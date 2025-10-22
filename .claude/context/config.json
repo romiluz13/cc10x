@@ -1,0 +1,181 @@
+{
+  "version": "0.1.0",
+  "description": "cc10x context management - progressive loading with alwaysApply rules",
+
+  "loadingStrategy": {
+    "stage1": {
+      "name": "Startup",
+      "trigger": "session start",
+      "estimatedTokens": 5000,
+      "rules": "alwaysApply"
+    },
+    "stage2": {
+      "name": "Task-Specific",
+      "trigger": "workflow invocation",
+      "estimatedTokens": "10000-15000",
+      "rules": "conditional based on workflow"
+    },
+    "stage3": {
+      "name": "On-Demand",
+      "trigger": "explicit need",
+      "estimatedTokens": "variable",
+      "rules": "loaded as needed"
+    }
+  },
+
+  "rules": {
+    "alwaysApply": [
+      {
+        "file": "working-plan.md",
+        "location": ".claude/memory/",
+        "estimatedTokens": 3000,
+        "reason": "Current priorities and session continuity",
+        "autoLoad": true
+      },
+      {
+        "file": "project-status.md",
+        "location": ".claude/context/rules/",
+        "estimatedTokens": 1500,
+        "reason": "Project overview and current state",
+        "autoLoad": true
+      },
+      {
+        "file": "coding-standards.md",
+        "location": ".claude/context/rules/",
+        "estimatedTokens": 1000,
+        "reason": "Universal code conventions",
+        "autoLoad": true
+      }
+    ],
+
+    "featureBuild": [
+      {
+        "file": "architecture-decisions.md",
+        "location": ".claude/context/rules/",
+        "estimatedTokens": 3000,
+        "reason": "System architecture and design patterns",
+        "loadWhen": "/feature-build workflow triggered"
+      },
+      {
+        "file": "testing-standards.md",
+        "location": ".claude/context/rules/",
+        "estimatedTokens": 2000,
+        "reason": "TDD requirements and test patterns",
+        "loadWhen": "/feature-build workflow triggered"
+      },
+      {
+        "preset": "frontend",
+        "loadWhen": "frontend keywords detected (React, component, UI, UX)"
+      },
+      {
+        "preset": "backend",
+        "loadWhen": "backend keywords detected (API, service, database)"
+      }
+    ],
+
+    "bugFix": [
+      {
+        "file": "debugging-patterns.md",
+        "location": ".claude/context/rules/",
+        "estimatedTokens": 2000,
+        "reason": "Systematic debugging approaches",
+        "loadWhen": "/bug-fix workflow triggered"
+      },
+      {
+        "file": "error-logs.md",
+        "location": ".claude/memory/",
+        "estimatedTokens": 1500,
+        "reason": "Recent error logs and stack traces",
+        "loadWhen": "/bug-fix workflow triggered"
+      },
+      {
+        "file": "recent-changes.md",
+        "location": ".claude/memory/",
+        "estimatedTokens": 2000,
+        "reason": "Recent commits that may have introduced bugs",
+        "loadWhen": "/bug-fix workflow triggered"
+      }
+    ],
+
+    "review": [
+      {
+        "file": "quality-standards.md",
+        "location": ".claude/context/rules/",
+        "estimatedTokens": 2500,
+        "reason": "Code quality metrics and standards",
+        "loadWhen": "/review workflow triggered"
+      },
+      {
+        "file": "security-checklist.md",
+        "location": ".claude/context/rules/",
+        "estimatedTokens": 2000,
+        "reason": "OWASP and security best practices",
+        "loadWhen": "/review workflow triggered"
+      },
+      {
+        "file": "performance-benchmarks.md",
+        "location": ".claude/context/rules/",
+        "estimatedTokens": 1500,
+        "reason": "Performance targets and optimization patterns",
+        "loadWhen": "/review workflow triggered"
+      }
+    ]
+  },
+
+  "presets": {
+    "frontend": {
+      "files": [
+        ".claude/context/rules/frontend-standards.md",
+        ".claude/context/rules/component-patterns.md",
+        ".claude/context/rules/design-system.md"
+      ],
+      "estimatedTokens": 5000,
+      "keywords": ["React", "component", "UI", "UX", "frontend", "CSS", "HTML", "JSX"]
+    },
+
+    "backend": {
+      "files": [
+        ".claude/context/rules/backend-standards.md",
+        ".claude/context/rules/api-patterns.md",
+        ".claude/context/rules/database-schema.md"
+      ],
+      "estimatedTokens": 5000,
+      "keywords": ["API", "service", "backend", "database", "server", "endpoint", "auth"]
+    },
+
+    "database": {
+      "files": [
+        ".claude/context/rules/database-schema.md",
+        ".claude/context/rules/migration-patterns.md"
+      ],
+      "estimatedTokens": 3000,
+      "keywords": ["database", "migration", "schema", "SQL", "Prisma", "query"]
+    },
+
+    "testing": {
+      "files": [
+        ".claude/context/rules/testing-standards.md",
+        ".claude/context/rules/test-patterns.md"
+      ],
+      "estimatedTokens": 3000,
+      "keywords": ["test", "testing", "TDD", "unit", "integration", "e2e"]
+    }
+  },
+
+  "tokenManagement": {
+    "stage1Budget": 5000,
+    "stage2Budget": 15000,
+    "stage3Budget": "variable",
+    "totalBudget": 200000,
+    "autoHealingTrigger": 150000,
+    "warningThreshold": 120000
+  },
+
+  "smartLoading": {
+    "enabled": true,
+    "analyzeIntent": true,
+    "detectKeywords": true,
+    "loadMinimalFirst": true,
+    "expandAsNeeded": true
+  }
+}

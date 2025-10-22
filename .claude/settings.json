@@ -1,0 +1,120 @@
+{
+  "description": "cc10x orchestration system settings - auto-loading memory, hooks, and configuration",
+
+  "hooks": {
+    "SessionStart": [
+      {
+        "type": "tool",
+        "tool": "Read",
+        "parameters": {
+          "file_path": ".claude/memory/working-plan.md"
+        },
+        "description": "Auto-load working plan on session start"
+      }
+    ]
+  },
+
+  "contextManagement": {
+    "autoHealing": {
+      "enabled": true,
+      "triggerAt": 150000,
+      "comment": "Auto-compact at 150k tokens (75% of 200k limit)",
+      "snapshotLocation": ".claude/memory/snapshots/",
+      "keepDecisions": true,
+      "keepProgress": true
+    },
+
+    "progressiveLoading": {
+      "enabled": true,
+      "stages": {
+        "startup": ["working-plan.md", "project-status.md", "coding-standards.md"],
+        "taskSpecific": "loaded based on workflow type",
+        "onDemand": "loaded as explicitly needed"
+      }
+    }
+  },
+
+  "parallelExecution": {
+    "implementers": {
+      "maxParallel": 1,
+      "reason": "File conflict prevention - NEVER parallelize implementers"
+    },
+    "analyzers": {
+      "maxParallel": 2,
+      "reason": "Read-only agents safe to parallelize"
+    },
+    "reviewers": {
+      "maxParallel": 5,
+      "reason": "Multi-dimensional review (security, quality, perf, ux, a11y)"
+    }
+  },
+
+  "qualityGates": {
+    "enabled": true,
+    "enforceAfterPhase": true,
+    "blockOnFailure": true,
+    "checkpoints": [
+      "context-analysis",
+      "planning",
+      "each-implementation-task",
+      "verification",
+      "finalization"
+    ]
+  },
+
+  "sessionManagement": {
+    "workingPlanLocation": ".claude/memory/working-plan.md",
+    "sessionsArchive": ".claude/memory/sessions/",
+    "keepRecentSessions": 10,
+    "archiveOlderSessions": true,
+    "snapshotInterval": "after each major phase"
+  },
+
+  "workflows": {
+    "featureBuild": {
+      "command": "/feature-build",
+      "phases": 5,
+      "estimatedTime": "25-35 minutes",
+      "estimatedTokens": "160k"
+    },
+    "bugFix": {
+      "command": "/bug-fix",
+      "phases": 5,
+      "estimatedTime": "10-15 minutes",
+      "estimatedTokens": "55k"
+    },
+    "review": {
+      "command": "/review",
+      "phases": 4,
+      "estimatedTime": "25-35 minutes",
+      "estimatedTokens": "130k"
+    }
+  },
+
+  "skills": {
+    "progressiveLoading": true,
+    "stages": {
+      "metadata": "50 tokens",
+      "quickReference": "500 tokens",
+      "fullContent": "3000 tokens"
+    },
+    "defaultLoadStage": "quickReference"
+  },
+
+  "subAgents": {
+    "isolatedContext": true,
+    "maxTokensPerAgent": 30000,
+    "autoInvokeSkills": true,
+    "trackingEnabled": true
+  },
+
+  "fileConflictPrevention": {
+    "enabled": true,
+    "checkBeforeLaunch": true,
+    "queueIfConflict": true,
+    "maxQueueTime": "10 minutes"
+  },
+
+  "version": "0.1.0",
+  "lastUpdated": "2025-10-22"
+}

@@ -1,0 +1,56 @@
+{
+  "name": "cc10x",
+  "version": "0.2.0",
+  "description": "Intelligent orchestration system combining commands, sub-agents, and skills for 10x developer productivity. Features progressive loading (93% token savings), auto-healing context, multi-dimensional code review, and strict TDD enforcement.",
+  "author": {
+    "name": "cc10x Team"
+  },
+  "homepage": "https://github.com/cc10x/cc10x",
+  "license": "MIT",
+  "keywords": [
+    "orchestration",
+    "productivity",
+    "sub-agents",
+    "skills",
+    "workflow",
+    "tdd",
+    "code-review",
+    "progressive-loading",
+    "auto-healing"
+  ],
+  "commands": [
+    {
+      "name": "feature-build",
+      "description": "Complete 5-phase feature development workflow with TDD enforcement"
+    },
+    {
+      "name": "bug-fix",
+      "description": "Lightweight 5-phase debugging workflow with progressive context loading"
+    },
+    {
+      "name": "review",
+      "description": "Multi-dimensional code review (security, quality, performance, UX, accessibility)"
+    }
+  ],
+  "agents": [
+    "implementer",
+    "context-analyzer",
+    "security-reviewer",
+    "quality-reviewer",
+    "performance-analyzer",
+    "ux-reviewer",
+    "accessibility-reviewer"
+  ],
+  "skills": [
+    "test-driven-development",
+    "code-generation",
+    "codebase-navigation",
+    "verification-before-completion",
+    "security-patterns",
+    "performance-patterns",
+    "ux-patterns",
+    "accessibility-patterns",
+    "code-review-patterns",
+    "safe-refactoring"
+  ]
+}
