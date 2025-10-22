@@ -1,0 +1,52 @@
+{
+  "name": "cc10x",
+  "owner": {
+    "name": "Rom Iluz",
+    "email": "rom.iluz13@gmail.com",
+    "url": "https://github.com/romiluz13"
+  },
+  "metadata": {
+    "description": "Intelligent orchestration system for Claude Code",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "cc10x",
+      "source": "./",
+      "description": "Intelligent orchestration system combining commands, sub-agents, and skills for 10x developer productivity. Features comprehensive feature planning, Lovable/Bolt-quality UI generation, progressive loading (93% token savings), auto-healing context, multi-dimensional code review, systematic debugging (LOG FIRST pattern), and strict TDD enforcement.",
+      "version": "1.0.0",
+      "author": {
+        "name": "Rom Iluz",
+        "email": "rom.iluz13@gmail.com",
+        "url": "https://github.com/romiluz13"
+      },
+      "homepage": "https://github.com/romiluz13/cc10x",
+      "repository": "https://github.com/romiluz13/cc10x",
+      "license": "MIT",
+      "keywords": [
+        "orchestration",
+        "productivity",
+        "sub-agents",
+        "skills",
+        "workflow",
+        "tdd",
+        "code-review",
+        "progressive-loading",
+        "auto-healing",
+        "feature-planning",
+        "systematic-debugging",
+        "ui-design",
+        "claude-code",
+        "claude-plugin"
+      ],
+      "category": "productivity",
+      "tags": [
+        "orchestration",
+        "productivity",
+        "tdd",
+        "code-review",
+        "debugging"
+      ]
+    }
+  ]
+}

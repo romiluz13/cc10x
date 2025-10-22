@@ -1,0 +1,46 @@
+# User-specific runtime files (created when plugin is used)
+.claude/
+
+# IDE
+.cursor/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Backup files
+*.bak
+*.tmp
+*.old
+*~
+
+# Archives (for development)
+archive/
+*.tar.gz
+*.zip
+
+# Node modules (if scripts need dependencies)
+node_modules/
