@@ -24,20 +24,267 @@ Perfect Orchestration = Sub-Agents + Skills + Smart Context
 
 ## Quick Start
 
+### Prerequisites
+
+Before installing cc10x, ensure you have:
+
+- **Claude Code** installed and running ([Download here](https://claude.ai/code))
+- **Git** (for version control features)
+- **Node.js 18+** (if your project uses JavaScript/TypeScript)
+- A project directory where you want to use cc10x
+
 ### Installation
 
-1. Copy the `production/` folder into your Claude Code project:
+cc10x can be installed in multiple ways depending on your needs:
+
+#### Method 1: Clone from GitHub (Recommended)
+
+```bash
+# Clone the repository
+git clone https://github.com/romiluz13/cc10x.git
+
+# Navigate to your project directory
+cd your-project/
+
+# Copy cc10x files to your project
+cp -r cc10x/production/.claude ./
+cp -r cc10x/production/.claude-plugin ./
+cp -r cc10x/production/agents ./
+cp -r cc10x/production/skills ./
+cp cc10x/production/CLAUDE.md ./
+```
+
+#### Method 2: Direct Download
+
+1. Download the repository as ZIP: https://github.com/romiluz13/cc10x/archive/refs/heads/main.zip
+2. Extract the archive
+3. Copy the following folders/files to your project root:
+   - `.claude/` → `your-project/.claude/`
+   - `.claude-plugin/` → `your-project/.claude-plugin/`
+   - `agents/` → `your-project/agents/`
+   - `skills/` → `your-project/skills/`
+   - `CLAUDE.md` → `your-project/CLAUDE.md`
+
+#### Method 3: Manual Setup
+
+If you want to customize the structure:
+
+```bash
+# Create directory structure
+mkdir -p your-project/.claude/{context/rules,memory}
+mkdir -p your-project/.claude-plugin/commands
+mkdir -p your-project/{agents,skills}
+
+# Copy core files
+cp production/CLAUDE.md your-project/
+cp production/.claude/settings.json your-project/.claude/
+cp production/.claude/context/config.json your-project/.claude/context/
+cp -r production/.claude/context/rules/* your-project/.claude/context/rules/
+cp -r production/.claude/memory/* your-project/.claude/memory/
+cp -r production/.claude-plugin/* your-project/.claude-plugin/
+cp -r production/agents/* your-project/agents/
+cp -r production/skills/* your-project/skills/
+```
+
+### Verification
+
+After installation, verify everything is set up correctly:
+
+1. **Check file structure**:
    ```bash
-   cp -r production/ your-project/.claude-cc10x/
+   ls -la .claude/
+   # Should show: context/, memory/, settings.json
+
+   ls -la .claude-plugin/
+   # Should show: commands/, plugin.json
+
+   ls -la agents/
+   # Should show: implementer.md, context-analyzer.md, security-reviewer.md, etc.
+
+   ls -la skills/
+   # Should show: test-driven-development/, code-generation/, etc.
    ```
 
-2. The system auto-loads on session start via `SessionStart` hook in `.claude/settings.json`
-
-3. Start using commands:
+2. **Start Claude Code**:
    ```bash
-   /feature-build Add user authentication with JWT
-   /bug-fix User login returns 500 error
+   claude code
    ```
+
+3. **Look for session start message**:
+   ```
+   [Session Start - Auto-triggered]
+   Loading working plan...
+   ✅ working-plan.md loaded
+   ```
+
+4. **Test a command**:
+   ```bash
+   /feature-build Add hello world endpoint
+   ```
+
+### First-Time Setup
+
+#### 1. Initialize Working Plan
+
+The first time you use cc10x, customize the working plan for your project:
+
+```bash
+# Edit the working plan
+vi .claude/memory/working-plan.md
+```
+
+Update with your project specifics:
+- Current sprint goals
+- Pending tasks
+- Project architecture decisions
+- Recent discoveries
+
+#### 2. Configure Project Status
+
+Customize the project status context:
+
+```bash
+# Edit project status
+vi .claude/context/rules/project-status.md
+```
+
+Add:
+- Tech stack (React, Node.js, PostgreSQL, etc.)
+- Architecture pattern (MVC, microservices, etc.)
+- Key dependencies
+- Build and test commands
+
+#### 3. Set Coding Standards
+
+Define your project's coding standards:
+
+```bash
+# Edit coding standards
+vi .claude/context/rules/coding-standards.md
+```
+
+Include:
+- Naming conventions
+- File organization patterns
+- Testing requirements
+- Documentation standards
+
+#### 4. Customize Token Budget (Optional)
+
+If working on a large codebase, adjust token budgets:
+
+```bash
+# Edit context config
+vi .claude/context/config.json
+```
+
+Adjust `tokenBudget` values based on your needs.
+
+### Quick Start Usage
+
+Once installed and verified, start using cc10x commands:
+
+```bash
+# Build a new feature
+/feature-build Add user authentication with JWT
+
+# Fix a bug
+/bug-fix User login returns 500 error on invalid credentials
+
+# Review code
+/review src/auth/
+```
+
+The system will auto-load your working plan and guide you through each workflow with intelligent orchestration.
+
+### Updating cc10x
+
+To update to the latest version:
+
+```bash
+# Navigate to cc10x repository
+cd cc10x/
+git pull origin main
+
+# Re-copy files to your project
+cd your-project/
+cp -r ../cc10x/production/.claude ./
+cp -r ../cc10x/production/.claude-plugin ./
+cp -r ../cc10x/production/agents ./
+cp -r ../cc10x/production/skills ./
+cp ../cc10x/production/CLAUDE.md ./
+```
+
+**Note**: This will overwrite customizations. Back up your working-plan.md and custom rules before updating.
+
+### Troubleshooting Installation
+
+#### Issue: Commands not recognized
+
+**Symptom**: `/feature-build` shows "Unknown command"
+
+**Solution**:
+```bash
+# Check plugin.json exists
+ls .claude-plugin/plugin.json
+
+# Verify commands directory
+ls .claude-plugin/commands/
+
+# Restart Claude Code
+```
+
+#### Issue: SessionStart hook not firing
+
+**Symptom**: working-plan.md not auto-loaded on startup
+
+**Solution**:
+```bash
+# Check settings.json exists
+cat .claude/settings.json | grep SessionStart
+
+# Verify working-plan.md exists
+cat .claude/memory/working-plan.md
+```
+
+#### Issue: Skills not loading
+
+**Symptom**: Sub-agents don't have access to skills
+
+**Solution**:
+```bash
+# Verify skills directory structure
+ls -R skills/
+
+# Each skill should have SKILL.md:
+# skills/test-driven-development/SKILL.md
+# skills/code-generation/SKILL.md
+# etc.
+
+# Check frontmatter in SKILL.md files
+head -10 skills/test-driven-development/SKILL.md
+# Should show:
+# ---
+# name: Test-Driven Development
+# description: ...
+# progressive: true
+# ---
+```
+
+#### Issue: Token usage too high at startup
+
+**Symptom**: Using more than 10k tokens at startup
+
+**Solution**:
+```bash
+# Check progressive loading is enabled
+cat .claude/context/config.json | grep progressive
+
+# Verify skill files have 3-stage structure
+grep "Stage 1:" skills/*/SKILL.md
+grep "Stage 2:" skills/*/SKILL.md
+grep "Stage 3:" skills/*/SKILL.md
+```
 
 ### Available Commands
 

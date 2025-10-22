@@ -3,9 +3,18 @@
   "version": "0.2.0",
   "description": "Intelligent orchestration system combining commands, sub-agents, and skills for 10x developer productivity. Features progressive loading (93% token savings), auto-healing context, multi-dimensional code review, and strict TDD enforcement.",
   "author": {
-    "name": "cc10x Team"
+    "name": "Rom Iluz",
+    "email": "rom.iluz13@gmail.com",
+    "url": "https://github.com/romiluz13"
   },
-  "homepage": "https://github.com/cc10x/cc10x",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/romiluz13/cc10x.git"
+  },
+  "homepage": "https://github.com/romiluz13/cc10x",
+  "bugs": {
+    "url": "https://github.com/romiluz13/cc10x/issues"
+  },
   "license": "MIT",
   "keywords": [
     "orchestration",
