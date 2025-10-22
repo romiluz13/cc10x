@@ -1,0 +1,18 @@
+{
+  "name": "cc10x",
+  "owner": {
+    "name": "romiluz13",
+    "email": "rom.iluz13@gmail.com"
+  },
+  "metadata": {
+    "description": "Intelligent orchestration system for 10x developer productivity",
+    "version": "0.3.0"
+  },
+  "plugins": [
+    {
+      "name": "cc10x",
+      "source": "./",
+      "description": "Complete development workflow: PLAN → BUILD → FIX → REVIEW with progressive loading, auto-healing context, and Lovable/Bolt-quality UIs"
+    }
+  ]
+}
