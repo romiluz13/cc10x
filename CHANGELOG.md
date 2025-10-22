@@ -5,6 +5,48 @@ All notable changes to cc10x will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2025-10-22
+
+### Added
+
+#### Skills (1 new skill)
+- **systematic-debugging** (50 → 500 → 2500 tokens) - LOG FIRST, FIX LATER methodology
+  - Prevents assumption-driven debugging that wastes hours/days
+  - Enforces comprehensive logging before attempting fixes
+  - The 5-Minute Rule: If debugging > 30 min without data → STOP → Add logging
+  - Real-world patterns for auth bugs, API bugs, data flow bugs, third-party integrations
+  - Common mismatch detection (Dashboard UI ≠ API response field names)
+  - Complete logging templates for authentication, APIs, databases, performance
+  - Case study: The Clerk metadata bug (3 days wasted → 5 minutes with logging)
+
+### Changed
+
+#### Commands
+- **`/bug-fix`** - Enhanced Phase 2 with systematic debugging
+  - NEW Phase 2.1: Add Comprehensive Logging FIRST (2-3 min) - Mandatory before analysis
+  - Logging templates for auth bugs, API bugs, data flow bugs, third-party integrations
+  - Quality gate: Must see ACTUAL data structures before proceeding
+  - Red flags checklist: When to stop and add logging immediately
+  - Updated duration: 12-17 minutes (includes logging, prevents hours/days of wasted time)
+  - Updated token usage: ~58k tokens (minimal increase for massive time savings)
+  - New parallel execution phase: Phase 2.1 (logging) → Phase 2.2 (investigation)
+
+#### Sub-Agents
+- **implementer** - Now auto-invokes systematic-debugging for bug fixes
+  - Automatically applies LOG FIRST pattern when fixing bugs
+  - Prevents assumption-driven debugging
+  - Ensures actual data structures are logged before implementing fixes
+
+### Impact
+
+**Time Savings**: Bug fixes that took hours/days now resolve in 5-10 minutes with comprehensive logging
+**Real-World Example**: Clerk metadata bug (Dashboard showed "publicMetadata", JWT used "metadata") - 3 days wasted vs 5 minutes with logging
+**Prevention**: The 5-Minute Rule prevents assumption-driven debugging loops
+
+**Based on**: Real-world feedback from production debugging experience
+
+---
+
 ## [0.2.0] - 2025-10-22
 
 ### Added

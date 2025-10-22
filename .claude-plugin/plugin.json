@@ -1,7 +1,7 @@
 {
   "name": "cc10x",
-  "version": "0.2.0",
-  "description": "Intelligent orchestration system combining commands, sub-agents, and skills for 10x developer productivity. Features progressive loading (93% token savings), auto-healing context, multi-dimensional code review, and strict TDD enforcement.",
+  "version": "0.2.1",
+  "description": "Intelligent orchestration system combining commands, sub-agents, and skills for 10x developer productivity. Features progressive loading (93% token savings), auto-healing context, multi-dimensional code review, systematic debugging (LOG FIRST pattern), and strict TDD enforcement.",
   "author": {
     "name": "Rom Iluz",
     "email": "rom.iluz13@gmail.com",
@@ -55,6 +55,7 @@
     "code-generation",
     "codebase-navigation",
     "verification-before-completion",
+    "systematic-debugging",
     "security-patterns",
     "performance-patterns",
     "ux-patterns",
