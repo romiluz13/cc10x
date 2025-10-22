@@ -15,6 +15,48 @@ You are orchestrating a complete feature development workflow using intelligent 
 
 **💡 Pro Tip**: For complex features, run `/feature-plan` FIRST to create a comprehensive plan, then use `/feature-build` to execute it. This ensures strategic planning before implementation!
 
+## Task Tracking Approach
+
+**Hybrid system combining persistent checklists + ephemeral TodoWrite tool**:
+
+### When You Have a Persistent Checklist
+
+If `/feature-plan` created a checklist file (`.claude/docs/checklist-[feature-name].md`):
+
+1. **Reference the persistent checklist** for long-term tracking (50+ tasks, all phases)
+2. **Copy current phase tasks** (5-10 items) to TodoWrite tool for active session tracking
+3. **Update both** during implementation:
+   - Mark TodoWrite tasks as complete (real-time UI feedback)
+   - Update persistent checklist after each phase (version control, team visibility)
+
+**Example workflow**:
+```bash
+# User ran: /feature-plan Add user authentication
+# Created: .claude/docs/checklist-authentication.md
+
+# Now running: /feature-build Implement Phase 1 from checklist-authentication.md
+
+# Step 1: Load persistent checklist (read from file)
+# Step 2: Copy Phase 1 tasks (1.1.1-1.2.4) to TodoWrite tool
+# Step 3: During implementation, mark TodoWrite tasks as complete
+# Step 4: After Phase 1 done, update persistent checklist progress dashboard
+```
+
+### When No Persistent Checklist Exists
+
+If building a small/medium feature without `/feature-plan`:
+
+1. **Use TodoWrite tool exclusively** for task tracking (5-10 tasks)
+2. Create tasks during Phase 2 (Planning)
+3. Mark tasks complete during Phase 3 (Implementation)
+4. Clean up completed tasks in Phase 5 (Finalization)
+
+**Benefits of hybrid approach**:
+- ✅ Long-term tracking with version control (persistent checklist)
+- ✅ Real-time UI feedback during active coding (TodoWrite)
+- ✅ Team collaboration on complex features (persistent checklist)
+- ✅ Simplicity for small features (TodoWrite only)
+
 ## Workflow Overview
 
 ```
@@ -148,7 +190,17 @@ Generate a comprehensive context report.
    [Continue with 3-6 steps total]
    ```
 
-4. **Create TODO List**:
+4. **Create Task List**:
+
+   **If persistent checklist exists** (from `/feature-plan`):
+   ```
+   1. Read .claude/docs/checklist-[feature-name].md
+   2. Identify current phase tasks
+   3. Copy 5-10 tasks from current phase to TodoWrite tool
+   4. Reference persistent checklist for dependencies and acceptance criteria
+   ```
+
+   **If no persistent checklist** (standalone feature):
    ```
    Use TodoWrite tool to create tasks:
    - [ ] Step 1: [Description] (depends on: none)
@@ -162,7 +214,7 @@ Generate a comprehensive context report.
 - ✅ Implementation plan has 3-6 clear steps
 - ✅ Each step is 15-30 minutes
 - ✅ Dependencies are identified
-- ✅ TODO list created with dependencies
+- ✅ Tasks loaded to TodoWrite tool (from persistent checklist OR created new)
 - ❌ If plan is unclear → Ask clarifying questions before proceeding
 
 ## Phase 3: Implementation with TDD
@@ -294,7 +346,19 @@ git status
    - Update CHANGELOG if maintaining one
    - Add migration notes if breaking changes
 
-3. **Clean TODO list**:
+3. **Update task tracking**:
+
+   **If persistent checklist exists**:
+   ```
+   1. Mark all TodoWrite tasks as completed
+   2. Update persistent checklist (.claude/docs/checklist-[feature-name].md):
+      - Check off completed tasks in current phase
+      - Update progress dashboard (completed count, percentage)
+      - Add any notes or discoveries in Implementation Notes section
+   3. Clear TodoWrite for next session
+   ```
+
+   **If no persistent checklist** (standalone feature):
    ```
    Use TodoWrite to archive completed tasks:
    - Move completed todos to "archived" status

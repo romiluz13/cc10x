@@ -16,6 +16,29 @@ You are orchestrating a fast, focused bug fix workflow using progressive context
 - `/bug-fix Payment processing fails with invalid token`
 - `/bug-fix Dashboard charts not rendering`
 
+## Task Tracking for Bug Fixes
+
+Bug fixes are **lightweight workflows** (12-17 minutes) and typically don't need persistent checklists or TodoWrite tool tracking.
+
+**When to use TodoWrite**:
+- ✅ Complex bug with multiple fixes needed (use TodoWrite for 3-5 tasks)
+- ✅ Bug fix spans multiple sessions
+- ❌ Simple, single-session bug fix (no tracking needed)
+
+**Why minimal tracking**:
+- Bug fixes are quick (12-17 min)
+- Clear workflow phases (investigate → fix → verify)
+- Real-time progress visible through workflow phases
+- No need for persistent tracking across sessions
+
+**Example TodoWrite usage** (complex bug only):
+```
+- [ ] Phase 2: Add comprehensive logging (2-3 min)
+- [ ] Phase 3: Analyze logs and identify root cause (3-5 min)
+- [ ] Phase 4: Implement fix with failing test first (5-7 min)
+- [ ] Phase 5: Verify fix and run regression tests (2-3 min)
+```
+
 ## Workflow Overview
 
 ```

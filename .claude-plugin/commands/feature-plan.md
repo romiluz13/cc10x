@@ -497,127 +497,248 @@ Manual Testing Checklist:
 
 ## Complete Plan Output
 
-After all phases, generate a **comprehensive plan document**:
+After all phases, generate a **persistent markdown checklist** using the template format from `.claude/docs/checklist-template.md`:
+
+**Output Location**: `.claude/docs/checklist-[feature-name].md`
+
+**Format**: Use the checklist template structure with these sections:
 
 ```markdown
-═══════════════════════════════════════════════════════
-FEATURE PLAN: [Feature Name]
-Generated: [Date/Time]
-Status: Ready for Implementation
-═══════════════════════════════════════════════════════
+# [Feature Name] Implementation Checklist
 
-## 1. OVERVIEW
+**Source**: `/feature-plan` command output
+**Generated**: [Date]
+**Status**: Not Started
+**Estimated Time**: [X hours/days]
 
-Feature: [Feature Name]
-Problem: [What problem this solves]
-Users: [Who benefits]
-Scope: [What's included/excluded]
+---
 
-Estimated Time: [X hours/days]
-Complexity: [Low/Medium/High]
+## 📋 Overview
 
-## 2. USER STORIES
+[Brief summary from Phase 1: Understanding]
 
-[List of user stories with acceptance criteria]
+**Key Goals**:
+- Goal 1 (from user stories)
+- Goal 2 (from user stories)
+- Goal 3 (from user stories)
 
-## 3. ARCHITECTURE
+---
 
-Technology Stack:
-- Frontend: [Framework, libraries]
-- Backend: [Language, framework]
-- Database: [Type, ORM]
-- Third-party: [Services]
+## 📊 Progress Dashboard
 
-[Architecture diagram]
+- **Total Tasks**: [Count all checklist items]
+- **Completed**: 0 (0%)
+- **In Progress**: 0
+- **Remaining**: [Total tasks]
 
-## 4. COMPONENTS
+**Phase Progress**:
+- Phase 1 (Foundation): 0/X tasks □□□□□
+- Phase 2 (Core Features): 0/X tasks □□□□□
+- Phase 3 (Testing & Polish): 0/X tasks □□□□□
 
-Frontend: [X components]
-Backend: [Y services]
-Middleware: [Z utilities]
+---
 
-[Detailed breakdown with estimates]
+## 🏗️ Phase 1: Foundation
 
-## 5. API DESIGN
+### 1.1 Data Models & Schema
 
-[Complete API endpoints with request/response examples]
+**Deliverable**: Complete data models [from Phase 4: Data Models]
+**Acceptance Criteria**:
+- All models have proper TypeScript types
+- Validation rules defined
+- Database migrations created and tested
+**Dependencies**: None
 
-## 6. DATA MODELS
+- [ ] 1.1.1 Create [table name] with [specific fields from data model]
+- [ ] 1.1.2 Add validation schemas (Zod/Yup)
+- [ ] 1.1.3 Create migrations
+- [ ] 1.1.4 Test model creation
 
-[Database schema with tables, columns, constraints, indexes]
+### 1.2 API Routes & Middleware
 
-## 7. EDGE CASES
+**Deliverable**: Functional API endpoints [from Phase 4: API Design]
+**Acceptance Criteria**:
+- Routes respond with correct status codes
+- Middleware configured
+- Error handling returns meaningful messages
+**Dependencies**: 1.1 (Data Models)
 
-[List of all edge cases to handle]
+- [ ] 1.2.1 Create [endpoint 1 from API design]
+- [ ] 1.2.2 Create [endpoint 2 from API design]
+- [ ] 1.2.3 Add middleware [from architecture decisions]
+- [ ] 1.2.4 Test endpoints
 
-Error Handling Strategy:
-[Frontend and backend error handling approach]
+---
 
-## 8. TESTING STRATEGY
+## 🎨 Phase 2: Core Features
 
-Unit Tests: [X tests]
-Integration Tests: [Y tests]
-E2E Tests: [Z scenarios]
+### 2.1 Frontend Components
 
-[Test file list with key test cases]
+**Deliverable**: UI components [from Phase 3: Components]
+**Acceptance Criteria**:
+- Components render without errors
+- Props properly typed
+- Lovable/Bolt-quality UIs (gradients, shadows, animations)
+- Responsive design
+**Dependencies**: 1.2 (API Routes)
 
-## 9. IMPLEMENTATION CHECKLIST
+- [ ] 2.1.1 Implement [Component 1 from breakdown]
+- [ ] 2.1.2 Implement [Component 2 from breakdown]
+- [ ] 2.1.3 Add loading and error states
+- [ ] 2.1.4 Style with modern design patterns
 
-Phase 1: Setup (Estimated: [X min])
-- [ ] Create database migrations
-- [ ] Set up API routes structure
-- [ ] Install required dependencies
+### 2.2 Business Logic
 
-Phase 2: Backend (Estimated: [X min])
-- [ ] Implement [Service 1]
-- [ ] Implement [Service 2]
-- [ ] Add authentication middleware
-- [ ] Write unit tests
+**Deliverable**: Complete feature workflow [from User Stories]
+**Acceptance Criteria**:
+- User actions trigger correct API calls
+- Data persists correctly
+- UI updates reflect backend state
+- Edge cases handled [from Phase 5]
+**Dependencies**: 2.1 (UI Components)
 
-Phase 3: Frontend (Estimated: [X min])
-- [ ] Implement [Component 1]
-- [ ] Implement [Component 2]
-- [ ] Connect to API
-- [ ] Add error handling
+- [ ] 2.2.1 Implement [workflow from user story 1]
+- [ ] 2.2.2 Add state management [from architecture]
+- [ ] 2.2.3 Connect UI to API
+- [ ] 2.2.4 Handle edge cases [reference Phase 5 edge cases]
 
-Phase 4: Testing (Estimated: [X min])
-- [ ] Run all unit tests
-- [ ] Run integration tests
-- [ ] Manual E2E testing
+---
 
-Phase 5: Polish (Estimated: [X min])
-- [ ] Add loading states
-- [ ] Add error states
-- [ ] Mobile responsive
-- [ ] Accessibility check
+## 🔍 Phase 3: Testing & Polish
 
-═══════════════════════════════════════════════════════
-NEXT STEP: Run /feature-build based on this plan
-═══════════════════════════════════════════════════════
+### 3.1 Automated Testing
+
+**Deliverable**: Test coverage [from Phase 6: Testing Strategy]
+**Acceptance Criteria**:
+- Unit tests for all business logic
+- Integration tests for API endpoints
+- Component tests for UI
+- Coverage > 70%
+**Dependencies**: 2.2 (Business Logic)
+
+- [ ] 3.1.1 Write unit tests [list from Phase 6]
+- [ ] 3.1.2 Write integration tests [list from Phase 6]
+- [ ] 3.1.3 Write component tests
+- [ ] 3.1.4 Achieve >70% coverage
+
+### 3.2 Manual Testing
+
+**Deliverable**: Verified edge cases [from Phase 5]
+**Acceptance Criteria**:
+- All happy paths work
+- Edge cases handled gracefully
+- Error messages helpful
+**Dependencies**: 3.1 (Automated Testing)
+
+- [ ] 3.2.1 Test [edge case 1 from Phase 5]
+- [ ] 3.2.2 Test [edge case 2 from Phase 5]
+- [ ] 3.2.3 Test error handling
+- [ ] 3.2.4 Test on mobile
+
+### 3.3 Documentation
+
+**Deliverable**: Updated documentation
+**Acceptance Criteria**:
+- Code commented
+- API documented
+- README updated
+- No debug code
+**Dependencies**: 3.2 (Manual Testing)
+
+- [ ] 3.3.1 Add JSDoc comments
+- [ ] 3.3.2 Document API endpoints
+- [ ] 3.3.3 Update README
+- [ ] 3.3.4 Remove debug code
+
+---
+
+## 📝 Implementation Notes
+
+### Technical Decisions
+[Copy from Phase 2: Architecture]
+
+### Risks & Mitigations
+[Derive from Phase 5: Edge Cases]
+
+### Future Enhancements
+[Copy from "out of scope" items in Phase 1]
+
+---
+
+## 🎯 Usage with TodoWrite Tool
+
+**For active development sessions**:
+1. Copy current phase tasks (5-10 items) to TodoWrite tool
+2. Mark complete in both TodoWrite and this checklist
+3. Update progress dashboard after each phase
+
+**Why hybrid approach?**
+- This checklist = Persistent, long-term tracking, version controlled
+- TodoWrite = Ephemeral, real-time UI tracking during active coding
+
+---
+
+## ✅ Completion Criteria
+
+**Feature is complete when**:
+- ✅ All phases checked off
+- ✅ All automated tests passing
+- ✅ Manual testing verified
+- ✅ Documentation updated
+- ✅ Code reviewed (optional: `/review`)
+- ✅ Ready for production
+
+---
+
+**NEXT STEP: Use `/feature-build` to implement tasks from current phase**
+**Last Updated**: [Date] by cc10x `/feature-plan` command
 ```
+
+**Save the checklist file** to `.claude/docs/checklist-[feature-name].md` for persistent tracking.
 
 ---
 
 ## Using the Plan with /feature-build
 
-Once the plan is complete:
+Once the persistent checklist is created at `.claude/docs/checklist-[feature-name].md`:
+
+**Hybrid Workflow**:
+
+1. **Long-term tracking** (Persistent checklist):
+   - All tasks organized by phases in `.claude/docs/checklist-[feature-name].md`
+   - Version controlled, team-visible
+   - Progress dashboard shows overall completion
+
+2. **Active session tracking** (TodoWrite tool):
+   - Copy current phase tasks (5-10 items) to TodoWrite
+   - Real-time UI updates during implementation
+   - Marks progress visibly in Claude Code interface
+
+**Implementation commands**:
 
 ```bash
-# Option 1: Reference the plan explicitly
-/feature-build Implement user authentication according to the plan above
+# Option 1: Implement specific phase
+/feature-build Implement Phase 1 from checklist-authentication.md
 
-# Option 2: Copy specific phase
-/feature-build Implement Phase 2 (Backend) from the authentication plan
+# Option 2: Implement specific subsection
+/feature-build Implement Phase 2.1 (Frontend Components) from checklist-authentication.md
 
-# Option 3: Break into smaller tasks
-/feature-build Implement AuthService with register, login, verifyToken methods
+# Option 3: Implement specific tasks
+/feature-build Implement tasks 1.1.1-1.1.4 (Data Models) from checklist-authentication.md
 ```
 
-The plan serves as a **complete specification** that `/feature-build` can execute from, ensuring:
+**During /feature-build execution**:
+- TodoWrite tool tracks 5-10 active tasks from current phase
+- After phase complete, update persistent checklist
+- Move to next phase tasks
+
+The persistent checklist serves as a **complete specification** that `/feature-build` can execute from, ensuring:
 - ✅ No guessing about architecture
 - ✅ No missing edge cases
 - ✅ No unclear requirements
 - ✅ Faster implementation (clear roadmap)
+- ✅ Progress tracking across sessions
+- ✅ Team collaboration on long-term features
 
 ---
 
