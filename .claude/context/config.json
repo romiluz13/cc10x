@@ -33,14 +33,14 @@
         "autoLoad": true
       },
       {
-        "file": "project-status.md",
+        "file": "project-status.mdc",
         "location": ".claude/context/rules/",
         "estimatedTokens": 1500,
         "reason": "Project overview and current state",
         "autoLoad": true
       },
       {
-        "file": "coding-standards.md",
+        "file": "coding-standards.mdc",
         "location": ".claude/context/rules/",
         "estimatedTokens": 1000,
         "reason": "Universal code conventions",

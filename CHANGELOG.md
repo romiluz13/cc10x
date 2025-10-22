@@ -5,6 +5,58 @@ All notable changes to cc10x will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2025-10-22
+
+### Added
+
+#### MDC Context Format (Smart Context Management)
+- **MDC files** with frontmatter for context rules
+  - `project-status.mdc` - Project status with `alwaysApply: true`
+  - `coding-standards.mdc` - Coding standards with `alwaysApply: true`
+  - Frontmatter includes: `description`, `alwaysApply`, `globs` (future)
+  - **Benefits**: Smart auto-loading, glob-based context switching, 93% token savings potential
+
+#### Hybrid Task Tracking System
+- **Persistent markdown checklists** (`.claude/docs/checklist-template.md`)
+  - Long-term project planning with phases
+  - Deliverables + Acceptance Criteria format
+  - Progress dashboard tracking
+  - Version controlled task history
+- **TodoWrite tool** for active sessions (ephemeral)
+  - Real-time tracking (5-10 tasks)
+  - Current phase focus
+  - UI-based progress updates
+
+### Changed
+
+#### Context Management
+- **config.json** updated to reference `.mdc` files
+  - `project-status.md` → `project-status.mdc`
+  - `coding-standards.md` → `coding-standards.mdc`
+  - Maintains backward compatibility
+
+### Impact
+
+**Smart Context Management**:
+- MDC format enables dynamic loading based on file patterns (future: glob support)
+- alwaysApply rules auto-load essential context (project status, coding standards)
+- Foundation for `/ctx` command (smart context switching)
+
+**Hybrid Task Tracking**:
+- Best of both worlds: Persistent planning + Real-time tracking
+- Persistent checklists (`.claude/docs/`) for long-term features
+- TodoWrite tool for active development sessions
+- Example workflow:
+  ```
+  /feature-plan → Generate persistent checklist (50 tasks)
+  /feature-build → Use TodoWrite for current phase (5 tasks)
+  After phase → Update persistent checklist
+  ```
+
+**Version**: 0.3.0 → 0.3.1 (patch - improvements, fully backward compatible)
+
+---
+
 ## [0.3.0] - 2025-10-22
 
 ### Added

@@ -1,0 +1,526 @@
+---
+description: Universal code conventions, naming standards, formatting rules, and best practices for cc10x development
+alwaysApply: true
+---
+
+# Coding Standards - cc10x Orchestration System
+
+**Purpose**: Universal conventions for consistent, maintainable, high-quality code across all cc10x components.
+
+**Applies to**: Commands, sub-agents, skills, documentation, configuration files
+
+---
+
+## General Principles
+
+###1. **Clarity over Cleverness**
+- Readable code > clever code
+- Explicit > implicit
+- Descriptive names > short names
+
+### 2. **Consistency is Key**
+- Follow existing patterns
+- Don't introduce new patterns without reason
+- When in doubt, check similar files
+
+### 3. **Documentation**
+- Frontmatter for all .md files (name, description)
+- Inline comments for complex logic
+- Update README when adding features
+
+---
+
+## File Naming Conventions
+
+### Commands
+```
+.claude-plugin/commands/
+├── feature-build.md      ← kebab-case
+├── bug-fix.md            ← kebab-case
+└── review.md             ← kebab-case
+```
+
+### Sub-Agents
+```
+agents/
+├── implementer.md        ← kebab-case
+├── context-analyzer.md   ← kebab-case
+└── security-reviewer.md  ← kebab-case
+```
+
+### Skills
+```
+skills/
+├── test-driven-development/    ← kebab-case directory
+│   └── SKILL.md                ← UPPERCASE
+├── code-generation/
+│   └── SKILL.md
+└── systematic-debugging/
+    └── SKILL.md
+```
+
+### Documentation
+```
+docs/
+├── README.md             ← UPPERCASE for root-level
+├── CHANGELOG.md          ← UPPERCASE for root-level
+├── CONTRIBUTING.md       ← UPPERCASE for root-level
+└── working-plan.md       ← lowercase for internal
+```
+
+---
+
+## Markdown Formatting
+
+### Headers
+```markdown
+# Main Title (H1) - Only once per file
+
+## Section (H2) - Major sections
+
+### Subsection (H3) - Detailed breakdowns
+
+#### Minor Section (H4) - Specific details
+```
+
+### Code Blocks
+```markdown
+\```language
+code here
+\```
+
+Examples:
+- \```bash for shell commands
+- \```typescript for TS code
+- \```json for config
+- \```markdown for markdown examples
+```
+
+### Lists
+```markdown
+Unordered:
+- Item one
+- Item two
+  - Nested item
+
+Ordered:
+1. First step
+2. Second step
+3. Third step
+
+Task lists:
+- [ ] Not done
+- [x] Done
+```
+
+### Emphasis
+```markdown
+**Bold** for important terms
+*Italic* for emphasis
+`code` for inline code, filenames, commands
+```
+
+---
+
+## Frontmatter Standards
+
+### Commands
+```yaml
+---
+name: command-name
+description: Brief description of what this command does
+---
+```
+
+### Sub-Agents
+```yaml
+---
+name: agent-name
+description: What this agent does and when to use it
+tools: Read, Write, Edit, Bash, Grep, Glob
+model: inherit
+---
+```
+
+### Skills
+```yaml
+---
+name: Skill Name
+description: What expertise this skill provides
+progressive: true
+---
+```
+
+---
+
+## Progressive Loading Structure (Skills)
+
+All skills MUST follow this 3-stage structure:
+
+```markdown
+---
+name: Example Skill
+description: What this skill teaches
+progressive: true
+---
+
+### Stage 1: Metadata (startup - ~50 tokens)
+
+**Skill**: Example Skill
+**Purpose**: Brief purpose
+**Core Principle**: Key takeaway
+
+---
+
+### Stage 2: Quick Reference (triggered - ~500 tokens)
+
+## Core Rules (5-7 key principles)
+
+1. Rule 1 with brief explanation
+2. Rule 2 with brief explanation
+...
+
+## Quick Examples
+
+\```typescript
+// ❌ BAD
+badExample();
+
+// ✅ GOOD
+goodExample();
+\```
+
+---
+
+### Stage 3: Detailed Content (on-demand - full tokens)
+
+[Complete guide with all details, examples, anti-patterns, etc.]
+```
+
+**Token Budget**:
+- Stage 1: ~50 tokens (always loaded)
+- Stage 2: ~500 tokens (loaded when agent invokes skill)
+- Stage 3: ~2000-3500 tokens (loaded when explicitly needed)
+
+---
+
+## Code Style Guidelines
+
+### TypeScript/JavaScript
+
+```typescript
+// ✅ GOOD: Clear, typed, documented
+interface User {
+  id: string;
+  email: string;
+  role: 'admin' | 'user';
+}
+
+function getUserById(id: string): Promise<User | null> {
+  // Clear purpose, explicit return type
+  return database.users.findUnique({ where: { id } });
+}
+
+// ❌ BAD: Vague, untyped, unclear
+function get(x: any): any {
+  return db.find(x);
+}
+```
+
+### Error Handling
+
+```typescript
+// ✅ GOOD: Specific errors, helpful messages
+if (!user.email) {
+  throw new ValidationError(
+    'Email is required for user creation',
+    { field: 'email', value: user }
+  );
+}
+
+// ❌ BAD: Generic errors
+if (!user.email) {
+  throw new Error('Invalid');
+}
+```
+
+### Naming Conventions
+
+```typescript
+// Variables and functions: camelCase
+const userName = 'John';
+function calculateTotal() { }
+
+// Classes and types: PascalCase
+class UserService { }
+interface UserProfile { }
+type RoleName = string;
+
+// Constants: UPPER_SNAKE_CASE
+const MAX_RETRIES = 3;
+const API_ENDPOINT = 'https://api.example.com';
+
+// Private methods: prefix with underscore
+class Example {
+  private _internalState: string;
+
+  private _validateInput(input: string): boolean {
+    return input.length > 0;
+  }
+}
+```
+
+---
+
+## Documentation Standards
+
+### Command Documentation
+
+Each command file should have:
+
+1. **Usage section** - How to invoke
+2. **Workflow overview** - Phases diagram
+3. **Phase details** - Each phase explained
+4. **Examples** - Real-world usage
+5. **Error handling** - What can go wrong
+6. **Orchestration rules** - DO/DON'T lists
+
+### Sub-Agent Documentation
+
+Each agent file should have:
+
+1. **Role definition** - What this agent does
+2. **Auto-invoked skills** - List of skills
+3. **Workflow** - Step-by-step process
+4. **Code quality standards** - Examples
+5. **Communication style** - How to report back
+
+### Skill Documentation
+
+Each skill file should have:
+
+1. **3-stage progressive structure** (required)
+2. **Real examples** - ❌ BAD / ✅ GOOD patterns
+3. **Anti-patterns** - Common mistakes
+4. **Checklists** - Actionable steps
+
+---
+
+## Git Commit Standards
+
+Follow **Conventional Commits**:
+
+```bash
+# Format
+<type>(<scope>): <description>
+
+[optional body]
+
+[optional footer]
+
+# Types
+feat: New feature
+fix: Bug fix
+docs: Documentation changes
+refactor: Code refactoring
+test: Test changes
+chore: Build/tooling changes
+
+# Examples
+feat(commands): add /review command for multi-dimensional analysis
+fix(implementer): ensure TDD cycle enforced before implementation
+docs(readme): update installation instructions for marketplace
+refactor(skills): split security-patterns into smaller modules
+
+# With body
+feat(skills): add ui-design skill for Lovable/Bolt-quality UIs
+
+Implements modern design system prompts with:
+- Color gradients (not flat colors)
+- Beautiful shadows and animations
+- Proper Tailwind spacing
+- Accessibility built-in (WCAG AA)
+
+Closes #42
+```
+
+**Commit Message Body** (required for features):
+- Explain WHY, not WHAT (code shows what)
+- List key changes (bullet points)
+- Reference issues if applicable
+
+---
+
+## Testing Standards
+
+### TDD Cycle (Strictly Enforced)
+
+```
+1. RED: Write failing test
+2. Verify: Test fails with expected error
+3. GREEN: Write minimal code to pass
+4. Verify: Test passes
+5. REFACTOR: Clean up while keeping tests green
+```
+
+**Never skip RED phase** - No production code without failing test first.
+
+### Test Structure
+
+```typescript
+// ✅ GOOD: Clear, isolated, descriptive
+describe('UserService', () => {
+  describe('register', () => {
+    it('should create user with hashed password', async () => {
+      // Arrange
+      const email = 'test@example.com';
+      const password = 'securepass123';
+
+      // Act
+      const user = await userService.register(email, password);
+
+      // Assert
+      expect(user.email).toBe(email);
+      expect(user.passwordHash).not.toBe(password);
+      expect(user.passwordHash).toMatch(/^\$2[aby]\$/);
+    });
+
+    it('should throw error for duplicate email', async () => {
+      // Arrange
+      await userService.register('test@example.com', 'pass');
+
+      // Act & Assert
+      await expect(
+        userService.register('test@example.com', 'pass')
+      ).rejects.toThrow('Email already exists');
+    });
+  });
+});
+```
+
+---
+
+## Quality Checklist
+
+Before marking work complete:
+
+- [ ] All tests pass
+- [ ] Code follows naming conventions
+- [ ] No console.logs or debug code (except intentional logging)
+- [ ] Error handling present for all failure paths
+- [ ] Documentation updated (README, CHANGELOG if needed)
+- [ ] Frontmatter complete and accurate
+- [ ] Git commit follows conventional commits format
+- [ ] Progressive loading structure for skills (if applicable)
+- [ ] Examples include both ❌ BAD and ✅ GOOD patterns
+
+---
+
+## Anti-Patterns to Avoid
+
+### ❌ Don't Do This
+
+1. **Vague names**
+   ```typescript
+   function process(data: any): any { }  // What process? What data?
+   ```
+
+2. **Magic numbers**
+   ```typescript
+   if (retries > 3) { }  // Why 3? Use constant
+   ```
+
+3. **Nested ternaries**
+   ```typescript
+   const x = a ? b ? c : d : e;  // Unreadable
+   ```
+
+4. **Silent failures**
+   ```typescript
+   try {
+     riskyOperation();
+   } catch (e) {
+     // Empty catch - error lost!
+   }
+   ```
+
+5. **Inconsistent formatting**
+   ```markdown
+   # Some headers are lowercase
+   ## Others Are Title Case
+   ### and_some_use_snake_case  ← Pick one style!
+   ```
+
+### ✅ Do This Instead
+
+1. **Descriptive names**
+   ```typescript
+   function retryFailedOperation(operation: () => Promise<void>): Promise<void> { }
+   ```
+
+2. **Named constants**
+   ```typescript
+   const MAX_RETRY_ATTEMPTS = 3;
+   if (retries > MAX_RETRY_ATTEMPTS) { }
+   ```
+
+3. **Clear conditionals**
+   ```typescript
+   if (hasAccess) {
+     return authorized ? fullAccess : limitedAccess;
+   }
+   return noAccess;
+   ```
+
+4. **Proper error handling**
+   ```typescript
+   try {
+     await riskyOperation();
+   } catch (error) {
+     logger.error('Operation failed', { error, context });
+     throw new OperationError('Failed to complete operation', { cause: error });
+   }
+   ```
+
+5. **Consistent formatting**
+   ```markdown
+   # Main Section (Title Case)
+   ## Subsection (Title Case)
+   ### Detail Section (Title Case)
+   ```
+
+---
+
+## Editor Configuration
+
+Recommended `.editorconfig`:
+
+```ini
+root = true
+
+[*]
+charset = utf-8
+indent_style = space
+indent_size = 2
+end_of_line = lf
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.md]
+trim_trailing_whitespace = false
+```
+
+---
+
+## When in Doubt
+
+1. **Check existing code** - Find similar files, follow their pattern
+2. **Ask for clarification** - Better to ask than guess wrong
+3. **Keep it simple** - Simple > complex, clear > clever
+4. **Document your reasoning** - Explain WHY in comments/commits
+
+---
+
+**Remember**: Code is read 10x more than it's written. Optimize for readability.
+
+**Last updated**: 2025-10-22 by cc10x orchestration system
