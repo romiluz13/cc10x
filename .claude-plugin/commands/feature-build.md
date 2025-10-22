@@ -13,6 +13,8 @@ You are orchestrating a complete feature development workflow using intelligent 
 
 **Example**: `/feature-build Add user authentication with JWT tokens`
 
+**💡 Pro Tip**: For complex features, run `/feature-plan` FIRST to create a comprehensive plan, then use `/feature-build` to execute it. This ensures strategic planning before implementation!
+
 ## Workflow Overview
 
 ```
@@ -198,6 +200,7 @@ Requirements:
 Auto-invoked skills:
 - test-driven-development (TDD enforcement)
 - code-generation (clean code patterns)
+- ui-design ⭐ (Lovable/Bolt-quality beautiful UIs for frontend)
 - verification-before-completion (quality gates)
 ```
 

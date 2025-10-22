@@ -5,6 +5,78 @@ All notable changes to cc10x will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2025-10-22
+
+### Added
+
+#### Commands (1 new command)
+- **`/feature-plan`** - Comprehensive feature planning BEFORE implementation
+  - PRD-style planning with user stories, architecture, components, APIs, data models
+  - Edge case identification (prevents bugs before coding)
+  - Testing strategy definition
+  - 6-phase workflow: Understand → Design → Break Down → Define APIs → Identify Edge Cases → Plan Testing
+  - Outputs comprehensive plan document ready for `/feature-build` execution
+  - Estimated time: 5-10 minutes
+  - Estimated tokens: ~20k
+  - **Philosophy**: "Plan twice, code once" - strategic design prevents costly mistakes
+
+#### Skills (1 new skill)
+- **ui-design** (50 → 500 → 3500 tokens) - Lovable/Bolt-quality beautiful UIs
+  - **The Missing Piece**: Lovable/Bolt create stunning UIs because they have killer design system prompts - now cc10x has them too!
+  - Modern color gradients (not flat colors): `bg-gradient-to-r from-indigo-600 to-purple-600`
+  - Proper Tailwind spacing (consistent scale: 4, 8, 12, 16, 24, 32)
+  - Beautiful shadows & depth (`shadow-xl`, `shadow-2xl`)
+  - Smooth animations (transform, hover effects, framer-motion patterns)
+  - Modern rounded corners (`rounded-xl`, `rounded-2xl`)
+  - Complete component library: buttons, cards, inputs, forms, loading states, error states, empty states
+  - Responsive design rules (mobile-first with breakpoints)
+  - Accessibility built-in (WCAG AA, semantic HTML, ARIA labels, keyboard nav)
+  - Real component examples with before/after comparisons
+  - **Impact**: Transforms basic components into polished, production-ready interfaces
+
+### Changed
+
+#### Commands
+- **`/feature-build`** - Enhanced to auto-invoke ui-design skill
+  - Now generates Lovable/Bolt-quality UIs for all frontend components
+  - Added pro tip: Use `/feature-plan` first for complex features
+  - Updated auto-invoked skills list: includes ui-design for frontend work
+
+#### Sub-Agents
+- **implementer** - Now auto-invokes ui-design for frontend components
+  - Automatically applies modern design patterns to all UI code
+  - Every frontend component becomes beautiful by default
+  - Guidance for when to use ui-design (all frontend work)
+
+### Impact
+
+**Complete Developer Workflow** ✅:
+```
+1. PLAN     → /feature-plan (NEW! Comprehensive planning)
+2. BUILD    → /feature-build (Enhanced with ui-design)
+3. FIX      → /bug-fix (systematic-debugging)
+4. REVIEW   → /review (multi-dimensional)
+```
+
+**UI Quality Transformation**:
+- Before: Basic, unstyled components
+- After: Lovable/Bolt-level beautiful, modern UIs
+- **No more UI frustration!** The killer design system prompts are now built into cc10x
+
+**Strategic Planning**:
+- Before: Jump straight to coding (miss edge cases, unclear architecture)
+- After: Comprehensive plan first (user stories, architecture, APIs, edge cases identified)
+- **5-10 minutes planning → Hours of smooth implementation**
+
+**Time Savings**:
+- Planning prevents costly refactors and bug fixes
+- Beautiful UIs on first attempt (no iteration cycles)
+- Complete workflow coverage (plan → build → fix → review)
+
+**Version**: 0.2.1 → 0.3.0 (minor - new features, backward compatible)
+
+---
+
 ## [0.2.1] - 2025-10-22
 
 ### Added

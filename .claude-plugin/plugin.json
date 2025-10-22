@@ -1,7 +1,7 @@
 {
   "name": "cc10x",
-  "version": "0.2.1",
-  "description": "Intelligent orchestration system combining commands, sub-agents, and skills for 10x developer productivity. Features progressive loading (93% token savings), auto-healing context, multi-dimensional code review, systematic debugging (LOG FIRST pattern), and strict TDD enforcement.",
+  "version": "0.3.0",
+  "description": "Intelligent orchestration system combining commands, sub-agents, and skills for 10x developer productivity. Features comprehensive feature planning, Lovable/Bolt-quality UI generation, progressive loading (93% token savings), auto-healing context, multi-dimensional code review, systematic debugging (LOG FIRST pattern), and strict TDD enforcement.",
   "author": {
     "name": "Rom Iluz",
     "email": "rom.iluz13@gmail.com",
@@ -29,12 +29,16 @@
   ],
   "commands": [
     {
+      "name": "feature-plan",
+      "description": "Comprehensive feature planning before implementation (PRD-style with architecture, APIs, edge cases)"
+    },
+    {
       "name": "feature-build",
-      "description": "Complete 5-phase feature development workflow with TDD enforcement"
+      "description": "Complete 5-phase feature development workflow with TDD enforcement and Lovable/Bolt-quality UIs"
     },
     {
       "name": "bug-fix",
-      "description": "Lightweight 5-phase debugging workflow with progressive context loading"
+      "description": "Lightweight 5-phase debugging workflow with LOG FIRST pattern and progressive context loading"
     },
     {
       "name": "review",
@@ -56,6 +60,7 @@
     "codebase-navigation",
     "verification-before-completion",
     "systematic-debugging",
+    "ui-design",
     "security-patterns",
     "performance-patterns",
     "ux-patterns",

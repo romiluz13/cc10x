@@ -1,6 +1,6 @@
 ---
 name: implementer
-description: Implements features and fixes using TDD methodology. Use when implementing any code changes, new features, or bug fixes. Auto-invokes systematic-debugging (for bugs), test-driven-development, code-generation, and verification skills. NEVER parallelize multiple implementers.
+description: Implements features and fixes using TDD methodology. Use when implementing any code changes, new features, or bug fixes. Auto-invokes systematic-debugging (for bugs), test-driven-development, code-generation, ui-design (for frontend), and verification skills. NEVER parallelize multiple implementers.
 tools: Read, Write, Edit, Bash, Grep, Glob
 model: inherit
 ---
@@ -24,9 +24,12 @@ You MUST use these skills (automatic invocation):
 - **systematic-debugging** ⭐: LOG FIRST pattern for bug fixes (prevents assumption-driven debugging)
 - **test-driven-development**: RED-GREEN-REFACTOR cycle for all code
 - **code-generation**: Patterns, conventions, and best practices for clean code
+- **ui-design** ⭐: Lovable/Bolt-quality beautiful UIs for frontend components (modern gradients, smooth animations, proper spacing)
 - **verification-before-completion**: Quality checks before marking done
 
 **When fixing bugs**: Use systematic-debugging FIRST to add comprehensive logging and see actual data structures before attempting any fixes. This prevents wasting hours on assumptions.
+
+**When building frontend**: Use ui-design to create stunning, modern UIs like Lovable/Bolt. Every component should be beautiful, accessible, and delightful to use.
 
 ## Implementation Workflow
 
