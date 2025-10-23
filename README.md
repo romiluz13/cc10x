@@ -79,16 +79,19 @@ Save 93% tokens by loading only what's needed:
 ### Prerequisites
 
 - [Claude Code](https://claude.ai/code) version 1.0 or later
-- Git (for cloning repositories)
 
-### Install from GitHub
+### Install from GitHub (Recommended)
 
 ```bash
 # Using Claude Code plugin manager
-/plugin marketplace add romiluz13/cc10x
-/plugin install cc10x@romiluz13-cc10x
+/plugin install https://github.com/romiluz13/cc10x
+```
 
-# Or clone directly
+That's it! All 5 commands, 7 sub-agents, 16 skills, and 3 hooks are installed automatically.
+
+### Alternative: Manual Installation
+
+```bash
 git clone https://github.com/romiluz13/cc10x.git
 cd your-project
 cp -r /path/to/cc10x/.claude-plugin .
