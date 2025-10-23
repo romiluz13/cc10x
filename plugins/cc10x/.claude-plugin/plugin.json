@@ -7,14 +7,8 @@
     "email": "rom.iluz13@gmail.com",
     "url": "https://github.com/romiluz13"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/romiluz13/cc10x.git"
-  },
   "homepage": "https://github.com/romiluz13/cc10x",
-  "bugs": {
-    "url": "https://github.com/romiluz13/cc10x/issues"
-  },
+  "repository": "https://github.com/romiluz13/cc10x",
   "license": "MIT",
   "keywords": [
     "orchestration",
@@ -35,5 +29,5 @@
   "commands": "./commands/",
   "agents": "./agents/",
   "skills": "./skills/",
-  "hooks": "./hooks/"
+  "hooks": "./hooks/hooks.json"
 }
