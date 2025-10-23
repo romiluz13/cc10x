@@ -1,14 +1,18 @@
-# cc10x - 10x Developer Productivity for Claude Code
+# cc10x - Professional Development Marketplace for Claude Code
 
-> Intelligent orchestration system combining commands, sub-agents, and skills for 10x developer productivity
+> Plugin marketplace delivering 10x developer productivity through intelligent orchestration
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Claude Code](https://img.shields.io/badge/Claude%20Code-Plugin-blue.svg)](https://claude.ai/code)
+[![Claude Code](https://img.shields.io/badge/Claude%20Code-Marketplace-blue.svg)](https://claude.ai/code)
 [![Version](https://img.shields.io/badge/version-1.1.0-green.svg)](https://github.com/romiluz13/cc10x/releases)
 
 ## What is cc10x?
 
-cc10x is a comprehensive Claude Code plugin that orchestrates specialized workflows for common development tasks. It combines:
+cc10x is a Claude Code **marketplace** that distributes professional development tools. Currently features the **cc10x plugin** - a comprehensive orchestration system for 10x productivity.
+
+## Featured Plugin: cc10x
+
+The cc10x plugin combines:
 
 - **4 Powerful Commands** - Feature planning, development, bug fixing, code review
 - **7 Specialized Sub-Agents** - Context analysis, implementation, security/quality/performance/UX/accessibility review
@@ -76,24 +80,17 @@ Save 93% tokens by loading only what's needed:
 
 ## Installation
 
-**Simple 3-step installation** (works immediately):
+**Simple 2-step installation:**
 
 ```bash
-# 1. Clone cc10x
-git clone https://github.com/romiluz13/cc10x.git /tmp/cc10x
+# 1. Add the cc10x marketplace
+/plugin marketplace add romiluz13/cc10x
 
-# 2. Copy to your project
-cd /path/to/your/project
-cp -r /tmp/cc10x/.claude-plugin .
-cp -r /tmp/cc10x/{commands,agents,skills,hooks} .
-
-# 3. Verify
-# Open in Claude Code and type: /feature-plan Test
+# 2. Install the cc10x plugin
+/plugin install cc10x@cc10x
 ```
 
-**That's it!** All 5 commands, 7 sub-agents, 16 skills ready to use.
-
-See [QUICK-INSTALL.md](./QUICK-INSTALL.md) for detailed instructions and troubleshooting.
+**That's it!** All 5 commands, 7 sub-agents, 16 skills are now available in Claude Code.
 
 ### Verify Installation
 

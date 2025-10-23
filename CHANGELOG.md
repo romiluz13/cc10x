@@ -4,40 +4,62 @@ All notable changes to cc10x are documented here.
 
 ## [1.1.0] - 2025-10-23
 
+### 🎉 Major Change: Transformed to Marketplace
+
+cc10x is now a **marketplace** that distributes the cc10x plugin, following the official Anthropic marketplace pattern.
+
 ### Added
-- **Risk Assessment Integration**: Phase 3b in feature planning with probability x impact scoring
-- **Development Constitution**: Formal `.claude/memory/CONSTITUTION.md` defining immutable principles
-- **Workflow Visualizations**: Mermaid diagrams in all 4 core commands
-- **Validation Command**: New `/validate` for cross-artifact consistency checks
-- **Video Production Script**: Complete walkthrough script for demos
-- **Installation Guides**: Multiple installation methods documented
+- **Marketplace Structure**: Proper marketplace.json with plugin catalog
+- **Plugin Subdirectory**: All plugin files now in `plugins/cc10x/`
+- **Clean Separation**: Marketplace docs vs plugin docs
+- **Professional Structure**: Matches EveryInc/every-marketplace pattern
 
-### Enhanced
-- Feature planning now includes risk identification, scoring, and mitigation
-- All commands have visual workflow diagrams
-- README updated with constitution section
-- Documentation massively improved
+### Installation Method Changed
 
-### Fixed
-- Installation process clarified (manual copy method documented)
-- All YAML frontmatter validated
-- Plugin structure verified against official Anthropic specs
-- Removed confusing marketplace.json (cc10x is standalone plugin)
+**Old (Standalone):**
+```bash
+# Manual copy required
+cp -r cc10x/{.claude-plugin,commands,agents,skills,hooks} .
+```
 
-### Changed
-- Archived all planning/research docs to `docs/archive/`
-- Production structure cleaned
-- Version bumped to 1.1.0
+**New (Marketplace):**
+```bash
+/plugin marketplace add romiluz13/cc10x
+/plugin install cc10x@cc10x
+```
+
+Much simpler and follows Claude Code conventions!
+
+### Features (Plugin v1.1.0)
+- **Risk Assessment**: Phase 3b in feature planning with probability x impact scoring
+- **Development Constitution**: Formal governance document
+- **Workflow Visualizations**: Mermaid diagrams in all commands
+- **Validation Command**: Cross-artifact consistency checks
+- **5 Commands**: feature-plan, feature-build, bug-fix, review, validate
+- **7 Sub-Agents**: Specialized AI workers
+- **16 Skills**: Domain expertise modules
+- **3 Hooks**: Automation scripts
+
+### Structure
+```
+cc10x/                        (Marketplace)
+  ├── .claude-plugin/
+  │   └── marketplace.json    (Marketplace definition)
+  ├── plugins/
+  │   └── cc10x/              (The plugin)
+  │       ├── .claude-plugin/plugin.json
+  │       ├── commands/
+  │       ├── agents/
+  │       ├── skills/
+  │       └── hooks/
+  └── README.md               (Marketplace docs)
+```
 
 ## [1.0.0] - 2025-10-22
 
-### Added
-- Initial release
-- 4 core commands: feature-plan, feature-build, bug-fix, review
-- 7 sub-agents for specialized tasks
-- 16 skills for domain expertise
-- Progressive 3-stage loading (93% token savings)
-- Auto-healing context preservation
-- Strict TDD enforcement
-- Multi-dimensional parallel code review
+### Initial Release (Standalone Plugin)
+- First version as standalone plugin
+- 4 core commands
+- Progressive loading, TDD enforcement
+- Multi-dimensional code review
 

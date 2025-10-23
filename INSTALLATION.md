@@ -1,12 +1,48 @@
-# cc10x Installation Guide
+# cc10x Marketplace Installation Guide
 
-## Method 1: Register as Known Marketplace (Recommended)
+## Overview
 
-This method allows you to use `/plugin` commands in Claude Code.
+cc10x is a Claude Code marketplace that distributes the cc10x plugin - a comprehensive orchestration system for 10x developer productivity.
 
-### Step 1: Edit Claude Code Settings
+---
 
-Open or create `~/.claude/settings.json` and add:
+## Method 1: Via Marketplace (Recommended)
+
+This is the official and easiest installation method.
+
+### Step 1: Add the Marketplace
+
+```bash
+/plugin marketplace add romiluz13/cc10x
+```
+
+This registers cc10x as a known marketplace in Claude Code.
+
+### Step 2: Install the Plugin
+
+```bash
+/plugin install cc10x@cc10x
+```
+
+This installs the cc10x plugin from the cc10x marketplace.
+
+### Step 3: Verify
+
+```bash
+/feature-plan Test
+```
+
+You should see the feature planning command interface!
+
+---
+
+## Method 2: Via Settings File
+
+For advanced users or automation, you can edit Claude Code settings directly.
+
+### Edit Settings
+
+Open or create `~/.claude/settings.json`:
 
 ```json
 {
@@ -24,72 +60,77 @@ Open or create `~/.claude/settings.json` and add:
 }
 ```
 
-### Step 2: Install in Claude Code
-
-```bash
-/plugin marketplace add cc10x
-/plugin install cc10x@cc10x
-```
-
-### Step 3: Verify
-
-```bash
-/feature-plan Test
-```
-
-You should see the feature planning command interface!
+Then restart Claude Code. The plugin will be automatically available.
 
 ---
 
-## Method 2: Manual Installation (Quick Start)
+## What Gets Installed
 
-Copy files directly to your project:
+When you install cc10x, you get the complete plugin:
 
-```bash
-# Navigate to your project
-cd /path/to/your-project
+### 5 Commands
 
-# Clone cc10x
-git clone https://github.com/romiluz13/cc10x.git /tmp/cc10x
+- `/feature-plan` - Comprehensive PRD-style planning with risk assessment
+- `/feature-build` - 5-phase TDD-enforced implementation
+- `/bug-fix` - Systematic debugging with LOG FIRST pattern
+- `/review` - Multi-dimensional parallel code review (5 dimensions)
+- `/validate` - Cross-artifact consistency validation
 
-# Copy components
-cp -r /tmp/cc10x/.claude-plugin .
-cp -r /tmp/cc10x/commands .
-cp -r /tmp/cc10x/agents .
-cp -r /tmp/cc10x/skills .
-cp -r /tmp/cc10x/hooks .
+### 7 Sub-Agents
 
-# Clean up
-rm -rf /tmp/cc10x
-```
+- `implementer` - Writes production code with TDD
+- `context-analyzer` - Finds patterns in your codebase
+- `security-reviewer` - Security audits (OWASP)
+- `quality-reviewer` - Code quality checks
+- `performance-analyzer` - Performance optimization
+- `ux-reviewer` - UX improvements
+- `accessibility-reviewer` - WCAG 2.1 AA compliance
 
-### Verify Installation
+### 16 Skills
 
-In Claude Code:
+- feature-planning, feature-building, bug-fixing
+- test-driven-development, code-generation
+- systematic-debugging, safe-refactoring
+- security-patterns, performance-patterns
+- accessibility-patterns, ux-patterns
+- ui-design, code-reviewing, code-review-patterns
+- codebase-navigation, verification-before-completion
 
-```bash
-/feature-plan Test
-```
+### 3 Hooks
+
+- `session-start` - Initialize on session start
+- `pre-compact` - Context preservation
+- Auto-healing context management
 
 ---
 
-## Method 3: Development Mode (Symlinks)
+## Verification Steps
 
-For development, use symlinks to avoid copying files:
+### 1. Check Plugin Installed
 
 ```bash
-# Navigate to your project
-cd /path/to/your-project
-
-# Create symlinks
-ln -s /Users/rom.iluz/Dev/cc10x_v2/.claude-plugin .
-ln -s /Users/rom.iluz/Dev/cc10x_v2/commands .
-ln -s /Users/rom.iluz/Dev/cc10x_v2/agents .
-ln -s /Users/rom.iluz/Dev/cc10x_v2/skills .
-ln -s /Users/rom.iluz/Dev/cc10x_v2/hooks .
+/plugin list
 ```
 
-Changes to cc10x source files are immediately reflected!
+You should see `cc10x@cc10x` in the list.
+
+### 2. Test Commands
+
+Try each command:
+
+```bash
+/feature-plan Add user authentication
+/review src/
+/validate .
+```
+
+### 3. Check Agent Loading
+
+Commands will automatically invoke sub-agents. Watch for agent loading messages in Claude Code.
+
+### 4. Verify Skills Active
+
+Skills auto-activate on trigger phrases. Try mentioning "TDD" or "security" in a conversation.
 
 ---
 
@@ -100,49 +141,55 @@ Changes to cc10x source files are immediately reflected!
 **Issue:** Typing `/feature-plan` doesn't show the command
 
 **Solutions:**
-1. Verify `.claude-plugin/plugin.json` exists in your project
-2. Check that `commands/` directory contains `.md` files
-3. Restart Claude Code
-4. Try in a trusted directory (Claude Code may block untrusted locations)
+1. Restart Claude Code
+2. Verify plugin installed: `/plugin list`
+3. Check you're in a trusted directory
+4. Try reinstalling: 
+   ```bash
+   /plugin uninstall cc10x@cc10x
+   /plugin install cc10x@cc10x
+   ```
 
-### "Plugin Not Found" Error
+### Marketplace Not Found
 
-**Issue:** `/plugin install` fails
+**Issue:** `/plugin marketplace add romiluz13/cc10x` fails
 
-**Solution:** Use Method 1 (extraKnownMarketplaces) or Method 2 (manual copy)
+**Solutions:**
+1. Check internet connection
+2. Try full URL: `/plugin marketplace add https://github.com/romiluz13/cc10x`
+3. Manual settings method (Method 2 above)
 
-Claude Code's `/plugin install` command requires plugins to be registered in `~/.claude/settings.json`.
+### Plugin Installation Fails
 
-### YAML Frontmatter Errors
+**Issue:** `/plugin install cc10x@cc10x` fails
 
-**Issue:** Commands/agents don't load
+**Solutions:**
+1. Ensure marketplace is added first
+2. Check Claude Code has permissions
+3. View logs for specific error
+4. Try via settings file (Method 2)
 
-**Solution:** 
-1. Check all `.md` files have valid YAML frontmatter
-2. Ensure `---` delimiters are present
-3. Validate YAML syntax (no tabs, proper spacing)
+### YAML/Syntax Errors
 
-### Hooks Don't Execute
+**Issue:** Plugin loads but commands fail
 
-**Issue:** Session-start hooks don't run
-
-**Solution:**
-1. Verify `hooks/hooks.json` exists
-2. Check shell scripts are executable: `chmod +x hooks/*.sh`
-3. Review Claude Code logs for hook execution errors
+**Solution:** Report this as a bug at https://github.com/romiluz13/cc10x/issues - this shouldn't happen in v1.1.0!
 
 ---
 
-## What Gets Installed
+## Uninstallation
 
-When you install cc10x, you get:
+To remove cc10x:
 
-- **5 Commands**: `/feature-plan`, `/feature-build`, `/bug-fix`, `/review`, `/validate`
-- **7 Sub-Agents**: implementer, context-analyzer, security-reviewer, quality-reviewer, performance-analyzer, ux-reviewer, accessibility-reviewer
-- **16 Skills**: TDD, systematic-debugging, security-patterns, performance-patterns, accessibility-patterns, ui-design, and more
-- **3 Hooks**: session-start, pre-compact, auto-healing context
+```bash
+# Remove the plugin
+/plugin uninstall cc10x@cc10x
 
-All components work together seamlessly through intelligent orchestration.
+# Remove the marketplace (optional)
+/plugin marketplace remove cc10x
+```
+
+Or manually edit `~/.claude/settings.json` to remove the `cc10x` entries.
 
 ---
 
@@ -150,31 +197,11 @@ All components work together seamlessly through intelligent orchestration.
 
 After installation:
 
-1. **Read the docs**: Check `README.md` for usage examples
+1. **Read the docs**: Check [README.md](./README.md) for usage examples
 2. **Try feature planning**: `/feature-plan Add user authentication`
 3. **Build a feature**: `/feature-build Implement the planned feature`
 4. **Review code**: `/review src/`
-5. **Read the constitution**: `.claude/memory/CONSTITUTION.md` for development principles
-
----
-
-## Uninstallation
-
-To remove cc10x from a project:
-
-```bash
-cd /path/to/your-project
-
-rm -rf .claude-plugin
-rm -rf commands
-rm -rf agents
-rm -rf skills
-rm -rf hooks
-```
-
-To remove from global settings:
-
-Edit `~/.claude/settings.json` and remove the `cc10x` entry from `extraKnownMarketplaces`.
+5. **Read the constitution**: View development principles
 
 ---
 
@@ -184,3 +211,10 @@ Edit `~/.claude/settings.json` and remove the `cc10x` entry from `extraKnownMark
 - **Documentation**: https://github.com/romiluz13/cc10x
 - **License**: MIT
 
+---
+
+## System Requirements
+
+- Claude Code version 1.0 or later
+- Internet connection (for marketplace installation)
+- Trusted project directory

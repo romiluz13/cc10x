@@ -1,0 +1,39 @@
+{
+  "name": "cc10x",
+  "owner": {
+    "name": "Rom Iluz",
+    "email": "rom.iluz13@gmail.com",
+    "url": "https://github.com/romiluz13"
+  },
+  "metadata": {
+    "description": "cc10x Plugin Marketplace - Professional development tools for 10x productivity with Claude Code",
+    "version": "1.1.0"
+  },
+  "plugins": [
+    {
+      "name": "cc10x",
+      "description": "Intelligent orchestration system combining commands, sub-agents, and skills. Features comprehensive feature planning, TDD enforcement, systematic debugging (LOG FIRST), multi-dimensional code review, cross-artifact validation, and Lovable/Bolt-quality UI generation. Includes 5 commands, 7 sub-agents, 16 skills, and 3 automation hooks for 10x developer productivity.",
+      "version": "1.1.0",
+      "author": {
+        "name": "Rom Iluz",
+        "email": "rom.iluz13@gmail.com",
+        "url": "https://github.com/romiluz13"
+      },
+      "homepage": "https://github.com/romiluz13/cc10x",
+      "tags": [
+        "orchestration",
+        "productivity",
+        "tdd",
+        "code-review",
+        "feature-planning",
+        "systematic-debugging",
+        "multi-dimensional-review",
+        "ui-design",
+        "progressive-loading",
+        "auto-healing"
+      ],
+      "source": "./plugins/cc10x"
+    }
+  ]
+}
+

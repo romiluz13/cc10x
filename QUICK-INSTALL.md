@@ -1,36 +1,26 @@
 # Quick Install cc10x
 
-## The Simple Way (Copy Files)
-
-This works immediately, no configuration needed:
+## The Marketplace Way (Recommended)
 
 ```bash
-# 1. Clone cc10x
-git clone https://github.com/romiluz13/cc10x.git /tmp/cc10x
+# 1. Add the cc10x marketplace
+/plugin marketplace add romiluz13/cc10x
 
-# 2. Go to your project
-cd /path/to/your/project
-
-# 3. Copy all components
-cp -r /tmp/cc10x/.claude-plugin .
-cp -r /tmp/cc10x/commands .
-cp -r /tmp/cc10x/agents .
-cp -r /tmp/cc10x/skills .
-cp -r /tmp/cc10x/hooks .
-
-# 4. Clean up
-rm -rf /tmp/cc10x
+# 2. Install the cc10x plugin
+/plugin install cc10x@cc10x
 ```
+
+That's it! 🎉
 
 ## Verify It Works
 
-Open your project in Claude Code and type:
+Open any project in Claude Code and type:
 
 ```bash
 /feature-plan Test feature
 ```
 
-You should see the feature planning interface! 🎉
+You should see the feature planning interface!
 
 ---
 
@@ -46,30 +36,14 @@ Once installed, you have:
 
 ---
 
-## Advanced: Register as Marketplace
+## What Gets Installed
 
-If you want to use `/plugin` commands, add this to `~/.claude/settings.json`:
+- ✅ 5 Commands - Feature workflows
+- ✅ 7 Sub-Agents - Specialized AI workers
+- ✅ 16 Skills - Domain expertise
+- ✅ 3 Hooks - Automation scripts
 
-```json
-{
-  "extraKnownMarketplaces": {
-    "cc10x": {
-      "source": {
-        "source": "github",
-        "repo": "romiluz13/cc10x"
-      }
-    }
-  }
-}
-```
-
-Then:
-```bash
-/plugin marketplace add cc10x
-/plugin install cc10x@cc10x
-```
-
-But the simple copy method above works perfectly and is faster!
+All orchestrated together for 10x productivity!
 
 ---
 
@@ -78,8 +52,12 @@ But the simple copy method above works perfectly and is faster!
 **Commands don't appear?**
 - Restart Claude Code
 - Make sure you're in a trusted directory
-- Check that `.claude-plugin/plugin.json` exists
+- Run `/plugin list` to see installed plugins
+
+**Marketplace not found?**
+- Check your internet connection
+- Verify the repository URL is correct
+- Try adding with full URL: `/plugin marketplace add https://github.com/romiluz13/cc10x`
 
 **Still issues?**
 - Open an issue: https://github.com/romiluz13/cc10x/issues
-
