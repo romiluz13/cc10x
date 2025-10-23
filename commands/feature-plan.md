@@ -44,6 +44,42 @@ Use `/feature-plan` when you need to:
 
 ## Workflow
 
+### Workflow Visualization
+
+```mermaid
+graph TD
+    A[User Request] --> B[Phase 1: Requirements]
+    B --> C[Parse & Clarify]
+    C --> D{Clear Requirements?}
+    D -->|No| E[Ask User]
+    E --> C
+    D -->|Yes| F[Phase 2: Context Analysis]
+    F --> G[Search Codebase]
+    G --> H[Find Patterns]
+    H --> I[Phase 3: Design & Architecture]
+    I --> J[User Stories]
+    J --> K[Architecture Decisions]
+    K --> L[Component Design]
+    L --> M[API & Data Models]
+    M --> N[Edge Cases]
+    N --> O[Phase 3b: Risk Assessment]
+    O --> P[Identify Risks]
+    P --> Q[Score Risks: Prob × Impact]
+    Q --> R[Define Mitigations]
+    R --> S[Phase 4: Testing Strategy]
+    S --> T[Plan Unit Tests]
+    T --> U[Plan Integration Tests]
+    U --> V[Plan E2E Tests]
+    V --> W[Phase 5: Implementation Roadmap]
+    W --> X[Break into Phases]
+    X --> Y[Estimate Timeline]
+    Y --> Z{Quality Gates Pass?}
+    Z -->|No| AA[Fix Issues]
+    AA --> I
+    Z -->|Yes| AB[Save Plan]
+    AB --> AC[Ready for /feature-build]
+```
+
 ### Phase 1: Requirements Gathering
 
 **Goal:** Understand the feature request and extract key requirements
@@ -212,6 +248,94 @@ Indexes:
 3. **Password Reset**: Not in v1 (add in v2)
 4. **Rate Limiting**: 5 failed login attempts → 15min lockout
 5. **SQL Injection**: Using Mongoose (protected), but validate anyway
+```
+
+---
+
+### Phase 3b: Risk Assessment
+
+**Goal:** Identify and mitigate risks before implementation (inspired by BMAD METHOD)
+
+**Process:**
+1. Identify risks across all categories
+2. Score each risk (Probability × Impact)
+3. Prioritize by score (HIGH 7-9, MEDIUM 4-6, LOW 1-3)
+4. Define mitigation strategies for HIGH/MEDIUM risks
+5. Incorporate mitigations into implementation roadmap
+
+**Risk Categories:**
+- **Security**: Authentication bypass, injection attacks, data exposure
+- **Performance**: N+1 queries, bottlenecks, memory leaks
+- **Data Integrity**: Data loss, corruption, inconsistent state
+- **Technical**: Dependency issues, complexity, maintainability
+
+**Risk Scoring:**
+- **Probability**: Low (1) | Medium (2) | High (3)
+- **Impact**: Low (1) | Medium (2) | High (3)
+- **Score**: Probability × Impact (1-9 scale)
+
+**Quality Gate:** HIGH risks have mitigation in implementation plan
+
+**Example Output:**
+```markdown
+## Risk Assessment
+
+| Risk ID | Risk | Category | Prob | Impact | Score | Priority | Mitigation Strategy |
+|---------|------|----------|------|--------|-------|----------|---------------------|
+| R-001 | JWT token bypass via signature validation flaw | Security | 2 | 3 | 6 | MEDIUM | Comprehensive token validation tests, use verified JWT library |
+| R-002 | N+1 query when loading user with relations | Performance | 3 | 2 | 6 | MEDIUM | Use JOINs/populate, add index on foreign keys, test with 1000+ users |
+| R-003 | Password stored in plaintext | Security | 1 | 3 | 3 | LOW | Use bcrypt with 12 rounds (industry standard) |
+| R-004 | Concurrent registration same email | Data | 2 | 2 | 4 | MEDIUM | Unique index on email, handle race condition in tests |
+| R-005 | Memory leak from unclosed DB connections | Technical | 2 | 3 | 6 | MEDIUM | Connection pooling, proper cleanup in error paths, monitor in tests |
+| R-006 | Token expiry not enforced | Security | 2 | 2 | 4 | MEDIUM | Set 24h expiry, validate exp claim, add refresh token in v2 |
+
+### Risk Mitigation Plan
+
+**HIGH Risks (Score 7-9):** None identified
+  
+**MEDIUM Risks (Score 4-6):** 5 total
+1. **R-001 (JWT bypass)**: 
+   - Add test: "Cannot verify token with wrong signature"
+   - Add test: "Cannot use expired token"
+   - Use `jsonwebtoken` library (verified, 16M+ weekly downloads)
+   
+2. **R-002 (N+1 queries)**:
+   - Add performance test: "Login with 1000+ users completes in <100ms"
+   - Use Mongoose populate with select
+   - Add compound index on User lookups
+   
+3. **R-004 (Concurrent registration)**:
+   - Add test: "Concurrent registrations same email - one succeeds, one fails with 409"
+   - Use unique index (prevents race at DB level)
+   
+4. **R-005 (Memory leaks)**:
+   - Add test: "Connection pool stays within limits after 1000 requests"
+   - Use connection pool (max 10 connections)
+   - Ensure all try-catch blocks close connections
+   
+5. **R-006 (Token expiry)**:
+   - Add test: "Token expires after 24 hours"
+   - Set expiresIn: '24h' in jwt.sign()
+   - Validate exp claim in middleware
+
+**LOW Risks (Score 1-3):** 1 total - Accepted as-is
+
+### Integration into Implementation Roadmap
+
+**Phase 1 (Database Setup):**
+- Add unique index on User.email (mitigates R-004)
+- Configure connection pool (mitigates R-005)
+
+**Phase 2 (Auth Service):**
+- Use bcrypt for password hashing (mitigates R-003)
+- Set JWT expiry to 24h (mitigates R-006)
+- Use jsonwebtoken library (mitigates R-001)
+
+**Phase 3 (Middleware & Tests):**
+- Add token validation tests (mitigates R-001, R-006)
+- Add concurrent registration test (mitigates R-004)
+- Add performance test with 1000+ users (mitigates R-002)
+- Add connection pool test (mitigates R-005)
 ```
 
 ---

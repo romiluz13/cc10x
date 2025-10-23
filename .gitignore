@@ -1,15 +1,16 @@
-# User-specific runtime files (created when plugin is used)
+# cc10x - Claude Code Plugin
+# .gitignore for production deployment
+
+# Runtime directories (user-specific context)
 .claude/
+!.claude/memory/
+!.claude/memory/CONSTITUTION.md
 
-# IDE
-.cursor/
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
+# Dependency directories
+node_modules/
+vendor/
 
-# OS
+# OS generated files
 .DS_Store
 .DS_Store?
 ._*
@@ -17,7 +18,16 @@
 .Trashes
 ehthumbs.db
 Thumbs.db
-Desktop.ini
+
+# Editor directories and files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+*~
+.project
+.settings/
 
 # Logs
 *.log
@@ -25,22 +35,27 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Runtime data
-pids
-*.pid
-*.seed
-*.pid.lock
+# Environment files
+.env
+.env.local
+.env.*.local
 
-# Backup files
-*.bak
+# Build outputs (if any future additions)
+dist/
+build/
+*.bundle.js
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Temporary files
 *.tmp
-*.old
-*~
+temp/
+tmp/
 
-# Archives (for development)
-archive/
-*.tar.gz
-*.zip
-
-# Node modules (if scripts need dependencies)
-node_modules/
+# Package manager files (keep lock files for reproducibility)
+# Uncomment if not using package managers
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml

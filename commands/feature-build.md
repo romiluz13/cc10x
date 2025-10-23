@@ -49,6 +49,59 @@ Use `/feature-build` when you need to:
 
 ## Workflow
 
+### Workflow Visualization
+
+```mermaid
+graph TD
+    A[User Request] --> B[Phase 1: Context Analysis]
+    B --> C[Search Similar Features]
+    C --> D[Find Patterns]
+    D --> E{Patterns Found?}
+    E -->|No| F[Use Defaults]
+    E -->|Yes| G[Extract Conventions]
+    F --> H[Phase 2: Planning]
+    G --> H
+    H --> I[Break into Increments]
+    I --> J[Each < 200 lines]
+    J --> K[Phase 3: Implementation]
+    K --> L[Increment N]
+    L --> M[RED: Write Test]
+    M --> N{Test Fails?}
+    N -->|No - Bad| O[Fix Test]
+    O --> M
+    N -->|Yes - Good| P[GREEN: Write Code]
+    P --> Q{Test Passes?}
+    Q -->|No| R[Fix Code]
+    R --> P
+    Q -->|Yes| S{All Tests Pass?}
+    S -->|No| T[Fix Regression]
+    T --> P
+    S -->|Yes| U[REFACTOR: Clean Up]
+    U --> V{Tests Still Pass?}
+    V -->|No| W[Revert Refactor]
+    W --> U
+    V -->|Yes| X{More Increments?}
+    X -->|Yes| L
+    X -->|No| Y[Phase 4: Verification]
+    Y --> Z[5 Parallel Reviewers]
+    Z --> AA[Security]
+    Z --> AB[Quality]
+    Z --> AC[Performance]
+    Z --> AD[UX]
+    Z --> AE[Accessibility]
+    AA --> AF{Critical Issues?}
+    AB --> AF
+    AC --> AF
+    AD --> AF
+    AE --> AF
+    AF -->|Yes| AG[Fix Issues]
+    AG --> Y
+    AF -->|No| AH[Phase 5: Finalization]
+    AH --> AI[Remove Debug Code]
+    AI --> AJ[Generate Commit Message]
+    AJ --> AK[Clean Commit]
+```
+
 ### Phase 1: Context Analysis (Automatic)
 
 **Goal:** Understand existing codebase patterns to follow

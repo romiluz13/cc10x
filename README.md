@@ -4,7 +4,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-Plugin-blue.svg)](https://claude.ai/code)
-[![Version](https://img.shields.io/badge/version-1.0.0-green.svg)](https://github.com/romiluz13/cc10x/releases)
+[![Version](https://img.shields.io/badge/version-1.1.0-green.svg)](https://github.com/romiluz13/cc10x/releases)
 
 ## What is cc10x?
 
@@ -310,6 +310,35 @@ All cc10x workflows enforce:
 ✅ No debug code (console.log, debugger, TODO)
 ✅ Error handling present
 ✅ Clean, semantic git commits
+
+## Development Constitution
+
+cc10x operates under a formal [Development Constitution](/.claude/memory/CONSTITUTION.md) that establishes immutable principles for quality:
+
+### Article I: Test-Driven Development (NON-NEGOTIABLE)
+NO production code without failing test first. RED-GREEN-REFACTOR enforced at every increment.
+
+### Article II: File Size Limits
+- Components: 200 lines max
+- Services: 400 lines max
+- Tests: 300 lines max
+
+### Article III: Progressive Quality Gates
+5 sequential gates must pass: Context Analysis → Planning → Implementation → Verification → Finalization
+
+### Article IV: Production-Ready Only
+No TODOs, no placeholders, no incomplete implementations. Complete code or don't commit.
+
+### Article V: Multi-Dimensional Review
+5 parallel reviewers (security, quality, performance, UX, accessibility) before merge.
+
+### Article VI: Token Efficiency
+93% token savings through progressive 3-stage loading and auto-healing at 75% threshold.
+
+### Article VII: Production-First UI
+Lovable/Bolt quality standards. WCAG 2.1 AA compliance. Responsive, modern, polished.
+
+**Read the full constitution**: [`.claude/memory/CONSTITUTION.md`](/.claude/memory/CONSTITUTION.md)
 
 ## Troubleshooting
 

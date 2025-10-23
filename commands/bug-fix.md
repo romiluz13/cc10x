@@ -48,6 +48,55 @@ Use `/bug-fix` when you need to:
 
 ## Workflow
 
+### Workflow Visualization
+
+```mermaid
+graph TD
+    A[Bug Report] --> B[Phase 1: Context Gathering]
+    B --> C[Understand Bug]
+    C --> D[Identify Affected Components]
+    D --> E[Gather Evidence]
+    E --> F{Clear Understanding?}
+    F -->|No| G[Gather More Info]
+    G --> C
+    F -->|Yes| H[Phase 2: Investigation - LOG FIRST]
+    H --> I[Add Strategic Logging]
+    I --> J[Reproduce Bug]
+    J --> K{Bug Reproduced?}
+    K -->|No| L[Adjust Logging]
+    L --> I
+    K -->|Yes| M[Analyze Logs]
+    M --> N[Identify Root Cause]
+    N --> O{Root Cause Clear?}
+    O -->|No| P[Add More Logging]
+    P --> I
+    O -->|Yes| Q[Phase 3: Fix Implementation]
+    Q --> R[RED: Write Test]
+    R --> S{Test Fails with Bug?}
+    S -->|No| T[Fix Test]
+    T --> R
+    S -->|Yes| U[GREEN: Minimal Fix]
+    U --> V{Test Passes?}
+    V -->|No| W[Adjust Fix]
+    W --> U
+    V -->|Yes| X{All Tests Pass?}
+    X -->|No| Y[Fix Regression]
+    Y --> U
+    X -->|Yes| Z[Phase 4: Verification]
+    Z --> AA[Unit Tests]
+    AA --> AB[Integration Tests]
+    AB --> AC[Manual Testing]
+    AC --> AD[Regression Check]
+    AD --> AE{All Verifications Pass?}
+    AE -->|No| AF[Investigate Failure]
+    AF --> U
+    AE -->|Yes| AG[Phase 5: Finalization]
+    AG --> AH[Remove ALL Debug Logging]
+    AH --> AI[Verify No Console.log]
+    AI --> AJ[Generate Semantic Message]
+    AJ --> AK[Clean Commit]
+```
+
 ### Phase 1: Context Gathering
 
 **Goal:** Understand the bug completely before touching any code

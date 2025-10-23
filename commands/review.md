@@ -48,6 +48,79 @@ Use `/review` when you need to:
 
 ## Workflow
 
+### Workflow Visualization
+
+```mermaid
+graph TD
+    A[User Request] --> B[Phase 1: Scope Analysis]
+    B --> C[Parse Target]
+    C --> D{Target Type?}
+    D -->|File| E[Single File]
+    D -->|Directory| F[All Files in Dir]
+    D -->|Glob| G[Pattern Match]
+    E --> H[Identify File Types]
+    F --> H
+    G --> H
+    H --> I[Phase 2: Parallel Review]
+    I --> J[Security Reviewer]
+    I --> K[Quality Reviewer]
+    I --> L[Performance Reviewer]
+    I --> M[UX Reviewer]
+    I --> N[Accessibility Reviewer]
+    
+    J --> O[OWASP Top 10]
+    J --> P[Auth Issues]
+    J --> Q[Injection Attacks]
+    O --> R[Security Findings]
+    P --> R
+    Q --> R
+    
+    K --> S[Code Smells]
+    K --> T[Duplication]
+    K --> U[Maintainability]
+    S --> V[Quality Findings]
+    T --> V
+    U --> V
+    
+    L --> W[N+1 Queries]
+    L --> X[Bottlenecks]
+    L --> Y[Complexity]
+    W --> Z[Performance Findings]
+    X --> Z
+    Y --> Z
+    
+    M --> AA[Error Messages]
+    M --> AB[Loading States]
+    M --> AC[User Feedback]
+    AA --> AD[UX Findings]
+    AB --> AD
+    AC --> AD
+    
+    N --> AE[WCAG 2.1 AA]
+    N --> AF[Keyboard Nav]
+    N --> AG[Screen Readers]
+    AE --> AH[A11y Findings]
+    AF --> AH
+    AG --> AH
+    
+    R --> AI[Phase 3: Report Compilation]
+    V --> AI
+    Z --> AI
+    AD --> AI
+    AH --> AI
+    
+    AI --> AJ[Aggregate Findings]
+    AJ --> AK[Prioritize by Severity]
+    AK --> AL{Critical Issues?}
+    AL -->|Yes| AM[BLOCK MERGE]
+    AL -->|No| AN{Major Issues?}
+    AN -->|Yes| AO[RECOMMEND FIX]
+    AN -->|No| AP[APPROVE]
+    AM --> AQ[Actionable Report]
+    AO --> AQ
+    AP --> AQ
+```
+
 ### Phase 1: Scope Analysis (Automatic)
 
 **Goal:** Understand what code to review

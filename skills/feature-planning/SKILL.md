@@ -248,6 +248,135 @@ Middleware/Utils:
 
 ---
 
+## Phase 3b: Risk Assessment
+
+**Objective**: Identify and mitigate risks before implementation (BMAD METHOD pattern)
+**Duration**: 1-2 minutes
+
+### Risk Identification Process
+
+Systematically identify risks across 4 key categories:
+
+```markdown
+[Risk Assessment]
+
+### Security Risks
+- Authentication bypass (token validation, session hijacking)
+- Injection attacks (SQL, NoSQL, XSS, command injection)
+- Data exposure (sensitive data in logs, APIs, errors)
+- Authorization failures (privilege escalation, IDOR)
+- Cryptography misuse (weak algorithms, hardcoded secrets)
+
+### Performance Risks
+- N+1 queries (missing JOINs, inefficient ORMs)
+- Memory leaks (unclosed connections, circular references)
+- Bottlenecks (synchronous operations, missing indexes)
+- Infinite loops (recursive logic, missing termination)
+- Resource exhaustion (uncontrolled growth, no pagination)
+
+### Data Integrity Risks
+- Data loss (missing transactions, no backups)
+- Data corruption (race conditions, invalid state transitions)
+- Inconsistent state (distributed system sync issues)
+- Orphaned records (missing cascades, incomplete cleanup)
+- Migration failures (schema changes break existing data)
+
+### Technical Risks
+- Dependency issues (unmaintained packages, version conflicts)
+- Breaking changes (API compatibility, data format changes)
+- Complexity explosion (over-engineering, tight coupling)
+- Technical debt (shortcuts that need fixing later)
+- Maintainability (hard to understand, test, or modify)
+```
+
+### Risk Scoring Matrix
+
+For each identified risk:
+
+**Probability Scale:**
+- **Low (1)**: Unlikely to happen (< 10% chance)
+- **Medium (2)**: Could happen (10-50% chance)
+- **High (3)**: Likely to happen (> 50% chance)
+
+**Impact Scale:**
+- **Low (1)**: Minor inconvenience, easy fix
+- **Medium (2)**: Significant issue, requires work to fix
+- **High (3)**: Critical failure, major rework needed
+
+**Risk Score = Probability × Impact (1-9)**
+
+**Priority Levels:**
+- **HIGH (7-9)**: Must address in implementation plan
+- **MEDIUM (4-6)**: Mitigate through testing strategy
+- **LOW (1-3)**: Document and accept
+
+### Risk Assessment Table Format
+
+```markdown
+| Risk ID | Risk Description | Category | Probability | Impact | Score | Priority | Mitigation Strategy |
+|---------|------------------|----------|-------------|--------|-------|----------|---------------------|
+| R-001 | JWT signature validation bypass | Security | 2 | 3 | 6 | MEDIUM | Use verified JWT library, add signature validation tests |
+| R-002 | N+1 query when loading nested data | Performance | 3 | 2 | 6 | MEDIUM | Use eager loading/JOINs, add performance tests |
+| R-003 | Race condition on concurrent writes | Data | 2 | 3 | 6 | MEDIUM | Use database transactions, add concurrency tests |
+| R-004 | Unmaintained dependency vulnerability | Technical | 1 | 3 | 3 | LOW | Use Dependabot, regular security audits |
+```
+
+### Mitigation Planning
+
+For each MEDIUM/HIGH risk, define concrete mitigation:
+
+```markdown
+[Risk Mitigation Plan]
+
+**HIGH Risks (Score 7-9):** [Count]
+[For each HIGH risk]
+- **Risk ID**: [ID]
+- **Mitigation Steps**:
+  1. [Specific action in implementation]
+  2. [Specific test to validate mitigation]
+  3. [Monitoring/alerting to detect if it occurs]
+
+**MEDIUM Risks (Score 4-6):** [Count]
+[For each MEDIUM risk]
+- **Risk ID**: [ID]
+- **Mitigation Steps**:
+  1. [Specific action]
+  2. [Test coverage]
+  3. [Fallback strategy]
+
+**LOW Risks (Score 1-3):** [Count] - Accepted as-is
+- Document for awareness but no active mitigation needed
+```
+
+### Integration into Implementation Roadmap
+
+Map mitigations back to implementation phases:
+
+```markdown
+[Risk Mitigation Integration]
+
+**Phase 1 (Foundation):**
+- Mitigation for R-001: [Action]
+- Mitigation for R-004: [Action]
+
+**Phase 2 (Core Features):**
+- Mitigation for R-002: [Action]
+- Mitigation for R-003: [Action]
+
+**Phase 3 (Testing & Validation):**
+- Test for R-001: [Test description]
+- Test for R-002: [Performance test]
+- Test for R-003: [Concurrency test]
+```
+
+**Quality Gate**:
+- ✅ All HIGH risks have concrete mitigations in plan
+- ✅ MEDIUM risks have test coverage planned
+- ✅ Risk mitigations integrated into implementation phases
+- ❌ If HIGH risk without mitigation → Cannot proceed until addressed
+
+---
+
 ## Phase 4: Define APIs & Data Models
 
 **Objective**: Establish contracts between frontend and backend

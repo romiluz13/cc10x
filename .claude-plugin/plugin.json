@@ -1,6 +1,6 @@
 {
   "name": "cc10x",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Intelligent orchestration system combining commands, sub-agents, and skills for 10x developer productivity. Features comprehensive feature planning, Lovable/Bolt-quality UI generation, progressive loading (93% token savings), auto-healing context, multi-dimensional code review, systematic debugging (LOG FIRST pattern), and strict TDD enforcement.",
   "author": {
     "name": "Rom Iluz",
