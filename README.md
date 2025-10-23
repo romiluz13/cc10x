@@ -76,29 +76,38 @@ Save 93% tokens by loading only what's needed:
 
 ## Installation
 
-### Prerequisites
+See [INSTALLATION.md](./INSTALLATION.md) for detailed installation instructions.
 
-- [Claude Code](https://claude.ai/code) version 1.0 or later
+### Quick Start (Method 1 - Recommended)
 
-### Install from GitHub (Recommended)
+Add to `~/.claude/settings.json`:
 
-```bash
-# Using Claude Code plugin manager
-/plugin install https://github.com/romiluz13/cc10x
+```json
+{
+  "extraKnownMarketplaces": {
+    "cc10x": {
+      "source": {
+        "source": "github",
+        "repo": "romiluz13/cc10x"
+      }
+    }
+  }
+}
 ```
 
-That's it! All 5 commands, 7 sub-agents, 16 skills, and 3 hooks are installed automatically.
+Then in Claude Code:
+```bash
+/plugin marketplace add cc10x
+/plugin install cc10x@cc10x
+```
 
-### Alternative: Manual Installation
+### Quick Start (Method 2 - Manual)
 
 ```bash
-git clone https://github.com/romiluz13/cc10x.git
 cd your-project
-cp -r /path/to/cc10x/.claude-plugin .
-cp -r /path/to/cc10x/agents .
-cp -r /path/to/cc10x/skills .
-cp -r /path/to/cc10x/commands .
-cp -r /path/to/cc10x/hooks .
+git clone https://github.com/romiluz13/cc10x.git /tmp/cc10x
+cp -r /tmp/cc10x/.claude-plugin .
+cp -r /tmp/cc10x/{commands,agents,skills,hooks} .
 ```
 
 ### Verify Installation
