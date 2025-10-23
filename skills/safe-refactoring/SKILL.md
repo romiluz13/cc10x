@@ -1,6 +1,15 @@
 ---
 name: Safe Refactoring
-description: Safe, automated code improvements that preserve behavior. Formatting, import organization, unused code removal. Auto-invoked by auto-fixer agent. Use for automatic code improvements.
+description: |
+  Performs behavior-preserving code improvements including formatting, import cleanup, unused code removal, and safe transformations. Use when cleaning up code without changing functionality.
+  
+  Trigger phrases: "refactor", "clean up code", "organize imports", "remove unused",
+  "format code", "safe refactor", "refactoring", "clean this up",
+  "reorganize code", "simplify", "extract function", "rename variable",
+  "code cleanup", "improve structure", "safe improvements".
+  
+  Activates on: refactoring tasks, code cleanup, structure improvements,
+  safe transformations, formatting cleanup, unused code removal.
 progressive: true
 ---
 

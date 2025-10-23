@@ -1,6 +1,15 @@
 ---
 name: Accessibility Patterns
-description: WCAG 2.1 AA compliance, semantic HTML, ARIA patterns, keyboard navigation, and screen reader compatibility. Auto-invoked by accessibility-reviewer. Use when analyzing accessibility.
+description: |
+  Ensures WCAG 2.1 AA compliance, semantic HTML, proper ARIA usage, keyboard navigation, and screen reader support. Use when building or reviewing UI components for accessibility compliance.
+  
+  Trigger phrases: "accessibility review", "accessibility check", "WCAG compliance",
+  "a11y", "screen reader", "keyboard navigation", "accessibility audit", "semantic HTML",
+  "ARIA labels", "accessible", "accessibility patterns", "keyboard accessible",
+  "contrast check", "accessibility standards".
+  
+  Activates on: UI component development, accessibility audits, WCAG compliance checks,
+  keyboard navigation review, screen reader testing, accessibility requirements.
 progressive: true
 ---
 

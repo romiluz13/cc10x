@@ -1,6 +1,16 @@
 ---
 name: code-reviewing
-description: Use when performing comprehensive code reviews - launches 5 parallel specialized reviewers (security, quality, performance, UX, accessibility) for multi-dimensional analysis; provides prioritized findings with optional auto-fix
+description: |
+  Comprehensive multi-dimensional code review launching 5 parallel specialized reviewers (security, quality, performance, UX, accessibility) for complete analysis. Use for thorough code review before merging.
+  
+  Trigger phrases: "review code", "code review", "review this", "check code",
+  "audit code", "review", "code audit", "review changes",
+  "check quality", "review PR", "code analysis", "comprehensive review",
+  "multi-dimensional review", "review before merge", "full code review".
+  
+  Activates on: code review requests, PR reviews, pre-merge checks,
+  comprehensive code analysis, multi-dimensional audits, quality assessments.
+progressive: true
 ---
 
 # Code Reviewing - Multi-Dimensional Analysis Workflow

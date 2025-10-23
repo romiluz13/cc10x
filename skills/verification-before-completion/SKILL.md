@@ -1,6 +1,15 @@
 ---
 name: Verification Before Completion
-description: Quality checklist ensuring code is production-ready before marking tasks complete. Use before committing code or marking tasks done. Auto-invoked by implementer sub-agent.
+description: |
+  Comprehensive quality checklist ensuring code is production-ready before marking tasks complete. Use to verify all quality gates are met before commit or completion.
+  
+  Trigger phrases: "verify", "check before commit", "quality check", "verify complete",
+  "pre-commit check", "verify quality", "completion check", "ready to commit",
+  "verify production-ready", "check quality gates", "verification checklist",
+  "ensure complete", "validate completion", "check before merge", "final verification".
+  
+  Activates on: pre-commit verification, completion checks, quality gate validation,
+  production readiness assessment, final verification before tasks completion.
 progressive: true
 ---
 

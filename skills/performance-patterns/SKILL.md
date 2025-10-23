@@ -1,6 +1,15 @@
 ---
 name: Performance Patterns
-description: Performance optimization techniques, N+1 query detection, algorithmic complexity analysis, memory leak prevention, and profiling strategies. Auto-invoked by performance-analyzer. Use when analyzing code for performance issues.
+description: |
+  Identifies performance bottlenecks, N+1 queries, inefficient algorithms, memory leaks, and optimization opportunities. Use when analyzing code for performance improvements and optimization.
+  
+  Trigger phrases: "performance review", "performance optimization", "slow code",
+  "bottleneck", "N+1 query", "optimize performance", "performance audit", "memory leak",
+  "performance patterns", "speed up", "inefficient", "performance issue",
+  "optimize this", "too slow", "performance problems".
+  
+  Activates on: performance analysis, optimization tasks, slow endpoint debugging,
+  database query optimization, frontend rendering optimization, memory profiling.
 progressive: true
 ---
 

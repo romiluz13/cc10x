@@ -1,6 +1,16 @@
 ---
 name: feature-planning
-description: Use when user requests comprehensive feature planning before implementation - creates detailed PRD-style plans with user stories, architecture decisions, component breakdowns, API contracts, data models, edge cases, and testing strategy to ensure strategic planning before coding
+description: |
+  Creates comprehensive PRD-style feature plans with user stories, architecture decisions, component breakdowns, API contracts, data models, edge cases, and testing strategies. Use for strategic planning before implementation.
+  
+  Trigger phrases: "plan feature", "feature plan", "design feature", "planning",
+  "plan this", "create plan", "feature design", "architecture plan",
+  "feature spec", "requirements", "PRD", "plan before building",
+  "design document", "feature planning", "plan implementation".
+  
+  Activates on: feature planning requests, architecture design, requirements analysis,
+  PRD creation, strategic planning, pre-implementation design.
+progressive: true
 ---
 
 # Feature Planning - Strategic Design Before Building

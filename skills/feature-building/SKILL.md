@@ -1,6 +1,16 @@
 ---
 name: feature-building
-description: Use when implementing complete features - orchestrates 5-phase workflow with context analysis, planning, TDD-enforced implementation, verification, and finalization; coordinates sub-agents and auto-invokes domain skills for production-quality results
+description: |
+  Complete feature implementation workflow orchestrating 5-phase development with context analysis, planning, TDD-enforced implementation, verification, and finalization. Use when building complete features from start to finish.
+  
+  Trigger phrases: "build feature", "implement feature", "create feature", "develop feature",
+  "add feature", "feature implementation", "build this", "implement this",
+  "develop", "build from scratch", "complete feature", "full implementation",
+  "end-to-end feature", "feature development", "implement complete".
+  
+  Activates on: feature implementation requests, complete development tasks,
+  end-to-end feature building, production feature creation, full feature workflows.
+progressive: true
 ---
 
 # Feature Building - Complete Implementation Workflow

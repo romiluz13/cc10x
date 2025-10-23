@@ -1,6 +1,15 @@
 ---
 name: UI Design
-description: Generate beautiful, modern UIs like Lovable/Bolt. Modern gradients, smooth animations, proper spacing, and accessibility built-in. Transform basic components into polished, production-ready interfaces.
+description: |
+  Generates beautiful, modern UIs matching Lovable/Bolt quality standards. Modern gradients, smooth animations, proper spacing, and built-in accessibility. Transform basic components into polished, production-ready interfaces.
+  
+  Trigger phrases: "design UI", "create UI", "modern UI", "beautiful interface",
+  "polished UI", "Lovable quality", "Bolt quality", "design component",
+  "UI component", "modern design", "beautiful design", "create interface",
+  "design system", "UI patterns", "production UI".
+  
+  Activates on: UI component creation, interface design, component styling,
+  production UI development, design system implementation, modern UI creation.
 progressive: true
 ---
 

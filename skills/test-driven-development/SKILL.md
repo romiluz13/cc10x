@@ -1,6 +1,15 @@
 ---
 name: Test-Driven Development
-description: Enforces RED-GREEN-REFACTOR methodology for all code implementation. Use when implementing features, fixing bugs, or modifying behavior - requires writing failing test FIRST before any production code. Auto-invoked by implementer sub-agent.
+description: |
+  Enforces strict RED-GREEN-REFACTOR methodology for all code implementation. Use when implementing features, fixing bugs, or modifying behavior - requires writing failing test FIRST before any production code.
+  
+  Trigger phrases: "implement", "add feature", "write code", "create function",
+  "build", "develop feature", "implement function", "add functionality",
+  "test-driven", "TDD", "write tests first", "test first",
+  "implement with tests", "add tests", "test coverage".
+  
+  Activates on: feature implementation, bug fixes, behavior modifications,
+  any code writing task, function creation, production code development.
 progressive: true
 ---
 

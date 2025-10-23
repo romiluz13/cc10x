@@ -1,25 +1,97 @@
 {
+  "$schema": "https://claudecode.ai/hooks-schema.json",
+  "version": "1.0.0",
+  "name": "cc10x Orchestration Hooks",
+  "description": "Intelligent session management with auto-healing and progress tracking",
+  
+  "config": {
+    "log_level": "info",
+    "max_snapshots": 10,
+    "auto_cleanup": true,
+    "timeout_default": 5000,
+    "enable_metrics": true
+  },
+  
   "hooks": {
     "SessionStart": [
       {
+        "description": "Initialize session with progress tracking and context management",
         "matcher": "startup|resume|clear|compact",
+        "priority": 100,
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh",
+            "timeout": 5000,
+            "async": false,
+            "required": true,
+            "on_error": "warn",
+            "retry": {
+              "max_attempts": 2,
+              "backoff_ms": 1000
+            }
           }
         ]
       }
     ],
+    
     "PreCompact": [
       {
+        "description": "Create comprehensive context snapshot before compaction (auto-healing at 75% tokens)",
+        "priority": 100,
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/pre-compact.sh"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/pre-compact.sh",
+            "timeout": 3000,
+            "async": false,
+            "required": true,
+            "on_error": "warn",
+            "retry": {
+              "max_attempts": 2,
+              "backoff_ms": 500
+            }
+          }
+        ]
+      }
+    ],
+    
+    "PostCommand": [
+      {
+        "description": "Track command execution metrics (optional, future enhancement)",
+        "matcher": "feature-plan|feature-build|bug-fix|review",
+        "priority": 50,
+        "enabled": false,
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/post-command.sh",
+            "timeout": 1000,
+            "async": true,
+            "required": false,
+            "on_error": "ignore"
           }
         ]
       }
     ]
-  }
+  },
+  
+  "metadata": {
+    "author": "Rom Iluz",
+    "license": "MIT",
+    "repository": "https://github.com/romiluz13/cc10x",
+    "documentation": "https://github.com/romiluz13/cc10x/blob/main/README.md",
+    "support": "https://github.com/romiluz13/cc10x/issues"
+  },
+  
+  "notes": [
+    "SessionStart: Runs at every session initialization (startup, resume, clear, compact)",
+    "PreCompact: Runs automatically at 75% token usage (auto-healing)",
+    "PostCommand: Future enhancement for command tracking (currently disabled)",
+    "Hooks are executed in priority order (higher priority first)",
+    "Async hooks run in background, sync hooks block until completion",
+    "Required hooks must succeed, optional hooks can fail without blocking",
+    "Timeouts prevent hooks from hanging indefinitely",
+    "Retries handle transient failures automatically"
+  ]
 }

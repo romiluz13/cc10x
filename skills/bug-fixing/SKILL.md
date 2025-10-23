@@ -1,6 +1,16 @@
 ---
 name: bug-fixing
-description: Use when debugging and fixing bugs - employs LOG FIRST pattern (add comprehensive logging before fixing) to prevent assumption-driven debugging; uses progressive context loading and systematic debugging workflow
+description: |
+  Complete bug-fixing workflow using LOG FIRST pattern (add comprehensive logging before fixing) to prevent assumption-driven debugging. Use for all bug reports and debugging tasks.
+  
+  Trigger phrases: "fix bug", "bug fix", "debug issue", "fix error",
+  "broken", "not working", "issue", "problem", "bug",
+  "fix this", "resolve issue", "troubleshoot bug", "debug problem",
+  "fix defect", "resolve bug", "bug report".
+  
+  Activates on: bug reports, error fixing, production issues, test failures,
+  defect resolution, broken functionality, unexpected behavior fixes.
+progressive: true
 ---
 
 # Bug Fixing - Systematic Debugging Workflow

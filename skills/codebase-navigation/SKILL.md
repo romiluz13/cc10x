@@ -1,6 +1,15 @@
 ---
 name: Codebase Navigation
-description: Provides efficient strategies for exploring codebases, finding relevant code, understanding patterns, and mapping dependencies. Use when needing to understand existing code before making changes. Auto-invoked by context-analyzer sub-agent.
+description: |
+  Provides efficient strategies for exploring codebases, finding relevant code, understanding patterns, and mapping dependencies. Use when analyzing existing code structure and discovering patterns.
+  
+  Trigger phrases: "find code", "explore codebase", "where is", "locate code",
+  "search for", "understand codebase", "code navigation", "find pattern",
+  "map dependencies", "discover patterns", "analyze structure", "find similar",
+  "locate feature", "understand architecture", "code exploration".
+  
+  Activates on: context analysis, pattern discovery, architecture understanding,
+  dependency mapping, similar feature identification, codebase exploration.
 progressive: true
 ---
 

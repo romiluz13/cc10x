@@ -1,6 +1,15 @@
 ---
 name: Systematic Debugging
-description: LOG FIRST, FIX LATER - Always verify runtime data before making assumptions. Prevents assumption-driven debugging that wastes hours.
+description: |
+  Enforces LOG FIRST, FIX LATER methodology - always verify runtime data before making assumptions. Prevents assumption-driven debugging that wastes hours. Use for all debugging tasks.
+  
+  Trigger phrases: "debug", "fix bug", "debugging", "troubleshoot", "investigate",
+  "why is this failing", "not working", "error", "bug fix",
+  "log first", "systematic debug", "debug this", "find the bug",
+  "diagnose", "root cause", "debugging workflow".
+  
+  Activates on: bug reports, error investigation, debugging tasks, troubleshooting,
+  test failures, production issues, unexpected behavior analysis.
 progressive: true
 ---
 

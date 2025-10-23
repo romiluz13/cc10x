@@ -1,6 +1,15 @@
 ---
 name: Code Generation
-description: Provides patterns, conventions, and best practices for writing clean, maintainable production code. Use when implementing any new code - guides code quality, error handling, organization, and performance. Auto-invoked by implementer sub-agent.
+description: |
+  Provides patterns, conventions, and best practices for writing clean, maintainable, production-ready code. Use when implementing new functionality with high quality standards.
+  
+  Trigger phrases: "write code", "implement", "create function", "add feature",
+  "generate code", "build component", "write implementation", "code this",
+  "develop", "create class", "add method", "implement function",
+  "write production code", "create module", "generate implementation".
+  
+  Activates on: implementation tasks, code writing, function creation,
+  component development, production code generation, feature implementation.
 progressive: true
 ---
 

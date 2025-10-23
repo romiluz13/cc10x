@@ -1,6 +1,15 @@
 ---
 name: UX Patterns
-description: User experience best practices, loading states, error handling, form design, and interaction patterns. Auto-invoked by ux-reviewer. Use when analyzing user experience.
+description: |
+  Evaluates user experience quality, loading states, error handling, form usability, and interaction design. Use when reviewing or improving user-facing interfaces and experiences.
+  
+  Trigger phrases: "UX review", "user experience", "usability", "improve UX",
+  "user-friendly", "interaction design", "UX patterns", "error messages",
+  "loading states", "form design", "user flow", "UX audit",
+  "usability issues", "confusing interface", "better UX".
+  
+  Activates on: UI/UX review, user flow design, error message improvement,
+  form usability analysis, interaction pattern review, user feedback analysis.
 progressive: true
 ---
 

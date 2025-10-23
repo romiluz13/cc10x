@@ -1,6 +1,15 @@
 ---
 name: Code Review Patterns
-description: Code quality analysis, code smells detection, refactoring opportunities, and maintainability assessment. Auto-invoked by quality-reviewer. Use when analyzing code quality.
+description: |
+  Analyzes code quality, detects code smells, identifies refactoring opportunities, and assesses maintainability. Use when reviewing code for quality improvements and best practices.
+  
+  Trigger phrases: "code review", "quality check", "code smells", "refactor",
+  "code quality", "maintainability", "clean code", "quality review",
+  "code patterns", "best practices", "review this code", "code improvements",
+  "refactoring opportunities", "quality audit", "maintainable code".
+  
+  Activates on: code review tasks, quality assessment, refactoring planning,
+  maintainability analysis, best practice enforcement, pre-PR quality checks.
 progressive: true
 ---
 

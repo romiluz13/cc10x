@@ -31,5 +31,9 @@
     "ui-design",
     "claude-code",
     "claude-plugin"
-  ]
+  ],
+  "commands": "./commands/",
+  "agents": "./agents/",
+  "skills": "./skills/",
+  "hooks": "./hooks/"
 }

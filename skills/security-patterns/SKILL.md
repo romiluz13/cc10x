@@ -1,6 +1,15 @@
 ---
 name: Security Patterns
-description: OWASP Top 10 vulnerabilities, secure coding practices, authentication patterns, and vulnerability detection. Auto-invoked by security-reviewer. Use when analyzing code for security issues.
+description: |
+  Identifies OWASP Top 10 vulnerabilities, authentication issues, injection attacks, and insecure coding practices. Use when analyzing code for security vulnerabilities and ensuring secure implementation.
+  
+  Trigger phrases: "security review", "security audit", "check for vulnerabilities", 
+  "security scan", "OWASP", "authentication security", "SQL injection", "XSS", 
+  "security issues", "secure this code", "security patterns", "vulnerability check",
+  "auth security", "security best practices".
+  
+  Activates on: security analysis, code review for vulnerabilities, authentication implementation,
+  input validation review, security audits, pre-production security checks.
 progressive: true
 ---
 
