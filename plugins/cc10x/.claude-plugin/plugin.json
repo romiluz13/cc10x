@@ -27,7 +27,15 @@
     "claude-plugin"
   ],
   "commands": "./commands/",
-  "agents": "./agents/",
+  "agents": [
+    "./agents/accessibility-reviewer.md",
+    "./agents/context-analyzer.md",
+    "./agents/implementer.md",
+    "./agents/performance-analyzer.md",
+    "./agents/quality-reviewer.md",
+    "./agents/security-reviewer.md",
+    "./agents/ux-reviewer.md"
+  ],
   "skills": "./skills/",
   "hooks": "./hooks/hooks.json"
 }
