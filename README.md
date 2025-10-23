@@ -76,39 +76,24 @@ Save 93% tokens by loading only what's needed:
 
 ## Installation
 
-See [INSTALLATION.md](./INSTALLATION.md) for detailed installation instructions.
-
-### Quick Start (Method 1 - Recommended)
-
-Add to `~/.claude/settings.json`:
-
-```json
-{
-  "extraKnownMarketplaces": {
-    "cc10x": {
-      "source": {
-        "source": "github",
-        "repo": "romiluz13/cc10x"
-      }
-    }
-  }
-}
-```
-
-Then in Claude Code:
-```bash
-/plugin marketplace add cc10x
-/plugin install cc10x@cc10x
-```
-
-### Quick Start (Method 2 - Manual)
+**Simple 3-step installation** (works immediately):
 
 ```bash
-cd your-project
+# 1. Clone cc10x
 git clone https://github.com/romiluz13/cc10x.git /tmp/cc10x
+
+# 2. Copy to your project
+cd /path/to/your/project
 cp -r /tmp/cc10x/.claude-plugin .
 cp -r /tmp/cc10x/{commands,agents,skills,hooks} .
+
+# 3. Verify
+# Open in Claude Code and type: /feature-plan Test
 ```
+
+**That's it!** All 5 commands, 7 sub-agents, 16 skills ready to use.
+
+See [QUICK-INSTALL.md](./QUICK-INSTALL.md) for detailed instructions and troubleshooting.
 
 ### Verify Installation
 
