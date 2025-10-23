@@ -21,7 +21,7 @@
       },
       "homepage": "https://github.com/romiluz13/cc10x",
       "tags": ["orchestration", "productivity", "tdd", "code-review", "feature-planning", "systematic-debugging", "multi-dimensional-review"],
-      "source": "."
+      "source": "./"
     }
   ]
 }
