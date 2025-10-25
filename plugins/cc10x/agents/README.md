@@ -1,4 +1,4 @@
-# cc10x Sub-Agents - What They Actually Are
+# cc10x v3 Agents: The 4+5 Architecture
 
 ## Reality Check
 
@@ -8,11 +8,11 @@ Most "agents" in cc10x are **specialized prompt templates**, not autonomous AI w
 
 ---
 
-## The 11 Agents Explained
+## The v3 Architecture: 9 Agents Total (4+5)
 
-### ⭐⭐⭐⭐⭐ The 5 WORKING Agents (Review Only)
+### ⭐⭐⭐⭐⭐ The 5 Review Agents (Parallel Execution - KEPT from v2)
 
-**Used exclusively by:** `/review` command
+**Used exclusively by:** REVIEW workflow
 
 **How they work:**
 - Launch in parallel (5 agents simultaneously)
@@ -58,179 +58,242 @@ Most "agents" in cc10x are **specialized prompt templates**, not autonomous AI w
 
 ---
 
-### The 4 NEW Planning Agents (v2.0)
+### The 4 Core Execution Agents (Sequential - NEW in v3)
 
-**What they actually are:** Specialized prompt templates that commands invoke sequentially
+**What they actually are:** Specialized prompt templates with complexity-aware scaling
 
-**How they "work":**
-- Command invokes agent explicitly
-- Agent provides structured instructions to Claude
-- Claude follows instructions (not separate AI)
-- Agent returns formatted output
+**How they work:**
+- Orchestrator invokes agents sequentially
+- Each agent provides structured instructions
+- Agents scale output based on complexity (1-5)
+- Progressive skill loading for token efficiency
 
 **The agents:**
 
-6. **architect.md** - Architecture, complexity, manifests, risk assessment
-   - **What it is:** Prompt template for architecture decisions
-   - **What it does:** Loads feature-planning skill progressively, applies patterns
-   - **Invoked by:** /feature-plan (Phases 3, 3a, 3b, 3c, 5b)
-   - **Output:** Architecture decisions, complexity score, file manifest
+6. **feature-planner.md** (NEW in v3)
+   - **Replaces:** requirements-analyst
+   - **From:** cc10x_V2-main pattern
+   - **Role:** Product manager creating comprehensive PRDs
+   - **Enhancements:** Risk-aware planning, assumption validation
+   - **Complexity scaling:** 
+     - Simple (1-2): 200-line PRD, 3-5 user stories
+     - Complex (4-5): 1,000+ line PRD, 20+ user stories
+   - **Invoked by:** PLANNING workflow (Phase 1)
 
-7. **devops-planner.md** - Rollback strategies, deployment plans
-   - **What it is:** Prompt template for deployment planning
-   - **What it does:** Loads deployment-patterns skill, creates procedures
-   - **Invoked by:** /feature-plan (Phases 6, 7)
-   - **Output:** Rollback strategy, deployment plan
+7. **architect.md** (Enhanced in v3)
+   - **Enhancements:** Technology decision framework, file size enforcement
+   - **From:** cc10x_V2-main patterns merged with existing
+   - **Role:** System design, technology decisions, complexity assessment, file manifests
+   - **Complexity scaling:**
+     - Simple (1-2): 150 lines, basic diagrams, 2-3 components
+     - Complex (4-5): 1,000+ lines, comprehensive diagrams, 10+ components
+   - **Invoked by:** PLANNING workflow (Phases 3, 3a, 3b, 3c, 5b)
 
-8. **requirements-analyst.md** - Requirements gathering, user stories
-   - **What it is:** Prompt template for requirements extraction
-   - **What it does:** Loads feature-planning Stage 1, structures requirements
-   - **Invoked by:** /feature-plan (Phase 1)
-   - **Output:** Requirements document, user stories
+8. **code-writer.md** (NEW in v3)
+   - **Merges:** implementer + tdd-enforcer logic
+   - **From:** cc10x_V2-main with TDD integration
+   - **Role:** TDD implementation with strict quality enforcement
+   - **Enforces:** <500 lines per file, no placeholders, production-ready only
+   - **Features:** Risk analysis before each increment, RED-GREEN-REFACTOR cycles
+   - **Complexity scaling:**
+     - Simple (1-2): 2-3 files, 50-150 lines total
+     - Complex (4-5): 10-20 files, 1,000+ lines
+   - **Invoked by:** BUILDING workflow (Phase 2-4)
 
-9. **tdd-enforcer.md** - Strict TDD enforcement, mandatory verification
-   - **What it is:** Prompt template for TDD methodology
-   - **What it does:** Loads test-driven-development skill, enforces RED-GREEN-REFACTOR
-   - **Invoked by:** /feature-build (Phase 3)
-   - **Output:** Implemented code with verified passing tests
-
-**Why they're NOT "real" agents:**
-- Not autonomous (require command to invoke)
-- Not parallel (run sequentially)
-- Claude follows their instructions (not separate AI instances)
-- More like "structured prompts" than "AI workers"
-
-**Why they're still valuable:**
-- Provide systematic frameworks
-- Load skills progressively (token-efficient)
-- Enforce quality gates
-- Prevent common mistakes
+9. **test-generator.md** (NEW in v3)
+   - **From:** cc10x_V2-main with verification requirements
+   - **Role:** Comprehensive test creation with mandatory user verification
+   - **Enforces:** >80% coverage, user must manually verify tests pass
+   - **Features:** Prevents false success reports
+   - **Complexity scaling:**
+     - Simple (1-2): 10-20 tests, basic coverage
+     - Complex (4-5): 80-200 tests, unit + integration + e2e
+   - **Invoked by:** BUILDING workflow (Phase 5)
 
 ---
 
-### The 2 Implementation Agents
+## What Changed in v3?
 
-10. **context-analyzer.md** - Codebase pattern discovery
-    - **What it is:** Hybrid (can be autonomous or invoked)
-    - **What it does:** Searches codebase for similar features, extracts conventions
-    - **Invoked by:** /feature-plan (Phase 2), /feature-build (Phase 1)
-    - **Status:** Enhanced in v2.0 with progressive skill loading
+### Consolidated from 11 → 9 Agents
 
-11. **implementer.md** - Feature implementation with TDD
-    - **What it is:** Implementation executor
-    - **What it does:** Follows TDD cycle, implements increments, verifies tests
-    - **Invoked by:** /feature-build (Phase 3)
-    - **⚠️ Warning:** Can report false success - MUST verify tests manually!
-    - **Status:** Enhanced in v2.0 with File Manifest verification, mandatory test verification
+**DELETED (merged into new agents):**
+- `requirements-analyst.md` → Merged into `feature-planner`
+- `implementer.md` → Merged into `code-writer`
+- `tdd-enforcer.md` → Merged into `code-writer`
+- `devops-planner.md` → Logic moved to `deployment-patterns` skill
+- `context-analyzer.md` → Logic moved to `codebase-navigation` skill
+
+**Why consolidate?**
+- **Simpler:** 4 clear roles vs 6 overlapping ones
+- **Clearer:** Each agent has distinct purpose
+- **Inspired by:** cc10x_V2-main's focused 4-agent model
+- **Better:** Less confusion about who does what
+
+### Review Agents Unchanged
+
+**Why keep review agents separate?**
+- They actually work as advertised (5-star performance)
+- Parallel execution proven effective
+- Found 38 real issues in testing
+- No changes needed - already excellent
+
+---
+
+## The 4+5 Workflow
+
+### PLANNING Workflow (Phases 1-7)
+1. **feature-planner** → Creates PRD with assumptions, user stories, requirements
+2. **architect** (Phase 3) → Designs architecture with technology decisions
+3. **architect** (Phase 3a) → Critical risk analysis (data flow + security)
+4. **architect** (Phase 3b) → Comprehensive risk assessment
+5. **architect** (Phase 3c) → Complexity assessment (recommends skip if 1-2)
+6. **architect** (Phase 5b) → File change manifest
+7. **architect** (Phases 6-7) → Rollback + deployment strategies (using deployment-patterns skill)
+
+### BUILDING Workflow (Phases 1-6)
+1. **Context analysis** (using codebase-navigation skill)
+2. **Task breakdown** (using task-breakdown skill)
+3. **code-writer** → TDD implementation (RED-GREEN-REFACTOR with risk analysis)
+4. **code-writer** → File manifest verification
+5. **test-generator** → Comprehensive test creation
+6. **User verification** → MANDATORY manual test verification
+
+### REVIEW Workflow (Parallel Execution)
+- **All 5 review agents in parallel** → Comprehensive multi-dimensional analysis
+- **Assembly** → Findings compiled into structured report
+
+---
+
+## Which Agents Are "Real"?
+
+### The 5 Review Agents: TRUE Autonomous AI Agents ⭐⭐⭐⭐⭐
+
+**They are:**
+- ✅ Separate AI instances running in parallel
+- ✅ Independent contexts (no interference)
+- ✅ Autonomous analysis (you don't do their work)
+- ✅ Real bug-finding capability (38 issues found)
+
+**Analogy:** Hiring 5 expert consultants who analyze your code simultaneously
+
+### The 4 Execution Agents: Structured Workflow Templates ⭐⭐⭐☆☆
+
+**They are:**
+- ⚠️ Sequential prompt templates (not parallel)
+- ⚠️ You follow their instructions (not autonomous)
+- ✅ Provide systematic frameworks (valuable!)
+- ✅ Scale to complexity (efficient!)
+
+**Analogy:** Following detailed checklists from domain experts
+
+**Still valuable because:**
+- Provide structure and completeness
+- Prevent common mistakes
+- Scale naturally to complexity
+- Load skills progressively
+
+---
+
+## Complexity-Aware Scaling
+
+All 4 core agents automatically scale output based on complexity:
+
+| Complexity | feature-planner | architect | code-writer | test-generator |
+|------------|----------------|-----------|-------------|----------------|
+| Simple (1-2) | 200 lines, 3-5 stories | 150 lines, basic | 2-3 files, 50-150 LOC | 10-20 tests |
+| Moderate (3) | 500 lines, 8-12 stories | 400 lines, detailed | 5-8 files, 300-600 LOC | 30-50 tests |
+| Complex (4-5) | 1,000+ lines, 20+ stories | 1,000+ lines, comprehensive | 10-20 files, 1,000+ LOC | 80-200 tests |
+
+**Same systematic process, different depth.**
+
+This replaces v2's separate simple/complex workflows with one adaptive workflow.
+
+---
+
+## Token Efficiency: Progressive Loading
+
+**How it works:**
+- Commands are thin (100-200 tokens)
+- Agents load skills on-demand (500-2,000 tokens per stage)
+- Only load what's needed for current phase
+
+**Example (PLANNING workflow):**
+```
+Orchestrator: 100 tokens
+↓
+feature-planner: +500 tokens (planning skill Stage 1)
+↓
+architect: +800 tokens (planning skill Stage 2 - architecture)
+↓
+architect: +1,400 tokens (risk-analysis Stages 1+5)
+↓
+architect: +600 tokens (planning skill Stage 4 - complexity)
+↓
+If complexity >= 4, continue:
+  architect: +500 tokens (planning skill Stage 5 - manifest)
+  architect: +1,100 tokens (deployment-patterns Stages 1-2)
+  
+Total: 5,000 tokens (complex) or 3,400 tokens (stops early if simple)
+
+vs v1.x: 15,000 tokens upfront (65-79% savings!)
+```
 
 ---
 
 ## The Truth About "Autonomous Agents"
 
-### What We Claimed (v1.x)
+### What We Claimed (v1.x-v2.0)
 
-"cc10x uses autonomous sub-agents that work independently to implement features"
+"cc10x uses autonomous sub-agents that work independently"
 
-### What Actually Happens
+### What Actually Happens in v3
 
-**For /review:** ✅ TRUE
+**For REVIEW workflow:** ✅ TRUE
 - 5 agents launch in parallel
 - Each is a separate AI instance
 - Work independently and return results
+- **Truly autonomous**
 
-**For other commands:** ❌ MISLEADING
-- "Agents" are prompt templates
-- Commands invoke them sequentially
+**For PLANNING/BUILDING workflows:** ⚠️ PARTIALLY TRUE
+- Agents are prompt templates
+- Orchestrator invokes them sequentially
 - Claude (same instance) follows their instructions
-- Not separate AI workers
+- **Structured prompts, not autonomous workers**
 
-### More Accurate Description
-
-**They are:**
-- Specialized instruction sets
-- Domain-specific checklists
-- Workflow guides
-- Progressive skill loaders
-
-**They are NOT:**
-- Autonomous AI workers (except review agents)
-- Self-executing programs
-- Independent decision-makers
-- Truly parallel (except review)
+**But still valuable:**
+- Systematic frameworks prevent mistakes
+- Complexity-aware scaling (no overkill)
+- Progressive skill loading (token-efficient)
+- Proven patterns from cc10x_V2-main
 
 ---
 
-## How to Think About Agents
+## When to Use Each Workflow
 
-### The 5 Review Agents (REAL AI Agents)
+### REVIEW Workflow: Use Liberally ⭐⭐⭐⭐⭐
 
-**Analogy:** Hiring 5 expert consultants who analyze your code simultaneously
+**When:** Before EVERY PR, any complexity
+**Why:** Finds real bugs, prevents disasters
+**Cost:** 20k-50k tokens
+**ROI:** One prevented security breach = infinite value
 
-- Security consultant finds vulnerabilities
-- Quality consultant finds code smells
-- Performance consultant finds bottlenecks
-- UX consultant finds usability issues
-- Accessibility consultant finds WCAG violations
+### PLANNING Workflow: Use for Complexity 4-5 ⭐⭐⭐☆☆
 
-**They work independently in parallel.** This is TRUE agent behavior.
+**When:** Complex features (500+ lines, 7+ files, novel patterns)
+**Why:** Prevents architecture mistakes, systematic approach
+**Cost:** 30k-60k tokens (vs 15k manual)
+**ROI:** Worth it for complex features (prevents costly rework)
 
----
+**Skip for:** Simple features (1-2 complexity) - just use library docs
 
-### The 6 Other Agents (Specialized Prompts)
+### BUILDING Workflow: Use with Caution ⭐⭐☆☆☆
 
-**Analogy:** Following detailed checklists from domain experts
+**When:** Want strict TDD enforcement, mandatory verification
+**Why:** Systematic implementation, prevents edge cases
+**Cost:** 40k-80k tokens (vs 20k manual)
+**Warning:** MUST verify tests manually (can report false success)
 
-- Architect checklist for design decisions
-- DevOps checklist for deployment planning
-- Requirements checklist for gathering needs
-- TDD checklist for test-first development
-- Context checklist for pattern discovery
-- Implementation checklist for coding
-
-**You follow the checklist.** They provide structure, not autonomy.
-
----
-
-## Why This Architecture?
-
-### Benefits
-
-**Separation of Concerns:**
-- Commands = orchestration logic (what to do when)
-- Agents = execution templates (how to do it)
-- Skills = knowledge bases (what patterns/frameworks to apply)
-
-**Progressive Loading:**
-- Commands don't embed everything (thin)
-- Agents load only needed skill stages (efficient)
-- Skills provide rich content on-demand (comprehensive)
-
-**Maintainability:**
-- Update skill content without touching commands
-- Add new agents without changing commands
-- Extend commands without bloating files
-
-**Token Efficiency:**
-- v1.x: 15k tokens upfront
-- v2.0: 3.2k-5.2k tokens progressive
-- Real 65-79% savings (vs v1.x embedded approach)
-
-### Tradeoffs
-
-**Costs:**
-- Still 3-20x MORE than pure manual (structure has overhead)
-- Complexity (3 layers to understand)
-- Requires discipline (follow the process)
-
-**When Worth It:**
-- Complex features (4-5 complexity)
-- High-risk changes (prevents disasters)
-- Team collaboration (documentation valuable)
-
-**When NOT Worth It:**
-- Simple features (1-2 complexity)
-- Time-sensitive (manual faster)
-- Solo dev (don't need docs)
+**Skip for:** Time-sensitive, simple implementations
 
 ---
 
@@ -242,25 +305,24 @@ Most "agents" in cc10x are **specialized prompt templates**, not autonomous AI w
 ```markdown
 ---
 name: agent-name
-description: What this agent does and when to use it
+description: What this agent does, when to use it, what it enforces
+tools: Read, Write, Grep, Glob
 model: sonnet
 ---
 
 # Agent Name
 
-You are a [role] specialist.
+Expert in [domain] with [special capabilities].
+
+## Complexity-Aware Output Scaling
+
+- Simple (1-2): [minimal output]
+- Moderate (3): [detailed output]
+- Complex (4-5): [comprehensive output]
 
 ## Your Responsibilities
 1. [Responsibility 1]
 2. [Responsibility 2]
-
-## Progressive Skill Loading Strategy
-
-### For [Task Name]
-1. Invoke Skill: `skill-name` Stage X
-2. Load: ~X tokens
-3. Apply: [what to do with skill content]
-4. Output: [what to produce]
 
 ## Workflow
 [Step-by-step instructions]
@@ -272,27 +334,35 @@ You are a [role] specialist.
 [Key principles]
 ```
 
-### When to Create an Agent vs Update Existing
+### When to Create vs Merge
 
 **Create NEW agent when:**
-- Truly distinct responsibility (not covered by existing)
-- Reusable across multiple commands
-- Loads different skills than existing agents
+- Truly distinct responsibility (not covered by existing 9)
+- Reusable across multiple workflows
+- Clear separation from existing agents
 
-**Update EXISTING agent when:**
-- Enhancing existing capability
-- Adding new skill loading
-- Improving quality standards
+**Merge into EXISTING agent when:**
+- Overlapping responsibilities
+- Always used together
+- Simpler to have one comprehensive agent
+
+**v3 philosophy:** Fewer, more comprehensive agents > Many overlapping agents
 
 ---
 
 ## Bottom Line
 
-**5 agents are real AI workers** (/review agents) ⭐⭐⭐⭐⭐
+**5 review agents are real AI workers** ⭐⭐⭐⭐⭐
+- Use before EVERY PR
+- Truly autonomous, parallel execution
+- Find real bugs
 
-**6 agents are structured prompts** (you do the work, they guide)
+**4 execution agents are workflow guides** ⭐⭐⭐☆☆
+- Use for complexity 4-5
+- Systematic frameworks
+- Complexity-aware scaling
+- You still do the work
 
-**All 11 provide value** through systematic frameworks, but only 5 are truly autonomous.
+**The 4+5 architecture is simpler, clearer, and inspired by proven patterns from cc10x_V2-main.**
 
-**Use `/review` liberally (it works!). Use others for complexity 4-5 only.**
-
+**Use `/review` liberally. Use PLANNING/BUILDING for complexity 4-5 only.**

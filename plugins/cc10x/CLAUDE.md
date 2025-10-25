@@ -1,361 +1,445 @@
-# cc10x v2 - Reality-Based Development System
+# cc10x v3 - User Guide
 
-**One killer feature + Four systematic workflows**
+**The Perfect Fusion: Simplicity + Power**
 
-## ⚠️ Reality Check (Read This First)
+---
 
-### What cc10x Actually Is
+## Reality Check (Read This First!)
 
-**✅ What You're Getting:**
+### What cc10x v3 Actually Is
 
-**ONE EXCELLENT COMMAND:** `/review` ⭐⭐⭐⭐⭐
-- Uses working AI agents (security, quality, performance, UX, accessibility)
-- Runs in parallel (fast results)
-- Found 38 real issues in testing (5 CRITICAL)
-- Worth every token (one prevented breach = infinite ROI)
+**✅ ONE KILLER FEATURE:** `/cc10x review` ⭐⭐⭐⭐⭐
+- 5 parallel AI agents (security, quality, performance, UX, accessibility)
+- Found 38 real issues in testing (5 CRITICAL: SQL injection, secrets, auth bypass)
+- **Use before EVERY PR!**
 
-**FOUR SYSTEMATIC WORKFLOWS:**
-- `/feature-plan` ⭐⭐⭐☆☆ - Complexity assessment, File manifests, Rollback/Deployment plans
-- `/feature-build` ⭐☆☆☆☆ - TDD workflow (MUST verify outputs manually!)
-- `/bug-fix` ⭐⭐☆☆☆ - LOG FIRST debugging pattern
-- `/validate` ⭐⭐⭐☆☆ - Cross-artifact validation
+**✅ FOUR SYSTEMATIC WORKFLOWS:**
+- PLANNING ⭐⭐⭐☆☆ - Quick defaults → comprehensive planning (complexity 4-5)
+- BUILDING ⭐⭐☆☆☆ - TDD enforcement (requires manual test verification!)
+- DEBUGGING ⭐⭐⭐☆☆ - LOG FIRST pattern (saves hours of guessing)
+- VALIDATION ⭐⭐⭐☆☆ - Cross-artifact consistency (team projects)
 
-**HONEST POSITIONING:**
-- NOT faster (similar time, more systematic)
-- NOT token savings for simple tasks (3-20x MORE)
-- NOT autonomous (you do the work, we guide)
-- YES valuable for complexity 4-5
+**✅ HONEST POSITIONING:**
+- **Costs 3-20x MORE tokens than manual** (not savings!)
+- Valuable for complexity 4-5 (prevents costly mistakes)
+- Recommends SKIP for simple features (saves your tokens!)
+- Review workflow always worth it (prevents security breaches)
 
 ### What You're NOT Getting
 
 ❌ Autonomous AI magic (you do the work, prompts guide you)
-❌ Auto-triggering skills (commands explicitly invoke them)
-❌ Token savings for simple tasks (costs MORE for structure)
+❌ Token savings for simple tasks (costs MORE for systematic approach)
 ❌ Always better than manual (use for complex features only)
-❌ Guaranteed success (MUST verify test outputs manually)
+❌ Auto-triggering (use `/cc10x` command for reliability)
+
+### What's NEW in v3
+
+✅ **4+5 architecture** - 4 execution + 5 review agents (vs 11 overlapping)
+✅ **TRUE progressive disclosure** - 50-75% token savings (workflows load on-demand)
+✅ **Quick default plans** - Phase 0a avoids 120k waste on wrong assumptions
+✅ **End-to-end automation** - "plan and build" in one command
+✅ **PostToolUse hook** - Enforces <500 lines automatically
+✅ **Mandatory test verification** - Prevents false "tests passing" reports
+✅ **ONE workflow scales** - Simple to complex naturally
+
+**Inspired by:** cc10x_V2-main (simplicity) + cc10x v2 (proven patterns)
 
 ---
 
-## Quick Start: Use What Actually Works
+## Quick Start
 
-### Step 1: Try /review (The Killer Feature)
+### Step 1: Install
 
 ```bash
-/review src/your-code.js
+/plugin marketplace add romiluz13/cc10x
+/plugin install cc10x@cc10x
+```
+
+### Step 2: Try the Killer Feature
+
+```bash
+/cc10x review src/your-code.js
+```
+
+This ALWAYS works and ALWAYS provides value. Use liberally!
+
+---
+
+## The 5 Workflows
+
+### 1. REVIEW ⭐⭐⭐⭐⭐ (Always Worth It!)
+
+**Use:** Before EVERY PR, any complexity
+
+**Command:**
+```bash
+/cc10x review src/auth.js
+/cc10x audit src/features/payment/
 ```
 
 **What happens:**
-- 5 AI agents launch in parallel
-- Analyze code from 5 dimensions
-- Find real issues with specific fixes
-- Report findings with line numbers
+1. 5 agents launch in parallel (2-3 minutes)
+2. Security → SQL injection, XSS, auth bypasses
+3. Quality → Code smells, DRY/SOLID violations
+4. Performance → O(n²) loops, N+1 queries, caching
+5. UX → Error messages, loading states
+6. Accessibility → WCAG violations, keyboard nav
 
-**Real test results:**
-- Found: 38 issues (5 CRITICAL, 12 HIGH, 21 MODERATE/LOW)
-- CRITICAL: SQL injection, hardcoded secrets, auth bypass
-- Time: 2-3 minutes
+**Real results:**
+- Found: 38 issues (5 CRITICAL, 12 HIGH)
+- Time: 3 minutes
 - Tokens: 20k-50k
 
-**Verdict:** ⭐⭐⭐⭐⭐ (5/5 stars) - Actually works as advertised!
+**Verdict:** Worth EVERY token. One prevented breach >> infinite tokens.
 
-**Use before EVERY PR.**
+**Use before EVERY PR!**
 
 ---
 
-### Step 2: Consider Systematic Workflows (For Complex Features)
+### 2. PLANNING ⭐⭐⭐☆☆ (Complexity 4-5)
 
-The other 4 commands provide structured frameworks by explicitly invoking sub-agents and skills.
+**Use:** Complex features (500+ lines, 7+ files, architecture decisions)
 
-**When to use:**
-- Complex features (complexity 4-5: 500+ lines, 7+ files, novel patterns)
-- Team documentation needed (alignment, accountability)
-- Want to prevent common mistakes (systematic approach)
+**Skip:** Simple features (complexity 1-2: manual is 16x cheaper!)
 
-**When to skip:**
-- Simple features (complexity 1-2: <200 lines, using libraries)
-- Time-sensitive (manual faster)
-- Token budget matters (costs 3-20x MORE)
-- Solo dev, familiar pattern
-
-## The Commands Explained
-
-### /feature-plan ⭐⭐⭐☆☆
-
-**What it does:** Creates comprehensive feature plans with complexity assessment
-
-**When to use:** Complexity 4-5, need architecture decisions
-
-**When to skip:** Complexity 1-2 (just read library docs instead)
-
-**Example:**
+**Command:**
 ```bash
-/feature-plan Add real-time notifications with WebSockets
+/cc10x plan real-time notifications with WebSockets
 ```
 
-**Produces:**
-- Requirements & user stories
-- Architecture decisions (alternatives compared)
-- Risk assessment (Probability × Impact)
-- **Complexity assessment** (NEW! - Recommends skip if simple)
-- **File change manifest** (NEW! - Prevents scope creep)
-- **Rollback strategy** (NEW! - < 5 min recovery)
-- **Deployment plan** (NEW! - Staged rollout)
+**What happens:**
+1. **Phase 0:** Complexity check (1-5 scoring)
+   - If 1-2: "This is SIMPLE. Manual is 16x cheaper. Skip cc10x?"
+   - If 3: "Moderate complexity. Show token tradeoffs. Proceed?"
+   - If 4-5: "Complex. Systematic planning valuable. Proceeding..."
 
-**Time:** 5-10 minutes
-**Tokens:** 20k-40k (3-8x MORE than manual)
-**Value:** Prevents architecture mistakes (worth it for complex features)
+2. **Phase 0a:** Quick default plan (3-5k tokens) **[NEW in v3!]**
+   - Shows intelligent defaults (OAuth: NO, tokens: 15min/7day, etc.)
+   - Lists 5-7 critical assumptions
+   - OPTIONS: (a) Proceed / (b) Customize / (c) Manual
+   - **Prevents 120k waste if assumptions wrong!**
+
+3. **Phases 1-7:** Full planning (if user approves)
+   - Requirements (feature-planner agent) → PRD
+   - Architecture (architect agent) → Design + technology decisions
+   - Risk analysis (7 dimensions) → Edge cases identified
+   - Testing strategy → Unit/integration/e2e plans
+   - File manifest → CREATE/MODIFY/DELETE breakdown
+   - Rollback strategy → <5 min recovery
+   - Deployment strategy → 5-stage rollout
+
+**Output:** Comprehensive plan in `.claude/plans/FEATURE_[NAME].md`
+
+**Cost:** 30-60k tokens (vs 15k manual = 2-4x MORE)
+
+**Worth it:** Complexity 4-5 (prevents architecture mistakes >> token cost)
 
 ---
 
-### /feature-build ⭐☆☆☆☆
+### 3. BUILDING ⭐⭐☆☆☆ (Use with Caution)
 
-**What it does:** TDD workflow with risk analysis before each increment
+**Use:** Complexity 4-5, want strict TDD enforcement
 
-**When to use:** Complexity 4-5, want strict TDD enforcement
+**Skip:** Simple features, time-sensitive (manual often better)
 
-**When to skip:** Complexity <3, time-sensitive, need reliability
-
-**⚠️ CRITICAL:** Always manually verify tests pass! During testing, reported "✅ All 33 tests passing!" when 3/7 FAILED.
-
-**Example:**
+**Command:**
 ```bash
-/feature-build Implement authentication from plan
+/cc10x build from plan authentication
+
+# Or end-to-end (NEW in v3!):
+/cc10x plan and build authentication
 ```
 
-**Process:**
-- Context analysis (find patterns)
-- Break into increments
-- For each increment:
-  - Risk analysis (what could go wrong?)
-  - TDD cycle (RED-GREEN-REFACTOR)
-  - File manifest check
-  - **MANDATORY test verification** (you MUST see tests pass)
-- Multi-dimensional review (5 agents)
-- Finalization
+**What happens:**
+1. **Phase 0:** Strong complexity check
+   - If <=2: "STOP! Rate limiting test: cc10x WORSE than manual. Skip?"
 
-**Time:** 20-40 minutes
-**Tokens:** 40k-80k (8-16x MORE than manual)
-**Value:** Systematic TDD, but MUST verify outputs
+2. **Phase 1-2:** Context + task breakdown
+   - Finds similar features
+   - Creates TODO.md with file-size-aware tasks
 
-**Real test:** Rate limiting (complexity 2)
-- cc10x: 100k tokens, false success, tests failed
-- Manual: Would be 30 min, 5k tokens, working code
-- **Lesson:** Don't use for simple features!
+3. **Phase 3:** TDD implementation (sequential!)
+   - **For each increment:**
+     - Risk analysis (what could go wrong?)
+     - RED: Write failing test
+     - GREEN: Minimal implementation
+     - REFACTOR: Improve code
+     - File manifest check
+     - **MANDATORY verification:** User must confirm tests pass!
+
+4. **Phase 4:** Test generation (test-generator agent)
+   - Comprehensive tests (>80% coverage)
+   - **MANDATORY verification:** User runs `npm test`, confirms
+
+5. **Phase 5:** Multi-dimensional review (5 agents parallel)
+   - Fix CRITICAL issues before finalizing
+
+6. **Phase 6:** Finalization
+   - Remove debug code
+   - Update documentation
+   - Stage for commit
+
+**⚠️ CRITICAL:** v2 testing showed false "tests passing" reports. v3 REQUIRES you manually verify. Don't trust reports!
+
+**Cost:** 40-80k tokens (vs 20k manual = 2-4x MORE)
+
+**Worth it:** Complexity 4-5 with strict TDD needs
 
 ---
 
-### /bug-fix ⭐⭐☆☆☆
+### 4. DEBUGGING ⭐⭐⭐☆☆ (LOG FIRST Pattern)
 
-**What it does:** Enforces LOG FIRST debugging pattern
+**Use:** Complex bugs, root cause unclear, spent >30 min guessing
 
-**When to use:** Complex bugs, root cause unclear
+**Skip:** Obvious fixes, emergencies
 
-**When to skip:** Obvious fixes, emergencies, know the cause
-
-**Example:**
+**Command:**
 ```bash
-/bug-fix Rate limiting not blocking requests
+/cc10x debug rate limiting not blocking requests
 ```
 
 **The LOG FIRST Pattern:**
-1. Add comprehensive logging (see actual data)
-2. Reproduce bug (observe logs)
-3. Identify root cause (from actual data, not assumptions)
-4. Minimal fix with test
-5. Remove debug logging
+1. **Add logging** to see ACTUAL data (don't assume!)
+2. **Reproduce bug**, observe logs
+3. **Identify root cause** from actual data
+4. **Minimal fix** based on observations
+5. **Add regression test**
+6. **Remove debug logging**
 
-**Time:** 10-20 minutes
-**Tokens:** 15k-30k (5-10x MORE)
-**Value:** LOG FIRST pattern is brilliant (saves hours of guessing)
+**Real test:** Saved 2 hours by logging first instead of trying 5 random fixes.
 
-**Real test:** Saved 2 hours by logging first instead of guessing
+**Cost:** 15-30k tokens (vs 5k manual = 3-6x MORE)
+
+**Worth it:** Saves 1-3 hours of guessing (time >> tokens)
 
 ---
 
-### /validate ⭐⭐⭐☆☆
+### 5. VALIDATION ⭐⭐⭐☆☆ (Team Accountability)
 
-**What it does:** Validates plan-code-tests-docs consistency
+**Use:** Team projects, pre-PR checks
 
-**When to use:** Pre-PR checks, periodic audits
+**Skip:** Solo dev, no plan exists
 
-**When to skip:** No plan exists, already used `/feature-build`
-
-**Example:**
+**Command:**
 ```bash
-/validate
+/cc10x validate
 ```
 
-**Validates:**
-- Plan matches code (did we build what we planned?)
-- Code has tests (comprehensive coverage?)
-- Code documented (README updated?)
-- Risks mitigated (were mitigations implemented?)
-- **File manifest** (NEW! - Files match plan?)
+**What it checks:**
+1. Plan → Code (did we build what we planned?)
+2. Code → Tests (is code tested >80%?)
+3. Code → Docs (is code documented?)
+4. Risks → Mitigations (were risks addressed?)
+5. File Manifest → Actual (matches plan? scope creep?)
 
-**Time:** 5-10 minutes
-**Tokens:** 20k-45k
-**Value:** Consistency verification, team accountability
+**Cost:** 20-45k tokens
+
+**Worth it:** Team projects (prevents drift, enables accountability)
 
 ---
 
-## The 3-Layer Architecture (v2.0)
+## How to Invoke
+
+### Method 1: Slash Command (Recommended - Guaranteed)
+
+```bash
+/cc10x [your request]
+```
+
+**Why:** Brutal testing showed 0% natural language trigger rate. Slash command guarantees orchestrator loads.
+
+**Examples:**
+```bash
+/cc10x review src/auth.js
+/cc10x plan and build authentication
+/cc10x debug login timeout
+```
+
+### Method 2: Natural Language (May Not Trigger)
 
 ```
-LAYER 1: COMMANDS (Orchestration)
-  ↓ Thin files (150-300 lines) that invoke agents
+"Review this code for security"
+"Plan authentication feature"
+```
+
+**If skill triggers:** Works perfectly  
+**If skill doesn't trigger:** Nothing happens
+
+**Recommendation:** Use `/cc10x` for reliability
+
+---
+
+## Complexity Guide (Critical!)
+
+cc10x v3 **honestly** assesses complexity and recommends the right approach:
+
+### Complexity 1: TRIVIAL
+- **Files:** 1
+- **Lines:** <50
+- **Examples:** Config change, typo fix
+- **Recommendation:** ❌ Skip cc10x (manual 20x cheaper, just do it!)
+
+### Complexity 2: SIMPLE
+- **Files:** 2-3
+- **Lines:** 50-200
+- **Examples:** Add rate limiting (express-rate-limit), form validation (Zod)
+- **Recommendation:** ❌ Skip cc10x (follow library docs, manual 16x cheaper)
+
+**Real test:** Rate limiting (complexity 2)
+- cc10x: 100k tokens, 90 min, reported "tests passing", actually 3/7 FAILED
+- Manual: 5k tokens, 30 min, working code from library docs
+- **Verdict: cc10x was WORSE!**
+
+### Complexity 3: MODERATE
+- **Files:** 4-6
+- **Lines:** 200-500
+- **Examples:** Pagination with caching, file upload, search filters
+- **Recommendation:** ⚠️ Maybe (if team docs valued, otherwise manual better)
+
+### Complexity 4: COMPLEX
+- **Files:** 7-15
+- **Lines:** 500-1,000
+- **Examples:** Real-time notifications (WebSockets), complex state management
+- **Recommendation:** ✅ Use cc10x (prevents architecture mistakes)
+
+### Complexity 5: VERY COMPLEX
+- **Files:** 15+
+- **Lines:** >1,000
+- **Examples:** Multi-tenancy with data isolation, payment processing (Stripe)
+- **Recommendation:** ✅✅ Use cc10x (essential for success!)
+
+**Exception:** REVIEW always worth it (any complexity)
+
+---
+
+## The 4+5 Architecture
+
+### 4 Core Execution Agents (Sequential)
+
+**From cc10x_V2-main - proven simple architecture:**
+
+1. **feature-planner** - Product manager
+   - Creates: Comprehensive PRDs with user stories
+   - Scales: 200 lines (simple) to 1,000+ lines (complex)
+
+2. **architect** - System designer
+   - Creates: Architecture docs, technology decisions, file manifests
+   - Scales: 150 lines (simple) to 1,000+ lines (complex)
+
+3. **code-writer** - TDD enforcer
+   - Implements: With strict TDD (RED-GREEN-REFACTOR)
+   - Enforces: <500 lines per file, no placeholders, production-ready only
+
+4. **test-generator** - Testing specialist
+   - Creates: Comprehensive tests (>80% coverage)
+   - Requires: Mandatory user verification (you must run `npm test`)
+
+### 5 Review Agents (Parallel) ⭐⭐⭐⭐⭐
+
+**The ONLY truly autonomous agents:**
+
+5. **security-reviewer** - OWASP Top 10, SQL injection, XSS
+6. **quality-reviewer** - Code smells, DRY/SOLID, complexity
+7. **performance-analyzer** - O(n²), memory leaks, N+1 queries
+8. **ux-reviewer** - Error messages, loading states, UX friction
+9. **accessibility-reviewer** - WCAG 2.1 AA, keyboard, screen readers
+
+**Status:** Proven in brutal testing (found 38 real issues)
+
+---
+
+## TRUE Progressive Disclosure
+
+**The Innovation (from cc10x_V2-main):**
+
+```
+Old v2 (monolithic):
+→ Orchestrator SKILL.md: 1,325 lines
+→ ALL loaded when skill triggers
+→ ~13,000 tokens always
+
+New v3 (progressive):
+→ Core SKILL.md: 150 lines (~1,500 tokens)
+→ Workflow file: 300-600 lines (~3,000-6,000 tokens) - loaded on-demand
+→ Total: 4,500-7,500 tokens (only what's needed)
+
+Savings: 50-75%!
+```
+
+**How it works:**
+- You: `/cc10x review code`
+- Loads: Core (150 lines) + review workflow (400 lines) = 550 lines total
+- Doesn't load: plan, build, debug, validate workflows (not needed!)
+- **Token efficient!**
+
+---
+
+## Quick Default Plans (Phase 0a)
+
+**The Problem v3 Fixes:**
+
+```
+v2 behavior:
+→ User: "Plan authentication"
+→ cc10x: Generates 12 questions, never asks them
+→ Proceeds with assumptions
+→ 120k tokens later...
+→ User: "Wait, I wanted OAuth!"
+→ 120k tokens wasted on wrong assumptions
+```
+
+**v3 solution:**
+
+```
+v3 behavior:
+→ User: "/cc10x plan authentication"
+→ cc10x: Quick complexity check (5/5 - complex)
+→ Phase 0a: Quick default plan (3-5k tokens)
+  Shows assumptions:
+  - OAuth: NO (defer to v2)
+  - Tokens: 15min access, 7-day refresh
+  - Storage: httpOnly cookies
+  - Email verification: NO
   
-LAYER 2: SUB-AGENTS (Execution)
-  ↓ 11 specialized agents that load skills progressively
-  
-LAYER 3: SKILLS (Knowledge)
-  ↓ 17 rich knowledge bases with progressive loading
+  OPTIONS:
+  (a) Proceed with defaults (fast track, +30k)
+  (b) Customize (I'll ask questions, +40k)
+  (c) Manual (quick guidance, +2k, STOP)
+
+→ User validates BEFORE cc10x wastes 120k!
+
+If (a): 35k total (vs 120k)
+If (b): 45k with customization
+If (c): 7k then stops (huge savings!)
 ```
 
-### What This Enables
-
-**Progressive Loading (REAL in v2.0!):**
-
-Before (v1.x): Command loads 15k tokens upfront
-After (v2.0): Command loads 200 tokens → Agents load skills on-demand
-
-**Example (feature-plan):**
-- Command: 200 tokens
-- requirements-analyst: Loads Skill Stage 1 = 500 tokens
-- context-analyzer: Loads Skill Stages 1-2 = 1,100 tokens
-- architect: Loads Skill Stages 2-4 = 2,300 tokens
-- devops-planner: Loads Skill Stages 1-2 = 1,100 tokens
-- **Total: ~5,200 tokens (vs 15k before = 65% savings!)**
-
-If feature is simple (complexity < 3), stops early:
-- Only: 200 + 500 + 1,100 + 1,400 = 3,200 tokens
-- **79% savings with early termination!**
-
-**This is REAL progressive loading.** v1.x claim was false.
+**Prevents wasting tokens on wrong direction!**
 
 ---
 
-## The 11 Sub-Agents
+## End-to-End Automation
 
-### The 5 Working Agents (Review Command) ⭐⭐⭐⭐⭐
+**One Command, Complete Implementation:**
 
-**Used by:** `/review` exclusively
+```bash
+/cc10x plan and build authentication
+```
 
-1. **security-reviewer** - Finds SQL injection, XSS, auth bypasses
-2. **quality-reviewer** - Finds code smells, duplication, maintainability issues
-3. **performance-analyzer** - Finds O(n²) loops, memory leaks, bottlenecks
-4. **ux-reviewer** - Finds UX issues, error message problems
-5. **accessibility-reviewer** - Finds WCAG violations, keyboard navigation issues
+**What happens:**
+1. PLANNING workflow executes (with Phase 0a defaults)
+2. Plan saved to `.claude/plans/`
+3. **AUTO-CONTINUES to BUILDING** (no second command!)
+4. BUILD workflow implements with TDD
+5. Complete, tested implementation delivered
 
-**Status:** Fully working, parallel execution, 5⭐ verified
+**vs v2:** Had to run `/feature-plan`, then `/feature-build` separately
 
----
+**Supported:**
+- "plan and build" → PLAN + BUILD
+- "review and refactor" → REVIEW + BUILD
+- "debug and fix" → DEBUG + implementation
 
-### The 4 NEW Orchestration Agents (v2.0)
-
-**Used by:** Feature planning and building commands
-
-6. **architect** - Architecture decisions, complexity assessment, file manifests
-7. **devops-planner** - Rollback strategies, deployment plans
-8. **requirements-analyst** - Requirements gathering, user stories
-9. **tdd-enforcer** - Strict TDD enforcement, mandatory verification
-
-**Status:** v2.0 addition, progressively load skills, enforce quality gates
-
----
-
-### The 2 Implementation Agents
-
-10. **context-analyzer** - Finds similar features, extracts project patterns
-11. **implementer** - Feature implementation (can report false success - verify manually!)
-
-**Status:** Enhanced in v2.0 with File Manifest verification
-
----
-
-## The 17 Skills
-
-Skills are knowledge bases that agents load progressively:
-
-1. **accessibility-patterns** - WCAG patterns
-2. **bug-fixing** - Bug fix strategies
-3. **code-generation** - Code patterns
-4. **code-review-patterns** - Code smells, refactoring
-5. **code-reviewing** - Review methodologies
-6. **codebase-navigation** - Search strategies
-7. **feature-building** - Implementation patterns
-8. **feature-planning** - Planning frameworks (5 stages!)
-9. **performance-patterns** - Optimization techniques
-10. **safe-refactoring** - Refactoring patterns
-11. **security-patterns** - OWASP Top 10, secure coding
-12. **systematic-debugging** - LOG FIRST pattern
-13. **test-driven-development** - RED-GREEN-REFACTOR (3 stages!)
-14. **ui-design** - Lovable/Bolt-quality UI patterns
-15. **ux-patterns** - UX best practices
-16. **verification-before-completion** - Quality checklists
-17. **deployment-patterns** (NEW!) - Rollback & deployment strategies
-18. **risk-analysis** (NEW!) - "What Could Go Wrong?" 7-dimension methodology
-
-**Status:** Skills don't auto-trigger (must be explicitly invoked by agents)
-
----
-
-## When cc10x Shines (And When It Doesn't)
-
-### ✅ Use cc10x For:
-
-**Complexity 4-5 Features:**
-- 500-1000+ lines of code
-- 7+ files affected
-- Novel patterns (not in codebase)
-- Critical architecture decisions
-- High-risk changes (auth, payments, data integrity)
-
-**Security-Sensitive Code:**
-- Authentication/authorization
-- Payment processing
-- Data handling (PII, financial)
-- API endpoints (public-facing)
-
-**Team Collaboration:**
-- Need documentation for alignment
-- Want accountability (prove plan followed)
-- Enterprise compliance requirements
-
-**Examples that benefit:**
-- Real-time notifications with WebSockets
-- Multi-tenancy with data isolation
-- Payment processing with Stripe
-- Complex state management
-
----
-
-### ❌ Skip cc10x For:
-
-**Complexity 1-2 Features:**
-- <200 lines of code
-- Using well-documented libraries
-- Single file changes
-- Standard patterns
-
-**Time-Sensitive:**
-- Production emergencies
-- Quick hotfixes
-- Prototype/MVP development
-
-**Solo Development:**
-- Familiar patterns
-- No documentation needed
-- Comfortable with the technology
-
-**Examples that don't benefit:**
-- Add rate limiting with express-rate-limit (read library docs instead)
-- Add form validation with Zod (follow Zod docs)
-- Fix typo or syntax error (just fix it)
-
-**Real test:** Simple rate limiting
-- cc10x: 100k tokens, 90 minutes, tests failed
-- Manual: 5k tokens, 30 minutes, working code
-- **Verdict:** cc10x was WORSE for simple feature
+**From cc10x_V2-main end-to-end approach.**
 
 ---
 
@@ -363,291 +447,320 @@ Skills are knowledge bases that agents load progressively:
 
 ### The Reality
 
-cc10x uses **3-20x MORE tokens** than manual implementation, not savings.
+**cc10x v3 costs 3-20x MORE tokens than manual.**
 
-**Why?**
-- Systematic multi-phase analysis
-- Progressive skill loading still has overhead
-- Multiple specialized agents
-- Comprehensive documentation
+| Workflow | Simple (1-2) | Moderate (3) | Complex (4-5) | Worth It? |
+|----------|--------------|--------------|---------------|-----------|
+| REVIEW | 20k-50k | 20k-50k | 20k-50k | ✅✅ ALWAYS |
+| PLANNING | 40k vs 5k manual | 60k vs 10k manual | 60k vs 20k manual | ❌ / ⚠️ / ✅ |
+| BUILDING | 80k vs 10k manual | 100k vs 20k manual | 100k vs 40k manual | ❌ / ⚠️ / ✅ |
+| DEBUGGING | 25k vs 8k manual | 25k vs 8k manual | 30k vs 10k manual | ⚠️ Maybe |
+| VALIDATION | 35k | 35k | 45k | ⚠️ Teams only |
 
-**Is it worth it?**
+**Simple (1-2):** ❌ Skip cc10x (manual 8-20x cheaper and often better)
+**Moderate (3):** ⚠️ Maybe (if team docs valued, otherwise skip)
+**Complex (4-5):** ✅ Use cc10x (prevents mistakes >> token cost)
 
-| Feature Complexity | Tokens (cc10x) | Tokens (Manual) | Worth It? |
-|-------------------|----------------|-----------------|-----------|
-| 1 (TRIVIAL) | 40k | 2k | ❌ NO (20x more!) |
-| 2 (SIMPLE) | 80k | 5k | ❌ NO (16x more!) |
-| 3 (MODERATE) | 100k | 15k | ⚠️ MAYBE (7x more) |
-| 4 (COMPLEX) | 120k | 30k | ✅ YES (4x more, prevents rework) |
-| 5 (VERY COMPLEX) | 180k | 50k | ✅✅ YES (4x more, prevents disasters) |
+**Exception:** REVIEW always worth it!
 
-**The ROI Calculation:**
-- Complexity 1-2: Waste of tokens (just implement manually)
-- Complexity 3: Borderline (worth it IF team docs valued)
-- Complexity 4-5: Worth it (one prevented architecture mistake pays for planning)
+---
 
-**Special case - /review:**
-- Always worth it (prevents security breaches, performance bugs)
-- Use before EVERY PR regardless of complexity
+## When to Use cc10x v3
+
+### ✅ Always Use REVIEW
+
+- Before EVERY PR
+- Security audits
+- Performance checks
+- Any complexity
+- **One prevented breach >> all tokens ever used**
+
+### ✅ Use PLANNING for:
+
+- Complexity 4-5 features (500+ lines, 7+ files)
+- Novel patterns (not in codebase)
+- High-risk domains (auth, payments, data)
+- Architecture decisions needed
+- Team alignment required
+
+**Examples:**
+- Real-time notifications (WebSockets)
+- Multi-tenancy (data isolation)
+- Payment processing (Stripe integration)
+- Complex state management
+
+### ✅ Use BUILDING for:
+
+- Complexity 4-5 (want strict TDD)
+- High-risk implementations
+- Need systematic quality
+
+**⚠️ Warning:** Requires manual test verification (can report false success)
+
+### ✅ Use DEBUGGING for:
+
+- Complex bugs (root cause unclear)
+- Spent >30 min without progress
+- Multiple interacting systems
+- LOG FIRST saves time
+
+### ❌ Skip cc10x For:
+
+- Simple features (complexity 1-2)
+  - Add rate limiting with library
+  - Form validation with Zod
+  - Simple CRUD operations
+  - **Just read library docs! 16-20x cheaper**
+
+- Obvious fixes
+  - Typos, syntax errors
+  - Missing imports
+  - Clear from error message
+
+- Emergencies
+  - Production down
+  - Fix now, document later
+
+- Prototypes/MVPs
+  - Iterate fast first
+  - Systematize later
+
+**v3 will honestly tell you to skip if manual is better!**
+
+---
+
+## Quality Enforcement
+
+### PostToolUse Hook (Automatic)
+
+**After EVERY Write/Edit:**
+- ✅ File size validated
+- ✅ Warning if >500 lines
+- ✅ Split suggestions provided
+
+**Example:**
+```
+⚠️ WARNING: src/auth/service.ts exceeds 500 lines (652 lines)
+
+USER RULE VIOLATION: Files must be < 500 lines!
+
+Split immediately:
+  - Components: <200 lines
+  - Utilities: <300 lines
+  - Services: <400 lines
+
+Example:
+  auth/service.ts (652 lines)
+    ↓ Split into:
+  auth/core.ts (350 lines)
+  auth/validation.ts (200 lines)
+  auth/utils.ts (102 lines)
+```
+
+**From cc10x_V2-main hooks - actually enforces, not just recommends!**
+
+### code-writer Enforcement
+
+- ✅ No placeholders or TODOs (rejects "implement this later")
+- ✅ Production-ready only
+- ✅ Comprehensive error handling (all failure paths)
+- ✅ Input validation (all functions)
+- ✅ TypeScript for JavaScript
+- ✅ DRY and SOLID principles
+
+### test-generator Requirements
+
+- ✅ >80% coverage target
+- ✅ Meaningful tests (not just coverage numbers)
+- ✅ Unit + integration + e2e (based on complexity)
+- ✅ **MANDATORY user verification** (prevents false reports)
 
 ---
 
 ## Best Practices
 
-### 1. Start with /review
+### 1. Always Start with /cc10x review
 
 ```bash
-# ALWAYS start here (it actually works!)
-/review src/your-changes.js
+/cc10x review src/
 ```
 
-This is the ONLY command guaranteed to work. It will find real issues.
+This is the ONLY universally valuable workflow. Use before every PR.
 
 ---
 
 ### 2. Check Complexity Before Planning
 
-**Quick assessment:**
-- How many files? (<3 = simple, 7-15 = complex)
-- Using library? (simple) or novel pattern? (complex)
-- High-risk? (auth/payments = complex regardless of size)
+**Quick mental check:**
+- Files: <3 = simple (skip cc10x)
+- Files: 7+ = complex (use cc10x)
+- Library or novel? Library = simple
+- Auth/payment? = Complex (high-risk overrides)
 
-**If complexity < 3:** Skip cc10x, implement manually
-**If complexity >= 4:** Use `/feature-plan`
-
----
-
-### 3. ALWAYS Verify Test Outputs
-
-**During testing, /feature-build reported:**
-> "✅ All 33 tests passing!"
-
-**Reality:** 3 out of 7 tests FAILED
-
-**You MUST:**
-```bash
-npm test  # Run actual tests
-echo $?   # Verify exit code = 0
-# SEE the results with your eyes
-```
-
-**Never trust workflow success reports. Always verify independently.**
+**If complexity <=2:** Manual is 16-20x cheaper!
 
 ---
 
-### 4. Use LOG FIRST for Complex Bugs
-
-If you've spent >30 minutes guessing on a bug:
+### 3. Use End-to-End for Complex
 
 ```bash
-/bug-fix Description of the bug
+/cc10x plan and build real-time notifications
 ```
 
-The LOG FIRST pattern will save you hours by forcing you to see actual data before fixing.
+One command, complete implementation!
 
 ---
 
-### 5. Know When to Go Manual
+### 4. Always Verify Tests Manually
 
-**cc10x is NOT always better.** Go manual when:
-- Simple feature (follow library docs faster)
-- Emergency (fix now, document later)
-- Time-sensitive (similar time but manual more direct)
-- Token budget (cc10x is expensive)
-
-**No shame in skipping cc10x for simple tasks!**
-
----
-
-## How It Works
-
-### The 3-Layer Architecture
-
-```
-YOU type: /feature-plan Add authentication
-  ↓
-COMMAND (Layer 1): Thin orchestrator (200 tokens)
-  ↓ Invokes agents in sequence
-SUB-AGENTS (Layer 2): Specialized workers (11 agents)
-  ↓ Load skills progressively
-SKILLS (Layer 3): Knowledge bases (17 skills, 500-2000 lines each)
-  ↓ Provide frameworks, patterns, checklists
-RESULT: Comprehensive plan with 7 phases
-```
-
-**Progressive Loading:**
-- Commands don't embed instructions (v1.x was 15k tokens upfront)
-- Agents load ONLY the skill stages they need
-- Real token savings: 65-83% (vs v1.x embedded approach)
-
-**Example (feature-plan):**
-```
-Phase 1: Invoke requirements-analyst
-  → Loads feature-planning Skill Stage 1 (500 tokens)
-  
-Phase 2: Invoke context-analyzer
-  → Loads codebase-navigation Skill Stages 1-2 (1,100 tokens)
-  
-Phase 3: Invoke architect
-  → Loads feature-planning Skill Stage 2 (800 tokens)
-  
-Phase 3a: Same agent (NEW!)
-  → Loads risk-analysis Stages 1+5 (1,400 tokens)
-  
-Phase 3b: Same agent
-  → Loads feature-planning Skill Stage 3 (400 tokens)
-  
-Phase 3c: Same agent (NEW!)
-  → Loads feature-planning Skill Stage 4 - Complexity (600 tokens)
-  → If complexity < 3: Recommends skip cc10x!
-  
-If complexity >= 4, continues...
-Phase 4-7: Testing, Roadmap, Manifest, Rollback, Deployment
-  → Additional 1,400 tokens
-
-Total: ~5,200 tokens (simple) or ~6,600 tokens (complex)
-
-vs v1.x: 15,000 tokens upfront
-
-Savings: 65-79% (REAL progressive loading!)
-```
-
----
-
-## What's NEW in v2.0
-
-### 1. Risk Analysis Everywhere
-
-**"What Could Go Wrong?" 7-Dimension Methodology:**
-
-Invoked at multiple phases:
-- **Planning:** architect invokes Stages 1+5 (Data Flow + Security)
-- **Implementation:** tdd-enforcer invokes Stages 1+3+7 (before each increment)
-- **Review:** quality-reviewer invokes ALL 7 stages (comprehensive)
-
-**7 Dimensions:**
-1. Data Flow & Transformations
-2. Dependency & Integration Mapping
-3. Timing, Concurrency & State
-4. User Experience & Human Factors
-5. Security & Validation
-6. Performance & Scalability
-7. Failure Modes & Recovery
-
-**Result:** Finds edge cases BEFORE they become production bugs
-
----
-
-### 2. Cursor IDE Enhancements Integrated
-
-**Complexity Assessment (Phase 3c):**
-- 1-5 scoring (TRIVIAL → VERY COMPLEX)
-- Honest recommendation (skip cc10x if < 3)
-- Token economics comparison
-
-**File Change Manifest (Phase 5b):**
-- CREATE/MODIFY/DELETE breakdown
-- LOC estimates
-- Integration points
-- Prevents scope creep
-
-**Rollback Strategy (Phase 6):**
-- Level 1: Feature flag (< 5 min)
-- Level 2: Configuration (< 10 min)
-- Level 3: Code rollback (< 15 min)
-
-**Deployment Plan (Phase 7):**
-- 5-stage rollout (Infrastructure → Canary → Partial → Full)
-- Risk-aware sequencing
-- Monitoring dashboards
-
----
-
-### 3. Mandatory Test Verification
-
-**Problem (v1.x):** Agents reported false success
-
-**Solution (v2.0):** Mandatory independent verification
+**Never trust "tests passing" reports!**
 
 ```bash
-# You MUST run and verify:
 npm test
 echo $?  # Must be 0
-
-# Don't trust reports, see results with YOUR EYES
 ```
 
----
-
-### 4. Honest Positioning
-
-**v1.x claims (FALSE):**
-- "93% token savings" ❌
-- "Auto-triggering skills" ❌
-- "10x faster" ❌
-- "Always better" ❌
-
-**v2.0 reality (HONEST):**
-- "65-79% savings vs v1.x embedded prompts" ✅
-- "3-20x MORE tokens than manual" ✅
-- "More systematic, not faster" ✅
-- "Better for complexity 4-5 only" ✅
+See results with YOUR EYES before proceeding.
 
 ---
 
-## Complexity Guide
+### 5. Trust the Complexity Assessment
 
-Use this to decide if cc10x adds value:
+When orchestrator says:
+- "This is SIMPLE (2/5), manual is 16x cheaper" → **Listen!**
+- "This is COMPLEX (5/5), systematic planning prevents disasters" → **Proceed!**
 
-### Complexity 1: TRIVIAL
-- **Example:** Add form field validation
-- **Files:** 1
-- **Lines:** <50
-- **Decision:** ❌ Skip cc10x (5-10 min manual)
+**Don't force cc10x on simple features.**
 
-### Complexity 2: SIMPLE
-- **Example:** Add rate limiting with express-rate-limit
-- **Files:** 2-3
-- **Lines:** 50-200
-- **Decision:** ❌ Skip cc10x (follow library docs)
+---
 
-### Complexity 3: MODERATE
-- **Example:** Add pagination with caching
-- **Files:** 4-6
-- **Lines:** 200-500
-- **Decision:** ⚠️ Maybe (if team docs valued)
+## Comparison
 
-### Complexity 4: COMPLEX
-- **Example:** Real-time notifications with WebSockets
-- **Files:** 7-15
-- **Lines:** 500-1000
-- **Decision:** ✅ Use cc10x (prevents mistakes)
+### cc10x v3 vs v2
 
-### Complexity 5: VERY COMPLEX
-- **Example:** Multi-tenancy with data isolation
-- **Files:** 15+
-- **Lines:** >1000
-- **Decision:** ✅✅ Use cc10x (essential!)
+**Simpler:**
+- 9 agents vs 11 (4+5 clear architecture)
+- 150-line core vs 1,325-line monolith
+
+**More Efficient:**
+- 50-75% token savings (progressive workflows)
+- 65-95% waste prevention (Phase 0a)
+
+**More Honest:**
+- Recommends skip for simple features
+- Shows real token economics
+- Requires manual verification
+
+**More Powerful:**
+- End-to-end automation
+- PostToolUse hook enforcement
+- Quick default validation
+
+**Inspired by:**
+- cc10x_V2-main (simplicity, progressive disclosure)
+- cc10x v2 (5-star review, risk analysis)
+
+---
+
+## Common Questions
+
+### Q: Why costs MORE tokens if it has progressive loading?
+
+**A:** Progressive loading (v3) saves 50-75% vs monolithic (v2), but BOTH cost more than manual because systematic analysis has overhead.
+
+- Manual: 5-50k tokens (ad-hoc implementation)
+- v2 monolithic: 80-180k tokens (loaded everything)
+- v3 progressive: 30-100k tokens (loads only needed workflows)
+
+**v3 is more efficient than v2, but both cost more than manual.**
+
+### Q: When should I actually use cc10x?
+
+**A:** 
+- REVIEW: Always (before every PR)
+- PLANNING: Complexity 4-5 only
+- BUILDING: Complexity 4-5, want TDD
+- DEBUGGING: Complex bugs
+- VALIDATION: Team projects
+
+**Skip for simple features!**
+
+### Q: What if I'm not sure about complexity?
+
+**A:** Run `/cc10x plan [feature]` - it will assess complexity and recommend:
+- "Skip cc10x, manual is 16x cheaper" (complexity 1-2)
+- "Show tradeoffs, your call" (complexity 3)
+- "Proceeding, cc10x valuable" (complexity 4-5)
+
+**Trust the assessment!**
+
+### Q: Can I force cc10x for simple features?
+
+**A:** Yes, but orchestrator will warn:
+```
+⚠️ This is SIMPLE (2/5). Manual is 16x cheaper.
+
+Real test showed cc10x WORSE for simple features.
+
+Proceed anyway? (costs 80k tokens for 5k-value feature)
+```
+
+If you confirm, it will proceed (but not recommended!).
+
+### Q: How do I know if tests actually pass?
+
+**A:** You MUST run tests yourself:
+```bash
+npm test
+echo $?  # Verify = 0
+```
+
+v2 testing showed false reports. v3 requires your eyes on results.
+
+---
+
+## File Limits
+
+**USER RULE (enforced by PostToolUse hook):**
+
+- Components: <200 lines
+- Utilities: <300 lines
+- Services: <400 lines
+- Config: <100 lines
+- **Maximum: 500 lines (hard limit)**
+
+**Hook validates after EVERY file write.**
+
+---
+
+## Support
+
+- **Quick Start:** [QUICK-START.md](../../QUICK-START.md)
+- **Technical Details:** [README.md](../../README.md)
+- **Changelog:** [CHANGELOG.md](../../CHANGELOG.md)
+- **Issues:** https://github.com/romiluz13/cc10x/issues
 
 ---
 
 ## Remember
 
-cc10x is **structured prompt engineering**, not magic automation.
+**cc10x v3 = The Perfect Fusion**
 
-**Benefits:**
-- `/review` actually works (5⭐, use liberally)
-- Systematic workflows prevent common mistakes
-- "What Could Go Wrong?" finds edge cases early
-- Good for complex features (4-5 complexity)
+**Best of:**
+- cc10x_V2-main (simplicity, efficiency, enforcement)
+- cc10x v2 (5-star review, risk analysis, honesty)
 
-**Limitations:**
-- Expensive (3-20x more tokens)
-- Not faster (similar time, more systematic)
-- Must verify outputs (agents can report false success)
-- Overkill for simple features
+**Result:**
+- Simpler (4+5 vs 11 agents)
+- More efficient (50-75% progressive savings)
+- More honest (recommends skip for simple)
+- More powerful (end-to-end automation)
+- More reliable (mandatory verification)
 
 **Philosophy:**
-Use the right tool for the job. Simple features? Go manual. Complex features? Use cc10x.
+Use the right tool for the job.
+- Simple? Go manual (16-20x cheaper).
+- Complex? Use cc10x (prevents costly mistakes).
+- Review? ALWAYS use (prevents disasters).
 
-**Start with `/review` - it's the best part of cc10x!**
+**Start with `/cc10x review` - the killer feature!**

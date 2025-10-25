@@ -67,16 +67,27 @@ tmp/
 # Planning and development docs
 docs/
 pre-deployment-review/
+cc10x_V2-main/
 *.plan.md
 *-COMPLETE.md
 *-PROGRESS.md
-*-VALIDATION.md
+*-VALIDATION*.md
+*-REPORT.md
 *-SUMMARY.md
 ORCHESTRATION-MAP.md
 IMPLEMENTATION-*.md
 READY-FOR-*.md
+DEPLOY-*.md
+FINAL-*.md
+SKILLS-FIRST-*.md
+V2-*.md
+V3-*.md
+
+# Backup files
+*.backup
 
 # Keep only production-ready docs
 !README.md
 !LICENSE
 !CHANGELOG.md
+!QUICK-START.md

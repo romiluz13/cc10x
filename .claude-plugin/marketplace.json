@@ -6,14 +6,14 @@
     "url": "https://github.com/romiluz13"
   },
   "metadata": {
-    "description": "cc10x v2 - Reality-based development: /review (5-star) + systematic workflows for complex features",
-    "version": "2.0.0"
+    "description": "cc10x v3 - The perfect fusion: 4+5 architecture + TRUE progressive disclosure + end-to-end automation",
+    "version": "3.0.0"
   },
   "plugins": [
     {
       "name": "cc10x",
-      "description": "cc10x v2: Skills-first architecture with ONE master orchestrator skill + 11 sub-agents + 18 domain skills. /review (5-star working AI agents), 4 systematic workflows via orchestrator. Features: 'What Could Go Wrong?' risk analysis, Complexity Assessment, File Manifests, Rollback/Deployment strategies. Real 65-79% progressive loading savings. Honest: 3-20x MORE tokens than manual, use for complexity 4-5. Follows official Anthropic patterns.",
-      "version": "2.0.0",
+      "description": "cc10x v3: Perfect fusion combining cc10x_V2-main simplicity with proven v2 patterns. 4+5 architecture (4 core execution + 5 parallel review agents), 20 domain skills, TRUE progressive disclosure (50-75% token savings). End-to-end automation (plan and build in one flow), quick default plans (avoid 120k waste), ONE workflow scales naturally. /review 5-star (always worth it). PostToolUse hook enforces <500 lines. Honest: 3-20x MORE tokens than manual, use for complexity 4-5.",
+      "version": "3.0.0",
       "author": {
         "name": "Rom Iluz",
         "email": "rom.iluz13@gmail.com",
@@ -25,12 +25,12 @@
         "risk-analysis",
         "complexity-assessment",
         "tdd",
-        "systematic-workflows",
-        "progressive-loading",
-        "rollback-strategy",
-        "deployment-planning",
-        "what-could-go-wrong",
-        "log-first"
+        "progressive-disclosure",
+        "end-to-end-automation",
+        "4-plus-5-architecture",
+        "log-first",
+        "true-progressive-loading",
+        "cc10x-v2-main-fusion"
       ],
       "source": "./plugins/cc10x"
     }

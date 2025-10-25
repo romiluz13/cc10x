@@ -56,6 +56,28 @@
       }
     ],
     
+    "PostToolUse": [
+      {
+        "description": "Validate file size after Write/Edit operations (enforces <500 lines USER RULE)",
+        "matcher": "Write|Edit",
+        "priority": 100,
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/scripts/validate-file-size.sh",
+            "timeout": 10000,
+            "async": false,
+            "required": false,
+            "on_error": "warn",
+            "retry": {
+              "max_attempts": 1,
+              "backoff_ms": 0
+            }
+          }
+        ]
+      }
+    ],
+    
     "PostCommand": [
       {
         "description": "Track command execution metrics (optional, future enhancement)",
