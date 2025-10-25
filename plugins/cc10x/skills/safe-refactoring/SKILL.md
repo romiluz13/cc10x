@@ -1,16 +1,7 @@
 ---
-name: Safe Refactoring
-description: |
-  Performs behavior-preserving code improvements including formatting, import cleanup, unused code removal, and safe transformations. Use when cleaning up code without changing functionality.
-  
-  Trigger phrases: "refactor", "clean up code", "organize imports", "remove unused",
-  "format code", "safe refactor", "refactoring", "clean this up",
-  "reorganize code", "simplify", "extract function", "rename variable",
-  "code cleanup", "improve structure", "safe improvements".
-  
-  Activates on: refactoring tasks, code cleanup, structure improvements,
-  safe transformations, formatting cleanup, unused code removal.
-progressive: true
+name: safe-refactoring
+description: Performs behavior-preserving code improvements including formatting, import organization, unused code removal, function extraction, variable renaming, and safe structural transformations without changing functionality. Use when cleaning up code after implementation, organizing imports, removing unused exports, simplifying complex functions through extraction, renaming for clarity, or improving code structure while keeping tests green. Emphasizes safety (tests must pass before and after), incremental changes (one refactoring at a time), and reversibility (can revert if tests break). Loaded when refactoring tasks needed or by quality-reviewer when suggesting code improvements. Critical principle tests must remain green throughout refactoring process.
+license: MIT
 ---
 
 # Safe Refactoring

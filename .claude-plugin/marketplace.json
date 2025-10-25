@@ -6,14 +6,14 @@
     "url": "https://github.com/romiluz13"
   },
   "metadata": {
-    "description": "cc10x Plugin Marketplace - Professional development tools for 10x productivity with Claude Code",
-    "version": "1.1.0"
+    "description": "cc10x v2 - Reality-based development: /review (5-star) + systematic workflows for complex features",
+    "version": "2.0.0"
   },
   "plugins": [
     {
       "name": "cc10x",
-      "description": "Intelligent orchestration system combining commands, sub-agents, and skills. Features comprehensive feature planning, TDD enforcement, systematic debugging (LOG FIRST), multi-dimensional code review, cross-artifact validation, and Lovable/Bolt-quality UI generation. Includes 5 commands, 7 sub-agents, 16 skills, and 3 automation hooks for 10x developer productivity.",
-      "version": "1.1.0",
+      "description": "cc10x v2: Skills-first architecture with ONE master orchestrator skill + 11 sub-agents + 18 domain skills. /review (5-star working AI agents), 4 systematic workflows via orchestrator. Features: 'What Could Go Wrong?' risk analysis, Complexity Assessment, File Manifests, Rollback/Deployment strategies. Real 65-79% progressive loading savings. Honest: 3-20x MORE tokens than manual, use for complexity 4-5. Follows official Anthropic patterns.",
+      "version": "2.0.0",
       "author": {
         "name": "Rom Iluz",
         "email": "rom.iluz13@gmail.com",
@@ -21,16 +21,16 @@
       },
       "homepage": "https://github.com/romiluz13/cc10x",
       "tags": [
-        "orchestration",
-        "productivity",
-        "tdd",
         "code-review",
-        "feature-planning",
-        "systematic-debugging",
-        "multi-dimensional-review",
-        "ui-design",
+        "risk-analysis",
+        "complexity-assessment",
+        "tdd",
+        "systematic-workflows",
         "progressive-loading",
-        "auto-healing"
+        "rollback-strategy",
+        "deployment-planning",
+        "what-could-go-wrong",
+        "log-first"
       ],
       "source": "./plugins/cc10x"
     }

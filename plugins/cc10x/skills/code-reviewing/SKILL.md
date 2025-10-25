@@ -1,16 +1,7 @@
 ---
 name: code-reviewing
-description: |
-  Comprehensive multi-dimensional code review launching 5 parallel specialized reviewers (security, quality, performance, UX, accessibility) for complete analysis. Use for thorough code review before merging.
-  
-  Trigger phrases: "review code", "code review", "review this", "check code",
-  "audit code", "review", "code audit", "review changes",
-  "check quality", "review PR", "code analysis", "comprehensive review",
-  "multi-dimensional review", "review before merge", "full code review".
-  
-  Activates on: code review requests, PR reviews, pre-merge checks,
-  comprehensive code analysis, multi-dimensional audits, quality assessments.
-progressive: true
+description: Comprehensive multi-dimensional code review methodology coordinating 5 parallel specialized reviewers (security, quality, performance, UX, accessibility) for complete systematic analysis. Use when conducting thorough code reviews before merging, performing PR reviews, auditing code quality, checking for security vulnerabilities, analyzing performance, or ensuring production readiness. Provides review framework for parallel agent invocation, finding consolidation, priority assessment, and actionable recommendations. Real-world testing found 38 issues including 5 CRITICAL (SQL injection, hardcoded secrets, auth bypass). The framework behind cc10x master orchestrator REVIEW workflow. Critical for pre-merge checks, security audits, and maintaining high code quality standards.
+license: MIT
 ---
 
 # Code Reviewing - Multi-Dimensional Analysis Workflow

@@ -1,16 +1,7 @@
 ---
-name: Test-Driven Development
-description: |
-  Enforces strict RED-GREEN-REFACTOR methodology for all code implementation. Use when implementing features, fixing bugs, or modifying behavior - requires writing failing test FIRST before any production code.
-  
-  Trigger phrases: "implement", "add feature", "write code", "create function",
-  "build", "develop feature", "implement function", "add functionality",
-  "test-driven", "TDD", "write tests first", "test first",
-  "implement with tests", "add tests", "test coverage".
-  
-  Activates on: feature implementation, bug fixes, behavior modifications,
-  any code writing task, function creation, production code development.
-progressive: true
+name: test-driven-development
+description: Enforces strict RED-GREEN-REFACTOR methodology for all code implementation with mandatory test verification to prevent false success reports. Provides 3 progressive stages (TDD cycle patterns, quick reference for test-first development, and mandatory verification procedures). Use when implementing features with strict test-first discipline, fixing bugs with reproducible tests, or ensuring code quality through TDD. Requires writing failing test FIRST before any production code. Loaded by tdd-enforcer agent during BUILDING and DEBUGGING workflows. Stage 3 (Mandatory Verification) prevents false "all tests passing" claims by requiring independent verification (run actual test command, verify exit code equals zero, see results with your eyes). Critical for preventing the pattern where agents report success when tests actually failed.
+license: MIT
 ---
 
 # Test-Driven Development (TDD)
@@ -396,3 +387,148 @@ test('handles operation failure', async () => {
 - ❌ Rationalizations made
 
 **Discipline beats talent. TDD is discipline.**
+
+---
+
+### Stage 3: Mandatory Verification (~400 tokens)
+
+**Purpose:** Prevent false success reports like "✅ All 33 tests passing!" when tests actually failed
+
+**The Problem (Real Example from Brutal Testing):**
+- Workflow reported: "All 33 tests passing!"
+- Reality: 3 out of 7 tests FAILED
+- Root cause: Reports not verified independently
+
+**The Solution: MANDATORY Verification**
+
+You MUST verify independently after ANY test execution:
+
+#### Verification Procedure
+
+**Step 1: Run Actual Test Command**
+```bash
+# Your project's test command
+npm test
+# or pytest
+# or cargo test
+# or go test
+# or mvn test
+```
+
+**Step 2: Capture REAL Output**
+
+Do not summarize. Copy the actual console output.
+
+**Step 3: Verify Exit Code**
+```bash
+echo $?  # MUST be 0 for success
+```
+
+**Step 4: Visual Confirmation**
+
+LOOK at the output with YOUR EYES. See ✓ symbols, green text, "X passed" messages.
+
+#### Required Checklist
+
+- [ ] All tests run (none skipped or filtered out)
+- [ ] All tests pass (see green ✓ symbols)
+- [ ] Exit code is 0 (verified with echo $?)
+- [ ] No warnings about failures in output
+- [ ] Actual output captured (not summarized)
+
+#### Quality Gate
+
+**YOU MUST SEE passing tests with YOUR EYES.**
+
+Do NOT say: "✅ All tests passing!"
+
+DO say: "Verified: npm test shows 33/33 passing (exit code 0). Output:\n[paste actual]"
+
+#### If Tests Fail
+
+**STOP immediately. Do NOT proceed.**
+
+1. Don't move to next increment
+2. Don't report partial success
+3. Investigate failure root cause
+4. Fix implementation or test
+5. Re-run until ALL pass
+6. Only then report success WITH PROOF
+
+#### Example: Correct Reporting
+
+```markdown
+## Test Verification
+
+**Command:** `npm test`
+
+**Output:**
+```
+PASS tests/auth.test.js
+  JWT Authentication
+    ✓ should generate valid token (45ms)
+    ✓ should reject invalid password (32ms)
+    ✓ should handle missing email (28ms)
+
+Tests: 3 passed, 3 total
+Snapshots: 0 total
+Time: 1.234s
+```
+
+**Exit code:** 0 (verified)
+
+**Verification:** ✅ All 3 tests passing independently confirmed
+
+**Proceeding to next increment**
+```
+
+#### Example: Failure Handling
+
+```markdown
+## Test Verification - FAILED
+
+**Command:** `npm test`
+
+**Output:**
+```
+FAIL tests/auth.test.js
+  JWT Authentication
+    ✓ should generate valid token
+    ✕ should reject invalid password (expected 401, got 500)
+    ✕ should handle missing email (expected 400, got 500)
+
+Tests: 1 passed, 2 failed, 3 total
+```
+
+**Exit code:** 1 (FAILURE)
+
+**Action:** STOPPING implementation. Fixing failures now.
+
+**Root cause:** Error handling not implemented for edge cases
+
+**Fix applied:** Added try/catch with proper HTTP status codes
+
+**Retry result:** All 3 tests now passing ✅
+
+**Now proceeding to next increment**
+```
+
+#### Anti-Patterns to Avoid
+
+❌ **Don't:** Trust your own success reports without verification
+✅ **Do:** Always run tests and see results
+
+❌ **Don't:** Summarize test output ("tests passed")
+✅ **Do:** Paste actual output with line counts
+
+❌ **Don't:** Assume exit code without checking
+✅ **Do:** Explicitly verify with `echo $?`
+
+❌ **Don't:** Proceed if ANY test fails
+✅ **Do:** Stop and fix until 100% pass
+
+#### Why This Stage Exists
+
+The "brutal truth" testing revealed that implementer agents reported false success. This stage exists to FORCE verification and prevent that pattern.
+
+**Every test execution MUST go through this verification checklist.**

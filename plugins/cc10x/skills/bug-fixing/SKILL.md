@@ -1,16 +1,7 @@
 ---
 name: bug-fixing
-description: |
-  Complete bug-fixing workflow using LOG FIRST pattern (add comprehensive logging before fixing) to prevent assumption-driven debugging. Use for all bug reports and debugging tasks.
-  
-  Trigger phrases: "fix bug", "bug fix", "debug issue", "fix error",
-  "broken", "not working", "issue", "problem", "bug",
-  "fix this", "resolve issue", "troubleshoot bug", "debug problem",
-  "fix defect", "resolve bug", "bug report".
-  
-  Activates on: bug reports, error fixing, production issues, test failures,
-  defect resolution, broken functionality, unexpected behavior fixes.
-progressive: true
+description: Complete bug-fixing workflow using LOG FIRST pattern to prevent assumption-driven debugging that wastes hours. Always verify runtime data by adding comprehensive logging BEFORE making fixes, then fix based on observed data rather than assumptions. Use when debugging issues where root cause is unclear, fixing bugs in production systems, investigating test failures, resolving unexpected behavior, or troubleshooting integration problems. Prevents wasting time on random fix attempts by forcing systematic investigation. Loaded by tdd-enforcer agent during DEBUGGING workflow or master orchestrator skill when bug-fixing tasks detected.
+license: MIT
 ---
 
 # Bug Fixing - Systematic Debugging Workflow
@@ -45,6 +36,68 @@ Bug fixes are **lightweight workflows** (12-17 minutes) and typically don't need
 - [ ] Phase 4: Implement fix with failing test first (5-7 min)
 - [ ] Phase 5: Verify fix and run regression tests (2-3 min)
 ```
+
+## Bug Classification (Choose Your Approach)
+
+**Before starting, classify the bug to choose the right workflow:**
+
+### Type 1: Obvious Bug (5-15 min) - Just Fix It!
+
+**Symptoms:**
+- Typo in code (e.g., `utills` instead of `utils`)
+- Syntax error (missing semicolon, bracket)
+- Missing import statement
+- Off-by-one error (loop boundary)
+- Obvious logic error
+
+**Approach:** Skip LOG FIRST, just fix it directly
+
+**Example:** "Cannot find module './utills'" → Fix typo to './utils'
+
+**When to use:** Root cause is immediately visible in error message
+
+---
+
+### Type 2: Unclear Bug (12-25 min) - Use LOG FIRST ⭐
+
+**Symptoms:**
+- "Feature not working" (vague)
+- Data not appearing as expected
+- Integration issues (third-party APIs)
+- Unexpected behavior (no clear error)
+
+**Approach:** Full LOG FIRST workflow (this skill!)
+
+**Example:** "Login not working" → Log req.body, discover it's undefined, find body parser missing
+
+**When to use:** Root cause not obvious, need to see actual data
+
+---
+
+### Type 3: Complex/Intermittent Bug (1-3 hours) - Full Investigation
+
+**Symptoms:**
+- Race conditions (only fails sometimes)
+- Intermittent failures (works locally, fails in production)
+- Memory leaks (slow degradation over time)
+- Concurrency issues
+
+**Approach:** Extended LOG FIRST + profiling + monitoring
+
+**Example:** "Users randomly get logged out" → Investigate session management, token expiry, race conditions
+
+**When to use:** Bug is complex or doesn't reproduce consistently
+
+---
+
+**Quick Decision Guide:**
+- Can you see the problem in error message? → Type 1 (just fix)
+- Need to see what data looks like? → Type 2 (LOG FIRST - this skill!)
+- Intermittent or complex investigation? → Type 3 (full debugging)
+
+**Most bugs are Type 2** - this is where LOG FIRST shines!
+
+---
 
 ## Workflow Overview
 

@@ -28,12 +28,181 @@ Claude may invoke these skills when relevant (based on skill descriptions):
 
 Skills are model-invoked based on context, not explicitly required.
 
+## File Manifest Verification (NEW!)
+
+**CRITICAL:** After each implementation increment, verify against the File Change Manifest from the plan.
+
+### Process
+
+**After each implementation increment:**
+1. Load File Manifest from plan (Phase 5b from PLANNING workflow output in `.claude/plans/`)
+2. Verify: Files created/modified as planned?
+3. Flag: Any unplanned files (scope creep indicator)?
+4. Check: Integration points connected?
+5. Validate: LOC within ±30% estimate?
+
+**Quality Gate:** Must match 90%+ before proceeding to next increment
+
+### Example Verification
+
+```markdown
+## File Manifest Check - Increment 1
+
+**Planned (from Phase 5b of PLANNING workflow):**
+- CREATE: `src/middleware/auth.js` (~80 LOC)
+- CREATE: `src/utils/jwt.js` (~50 LOC)
+- MODIFY: `src/routes/index.js` (line 10, add auth import)
+
+**Actual:**
+- CREATED: `src/middleware/auth.js` (85 LOC) ✅ Within ±30%
+- CREATED: `src/utils/jwt.js` (47 LOC) ✅ Within ±30%
+- CREATED: `src/config/auth.js` (15 LOC) ⚠️ UNPLANNED
+- MODIFIED: `src/routes/index.js` (line 10-11) ✅ As planned
+
+**Match: 95% (acceptable)**
+
+**Flags:**
+- `auth.js` config file unplanned but reasonable (extracted constants)
+- Recommend: Update manifest to reflect actual structure
+
+**Integration Points:**
+- ✅ `auth.js` imports `jwt.js` (as planned)
+- ✅ `index.js` imports `auth.js` (as planned)
+- ✅ Config imported by middleware (not planned but logical)
+
+**Decision:** PROCEED to next increment
+```
+
+### When to Flag Issues
+
+**Flag YELLOW (investigate but can proceed):**
+- 1-2 unplanned files (reasonable additions)
+- LOC variance 30-50% (estimation error)
+- Renamed files (better naming discovered)
+
+**Flag RED (stop and review):**
+- 3+ unplanned files (significant scope creep)
+- LOC variance >50% (fundamental misestimation)
+- Missing planned files (incomplete implementation)
+- Integration points not connected (broken architecture)
+
+## MANDATORY Test Verification
+
+**CRITICAL:** Never report success without independently verifying tests!
+
+### The Problem
+
+During brutal testing, implementer reported:
+> "✅ All 33 tests passing!"
+
+**Reality:** 3 out of 7 tests FAILED.
+
+**Root cause:** Reports not verified, false success claimed.
+
+### The Solution: MANDATORY Verification
+
+**You MUST verify independently after ANY implementation:**
+
+```bash
+# Run YOUR test command
+npm test  # or pytest, cargo test, etc.
+
+# Verify exit code
+echo $?  # Must be 0
+```
+
+**Required Checklist:**
+- [ ] All tests run (none skipped)
+- [ ] All tests pass (see green ✓ symbols)
+- [ ] Exit code is 0 (success)
+- [ ] No warnings about failures
+- [ ] Paste/screenshot actual output
+
+**Quality Gate:** You MUST see passing tests with YOUR EYES.
+
+### Correct vs Incorrect Reporting
+
+❌ **WRONG (don't do this):**
+```markdown
+✅ All tests passing!
+✅ Implementation complete!
+```
+
+✅ **CORRECT (do this):**
+```markdown
+## Test Verification
+
+**Command run:** `npm test`
+
+**Output:**
+```
+PASS tests/auth.test.js
+  JWT Authentication
+    ✓ should generate valid token (45ms)
+    ✓ should reject invalid password (32ms)
+    ✓ should handle missing email (28ms)
+
+Tests: 3 passed, 3 total
+Snapshots: 0 total
+Time: 1.234s
+```
+
+**Exit code:** 0 (verified with `echo $?`)
+
+**Verification:** ✅ All 3 tests passing independently confirmed
+
+**Next:** Proceeding to next increment
+```
+
+### If Tests Fail
+
+**STOP immediately:**
+1. Don't proceed to next increment
+2. Don't report partial success
+3. Investigate failures
+4. Fix implementation
+5. Re-run until ALL pass
+6. Only then report success WITH PROOF
+
+**Example failure handling:**
+```markdown
+## Test Verification - FAILED
+
+**Command run:** `npm test`
+
+**Output:**
+```
+FAIL tests/auth.test.js
+  JWT Authentication
+    ✓ should generate valid token
+    ✕ should reject invalid password (expected 401, got 500)
+    ✕ should handle missing email (expected 400, got 500)
+
+Tests: 1 passed, 2 failed, 3 total
+```
+
+**Exit code:** 1 (FAILURE)
+
+**Action:** STOPPING implementation, fixing failures now
+
+**Root cause:** Error handling not implemented for edge cases
+
+**Fix:** Adding try/catch and proper error responses...
+
+[After fixing...]
+
+**Retry:** `npm test` → All 3 passing ✅
+
+**Now proceeding to next increment**
+```
+
 ## Implementation Workflow
 
 Follow this exact sequence:
 
 ```
 Implementation Progress:
+- [ ] Step 0: Risk analysis (what could go wrong?)
 - [ ] Step 1: Understand requirements
 - [ ] Step 2: Write failing test (RED)
 - [ ] Step 3: Verify test fails correctly
@@ -42,6 +211,45 @@ Implementation Progress:
 - [ ] Step 6: Refactor (keep green)
 - [ ] Step 7: Run all tests
 - [ ] Step 8: Verify and commit
+```
+
+### Step 0: Risk Analysis (NEW! - Before Each Increment)
+
+**Before writing ANY code for each increment:**
+
+1. Invoke Skill: `cc10x:risk-analysis` 
+2. Load stages: "Stage 1: Data Flow" + "Stage 3: Timing" + "Stage 7: Failure Modes"
+3. Purpose: Identify edge cases, race conditions, and failure scenarios BEFORE implementation
+4. This loads: ~2,000 tokens (three critical stages)
+5. Output: Edge cases list that becomes test cases
+
+**Why this matters:**
+- Prevents bugs by identifying edge cases before coding
+- Informs what tests to write (Step 2)
+- Catches race conditions early
+- Plans error handling upfront
+
+**Example:**
+```
+Increment: Implement user registration endpoint
+
+Step 0: Risk Analysis
+
+Invoke Skill: "cc10x:risk-analysis"
+Stages: "Stage 1: Data Flow" + "Stage 3: Timing" + "Stage 7: Failure Modes"
+
+Findings:
+- Data Flow: Email could be null, malformed, or SQL injection attempt
+- Timing: Two users could register with same email simultaneously (race condition)
+- Failure: Email service might be down, database constraint could fail
+
+These become test cases in Step 2:
+- Test: Handles null email (returns 400)
+- Test: Handles malformed email (returns 400)
+- Test: Sanitizes input (prevents SQL injection)
+- Test: Prevents duplicate registration (unique constraint)
+- Test: Handles email service failure (queues for retry)
+- Test: Rolls back on database error (transaction)
 ```
 
 ### Step 1: Understand Requirements

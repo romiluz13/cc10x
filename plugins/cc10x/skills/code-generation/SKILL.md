@@ -1,16 +1,7 @@
 ---
-name: Code Generation
-description: |
-  Provides patterns, conventions, and best practices for writing clean, maintainable, production-ready code. Use when implementing new functionality with high quality standards.
-  
-  Trigger phrases: "write code", "implement", "create function", "add feature",
-  "generate code", "build component", "write implementation", "code this",
-  "develop", "create class", "add method", "implement function",
-  "write production code", "create module", "generate implementation".
-  
-  Activates on: implementation tasks, code writing, function creation,
-  component development, production code generation, feature implementation.
-progressive: true
+name: code-generation
+description: Provides patterns, conventions, and best practices for writing clean maintainable production-ready code following SOLID principles, DRY methodology, and project-specific conventions. Use when implementing new functionality with high quality standards, writing production code, creating functions or classes, adding features to existing codebase, or generating implementations that follow established patterns. Ensures consistency with codebase conventions, proper error handling, comprehensive edge case coverage, and maintainable code structure. Loaded by implementer agent during code writing phases or when quality code generation needed. Complements test-driven-development skill (which focuses on testing discipline) by focusing on code quality and patterns.
+license: MIT
 ---
 
 # Code Generation

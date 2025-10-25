@@ -1,16 +1,7 @@
 ---
-name: Code Review Patterns
-description: |
-  Analyzes code quality, detects code smells, identifies refactoring opportunities, and assesses maintainability. Use when reviewing code for quality improvements and best practices.
-  
-  Trigger phrases: "code review", "quality check", "code smells", "refactor",
-  "code quality", "maintainability", "clean code", "quality review",
-  "code patterns", "best practices", "review this code", "code improvements",
-  "refactoring opportunities", "quality audit", "maintainable code".
-  
-  Activates on: code review tasks, quality assessment, refactoring planning,
-  maintainability analysis, best practice enforcement, pre-PR quality checks.
-progressive: true
+name: code-review-patterns
+description: Analyzes code quality using Martin Fowler refactoring catalog to detect code smells, identify refactoring opportunities, assess maintainability, and suggest improvements. Checks for long functions, duplicate code, high complexity, god objects, inappropriate intimacy, and other anti-patterns. Use when reviewing code for quality improvements, planning refactoring efforts, assessing technical debt, enforcing best practices, or conducting pre-PR quality checks. Provides specific refactoring techniques with before-after examples. Loaded by quality-reviewer agent during REVIEW workflow or master orchestrator when code quality analysis needed. Complements risk-analysis skill (which focuses on bugs/risks) by focusing on maintainability and clean code principles.
+license: MIT
 ---
 
 # Code Review Patterns

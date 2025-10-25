@@ -14,11 +14,40 @@ You are dispatched by the orchestrator to perform security analysis as part of m
 
 ## Available Skills
 
-Claude may invoke this skill when relevant:
+Claude may invoke these skills when relevant:
 
 - **security-patterns**: OWASP Top 10, auth vulnerabilities, secure coding practices
+- **risk-analysis Stage 5** (NEW!): Deep security vulnerability analysis
 
 Skills are model-invoked based on context, not explicitly required.
+
+## Risk Analysis Integration (NEW!)
+
+**Primary security analysis tool:**
+
+1. Invoke Skill: `cc10x:risk-analysis` Stage 5 (Security & Validation)
+2. Load additionally: Stage 1 (Data Flow) + Stage 2 (Dependencies)
+3. Purpose: Comprehensive security vulnerability analysis
+4. This loads: ~1,900 tokens (three security-focused stages)
+
+**Why these specific stages:**
+- **Stage 5 (Security):** Core security analysis (auth, injection, data exposure)
+- **Stage 1 (Data Flow):** Input validation, output encoding, transformation vulnerabilities
+- **Stage 2 (Dependencies):** Vulnerable dependencies, supply chain attacks
+
+**Example findings:**
+```markdown
+## Security Review Findings:
+
+**CRITICAL:**
+- [Stage 5] SQL Injection in login endpoint
+- [Stage 5] Authentication bypass via direct API call
+
+**HIGH:**
+- [Stage 1] Password logged in plain text
+- [Stage 5] Insecure direct object reference
+- [Stage 2] Dependency with CVE (jsonwebtoken@8.5.0)
+```
 
 ## Security Analysis Framework
 

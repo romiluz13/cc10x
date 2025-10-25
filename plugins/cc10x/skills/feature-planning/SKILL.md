@@ -1,16 +1,7 @@
 ---
 name: feature-planning
-description: |
-  Creates comprehensive PRD-style feature plans with user stories, architecture decisions, component breakdowns, API contracts, data models, edge cases, and testing strategies. Use for strategic planning before implementation.
-  
-  Trigger phrases: "plan feature", "feature plan", "design feature", "planning",
-  "plan this", "create plan", "feature design", "architecture plan",
-  "feature spec", "requirements", "PRD", "plan before building",
-  "design document", "feature planning", "plan implementation".
-  
-  Activates on: feature planning requests, architecture design, requirements analysis,
-  PRD creation, strategic planning, pre-implementation design.
-progressive: true
+description: Creates comprehensive PRD-style feature plans with user stories, architecture decisions, component breakdowns, API contracts, data models, edge cases, testing strategies, complexity assessment, file change manifests, and implementation roadmaps. Use for strategic planning before implementing complex features (4-5 complexity). Provides 5 progressive stages (requirements analysis, architecture design, risk assessment, complexity scoring with recommendations to skip if simple, and file manifest creation). Loaded by requirements-analyst and architect agents during PLANNING workflow. Particularly valuable for novel architectures, high-risk features, or when team alignment documentation needed. For simple features using well-documented libraries, recommend manual implementation instead (faster and more token-efficient).
+license: MIT
 ---
 
 # Feature Planning - Strategic Design Before Building
@@ -667,6 +658,279 @@ After all phases, generate a **persistent markdown checklist**:
 After saving the plan, offer execution choice:
 
 **"Plan complete and saved to `.claude/docs/checklist-[feature-name].md`. Ready to implement with `/feature-build`?"**
+
+---
+
+## Stage 4: Complexity Assessment (~600 tokens)
+
+**Objective**: Honest evaluation of whether cc10x adds value for this feature
+
+**Purpose:** Prevent using cc10x for features where manual implementation is faster/better
+
+### The 1-5 Complexity Scoring Rubric
+
+**Assessment Factors:**
+- Files affected (count)
+- Novel patterns vs familiar (ratio)
+- Integration points (count)
+- Risk level (1-5)
+- Domain complexity (simple/moderate/high)
+
+#### 1. TRIVIAL (<50 lines, single file, well-documented)
+
+**Example:** Add validation to form field
+
+**Characteristics:**
+- Single file modification
+- < 50 lines of code
+- Well-documented pattern exists
+- No new dependencies
+- No architecture decisions
+
+**Recommendation:** ❌ Skip cc10x (5-10 min manual implementation)
+
+**Why:**
+- Planning overhead (20-30k tokens) exceeds implementation time
+- Manual implementation faster than writing the plan
+- No architecture decisions needed
+
+**Token Economics:**
+- cc10x: 40k tokens (plan + build)
+- Manual: 2k tokens (just implement)
+- **20x more expensive with cc10x**
+
+---
+
+#### 2. SIMPLE (50-200 lines, 2-3 files, using library)
+
+**Example:** Add rate limiting with express-rate-limit library
+
+**Characteristics:**
+- 2-3 files affected
+- Using well-documented library
+- Clear implementation path from library docs
+- Minimal integration complexity
+- Standard patterns
+
+**Recommendation:** ❌ Skip cc10x (30-60 min following library docs)
+
+**Why:**
+- Library documentation is more current and specific
+- Implementation path is clear
+- No novel architecture needed
+- Fast to implement manually
+
+**Token Economics:**
+- cc10x: 80k tokens (comprehensive planning + build)
+- Manual: 5k tokens (library docs + implementation)
+- **16x more expensive with cc10x**
+
+**Real test data:** Rate limiting feature
+- cc10x: 100k tokens, reported false success, tests failed
+- Manual: Would have been 30 min, 5k tokens, working code
+
+---
+
+#### 3. MODERATE (200-500 lines, 4-6 files, some novelty)
+
+**Example:** Add pagination with caching
+
+**Characteristics:**
+- 4-6 files affected
+- Some novel patterns (not pure library use)
+- Multiple integration points
+- Moderate risk
+- Architecture decisions needed
+
+**Recommendation:** ⚠️ MAYBE use cc10x (if team docs valued)
+
+**Why:**
+- Structure helps but not critical
+- Could go either way depending on:
+  - Team collaboration needs (plan valuable for alignment)
+  - Developer familiarity (junior dev benefits more)
+  - Documentation requirements (enterprise needs docs)
+
+**Token Economics:**
+- cc10x: 80-100k tokens
+- Manual: 15-20k tokens
+- **4-5x more expensive with cc10x**
+
+**Worth it if:**
+- Team needs alignment on approach
+- Want systematic TDD enforcement
+- Documentation valuable for future
+- Prevents rework (architecture decisions matter)
+
+---
+
+#### 4. COMPLEX (500-1000 lines, 7-15 files, novel patterns)
+
+**Example:** Real-time notifications with WebSockets
+
+**Characteristics:**
+- 7-15 files affected
+- Novel patterns (not in codebase)
+- Many integration points (API, DB, Redis, WebSockets)
+- High risk (affects all users)
+- Critical architecture decisions
+
+**Recommendation:** ✅ Use cc10x (structure prevents rework)
+
+**Why:**
+- Architecture decisions matter (WebSocket strategy, scaling, error handling)
+- Integration complexity (many moving parts)
+- Risk mitigation planning essential
+- File manifest helps track scope creep
+- Systematic approach prevents costly mistakes
+
+**Token Economics:**
+- cc10x: 100-150k tokens
+- Manual: 30-50k tokens
+- **3-5x more expensive BUT...**
+
+**ROI Calculation:**
+- One major rework: 80k tokens + 4 hours wasted
+- One missed edge case in production: Incident response costs
+- One security issue: Infinite cost
+- **Structure prevents these scenarios**
+
+---
+
+#### 5. VERY COMPLEX (>1000 lines, 15+ files, system-wide)
+
+**Example:** Multi-tenancy with data isolation
+
+**Characteristics:**
+- 15+ files affected
+- System-wide changes
+- Multiple novel patterns
+- Very high risk (data isolation = security critical)
+- Many critical architecture decisions
+- Long-term maintenance implications
+
+**Recommendation:** ✅✅ Use cc10x (prevents costly mistakes)
+
+**Why:**
+- Comprehensive planning ESSENTIAL
+- Architecture mistakes expensive to fix later
+- Risk assessment critical (data isolation bugs = breaches)
+- File manifest essential (scope easily creeps)
+- Rollback/deployment planning necessary
+- Documentation required for team
+
+**Token Economics:**
+- cc10x: 150-200k tokens
+- Manual: 50-80k tokens
+- **3-4x more expensive BUT...**
+
+**ROI Calculation:**
+- One architecture mistake: Complete rewrite (weeks of work)
+- One security bug: Data breach (company-ending)
+- One missed edge case: Production incident (customer trust)
+- **Planning cost is insurance against disaster**
+
+---
+
+### Quality Gate for Complexity Assessment
+
+**If complexity < 3 (TRIVIAL or SIMPLE):**
+
+Output honest recommendation to user:
+
+```markdown
+## Complexity Assessment
+
+**Score: 2/5 (SIMPLE)**
+
+⚠️ **Recommendation: Consider Manual Implementation**
+
+This feature uses well-documented library (express-rate-limit).
+A developer familiar with Express could implement in 30-60 min.
+
+**cc10x adds value if:**
+- Team needs documentation/alignment on rate limiting strategy
+- Want strict TDD enforcement for quality assurance
+- Enterprise requires formal planning documentation
+
+**Manual implementation is better if:**
+- Time-sensitive (manual is faster - 30 min vs 90 min with planning)
+- Token budget constrained (saves 75k tokens)
+- Solo developer comfortable with the library
+- Quick iteration preferred over documentation
+
+**Token Economics:**
+- cc10x: ~80k tokens (plan + build + review)
+- Manual: ~5k tokens (library docs + implementation)
+- **16x more tokens for structure**
+
+**Your call:** Proceed with cc10x for systematic approach, or implement manually for speed?
+```
+
+**If complexity >= 4 (COMPLEX or VERY COMPLEX):**
+
+Proceed with confidence:
+
+```markdown
+## Complexity Assessment
+
+**Score: 4/5 (COMPLEX)**
+
+✅ **Recommendation: Use cc10x**
+
+This feature has significant complexity:
+- 12 files affected (controllers, services, models, middleware, tests)
+- Novel patterns (WebSocket event handling not in codebase)
+- 8 integration points (API, DB, Redis, WebSocket server, auth, logging)
+- High risk (affects all connected users simultaneously)
+- Multiple architecture decisions (connection pooling, event routing, scaling)
+
+**Why cc10x adds value:**
+- Architecture decisions critical (poor WebSocket design = scaling issues)
+- Risk assessment essential (connection storms, memory leaks, cascading failures)
+- Integration complexity (many moving parts to coordinate)
+- File manifest prevents scope creep (easy to over-engineer real-time)
+- Rollback strategy necessary (rollback real-time changes is complex)
+
+**Token Economics:**
+- cc10x: ~120k tokens (comprehensive planning + systematic build)
+- Manual: ~40k tokens (ad-hoc implementation)
+- **3x more tokens, BUT structure prevents:**
+  - Major rework if architecture wrong (80k tokens + days of work)
+  - Production incidents from missed edge cases (infinite cost)
+  - Technical debt from rushed implementation (compounds over time)
+
+**ROI: One prevented rework pays for planning cost**
+
+**Proceeding with systematic cc10x workflow...**
+```
+
+---
+
+## Stage 5: File Change Manifest (~500 tokens)
+
+**Objective**: Create concrete implementation targets for verification
+
+**Purpose:** Prevent scope creep, enable systematic verification during implementation
+
+### Manifest Structure
+
+For detailed File Change Manifest templates and examples, see the complete specification in the plan structure. Key elements include:
+
+- **Summary**: Count of CREATE/MODIFY/DELETE files, estimated LOC
+- **New Files**: Path, purpose, exports, dependencies, complexity, LOC estimate
+- **Modified Files**: Path, locations, changes (ADD/MODIFY/DELETE), impact level
+- **Deleted Files**: Path, reason, migration path, risk assessment
+- **Integration Points**: How files connect (imports, function calls, data flow)
+- **Verification Checklist**: Items to verify during implementation
+
+**Use during implementation to:**
+- Detect scope creep (unplanned files created)
+- Verify completeness (all planned files exist)
+- Check integration (connections work as planned)
+- Validate estimates (LOC within ±30%)
+
+**Quality Gate:** 90%+ match required before claiming completion
 
 ---
 

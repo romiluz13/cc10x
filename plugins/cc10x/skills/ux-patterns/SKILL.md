@@ -1,16 +1,7 @@
 ---
-name: UX Patterns
-description: |
-  Evaluates user experience quality, loading states, error handling, form usability, and interaction design. Use when reviewing or improving user-facing interfaces and experiences.
-  
-  Trigger phrases: "UX review", "user experience", "usability", "improve UX",
-  "user-friendly", "interaction design", "UX patterns", "error messages",
-  "loading states", "form design", "user flow", "UX audit",
-  "usability issues", "confusing interface", "better UX".
-  
-  Activates on: UI/UX review, user flow design, error message improvement,
-  form usability analysis, interaction pattern review, user feedback analysis.
-progressive: true
+name: ux-patterns
+description: Evaluates user experience quality including loading states, error handling, form usability, interaction design, user feedback mechanisms, and overall user flow coherence. Use when reviewing user-facing interfaces for UX improvements, designing user flows, improving error messages, analyzing form usability, or assessing interaction patterns. Identifies UX friction points, confusing interfaces, missing loading indicators, poor error messages, and interaction design issues. Loaded by ux-reviewer agent during REVIEW workflow or master orchestrator when UX analysis needed. Complements risk-analysis Stage 4 (User Experience & Human Factors) with specific UX improvement patterns and techniques. Critical for customer-facing features where user satisfaction drives adoption.
+license: MIT
 ---
 
 # UX Patterns

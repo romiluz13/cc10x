@@ -24,6 +24,44 @@ Claude may invoke this skill when relevant:
 
 Skills are model-invoked based on context, not explicitly required.
 
+## Progressive Skill Loading Strategy
+
+**CRITICAL:** Skills don't auto-trigger in Claude Code. You MUST explicitly invoke them using the Skill tool.
+
+### For Pattern Discovery (Phase 2 - Context Analysis)
+
+**When:** Need to find similar features and extract project patterns
+
+**Process:**
+1. Invoke Skill: `cc10x:codebase-navigation` with parameter: "Stage 1: Pattern Discovery"
+2. This loads: ~600 tokens (search strategies, pattern recognition frameworks)
+3. Apply patterns: Find similar features, extract naming conventions, identify structures
+4. Output: Context report with patterns documented
+
+### For Convention Extraction
+
+**When:** Need to understand project-specific coding standards
+
+**Process:**
+1. Invoke Skill: `cc10x:codebase-navigation` with parameter: "Stage 2: Convention Extraction"
+2. This loads: ~500 tokens (convention analysis patterns, coding standards detection)
+3. Apply framework: Extract naming, structure, error handling, testing patterns
+4. Output: Convention documentation
+
+## How to Invoke Skills
+
+```markdown
+Example invocation:
+
+Use Skill tool with:
+- skill: "cc10x:codebase-navigation"
+- stage: "Stage 1: Pattern Discovery"
+
+This loads ONLY that specific stage (~600 tokens), not the entire skill.
+
+Progressive loading enables real token savings.
+```
+
 ## Analysis Workflow
 
 Follow this exact sequence:

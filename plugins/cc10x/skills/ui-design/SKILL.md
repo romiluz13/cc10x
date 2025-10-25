@@ -1,16 +1,7 @@
 ---
-name: UI Design
-description: |
-  Generates beautiful, modern UIs matching Lovable/Bolt quality standards. Modern gradients, smooth animations, proper spacing, and built-in accessibility. Transform basic components into polished, production-ready interfaces.
-  
-  Trigger phrases: "design UI", "create UI", "modern UI", "beautiful interface",
-  "polished UI", "Lovable quality", "Bolt quality", "design component",
-  "UI component", "modern design", "beautiful design", "create interface",
-  "design system", "UI patterns", "production UI".
-  
-  Activates on: UI component creation, interface design, component styling,
-  production UI development, design system implementation, modern UI creation.
-progressive: true
+name: ui-design
+description: Generates beautiful modern UIs matching Lovable and Bolt quality standards with modern gradients, smooth animations, proper spacing, and built-in accessibility. Transforms basic components into polished production-ready interfaces using design system principles, Tailwind CSS patterns, and React component best practices. Use when creating UI components, designing user interfaces, building frontend features, implementing design systems, or developing production-quality UI elements. Provides component library patterns, animation techniques, responsive design strategies, and accessibility integration. Particularly valuable for customer-facing features where UI quality matters. Loaded when frontend implementation needed or explicitly requested for UI design tasks.
+license: MIT
 ---
 
 # UI Design - Lovable/Bolt Quality

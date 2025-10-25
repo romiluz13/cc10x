@@ -1,16 +1,7 @@
 ---
-name: Codebase Navigation
-description: |
-  Provides efficient strategies for exploring codebases, finding relevant code, understanding patterns, and mapping dependencies. Use when analyzing existing code structure and discovering patterns.
-  
-  Trigger phrases: "find code", "explore codebase", "where is", "locate code",
-  "search for", "understand codebase", "code navigation", "find pattern",
-  "map dependencies", "discover patterns", "analyze structure", "find similar",
-  "locate feature", "understand architecture", "code exploration".
-  
-  Activates on: context analysis, pattern discovery, architecture understanding,
-  dependency mapping, similar feature identification, codebase exploration.
-progressive: true
+name: codebase-navigation
+description: Provides efficient strategies for exploring codebases, finding relevant code, understanding patterns, extracting project conventions, and mapping dependencies. Use when analyzing existing code structure before implementation, discovering similar features for pattern reference, understanding codebase architecture, extracting naming and coding conventions, or mapping integration points. Provides search strategies, pattern recognition techniques, convention extraction frameworks, and dependency mapping approaches. Loaded by context-analyzer agent during PLANNING and BUILDING workflows Phase 1-2. Helps new features follow existing project patterns and integrate seamlessly with current architecture. Progressive stages for pattern discovery and convention extraction.
+license: MIT
 ---
 
 # Codebase Navigation

@@ -1,16 +1,7 @@
 ---
-name: Systematic Debugging
-description: |
-  Enforces LOG FIRST, FIX LATER methodology - always verify runtime data before making assumptions. Prevents assumption-driven debugging that wastes hours. Use for all debugging tasks.
-  
-  Trigger phrases: "debug", "fix bug", "debugging", "troubleshoot", "investigate",
-  "why is this failing", "not working", "error", "bug fix",
-  "log first", "systematic debug", "debug this", "find the bug",
-  "diagnose", "root cause", "debugging workflow".
-  
-  Activates on: bug reports, error investigation, debugging tasks, troubleshooting,
-  test failures, production issues, unexpected behavior analysis.
-progressive: true
+name: systematic-debugging
+description: Enforces LOG FIRST FIX LATER methodology to prevent assumption-driven debugging that wastes hours. Always verify runtime data by logging complete object structures before making assumptions about field names or data shapes. Particularly critical for third-party integrations, authentication systems, API responses, and data flow issues where assumptions about data structure commonly cause debugging cycles. Use when debugging fails repeatedly, investigating why expected data is missing, working with unfamiliar APIs, or when you've tried multiple fixes without success. Prevents the anti-pattern of assumption then try fix then still broken then repeat. Real-world testing saved 2 hours by logging first instead of guessing. Loaded by tdd-enforcer agent during DEBUGGING workflow.
+license: MIT
 ---
 
 # Systematic Debugging

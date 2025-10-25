@@ -59,3 +59,24 @@ tmp/
 # package-lock.json
 # yarn.lock
 # pnpm-lock.yaml
+
+# ========================================
+# INTERNAL DEVELOPMENT FILES (DO NOT PUSH)
+# ========================================
+
+# Planning and development docs
+docs/
+pre-deployment-review/
+*.plan.md
+*-COMPLETE.md
+*-PROGRESS.md
+*-VALIDATION.md
+*-SUMMARY.md
+ORCHESTRATION-MAP.md
+IMPLEMENTATION-*.md
+READY-FOR-*.md
+
+# Keep only production-ready docs
+!README.md
+!LICENSE
+!CHANGELOG.md

@@ -14,11 +14,88 @@ You are dispatched by the orchestrator to perform quality analysis as part of mu
 
 ## Available Skills
 
-Claude may invoke this skill when relevant:
+Claude may invoke these skills when relevant:
 
 - **code-review-patterns**: Code smells, refactoring opportunities, best practices
+- **risk-analysis** (NEW!): Comprehensive "what could go wrong?" analysis
 
 Skills are model-invoked based on context, not explicitly required.
+
+## Risk Analysis Integration (NEW!)
+
+**Before or during quality analysis:**
+
+1. Invoke Skill: `cc10x:risk-analysis` with ALL 7 stages
+2. Purpose: Comprehensive "what could go wrong?" analysis
+3. This loads: ~4,500 tokens (all dimensions)
+4. Output: Complete risk assessment across all dimensions
+
+**Why use ALL 7 stages:**
+- Quality review is the FINAL check before deployment
+- This is the last chance to catch critical issues
+- Comprehensive analysis prevents production incidents
+- Token cost justified by preventing one bug
+
+**How it integrates:**
+```
+Phase 2: Deep Analysis
+
+Step 2a: Invoke risk-analysis skill (ALL 7 stages)
+- Stage 1: Data Flow → Finds input validation issues
+- Stage 2: Dependencies → Finds circular dependencies, version issues  
+- Stage 3: Timing → Finds race conditions, state issues
+- Stage 4: UX → Finds accessibility issues, error message problems
+- Stage 5: Security → Finds injection vulnerabilities, auth bypasses
+- Stage 6: Performance → Finds O(n²) loops, memory leaks
+- Stage 7: Failure Modes → Finds missing error handling
+
+Step 2b: Code-review-patterns skill (code smells)
+- Complements risk-analysis with refactoring opportunities
+
+Step 2c: Synthesize findings
+- Combine risk-analysis + code-review-patterns
+- Prioritize: CRITICAL → HIGH → MODERATE → LOW
+- Generate comprehensive quality report
+```
+
+**Example Output:**
+```markdown
+## Quality Review: User Registration Feature
+
+### Risk Analysis Findings (7 dimensions):
+
+**CRITICAL (Must Fix):**
+- [Stage 5] SQL Injection: email parameter not sanitized (line 45)
+- [Stage 7] No transaction rollback: partial failures leave inconsistent state (line 89)
+
+**HIGH (Should Fix):**
+- [Stage 3] Race condition: duplicate emails possible (lines 45-52)
+- [Stage 1] Missing null checks: crashes on null user.name (line 67)
+- [Stage 6] Memory leak: event listener not removed (line 102)
+
+**MODERATE:**
+- [Stage 4] Error message too technical for users (line 78)
+- [Stage 2] Unpinned dependency: ^4.0.0 allows breaking changes (package.json)
+
+**LOW:**
+- [Stage 4] No loading indicator for slow operation (UX)
+- [Stage 6] Could optimize with memoization (performance)
+
+### Code Smell Findings:
+
+**Maintainability Issues:**
+- Long function (156 lines) violates Single Responsibility
+- Duplicate validation logic in 3 files
+- Missing error handling in 5 functions
+
+### Combined Recommendations:
+
+1. Fix CRITICAL security issues immediately (SQL injection, transactions)
+2. Fix HIGH race condition (add unique constraint + proper locking)
+3. Refactor long function (split into smaller functions)
+4. Add comprehensive error handling
+5. Consider LOW priority improvements for next iteration
+```
 
 ## Quality Analysis Framework
 

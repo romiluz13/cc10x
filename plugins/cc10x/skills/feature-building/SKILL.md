@@ -1,16 +1,7 @@
 ---
 name: feature-building
-description: |
-  Complete feature implementation workflow orchestrating 5-phase development with context analysis, planning, TDD-enforced implementation, verification, and finalization. Use when building complete features from start to finish.
-  
-  Trigger phrases: "build feature", "implement feature", "create feature", "develop feature",
-  "add feature", "feature implementation", "build this", "implement this",
-  "develop", "build from scratch", "complete feature", "full implementation",
-  "end-to-end feature", "feature development", "implement complete".
-  
-  Activates on: feature implementation requests, complete development tasks,
-  end-to-end feature building, production feature creation, full feature workflows.
-progressive: true
+description: Complete feature implementation workflow orchestrating 5-phase development with context analysis, implementation planning, TDD-enforced sequential development with risk analysis before each increment, multi-dimensional verification, and finalization. Use when building complete features from start to finish with strict test-first methodology. Provides guidance on breaking features into increments under 200 lines each, implementing with RED-GREEN-REFACTOR cycles, file manifest verification, and mandatory test verification. Loaded by implementer and tdd-enforcer agents during BUILDING workflow. Integrates with risk-analysis skill to identify edge cases before each increment. Critical for complex features requiring systematic TDD discipline and comprehensive quality gates.
+license: MIT
 ---
 
 # Feature Building - Complete Implementation Workflow
@@ -23,49 +14,47 @@ Orchestrate complete feature development from planning to production-ready code.
 
 **Announce at start:** "I'm using the feature-building skill to implement this feature."
 
-**💡 Pro Tip**: For complex features, run `/feature-plan` FIRST to create a comprehensive plan, then implement from that plan.
+**💡 Pro Tip**: For complex features, use PLANNING workflow (via master orchestrator or /cc10x plan) FIRST to create a comprehensive plan, then implement from that plan.
 
 ## Task Tracking Approach
 
-**Hybrid system combining persistent checklists + ephemeral TodoWrite tool**:
+**Simple task tracking optimized for implementation workflow**:
 
-### When You Have a Persistent Checklist
+### When You Have a Plan
 
-If `/feature-plan` created a checklist file (`.claude/docs/checklist-[feature-name].md`):
+If PLANNING workflow created a comprehensive plan (`.claude/plans/FEATURE_[NAME].md`):
 
-1. **Reference the persistent checklist** for long-term tracking (50+ tasks, all phases)
-2. **Copy current phase tasks** (5-10 items) to TodoWrite tool for active session tracking
-3. **Update both** during implementation:
-   - Mark TodoWrite tasks as complete (real-time UI feedback)
-   - Update persistent checklist after each phase (version control, team visibility)
+1. **Load plan** to reference architecture decisions and file manifest
+2. **Track current increment** with TodoWrite tool (5-10 active tasks)
+3. **Update after each increment** - mark complete, load next increment tasks
+4. **Reference plan** for architecture, risks, manifest throughout implementation
 
 **Example workflow**:
-```bash
-# User ran: /feature-plan Add user authentication
-# Created: .claude/docs/checklist-authentication.md
+```
+# User ran PLANNING workflow: "Plan authentication feature"
+# Created: .claude/plans/FEATURE_AUTH.md
 
-# Now running: /feature-build Implement Phase 1 from checklist-authentication.md
-
-# Step 1: Load persistent checklist (read from file)
-# Step 2: Copy Phase 1 tasks (1.1.1-1.2.4) to TodoWrite tool
-# Step 3: During implementation, mark TodoWrite tasks as complete
-# Step 4: After Phase 1 done, update persistent checklist progress dashboard
+# Now in BUILDING workflow
+# Step 1: Load plan to understand architecture and increments
+# Step 2: Create TodoWrite tasks for Increment 1 (5-7 tasks)
+# Step 3: Implement Increment 1, mark tasks complete
+# Step 4: Load Increment 2 tasks, repeat
 ```
 
-### When No Persistent Checklist Exists
+### When Building Without Plan
 
-If building a small/medium feature without `/feature-plan`:
+If building directly (smaller features):
 
-1. **Use TodoWrite tool exclusively** for task tracking (5-10 tasks)
-2. Create tasks during Phase 2 (Planning)
-3. Mark tasks complete during Phase 3 (Implementation)
-4. Clean up completed tasks in Phase 5 (Finalization)
+1. **Create tasks in Phase 2** (Planning phase breaks feature into increments)
+2. **Track with TodoWrite** (5-10 tasks for current increment)
+3. **Update as you progress** through increments
+4. **No persistent plan needed** (ad-hoc implementation)
 
-**Benefits of hybrid approach**:
-- ✅ Long-term tracking with version control (persistent checklist)
-- ✅ Real-time UI feedback during active coding (TodoWrite)
-- ✅ Team collaboration on complex features (persistent checklist)
-- ✅ Simplicity for small features (TodoWrite only)
+**Benefits:**
+- ✅ Simple tracking (TodoWrite for current work)
+- ✅ Reference plan for architecture (if exists)
+- ✅ Increment-focused (5-10 tasks at a time)
+- ✅ No complex dual-tracking system
 
 ## Workflow Overview
 

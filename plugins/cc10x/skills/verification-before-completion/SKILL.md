@@ -1,16 +1,7 @@
 ---
-name: Verification Before Completion
-description: |
-  Comprehensive quality checklist ensuring code is production-ready before marking tasks complete. Use to verify all quality gates are met before commit or completion.
-  
-  Trigger phrases: "verify", "check before commit", "quality check", "verify complete",
-  "pre-commit check", "verify quality", "completion check", "ready to commit",
-  "verify production-ready", "check quality gates", "verification checklist",
-  "ensure complete", "validate completion", "check before merge", "final verification".
-  
-  Activates on: pre-commit verification, completion checks, quality gate validation,
-  production readiness assessment, final verification before tasks completion.
-progressive: true
+name: verification-before-completion
+description: Comprehensive quality checklist ensuring code is production-ready before marking tasks complete with verification of tests passing, debug code removed, documentation updated, error handling present, and clean commits prepared. Use when verifying implementation completion, checking quality gates before commits, assessing production readiness, validating feature completeness, or performing final pre-merge checks. Prevents incomplete implementations by systematically checking all quality criteria. Loaded by implementer agent during finalization phases or master orchestrator before marking tasks complete. Ensures no console.logs, debugger statements, TODO comments, or incomplete error handling make it to production.
+license: MIT
 ---
 
 # Verification Before Completion

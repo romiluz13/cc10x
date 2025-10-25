@@ -1,16 +1,7 @@
 ---
-name: Security Patterns
-description: |
-  Identifies OWASP Top 10 vulnerabilities, authentication issues, injection attacks, and insecure coding practices. Use when analyzing code for security vulnerabilities and ensuring secure implementation.
-  
-  Trigger phrases: "security review", "security audit", "check for vulnerabilities", 
-  "security scan", "OWASP", "authentication security", "SQL injection", "XSS", 
-  "security issues", "secure this code", "security patterns", "vulnerability check",
-  "auth security", "security best practices".
-  
-  Activates on: security analysis, code review for vulnerabilities, authentication implementation,
-  input validation review, security audits, pre-production security checks.
-progressive: true
+name: security-patterns
+description: Identifies OWASP Top 10 vulnerabilities including SQL injection, XSS, authentication bypasses, insecure direct object references, CSRF, broken access control, and security misconfigurations. Use when analyzing code for security vulnerabilities, reviewing authentication and authorization logic, auditing input validation and output encoding, checking for injection attacks, or ensuring secure coding practices. Provides secure coding patterns, vulnerability remediation techniques, authentication best practices, and security checklists. Loaded by security-reviewer agent during REVIEW workflow or master orchestrator when security analysis needed. Complements risk-analysis Stage 5 (Security & Validation) with specific OWASP-mapped vulnerability patterns. Critical for auth, payment processing, data handling, and any security-sensitive code.
+license: MIT
 ---
 
 # Security Patterns

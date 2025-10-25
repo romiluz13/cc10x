@@ -1,16 +1,7 @@
 ---
-name: Performance Patterns
-description: |
-  Identifies performance bottlenecks, N+1 queries, inefficient algorithms, memory leaks, and optimization opportunities. Use when analyzing code for performance improvements and optimization.
-  
-  Trigger phrases: "performance review", "performance optimization", "slow code",
-  "bottleneck", "N+1 query", "optimize performance", "performance audit", "memory leak",
-  "performance patterns", "speed up", "inefficient", "performance issue",
-  "optimize this", "too slow", "performance problems".
-  
-  Activates on: performance analysis, optimization tasks, slow endpoint debugging,
-  database query optimization, frontend rendering optimization, memory profiling.
-progressive: true
+name: performance-patterns
+description: Identifies performance bottlenecks, N+1 database queries, inefficient algorithms with O(n²) complexity, memory leaks, unnecessary re-renders, and optimization opportunities. Use when analyzing code for performance improvements, reviewing slow endpoints or pages, optimizing database queries, debugging memory issues, or planning performance-critical features. Provides optimization techniques, caching strategies, algorithm complexity analysis, and profiling guidance. Loaded by performance-analyzer agent during REVIEW workflow or master orchestrator when performance analysis needed. Complements risk-analysis Stage 6 (Performance & Scalability) with specific optimization patterns and techniques.
+license: MIT
 ---
 
 # Performance Patterns
