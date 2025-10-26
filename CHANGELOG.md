@@ -111,7 +111,7 @@ cc10x-orchestrator/
 
 ### 🎯 QUICK DEFAULT PLANS - Phase 0a (NEW!)
 
-**The Problem (Brutal Truth #1):**
+**The Problem (v2.0):**
 ```
 v2 Planning workflow:
 → Generated 12 clarifying questions
@@ -182,9 +182,9 @@ Result: One command, end-to-end, seamless!
 
 ---
 
-### 🛡️ MANDATORY TEST VERIFICATION (From Brutal Truth #2)
+### 🛡️ MANDATORY TEST VERIFICATION (Reliability Improvement)
 
-**The Problem (v2.0 Testing):**
+**The Problem (v2.0):**
 ```
 code-writer agent reported:
 > "✅ All 33 tests passing! 90%+ coverage!"
@@ -377,7 +377,7 @@ allowed-tools: Read, Write, Grep, Glob  # Optional but useful
 
 ## Fixed
 
-### From Brutal Truth Testing
+### Issues Fixed in v3.0
 
 **Issue 1:** False success reports
 - **Fix:** Mandatory user test verification in test-generator and workflows/build.md

@@ -87,7 +87,7 @@ Based on cc10x_V2-main's proven pattern:
 8. **ux-reviewer** - Error messages, loading states, UX friction
 9. **accessibility-reviewer** - WCAG 2.1 AA, keyboard nav, screen readers
 
-**Real test:** Found 38 issues including 5 CRITICAL (SQL injection, secrets exposed, auth bypass)
+**Capabilities:** Finds critical issues including SQL injection, exposed secrets, auth bypasses
 
 ---
 
@@ -221,7 +221,7 @@ Prevents wasting 120k on wrong direction!
 3. Findings consolidated and prioritized
 4. Report with specific fixes and line numbers
 
-**Real test:** Found 38 issues (5 CRITICAL, 12 HIGH, 21 MODERATE/LOW)
+**Example results:** Can find 30+ issues across severity levels (CRITICAL, HIGH, MODERATE, LOW)
 
 **Cost:** 20k-50k tokens
 **ROI:** One prevented security breach = infinite value
@@ -271,7 +271,7 @@ Prevents wasting 120k on wrong direction!
 6. **Phase 5:** Multi-dimensional review (5 agents)
 7. **Phase 6:** Finalization
 
-**Warning:** v2 testing showed false "tests passing" reports. v3 requires MANDATORY user verification.
+**Important:** Previous versions had reliability issues with test reports. v3 requires MANDATORY user verification for accuracy.
 
 **Cost:** 40-80k tokens (vs 20k manual)
 **Skip for:** Complexity 1-2 (manual often better)
@@ -299,7 +299,7 @@ Or end-to-end:
 5. Minimal fix + regression test
 6. Cleanup debug code
 
-**Real test:** Saved 2 hours by logging first vs guessing
+**Efficiency:** Can save hours by systematic investigation vs guessing
 
 **Cost:** 15-30k tokens (vs 5k manual)
 **Worth it:** Saves hours of assumption-driven debugging

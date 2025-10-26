@@ -400,7 +400,7 @@ The orchestrator assesses complexity and recommends:
 /cc10x [your request]
 ```
 
-Brutal testing showed 0% natural language trigger rate. Slash command guarantees loading.
+Natural language triggering is unreliable. Slash command guarantees loading.
 
 ---
 
@@ -578,7 +578,7 @@ You'll know cc10x v3 is working when:
 
 ---
 
-## Token Economics (Brutal Honesty)
+## Token Economics (Honest Assessment)
 
 cc10x v3 costs **3-20x MORE tokens than manual** for most workflows.
 

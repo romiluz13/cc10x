@@ -246,7 +246,7 @@ This ALWAYS works and ALWAYS provides value. Use liberally!
 /cc10x [your request]
 ```
 
-**Why:** Brutal testing showed 0% natural language trigger rate. Slash command guarantees orchestrator loads.
+**Why:** Natural language triggering is unreliable. Slash command guarantees orchestrator loads.
 
 **Examples:**
 ```bash
@@ -344,7 +344,7 @@ cc10x v3 **honestly** assesses complexity and recommends the right approach:
 8. **ux-reviewer** - Error messages, loading states, UX friction
 9. **accessibility-reviewer** - WCAG 2.1 AA, keyboard, screen readers
 
-**Status:** Proven in brutal testing (found 38 real issues)
+**Status:** Proven effective (found 38 real issues in validation)
 
 ---
 
@@ -443,7 +443,7 @@ If (c): 7k then stops (huge savings!)
 
 ---
 
-## Token Economics (Brutal Honesty)
+## Token Economics (Honest Assessment)
 
 ### The Reality
 
