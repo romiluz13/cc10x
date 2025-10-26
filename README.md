@@ -8,7 +8,7 @@
 
 ---
 
-## What is cc10x?
+## What is CC10x?
 
 A Claude Code plugin that provides **focused AI assistance** for software development:
 
