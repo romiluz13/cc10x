@@ -6,14 +6,14 @@
     "url": "https://github.com/romiluz13"
   },
   "metadata": {
-    "description": "cc10x v3 - The perfect fusion: 4+5 architecture + TRUE progressive disclosure + end-to-end automation",
-    "version": "3.0.0"
+    "description": "cc10x v2.1 - Focused orchestrator: Does what you ask, delivers results fast",
+    "version": "2.1.0"
   },
   "plugins": [
     {
       "name": "cc10x",
-      "description": "cc10x v3: Perfect fusion combining cc10x_V2-main simplicity with proven v2 patterns. 4+5 architecture (4 core execution + 5 parallel review agents), 20 domain skills, TRUE progressive disclosure (50-75% token savings). End-to-end automation (plan and build in one flow), quick default plans (avoid 120k waste), ONE workflow scales naturally. /review 5-star (always worth it). PostToolUse hook enforces <500 lines. Honest: 3-20x MORE tokens than manual, use for complexity 4-5.",
-      "version": "3.0.0",
+      "description": "cc10x v2.1: Focused orchestrator that does what you ask without losing control. 11 specialized agents, 20 domain skills. THE FOCUS RULE: Only activates workflows user requested (no forced orchestration). Quick mode default (delivers fast), systematic mode optional (if explicitly requested). Review (5-star) finds issues. Build delivers working code. Fix uses LOG FIRST. User controls flow. PostToolUse hook enforces <500 lines. Honest: costs more for systematic, use when quality matters.",
+      "version": "2.1.0",
       "author": {
         "name": "Rom Iluz",
         "email": "rom.iluz13@gmail.com",

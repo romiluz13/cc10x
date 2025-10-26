@@ -1,7 +1,7 @@
 {
   "name": "cc10x",
-  "version": "3.0.0",
-  "description": "Reality-based development system with 4+5 architecture: 4 core execution agents + 5 parallel review agents + 20 domain skills. Master orchestrator with TRUE progressive disclosure. ONE workflow scales naturally (simple to complex). End-to-end automation (plan and build in one flow). /review (5-star, always worth it). Real 50-75% token savings. Inspired by cc10x_V2-main + proven v2 patterns. Honest: 3-20x MORE tokens than manual, use for complexity 4-5. Follows official Anthropic patterns.",
+  "version": "2.1.0",
+  "description": "Focused orchestrator that does what you ask. 4 core workflows (review, build, fix, validate) that deliver results without losing focus. Smart agent activation (only uses what's needed for your task). Quick mode by default, full systematic only if requested. Review workflow (5-star) finds real issues. Build workflow delivers working code. Fix workflow uses LOG FIRST. User controls the flow, not endless orchestration. Honest: costs more tokens for systematic approach, use when quality matters. Simple tasks stay simple, complex tasks get full support.",
   "author": {
     "name": "Rom Iluz",
     "email": "rom.iluz13@gmail.com",
@@ -28,10 +28,12 @@
   ],
   "commands": ["./commands/cc10x.md"],
   "agents": [
-    "./agents/feature-planner.md",
+    "./agents/context-analyzer.md",
+    "./agents/implementer.md",
     "./agents/architect.md",
-    "./agents/code-writer.md",
-    "./agents/test-generator.md",
+    "./agents/requirements-analyst.md",
+    "./agents/tdd-enforcer.md",
+    "./agents/devops-planner.md",
     "./agents/security-reviewer.md",
     "./agents/quality-reviewer.md",
     "./agents/performance-analyzer.md",
