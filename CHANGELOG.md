@@ -7,7 +7,106 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [3.0.0] - 2025-10-25
+## [2.1.0] - 2025-10-26
+
+### 🎯 THE FOCUS RULE - Critical Fix for User Control
+
+**Problem Identified:** Orchestrator was losing focus and spending hours on things user didn't ask for.
+
+**Example:**
+- User: "Build simple todo app"
+- Old behavior: 4 hours on security analysis, deployment planning, risk analysis
+- Result: User frustrated, nothing delivered
+
+**THE FIX - THE FOCUS RULE:**
+
+Added at top of orchestrator (lines 42-74):
+
+```markdown
+🎯 THE FOCUS RULE (CRITICAL!)
+
+DO WHAT USER ASKED. NOTHING MORE.
+
+- Asked for "build" → ONLY build (NO forced planning!)
+- Asked for "review" → ONLY review (NO forced comprehensive analysis!)
+- Asked for "fix" → ONLY fix (NO architecture deep dive!)
+
+Default: DIRECT EXECUTION (delivers fast)
+Systematic: ONLY if user explicitly requests
+```
+
+**Impact:**
+- User regains control
+- Results delivered quickly
+- No endless orchestration loops
+- Still systematic when needed, but user chooses
+
+---
+
+### Fixed
+
+**Issue: Never-ending orchestration loops**
+- Orchestrator would activate workflows user didn't ask for
+- Lost focus on actual request
+- Hours wasted on tangential analysis
+
+**Solution:**
+- THE FOCUS RULE enforces doing only what user requested
+- Quick mode by default
+- Full systematic only if explicitly asked
+- User controls depth, not orchestrator
+
+---
+
+### Reverted
+
+**v3.0.0 Changes Reverted:**
+- Progressive workflows (broke execution - had meta-instructions, no actual logic)
+- 4+5 agent restructuring (unnecessary complexity)
+- Meta-orchestration (caused infinite loops)
+
+**Why reverted:**
+- v3 orchestrator said "Load workflow" with no instructions HOW
+- Claude got stuck in loops trying to figure out how to load
+- User lost control completely
+- Meta-talk about orchestration instead of actual execution
+
+**Lesson learned:** Embedded execution logic works. Meta-instructions don't.
+
+---
+
+### Kept from v3.0 (The Good Parts)
+
+✅ PostToolUse hook (enforces <500 lines automatically)
+✅ task-breakdown skill (helpful for TODO generation)
+✅ progress-tracker skill (helpful for status reports)
+✅ Professional documentation language
+
+---
+
+### Version
+
+- v2.1.0: v2 structure + THE FOCUS RULE + PostToolUse hook + helpful skills
+- Not v3.0: That was broken, reverted
+- Based on: v2.0 (worked) + focus fix + SpecWeaver inspiration
+
+---
+
+## [3.0.0] - 2025-10-25 [REVERTED]
+
+**This version was reverted due to critical execution failures.**
+
+**Problems:**
+- Orchestrator had meta-instructions without actual execution logic
+- Caused never-ending loops
+- Lost user control
+- Bloated content 2.4x (3,155 vs 1,325 lines)
+
+**See v2.1.0 for working version with improvements.**
+
+---
+
+## [2.0.0] - 2025-10-24
 
 ### 🎉 THE PERFECT FUSION (Complete Architectural Transformation)
 
