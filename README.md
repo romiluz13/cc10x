@@ -1,4 +1,4 @@
-# cc10x - Focused AI Development Assistant for Claude Code
+# CC10x - Focused AI Development Assistant for Claude Code
 
 **Smart orchestration that does what you ask. Fast results without losing focus.**
 
