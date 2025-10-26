@@ -76,25 +76,6 @@
           }
         ]
       }
-    ],
-    
-    "PostCommand": [
-      {
-        "description": "Track command execution metrics (optional, future enhancement)",
-        "matcher": "feature-plan|feature-build|bug-fix|review",
-        "priority": 50,
-        "enabled": false,
-        "hooks": [
-          {
-            "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/post-command.sh",
-            "timeout": 1000,
-            "async": true,
-            "required": false,
-            "on_error": "ignore"
-          }
-        ]
-      }
     ]
   },
   
@@ -109,7 +90,7 @@
   "notes": [
     "SessionStart: Runs at every session initialization (startup, resume, clear, compact)",
     "PreCompact: Runs automatically at 75% token usage (auto-healing)",
-    "PostCommand: Future enhancement for command tracking (currently disabled)",
+    "PostToolUse: Validates file size after Write/Edit (enforces <500 lines)",
     "Hooks are executed in priority order (higher priority first)",
     "Async hooks run in background, sync hooks block until completion",
     "Required hooks must succeed, optional hooks can fail without blocking",
