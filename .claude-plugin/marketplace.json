@@ -6,14 +6,14 @@
     "url": "https://github.com/romiluz13"
   },
   "metadata": {
-    "description": "cc10x v2.1 - Focused orchestrator: Does what you ask, delivers results fast",
-    "version": "2.1.0"
+    "description": "cc10x v2.2 - Pure skill orchestrator with progressive loading",
+    "version": "2.2.0"
   },
   "plugins": [
     {
       "name": "cc10x",
-      "description": "cc10x v2.1: Focused orchestrator that does what you ask without losing control. 11 specialized agents, 20 domain skills. THE FOCUS RULE: Only activates workflows user requested (no forced orchestration). Quick mode default (delivers fast), systematic mode optional (if explicitly requested). Review (5-star) finds issues. Build delivers working code. Fix uses LOG FIRST. User controls flow. PostToolUse hook enforces <500 lines. Honest: costs more for systematic, use when quality matters.",
-      "version": "2.1.0",
+      "description": "cc10x v2.2: Pure skill orchestrator with natural language activation. 11 agents + 20 skills coordinate systematically. Say 'review my code' or 'plan this feature' to activate. 4 workflows: REVIEW (5 parallel AI agents), PLANNING (PRD with risk analysis), BUILDING (TDD enforced), DEBUGGING (LOG FIRST). Progressive loading (workflows on-demand) saves 50-75% tokens. THE FOCUS RULE enforced (only executes what you request). Complexity-aware (manual for simple 1-2, systematic for complex 4-5). Honest: 3-20x MORE tokens than manual, use for quality-critical complex features.",
+      "version": "2.2.0",
       "author": {
         "name": "Rom Iluz",
         "email": "rom.iluz13@gmail.com",

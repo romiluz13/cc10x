@@ -1,408 +1,395 @@
-# REVIEW Workflow ⭐⭐⭐⭐⭐
+# REVIEW Workflow - Multi-Dimensional Code Analysis
 
-**The Killer Feature - Always Worth It!**
+**Triggered by:** User requests code review, security audit, quality check
 
-## When to Use
+**Token cost:** ~11.5k tokens (orchestrator 1.5k + this file 3k + 5 agents 3k + skills 4k)
 
-Use this workflow for:
-- Code review before PRs
-- Security audits
-- Quality checks
-- Performance analysis
-- UX/accessibility reviews
-- Finding bugs in existing code
+---
 
-**Always valuable regardless of complexity.**
+## Overview
 
-## Workflow Execution
+This workflow invokes 5 specialized reviewer agents in PARALLEL for comprehensive multi-dimensional analysis:
+1. Security vulnerabilities
+2. Code quality issues
+3. Performance bottlenecks
+4. UX problems
+5. Accessibility violations
 
-### Phase 1: Scope Analysis
+---
 
-1. **Parse target from user message:**
+## Phase 1: Scope Determination
+
+**Parse user request to identify:**
+
+1. **Target files:**
    - Specific file: `src/auth.js`
    - Directory: `src/features/auth/`
    - Pattern: `src/**/*.js`
    - Entire codebase: `src/`
 
-2. **Identify file types:**
-   - JavaScript/TypeScript
-   - Python
-   - Other languages
+2. **Focus area (if specified):**
+   - Security only: Skip other agents
+   - Performance only: Skip other agents
+   - All dimensions: Invoke all 5 agents
 
-3. **Determine scope:**
-   - Single file review (10-20k tokens)
-   - Module review (30-40k tokens)
-   - Full codebase review (80-120k tokens)
-
-### Phase 2: Parallel Multi-Dimensional Review
-
-**Invoke 5 agents SIMULTANEOUSLY** (ONLY workflow that parallelizes!):
-
-#### 1. security-reviewer
-
-**Loads skills:** `risk-analysis` Stages 1+2+5 + `security-patterns`
-
-**Analyzes:**
-- SQL injection vulnerabilities
-- XSS (Cross-Site Scripting)
-- Authentication bypasses
-- Authorization flaws
-- Data exposure risks
-- Secret management
-- Input validation gaps
-
-**Uses:** OWASP Top 10 checklist
-
-**Returns:** Security findings with severity classification
+3. **File count estimate:**
+   - 1-3 files: 10-20k tokens total
+   - 4-10 files: 30-40k tokens total
+   - 10+ files: 50-80k tokens total
 
 ---
 
-#### 2. quality-reviewer
+## Phase 2: Invoke 5 Reviewer Agents in Parallel
 
-**Loads skills:** `risk-analysis` ALL 7 stages + `code-review-patterns`
+**EXECUTE THESE CONCURRENTLY:**
 
-**Analyzes:**
-- Code smells (Long Method, Large Class, Duplicate Code)
-- Complexity issues (Cyclomatic complexity)
-- Maintainability problems
-- DRY violations
-- SOLID principle violations
-- Refactoring opportunities
+### Agent 1: Security Reviewer
 
-**Uses:** Martin Fowler refactoring catalog
+```bash
+# Load agent instructions
+cat /Users/rom.iluz/Dev/cc10x_v2/plugins/cc10x/agents/security-reviewer.md
+```
 
-**Returns:** Quality findings with refactoring suggestions
+**The agent will:**
+1. Load domain skills:
+   - `risk-analysis` skill (Stages 1: Data Flow, 2: Dependencies, 5: Security)
+   - `security-patterns` skill (authentication, authorization, injection)
+2. Analyze target files for:
+   - SQL injection, XSS, CSRF vulnerabilities
+   - Authentication bypasses
+   - Authorization flaws
+   - Secret management issues
+   - Dependency vulnerabilities
+3. Return findings with severity: CRITICAL/HIGH/MEDIUM/LOW
 
----
+**Agent output format:**
+```markdown
+## Security Review Findings
 
-#### 3. performance-analyzer
+### CRITICAL
+- [File:Line] SQL injection in user login query
+  Impact: Full database access
+  Fix: Use parameterized queries
 
-**Loads skills:** `risk-analysis` Stage 6 + `performance-patterns`
+- [File:Line] Hardcoded API key in source
+  Impact: API abuse, cost
+  Fix: Move to environment variables
 
-**Analyzes:**
-- Time complexity (O(n²), O(n³) algorithms)
-- Memory leaks
-- N+1 query problems
-- Missing caching opportunities
-- Inefficient data structures
-- Blocking operations
+### HIGH
+- [File:Line] Missing rate limiting on auth endpoint
+  Impact: Brute force attacks
+  Fix: Implement express-rate-limit
 
-**Uses:** Performance optimization techniques
-
-**Returns:** Performance findings with optimization suggestions
-
----
-
-#### 4. ux-reviewer
-
-**Loads skills:** `risk-analysis` Stage 4 + `ux-patterns`
-
-**Analyzes:**
-- Error messages (clarity, actionability)
-- Loading states (missing or confusing)
-- User feedback (success/error communication)
-- Interaction patterns (clicks, forms, navigation)
-- Edge case handling (empty states, errors)
-
-**Uses:** UX best practices
-
-**Returns:** UX findings with improvement suggestions
+[etc.]
+```
 
 ---
 
-#### 5. accessibility-reviewer
+### Agent 2: Quality Reviewer
 
-**Loads skills:** `accessibility-patterns`
+```bash
+# Load agent instructions
+cat /Users/rom.iluz/Dev/cc10x_v2/plugins/cc10x/agents/quality-reviewer.md
+```
 
-**Analyzes:**
-- WCAG 2.1 AA violations
-- Keyboard navigation issues
-- Screen reader support
-- Color contrast problems
-- Missing ARIA labels
-- Focus management
+**The agent will:**
+1. Load domain skills:
+   - `code-generation` skill (quality patterns, SOLID principles)
+   - `safe-refactoring` skill (refactoring patterns)
+2. Analyze for:
+   - Code smells (long functions, god objects, duplicates)
+   - SOLID violations
+   - Complexity issues (cyclomatic complexity > 10)
+   - Naming conventions
+   - Documentation gaps
+3. Return findings with refactoring suggestions
 
-**Uses:** WCAG 2.1 AA checklist
+**Agent output format:**
+```markdown
+## Quality Review Findings
 
-**Returns:** Accessibility findings with remediation steps
+### HIGH
+- [File:Line] Function exceeds 50 lines (currently 120)
+  Issue: Hard to test and maintain
+  Fix: Extract methods for validation, db operations, response
+
+- [File:Line] Duplicate code across 3 files
+  Issue: Maintenance burden, bug spread
+  Fix: Extract to shared utility function
+
+### MEDIUM
+[etc.]
+```
 
 ---
 
-### Phase 3: Synthesis & Report Generation
+### Agent 3: Performance Analyzer
 
-1. **Consolidate findings** from all 5 agents
-2. **Remove duplicates** (same issue found by multiple agents)
-3. **Prioritize by severity:** CRITICAL → HIGH → MODERATE → LOW
-4. **Generate comprehensive report** with:
-   - File-level findings
-   - Specific line numbers
-   - Severity classification
-   - Fix recommendations with code examples
-   - Time estimates for fixes
+```bash
+# Load agent instructions
+cat /Users/rom.iluz/Dev/cc10x_v2/plugins/cc10x/agents/performance-analyzer.md
+```
+
+**The agent will:**
+1. Load domain skills:
+   - `performance-patterns` skill (optimization patterns)
+   - `risk-analysis` skill (Stage 6: Performance/Scalability)
+2. Analyze for:
+   - N+1 query problems
+   - Missing database indexes
+   - Memory leaks (closures, event listeners)
+   - Inefficient algorithms (O(n²) loops)
+   - Missing caching opportunities
+3. Return findings with optimization strategies
+
+**Agent output format:**
+```markdown
+## Performance Review Findings
+
+### HIGH
+- [File:Line] N+1 query in user listing
+  Impact: 1000 users = 1000 queries (5s response)
+  Fix: Use JOIN or batch loading
+
+- [File:Line] Missing index on email column
+  Impact: Full table scan on every login
+  Fix: ADD INDEX idx_users_email
+
+### MEDIUM
+[etc.]
+```
 
 ---
 
-## Output Format
+### Agent 4: UX Reviewer
+
+```bash
+# Load agent instructions
+cat /Users/rom.iluz/Dev/cc10x_v2/plugins/cc10x/agents/ux-reviewer.md
+```
+
+**The agent will:**
+1. Load domain skills:
+   - `ux-patterns` skill (user experience patterns)
+   - `risk-analysis` skill (Stage 4: UX/Human Factors)
+2. Analyze for:
+   - Error message quality (helpful vs cryptic)
+   - Edge case handling (empty states, loading, errors)
+   - User feedback (success/failure indicators)
+   - Input validation messages
+   - Confirmation dialogs for destructive actions
+3. Return findings with UX improvements
+
+**Agent output format:**
+```markdown
+## UX Review Findings
+
+### HIGH
+- [File:Line] Cryptic error: "Error 401"
+  Impact: User confusion
+  Fix: "Invalid credentials. Please check your email and password."
+
+- [File:Line] No loading state during login
+  Impact: User clicks multiple times
+  Fix: Show spinner, disable button
+
+### MEDIUM
+[etc.]
+```
+
+---
+
+### Agent 5: Accessibility Reviewer
+
+```bash
+# Load agent instructions
+cat /Users/rom.iluz/Dev/cc10x_v2/plugins/cc10x/agents/accessibility-reviewer.md
+```
+
+**The agent will:**
+1. Load domain skills:
+   - `accessibility-patterns` skill (WCAG guidelines, a11y patterns)
+2. Analyze for:
+   - Missing alt text on images
+   - Keyboard navigation issues
+   - Screen reader compatibility
+   - Color contrast problems
+   - ARIA labels missing
+   - Focus management
+3. Return findings with WCAG compliance level
+
+**Agent output format:**
+```markdown
+## Accessibility Review Findings
+
+### CRITICAL (WCAG A)
+- [File:Line] Button has no accessible label
+  Impact: Screen readers can't identify purpose
+  Fix: Add aria-label="Submit login form"
+
+- [File:Line] Form inputs have no labels
+  Impact: Cannot navigate with keyboard
+  Fix: Add <label for="email">Email</label>
+
+### HIGH (WCAG AA)
+[etc.]
+```
+
+---
+
+## Phase 3: Compile Results
+
+**After all 5 agents complete:**
+
+1. **Aggregate findings** from all agents
+2. **Deduplicate** overlapping issues (e.g., security and quality both flag same function)
+3. **Prioritize** by severity (CRITICAL → HIGH → MEDIUM → LOW)
+4. **Cross-reference** related issues
+5. **Calculate** total issue count and breakdown
+
+---
+
+## Phase 4: Format Comprehensive Report
 
 ```markdown
-## Multi-Dimensional Code Review: [Target]
+# Code Review Results
 
-### Summary
-- Total Issues: [X]
-- CRITICAL: [X] (must fix before merge)
-- HIGH: [X] (should fix)
-- MODERATE: [X] (good to fix)
-- LOW: [X] (nice to fix)
-
-### Review Dimensions Analyzed
-- ✅ Security (OWASP Top 10, injection, auth)
-- ✅ Quality (code smells, complexity, DRY/SOLID)
-- ✅ Performance (O(n) complexity, caching, queries)
-- ✅ UX (error messages, loading, feedback)
-- ✅ Accessibility (WCAG 2.1 AA, keyboard, screen reader)
+## Executive Summary
+- **Total Issues:** X found
+- **Critical:** Y (immediate action required)
+- **High Priority:** Z (fix before deployment)
+- **Recommendation:** [DEPLOY / HOLD / REWORK]
 
 ---
 
-## CRITICAL Issues (Must Fix Before Merge)
+## Critical Issues (Fix Immediately)
 
-### [SEC-001] SQL Injection Vulnerability
+### Security (CRITICAL)
+1. **SQL Injection** in `src/auth.js:45`
+   - Impact: Full database access
+   - Fix: Use parameterized queries
+   - Priority: IMMEDIATE
 
-**File:** `src/auth/login.controller.js`  
-**Line:** 45  
-**Dimension:** Security  
+2. **Hardcoded Secret** in `src/config.js:12`
+   - Impact: API key exposed in source
+   - Fix: Move to `.env`, add to `.gitignore`
+   - Priority: IMMEDIATE
 
-**Issue:** User input directly concatenated into SQL query without sanitization
+### Accessibility (CRITICAL - WCAG A)
+3. **Missing Form Labels** in `src/components/LoginForm.jsx:20`
+   - Impact: Unusable for screen reader users
+   - Fix: Add `<label>` elements for all inputs
+   - Priority: Before deploy
 
-**Risk:** Database compromise, data breach, unauthorized access
+---
 
-**Current Code:**
-```javascript
-const query = `SELECT * FROM users WHERE email = '${email}'`;
-const result = await db.query(query);
+## High Priority (Fix Before Deploy)
+
+### Security (HIGH)
+[List high-priority security issues]
+
+### Performance (HIGH)
+[List high-priority performance issues]
+
+### Quality (HIGH)
+[List high-priority quality issues]
+
+---
+
+## Medium Priority (Fix Soon)
+
+[Organized by category: Security, Quality, Performance, UX, Accessibility]
+
+---
+
+## Low Priority / Suggestions
+
+[Nice-to-have improvements]
+
+---
+
+## Detailed Findings by Dimension
+
+### Security Analysis
+[All security findings grouped]
+
+### Quality Analysis
+[All quality findings grouped]
+
+### Performance Analysis
+[All performance findings grouped]
+
+### UX Analysis
+[All UX findings grouped]
+
+### Accessibility Analysis
+[All accessibility findings grouped]
+
+---
+
+## Recommendations
+
+**Immediate Actions:**
+1. Fix X CRITICAL issues (estimated: Y hours)
+2. Address Z HIGH security issues
+3. Implement WCAG A compliance fixes
+
+**Before Deployment:**
+- All CRITICAL fixed
+- All HIGH security fixed
+- Basic accessibility (WCAG A)
+
+**Post-Deployment:**
+- MEDIUM priority refactoring
+- Performance optimizations
+- WCAG AA compliance
+
+**Deployment Decision:** [READY / HOLD / REWORK]
 ```
 
-**Vulnerable Because:**
-- Email parameter from user input (`req.body.email`)
-- Direct string interpolation into SQL
-- No parameterization or escaping
-- Attacker could inject: `' OR '1'='1` to bypass authentication
+---
 
-**Fix:**
-```javascript
-// ✅ FIXED - Use parameterized queries
-const query = 'SELECT * FROM users WHERE email = ?';
-const result = await db.query(query, [email]);
+## Phase 5: Return Results
 
-// OR with ORM (Mongoose/Prisma):
-const user = await User.findOne({ email }); // Automatically sanitized
+**Present the comprehensive report to user.**
+
+**DO NOT automatically:**
+- ❌ Start fixing issues
+- ❌ Create a plan to address findings
+- ❌ Refactor code
+- ❌ Suggest building tests
+
+**Instead OFFER next steps:**
+```
+Review complete! Found X issues (Y critical).
+
+What would you like to do?
+- Create a plan to fix critical issues?
+- Prioritize which issues to tackle first?
+- Need help understanding any findings?
+- Want me to fix specific issues?
 ```
 
-**Estimated fix time:** 10 minutes
-
-**Why this matters:** SQL injection is #1 in OWASP Top 10. One breach can compromise entire database.
-
----
-
-### [SEC-002] Hardcoded Secrets in Code
-
-**File:** `src/config/database.js`  
-**Line:** 12  
-**Dimension:** Security  
-
-**Issue:** Database credentials hardcoded in source code
-
-**Risk:** Secrets exposed in version control, leaked if repo compromised
-
-**Current Code:**
-```javascript
-const config = {
-  password: 'myP@ssw0rd123',  // ❌ CRITICAL - Never hardcode!
-  host: 'prod-db.example.com'
-};
-```
-
-**Fix:**
-```javascript
-// ✅ FIXED - Use environment variables
-const config = {
-  password: process.env.DB_PASSWORD,
-  host: process.env.DB_HOST
-};
-
-// Validate env vars exist
-if (!config.password) {
-  throw new Error('DB_PASSWORD environment variable required');
-}
-```
-
-**Also:**
-- Remove from git history: `git filter-branch` or BFG Repo-Cleaner
-- Rotate credentials immediately
-- Use secrets manager (AWS Secrets Manager, HashiCorp Vault)
-
-**Estimated fix time:** 30 minutes (including credential rotation)
-
----
-
-## HIGH Priority Issues (Should Fix)
-
-### [PERF-001] N+1 Query Problem
-
-**File:** `src/users/service.js`  
-**Line:** 78-82  
-**Dimension:** Performance  
-
-**Issue:** Loading user posts in loop causing N+1 database queries
-
-**Impact:** 
-- 100 users = 101 queries (1 user query + 100 post queries)
-- Slow response time (300ms → 2,500ms)
-- Database overload under load
-
-**Current Code:**
-```javascript
-const users = await User.find(); // 1 query
-for (const user of users) {
-  user.posts = await Post.find({ userId: user.id }); // N queries!
-}
-```
-
-**Fix:**
-```javascript
-// ✅ FIXED - Single query with join or lookup
-const users = await User.aggregate([
-  {
-    $lookup: {
-      from: 'posts',
-      localField: '_id',
-      foreignField: 'userId',
-      as: 'posts'
-    }
-  }
-]); // 1 query total!
-```
-
-**Estimated fix time:** 20 minutes
-
-**Performance improvement:** 8-10x faster (2,500ms → 250ms)
-
----
-
-[Continue for all HIGH issues...]
-
----
-
-## MODERATE Priority Issues (Good to Fix)
-
-[Include code smells, minor UX issues, etc.]
-
----
-
-## LOW Priority Issues (Nice to Fix)
-
-[Include minor improvements, suggestions, etc.]
-
----
-
-## Coverage Summary
-
-### Files Reviewed
-- [List all files analyzed]
-
-### Agents Executed
-- ✅ security-reviewer: Found [X] issues
-- ✅ quality-reviewer: Found [X] issues
-- ✅ performance-analyzer: Found [X] issues
-- ✅ ux-reviewer: Found [X] issues
-- ✅ accessibility-reviewer: Found [X] issues
-
-### Recommended Actions
-
-1. **Fix CRITICAL issues immediately** (block merge until resolved)
-2. **Fix HIGH issues before merge** (schedule if time-constrained)
-3. **Create tickets for MODERATE** (address in next sprint)
-4. **Consider LOW improvements** (technical debt backlog)
-
-### Estimated Total Fix Time
-- CRITICAL: [X] hours
-- HIGH: [X] hours
-- MODERATE: [X] hours
-- LOW: [X] hours
-
----
-
-## Real-World Test Results
-
-**Test Case:** Authentication system review (src/auth/)
-
-**Results:**
-- Files reviewed: 8
-- Total issues: 38
-- CRITICAL: 5 (SQL injection, secrets exposed, auth bypass, XSS, missing transaction)
-- HIGH: 12 (N+1 queries, memory leaks, race conditions, error handling)
-- MODERATE: 15 (code smells, UX improvements)
-- LOW: 6 (minor suggestions)
-
-**Time:** 3 minutes
-
-**Tokens:** 35,000
-
-**Value:** One prevented SQL injection breach alone justifies the tokens.
-
-**Verdict:** ⭐⭐⭐⭐⭐ (5/5 stars)
+**Let user decide the next action.**
 
 ---
 
 ## Token Economics
 
-**Cost:** 20k-50k tokens depending on codebase size
+**Typical review workflow costs:**
+- Orchestrator: 1.5k tokens
+- This workflow file: 3k tokens
+- 5 agents invoked: 3k tokens (600 each)
+- Domain skills loaded: 4k tokens (agents load progressively)
+- **Total: ~11.5k tokens**
 
-**Breakdown:**
-- Scope analysis: 1k tokens
-- 5 parallel agents: 15k-40k tokens (3k-8k each)
-- Synthesis & report: 4k-9k tokens
+**Time: 3-7 minutes** (parallel agent execution)
 
-**Value Comparison:**
+**Value: ALWAYS worth it**
+- Finds issues before production
+- Prevents security breaches
+- Catches performance problems early
+- Ensures accessibility compliance
+- Improves code quality
 
-**Manual equivalent:**
-- Security expert review: 2-3 hours
-- Code quality review: 2-3 hours
-- Performance review: 1-2 hours
-- UX review: 1-2 hours
-- Accessibility audit: 1-2 hours
-- **Total: 7-13 hours of expert time**
-
-**cc10x review:**
-- Time: 2-5 minutes
-- Tokens: 20k-50k
-- **Replaces 7-13 hours of manual expert reviews**
-
-**ROI:**
-- One prevented security breach >> infinite value
-- One prevented performance bug >> hours of debugging saved
-- Accessibility compliance >> lawsuit prevention
-
-**Use before EVERY PR!**
-
----
-
-## When NOT to Use
-
-This workflow is almost always worth it, but skip if:
-- ❌ Trivial changes (<10 lines, obvious correctness)
-- ❌ Generated code (config files, migrations)
-- ❌ Already reviewed by full team
-- ❌ Emergency hotfix (review after deploying)
-
-**For 99% of PRs:** USE THIS WORKFLOW.
-
----
-
-## Remember
-
-This is the ONLY cc10x workflow that's universally valuable regardless of complexity. The 5 review agents actually work as advertised - they find real issues that prevent production incidents.
-
-**One prevented security breach justifies unlimited tokens.**
-
-**Use liberally!**
-
+**One prevented security breach = infinite ROI**

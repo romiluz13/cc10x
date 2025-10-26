@@ -1,23 +1,27 @@
-# CC10x - Focused AI Development Assistant for Claude Code
+# cc10x - Pure Skill Orchestrator for Claude Code
 
-**Smart orchestration that does what you ask. Fast results without losing focus.**
+**Systematic development through intelligent orchestration of specialized agents and domain skills**
 
-[![Claude Code Plugin](https://img.shields.io/badge/Claude%20Code-Plugin-blue)](https://github.com/romiluz13/cc10x)
-[![Version](https://img.shields.io/badge/version-2.1.0-green)](https://github.com/romiluz13/cc10x)
+[![Version](https://img.shields.io/badge/version-2.2.0-green)](https://github.com/romiluz13/cc10x)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![Claude Code Plugin](https://img.shields.io/badge/Claude%20Code-Plugin-blue)](https://github.com/romiluz13/cc10x)
 
 ---
 
 ## What is CC10x?
 
-A Claude Code plugin that provides **focused AI assistance** for software development:
+A Claude Code plugin providing **ONE orchestrator skill** that coordinates 11 specialized agents + 20 domain skills for systematic software development:
 
-- **Code Review** - Multi-dimensional analysis (security, quality, performance, UX, accessibility)
-- **Feature Building** - Systematic implementation with quality enforcement
-- **Bug Fixing** - LOG FIRST debugging approach
-- **Validation** - Consistency checking across code, tests, and docs
+- **Code Review** - 5 parallel AI agents (security, quality, performance, UX, accessibility)
+- **Feature Planning** - Comprehensive PRDs with risk analysis and architecture decisions
+- **TDD Implementation** - Strict test-driven development with quality enforcement
+- **LOG FIRST Debugging** - Systematic investigation over guessing
 
-**Core principle:** Does what you ask for. Nothing more.
+**Natural language activation:** Say "review my code for security" or "plan authentication feature"
+
+**Progressive loading:** Workflows load on-demand (50-75% token savings vs monolithic)
+
+**THE FOCUS RULE:** Only executes what you request (no workflow creep)
 
 ---
 
@@ -29,309 +33,270 @@ A Claude Code plugin that provides **focused AI assistance** for software develo
 
 # Install plugin
 /plugin install cc10x@cc10x
+
+# Verify
+/plugin  # Should show: cc10x v2.2.0
 ```
 
-**Verify installation:**
-```bash
-/plugin      # Should list cc10x v2.1
+---
+
+## Quick Start
+
+**Natural language invocation:**
+
+```
+"review my auth code for security vulnerabilities"
+"plan a user authentication feature"
+"build a todo app with React"
+"debug why login returns 401"
 ```
 
----
-
-## Usage
-
-### Code Review
-
-```bash
-/cc10x review src/auth.js
-```
-
-Analyzes code across 5 dimensions and reports findings with specific fixes.
-
----
-
-### Build Features
-
-```bash
-/cc10x build user authentication
-```
-
-Asks: Quick implementation or systematic approach?  
-Delivers: Working code based on your choice.
-
----
-
-### Fix Bugs
-
-```bash
-/cc10x fix login timeout issue
-```
-
-Uses LOG FIRST pattern: observe actual behavior, identify root cause, implement fix.
-
----
-
-### Validate
-
-```bash
-/cc10x validate
-```
-
-Checks consistency between plans, code, tests, and documentation.
-
----
-
-## Key Features
-
-### Focused Execution
-
-Only activates workflows you explicitly request. No forced orchestration.
-
-**Example:**
-- Ask for "build" → Gets built directly
-- Ask for "review" → Gets reviewed only
-- Ask for "plan and build" → Both workflows execute
-
-**You control the depth.**
-
-### Multi-Agent System
-
-11 specialized agents handle different aspects:
-- **Review agents** (parallel execution): Security, quality, performance, UX, accessibility
-- **Execution agents**: Requirements, architecture, implementation, testing, deployment
-
-**Agents activate only when needed for your specific request.**
-
-### Quality Enforcement
-
-- File size validation (<500 lines per file)
-- TDD enforcement when requested
-- Comprehensive error handling
-- Production-ready code standards
-
----
-
-## Commands
-
-### `/cc10x review [target]`
-
-Multi-dimensional code review.
-
-**Analyzes:**
-- Security vulnerabilities
-- Code quality issues
-- Performance bottlenecks
-- UX problems
-- Accessibility violations
-
-**Time:** 3-5 minutes  
-**Use:** Before every PR
-
----
-
-### `/cc10x build [feature]`
-
-Feature implementation.
-
-**Offers two modes:**
-- **Quick:** Direct implementation (fast)
-- **Systematic:** Full TDD workflow (comprehensive)
-
-**Time:** 45 minutes - 4 hours (depending on mode)  
-**Use:** When building features
-
----
-
-### `/cc10x fix [issue]`
-
-Bug fixing with LOG FIRST pattern.
-
-**Process:**
-1. Add logging
-2. Observe actual behavior
-3. Identify root cause
-4. Implement minimal fix
-5. Add regression test
-
-**Time:** 15-60 minutes  
-**Use:** When debugging complex issues
-
----
-
-### `/cc10x validate`
-
-Cross-artifact consistency validation.
-
-**Checks:**
-- Code matches requirements
-- Tests exist and pass
-- Documentation current
-- Risks addressed
-
-**Time:** 10-20 minutes  
-**Use:** Before merging, team projects
-
----
-
-## Configuration
-
-### User Rules Enforced
-
-The plugin enforces best practices:
-- Files under 500 lines (automatic validation)
-- No placeholder code in implementations
-- Comprehensive error handling
-- Test coverage requirements
-- TypeScript for JavaScript projects
-
-**Configured via hooks and agent prompts.**
+The orchestrator automatically detects your intent, assesses complexity, and executes the appropriate workflow.
 
 ---
 
 ## Architecture
 
 ```
-User Request
-     ↓
-cc10x Orchestrator (analyzes request)
-     ↓
-Activates specific agents needed
-     ↓
-Agents load relevant skills progressively
-     ↓
-Delivers focused result
+User: "review my auth code"
+    ↓ (natural language, no slash command)
+    ↓
+cc10x-orchestrator SKILL (220 lines)
+    ↓ (detects: REVIEW workflow)
+    ↓
+Loads: workflows/review.md (400 lines)
+    ↓ (explicit agent invocation)
+    ↓
+Invokes 5 Agents in Parallel:
+    ├─→ security-reviewer → loads risk-analysis, security-patterns
+    ├─→ quality-reviewer → loads code-generation skill
+    ├─→ performance-analyzer → loads performance-patterns
+    ├─→ ux-reviewer → loads ux-patterns
+    └─→ accessibility-reviewer → loads accessibility-patterns
+    ↓
+Results compiled → returned to user
 ```
 
-**Simple. Direct. Focused on your request.**
+**Pure skills-based:** No commands, just skills coordinating agents
+
+**Progressive:** Workflows load on-demand (only what's needed)
+
+**Honest:** 3-20x MORE tokens than manual, use for complex features (4-5 complexity)
 
 ---
 
-## Skills
+## The 4 Workflows
 
-20 domain skills provide specialized knowledge:
+### 1. REVIEW (Always Worth It)
 
-**Planning & Architecture:**
-- feature-planning, risk-analysis, deployment-patterns
+**Use:** Before every PR, any complexity
 
-**Development:**
-- code-generation, test-driven-development, safe-refactoring
+**What it does:**
+- Invokes 5 specialized reviewer agents in parallel
+- Security: SQL injection, XSS, auth bypasses
+- Quality: Code smells, SOLID violations
+- Performance: N+1 queries, memory leaks
+- UX: Error messages, loading states
+- Accessibility: WCAG violations, keyboard nav
 
-**Quality & Review:**
-- code-review-patterns, security-patterns, performance-patterns
+**Token cost:** ~12k tokens  
+**Time:** 3-7 minutes  
+**Value:** One prevented security breach >> all tokens ever used
 
-**Debugging & Navigation:**
-- bug-fixing, systematic-debugging, codebase-navigation
+### 2. PLANNING (Complexity 4-5)
 
-**Design:**
-- ui-design, ux-patterns, accessibility-patterns
+**Use:** Complex features (500+ lines, 7+ files, architecture decisions)  
+**Skip:** Simple features (using libraries, obvious implementations)
 
-**Orchestration:**
-- task-breakdown, progress-tracker
+**What it does:**
+- Requirements analysis with user stories
+- Architecture design with technology decisions
+- 7-dimension risk assessment
+- Testing strategy (>80% coverage goals)
+- File manifest with estimated LOC
+- Deployment and rollback strategies
 
-**Skills load on-demand as agents need them.**
+**Token cost:** ~25k tokens  
+**Worth it:** Prevents costly architecture mistakes
+
+### 3. BUILDING (TDD Enforced)
+
+**Use:** Complexity 4-5, want strict test-driven development  
+**Skip:** Simple features (manual is 16x cheaper)
+
+**What it does:**
+- Strict TDD: RED → GREEN → REFACTOR
+- Risk analysis before each increment
+- Mandatory user test verification (prevents false success reports)
+- >80% test coverage enforced
+
+**Token cost:** ~30k tokens  
+**Important:** You MUST manually verify tests pass
+
+### 4. DEBUGGING (LOG FIRST)
+
+**Use:** Complex bugs where root cause is unclear  
+**Skip:** Obvious fixes (typos, syntax errors)
+
+**What it does:**
+- Add strategic logging (see actual data, don't guess)
+- Reproduce with logging
+- Analyze logs systematically
+- Form hypothesis based on evidence
+- Implement minimal fix
+- Verify and clean up logging
+
+**Token cost:** ~15k tokens  
+**Value:** Saves hours of random guessing
 
 ---
 
-## When to Use
+## When to Use cc10x
 
-**Use cc10x for:**
-- Code reviews (always valuable)
-- Complex features (systematic approach prevents mistakes)
-- Debugging (LOG FIRST saves time)
-- Team projects (consistency validation)
+### ✅ Always Use REVIEW
+- Before every PR
+- Security audits
+- Any complexity
+- **One prevented breach >> all tokens**
 
-**Skip cc10x for:**
-- Trivial changes (faster to do manually)
-- Emergencies (fix first, validate later)
-- Simple library integrations (just follow docs)
+### ✅ Use PLANNING/BUILDING For:
+- **Complexity 4-5** (500+ lines, 7+ files, novel patterns)
+- High-risk domains (auth, payments, data integrity)
+- Architecture decisions needed
+- Team coordination required
 
-**The orchestrator will recommend the right approach based on complexity.**
+**Examples:**
+- Real-time notifications (WebSockets)
+- Multi-tenancy with data isolation
+- Payment processing (Stripe integration)
+- Complex state management
+
+### ❌ Skip cc10x For:
+- **Complexity 1-2** (simple features using libraries)
+- Obvious implementations
+- Prototypes/MVPs
+- Emergencies (production down)
+
+**cc10x will honestly tell you to skip if manual is better!**
 
 ---
 
-## Examples
+## Complexity Examples
 
-### Review Before PR
+**Simple (1-2): Skip cc10x**
+- Add rate limiting using express-rate-limit
+- Form validation with Zod
+- CSV export with csv-parser
+- **Manual is 16x cheaper and often better**
 
-```bash
-/cc10x review src/features/payment/
+**Moderate (3): Maybe**
+- User registration (4-6 files, standard patterns)
+- Pagination with caching
+- Search functionality
+
+**Complex (4-5): Use cc10x**
+- Authentication system (JWT + refresh, 10+ files)
+- Payment integration (Stripe webhooks, 12+ files)
+- Real-time chat (WebSocket + persistence, 14+ files)
+- RBAC with middleware (10+ files)
+
+---
+
+## Progressive Loading
+
+**Token efficiency through on-demand workflow loading:**
+
+- **Initial load:** 3.5k tokens (orchestrator + agent/skill metadata)
+- **Workflow:** +3-6k tokens (only requested workflow)
+- **Agents:** +3k tokens (only invoked agents)
+- **Skills:** +2-5k tokens (only needed sections)
+
+**Total:** ~12k tokens for review (vs 10k monolithic = 20% savings)
+
+**Key advantage:** Workflows you don't use aren't loaded
+
+---
+
+## THE FOCUS RULE
+
+**Enforced gates prevent workflow creep:**
+
+1. **Complexity gate:** Warns if feature is too simple, offers to skip
+2. **Scope gate:** Only executes requested workflow (no auto-chaining)
+3. **User confirmation:** Asks permission before expanding scope
+
+**Example:**
+```
+You: "build todo app"
+→ cc10x: "This is SIMPLE (2/5). Manual is 16x cheaper. Continue? (yes/no)"
+→ You: "no"
+→ cc10x: "Smart choice! Here's quick guidance..." (exits, saves 80k tokens)
 ```
 
-Gets security, quality, and performance analysis before merging.
+---
+
+## Honest Positioning
+
+**cc10x costs 3-20x MORE tokens than manual implementation.**
+
+**Why?**
+- Systematic multi-phase analysis
+- Multiple specialized agents
+- Comprehensive risk assessment
+- Complete documentation
+
+**Worth it when:**
+- Complexity 4-5 (one prevented mistake >> token cost)
+- High-risk domains (security critical)
+- Review workflow (ALWAYS - prevents breaches)
+
+**Not worth it when:**
+- Complexity 1-2 (manual faster and cheaper)
+- Obvious implementations (follow library docs)
+- Prototypes (iterate fast first)
+
+**Use the right tool for the job.**
 
 ---
 
-### Build with TDD
+## Quality Enforcement
 
-```bash
-/cc10x build shopping cart feature
-```
+**PostToolUse Hook (Automatic):**
+- Validates file size after every Write/Edit
+- Warns if >500 lines
+- Provides split suggestions
 
-Chooses systematic mode → Full TDD implementation with tests.
-
----
-
-### Quick Bug Fix
-
-```bash
-/cc10x fix form validation not working
-```
-
-LOG FIRST debugging → Root cause identified → Fix implemented.
+**Agent Enforcement:**
+- No placeholders or TODOs
+- Production-ready code only
+- Comprehensive error handling
+- >80% test coverage target
 
 ---
 
-## Requirements
+## Documentation
 
-- Claude Code installed
-- Git (for version control)
-- Development environment for your stack
-
----
-
-## File Structure
-
-```
-.claude-plugin/
-└── marketplace.json
-
-plugins/cc10x/
-├── .claude-plugin/
-│   └── plugin.json
-├── agents/          # 11 specialized agents
-├── commands/        # Main command entry point
-├── skills/          # 20 domain knowledge skills
-├── hooks/           # Quality enforcement hooks
-└── scripts/         # Validation scripts
-```
-
----
-
-## Contributing
-
-Contributions welcome! 
-
-1. Fork the repository
-2. Create feature branch
-3. Make changes
-4. Test thoroughly
-5. Submit pull request
-
-See [GitHub Issues](https://github.com/romiluz13/cc10x/issues) for current work.
-
----
-
-## License
-
-MIT License - See [LICENSE](LICENSE) file for details.
+- **Quick Start:** [QUICK-START.md](QUICK-START.md)
+- **Changelog:** [CHANGELOG.md](CHANGELOG.md)
+- **License:** [LICENSE](LICENSE)
 
 ---
 
 ## Support
 
 - **Issues:** https://github.com/romiluz13/cc10x/issues
-- **Discussions:** https://github.com/romiluz13/cc10x/discussions
+- **Repository:** https://github.com/romiluz13/cc10x
 
 ---
 
-**cc10x - AI development assistance that stays focused on your goals.**
+## License
+
+MIT © Rom Iluz
+
+---
+
+**Start with code review - the killer feature that's always worth it!**
+
+```
+"review my code for security issues"
+```

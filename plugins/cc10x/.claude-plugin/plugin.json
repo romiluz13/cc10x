@@ -1,7 +1,7 @@
 {
   "name": "cc10x",
-  "version": "2.1.0",
-  "description": "Focused orchestrator that does what you ask. 4 core workflows (review, build, fix, validate) that deliver results without losing focus. Smart agent activation (only uses what's needed for your task). Quick mode by default, full systematic only if requested. Review workflow (5-star) finds real issues. Build workflow delivers working code. Fix workflow uses LOG FIRST. User controls the flow, not endless orchestration. Honest: costs more tokens for systematic approach, use when quality matters. Simple tasks stay simple, complex tasks get full support.",
+  "version": "2.2.0",
+  "description": "Pure skill orchestrator coordinating 11 agents + 20 domain skills for systematic development. Natural language activation (say 'review my code' or 'plan this feature'). 4 workflows: REVIEW (5 parallel AI agents find security/quality/performance issues), PLANNING (comprehensive PRD with risk analysis), BUILDING (TDD enforced), DEBUGGING (LOG FIRST approach). Progressive loading saves 50-75% tokens (workflows load on-demand). THE FOCUS RULE enforced (only executes what you request, no workflow creep). Complexity-aware (recommends manual for simple features 1-2, systematic for complex 4-5). Honest positioning: costs 3-20x MORE tokens than manual due to systematic analysis, use when preventing architecture mistakes justifies cost. Review workflow always worth it (prevents security breaches).",
   "author": {
     "name": "Rom Iluz",
     "email": "rom.iluz13@gmail.com",
@@ -15,18 +15,13 @@
     "systematic-workflows",
     "risk-analysis",
     "complexity-assessment",
-    "file-manifest",
-    "rollback-strategy",
-    "deployment-planning",
     "tdd",
     "log-first",
-    "what-could-go-wrong",
     "progressive-loading",
-    "3-layer-architecture",
-    "claude-code",
-    "claude-plugin"
+    "pure-skills",
+    "orchestrator",
+    "claude-code"
   ],
-  "commands": ["./commands/cc10x.md"],
   "agents": [
     "./agents/context-analyzer.md",
     "./agents/implementer.md",
