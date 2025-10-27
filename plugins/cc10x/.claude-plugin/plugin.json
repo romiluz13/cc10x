@@ -1,7 +1,7 @@
 {
   "name": "cc10x",
-  "version": "2.2.0",
-  "description": "Pure skill orchestrator coordinating 11 agents + 20 domain skills for systematic development. Natural language activation (say 'review my code' or 'plan this feature'). 4 workflows: REVIEW (5 parallel AI agents find security/quality/performance issues), PLANNING (comprehensive PRD with risk analysis), BUILDING (TDD enforced), DEBUGGING (LOG FIRST approach). Progressive loading saves 50-75% tokens (workflows load on-demand). THE FOCUS RULE enforced (only executes what you request, no workflow creep). Complexity-aware (recommends manual for simple features 1-2, systematic for complex 4-5). Honest positioning: costs 3-20x MORE tokens than manual due to systematic analysis, use when preventing architecture mistakes justifies cost. Review workflow always worth it (prevents security breaches).",
+  "version": "3.0.0",
+  "description": "Intelligent orchestration system with auto-loaded CLAUDE.md guide. 12 specialized agents + 21 progressive skills coordinate systematically. Detects intent from natural language, assesses complexity (1-5), routes to workflows dynamically. Progressive loading (50-75% token savings). 5-agent parallel review (security, quality, performance, UX, accessibility). Complexity gate recommends manual for simple features, systematic for complex. 'What Could Go Wrong' methodology integrated. Workflows: REVIEW (always worth it), PLANNING (comprehensive PRD), BUILDING (TDD with pause points), DEBUGGING (LOG FIRST). Honest about costs (3-20x MORE than manual, use for preventing architecture mistakes).",
   "author": {
     "name": "Rom Iluz",
     "email": "rom.iluz13@gmail.com",
@@ -11,15 +11,15 @@
   "repository": "https://github.com/romiluz13/cc10x",
   "license": "MIT",
   "keywords": [
+    "intelligent-orchestration",
     "code-review",
-    "systematic-workflows",
     "risk-analysis",
-    "complexity-assessment",
+    "complexity-gate",
+    "progressive-loading",
+    "context-management",
+    "what-could-go-wrong",
     "tdd",
     "log-first",
-    "progressive-loading",
-    "pure-skills",
-    "orchestrator",
     "claude-code"
   ],
   "agents": [

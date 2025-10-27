@@ -6,32 +6,35 @@
     "url": "https://github.com/romiluz13"
   },
   "metadata": {
-    "description": "cc10x v2.2 - Pure skill orchestrator with progressive loading",
-    "version": "2.2.0"
+    "description": "cc10x v3.0 - Intelligent AI orchestration for systematic development",
+    "version": "3.0.0"
   },
   "plugins": [
     {
       "name": "cc10x",
-      "description": "cc10x v2.2: Pure skill orchestrator with natural language activation. 11 agents + 20 skills coordinate systematically. Say 'review my code' or 'plan this feature' to activate. 4 workflows: REVIEW (5 parallel AI agents), PLANNING (PRD with risk analysis), BUILDING (TDD enforced), DEBUGGING (LOG FIRST). Progressive loading (workflows on-demand) saves 50-75% tokens. THE FOCUS RULE enforced (only executes what you request). Complexity-aware (manual for simple 1-2, systematic for complex 4-5). Honest: 3-20x MORE tokens than manual, use for quality-critical complex features.",
-      "version": "2.2.0",
+      "description": "cc10x v3.0: Intelligent orchestration system with 12 agents + 21 progressive skills. Auto-loaded CLAUDE.md orchestrator detects intent, assesses complexity, routes workflows dynamically. 5-agent parallel review (security, quality, performance, UX, accessibility). Progressive loading (50-75% token savings). Complexity gate (warns when manual better). 'What Could Go Wrong' methodology. Workflows: REVIEW (always worth it), PLANNING (complexity 4-5), BUILDING (TDD with pause points), DEBUGGING (LOG FIRST).",
+      "version": "3.0.0",
       "author": {
         "name": "Rom Iluz",
         "email": "rom.iluz13@gmail.com",
         "url": "https://github.com/romiluz13"
       },
       "homepage": "https://github.com/romiluz13/cc10x",
-      "tags": [
+      "repository": "https://github.com/romiluz13/cc10x",
+      "license": "MIT",
+      "keywords": [
+        "intelligent-orchestration",
         "code-review",
         "risk-analysis",
         "complexity-assessment",
+        "progressive-loading",
+        "what-could-go-wrong",
         "tdd",
-        "progressive-disclosure",
-        "end-to-end-automation",
-        "4-plus-5-architecture",
         "log-first",
-        "true-progressive-loading",
-        "cc10x-v2-main-fusion"
+        "context-management",
+        "claude-code"
       ],
+      "category": "development-tools",
       "source": "./plugins/cc10x"
     }
   ]

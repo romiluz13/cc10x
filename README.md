@@ -1,8 +1,8 @@
-# cc10x - Pure Skill Orchestrator for Claude Code
+# cc10x v3.0 - Intelligent AI Orchestration
 
-**Systematic development through intelligent orchestration of specialized agents and domain skills**
+**Professional Claude Code plugin with intelligent orchestration, specialized agents, and progressive skills**
 
-[![Version](https://img.shields.io/badge/version-2.2.0-green)](https://github.com/romiluz13/cc10x)
+[![Version](https://img.shields.io/badge/version-3.0.0-green)](https://github.com/romiluz13/cc10x)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Claude Code Plugin](https://img.shields.io/badge/Claude%20Code-Plugin-blue)](https://github.com/romiluz13/cc10x)
 
@@ -10,18 +10,20 @@
 
 ## What is CC10x?
 
-A Claude Code plugin providing **ONE orchestrator skill** that coordinates 11 specialized agents + 20 domain skills for systematic software development:
+An intelligent Claude Code plugin with **auto-loaded orchestrator** that coordinates 12 specialized agents + 21 progressive skills for systematic software development:
 
 - **Code Review** - 5 parallel AI agents (security, quality, performance, UX, accessibility)
 - **Feature Planning** - Comprehensive PRDs with risk analysis and architecture decisions
 - **TDD Implementation** - Strict test-driven development with quality enforcement
 - **LOG FIRST Debugging** - Systematic investigation over guessing
 
-**Natural language activation:** Say "review my code for security" or "plan authentication feature"
+**Intelligent Orchestration:** Detects intent, assesses complexity, routes dynamically
 
-**Progressive loading:** Workflows load on-demand (50-75% token savings vs monolithic)
+**Progressive Loading:** Workflows load on-demand (50-75% token savings)
 
-**THE FOCUS RULE:** Only executes what you request (no workflow creep)
+**Complexity Gate:** Honestly recommends manual when better (prevents waste)
+
+**"What Could Go Wrong":** 7-dimension risk analysis integrated
 
 ---
 
@@ -35,7 +37,7 @@ A Claude Code plugin providing **ONE orchestrator skill** that coordinates 11 sp
 /plugin install cc10x@cc10x
 
 # Verify
-/plugin  # Should show: cc10x v2.2.0
+/plugin  # Should show: cc10x v3.0.0
 ```
 
 ---
