@@ -66,6 +66,7 @@ tmp/
 
 # Planning and development docs
 docs/
+templates/
 pre-deployment-review/
 cc10x_V2-main/
 *.plan.md
@@ -87,6 +88,12 @@ CRITICAL-*.md
 V2-*.md
 V3-*.md
 
+# Archive directory (development history)
+archive/
+
+# Archived versions
+cc10x-fresh-*/
+
 # Backup files
 *.backup
 
@@ -95,3 +102,6 @@ V3-*.md
 !LICENSE
 !CHANGELOG.md
 !QUICK-START.md
+!plugins/cc10x/README.md
+!plugins/cc10x/QUICKSTART.md
+!plugins/cc10x/CLAUDE.md
