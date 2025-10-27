@@ -1,0 +1,20 @@
+{
+  "name": "cc10x",
+  "version": "3.0.0",
+  "description": "10x AI development framework with intelligent orchestration, specialized reviewers, and progressive workflows",
+  "author": {
+    "name": "CC10x Team",
+    "email": "team@cc10x.dev"
+  },
+  "homepage": "https://github.com/cc10x/cc10x",
+  "repository": "https://github.com/cc10x/cc10x",
+  "license": "MIT",
+  "keywords": [
+    "development",
+    "code-review",
+    "testing",
+    "security",
+    "performance",
+    "workflow-automation"
+  ]
+}

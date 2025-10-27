@@ -1,0 +1,32 @@
+{
+  "name": "cc10x-marketplace",
+  "owner": {
+    "name": "CC10x Team",
+    "email": "team@cc10x.dev"
+  },
+  "metadata": {
+    "description": "Official CC10x plugin marketplace - 10x your AI development",
+    "version": "3.0.0"
+  },
+  "plugins": [
+    {
+      "name": "cc10x",
+      "source": "./plugins/cc10x",
+      "description": "10x AI development framework with intelligent orchestration",
+      "version": "3.0.0",
+      "author": {
+        "name": "CC10x Team"
+      },
+      "homepage": "https://github.com/cc10x/cc10x",
+      "repository": "https://github.com/cc10x/cc10x",
+      "license": "MIT",
+      "keywords": [
+        "development",
+        "workflow",
+        "automation",
+        "review"
+      ],
+      "category": "development-tools"
+    }
+  ]
+}

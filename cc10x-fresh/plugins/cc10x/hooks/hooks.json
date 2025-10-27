@@ -1,0 +1,26 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "description": "Welcome message and context restoration",
+        "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh"
+      }
+    ],
+    "PostToolUse": [
+      {
+        "description": "Enforce file size limits (< 500 lines)",
+        "matcher": {
+          "tool": "Write"
+        },
+        "command": "${CLAUDE_PLUGIN_ROOT}/hooks/check-file-size.sh"
+      },
+      {
+        "description": "Enforce file size limits for edits",
+        "matcher": {
+          "tool": "Edit"
+        },
+        "command": "${CLAUDE_PLUGIN_ROOT}/hooks/check-file-size.sh"
+      }
+    ]
+  }
+}
