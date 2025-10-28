@@ -35,7 +35,7 @@ my-company-plugin/
 ```json
 {
   "name": "my-company-plugin",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Company development tools",
   "author": {
     "name": "Engineering Team",
@@ -228,7 +228,7 @@ Overall score: X/10
   },
   "metadata": {
     "description": "Internal company development tools",
-    "version": "1.0.0"
+    "version": "2.0.0"
   },
   "plugins": [
     {

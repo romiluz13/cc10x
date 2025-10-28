@@ -222,7 +222,7 @@ mkdir -p .claude-plugin commands skills
 cat > .claude-plugin/plugin.json << 'EOF'
 {
   "name": "my-plugin",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "My first plugin"
 }
 EOF

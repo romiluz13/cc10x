@@ -829,7 +829,7 @@ project/
 {
   "name": "plugin-name",
   "description": "Clear description of what plugin does",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "author": {"name": "Team", "email": "team@example.com"},
   "homepage": "https://docs.example.com",
   "repository": "https://github.com/user/repo",

@@ -278,7 +278,7 @@
 
 1. ✅ Move to docs/reference/
 2. ✅ Commit all changes
-3. ✅ Tag v1.0.0
+3. ✅ Tag v2.0.0
 4. ✅ Deploy to production
 5. ✅ Monitor performance
 6. ✅ Gather feedback

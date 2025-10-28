@@ -40,7 +40,7 @@ my-plugin/
 ```json
 {
   "name": "plugin-name",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Brief plugin description",
   "author": {
     "name": "Author Name"
@@ -280,7 +280,7 @@ mkdir -p .claude-plugin commands agents skills hooks
 ```json
 {
   "name": "my-plugin",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "My custom plugin",
   "author": {"name": "Your Name"}
 }

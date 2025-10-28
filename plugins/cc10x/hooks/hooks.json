@@ -1,6 +1,6 @@
 {
   "$schema": "https://claudecode.ai/hooks-schema.json",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "name": "cc10x Orchestration Hooks",
   "description": "Intelligent session management with auto-healing and progress tracking",
   

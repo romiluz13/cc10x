@@ -10,14 +10,14 @@
   "owner": {"name": "Name", "email": "email@example.com"},
   "metadata": {
     "description": "Optional description",
-    "version": "1.0.0"
+    "version": "2.0.0"
   },
   "plugins": [
     {
       "name": "plugin-id",
       "source": "./path" | {"source": "github", "repo": "owner/repo"},
       "description": "What plugin does",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "author": {"name": "Author"},
       "homepage": "https://docs.url",
       "repository": "https://github.com/...",
@@ -35,7 +35,7 @@
 ```json
 {
   "name": "plugin-id",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Brief description",
   "author": {"name": "Name", "email": "email@example.com"},
   "homepage": "https://docs.url",
@@ -506,7 +506,7 @@ mkdir -p .claude-plugin commands agents skills
 cat > .claude-plugin/plugin.json << 'EOF'
 {
   "name": "my-plugin",
-  "version": "1.0.0"
+  "version": "2.0.0"
 }
 EOF
 ```

@@ -268,11 +268,11 @@ Assuming 100 installed skills:
 
 | Component | Min Claude Code Version |
 |-----------|------------------------|
-| **Plugins** | 1.0.0 |
-| **Skills** | 1.0.0 |
-| **Marketplace** | 1.0.0 |
-| **Subagents** | 1.0.0 |
-| **Hooks** | 1.0.0 |
+| **Plugins** | 2.0.0 |
+| **Skills** | 2.0.0 |
+| **Marketplace** | 2.0.0 |
+| **Subagents** | 2.0.0 |
+| **Hooks** | 2.0.0 |
 | **SlashCommand tool** | 1.0.124 |
 
 ## Summary Decision Matrix

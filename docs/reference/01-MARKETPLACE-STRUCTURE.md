@@ -23,7 +23,7 @@ Plugin marketplaces are JSON catalogs that list available plugins and describe w
   },
   "metadata": {
     "description": "Optional marketplace description",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "pluginRoot": "./plugins"  // Optional: base path for plugins
   },
   "plugins": [
@@ -31,7 +31,7 @@ Plugin marketplaces are JSON catalogs that list available plugins and describe w
       "name": "plugin-name",
       "source": "./path-or-config",
       "description": "What this plugin does",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "author": { "name": "Author" },
       "homepage": "https://docs.example.com",
       "repository": "https://github.com/user/repo",

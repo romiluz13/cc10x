@@ -179,7 +179,7 @@ git commit -m "chore: organize repository for production publishing"
 
 ### 3. Create Release Tag
 ```bash
-git tag -a v1.0.0 -m "Production release: CC10X v1.0.0"
+git tag -a v2.0.0 -m "Production release: CC10X v2.0.0"
 ```
 
 ### 4. Push to Remote
@@ -243,6 +243,6 @@ The CC10X repository is now:
 
 **Status**: ✅ READY FOR PUBLISHING  
 **Date**: 2025-10-28  
-**Version**: 1.0.0  
+**Version**: 2.0.0  
 **Next Action**: `git push origin main --tags`
 

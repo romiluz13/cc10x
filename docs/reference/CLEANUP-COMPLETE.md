@@ -200,7 +200,7 @@ git commit -m "chore: organize repository for production publishing"
 
 ### 3. Create Release
 ```bash
-git tag -a v1.0.0 -m "Production release: CC10X v1.0.0"
+git tag -a v2.0.0 -m "Production release: CC10X v2.0.0"
 git push origin main --tags
 ```
 
