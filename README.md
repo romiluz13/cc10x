@@ -4,15 +4,33 @@ A powerful, production-ready Claude Code plugin that provides intelligent code a
 
 ## 🚀 Quick Start
 
-```bash
-# Install the plugin
-# Follow the installation guide in plugins/cc10x/QUICKSTART.md
+### Fastest Setup
 
-# Use the plugin
-# Invoke any of the 4 core workflows: REVIEW, PLAN, BUILD, DEBUG
+Install the plugin directly in Claude Code:
+
+```bash
+/plugin install cc10x
 ```
 
-For detailed setup instructions, see [plugins/cc10x/QUICKSTART.md](plugins/cc10x/README.md).
+Then restart Claude Code.
+
+### Key Commands
+
+```bash
+# Review code
+@cc10x review
+
+# Plan architecture
+@cc10x plan
+
+# Build components
+@cc10x build
+
+# Debug issues
+@cc10x debug
+```
+
+For detailed setup instructions, see [plugins/cc10x/QUICKSTART.md](plugins/cc10x/QUICKSTART.md).
 
 ---
 
@@ -166,43 +184,89 @@ Systematic bug investigation and fixing:
 
 ## 🔧 Installation
 
-### Prerequisites
-- Claude Code plugin support
-- Access to Claude API
+### Method 1: Direct Installation (Recommended)
 
-### Setup
-1. Clone this repository
-2. Follow [plugins/cc10x/QUICKSTART.md](plugins/cc10x/QUICKSTART.md)
-3. Configure your Claude Code environment
-4. Start using the workflows
+```bash
+/plugin install cc10x
+```
+
+Restart Claude Code, then you're ready to use all workflows.
+
+### Method 2: Manual Installation
+
+1. Clone this repository:
+```bash
+git clone https://github.com/romiluz13/cc10x.git
+```
+
+2. Add to Claude Code:
+```bash
+/plugin add ./cc10x/plugins/cc10x
+```
+
+3. Restart Claude Code
+
+### Verify Installation
+
+```bash
+/cc10x:help
+```
+
+Should display all available workflows and commands.
 
 ---
 
-## 📖 Usage Examples
+## 📖 Workflows & Commands
 
-### Review Code
-```
+### REVIEW - Code Analysis
+
+Comprehensive analysis across 6 dimensions: risk, security, performance, quality, UX, accessibility.
+
+```bash
 @cc10x review
 Analyze this code for quality, security, and performance
 ```
 
-### Plan Feature
-```
+**Output**: Risk assessment, security findings, performance recommendations, quality metrics
+
+---
+
+### PLAN - Architecture & Design
+
+Strategic planning for features, architecture, and deployment.
+
+```bash
 @cc10x plan
 Design the architecture for a new user authentication system
 ```
 
-### Build Component
-```
+**Output**: Architecture design, implementation plan, risk assessment, deployment strategy
+
+---
+
+### BUILD - Implementation
+
+Parallel component building with code generation and testing.
+
+```bash
 @cc10x build
 Implement a React component for user profile management
 ```
 
-### Debug Issue
-```
+**Output**: Generated code, unit tests, integration verification, quality checks
+
+---
+
+### DEBUG - Bug Investigation
+
+Systematic bug investigation and fixing with root cause analysis.
+
+```bash
 @cc10x debug
 Fix the memory leak in the data processing pipeline
 ```
+
+**Output**: Root cause analysis, fix implementation, verification, prevention strategies
 
 ---
 
