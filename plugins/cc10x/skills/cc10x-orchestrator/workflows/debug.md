@@ -199,4 +199,20 @@ npm test
 **Prevention:** Consider adding request validation middleware
 ```
 
+---
+
+## Workflow Complete
+
+**Debug complete! Bug fixed and verified.**
+
+**What would you like to do next?**
+- Review the fix for quality/security?
+- Add tests to prevent regression?
+- Document this bug for the team?
+- Need help with another bug?
+
+**DO NOT automatically review or test!**
+
+Let user decide next step.
+
 

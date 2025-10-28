@@ -57,6 +57,13 @@ license: MIT
 - I OFFER additional help: "Want me to review it?"
 - YOU decide next step (no automatic workflow chaining)
 
+**ENFORCEMENT RULES - YOU MUST NOT:**
+- Execute workflows not explicitly requested by user
+- Chain workflows automatically without permission
+- Proceed to next workflow without user confirmation
+- Assume user wants additional workflows beyond their request
+- Make decisions about what's "helpful" - only execute what's requested
+
 ### Step 3: Complexity Gate (for BUILD/PLAN)
 
 **IF complexity <= 2 AND you want BUILD/PLAN:**
@@ -75,9 +82,15 @@ Example: Rate limiting feature
 Recommendation: Consider manual approach for simple features.
 ```
 
-Then I ASK: "Continue anyway? (yes/no)"
-- If NO: I exit, don't execute
-- If YES: I proceed with warning
+**YOU MUST WAIT FOR USER RESPONSE BEFORE PROCEEDING.**
+
+Ask user: "Continue anyway? (yes/no)"
+
+**CRITICAL RULES:**
+- IF user says "no" → ABORT IMMEDIATELY, DO NOT PROCEED
+- IF user says "yes" → Proceed with warning
+- IF user doesn't respond → WAIT, DO NOT ASSUME YES
+- DO NOT proceed without explicit "yes" from user
 
 **REVIEW workflow: Always proceed (no gate)**
 
@@ -112,24 +125,29 @@ I follow the instructions in the loaded workflow skill. The workflow tells me:
 **If a workflow fails mid-execution:**
 
 1. **Subagent Failure** (e.g., component-builder times out)
-   - Fallback: Continue with other subagents
-   - Retry: Attempt once more with reduced scope
-   - Report: Show partial results + error details
+   - STOP and report: Show partial results + error details
+   - ASK user: "Subagent failed. Continue with other subagents? (yes/no)"
+   - WAIT for response before proceeding
+   - DO NOT automatically retry or continue
 
 2. **Skill Loading Failure** (e.g., security-patterns unavailable)
-   - Fallback: Use core skills only
-   - Report: "Skipped security analysis due to unavailable skill"
-   - Continue: Proceed with available skills
+   - STOP and report: "Cannot load security-patterns skill"
+   - ASK user: "Continue with core skills only? (yes/no)"
+   - WAIT for response before proceeding
+   - DO NOT automatically fallback without permission
 
 3. **Timeout Handling** (e.g., analysis takes >10 min)
    - Fallback: Return partial results
-   - Report: "Analysis incomplete - timeout after 10 min"
-   - Suggest: "Run again with smaller scope"
+   - STOP and report: "Analysis incomplete - timeout after 10 min"
+   - ASK user: "Run again with smaller scope? (yes/no)"
+   - WAIT for response before proceeding
+   - DO NOT automatically retry
 
 4. **Input Validation Failure** (e.g., invalid code provided)
-   - Report: "Cannot analyze - invalid input: [reason]"
-   - Suggest: "Provide valid code or check syntax"
-   - Offer: "Want me to help fix the syntax?"
+   - STOP and report: "Cannot analyze - invalid input: [reason]"
+   - ASK user: "Want me to help fix the syntax? (yes/no)"
+   - WAIT for response before proceeding
+   - DO NOT assume user wants help
 
 **Error Messages Format:**
 ```

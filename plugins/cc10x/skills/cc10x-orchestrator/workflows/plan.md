@@ -32,8 +32,6 @@
 
 **Invoke requirements-analyst agent:**
 
-Follow instructions in [../../agents/requirements-analyst.md](../../agents/requirements-analyst.md)
-
 **Agent task:**
 1. Parse user's feature description
 2. Identify core functionality
@@ -58,8 +56,6 @@ Follow instructions in [../../agents/requirements-analyst.md](../../agents/requi
 
 **Invoke context-analyzer agent:**
 
-Follow instructions in [../../agents/context-analyzer.md](../../agents/context-analyzer.md)
-
 **Agent task:**
 1. Search codebase for similar features
 2. Identify existing patterns to follow
@@ -82,8 +78,6 @@ Follow instructions in [../../agents/context-analyzer.md](../../agents/context-a
 ## Phase 3: Architecture & Design
 
 **Invoke architect agent:**
-
-Follow instructions in [../../agents/architect.md](../../agents/architect.md)
 
 **Agent task:**
 1. Design system architecture
@@ -135,8 +129,6 @@ See [../../skills/risk-analysis/SKILL.md](../../skills/risk-analysis/SKILL.md)
 
 **Invoke tdd-enforcer agent (planning mode):**
 
-Follow instructions in [../../agents/tdd-enforcer.md](../../agents/tdd-enforcer.md)
-
 **Agent task:**
 1. Plan unit tests (what to test)
 2. Plan integration tests (how components interact)
@@ -158,8 +150,6 @@ Follow instructions in [../../agents/tdd-enforcer.md](../../agents/tdd-enforcer.
 ## Phase 6: Implementation Roadmap
 
 **Invoke devops-planner agent:**
-
-Follow instructions in [../../agents/devops-planner.md](../../agents/devops-planner.md)
 
 **Agent task:**
 1. Break feature into incremental phases

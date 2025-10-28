@@ -49,8 +49,6 @@ IF no plan:
 
 ## Phase 2: Invoke Implementer Agent
 
-Follow instructions in [../../agents/implementer.md](../../agents/implementer.md)
-
 **Agent task:**
 1. Implement feature using strict TDD
 2. RED-GREEN-REFACTOR cycle enforcement
@@ -112,8 +110,6 @@ If tests PASS:
 ## Phase 4: Invoke Test Generator (if needed)
 
 IF coverage < 80%:
-
-Follow instructions in [../../agents/test-generator.md](../../agents/test-generator.md)
 
 **Agent task:**
 1. Analyze coverage gaps

@@ -45,8 +45,6 @@ This workflow invokes 5 specialized reviewer agents in PARALLEL for comprehensiv
 
 ### Agent 1: Security Reviewer
 
-Follow instructions in [../../agents/security-reviewer.md](../../agents/security-reviewer.md)
-
 **The agent will:**
 1. Load domain skills:
    - `risk-analysis` skill (Stages 1: Data Flow, 2: Dependencies, 5: Security)
@@ -84,8 +82,6 @@ Follow instructions in [../../agents/security-reviewer.md](../../agents/security
 
 ### Agent 2: Quality Reviewer
 
-Follow instructions in [../../agents/quality-reviewer.md](../../agents/quality-reviewer.md)
-
 **The agent will:**
 1. Load domain skills:
    - `code-generation` skill (quality patterns, SOLID principles)
@@ -118,8 +114,6 @@ Follow instructions in [../../agents/quality-reviewer.md](../../agents/quality-r
 ---
 
 ### Agent 3: Performance Analyzer
-
-Follow instructions in [../../agents/performance-analyzer.md](../../agents/performance-analyzer.md)
 
 **The agent will:**
 1. Load domain skills:
@@ -154,8 +148,6 @@ Follow instructions in [../../agents/performance-analyzer.md](../../agents/perfo
 
 ### Agent 4: UX Reviewer
 
-Follow instructions in [../../agents/ux-reviewer.md](../../agents/ux-reviewer.md)
-
 **The agent will:**
 1. Load domain skills:
    - `ux-patterns` skill (user experience patterns)
@@ -188,8 +180,6 @@ Follow instructions in [../../agents/ux-reviewer.md](../../agents/ux-reviewer.md
 ---
 
 ### Agent 5: Accessibility Reviewer
-
-Follow instructions in [../../agents/accessibility-reviewer.md](../../agents/accessibility-reviewer.md)
 
 **The agent will:**
 1. Load domain skills:
