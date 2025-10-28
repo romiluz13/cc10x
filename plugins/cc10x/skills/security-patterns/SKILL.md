@@ -1,7 +1,6 @@
 ---
 name: security-patterns
 description: Identifies OWASP Top 10 vulnerabilities including SQL injection, XSS, authentication bypasses, insecure direct object references, CSRF, broken access control, and security misconfigurations. Use when analyzing code for security vulnerabilities, reviewing authentication and authorization logic, auditing input validation and output encoding, checking for injection attacks, or ensuring secure coding practices.
-license: MIT
 ---
 
 # Security Patterns - Stage 1: Metadata

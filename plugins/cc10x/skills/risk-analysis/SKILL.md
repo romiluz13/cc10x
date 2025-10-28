@@ -1,7 +1,6 @@
 ---
 name: risk-analysis
 description: Universal "What Could Go Wrong?" critical thinking framework for pre-implementation audits. 7-dimensional analysis covering data flow transformations, dependency integration mapping, timing concurrency state management, user experience human factors, security validation, performance scalability, and failure modes recovery. Prevents bugs before they're written by systematically identifying edge cases. Use when analyzing feature designs for risks, reviewing code for vulnerabilities, planning deployments for failure scenarios, debugging complex issues for root causes, or validating implementations for edge cases. Particularly valuable before implementing high-risk features (authentication, payment processing, data handling) or when edge cases need systematic identification. Loaded progressively by master orchestrator in 7 stages, or explicitly invoked for specific dimension analysis.
-license: MIT
 ---
 
 # Risk Analysis - "What Could Go Wrong?" Methodology
@@ -253,7 +252,7 @@ Assume everything can fail. Find edge cases before production does.
   - Trigger: Colorblind user can't distinguish red/green
   - Impact: User can't tell if order succeeded or failed
   - Probability: MEDIUM (8% of males are colorblind)
-  - Fix: Add icons: �(success) and ✕ (failure) plus color
+  - Fix: Add icons: â(success) and â (failure) plus color
 
 #### LOW:
 - [Issue]: No keyboard navigation support
@@ -358,7 +357,7 @@ Assume everything can fail. Find edge cases before production does.
 **Critical Questions:**
 
 **Computational Complexity:**
-- What's the Big O complexity? (O(n), O(n²), O(n log n))
+- What's the Big O complexity? (O(n), O(nÂ²), O(n log n))
 - Are there nested loops over large datasets?
 - Are there recursive calls without depth limits? (stack overflow risk)
 - Is there unnecessary repeated computation? (could be cached/memoized)
@@ -390,9 +389,9 @@ Assume everything can fail. Find edge cases before production does.
 ### Performance Risks
 
 #### HIGH:
-- [Issue]: O(n²) complexity on large dataset
+- [Issue]: O(nÂ²) complexity on large dataset
   - Location: reports.service.js lines 45-52 (nested loops over users and orders)
-  - Trigger: Admin exports full user report (10,000 users �50 orders each)
+  - Trigger: Admin exports full user report (10,000 users Ã50 orders each)
   - Impact: Server timeout after 30+ seconds, request fails
   - Probability: MEDIUM (admins export reports monthly)
   - Fix: Optimize with SQL JOIN + index: reduce to O(n log n), 2 seconds
@@ -578,7 +577,7 @@ User: "Check for edge cases in this data transformation function"
 
 ### Method 3: Auto-Trigger (NOT WORKING)
 
-**Status:** ⚠�Skills don't currently auto-trigger in Claude Code
+**Status:** â ï¸Skills don't currently auto-trigger in Claude Code
 
 **Evidence:**
 - Trigger phrases listed for future compatibility
@@ -619,11 +618,11 @@ User: "Check for edge cases in this data transformation function"
 ## Red Flags (Use This Skill Immediately)
 
 If you catch yourself saying:
-- �"This will never happen in practice"
-- �"Users would never do that"
-- �"The documentation says it should work"
-- �"We can fix it later if it's a problem"
-- �"It's just a quick fix, we don't need to think about edge cases"
+- â"This will never happen in practice"
+- â"Users would never do that"
+- â"The documentation says it should work"
+- â"We can fix it later if it's a problem"
+- â"It's just a quick fix, we don't need to think about edge cases"
 
 **STOP.** These are danger signs. Load this skill and do proper analysis.
 
@@ -632,18 +631,18 @@ If you catch yourself saying:
 ## Success Metrics
 
 **You're using this skill correctly when:**
-- �You find bugs during design/review, not production
-- �Your deployments succeed without rollbacks
-- �You proactively prevent issues
-- �Code reviews catch critical issues early
-- �Production incidents decrease over time
+- âYou find bugs during design/review, not production
+- âYour deployments succeed without rollbacks
+- âYou proactively prevent issues
+- âCode reviews catch critical issues early
+- âProduction incidents decrease over time
 
 **You're NOT using it correctly when:**
-- �Still discovering bugs in production
-- �Frequent emergency rollbacks
-- �Saying "we didn't think about that"
-- �Treating this as a checkbox exercise
-- �Only using it for big changes (use for ALL changes)
+- âStill discovering bugs in production
+- âFrequent emergency rollbacks
+- âSaying "we didn't think about that"
+- âTreating this as a checkbox exercise
+- âOnly using it for big changes (use for ALL changes)
 
 ---
 

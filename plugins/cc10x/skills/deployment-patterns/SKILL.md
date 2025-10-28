@@ -1,7 +1,6 @@
 ---
 name: deployment-patterns
 description: Rollback strategies and staged deployment patterns for production-ready feature releases. Creates fast recovery procedures with 3-level escalation (feature flag under 5 minutes, configuration under 10 minutes, code rollback under 15 minutes) and risk-aware deployment sequences (5-stage rollout from infrastructure to canary to partial to full). Use when planning production deployments for new features, creating disaster recovery procedures, designing staged rollouts to minimize blast radius, or defining rollback triggers and monitoring metrics. Provides rollback strategy templates, deployment sequencing patterns, monitoring dashboard guidance, and failure mode analysis integration. Loaded by devops-planner agent during feature planning Phase 6-7 or explicitly for deployment planning tasks.
-license: MIT
 ---
 
 # Deployment Patterns - Production Readiness

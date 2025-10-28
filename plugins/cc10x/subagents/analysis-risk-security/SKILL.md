@@ -1,7 +1,6 @@
 ---
 name: analysis-risk-security
 description: Parallel subagent for REVIEW workflow. Analyzes code for security vulnerabilities and architectural risks. Loads risk-analysis and security-patterns skills. Runs in parallel with other analysis subagents for 3x faster reviews.
-license: MIT
 ---
 
 # Analysis Risk & Security Subagent
@@ -115,19 +114,19 @@ Dispatched by REVIEW workflow when analyzing code for:
 
 **Organize security and risk findings:**
 
-### Critical Issues 🔴
+### Critical Issues ð´
 - Security vulnerabilities
 - Authentication bypass
 - Data exposure
 - Architectural failures
 
-### Important Issues 🟡
+### Important Issues ð¡
 - Security concerns
 - Risk factors
 - Scalability issues
 - Maintainability problems
 
-### Nice to Have 🟢
+### Nice to Have ð¢
 - Security improvements
 - Risk mitigation
 - Performance optimization

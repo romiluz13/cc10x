@@ -1,7 +1,6 @@
 ---
 name: test-driven-development
 description: Enforces strict RED-GREEN-REFACTOR methodology for all code implementation with mandatory test verification to prevent false success reports. Provides 3 progressive stages (TDD cycle patterns, quick reference for test-first development, and mandatory verification procedures). Use when implementing features with strict test-first discipline, fixing bugs with reproducible tests, or ensuring code quality through TDD. Requires writing failing test FIRST before any production code. Loaded by tdd-enforcer agent during BUILDING and DEBUGGING workflows. Stage 3 (Mandatory Verification) prevents false "all tests passing" claims by requiring independent verification (run actual test command, verify exit code equals zero, see results with your eyes). Critical for preventing the pattern where agents report success when tests actually failed.
-license: MIT
 ---
 
 # Test-Driven Development (TDD)

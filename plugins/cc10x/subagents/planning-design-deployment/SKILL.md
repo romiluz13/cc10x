@@ -1,7 +1,6 @@
 ---
 name: planning-design-deployment
 description: Parallel subagent for PLANNING workflow. Designs API, components, and deployment strategy. Loads api-design-patterns, component-design-patterns, and deployment-patterns skills. Runs in parallel with planning-architecture-risk for 1.5x faster planning.
-license: MIT
 ---
 
 # Planning Design & Deployment Subagent

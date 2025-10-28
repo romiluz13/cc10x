@@ -1,7 +1,6 @@
 ---
 name: integration-verifier
 description: Specialized subagent for verifying component integration and system functionality. Dispatched by BUILD and DEBUG workflows for parallel integration testing. Each verification gets fresh context, independent testing, and quality gates. Use when verifying integrations, testing system functionality, or validating end-to-end flows. Provides integration testing patterns, verification strategies, and integration checklists.
-license: MIT
 ---
 
 # Integration Verifier Subagent

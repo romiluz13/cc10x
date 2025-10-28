@@ -1,7 +1,6 @@
 ---
 name: code-reviewer
 description: Specialized subagent for reviewing code changes. Dispatched by BUILD and DEBUG workflows for parallel code review. Each review gets fresh context, independent analysis, and quality gates. Use when reviewing code changes, checking quality, or validating implementations. Provides code review patterns, quality metrics, and review checklists.
-license: MIT
 ---
 
 # Code Reviewer Subagent

@@ -1,7 +1,6 @@
 ---
 name: log-analysis-patterns
 description: Identifies log analysis best practices including log structure, log levels, structured logging, log aggregation, and log analysis techniques. Use when analyzing logs for debugging, reviewing logging practices, planning logging strategy, checking log quality, and ensuring observability. Provides log analysis patterns, structured logging templates, log parsing techniques, and logging checklists. Loaded by debugger agent during DEBUG workflow or when log analysis needed. Complements systematic-debugging with specific log-focused guidance. Critical for debugging, monitoring, and troubleshooting.
-license: MIT
 ---
 
 # Log Analysis Patterns
@@ -45,12 +44,12 @@ INFO:    Important events, state changes, milestones
 DEBUG:   Detailed information for debugging
 TRACE:   Very detailed information, function calls
 
-�BAD LOGGING
+âBAD LOGGING
 console.log('User login');
 console.log('Error: ' + error);
 console.log('Processing...');
 
-�GOOD LOGGING
+âGOOD LOGGING
 logger.info('User login', { userId: 123, timestamp: new Date() });
 logger.error('Login failed', { userId: 123, error: error.message, stack: error.stack });
 logger.debug('Processing user data', { userId: 123, data: userData });
@@ -58,10 +57,10 @@ logger.debug('Processing user data', { userId: 123, data: userData });
 
 **Structured Logging**:
 ```typescript
-// �UNSTRUCTURED
+// âUNSTRUCTURED
 console.log('User 123 logged in at 2024-01-15 10:30:00');
 
-// �STRUCTURED
+// âSTRUCTURED
 logger.info('user_login', {
   userId: 123,
   email: 'user@example.com',
@@ -74,7 +73,7 @@ logger.info('user_login', {
 
 **Request Tracing**:
 ```typescript
-// �REQUEST ID TRACING
+// âREQUEST ID TRACING
 const requestId = generateUUID();
 logger.info('request_start', {
   requestId,
@@ -99,10 +98,10 @@ logger.info('request_end', {
 
 **Error Logging**:
 ```typescript
-// �INCOMPLETE
+// âINCOMPLETE
 logger.error('Error occurred');
 
-// �COMPLETE
+// âCOMPLETE
 logger.error('Payment processing failed', {
   requestId: 'req-123',
   userId: 456,
@@ -117,7 +116,7 @@ logger.error('Payment processing failed', {
 });
 ```
 
-#### Red Flags 🚩
+#### Red Flags ð©
 ```bash
 # Find console.log (should use logger)
 grep -r "console\." src/ --include="*.ts"
@@ -218,7 +217,7 @@ Logstash: Parse and transform logs
 Kibana: Visualize and analyze logs
 
 Pipeline:
-Application �Logstash �Elasticsearch �Kibana
+Application âLogstash âElasticsearch âKibana
 ```
 
 ### Log Parsing
@@ -292,7 +291,7 @@ Rate Limit:
 ### What to Log
 
 ```
-�DO LOG:
+âDO LOG:
 - Application startup/shutdown
 - User actions (login, logout, purchase)
 - API requests and responses
@@ -302,7 +301,7 @@ Rate Limit:
 - Security events
 - State changes
 
-�DON'T LOG:
+âDON'T LOG:
 - Passwords or API keys
 - Credit card numbers
 - Personal identification numbers

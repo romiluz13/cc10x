@@ -1,7 +1,6 @@
 ---
 name: performance-patterns
-description: Identifies performance bottlenecks, N+1 database queries, inefficient algorithms with O(n²) complexity, memory leaks, unnecessary re-renders, and optimization opportunities. Use when analyzing code for performance improvements, reviewing slow endpoints or pages, optimizing database queries, debugging memory issues, or planning performance-critical features. Provides optimization techniques, caching strategies, algorithm complexity analysis, and profiling guidance. Loaded by performance-analyzer agent during REVIEW workflow or master orchestrator when performance analysis needed. Complements risk-analysis Stage 6 (Performance & Scalability) with specific optimization patterns and techniques.
-license: MIT
+description: Identifies performance bottlenecks, N+1 database queries, inefficient algorithms with O(nÂ²) complexity, memory leaks, unnecessary re-renders, and optimization opportunities. Use when analyzing code for performance improvements, reviewing slow endpoints or pages, optimizing database queries, debugging memory issues, or planning performance-critical features. Provides optimization techniques, caching strategies, algorithm complexity analysis, and profiling guidance. Loaded by performance-analyzer agent during REVIEW workflow or master orchestrator when performance analysis needed. Complements risk-analysis Stage 6 (Performance & Scalability) with specific optimization patterns and techniques.
 ---
 
 # Performance Patterns
@@ -24,7 +23,7 @@ license: MIT
 ```
 Performance Checklist:
 - [ ] Database: N+1 queries eliminated?
-- [ ] Algorithms: O(n²) loops avoided?
+- [ ] Algorithms: O(nÂ²) loops avoided?
 - [ ] Frontend: React memoization used?
 - [ ] Memory: Intervals/listeners cleaned up?
 - [ ] Bundle: Code splitting implemented?
@@ -35,13 +34,13 @@ Performance Checklist:
 
 **N+1 Query Problem**:
 ```typescript
-// �N+1: 1 + N queries
+// âN+1: 1 + N queries
 const orders = await db.query('SELECT * FROM orders');
 for (const order of orders) {
   order.customer = await db.query('SELECT * FROM customers WHERE id = $1', [order.customer_id]);
 }
 
-// �Single JOIN query
+// âSingle JOIN query
 const orders = await db.query(`
   SELECT orders.*, customers.*
   FROM orders
@@ -49,16 +48,16 @@ const orders = await db.query(`
 `);
 ```
 
-**O(n²) Nested Loops**:
+**O(nÂ²) Nested Loops**:
 ```typescript
-// �O(n²) complexity
+// âO(nÂ²) complexity
 for (let i = 0; i < arr.length; i++) {
   for (let j = 0; j < arr.length; j++) {
     if (arr[i] === arr[j] && i !== j) duplicates.push(arr[i]);
   }
 }
 
-// �O(n) with Set
+// âO(n) with Set
 const seen = new Set();
 const duplicates = new Set();
 for (const item of arr) {
@@ -69,13 +68,13 @@ for (const item of arr) {
 
 **Unnecessary Re-renders** (React):
 ```typescript
-// �New function every render
+// âNew function every render
 function UserList({ users }) {
   const handleClick = (id) => console.log(id); // New function!
   return users.map(u => <User onClick={handleClick} />);
 }
 
-// �Memoized callback
+// âMemoized callback
 const UserList = memo(function UserList({ users }) {
   const handleClick = useCallback((id) => console.log(id), []);
   return users.map(u => <User onClick={handleClick} />);
@@ -88,7 +87,7 @@ const UserList = memo(function UserList({ users }) {
 # Find N+1 candidates
 grep -rn "for.*of\|forEach" src/ -A 3 | grep -i "query\|find"
 
-# Find O(n²) nested loops
+# Find O(nÂ²) nested loops
 grep -rn "for.*for" src/ --include="*.ts"
 
 # Find memory leak candidates
@@ -162,7 +161,7 @@ const items = await itemRepository.find({
 ```sql
 -- Check query execution plan
 EXPLAIN ANALYZE SELECT * FROM orders WHERE customer_id = 123;
--- If you see "Seq Scan" �Missing index!
+-- If you see "Seq Scan" âMissing index!
 ```
 
 **Solution**:
@@ -193,15 +192,15 @@ O(1)      - Constant: Hash map lookup, array index
 O(log n)  - Logarithmic: Binary search, balanced tree
 O(n)      - Linear: Single loop, array.map
 O(n log n)- Linearithmic: Merge sort, quick sort
-O(n²)     - Quadratic: Nested loops (AVOID!)
-O(2ⁿ)     - Exponential: Recursive Fibonacci (AVOID!)
+O(nÂ²)     - Quadratic: Nested loops (AVOID!)
+O(2â¿)     - Exponential: Recursive Fibonacci (AVOID!)
 ```
 
-#### O(n²) �O(n) Optimizations
+#### O(nÂ²) âO(n) Optimizations
 
 **Problem: Find duplicates**:
 ```typescript
-// �O(n²) - 10,000 items = 100M operations
+// âO(nÂ²) - 10,000 items = 100M operations
 function findDuplicates(arr) {
   const dups = [];
   for (let i = 0; i < arr.length; i++) {
@@ -212,7 +211,7 @@ function findDuplicates(arr) {
   return dups;
 }
 
-// �O(n) - 10,000 items = 10K operations
+// âO(n) - 10,000 items = 10K operations
 function findDuplicates(arr) {
   const seen = new Set();
   const dups = new Set();
@@ -226,12 +225,12 @@ function findDuplicates(arr) {
 
 **Problem: Find intersection**:
 ```typescript
-// �O(n �m) - nested indexOf
+// âO(n Ãm) - nested indexOf
 function intersection(arr1, arr2) {
   return arr1.filter(x => arr2.indexOf(x) !== -1);
 }
 
-// �O(n + m) - Set lookup
+// âO(n + m) - Set lookup
 function intersection(arr1, arr2) {
   const set2 = new Set(arr2);
   return arr1.filter(x => set2.has(x));
@@ -244,12 +243,12 @@ function intersection(arr1, arr2) {
 
 **Use React.memo**:
 ```typescript
-// �Re-renders when parent re-renders
+// âRe-renders when parent re-renders
 function UserCard({ user }) {
   return <div>{user.name}</div>;
 }
 
-// �Only re-renders when user changes
+// âOnly re-renders when user changes
 const UserCard = memo(function UserCard({ user }) {
   return <div>{user.name}</div>;
 });
@@ -257,13 +256,13 @@ const UserCard = memo(function UserCard({ user }) {
 
 **Use useMemo for expensive calculations**:
 ```typescript
-// �Recalculates on every render
+// âRecalculates on every render
 function Cart({ items }) {
   const total = items.reduce((sum, item) => sum + item.price * item.qty, 0);
   return <div>Total: ${total}</div>;
 }
 
-// �Only recalculates when items change
+// âOnly recalculates when items change
 function Cart({ items }) {
   const total = useMemo(
     () => items.reduce((sum, item) => sum + item.price * item.qty, 0),
@@ -275,14 +274,14 @@ function Cart({ items }) {
 
 **Use useCallback for event handlers**:
 ```typescript
-// �New function every render �child re-renders
+// âNew function every render âchild re-renders
 function Parent() {
   const [count, setCount] = useState(0);
   const handleClick = () => setCount(c => c + 1);
   return <Child onClick={handleClick} />;
 }
 
-// �Stable function reference
+// âStable function reference
 function Parent() {
   const [count, setCount] = useState(0);
   const handleClick = useCallback(() => setCount(c => c + 1), []);
@@ -293,7 +292,7 @@ function Parent() {
 #### Virtualize Long Lists
 
 ```typescript
-// �Renders 10,000 DOM nodes
+// âRenders 10,000 DOM nodes
 function CommentList({ comments }) {
   return (
     <div>
@@ -302,7 +301,7 @@ function CommentList({ comments }) {
   );
 }
 
-// �Only renders visible items (~20 DOM nodes)
+// âOnly renders visible items (~20 DOM nodes)
 import { FixedSizeList } from 'react-window';
 
 function CommentList({ comments }) {
@@ -329,12 +328,12 @@ function CommentList({ comments }) {
 #### Clear Intervals/Timeouts
 
 ```typescript
-// �Memory leak - interval never cleared
+// âMemory leak - interval never cleared
 function startPolling() {
   setInterval(() => fetchData(), 1000);
 }
 
-// �Cleanup in useEffect
+// âCleanup in useEffect
 function usePolling() {
   useEffect(() => {
     const interval = setInterval(() => fetchData(), 1000);
@@ -346,12 +345,12 @@ function usePolling() {
 #### Remove Event Listeners
 
 ```typescript
-// �Memory leak - listener not removed
+// âMemory leak - listener not removed
 useEffect(() => {
   window.addEventListener('resize', handleResize);
 }, []);
 
-// �Cleanup listener
+// âCleanup listener
 useEffect(() => {
   window.addEventListener('resize', handleResize);
   return () => window.removeEventListener('resize', handleResize);
@@ -363,12 +362,12 @@ useEffect(() => {
 #### Code Splitting
 
 ```typescript
-// �Everything in one bundle
+// âEverything in one bundle
 import Dashboard from './Dashboard';
 import Settings from './Settings';
 import Reports from './Reports';
 
-// �Lazy load routes
+// âLazy load routes
 const Dashboard = lazy(() => import('./Dashboard'));
 const Settings = lazy(() => import('./Settings'));
 const Reports = lazy(() => import('./Reports'));
@@ -385,11 +384,11 @@ const Reports = lazy(() => import('./Reports'));
 #### Tree Shaking
 
 ```typescript
-// �Imports entire library
+// âImports entire library
 import _ from 'lodash';
 import moment from 'moment';
 
-// �Import only what's needed
+// âImport only what's needed
 import debounce from 'lodash/debounce';
 import { format } from 'date-fns'; // Much smaller than moment
 ```
@@ -399,13 +398,13 @@ import { format } from 'date-fns'; // Much smaller than moment
 #### HTTP Caching
 
 ```typescript
-// �No caching
+// âNo caching
 app.get('/api/products', (req, res) => {
   const products = getProducts();
   res.json(products);
 });
 
-// �Cache for 1 hour
+// âCache for 1 hour
 app.get('/api/products', (req, res) => {
   const products = getProducts();
   res.set('Cache-Control', 'public, max-age=3600');
@@ -416,13 +415,13 @@ app.get('/api/products', (req, res) => {
 #### Memoization
 
 ```typescript
-// �Expensive calculation repeated
+// âExpensive calculation repeated
 function fibonacci(n) {
   if (n <= 1) return n;
-  return fibonacci(n - 1) + fibonacci(n - 2); // O(2ⁿ)!
+  return fibonacci(n - 1) + fibonacci(n - 2); // O(2â¿)!
 }
 
-// �Memoized
+// âMemoized
 const fibCache = new Map();
 function fibonacci(n) {
   if (n <= 1) return n;

@@ -1,7 +1,6 @@
 ---
 name: bug-investigator
 description: Specialized subagent for investigating and fixing individual bugs. Dispatched by DEBUG workflow for parallel bug fixing. Each bug gets fresh context, independent investigation, and quality gates between fixes. Use when debugging single bugs, investigating issues, or fixing specific problems. Provides bug investigation patterns, systematic debugging, and bug fixing strategies.
-license: MIT
 ---
 
 # Bug Investigator Subagent

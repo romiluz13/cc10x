@@ -1,7 +1,6 @@
 ---
 name: review-workflow
 description: Orchestrates comprehensive code review using shared context for coordinated analysis. Loads 6 skills for multi-dimensional review (security, quality, performance, UX, accessibility). Use when reviewing code, auditing security, checking quality. Provides coordinated analysis avoiding duplicate findings. Loaded by orchestrator when user requests review.
-license: MIT
 ---
 
 # REVIEW Workflow Skill

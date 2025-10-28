@@ -1,7 +1,6 @@
 ---
 name: build-workflow
 description: Orchestrates feature implementation using hybrid approach - shared context for analysis, subagents for parallel component building. Loads 5 skills for planning (feature-planning, requirements-analysis, component-design-patterns, code-generation, test-driven-development). Dispatches component-builder subagents for parallel implementation. Use when implementing features, building components, creating functionality. Provides 3x faster implementation through parallelization. Loaded by orchestrator when user requests build.
-license: MIT
 ---
 
 # BUILD Workflow Skill
@@ -115,18 +114,18 @@ Triggered by user requests:
 
 ```
 Component 1: UserCard
-  �Subagent 1: Build UserCard (TDD)
-  �Subagent 2: Review UserCard
-  �Subagent 3: Verify UserCard integration
-  �All run in parallel!
+  Subagent 1: Build UserCard (TDD)
+  Subagent 2: Review UserCard
+  Subagent 3: Verify UserCard integration
+  All run in parallel!
 
 Component 2: LoginForm
-  �Subagent 1: Build LoginForm (TDD)
-  �Subagent 2: Review LoginForm
-  �Subagent 3: Verify LoginForm integration
-  �All run in parallel!
+  Subagent 1: Build LoginForm (TDD)
+  Subagent 2: Review LoginForm
+  Subagent 3: Verify LoginForm integration
+  All run in parallel!
 
-⏱�All components built in parallel = 3x faster!
+All components built in parallel = 3x faster!
 ```
 
 ---
@@ -160,15 +159,15 @@ Component 2: LoginForm
 ## Implementation Complete
 
 ### Components Built
-- �Component 1: [Status]
-- �Component 2: [Status]
-- �Component 3: [Status]
+- Component 1: [Status]
+- Component 2: [Status]
+- Component 3: [Status]
 
 ### Code Quality
 - Quality score: X/10
 - Test coverage: X%
-- Security: �Pass
-- Performance: �Pass
+- Security: Pass
+- Performance: Pass
 
 ### Integration
 - All components integrated: YES
@@ -245,12 +244,12 @@ Component 2: LoginForm
 **Example**:
 ```
 Parallel Execution:
-  ├�Subagent 1 (component-builder): �Success
-  ├�Subagent 2 (code-reviewer): �FAILED
-  └�Subagent 3 (integration-verifier): �Success
+  Subagent 1 (component-builder): Success
+  Subagent 2 (code-reviewer): FAILED
+  Subagent 3 (integration-verifier): Success
 
 Fallback to Sequential:
-  └�Subagent 2 (retry): �Success (on retry)
+  Subagent 2 (retry): Success (on retry)
 
 Result: Complete build with all components
 ```
@@ -266,9 +265,9 @@ Result: Complete build with all components
 **Example**:
 ```
 Load Skill:
-  ├�Primary: �FAILED
-  ├�Cache: �Success
-  └�Use cached version
+  Primary: FAILED
+  Cache: Success
+  Use cached version
 
 Result: Build continues with cached skill
 ```

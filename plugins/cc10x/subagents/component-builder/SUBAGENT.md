@@ -1,7 +1,6 @@
 ---
 name: component-builder
 description: Specialized subagent for implementing individual components using TDD. Dispatched by BUILD workflow for parallel component implementation. Each component gets fresh context, independent execution, and quality gates between tasks. Use when building single components, implementing component features, or fixing component bugs. Provides component implementation patterns, TDD for components, and component testing strategies.
-license: MIT
 ---
 
 # Component Builder Subagent

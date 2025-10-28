@@ -1,7 +1,6 @@
 ---
 name: accessibility-patterns
 description: Ensures WCAG 2.1 AA compliance with semantic HTML, proper ARIA labeling, keyboard navigation, screen reader support, color contrast requirements, and focus management. Use when building UI components for accessibility compliance, reviewing interfaces for WCAG violations, auditing frontend code for a11y issues, implementing keyboard navigation, or ensuring screen reader compatibility. Provides accessibility checklists, ARIA pattern guides, semantic HTML templates, and remediation strategies for common violations. Loaded by accessibility-reviewer agent during REVIEW workflow or master orchestrator when accessibility compliance needed. Critical for customer-facing applications, enterprise software, government systems, or any application requiring legal compliance.
-license: MIT
 ---
 
 # Accessibility Patterns
@@ -25,7 +24,7 @@ license: MIT
 Accessibility Checklist:
 - [ ] All interactive elements keyboard accessible?
 - [ ] All images have alt text?
-- [ ] Color contrast �4.5:1 for text?
+- [ ] Color contrast â4.5:1 for text?
 - [ ] All form inputs have labels?
 - [ ] Focus indicators visible?
 - [ ] No keyboard traps?
@@ -36,13 +35,13 @@ Accessibility Checklist:
 
 **Keyboard Navigation**:
 ```tsx
-// �Div as button (not keyboard accessible)
+// âDiv as button (not keyboard accessible)
 <div onClick={handleClick}>Submit</div>
 
-// �Proper button (keyboard accessible)
+// âProper button (keyboard accessible)
 <button onClick={handleClick}>Submit</button>
 
-// �Custom element with keyboard support
+// âCustom element with keyboard support
 <span
   role="button"
   tabIndex={0}
@@ -57,39 +56,39 @@ Accessibility Checklist:
 
 **Alt Text**:
 ```tsx
-// �Missing alt text
+// âMissing alt text
 <img src="logo.png" />
 
-// �Decorative image with alt text
+// âDecorative image with alt text
 <img src="decoration.png" alt="decoration" />
 
-// �Descriptive alt text
+// âDescriptive alt text
 <img src="logo.png" alt="Company name logo" />
 
-// �Decorative image hidden
+// âDecorative image hidden
 <img src="decoration.png" alt="" aria-hidden="true" />
 ```
 
 **Form Labels**:
 ```tsx
-// �No label
+// âNo label
 <input type="text" placeholder="Email" />
 
-// �Proper label
+// âProper label
 <label htmlFor="email">Email</label>
 <input id="email" type="email" />
 
-// �Or aria-label
+// âOr aria-label
 <input type="email" aria-label="Email address" />
 ```
 
 **Color Contrast**:
 ```css
-/* �Low contrast (3.2:1) */
+/* âLow contrast (3.2:1) */
 color: #7B7B7B;
 background: #CCCCCC;
 
-/* �WCAG AA compliant (4.5:1) */
+/* âWCAG AA compliant (4.5:1) */
 color: #5A5A5A;
 background: #FFFFFF;
 ```
@@ -131,15 +130,15 @@ All images, icons, and non-text content must have text alternatives.
 **Testing**:
 ```bash
 # Use browser dev tools:
-# Chrome DevTools �Elements �Styles �Color picker �Contrast ratio
+# Chrome DevTools âElements âStyles âColor picker âContrast ratio
 ```
 
 **Common Issues**:
 ```css
-/* �Too low */
+/* âToo low */
 color: #999; background: #fff; /* 2.8:1 */
 
-/* �WCAG AA compliant */
+/* âWCAG AA compliant */
 color: #767676; background: #fff; /* 4.5:1 */
 color: #fff; background: #007bff; /* 4.5:1 */
 ```
@@ -151,13 +150,13 @@ All functionality available via keyboard.
 
 **Interactive Elements**:
 ```tsx
-// �Click-only
+// âClick-only
 <div onClick={handleAction}>Action</div>
 
-// �Keyboard accessible
+// âKeyboard accessible
 <button onClick={handleAction}>Action</button>
 
-// �Custom with keyboard
+// âCustom with keyboard
 <div
   role="button"
   tabIndex={0}
@@ -207,18 +206,18 @@ function Modal({ isOpen, onClose, children }) {
 Focus indicators must be visible.
 
 ```css
-/* �Removing focus outline */
+/* âRemoving focus outline */
 *:focus {
   outline: none;
 }
 
-/* �Custom focus indicator */
+/* âCustom focus indicator */
 button:focus {
   outline: 2px solid #007bff;
   outline-offset: 2px;
 }
 
-/* �Or use :focus-visible */
+/* âOr use :focus-visible */
 button:focus-visible {
   outline: 2px solid #007bff;
 }
@@ -230,14 +229,14 @@ button:focus-visible {
 Form inputs must have clear labels.
 
 ```tsx
-// �Placeholder as label
+// âPlaceholder as label
 <input type="text" placeholder="Email" />
 
-// �Proper label
+// âProper label
 <label htmlFor="email">Email address</label>
 <input id="email" type="email" />
 
-// �With description
+// âWith description
 <label htmlFor="password">
   Password
   <span className="hint">Must be at least 12 characters</span>
@@ -256,10 +255,10 @@ Form inputs must have clear labels.
 Error messages must be clear and suggest corrections.
 
 ```tsx
-// �Vague error
+// âVague error
 {errors.email && <span>Invalid</span>}
 
-// �Clear error with suggestion
+// âClear error with suggestion
 {errors.email && (
   <span role="alert">
     Please enter a valid email address (e.g., name@example.com)
@@ -273,17 +272,17 @@ Error messages must be clear and suggest corrections.
 UI components must have accessible names and roles.
 
 ```tsx
-// �No accessible name
+// âNo accessible name
 <button>
   <Icon name="close" />
 </button>
 
-// �With accessible name
+// âWith accessible name
 <button aria-label="Close dialog">
   <Icon name="close" aria-hidden="true" />
 </button>
 
-// �Custom component
+// âCustom component
 <div
   role="button"
   aria-pressed={isActive}
@@ -328,22 +327,22 @@ UI components must have accessible names and roles.
 ## Common A11y Anti-Patterns
 
 ```tsx
-// 🚩 Div soup
+// ð© Div soup
 <div onClick={handler}>Click me</div>
 
-// 🚩 Missing alt
+// ð© Missing alt
 <img src="photo.jpg" />
 
-// 🚩 Removing outlines
+// ð© Removing outlines
 *:focus { outline: none; }
 
-// 🚩 Placeholder as label
+// ð© Placeholder as label
 <input placeholder="Name" />
 
-// 🚩 Low contrast
+// ð© Low contrast
 color: #999; background: #eee;
 
-// 🚩 No keyboard support
+// ð© No keyboard support
 <span onClick={handler}>Action</span>
 ```
 

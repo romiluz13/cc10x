@@ -1,7 +1,6 @@
 ---
 name: feature-planning
 description: Creates comprehensive PRD-style feature plans with user stories, architecture decisions, component breakdowns, API contracts, data models, edge cases, testing strategies, complexity assessment, file change manifests, and implementation roadmaps. Use for strategic planning before implementing complex features (4-5 complexity). Provides 5 progressive stages (requirements analysis, architecture design, risk assessment, complexity scoring with recommendations to skip if simple, and file manifest creation). Loaded by requirements-analyst and architect agents during PLANNING workflow. Particularly valuable for novel architectures, high-risk features, or when team alignment documentation needed. For simple features using well-documented libraries, recommend manual implementation instead (faster and more token-efficient).
-license: MIT
 ---
 
 # Feature Planning - Strategic Design Before Building
@@ -20,18 +19,18 @@ Create comprehensive, actionable feature plans BEFORE any code is written. Gener
 
 ```
 Phase 1: Understand the Feature (requirements gathering)
-    ↓
+    â
 Phase 2: Design Architecture (technical decisions)
-    ↓
+    â
 Phase 3: Break Down Components (what to build)
-    ↓
+    â
 Phase 4: Define APIs & Data Models (contracts)
-    ↓
+    â
 Phase 5: Identify Edge Cases (prevent bugs)
-    ↓
+    â
 Phase 6: Plan Testing Strategy (quality assurance)
-    ↓
-Output: Comprehensive Plan �Ready for /feature-build
+    â
+Output: Comprehensive Plan âReady for /feature-build
 ```
 
 **Estimated Time**: 5-10 minutes
@@ -141,18 +140,18 @@ Before proceeding with full planning, assess if cc10x adds value:
 
 **Complexity Scale (1-5):**
 - **1-2 (Simple)**: Well-documented library integration, CRUD operations
-  - **Recommendation**: �Skip cc10x - Manual implementation more efficient
+  - **Recommendation**: âSkip cc10x - Manual implementation more efficient
   - **Example**: "Add a login form using Auth0"
 
 - **3 (Moderate)**: Multiple components, some integration complexity
-  - **Recommendation**: ⚠�Consider manual - cc10x may be overkill
+  - **Recommendation**: â ï¸Consider manual - cc10x may be overkill
   - **Example**: "Add user profile page with edit functionality"
 
 - **4-5 (Complex)**: Novel architecture, high risk, team alignment needed
-  - **Recommendation**: �Use cc10x - Systematic approach prevents costly mistakes
+  - **Recommendation**: âUse cc10x - Systematic approach prevents costly mistakes
   - **Example**: "Real-time collaborative editing with conflict resolution"
 
-**If complexity ≤ 2**: Ask user permission to continue or recommend manual approach
+**If complexity â¤ 2**: Ask user permission to continue or recommend manual approach
 
 ---
 
@@ -169,24 +168,24 @@ Before proceeding with full planning, assess if cc10x adds value:
 
 ## Common Pitfalls to Avoid
 
-- �Skipping requirements phase (leads to rework)
-- �Over-engineering (YAGNI - You Aren't Gonna Need It)
-- �Ignoring edge cases (they always happen in production)
-- �No testing strategy (bugs found late are expensive)
-- �Unclear acceptance criteria (when is it "done"?)
-- �Missing error handling (happy path only)
+- âSkipping requirements phase (leads to rework)
+- âOver-engineering (YAGNI - You Aren't Gonna Need It)
+- âIgnoring edge cases (they always happen in production)
+- âNo testing strategy (bugs found late are expensive)
+- âUnclear acceptance criteria (when is it "done"?)
+- âMissing error handling (happy path only)
 
 ---
 
 ## Success Criteria
 
 A great plan should:
-- �Be actionable (clear next steps)
-- �Be testable (clear acceptance criteria)
-- �Be realistic (achievable time estimates)
-- �Address risks (identified and mitigated)
-- �Be documented (persistent markdown file)
-- �Be ready for `/feature-build` execution
+- âBe actionable (clear next steps)
+- âBe testable (clear acceptance criteria)
+- âBe realistic (achievable time estimates)
+- âAddress risks (identified and mitigated)
+- âBe documented (persistent markdown file)
+- âBe ready for `/feature-build` execution
 
 ---
 

@@ -1,7 +1,6 @@
 ---
 name: debug-workflow
 description: Orchestrates bug fixing using hybrid approach - shared context for related bugs, subagents for parallel independent bug fixing. Loads 4 skills for analysis (systematic-debugging, log-analysis-patterns, root-cause-analysis, test-driven-development). Dispatches bug-investigator subagents for parallel bug fixing. Use when debugging issues, fixing bugs, investigating problems. Provides 3x faster debugging through parallelization. Loaded by orchestrator when user requests debug.
-license: MIT
 ---
 
 # DEBUG Workflow Skill

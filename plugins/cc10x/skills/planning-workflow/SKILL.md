@@ -1,7 +1,6 @@
 ---
 name: planning-workflow
 description: Orchestrates comprehensive feature planning using shared context for sequential phases. Loads 7 skills for complete planning (feature-planning, requirements-analysis, architecture-patterns, api-design-patterns, component-design-patterns, risk-analysis, deployment-patterns). Use when planning features, designing architecture, creating PRDs. Provides coordinated planning with sequential phases building on each other. Loaded by orchestrator when user requests planning.
-license: MIT
 ---
 
 # PLANNING Workflow Skill

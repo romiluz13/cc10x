@@ -13,7 +13,7 @@
 **IF OBVIOUS (typo, syntax, missing import):**
 ```
 This looks like a simple fix:
-- Typo: `utills` → `utils`
+- Typo: `utills`  `utils`
 - Missing import: Add `import X from 'Y'`
 - Syntax: Missing semicolon
 
@@ -91,8 +91,8 @@ Log: [DEBUG] User loaded: null
 Expected: User object
 
 AHA! getUser() returns null
-→ Either user doesn't exist OR query is wrong
-→ Add logging inside getUser() to investigate
+ Either user doesn't exist OR query is wrong
+ Add logging inside getUser() to investigate
 ```
 
 ---
@@ -132,7 +132,7 @@ function processPayment(userId, amount) {
 }
 ```
 
-**Run again → Confirms hypothesis**
+**Run again  Confirms hypothesis**
 
 ---
 

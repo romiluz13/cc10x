@@ -1,7 +1,6 @@
 ---
 name: design-patterns
 description: Comprehensive design patterns covering API design (RESTful principles, versioning, error handling), component design (composition, reusability, props design), and integration patterns (retry strategies, circuit breaker, error handling). Use when designing APIs, components, or integrations, reviewing design contracts, planning architecture, ensuring consistency and reliability. Provides design checklists, best practices, and patterns for all three domains. Loaded by PLAN workflow for comprehensive design guidance. Critical for scalability, maintainability, reliability, and developer experience.
-license: MIT
 ---
 
 # Design Patterns

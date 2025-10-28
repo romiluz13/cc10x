@@ -1,7 +1,6 @@
 ---
 name: systematic-debugging
 description: Enforces LOG FIRST FIX LATER methodology to prevent assumption-driven debugging that wastes hours. Always verify runtime data by logging complete object structures before making assumptions about field names or data shapes. Particularly critical for third-party integrations, authentication systems, API responses, and data flow issues where assumptions about data structure commonly cause debugging cycles. Use when debugging fails repeatedly, investigating why expected data is missing, working with unfamiliar APIs, or when you've tried multiple fixes without success. Prevents the anti-pattern of assumption then try fix then still broken then repeat. Real-world testing saved 2 hours by logging first instead of guessing. Loaded by tdd-enforcer agent during DEBUGGING workflow.
-license: MIT
 ---
 
 # Systematic Debugging
@@ -18,8 +17,8 @@ license: MIT
 - **Purpose**: Prevent assumption-driven debugging that wastes hours/days
 - **When**: Any bug involving third-party integrations, authentication, APIs, data flow issues
 - **Core Rule**: Add comprehensive logging BEFORE attempting any fixes
-- **The Anti-Pattern**: Assumption �Try Fix �Still Broken �Try Another Fix �Repeat 10x ❌
-- **The Solution**: LOG FIRST �See Actual Data �Apply Correct Fix �Done in 5 min ✅
+- **The Anti-Pattern**: Assumption âTry Fix âStill Broken âTry Another Fix âRepeat 10x â
+- **The Solution**: LOG FIRST âSee Actual Data âApply Correct Fix âDone in 5 min â
 - **Sections Available**: The 5-Minute Rule, LOG FIRST Pattern, Red Flags Checklist, Comprehensive Logging Guide
 
 ---
@@ -28,11 +27,11 @@ license: MIT
 
 ## The 5-Minute Rule
 
-**If you've been debugging for more than 30 minutes without seeing the actual data �STOP �Add comprehensive logging first.**
+**If you've been debugging for more than 30 minutes without seeing the actual data âSTOP âAdd comprehensive logging first.**
 
 ## The LOG FIRST Pattern
 
-### �BAD: Assuming Field Names
+### âBAD: Assuming Field Names
 
 ```typescript
 // Don't guess what the data looks like
@@ -45,7 +44,7 @@ console.log("User ID:", user.id);
 - The field exists at the top level (might be nested)
 - The data structure matches the documentation
 
-### �GOOD: Logging Complete Structure
+### âGOOD: Logging Complete Structure
 
 ```typescript
 // See the ACTUAL data structure first
@@ -69,12 +68,12 @@ console.log(JSON.stringify(req.headers, null, 2));
 
 Stop and add comprehensive logging if:
 
-- ⚠�**Third-party service not behaving as expected** (Clerk, Stripe, Auth0, etc.)
-- ⚠�**Authentication/authorization issues** (JWT, sessions, cookies)
-- ⚠�**Data not appearing where it should** (missing fields, undefined values)
-- ⚠�**We've tried 3+ fixes without success** (we're guessing, not debugging)
-- ⚠�**Documentation says X but behavior is Y** (docs lie, runtime doesn't)
-- ⚠�**Dashboard UI shows data but code doesn't see it** (UI �API response)
+- â ï¸**Third-party service not behaving as expected** (Clerk, Stripe, Auth0, etc.)
+- â ï¸**Authentication/authorization issues** (JWT, sessions, cookies)
+- â ï¸**Data not appearing where it should** (missing fields, undefined values)
+- â ï¸**We've tried 3+ fixes without success** (we're guessing, not debugging)
+- â ï¸**Documentation says X but behavior is Y** (docs lie, runtime doesn't)
+- â ï¸**Dashboard UI shows data but code doesn't see it** (UI âAPI response)
 
 ## Quick Logging Commands
 
@@ -102,7 +101,7 @@ Real-world examples of docs vs reality:
 | Auth0 | `user.roles` | `user['https://app.com/roles']` |
 | Stripe | `payment.status` | `payment.payment_intent.status` |
 
-**Lesson**: Dashboard UI field names �API response field names. Always verify!
+**Lesson**: Dashboard UI field names âAPI response field names. Always verify!
 
 ---
 
@@ -146,16 +145,16 @@ console.log("=== END AUTH DEBUG ===");
 **Real-world example** (the Clerk metadata bug you hit):
 
 ```typescript
-// �What you tried (based on docs/dashboard):
+// âWhat you tried (based on docs/dashboard):
 const role = auth.sessionClaims?.publicMetadata?.role;
 console.log("Role:", role); // undefined (why??)
 
-// �What you should have done first:
+// âWhat you should have done first:
 console.log("FULL sessionClaims:", JSON.stringify(auth.sessionClaims, null, 2));
 // Output shows: { "metadata": { "role": "admin" } }
 // ^ AHA! It's "metadata", not "publicMetadata"!
 
-// �Correct fix (found in 5 minutes instead of 3 days):
+// âCorrect fix (found in 5 minutes instead of 3 days):
 const role = auth.sessionClaims?.metadata?.role;
 ```
 
@@ -275,8 +274,8 @@ console.timeEnd("Operation");
 ### Step-by-Step Process
 
 ```
-1. �DON'T START WITH: "Let me try changing X..."
-   �START WITH: "Let me add logging to see what X actually is..."
+1. âDON'T START WITH: "Let me try changing X..."
+   âSTART WITH: "Let me add logging to see what X actually is..."
 
 2. Add comprehensive logging (5 minutes)
    - Log FULL objects with JSON.stringify(obj, null, 2)
@@ -307,7 +306,7 @@ console.timeEnd("Operation");
 
 User reported: "Clerk authentication works, but user roles aren't being read. Dashboard shows the role in `publicMetadata`, but code returns `undefined`."
 
-### �What Was Done (3 Days Wasted)
+### âWhat Was Done (3 Days Wasted)
 
 ```typescript
 // Day 1: Try various field names (guessing)
@@ -327,7 +326,7 @@ console.log("FULL sessionClaims:", JSON.stringify(auth.sessionClaims, null, 2));
 **Time wasted**: 3 days
 **Root cause found**: 5 minutes after adding logging
 
-### �What SHOULD Have Been Done (5 Minutes Total)
+### âWhat SHOULD Have Been Done (5 Minutes Total)
 
 ```typescript
 // Minute 1: User reports issue
@@ -343,14 +342,14 @@ console.log("FULL user:", JSON.stringify(auth.user, null, 2));
 // Dashboard says "publicMetadata" but JWT uses "metadata"
 
 // Minute 5: Apply correct fix
-const role = auth.sessionClaims?.metadata?.role; // �Works!
+const role = auth.sessionClaims?.metadata?.role; // âWorks!
 ```
 
 **Time saved**: 2 days, 23 hours, 55 minutes
 
 ### The Lesson
 
-**Dashboard UI �JWT structure**. Clerk's dashboard shows "Public Metadata" in the UI, but the actual JWT token uses the field name `metadata`.
+**Dashboard UI âJWT structure**. Clerk's dashboard shows "Public Metadata" in the UI, but the actual JWT token uses the field name `metadata`.
 
 **Never trust the UI** - always verify with runtime logging.
 
@@ -359,29 +358,29 @@ const role = auth.sessionClaims?.metadata?.role; // �Works!
 ### Anti-Pattern 1: Assumption-Driven Debugging
 
 ```typescript
-// �BAD: Making assumptions
+// âBAD: Making assumptions
 // "The docs say it's in publicMetadata, so..."
 const role = user.publicMetadata.role;
 
-// �BAD: Trying random fixes
+// âBAD: Trying random fixes
 // "Maybe it's called user_metadata?"
 const role = user.user_metadata?.role;
 
-// �BAD: Changing everything
+// âBAD: Changing everything
 // "Let me try fixing CORS, domains, cookies all at once..."
 
-// �GOOD: Log first, understand, then fix
+// âGOOD: Log first, understand, then fix
 console.log("FULL USER:", JSON.stringify(user, null, 2));
-// See actual structure �Apply correct fix
+// See actual structure âApply correct fix
 ```
 
 ### Anti-Pattern 2: Partial Logging
 
 ```typescript
-// �BAD: Only logging what you think is relevant
+// âBAD: Only logging what you think is relevant
 console.log("Role:", role); // undefined (not helpful!)
 
-// �GOOD: Log the complete object
+// âGOOD: Log the complete object
 console.log("FULL OBJECT:", JSON.stringify(sessionClaims, null, 2));
 // Shows ALL fields, nested structure, actual field names
 ```
@@ -389,11 +388,11 @@ console.log("FULL OBJECT:", JSON.stringify(sessionClaims, null, 2));
 ### Anti-Pattern 3: Trusting Documentation Alone
 
 ```typescript
-// �BAD: Assuming docs are correct
+// âBAD: Assuming docs are correct
 // Docs say: "User roles are in user.roles"
 const roles = user.roles;
 
-// �GOOD: Verify with runtime data
+// âGOOD: Verify with runtime data
 console.log("FULL USER:", JSON.stringify(user, null, 2));
 // Actual structure: user['https://myapp.com/roles']
 ```
@@ -403,7 +402,7 @@ console.log("FULL USER:", JSON.stringify(user, null, 2));
 ### 1. Use Structured Logging
 
 ```typescript
-// �GOOD: Easy to find in logs
+// âGOOD: Easy to find in logs
 console.log("=== AUTHENTICATION DEBUG ===");
 console.log("Step 1: Session Claims");
 console.log(JSON.stringify(sessionClaims, null, 2));
@@ -415,7 +414,7 @@ console.log("=== END DEBUG ===");
 ### 2. Log at Multiple Points
 
 ```typescript
-// �GOOD: See data transformation
+// âGOOD: See data transformation
 console.log("INPUT:", JSON.stringify(input, null, 2));
 console.log("AFTER VALIDATION:", JSON.stringify(validated, null, 2));
 console.log("AFTER TRANSFORM:", JSON.stringify(transformed, null, 2));
@@ -425,7 +424,7 @@ console.log("OUTPUT:", JSON.stringify(output, null, 2));
 ### 3. Include Context
 
 ```typescript
-// �GOOD: Know what you're looking at
+// âGOOD: Know what you're looking at
 console.log("User", userId, "at", new Date().toISOString());
 console.log("Request ID:", requestId);
 console.log("Environment:", process.env.NODE_ENV);
@@ -489,10 +488,10 @@ When debugging data persistence:
 ## When to Stop Logging
 
 You can reduce logging once you:
-- �Found the root cause
-- �Applied the fix
-- �Verified it works
-- �Understand the issue for future reference
+- âFound the root cause
+- âApplied the fix
+- âVerified it works
+- âUnderstand the issue for future reference
 
 Keep minimal logging for production monitoring:
 ```typescript
@@ -512,7 +511,7 @@ logger.info("User logged in", { userId, timestamp });
 2. **LOG COMPLETE OBJECTS** - Use `JSON.stringify(obj, null, 2)` to see everything
 3. **NEVER TRUST DOCS ALONE** - Verify field names and structure with runtime data
 4. **THE 5-MINUTE RULE** - If debugging > 30 min without seeing data, stop and log
-5. **DASHBOARD �API** - UI field names often differ from actual API responses
+5. **DASHBOARD âAPI** - UI field names often differ from actual API responses
 6. **SEE, DON'T ASSUME** - Base fixes on what you SEE in logs, not what you ASSUME
 
 ---

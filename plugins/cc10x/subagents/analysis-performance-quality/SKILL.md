@@ -1,7 +1,6 @@
 ---
 name: analysis-performance-quality
 description: Parallel subagent for REVIEW workflow. Analyzes code for performance bottlenecks and quality issues. Loads performance-patterns and code-quality-patterns skills. Runs in parallel with other analysis subagents for 3x faster reviews.
-license: MIT
 ---
 
 # Analysis Performance & Quality Subagent
@@ -117,19 +116,19 @@ Dispatched by REVIEW workflow when analyzing code for:
 
 **Organize performance and quality findings:**
 
-### Critical Issues 🔴
+### Critical Issues ð´
 - Performance disasters
 - Critical complexity
 - Major duplication
 - SOLID violations
 
-### Important Issues 🟡
+### Important Issues ð¡
 - Performance concerns
 - Code quality problems
 - Maintainability issues
 - Technical debt
 
-### Nice to Have 🟢
+### Nice to Have ð¢
 - Performance optimizations
 - Code improvements
 - Refactoring suggestions

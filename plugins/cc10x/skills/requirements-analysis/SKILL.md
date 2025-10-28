@@ -1,7 +1,6 @@
 ---
 name: requirements-analysis
 description: Identifies requirements analysis best practices including stakeholder analysis, requirement elicitation, acceptance criteria, scope management, and requirement validation. Use when gathering requirements, reviewing requirements, planning features, checking acceptance criteria, and ensuring requirement clarity. Provides requirement analysis patterns, elicitation techniques, acceptance criteria templates, and requirement checklists. Loaded by architect agent during PLAN workflow or when requirements analysis needed. Complements feature-planning with specific requirement-focused guidance. Critical for project success, scope management, and stakeholder satisfaction.
-license: MIT
 ---
 
 # Requirements Analysis
@@ -39,12 +38,12 @@ Requirement Quality:
 
 **SMART Criteria**:
 ```
-�BAD REQUIREMENT
+âBAD REQUIREMENT
 "The system should be fast"
 "Users should be able to search"
 "The API should be reliable"
 
-�GOOD REQUIREMENT (SMART)
+âGOOD REQUIREMENT (SMART)
 Specific: "Users can search by product name, category, or SKU"
 Measurable: "Search results return within 500ms"
 Achievable: "Using Elasticsearch with proper indexing"
@@ -54,14 +53,14 @@ Time-bound: "Complete by Q2 2024"
 
 **Acceptance Criteria**:
 ```
-�VAGUE
+âVAGUE
 Feature: User Registration
 Scenario: User can register
   Given user is on registration page
   When user enters data
   Then user is registered
 
-�CLEAR
+âCLEAR
 Feature: User Registration
 Scenario: User can register with valid email
   Given user is on registration page
@@ -84,10 +83,10 @@ Scenario: User cannot register with invalid email
 
 **User Stories**:
 ```
-�INCOMPLETE
+âINCOMPLETE
 "As a user, I want to search products"
 
-�COMPLETE
+âCOMPLETE
 "As a customer, I want to search products by name
 So that I can quickly find items I'm looking for
 Acceptance Criteria:
@@ -99,7 +98,7 @@ Acceptance Criteria:
 - Partial matches supported"
 ```
 
-#### Red Flags 🚩
+#### Red Flags ð©
 ```bash
 # Vague requirements
 grep -r "should be\|nice to have\|maybe\|possibly" requirements/
@@ -140,18 +139,18 @@ Questions to Ask:
 
 ```
 Epic: User Management
-├─�Story 1: User Registration
-�  ├─�Task: Email validation
-�  ├─�Task: Password hashing
-�  └─�Task: Confirmation email
-├─�Story 2: User Login
-�  ├─�Task: Credential validation
-�  ├─�Task: Session creation
-�  └─�Task: Remember me option
-└─�Story 3: User Profile
-    ├─�Task: View profile
-    ├─�Task: Edit profile
-    └─�Task: Delete account
+âââStory 1: User Registration
+â  âââTask: Email validation
+â  âââTask: Password hashing
+â  âââTask: Confirmation email
+âââStory 2: User Login
+â  âââTask: Credential validation
+â  âââTask: Session creation
+â  âââTask: Remember me option
+âââStory 3: User Profile
+    âââTask: View profile
+    âââTask: Edit profile
+    âââTask: Delete account
 ```
 
 ### Requirements Traceability Matrix

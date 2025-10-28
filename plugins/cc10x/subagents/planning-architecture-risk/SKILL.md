@@ -1,7 +1,6 @@
 ---
 name: planning-architecture-risk
 description: Parallel subagent for PLANNING workflow. Designs system architecture and assesses risks. Loads architecture-patterns and risk-analysis skills. Runs in parallel with planning-design-deployment for 1.5x faster planning.
-license: MIT
 ---
 
 # Planning Architecture & Risk Subagent

@@ -1,7 +1,6 @@
 ---
 name: root-cause-analysis
 description: Identifies root causes of bugs and issues by analyzing symptoms, logs, and code flow. Use when investigating why bugs occur, understanding failure patterns, analyzing error chains, and preventing recurrence. Provides root cause analysis frameworks, symptom-to-cause mapping, and prevention strategies. Loaded by DEBUG workflow for comprehensive bug investigation. Complements systematic-debugging with deeper analysis of why bugs happen, not just how to fix them. Critical for preventing recurring bugs and improving system reliability.
-license: MIT
 ---
 
 # Root Cause Analysis
@@ -28,19 +27,19 @@ license: MIT
 
 ```
 Why 1: Why does login return 401?
-→ Token validation fails
+ Token validation fails
 
 Why 2: Why does token validation fail?
-→ Token is expired
+ Token is expired
 
 Why 3: Why is token expired?
-→ Refresh token endpoint not called
+ Refresh token endpoint not called
 
 Why 4: Why isn't refresh token called?
-→ No refresh logic in auth service
+ No refresh logic in auth service
 
 Why 5: Why is there no refresh logic?
-→ Feature not implemented
+ Feature not implemented
 
 ROOT CAUSE: Missing token refresh logic
 FIX: Implement automatic token refresh
@@ -116,11 +115,11 @@ Investigation Process:
 
 ```
 User Action: Click Login
-  ↓
+  
 Expected: Auth service validates credentials
-  ↓
+  
 Actual: Auth service returns 401
-  ↓
+  
 Investigation:
   1. Check auth service logs
   2. Find: "Token expired"

@@ -1,7 +1,6 @@
 ---
 name: code-quality-patterns
 description: Identifies code quality issues including maintainability, readability, complexity, duplication, and technical debt. Use when analyzing code for quality metrics, reviewing code structure, identifying refactoring opportunities, checking naming conventions, and ensuring consistent patterns. Provides code quality patterns, complexity reduction techniques, DRY principles, SOLID patterns, and quality checklists. Loaded by quality-reviewer agent during REVIEW workflow or when code quality analysis needed. Complements risk-analysis Stage 4 (Code Quality) with specific quality metrics and patterns. Critical for maintainability, scalability, and long-term codebase health.
-license: MIT
 ---
 
 # Code Quality Patterns

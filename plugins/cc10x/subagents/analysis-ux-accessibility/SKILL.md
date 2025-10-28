@@ -1,7 +1,6 @@
 ---
 name: analysis-ux-accessibility
 description: Parallel subagent for REVIEW workflow. Analyzes code for UX problems and accessibility violations. Loads ux-patterns and accessibility-patterns skills. Runs in parallel with other analysis subagents for 3x faster reviews.
-license: MIT
 ---
 
 # Analysis UX & Accessibility Subagent
@@ -124,19 +123,19 @@ Dispatched by REVIEW workflow when analyzing code for:
 
 **Organize UX and accessibility findings:**
 
-### Critical Issues 🔴
+### Critical Issues ð´
 - WCAG violations
 - Keyboard inaccessible
 - Screen reader incompatible
 - Major UX problems
 
-### Important Issues 🟡
+### Important Issues ð¡
 - Accessibility concerns
 - UX improvements
 - Usability issues
 - Design inconsistencies
 
-### Nice to Have 🟢
+### Nice to Have ð¢
 - UX enhancements
 - Accessibility improvements
 - Design refinements
