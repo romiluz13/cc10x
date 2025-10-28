@@ -31,7 +31,7 @@ Phase 5: Identify Edge Cases (prevent bugs)
     â†“
 Phase 6: Plan Testing Strategy (quality assurance)
     â†“
-Output: Comprehensive Plan â†’ Ready for /feature-build
+Output: Comprehensive Plan â†Ready for /feature-build
 ```
 
 **Estimated Time**: 5-10 minutes
@@ -141,15 +141,15 @@ Before proceeding with full planning, assess if cc10x adds value:
 
 **Complexity Scale (1-5):**
 - **1-2 (Simple)**: Well-documented library integration, CRUD operations
-  - **Recommendation**: âŒ Skip cc10x - Manual implementation more efficient
+  - **Recommendation**: âSkip cc10x - Manual implementation more efficient
   - **Example**: "Add a login form using Auth0"
 
 - **3 (Moderate)**: Multiple components, some integration complexity
-  - **Recommendation**: âš ï¸ Consider manual - cc10x may be overkill
+  - **Recommendation**: âš ï¸Consider manual - cc10x may be overkill
   - **Example**: "Add user profile page with edit functionality"
 
 - **4-5 (Complex)**: Novel architecture, high risk, team alignment needed
-  - **Recommendation**: âœ… Use cc10x - Systematic approach prevents costly mistakes
+  - **Recommendation**: âœUse cc10x - Systematic approach prevents costly mistakes
   - **Example**: "Real-time collaborative editing with conflict resolution"
 
 **If complexity â‰¤ 2**: Ask user permission to continue or recommend manual approach
@@ -169,24 +169,24 @@ Before proceeding with full planning, assess if cc10x adds value:
 
 ## Common Pitfalls to Avoid
 
-- âŒ Skipping requirements phase (leads to rework)
-- âŒ Over-engineering (YAGNI - You Aren't Gonna Need It)
-- âŒ Ignoring edge cases (they always happen in production)
-- âŒ No testing strategy (bugs found late are expensive)
-- âŒ Unclear acceptance criteria (when is it "done"?)
-- âŒ Missing error handling (happy path only)
+- âSkipping requirements phase (leads to rework)
+- âOver-engineering (YAGNI - You Aren't Gonna Need It)
+- âIgnoring edge cases (they always happen in production)
+- âNo testing strategy (bugs found late are expensive)
+- âUnclear acceptance criteria (when is it "done"?)
+- âMissing error handling (happy path only)
 
 ---
 
 ## Success Criteria
 
 A great plan should:
-- âœ… Be actionable (clear next steps)
-- âœ… Be testable (clear acceptance criteria)
-- âœ… Be realistic (achievable time estimates)
-- âœ… Address risks (identified and mitigated)
-- âœ… Be documented (persistent markdown file)
-- âœ… Be ready for `/feature-build` execution
+- âœBe actionable (clear next steps)
+- âœBe testable (clear acceptance criteria)
+- âœBe realistic (achievable time estimates)
+- âœAddress risks (identified and mitigated)
+- âœBe documented (persistent markdown file)
+- âœBe ready for `/feature-build` execution
 
 ---
 

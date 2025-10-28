@@ -28,7 +28,7 @@ If no plan exists, recommend creating one first or skip validation.
 
 ## Validation Dimensions
 
-### 1. Plan → Code Consistency
+### 1. Plan âCode Consistency
 
 **Question:** Did we build what we planned?
 
@@ -43,21 +43,21 @@ If no plan exists, recommend creating one first or skip validation.
 ## Requirement Validation
 
 REQ-F1: User registration with email/password
-- ✅ IMPLEMENTED: `src/auth/register.controller.ts` (lines 12-45)
-- ✅ TEST: `tests/auth/register.test.ts` (8 test cases)
+- âIMPLEMENTED: `src/auth/register.controller.ts` (lines 12-45)
+- âTEST: `tests/auth/register.test.ts` (8 test cases)
 
 REQ-F2: JWT token generation
-- ✅ IMPLEMENTED: `src/auth/token.service.ts` (lines 28-67)
-- ✅ TEST: `tests/auth/token.test.ts` (12 test cases)
+- âIMPLEMENTED: `src/auth/token.service.ts` (lines 28-67)
+- âTEST: `tests/auth/token.test.ts` (12 test cases)
 
 REQ-F3: Refresh token rotation
-- ❌ MISSING: No implementation found for token rotation
-- ⚠️ DRIFT: Plan specified this, code doesn't implement it
+- âMISSING: No implementation found for token rotation
+- â ï¸DRIFT: Plan specified this, code doesn't implement it
 ```
 
 ---
 
-### 2. Code → Tests Consistency
+### 2. Code âTests Consistency
 
 **Question:** Is implemented code comprehensively tested?
 
@@ -72,22 +72,22 @@ REQ-F3: Refresh token rotation
 ## Test Coverage Validation
 
 `src/auth/service.ts` (352 lines)
-- ✅ Test file: `tests/auth/service.test.ts` (198 lines, 45 tests)
-- ✅ Coverage: Functions 100%, Branches 92%, Lines 95%
-- ✅ Edge cases: null input, malformed data, duplicates (all tested)
+- âTest file: `tests/auth/service.test.ts` (198 lines, 45 tests)
+- âCoverage: Functions 100%, Branches 92%, Lines 95%
+- âEdge cases: null input, malformed data, duplicates (all tested)
 
 `src/auth/middleware.ts` (187 lines)
-- ✅ Test file: `tests/auth/middleware.test.ts` (134 lines, 28 tests)
-- ✅ Coverage: Functions 100%, Branches 88%, Lines 93%
-- ⚠️ Missing: Integration test for expired token scenario
+- âTest file: `tests/auth/middleware.test.ts` (134 lines, 28 tests)
+- âCoverage: Functions 100%, Branches 88%, Lines 93%
+- â ï¸Missing: Integration test for expired token scenario
 
 `src/auth/types.ts` (124 lines)
-- ⚠️ No tests: Type-only file (acceptable)
+- â ï¸No tests: Type-only file (acceptable)
 ```
 
 ---
 
-### 3. Code → Documentation Consistency
+### 3. Code âDocumentation Consistency
 
 **Question:** Is code properly documented?
 
@@ -102,24 +102,24 @@ REQ-F3: Refresh token rotation
 ## Documentation Validation
 
 README.md:
-- ✅ Authentication section added (lines 145-189)
-- ✅ API endpoints documented
-- ✅ Example usage included
+- âAuthentication section added (lines 145-189)
+- âAPI endpoints documented
+- âExample usage included
 
 API Documentation:
-- ✅ `docs/api/auth.md` exists
-- ✅ All endpoints documented (login, register, refresh)
-- ✅ Request/response examples current
+- â`docs/api/auth.md` exists
+- âAll endpoints documented (login, register, refresh)
+- âRequest/response examples current
 
 Inline Comments:
-- ✅ Complex token rotation logic commented
-- ✅ Security considerations noted
-- ⚠️ Missing: Why we chose bcrypt cost factor 12 (should document rationale)
+- âComplex token rotation logic commented
+- âSecurity considerations noted
+- â ï¸Missing: Why we chose bcrypt cost factor 12 (should document rationale)
 ```
 
 ---
 
-### 4. Risks → Mitigations Consistency
+### 4. Risks âMitigations Consistency
 
 **Question:** Were identified risks actually mitigated?
 
@@ -132,32 +132,32 @@ Inline Comments:
 ```markdown
 ## Risk Mitigation Validation
 
-RISK-01: SQL Injection (CRITICAL, Prob 3 × Impact 3 = 9)
+RISK-01: SQL Injection (CRITICAL, Prob 3 ÃImpact 3 = 9)
 - Mitigation planned: Use parameterized queries
-- ✅ IMPLEMENTED: All database queries use Mongoose (auto-sanitized)
-- ✅ VERIFIED: No raw SQL string concatenation
+- âIMPLEMENTED: All database queries use Mongoose (auto-sanitized)
+- âVERIFIED: No raw SQL string concatenation
 
-RISK-02: Weak Password Hashing (HIGH, 2 × 3 = 6)
+RISK-02: Weak Password Hashing (HIGH, 2 Ã3 = 6)
 - Mitigation planned: bcrypt with cost factor 12
-- ✅ IMPLEMENTED: `crypto/password.ts` uses bcrypt(password, 12)
-- ✅ TESTED: Hash format verified in tests
+- âIMPLEMENTED: `crypto/password.ts` uses bcrypt(password, 12)
+- âTESTED: Hash format verified in tests
 
-RISK-03: Token Replay Attacks (MEDIUM, 2 × 2 = 4)
+RISK-03: Token Replay Attacks (MEDIUM, 2 Ã2 = 4)
 - Mitigation planned: Short-lived access tokens (15 min)
-- ✅ IMPLEMENTED: JWT expiry set to 900 seconds
-- ❌ MISSING: Token blacklist not implemented (deferred to v2 per plan)
+- âIMPLEMENTED: JWT expiry set to 900 seconds
+- âMISSING: Token blacklist not implemented (deferred to v2 per plan)
 ```
 
 ---
 
-### 5. File Manifest → Actual Files Consistency
+### 5. File Manifest âActual Files Consistency
 
 **Question:** Do created files match the plan?
 
 **Process:**
 1. Load File Change Manifest from plan (Phase 5b)
 2. Check each planned file exists
-3. Verify LOC within ±30% of estimates
+3. Verify LOC within Â±30% of estimates
 4. Flag unplanned files (scope creep indicator)
 
 **Example:**
@@ -168,11 +168,11 @@ RISK-03: Token Replay Attacks (MEDIUM, 2 × 2 = 4)
 
 Planned: `src/auth/service.ts` (~350 lines)
 Actual: `src/auth/service.ts` (352 lines)
-Status: ✅ Match (variance: +0.6%)
+Status: âMatch (variance: +0.6%)
 
 Planned: `src/auth/middleware.ts` (~180 lines)
 Actual: `src/auth/middleware.ts` (187 lines)
-Status: ✅ Match (variance: +3.9%)
+Status: âMatch (variance: +3.9%)
 
 [...continue for all planned files...]
 
@@ -180,17 +180,17 @@ Status: ✅ Match (variance: +3.9%)
 
 Planned: `src/app.ts` (+25 lines)
 Actual: `src/app.ts` (+28 lines)
-Status: ✅ Match (close enough)
+Status: âMatch (close enough)
 
 ### Summary
 - Planned files: 8
 - Actual files: 9
 - Unplanned: 1 file (`src/auth/constants.ts` - 45 lines)
   - Reason: Extracted magic numbers (good practice, acceptable)
-  
+
 - LOC planned: 1,200
 - LOC actual: 1,104
-- Variance: -8% (within ±30% ✅)
+- Variance: -8% (within Â±30% â)
 
 **Scope Control:** Minimal drift, one unplanned file justified
 ```
@@ -204,84 +204,84 @@ Status: ✅ Match (close enough)
 
 ### Summary
 - Total validations: 5
-- Passing: 4 ✅
-- Issues found: 3 ⚠️
+- Passing: 4 â
+- Issues found: 3 â ï¸
 - Critical issues: 0
 
 ---
 
-## 1. Plan → Code Consistency ✅
+## 1. Plan âCode Consistency â
 
 **Requirements:**
 - 12 functional requirements planned
-- 12 implemented ✅
+- 12 implemented â
 - 0 missing
 
 **User Stories:**
 - 8 stories planned
-- 8 implemented ✅
+- 8 implemented â
 
 **Acceptance Criteria:**
 - 24 criteria planned
-- 23 met ✅
+- 23 met â
 - 1 deferred (documented as v2 feature)
 
 **Status:** PASS - Code matches plan
 
 ---
 
-## 2. Code → Tests Consistency ✅
+## 2. Code âTests Consistency â
 
 **Test Coverage:**
-- Functions: 100% ✅
-- Branches: 91% ✅ (target >80%)
-- Lines: 95% ✅ (target >90%)
+- Functions: 100% â
+- Branches: 91% â(target >80%)
+- Lines: 95% â(target >90%)
 
 **Test Files:**
 - 8 implementation files
-- 8 test files ✅
+- 8 test files â
 - All files have tests
 
 **Edge Cases:**
 - Risk analysis identified: 15 edge cases
-- Tests cover: 14/15 ✅ (93%)
+- Tests cover: 14/15 â(93%)
 - Missing: 1 (browser-specific, needs E2E)
 
 **Status:** PASS - Comprehensive test coverage
 
 ---
 
-## 3. Code → Documentation Consistency ⚠️
+## 3. Code âDocumentation Consistency â ï¸
 
 **README:**
-- ✅ Updated with auth section
-- ✅ API usage examples included
+- âUpdated with auth section
+- âAPI usage examples included
 
 **API Docs:**
-- ✅ All endpoints documented
+- âAll endpoints documented
 
 **Inline Comments:**
-- ⚠️ Missing rationale for bcrypt cost factor choice
-- ⚠️ Token rotation logic under-commented
+- â ï¸Missing rationale for bcrypt cost factor choice
+- â ï¸Token rotation logic under-commented
 
 **Status:** MINOR ISSUES - Add missing comments
 
 ---
 
-## 4. Risks → Mitigations Consistency ✅
+## 4. Risks âMitigations Consistency â
 
 **Risks Identified:** 8 (from plan Phase 3b)
 
 **Mitigations Implemented:**
-- CRITICAL risks: 2 planned, 2 implemented ✅
-- HIGH risks: 3 planned, 3 implemented ✅
-- MEDIUM risks: 3 planned, 2 implemented, 1 deferred (documented) ✅
+- CRITICAL risks: 2 planned, 2 implemented â
+- HIGH risks: 3 planned, 3 implemented â
+- MEDIUM risks: 3 planned, 2 implemented, 1 deferred (documented) â
 
 **Status:** PASS - All critical mitigations in place
 
 ---
 
-## 5. File Manifest → Actual Consistency ✅
+## 5. File Manifest âActual Consistency â
 
 **Files:**
 - Planned: 8 CREATE, 3 MODIFY, 0 DELETE
@@ -291,11 +291,11 @@ Status: ✅ Match (close enough)
 **LOC:**
 - Planned: 1,200 lines
 - Actual: 1,104 lines
-- Variance: -8% (within ±30% ✅)
+- Variance: -8% (within Â±30% â)
 
 **File Sizes:**
-- Max file: 352 lines ✅ (<500 limit)
-- All files within limits ✅
+- Max file: 352 lines â(<500 limit)
+- All files within limits â
 
 **Status:** PASS - Minimal scope drift
 
@@ -331,18 +331,18 @@ All CRITICAL and HIGH priority items validated successfully.
 2. **Consider E2E test** for browser scenario (30 min or defer)
 3. **Ready to merge** after documentation fixes
 
-**Overall Validation:** ✅ PASS (4/5 passing, 1 minor issue)
+**Overall Validation:** âPASS (4/5 passing, 1 minor issue)
 
 ---
 
 ## Validation Complete
 
 Project shows strong plan-code consistency:
-- ✅ All planned requirements implemented
-- ✅ Comprehensive test coverage (>80%)
-- ✅ Risk mitigations in place
-- ✅ File manifest matches (minimal drift)
-- ⚠️ Minor documentation gaps (easily fixed)
+- âAll planned requirements implemented
+- âComprehensive test coverage (>80%)
+- âRisk mitigations in place
+- âFile manifest matches (minimal drift)
+- â ï¸Minor documentation gaps (easily fixed)
 
 **Confidence Level:** HIGH - Safe to merge after documentation fixes
 ```

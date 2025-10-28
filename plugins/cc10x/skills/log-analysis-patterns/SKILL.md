@@ -45,12 +45,12 @@ INFO:    Important events, state changes, milestones
 DEBUG:   Detailed information for debugging
 TRACE:   Very detailed information, function calls
 
-‚ùå BAD LOGGING
+‚ùBAD LOGGING
 console.log('User login');
 console.log('Error: ' + error);
 console.log('Processing...');
 
-‚úÖ GOOD LOGGING
+‚úGOOD LOGGING
 logger.info('User login', { userId: 123, timestamp: new Date() });
 logger.error('Login failed', { userId: 123, error: error.message, stack: error.stack });
 logger.debug('Processing user data', { userId: 123, data: userData });
@@ -58,10 +58,10 @@ logger.debug('Processing user data', { userId: 123, data: userData });
 
 **Structured Logging**:
 ```typescript
-// ‚ùå UNSTRUCTURED
+// ‚ùUNSTRUCTURED
 console.log('User 123 logged in at 2024-01-15 10:30:00');
 
-// ‚úÖ STRUCTURED
+// ‚úSTRUCTURED
 logger.info('user_login', {
   userId: 123,
   email: 'user@example.com',
@@ -74,7 +74,7 @@ logger.info('user_login', {
 
 **Request Tracing**:
 ```typescript
-// ‚úÖ REQUEST ID TRACING
+// ‚úREQUEST ID TRACING
 const requestId = generateUUID();
 logger.info('request_start', {
   requestId,
@@ -99,10 +99,10 @@ logger.info('request_end', {
 
 **Error Logging**:
 ```typescript
-// ‚ùå INCOMPLETE
+// ‚ùINCOMPLETE
 logger.error('Error occurred');
 
-// ‚úÖ COMPLETE
+// ‚úCOMPLETE
 logger.error('Payment processing failed', {
   requestId: 'req-123',
   userId: 456,
@@ -218,7 +218,7 @@ Logstash: Parse and transform logs
 Kibana: Visualize and analyze logs
 
 Pipeline:
-Application ‚Üí Logstash ‚Üí Elasticsearch ‚Üí Kibana
+Application ‚ÜLogstash ‚ÜElasticsearch ‚ÜKibana
 ```
 
 ### Log Parsing
@@ -292,7 +292,7 @@ Rate Limit:
 ### What to Log
 
 ```
-‚úÖ DO LOG:
+‚úDO LOG:
 - Application startup/shutdown
 - User actions (login, logout, purchase)
 - API requests and responses
@@ -302,7 +302,7 @@ Rate Limit:
 - Security events
 - State changes
 
-‚ùå DON'T LOG:
+‚ùDON'T LOG:
 - Passwords or API keys
 - Credit card numbers
 - Personal identification numbers

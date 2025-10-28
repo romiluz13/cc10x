@@ -27,11 +27,11 @@ Review code by:
 - Provide improvement suggestions
 
 **Examples:**
-- ✅ Review authentication implementation
-- ✅ Review component changes
-- ✅ Review API endpoint
-- ✅ Review database query
-- ❌ Review entire codebase (too large - review specific changes)
+- âReview authentication implementation
+- âReview component changes
+- âReview API endpoint
+- âReview database query
+- âReview entire codebase (too large - review specific changes)
 
 ## Available Skills
 
@@ -63,107 +63,107 @@ Output:
 ### Phase 2: Code Quality Review
 
 ```typescript
-// ✅ CHECK CODE QUALITY
+// âCHECK CODE QUALITY
 
 1. Complexity
-   - Cyclomatic complexity < 10?
-   - Function length < 50 lines?
-   - Nesting depth < 4?
+ - Cyclomatic complexity < 10?
+ - Function length < 50 lines?
+ - Nesting depth < 4?
 
 2. Naming
-   - Variables have meaningful names?
-   - Functions describe what they do?
-   - Classes have single responsibility?
+ - Variables have meaningful names?
+ - Functions describe what they do?
+ - Classes have single responsibility?
 
 3. DRY Principle
-   - No code duplication?
-   - Reusable functions extracted?
-   - Constants defined?
+ - No code duplication?
+ - Reusable functions extracted?
+ - Constants defined?
 
 4. SOLID Principles
-   - Single responsibility?
-   - Open/closed principle?
-   - Liskov substitution?
-   - Interface segregation?
-   - Dependency inversion?
+ - Single responsibility?
+ - Open/closed principle?
+ - Liskov substitution?
+ - Interface segregation?
+ - Dependency inversion?
 ```
 
 ### Phase 3: Security Review
 
 ```typescript
-// ✅ CHECK SECURITY
+// âCHECK SECURITY
 
 1. Input Validation
-   - All user input validated?
-   - Parameterized queries used?
-   - No string concatenation?
+ - All user input validated?
+ - Parameterized queries used?
+ - No string concatenation?
 
 2. Authentication
-   - Auth checks present?
-   - Passwords hashed?
-   - Tokens have expiry?
+ - Auth checks present?
+ - Passwords hashed?
+ - Tokens have expiry?
 
 3. Authorization
-   - Users can only access their data?
-   - Role-based access control?
-   - Admin functions protected?
+ - Users can only access their data?
+ - Role-based access control?
+ - Admin functions protected?
 
 4. Secrets
-   - No hardcoded secrets?
-   - Environment variables used?
-   - Secrets not in logs?
+ - No hardcoded secrets?
+ - Environment variables used?
+ - Secrets not in logs?
 ```
 
 ### Phase 4: Performance Review
 
 ```typescript
-// ✅ CHECK PERFORMANCE
+// âCHECK PERFORMANCE
 
 1. Database Queries
-   - Queries optimized?
-   - Indexes used?
-   - N+1 queries avoided?
+ - Queries optimized?
+ - Indexes used?
+ - N+1 queries avoided?
 
 2. Caching
-   - Caching used where appropriate?
-   - Cache invalidation correct?
-   - No stale data?
+ - Caching used where appropriate?
+ - Cache invalidation correct?
+ - No stale data?
 
 3. Memory
-   - No memory leaks?
-   - Large objects cleaned up?
-   - Efficient data structures?
+ - No memory leaks?
+ - Large objects cleaned up?
+ - Efficient data structures?
 
 4. Network
-   - Minimal API calls?
-   - Responses compressed?
-   - Pagination implemented?
+ - Minimal API calls?
+ - Responses compressed?
+ - Pagination implemented?
 ```
 
 ### Phase 5: Test Coverage Review
 
 ```typescript
-// ✅ CHECK TEST COVERAGE
+// âCHECK TEST COVERAGE
 
 1. Unit Tests
-   - Happy path tested?
-   - Error cases tested?
-   - Edge cases tested?
+ - Happy path tested?
+ - Error cases tested?
+ - Edge cases tested?
 
 2. Coverage
-   - Coverage > 80%?
-   - Critical paths covered?
-   - All branches tested?
+ - Coverage > 80%?
+ - Critical paths covered?
+ - All branches tested?
 
 3. Test Quality
-   - Tests are clear?
-   - Tests are independent?
-   - Tests are fast?
+ - Tests are clear?
+ - Tests are independent?
+ - Tests are fast?
 
 4. Integration
-   - Integration tests present?
-   - API tests present?
-   - End-to-end tests?
+ - Integration tests present?
+ - API tests present?
+ - End-to-end tests?
 ```
 
 ### Phase 6: Provide Feedback
@@ -177,28 +177,28 @@ Output:
 - Quality score: X/10
 
 ### Quality Metrics
-- Cyclomatic complexity: ✅ Good
-- Code duplication: ✅ None
-- Test coverage: ✅ 85%
+- Cyclomatic complexity: âGood
+- Code duplication: âNone
+- Test coverage: â85%
 
 ### Issues Found
 
-#### Critical 🔴
+#### Critical ð´
 - [ ] Issue 1: [Description]
-  - Location: [File:Line]
-  - Fix: [Suggestion]
+ - Location: [File:Line]
+ - Fix: [Suggestion]
 
-#### Important 🟡
+#### Important ð¡
 - [ ] Issue 2: [Description]
-  - Location: [File:Line]
-  - Fix: [Suggestion]
+ - Location: [File:Line]
+ - Fix: [Suggestion]
 
-#### Nice to Have 🟢
+#### Nice to Have ð¢
 - [ ] Issue 3: [Description]
-  - Location: [File:Line]
-  - Fix: [Suggestion]
+ - Location: [File:Line]
+ - Fix: [Suggestion]
 
-### Strengths ✅
+### Strengths â
 - Good error handling
 - Clear variable names
 - Comprehensive tests
@@ -266,21 +266,21 @@ Output:
 
 ## Review Severity Levels
 
-### 🔴 Critical (Must Fix)
+### ð´ Critical (Must Fix)
 - Security vulnerabilities
 - Memory leaks
 - Data corruption
 - Breaking changes
 - Missing error handling
 
-### 🟡 Important (Should Fix)
+### ðImportant (Should Fix)
 - Performance issues
 - Code quality issues
 - Test coverage gaps
 - Maintainability concerns
 - Inconsistent patterns
 
-### 🟢 Nice to Have (Consider)
+### ð¢ Nice to Have (Consider)
 - Code style improvements
 - Documentation enhancements
 - Refactoring suggestions
@@ -305,9 +305,9 @@ When review is complete, provide:
 - Nice to have: X
 
 ### Recommendation
-- ✅ Approved
-- ⚠️ Approved with changes
-- ❌ Needs revision
+- âApproved
+- â ï¸Approved with changes
+- âNeeds revision
 
 ### Next Steps
 1. [Action 1]

@@ -98,7 +98,7 @@ if (!input.email || !isValidEmail(input.email)) {
 ### Functions and Variables
 
 ```typescript
-// âœ… Good: Clear, describes purpose
+// âœGood: Clear, describes purpose
 function calculateMonthlyRevenue(transactions: Transaction[]): number {
   return transactions
     .filter(t => t.type === 'revenue')
@@ -110,7 +110,7 @@ const isAuthenticationValid = validateToken(token);
 ```
 
 ```typescript
-// âŒ Bad: Unclear, abbreviated
+// âBad: Unclear, abbreviated
 function calcRev(txns: any[]): number {
   return txns.filter(t => t.t === 'r').reduce((s, t) => s + t.a, 0);
 }
@@ -128,7 +128,7 @@ const isValid = validate(token);
 ### Classes and Types
 
 ```typescript
-// âœ… Good: PascalCase, descriptive
+// âœGood: PascalCase, descriptive
 class UserAuthenticationService {
   private tokenValidator: TokenValidator;
 
@@ -156,7 +156,7 @@ type OrderStatus = 'pending' | 'processing' | 'completed' | 'failed';
 ### Single Responsibility
 
 ```typescript
-// âœ… Good: Each function does one thing
+// âœGood: Each function does one thing
 async function createUser(userData: CreateUserInput): Promise<User> {
   const validatedData = validateUserInput(userData);
   const hashedPassword = await hashPassword(validatedData.password);
@@ -177,7 +177,7 @@ function validateUserInput(input: CreateUserInput): ValidatedUserInput {
 ```
 
 ```typescript
-// âŒ Bad: Does too much, hard to test
+// âBad: Does too much, hard to test
 async function createUser(email: string, password: string): Promise<User> {
   // Validation
   if (!email || !email.includes('@')) throw new Error('Invalid');
@@ -202,7 +202,7 @@ async function createUser(email: string, password: string): Promise<User> {
 **Target**: 5-15 lines per function
 
 ```typescript
-// âœ… Good: Readable, testable
+// âœGood: Readable, testable
 function processOrder(order: Order): ProcessedOrder {
   validateOrder(order);
   const items = calculateOrderItems(order);
@@ -226,7 +226,7 @@ function validateOrder(order: Order): void {
 ### Custom Error Classes
 
 ```typescript
-// âœ… Good: Specific error types, helpful messages
+// âœGood: Specific error types, helpful messages
 class OrderProcessingError extends Error {
   constructor(
     message: string,
@@ -257,7 +257,7 @@ async function processPayment(order: Order): Promise<PaymentResult> {
 ```
 
 ```typescript
-// âŒ Bad: Generic errors, no context
+// âBad: Generic errors, no context
 async function processPayment(order: any) {
   try {
     const payment = await gateway.charge(order.total);
@@ -302,28 +302,28 @@ if (!user) {
 
 ```
 src/
-â”œâ”€â”€ features/
-â”‚   â”œâ”€â”€ auth/
-â”‚   â”‚   â”œâ”€â”€ auth.service.ts      # Business logic
-â”‚   â”‚   â”œâ”€â”€ auth.controller.ts   # HTTP handlers
-â”‚   â”‚   â”œâ”€â”€ auth.types.ts        # Types/interfaces
-â”‚   â”‚   â””â”€â”€ auth.test.ts         # Tests
-â”‚   â””â”€â”€ orders/
-â”‚       â”œâ”€â”€ orders.service.ts
-â”‚       â”œâ”€â”€ orders.controller.ts
-â”‚       â”œâ”€â”€ orders.types.ts
-â”‚       â””â”€â”€ orders.test.ts
-â”œâ”€â”€ shared/
-â”‚   â”œâ”€â”€ utils/
-â”‚   â”œâ”€â”€ types/
-â”‚   â””â”€â”€ errors/
-â””â”€â”€ config/
+â”œâ”€â”features/
+â”  â”œâ”€â”auth/
+â”  â”  â”œâ”€â”auth.service.ts      # Business logic
+â”  â”  â”œâ”€â”auth.controller.ts   # HTTP handlers
+â”  â”  â”œâ”€â”auth.types.ts        # Types/interfaces
+â”  â”  â””â”€â”auth.test.ts         # Tests
+â”  â””â”€â”orders/
+â”      â”œâ”€â”orders.service.ts
+â”      â”œâ”€â”orders.controller.ts
+â”      â”œâ”€â”orders.types.ts
+â”      â””â”€â”orders.test.ts
+â”œâ”€â”shared/
+â”  â”œâ”€â”utils/
+â”  â”œâ”€â”types/
+â”  â””â”€â”errors/
+â””â”€â”config/
 ```
 
 ### Import Organization
 
 ```typescript
-// âœ… Good: Grouped and ordered
+// âœGood: Grouped and ordered
 // 1. External dependencies
 import { Request, Response } from 'express';
 import { z } from 'zod';
@@ -343,14 +343,14 @@ import type { AuthContext } from '@/features/auth';
 ### Export Patterns
 
 ```typescript
-// âœ… Good: Explicit exports
+// âœGood: Explicit exports
 export { UserService } from './user.service';
 export { UserController } from './user.controller';
 export type { User, CreateUserInput, UpdateUserInput } from './user.types';
 ```
 
 ```typescript
-// âŒ Bad: Barrel exports (slow)
+// âBad: Barrel exports (slow)
 export * from './user.service';
 export * from './user.controller';
 ```
@@ -377,10 +377,10 @@ grep -r "similar_feature_name" src/
 ### Consistency Matters
 
 **In a project using**:
-- Services for business logic â†’ Create `feature.service.ts`
-- Controllers for HTTP â†’ Create `feature.controller.ts`
-- Zod for validation â†’ Use Zod schemas
-- Custom error classes â†’ Create feature-specific errors
+- Services for business logic â†Create `feature.service.ts`
+- Controllers for HTTP â†Create `feature.controller.ts`
+- Zod for validation â†Use Zod schemas
+- Custom error classes â†Create feature-specific errors
 
 **Don't introduce new patterns without reason.**
 
@@ -389,7 +389,7 @@ grep -r "similar_feature_name" src/
 ### When to Comment
 
 ```typescript
-// âœ… Good: Explains WHY (non-obvious reasoning)
+// âœGood: Explains WHY (non-obvious reasoning)
 // Using exponential backoff to avoid overwhelming the API
 // after a rate limit error
 const delay = Math.pow(2, attempt) * 1000;
@@ -400,7 +400,7 @@ const idempotencyKey = generateIdempotencyKey(order.id);
 ```
 
 ```typescript
-// âŒ Bad: Explains WHAT (code already shows)
+// âBad: Explains WHAT (code already shows)
 // Set delay to 2 to the power of attempt times 1000
 const delay = Math.pow(2, attempt) * 1000;
 
@@ -440,14 +440,14 @@ async function processRefund(
 ### Avoid Premature Optimization
 
 ```typescript
-// âœ… Good: Clear, correct, fast enough
+// âœGood: Clear, correct, fast enough
 function findUsersByRole(users: User[], role: string): User[] {
   return users.filter(user => user.role === role);
 }
 ```
 
 ```typescript
-// âŒ Bad: Over-optimized, hard to read
+// âBad: Over-optimized, hard to read
 function findUsersByRole(users: User[], role: string): User[] {
   const result: User[] = [];
   const len = users.length;
@@ -467,7 +467,7 @@ function findUsersByRole(users: User[], role: string): User[] {
 
 **Database queries**:
 ```typescript
-// âœ… Good: Single query with join
+// âœGood: Single query with join
 const orders = await db.query(`
   SELECT o.*, u.email, u.name
   FROM orders o
@@ -477,7 +477,7 @@ const orders = await db.query(`
 ```
 
 ```typescript
-// âŒ Bad: N+1 query problem
+// âBad: N+1 query problem
 const orders = await db.query('SELECT * FROM orders WHERE status = ?', ['pending']);
 for (const order of orders) {
   order.user = await db.query('SELECT * FROM users WHERE id = ?', [order.user_id]);
@@ -486,7 +486,7 @@ for (const order of orders) {
 
 **Async operations**:
 ```typescript
-// âœ… Good: Parallel independent operations
+// âœGood: Parallel independent operations
 const [user, orders, preferences] = await Promise.all([
   fetchUser(id),
   fetchOrders(id),
@@ -495,7 +495,7 @@ const [user, orders, preferences] = await Promise.all([
 ```
 
 ```typescript
-// âŒ Bad: Sequential when could be parallel
+// âBad: Sequential when could be parallel
 const user = await fetchUser(id);
 const orders = await fetchOrders(id);
 const preferences = await fetchPreferences(id);
@@ -506,7 +506,7 @@ const preferences = await fetchPreferences(id);
 ### No Magic Numbers
 
 ```typescript
-// âœ… Good: Named constants
+// âœGood: Named constants
 const MAX_LOGIN_ATTEMPTS = 3;
 const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
 
@@ -516,7 +516,7 @@ if (loginAttempts >= MAX_LOGIN_ATTEMPTS) {
 ```
 
 ```typescript
-// âŒ Bad: Unexplained numbers
+// âBad: Unexplained numbers
 if (loginAttempts >= 3) {
   lockAccount();
 }
@@ -525,7 +525,7 @@ if (loginAttempts >= 3) {
 ### No Code Duplication
 
 ```typescript
-// âœ… Good: Extract shared logic
+// âœGood: Extract shared logic
 function validateEmail(email: string): void {
   if (!email || !isValidEmailFormat(email)) {
     throw new ValidationError('Valid email required');
@@ -548,7 +548,7 @@ function updateUser(id: string, data: UpdateUserInput) {
 ### No Deep Nesting
 
 ```typescript
-// âœ… Good: Early returns, flat structure
+// âœGood: Early returns, flat structure
 function processOrder(order: Order): ProcessedOrder {
   if (!order.items || order.items.length === 0) {
     throw new ValidationError('Order must contain items');
@@ -583,15 +583,15 @@ Production Ready:
 ## Remember
 
 **Good code is**:
-- âœ… Easy to read and understand
-- âœ… Easy to modify and extend
-- âœ… Easy to test
-- âœ… Easy to debug
+- âœEasy to read and understand
+- âœEasy to modify and extend
+- âœEasy to test
+- âœEasy to debug
 
 **Good code is NOT**:
-- âŒ Clever or impressive
-- âŒ Using every language feature
-- âŒ Over-engineered for future needs
-- âŒ Optimized before profiling
+- âClever or impressive
+- âUsing every language feature
+- âOver-engineered for future needs
+- âOptimized before profiling
 
 **Write code for the next developer (probably you in 6 months).**

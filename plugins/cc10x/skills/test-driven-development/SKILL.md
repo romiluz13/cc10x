@@ -52,14 +52,14 @@ TDD Progress:
 - Keep tests green
 - Don't add behavior
 
-#### Red Flags 🚨
-- ❌ Code exists before test
-- ❌ Test passes immediately
-- ❌ "I already tested manually"
-- ❌ "Just this once"
-- ❌ "Keep as reference"
+#### Red Flags ð¨
+- âCode exists before test
+- âTest passes immediately
+- â"I already tested manually"
+- â"Just this once"
+- â"Keep as reference"
 
-**If rationalizing → You're doing it wrong**
+**If rationalizing âYou're doing it wrong**
 
 #### Test Commands
 ```bash
@@ -84,27 +84,27 @@ npm test -- --watch
 Write one minimal test showing desired behavior.
 
 ```typescript
-// ✅ Good: Clear, tests real behavior
+// âGood: Clear, tests real behavior
 test('retries operation 3 times on failure', async () => {
-  let attempts = 0;
-  const operation = () => {
-    attempts++;
-    if (attempts < 3) throw new Error('fail');
-    return 'success';
-  };
+ let attempts = 0;
+ const operation = () => {
+ attempts++;
+ if (attempts < 3) throw new Error('fail');
+ return 'success';
+ };
 
-  const result = await retryOperation(operation);
+ const result = await retryOperation(operation);
 
-  expect(result).toBe('success');
-  expect(attempts).toBe(3);
+ expect(result).toBe('success');
+ expect(attempts).toBe(3);
 });
 ```
 
 ```typescript
-// ❌ Bad: Unclear, tests implementation
+// âBad: Unclear, tests implementation
 test('works', () => {
-  const result = fn();
-  expect(result).toBeTruthy();
+ const result = fn();
+ expect(result).toBeTruthy();
 });
 ```
 
@@ -120,9 +120,9 @@ npm test path/to/test.test.ts
 ```
 
 **Confirm**:
-- ✅ Test **fails** (not errors, actual failure)
-- ✅ Failure message is **expected** ("retryOperation is not defined")
-- ✅ Fails because **feature is missing** (not a bug in test)
+- âTest **fails** (not errors, actual failure)
+- âFailure message is **expected** ("retryOperation is not defined")
+- âFails because **feature is missing** (not a bug in test)
 
 **Common Issues**:
 
@@ -137,39 +137,39 @@ npm test path/to/test.test.ts
 Write **simplest code** to pass test. No more, no less.
 
 ```typescript
-// ✅ Good: Minimal, passes test
+// âGood: Minimal, passes test
 async function retryOperation<T>(fn: () => Promise<T>): Promise<T> {
-  for (let i = 0; i < 3; i++) {
-    try {
-      return await fn();
-    } catch (e) {
-      if (i === 2) throw e;
-    }
-  }
-  throw new Error('unreachable');
+ for (let i = 0; i < 3; i++) {
+ try {
+ return await fn();
+ } catch (e) {
+ if (i === 2) throw e;
+ }
+ }
+ throw new Error('unreachable');
 }
 ```
 
 ```typescript
-// ❌ Bad: Over-engineered, not required by test
+// âBad: Over-engineered, not required by test
 async function retryOperation<T>(
-  fn: () => Promise<T>,
-  options?: {
-    maxRetries?: number;
-    backoff?: 'linear' | 'exponential';
-    onRetry?: (attempt: number) => void;
-    jitter?: boolean;
-  }
+ fn: () => Promise<T>,
+ options?: {
+ maxRetries?: number;
+ backoff?: 'linear' | 'exponential';
+ onRetry?: (attempt: number) => void;
+ jitter?: boolean;
+ }
 ): Promise<T> {
-  // YAGNI - You Aren't Gonna Need It
-  // Test only requires 3 retries, nothing else
+ // YAGNI - You Aren't Gonna Need It
+ // Test only requires 3 retries, nothing else
 }
 ```
 
 **Don't**:
-- ❌ Add features not required by test
-- ❌ Refactor other code (wait for REFACTOR phase)
-- ❌ Over-engineer for future needs
+- âAdd features not required by test
+- âRefactor other code (wait for REFACTOR phase)
+- âOver-engineer for future needs
 
 ### Verify GREEN - Watch It Pass
 
@@ -178,11 +178,11 @@ npm test
 ```
 
 **Confirm**:
-- ✅ **New test passes**
-- ✅ **All other tests pass** (no regressions)
-- ✅ **No errors or warnings**
+- â**New test passes**
+- â**All other tests pass** (no regressions)
+- â**No errors or warnings**
 
-If any test fails → Fix before moving to REFACTOR
+If any test fails âFix before moving to REFACTOR
 
 ### REFACTOR - Clean Up
 
@@ -193,23 +193,23 @@ If any test fails → Fix before moving to REFACTOR
 - Simplify logic
 
 **Rules**:
-- ✅ Keep all tests green
-- ✅ Run tests after each refactor
-- ❌ Don't add behavior (that's a new test)
+- âKeep all tests green
+- âRun tests after each refactor
+- âDon't add behavior (that's a new test)
 
 ```typescript
 // Example refactor: Extract magic number
 const MAX_RETRY_ATTEMPTS = 3;
 
 async function retryOperation<T>(fn: () => Promise<T>): Promise<T> {
-  for (let i = 0; i < MAX_RETRY_ATTEMPTS; i++) {
-    try {
-      return await fn();
-    } catch (e) {
-      if (i === MAX_RETRY_ATTEMPTS - 1) throw e;
-    }
-  }
-  throw new Error('unreachable');
+ for (let i = 0; i < MAX_RETRY_ATTEMPTS; i++) {
+ try {
+ return await fn();
+ } catch (e) {
+ if (i === MAX_RETRY_ATTEMPTS - 1) throw e;
+ }
+ }
+ throw new Error('unreachable');
 }
 ```
 
@@ -218,14 +218,14 @@ async function retryOperation<T>(fn: () => Promise<T>): Promise<T> {
 ### Tests-After Don't Work
 
 **"I'll write tests after"**:
-- Test passes immediately → Proves nothing
+- Test passes immediately âProves nothing
 - You test what code does, not what it should do
 - Edge cases missed (code already "works")
 
 **Test-first guarantees**:
-- ✅ Test actually catches the bug
-- ✅ Test verifies behavior, not implementation
-- ✅ Edge cases discovered before coding
+- âTest actually catches the bug
+- âTest verifies behavior, not implementation
+- âEdge cases discovered before coding
 
 ### Manual Testing Isn't Enough
 
@@ -235,15 +235,15 @@ async function retryOperation<T>(fn: () => Promise<T>): Promise<T> {
 - Can't run on every change
 
 **Automated tests**:
-- ✅ Run in <1 second
-- ✅ Run on every change
-- ✅ Document expected behavior
+- âRun in <1 second
+- âRun on every change
+- âDocument expected behavior
 
 ### Sunk Cost Fallacy
 
 **"Deleting code is wasteful"**:
 - Keeping **unverified** code is technical debt
-- You'll adapt it → That's testing-after
+- You'll adapt it âThat's testing-after
 
 **Delete means delete**:
 - Don't keep as "reference"
@@ -268,8 +268,8 @@ async function retryOperation<T>(fn: () => Promise<T>): Promise<T> {
 ### RED - Write Failing Test
 ```typescript
 test('rejects empty email', async () => {
-  const result = await submitForm({ email: '' });
-  expect(result.error).toBe('Email required');
+ const result = await submitForm({ email: '' });
+ expect(result.error).toBe('Email required');
 });
 ```
 
@@ -282,10 +282,10 @@ npm test
 ### GREEN - Minimal Fix
 ```typescript
 function submitForm(data: FormData) {
-  if (!data.email?.trim()) {
-    return { error: 'Email required' };
-  }
-  // ... rest of function
+ if (!data.email?.trim()) {
+ return { error: 'Email required' };
+ }
+ // ... rest of function
 }
 ```
 
@@ -299,18 +299,18 @@ npm test
 ```typescript
 // Extract validation
 function validateEmail(email: string): string | null {
-  if (!email?.trim()) {
-    return 'Email required';
-  }
-  return null;
+ if (!email?.trim()) {
+ return 'Email required';
+ }
+ return null;
 }
 
 function submitForm(data: FormData) {
-  const emailError = validateEmail(data.email);
-  if (emailError) {
-    return { error: emailError };
-  }
-  // ... rest of function
+ const emailError = validateEmail(data.email);
+ if (emailError) {
+ return { error: emailError };
+ }
+ // ... rest of function
 }
 ```
 
@@ -333,8 +333,8 @@ TDD Compliance:
 ## Final Rule
 
 ```
-Production code exists → test exists and failed first
-Otherwise → not TDD, delete and restart
+Production code exists âtest exists and failed first
+Otherwise ânot TDD, delete and restart
 ```
 
 **No exceptions without explicit permission.**
@@ -346,51 +346,51 @@ Ensure tests cover:
 ```typescript
 // Empty inputs
 test('handles empty array', () => {
-  expect(sum([])).toBe(0);
+ expect(sum([])).toBe(0);
 });
 
 // Null/undefined
 test('handles null input', () => {
-  expect(() => sum(null)).toThrow('Input required');
+ expect(() => sum(null)).toThrow('Input required');
 });
 
 // Boundary conditions
 test('handles single element', () => {
-  expect(sum([5])).toBe(5);
+ expect(sum([5])).toBe(5);
 });
 
 test('handles negative numbers', () => {
-  expect(sum([-1, -2, -3])).toBe(-6);
+ expect(sum([-1, -2, -3])).toBe(-6);
 });
 
 // Error states
 test('handles operation failure', async () => {
-  const failing = () => Promise.reject('error');
-  await expect(retryOperation(failing)).rejects.toThrow();
+ const failing = () => Promise.reject('error');
+ await expect(retryOperation(failing)).rejects.toThrow();
 });
 ```
 
 ## Remember
 
 **TDD succeeds when**:
-- ✅ Tests written first (always)
-- ✅ Tests watched failing (proving they work)
-- ✅ Minimal code written (no over-engineering)
-- ✅ All tests green (no regressions)
-- ✅ Code refactored (clean and maintainable)
+- âTests written first (always)
+- âTests watched failing (proving they work)
+- âMinimal code written (no over-engineering)
+- âAll tests green (no regressions)
+- âCode refactored (clean and maintainable)
 
 **TDD fails when**:
-- ❌ Code written before test
-- ❌ Tests written after
-- ❌ Tests pass immediately
-- ❌ Over-engineering happens
-- ❌ Rationalizations made
+- âCode written before test
+- âTests written after
+- âTests pass immediately
+- âOver-engineering happens
+- âRationalizations made
 
 **Discipline beats talent. TDD is discipline.**
 
 ---
 
-**Purpose:** Prevent false success reports like "✅ All 33 tests passing!" when tests actually failed
+**Purpose:** Prevent false success reports like "âAll 33 tests passing!" when tests actually failed
 
 **The Problem (Real Example from Brutal Testing):**
 - Workflow reported: "All 33 tests passing!"
@@ -419,17 +419,17 @@ Do not summarize. Copy the actual console output.
 
 **Step 3: Verify Exit Code**
 ```bash
-echo $?  # MUST be 0 for success
+echo $? # MUST be 0 for success
 ```
 
 **Step 4: Visual Confirmation**
 
-LOOK at the output with YOUR EYES. See ✓ symbols, green text, "X passed" messages.
+LOOK at the output with YOUR EYES. See âsymbols, green text, "X passed" messages.
 
 #### Required Checklist
 
 - [ ] All tests run (none skipped or filtered out)
-- [ ] All tests pass (see green ✓ symbols)
+- [ ] All tests pass (see green âsymbols)
 - [ ] Exit code is 0 (verified with echo $?)
 - [ ] No warnings about failures in output
 - [ ] Actual output captured (not summarized)
@@ -438,7 +438,7 @@ LOOK at the output with YOUR EYES. See ✓ symbols, green text, "X passed" messa
 
 **YOU MUST SEE passing tests with YOUR EYES.**
 
-Do NOT say: "✅ All tests passing!"
+Do NOT say: "âAll tests passing!"
 
 DO say: "Verified: npm test shows 33/33 passing (exit code 0). Output:\n[paste actual]"
 
@@ -463,10 +463,10 @@ DO say: "Verified: npm test shows 33/33 passing (exit code 0). Output:\n[paste a
 **Output:**
 ```
 PASS tests/auth.test.js
-  JWT Authentication
-    ✓ should generate valid token (45ms)
-    ✓ should reject invalid password (32ms)
-    ✓ should handle missing email (28ms)
+ JWT Authentication
+ âshould generate valid token (45ms)
+ âshould reject invalid password (32ms)
+ âshould handle missing email (28ms)
 
 Tests: 3 passed, 3 total
 Snapshots: 0 total
@@ -475,7 +475,7 @@ Time: 1.234s
 
 **Exit code:** 0 (verified)
 
-**Verification:** ✅ All 3 tests passing independently confirmed
+**Verification:** âAll 3 tests passing independently confirmed
 
 **Proceeding to next increment**
 ```
@@ -490,10 +490,10 @@ Time: 1.234s
 **Output:**
 ```
 FAIL tests/auth.test.js
-  JWT Authentication
-    ✓ should generate valid token
-    ✕ should reject invalid password (expected 401, got 500)
-    ✕ should handle missing email (expected 400, got 500)
+ JWT Authentication
+ âshould generate valid token
+ â should reject invalid password (expected 401, got 500)
+ â should handle missing email (expected 400, got 500)
 
 Tests: 1 passed, 2 failed, 3 total
 ```
@@ -506,24 +506,24 @@ Tests: 1 passed, 2 failed, 3 total
 
 **Fix applied:** Added try/catch with proper HTTP status codes
 
-**Retry result:** All 3 tests now passing ✅
+**Retry result:** All 3 tests now passing â
 
 **Now proceeding to next increment**
 ```
 
 #### Anti-Patterns to Avoid
 
-❌ **Don't:** Trust your own success reports without verification
-✅ **Do:** Always run tests and see results
+â**Don't:** Trust your own success reports without verification
+â**Do:** Always run tests and see results
 
-❌ **Don't:** Summarize test output ("tests passed")
-✅ **Do:** Paste actual output with line counts
+â**Don't:** Summarize test output ("tests passed")
+â**Do:** Paste actual output with line counts
 
-❌ **Don't:** Assume exit code without checking
-✅ **Do:** Explicitly verify with `echo $?`
+â**Don't:** Assume exit code without checking
+â**Do:** Explicitly verify with `echo $?`
 
-❌ **Don't:** Proceed if ANY test fails
-✅ **Do:** Stop and fix until 100% pass
+â**Don't:** Proceed if ANY test fails
+â**Do:** Stop and fix until 100% pass
 
 #### Why This Stage Exists
 

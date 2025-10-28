@@ -34,37 +34,37 @@ Triggered by user requests:
 **Assess code size and complexity:**
 
 1. **Code Size Check:**
-   - < 100 lines: ⚠️ SKIP (suggest manual review)
-   - 100-500 lines: ✅ PROCEED (standard review)
-   - 500-2000 lines: ✅ PROCEED (standard review)
-   - > 2000 lines: ✅ PROCEED (deep review)
+ - < 100 lines: â ï¸SKIP (suggest manual review)
+ - 100-500 lines: âPROCEED (standard review)
+ - 500-2000 lines: âPROCEED (standard review)
+ - > 2000 lines: âPROCEED (deep review)
 
 2. **If skipped (<100 lines):**
-   ```
-   "This code is small enough for manual review (< 100 lines).
-   Consider manual review for simpler code.
+ ```
+ "This code is small enough for manual review (< 100 lines).
+ Consider manual review for simpler code.
 
-   Recommendation: Use manual review for efficiency.
-   Want me to review anyway?"
-   ```
+ Recommendation: Use manual review for efficiency.
+ Want me to review anyway?"
+ ```
 
-3. **If proceeding (≥100 lines):**
-   - Parse user request for review focus
-   - Identify target files/directories
-   - Prepare for parallel analysis
+3. **If proceeding (â¥100 lines):**
+ - Parse user request for review focus
+ - Identify target files/directories
+ - Prepare for parallel analysis
 
 4. **Partial Code Review Support:**
-   - **Line ranges**: "review lines 50-150 of auth.js"
-   - **Functions**: "review the login() function"
-   - **Sections**: "review the authentication section"
-   - **Files**: "review only src/auth/ directory"
-   - **Patterns**: "review all database queries"
+ - **Line ranges**: "review lines 50-150 of auth.js"
+ - **Functions**: "review the login() function"
+ - **Sections**: "review the authentication section"
+ - **Files**: "review only src/auth/ directory"
+ - **Patterns**: "review all database queries"
 
-   **Handling**:
-   - Extract specified code section
-   - Adjust complexity assessment
-   - Proceed with standard review
-   - Note: "Reviewing partial code - full context may be needed"
+ **Handling**:
+ - Extract specified code section
+ - Adjust complexity assessment
+ - Proceed with standard review
+ - Note: "Reviewing partial code - full context may be needed"
 
 ---
 
@@ -73,16 +73,16 @@ Triggered by user requests:
 **Load 2 core skills for coordination:**
 
 1. **risk-analysis**
-   - Identifies architectural risks
-   - Assesses security risks
-   - Evaluates performance risks
-   - Checks deployment readiness
+ - Identifies architectural risks
+ - Assesses security risks
+ - Evaluates performance risks
+ - Checks deployment readiness
 
 2. **code-quality-patterns**
-   - Complexity metrics
-   - Code duplication
-   - SOLID principles
-   - Naming conventions
+ - Complexity metrics
+ - Code duplication
+ - SOLID principles
+ - Naming conventions
 
 **Note**: Specific analysis skills loaded by subagents (see Phase 3)
 
@@ -134,27 +134,27 @@ Triggered by user requests:
 **Merge findings from parallel analysis:**
 
 1. **Collect from Subagent 1** (risk-security)
-   - Security vulnerabilities
-   - Authentication issues
-   - Input validation problems
-   - Architectural risks
+ - Security vulnerabilities
+ - Authentication issues
+ - Input validation problems
+ - Architectural risks
 
 2. **Collect from Subagent 2** (performance-quality)
-   - Performance bottlenecks
-   - Code quality issues
-   - Complexity problems
-   - Duplication
+ - Performance bottlenecks
+ - Code quality issues
+ - Complexity problems
+ - Duplication
 
 3. **Collect from Subagent 3** (ux-accessibility)
-   - UX problems
-   - Accessibility violations
-   - Usability issues
-   - Design inconsistencies
+ - UX problems
+ - Accessibility violations
+ - Usability issues
+ - Design inconsistencies
 
 4. **Organize by severity:**
-   - 🔴 Critical (fix immediately)
-   - 🟡 Important (fix soon)
-   - 🟢 Nice-to-have (consider)
+ - ð´ Critical (fix immediately)
+ - ðImportant (fix soon)
+ - ð¢ Nice-to-have (consider)
 
 ---
 
@@ -171,7 +171,7 @@ Triggered by user requests:
 - Issues found: X
 - Quality score: X/10
 
-## Critical Issues (🔴)
+## Critical Issues (ð´)
 From Subagent 1 (Risk & Security):
 - Security vulnerability: [Description]
 - Architectural risk: [Description]
@@ -183,10 +183,10 @@ From Subagent 2 (Performance & Quality):
 From Subagent 3 (UX & Accessibility):
 - Critical accessibility violation: [Description]
 
-## Important Issues (🟡)
+## Important Issues (ð¡)
 - [From all 3 subagents]
 
-## Nice to Have (🟢)
+## Nice to Have (ð¢)
 - [From all 3 subagents]
 
 ## Quality Metrics
@@ -212,9 +212,9 @@ From Subagent 3 (UX & Accessibility):
 **Offer next steps:**
 ```
 Want me to:
-• Plan fixes for critical issues?
-• Build the fixes?
-• Review the fixes?
+â¢ Plan fixes for critical issues?
+â¢ Build the fixes?
+â¢ Review the fixes?
 ```
 
 ---
@@ -274,12 +274,12 @@ Want me to:
 **Example**:
 ```
 Parallel Execution:
-  ├─ Subagent 1 (risk-security): ✅ Success
-  ├─ Subagent 2 (performance-quality): ❌ FAILED
-  └─ Subagent 3 (ux-accessibility): ✅ Success
+ ââSubagent 1 (risk-security): âSuccess
+ ââSubagent 2 (performance-quality): âFAILED
+ ââSubagent 3 (ux-accessibility): âSuccess
 
 Fallback to Sequential:
-  └─ Subagent 2 (retry): ✅ Success (on retry)
+ ââSubagent 2 (retry): âSuccess (on retry)
 
 Result: Complete review with all dimensions
 ```
@@ -295,9 +295,9 @@ Result: Complete review with all dimensions
 **Example**:
 ```
 Load Skill:
-  ├─ Primary: ❌ FAILED
-  ├─ Cache: ✅ Success
-  └─ Use cached version
+ ââPrimary: âFAILED
+ ââCache: âSuccess
+ ââUse cached version
 
 Result: Review continues with cached skill
 ```
@@ -316,7 +316,7 @@ Result: Review continues with cached skill
 
 ### If Issues Found
 ```markdown
-## Review Complete ✅
+## Review Complete â
 
 **Issues Found**: 3 critical, 5 warnings
 
@@ -336,7 +336,7 @@ This will:
 
 ### If No Issues Found
 ```markdown
-## Review Complete ✅
+## Review Complete â
 
 **Status**: All checks passed!
 
@@ -355,7 +355,7 @@ This code is ready for:
 
 ### If Bugs Found
 ```markdown
-## Review Complete ✅
+## Review Complete â
 
 **Bugs Found**: 2 critical
 

@@ -27,11 +27,11 @@ Fix ONE bug by:
 - Quality gates between bugs
 
 **Examples:**
-- ✅ Fix login endpoint returning 500
-- ✅ Fix memory leak in UserList component
-- ✅ Fix race condition in payment processing
-- ❌ Fix entire authentication system (too large - break into bugs)
-- ❌ Fix multiple unrelated bugs (use separate subagent instances)
+- âFix login endpoint returning 500
+- âFix memory leak in UserList component
+- âFix race condition in payment processing
+- âFix entire authentication system (too large - break into bugs)
+- âFix multiple unrelated bugs (use separate subagent instances)
 
 ## Available Skills
 
@@ -64,7 +64,7 @@ Output:
 ### Phase 2: Analyze Logs (LOG FIRST)
 
 ```
-✅ ALWAYS START WITH LOGS
+âALWAYS START WITH LOGS
 
 1. Find error logs
    grep "ERROR" logs/ | grep "bug_keyword"
@@ -86,7 +86,7 @@ Output:
 ### Phase 3: Reproduce the Bug
 
 ```typescript
-// ✅ REPRODUCE FIRST
+// âREPRODUCE FIRST
 // Steps to reproduce:
 // 1. Create user with email "test@example.com"
 // 2. Try to login with wrong password
@@ -103,26 +103,26 @@ Output:
 ### Phase 4: Find Root Cause
 
 ```typescript
-// ❌ WRONG: Fix the symptom
+// âWRONG: Fix the symptom
 // if (user && user.password) { ... }
 
-// ✅ RIGHT: Fix the root cause
+// âRIGHT: Fix the root cause
 // Root cause: User query returns null when email not found
 // Fix: Check if user exists before accessing password
 
 async function login(email, password) {
   const user = await User.findByEmail(email);
-  
-  // ✅ ROOT CAUSE FIX
+
+  // âROOT CAUSE FIX
   if (!user) {
     throw new Error('Invalid email or password');
   }
-  
+
   const isValid = await bcrypt.compare(password, user.password);
   if (!isValid) {
     throw new Error('Invalid email or password');
   }
-  
+
   return user;
 }
 ```
@@ -130,24 +130,24 @@ async function login(email, password) {
 ### Phase 5: Write Failing Test
 
 ```typescript
-// ✅ WRITE TEST THAT REPRODUCES BUG
+// âWRITE TEST THAT REPRODUCES BUG
 describe('login', () => {
   it('returns 401 when user not found', async () => {
     const response = await request(app)
       .post('/api/login')
       .send({ email: 'notfound@example.com', password: 'password' });
-    
+
     expect(response.status).toBe(401);
     expect(response.body.error).toBe('Invalid email or password');
   });
-  
+
   it('returns 401 when password is wrong', async () => {
     await User.create({ email: 'test@example.com', password: 'correct' });
-    
+
     const response = await request(app)
       .post('/api/login')
       .send({ email: 'test@example.com', password: 'wrong' });
-    
+
     expect(response.status).toBe(401);
     expect(response.body.error).toBe('Invalid email or password');
   });
@@ -157,19 +157,19 @@ describe('login', () => {
 ### Phase 6: Fix the Bug
 
 ```typescript
-// ✅ MINIMAL FIX
+// âMINIMAL FIX
 async function login(email, password) {
   const user = await User.findByEmail(email);
-  
+
   if (!user) {
     throw new Error('Invalid email or password');
   }
-  
+
   const isValid = await bcrypt.compare(password, user.password);
   if (!isValid) {
     throw new Error('Invalid email or password');
   }
-  
+
   return user;
 }
 ```
@@ -305,12 +305,12 @@ Race Condition:
 
 **Before marking bug fixed:**
 
-1. ✅ Bug reproduced
-2. ✅ Root cause identified
-3. ✅ Test reproduces bug
-4. ✅ Test passes after fix
-5. ✅ All tests passing
-6. ✅ No regressions
+1. âBug reproduced
+2. âRoot cause identified
+3. âTest reproduces bug
+4. âTest passes after fix
+5. âAll tests passing
+6. âNo regressions
 
 **If any gate fails:** Investigate further before proceeding
 
@@ -337,16 +337,16 @@ When bug is fixed, provide:
 - Test: [Test that verifies fix]
 
 ### Verification
-- Test status: ✅ Passing
-- Regression tests: ✅ All passing
-- Performance: ✅ No degradation
+- Test status: âPassing
+- Regression tests: âAll passing
+- Performance: âNo degradation
 
 ### Files Modified
 - MODIFY: src/auth.js (line 45)
 - CREATE: src/auth.test.js (test case)
 
 ### Ready for Integration
-✅ All quality gates passed
+âAll quality gates passed
 ```
 
 ---

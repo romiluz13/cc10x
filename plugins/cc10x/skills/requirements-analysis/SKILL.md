@@ -39,12 +39,12 @@ Requirement Quality:
 
 **SMART Criteria**:
 ```
-❌ BAD REQUIREMENT
+�BAD REQUIREMENT
 "The system should be fast"
 "Users should be able to search"
 "The API should be reliable"
 
-✅ GOOD REQUIREMENT (SMART)
+�GOOD REQUIREMENT (SMART)
 Specific: "Users can search by product name, category, or SKU"
 Measurable: "Search results return within 500ms"
 Achievable: "Using Elasticsearch with proper indexing"
@@ -54,14 +54,14 @@ Time-bound: "Complete by Q2 2024"
 
 **Acceptance Criteria**:
 ```
-❌ VAGUE
+�VAGUE
 Feature: User Registration
 Scenario: User can register
   Given user is on registration page
   When user enters data
   Then user is registered
 
-✅ CLEAR
+�CLEAR
 Feature: User Registration
 Scenario: User can register with valid email
   Given user is on registration page
@@ -84,10 +84,10 @@ Scenario: User cannot register with invalid email
 
 **User Stories**:
 ```
-❌ INCOMPLETE
+�INCOMPLETE
 "As a user, I want to search products"
 
-✅ COMPLETE
+�COMPLETE
 "As a customer, I want to search products by name
 So that I can quickly find items I'm looking for
 Acceptance Criteria:
@@ -140,18 +140,18 @@ Questions to Ask:
 
 ```
 Epic: User Management
-├── Story 1: User Registration
-│   ├── Task: Email validation
-│   ├── Task: Password hashing
-│   └── Task: Confirmation email
-├── Story 2: User Login
-│   ├── Task: Credential validation
-│   ├── Task: Session creation
-│   └── Task: Remember me option
-└── Story 3: User Profile
-    ├── Task: View profile
-    ├── Task: Edit profile
-    └── Task: Delete account
+├─�Story 1: User Registration
+�  ├─�Task: Email validation
+�  ├─�Task: Password hashing
+�  └─�Task: Confirmation email
+├─�Story 2: User Login
+�  ├─�Task: Credential validation
+�  ├─�Task: Session creation
+�  └─�Task: Remember me option
+└─�Story 3: User Profile
+    ├─�Task: View profile
+    ├─�Task: Edit profile
+    └─�Task: Delete account
 ```
 
 ### Requirements Traceability Matrix

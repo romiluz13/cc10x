@@ -32,21 +32,21 @@ Triggered by user requests:
 **Load 3 core skills:**
 
 1. **log-analysis-patterns**
-   - Find error logs
-   - Get context
-   - Trace the flow
-   - Identify patterns
+ - Find error logs
+ - Get context
+ - Trace the flow
+ - Identify patterns
 
 2. **performance-patterns**
-   - Performance bottlenecks
-   - Optimization strategies
-   - Caching strategies
-   - Memory management
+ - Performance bottlenecks
+ - Optimization strategies
+ - Caching strategies
+ - Memory management
 
 3. **test-driven-development**
-   - TDD principles
-   - Test structure
-   - Test coverage
+ - TDD principles
+ - Test structure
+ - Test coverage
 
 ---
 
@@ -55,35 +55,35 @@ Triggered by user requests:
 **Using log-analysis-patterns skill:**
 
 1. **Find error logs**
-   ```bash
-   grep "ERROR" logs/ | grep "keyword"
-   ```
+ ```bash
+ grep "ERROR" logs/ | grep "keyword"
+ ```
 
 2. **Get context**
-   ```bash
-   grep "requestId.*123" logs/ | head -50
-   ```
+ ```bash
+ grep "requestId.*123" logs/ | head -50
+ ```
 
 3. **Trace the flow**
-   - When did error occur?
-   - What happened before?
-   - What happened after?
+ - When did error occur?
+ - What happened before?
+ - What happened after?
 
 4. **Categorize bugs**
-   - Related bugs (same root cause) → Fix in shared context
-   - Independent bugs (different root causes) → Fix in parallel
+ - Related bugs (same root cause) âFix in shared context
+ - Independent bugs (different root causes) âFix in parallel
 
 5. **Bug Categorization Criteria**
-   - **Same Root Cause**: Same error message, same stack trace, same component
-   - **Different Root Causes**: Different error messages, different stack traces, different components
-   - **Cascading Bugs**: Bug A causes Bug B → Fix A first, then B
-   - **Unrelated Bugs**: No connection → Fix in parallel
+ - **Same Root Cause**: Same error message, same stack trace, same component
+ - **Different Root Causes**: Different error messages, different stack traces, different components
+ - **Cascading Bugs**: Bug A causes Bug B âFix A first, then B
+ - **Unrelated Bugs**: No connection âFix in parallel
 
 6. **Categorization Examples**
-   - **Related**: "Login fails" + "Logout fails" (both auth issues) → Fix together
-   - **Independent**: "Login fails" + "Dashboard slow" (different components) → Fix in parallel
-   - **Cascading**: "Database connection fails" → "All queries fail" → Fix DB first
-   - **Unrelated**: "UI bug" + "API bug" (different layers) → Fix in parallel
+ - **Related**: "Login fails" + "Logout fails" (both auth issues) âFix together
+ - **Independent**: "Login fails" + "Dashboard slow" (different components) âFix in parallel
+ - **Cascading**: "Database connection fails" â"All queries fail" âFix DB first
+ - **Unrelated**: "UI bug" + "API bug" (different layers) âFix in parallel
 
 ---
 
@@ -124,18 +124,18 @@ Triggered by user requests:
 
 ```
 Bug 1: Login endpoint returns 500
-  → Subagent 1: Investigate & fix
-  → Subagent 2: Review fix
-  → Subagent 3: Verify fix
-  → All run in parallel!
+ âSubagent 1: Investigate & fix
+ âSubagent 2: Review fix
+ âSubagent 3: Verify fix
+ âAll run in parallel!
 
 Bug 2: Search returns empty results
-  → Subagent 1: Investigate & fix
-  → Subagent 2: Review fix
-  → Subagent 3: Verify fix
-  → All run in parallel!
+ âSubagent 1: Investigate & fix
+ âSubagent 2: Review fix
+ âSubagent 3: Verify fix
+ âAll run in parallel!
 
-⏱️ All bugs fixed in parallel = 3x faster!
+â±ï¸All bugs fixed in parallel = 3x faster!
 ```
 
 ---
@@ -145,19 +145,19 @@ Bug 2: Search returns empty results
 **Collect all subagent outputs:**
 
 1. **Bugs fixed** (from Subagent 1)
-   - All bug fixes
-   - All test files
-   - All documentation
+ - All bug fixes
+ - All test files
+ - All documentation
 
 2. **Code reviews** (from Subagent 2)
-   - Quality feedback
-   - Root cause analysis
-   - Recommendations
+ - Quality feedback
+ - Root cause analysis
+ - Recommendations
 
 3. **Integration verification** (from Subagent 3)
-   - Fix verification
-   - Regression testing
-   - Performance impact
+ - Fix verification
+ - Regression testing
+ - Performance impact
 
 ---
 
@@ -171,23 +171,23 @@ Bug 2: Search returns empty results
 ### Bug 1: [Title]
 - Root cause: [Explanation]
 - Fix: [Solution]
-- Status: ✅ Fixed
+- Status: âFixed
 
 ### Bug 2: [Title]
 - Root cause: [Explanation]
 - Fix: [Solution]
-- Status: ✅ Fixed
+- Status: âFixed
 
 ### Bug 3: [Title]
 - Root cause: [Explanation]
 - Fix: [Solution]
-- Status: ✅ Fixed
+- Status: âFixed
 
 ### Summary
 - Bugs fixed: 3
-- Tests passing: ✅
-- No regressions: ✅
-- Ready for deployment: ✅
+- Tests passing: â
+- No regressions: â
+- Ready for deployment: â
 
 ### Files Modified
 - [File 1]
@@ -260,12 +260,12 @@ Bug 2: Search returns empty results
 **Example**:
 ```
 Parallel Execution:
-  ├─ Subagent 1 (bug-investigator): ✅ Success
-  ├─ Subagent 2 (code-reviewer): ❌ FAILED
-  └─ Subagent 3 (integration-verifier): ✅ Success
+ ââSubagent 1 (bug-investigator): âSuccess
+ ââSubagent 2 (code-reviewer): âFAILED
+ ââSubagent 3 (integration-verifier): âSuccess
 
 Fallback to Sequential:
-  └─ Subagent 2 (retry): ✅ Success (on retry)
+ ââSubagent 2 (retry): âSuccess (on retry)
 
 Result: Complete debugging with all checks
 ```
@@ -281,9 +281,9 @@ Result: Complete debugging with all checks
 **Example**:
 ```
 Load Skill:
-  ├─ Primary: ❌ FAILED
-  ├─ Cache: ✅ Success
-  └─ Use cached version
+ ââPrimary: âFAILED
+ ââCache: âSuccess
+ ââUse cached version
 
 Result: Debugging continues with cached skill
 ```
@@ -302,7 +302,7 @@ Result: Debugging continues with cached skill
 
 ### After Bugs Fixed
 ```markdown
-## Debug Complete ✅
+## Debug Complete â
 
 **Status**: All bugs fixed and tested
 
@@ -322,7 +322,7 @@ This will:
 
 ### If New Issues Found
 ```markdown
-## Debug Complete ⚠️
+## Debug Complete â ï¸
 
 **Status**: Bugs fixed, but new issues found
 

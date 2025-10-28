@@ -37,7 +37,7 @@ Quality Metrics:
 
 **Function Complexity** (Cyclomatic Complexity):
 ```typescript
-// ❌ HIGH COMPLEXITY (CC = 8)
+// âHIGH COMPLEXITY (CC = 8)
 function processUser(user) {
   if (user.age > 18) {
     if (user.verified) {
@@ -52,7 +52,7 @@ function processUser(user) {
   }
 }
 
-// ✅ LOW COMPLEXITY (CC = 1)
+// âLOW COMPLEXITY (CC = 1)
 function processUser(user) {
   if (!isEligible(user)) return;
   handlePremiumUser(user);
@@ -65,7 +65,7 @@ function isEligible(user) {
 
 **DRY Principle** (Don't Repeat Yourself):
 ```typescript
-// ❌ DUPLICATION
+// âDUPLICATION
 function validateEmail(email) {
   if (!email.includes('@')) throw new Error('Invalid email');
   if (email.length < 5) throw new Error('Email too short');
@@ -76,7 +76,7 @@ function validatePhone(phone) {
   if (phone.length < 10) throw new Error('Phone too short');
 }
 
-// ✅ REUSABLE
+// âREUSABLE
 function validate(value, pattern, minLength, fieldName) {
   if (!pattern.test(value)) throw new Error(`Invalid ${fieldName}`);
   if (value.length < minLength) throw new Error(`${fieldName} too short`);
@@ -88,18 +88,18 @@ validate(phone, /-/, 10, 'phone');
 
 **Naming Conventions**:
 ```typescript
-// ❌ BAD NAMES
+// âBAD NAMES
 const d = new Date();
 const x = users.filter(u => u.age > 18);
 function fn(a, b) { return a + b; }
 
-// ✅ GOOD NAMES
+// âGOOD NAMES
 const currentDate = new Date();
 const adultUsers = users.filter(user => user.age > 18);
 function calculateTotal(subtotal, tax) { return subtotal + tax; }
 ```
 
-#### Red Flags 🚩
+#### Red Flags ð©
 ```bash
 # Find high complexity functions
 grep -r "if.*if.*if" src/ --include="*.ts"
@@ -128,30 +128,30 @@ grep -r "TODO\|FIXME" src/ --include="*.ts"
 **What**: Each class/function should have ONE reason to change.
 
 ```typescript
-// ❌ MULTIPLE RESPONSIBILITIES
+// âMULTIPLE RESPONSIBILITIES
 class User {
   constructor(name, email) {
     this.name = name;
     this.email = email;
   }
-  
+
   save() {
     // Saving to database
     db.insert('users', this);
   }
-  
+
   sendEmail() {
     // Sending email
     emailService.send(this.email, 'Welcome!');
   }
-  
+
   generateReport() {
     // Generating report
     return `User: ${this.name}`;
   }
 }
 
-// ✅ SINGLE RESPONSIBILITY
+// âSINGLE RESPONSIBILITY
 class User {
   constructor(name, email) {
     this.name = name;
@@ -183,7 +183,7 @@ class UserReporter {
 **What**: Open for extension, closed for modification.
 
 ```typescript
-// ❌ VIOLATES OCP
+// âVIOLATES OCP
 class PaymentProcessor {
   process(payment) {
     if (payment.type === 'credit') {
@@ -196,7 +196,7 @@ class PaymentProcessor {
   }
 }
 
-// ✅ FOLLOWS OCP
+// âFOLLOWS OCP
 interface PaymentMethod {
   process(payment): Promise<void>;
 }
@@ -222,7 +222,7 @@ class PaymentProcessor {
 **What**: Subtypes must be substitutable for their base types.
 
 ```typescript
-// ❌ VIOLATES LSP
+// âVIOLATES LSP
 class Bird {
   fly() { return 'flying'; }
 }
@@ -231,7 +231,7 @@ class Penguin extends Bird {
   fly() { throw new Error('Penguins cannot fly'); }
 }
 
-// ✅ FOLLOWS LSP
+// âFOLLOWS LSP
 class Bird {
   move() { return 'moving'; }
 }
@@ -250,7 +250,7 @@ class Penguin extends Bird {
 **What**: Clients should not depend on interfaces they don't use.
 
 ```typescript
-// ❌ VIOLATES ISP
+// âVIOLATES ISP
 interface Worker {
   work(): void;
   eat(): void;
@@ -263,7 +263,7 @@ class Robot implements Worker {
   sleep() { throw new Error('Robots do not sleep'); }
 }
 
-// ✅ FOLLOWS ISP
+// âFOLLOWS ISP
 interface Workable {
   work(): void;
 }
@@ -292,23 +292,23 @@ class Human implements Workable, Eatable, Sleepable {
 **What**: Depend on abstractions, not concretions.
 
 ```typescript
-// ❌ VIOLATES DIP
+// âVIOLATES DIP
 class UserService {
   private db = new MySQLDatabase();
-  
+
   getUser(id) {
     return this.db.query(`SELECT * FROM users WHERE id = ${id}`);
   }
 }
 
-// ✅ FOLLOWS DIP
+// âFOLLOWS DIP
 interface Database {
   query(sql: string): Promise<any>;
 }
 
 class UserService {
   constructor(private db: Database) {}
-  
+
   getUser(id) {
     return this.db.query(`SELECT * FROM users WHERE id = ${id}`);
   }

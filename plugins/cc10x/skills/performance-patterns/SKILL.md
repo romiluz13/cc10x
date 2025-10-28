@@ -35,13 +35,13 @@ Performance Checklist:
 
 **N+1 Query Problem**:
 ```typescript
-// âŒ N+1: 1 + N queries
+// âN+1: 1 + N queries
 const orders = await db.query('SELECT * FROM orders');
 for (const order of orders) {
   order.customer = await db.query('SELECT * FROM customers WHERE id = $1', [order.customer_id]);
 }
 
-// âœ… Single JOIN query
+// âœSingle JOIN query
 const orders = await db.query(`
   SELECT orders.*, customers.*
   FROM orders
@@ -51,14 +51,14 @@ const orders = await db.query(`
 
 **O(nÂ²) Nested Loops**:
 ```typescript
-// âŒ O(nÂ²) complexity
+// âO(nÂ²) complexity
 for (let i = 0; i < arr.length; i++) {
   for (let j = 0; j < arr.length; j++) {
     if (arr[i] === arr[j] && i !== j) duplicates.push(arr[i]);
   }
 }
 
-// âœ… O(n) with Set
+// âœO(n) with Set
 const seen = new Set();
 const duplicates = new Set();
 for (const item of arr) {
@@ -69,13 +69,13 @@ for (const item of arr) {
 
 **Unnecessary Re-renders** (React):
 ```typescript
-// âŒ New function every render
+// âNew function every render
 function UserList({ users }) {
   const handleClick = (id) => console.log(id); // New function!
   return users.map(u => <User onClick={handleClick} />);
 }
 
-// âœ… Memoized callback
+// âœMemoized callback
 const UserList = memo(function UserList({ users }) {
   const handleClick = useCallback((id) => console.log(id), []);
   return users.map(u => <User onClick={handleClick} />);
@@ -162,7 +162,7 @@ const items = await itemRepository.find({
 ```sql
 -- Check query execution plan
 EXPLAIN ANALYZE SELECT * FROM orders WHERE customer_id = 123;
--- If you see "Seq Scan" â†’ Missing index!
+-- If you see "Seq Scan" â†Missing index!
 ```
 
 **Solution**:
@@ -197,11 +197,11 @@ O(nÂ²)     - Quadratic: Nested loops (AVOID!)
 O(2â¿)     - Exponential: Recursive Fibonacci (AVOID!)
 ```
 
-#### O(nÂ²) â†’ O(n) Optimizations
+#### O(nÂ²) â†O(n) Optimizations
 
 **Problem: Find duplicates**:
 ```typescript
-// âŒ O(nÂ²) - 10,000 items = 100M operations
+// âO(nÂ²) - 10,000 items = 100M operations
 function findDuplicates(arr) {
   const dups = [];
   for (let i = 0; i < arr.length; i++) {
@@ -212,7 +212,7 @@ function findDuplicates(arr) {
   return dups;
 }
 
-// âœ… O(n) - 10,000 items = 10K operations
+// âœO(n) - 10,000 items = 10K operations
 function findDuplicates(arr) {
   const seen = new Set();
   const dups = new Set();
@@ -226,12 +226,12 @@ function findDuplicates(arr) {
 
 **Problem: Find intersection**:
 ```typescript
-// âŒ O(n Ã— m) - nested indexOf
+// âO(n Ãm) - nested indexOf
 function intersection(arr1, arr2) {
   return arr1.filter(x => arr2.indexOf(x) !== -1);
 }
 
-// âœ… O(n + m) - Set lookup
+// âœO(n + m) - Set lookup
 function intersection(arr1, arr2) {
   const set2 = new Set(arr2);
   return arr1.filter(x => set2.has(x));
@@ -244,12 +244,12 @@ function intersection(arr1, arr2) {
 
 **Use React.memo**:
 ```typescript
-// âŒ Re-renders when parent re-renders
+// âRe-renders when parent re-renders
 function UserCard({ user }) {
   return <div>{user.name}</div>;
 }
 
-// âœ… Only re-renders when user changes
+// âœOnly re-renders when user changes
 const UserCard = memo(function UserCard({ user }) {
   return <div>{user.name}</div>;
 });
@@ -257,13 +257,13 @@ const UserCard = memo(function UserCard({ user }) {
 
 **Use useMemo for expensive calculations**:
 ```typescript
-// âŒ Recalculates on every render
+// âRecalculates on every render
 function Cart({ items }) {
   const total = items.reduce((sum, item) => sum + item.price * item.qty, 0);
   return <div>Total: ${total}</div>;
 }
 
-// âœ… Only recalculates when items change
+// âœOnly recalculates when items change
 function Cart({ items }) {
   const total = useMemo(
     () => items.reduce((sum, item) => sum + item.price * item.qty, 0),
@@ -275,14 +275,14 @@ function Cart({ items }) {
 
 **Use useCallback for event handlers**:
 ```typescript
-// âŒ New function every render â†’ child re-renders
+// âNew function every render â†child re-renders
 function Parent() {
   const [count, setCount] = useState(0);
   const handleClick = () => setCount(c => c + 1);
   return <Child onClick={handleClick} />;
 }
 
-// âœ… Stable function reference
+// âœStable function reference
 function Parent() {
   const [count, setCount] = useState(0);
   const handleClick = useCallback(() => setCount(c => c + 1), []);
@@ -293,7 +293,7 @@ function Parent() {
 #### Virtualize Long Lists
 
 ```typescript
-// âŒ Renders 10,000 DOM nodes
+// âRenders 10,000 DOM nodes
 function CommentList({ comments }) {
   return (
     <div>
@@ -302,7 +302,7 @@ function CommentList({ comments }) {
   );
 }
 
-// âœ… Only renders visible items (~20 DOM nodes)
+// âœOnly renders visible items (~20 DOM nodes)
 import { FixedSizeList } from 'react-window';
 
 function CommentList({ comments }) {
@@ -329,12 +329,12 @@ function CommentList({ comments }) {
 #### Clear Intervals/Timeouts
 
 ```typescript
-// âŒ Memory leak - interval never cleared
+// âMemory leak - interval never cleared
 function startPolling() {
   setInterval(() => fetchData(), 1000);
 }
 
-// âœ… Cleanup in useEffect
+// âœCleanup in useEffect
 function usePolling() {
   useEffect(() => {
     const interval = setInterval(() => fetchData(), 1000);
@@ -346,12 +346,12 @@ function usePolling() {
 #### Remove Event Listeners
 
 ```typescript
-// âŒ Memory leak - listener not removed
+// âMemory leak - listener not removed
 useEffect(() => {
   window.addEventListener('resize', handleResize);
 }, []);
 
-// âœ… Cleanup listener
+// âœCleanup listener
 useEffect(() => {
   window.addEventListener('resize', handleResize);
   return () => window.removeEventListener('resize', handleResize);
@@ -363,12 +363,12 @@ useEffect(() => {
 #### Code Splitting
 
 ```typescript
-// âŒ Everything in one bundle
+// âEverything in one bundle
 import Dashboard from './Dashboard';
 import Settings from './Settings';
 import Reports from './Reports';
 
-// âœ… Lazy load routes
+// âœLazy load routes
 const Dashboard = lazy(() => import('./Dashboard'));
 const Settings = lazy(() => import('./Settings'));
 const Reports = lazy(() => import('./Reports'));
@@ -385,11 +385,11 @@ const Reports = lazy(() => import('./Reports'));
 #### Tree Shaking
 
 ```typescript
-// âŒ Imports entire library
+// âImports entire library
 import _ from 'lodash';
 import moment from 'moment';
 
-// âœ… Import only what's needed
+// âœImport only what's needed
 import debounce from 'lodash/debounce';
 import { format } from 'date-fns'; // Much smaller than moment
 ```
@@ -399,13 +399,13 @@ import { format } from 'date-fns'; // Much smaller than moment
 #### HTTP Caching
 
 ```typescript
-// âŒ No caching
+// âNo caching
 app.get('/api/products', (req, res) => {
   const products = getProducts();
   res.json(products);
 });
 
-// âœ… Cache for 1 hour
+// âœCache for 1 hour
 app.get('/api/products', (req, res) => {
   const products = getProducts();
   res.set('Cache-Control', 'public, max-age=3600');
@@ -416,13 +416,13 @@ app.get('/api/products', (req, res) => {
 #### Memoization
 
 ```typescript
-// âŒ Expensive calculation repeated
+// âExpensive calculation repeated
 function fibonacci(n) {
   if (n <= 1) return n;
   return fibonacci(n - 1) + fibonacci(n - 2); // O(2â¿)!
 }
 
-// âœ… Memoized
+// âœMemoized
 const fibCache = new Map();
 function fibonacci(n) {
   if (n <= 1) return n;

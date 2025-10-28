@@ -11,10 +11,10 @@ license: MIT
 ## Quick Reference
 
 **I detect your intent and execute the right workflow:**
-- "review", "audit", "check security" â†’ REVIEW workflow (coordinated analysis)
-- "plan", "design", "architecture" â†’ PLANNING workflow (comprehensive planning)
-- "build", "implement", "create" â†’ BUILD workflow (parallel component building)
-- "debug", "fix", "not working" â†’ DEBUG workflow (parallel bug fixing)
+- "review", "audit", "check security" â†REVIEW workflow (coordinated analysis)
+- "plan", "design", "architecture" â†PLANNING workflow (comprehensive planning)
+- "build", "implement", "create" â†BUILD workflow (parallel component building)
+- "debug", "fix", "not working" â†DEBUG workflow (parallel bug fixing)
 
 ## How I Work
 
@@ -42,15 +42,15 @@ license: MIT
 
 **CRITICAL: I only execute what you requested!**
 
-âŒ You ask "build app" â†’ I do NOT do security review first
-âŒ You ask "review code" â†’ I do NOT suggest building next
-âœ… You ask "plan and build" â†’ I do BOTH (explicitly requested)
-âœ… You ask "review then plan" â†’ I do BOTH in sequence
+âYou ask "build app" â†I do NOT do security review first
+âYou ask "review code" â†I do NOT suggest building next
+âœYou ask "plan and build" â†I do BOTH (explicitly requested)
+âœYou ask "review then plan" â†I do BOTH in sequence
 
 **Multi-Intent Handling:**
-- **Sequential**: "review then plan" â†’ REVIEW first, then PLAN
-- **Parallel**: "review and plan" â†’ Both workflows in parallel (if independent)
-- **Conditional**: "review, then plan if no critical issues" â†’ REVIEW first, then decide
+- **Sequential**: "review then plan" â†REVIEW first, then PLAN
+- **Parallel**: "review and plan" â†Both workflows in parallel (if independent)
+- **Conditional**: "review, then plan if no critical issues" â†REVIEW first, then decide
 
 **After completing your request:**
 - I deliver results
@@ -71,7 +71,7 @@ license: MIT
 I STOP and warn you:
 
 ```
-âš ï¸ STOP: This is SIMPLE (complexity 2/5)
+âš ï¸STOP: This is SIMPLE (complexity 2/5)
 
 This is straightforward and may not require systematic analysis.
 
@@ -87,9 +87,9 @@ Recommendation: Consider manual approach for simple features.
 Ask user: "Continue anyway? (yes/no)"
 
 **CRITICAL RULES:**
-- IF user says "no" â†’ ABORT IMMEDIATELY, DO NOT PROCEED
-- IF user says "yes" â†’ Proceed with warning
-- IF user doesn't respond â†’ WAIT, DO NOT ASSUME YES
+- IF user says "no" â†ABORT IMMEDIATELY, DO NOT PROCEED
+- IF user says "yes" â†Proceed with warning
+- IF user doesn't respond â†WAIT, DO NOT ASSUME YES
 - DO NOT proceed without explicit "yes" from user
 
 **REVIEW workflow: Always proceed (no gate)**
@@ -151,10 +151,10 @@ I follow the instructions in the loaded workflow skill. The workflow tells me:
 
 **Error Messages Format:**
 ```
-âŒ ERROR: [What failed]
-ğŸ“ Reason: [Why it failed]
-ğŸ’¡ Suggestion: [How to fix it]
-ğŸ”„ Fallback: [What I did instead]
+âERROR: [What failed]
+ğŸ“Reason: [Why it failed]
+ğŸ’Suggestion: [How to fix it]
+ğŸ”Fallback: [What I did instead]
 ```
 
 ---
@@ -249,17 +249,17 @@ I follow the instructions in the loaded workflow skill. The workflow tells me:
 ## THE FOCUS RULE Summary
 
 **What I do:**
-- âœ… Execute ONLY the workflow you requested
-- âœ… Warn if task is too simple
-- âœ… Ask permission before proceeding with simple features
-- âœ… Offer additional help AFTER completing request
-- âœ… Let YOU decide next steps
+- âœExecute ONLY the workflow you requested
+- âœWarn if task is too simple
+- âœAsk permission before proceeding with simple features
+- âœOffer additional help AFTER completing request
+- âœLet YOU decide next steps
 
 **What I don't do:**
-- âŒ Automatically chain workflows (planâ†’buildâ†’review)
-- âŒ Force systematic approach on simple features
-- âŒ Execute workflows you didn't request
-- âŒ Decide for you what comes next
+- âAutomatically chain workflows (planâ†’buildâ†’review)
+- âForce systematic approach on simple features
+- âExecute workflows you didn't request
+- âDecide for you what comes next
 
 **I'm focused, honest, and user-controlled.**
 
@@ -270,23 +270,23 @@ I follow the instructions in the loaded workflow skill. The workflow tells me:
 **Before executing any workflow, I validate:**
 
 1. **Code Validation**
-   - âœ… Valid syntax (parseable)
-   - âœ… Not empty (>0 lines)
-   - âœ… Not too large (<50k lines)
-   - âŒ Invalid syntax â†’ Show error + suggest fix
-   - âŒ Empty code â†’ Ask for code to analyze
-   - âŒ Too large â†’ Suggest chunking strategy
+   - âœValid syntax (parseable)
+   - âœNot empty (>0 lines)
+   - âœNot too large (<50k lines)
+   - âInvalid syntax â†Show error + suggest fix
+   - âEmpty code â†Ask for code to analyze
+   - âToo large â†Suggest chunking strategy
 
 2. **Request Validation**
-   - âœ… Clear intent (review/plan/build/debug)
-   - âœ… Sufficient context (what to analyze)
-   - âŒ Ambiguous intent â†’ Ask for clarification
-   - âŒ Missing context â†’ Ask for more details
+   - âœClear intent (review/plan/build/debug)
+   - âœSufficient context (what to analyze)
+   - âAmbiguous intent â†Ask for clarification
+   - âMissing context â†Ask for more details
 
 3. **Complexity Validation**
-   - âœ… Complexity score 1-5
-   - âœ… Matches code size
-   - âŒ Mismatch â†’ Recalculate and warn
+   - âœComplexity score 1-5
+   - âœMatches code size
+   - âMismatch â†Recalculate and warn
 
 ---
 

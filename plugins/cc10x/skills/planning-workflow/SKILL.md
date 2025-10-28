@@ -32,21 +32,21 @@ Triggered by user requests:
 **Assess feature complexity:**
 
 1. **Feature Size Check:**
-   - Simple (1-2 user stories): ⚠️ SKIP (suggest manual planning)
-   - Medium (3-5 user stories): ✅ PROCEED (standard planning)
-   - Complex (6+ user stories): ✅ PROCEED (deep planning)
+ - Simple (1-2 user stories): â ï¿½SKIP (suggest manual planning)
+ - Medium (3-5 user stories): ï¿½PROCEED (standard planning)
+ - Complex (6+ user stories): ï¿½PROCEED (deep planning)
 
 2. **If skipped (simple features):**
-   ```
-   "This is a simple feature (1-2 user stories).
-   Consider manual planning for simpler features.
+ ```
+ "This is a simple feature (1-2 user stories).
+ Consider manual planning for simpler features.
 
-   Recommendation: Use manual planning for efficiency.
-   Want me to plan anyway?"
-   ```
+ Recommendation: Use manual planning for efficiency.
+ Want me to plan anyway?"
+ ```
 
 3. **If proceeding (medium/complex):**
-   - Proceed to Phase 2
+ - Proceed to Phase 2
 
 ---
 
@@ -56,25 +56,25 @@ Triggered by user requests:
 
 Analyze and document:
 1. **Stakeholder analysis**
-   - Who are the users?
-   - What are their pain points?
-   - What success looks like?
+ - Who are the users?
+ - What are their pain points?
+ - What success looks like?
 
 2. **Requirement elicitation**
-   - Functional requirements
-   - Non-functional requirements
-   - Constraints
-   - Assumptions
+ - Functional requirements
+ - Non-functional requirements
+ - Constraints
+ - Assumptions
 
 3. **User stories**
-   - As a [user], I want [feature] so that [benefit]
-   - Acceptance criteria
-   - Edge cases
+ - As a [user], I want [feature] so that [benefit]
+ - Acceptance criteria
+ - Edge cases
 
 4. **Scope definition**
-   - In scope
-   - Out of scope
-   - MVP vs Phase 2
+ - In scope
+ - Out of scope
+ - MVP vs Phase 2
 
 **Output:**
 - Requirements document
@@ -90,8 +90,8 @@ Analyze and document:
 
 **Context Passing**:
 - Both subagents receive: Requirements document + user stories
-- Subagent 1 output → Passed to Subagent 2 (architecture decisions)
-- Subagent 2 output → Passed to Subagent 1 (deployment constraints)
+- Subagent 1 output ï¿½Passed to Subagent 2 (architecture decisions)
+- Subagent 2 output ï¿½Passed to Subagent 1 (deployment constraints)
 - Coordination: Resolve conflicts in Phase 4
 
 ### Subagent 1: planning-architecture-risk
@@ -136,23 +136,23 @@ Analyze and document:
 **Merge planning from parallel analysis:**
 
 1. **Collect from Subagent 1** (architecture-risk)
-   - System architecture
-   - Technology decisions
-   - Component breakdown
-   - Data models
-   - API specification
-   - Risk register
-   - Mitigation strategies
+ - System architecture
+ - Technology decisions
+ - Component breakdown
+ - Data models
+ - API specification
+ - Risk register
+ - Mitigation strategies
 
 2. **Collect from Subagent 2** (design-deployment)
-   - API design details
-   - Component hierarchy
-   - Props interfaces
-   - State management plan
-   - Implementation phases
-   - File manifest
-   - Testing strategy
-   - Deployment plan
+ - API design details
+ - Component hierarchy
+ - Props interfaces
+ - State management plan
+ - Implementation phases
+ - File manifest
+ - Testing strategy
+ - Deployment plan
 
 ---
 
@@ -250,11 +250,11 @@ Analyze and document:
 **Example**:
 ```
 Parallel Execution:
-  ├─ Subagent 1 (architecture-risk): ✅ Success
-  └─ Subagent 2 (design-deployment): ❌ FAILED
+ âï¿½Subagent 1 (architecture-risk): ï¿½Success
+ âï¿½Subagent 2 (design-deployment): ï¿½FAILED
 
 Fallback to Sequential:
-  └─ Subagent 2 (retry): ✅ Success (on retry)
+ âï¿½Subagent 2 (retry): ï¿½Success (on retry)
 
 Result: Complete plan with all phases
 ```
@@ -270,9 +270,9 @@ Result: Complete plan with all phases
 **Example**:
 ```
 Load Skill:
-  ├─ Primary: ❌ FAILED
-  ├─ Cache: ✅ Success
-  └─ Use cached version
+ âï¿½Primary: ï¿½FAILED
+ âï¿½Cache: ï¿½Success
+ âï¿½Use cached version
 
 Result: Planning continues with cached skill
 ```
@@ -291,7 +291,7 @@ Result: Planning continues with cached skill
 
 ### After Planning Complete
 ```markdown
-## Plan Complete ✅
+## Plan Complete
 
 **Status**: Architecture, design, and deployment strategy ready
 
@@ -311,7 +311,7 @@ This will:
 
 ### If Risks Identified
 ```markdown
-## Plan Complete ⚠️
+## Plan Complete (With Warnings)
 
 **Risks Identified**: 3 high-priority risks
 

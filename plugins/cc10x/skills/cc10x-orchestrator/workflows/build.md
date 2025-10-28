@@ -13,7 +13,7 @@
 STOP and show strong warning:
 
 ```
-⚠️ STOP: This is SIMPLE (complexity 2/5)
+⚠�STOP: This is SIMPLE (complexity 2/5)
 
 This is straightforward and may not require systematic analysis.
 
@@ -79,7 +79,7 @@ IF no plan:
 ```
 Implementation complete. Agent reports: "All tests passing"
 
-⚠️ VERIFY BEFORE TRUSTING:
+⚠�VERIFY BEFORE TRUSTING:
 
 Run tests yourself:
 ```bash
@@ -135,7 +135,7 @@ Summary:
 - Tests written: Z
 - Coverage: W%
 
-⚠️ IMPORTANT: I ran tests and they pass.
+⚠�IMPORTANT: I ran tests and they pass.
 BUT: Please verify yourself (run: npm test)
 
 What next?

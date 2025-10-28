@@ -14,7 +14,7 @@ license: MIT
 
 - **Purpose**: Create fast recovery procedures when deployments go wrong
 - **Target**: < 5 minute recovery time for Level 1
-- **Levels**: Feature Flag → Configuration → Code Rollback
+- **Levels**: Feature Flag âConfiguration âCode Rollback
 - **Use when**: Planning any production deployment
 - **Sections Available**: 3-Level Rollback, Recovery Procedures, Rollback Triggers
 
@@ -26,7 +26,7 @@ license: MIT
 
 **Philosophy**: Start with fastest, least disruptive rollback. Escalate only if needed.
 
-#### Level 1: Feature Flag (< 5 min) ⚡
+#### Level 1: Feature Flag (< 5 min) â¡
 
 **When to use:** First response to ANY production issue
 
@@ -355,7 +355,7 @@ Recovery time: [X] minutes
 **Deployment:**
 - Extended canary: 1-5% of users
 - Wait: 8-24 hours
-- Multiple partial stages: 10% → 25% → 50% → 75% → 100%
+- Multiple partial stages: 10% â25% â50% â75% â100%
 - Each stage: 4-8 hours wait
 - Intensive monitoring at every stage
 
@@ -419,8 +419,8 @@ Recovery time: [X] minutes
 ```javascript
 // Feature flag configuration
 if (hashUserId(user.id) % 10 === 0) {
-  // 10% of users get new feature
-  enableFeature('new-auth-flow');
+ // 10% of users get new feature
+ enableFeature('new-auth-flow');
 }
 ```
 
@@ -482,7 +482,7 @@ if (hashUserId(user.id) % 10 === 0) {
 
 ---
 
-#### Stage 5: Full Rollout (HIGH-RISK → FINAL)
+#### Stage 5: Full Rollout (HIGH-RISK âFINAL)
 
 **Deploy:**
 - Enable feature for 100% of users
@@ -500,26 +500,26 @@ if (hashUserId(user.id) % 10 === 0) {
 **Post-Deployment Actions (after 24 hours stable):**
 
 1. **Document learnings**
-   - What went well
-   - What was surprising
-   - Metrics to watch next time
+ - What went well
+ - What was surprising
+ - Metrics to watch next time
 
 2. **Update runbook**
-   - Add operational procedures
-   - Document common issues
-   - Update troubleshooting guide
+ - Add operational procedures
+ - Document common issues
+ - Update troubleshooting guide
 
 3. **Remove feature flag** (after 1 week stable)
-   - Clean up flag code
-   - Remove conditional logic
-   - Simplify codebase
+ - Clean up flag code
+ - Remove conditional logic
+ - Simplify codebase
 
-4. **Celebrate!** 🎉
-   - Feature shipped successfully
-   - Team learned from the process
-   - Production is stable
+4. **Celebrate!** ð
+ - Feature shipped successfully
+ - Team learned from the process
+ - Production is stable
 
-**Success:** Feature stable for 1 week → Mark as complete, remove from monitoring
+**Success:** Feature stable for 1 week âMark as complete, remove from monitoring
 
 ---
 
@@ -528,29 +528,29 @@ if (hashUserId(user.id) % 10 === 0) {
 **Required Dashboards:**
 
 1. **Error Rate Dashboard**
-   - URL: `/dashboard/errors?filter=feature-name`
-   - Metrics: Total errors, error rate %, top error messages
-   - Alerts: >0.2% warning, >0.5% critical
+ - URL: `/dashboard/errors?filter=feature-name`
+ - Metrics: Total errors, error rate %, top error messages
+ - Alerts: >0.2% warning, >0.5% critical
 
 2. **Latency Dashboard**
-   - URL: `/dashboard/performance?service=service-name`
-   - Metrics: p50, p95, p99 latency
-   - Alerts: p95 >300ms warning, >500ms critical
+ - URL: `/dashboard/performance?service=service-name`
+ - Metrics: p50, p95, p99 latency
+ - Alerts: p95 >300ms warning, >500ms critical
 
 3. **Success Rate Dashboard**
-   - URL: `/dashboard/success?endpoint=/api/*`
-   - Metrics: 2xx rate, 4xx rate, 5xx rate
-   - Alerts: 5xx >0.5% critical
+ - URL: `/dashboard/success?endpoint=/api/*`
+ - Metrics: 2xx rate, 4xx rate, 5xx rate
+ - Alerts: 5xx >0.5% critical
 
 4. **Custom Metrics Dashboard**
-   - URL: `/dashboard/custom?feature=feature-name`
-   - Metrics: Feature-specific (e.g., tokens issued, logins/hour)
-   - Alerts: Custom thresholds
+ - URL: `/dashboard/custom?feature=feature-name`
+ - Metrics: Feature-specific (e.g., tokens issued, logins/hour)
+ - Alerts: Custom thresholds
 
 **Alert Routing:**
-- Warnings → #alerts channel (reviewed periodically)
-- Critical → PagerDuty/on-call (immediate response)
-- Security → Separate security channel + incident response team
+- Warnings â#alerts channel (reviewed periodically)
+- Critical âPagerDuty/on-call (immediate response)
+- Security âSeparate security channel + incident response team
 
 ---
 
@@ -627,22 +627,22 @@ if (hashUserId(user.id) % 10 === 0) {
 **Design every deployment to be easily reversible:**
 
 1. **Feature Flags**
-   - Every new feature behind a flag
-   - Can toggle off instantly
+ - Every new feature behind a flag
+ - Can toggle off instantly
 
 2. **Backward-Compatible Database Migrations**
-   - Add columns, don't remove
-   - New tables, don't modify existing
-   - Can rollback code without DB rollback
+ - Add columns, don't remove
+ - New tables, don't modify existing
+ - Can rollback code without DB rollback
 
 3. **Blue-Green Deployments** (Infrastructure)
-   - Keep previous version running
-   - Switch traffic atomically
-   - Instant rollback to previous version
+ - Keep previous version running
+ - Switch traffic atomically
+ - Instant rollback to previous version
 
 4. **Canary Deployments** (Traffic)
-   - Route small percentage to new version
-   - Instant rollback via routing change
+ - Route small percentage to new version
+ - Instant rollback via routing change
 
 ---
 
@@ -680,7 +680,7 @@ User: "Use deployment-patterns skill to create rollback plan for auth changes"
 
 ### Method 3: Auto-Trigger (NOT WORKING)
 
-**Status:** ⚠️ Skills don't currently auto-trigger in Claude Code
+**Status:** â ï¸Skills don't currently auto-trigger in Claude Code
 
 **Evidence:**
 - Trigger phrases listed for future compatibility
@@ -694,7 +694,7 @@ User: "Use deployment-patterns skill to create rollback plan for auth changes"
 ## Summary
 
 **Stage 1: Rollback Strategies** provides:
-- 3-level escalation model (flag → config → code)
+- 3-level escalation model (flag âconfig âcode)
 - < 5 minute recovery target
 - Clear rollback triggers
 - Post-rollback procedures

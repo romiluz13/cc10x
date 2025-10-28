@@ -44,7 +44,7 @@ REST Principles:
 
 **RESTful Endpoints**:
 ```typescript
-// ✅ GOOD: Resources with HTTP verbs
+// âGOOD: Resources with HTTP verbs
 GET /api/users              // List all users
 GET /api/users/123          // Get user 123
 POST /api/users             // Create new user
@@ -55,7 +55,7 @@ PATCH /api/users/123        // Partial update
 
 **Error Responses**:
 ```typescript
-// ✅ CONSISTENT
+// âCONSISTENT
 {
   error: {
     code: 'USER_NOT_FOUND',
@@ -86,7 +86,7 @@ Component Structure:
 
 **Composition Over Inheritance**:
 ```typescript
-// ✅ COMPOSITION (PREFER)
+// âCOMPOSITION (PREFER)
 function Button({ children, variant = 'default', ...props }) {
   return <button className={`btn btn-${variant}`} {...props}>{children}</button>;
 }
@@ -98,7 +98,7 @@ function PrimaryButton(props) {
 
 **Props Design**:
 ```typescript
-// ✅ GROUPED PROPS
+// âGROUPED PROPS
 <UserCard user={{
   firstName: 'John',
   lastName: 'Doe',
@@ -128,7 +128,7 @@ Integration Reliability:
 
 **Retry with Exponential Backoff**:
 ```typescript
-// ✅ WITH RETRY
+// âWITH RETRY
 async function fetchWithRetry(url, maxRetries = 3) {
   for (let i = 0; i < maxRetries; i++) {
     try {
@@ -147,7 +147,7 @@ async function fetchWithRetry(url, maxRetries = 3) {
 
 **Circuit Breaker Pattern**:
 ```typescript
-// ✅ CIRCUIT BREAKER
+// âCIRCUIT BREAKER
 class CircuitBreaker {
   constructor(fn, { threshold = 5, timeout = 60000 } = {}) {
     this.fn = fn;
@@ -157,7 +157,7 @@ class CircuitBreaker {
     this.state = 'CLOSED'; // CLOSED, OPEN, HALF_OPEN
     this.nextAttempt = Date.now();
   }
-  
+
   async call(...args) {
     if (this.state === 'OPEN') {
       if (Date.now() < this.nextAttempt) {
@@ -165,7 +165,7 @@ class CircuitBreaker {
       }
       this.state = 'HALF_OPEN';
     }
-    
+
     try {
       const result = await this.fn(...args);
       this.onSuccess();
@@ -175,12 +175,12 @@ class CircuitBreaker {
       throw error;
     }
   }
-  
+
   onSuccess() {
     this.failures = 0;
     this.state = 'CLOSED';
   }
-  
+
   onFailure() {
     this.failures++;
     if (this.failures >= this.threshold) {

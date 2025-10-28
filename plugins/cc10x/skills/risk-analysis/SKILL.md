@@ -253,7 +253,7 @@ Assume everything can fail. Find edge cases before production does.
   - Trigger: Colorblind user can't distinguish red/green
   - Impact: User can't tell if order succeeded or failed
   - Probability: MEDIUM (8% of males are colorblind)
-  - Fix: Add icons: âœ“ (success) and âœ• (failure) plus color
+  - Fix: Add icons: âœ(success) and âœ• (failure) plus color
 
 #### LOW:
 - [Issue]: No keyboard navigation support
@@ -392,7 +392,7 @@ Assume everything can fail. Find edge cases before production does.
 #### HIGH:
 - [Issue]: O(nÂ²) complexity on large dataset
   - Location: reports.service.js lines 45-52 (nested loops over users and orders)
-  - Trigger: Admin exports full user report (10,000 users Ã— 50 orders each)
+  - Trigger: Admin exports full user report (10,000 users Ã50 orders each)
   - Impact: Server timeout after 30+ seconds, request fails
   - Probability: MEDIUM (admins export reports monthly)
   - Fix: Optimize with SQL JOIN + index: reduce to O(n log n), 2 seconds
@@ -578,7 +578,7 @@ User: "Check for edge cases in this data transformation function"
 
 ### Method 3: Auto-Trigger (NOT WORKING)
 
-**Status:** âš ï¸ Skills don't currently auto-trigger in Claude Code
+**Status:** âš ï¸Skills don't currently auto-trigger in Claude Code
 
 **Evidence:**
 - Trigger phrases listed for future compatibility
@@ -619,11 +619,11 @@ User: "Check for edge cases in this data transformation function"
 ## Red Flags (Use This Skill Immediately)
 
 If you catch yourself saying:
-- âŒ "This will never happen in practice"
-- âŒ "Users would never do that"
-- âŒ "The documentation says it should work"
-- âŒ "We can fix it later if it's a problem"
-- âŒ "It's just a quick fix, we don't need to think about edge cases"
+- â"This will never happen in practice"
+- â"Users would never do that"
+- â"The documentation says it should work"
+- â"We can fix it later if it's a problem"
+- â"It's just a quick fix, we don't need to think about edge cases"
 
 **STOP.** These are danger signs. Load this skill and do proper analysis.
 
@@ -632,18 +632,18 @@ If you catch yourself saying:
 ## Success Metrics
 
 **You're using this skill correctly when:**
-- âœ… You find bugs during design/review, not production
-- âœ… Your deployments succeed without rollbacks
-- âœ… You proactively prevent issues
-- âœ… Code reviews catch critical issues early
-- âœ… Production incidents decrease over time
+- âœYou find bugs during design/review, not production
+- âœYour deployments succeed without rollbacks
+- âœYou proactively prevent issues
+- âœCode reviews catch critical issues early
+- âœProduction incidents decrease over time
 
 **You're NOT using it correctly when:**
-- âŒ Still discovering bugs in production
-- âŒ Frequent emergency rollbacks
-- âŒ Saying "we didn't think about that"
-- âŒ Treating this as a checkbox exercise
-- âŒ Only using it for big changes (use for ALL changes)
+- âStill discovering bugs in production
+- âFrequent emergency rollbacks
+- âSaying "we didn't think about that"
+- âTreating this as a checkbox exercise
+- âOnly using it for big changes (use for ALL changes)
 
 ---
 

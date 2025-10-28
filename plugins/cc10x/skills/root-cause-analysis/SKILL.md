@@ -51,31 +51,31 @@ PREVENTION: Add token refresh to auth service
 
 ```
 Symptom: "User can't login"
-├─ Possible Causes:
-│  ├─ Database connection failed
-│  ├─ Password hash mismatch
-│  ├─ User account locked
-│  ├─ Rate limiting triggered
-│  └─ Authentication service down
-└─ Investigation: Check logs for each
+ Possible Causes:
+   Database connection failed
+   Password hash mismatch
+   User account locked
+   Rate limiting triggered
+   Authentication service down
+ Investigation: Check logs for each
 
 Symptom: "Page loads slowly"
-├─ Possible Causes:
-│  ├─ Database query slow
-│  ├─ Large data transfer
-│  ├─ Missing indexes
-│  ├─ N+1 query problem
-│  └─ External API timeout
-└─ Investigation: Profile each layer
+ Possible Causes:
+   Database query slow
+   Large data transfer
+   Missing indexes
+   N+1 query problem
+   External API timeout
+ Investigation: Profile each layer
 
 Symptom: "Random crashes"
-├─ Possible Causes:
-│  ├─ Memory leak
-│  ├─ Race condition
-│  ├─ Unhandled exception
-│  ├─ Resource exhaustion
-│  └─ Third-party library bug
-└─ Investigation: Check crash logs
+ Possible Causes:
+   Memory leak
+   Race condition
+   Unhandled exception
+   Resource exhaustion
+   Third-party library bug
+ Investigation: Check crash logs
 ```
 
 ## Root Cause Analysis Checklist

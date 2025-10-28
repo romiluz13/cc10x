@@ -44,10 +44,10 @@ Want me to fix it anyway? (yes/no)
 ```javascript
 function processPayment(userId, amount) {
   console.log('[DEBUG] processPayment called:', {userId, amount});
-  
+
   const user = await getUser(userId);
   console.log('[DEBUG] User loaded:', user);
-  
+
   if (user.balance >= amount) {
     console.log('[DEBUG] Balance sufficient, processing...');
     // ...

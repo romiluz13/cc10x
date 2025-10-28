@@ -25,11 +25,11 @@ Build ONE component by:
 - Quality gates between components
 
 **Examples:**
-- ✅ Build UserCard component
-- ✅ Build LoginForm component
-- ✅ Build ProductList component
-- ❌ Build entire authentication system (too large - break into components)
-- ❌ Build multiple unrelated components (use separate subagent instances)
+- âBuild UserCard component
+- âBuild LoginForm component
+- âBuild ProductList component
+- âBuild entire authentication system (too large - break into components)
+- âBuild multiple unrelated components (use separate subagent instances)
 
 ## Available Skills
 
@@ -61,20 +61,20 @@ Output:
 ### Phase 2: Write Tests (RED)
 
 ```typescript
-// ✅ WRITE TESTS FIRST
+// âWRITE TESTS FIRST
 describe('UserCard', () => {
   it('renders user name', () => {
     const user = { id: 1, name: 'John', email: 'john@example.com' };
     render(<UserCard user={user} />);
     expect(screen.getByText('John')).toBeInTheDocument();
   });
-  
+
   it('renders user email', () => {
     const user = { id: 1, name: 'John', email: 'john@example.com' };
     render(<UserCard user={user} />);
     expect(screen.getByText('john@example.com')).toBeInTheDocument();
   });
-  
+
   it('calls onEdit when edit button clicked', () => {
     const user = { id: 1, name: 'John', email: 'john@example.com' };
     const onEdit = jest.fn();
@@ -88,7 +88,7 @@ describe('UserCard', () => {
 ### Phase 3: Implement Component (GREEN)
 
 ```typescript
-// ✅ MINIMAL CODE TO PASS TESTS
+// âMINIMAL CODE TO PASS TESTS
 interface UserCardProps {
   user: { id: number; name: string; email: string };
   onEdit?: (user: UserCardProps['user']) => void;
@@ -108,7 +108,7 @@ export function UserCard({ user, onEdit }: UserCardProps) {
 ### Phase 4: Refactor (REFACTOR)
 
 ```typescript
-// ✅ IMPROVE WHILE KEEPING TESTS GREEN
+// âIMPROVE WHILE KEEPING TESTS GREEN
 interface UserCardProps {
   user: User;
   onEdit?: (user: User) => void;
@@ -247,12 +247,12 @@ it('has proper ARIA labels', () => {
 
 **Before marking component complete:**
 
-1. ✅ All tests passing
-2. ✅ Test coverage > 80%
-3. ✅ No console errors
-4. ✅ Accessibility checks pass
-5. ✅ Component is reusable
-6. ✅ Documentation complete
+1. âAll tests passing
+2. âTest coverage > 80%
+3. âNo console errors
+4. âAccessibility checks pass
+5. âComponent is reusable
+6. âDocumentation complete
 
 **If any gate fails:** Fix before proceeding
 
@@ -269,9 +269,9 @@ When component is complete, provide:
 - Test coverage: X%
 
 ### Tests
-- [Test 1]: ✅
-- [Test 2]: ✅
-- [Test 3]: ✅
+- [Test 1]: â
+- [Test 2]: â
+- [Test 3]: â
 
 ### Quality Metrics
 - Lines of code: X
@@ -283,7 +283,7 @@ When component is complete, provide:
 - CREATE: src/components/[ComponentName].test.tsx
 
 ### Ready for Integration
-✅ All quality gates passed
+âAll quality gates passed
 ```
 
 ---

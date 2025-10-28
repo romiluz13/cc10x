@@ -218,7 +218,7 @@ This workflow invokes 5 specialized reviewer agents in PARALLEL for comprehensiv
 
 1. **Aggregate findings** from all agents
 2. **Deduplicate** overlapping issues (e.g., security and quality both flag same function)
-3. **Prioritize** by severity (CRITICAL â†’ HIGH â†’ MEDIUM â†’ LOW)
+3. **Prioritize** by severity (CRITICAL â†HIGH â†MEDIUM â†LOW)
 4. **Cross-reference** related issues
 5. **Calculate** total issue count and breakdown
 
@@ -329,10 +329,10 @@ This workflow invokes 5 specialized reviewer agents in PARALLEL for comprehensiv
 **Present the comprehensive report to user.**
 
 **DO NOT automatically:**
-- âŒ Start fixing issues
-- âŒ Create a plan to address findings
-- âŒ Refactor code
-- âŒ Suggest building tests
+- âStart fixing issues
+- âCreate a plan to address findings
+- âRefactor code
+- âSuggest building tests
 
 **Instead OFFER next steps:**
 ```

@@ -25,7 +25,7 @@ license: MIT
 Accessibility Checklist:
 - [ ] All interactive elements keyboard accessible?
 - [ ] All images have alt text?
-- [ ] Color contrast â‰¥ 4.5:1 for text?
+- [ ] Color contrast â‰4.5:1 for text?
 - [ ] All form inputs have labels?
 - [ ] Focus indicators visible?
 - [ ] No keyboard traps?
@@ -36,13 +36,13 @@ Accessibility Checklist:
 
 **Keyboard Navigation**:
 ```tsx
-// âŒ Div as button (not keyboard accessible)
+// âDiv as button (not keyboard accessible)
 <div onClick={handleClick}>Submit</div>
 
-// âœ… Proper button (keyboard accessible)
+// âœProper button (keyboard accessible)
 <button onClick={handleClick}>Submit</button>
 
-// âœ… Custom element with keyboard support
+// âœCustom element with keyboard support
 <span
   role="button"
   tabIndex={0}
@@ -57,39 +57,39 @@ Accessibility Checklist:
 
 **Alt Text**:
 ```tsx
-// âŒ Missing alt text
+// âMissing alt text
 <img src="logo.png" />
 
-// âŒ Decorative image with alt text
+// âDecorative image with alt text
 <img src="decoration.png" alt="decoration" />
 
-// âœ… Descriptive alt text
+// âœDescriptive alt text
 <img src="logo.png" alt="Company name logo" />
 
-// âœ… Decorative image hidden
+// âœDecorative image hidden
 <img src="decoration.png" alt="" aria-hidden="true" />
 ```
 
 **Form Labels**:
 ```tsx
-// âŒ No label
+// âNo label
 <input type="text" placeholder="Email" />
 
-// âœ… Proper label
+// âœProper label
 <label htmlFor="email">Email</label>
 <input id="email" type="email" />
 
-// âœ… Or aria-label
+// âœOr aria-label
 <input type="email" aria-label="Email address" />
 ```
 
 **Color Contrast**:
 ```css
-/* âŒ Low contrast (3.2:1) */
+/* âLow contrast (3.2:1) */
 color: #7B7B7B;
 background: #CCCCCC;
 
-/* âœ… WCAG AA compliant (4.5:1) */
+/* âœWCAG AA compliant (4.5:1) */
 color: #5A5A5A;
 background: #FFFFFF;
 ```
@@ -131,15 +131,15 @@ All images, icons, and non-text content must have text alternatives.
 **Testing**:
 ```bash
 # Use browser dev tools:
-# Chrome DevTools â†’ Elements â†’ Styles â†’ Color picker â†’ Contrast ratio
+# Chrome DevTools â†Elements â†Styles â†Color picker â†Contrast ratio
 ```
 
 **Common Issues**:
 ```css
-/* âŒ Too low */
+/* âToo low */
 color: #999; background: #fff; /* 2.8:1 */
 
-/* âœ… WCAG AA compliant */
+/* âœWCAG AA compliant */
 color: #767676; background: #fff; /* 4.5:1 */
 color: #fff; background: #007bff; /* 4.5:1 */
 ```
@@ -151,13 +151,13 @@ All functionality available via keyboard.
 
 **Interactive Elements**:
 ```tsx
-// âŒ Click-only
+// âClick-only
 <div onClick={handleAction}>Action</div>
 
-// âœ… Keyboard accessible
+// âœKeyboard accessible
 <button onClick={handleAction}>Action</button>
 
-// âœ… Custom with keyboard
+// âœCustom with keyboard
 <div
   role="button"
   tabIndex={0}
@@ -207,18 +207,18 @@ function Modal({ isOpen, onClose, children }) {
 Focus indicators must be visible.
 
 ```css
-/* âŒ Removing focus outline */
+/* âRemoving focus outline */
 *:focus {
   outline: none;
 }
 
-/* âœ… Custom focus indicator */
+/* âœCustom focus indicator */
 button:focus {
   outline: 2px solid #007bff;
   outline-offset: 2px;
 }
 
-/* âœ… Or use :focus-visible */
+/* âœOr use :focus-visible */
 button:focus-visible {
   outline: 2px solid #007bff;
 }
@@ -230,14 +230,14 @@ button:focus-visible {
 Form inputs must have clear labels.
 
 ```tsx
-// âŒ Placeholder as label
+// âPlaceholder as label
 <input type="text" placeholder="Email" />
 
-// âœ… Proper label
+// âœProper label
 <label htmlFor="email">Email address</label>
 <input id="email" type="email" />
 
-// âœ… With description
+// âœWith description
 <label htmlFor="password">
   Password
   <span className="hint">Must be at least 12 characters</span>
@@ -256,10 +256,10 @@ Form inputs must have clear labels.
 Error messages must be clear and suggest corrections.
 
 ```tsx
-// âŒ Vague error
+// âVague error
 {errors.email && <span>Invalid</span>}
 
-// âœ… Clear error with suggestion
+// âœClear error with suggestion
 {errors.email && (
   <span role="alert">
     Please enter a valid email address (e.g., name@example.com)
@@ -273,17 +273,17 @@ Error messages must be clear and suggest corrections.
 UI components must have accessible names and roles.
 
 ```tsx
-// âŒ No accessible name
+// âNo accessible name
 <button>
   <Icon name="close" />
 </button>
 
-// âœ… With accessible name
+// âœWith accessible name
 <button aria-label="Close dialog">
   <Icon name="close" aria-hidden="true" />
 </button>
 
-// âœ… Custom component
+// âœCustom component
 <div
   role="button"
   aria-pressed={isActive}
