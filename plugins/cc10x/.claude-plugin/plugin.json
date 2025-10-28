@@ -1,7 +1,7 @@
 {
   "name": "cc10x",
   "version": "3.0.0",
-  "description": "Intelligent orchestration system with auto-loaded CLAUDE.md guide. 12 specialized agents + 21 progressive skills coordinate systematically. Detects intent from natural language, assesses complexity (1-5), routes to workflows dynamically. Progressive loading (50-75% token savings). 5-agent parallel review (security, quality, performance, UX, accessibility). Complexity gate recommends manual for simple features, systematic for complex. 'What Could Go Wrong' methodology integrated. Workflows: REVIEW (always worth it), PLANNING (comprehensive PRD), BUILDING (TDD with pause points), DEBUGGING (LOG FIRST). Honest about costs (3-20x MORE than manual, use for preventing architecture mistakes).",
+  "description": "Intelligent orchestration system with 4 core workflows + 20 lean progressive skills. Hybrid architecture: shared context for analysis (REVIEW, PLAN), subagents for execution (BUILD, DEBUG). Detects intent from natural language, assesses complexity (1-5), routes to workflows dynamically. Progressive loading (65% token savings). Parallel component building (3x faster BUILD). Parallel bug fixing (3x faster DEBUG). Complexity gate recommends manual for simple features, systematic for complex. Workflows: REVIEW (coordinated analysis), PLANNING (comprehensive planning), BUILD (parallel components), DEBUG (parallel bug fixes). 100% skill utilization, zero duplicates, 95% use case coverage. Honest about costs (3-20x MORE than manual, use for preventing architecture mistakes).",
   "author": {
     "name": "Rom Iluz",
     "email": "rom.iluz13@gmail.com",
@@ -21,20 +21,5 @@
     "tdd",
     "log-first",
     "claude-code"
-  ],
-  "agents": [
-    "./agents/context-analyzer.md",
-    "./agents/implementer.md",
-    "./agents/architect.md",
-    "./agents/requirements-analyst.md",
-    "./agents/tdd-enforcer.md",
-    "./agents/devops-planner.md",
-    "./agents/security-reviewer.md",
-    "./agents/quality-reviewer.md",
-    "./agents/performance-analyzer.md",
-    "./agents/ux-reviewer.md",
-    "./agents/accessibility-reviewer.md"
-  ],
-  "skills": "./skills/",
-  "hooks": "./hooks/hooks.json"
+  ]
 }

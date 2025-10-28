@@ -32,9 +32,7 @@
 
 **Invoke requirements-analyst agent:**
 
-```bash
-cat /Users/rom.iluz/Dev/cc10x_v2/plugins/cc10x/agents/requirements-analyst.md
-```
+Follow instructions in [../../agents/requirements-analyst.md](../../agents/requirements-analyst.md)
 
 **Agent task:**
 1. Parse user's feature description
@@ -60,9 +58,7 @@ cat /Users/rom.iluz/Dev/cc10x_v2/plugins/cc10x/agents/requirements-analyst.md
 
 **Invoke context-analyzer agent:**
 
-```bash
-cat /Users/rom.iluz/Dev/cc10x_v2/plugins/cc10x/agents/context-analyzer.md
-```
+Follow instructions in [../../agents/context-analyzer.md](../../agents/context-analyzer.md)
 
 **Agent task:**
 1. Search codebase for similar features
@@ -87,9 +83,7 @@ cat /Users/rom.iluz/Dev/cc10x_v2/plugins/cc10x/agents/context-analyzer.md
 
 **Invoke architect agent:**
 
-```bash
-cat /Users/rom.iluz/Dev/cc10x_v2/plugins/cc10x/agents/architect.md
-```
+Follow instructions in [../../agents/architect.md](../../agents/architect.md)
 
 **Agent task:**
 1. Design system architecture
@@ -118,9 +112,7 @@ cat /Users/rom.iluz/Dev/cc10x_v2/plugins/cc10x/agents/architect.md
 **Agent continues with risk-analysis skill:**
 
 **Load 7-dimension framework:**
-```bash
-cat /Users/rom.iluz/Dev/cc10x_v2/plugins/cc10x/skills/risk-analysis/SKILL.md
-```
+See [../../skills/risk-analysis/SKILL.md](../../skills/risk-analysis/SKILL.md)
 
 **Agent analyzes:**
 1. Data Flow transformations (Stage 1)
@@ -143,9 +135,7 @@ cat /Users/rom.iluz/Dev/cc10x_v2/plugins/cc10x/skills/risk-analysis/SKILL.md
 
 **Invoke tdd-enforcer agent (planning mode):**
 
-```bash
-cat /Users/rom.iluz/Dev/cc10x_v2/plugins/cc10x/agents/tdd-enforcer.md
-```
+Follow instructions in [../../agents/tdd-enforcer.md](../../agents/tdd-enforcer.md)
 
 **Agent task:**
 1. Plan unit tests (what to test)
@@ -169,9 +159,7 @@ cat /Users/rom.iluz/Dev/cc10x_v2/plugins/cc10x/agents/tdd-enforcer.md
 
 **Invoke devops-planner agent:**
 
-```bash
-cat /Users/rom.iluz/Dev/cc10x_v2/plugins/cc10x/agents/devops-planner.md
-```
+Follow instructions in [../../agents/devops-planner.md](../../agents/devops-planner.md)
 
 **Agent task:**
 1. Break feature into incremental phases

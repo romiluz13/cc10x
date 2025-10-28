@@ -45,10 +45,7 @@ This workflow invokes 5 specialized reviewer agents in PARALLEL for comprehensiv
 
 ### Agent 1: Security Reviewer
 
-```bash
-# Load agent instructions
-cat /Users/rom.iluz/Dev/cc10x_v2/plugins/cc10x/agents/security-reviewer.md
-```
+Follow instructions in [../../agents/security-reviewer.md](../../agents/security-reviewer.md)
 
 **The agent will:**
 1. Load domain skills:
@@ -87,10 +84,7 @@ cat /Users/rom.iluz/Dev/cc10x_v2/plugins/cc10x/agents/security-reviewer.md
 
 ### Agent 2: Quality Reviewer
 
-```bash
-# Load agent instructions
-cat /Users/rom.iluz/Dev/cc10x_v2/plugins/cc10x/agents/quality-reviewer.md
-```
+Follow instructions in [../../agents/quality-reviewer.md](../../agents/quality-reviewer.md)
 
 **The agent will:**
 1. Load domain skills:
@@ -125,10 +119,7 @@ cat /Users/rom.iluz/Dev/cc10x_v2/plugins/cc10x/agents/quality-reviewer.md
 
 ### Agent 3: Performance Analyzer
 
-```bash
-# Load agent instructions
-cat /Users/rom.iluz/Dev/cc10x_v2/plugins/cc10x/agents/performance-analyzer.md
-```
+Follow instructions in [../../agents/performance-analyzer.md](../../agents/performance-analyzer.md)
 
 **The agent will:**
 1. Load domain skills:
@@ -163,10 +154,7 @@ cat /Users/rom.iluz/Dev/cc10x_v2/plugins/cc10x/agents/performance-analyzer.md
 
 ### Agent 4: UX Reviewer
 
-```bash
-# Load agent instructions
-cat /Users/rom.iluz/Dev/cc10x_v2/plugins/cc10x/agents/ux-reviewer.md
-```
+Follow instructions in [../../agents/ux-reviewer.md](../../agents/ux-reviewer.md)
 
 **The agent will:**
 1. Load domain skills:
@@ -201,10 +189,7 @@ cat /Users/rom.iluz/Dev/cc10x_v2/plugins/cc10x/agents/ux-reviewer.md
 
 ### Agent 5: Accessibility Reviewer
 
-```bash
-# Load agent instructions
-cat /Users/rom.iluz/Dev/cc10x_v2/plugins/cc10x/agents/accessibility-reviewer.md
-```
+Follow instructions in [../../agents/accessibility-reviewer.md](../../agents/accessibility-reviewer.md)
 
 **The agent will:**
 1. Load domain skills:

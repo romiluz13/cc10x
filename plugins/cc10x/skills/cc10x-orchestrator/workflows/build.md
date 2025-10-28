@@ -56,9 +56,7 @@ IF no plan:
 
 ## Phase 2: Invoke Implementer Agent
 
-```bash
-cat /Users/rom.iluz/Dev/cc10x_v2/plugins/cc10x/agents/implementer.md
-```
+Follow instructions in [../../agents/implementer.md](../../agents/implementer.md)
 
 **Agent task:**
 1. Implement feature using strict TDD
@@ -122,9 +120,7 @@ If tests PASS:
 
 IF coverage < 80%:
 
-```bash
-cat /Users/rom.iluz/Dev/cc10x_v2/plugins/cc10x/agents/test-generator.md
-```
+Follow instructions in [../../agents/test-generator.md](../../agents/test-generator.md)
 
 **Agent task:**
 1. Analyze coverage gaps

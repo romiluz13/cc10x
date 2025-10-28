@@ -6,16 +6,36 @@
 
 CC10x transforms complex development tasks into systematic, high-quality implementations through intelligent orchestration of specialized AI agents and progressive skill loading.
 
+### Architecture Note: "Agents" vs Claude Code "Subagents"
+
+**cc10x uses instruction-based agents** (NOT Claude Code subagents):
+
+| Feature | cc10x Agents | Claude Code Subagents |
+|---------|--------------|----------------------|
+| **Context** | Shared (same) | Separate (isolated) |
+| **Loading** | Progressive (file references) | Delegation (new instance) |
+| **Purpose** | Specialized instructions | Task delegation |
+| **Token Cost** | Efficient (shared context) | Expensive (separate contexts) |
+| **Coordination** | Can coordinate (see each other) | Cannot coordinate (isolated) |
+
+**Why this approach?**
+- Enables coordination between agents (e.g., 5-agent parallel review with shared context)
+- More token-efficient for orchestrated workflows
+- Allows progressive loading of specialized instructions
+- Better for systematic multi-agent analysis
+
+**Trade-off**: No context isolation (all agents see same conversation)
+
 ### The Orchestration System
 
 Unlike simple plugins that just delegate tasks, CC10x has an **intelligent orchestrator** that:
 
-✅ **Detects your intent** from natural language ("review this code", "plan authentication")  
-✅ **Assesses complexity** (1-5 scoring) and recommends the right approach  
-✅ **Routes to workflows** (review, plan, build, debug) dynamically  
-✅ **Loads skills progressively** (40-60% token savings)  
-✅ **Prevents waste** (warns when manual is better)  
-✅ **Applies "What Could Go Wrong"** methodology at decision points  
+✅ **Detects your intent** from natural language ("review this code", "plan authentication")
+✅ **Assesses complexity** (1-5 scoring) and recommends the right approach
+✅ **Routes to workflows** (review, plan, build, debug) dynamically
+✅ **Loads skills progressively** (40-60% token savings)
+✅ **Prevents waste** (warns when manual is better)
+✅ **Applies "What Could Go Wrong"** methodology at decision points
 
 ## Core Features
 

@@ -1,20 +1,20 @@
 ---
 name: cc10x-orchestrator
-description: Systematic development orchestrator coordinating specialized agents and domain skills. Use when you need comprehensive code review (security, quality, performance, UX, accessibility analysis via parallel AI agents), feature planning (architecture decisions, complexity assessment, risk analysis, deployment strategies), TDD implementation (test-driven development with quality gates and risk assessment), or LOG FIRST debugging (systematic investigation over guessing). Automatically detects your intent from natural language (review, plan, build, debug) and orchestrates the right workflow with specialized agents and progressive skill loading. Best for complex features (4-5 complexity: 500+ lines, 7+ files, novel patterns, architecture decisions). Recommends manual approach for simple features (1-2 complexity) with honest token economics. Review workflow always valuable (prevents security breaches). Integrates 7-dimension risk analysis (data flow, dependencies, timing, UX, security, performance, failure modes). Say "review this code for security", "plan authentication feature", "build user registration", or "debug login issue" to activate. Honest positioning: costs 3-20x MORE tokens than manual due to systematic multi-phase analysis, use when preventing architecture mistakes justifies the cost.
+description: Systematic development orchestrator coordinating 4 core workflows and 21 domain skills. Use when you need comprehensive code review (multi-dimensional analysis), feature planning (architecture decisions, risk analysis), TDD implementation (parallel component building), or LOG FIRST debugging (parallel bug fixing). Automatically detects your intent from natural language (review, plan, build, debug) and orchestrates the right workflow with progressive skill loading. Hybrid architecture - shared context for analysis workflows, subagents for execution workflows (3x faster). Best for complex features (4-5 complexity: 500+ lines, 7+ files, novel patterns). Recommends manual approach for simple features (1-2 complexity). Review workflow always valuable (prevents security breaches). Say "review this code", "plan authentication", "build user registration", or "debug login issue" to activate. Honest positioning: costs 3-20x MORE tokens than manual, use when preventing mistakes justifies the cost.
 license: MIT
 ---
 
 # cc10x Orchestrator Skill
 
-**I coordinate 11 specialized agents + 20 domain skills for systematic development.**
+**I coordinate 4 core workflows + 20 domain skills for systematic development.**
 
 ## Quick Reference
 
 **I detect your intent and execute the right workflow:**
-- "review", "audit", "check security" → REVIEW workflow (5 parallel AI agents)
-- "plan", "design", "architecture" → PLANNING workflow (comprehensive PRD)
-- "build", "implement", "create" → BUILDING workflow (TDD enforced)
-- "debug", "fix", "not working" → DEBUGGING workflow (LOG FIRST)
+- "review", "audit", "check security" → REVIEW workflow (coordinated analysis)
+- "plan", "design", "architecture" → PLANNING workflow (comprehensive planning)
+- "build", "implement", "create" → BUILD workflow (parallel component building)
+- "debug", "fix", "not working" → DEBUG workflow (parallel bug fixing)
 
 ## How I Work
 
@@ -24,19 +24,33 @@ license: MIT
 1. **Task type** (review/plan/build/debug)
 2. **Complexity** (1-5 scoring based on files, patterns, risk)
 3. **Domain** (frontend/backend/full-stack)
+4. **Multi-intent handling** (if multiple tasks requested)
 
 **Complexity Examples:**
 - **1-2 (Simple):** Rate limiting using library, form validation, CSV export
 - **3 (Moderate):** User registration, pagination, search
 - **4-5 (Complex):** Auth system, payments, real-time chat, RBAC
 
+**Complexity Metrics:**
+- **File Count**: 1-3 files (simple), 4-10 files (moderate), 10+ files (complex)
+- **Lines of Code**: <200 (simple), 200-1000 (moderate), 1000+ (complex)
+- **Cyclomatic Complexity**: <10 (simple), 10-20 (moderate), 20+ (complex)
+- **Novel Patterns**: Using established libraries (simple), custom patterns (moderate), new architectures (complex)
+- **Risk Level**: Low (simple), Medium (moderate), High (complex)
+
 ### Step 2: THE FOCUS RULE (Enforced!)
 
 **CRITICAL: I only execute what you requested!**
 
-❌ You ask "build app" → I do NOT do security review first  
-❌ You ask "review code" → I do NOT suggest building next  
+❌ You ask "build app" → I do NOT do security review first
+❌ You ask "review code" → I do NOT suggest building next
 ✅ You ask "plan and build" → I do BOTH (explicitly requested)
+✅ You ask "review then plan" → I do BOTH in sequence
+
+**Multi-Intent Handling:**
+- **Sequential**: "review then plan" → REVIEW first, then PLAN
+- **Parallel**: "review and plan" → Both workflows in parallel (if independent)
+- **Conditional**: "review, then plan if no critical issues" → REVIEW first, then decide
 
 **After completing your request:**
 - I deliver results
@@ -70,37 +84,63 @@ Then I ASK: "Continue anyway? (yes/no)"
 
 **REVIEW workflow: Always proceed (no gate)**
 
-### Step 4: Load Workflow File
+### Step 4: Load Workflow Skill
 
-Based on detected task, I load ONE workflow file:
+Based on detected task, I load ONE workflow skill:
 
 **REVIEW Workflow:**
-```bash
-cat /Users/rom.iluz/Dev/cc10x_v2/plugins/cc10x/skills/cc10x-orchestrator/workflows/review.md
-```
+Load `review-workflow` skill (coordinated analysis)
 
 **PLANNING Workflow:**
-```bash
-cat /Users/rom.iluz/Dev/cc10x_v2/plugins/cc10x/skills/cc10x-orchestrator/workflows/plan.md
-```
+Load `planning-workflow` skill (comprehensive planning)
 
-**BUILDING Workflow:**
-```bash
-cat /Users/rom.iluz/Dev/cc10x_v2/plugins/cc10x/skills/cc10x-orchestrator/workflows/build.md
-```
+**BUILD Workflow:**
+Load `build-workflow` skill (parallel component building)
 
-**DEBUGGING Workflow:**
-```bash
-cat /Users/rom.iluz/Dev/cc10x_v2/plugins/cc10x/skills/cc10x-orchestrator/workflows/debug.md
-```
+**DEBUG Workflow:**
+Load `debug-workflow` skill (parallel bug fixing)
 
 ### Step 5: Execute Workflow Instructions
 
-I follow the instructions in the loaded workflow file. The workflow tells me:
-- Which agents to invoke
-- What domain skills agents should load
+I follow the instructions in the loaded workflow skill. The workflow tells me:
+- Which skills to load
+- Which subagents to dispatch (for BUILD/DEBUG)
 - How to compile results
 - What to return to you
+
+---
+
+## Error Recovery & Reliability
+
+**If a workflow fails mid-execution:**
+
+1. **Subagent Failure** (e.g., component-builder times out)
+   - Fallback: Continue with other subagents
+   - Retry: Attempt once more with reduced scope
+   - Report: Show partial results + error details
+
+2. **Skill Loading Failure** (e.g., security-patterns unavailable)
+   - Fallback: Use core skills only
+   - Report: "Skipped security analysis due to unavailable skill"
+   - Continue: Proceed with available skills
+
+3. **Timeout Handling** (e.g., analysis takes >10 min)
+   - Fallback: Return partial results
+   - Report: "Analysis incomplete - timeout after 10 min"
+   - Suggest: "Run again with smaller scope"
+
+4. **Input Validation Failure** (e.g., invalid code provided)
+   - Report: "Cannot analyze - invalid input: [reason]"
+   - Suggest: "Provide valid code or check syntax"
+   - Offer: "Want me to help fix the syntax?"
+
+**Error Messages Format:**
+```
+❌ ERROR: [What failed]
+📝 Reason: [Why it failed]
+💡 Suggestion: [How to fix it]
+🔄 Fallback: [What I did instead]
+```
 
 ---
 
@@ -108,17 +148,17 @@ I follow the instructions in the loaded workflow file. The workflow tells me:
 
 **Level 1 (Always Loaded):**
 - This file (200 lines, ~1.5k tokens)
-- Agent metadata (11 agents, ~1k tokens)
-- Skill metadata (20 skills, ~1k tokens)
+- Workflow skill metadata (4 workflows, ~1k tokens)
+- Skill metadata (21 skills, ~1k tokens)
 - **Total: ~3.5k tokens initial**
 
 **Level 2 (On-Demand):**
-- Workflow file when needed (400-800 lines, ~3-6k tokens)
+- Workflow skill when needed (300-400 lines, ~2-3k tokens)
 - ONLY the workflow you requested
 
 **Level 3 (As-Needed):**
-- Agent files when invoked (300-600 lines each)
-- Domain skills when agents need them (200-2000 lines)
+- Domain skills when workflow needs them (200-2000 lines)
+- Subagents when dispatched (300-400 lines each)
 - Progressive: Only relevant sections
 
 **Token Savings:**
@@ -159,36 +199,36 @@ I follow the instructions in the loaded workflow file. The workflow tells me:
 **What happens:**
 
 1. **I detect:** REVIEW workflow needed
-2. **I load:** `workflows/review.md` (400 lines)
-3. **Workflow instructs me to invoke 5 agents in parallel:**
-   - security-reviewer → loads risk-analysis, security-patterns
-   - quality-reviewer → loads code-generation skill
-   - performance-analyzer → loads performance-patterns
-   - ux-reviewer → loads ux-patterns
-   - accessibility-reviewer → loads accessibility-patterns
-4. **Each agent:** Analyzes from their dimension, returns findings
-5. **I compile:** All findings by severity (CRITICAL/HIGH/MEDIUM/LOW)
+2. **I load:** `review-workflow` skill (300 lines)
+3. **Workflow instructs me to load 6 skills in shared context:**
+   - risk-analysis (7 stages)
+   - security-patterns
+   - performance-patterns
+   - ux-patterns
+   - accessibility-patterns
+   - code-quality-patterns
+4. **I analyze:** Code from all 6 dimensions simultaneously
+5. **I compile:** All findings by severity (CRITICAL/IMPORTANT/NICE-TO-HAVE)
 6. **I return:** Comprehensive review report
 
 **Tokens used:**
 - Orchestrator: 1.5k (this file)
-- Review workflow: 3k (review.md)
-- 5 agents: 3k (only invoked ones)
-- Domain skills: 4k (only needed sections)
-- **Total: ~11.5k tokens**
+- Review workflow: 2k (review-workflow skill)
+- Domain skills: 18k (6 skills × 3k)
+- **Total: ~22k tokens**
 
 ---
 
-## Agent Coordination
+## Workflow Coordination
 
-**Agents are specialized workers.** They:
-1. Receive specific task from me
-2. Read their instructions (`cat agents/[name].md`)
-3. Load relevant domain skills (`cat skills/[name]/SKILL.md`)
-4. Execute specialized analysis
-5. Return findings to me
+**Workflows are orchestrated processes.** They:
+1. Load relevant domain skills in shared context
+2. Perform coordinated analysis (REVIEW, PLAN)
+3. Dispatch subagents for parallel execution (BUILD, DEBUG)
+4. Compile results from all sources
+5. Return comprehensive findings
 
-**I coordinate, agents execute, skills provide knowledge.**
+**I coordinate, workflows execute, skills provide knowledge, subagents build/fix.**
 
 ---
 
@@ -200,10 +240,16 @@ I follow the instructions in the loaded workflow file. The workflow tells me:
 - Best practices (TDD RED-GREEN-REFACTOR, SOLID principles)
 - Implementation guides (how to handle specific scenarios)
 
-**Agents load skills progressively:**
+**Workflows load skills progressively:**
 - Only the skills they need
 - Only the sections relevant to their task
 - Real token savings via on-demand loading
+
+**Subagents load skills as needed:**
+- component-builder loads: test-driven-development, design-patterns, code-generation
+- bug-investigator loads: systematic-debugging, log-analysis-patterns, root-cause-analysis
+- code-reviewer loads: code-quality-patterns, security-patterns, performance-patterns
+- integration-verifier loads: design-patterns, test-driven-development
 
 ---
 
@@ -226,6 +272,31 @@ I follow the instructions in the loaded workflow file. The workflow tells me:
 
 ---
 
+## Input Validation Rules
+
+**Before executing any workflow, I validate:**
+
+1. **Code Validation**
+   - ✅ Valid syntax (parseable)
+   - ✅ Not empty (>0 lines)
+   - ✅ Not too large (<50k lines)
+   - ❌ Invalid syntax → Show error + suggest fix
+   - ❌ Empty code → Ask for code to analyze
+   - ❌ Too large → Suggest chunking strategy
+
+2. **Request Validation**
+   - ✅ Clear intent (review/plan/build/debug)
+   - ✅ Sufficient context (what to analyze)
+   - ❌ Ambiguous intent → Ask for clarification
+   - ❌ Missing context → Ask for more details
+
+3. **Complexity Validation**
+   - ✅ Complexity score 1-5
+   - ✅ Matches code size
+   - ❌ Mismatch → Recalculate and warn
+
+---
+
 ## Ready to Use
 
 **Natural language examples:**
@@ -233,13 +304,17 @@ I follow the instructions in the loaded workflow file. The workflow tells me:
 - "plan a user authentication feature with JWT"
 - "build a todo app with React and Node"
 - "debug why login returns 401 error"
+- "review and plan the payment system"
+- "plan then build the user dashboard"
 
 **I'll automatically:**
-1. Detect your intent
-2. Assess complexity
-3. Warn if too simple
-4. Load appropriate workflow
-5. Coordinate agents and skills
-6. Deliver results
+1. Validate your input
+2. Detect your intent
+3. Assess complexity
+4. Warn if too simple
+5. Load appropriate workflow(s)
+6. Coordinate agents and skills
+7. Deliver results
+8. Offer next steps
 
 **No slash commands needed. Just describe what you want!**

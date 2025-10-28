@@ -1,5 +1,10 @@
-# cc10x - Claude Code Plugin
+# CC10X - Claude Code Plugin
 # .gitignore for production deployment
+# ========================================
+
+# ========================================
+# RUNTIME & DEPENDENCIES
+# ========================================
 
 # Runtime directories (user-specific context)
 .claude/
@@ -9,6 +14,13 @@
 # Dependency directories
 node_modules/
 vendor/
+.venv/
+venv/
+env/
+
+# ========================================
+# OS & EDITOR FILES
+# ========================================
 
 # OS generated files
 .DS_Store
@@ -28,80 +40,112 @@ Thumbs.db
 *~
 .project
 .settings/
+*.sublime-project
+*.sublime-workspace
+
+# ========================================
+# LOGS & TEMPORARY FILES
+# ========================================
 
 # Logs
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-
-# Environment files
-.env
-.env.local
-.env.*.local
-
-# Build outputs (if any future additions)
-dist/
-build/
-*.bundle.js
-
-# Test coverage
-coverage/
-.nyc_output/
+pnpm-debug.log*
 
 # Temporary files
 *.tmp
 temp/
 tmp/
-
-# Package manager files (keep lock files for reproducibility)
-# Uncomment if not using package managers
-# package-lock.json
-# yarn.lock
-# pnpm-lock.yaml
+*.temp
 
 # ========================================
-# INTERNAL DEVELOPMENT FILES (DO NOT PUSH)
+# ENVIRONMENT & SECRETS
 # ========================================
 
-# Planning and development docs
-docs/
-templates/
-pre-deployment-review/
-cc10x_V2-main/
-*.plan.md
-*-COMPLETE.md
-*-PROGRESS.md
-*-VALIDATION*.md
-*-REPORT.md
-*-SUMMARY.md
-*-AUDIT*.md
-ORCHESTRATION-MAP.md
-IMPLEMENTATION-*.md
-READY-FOR-*.md
-DEPLOY-*.md
-FINAL-*.md
-SKILLS-FIRST-*.md
-SKILL-ORCHESTRATOR-*.md
-FIX-PLAN-*.md
-CRITICAL-*.md
-V2-*.md
-V3-*.md
+# Environment files (NEVER commit secrets)
+.env
+.env.local
+.env.*.local
+.env.production.local
 
-# Archive directory (development history)
-archive/
+# ========================================
+# BUILD & TEST ARTIFACTS
+# ========================================
 
-# Archived versions
-cc10x-fresh-*/
+# Build outputs
+dist/
+build/
+*.bundle.js
+out/
+
+# Test coverage
+coverage/
+.nyc_output/
+.coverage
+htmlcov/
+
+# ========================================
+# DEVELOPMENT & REFERENCE FOLDERS
+# ========================================
+
+# Reference/inspiration (not part of production)
+inspiration/
+examples/old/
+reference/
+scratch/
+docs_/
+
+# ========================================
+# BACKUP & ARCHIVE FILES
+# ========================================
 
 # Backup files
 *.backup
+*.bak
+*.swp
+*.swo
 
-# Keep only production-ready docs
+# Archive directory (development history)
+archive/
+archived/
+.archive/
+cc10x-fresh-*/
+cc10x_V2-main/
+
+# ========================================
+# KEEP PRODUCTION FILES
+# ========================================
+
+# Production documentation (DO NOT IGNORE)
 !README.md
 !LICENSE
 !CHANGELOG.md
-!QUICK-START.md
 !plugins/cc10x/README.md
 !plugins/cc10x/QUICKSTART.md
 !plugins/cc10x/CLAUDE.md
+
+# Production code (DO NOT IGNORE)
+!plugins/
+!plugins/cc10x/
+!plugins/cc10x/skills/
+!plugins/cc10x/subagents/
+!plugins/cc10x/agents/
+!plugins/cc10x/hooks/
+!plugins/cc10x/scripts/
+
+# Production documentation (DO NOT IGNORE)
+!docs/
+!docs/guides/
+!docs/reference/
+
+# ========================================
+# PACKAGE MANAGER LOCK FILES
+# ========================================
+
+# Keep lock files for reproducibility
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+# Gemfile.lock
