@@ -2,7 +2,7 @@
 
 **Triggered by:** User requests code review, security audit, quality check
 
-**Token cost:** ~11.5k tokens (orchestrator 1.5k + this file 3k + 5 agents 3k + skills 4k)
+
 
 ---
 
@@ -33,9 +33,9 @@ This workflow invokes 5 specialized reviewer agents in PARALLEL for comprehensiv
    - All dimensions: Invoke all 5 agents
 
 3. **File count estimate:**
-   - 1-3 files: 10-20k tokens total
-   - 4-10 files: 30-40k tokens total
-   - 10+ files: 50-80k tokens total
+   - 1-3 files: Small scope
+   - 4-10 files: Medium scope
+   - 10+ files: Large scope
 
 ---
 
@@ -357,24 +357,4 @@ What would you like to do?
 
 **Let user decide the next action.**
 
----
 
-## Token Economics
-
-**Typical review workflow costs:**
-- Orchestrator: 1.5k tokens
-- This workflow file: 3k tokens
-- 5 agents invoked: 3k tokens (600 each)
-- Domain skills loaded: 4k tokens (agents load progressively)
-- **Total: ~11.5k tokens**
-
-**Time: 3-7 minutes** (parallel agent execution)
-
-**Value: ALWAYS worth it**
-- Finds issues before production
-- Prevents security breaches
-- Catches performance problems early
-- Ensures accessibility compliance
-- Improves code quality
-
-**One prevented security breach = infinite ROI**

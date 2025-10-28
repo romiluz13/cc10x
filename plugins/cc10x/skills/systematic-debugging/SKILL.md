@@ -12,7 +12,7 @@ license: MIT
 
 ## Progressive Loading Stages
 
-### Stage 1: Metadata (startup - ~50 tokens)
+### Stage 1: Metadata
 
 - **Skill**: Systematic Debugging
 - **Purpose**: Prevent assumption-driven debugging that wastes hours/days
@@ -24,7 +24,7 @@ license: MIT
 
 ---
 
-### Stage 2: Quick Reference (triggered - ~500 tokens)
+### Stage 2: Quick Reference
 
 ## The 5-Minute Rule
 
@@ -106,7 +106,7 @@ Real-world examples of docs vs reality:
 
 ---
 
-### Stage 3: Detailed Guide (on-demand - ~2500 tokens)
+### Stage 3: Detailed Guide
 
 ## Comprehensive Logging Guide
 

@@ -8,7 +8,7 @@ license: MIT
 
 ## Progressive Loading Stages
 
-### Stage 1: Metadata (startup - ~50 tokens)
+### Stage 1: Metadata
 - **Skill**: Test-Driven Development (TDD)
 - **Purpose**: Enforce test-first methodology (RED-GREEN-REFACTOR)
 - **When**: All feature implementation, bug fixes, behavior changes
@@ -17,7 +17,7 @@ license: MIT
 
 ---
 
-### Stage 2: Quick Reference (triggered - ~500 tokens)
+### Stage 2: Quick Reference
 
 #### The Iron Law
 ```
@@ -75,7 +75,7 @@ npm test -- --watch
 
 ---
 
-### Stage 3: Detailed Content (on-demand - ~2500 tokens)
+### Stage 3: Detailed Content
 
 ## Detailed TDD Guide
 
@@ -389,8 +389,6 @@ test('handles operation failure', async () => {
 **Discipline beats talent. TDD is discipline.**
 
 ---
-
-### Stage 3: Mandatory Verification (~400 tokens)
 
 **Purpose:** Prevent false success reports like "✅ All 33 tests passing!" when tests actually failed
 

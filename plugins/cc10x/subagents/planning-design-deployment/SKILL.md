@@ -23,7 +23,6 @@ Dispatched by PLANNING workflow when planning features for:
 
 **Pattern**: Parallel execution (runs simultaneously with other planning subagent)  
 **Skills Loaded**: api-design-patterns, component-design-patterns, deployment-patterns  
-**Token Cost**: ~8k tokens  
 **Time**: ~4-5 minutes (parallel with other subagent)  
 
 ---

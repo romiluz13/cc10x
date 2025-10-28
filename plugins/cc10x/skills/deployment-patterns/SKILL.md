@@ -12,8 +12,6 @@ license: MIT
 
 ## Progressive Loading Stages
 
-### Stage 1: Rollback Strategies (~400 tokens)
-
 - **Purpose**: Create fast recovery procedures when deployments go wrong
 - **Target**: < 5 minute recovery time for Level 1
 - **Levels**: Feature Flag → Configuration → Code Rollback
@@ -22,7 +20,7 @@ license: MIT
 
 ---
 
-## Stage 1: Rollback Strategies (~400 tokens)
+## Stage 1: Rollback Strategies
 
 ### The 3-Level Escalation Model
 
@@ -282,7 +280,7 @@ Recovery time: [X] minutes
 
 ---
 
-## Stage 2: Deployment Strategies (~600 tokens)
+## Stage 2: Deployment Strategies
 
 ### Risk-Based Staged Deployment
 
@@ -662,13 +660,12 @@ if (hashUserId(user.id) % 10 === 0) {
 # In devops-planner sub-agent:
 Invoke Skill: "cc10x:deployment-patterns"
 Stage: "Stage 1: Rollback Strategies"
-Loads: ~400 tokens (only rollback stage)
+Loads: Rollback stage only
 ```
 
 **Benefits:**
-- Token-efficient (loads only what's needed)
+- Loads only what's needed
 - Provides structure at right moment
-- Real 71-83% token savings
 
 ### Method 2: Manual Invocation by User
 
@@ -714,10 +711,7 @@ User: "Use deployment-patterns skill to create rollback plan for auth changes"
 - Designing staged rollouts
 - Preparing for disaster recovery
 
-**Progressive loading saves:**
-- Stage 1 only: ~400 tokens
-- Stage 2 only: ~600 tokens
-- Both stages: ~1000 tokens
-- vs full deployment guide: ~3000 tokens
-- **Savings: 60-87% depending on what you need**
-
+**Progressive loading:**
+- Stage 1: Rollback strategies
+- Stage 2: Deployment strategies
+- Load only what you need

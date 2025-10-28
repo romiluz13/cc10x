@@ -35,7 +35,6 @@ Output: Comprehensive Plan → Ready for /feature-build
 ```
 
 **Estimated Time**: 5-10 minutes
-**Estimated Tokens**: ~20k tokens
 
 ---
 
@@ -154,7 +153,7 @@ Before proceeding with full planning, assess if cc10x adds value:
 
 **Complexity Scale (1-5):**
 - **1-2 (Simple)**: Well-documented library integration, CRUD operations
-  - **Recommendation**: ❌ Skip cc10x - Manual implementation 16x cheaper
+  - **Recommendation**: ❌ Skip cc10x - Manual implementation more efficient
   - **Example**: "Add a login form using Auth0"
 
 - **3 (Moderate)**: Multiple components, some integration complexity

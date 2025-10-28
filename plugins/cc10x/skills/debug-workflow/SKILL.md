@@ -22,8 +22,7 @@ Triggered by user requests:
 **Pattern**: Hybrid (shared context + subagents)
 **Skills Loaded**: 3 (log-analysis-patterns, performance-patterns, test-driven-development)
 **Subagents**: bug-investigator, code-reviewer, integration-verifier (parallel instances)
-**Token Cost**: ~35K tokens (22% savings)
-**Time**: ~4 minutes (20% faster)
+**Time**: ~4 minutes
 **Early Dispatch**: Subagents start after Phase 1 (not Phase 3)
 
 ---
@@ -237,24 +236,9 @@ Bug 2: Search returns empty results
 
 ---
 
-## Token Economics
+## Workflow Benefits
 
-**DEBUG workflow (OPTIMIZED):**
-- Orchestrator: 1.5k
-- This workflow: 2k
-- Shared context skills: 3 skills × 2k = 6k
-- Subagent 1 (bug-investigator): 8k
-- Subagent 2 (code-reviewer): 8k
-- Subagent 3 (integration-verifier): 8k
-- **Total: ~35k tokens (22% savings!)**
-
-**Comparison:**
-- Old: 45k tokens, 5 min
-- New: 35k tokens, 4 min
-- **Gain: 20% faster, 22% token savings**
-
-**Value:**
-- 3x faster than sequential
+**DEBUG workflow:**
 - Parallel bug fixing
 - Comprehensive testing
 - Quality assurance
@@ -369,4 +353,3 @@ This workflow provides **parallel debugging** that:
 - **Suggests REVIEW workflow automatically**
 
 **Use for bug fixing!**
-

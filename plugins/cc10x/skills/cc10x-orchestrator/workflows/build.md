@@ -2,7 +2,7 @@
 
 **Triggered by:** User requests feature implementation
 
-**Token cost:** ~30k tokens (systematic TDD with verification)
+
 
 ---
 
@@ -15,20 +15,13 @@ STOP and show strong warning:
 ```
 ⚠️ STOP: This is SIMPLE (complexity 2/5)
 
-Real Example - Rate Limiting:
-✅ Manual (30 min, 5k tokens):
-   - Read express-rate-limit docs
-   - Add middleware
-   - Test with curl
-   - Working code!
+This is straightforward and may not require systematic analysis.
 
-❌ cc10x BUILD (similar time, 100k tokens):
-   - Systematic planning (25k)
-   - TDD implementation (50k)
-   - Verification required (manual anyway!)
-   - Reported "tests passing" but 3/7 FAILED
+Example: Rate Limiting
+- Consider implementing manually for simpler features
+- Use cc10x for review and complex features
 
-Recommendation: Implement manually, use cc10x for REVIEW only.
+Recommendation: Consider manual approach for simple features.
 ```
 
 ASK: "Continue anyway? (yes/no)"
@@ -157,16 +150,4 @@ What next?
 
 **DO NOT automatically review or deploy!**
 
----
 
-## Token Economics
-
-**BUILD workflow costs:**
-- Orchestrator: 1.5k
-- This workflow: 2k
-- Implementer agent: 10k (TDD iterations)
-- Test generator: 5k (if needed)
-- Domain skills: 12k (TDD, code-gen, risk-analysis)
-- **Total: ~30k tokens**
-
-**Worth it for complexity 4-5, not for 1-2**

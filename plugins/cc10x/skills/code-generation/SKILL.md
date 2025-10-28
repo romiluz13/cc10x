@@ -8,7 +8,7 @@ license: MIT
 
 ## Progressive Loading Stages
 
-### Stage 1: Metadata (startup - ~50 tokens)
+### Stage 1: Metadata
 - **Skill**: Code Generation
 - **Purpose**: Clean code patterns, naming conventions, best practices
 - **When**: All code implementation (features, fixes, refactors)
@@ -17,7 +17,7 @@ license: MIT
 
 ---
 
-### Stage 2: Quick Reference (triggered - ~500 tokens)
+### Stage 2: Quick Reference
 
 #### Core Principles
 1. **Clear over clever** - Self-explanatory code
@@ -91,7 +91,7 @@ if (!input.email || !isValidEmail(input.email)) {
 
 ---
 
-### Stage 3: Detailed Content (on-demand - ~3000 tokens)
+### Stage 3: Detailed Content
 
 ## Naming Conventions (Detailed)
 

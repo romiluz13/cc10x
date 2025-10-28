@@ -2,7 +2,7 @@
 
 **Triggered by:** User reports bug, something not working
 
-**Token cost:** ~15k tokens (systematic investigation)
+
 
 ---
 
@@ -17,7 +17,7 @@ This looks like a simple fix:
 - Missing import: Add `import X from 'Y'`
 - Syntax: Missing semicolon
 
-Recommendation: Just fix it! (5 min, 0 tokens)
+Recommendation: Just fix it!
 
 Want me to fix it anyway? (yes/no)
 ```
@@ -199,17 +199,4 @@ npm test
 **Prevention:** Consider adding request validation middleware
 ```
 
----
 
-## Token Economics
-
-**DEBUG workflow:**
-- Orchestrator: 1.5k
-- This workflow: 2k
-- Investigation: 5-10k (depending on complexity)
-- **Total: ~15k tokens**
-
-**Value:**
-- Saves hours vs random guessing
-- Systematic approach prevents missing root cause
-- LOG FIRST philosophy: see data, don't guess

@@ -132,7 +132,6 @@ Load detailed guide when:
 
 ---
 
-**Token Cost**: ~500 tokens
 **Use**: When security analysis is needed
 **Next**: Load DETAILED-GUIDE.md for comprehensive patterns
 

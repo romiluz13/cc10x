@@ -22,8 +22,7 @@ Triggered by user requests:
 **Pattern**: Hybrid (shared context + parallel subagents)
 **Skills Loaded**: 1 (requirements-analysis)
 **Subagents**: 2 (planning-architecture-risk, planning-design-deployment)
-**Token Cost**: ~22K tokens (30% savings)
-**Time**: ~4-5 minutes (1.5x faster)
+**Time**: ~4-5 minutes
 **Complexity Gate**: Skip for simple features (1-2 user stories)
 
 ---
@@ -40,11 +39,10 @@ Triggered by user requests:
 2. **If skipped (simple features):**
    ```
    "This is a simple feature (1-2 user stories).
-   Manual planning: ~10k tokens, 15 min
-   cc10x planning: ~22k tokens, 4-5 min
+   Consider manual planning for simpler features.
 
    Recommendation: Use manual planning for efficiency.
-   Want me to plan anyway? (2x more tokens)"
+   Want me to plan anyway?"
    ```
 
 3. **If proceeding (medium/complex):**
@@ -236,28 +234,6 @@ Analyze and document:
 
 ---
 
-## Token Economics
-
-**PLANNING workflow (OPTIMIZED):**
-- Orchestrator: 1.5k
-- This workflow: 2k
-- Shared context skills: 1 skill × 2k = 2k
-- Subagent 1 (architecture-risk): 8k
-- Subagent 2 (design-deployment): 8k
-- **Total: ~22k tokens (30% savings!)**
-
-**Comparison:**
-- Old: 32k tokens, 7 min
-- New: 22k tokens, 4-5 min
-- **Gain: 1.5x faster, 30% token savings**
-
-**Value:**
-- Prevents rework
-- Aligns team
-- Identifies risks early
-- Enables parallel work
-- Saves implementation time
-- **1.5x faster than before!**
 
 ---
 
@@ -366,4 +342,3 @@ This workflow provides **comprehensive planning** that:
 - **Suggests BUILD workflow automatically**
 
 **Use before implementation for complex features!**
-

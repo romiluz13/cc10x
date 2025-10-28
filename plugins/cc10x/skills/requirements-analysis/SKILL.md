@@ -8,7 +8,7 @@ license: MIT
 
 ## Progressive Loading Stages
 
-### Stage 1: Metadata (startup - ~50 tokens)
+### Stage 1: Metadata
 - **Skill**: Requirements Analysis
 - **Purpose**: Gather, analyze, and validate requirements clearly
 - **When**: Requirements gathering, feature planning, scope definition
@@ -17,7 +17,7 @@ license: MIT
 
 ---
 
-### Stage 2: Quick Reference (triggered - ~500 tokens)
+### Stage 2: Quick Reference
 
 #### Requirements Analysis Checklist
 
@@ -116,7 +116,7 @@ grep -r "Feature:" requirements/ | grep -v "Constraint:"
 
 ---
 
-### Stage 3: Detailed Guide (on-demand - ~3000 tokens)
+### Stage 3: Detailed Guide
 
 ## Requirement Elicitation Techniques
 
@@ -295,4 +295,3 @@ For Each Requirement:
 ---
 
 **Remember**: Good requirements prevent bad implementations. Invest time upfront!
-

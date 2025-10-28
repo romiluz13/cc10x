@@ -8,7 +8,7 @@ license: MIT
 
 ## Progressive Loading Stages
 
-### Stage 1: Metadata (startup - ~50 tokens)
+### Stage 1: Metadata
 - **Skill**: Code Quality Patterns
 - **Purpose**: Identify code quality issues and ensure maintainability
 - **When**: Code review, quality analysis, refactoring planning
@@ -17,7 +17,7 @@ license: MIT
 
 ---
 
-### Stage 2: Quick Reference (triggered - ~500 tokens)
+### Stage 2: Quick Reference
 
 #### Code Quality Checklist
 
@@ -119,7 +119,7 @@ grep -r "TODO\|FIXME" src/ --include="*.ts"
 
 ---
 
-### Stage 3: Detailed Guide (on-demand - ~3000 tokens)
+### Stage 3: Detailed Guide
 
 ## SOLID Principles
 
@@ -379,4 +379,3 @@ Code Quality Verification:
 ---
 
 **Remember**: Code quality is an investment in the future. Clean code saves time and money!
-

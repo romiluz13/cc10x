@@ -2,13 +2,13 @@
 
 **Triggered by:** User requests feature plan, architecture design, PRD creation
 
-**Token cost:** ~25k tokens (orchestrator + workflow + agents + skills)
+
 
 ---
 
 ## Phase 0: Complexity Assessment
 
-**CRITICAL GATE:** Assess if systematic planning is worth the token cost.
+**CRITICAL GATE:** Assess if systematic planning is needed.
 
 **Quick assessment:**
 1. How many files affected? (1-3=simple, 4-6=moderate, 7+=complex)
@@ -17,8 +17,8 @@
 
 **IF Complexity <= 2 (SIMPLE):**
 - STOP execution
-- Warn user about 16x token multiplier
-- Show example: Rate limiting = 5k manual vs 80k systematic
+- Warn user that this is straightforward
+- Show example: Rate limiting = simple feature
 - ASK: "Continue anyway? (yes/no)"
 - If NO: Exit
 - If YES: Proceed with warning
@@ -245,21 +245,4 @@ What would you like to do?
 
 Let user decide next step.
 
----
 
-## Token Economics
-
-**Typical planning workflow:**
-- Orchestrator: 1.5k
-- This workflow: 2k
-- Requirements agent: 2k
-- Context agent: 3k
-- Architect agent: 4k
-- TDD agent: 2k
-- DevOps agent: 3k
-- Domain skills: 8k (risk-analysis, feature-planning, deployment-patterns)
-- **Total: ~25k tokens**
-
-**Time:** 5-10 minutes
-
-**Value:** Prevents costly architecture mistakes (one avoided mistake = ROI)

@@ -14,8 +14,6 @@ Assume everything can fail. Find edge cases before production does.
 
 ## Progressive Loading Stages
 
-### Stage 1: Data Flow & Transformations (~600 tokens)
-
 **Focus:** Input validation, data transformations, output handling
 
 **Critical Questions:**
@@ -76,8 +74,6 @@ Assume everything can fail. Find edge cases before production does.
 
 ---
 
-### Stage 2: Dependency & Integration Mapping (~500 tokens)
-
 **Focus:** What this code depends on, what depends on this code
 
 **Critical Questions:**
@@ -136,8 +132,6 @@ Assume everything can fail. Find edge cases before production does.
 ```
 
 ---
-
-### Stage 3: Timing, Concurrency & State (~700 tokens)
 
 **Focus:** Race conditions, state transitions, execution order
 
@@ -200,8 +194,6 @@ Assume everything can fail. Find edge cases before production does.
 ```
 
 ---
-
-### Stage 4: User Experience & Human Factors (~600 tokens)
 
 **Focus:** How real users interact, accessibility, internationalization
 
@@ -273,8 +265,6 @@ Assume everything can fail. Find edge cases before production does.
 ```
 
 ---
-
-### Stage 5: Security & Validation (~800 tokens)
 
 **Focus:** Authentication, authorization, injection attacks, data exposure
 
@@ -363,8 +353,6 @@ Assume everything can fail. Find edge cases before production does.
 
 ---
 
-### Stage 6: Performance & Scalability (~600 tokens)
-
 **Focus:** Computational complexity, resource usage, caching
 
 **Critical Questions:**
@@ -443,8 +431,6 @@ Assume everything can fail. Find edge cases before production does.
 ```
 
 ---
-
-### Stage 7: Failure Modes & Recovery (~700 tokens)
 
 **Focus:** What can fail, error handling, graceful degradation, rollback
 
@@ -673,4 +659,3 @@ If you catch yourself saying:
 - Murphy's Law: "Anything that can go wrong, will go wrong"
 
 **The goal:** Transform "Let's ship it and see" into "We've thought through every scenario and we're confident this is production-ready."
-

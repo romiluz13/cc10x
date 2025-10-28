@@ -10,7 +10,7 @@ license: MIT
 
 ## Progressive Loading Stages
 
-### Stage 1: Metadata (startup - ~50 tokens)
+### Stage 1: Metadata
 
 - **Skill**: Root Cause Analysis
 - **Purpose**: Identify why bugs occur, not just fix symptoms
@@ -20,7 +20,7 @@ license: MIT
 
 ---
 
-### Stage 2: Quick Reference (triggered - ~500 tokens)
+### Stage 2: Quick Reference
 
 ## The 5 Whys Framework
 
@@ -96,7 +96,7 @@ Investigation Process:
 
 ---
 
-### Stage 3: Detailed Guide (on-demand - ~3000 tokens)
+### Stage 3: Detailed Guide
 
 ## Cause-Effect Analysis
 
@@ -238,4 +238,3 @@ Confirm:
 ---
 
 **Remember**: The best bugs to fix are the ones that never happen again. Find the root cause, fix it properly, and prevent recurrence.
-

@@ -86,10 +86,7 @@ Unlike simple plugins that just delegate tasks, CC10x has an **intelligent orche
 ```
 ⚠️ STOP: This is SIMPLE (2/5)
 
-Token Economics:
-- Manual: 5k tokens, 30-60 min
-- cc10x: 80k tokens, verification required
-- Multiplier: 16x MORE tokens
+
 
 Recommendation: Implement manually. Use cc10x for review only.
 ```
@@ -279,35 +276,7 @@ The orchestrator **honestly** assesses complexity and recommends the right appro
 
 ## Honest Positioning
 
-### Token Economics
-
-**cc10x v3 costs 3-20x MORE tokens than manual.**
-
-| Workflow | Simple (1-2) | Complex (4-5) | Worth It? |
-|----------|--------------|---------------|-----------|
-| REVIEW | 20k-50k | 20k-50k | ✅✅ ALWAYS |
-| PLANNING | 60k vs 5k manual | 60k vs 20k manual | ❌ / ✅ |
-| BUILDING | 100k vs 10k manual | 100k vs 40k manual | ❌ / ✅ |
-| DEBUGGING | 25k vs 8k manual | 30k vs 10k manual | ⚠️ Maybe |
-
-**Why it costs more:**
-- Systematic multi-phase analysis (not ad-hoc)
-- Multiple specialized agents (not single perspective)
-- Comprehensive risk assessment (7 dimensions)
-- Complete documentation (plans, manifests, strategies)
-
-**Worth it when:**
-- **Complexity 4-5:** One prevented architecture mistake pays for all planning
-- **High-risk domains:** Auth, payments, data integrity
-- **Review workflow:** ALWAYS (prevents security breaches = infinite ROI)
-
-**Not worth it when:**
-- **Simple features (1-2):** Using libraries, obvious implementations
-- **Emergencies:** Production down (fix first, document later)
-- **Prototypes:** Iterate fast first, systematize later
-
-**The orchestrator will honestly tell you to skip if manual is better!**
-
+#
 ## Quality Enforcement
 
 ### PostToolUse Hooks (Automatic)
@@ -385,7 +354,7 @@ This is the ONLY universally valuable workflow. Use before every PR.
 ### 2. Trust the Complexity Assessment
 
 When orchestrator says:
-- "This is SIMPLE (2/5), manual is 16x cheaper" → **Listen!**
+- "This is SIMPLE (2/5), manual approach" → **Listen!**
 - "This is COMPLEX (5/5), systematic planning prevents disasters" → **Proceed!**
 
 ### 3. Use End-to-End for Complex Features
@@ -449,7 +418,7 @@ Results with "What Could Go Wrong" Analysis
 - Execution agents (planner, architect, tdd-enforcer)
 - Testing, UX, deployment skills
 
-**Result:** 15k tokens instead of 30k+ (50% savings!)
+**Result:** 15k tokens instead of 30k+
 
 ## File Limits (Enforced)
 

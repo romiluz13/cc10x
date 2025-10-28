@@ -8,7 +8,7 @@ license: MIT
 
 ## Progressive Loading Stages
 
-### Stage 1: Metadata (startup - ~50 tokens)
+### Stage 1: Metadata
 - **Skill**: Accessibility Patterns
 - **Purpose**: Ensure applications are usable by everyone
 - **When**: Accessibility audits, WCAG compliance checks
@@ -17,7 +17,7 @@ license: MIT
 
 ---
 
-### Stage 2: Quick Reference (triggered - ~500 tokens)
+### Stage 2: Quick Reference
 
 #### WCAG 2.1 Level AA Quick Checks
 
@@ -96,7 +96,7 @@ background: #FFFFFF;
 
 ---
 
-### Stage 3: Detailed Guide (on-demand - ~2500 tokens)
+### Stage 3: Detailed Guide
 
 ## WCAG 2.1 Level AA Compliance
 

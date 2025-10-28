@@ -17,7 +17,6 @@ license: MIT
 
 ## Available Sections
 
-### Stage 2: Quick Reference (~500 tokens)
 **File**: `QUICK-REFERENCE.md`
 
 Contains:
@@ -29,7 +28,6 @@ Contains:
 
 **Load when**: Security analysis is needed
 
-### Stage 3: Detailed Guide (~3000 tokens)
 **File**: `DETAILED-GUIDE.md`
 
 Contains:
@@ -71,19 +69,6 @@ Contains:
 - When handling payment processing
 - When storing sensitive data
 - When building public APIs
-
----
-
-## Token Economics
-
-| Stage | Tokens | When |
-|-------|--------|------|
-| Stage 1 | ~50 | Always |
-| Stage 2 | ~500 | On demand |
-| Stage 3 | ~3000 | On demand |
-| **Total** | **~3550** | **All stages** |
-
-**Savings**: 30-50% by loading only needed stages
 
 ---
 

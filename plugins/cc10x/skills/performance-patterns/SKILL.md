@@ -8,7 +8,7 @@ license: MIT
 
 ## Progressive Loading Stages
 
-### Stage 1: Metadata (startup - ~50 tokens)
+### Stage 1: Metadata
 - **Skill**: Performance Patterns
 - **Purpose**: Identify performance bottlenecks and optimization opportunities
 - **When**: Performance analysis, code review, optimization tasks
@@ -17,7 +17,7 @@ license: MIT
 
 ---
 
-### Stage 2: Quick Reference (triggered - ~500 tokens)
+### Stage 2: Quick Reference
 
 #### Performance Quick Checks
 
@@ -100,7 +100,7 @@ npm run build -- --stats
 
 ---
 
-### Stage 3: Detailed Guide (on-demand - ~3000 tokens)
+### Stage 3: Detailed Guide
 
 ## Performance Optimization Patterns
 

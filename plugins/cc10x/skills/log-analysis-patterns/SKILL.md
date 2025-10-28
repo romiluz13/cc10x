@@ -8,7 +8,7 @@ license: MIT
 
 ## Progressive Loading Stages
 
-### Stage 1: Metadata (startup - ~50 tokens)
+### Stage 1: Metadata
 - **Skill**: Log Analysis Patterns
 - **Purpose**: Analyze logs effectively to debug issues
 - **When**: Debugging, log analysis, troubleshooting
@@ -17,7 +17,7 @@ license: MIT
 
 ---
 
-### Stage 2: Quick Reference (triggered - ~500 tokens)
+### Stage 2: Quick Reference
 
 #### Log Analysis Checklist
 
@@ -134,7 +134,7 @@ grep -r "logger\." src/ | grep -v "requestId\|traceId"
 
 ---
 
-### Stage 3: Detailed Guide (on-demand - ~3000 tokens)
+### Stage 3: Detailed Guide
 
 ## Structured Logging Implementation
 
@@ -352,4 +352,3 @@ TRACE logs:   Keep for 1 hour (development only)
 ---
 
 **Remember**: Good logs are your best debugging tool. Invest in logging!
-

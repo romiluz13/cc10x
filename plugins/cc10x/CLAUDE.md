@@ -100,7 +100,7 @@ This ALWAYS works and ALWAYS provides value. Use liberally!
 
 **Use:** Complex features (500+ lines, 7+ files, architecture decisions)
 
-**Skip:** Simple features (complexity 1-2: manual is 16x cheaper!)
+**Skip:** Simple features (complexity 1-2: manual approach!)
 
 **Command:**
 ```bash
@@ -109,7 +109,7 @@ This ALWAYS works and ALWAYS provides value. Use liberally!
 
 **What happens:**
 1. **Phase 0:** Complexity check (1-5 scoring)
-   - If 1-2: "This is SIMPLE. Manual is 16x cheaper. Skip cc10x?"
+   - If 1-2: "This is SIMPLE. Manual is more efficient. Skip cc10x?"
    - If 3: "Moderate complexity. Show token tradeoffs. Proceed?"
    - If 4-5: "Complex. Systematic planning valuable. Proceeding..."
 
@@ -283,7 +283,7 @@ cc10x v3 **honestly** assesses complexity and recommends the right approach:
 - **Files:** 2-3
 - **Lines:** 50-200
 - **Examples:** Add rate limiting (express-rate-limit), form validation (Zod)
-- **Recommendation:** ❌ Skip cc10x (follow library docs, manual 16x cheaper)
+- **Recommendation:** ❌ Skip cc10x (follow library docs, manual more efficient)
 
 **Real test:** Rate limiting (complexity 2)
 - cc10x: 100k tokens, 90 min, reported "tests passing", actually 3/7 FAILED
@@ -356,10 +356,8 @@ cc10x v3 **honestly** assesses complexity and recommends the right approach:
 Old v2 (monolithic):
 → Orchestrator SKILL.md: 1,325 lines
 → ALL loaded when skill triggers
-→ ~13,000 tokens always
 
 New v3 (progressive):
-→ Core SKILL.md: 150 lines (~1,500 tokens)
 → Workflow file: 300-600 lines (~3,000-6,000 tokens) - loaded on-demand
 → Total: 4,500-7,500 tokens (only what's needed)
 
@@ -443,7 +441,6 @@ If (c): 7k then stops (huge savings!)
 
 ---
 
-## Token Economics (Honest Assessment)
 
 ### The Reality
 
@@ -627,7 +624,7 @@ See results with YOUR EYES before proceeding.
 ### 5. Trust the Complexity Assessment
 
 When orchestrator says:
-- "This is SIMPLE (2/5), manual is 16x cheaper" → **Listen!**
+- "This is SIMPLE (2/5), manual approach" → **Listen!**
 - "This is COMPLEX (5/5), systematic planning prevents disasters" → **Proceed!**
 
 **Don't force cc10x on simple features.**
@@ -688,7 +685,7 @@ When orchestrator says:
 ### Q: What if I'm not sure about complexity?
 
 **A:** Run `/cc10x plan [feature]` - it will assess complexity and recommend:
-- "Skip cc10x, manual is 16x cheaper" (complexity 1-2)
+- "Skip cc10x, manual approach" (complexity 1-2)
 - "Show tradeoffs, your call" (complexity 3)
 - "Proceeding, cc10x valuable" (complexity 4-5)
 
@@ -698,7 +695,7 @@ When orchestrator says:
 
 **A:** Yes, but orchestrator will warn:
 ```
-⚠️ This is SIMPLE (2/5). Manual is 16x cheaper.
+⚠️ This is SIMPLE (2/5). Manual is more efficient.
 
 Real test showed cc10x WORSE for simple features.
 

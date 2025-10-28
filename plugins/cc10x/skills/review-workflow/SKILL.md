@@ -22,8 +22,7 @@ Triggered by user requests:
 **Pattern**: Hybrid (shared context + parallel subagents)
 **Skills Loaded**: 2 (risk-analysis, code-quality-patterns)
 **Subagents**: 3 (analysis-risk-security, analysis-performance-quality, analysis-ux-accessibility)
-**Token Cost**: ~15K tokens (30% savings)
-**Time**: ~2-3 minutes (3x faster)
+**Time**: ~2-3 minutes
 **Complexity Gate**: Skip for <100 lines (suggest manual review)
 **Timeout**: 10 minutes (return partial results if exceeded)
 **Fallback**: If subagent fails, continue with other subagents
@@ -43,11 +42,10 @@ Triggered by user requests:
 2. **If skipped (<100 lines):**
    ```
    "This code is small enough for manual review (< 100 lines).
-   Manual review: ~5k tokens, 10 min
-   cc10x review: ~15k tokens, 2-3 min
+   Consider manual review for simpler code.
 
    Recommendation: Use manual review for efficiency.
-   Want me to review anyway? (3x more tokens)"
+   Want me to review anyway?"
    ```
 
 3. **If proceeding (≥100 lines):**
@@ -92,7 +90,7 @@ Triggered by user requests:
 
 ## Phase 3: Dispatch 3 Subagents in PARALLEL
 
-**All 3 subagents run simultaneously (3x faster):**
+**All 3 subagents run simultaneously:**
 
 ### Subagent 1: analysis-risk-security
 **Loads**: risk-analysis, security-patterns
@@ -260,29 +258,6 @@ Want me to:
 
 ---
 
-## Token Economics
-
-**REVIEW workflow (OPTIMIZED):**
-- Orchestrator: 1.5k
-- This workflow: 2k
-- Shared context skills: 2 skills × 2k = 4k
-- Subagent 1 (risk-security): 4k
-- Subagent 2 (performance-quality): 4k
-- Subagent 3 (ux-accessibility): 4k
-- **Total: ~15k tokens (30% savings!)**
-
-**Comparison:**
-- Old: 22k tokens, 7 min
-- New: 15k tokens, 2-3 min
-- **Gain: 3x faster, 30% token savings**
-
-**Value:**
-- Catches issues before production
-- Prevents security vulnerabilities
-- Improves code quality
-- Ensures accessibility
-- Saves debugging time
-- **3x faster than before!**
 
 ---
 
@@ -411,4 +386,3 @@ This workflow provides **coordinated analysis** that:
 - **Suggests next workflow automatically**
 
 **Use before merge for production code!**
-

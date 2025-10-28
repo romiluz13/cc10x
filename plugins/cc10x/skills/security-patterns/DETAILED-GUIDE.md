@@ -245,7 +245,6 @@ app.post('/login', limiter, loginHandler);
 
 ---
 
-**Token Cost**: ~3000 tokens
 **Use**: When implementing security-critical features
 **Reference**: OWASP Top 10 2021
 

@@ -10,7 +10,7 @@ license: MIT
 
 ## Progressive Loading Stages
 
-### Stage 1: Metadata (startup - ~50 tokens)
+### Stage 1: Metadata
 
 **Domains Covered:**
 - **API Design**: RESTful principles, versioning, error handling, rate limiting
@@ -24,7 +24,7 @@ license: MIT
 
 ---
 
-### Stage 2: Quick Reference (triggered - ~500 tokens)
+### Stage 2: Quick Reference
 
 ## API Design Checklist
 
@@ -193,7 +193,7 @@ class CircuitBreaker {
 
 ---
 
-### Stage 3: Detailed Guide (on-demand - ~3000 tokens)
+### Stage 3: Detailed Guide
 
 ## API Design Best Practices
 
@@ -298,4 +298,3 @@ function withDataFetching(Component, url) {
 ---
 
 **Remember**: Good design prevents bugs, improves maintainability, and scales with your system.
-

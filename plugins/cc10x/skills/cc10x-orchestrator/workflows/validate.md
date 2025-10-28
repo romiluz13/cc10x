@@ -349,32 +349,6 @@ Project shows strong plan-code consistency:
 
 ---
 
-## Token Economics
-
-**Cost:** 20k-45k tokens depending on codebase size
-
-**Breakdown:**
-- Plan loading: 2-5k
-- Code scanning: 5-15k
-- Test verification: 3-10k
-- Risk validation: 5-10k
-- Report generation: 5-10k
-
-**Value:**
-- Catches plan drift before it becomes technical debt
-- Ensures requirements actually implemented
-- Verifies risk mitigations in place
-- Team accountability (did we do what we said?)
-
-**Worth it when:**
-- Team projects (alignment valuable)
-- Complex features (verify nothing missed)
-- Compliance requirements (documentation)
-
-**Skip when:**
-- Solo dev (you know what you built)
-- No plan exists (nothing to validate)
-- Already validated during BUILD workflow
 
 ---
 

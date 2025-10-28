@@ -1,6 +1,6 @@
 ---
 name: cc10x-orchestrator
-description: Systematic development orchestrator coordinating 4 core workflows and 21 domain skills. Use when you need comprehensive code review (multi-dimensional analysis), feature planning (architecture decisions, risk analysis), TDD implementation (parallel component building), or LOG FIRST debugging (parallel bug fixing). Automatically detects your intent from natural language (review, plan, build, debug) and orchestrates the right workflow with progressive skill loading. Hybrid architecture - shared context for analysis workflows, subagents for execution workflows (3x faster). Best for complex features (4-5 complexity: 500+ lines, 7+ files, novel patterns). Recommends manual approach for simple features (1-2 complexity). Review workflow always valuable (prevents security breaches). Say "review this code", "plan authentication", "build user registration", or "debug login issue" to activate. Honest positioning: costs 3-20x MORE tokens than manual, use when preventing mistakes justifies the cost.
+description: Systematic development orchestrator coordinating 4 core workflows and 21 domain skills. Use when you need comprehensive code review (multi-dimensional analysis), feature planning (architecture decisions, risk analysis), TDD implementation (parallel component building), or LOG FIRST debugging (parallel bug fixing). Automatically detects your intent from natural language (review, plan, build, debug) and orchestrates the right workflow. Best for complex features (4-5 complexity: 500+ lines, 7+ files, novel patterns). Say "review this code", "plan authentication", "build user registration", or "debug login issue" to activate.
 license: MIT
 ---
 
@@ -66,16 +66,13 @@ I STOP and warn you:
 ```
 ⚠️ STOP: This is SIMPLE (complexity 2/5)
 
-Token Economics:
-- Manual: 5k tokens, 30-60 min
-- cc10x: 80k tokens, similar time, verification required
-- Multiplier: 16x MORE tokens
+This is straightforward and may not require systematic analysis.
 
 Example: Rate limiting feature
-- Manual (using express-rate-limit): 5k tokens, works
-- cc10x: 100k tokens, needs verification
+- Consider implementing manually for simpler features
+- Use cc10x for review and complex features
 
-Recommendation: Implement manually. Use cc10x for review only.
+Recommendation: Consider manual approach for simple features.
 ```
 
 Then I ASK: "Continue anyway? (yes/no)"
@@ -144,51 +141,36 @@ I follow the instructions in the loaded workflow skill. The workflow tells me:
 
 ---
 
-## Progressive Loading Explained
+## Progressive Loading
 
 **Level 1 (Always Loaded):**
-- This file (200 lines, ~1.5k tokens)
-- Workflow skill metadata (4 workflows, ~1k tokens)
-- Skill metadata (21 skills, ~1k tokens)
-- **Total: ~3.5k tokens initial**
+- Orchestrator metadata
+- Workflow skill metadata (4 workflows)
+- Skill metadata (21 skills)
 
 **Level 2 (On-Demand):**
-- Workflow skill when needed (300-400 lines, ~2-3k tokens)
+- Workflow skill when needed
 - ONLY the workflow you requested
 
 **Level 3 (As-Needed):**
-- Domain skills when workflow needs them (200-2000 lines)
-- Subagents when dispatched (300-400 lines each)
+- Domain skills when workflow needs them
+- Subagents when dispatched
 - Progressive: Only relevant sections
-
-**Token Savings:**
-- Old monolith: 10k tokens always
-- New progressive: 3.5k initial + workflow on-demand
-- **Savings: 65% on unused workflows**
 
 ---
 
-## Honest Positioning
+## When to Use CC10X
 
-**I cost 3-20x MORE tokens than manual because:**
-- Systematic multi-phase analysis (not ad-hoc)
-- Multiple specialized agents (not single perspective)
-- Comprehensive risk assessment (7 dimensions)
-- Complete documentation (plans, manifests, strategies)
+**Best for:**
+- Complex features (4-5 complexity)
+- High-risk domains (auth, payments, data integrity)
+- Team coordination and alignment
+- Comprehensive code review
 
-**Worth it when:**
-- **Complexity 4-5:** One prevented architecture mistake pays for all planning
-- **High-risk domains:** Auth, payments, data integrity (security critical)
-- **Team coordination:** Shared understanding, alignment
-- **Review workflow:** ALWAYS worth it (prevents security breaches = infinite ROI)
-
-**Not worth it when:**
-- **Simple features (1-2):** Using libraries, obvious implementations
-- **Emergencies:** Production down (fix first, document later)
-- **Prototypes/MVPs:** Iterate fast first, systematize later
-- **Obvious bugs:** Typos, syntax errors (just fix it!)
-
-**I'll tell you when to skip me!**
+**Consider manual approach for:**
+- Simple features (1-2 complexity)
+- Obvious bugs (typos, syntax errors)
+- Quick fixes that don't need verification
 
 ---
 
@@ -199,9 +181,9 @@ I follow the instructions in the loaded workflow skill. The workflow tells me:
 **What happens:**
 
 1. **I detect:** REVIEW workflow needed
-2. **I load:** `review-workflow` skill (300 lines)
+2. **I load:** `review-workflow` skill
 3. **Workflow instructs me to load 6 skills in shared context:**
-   - risk-analysis (7 stages)
+   - risk-analysis
    - security-patterns
    - performance-patterns
    - ux-patterns
@@ -210,12 +192,6 @@ I follow the instructions in the loaded workflow skill. The workflow tells me:
 4. **I analyze:** Code from all 6 dimensions simultaneously
 5. **I compile:** All findings by severity (CRITICAL/IMPORTANT/NICE-TO-HAVE)
 6. **I return:** Comprehensive review report
-
-**Tokens used:**
-- Orchestrator: 1.5k (this file)
-- Review workflow: 2k (review-workflow skill)
-- Domain skills: 18k (6 skills × 3k)
-- **Total: ~22k tokens**
 
 ---
 
@@ -243,7 +219,6 @@ I follow the instructions in the loaded workflow skill. The workflow tells me:
 **Workflows load skills progressively:**
 - Only the skills they need
 - Only the sections relevant to their task
-- Real token savings via on-demand loading
 
 **Subagents load skills as needed:**
 - component-builder loads: test-driven-development, design-patterns, code-generation
@@ -257,7 +232,7 @@ I follow the instructions in the loaded workflow skill. The workflow tells me:
 
 **What I do:**
 - ✅ Execute ONLY the workflow you requested
-- ✅ Warn if task is too simple (waste of tokens)
+- ✅ Warn if task is too simple
 - ✅ Ask permission before proceeding with simple features
 - ✅ Offer additional help AFTER completing request
 - ✅ Let YOU decide next steps

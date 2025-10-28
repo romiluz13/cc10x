@@ -21,7 +21,6 @@ Dispatched by REVIEW workflow when analyzing code for:
 
 **Pattern**: Parallel execution (runs simultaneously with other subagents)  
 **Skills Loaded**: performance-patterns, code-quality-patterns  
-**Token Cost**: ~4k tokens  
 **Time**: ~2-3 minutes (parallel with others)  
 
 ---

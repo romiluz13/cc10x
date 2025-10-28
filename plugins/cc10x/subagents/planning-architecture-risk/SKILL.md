@@ -23,7 +23,6 @@ Dispatched by PLANNING workflow when planning features for:
 
 **Pattern**: Parallel execution (runs simultaneously with other planning subagent)  
 **Skills Loaded**: architecture-patterns, risk-analysis  
-**Token Cost**: ~8k tokens  
 **Time**: ~4-5 minutes (parallel with other subagent)  
 
 ---

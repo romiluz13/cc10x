@@ -121,7 +121,7 @@ Let's build a complete feature with intelligent orchestration.
 - Core: 3.5k tokens (always)
 - + Review workflow: 4k tokens (on-demand)
 - + Review agents: 7.5k tokens (parallel)
-- **Total: 15k instead of 30k+ (50% savings!)**
+- **Total: 15k instead of 30k+**
 
 ### Complexity Gate Example
 
@@ -134,10 +134,7 @@ Complexity: 2/5 (SIMPLE - just use express-rate-limit library)
 # Orchestrator warns:
 ⚠️ STOP: This is SIMPLE (2/5)
 
-Token Economics:
-- Manual: 5k tokens, 30 min (read library docs)
-- cc10x: 80k tokens, similar time, needs verification
-- Multiplier: 16x MORE tokens
+
 
 Recommendation: Implement manually. Use cc10x for review only.
 
@@ -244,7 +241,7 @@ Result: 50-75% token savings!
 **Orchestrator says:**
 ```
 ⚠️ This is SIMPLE (2/5)
-Manual is 16x cheaper.
+Manual is more efficient.
 Recommendation: Skip cc10x.
 ```
 
@@ -284,7 +281,7 @@ Proceeding...
 
 ### 1. Trust the Complexity Gate
 
-When orchestrator warns "manual is 16x cheaper" → **Listen!**
+When orchestrator warns "manual approach" → **Listen!**
 
 Simple features don't need systematic orchestration.
 

@@ -8,7 +8,7 @@ license: MIT
 
 ## Progressive Loading Stages
 
-### Stage 1: Metadata (startup - ~50 tokens)
+### Stage 1: Metadata
 - **Skill**: UX Patterns
 - **Purpose**: Ensure delightful, intuitive user experiences
 - **When**: UX analysis, interaction design review, usability testing
@@ -17,7 +17,7 @@ license: MIT
 
 ---
 
-### Stage 2: Quick Reference (triggered - ~500 tokens)
+### Stage 2: Quick Reference
 
 #### UX Quick Checks
 
@@ -98,7 +98,7 @@ catch (error) {
 
 ---
 
-### Stage 3: Detailed Guide (on-demand - ~2500 tokens)
+### Stage 3: Detailed Guide
 
 ## Core UX Principles
 

@@ -51,26 +51,20 @@ Workflows are located in `../skills/`:
 - **review-workflow**: Coordinated multi-dimensional code analysis
   - Loads: 6 skills (risk-analysis, security-patterns, performance-patterns, ux-patterns, accessibility-patterns, code-quality-patterns)
   - Pattern: Shared context (coordination needed)
-  - Token cost: ~22K
 
 - **planning-workflow**: Comprehensive feature planning
   - Loads: 7 skills (feature-planning, requirements-analysis, architecture-patterns, api-design-patterns, component-design-patterns, risk-analysis, deployment-patterns)
   - Pattern: Shared context (sequential phases)
-  - Token cost: ~35K
 
 - **build-workflow**: Parallel component building with subagents
   - Loads: 5 skills (feature-planning, requirements-analysis, component-design-patterns, code-generation, test-driven-development)
   - Dispatches: component-builder subagents in parallel
   - Pattern: Hybrid (analysis in shared context, execution via subagents)
-  - Token cost: ~51K
-  - Speed: 3x faster than sequential
 
 - **debug-workflow**: Parallel bug fixing with subagents
   - Loads: 4 skills (systematic-debugging, log-analysis-patterns, root-cause-analysis, test-driven-development)
   - Dispatches: bug-investigator subagents in parallel
   - Pattern: Hybrid (related bugs in shared context, independent bugs via subagents)
-  - Token cost: ~45K
-  - Speed: 3x faster than sequential
 
 ## Migration Notes
 
@@ -92,22 +86,19 @@ The system now uses:
 2. **Skills** for domain knowledge and patterns
 3. **Subagents** for parallel execution of independent tasks
 
-## Efficiency Improvements
+## Architecture Improvements
 
 ### REVIEW Workflow
-- **Before**: 11 agents + 20 skills = ~30K tokens
-- **After**: 6 skills in shared context = ~22K tokens
-- **Savings**: 27% token reduction
+- Coordinated multi-dimensional analysis
+- 6 skills in shared context
 
 ### BUILD Workflow
-- **Before**: Sequential component building = 15 minutes
-- **After**: Parallel subagents = 5 minutes
-- **Speed**: 3x faster
+- Parallel component building
+- Faster execution
 
 ### DEBUG Workflow
-- **Before**: Sequential bug fixing = 15 minutes
-- **After**: Parallel subagents = 5 minutes
-- **Speed**: 3x faster
+- Parallel bug fixing
+- Faster execution
 
 ## Architecture Benefits
 

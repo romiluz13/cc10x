@@ -21,7 +21,6 @@ Dispatched by REVIEW workflow when analyzing code for:
 
 **Pattern**: Parallel execution (runs simultaneously with other subagents)  
 **Skills Loaded**: risk-analysis, security-patterns  
-**Token Cost**: ~4k tokens  
 **Time**: ~2-3 minutes (parallel with others)  
 
 ---

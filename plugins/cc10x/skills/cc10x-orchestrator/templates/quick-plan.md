@@ -154,24 +154,6 @@ I've created this quick plan with intelligent defaults based on common patterns 
 
 ---
 
-## Token Economics
-
-**Quick plan (so far):** 3-5k tokens
-
-**If (a) proceed:**
-- Total: 33-35k tokens (quick plan 5k + full planning 30k)
-- vs manual: ~15k tokens
-- **2-3x MORE but gets comprehensive planning**
-
-**If (b) customize:**
-- Total: 43-45k tokens (quick plan 5k + questions 5k + refined plan 35k)
-- vs manual: ~15k tokens
-- **3x MORE but plan customized to preferences**
-
-**If (c) manual:**
-- Total: 5-7k tokens (quick plan 5k + guidance 2k)
-- vs manual: ~15k tokens
-- **Actually CHEAPER because we stop here!**
 
 ---
 

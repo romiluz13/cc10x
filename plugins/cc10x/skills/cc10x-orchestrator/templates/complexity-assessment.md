@@ -193,19 +193,7 @@ Team adjustment: [+/-]
 
 ---
 
-### Token Economics
-
-**cc10x planning:** ~[X]k tokens
-**cc10x building:** ~[Y]k tokens
-**Total:** ~[Z]k tokens
-
-**Manual equivalent:** ~[X]k tokens
-
-**Multiplier:** [Z]x MORE with cc10x
-
-**Worth it because:**
-[Specific value for THIS feature, or "NOT worth it - manual better"]
-
+#
 ---
 
 ### Decision
