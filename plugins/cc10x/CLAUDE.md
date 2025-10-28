@@ -358,10 +358,8 @@ Old v2 (monolithic):
 → ALL loaded when skill triggers
 
 New v3 (progressive):
-→ Workflow file: 300-600 lines (~3,000-6,000 tokens) - loaded on-demand
-→ Total: 4,500-7,500 tokens (only what's needed)
-
-Savings: 50-75%!
+→ Workflow file: 300-600 lines - loaded on-demand
+→ Only loads what's needed
 ```
 
 **How it works:**
