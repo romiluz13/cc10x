@@ -40,8 +40,6 @@ Output: Comprehensive Plan → Ready for /feature-build
 
 ## Phase 1: Understand the Feature
 
-For detailed Phase 1 instructions, see [phase-1-requirements.md](phase-1-requirements.md)
-
 **Quick Summary**:
 - Clarify requirements and user needs
 - Define user stories and acceptance criteria
@@ -51,8 +49,6 @@ For detailed Phase 1 instructions, see [phase-1-requirements.md](phase-1-require
 ---
 
 ## Phase 2: Design Architecture
-
-For detailed Phase 2 instructions, see [phase-2-architecture.md](phase-2-architecture.md)
 
 **Quick Summary**:
 - Make strategic technical decisions
@@ -65,8 +61,6 @@ For detailed Phase 2 instructions, see [phase-2-architecture.md](phase-2-archite
 
 ## Phase 3: Break Down Components
 
-For detailed Phase 3 instructions, see [phase-3-components.md](phase-3-components.md)
-
 **Quick Summary**:
 - Identify what needs to be built
 - List frontend components and backend services
@@ -76,8 +70,6 @@ For detailed Phase 3 instructions, see [phase-3-components.md](phase-3-component
 ---
 
 ## Phase 4: Define APIs & Data Models
-
-For detailed Phase 4 instructions, see [phase-4-contracts.md](phase-4-contracts.md)
 
 **Quick Summary**:
 - Define API endpoints and contracts
@@ -89,8 +81,6 @@ For detailed Phase 4 instructions, see [phase-4-contracts.md](phase-4-contracts.
 
 ## Phase 5: Identify Edge Cases
 
-For detailed Phase 5 instructions, see [phase-5-edge-cases.md](phase-5-edge-cases.md)
-
 **Quick Summary**:
 - Identify potential bugs and edge cases
 - Plan error handling strategies
@@ -100,8 +90,6 @@ For detailed Phase 5 instructions, see [phase-5-edge-cases.md](phase-5-edge-case
 ---
 
 ## Phase 6: Plan Testing Strategy
-
-For detailed Phase 6 instructions, see [phase-6-testing.md](phase-6-testing.md)
 
 **Quick Summary**:
 - Plan unit, integration, and E2E tests
@@ -119,22 +107,22 @@ The plan should be saved to `.claude/docs/checklist-[feature-name].md` with this
 # Feature Plan: [Feature Name]
 
 ## Phase 1: Requirements
-[Summary from phase-1-requirements.md]
+[Requirements analysis and user stories]
 
 ## Phase 2: Architecture
-[Summary from phase-2-architecture.md]
+[Architecture design and technical decisions]
 
 ## Phase 3: Components
-[Summary from phase-3-components.md]
+[Component breakdown and implementation plan]
 
 ## Phase 4: APIs & Data
-[Summary from phase-4-contracts.md]
+[API contracts and data models]
 
 ## Phase 5: Edge Cases
-[Summary from phase-5-edge-cases.md]
+[Edge cases and error handling]
 
 ## Phase 6: Testing
-[Summary from phase-6-testing.md]
+[Testing strategy and coverage]
 
 ## Implementation Checklist
 - [ ] Set up project structure
