@@ -215,7 +215,10 @@ display_stats() {
     # Count components
     local commands_count agents_count skills_count
     commands_count=$(find commands -name "*.md" 2>/dev/null | wc -l | tr -d ' ')
-    agents_count=$(find agents -name "*.md" 2>/dev/null | wc -l | tr -d ' ')
+    agents_count=$(( \
+        $(find agents -name "*.md" 2>/dev/null | wc -l | tr -d ' ') + \
+        $(find subagents -name "*.md" 2>/dev/null | wc -l | tr -d ' ') \
+    ))
     skills_count=$(find skills -name "SKILL.md" 2>/dev/null | wc -l | tr -d ' ')
     
     echo "  Commands: $commands_count loaded"
@@ -225,9 +228,42 @@ display_stats() {
 }
 
 # Main execution
+read_hook_input() {
+    if [ -t 0 ]; then
+        HOOK_INPUT=""
+        return 0
+    fi
+    HOOK_INPUT=$(cat || true)
+}
+
+get_hook_field() {
+    local field="$1"
+    if [ -z "${HOOK_INPUT:-}" ]; then
+        echo ""
+        return 0
+    fi
+    echo "$HOOK_INPUT" | jq -r ".${field} // empty" 2>/dev/null || echo ""
+}
+
+load_latest_snapshot() {
+    if [ ! -d "$SNAPSHOT_DIR" ]; then
+        echo ""
+        return 0
+    fi
+    local latest
+    latest=$(ls -1t "$SNAPSHOT_DIR"/snapshot-*.md 2>/dev/null | head -n1 || true)
+    if [ -n "$latest" ] && [ -f "$latest" ]; then
+        cat "$latest"
+    else
+        echo ""
+    fi
+}
+
 main() {
     # Initialize session
     initialize_session
+    # Read hook input (if any)
+    read_hook_input
     
     # Generate session ID
     local session_id
@@ -251,6 +287,17 @@ main() {
     
     # Display stats
     display_stats
+
+    # If resuming after compaction, add latest snapshot to context
+    local source snapshot_content
+    source=$(get_hook_field "source")
+    if [ "$source" = "compact" ]; then
+        snapshot_content=$(load_latest_snapshot)
+        if [ -n "$snapshot_content" ]; then
+            printf '{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":%s}}\n' \
+                "$(printf %s "$snapshot_content" | jq -Rs .)"
+        fi
+    fi
 
     # Final message
     log "INFO" "Session start complete"

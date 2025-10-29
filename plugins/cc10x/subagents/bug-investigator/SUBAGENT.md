@@ -1,6 +1,7 @@
 ---
 name: bug-investigator
 description: Investigates and fixes a single bug using systematic debugging. Loads systematic-debugging, log-analysis-patterns, root-cause-analysis, test-driven-development, and verification-before-completion.
+tools: Read, Edit, Write, Bash, Grep, Glob
 ---
 
 # Bug Investigator

@@ -1,7 +1,7 @@
 ---
 name: review-workflow
 description: Coordinates the review workflow: loads domain skills, runs bundled analysis subagents, and compiles an evidence-backed report.
-allowed-tools: Read, Grep, Glob
+allowed-tools: Read, Grep, Glob, Task, Bash
 ---
 
 # Review Workflow

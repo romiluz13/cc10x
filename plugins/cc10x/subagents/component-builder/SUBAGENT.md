@@ -1,6 +1,7 @@
 ---
 name: component-builder
 description: Builds a single component or unit of work using strict TDD. Loads component-design-patterns, code-generation, test-driven-development, and verification-before-completion skills.
+tools: Read, Edit, Write, Bash
 ---
 
 # Component Builder

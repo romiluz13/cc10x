@@ -1,6 +1,7 @@
 ---
 name: planning-design-deployment
 description: Produces API, component, testing, and deployment plans for the planning workflow. Loads api-design-patterns, component-design-patterns, deployment-patterns, and verification-before-completion.
+tools: Read, Grep, Glob
 ---
 
 # Planning - Design & Deployment

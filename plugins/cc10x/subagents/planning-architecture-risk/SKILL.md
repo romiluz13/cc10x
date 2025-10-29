@@ -1,6 +1,7 @@
 ---
 name: planning-architecture-risk
 description: Designs system architecture and assesses risks for the planning workflow. Loads architecture-patterns and risk-analysis.
+tools: Read, Grep, Glob
 ---
 
 # Planning - Architecture & Risk

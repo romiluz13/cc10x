@@ -1,6 +1,7 @@
 ---
 name: analysis-ux-accessibility
 description: Reviewer focusing on user experience and accessibility concerns. Loads ux-patterns and accessibility-patterns.
+tools: Read, Grep, Glob
 ---
 
 # Analysis - UX & Accessibility

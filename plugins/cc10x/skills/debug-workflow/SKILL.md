@@ -1,7 +1,7 @@
 ---
 name: debug-workflow
 description: Coordinates systematic debugging by loading investigation skills and delegating to bug-investigator, code-reviewer, and integration-verifier sequentially.
-allowed-tools: Read, Grep, Glob
+allowed-tools: Read, Grep, Glob, Task, Bash
 ---
 
 # Debug Workflow

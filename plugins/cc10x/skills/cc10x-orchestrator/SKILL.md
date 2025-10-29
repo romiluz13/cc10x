@@ -26,7 +26,7 @@ If a user combines intents (for example "review then plan"), run each workflow i
 1. **Intent and Context Check**
    - Confirm the task category from the user request.
    - Validate inputs (files, directories, questions). Ask for clarifications when context is missing.
-   - Score complexity on a 1-5 scale. When the score is <=2 for plan/build, present the lightweight-warning script and wait for the user's decision.
+   - Score complexity on a 1-5 scale. When the score is <=2 for plan/build, run Bash: `${CLAUDE_PLUGIN_ROOT}/scripts/lightweight-warning.sh` and wait for the user's explicit yes/no decision before proceeding.
 
 2. **Policy Enforcement**
    - Do not auto-chain workflows. Offer optional follow-ups only after delivering the requested result.

@@ -1,7 +1,7 @@
 ---
 name: planning-workflow
 description: Coordinates the planning workflow by running requirements intake and planning subagents, then compiling a complete plan.
-allowed-tools: Read, Grep, Glob
+allowed-tools: Read, Grep, Glob, Task, Bash
 ---
 
 # Planning Workflow

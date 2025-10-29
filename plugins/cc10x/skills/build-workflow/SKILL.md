@@ -1,7 +1,7 @@
 ---
 name: build-workflow
 description: Coordinates feature implementation via TDD, review, and integration verification. Loads shared skills and invokes component-builder, code-reviewer, and integration-verifier sequentially.
-allowed-tools: Read, Grep, Glob
+allowed-tools: Read, Grep, Glob, Task, Bash
 ---
 
 # Build Workflow

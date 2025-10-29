@@ -1,6 +1,7 @@
 ---
 name: analysis-performance-quality
 description: Reviewer that inspects the provided code scope for performance risks and code-quality issues. Loads performance-patterns and code-quality-patterns. Returns findings with evidence and remediation guidance.
+tools: Read, Grep, Glob
 ---
 
 # Analysis - Performance & Quality

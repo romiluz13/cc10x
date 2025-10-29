@@ -1,6 +1,7 @@
 ---
 name: analysis-risk-security
 description: Reviewer that analyses the target scope for security vulnerabilities and architectural risks. Loads risk-analysis and security-patterns.
+tools: Read, Grep, Glob
 ---
 
 # Analysis - Risk & Security
