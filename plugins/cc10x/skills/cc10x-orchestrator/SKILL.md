@@ -10,7 +10,8 @@ allowed-tools: Read, Grep, Glob, Bash, Task
 Coordinate the four cc10x workflows using the official Anthropic model-invoked skills pattern. The orchestrator:
 - Identifies the requested outcome (review, plan, build, debug).
 - Loads only workflow skills that exist in `plugins/cc10x/skills/`.
-- Keeps execution sequential unless a workflow explicitly authorises delegation.
+- Analyzes dependencies and parallelizes subagents where safe (read-only, independent, isolated contexts).
+- Falls back to sequential execution for operations with dependencies or shared state.
 - Prompts for explicit user approval before continuing past any complexity gates.
 - Routes all completion claims through the `verification-before-completion` skill.
 
@@ -60,6 +61,43 @@ If a user combines intents (for example "review then plan"), run each workflow i
    - Ask user: "Detected external dependencies: {list}. Check cache or fetch documentation? (yes/no)"
    
    - Score complexity on a 1-5 scale using the expanded Complexity Rubric below. When the score is <=2 for plan/build, run Bash: `${CLAUDE_PLUGIN_ROOT}/scripts/lightweight-warning.sh` and wait for the user's explicit yes/no decision before proceeding.
+
+## Skill Loading Optimization
+
+**Unified Parallel Loading Strategy**:
+
+1. **Identify Skill Dependencies**:
+   - Map skill dependencies: skill A → skill B (B requires A)
+   - Check if skills are independent (no dependencies)
+
+2. **Load Strategy**:
+   
+   **PARALLEL Loading**:
+   - ✅ Independent skills (no dependencies) → Load simultaneously
+   - ✅ Faster initialization (all skills ready together)
+   
+   **SEQUENTIAL Loading**:
+   - ❌ Skills with dependencies → Load in topological order
+   - ❌ Dependent skill waits for prerequisite
+
+3. **Implementation**:
+   ```
+   Example: Review workflow requires 8 skills
+   
+   Dependency Analysis:
+   - risk-analysis: no deps → Parallel group 1
+   - security-patterns: no deps → Parallel group 1
+   - performance-patterns: no deps → Parallel group 1
+   - code-quality-patterns: no deps → Parallel group 1
+   - ux-patterns: no deps → Parallel group 1
+   - accessibility-patterns: no deps → Parallel group 1
+   - memory-tool-integration: no deps → Parallel group 1
+   - web-fetch-integration: no deps → Parallel group 1
+   
+   Load all 8 skills in parallel (no dependencies)
+   ```
+
+**Update all workflow Phase 1 sections** to use "Load all independent skills in parallel" instead of mixed strategies.
 
 2. **Workflow Existence Verification**
    - Before loading any workflow skill, verify it exists: Read first 100 chars of `plugins/cc10x/skills/{workflow-name}/SKILL.md`.
@@ -170,6 +208,57 @@ If a user combines intents (for example "review then plan"), run each workflow i
    - Never fabricate outputs for missing agents or skipped steps.
    - Wait for explicit user decision before proceeding (do not assume).
    - After timeout, proceed with default action and log the decision.
+
+## Parallel Execution Strategy
+
+**Dependency Analysis Protocol**:
+1. **Build Dependency Graph**: For each workflow phase:
+   - Identify all operations (subagents, skills, components, bugs)
+   - Map dependencies: operation A → operation B (B requires A's output)
+   - Map conflicts: operation A ⚠️ operation B (shared state, same files)
+   
+2. **Execution Mode Selection**:
+   
+   **PARALLEL (Safe)**:
+   - ✅ No output dependencies (operation B doesn't need operation A's output)
+   - ✅ Read-only operations (no state mutations)
+   - ✅ Isolated contexts (separate subagent contexts)
+   - ✅ Independent data (different files/components/bugs)
+   - ✅ Validation after each (prevents error propagation)
+   
+   **SEQUENTIAL (Required)**:
+   - ❌ Output → Input dependency (A's output feeds B's input)
+   - ❌ State mutation → Read dependency (A mutates, B reads)
+   - ❌ Validation gates (must wait for validation)
+   - ❌ Feedback loops (B can trigger return to A)
+   - ❌ Shared state (both modify same data)
+
+3. **Conflict Prevention Rules**:
+   - Read-only subagents analyzing SAME code → PARALLEL (safe)
+   - Subagents mutating DIFFERENT files → PARALLEL (safe)
+   - Subagents with output dependencies → SEQUENTIAL (required)
+   - Subagents in same workflow phase → Check dependencies first
+
+4. **Fallback Strategy**:
+   - If parallel execution fails → Automatically fallback to sequential
+   - Log fallback reason for debugging
+   - Continue with remaining operations
+
+## Parallel Execution Safety Validation
+
+**Conflict Detection Checklist** (before parallel execution):
+- [ ] No output dependencies (operation B doesn't need A's output)
+- [ ] No shared state mutations (operations don't modify same data)
+- [ ] Read-only operations (no write conflicts)
+- [ ] Isolated contexts (separate subagent contexts)
+- [ ] Validation gates (validation occurs after all complete)
+- [ ] Error isolation (failure of one doesn't corrupt others)
+
+**Fallback Triggers**:
+- Any conflict detected → Automatically fallback to sequential
+- Parallel execution fails → Retry sequentially
+- User preference for sequential → Honor user choice
+- Complexity threshold exceeded → Sequential for safety
 
 ## Complexity Gate (Plan/Build)
 If the complexity score is 2 or lower, warn that cc10x is optimized for higher-risk work and ask whether to proceed (yes/no). Pause until the user answers. Abort if the answer is "no" or no answer is provided.

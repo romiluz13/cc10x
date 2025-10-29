@@ -47,6 +47,39 @@
 - If scope spans multiple independent failures, queue them and tackle serially unless the user approves separate runs.
 - If bugs are NOT independent (related failures), investigate together as single root cause may affect multiple symptoms.
 
+**Bug Independence Analysis**:
+1. **Analyze Bug Relationships**:
+   - Check if bugs share:
+     - Same files (mutations conflict)
+     - Same root cause (investigation overlap)
+     - Same test suites (verification conflict)
+     - Dependent fixes (fix A enables fix B)
+   
+2. **Execution Strategy**:
+   
+   **PARALLEL (Safe for Independent Bugs)**:
+   - ✅ Different files (no mutation conflicts)
+   - ✅ Different root causes (independent investigations)
+   - ✅ Different test suites (no verification overlap)
+   - ✅ Isolated subagent contexts
+   
+   **SEQUENTIAL (Required for Related Bugs)**:
+   - ❌ Same files (mutation conflicts)
+   - ❌ Same root cause (investigation overlap)
+   - ❌ Dependent fixes (fix B needs fix A)
+   
+3. **Bug Execution Plan**:
+   ```
+   Bug Independence Graph:
+   - Bug 1: file X, cause A → Independent
+   - Bug 2: file Y, cause B → Independent (parallel with Bug 1)
+   - Bug 3: file X, cause A → Related to Bug 1 (sequential after Bug 1)
+   
+   Execution Order:
+   Phase 1 (Parallel): Bug 1 + Bug 2 (independent)
+   Phase 2 (Sequential): Bug 3 (after Bug 1 completes, same file/root cause)
+   ```
+
 **Workflow State Persistence** (Checkpoint System):
 - **Checkpoint After Each Phase**: Save workflow state to `.claude/memory/workflow_state/debug_{timestamp}.json`
 - **Checkpoint Format**:
@@ -88,6 +121,12 @@
 - `memory-tool-integration` (filesystem-based memory always available)
 - `web-fetch-integration` (if external resources needed)
 
+**Skill Loading Strategy**:
+- Core 6 skills are independent (no dependencies between them)
+- **Load all core skills in parallel** for faster initialization
+- Conditional skills (performance-patterns, security-patterns, integration-patterns) added based on bug type, load in parallel when needed
+- If conditional skill needed (web-fetch-integration), load conditionally but still in parallel with others
+
 **Skill Loading Verification Protocol**:
 For each skill above:
 1. Read first 100 chars of `plugins/cc10x/skills/{skill-name}/SKILL.md` to verify file exists
@@ -105,6 +144,12 @@ For each skill above:
 - For integration bugs: Also load `integration-patterns`
 
 ## Phase 2 - Bug Investigation Loop
+
+**Per-Bug Subagent Sequence** (ALWAYS SEQUENTIAL):
+- bug-investigator → regression test → code-reviewer → integration-verifier
+- Must remain sequential (each needs previous output)
+- Parallelization applies BETWEEN bugs, not WITHIN bug investigation
+
 For each identified bug:
 
 **When to Invoke Subagents**:

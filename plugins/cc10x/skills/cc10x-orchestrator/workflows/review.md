@@ -72,6 +72,11 @@
 - `memory-tool-integration` (filesystem-based memory always available)
 - `web-fetch-integration` (if external standards needed)
 
+**Skill Loading Strategy**:
+- All 8 skills are independent (no dependencies between them)
+- **Load all skills in parallel** for faster initialization
+- If conditional skill needed (web-fetch-integration), load conditionally but still in parallel with others
+
 **Skill Loading Verification Protocol**:
 For each skill above:
 1. Read first 100 chars of `plugins/cc10x/skills/{skill-name}/SKILL.md` to verify file exists
@@ -103,19 +108,41 @@ For each skill above:
 - **SKIP** - User explicitly skips: If user says "skip review" or "quick check only" → Document in Actions Taken and skip subagent invocation
 - **SKIP** - No code files: If scope is empty or contains no code files → Report: "No code files in scope. Subagent analysis skipped."
 
-**Subagent Selection Logic** (avoid conflicts):
-- **Security-focused request** → Invoke `analysis-risk-security` ONLY (skip others if not relevant)
-- **Performance-focused request** → Invoke `analysis-performance-quality` ONLY (skip others if not relevant)
-- **UX-focused request** → Invoke `analysis-ux-accessibility` ONLY (skip others if not relevant)
-- **General/comprehensive review** → Invoke all 3 sequentially (default behavior)
+**Subagent Selection & Execution Strategy**:
 
-**Sequential Execution** (no conflicts):
-Run the selected subagents one after another (no simulated parallel execution):
-1. `analysis-risk-security` (if security review needed or general review)
-2. `analysis-performance-quality` (if performance review needed or general review)
-3. `analysis-ux-accessibility` (if UX review needed or general review)
+**Step 1: Request Focus Detection**:
+- Scan user request for focus keywords:
+  - "security" or "vulnerabilities" → Security-focused
+  - "performance" or "optimization" → Performance-focused
+  - "UX" or "accessibility" → UX/Accessibility-focused
+  - General "review" or "audit" → Comprehensive review
 
-For each subagent, pass the scoped files and relevant user notes. Require every subagent to produce:
+**Step 2: Conditional Subagent Selection**:
+- **IF focused request** (security/performance/UX mentioned):
+  - Invoke ONLY the relevant subagent:
+    - Security-focused → `analysis-risk-security` ONLY (skip others if not relevant)
+    - Performance-focused → `analysis-performance-quality` ONLY (skip others if not relevant)
+    - UX-focused → `analysis-ux-accessibility` ONLY (skip others if not relevant)
+  
+- **IF general request** (comprehensive review):
+  - Dependency Analysis:
+    - All 3 subagents: Read-only operations ✓
+    - All 3 subagents: Analyze same code scope ✓
+    - All 3 subagents: No output dependencies ✓
+    - All 3 subagents: Isolated contexts (separate subagent) ✓
+    - Conclusion: **SAFE FOR PARALLEL EXECUTION**
+  
+  - Invoke all 3 subagents **IN PARALLEL**:
+    ```
+    Parallel Execution:
+    ├─ analysis-risk-security (concurrent)
+    ├─ analysis-performance-quality (concurrent)
+    └─ analysis-ux-accessibility (concurrent)
+    ```
+  
+- **Default behavior** (general/comprehensive review): Invoke all 3 in parallel for optimal performance
+
+For each subagent (parallel or single), pass the scoped files and relevant user notes. Require every subagent to produce:
 - Findings grouped by severity (critical, high, medium, low).
 - File references including path and line numbers.
 - Specific remediation steps tied to the skill guidance that surfaced them.
@@ -147,6 +174,20 @@ For each subagent, pass the scoped files and relevant user notes. Require every 
 - If subagent returns no findings, this may be normal (clean code) or suspicious (subagent didn't analyze)
 - Verify: Did subagent analyze the correct scope? Check subagent output for confirmation
 - If suspicious: Ask user "Subagent '{name}' found no issues. Is this expected, or should I investigate?"
+
+**Parallel Execution Safety Guarantees**:
+- Each subagent operates in isolated context (Claude subagent model)
+- All subagents are read-only (Read, Grep, Glob tools only)
+- No state mutations (analyzing same code, not modifying)
+- No output dependencies (each produces independent findings)
+- Validation occurs after all complete (prevents error propagation)
+- Conflict resolution handles disagreements (synthesis phase)
+
+**Parallel Execution Fallback**:
+- If any subagent fails during parallel execution:
+  - Log failure and continue with successful subagents
+  - Retry failed subagent sequentially
+  - Merge partial results in synthesis
 
 ## Phase 3 - Synthesis
 

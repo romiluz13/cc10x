@@ -71,6 +71,11 @@
 - `memory-tool-integration` (filesystem-based memory always available)
 - `web-fetch-integration` (if external docs needed)
 
+**Skill Loading Strategy**:
+- All 6 skills are independent (no dependencies between them)
+- **Load all skills in parallel** for faster initialization
+- If conditional skill needed (web-fetch-integration), load conditionally but still in parallel with others
+
 **Memory Integration** (optimized):
 - **Load Preferences**: Query `.claude/memory/preferences.json` for build preferences (if exists)
 - **Retrieve Build Patterns**: Check `.claude/memory/patterns.json` for component_orders matching task type
@@ -128,6 +133,37 @@ BEFORE creating component queue:
 5. If no dependencies, proceed with user-specified order or logical grouping
 6. **Mark dependencies**: Store dependency graph: `{component: [dependencies]}` for failure cascading
 
+**Component Execution Strategy**:
+1. **Build Dependency Graph** (already exists above):
+   - Map: `{component: [dependencies]}`
+   - Identify independent components (no dependencies on each other)
+   
+2. **Execution Mode Selection**:
+   
+   **PARALLEL (Safe for Independent Components)**:
+   - ✅ Different components (no shared code)
+   - ✅ Isolated subagent contexts (separate execution)
+   - ✅ No dependencies (component A doesn't need component B)
+   - ✅ Validation per component (prevents cascade)
+   
+   **SEQUENTIAL (Required for Dependent Components)**:
+   - ❌ Component depends on another component
+   - ❌ Shared code or interfaces
+   - ❌ Integration dependencies
+   
+3. **Component Execution Plan**:
+   ```
+   Dependency Graph Analysis:
+   - Component A: no deps → Can start immediately
+   - Component B: no deps → Can start immediately (parallel with A)
+   - Component C: depends on A → Must wait for A
+   - Component D: depends on B → Must wait for B
+   
+   Execution Order:
+   Phase 1 (Parallel): A + B (independent, execute simultaneously)
+   Phase 2 (Sequential): C (after A completes), D (after B completes)
+   ```
+
 **Component Failure Cascading Logic**:
 - **Failure Detection**: If component fails (component-builder fails, blocking review feedback, integration failure):
   1. Mark component status: `{component_name}: FAILED` with reason
@@ -150,13 +186,20 @@ BEFORE creating component queue:
   5. **Wait for User Decision**: Don't proceed until user chooses path
   6. **Documentation**: Log failure cascade in Actions Taken: "Component 1 failed → Component 2, 3 blocked"
 
-**Sequential Execution Policy**:
-- Process components sequentially without overlap
-- If user requests parallel runs, confirm scope and handle as separate sequential passes
-- Document component order in Actions Taken section
+**Execution Policy**:
+- Independent components (no dependencies) → Execute in parallel
+- Dependent components → Execute sequentially after dependencies complete
+- If user requests explicit sequential execution, honor user preference
+- Document component execution order (parallel groups, sequential dependencies) in Actions Taken section
 - **Skip blocked components** until dependencies resolved
 
 ## Phase 3 - Component Execution Loop
+
+**Per-Component Subagent Sequence** (ALWAYS SEQUENTIAL):
+- component-builder → code-reviewer → integration-verifier
+- Must remain sequential (reviewer needs builder output, verifier needs reviewer approval)
+- Parallelization applies BETWEEN components, not WITHIN component
+
 For every component:
 
 **When to Invoke Subagents**:
