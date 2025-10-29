@@ -242,7 +242,12 @@ get_hook_field() {
         echo ""
         return 0
     fi
-    echo "$HOOK_INPUT" | jq -r ".${field} // empty" 2>/dev/null || echo ""
+    if command -v jq >/dev/null 2>&1; then
+        echo "$HOOK_INPUT" | jq -r ".${field} // empty" 2>/dev/null || echo ""
+    else
+        # Fallback: naive parse for simple top-level string fields
+        echo "$HOOK_INPUT" | sed -n "s/.*\"${field}\"[[:space:]]*:[[:space:]]*\"\(.*\)\".*/\1/p" | head -n1
+    fi
 }
 
 load_latest_snapshot() {
@@ -264,7 +269,25 @@ main() {
     initialize_session
     # Read hook input (if any)
     read_hook_input
-    
+
+    # If resuming after compaction, emit JSON additionalContext ONLY and exit
+    local source snapshot_content
+    source=$(get_hook_field "source")
+    if [ "$source" = "compact" ]; then
+        snapshot_content=$(load_latest_snapshot)
+        if [ -n "$snapshot_content" ]; then
+            # Prefer jq for JSON string escape; fallback to Python if jq not available
+            if command -v jq >/dev/null 2>&1; then
+                printf '{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":%s}}\n' \
+                    "$(printf %s "$snapshot_content" | jq -Rs .)"
+            else
+                printf '{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":%s}}\n' \
+                    "$(printf %s "$snapshot_content" | python -c 'import sys,json;print(json.dumps(sys.stdin.read()))')"
+            fi
+        fi
+        return 0
+    fi
+
     # Generate session ID
     local session_id
     session_id=$(generate_session_id)
@@ -287,17 +310,6 @@ main() {
     
     # Display stats
     display_stats
-
-    # If resuming after compaction, add latest snapshot to context
-    local source snapshot_content
-    source=$(get_hook_field "source")
-    if [ "$source" = "compact" ]; then
-        snapshot_content=$(load_latest_snapshot)
-        if [ -n "$snapshot_content" ]; then
-            printf '{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":%s}}\n' \
-                "$(printf %s "$snapshot_content" | jq -Rs .)"
-        fi
-    fi
 
     # Final message
     log "INFO" "Session start complete"

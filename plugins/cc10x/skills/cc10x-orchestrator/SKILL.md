@@ -19,6 +19,7 @@ Coordinate the four cc10x workflows using the official Anthropic model-invoked s
 - **plan** -> `planning-workflow`
 - **build** -> `build-workflow`
 - **debug** -> `debug-workflow`
+- **validate** -> `VALIDATION workflow` (see `workflows/validate.md`)
 
 If a user combines intents (for example "review then plan"), run each workflow in the order requested and confirm between phases. Never promise simultaneous execution or reference agents that are not bundled with the plugin.
 
@@ -37,6 +38,9 @@ If a user combines intents (for example "review then plan"), run each workflow i
    - Load the workflow skill with `Read` (progressive disclosure Level 2).
    - Follow workflow instructions exactly. Workflows now reference only real subagents and skills.
    - Record which domain skills are invoked so results can point to specific guidance files.
+
+### Tool Access Precedence
+- When multiple skills are active, the orchestrator/workflow tool set governs delegation and verification. Domain skills may restrict themselves (e.g., Read/Grep/Glob), but they do not prevent the orchestrator/workflow from using `Task` or `Bash` to delegate/verify.
 
 4. **Result Compilation**
    - Summarise findings with severity or priority (high/medium/low) based on evidence.
@@ -61,6 +65,16 @@ If the complexity score is 2 or lower, warn that cc10x is optimized for higher-r
 - Reviews must cite file paths and line numbers.
 - Planning, build, and debug workflows must run the relevant verification commands before claiming completion.
 - For every success statement, include a short "Verification Summary" that lists commands run, exit codes, and artefacts.
+
+## Final Report - Output Format (REQUIRED)
+Produce a consistent, top-level report for the requested workflow:
+
+1) Executive Summary (2–3 sentences)
+2) Actions Taken (key steps, tools used, subagents invoked)
+3) Findings / Decisions (by category, with file:line citations where applicable)
+4) Verification Summary (commands → exit codes, artefacts)
+5) Recommendations / Next Steps (prioritized)
+6) Open Questions / Assumptions (if any)
 
 ## References
 - Workflows: `plugins/cc10x/skills/cc10x-orchestrator/workflows/`
