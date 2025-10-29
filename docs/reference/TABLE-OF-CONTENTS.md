@@ -198,6 +198,17 @@
 - Tool names
 - Hook events
 - Common patterns
+
+### Project Skills Index (cc10x)
+For a practical catalogue of production skills used by this plugin, see:
+- `plugins/cc10x/skills/architecture-patterns/SKILL.md` (planning/architecture)
+- `plugins/cc10x/skills/deployment-patterns/SKILL.md` (deployment/rollback)
+- `plugins/cc10x/skills/risk-analysis/SKILL.md` (risk framework)
+- `plugins/cc10x/skills/test-driven-development/SKILL.md` (TDD)
+- `plugins/cc10x/skills/systematic-debugging/SKILL.md` (debug discipline)
+- `plugins/cc10x/skills/verification-before-completion/SKILL.md` (evidence-first gate)
+
+Tip: Heavy guidance is moved into co-located PLAYBOOK.md files for progressive loading.
 - Debugging guide
 
 **Read if**: Need quick schema/command lookup
@@ -590,4 +601,3 @@ You now have a complete, accurate, AI-optimized documentation package covering:
 - ✅ Security guidelines
 
 **Ready for**: Building marketplace, AI training, team onboarding, production development!
-

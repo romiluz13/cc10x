@@ -1,175 +1,41 @@
 ---
 name: analysis-risk-security
-description: Parallel subagent for REVIEW workflow. Analyzes code for security vulnerabilities and architectural risks. Loads risk-analysis and security-patterns skills. Runs in parallel with other analysis subagents for 3x faster reviews.
+description: Reviewer that analyses the target scope for security vulnerabilities and architectural risks. Loads risk-analysis and security-patterns.
 ---
 
-# Analysis Risk & Security Subagent
+# Analysis - Risk & Security
 
-**Parallel analysis of security vulnerabilities and architectural risks.**
+## Scope
+- Engage only when the review workflow requests security or architectural risk analysis.
+- Focus on the files supplied; note if additional context is required.
 
-## When Used
+## Required Skills
+- `risk-analysis`
+- `security-patterns`
 
-Dispatched by REVIEW workflow when analyzing code for:
-- Security vulnerabilities
-- Authentication/authorization issues
-- Input validation problems
-- Architectural risks
-- Scalability concerns
+## How to Apply Required Skills
+- `security-patterns`: Validate authentication/authorization boundaries, injection, CSRF/XSS, secrets management; cite `path:line` with minimal snippet.
+- `risk-analysis`: Map trust boundaries and failure modes; rate probability/impact and tie each risk to a requirement or decision.
 
-## Workflow
+## Process
+1. Map data flows and trust boundaries using the risk-analysis stages.
+2. Inspect authentication, authorization, validation, secrets, and dependency usage.
+3. Record risks with probability/impact ratings and concrete mitigations.
+4. Highlight any missing controls or monitoring hooks recommended by the skills.
 
-**Pattern**: Parallel execution (runs simultaneously with other subagents)  
-**Skills Loaded**: risk-analysis, security-patterns  
-**Time**: ~2-3 minutes (parallel with others)  
-
----
-
-## Phase 1: Load Skills
-
-**Load in independent context:**
-
-1. **risk-analysis**
-   - Architectural risk assessment
-   - Security risk identification
-   - Performance risk evaluation
-   - Scalability assessment
-   - Deployment readiness
-
-2. **security-patterns**
-   - OWASP Top 10 vulnerabilities
-   - Authentication/authorization
-   - Input validation
-   - Secrets management
-   - Access control
-
----
-
-## Phase 2: Analyze Security
-
-**Check for security vulnerabilities:**
-
-### OWASP Top 10
-- [ ] Injection attacks (SQL, NoSQL, OS)
-- [ ] Broken authentication
-- [ ] Sensitive data exposure
-- [ ] XML external entities (XXE)
-- [ ] Broken access control
-- [ ] Security misconfiguration
-- [ ] Cross-site scripting (XSS)
-- [ ] Insecure deserialization
-- [ ] Using components with known vulnerabilities
-- [ ] Insufficient logging & monitoring
-
-### Authentication & Authorization
-- [ ] Proper password hashing
-- [ ] Session management
-- [ ] Token validation
-- [ ] Role-based access control
-- [ ] Permission checks
-
-### Input Validation
-- [ ] All inputs validated
-- [ ] Type checking
-- [ ] Length limits
-- [ ] Format validation
-- [ ] Sanitization
-
-### Secrets Management
-- [ ] No hardcoded secrets
-- [ ] Environment variables used
-- [ ] Secrets not in logs
-- [ ] Secrets not in version control
-- [ ] Rotation strategy
-
----
-
-## Phase 3: Analyze Risks
-
-**Assess architectural and performance risks:**
-
-### Architectural Risks
-- [ ] Single point of failure
-- [ ] Tight coupling
-- [ ] Poor separation of concerns
-- [ ] Scalability bottlenecks
-- [ ] Maintainability issues
-
-### Performance Risks
-- [ ] N+1 queries
-- [ ] Memory leaks
-- [ ] Inefficient algorithms
-- [ ] Blocking operations
-- [ ] Resource exhaustion
-
-### Deployment Risks
-- [ ] No error handling
-- [ ] No logging
-- [ ] No monitoring
-- [ ] No rollback strategy
-- [ ] No health checks
-
----
-
-## Phase 4: Compile Findings
-
-**Organize security and risk findings:**
-
-### Critical Issues ð´
-- Security vulnerabilities
-- Authentication bypass
-- Data exposure
-- Architectural failures
-
-### Important Issues ð¡
-- Security concerns
-- Risk factors
-- Scalability issues
-- Maintainability problems
-
-### Nice to Have ð¢
-- Security improvements
-- Risk mitigation
-- Performance optimization
-
----
-
-## Phase 5: Return Results
-
-**Provide security and risk analysis:**
-
-```markdown
-## Security Analysis
-
-### Critical Vulnerabilities
-- [Vulnerability 1]: [Description]
-  - Location: [File:Line]
-  - Fix: [Suggestion]
-
-### Important Issues
-- [Issue 1]: [Description]
-  - Location: [File:Line]
-  - Fix: [Suggestion]
-
-### Risk Assessment
-- Architectural risks: [Assessment]
-- Performance risks: [Assessment]
-- Deployment risks: [Assessment]
-
-### Recommendations
-1. [Recommendation 1]
-2. [Recommendation 2]
-3. [Recommendation 3]
+## Output Format
 ```
+## Security Findings
+- <Severity> - <Issue title>
+  - Location: path:line
+  - Evidence: <what you observed>
+  - Mitigation: <action>
 
----
+## Architectural Risks
+- ...
+```
+Include a "Residual Risk" section summarising remaining concerns.
 
-## Integration
-
-**Runs in parallel with:**
-- analysis-performance-quality
-- analysis-ux-accessibility
-
-**Merged by**: review-workflow
-
-**Result**: 3x faster code review (2-3 min vs 7 min)
-
+## Verification
+- Tie each finding to a specific code reference or configuration file.
+- If additional analysis (dependency scan, config review) is needed, state the request explicitly instead of assuming completion.

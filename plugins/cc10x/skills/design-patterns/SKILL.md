@@ -43,7 +43,7 @@ REST Principles:
 
 **RESTful Endpoints**:
 ```typescript
-// âGOOD: Resources with HTTP verbs
+// GOOD: Resources with HTTP verbs
 GET /api/users              // List all users
 GET /api/users/123          // Get user 123
 POST /api/users             // Create new user
@@ -54,7 +54,7 @@ PATCH /api/users/123        // Partial update
 
 **Error Responses**:
 ```typescript
-// âCONSISTENT
+// CONSISTENT
 {
   error: {
     code: 'USER_NOT_FOUND',
@@ -85,7 +85,7 @@ Component Structure:
 
 **Composition Over Inheritance**:
 ```typescript
-// âCOMPOSITION (PREFER)
+// COMPOSITION (PREFER)
 function Button({ children, variant = 'default', ...props }) {
   return <button className={`btn btn-${variant}`} {...props}>{children}</button>;
 }
@@ -97,7 +97,7 @@ function PrimaryButton(props) {
 
 **Props Design**:
 ```typescript
-// âGROUPED PROPS
+// GROUPED PROPS
 <UserCard user={{
   firstName: 'John',
   lastName: 'Doe',
@@ -127,7 +127,7 @@ Integration Reliability:
 
 **Retry with Exponential Backoff**:
 ```typescript
-// âWITH RETRY
+// WITH RETRY
 async function fetchWithRetry(url, maxRetries = 3) {
   for (let i = 0; i < maxRetries; i++) {
     try {
@@ -146,7 +146,7 @@ async function fetchWithRetry(url, maxRetries = 3) {
 
 **Circuit Breaker Pattern**:
 ```typescript
-// âCIRCUIT BREAKER
+// CIRCUIT BREAKER
 class CircuitBreaker {
   constructor(fn, { threshold = 5, timeout = 60000 } = {}) {
     this.fn = fn;

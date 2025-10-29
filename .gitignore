@@ -96,6 +96,12 @@ examples/old/
 reference/
 scratch/
 docs_/
+audit/
+.claude/plans/
+plans/
+planning/
+.archive/
+nonprod/
 
 # ========================================
 # BACKUP & ARCHIVE FILES

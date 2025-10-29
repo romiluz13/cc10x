@@ -1,6 +1,6 @@
 ---
 name: code-quality-patterns
-description: Identifies code quality issues including maintainability, readability, complexity, duplication, and technical debt. Use when analyzing code for quality metrics, reviewing code structure, identifying refactoring opportunities, checking naming conventions, and ensuring consistent patterns. Provides code quality patterns, complexity reduction techniques, DRY principles, SOLID patterns, and quality checklists. Loaded by quality-reviewer agent during REVIEW workflow or when code quality analysis needed. Complements risk-analysis Stage 4 (Code Quality) with specific quality metrics and patterns. Critical for maintainability, scalability, and long-term codebase health.
+description: Identifies maintainability, readability, complexity, duplication, and technical-debt issues. Used by the review, build, and debug workflows to provide actionable quality feedback.
 ---
 
 # Code Quality Patterns
@@ -36,7 +36,7 @@ Quality Metrics:
 
 **Function Complexity** (Cyclomatic Complexity):
 ```typescript
-// âHIGH COMPLEXITY (CC = 8)
+// HIGH COMPLEXITY (CC = 8)
 function processUser(user) {
   if (user.age > 18) {
     if (user.verified) {
@@ -51,7 +51,7 @@ function processUser(user) {
   }
 }
 
-// âLOW COMPLEXITY (CC = 1)
+// LOW COMPLEXITY (CC = 1)
 function processUser(user) {
   if (!isEligible(user)) return;
   handlePremiumUser(user);
@@ -64,7 +64,7 @@ function isEligible(user) {
 
 **DRY Principle** (Don't Repeat Yourself):
 ```typescript
-// âDUPLICATION
+// DUPLICATION
 function validateEmail(email) {
   if (!email.includes('@')) throw new Error('Invalid email');
   if (email.length < 5) throw new Error('Email too short');
@@ -75,7 +75,7 @@ function validatePhone(phone) {
   if (phone.length < 10) throw new Error('Phone too short');
 }
 
-// âREUSABLE
+// REUSABLE
 function validate(value, pattern, minLength, fieldName) {
   if (!pattern.test(value)) throw new Error(`Invalid ${fieldName}`);
   if (value.length < minLength) throw new Error(`${fieldName} too short`);
@@ -87,18 +87,18 @@ validate(phone, /-/, 10, 'phone');
 
 **Naming Conventions**:
 ```typescript
-// âBAD NAMES
+// BAD NAMES
 const d = new Date();
 const x = users.filter(u => u.age > 18);
 function fn(a, b) { return a + b; }
 
-// âGOOD NAMES
+// GOOD NAMES
 const currentDate = new Date();
 const adultUsers = users.filter(user => user.age > 18);
 function calculateTotal(subtotal, tax) { return subtotal + tax; }
 ```
 
-#### Red Flags ð©
+#### Red Flags 
 ```bash
 # Find high complexity functions
 grep -r "if.*if.*if" src/ --include="*.ts"
@@ -127,7 +127,7 @@ grep -r "TODO\|FIXME" src/ --include="*.ts"
 **What**: Each class/function should have ONE reason to change.
 
 ```typescript
-// âMULTIPLE RESPONSIBILITIES
+// MULTIPLE RESPONSIBILITIES
 class User {
   constructor(name, email) {
     this.name = name;
@@ -150,7 +150,7 @@ class User {
   }
 }
 
-// âSINGLE RESPONSIBILITY
+// SINGLE RESPONSIBILITY
 class User {
   constructor(name, email) {
     this.name = name;
@@ -182,7 +182,7 @@ class UserReporter {
 **What**: Open for extension, closed for modification.
 
 ```typescript
-// âVIOLATES OCP
+// VIOLATES OCP
 class PaymentProcessor {
   process(payment) {
     if (payment.type === 'credit') {
@@ -195,7 +195,7 @@ class PaymentProcessor {
   }
 }
 
-// âFOLLOWS OCP
+// FOLLOWS OCP
 interface PaymentMethod {
   process(payment): Promise<void>;
 }
@@ -221,7 +221,7 @@ class PaymentProcessor {
 **What**: Subtypes must be substitutable for their base types.
 
 ```typescript
-// âVIOLATES LSP
+// VIOLATES LSP
 class Bird {
   fly() { return 'flying'; }
 }
@@ -230,7 +230,7 @@ class Penguin extends Bird {
   fly() { throw new Error('Penguins cannot fly'); }
 }
 
-// âFOLLOWS LSP
+// FOLLOWS LSP
 class Bird {
   move() { return 'moving'; }
 }
@@ -249,7 +249,7 @@ class Penguin extends Bird {
 **What**: Clients should not depend on interfaces they don't use.
 
 ```typescript
-// âVIOLATES ISP
+// VIOLATES ISP
 interface Worker {
   work(): void;
   eat(): void;
@@ -262,7 +262,7 @@ class Robot implements Worker {
   sleep() { throw new Error('Robots do not sleep'); }
 }
 
-// âFOLLOWS ISP
+// FOLLOWS ISP
 interface Workable {
   work(): void;
 }
@@ -291,18 +291,18 @@ class Human implements Workable, Eatable, Sleepable {
 **What**: Depend on abstractions, not concretions.
 
 ```typescript
-// âVIOLATES DIP
+// VIOLATES DIP
 class UserService {
-  private db = new MySQLDatabase();
+  private db = new MongoDBClient();
 
   getUser(id) {
-    return this.db.query(`SELECT * FROM users WHERE id = ${id}`);
+    return this.db.collection('users').findOne({ _id: id });
   }
 }
 
-// âFOLLOWS DIP
+// FOLLOWS DIP
 interface Database {
-  query(sql: string): Promise<any>;
+  findOne(collection: string, query: any): Promise<any>;
 }
 
 class UserService {

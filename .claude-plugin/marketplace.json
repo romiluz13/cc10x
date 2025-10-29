@@ -12,7 +12,7 @@
   "plugins": [
     {
       "name": "cc10x",
-      "description": "cc10x v3.0: Intelligent orchestration system with 12 agents + 21 progressive skills. Auto-loaded CLAUDE.md orchestrator detects intent, assesses complexity, routes workflows dynamically. 5-agent parallel review (security, quality, performance, UX, accessibility). Progressive loading (50-75% token savings). Complexity gate (warns when manual better). 'What Could Go Wrong' methodology. Workflows: REVIEW (always worth it), PLANNING (complexity 4-5), BUILDING (TDD with pause points), DEBUGGING (LOG FIRST).",
+      "description": "cc10x v3.0: Intelligent orchestration with progressive skills. Detects intent, applies complexity gates, loads the right workflow, and requires verification evidence before completion. Workflows: REVIEW (coordinated analysis), PLANNING (requirements to architecture/design), BUILD (TDD with review + integration), DEBUG (LOG FIRST + minimal fixes).",
       "version": "3.0.0",
       "author": {
         "name": "Rom Iluz",
@@ -39,4 +39,3 @@
     }
   ]
 }
-

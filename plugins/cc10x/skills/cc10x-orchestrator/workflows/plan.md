@@ -1,238 +1,66 @@
-# PLANNING Workflow - Comprehensive Feature Planning
+# PLANNING Workflow - Structured Feature Design
 
-**Triggered by:** User requests feature plan, architecture design, PRD creation
+**Triggered by:** User asks to plan, architect, or design a feature or system update.
 
+## Phase 0 - Complexity Gate
+1. Estimate complexity using the orchestrator's Complexity Rubric (files changed, novelty, and risk cues).
+2. If the score <=2, warn that cc10x is optimized for higher-risk work and wait for an explicit "yes" before proceeding.
 
+## Phase 1 - Requirements Intake
+- Load the `requirements-analysis` skill.
+- Extract goals, stakeholders, user stories, acceptance criteria, assumptions, and open questions.
+- Ask for clarification if critical information is missing.
 
----
+## Phase 2 - Delegated Analysis
+Run the bundled planning subagents sequentially, sharing the Phase 1 notes as context:
+1. `planning-architecture-risk` (loads `architecture-patterns` and `risk-analysis`).
+2. `planning-design-deployment` (loads `api-design-patterns`, `component-design-patterns`, and `deployment-patterns`).
 
-## Phase 0: Complexity Assessment
+Each subagent must:
+- Reference the skill sections used to make decisions.
+- Produce actionable outputs (diagrams, data models, API specs, risk register, deployment steps).
+- Identify outstanding assumptions that require user confirmation.
 
-**CRITICAL GATE:** Assess if systematic planning is needed.
+Invocation pattern:
+- Read the subagent's SKILL.md to load its process and output format.
+- Provide the requirements summary and constraints.
+- Require the specified outputs with clear traceability to requirements.
+- If the subagent fails, stop and ask whether to retry or continue.
 
-**Quick assessment:**
-1. How many files affected? (1-3=simple, 4-6=moderate, 7+=complex)
-2. Using library or novel pattern? (library=simple, novel=complex)
-3. High-risk domain? (auth/payment/data=complex)
+## Phase 3 - Synthesis
+1. Merge subagent outputs into a single plan outline.
+2. Resolve conflicts or highlight them for the user.
+3. Build a file manifest and phased roadmap, noting dependencies.
 
-**IF Complexity <= 2 (SIMPLE):**
-- STOP execution
-- Warn user that this is straightforward
-- Show example: Rate limiting = simple feature
-- ASK: "Continue anyway? (yes/no)"
-- If NO: Exit
-- If YES: Proceed with warning
-
-**IF Complexity >= 4 (COMPLEX):**
-- Proceed with confidence (systematic planning prevents costly mistakes)
-
----
-
-## Phase 1: Requirements Analysis
-
-**Invoke requirements-analyst agent:**
-
-**Agent task:**
-1. Parse user's feature description
-2. Identify core functionality
-3. Extract implicit requirements
-4. Generate user stories with acceptance criteria
-5. List assumptions to validate
-6. Create clarifying questions (if any)
-
-**Agent loads skills:**
-- `feature-planning` skill (requirements patterns)
-
-**Output:**
-- Requirements summary
-- User stories (As a [role], I want [feature], so that [benefit])
-- Acceptance criteria per story
-- Assumptions list
-- Clarifying questions (if requirements unclear)
-
----
-
-## Phase 2: Context Analysis
-
-**Invoke context-analyzer agent:**
-
-**Agent task:**
-1. Search codebase for similar features
-2. Identify existing patterns to follow
-3. Find naming conventions
-4. Locate integration points
-5. Discover relevant existing code
-
-**Agent loads skills:**
-- `codebase-navigation` skill (search strategies)
-
-**Output:**
-- Similar features found
-- Patterns to follow
-- Naming conventions
-- Integration points
-- Files to modify/create
-
----
-
-## Phase 3: Architecture & Design
-
-**Invoke architect agent:**
-
-**Agent task:**
-1. Design system architecture
-2. Evaluate technology options
-3. Make architecture decisions (with trade-offs)
-4. Create component breakdown
-5. Design API specifications
-6. Plan data models
-
-**Agent loads skills:**
-- `feature-planning` skill (architecture patterns)
-- `risk-analysis` skill (Stage 1: Data Flow, Stage 2: Dependencies)
-
-**Output:**
-- Architecture diagram (text-based)
-- Technology decisions with justification
-- Component breakdown
-- API specification
-- Data models
-- Sequence diagrams
-
----
-
-## Phase 4: Risk Assessment
-
-**Agent continues with risk-analysis skill:**
-
-**Load 7-dimension framework:**
-See [../../skills/risk-analysis/SKILL.md](../../skills/risk-analysis/SKILL.md)
-
-**Agent analyzes:**
-1. Data Flow transformations (Stage 1)
-2. Dependency integration (Stage 2)
-3. Timing/Concurrency (Stage 3)
-4. UX/Human Factors (Stage 4)
-5. Security validation (Stage 5)
-6. Performance/Scalability (Stage 6)
-7. Failure Modes/Recovery (Stage 7)
-
-**Output:**
-- Risk matrix (Probability × Impact)
-- Top 5 risks prioritized
-- Mitigation strategies per risk
-- Residual risks after mitigation
-
----
-
-## Phase 5: Testing Strategy
-
-**Invoke tdd-enforcer agent (planning mode):**
-
-**Agent task:**
-1. Plan unit tests (what to test)
-2. Plan integration tests (how components interact)
-3. Plan e2e tests (user journeys)
-4. Define test coverage goals (>80%)
-5. Identify edge cases to test
-
-**Agent loads skills:**
-- `test-driven-development` skill (testing patterns)
-
-**Output:**
-- Test plan (unit, integration, e2e)
-- Coverage goals
-- Edge cases to test
-- Testing tools recommended
-
----
-
-## Phase 6: Implementation Roadmap
-
-**Invoke devops-planner agent:**
-
-**Agent task:**
-1. Break feature into incremental phases
-2. Create file manifest (files to create/modify)
-3. Plan deployment strategy
-4. Create rollback procedures
-5. Estimate lines of code
-
-**Agent loads skills:**
-- `deployment-patterns` skill (deployment strategies)
-
-**Output:**
-- Implementation phases (6-10 increments)
-- File manifest with estimated LOC
-- Deployment strategy (blue-green, canary, etc.)
-- Rollback plan with steps
-- Timeline estimate
-
----
-
-## Phase 7: Compile Comprehensive Plan
-
-**Create final plan document:**
-
-```markdown
-# Feature Plan: [Feature Name]
-
-## 1. Requirements
-[Requirements from Phase 1]
-
-## 2. Architecture
-[Architecture from Phase 3]
-
-## 3. Risk Assessment
-[Risks from Phase 4]
-
-## 4. Testing Strategy
-[Tests from Phase 5]
-
-## 5. Implementation Roadmap
-[Roadmap from Phase 6]
-
-## 6. File Manifest
-[Files to create/modify from Phase 6]
-
-## 7. Deployment Strategy
-[Deployment plan from Phase 6]
-
-## 8. Rollback Procedures
-[Rollback steps from Phase 6]
+## Phase 4 - Verification Summary
+Before marking the plan as ready, include:
+```
+# Verification Summary
+Inputs: <sources reviewed>
+Decisions: <key architecture decisions with rationale>
+Open Questions: <items awaiting user confirmation>
 ```
 
-**Save to:**
-```bash
-.claude/plans/FEATURE_[name].md
-```
+Example:
+Inputs: requirements doc, existing API patterns
+Decisions: JWT auth (stateless, mobile-friendly), event-driven webhooks (async resilience)
+Open Questions: Stripe vs PayPal for payments? Monitoring SLA requirements?
 
----
+## Phase 5 - Deliverable
+Provide a markdown report containing:
+- Requirements overview (user stories + acceptance criteria).
+- Architecture and component design.
+- API/data models.
+- Risk assessment with mitigations.
+- Testing strategy and deployment plan.
+- File manifest and implementation phases.
 
-## Phase 8: Return Results
+Offer optional next steps (for example, "Run build workflow for Phase 1?") without assuming consent.
 
-**Present plan to user:**
+## Failure Handling
+- If a subagent fails, stop and ask whether to retry or continue without it.
+- Do not fabricate architecture decisions; clearly mark any sections that could not be produced.
 
-```
-Comprehensive plan created!
-
-Summary:
-- Complexity: X/5
-- Files to modify: Y
-- Estimated LOC: Z
-- Implementation phases: N
-- Top risks: [list top 3]
-
-Plan saved to: .claude/plans/FEATURE_[name].md
-
-What would you like to do?
-- Build this feature now? (invoke BUILD workflow)
-- Refine the plan?
-- Start with specific phase?
-```
-
-**DO NOT automatically start building!**
-
-Let user decide next step.
-
-
+## References
+- Skill format: `docs/reference/04-SKILLS.md`
+- Subagent expectations: `docs/reference/03-SUBAGENTS.md`

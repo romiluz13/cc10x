@@ -1,218 +1,67 @@
-# DEBUGGING Workflow - LOG FIRST Approach
+# DEBUG Workflow - Root Cause First
 
-**Triggered by:** User reports bug, something not working
+**Triggered by:** User requests help investigating bugs, errors, or unexpected behaviour.
 
+## Phase 0 - Intake
+1. Gather reproduction steps, error messages, logs, and recent changes.
+2. Confirm scope (single bug per run unless explicitly broadened).
+3. If scope spans multiple independent failures, queue them and tackle serially unless the user approves separate runs.
 
+## Phase 1 - Shared Skills
+Load the following skills:
+- `systematic-debugging`
+- `log-analysis-patterns`
+- `root-cause-analysis`
+- `test-driven-development`
+- `verification-before-completion`
 
----
+## Phase 2 - Bug Investigation Loop
+For each identified bug:
+1. Invoke `bug-investigator` with all context. Require:
+   - Reproduction of the failure.
+   - Collection of relevant logs/metrics (LOG FIRST).
+   - Written hypothesis before implementing fixes.
+   - Failing regression test proving the bug.
+2. Once the fix is proposed, re-run the regression test to verify GREEN and document commands run.
+3. Send the changes to `code-reviewer` for validation (quality, security, performance).
+4. Use `integration-verifier` to confirm there are no regressions in the broader flow.
 
-## Phase 0: Bug Complexity Assessment
+Invocation pattern (per bug):
+- Read the subagent's SKILL.md to load its process and output format.
+- Provide the repro steps, logs, and scope.
+- Require the specified outputs with file:line evidence and command outputs.
+- On failure or missing repro, stop and request direction.
 
-**Quick triage:**
+## Phase 3 - Consolidation
+- Summarise root cause, fix, and verification evidence for each bug.
+- List any follow-up work (monitoring, additional tests) recommended by the skills used.
 
-**IF OBVIOUS (typo, syntax, missing import):**
+## Phase 4 - Verification Summary
+Document:
 ```
-This looks like a simple fix:
-- Typo: `utills`  `utils`
-- Missing import: Add `import X from 'Y'`
-- Syntax: Missing semicolon
-
-Recommendation: Just fix it!
-
-Want me to fix it anyway? (yes/no)
-```
-
-**IF COMPLEX (root cause unclear):**
-- Proceed with LOG FIRST systematic approach
-
----
-
-## Phase 1: LOG FIRST - Add Strategic Logging
-
-**The Philosophy:**
-> Never guess what data looks like - ALWAYS log and see it first
-
-**Add logging at key points:**
-
-1. **Function entry:** Log inputs
-2. **Before conditionals:** Log condition values
-3. **Before operations:** Log state before transform
-4. **After operations:** Log results
-5. **Before return:** Log output
-
-**Example:**
-```javascript
-function processPayment(userId, amount) {
-  console.log('[DEBUG] processPayment called:', {userId, amount});
-
-  const user = await getUser(userId);
-  console.log('[DEBUG] User loaded:', user);
-
-  if (user.balance >= amount) {
-    console.log('[DEBUG] Balance sufficient, processing...');
-    // ...
-  } else {
-    console.log('[DEBUG] Insufficient balance:', {balance: user.balance, required: amount});
-  }
-}
+# Verification Summary
+Bugs fixed: <list>
+Commands: <tests/log scripts run with exit codes>
+Residual risk: <items to monitor>
 ```
 
----
+Example:
+Commands:
+- npm test test/cart.spec.ts -> exit 1 (RED)
+- Apply null check in src/cart.ts:85
+- npm test test/cart.spec.ts -> exit 0 (GREEN)
+Residual risk: add e2e test for empty cart state
 
-## Phase 2: Reproduce with Logging
+## Phase 5 - Report
+- Provide a detailed breakdown per bug (root cause, fix, verification evidence).
+- Highlight any remaining issues or uncertainties.
+- Offer optional next steps (e.g., "Want a code review of the patch?") without assuming consent.
 
-**Run the failing scenario:**
-```bash
-# Run tests or reproduce manually
-npm test
-# or
-curl -X POST http://localhost:3000/endpoint
-```
+## Failure Handling
+- If a reproduction cannot be established, pause and request more information.
+- If a fix fails review/integration, report the blocker and wait for direction.
+- Never mark bugs as fixed without captured test or log evidence.
 
-**Capture logs:**
-- Save output to file
-- Review log sequence
-- Identify where behavior diverges from expected
-
----
-
-## Phase 3: Analyze Logs
-
-**Look for:**
-1. **Data surprises:** "Expected X, got Y"
-2. **Missing steps:** Function not called when it should
-3. **Wrong order:** Steps execute in unexpected sequence
-4. **State issues:** Variable has wrong value at critical point
-5. **Async issues:** Race conditions, promises not awaited
-
-**Example Analysis:**
-```
-Log: [DEBUG] User loaded: null
-Expected: User object
-
-AHA! getUser() returns null
- Either user doesn't exist OR query is wrong
- Add logging inside getUser() to investigate
-```
-
----
-
-## Phase 4: Form Hypothesis
-
-**Based on logs, hypothesize root cause:**
-
-```markdown
-## Hypothesis
-
-**What:** getUser() returns null
-
-**Why (possible causes):**
-1. User ID passed is undefined
-2. Database query has wrong field name
-3. User doesn't exist in test database
-4. Async issue - not awaiting query
-
-**Most likely:** #1 (userId is undefined)
-**Evidence:** Log shows userId: undefined in processPayment call
-```
-
----
-
-## Phase 5: Test Hypothesis
-
-**Add targeted logging to verify:**
-
-```javascript
-function processPayment(userId, amount) {
-  if (!userId) {
-    console.error('[DEBUG] BUG FOUND: userId is undefined!');
-    console.trace(); // Show call stack
-  }
-  // ...
-}
-```
-
-**Run again  Confirms hypothesis**
-
----
-
-## Phase 6: Implement Minimal Fix
-
-**Fix ONLY what's needed:**
-
-```javascript
-// Before (bug):
-router.post('/payment', async (req, res) => {
-  await processPayment(req.body.user_id, req.body.amount);
-});
-
-// After (fixed):
-router.post('/payment', async (req, res) => {
-  const userId = req.body.userId; // Was reading wrong field!
-  await processPayment(userId, req.body.amount);
-});
-```
-
----
-
-## Phase 7: Verify Fix
-
-**Run tests again:**
-```bash
-npm test
-```
-
-**Confirm:**
-- Tests pass
-- Bug no longer reproduces
-- No new issues introduced
-
----
-
-## Phase 8: Clean Up Logging
-
-**Remove debug logs:**
-- Keep strategic logging (errors, critical points)
-- Remove verbose debug logs added during investigation
-- Don't leave `console.log` in production code
-
----
-
-## Phase 9: Return Results
-
-**Report to user:**
-
-```markdown
-## Bug Fixed!
-
-**Root Cause:** Field name mismatch
-- Code read: `req.body.user_id`
-- Client sent: `req.body.userId`
-
-**Fix:** Updated field name to match API contract
-
-**Verification:** All tests passing
-
-**Files Modified:**
-- src/routes/payment.js (line 45)
-
-**Prevention:** Consider adding request validation middleware
-```
-
----
-
-## Workflow Complete
-
-**Debug complete! Bug fixed and verified.**
-
-**What would you like to do next?**
-- Review the fix for quality/security?
-- Add tests to prevent regression?
-- Document this bug for the team?
-- Need help with another bug?
-
-**DO NOT automatically review or test!**
-
-Let user decide next step.
-
-
+## References
+- Debugging discipline: `plugins/cc10x/skills/systematic-debugging/SKILL.md`
+- Official guidance: `docs/reference/03-SUBAGENTS.md`, `docs/reference/04-SKILLS.md`

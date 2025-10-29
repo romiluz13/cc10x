@@ -1,149 +1,71 @@
-# BUILDING Workflow - TDD Implementation
+# BUILD Workflow - TDD Driven Implementation
 
-**Triggered by:** User requests feature implementation
+**Triggered by:** User requests implementation or feature build work.
 
+## Phase 0 - Complexity Gate
+- Estimate scope. If complexity <=2, present the lightweight warning and wait for explicit approval before continuing.
+- Confirm repositories, directories, and acceptance criteria.
 
+## Phase 1 - Shared Context
+Load these skills into shared context:
+- `requirements-analysis`
+- `security-patterns`
+- `test-driven-development`
+- `verification-before-completion`
 
----
+Summarise requirements, constraints, and acceptance tests before delegating work.
 
-## Phase 0: Complexity Gate (STRONG)
+## Phase 2 - Component Queue
+1. Break the request into discrete components or tasks.
+2. For each component, prepare a concise brief (goal, inputs, outputs, dependencies).
+3. Execute the loop below for each component; process components sequentially without overlap. If the user requests parallel runs, confirm scope and handle them as separate sequential passes.
 
-**IF Complexity <= 2:**
+## Phase 3 - Component Execution Loop
+For every component:
+1. Invoke `component-builder` with the brief. Require:
+   - Failing test first (RED) with command output captured.
+   - Minimal implementation (GREEN).
+   - Refactor while keeping tests green.
+   - Verification log referencing commands executed.
+2. Invoke `code-reviewer` on the resulting changes. Expect:
+   - Findings with file/line references.
+   - Security/performance considerations tied to the relevant skills.
+   - Recommendations or approval status.
+3. Invoke `integration-verifier` to confirm broader system behaviour. Expect:
+   - Integration or end-to-end checks.
+   - Additional tests or scripts run, plus their outputs.
+4. Consolidate notes. Address blocking review feedback before moving to the next component.
 
-STOP and show strong warning:
+Invocation pattern (for each subagent above):
+- Read the subagent's SKILL.md to load its process and output format.
+- Pass the component brief and relevant context.
+- Require the specified outputs with file:line evidence and commands/exit codes where relevant.
+- On failure, stop and ask whether to retry or continue.
 
-```
-âš ï¸STOP: This is SIMPLE (complexity 2/5)
+Example (TDD Cycle for a Component):
+Component: User authentication validator
+- RED: npm test tests/auth.spec.ts -> exit 1 (expected validateToken to be defined)
+- GREEN: implement validateToken in src/auth.ts:42 -> npm test -> exit 0
+- REFACTOR: extract helper isExpired() -> npm test -> exit 0
+- REVIEW: code-reviewer -> "approved, consider rate limiting"
+- INTEGRATION: integration-verifier -> e2e login flow passes
 
-This is straightforward and may not require systematic analysis.
+## Phase 4 - Aggregate Verification
+After all components are complete:
+- Run the project's regression or test suite as appropriate.
+- Produce a `Verification Summary` covering commands run, exit codes, coverage metrics (if applicable), and artefacts.
 
-Example: Rate Limiting
-- Consider implementing manually for simpler features
-- Use cc10x for review and complex features
+## Phase 5 - Delivery
+Report back with:
+- Components implemented and status of review/integration feedback.
+- Evidence from tests and verification steps.
+- Known follow-up work or tech debt.
+- Optional prompt offering to run the review or deployment workflow if the user wants further assistance.
 
-Recommendation: Consider manual approach for simple features.
-```
+## Failure Handling
+- If any subagent or test fails, stop, surface the failure, and ask for user direction.
+- Do not mark components complete without the verification summary or without resolving reviewer blockers.
 
-ASK: "Continue anyway? (yes/no)"
-
----
-
-## Phase 1: Load Plan (if exists)
-
-**Check for plan:**
-```bash
-ls .claude/plans/FEATURE_*.md 2>/dev/null
-```
-
-IF plan exists:
-- Load it for context
-- Use architecture decisions
-- Follow file manifest
-
-IF no plan:
-- ASK: "Want me to create plan first?"
-- If YES: Invoke PLANNING workflow, then return here
-- If NO: Proceed with ad-hoc implementation (less systematic)
-
----
-
-## Phase 2: Invoke Implementer Agent
-
-**Agent task:**
-1. Implement feature using strict TDD
-2. RED-GREEN-REFACTOR cycle enforcement
-3. Write test first (RED)
-4. Implement minimal code (GREEN)
-5. Refactor (keep tests passing)
-6. Repeat for each increment
-
-**Agent loads skills:**
-- `test-driven-development` skill (TDD patterns)
-- `code-generation` skill (implementation patterns)
-- `risk-analysis` skill (before each increment)
-
-**TDD Enforcement:**
-- Agent MUST write test before code
-- Agent MUST see test fail (RED)
-- Agent MUST implement minimal solution (GREEN)
-- Agent MUST refactor without breaking tests
-
----
-
-## Phase 3: Mandatory Test Verification
-
-**CRITICAL: Do NOT trust agent's "all tests passing" report!**
-
-**User MUST manually verify:**
-
-```
-Implementation complete. Agent reports: "All tests passing"
-
-âš ï¸VERIFY BEFORE TRUSTING:
-
-Run tests yourself:
-```bash
-npm test        # or pytest, cargo test, etc.
-```
-
-Check output:
-- ALL tests actually pass?
-- No failures hidden in output?
-- Coverage meets >80% goal?
-
-If tests FAIL:
-- Use DEBUG workflow to investigate
-- Agent may have reported false success
-
-If tests PASS:
-- Verify coverage: npm test -- --coverage
-- Ensure >80% coverage achieved
-```
-
-**Why this step?**
-- Previous testing showed agents report "tests passing" when they fail
-- Manual verification prevents false confidence
-- You're the final quality gate
-
----
-
-## Phase 4: Invoke Test Generator (if needed)
-
-IF coverage < 80%:
-
-**Agent task:**
-1. Analyze coverage gaps
-2. Generate additional tests
-3. Target >80% coverage
-4. Focus on untested edge cases
-
-**Agent loads skills:**
-- `test-driven-development` skill (test patterns)
-
----
-
-## Phase 5: Return Results
-
-**Present implementation to user:**
-
-```
-Feature implemented!
-
-Summary:
-- Files created: X
-- Files modified: Y
-- Tests written: Z
-- Coverage: W%
-
-âš ï¸IMPORTANT: I ran tests and they pass.
-BUT: Please verify yourself (run: npm test)
-
-What next?
-- Review code for quality/security?
-- Deploy to staging?
-- Create documentation?
-```
-
-**DO NOT automatically review or deploy!**
-
-
+## References
+- Skills guide: `docs/reference/04-SKILLS.md`
+- Subagent contract: `docs/reference/03-SUBAGENTS.md`
