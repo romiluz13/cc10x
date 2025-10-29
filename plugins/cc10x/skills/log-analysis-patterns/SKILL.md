@@ -1,6 +1,6 @@
 ---
 name: log-analysis-patterns
-description: Provides log analysis best practices covering structure, levels, aggregation, and troubleshooting techniques. Used by the debug workflow and subagents to capture evidence before proposing fixes.
+description: Provides log analysis best practices covering structure, levels, aggregation, and troubleshooting techniques. Use when analyzing logs for debugging, investigating errors, troubleshooting issues, or capturing evidence before proposing fixes. Used by the debug workflow and subagents to capture evidence before proposing fixes.
 ---
 
 # Log Analysis Patterns

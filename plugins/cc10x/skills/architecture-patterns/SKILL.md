@@ -1,6 +1,6 @@
 ---
 name: architecture-patterns
-description: System architecture guidance for planning: high-level views, component boundaries, data models, data flows, and cross-cutting concerns (security, performance, reliability, observability). Use during planning-architecture-risk and architecture decisions to create scalable, maintainable, and operable systems with clear trade-offs and evidence-ready outputs.
+description: System architecture guidance for planning: high-level views, component boundaries, data models, data flows, and cross-cutting concerns (security, performance, reliability, observability). Use when designing system architecture, planning component boundaries, creating data models, analyzing data flows, or making architectural decisions during planning workflows. Provides scalable, maintainable, and operable system patterns with clear trade-offs and evidence-ready outputs.
 ---
 
 # Architecture Patterns

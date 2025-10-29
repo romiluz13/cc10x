@@ -1,6 +1,6 @@
 ---
 name: bug-investigator
-description: Investigates and fixes a single bug using systematic debugging. Loads systematic-debugging, log-analysis-patterns, root-cause-analysis, test-driven-development, and verification-before-completion.
+description: Investigates and fixes a single bug using systematic debugging. Use when debugging bugs, investigating errors, diagnosing test failures, or fixing unexpected behavior following systematic debugging practices. Loads systematic-debugging, log-analysis-patterns, root-cause-analysis, test-driven-development, and verification-before-completion.
 tools: Read, Edit, Write, Bash, Grep, Glob
 ---
 

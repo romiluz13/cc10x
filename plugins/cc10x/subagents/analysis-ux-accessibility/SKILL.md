@@ -1,6 +1,6 @@
 ---
 name: analysis-ux-accessibility
-description: Reviewer focusing on user experience and accessibility concerns. Loads ux-patterns and accessibility-patterns.
+description: Reviewer focusing on user experience and accessibility concerns. Use when reviewing UX quality, analyzing accessibility compliance, evaluating user interfaces, auditing WCAG compliance, or assessing user experience flows. Loads ux-patterns and accessibility-patterns.
 tools: Read, Grep, Glob
 ---
 

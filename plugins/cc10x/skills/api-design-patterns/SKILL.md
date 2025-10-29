@@ -1,6 +1,6 @@
 ---
 name: api-design-patterns
-description: Focused API design guidance. Thin wrapper around the API section of design-patterns with a compact checklist and examples. Used by planning-workflow, planning-design-deployment, and code-reviewer when API contracts are in scope.
+description: Focused API design guidance. Thin wrapper around the API section of design-patterns with a compact checklist and examples. Use when designing REST APIs, planning API contracts, reviewing API endpoints, implementing versioning strategies, or ensuring RESTful design principles. Used by planning-workflow, planning-design-deployment, and code-reviewer when API contracts are in scope.
 ---
 
 # API Design Patterns (Focused)

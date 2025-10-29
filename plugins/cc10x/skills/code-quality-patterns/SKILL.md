@@ -1,6 +1,6 @@
 ---
 name: code-quality-patterns
-description: Identifies maintainability, readability, complexity, duplication, and technical-debt issues. Used by the review, build, and debug workflows to provide actionable quality feedback.
+description: Identifies maintainability, readability, complexity, duplication, and technical-debt issues. Use when reviewing code quality, analyzing code complexity, identifying technical debt, checking for code smells, or ensuring maintainable code patterns. Used by the review, build, and debug workflows to provide actionable quality feedback.
 ---
 
 # Code Quality Patterns

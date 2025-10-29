@@ -1,6 +1,6 @@
 ---
 name: component-design-patterns
-description: Focused component design guidance. Thin wrapper around the Component section of design-patterns with a compact checklist and examples. Used by component-builder, planning-workflow, and code-reviewer.
+description: Focused component design guidance. Thin wrapper around the Component section of design-patterns with a compact checklist and examples. Use when designing UI components, planning component architecture, reviewing component interfaces, or ensuring component reusability and maintainability. Used by component-builder, planning-workflow, and code-reviewer.
 ---
 
 # Component Design Patterns (Focused)

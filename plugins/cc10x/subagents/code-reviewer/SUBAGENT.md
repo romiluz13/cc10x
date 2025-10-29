@@ -1,6 +1,6 @@
 ---
 name: code-reviewer
-description: Reviews code changes for quality, security, and performance. Loads code-quality-patterns, security-patterns, performance-patterns, and verification-before-completion.
+description: Reviews code changes for quality, security, and performance. Use when reviewing code changes, conducting code reviews, analyzing code quality, checking security vulnerabilities, or assessing code performance. Loads code-quality-patterns, security-patterns, performance-patterns, and verification-before-completion.
 tools: Read, Grep, Glob
 ---
 

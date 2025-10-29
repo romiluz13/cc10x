@@ -1,6 +1,6 @@
 ---
 name: integration-patterns
-description: Focused integration design and reliability guidance. Thin wrapper around the Integration section of design-patterns with a compact checklist and examples. Used by integration-verifier, planning-workflow, and debug workflows when integrations fail.
+description: Focused integration design and reliability guidance. Thin wrapper around the Integration section of design-patterns with a compact checklist and examples. Use when designing integrations, planning service contracts, implementing retry strategies, handling integration failures, or ensuring reliable cross-service communication. Used by integration-verifier, planning-workflow, and debug workflows when integrations fail.
 ---
 
 # Integration Patterns (Focused)

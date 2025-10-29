@@ -1,6 +1,6 @@
 ---
 name: integration-verifier
-description: Validates that components and services work together. Loads integration-patterns, test-driven-development, log-analysis-patterns, and verification-before-completion.
+description: Validates that components and services work together. Use when verifying integrations, testing cross-service communication, validating API contracts, checking end-to-end flows, or ensuring components work together correctly. Loads integration-patterns, test-driven-development, log-analysis-patterns, and verification-before-completion.
 tools: Bash, Read, Grep
 ---
 

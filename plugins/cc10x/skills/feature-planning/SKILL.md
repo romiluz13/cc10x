@@ -1,6 +1,6 @@
 ---
 name: feature-planning
-description: Provides guidance for gathering requirements, analyzing architecture, and preparing implementation plans. Used by the planning workflow and related subagents to create comprehensive feature specifications.
+description: Provides guidance for gathering requirements, analyzing architecture, and preparing implementation plans. Use when planning features, creating feature specifications, analyzing architectural requirements, or preparing implementation roadmaps. Used by the planning workflow and related subagents to create comprehensive feature specifications.
 allowed-tools: Read, Grep, Glob
 ---
 

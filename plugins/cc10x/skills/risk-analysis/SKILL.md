@@ -1,6 +1,6 @@
 ---
 name: risk-analysis
-description: Provides a lightweight framework for identifying and mitigating risks across data flow, dependencies, UX, security, performance, and recovery. Use during planning, review, or validation to surface high-impact risks early.
+description: Provides a lightweight framework for identifying and mitigating risks across data flow, dependencies, UX, security, performance, and recovery. Use when planning features, reviewing code for risks, analyzing security vulnerabilities, assessing performance risks, or validating implementations to surface high-impact risks early.
 allowed-tools: Read, Grep, Glob
 ---
 

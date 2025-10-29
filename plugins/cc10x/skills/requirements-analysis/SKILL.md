@@ -1,6 +1,6 @@
 ---
 name: requirements-analysis
-description: Identifies requirements best practices including stakeholder analysis, elicitation, acceptance criteria, scope management, and validation. Used by the planning workflow and related subagents to capture complete requirements before design or implementation.
+description: Identifies requirements best practices including stakeholder analysis, elicitation, acceptance criteria, scope management, and validation. Use when gathering requirements, analyzing stakeholder needs, defining acceptance criteria, managing project scope, or validating requirements completeness. Used by the planning workflow and related subagents to capture complete requirements before design or implementation.
 ---
 
 # Requirements Analysis

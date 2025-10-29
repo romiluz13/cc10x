@@ -1,6 +1,6 @@
 ---
 name: verification-before-completion
-description: Evidence-first gate that blocks success claims without fresh verification. Apply before saying "done", "fixed", or "ready".
+description: Evidence-first gate that blocks success claims without fresh verification. Use before claiming completion, marking tasks as done, declaring fixes complete, or stating readiness without verification evidence. Apply before saying "done", "fixed", or "ready".
 allowed-tools: Read, Grep, Glob, Bash
 ---
 
