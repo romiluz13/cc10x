@@ -32,6 +32,36 @@ Quality Metrics:
 - [ ] No TODO/FIXME comments
 ```
 
+#### File Size Policy
+
+Keep files readable and focused. Default guidance:
+
+- Aim for files under 500 lines
+- Soft caps by type:
+  - Components: < 200 lines
+  - Utilities: < 300 lines
+  - Services: < 400 lines
+  - Config: < 100 lines
+
+When a file exceeds its cap, propose a concrete split plan (by responsibility):
+
+```
+example/large-file.ts (780 lines)
+  → core.ts (business logic)
+  → utils.ts (helpers)
+  → types.ts (interfaces/types)
+  → adapters.ts (I/O, boundaries)
+```
+
+Quick detection:
+```bash
+find src -type f -name "*.*" -maxdepth 4 -print0 \
+  | xargs -0 wc -l 2>/dev/null \
+  | sort -n | tail -20
+```
+
+Flag oversized files during review/build/debug and suggest a split before closing the task.
+
 #### Critical Quality Patterns
 
 **Function Complexity** (Cyclomatic Complexity):

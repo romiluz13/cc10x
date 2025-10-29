@@ -5,6 +5,9 @@
 ## Phase 0 - Complexity Gate
 1. Estimate complexity using the orchestrator's Complexity Rubric (files changed, novelty, and risk cues).
 2. If the score <=2, warn that cc10x is optimized for higher-risk work and wait for an explicit "yes" before proceeding.
+3. If resuming after compaction or context is unclear, read the latest snapshot and working plan:
+   - Read `.claude/memory/snapshots/` most recent `snapshot-*.md`
+   - Read `.claude/memory/WORKING_PLAN.md`
 
 ## Phase 1 - Requirements Intake
 - Load the `requirements-analysis` skill.

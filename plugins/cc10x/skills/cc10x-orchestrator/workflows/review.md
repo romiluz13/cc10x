@@ -6,6 +6,9 @@
 1. Confirm files, directories, or patterns to review.
 2. Ask for clarification if the scope is ambiguous.
 3. If the code scope is very small, warn and confirm before proceeding.
+4. If resuming after compaction or context is unclear, read the latest snapshot and working plan:
+   - Read `.claude/memory/snapshots/` most recent `snapshot-*.md`
+   - Read `.claude/memory/WORKING_PLAN.md`
 
 ## Phase 1 - Load Required Skills
 Load these domain skills (all exist under `plugins/cc10x/skills/`):
@@ -37,6 +40,7 @@ Invocation pattern:
 1. Merge the subagent outputs, deduplicating identical issues.
 2. Flag conflicts or open questions for the user.
 3. Highlight blockers (critical/high) before suggestions.
+4. File size sanity check: If any reviewed file exceeds ~500 lines, flag it for refactor/splitting and suggest a concrete split plan.
 
 ## Phase 4 - Verification Summary
 Before claiming the review is complete, compose a verification block:

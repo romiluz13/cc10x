@@ -5,6 +5,9 @@
 ## Phase 0 - Complexity Gate
 - Estimate scope. If complexity <=2, present the lightweight warning and wait for explicit approval before continuing.
 - Confirm repositories, directories, and acceptance criteria.
+ - If resuming after compaction or context is unclear, read the latest snapshot and working plan:
+   - Read `.claude/memory/snapshots/` most recent `snapshot-*.md`
+   - Read `.claude/memory/WORKING_PLAN.md`
 
 ## Phase 1 - Shared Context
 Load these skills into shared context:
@@ -35,6 +38,7 @@ For every component:
    - Integration or end-to-end checks.
    - Additional tests or scripts run, plus their outputs.
 4. Consolidate notes. Address blocking review feedback before moving to the next component.
+5. File size sanity check: Before moving on, scan changed files; if any exceeds ~500 lines, propose a concrete refactor/split plan.
 
 Invocation pattern (for each subagent above):
 - Read the subagent's SKILL.md to load its process and output format.

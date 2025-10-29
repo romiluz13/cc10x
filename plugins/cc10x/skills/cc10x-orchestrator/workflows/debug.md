@@ -6,6 +6,9 @@
 1. Gather reproduction steps, error messages, logs, and recent changes.
 2. Confirm scope (single bug per run unless explicitly broadened).
 3. If scope spans multiple independent failures, queue them and tackle serially unless the user approves separate runs.
+4. If resuming after compaction or context is unclear, read the latest snapshot and working plan:
+   - Read `.claude/memory/snapshots/` most recent `snapshot-*.md`
+   - Read `.claude/memory/WORKING_PLAN.md`
 
 ## Phase 1 - Shared Skills
 Load the following skills:
@@ -25,6 +28,8 @@ For each identified bug:
 2. Once the fix is proposed, re-run the regression test to verify GREEN and document commands run.
 3. Send the changes to `code-reviewer` for validation (quality, security, performance).
 4. Use `integration-verifier` to confirm there are no regressions in the broader flow.
+
+File size sanity check: As fixes accumulate, if any modified file exceeds ~500 lines, propose a focused refactor/split plan (after green tests).
 
 Invocation pattern (per bug):
 - Read the subagent's SKILL.md to load its process and output format.
