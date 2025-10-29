@@ -88,7 +88,7 @@ If a user combines intents (for example "review then plan"), run each workflow i
    - Summarise findings with severity or priority (high/medium/low) based on evidence.
    - Link each recommendation to the skill or subagent that produced it.
    - Surface open questions and next-step offers without assuming consent.
-   
+
    **Memory Integration** (filesystem-based, optimized):
    - **Validate Patterns First**: Compare predicted complexity → actual complexity
    - **Update Accuracy**: Calculate accuracy = (matches / total_uses) * 100

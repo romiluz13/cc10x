@@ -1,5 +1,5 @@
 #!/bin/bash
-# cc10x - 10x Developer Productivity with Claude Code
+# cc10x v3.1 - 10x Developer Productivity with Claude Code
 # Copyright (c) 2025 Rom Iluz
 # Licensed under MIT License
 
@@ -24,6 +24,8 @@ log() {
     local message="$*"
     local timestamp
     timestamp="$(date +'%Y-%m-%d %H:%M:%S')"
+    # Ensure directory exists before logging
+    mkdir -p "$MEMORY_DIR" 2>/dev/null || true
     echo "[$timestamp] [$level] $message" >> "$LOG_FILE" 2>&1 || true
 }
 

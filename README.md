@@ -624,4 +624,4 @@ If cc10x made your development faster, safer, or better:
 
 ---
 
-*cc10x v3.0.0 | Production Ready | Built for Claude Code*
+*cc10x v3.1.0 | Production Ready | Built for Claude Code | 9.5+ Prompt Engineering*
