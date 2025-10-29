@@ -103,6 +103,19 @@ planning/
 .archive/
 nonprod/
 
+# Internal documentation (development-only)
+docs/analysis/
+docs/optimization/
+docs/phases/
+
+# Internal scripts (should not be in repo)
+push-to-github.sh
+push_v3.1.py
+*.sh
+*.py
+!plugins/cc10x/hooks/*.sh
+!plugins/cc10x/scripts/*.sh
+
 # ========================================
 # BACKUP & ARCHIVE FILES
 # ========================================
