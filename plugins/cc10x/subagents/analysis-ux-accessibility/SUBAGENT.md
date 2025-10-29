@@ -40,3 +40,4 @@ Add a "Positive Observations" list when notable strengths exist.
 ## Verification
 - Support each finding with code snippets or referenced styles.
 - If manual testing steps (keyboard, screen reader) are required but not run, clearly state the limitation.
+

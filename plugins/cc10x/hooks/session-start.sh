@@ -1,5 +1,5 @@
 #!/bin/bash
-# cc10x v3.1 - 10x Developer Productivity with Claude Code
+# cc10x v3.2 - 10x Developer Productivity with Claude Code
 # Copyright (c) 2025 Rom Iluz
 # Licensed under MIT License
 

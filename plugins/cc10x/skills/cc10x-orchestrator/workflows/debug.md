@@ -14,18 +14,19 @@
 1. Gather reproduction steps, error messages, logs, and recent changes.
 2. Confirm scope (single bug per run unless explicitly broadened).
 
-**External Resource Check** (smart caching):
-- **Check Cache First**: Lookup URLs in `.claude/memory/web_cache/cache_index.json`
+**External Resource Check** (smart Q&A caching):
+- **Check Cache First**: Lookup {url, prompt} combinations in `.claude/memory/web_cache/cache_index.json`
 - **Cache Logic**:
-  - Error docs: 30-day TTL
-  - If cached and TTL valid → use cache (skip fetch)
-  - If cached but expired → re-fetch
-  - If not cached → fetch and cache
+  - Create hash from `{url}_{prompt}` for each planned question
+  - Error docs: 48h TTL
+  - If cached and TTL valid → use cached answer (skip fetch)
+  - If cached but expired → re-fetch with same prompt
+  - If not cached → WebFetch with prompt and cache answer
 - Check if debug needs external resources:
-  - Error documentation? → Check cache first, then fetch if needed
-  - Stack trace analysis? → Check cache first, then fetch if needed
-  - Library-specific issues? → Check cache first, then fetch library troubleshooting docs if needed
-- Ask user: "Should I fetch external debugging resources? Found {N} in cache. Fetch missing? (yes/no)"
+  - Error documentation? → Ask: "What does error [error code/message] mean and how do I fix it?"
+  - Stack trace analysis? → Ask: "How do I troubleshoot [symptom] in [technology]? What are common causes?"
+  - Library-specific issues? → Ask: "What are common errors in [library] and their solutions? How do I debug integration issues?"
+- Ask user: "Should I fetch external debugging resources? Will ask {N} targeted questions. Found {M} in cache. Proceed? (yes/no)"
 3. **Bug Classification**: Classify bug type before investigation:
    - **Reproducible**: Clear steps, consistent failure
    - **Intermittent**: Fails sometimes, unclear pattern
@@ -105,20 +106,40 @@ For each skill above:
 
 ## Phase 2 - Bug Investigation Loop
 For each identified bug:
+
+**When to Invoke Subagents**:
+- **INVOKE** - Bug needs investigation: Always invoke `bug-investigator` (required for systematic debugging)
+- **INVOKE** - Fix implemented: After bug-investigator proposes fix, invoke `code-reviewer` (always for quality/security check)
+- **INVOKE** - Integration risk: After review passes, invoke `integration-verifier` (always to prevent regressions)
+
+**When NOT to Invoke Subagents**:
+- **SKIP** - Investigation timeout exceeded: If 3 attempts to find root cause failed → Skip `bug-investigator` re-invocation, escalate to user with options
+- **SKIP** - Bug not reproducible: If bug cannot be reproduced with given steps → Skip `bug-investigator`, request more data from user
+- **SKIP** - Trivial fix (typo/comment): If bug is single-line typo or comment fix → Skip `code-reviewer` (no security/code quality risk), skip `integration-verifier` (no integration risk)
+- **SKIP** - User explicitly skips review: If user says "skip review" or "just fix it" → Skip `code-reviewer`, proceed to integration check
+- **SKIP** - User explicitly skips integration: If user says "skip integration check" → Skip `integration-verifier`, mark bug fixed
+- **SKIP** - No code changes: If investigation determines bug is external (environment, dependency) → Skip all subagents, report finding to user
+
+**Conflict Prevention**:
+- **One bug per investigation**: Never invoke `bug-investigator` for multiple bugs simultaneously
+- **Sequential flow**: Investigation → Fix → Review → Integration (never parallel)
+- **Skip if blocked**: If bug-investigator fails, don't invoke code-reviewer or integration-verifier until investigation succeeds
+
+**Default Sequence** (unless conditions above met):
 1. Invoke `bug-investigator` with all context. Require:
    - Reproduction of the failure.
    - Collection of relevant logs/metrics (LOG FIRST).
    - Written hypothesis before implementing fixes.
    - Failing regression test proving the bug.
 2. Once the fix is proposed, re-run the regression test to verify GREEN and document commands run.
-3. Send the changes to `code-reviewer` for validation (quality, security, performance).
-4. Use `integration-verifier` to confirm there are no regressions in the broader flow.
+3. Send the changes to `code-reviewer` for validation (quality, security, performance) (unless user skipped or trivial fix).
+4. Use `integration-verifier` to confirm there are no regressions in the broader flow (unless user skipped or trivial fix).
 
 File size sanity check: As fixes accumulate, if any modified file exceeds ~500 lines, propose a focused refactor/split plan (after green tests).
 
 **Subagent Invocation Pattern** (per bug):
-- Verify subagent exists: Read first 100 chars of `plugins/cc10x/subagents/{subagent-name}/SKILL.md` or `SUBAGENT.md`
-- Read the subagent's SKILL.md to load its process and output format.
+- Verify subagent exists: Read first 100 chars of `plugins/cc10x/subagents/{subagent-name}/SUBAGENT.md`
+- Read the subagent's SUBAGENT.md to load its process and output format.
 - Provide the repro steps, logs, and scope from Phase 0.
 - Require the specified outputs with file:line evidence and command outputs.
 - **Subagent Output Validation** (after subagent completes):

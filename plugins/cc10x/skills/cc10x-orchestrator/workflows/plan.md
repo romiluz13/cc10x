@@ -13,19 +13,23 @@
 
 1. Estimate complexity using the orchestrator's Complexity Rubric (files changed, novelty, and risk cues).
 2. If the score <=2, warn that cc10x is optimized for higher-risk work and wait for an explicit "yes" before proceeding.
-3. **External Resource Check** (smart caching):
-   - **Check Cache First**: Lookup URLs in `.claude/memory/web_cache/cache_index.json`
+3. **External Resource Check** (smart Q&A caching):
+   - **Check Cache First**: Lookup {url, prompt} combinations in `.claude/memory/web_cache/cache_index.json`
    - **Cache Logic**:
-     - If cached and TTL valid → use cache (skip fetch)
-     - If cached but expired → re-fetch
-     - If not cached → fetch and cache with TTL (API specs: 7 days, framework docs: 30 days)
-   - **Deduplication**: Track URLs fetched in this workflow, avoid duplicates
+     - Create hash from `{url}_{prompt}` for each planned question
+     - If cached and TTL valid → use cached answer (skip fetch)
+     - If cached but expired → re-fetch with same prompt
+     - If not cached → fetch with prompt and cache answer (TTL: API specs 24h, framework docs 48h)
+   - **Deduplication**: Track {url, prompt} combinations fetched in this workflow
    - Check if planning requires external documentation:
-     - External APIs mentioned? → Check cache, then fetch API specifications if needed
-     - External services mentioned? → Check cache, then fetch service documentation if needed
-     - Frameworks mentioned? → Check cache, then fetch framework documentation if needed
-   - Ask user: "Detected external dependencies: {list}. Found {N} in cache, need to fetch {M} more. Proceed? (yes/no)"
-   - If yes, fetch missing docs and include in planning context
+     - External APIs mentioned? → Plan targeted questions:
+       - "What are all the API endpoints, HTTP methods, and their purposes?"
+       - "What authentication method is required and how do I get credentials?"
+       - "What are the main data models, their fields, and relationships?"
+     - External services mentioned? → Plan questions about service capabilities, integration, limits
+     - Frameworks mentioned? → Plan questions about setup, patterns, concepts
+   - Ask user: "Detected external dependencies: {list}. Will ask {N} targeted questions. Found {M} in cache. Proceed? (yes/no)"
+   - If yes, use WebFetch with prompts (check cache first, fetch if needed) and include answers in planning context
 4. If resuming after compaction or context is unclear, read the latest snapshot and working plan:
    - Read `.claude/memory/snapshots/` most recent `snapshot-*.md`
    - Read `.claude/memory/WORKING_PLAN.md`
@@ -44,13 +48,17 @@
 - **Query Requirements Patterns**: Check `.claude/memory/patterns.json` for similar requirements (use semantic match, top 3 only)
 - **Validation Before Storage**: Only store requirements patterns after workflow completes and validates accuracy
 
-**External Documentation** (smart caching):
+**External Documentation** (smart Q&A caching):
 - If external APIs/services mentioned in requirements:
-  - **Check Cache First**: Lookup API spec URLs in `.claude/memory/web_cache/cache_index.json`
-  - **Use Cache if Valid**: If cached and TTL valid → use cache (skip fetch)
-  - **Fetch if Needed**: If not cached or expired → fetch and cache with 7-day TTL
-  - Load service documentation (same cache-first approach)
-  - Include in requirements context
+  - **Plan Targeted Questions**: For each API/service, plan 3-4 specific questions:
+    - Endpoints: "What are all the API endpoint paths, HTTP methods, and required parameters?"
+    - Authentication: "How do I authenticate requests? What credentials are needed?"
+    - Data Models: "What are the main data models, their fields, types, and relationships?"
+    - Error Handling: "What error codes does this API return and what do they mean?"
+  - **Check Cache First**: For each {url, prompt} combo, check cache_index.json
+  - **Use Cache if Valid**: If cached and TTL valid → use cached answer (skip fetch)
+  - **Fetch if Needed**: If not cached or expired → WebFetch with prompt and cache answer (24h TTL)
+  - Include answers in requirements context (NOT raw content)
 
 **Requirements Extraction Template**:
 Use this structure for requirements intake:
@@ -141,9 +149,32 @@ Use this structure for requirements intake:
 - **Checkpoint Triggers**: After Phase 0, Phase 1, Phase 2, Phase 3, Phase 4 completion
 
 ## Phase 2 - Delegated Analysis
+
+**When to Invoke Subagents**:
+- **INVOKE** - Architecture needed: Complexity score >= 3 OR multi-file/multi-component work → Invoke `planning-architecture-risk`
+- **INVOKE** - Design/deployment needed: Any build work requires API design OR component design OR deployment planning → Invoke `planning-design-deployment`
+- **INVOKE** - Complete planning: Both subagents needed for comprehensive planning (default for complexity >= 3)
+
+**When NOT to Invoke Subagents**:
+- **SKIP** - Complexity too low: Complexity score <= 2 → Skip `planning-architecture-risk` (architecture not needed), ask user: "Low complexity ({score}). Skip architecture planning? (yes/no)"
+- **SKIP** - No API/component design needed: If work is pure refactoring or config changes (no new APIs/components) → Skip `planning-design-deployment`, only invoke `planning-architecture-risk` if complexity >= 3
+- **SKIP** - User explicitly skips: If user says "skip architecture" or "skip design" → Skip corresponding subagent, document in Actions Taken
+- **SKIP** - Single-file trivial change: If change is single file, <200 lines, no architectural impact → Skip both subagents, proceed with build workflow directly
+- **SKIP** - Architecture already exists: If user says "architecture already defined" → Skip `planning-architecture-risk`, only invoke `planning-design-deployment` if needed
+
+**Conflict Prevention**:
+- **Sequential execution**: Always run `planning-architecture-risk` FIRST, then `planning-design-deployment` (architecture informs design)
+- **No parallel execution**: Never invoke both simultaneously (architecture decisions needed before design)
+- **Share context**: `planning-design-deployment` receives architecture outputs from `planning-architecture-risk` as input
+
+**Subagent Dependency**:
+- `planning-design-deployment` DEPENDS on `planning-architecture-risk` outputs (architecture, risk register)
+- If `planning-architecture-risk` fails or skipped, provide minimal context to `planning-design-deployment` and flag limitation
+
+**Default Sequence** (unless conditions above met):
 Run the bundled planning subagents sequentially, sharing the Phase 1 notes as context:
-1. `planning-architecture-risk` (loads `architecture-patterns` and `risk-analysis`).
-2. `planning-design-deployment` (loads `api-design-patterns`, `component-design-patterns`, and `deployment-patterns`).
+1. `planning-architecture-risk` (loads `architecture-patterns` and `risk-analysis`) - FIRST.
+2. `planning-design-deployment` (loads `api-design-patterns`, `component-design-patterns`, and `deployment-patterns`) - SECOND (receives architecture outputs).
 
 Each subagent must:
 - Reference the skill sections used to make decisions.
@@ -151,8 +182,8 @@ Each subagent must:
 - Identify outstanding assumptions that require user confirmation.
 
 **Subagent Invocation Pattern**:
-- Verify subagent exists: Read first 100 chars of `plugins/cc10x/subagents/{subagent-name}/SKILL.md` or `SUBAGENT.md`
-- Read the subagent's SKILL.md to load its process and output format.
+- Verify subagent exists: Read first 100 chars of `plugins/cc10x/subagents/{subagent-name}/SUBAGENT.md`
+- Read the subagent's SUBAGENT.md to load its process and output format.
 - Provide the requirements summary and constraints from Phase 1.
 - Require the specified outputs with clear traceability to requirements.
 - **Subagent Output Validation** (after subagent completes):

@@ -13,8 +13,10 @@ Provide memory functionality for cc10x workflows using filesystem-based memory. 
 ## Availability
 
 - ✅ **Filesystem Memory**: Available in Claude Code (`.claude/memory/` directory)
-- ✅ **MCP Memory Servers**: Available via MCP servers if configured
-- ❌ **Memory Tool API**: NOT available in Claude Code (API beta only)
+- ✅ **MCP Memory Servers**: Available via MCP servers if configured (e.g., `claude-code-memory`, `viralvoodoo-claude-code-memory`)
+- ❌ **Memory Tool API**: NOT available in Claude Code (API beta only, requires `context-management-2025-06-27` header)
+
+**Note**: If MCP memory servers are configured, they can be used in addition to or instead of filesystem memory. Check `.claude/settings.json` for MCP server configuration.
 
 ## When to Use
 

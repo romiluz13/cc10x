@@ -17,18 +17,19 @@
    - Single function < 20 lines = warn: "Scope is very small (1 function, {N} lines). Continue?"
    - If user confirms, proceed; if not, ask for broader scope
 
-**External Resource Check** (smart caching):
-- **Check Cache First**: Lookup URLs in `.claude/memory/web_cache/cache_index.json`
+**External Resource Check** (smart Q&A caching):
+- **Check Cache First**: Lookup {url, prompt} combinations in `.claude/memory/web_cache/cache_index.json`
 - **Cache Logic**:
-  - Standards/Guidelines: 90-day TTL (stable content)
-  - If cached and TTL valid → use cache (skip fetch)
-  - If cached but expired → re-fetch
-  - If not cached → fetch and cache
+  - Create hash from `{url}_{prompt}` for each planned question
+  - Standards/Guidelines: 72h TTL (use shorter TTL since content changes)
+  - If cached and TTL valid → use cached answer (skip fetch)
+  - If cached but expired → re-fetch with same prompt
+  - If not cached → WebFetch with prompt and cache answer
 - Check if review needs external standards:
-  - Security standards? → Check cache first, then fetch OWASP guidelines if needed
-  - Coding standards? → Check cache first, then fetch guidelines if needed
-  - Performance standards? → Check cache first, then fetch guides if needed
-- Ask user: "Should I fetch external standards? Found {N} in cache. Fetch missing? (yes/no)"
+  - Security standards? → Ask: "What are the OWASP Top 10 security risks and how do I check for injection attacks, broken authentication, and sensitive data exposure?"
+  - Coding standards? → Ask: "What are the coding standards for error handling, naming conventions, and code structure?"
+  - Performance standards? → Ask: "What performance optimization techniques apply to [scenario]? How do I identify bottlenecks?"
+- Ask user: "Should I fetch external standards? Will ask {N} targeted questions. Found {M} in cache. Proceed? (yes/no)"
 
 **Workflow State Persistence** (Checkpoint System):
 - **Checkpoint After Each Phase**: Save workflow state to `.claude/memory/workflow_state/review_{timestamp}.json`
@@ -90,10 +91,29 @@ For each skill above:
 - Ask user: "Continue without {skill} or abort workflow?"
 
 ## Phase 2 - Dispatch Analysis Subagents
-Run the bundled subagents one after another (no simulated parallel execution):
-1. `analysis-risk-security`
-2. `analysis-performance-quality`
-3. `analysis-ux-accessibility`
+
+**When to Invoke Subagents**:
+- **INVOKE** - Scope is substantial: Multiple files OR single file >100 lines OR explicit user request
+- **INVOKE** - Code changes detected: Modified/new files present
+- **INVOKE** - Review type matches: Security review → invoke `analysis-risk-security`, Performance review → invoke `analysis-performance-quality`, etc.
+
+**When NOT to Invoke Subagents** (skip to save context/tokens):
+- **SKIP** - Scope too small: Single file < 50 lines OR single function < 20 lines → Ask user: "Scope is very small ({N} lines). Skip subagent analysis or proceed?"
+- **SKIP** - Read-only files: If scope contains only markdown/docs/config files (no code) → Skip code-quality and performance subagents, only invoke `analysis-risk-security` if security review requested
+- **SKIP** - User explicitly skips: If user says "skip review" or "quick check only" → Document in Actions Taken and skip subagent invocation
+- **SKIP** - No code files: If scope is empty or contains no code files → Report: "No code files in scope. Subagent analysis skipped."
+
+**Subagent Selection Logic** (avoid conflicts):
+- **Security-focused request** → Invoke `analysis-risk-security` ONLY (skip others if not relevant)
+- **Performance-focused request** → Invoke `analysis-performance-quality` ONLY (skip others if not relevant)
+- **UX-focused request** → Invoke `analysis-ux-accessibility` ONLY (skip others if not relevant)
+- **General/comprehensive review** → Invoke all 3 sequentially (default behavior)
+
+**Sequential Execution** (no conflicts):
+Run the selected subagents one after another (no simulated parallel execution):
+1. `analysis-risk-security` (if security review needed or general review)
+2. `analysis-performance-quality` (if performance review needed or general review)
+3. `analysis-ux-accessibility` (if UX review needed or general review)
 
 For each subagent, pass the scoped files and relevant user notes. Require every subagent to produce:
 - Findings grouped by severity (critical, high, medium, low).
@@ -101,8 +121,8 @@ For each subagent, pass the scoped files and relevant user notes. Require every 
 - Specific remediation steps tied to the skill guidance that surfaced them.
 
 **Subagent Invocation Pattern**:
-- Read the subagent's SKILL.md to load its process and output format.
-- Verify subagent exists before invoking: Read first 100 chars of `plugins/cc10x/subagents/{subagent-name}/SKILL.md` or `SUBAGENT.md`
+- Read the subagent's SUBAGENT.md to load its process and output format.
+- Verify subagent exists before invoking: Read first 100 chars of `plugins/cc10x/subagents/{subagent-name}/SUBAGENT.md`
 - Pass the same scope and relevant notes to the subagent.
 - Require the specified outputs with file:line evidence.
 - **Subagent Output Validation** (after subagent completes):
@@ -175,8 +195,8 @@ Outstanding Questions: <if clarification is needed>
 ```
 
 **Evidence Quality Examples**:
-- ✅ **Good evidence**: "HIGH - SQL injection via string concatenation - src/db/user.ts:42 - Evidence: user input concatenated into query without parameterization. Mitigation: use prepared statements (see security-patterns 'SQL Injection')."
-- ❌ **Weak evidence**: "maybe insecure DB calls somewhere in user code" (reject - must cite specific file:line)
+- **Good evidence**: "HIGH - SQL injection via string concatenation - src/db/user.ts:42 - Evidence: user input concatenated into query without parameterization. Mitigation: use prepared statements (see security-patterns 'SQL Injection')."
+- **Weak evidence**: "maybe insecure DB calls somewhere in user code" (reject - must cite specific file:line)
 
 **Required**: Every finding must include file:line citation. If unable to cite, state "Insufficient evidence - requires manual review" instead of guessing.
 

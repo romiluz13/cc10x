@@ -80,6 +80,14 @@ If a user combines intents (for example "review then plan"), run each workflow i
      - Wait for user decision before proceeding
    - Follow workflow instructions exactly. Workflows now reference only real subagents and skills.
    - Record which domain skills are invoked so results can point to specific guidance files.
+   
+   **Subagent Invocation Rules** (CRITICAL):
+   - **Verify existence FIRST**: Before invoking any subagent, verify it exists in `plugin.json` or `.claude/agents/`
+   - **Check skip conditions**: Each workflow defines "when NOT to invoke" - check these BEFORE invocation
+   - **Respect user overrides**: If user explicitly skips a subagent, document and skip it
+   - **Sequential only**: Never invoke multiple subagents in parallel (each gets separate context window)
+   - **Context isolation**: Each subagent starts fresh - provide all needed context explicitly
+   - **Confirmation on skip**: If skipping subagent, ask user: "Skipping {subagent-name} due to {reason}. Proceed? (yes/no)"
 
 ### Tool Access Precedence
 - When multiple skills are active, the orchestrator/workflow tool set governs delegation and verification. Domain skills may restrict themselves (e.g., Read/Grep/Glob), but they do not prevent the orchestrator/workflow from using `Task` or `Bash` to delegate/verify.

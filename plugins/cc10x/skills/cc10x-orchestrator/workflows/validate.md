@@ -64,9 +64,9 @@
    ```
    | Requirement | Code Location | Status | Drift Type |
    |-------------|---------------|--------|------------|
-   | User Story 1 | src/auth.ts:42 | ✅ Implemented | None |
-   | User Story 2 | src/payment.ts:100 | ⚠️ Partial | Missing implementation |
-   | User Story 3 | N/A | ❌ Missing | Missing |
+   | User Story 1 | src/auth.ts:42 | Implemented | None |
+   | User Story 2 | src/payment.ts:100 | Partial | Missing implementation |
+   | User Story 3 | N/A | Missing | Missing |
    ```
 
 ## Phase 2 - Code vs Tests
@@ -100,9 +100,9 @@
 5. **Edge Case Coverage**:
    - Extract edge cases from plan or risk analysis
    - Verify each edge case has test:
-     - ✅ Covered: Test exists and passes
-     - ⚠️ Missing: Edge case identified but no test
-     - ❌ Failed: Test exists but fails
+     - Covered: Test exists and passes
+     - Missing: Edge case identified but no test
+     - Failed: Test exists but fails
    - Report: "Edge case coverage: {N} covered, {M} missing, {K} failed"
 
 Invocation pattern:
@@ -129,10 +129,10 @@ Invocation pattern:
      - Compare: Code models vs Doc models
      - Flag: Missing fields, extra fields, type mismatches
 3. **Freshness Scoring**:
-   - **Fresh** (matches code): ✅ Documentation accurate
-   - **Stale** (partially matches): ⚠️ Documentation outdated (list differences)
-   - **Missing** (no docs): ❌ Documentation missing
-   - **Incorrect** (conflicts with code): ❌ Documentation incorrect (cite conflicts)
+   - **Fresh** (matches code): Documentation accurate
+   - **Stale** (partially matches): Documentation outdated (list differences)
+   - **Missing** (no docs): Documentation missing
+   - **Incorrect** (conflicts with code): Documentation incorrect (cite conflicts)
 4. **Cite Missing/Outdated Sections**:
    - Format: `{file}:{line_start}-{line_end}` or `{file}:{section}` → Issue: {description}
    - Example: `README.md:API-Endpoints` → Issue: Missing endpoint `DELETE /api/users/:id`
@@ -169,9 +169,9 @@ Requirements checked: 12 user stories
 Drift detected: 2 intentional, 1 accidental, 0 missing, 1 extra
 Tests run: npm test -- tests/checkout.spec.ts -> exit 0
 Coverage: 81% lines (84% statements, 69% branches)
-  - Unit tests: 85% (threshold: 70%, target: 80%) ✅
-  - Integration tests: 72% (threshold: 50%, target: 60%) ✅
-  - E2E tests: 3 critical flows covered ✅
+  - Unit tests: 85% (threshold: 70%, target: 80%) - PASSED
+  - Integration tests: 72% (threshold: 50%, target: 60%) - PASSED
+  - E2E tests: 3 critical flows covered - PASSED
 Coverage gaps: src/utils/helpers.ts (45% - below threshold)
 Edge cases: 8 covered, 2 missing, 0 failed
 Documentation reviewed: README.md, docs/api/payments.md
@@ -202,9 +202,9 @@ Outstanding issues: Missing E2E test for checkout cancellation flow, outdated AP
 ### Alignment Matrix
 | Requirement/User Story | Code Location | Test Coverage | Documentation | Status | Drift Type |
 |------------------------|---------------|---------------|---------------|--------|------------|
-| Story 1 | src/auth.ts:42 | ✅ Covered (test: auth.spec.ts:10) | ✅ Documented | ✅ Aligned | None |
-| Story 2 | src/payment.ts:100 | ⚠️ Partial (test: payment.spec.ts:20) | ✅ Documented | ⚠️ Partial | Missing implementation |
-| Story 3 | N/A | ❌ Missing | ❌ Missing | ❌ Missing | Missing |
+| Story 1 | src/auth.ts:42 | Covered (test: auth.spec.ts:10) | Documented | Aligned | None |
+| Story 2 | src/payment.ts:100 | Partial (test: payment.spec.ts:20) | Documented | Partial | Missing implementation |
+| Story 3 | N/A | Missing | Missing | Missing | Missing |
 
 ### Drift Analysis
 - **Intentional Drifts**: {N} documented changes with rationale
