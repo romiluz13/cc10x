@@ -2,6 +2,7 @@
   "name": "cc10x",
   "version": "3.0.0",
   "description": "Intelligent orchestration for systematic development with 4 workflows (review, plan, build, debug) and lean progressive skills. Detects intent, applies complexity gates, executes workflows sequentially with explicit user confirmation, and enforces evidence-first verification before any success claims.",
+  "agents": "./subagents/",
   "author": {
     "name": "Rom Iluz",
     "email": "rom.iluz13@gmail.com",

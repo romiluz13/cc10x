@@ -1,5 +1,7 @@
+---
 name: ux-patterns
 description: Evaluates user experience quality including loading states, error handling, form usability, interaction design, user feedback mechanisms, and overall user flow coherence. Use when reviewing user-facing interfaces for UX improvements, designing user flows, improving error messages, analyzing form usability, or assessing interaction patterns. Identifies UX friction points, confusing interfaces, missing loading indicators, poor error messages, and interaction design issues. Loaded by the analysis-ux-accessibility subagent during the REVIEW workflow or by the orchestrator when UX analysis is needed. Complements risk-analysis Stage 4 (User Experience & Human Factors) with specific UX improvement patterns and techniques. Critical for customer-facing features where user satisfaction drives adoption.
+---
 
 # UX Patterns
 

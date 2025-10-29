@@ -108,10 +108,6 @@ load_working_plan() {
 
 ## Notes
 - Session started: $(date)
-- Use /feature-plan to plan new features
-- Use /feature-build to implement features
-- Use /bug-fix to fix issues systematically
-- Use /review for multi-dimensional code review
 
 ## Next Steps
 1. Review codebase structure
@@ -210,33 +206,6 @@ display_welcome() {
     echo ""
 }
 
-# Display available commands
-display_commands() {
-    echo "🎯 Available Commands:"
-    echo ""
-    echo "  /feature-plan <description>"
-    echo "    → Create comprehensive PRD-style feature plans"
-    echo "    → Architecture, API design, edge cases, test strategy"
-    echo "    → 93% token savings via progressive loading"
-    echo ""
-    echo "  /feature-build <description>"
-    echo "    → Complete feature implementation with strict TDD"
-    echo "    → Context analysis → Planning → Implementation → Verification"
-    echo "    → Lovable/Bolt-quality UI, production-ready code"
-    echo ""
-    echo "  /bug-fix <description>"
-    echo "    → Systematic debugging with LOG FIRST pattern"
-    echo "    → Minimal targeted changes, comprehensive tests"
-    echo "    → Root cause analysis, regression prevention"
-    echo ""
-    echo "  /review <path>"
-    echo "    → Multi-dimensional code review (security, quality, performance, UX, a11y)"
-    echo "    → Parallel analysis across 5 dimensions"
-    echo "    → Prioritized findings with actionable recommendations"
-    echo ""
-    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo ""
-}
 
 # Display stats
 display_stats() {
@@ -282,10 +251,7 @@ main() {
     
     # Display stats
     display_stats
-    
-    # Display commands
-    display_commands
-    
+
     # Final message
     log "INFO" "Session start complete"
     success "Ready for orchestration! 🚀"

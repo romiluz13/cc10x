@@ -1,7 +1,7 @@
 ---
 name: cc10x-orchestrator
 description: Primary orchestrator for cc10x. Interprets user intent and coordinates review, planning, build, and debug workflows in line with Anthropic's skills and subagent contracts. Honors focus requests, enforces evidence-first rules, and never invokes non-existent agents. Use for complex multi-step engineering tasks that need structured coordination.
-allowed-tools: Read, Grep, Glob, Bash
+allowed-tools: Read, Grep, Glob, Bash, Task
 ---
 
 # cc10x Orchestrator Skill

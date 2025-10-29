@@ -9,8 +9,11 @@ if [ -t 0 ]; then
   exit 0
 fi
 
+# Read stdin into variable
+INPUT=$(cat)
+
 # Try to parse JSON input from tool
-file_path=$(echo "$STDIN" | jq -r '.tool_input.file_path // .tool_input.target_file // empty' 2>/dev/null)
+file_path=$(echo "$INPUT" | jq -r '.tool_input.file_path // .tool_input.target_file // empty' 2>/dev/null)
 
 # If jq failed or no file path, try reading directly
 if [ -z "$file_path" ]; then
