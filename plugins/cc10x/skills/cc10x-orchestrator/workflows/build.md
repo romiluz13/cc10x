@@ -14,18 +14,22 @@
 - Estimate scope. If complexity <=2, present the lightweight warning and wait for explicit approval before continuing.
 - Confirm repositories, directories, and acceptance criteria.
 
-**External Resource Check** (smart caching):
-- **Check Cache First**: Lookup URLs in `.claude/memory/web_cache/cache_index.json`
+**External Resource Check** (smart Q&A caching):
+- **Check Cache First**: Lookup {url, prompt} combinations in `.claude/memory/web_cache/cache_index.json`
 - **Cache Logic**:
-  - If cached and TTL valid → use cache (skip fetch)
-  - If cached but expired → re-fetch
-  - If not cached → fetch and cache (library docs: 14 days TTL)
-- **Deduplication**: Track URLs fetched in this workflow
+  - Create hash from `{url}_{prompt}` for each planned question
+  - If cached and TTL valid → use cached answer (skip fetch)
+  - If cached but expired → re-fetch with same prompt
+  - If not cached → WebFetch with prompt and cache answer (library docs: 48h TTL)
+- **Deduplication**: Track {url, prompt} combinations fetched in this workflow
 - Check if build requires external documentation:
-  - Libraries/frameworks mentioned? → Check cache, then fetch library documentation if needed
-  - SDKs mentioned? → Check cache, then fetch SDK examples if needed
-  - External APIs? → Check cache, then fetch API integration guides if needed
-- Ask user: "Detected external dependencies: {list}. Found {N} in cache, need to fetch {M} more. Proceed? (yes/no)"
+  - Libraries/frameworks mentioned? → Plan questions:
+    - "How do I install and initialize this library?"
+    - "What are the most common usage patterns and code examples?"
+    - "How do I handle errors and edge cases?"
+  - SDKs mentioned? → Plan questions about setup, initialization, API calls
+  - External APIs? → Plan questions about authentication, request format, error handling
+- Ask user: "Detected external dependencies: {list}. Will ask {N} targeted questions. Found {M} in cache. Proceed? (yes/no)"
 
 **Workflow State Persistence** (Checkpoint System):
 - **Checkpoint After Each Phase**: Save workflow state to `.claude/memory/workflow_state/build_{timestamp}.json`
@@ -154,24 +158,44 @@ BEFORE creating component queue:
 
 ## Phase 3 - Component Execution Loop
 For every component:
+
+**When to Invoke Subagents**:
+- **INVOKE** - Component building needed: Always invoke `component-builder` (required for TDD)
+- **INVOKE** - Code changes made: After component-builder completes, invoke `code-reviewer` (always)
+- **INVOKE** - Integration checks needed: After review passes, invoke `integration-verifier` (always unless user skips)
+
+**When NOT to Invoke Subagents**:
+- **SKIP** - Component already built: If component exists and user says "skip build, just review" → Skip `component-builder`, only invoke `code-reviewer`
+- **SKIP** - User explicitly skips review: If user says "skip review" or "quick build" → Skip `code-reviewer`, proceed to integration
+- **SKIP** - User explicitly skips integration: If user says "skip integration checks" → Skip `integration-verifier`, proceed to next component
+- **SKIP** - Component is dependency-only: If component is pure dependency (e.g., package.json update, config file) → Skip `code-reviewer` (no security/code quality concerns), only invoke `integration-verifier` if integration depends on it
+- **SKIP** - Trivial changes: If change is single line/comment → Skip `code-reviewer` and `integration-verifier`, just invoke `component-builder` for verification
+
+**Conflict Prevention**:
+- **Never invoke multiple builders simultaneously**: Each component gets its own `component-builder` invocation
+- **Sequential review**: Review happens AFTER build completes, not in parallel
+- **Sequential integration**: Integration check happens AFTER review, not in parallel
+- **One bug at a time**: If debugging needed, finish bug-investigator before invoking code-reviewer
+
+**Default Sequence** (unless user skips):
 1. Invoke `component-builder` with the brief. Require:
    - Failing test first (RED) with command output captured.
    - Minimal implementation (GREEN).
    - Refactor while keeping tests green.
    - Verification log referencing commands executed.
-2. Invoke `code-reviewer` on the resulting changes. Expect:
+2. Invoke `code-reviewer` on the resulting changes (unless user skipped). Expect:
    - Findings with file/line references.
    - Security/performance considerations tied to the relevant skills.
    - Recommendations or approval status.
-3. Invoke `integration-verifier` to confirm broader system behaviour. Expect:
+3. Invoke `integration-verifier` to confirm broader system behaviour (unless user skipped). Expect:
    - Integration or end-to-end checks.
    - Additional tests or scripts run, plus their outputs.
 4. Consolidate notes. Address blocking review feedback before moving to the next component.
 5. File size sanity check: Before moving on, scan changed files; if any exceeds ~500 lines, propose a concrete refactor/split plan.
 
 **Subagent Invocation Pattern** (for each subagent):
-- Verify subagent exists: Read first 100 chars of `plugins/cc10x/subagents/{subagent-name}/SKILL.md` or `SUBAGENT.md`
-- Read the subagent's SKILL.md to load its process and output format.
+- Verify subagent exists: Read first 100 chars of `plugins/cc10x/subagents/{subagent-name}/SUBAGENT.md`
+- Read the subagent's SUBAGENT.md to load its process and output format.
 - Pass the component brief and relevant context.
 - Require the specified outputs with file:line evidence and commands/exit codes where relevant.
 - **Subagent Output Validation** (after subagent completes):

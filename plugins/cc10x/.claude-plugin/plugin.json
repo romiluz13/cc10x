@@ -1,17 +1,17 @@
 {
   "name": "cc10x",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "description": "Intelligent orchestration for systematic development with 5 workflows (review, plan, build, debug, validate) and lean progressive skills. Detects intent deterministically, applies complexity gates, executes workflows sequentially with explicit user confirmation, enforces evidence-first verification, and includes smart memory integration with web-fetch caching. Achieves 9.5+ prompt engineering ranking.",
   "agents": [
     "./subagents/code-reviewer/SUBAGENT.md",
     "./subagents/component-builder/SUBAGENT.md",
     "./subagents/integration-verifier/SUBAGENT.md",
     "./subagents/bug-investigator/SUBAGENT.md",
-    "./subagents/analysis-risk-security/SKILL.md",
-    "./subagents/analysis-performance-quality/SKILL.md",
-    "./subagents/analysis-ux-accessibility/SKILL.md",
-    "./subagents/planning-architecture-risk/SKILL.md",
-    "./subagents/planning-design-deployment/SKILL.md"
+    "./subagents/analysis-risk-security/SUBAGENT.md",
+    "./subagents/analysis-performance-quality/SUBAGENT.md",
+    "./subagents/analysis-ux-accessibility/SUBAGENT.md",
+    "./subagents/planning-architecture-risk/SUBAGENT.md",
+    "./subagents/planning-design-deployment/SUBAGENT.md"
   ],
   "author": {
     "name": "Rom Iluz",

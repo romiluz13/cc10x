@@ -43,162 +43,280 @@ Integrate Anthropic's Web Fetch Tool to load external documentation, API specifi
 
 ## WebFetch Tool Usage (Claude Code)
 
-**Availability**: ✅ WebFetch is available in Claude Code (listed in available tools)
+**Availability**: ✅ WebFetch is available in Claude Code (built-in tool)
 
-**Basic Usage**:
-- WebFetch tool is automatically available in Claude Code
-- Use `WebFetch` in `allowed-tools` to ensure access
-- Tool handles fetching web pages and PDFs
+**CRITICAL: How Claude Code WebFetch Works**
 
-**Example Integration**:
+Claude Code's WebFetch is **different** from the API version:
+
+**API WebFetch** (beta, not in Claude Code):
+- Returns full raw content (HTML/PDF)
+- Single URL parameter
+
+**Claude Code WebFetch** (built-in):
+- **Requires BOTH `url` and `prompt` parameters**
+- Returns **summarized answer**, NOT raw content
+- Pipeline: Fetch → Convert to Markdown (max 100KB) → Haiku 3.5 summary → Answer
+
+**Usage Pattern**:
 ```bash
-# Claude Code automatically uses WebFetch when needed
-# Just mention URLs in context, Claude will fetch them
+# WRONG (assumes raw content):
+WebFetch(url="https://api.example.com/openapi.json")
+→ Returns: Full JSON spec (THIS DOESN'T WORK IN CLAUDE CODE)
 
-# During planning workflow - mention API spec URL
-# "I need to fetch https://api.example.com/openapi.json for API design"
-
-# During build workflow - mention library docs
-# "Fetch https://docs.library.com/getting-started for implementation guidance"
+# CORRECT (prompt-based):
+WebFetch(
+  url="https://api.example.com/openapi.json",
+  prompt="What are all the API endpoint paths, HTTP methods, and required parameters?"
+)
+→ Returns: "The API has the following endpoints: POST /auth/login requires username and password, GET /users/{id} returns user details..."
 ```
 
-**Explicit Usage** (if needed):
-- WebFetch tool is model-invoked automatically when URLs are referenced
-- No explicit API calls needed - Claude Code handles it
-- Results are included in context automatically
+**Key Constraints**:
+- ❌ Cannot fetch raw API specs for parsing
+- ❌ Cannot load full documentation pages  
+- ❌ Cannot cache raw HTML/JSON content
+- ✅ Can ask specific questions and get targeted answers
+- ✅ Built-in 15-minute caching (server-side, automatic)
+- ✅ Domain validation (blocks malicious domains)
+
+**Best Practice**:
+Use multiple targeted questions instead of expecting full content:
+- Question 1: "What are all the API endpoints?"
+- Question 2: "What authentication method is required?"
+- Question 3: "What are the data models and their fields?"
 
 ## Integration Points
 
 ### Planning Workflow
 
 **Phase 1 - Requirements Intake**:
-- If external APIs mentioned, fetch API documentation
-- If frameworks mentioned, fetch framework docs
-- If external services mentioned, fetch service docs
+- If external APIs mentioned, ask targeted questions:
+  - "What are all the API endpoints and HTTP methods?"
+  - "What authentication method is required?"
+  - "What are the main data models and their fields?"
+- If frameworks mentioned, ask:
+  - "How do I set up and configure this framework?"
+  - "What are the core concepts and patterns?"
+  - "What are the integration requirements?"
+- If external services mentioned, ask:
+  - "What are the service capabilities and limitations?"
+  - "How do I integrate with this service?"
+  - "What are the pricing and rate limits?"
 
 **Phase 2 - Architecture Design**:
-- Fetch integration patterns from external sources
-- Load external architecture guides
-- Access best practice documentation
+- Ask about integration patterns: "What are best practices for integrating [service] with [framework]?"
+- Ask about architecture: "What architectural patterns are recommended for [use case]?"
+- Ask about best practices: "What are the recommended approaches for [scenario]?"
 
 ### Build Workflow
 
 **Before Component Building**:
-- Fetch library documentation if new library used
-- Load SDK examples if SDK integration needed
-- Access framework guides for implementation
+- If new library used, ask:
+  - "How do I install and initialize this library?"
+  - "What are the most common usage patterns and examples?"
+  - "How do I handle errors and edge cases?"
+- If SDK integration needed, ask:
+  - "How do I set up the SDK?"
+  - "What are the initialization patterns?"
+  - "How do I make API calls with the SDK?"
+- If framework guides needed, ask:
+  - "How do I implement [feature] in this framework?"
+  - "What are the recommended patterns for [task]?"
 
 **During Integration**:
-- Fetch API documentation for external services
-- Load integration guides
-- Access troubleshooting resources
+- For external APIs, ask:
+  - "How do I authenticate with this API?"
+  - "What's the request/response format?"
+  - "How do I handle errors from this API?"
+- For integration guides, ask:
+  - "How do I integrate [service] with [component]?"
+  - "What are common integration pitfalls?"
+- For troubleshooting, ask:
+  - "What are common errors and how do I fix them?"
+  - "How do I debug integration issues?"
 
 ### Review Workflow
 
 **Security Review**:
-- Fetch OWASP guidelines (if not in skills)
-- Load security best practices from external sources
-- Access vulnerability databases
+- Ask: "What are the OWASP Top 10 security risks and how do I check for them?"
+- Ask: "What security vulnerabilities should I look for in [code type]?"
+- Ask: "What are best practices for [security concern]?"
 
 **Performance Review**:
-- Fetch performance optimization guides
-- Load profiling tool documentation
-- Access benchmarking resources
+- Ask: "What performance optimization techniques apply to [scenario]?"
+- Ask: "How do I profile and identify bottlenecks in [technology]?"
+- Ask: "What are performance best practices for [component]?"
 
 ### Debug Workflow
 
 **During Investigation**:
-- Fetch error documentation
-- Load troubleshooting guides
-- Access stack trace analysis resources
+- Ask: "What does this error [error code/message] mean and how do I fix it?"
+- Ask: "How do I troubleshoot [symptom] in [technology]?"
+- Ask: "What are common causes of [issue type] and their solutions?"
 
-## Web Fetch Patterns
+## Web Fetch Patterns (Claude Code)
 
-### Pattern 1: API Specification Loading
+### Pattern 1: API Specification Loading (Question-Based)
 
-```python
-# Fetch API spec for planning
-def load_api_spec(api_url):
-    spec_url = f"{api_url}/openapi.json"  # or swagger.json
-    spec = web_fetch(url=spec_url)
-    return parse_spec(spec)
+```bash
+# CORRECT: Ask targeted questions about API
+# Planning workflow - gather API information
+
+# Question 1: Endpoints
+WebFetch(
+  url="https://api.example.com/openapi.json",
+  prompt="What are all the API endpoint paths, HTTP methods, and their purposes?"
+)
+
+# Question 2: Authentication
+WebFetch(
+  url="https://api.example.com/openapi.json",
+  prompt="What authentication method is required? How do I get an access token?"
+)
+
+# Question 3: Data Models
+WebFetch(
+  url="https://api.example.com/openapi.json",
+  prompt="What are the main data models, their fields, types, and relationships?"
+)
+
+# Question 4: Error Handling
+WebFetch(
+  url="https://api.example.com/docs",
+  prompt="What error codes does this API return and what do they mean?"
+)
 ```
 
-### Pattern 2: Documentation Loading
+### Pattern 2: Library Documentation Loading
 
-```python
-# Fetch library docs during build
-def load_library_docs(library_name):
-    docs_url = f"https://docs.{library_name}.com"
-    docs = web_fetch(url=docs_url)
-    return extract_examples(docs)
+```bash
+# CORRECT: Ask specific implementation questions
+# Build workflow - get implementation guidance
+
+# Question 1: Getting Started
+WebFetch(
+  url="https://docs.library.com/getting-started",
+  prompt="How do I install and initialize this library? What's the basic setup?"
+)
+
+# Question 2: Common Patterns
+WebFetch(
+  url="https://docs.library.com/patterns",
+  prompt="What are the most common usage patterns and code examples?"
+)
+
+# Question 3: Integration
+WebFetch(
+  url="https://docs.library.com/integration",
+  prompt="How do I integrate this library with [framework]? What's the recommended approach?"
+)
 ```
 
-### Pattern 3: Reference Material Loading
+### Pattern 3: Standards and Guidelines
 
-```python
-# Fetch reference guides
-def load_reference_guide(guide_url):
-    guide = web_fetch(url=guide_url)
-    return parse_markdown(guide)
+```bash
+# CORRECT: Ask about specific guidelines
+# Review workflow - check against standards
+
+WebFetch(
+  url="https://owasp.org/www-project-top-ten/",
+  prompt="What are the OWASP Top 10 security risks and how do I check for them in code?"
+)
+
+WebFetch(
+  url="https://example.com/coding-standards",
+  prompt="What are the coding standards for error handling, naming conventions, and code structure?"
+)
 ```
 
-## Smart Caching Strategy (AI Coding Assistant Optimized)
+## Smart Caching Strategy (Q&A Pair Caching)
+
+**CRITICAL**: Claude Code WebFetch returns answers, not raw content. Cache Q&A pairs!
 
 ### Cache Structure
 
 ```
 .claude/memory/web_cache/
-├── api_specs/
-│   ├── stripe_api_v1.json (with timestamp)
-│   └── github_api_v3.json (with timestamp)
-├── library_docs/
-│   └── react_query_v5.md (with timestamp)
-├── framework_docs/
-│   └── nextjs_v14.md (with timestamp)
-└── cache_index.json (URL → file mapping, TTL, last_fetched)
+├── qa_pairs/
+│   ├── {url_hash}_{prompt_hash}.json
+│   └── ...
+└── cache_index.json (Maps {url, prompt} → cached answer)
 ```
 
-### Cache Index Format
+### Cache Entry Format
 
 ```json
 {
-  "https://stripe.com/docs/api": {
-    "cached_file": ".claude/memory/web_cache/api_specs/stripe_api_v1.json",
-    "ttl_days": 7,
-    "last_fetched": "2025-10-22T10:00:00Z",
-    "expires_at": "2025-10-29T10:00:00Z",
-    "fetch_count": 3,
+  "https://api.example.com/openapi.json": {
+    "What are all the API endpoints?": {
+      "answer": "The API has POST /auth/login, GET /users/{id}...",
+      "fetched_at": "2025-10-29T10:00:00Z",
+      "ttl_hours": 24,
+      "expires_at": "2025-10-30T10:00:00Z",
+      "workflow_used": ["planning"],
+      "cache_file": ".claude/memory/web_cache/qa_pairs/abc123_def456.json"
+    },
+    "What authentication is required?": {
+      "answer": "OAuth2 Bearer token...",
+      "fetched_at": "2025-10-29T10:05:00Z",
+      "ttl_hours": 24,
+      "expires_at": "2025-10-30T10:05:00Z",
+      "workflow_used": ["planning"]
+    }
+  }
+}
+```
+
+### Cache Index Format (Simplified)
+
+```json
+{
+  "url_prompt_hash": {
+    "url": "https://api.example.com/openapi.json",
+    "prompt": "What are all the API endpoints?",
+    "answer_file": ".claude/memory/web_cache/qa_pairs/abc123_def456.json",
+    "ttl_hours": 24,
+    "last_fetched": "2025-10-29T10:00:00Z",
+    "expires_at": "2025-10-30T10:00:00Z",
+    "fetch_count": 2,
     "workflow_used": ["planning", "build"]
   }
 }
 ```
 
-### TTL Strategy
+### TTL Strategy (Hours-Based)
 
-- **API Specifications**: 7 days (APIs change frequently)
-- **Library Documentation**: 14 days (version updates)
-- **Framework Docs**: 30 days (major releases)
-- **Standards/Guidelines**: 90 days (stable content)
+- **API Specifications**: 24 hours (APIs change frequently, answers may become outdated)
+- **Library Documentation**: 48 hours (version updates, usage patterns change)
+- **Framework Docs**: 48 hours (examples and best practices evolve)
+- **Standards/Guidelines**: 72 hours (even stable content has updates)
 
-### Smart Fetching Rules
+**Rationale**: Since we cache answers (not raw content), shorter TTLs ensure answers stay current. Answers summarize content at fetch time, so re-fetching with same prompt may yield updated information.
+
+### Smart Fetching Rules (Q&A Based)
 
 **Cache-First Strategy**:
-1. **Check Cache Index**: Lookup URL in `cache_index.json`
-2. **Validate TTL**: If cached and TTL valid → use cache (no fetch)
-3. **Expired Cache**: If cached but expired → re-fetch
-4. **Not Cached**: If not cached → fetch and cache
-5. **Update Index**: Always update cache_index.json
+1. **Hash Query**: Create hash from `{url}_{prompt}` combination
+2. **Check Cache Index**: Lookup hash in `cache_index.json`
+3. **Validate TTL**: If cached and TTL valid → return cached answer (no fetch)
+4. **Expired Cache**: If cached but expired → re-fetch with same prompt
+5. **Not Cached**: If not cached → fetch with prompt and cache answer
+6. **Update Index**: Always update cache_index.json with new Q&A pair
 
 **Deduplication**:
-- Track URLs fetched in current workflow
-- Same URL in same workflow = use cached (already fetched)
-- Batch fetch multiple URLs when possible
+- Track `{url, prompt}` combinations fetched in current workflow
+- Same query in same workflow = use cached answer (already fetched)
+- Different prompts on same URL = different cache entries (ask different questions)
 
 **Graceful Fallback**:
-- If fetch fails → use cached version (even if expired)
+- If fetch fails → use cached answer (even if expired)
 - Log fetch failure for debugging
 - Notify user if using stale cache
+
+**Prompt Consistency**:
+- Use same prompt wording for same URL to maximize cache hits
+- Standardize common questions (e.g., "What are the API endpoints?")
 
 **Cache Corruption Handling**:
 - **Detection**: Validate `cache_index.json` is valid JSON before use
@@ -246,16 +364,20 @@ if not is_valid_url(url):
 
 ## Cache Implementation
 
-### Cache Check Function
+### Cache Check Function (Q&A Based)
 
 ```bash
 #!/bin/bash
-# Check cache before fetching URL
-# Includes cache corruption handling
+# Check cache before fetching URL with prompt
+# Returns cached answer if available
 
 check_cache() {
   local url="$1"
+  local prompt="$2"
   local cache_index=".claude/memory/web_cache/cache_index.json"
+  
+  # Create hash from URL + prompt combination
+  local query_hash=$(echo -n "${url}:${prompt}" | sha256sum | cut -d' ' -f1)
   
   # Validate cache_index.json exists and is valid JSON
   if [ ! -f "$cache_index" ]; then
@@ -265,38 +387,37 @@ check_cache() {
   
   # Validate JSON syntax (cache corruption detection)
   if ! jq empty "$cache_index" 2>/dev/null; then
-    # Cache index corrupted - rebuild from cache files
-    echo "CACHE_CORRUPTED: Rebuilding cache_index.json" >&2
-    rebuild_cache_index "$cache_index"
-    if ! jq empty "$cache_index" 2>/dev/null; then
-      # Rebuild failed - clear cache and start fresh
-      echo "CACHE_REBUILD_FAILED: Clearing cache" >&2
-      rm -f "$cache_index"
-      echo "CACHE_MISS"
-      return 2
-    fi
+    # Cache index corrupted - rebuild or clear
+    echo "CACHE_CORRUPTED: Clearing cache_index.json" >&2
+    rm -f "$cache_index"
+    echo "CACHE_MISS"
+    return 2
   fi
   
-  # Check if URL in cache index
-  local cached=$(jq -r ".[\"$url\"] // empty" "$cache_index" 2>/dev/null)
-  if [ -n "$cached" ] && [ "$cached" != "null" ]; then
-    local expires=$(echo "$cached" | jq -r '.expires_at // empty' 2>/dev/null)
-    local cached_file=$(echo "$cached" | jq -r '.cached_file // empty' 2>/dev/null)
+  # Check if query_hash exists in cache
+  local cached_entry=$(jq -r ".[\"$query_hash\"] // empty" "$cache_index" 2>/dev/null)
+  if [ -n "$cached_entry" ] && [ "$cached_entry" != "null" ]; then
+    local expires=$(echo "$cached_entry" | jq -r '.expires_at // empty' 2>/dev/null)
+    local answer_file=$(echo "$cached_entry" | jq -r '.answer_file // empty' 2>/dev/null)
     
-    # Validate cached file exists
-    if [ -z "$cached_file" ] || [ ! -f "$cached_file" ]; then
-      # Cached file missing - remove from index
-      jq "del(.[\"$url\"])" "$cache_index" > "$cache_index.tmp" && mv "$cache_index.tmp" "$cache_index"
+    # Validate answer file exists
+    if [ -z "$answer_file" ] || [ ! -f "$answer_file" ]; then
+      # Answer file missing - remove from index
+      jq "del(.[\"$query_hash\"])" "$cache_index" > "$cache_index.tmp" && mv "$cache_index.tmp" "$cache_index"
       echo "CACHE_MISS"
       return 2
     fi
     
     # Check if TTL valid
-    if [ -n "$expires" ] && [ "$(date -d "$expires" +%s 2>/dev/null)" -gt "$(date +%s)" ]; then
-      echo "CACHE_HIT:$cached_file"
+    local expires_ts=$(date -d "$expires" +%s 2>/dev/null)
+    local now_ts=$(date +%s)
+    if [ -n "$expires_ts" ] && [ "$expires_ts" -gt "$now_ts" ]; then
+      # Return cached answer
+      local answer=$(cat "$answer_file")
+      echo "CACHE_HIT:$answer"
       return 0
     else
-      echo "CACHE_EXPIRED:$cached_file"
+      echo "CACHE_EXPIRED:$answer_file"
       return 1
     fi
   fi
@@ -304,123 +425,146 @@ check_cache() {
   echo "CACHE_MISS"
   return 2
 }
-
-# Rebuild cache index from existing cache files
-rebuild_cache_index() {
-  local cache_index="$1"
-  local cache_dir=".claude/memory/web_cache"
-  
-  echo "{}" > "$cache_index"
-  
-  # Rebuild from cached files (if any exist)
-  find "$cache_dir" -type f -name "*.json" -o -name "*.md" | while read -r cached_file; do
-    # Extract URL from file metadata or skip (re-fetch later)
-    # For now, just clear corrupted index - re-fetch will rebuild properly
-    true
-  done
-}
 ```
 
-### Cache Save Function
+### Cache Save Function (Q&A Based)
 
 ```bash
 #!/bin/bash
-# Save fetched content to cache
+# Save fetched answer to cache (Q&A pair)
 
 save_to_cache() {
   local url="$1"
-  local content_file="$2"
-  local ttl_days="${3:-7}"  # Default 7 days
+  local prompt="$2"
+  local answer="$3"
+  local ttl_hours="${4:-24}"  # Default 24 hours
   
   local cache_dir=".claude/memory/web_cache"
   local cache_index="$cache_dir/cache_index.json"
   
-  mkdir -p "$cache_dir/api_specs" "$cache_dir/library_docs" "$cache_dir/framework_docs"
+  mkdir -p "$cache_dir/qa_pairs"
   
-  # Determine cache subdirectory based on URL pattern
-  local subdir="api_specs"
-  if [[ "$url" =~ "docs\.(library|framework)" ]]; then
-    subdir="library_docs"
-  fi
+  # Create hash from URL + prompt
+  local query_hash=$(echo -n "${url}:${prompt}" | sha256sum | cut -d' ' -f1)
+  local answer_file="$cache_dir/qa_pairs/${query_hash}.json"
   
-  local cached_file="$cache_dir/$subdir/$(echo "$url" | md5sum | cut -d' ' -f1).json"
-  cp "$content_file" "$cached_file"
+  # Save answer to file
+  echo "$answer" > "$answer_file"
   
   # Update cache index
-  local expires_at=$(date -d "+$ttl_days days" -Iseconds)
-  jq --arg url "$url" \
-     --arg file "$cached_file" \
-     --arg ttl "$ttl_days" \
+  local expires_at=$(date -d "+$ttl_hours hours" -Iseconds)
+  jq --arg hash "$query_hash" \
+     --arg url "$url" \
+     --arg prompt "$prompt" \
+     --arg file "$answer_file" \
+     --arg ttl "$ttl_hours" \
      --arg expires "$expires_at" \
-     '.[$url] = {
-       "cached_file": $file,
-       "ttl_days": ($ttl | tonumber),
+     '.[$hash] = {
+       "url": $url,
+       "prompt": $prompt,
+       "answer_file": $file,
+       "ttl_hours": ($ttl | tonumber),
        "last_fetched": (now | strftime("%Y-%m-%dT%H:%M:%SZ")),
        "expires_at": $expires,
-       "fetch_count": ((.[$url].fetch_count // 0) + 1)
-     }' "$cache_index" > "$cache_index.tmp"
+       "fetch_count": ((.[$hash].fetch_count // 0) + 1),
+       "workflow_used": ((.[$hash].workflow_used // []) + [$ENV.WORKFLOW_NAME])
+     }' "$cache_index" > "$cache_index.tmp" 2>/dev/null || echo "{}" > "$cache_index.tmp"
   mv "$cache_index.tmp" "$cache_index"
 }
 ```
 
-## Verification Checklist
+## Verification Checklist (Q&A Based)
 
 **Before Fetching**:
-- [ ] Check `cache_index.json` for URL
-- [ ] If cached and TTL valid → use cache (skip fetch)
-- [ ] If cached but expired → mark for re-fetch
-- [ ] If not cached → proceed with fetch
+- [ ] Create hash from `{url}_{prompt}` combination
+- [ ] Check `cache_index.json` for query hash
+- [ ] If cached and TTL valid → use cached answer (skip fetch)
+- [ ] If cached but expired → mark for re-fetch with same prompt
+- [ ] If not cached → proceed with fetch using prompt
 - [ ] Verify URL is valid and accessible
+- [ ] Verify prompt is specific and clear
 
 **After Fetching**:
-- [ ] Save to cache with appropriate TTL
-- [ ] Update cache_index.json
-- [ ] Validate fetched content is relevant
-- [ ] Extract only needed sections
-- [ ] Cite source in workflow output
-- [ ] Track which workflow used this cache
+- [ ] Save answer (not raw content) to cache with appropriate TTL
+- [ ] Update cache_index.json with Q&A pair entry
+- [ ] Validate answer is relevant to prompt
+- [ ] Use consistent prompt wording for same questions
+- [ ] Cite source URL in workflow output
+- [ ] Track which workflow used this cache entry
 
 **On Fetch Failure**:
-- [ ] Check for stale cache (even if expired)
-- [ ] Use stale cache if available
+- [ ] Check for stale cached answer (even if expired)
+- [ ] Use stale answer if available
 - [ ] Log failure for debugging
 - [ ] Notify user if using stale cache
+- [ ] Consider alternative phrasing of prompt
 
 ## Examples
 
-### Example 1: Planning with External API
+### Example 1: Planning with External API (Question-Based)
 
-```python
+```bash
 # Planning workflow - Phase 1
 user_request = "Integrate with Stripe API"
 
-# Fetch Stripe API docs
-stripe_docs = web_fetch(url="https://stripe.com/docs/api")
-payment_patterns = extract_patterns(stripe_docs)
+# Question 1: Get all endpoints
+endpoints = WebFetch(
+  url="https://stripe.com/docs/api",
+  prompt="What are all the API endpoint paths, HTTP methods, and their purposes?"
+)
 
-# Use in architecture design
-design_api_integration(stripe_docs, payment_patterns)
+# Question 2: Get authentication details
+auth_info = WebFetch(
+  url="https://stripe.com/docs/api/authentication",
+  prompt="How do I authenticate requests? What API keys are needed and where do I get them?"
+)
+
+# Question 3: Get payment models
+payment_models = WebFetch(
+  url="https://stripe.com/docs/api/payment_intents",
+  prompt="What are the PaymentIntent data model fields and their types? What are required vs optional fields?"
+)
+
+# Use answers in architecture design
+design_api_integration(endpoints, auth_info, payment_models)
 ```
 
-### Example 2: Build with Library Docs
+### Example 2: Build with Library Docs (Question-Based)
 
-```python
+```bash
 # Build workflow - Before component
 library = "react-query"
 
-# Fetch library docs
-react_query_docs = web_fetch(url="https://tanstack.com/query/latest")
-examples = extract_examples(react_query_docs)
+# Question 1: Setup
+setup_info = WebFetch(
+  url="https://tanstack.com/query/latest/docs/react/overview",
+  prompt="How do I install and set up react-query? What's the basic configuration?"
+)
+
+# Question 2: Common patterns
+usage_patterns = WebFetch(
+  url="https://tanstack.com/query/latest/docs/react/guides/queries",
+  prompt="What are the most common query patterns and code examples for fetching data?"
+)
+
+# Question 3: Mutations
+mutations_info = WebFetch(
+  url="https://tanstack.com/query/latest/docs/react/guides/mutations",
+  prompt="How do I handle mutations? What's the pattern for POST/PUT/DELETE operations?"
+)
 
 # Use in implementation
-implement_with_guidance(examples)
+implement_with_guidance(setup_info, usage_patterns, mutations_info)
 ```
 
-### Example 3: Review with External Standards
+### Example 3: Review with External Standards (Question-Based)
 
-```python
+```bash
 # Review workflow - Security review
-security_guidelines = web_fetch(url="https://owasp.org/www-project-top-ten/")
+security_guidelines = WebFetch(
+  url="https://owasp.org/www-project-top-ten/",
+  prompt="What are the OWASP Top 10 security risks for 2021? How do I check for injection attacks, broken authentication, and sensitive data exposure in code?"
+)
 
 # Use in security analysis
 analyze_with_owasp(security_guidelines)

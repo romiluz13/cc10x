@@ -283,3 +283,4 @@ interface UserCardProps {
 |----------|--------|------|---------|----------|
 | /v1/users | GET | JWT | query: {id?} | 200: User[] |
 | /v1/users | POST | JWT | body: {email, name} | 201: User |
+

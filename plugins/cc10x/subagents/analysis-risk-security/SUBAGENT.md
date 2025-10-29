@@ -40,3 +40,4 @@ Include a "Residual Risk" section summarising remaining concerns.
 ## Verification
 - Tie each finding to a specific code reference or configuration file.
 - If additional analysis (dependency scan, config review) is needed, state the request explicitly instead of assuming completion.
+
