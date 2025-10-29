@@ -1,320 +1,342 @@
-# CC10X - Claude Code Plugin
+# cc10x - Intelligent Development Workflows
 
-A powerful, production-ready Claude Code plugin that provides intelligent code analysis, planning, building, and debugging capabilities through a lean, optimized architecture.
+A Claude Code plugin that provides systematic development workflows through orchestrated skills and subagents. Automates code review, feature planning, implementation, and debugging with structured, repeatable processes.
 
-## 🚀 Quick Start
+## Quick Start
 
-### Fastest Setup
+### Installation
 
-Install the plugin directly in Claude Code:
+Install directly in Claude Code:
 
 ```bash
 /plugin install cc10x
 ```
 
-Then restart Claude Code.
+Restart Claude Code to activate the plugin.
 
-### Key Commands
+### Basic Usage
 
-```bash
-# Review code
-@cc10x review
+The orchestrator detects your intent and invokes the appropriate workflow:
 
-# Plan architecture
-@cc10x plan
+```
+Review this authentication module for security issues
+→ Triggers REVIEW workflow
 
-# Build components
-@cc10x build
+Plan a payment processing feature
+→ Triggers PLAN workflow
 
-# Debug issues
-@cc10x debug
+Implement user profile management
+→ Triggers BUILD workflow
+
+Fix the memory leak in data pipeline
+→ Triggers DEBUG workflow
 ```
 
-For detailed setup instructions, see [plugins/cc10x/QUICKSTART.md](plugins/cc10x/QUICKSTART.md).
+---
+
+## Four Core Workflows
+
+### REVIEW - Multi-Dimensional Code Analysis
+
+Systematic code review across security, quality, performance, UX, and accessibility dimensions.
+
+**When to use**:
+- Before merging pull requests
+- Security audits
+- Performance optimization
+- UX evaluation
+- Accessibility compliance checks
+
+**What it provides**:
+- Security vulnerability identification (OWASP Top 10)
+- Performance bottleneck detection
+- Code quality assessment (complexity, duplication, maintainability)
+- UX friction point analysis
+- WCAG accessibility compliance check
 
 ---
 
-## 📋 What is CC10X?
+### PLAN - Strategic Feature Planning
 
-CC10X is a Claude Code plugin that orchestrates intelligent workflows for:
+Comprehensive planning for features and architecture with requirements analysis, design decisions, and risk assessment.
 
-- **REVIEW** - Analyze code quality, security, performance, UX, accessibility
-- **PLAN** - Design architecture, plan features, estimate effort
-- **BUILD** - Implement components, write tests, verify integration
-- **DEBUG** - Investigate bugs, fix issues, verify fixes
+**When to use**:
+- New feature development
+- Architecture design
+- Technical decision making
+- Risk assessment before implementation
 
-### Key Features
-
-✅ **3x Faster** - Parallel execution of analysis and implementation  
-✅ **67% Token Savings** - Progressive skill loading and optimization  
-✅ **100% Parallelized** - All workflows optimized for speed  
-✅ **99%+ Reliable** - Enterprise-grade error handling  
-✅ **Production-Ready** - Fully tested and documented  
+**What it provides**:
+- Requirements analysis with acceptance criteria
+- Architecture design with system context and component breakdown
+- Risk identification across 7 dimensions (data flow, dependencies, timing, UX, security, performance, failure modes)
+- Implementation roadmap with file manifest and phased approach
+- Deployment strategy with rollback plans
 
 ---
 
-## 📁 Project Structure
+### BUILD - TDD-Driven Implementation
+
+Test-driven development workflow with component building, code review, and integration verification.
+
+**When to use**:
+- Implementing new features
+- Building components
+- Adding functionality to existing codebase
+
+**What it provides**:
+- RED → GREEN → REFACTOR cycle enforcement
+- Component implementation with tests
+- Code quality verification
+- Integration testing
+- Evidence-based verification before completion
+
+---
+
+### DEBUG - Systematic Bug Investigation
+
+Log-first debugging methodology for root cause analysis and systematic fixes.
+
+**When to use**:
+- Investigating production issues
+- Fixing bugs
+- Understanding unexpected behavior
+- Performance debugging
+
+**What it provides**:
+- Log-first evidence gathering (prevents assumption-driven debugging)
+- Root cause identification
+- Targeted fix implementation
+- Regression prevention
+- Verification of fix effectiveness
+
+---
+
+## Skills Architecture
+
+The plugin includes 26 specialized skills organized into domains:
+
+### Code Quality & Security
+- **security-patterns**: OWASP Top 10, injection prevention, authentication decision frameworks
+- **code-quality-patterns**: SOLID principles, complexity metrics, maintainability patterns
+- **performance-patterns**: Bottleneck identification, optimization techniques, profiling guidance
+
+### Design & Planning
+- **feature-planning**: Requirements gathering, architecture design, implementation roadmaps
+- **requirements-analysis**: Stakeholder analysis, acceptance criteria, scope management
+- **architecture-patterns**: System design, component boundaries, integration patterns
+- **risk-analysis**: 7-stage risk framework (data flow, dependencies, timing, UX, security, performance, failure modes)
+
+### User Experience
+- **ux-patterns**: Loading states, error handling, form usability, user flows
+- **ui-design**: Visual hierarchy, design tokens, layout systems, state design
+- **accessibility-patterns**: WCAG compliance, keyboard navigation, screen reader support
+
+### Implementation
+- **test-driven-development**: RED → GREEN → REFACTOR discipline, test patterns
+- **code-generation**: SOLID principles, DRY methodology, project conventions
+- **component-design-patterns**: Composition, reusability, API design
+
+### Deployment & Operations
+- **deployment-patterns**: 3-level rollback (flag/config/code), staged rollouts, monitoring
+- **systematic-debugging**: LOG FIRST methodology, evidence-based debugging
+- **log-analysis-patterns**: Structured logging, log aggregation, parsing techniques
+
+---
+
+## Subagents Architecture
+
+9 specialized subagents execute workflows:
+
+### Review Workflow
+- **analysis-risk-security**: Security vulnerabilities, risk assessment
+- **analysis-performance-quality**: Performance bottlenecks, code quality metrics
+- **analysis-ux-accessibility**: UX friction points, accessibility compliance
+
+### Plan Workflow
+- **planning-architecture-risk**: System architecture, component design, risk identification
+- **planning-design-deployment**: API design, deployment strategy, rollback plans
+
+### Build Workflow
+- **component-builder**: TDD implementation, component building
+- **code-reviewer**: Quality and security verification
+- **integration-verifier**: Integration testing, evidence-based completion
+
+### Debug Workflow
+- **bug-investigator**: Log analysis, root cause identification, fix implementation
+
+---
+
+## Progressive Disclosure
+
+Skills use 3-level progressive loading:
+
+**Level 1: Metadata** - Skill name and description (always loaded)
+```yaml
+---
+name: security-patterns
+description: Identifies OWASP Top 10 vulnerabilities including SQL injection, XSS, authentication bypasses...
+---
+```
+
+**Level 2: Quick Reference** - Core patterns and decision frameworks (loaded when triggered)
+- Decision matrices (JWT vs Sessions vs OAuth, RBAC vs ABAC)
+- Before/after examples showing quality differences
+- Quick checklists and red flags
+
+**Level 3: Detailed Guide** - Comprehensive patterns and examples (loaded as needed)
+- Complete pattern catalog
+- Edge case handling
+- Integration with other skills
+
+---
+
+## Workflow Invocation
+
+The orchestrator detects intent from natural language:
+
+```
+"Review this code for security" → REVIEW workflow
+"Plan authentication system" → PLAN workflow
+"Build user registration" → BUILD workflow
+"Debug login issue" → DEBUG workflow
+```
+
+### Complexity Gating
+
+The orchestrator assesses complexity before proceeding:
+
+**Complexity Scale (1-5)**:
+- **1-2**: Simple changes - recommends direct implementation
+- **3**: Moderate - planning workflow adds value
+- **4-5**: Complex - comprehensive planning critical
+
+**Complexity Example**:
+```
+Task: Add a validation helper function
+Complexity: 1 (trivial)
+Recommendation: "This is a simple change. Implement directly?"
+```
+
+---
+
+## Evidence-Based Verification
+
+All workflows enforce evidence-first completion:
+
+**Before marking complete**:
+- Run tests: `npm test` → capture exit code and output
+- Check coverage: `npm run coverage` → verify >80%
+- Verify build: `npm run build` → confirm success
+- Manual testing: Document steps and results
+
+**No success claims without command outputs**
+
+---
+
+## When to Use Each Workflow
+
+### Use REVIEW when:
+- Before merging pull requests
+- Security-critical code changes
+- Performance optimization needed
+- UX evaluation required
+- Accessibility compliance checking
+
+### Use PLAN when:
+- Starting new features (complexity 4-5)
+- Making architectural decisions
+- Assessing deployment risks
+- Coordinating team implementation
+
+### Use BUILD when:
+- Implementing planned features
+- Building new components
+- Adding functionality with tests
+- Quality standards enforcement needed
+
+### Use DEBUG when:
+- Production issues occurring
+- Bugs need systematic investigation
+- Root cause analysis required
+- Prevention strategies needed
+
+---
+
+## File Structure
 
 ```
 cc10x/
-├── README.md                 # This file
-├── LICENSE                   # MIT License
-├── plugins/cc10x/            # Main plugin code
-│   ├── README.md            # Plugin documentation
-│   ├── QUICKSTART.md        # Setup guide
-│   ├── CLAUDE.md            # Claude integration guide
-│   ├── skills/              # 20 core skills
-│   ├── subagents/           # 9 parallel subagents
-│   ├── agents/              # Agent definitions
-│   ├── hooks/               # Lifecycle hooks
-│   └── scripts/             # Utility scripts
-└── docs/                     # Documentation
-    ├── phases/              # Implementation phases
-    ├── optimization/        # Optimization reports
-    ├── analysis/            # Architecture analysis
-    ├── guides/              # Implementation guides
-    └── reference/           # Reference documentation
+├── .claude-plugin/
+│   └── plugin.json                    # Plugin configuration
+├── skills/                            # 26 specialized skills
+│   ├── cc10x-orchestrator/           # Main orchestrator
+│   ├── security-patterns/            # Security guidance
+│   ├── feature-planning/             # Planning templates
+│   ├── test-driven-development/      # TDD patterns
+│   └── ...                           # Other domain skills
+├── subagents/                         # 9 workflow subagents
+│   ├── analysis-risk-security/       # Security analysis
+│   ├── component-builder/            # TDD implementation
+│   ├── bug-investigator/             # Debugging
+│   └── ...                           # Other subagents
+├── hooks/                             # Lifecycle hooks
+│   └── session-start.sh              # Session initialization
+└── scripts/                           # Validation scripts
+    └── validate-skill-references.sh
 ```
 
 ---
 
-## 🎯 Core Workflows
+## Verification
 
-### REVIEW Workflow
-Comprehensive code analysis with 6 dimensions:
-- Risk & Security Analysis
-- Performance Analysis
-- Code Quality Analysis
-- UX & Accessibility Analysis
-
-**Speed**: 2-3 minutes | **Tokens**: 15k
-
-### PLAN Workflow
-Strategic planning for features and architecture:
-- Requirements Analysis
-- Architecture Design
-- Risk Assessment
-- Deployment Planning
-
-**Speed**: 4-5 minutes | **Tokens**: 22k
-
-### BUILD Workflow
-Implementation with quality assurance:
-- Component Building
-- Code Generation
-- Test Writing
-- Integration Verification
-
-**Speed**: 4 minutes | **Tokens**: 40k
-
-### DEBUG Workflow
-Systematic bug investigation and fixing:
-- Log Analysis
-- Bug Investigation
-- Fix Implementation
-- Verification
-
-**Speed**: 4 minutes | **Tokens**: 35k
-
----
-
-## 📊 Performance Metrics
-
-| Metric | Value | Status |
-|--------|-------|--------|
-| **Execution Speed** | 6-8 min | ✅ 3x faster |
-| **Token Efficiency** | 50k | ✅ 67% savings |
-| **Parallelization** | 100% | ✅ Full coverage |
-| **Reliability** | 99%+ | ✅ Enterprise-grade |
-| **Code Quality** | 100% | ✅ All checks |
-
----
-
-## 📚 Documentation
-
-### Getting Started
-- [Plugin README](plugins/cc10x/README.md) - Plugin overview
-- [Quick Start Guide](plugins/cc10x/QUICKSTART.md) - Setup instructions
-- [Claude Integration](plugins/cc10x/CLAUDE.md) - Claude-specific setup
-
-### Implementation Guides
-- [Error Handling Guide](docs/guides/ERROR-HANDLING-GUIDE.md) - Error recovery strategies
-- [Progressive Loading Guide](docs/guides/PROGRESSIVE-LOADING-GUIDE.md) - Token optimization
-- [Workflow Chaining Guide](docs/guides/WORKFLOW-CHAINING-GUIDE.md) - Workflow transitions
-
-### Reference Documentation
-- [Architecture Analysis](docs/analysis/) - System design documents
-- [Optimization Reports](docs/optimization/) - Performance improvements
-- [Implementation Phases](docs/phases/) - Phase-by-phase delivery
-
----
-
-## 🛠️ Skills & Subagents
-
-### 20 Core Skills
-- Code Quality Patterns
-- Security Patterns
-- Performance Patterns
-- UX Patterns
-- Accessibility Patterns
-- Design Patterns
-- Deployment Patterns
-- Test-Driven Development
-- Feature Planning
-- Requirements Analysis
-- Risk Analysis
-- Root Cause Analysis
-- Log Analysis Patterns
-- Systematic Debugging
-- Code Generation
-- And more...
-
-### 9 Parallel Subagents
-- Analysis: Risk & Security
-- Analysis: Performance & Quality
-- Analysis: UX & Accessibility
-- Planning: Architecture & Risk
-- Planning: Design & Deployment
-- Building: Component Builder
-- Building: Code Reviewer
-- Building: Integration Verifier
-- Debugging: Bug Investigator
-
----
-
-## 🔧 Installation
-
-### Method 1: Direct Installation (Recommended)
+Check installation success:
 
 ```bash
-/plugin install cc10x
+# List installed plugins
+/plugins list
+
+# Verify cc10x appears
+
+# Test workflow invocation
+"Review this code for quality"
+# Should trigger REVIEW workflow
 ```
 
-Restart Claude Code, then you're ready to use all workflows.
+---
 
-### Method 2: Manual Installation
+## Documentation
 
-1. Clone this repository:
-```bash
-git clone https://github.com/romiluz13/cc10x.git
-```
-
-2. Add to Claude Code:
-```bash
-/plugin add ./cc10x/plugins/cc10x
-```
-
-3. Restart Claude Code
-
-### Verify Installation
-
-```bash
-/cc10x:help
-```
-
-Should display all available workflows and commands.
+- **Skills Reference**: See `skills/` directory for individual skill documentation
+- **Subagents Reference**: See `subagents/` directory for subagent specifications
+- **Workflow Documentation**: See `skills/cc10x-orchestrator/workflows/` for workflow details
 
 ---
 
-## 📖 Workflows & Commands
+## Design Principles
 
-### REVIEW - Code Analysis
-
-Comprehensive analysis across 6 dimensions: risk, security, performance, quality, UX, accessibility.
-
-```bash
-@cc10x review
-Analyze this code for quality, security, and performance
-```
-
-**Output**: Risk assessment, security findings, performance recommendations, quality metrics
+**Progressive Disclosure**: Load only what's needed when it's needed
+**Evidence-First**: No success claims without verification
+**Principles Over Prescriptions**: Teach decision frameworks, not rigid checklists
+**Systematic Processes**: Repeatable workflows with clear stages
 
 ---
 
-### PLAN - Architecture & Design
+## License
 
-Strategic planning for features, architecture, and deployment.
-
-```bash
-@cc10x plan
-Design the architecture for a new user authentication system
-```
-
-**Output**: Architecture design, implementation plan, risk assessment, deployment strategy
+MIT License - See LICENSE file for details
 
 ---
 
-### BUILD - Implementation
+## Contributing
 
-Parallel component building with code generation and testing.
-
-```bash
-@cc10x build
-Implement a React component for user profile management
-```
-
-**Output**: Generated code, unit tests, integration verification, quality checks
+For improvements or issues:
+1. Check existing documentation in `skills/` and `subagents/`
+2. Review workflow specifications
+3. Submit detailed reports with examples
 
 ---
 
-### DEBUG - Bug Investigation
-
-Systematic bug investigation and fixing with root cause analysis.
-
-```bash
-@cc10x debug
-Fix the memory leak in the data processing pipeline
-```
-
-**Output**: Root cause analysis, fix implementation, verification, prevention strategies
-
----
-
-## 🚀 Deployment
-
-CC10X is production-ready and can be deployed immediately:
-
-✅ All workflows optimized and tested  
-✅ Error handling and fallbacks implemented  
-✅ Comprehensive documentation provided  
-✅ Enterprise-grade reliability (99%+)  
-
----
-
-## 📄 License
-
-MIT License - See [LICENSE](LICENSE) file for details
-
----
-
-## 🤝 Contributing
-
-This is a production plugin. For improvements or issues:
-1. Review the documentation
-2. Check existing issues
-3. Submit detailed reports
-
----
-
-## 📞 Support
-
-For questions or issues:
-- Check the [documentation](docs/)
-- Review [implementation guides](docs/guides/)
-- See [reference documentation](docs/reference/)
-
----
-
-## 🎉 Acknowledgments
-
-Built with:
-- Claude AI by Anthropic
-- Lean architecture principles
-- Enterprise-grade optimization
-
----
-
-**Status**: ✅ Production Ready
-**Version**: 2.0.0
-**Last Updated**: 2025-10-28
-
+**Version**: 3.0.0
+**Status**: Production Ready
+**Last Updated**: 2025-10-29
