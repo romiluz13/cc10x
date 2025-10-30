@@ -77,10 +77,13 @@ Skills load in 3 levels—exactly when needed:
 ### Installation
 
 ```bash
-# Install cc10x plugin
-/plugin install cc10x
+# Step 1: Add the marketplace
+/plugin marketplace add romiluz13/cc10x
 
-# Restart Claude Code
+# Step 2: Install the plugin
+/plugin install cc10x@romiluz13
+
+# Step 3: Restart Claude Code
 # Done. That's it.
 ```
 
@@ -507,7 +510,8 @@ cc10x Orchestrator
 
 ## 🚦 Getting Started Checklist
 
-- [ ] Install cc10x: `/plugin install cc10x`
+- [ ] Add marketplace: `/plugin marketplace add romiluz13/cc10x`
+- [ ] Install cc10x: `/plugin install cc10x@romiluz13`
 - [ ] Restart Claude Code
 - [ ] Try REVIEW: `"Review this code for security issues"`
 - [ ] Try PLAN: `"Plan a user authentication feature"`
@@ -617,11 +621,15 @@ If cc10x made your development faster, safer, or better:
 **Ready to level up your Claude Code experience?**
 
 ```bash
-/plugin install cc10x
+# Step 1: Add the marketplace
+/plugin marketplace add romiluz13/cc10x
+
+# Step 2: Install the plugin
+/plugin install cc10x@romiluz13
 ```
 
 **Welcome to the future of AI-assisted development.** 🚀
 
 ---
 
-*cc10x v3.1.0 | Production Ready | Built for Claude Code | 9.5+ Prompt Engineering*
+*cc10x v3.2.0 | Production Ready | Built for Claude Code | 9.5+ Prompt Engineering*
