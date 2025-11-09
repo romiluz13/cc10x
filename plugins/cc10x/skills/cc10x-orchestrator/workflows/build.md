@@ -2,15 +2,61 @@
 
 **CRITICAL**: This workflow MUST be activated through cc10x-orchestrator. Do NOT execute this workflow directly. The orchestrator provides required context, coordinates skill loading, and manages subagent invocation. Direct execution bypasses all validation mechanisms.
 
+**🚨 CRITICAL ENFORCEMENT - DO NOT WRITE CODE DIRECTLY 🚨**
+
+**MANDATORY RULES** (Violation = Workflow Failure):
+
+1. **DO NOT write code directly** - You MUST invoke subagents in sequence:
+   - component-builder → code-reviewer → integration-verifier
+   - Each component gets its own subagent sequence
+   - Read subagent's SUBAGENT.md before invoking
+   - Verify subagent exists before invoking
+   - Check skip conditions before invoking
+
+2. **DO NOT skip TDD cycle** - component-builder MUST follow RED → GREEN → REFACTOR:
+   - RED: Write failing test FIRST, run test, capture failing output with exit code
+   - GREEN: Write minimal code to pass test, run test, capture passing output with exit code
+   - REFACTOR: Clean up while keeping tests green, verify exit code still 0
+   - Do NOT mark component complete without seeing test fail then pass
+
+3. **DO NOT skip Actions Taken tracking** - Update Actions Taken IMMEDIATELY after:
+   - Each skill loaded (mark as "loaded successfully" or "failed to load")
+   - Each subagent invoked (mark as "invoked successfully" or "skipped" with reason)
+   - Each phase completed (mark phase as complete)
+   - Never proceed to next phase without updating Actions Taken
+
+4. **DO NOT skip inventory checks** - You MUST perform:
+   - Skills Inventory Check before Phase 3 (verify ALL required skills loaded)
+   - Subagents Inventory Check before Phase 4 (verify ALL required subagents invoked)
+   - If ANY missing, STOP workflow, fix immediately, re-validate
+
+5. **DO NOT skip memory integration** - You MUST:
+   - Query patterns before complexity scoring (load patterns.json ONCE, cache for workflow duration)
+   - Store patterns after workflow completion (validate first, update accuracy)
+
+6. **DO NOT skip web fetch integration** - You MUST:
+   - When external APIs/libraries/frameworks mentioned, fetch documentation
+   - Use question-based prompts (not raw content requests)
+   - Check cache first, use cache if valid, fetch if needed
+
+**If you violate ANY of these rules, Phase 4 validation will FAIL and you will be forced to correct before proceeding.**
+
 **Triggered by:** User requests implementation or feature build work.
 
 ## TL;DR Quick Checklist
+
+**CRITICAL**: Complete ALL items below. Skipping any item will cause workflow validation to FAIL.
 
 - [ ] Complete Phase 0: Functionality Analysis FIRST (understand functionality requirements, document flows, extract acceptance criteria)
 - [ ] Assess complexity (1-5 scale) and gate check if <=2
 - [ ] Load required skills in parallel (code-generation, test-driven-development, component-design-patterns)
 - [ ] Load conditional skills if detected (ui-design if UI components, design-patterns if building APIs/components/integrations)
-- [ ] Build components sequentially per component (component-builder → code-reviewer → integration-verifier)
+- [ ] **UPDATE Actions Taken** - Document ALL skills loaded IMMEDIATELY after loading
+- [ ] **PERFORM Skills Inventory Check** - Verify ALL required skills loaded before Phase 3
+- [ ] **DO NOT write code directly** - Invoke subagents: component-builder → code-reviewer → integration-verifier
+- [ ] **FOR EACH component** - Follow TDD cycle: RED (failing test) → GREEN (minimal code) → REFACTOR (clean up)
+- [ ] **UPDATE Actions Taken** - Document ALL subagents invoked IMMEDIATELY after invocation
+- [ ] **PERFORM Subagents Inventory Check** - Verify ALL required subagents invoked before Phase 4
 - [ ] Run tests and verify functionality works before claiming completion
 - [ ] Generate build report with functionality verification FIRST, then other checks
 
@@ -436,6 +482,17 @@ Established:
 Next: Proceeding to Phase 3 - Component Queue
 ```
 
+**CRITICAL VALIDATION GATE - Before Phase 3**:
+
+**Checklist** (ALL must pass before proceeding):
+
+- [ ] Phase 2: Skills loaded complete
+- [ ] Actions Taken section updated with ALL required skills listed
+- [ ] Skills Inventory Check passed (ALL required skills loaded, conditional skills loaded IF detected)
+- [ ] Each skill marked as "loaded successfully" or "failed to load" in Actions Taken
+
+**If validation fails**: STOP workflow, load missing skills, update Actions Taken, re-run Skills Inventory Check, then proceed.
+
 ## Phase 3 - Component Queue
 
 **Component Identification**:
@@ -559,6 +616,20 @@ BEFORE creating component queue:
 - Must remain sequential (reviewer needs builder output, verifier needs reviewer approval)
 - Parallelization applies BETWEEN components, not WITHIN component
 
+**CRITICAL**: After EACH subagent invocation, you MUST:
+
+1. Update Actions Taken IMMEDIATELY (mark subagent as "invoked successfully" or "skipped" with reason)
+2. Document execution mode (sequential/parallel)
+3. Document subagent outputs (files created, tests run, exit codes)
+
+**CRITICAL**: Before proceeding to Phase 5, you MUST:
+
+1. Perform Subagents Inventory Check (verify ALL required subagents invoked)
+2. Verify Actions Taken updated with ALL subagents documented
+3. For BUILD workflow: Verify TDD cycle evidence present (RED → GREEN → REFACTOR with exit codes)
+
+**If validation fails**: STOP workflow, invoke missing subagents, update Actions Taken, re-run Subagents Inventory Check, then proceed.
+
 For every component:
 
 **When to Invoke Subagents**:
@@ -594,6 +665,19 @@ Queued:
 
 Next: Proceeding to Phase 4 - Component Execution Loop
 ```
+
+**CRITICAL VALIDATION GATE - Before Phase 4**:
+
+**Checklist** (ALL must pass before proceeding):
+
+- [ ] Phase 3: Component queue complete
+- [ ] Actions Taken section updated with component queue documented
+- [ ] Dependencies mapped and execution order determined
+- [ ] Component briefs prepared for all components
+
+**If validation fails**: STOP workflow, complete missing items, update Actions Taken, then proceed.
+
+## Phase 4 - Component Execution Loop
 
 **Default Sequence** (unless user skips):
 

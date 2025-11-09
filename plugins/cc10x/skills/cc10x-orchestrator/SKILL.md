@@ -1,22 +1,78 @@
 ---
 name: cc10x-orchestrator
-description: Use PROACTIVELY when reviewing code, planning features, building components, debugging errors, or validating implementations - MANDATORY entry point that coordinates all cc10x workflows with functionality-first approach. ALWAYS starts with functionality analysis (user flows, admin flows, system flows) before applying specialized checks. Workflows MUST be activated through orchestrator, not directly. Honors focus requests, enforces evidence-first rules, and never invokes non-existent agents.
+description: CRITICAL - LOAD THIS FIRST: MANDATORY entry point for ALL code tasks (review, plan, build, debug, validate, code review, audit, analyze, assess, evaluate, inspect, examine, plan, design, architect, roadmap, strategy, architecture, system design, build, implement, create, write, code, develop, make, add feature, implement feature, build feature, debug, fix, error, bug, investigate, failure, broken, issue, problem, troubleshoot, diagnose, validate, verify, check, confirm implementation, alignment check, consistency check). You MUST load this skill BEFORE writing any code. This orchestrator coordinates subagents (component-builder, code-reviewer, integration-verifier) - do NOT write code directly. Always starts with Phase 0: Functionality Analysis. Enforces TDD cycle (RED → GREEN → REFACTOR), Actions Taken tracking, memory integration, and web fetch integration. DO NOT bypass orchestrator validation mechanisms.
 allowed-tools: Read, Grep, Glob, Bash, Task
 ---
 
 # cc10x Orchestrator Skill - Functionality First
 
+## CRITICAL ENFORCEMENT - READ THIS FIRST
+
+**🚨 BYPASS PREVENTION - DO NOT WRITE CODE DIRECTLY 🚨**
+
+**CRITICAL RULES** (Violation = Incomplete Results):
+
+1. **DO NOT write code directly** - You MUST invoke subagents instead:
+   - BUILD workflow: component-builder → code-reviewer → integration-verifier
+   - REVIEW workflow: analysis subagents → code-reviewer (if changes) → integration-verifier (if integration)
+   - PLAN workflow: planning-architecture-risk → planning-design-deployment
+   - DEBUG workflow: bug-investigator → code-reviewer → integration-verifier
+   - VALIDATE workflow: Direct analysis (no subagents)
+
+2. **DO NOT skip TDD cycle** - For BUILD workflow, you MUST follow RED → GREEN → REFACTOR:
+   - RED: Write failing test first, capture output with exit code
+   - GREEN: Minimal implementation, run test, capture exit code
+   - REFACTOR: Clean up while tests green, verify exit code
+   - Do NOT mark component complete without seeing test fail then pass
+
+3. **DO NOT skip Actions Taken tracking** - You MUST maintain Actions Taken section in real-time:
+   - Update IMMEDIATELY after each activation (skill loading, subagent invocation, phase completion)
+   - Never proceed to next phase without updating Actions Taken
+   - Verify Actions Taken updated before each phase transition
+   - Before final report, verify ALL phases documented in Actions Taken
+
+4. **DO NOT skip inventory checks** - You MUST perform:
+   - Skills Inventory Check before Phase 3 (verify ALL required skills loaded)
+   - Subagents Inventory Check before Phase 4 (verify ALL required subagents invoked)
+   - If ANY missing, STOP workflow execution, fix immediately, re-validate
+
+5. **DO NOT skip memory integration** - You MUST use:
+   - Query patterns before complexity scoring (load patterns.json ONCE, cache for workflow duration)
+   - Store patterns after workflow completion (validate first, update accuracy)
+   - Store user preferences (explicit only, never inferred)
+   - Store workflow checkpoints
+
+6. **DO NOT skip web fetch integration** - You MUST use:
+   - When external APIs/libraries/frameworks mentioned, fetch documentation
+   - Use question-based prompts (not raw content requests)
+   - Check cache first, use cache if valid, fetch if needed
+   - Cache results with appropriate TTL
+
+**If you violate ANY of these rules, the workflow will FAIL validation and you will be forced to correct before proceeding.**
+
 ## TL;DR Quick Checklist
 
+**CRITICAL**: Complete ALL items below. Skipping any item will cause workflow validation to FAIL.
+
+- [ ] **LOAD ORCHESTRATOR FIRST** - This skill MUST be loaded before any code tasks
 - [ ] Detect user intent (review/plan/build/debug/validate) using keyword matching
 - [ ] Execute Phase 0: Functionality Analysis FIRST (understand user/admin/system flows, verify functionality works)
 - [ ] Execute Phase 0: Context Preset Detection (automatically detect task type and load appropriate preset)
 - [ ] Load required skills in parallel (if independent) or sequentially (if dependencies exist)
 - [ ] Load conditional skills based on detection logic (UI detected → load ui-design, etc.)
+- [ ] **UPDATE Actions Taken** - Document skills loaded IMMEDIATELY after loading
+- [ ] **PERFORM Skills Inventory Check** - Verify ALL required skills loaded before Phase 3
+- [ ] **DO NOT write code directly** - Invoke subagents instead (component-builder → code-reviewer → integration-verifier)
+- [ ] **FOR BUILD workflow** - Follow TDD cycle: RED (failing test) → GREEN (minimal code) → REFACTOR (clean up)
 - [ ] Invoke subagents based on conditions and dependencies (check skip conditions, analyze dependencies)
+- [ ] **UPDATE Actions Taken** - Document subagents invoked IMMEDIATELY after invocation
+- [ ] **PERFORM Subagents Inventory Check** - Verify ALL required subagents invoked before Phase 4
+- [ ] **USE memory integration** - Query patterns before complexity, store patterns after completion
+- [ ] **USE web fetch integration** - Fetch external docs when APIs/libraries mentioned
 - [ ] Validate outputs before proceeding (check format, evidence, file:line citations)
 - [ ] Generate verification summary with evidence (commands run, exit codes, artifacts)
 - [ ] Use Error Recovery Protocol if any component fails (context → problem → options → impact → default)
+- [ ] **VALIDATE Actions Taken** - Verify ALL phases documented before final report
 
 ## Guardrails
 
@@ -36,7 +92,70 @@ allowed-tools: Read, Grep, Glob, Bash, Task
 
 - **Error Recovery**: Always use Error Recovery Protocol when failures occur. Provide context, problem, options, impact, and default action. Wait for user decision before proceeding.
 
-## Functionality First Mandate
+## Runtime Compliance Checks
+
+**CRITICAL**: These validation gates are executed automatically at key checkpoints. If validation fails, workflow STOPS and you MUST fix issues before proceeding.
+
+### Validation Point 1: Before Phase 2 (Skills Loading)
+
+**Checklist** (ALL must pass):
+
+- [ ] Phase 0: Functionality Analysis complete (user flow, admin flow if applicable, system flow documented)
+- [ ] Actions Taken section exists and Phase 0 documented
+- [ ] Gate checks passed (if applicable)
+
+**If validation fails**: STOP workflow, complete missing items, re-validate, then proceed.
+
+### Validation Point 2: Before Phase 3 (Subagent Invocation)
+
+**Checklist** (ALL must pass):
+
+- [ ] Phase 2: Skills loaded complete
+- [ ] Actions Taken section updated with ALL required skills listed
+- [ ] Skills Inventory Check passed (ALL required skills loaded, conditional skills loaded IF detected)
+- [ ] Each skill marked as "loaded successfully" or "failed to load" in Actions Taken
+
+**If validation fails**: STOP workflow, load missing skills, update Actions Taken, re-run Skills Inventory Check, then proceed.
+
+### Validation Point 3: Before Phase 4 (Synthesis)
+
+**Checklist** (ALL must pass):
+
+- [ ] Phase 3: Subagents invoked complete
+- [ ] Actions Taken section updated with ALL required subagents listed
+- [ ] Subagents Inventory Check passed (ALL required subagents invoked, execution mode documented)
+- [ ] Each subagent marked as "invoked successfully" or "skipped" with reason in Actions Taken
+- [ ] For BUILD workflow: TDD cycle evidence present (RED → GREEN → REFACTOR with exit codes)
+
+**If validation fails**: STOP workflow, invoke missing subagents, update Actions Taken, re-run Subagents Inventory Check, then proceed.
+
+### Validation Point 4: Before Final Report
+
+**Checklist** (ALL must pass):
+
+- [ ] ALL workflow phases completed
+- [ ] Actions Taken section complete (ALL phases documented)
+- [ ] Skills Inventory Check passed
+- [ ] Subagents Inventory Check passed
+- [ ] Memory integration used (patterns queried before complexity, stored after completion)
+- [ ] Web fetch integration used (if external APIs/libraries mentioned)
+- [ ] Pre-Final-Report Validation passed (see orchestrator validation section)
+
+**If validation fails**: STOP final report generation, complete missing items, re-run all validations, then proceed.
+
+### Automatic Validation Execution
+
+**When**: These checks run automatically at each validation point above.
+
+**How**:
+
+1. Read Actions Taken section
+2. Verify required items present
+3. If ANY item missing → STOP workflow, report missing items, force correction
+4. Re-validate after correction
+5. Only proceed when ALL items pass
+
+**Enforcement**: Workflow CANNOT proceed past validation point until ALL checks pass.
 
 **CRITICAL**: Every workflow MUST start with functionality analysis before applying specialized checks (security, quality, performance, UX, accessibility, architecture, etc.).
 

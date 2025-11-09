@@ -2,6 +2,31 @@
 
 **CRITICAL**: This workflow MUST be activated through cc10x-orchestrator. Do NOT execute this workflow directly. The orchestrator provides required context, coordinates skill loading, and manages subagent invocation. Direct execution bypasses all validation mechanisms.
 
+**🚨 CRITICAL ENFORCEMENT - DO NOT WRITE CODE DIRECTLY 🚨**
+
+**MANDATORY RULES** (Violation = Workflow Failure):
+
+1. **DO NOT write code directly** - This workflow uses direct analysis (no subagents), but you MUST:
+   - Follow orchestrator validation mechanisms
+   - Update Actions Taken IMMEDIATELY after each phase
+   - Never skip Actions Taken tracking
+
+2. **DO NOT skip Actions Taken tracking** - Update Actions Taken IMMEDIATELY after:
+   - Each phase completed (mark phase as complete)
+   - Each comparison performed (plan vs code, code vs tests, code vs docs)
+   - Never proceed to next phase without updating Actions Taken
+
+3. **DO NOT skip memory integration** - You MUST:
+   - Query patterns before complexity scoring (load patterns.json ONCE, cache for workflow duration)
+   - Store patterns after workflow completion (validate first, update accuracy)
+
+4. **DO NOT skip web fetch integration** - You MUST:
+   - When external APIs/libraries/frameworks mentioned, fetch documentation
+   - Use question-based prompts (not raw content requests)
+   - Check cache first, use cache if valid, fetch if needed
+
+**If you violate ANY of these rules, Phase 4 validation will FAIL and you will be forced to correct before proceeding.**
+
 **Triggered by:** User wants to confirm the implementation matches an existing plan, tests, or documentation set.
 
 ## Prerequisites
@@ -11,11 +36,17 @@
 
 ## TL;DR Quick Checklist
 
+**CRITICAL**: Complete ALL items below. Skipping any item will cause workflow validation to FAIL.
+
 - [ ] Complete Phase 0: Functionality Analysis FIRST (understand validation requirements, map functionality from plan/code/tests)
 - [ ] Load plan/requirements and code scope
+- [ ] **UPDATE Actions Taken** - Document plan/requirements loaded IMMEDIATELY
 - [ ] Compare plan vs code (functionality alignment, missing features, extra features)
+- [ ] **UPDATE Actions Taken** - Document plan vs code comparison IMMEDIATELY
 - [ ] Compare code vs tests (test coverage, missing tests, untested code)
+- [ ] **UPDATE Actions Taken** - Document code vs tests comparison IMMEDIATELY
 - [ ] Compare code vs documentation (documentation accuracy, missing docs)
+- [ ] **UPDATE Actions Taken** - Document code vs docs comparison IMMEDIATELY
 - [ ] Generate validation report with functionality verification FIRST, then consistency checks
 
 ## Guardrails

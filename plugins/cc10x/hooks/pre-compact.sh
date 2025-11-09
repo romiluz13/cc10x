@@ -1,5 +1,5 @@
 #!/bin/bash
-# cc10x - 10x Developer Productivity with Claude Code
+# cc10x v4.2.0 - Orchestration plugin for Claude Code
 # Copyright (c) 2025 Rom Iluz
 # Licensed under MIT License
 

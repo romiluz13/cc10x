@@ -1,5 +1,31 @@
 # Changelog
 
+## [4.2.0] - 2025-01-29
+
+### Added
+
+- **Automatic Orchestrator Enforcement System**: Comprehensive enforcement mechanisms that automatically force Claude Code to use orchestrator without requiring user action
+- **Context.json AlwaysApply Rules**: Created 7 alwaysApply rules in `.claude/context.json` to enforce orchestrator usage, subagent invocation, TDD cycle, Actions Taken tracking, memory integration, and web fetch integration
+- **Enhanced Orchestrator Description**: Expanded orchestrator skill description with comprehensive workflow keywords and explicit bypass prevention warnings
+- **Runtime Compliance Checks**: Added 4 validation checkpoints (before Phase 2, Phase 3, Phase 4, and Final Report) that automatically stop workflow if validation fails
+- **Workflow Enforcement Instructions**: Added explicit "DO NOT write code directly" warnings and validation gates to all 5 workflow files
+- **Validation Script**: Created `scripts/validate-orchestrator-compliance.sh` to programmatically validate orchestrator compliance
+- **Enhanced Subagent Descriptions**: Added critical warnings to all subagent files preventing direct invocation
+- **Pre-Prompt Hook**: Created optional pre-prompt hook to detect workflow keywords and warn if orchestrator should be loaded
+
+### Changed
+
+- **Orchestrator Skill**: Enhanced with comprehensive enforcement section, runtime validation gates, and explicit checklists
+- **All Workflow Files**: Added critical enforcement sections and validation gates before key phases
+- **Subagent Files**: Enhanced with explicit warnings and TDD cycle requirements
+
+### Fixed
+
+- **Direct Code Writing Bypass**: Fixed issue where Claude Code could write code directly without invoking subagents
+- **TDD Cycle Skipping**: Fixed issue where BUILD workflow could skip RED → GREEN → REFACTOR cycle
+- **Actions Taken Tracking**: Fixed issue where Actions Taken section could be skipped or incomplete
+- **Inventory Checks**: Fixed issue where Skills/Subagents Inventory Checks could be skipped
+
 ## [4.1.0] - 2025-01-27
 
 ### Changed

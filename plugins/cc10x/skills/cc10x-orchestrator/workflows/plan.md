@@ -2,16 +2,54 @@
 
 **CRITICAL**: This workflow MUST be activated through cc10x-orchestrator. Do NOT execute this workflow directly. The orchestrator provides required context, coordinates skill loading, and manages subagent invocation. Direct execution bypasses all validation mechanisms.
 
+**🚨 CRITICAL ENFORCEMENT - DO NOT WRITE CODE DIRECTLY 🚨**
+
+**MANDATORY RULES** (Violation = Workflow Failure):
+
+1. **DO NOT write code directly** - You MUST invoke subagents sequentially:
+   - planning-architecture-risk → planning-design-deployment
+   - Read subagent's SUBAGENT.md before invoking
+   - Verify subagent exists before invoking
+   - Check skip conditions before invoking
+
+2. **DO NOT skip Actions Taken tracking** - Update Actions Taken IMMEDIATELY after:
+   - Each skill loaded (mark as "loaded successfully" or "failed to load")
+   - Each subagent invoked (mark as "invoked successfully" or "skipped" with reason)
+   - Each phase completed (mark phase as complete)
+   - Never proceed to next phase without updating Actions Taken
+
+3. **DO NOT skip inventory checks** - You MUST perform:
+   - Skills Inventory Check before Phase 3 (verify ALL required skills loaded)
+   - Subagents Inventory Check before Phase 4 (verify ALL required subagents invoked)
+   - If ANY missing, STOP workflow, fix immediately, re-validate
+
+4. **DO NOT skip memory integration** - You MUST:
+   - Query patterns before complexity scoring (load patterns.json ONCE, cache for workflow duration)
+   - Store patterns after workflow completion (validate first, update accuracy)
+
+5. **DO NOT skip web fetch integration** - You MUST:
+   - When external APIs/libraries/frameworks mentioned, fetch documentation
+   - Use question-based prompts (not raw content requests)
+   - Check cache first, use cache if valid, fetch if needed
+
+**If you violate ANY of these rules, Phase 4 validation will FAIL and you will be forced to correct before proceeding.**
+
 **Triggered by:** User asks to plan, architect, or design a feature or system update.
 
 ## TL;DR Quick Checklist
+
+**CRITICAL**: Complete ALL items below. Skipping any item will cause workflow validation to FAIL.
 
 - [ ] Complete Phase 0: Functionality Analysis FIRST (understand what functionality needs planning, document flows, plan research)
 - [ ] Assess complexity (1-5 scale) and gate check if <=2
 - [ ] Gather requirements using Ask Questions tool if needed
 - [ ] Load required skills in parallel (requirements-analysis, architecture-patterns, feature-planning, design-patterns)
 - [ ] Load conditional skills if detected (ui-design if UI features mentioned)
-- [ ] Invoke planning subagents sequentially (architecture-risk → design-deployment)
+- [ ] **UPDATE Actions Taken** - Document ALL skills loaded IMMEDIATELY after loading
+- [ ] **PERFORM Skills Inventory Check** - Verify ALL required skills loaded before Phase 3
+- [ ] **DO NOT write code directly** - Invoke planning subagents sequentially: planning-architecture-risk → planning-design-deployment
+- [ ] **UPDATE Actions Taken** - Document ALL subagents invoked IMMEDIATELY after invocation
+- [ ] **PERFORM Subagents Inventory Check** - Verify ALL required subagents invoked before Phase 4
 - [ ] Synthesize plan with functionality-first approach and generate deliverable
 
 ## Guardrails
