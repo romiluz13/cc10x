@@ -6,14 +6,14 @@
     "url": "https://github.com/romiluz13"
   },
   "metadata": {
-    "description": "cc10x v3.2 - Intelligent AI orchestration for systematic development",
-    "version": "3.2.0"
+    "description": "cc10x v4.0 - Orchestration plugin for systematic development",
+    "version": "4.0.0"
   },
   "plugins": [
     {
       "name": "cc10x",
-      "description": "cc10x v3.2: Intelligent orchestration with progressive skills. Detects intent, applies complexity gates, loads the right workflow, and requires verification evidence before completion. Workflows: REVIEW (coordinated analysis), PLANNING (requirements to architecture/design), BUILD (TDD with review + integration), DEBUG (LOG FIRST + minimal fixes), VALIDATE (plan-code-test-docs alignment). Features: smart memory integration, web-fetch caching, workflow state persistence, deterministic intent mapping, perfect subagent activation logic with conflict prevention.",
-      "version": "3.2.0",
+      "description": "Orchestration plugin for Claude Code. Provides 5 workflows: REVIEW (multi-dimensional code analysis), PLAN (requirements to architecture), BUILD (TDD implementation), DEBUG (systematic bug investigation), VALIDATE (cross-artifact consistency). Features: deterministic workflow selection, complexity gating, evidence-first verification, memory integration, workflow state persistence.",
+      "version": "4.0.0",
       "author": {
         "name": "Rom Iluz",
         "email": "rom@iluz.net",
@@ -23,7 +23,7 @@
       "repository": "https://github.com/romiluz13/cc10x",
       "license": "MIT",
       "keywords": [
-        "intelligent-orchestration",
+        "orchestration",
         "code-review",
         "risk-analysis",
         "complexity-assessment",

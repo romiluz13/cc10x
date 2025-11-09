@@ -1,7 +1,7 @@
 {
   "name": "cc10x",
-  "version": "3.2.0",
-  "description": "Intelligent orchestration for systematic development with 5 workflows (review, plan, build, debug, validate) and lean progressive skills. Detects intent deterministically, applies complexity gates, executes workflows sequentially with explicit user confirmation, enforces evidence-first verification, and includes smart memory integration with web-fetch caching. Achieves 9.5+ prompt engineering ranking.",
+  "version": "4.0.0",
+  "description": "Orchestration plugin for Claude Code with 5 workflows: review, plan, build, debug, validate. Features deterministic intent detection, complexity gating, evidence-first verification, and filesystem-based memory integration.",
   "agents": [
     "./subagents/code-reviewer/SUBAGENT.md",
     "./subagents/component-builder/SUBAGENT.md",
@@ -22,7 +22,7 @@
   "repository": "https://github.com/romiluz13/cc10x",
   "license": "MIT",
   "keywords": [
-    "intelligent-orchestration",
+    "orchestration",
     "code-review",
     "risk-analysis",
     "complexity-gate",
