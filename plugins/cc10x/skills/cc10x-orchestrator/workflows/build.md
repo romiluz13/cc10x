@@ -305,6 +305,9 @@ Next: Proceeding to Phase 2 - Shared Context
 - `project-context-understanding` - **MANDATORY** (understand project patterns, conventions, and structure before building)
 - `requirements-analysis`
 - `security-patterns`
+- `code-quality-patterns` - **MANDATORY** (build quality code with SOLID principles, maintainability)
+- `code-generation` - **MANDATORY** (code generation patterns and best practices)
+- `component-design-patterns` - **MANDATORY** (component design patterns and best practices)
 - `test-driven-development`
 - `verification-before-completion`
 - `memory-tool-integration` (filesystem-based memory always available)
@@ -314,17 +317,19 @@ Next: Proceeding to Phase 2 - Shared Context
 
 - `ui-design` - **MANDATORY** when UI components detected (file patterns: _.tsx, _.jsx, \*.vue, components/, ui/)
 - `design-patterns` - Load if building APIs, components, or integrations
+- `performance-patterns` - Load if performance-critical code detected (keywords: performance, optimization, fast, efficient, bottleneck)
 
 **Detection Logic**:
 
 - UI Components: File patterns `*.tsx`, `*.jsx`, `*.vue`, `components/`, `ui/`, component names (Form, Button, Modal, etc.), or user requests UI components
 - Design Patterns: Building APIs, components, or integrations mentioned in requirements
+- Performance-Critical Code: Keywords "performance", "optimization", "fast", "efficient", "bottleneck"
 
 **Skill Loading Strategy**:
 
 - All required skills are independent (no dependencies between them)
 - **Load all required skills in parallel** for faster initialization
-- **Load conditional skills** (`ui-design`, `design-patterns`, `web-fetch-integration`) based on detection logic, still in parallel with required skills
+- **Load conditional skills** (`ui-design`, `design-patterns`, `performance-patterns`, `web-fetch-integration`) based on detection logic, still in parallel with required skills
 
 **Memory Integration** (optimized):
 

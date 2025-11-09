@@ -361,6 +361,7 @@ For each skill above:
 - For performance bugs: Also load `performance-patterns`
 - For security-related bugs: Also load `security-patterns`
 - For integration bugs: Also load `integration-patterns`
+- For code quality bugs: Also load `code-quality-patterns` (complexity, maintainability, SOLID violations)
 
 **Display Success Message** (after Phase 2 completion):
 

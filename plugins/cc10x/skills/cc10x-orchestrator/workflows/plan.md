@@ -266,6 +266,8 @@ Next: Proceeding to Phase 2 - Requirements Intake
 - `requirements-analysis`
 - `feature-planning` - **MANDATORY** (provides feature planning guidance)
 - `design-patterns` - **MANDATORY** (provides API/component/integration patterns)
+- `architecture-patterns` - **MANDATORY** (provides architecture design patterns)
+- `risk-analysis` - **MANDATORY** (provides risk analysis framework)
 - `verification-before-completion` - **MANDATORY** (verify plan completeness and accuracy before completion)
 - `memory-tool-integration` (filesystem-based memory always available)
 - `web-fetch-integration` (if external docs needed)
@@ -273,12 +275,20 @@ Next: Proceeding to Phase 2 - Requirements Intake
 **Conditional Skills**:
 
 - `ui-design` - Load if UI features mentioned (keywords: UI, interface, design, form, dashboard)
+- `api-design-patterns` - Load if API planning detected (keywords: API, endpoint, REST, GraphQL, route)
+- `component-design-patterns` - Load if component planning detected (keywords: component, UI component, React component, Vue component)
+
+**Detection Logic**:
+
+- UI Features: Keywords "UI", "interface", "design", "form", "dashboard"
+- API Planning: Keywords "API", "endpoint", "REST", "GraphQL", "route"
+- Component Planning: Keywords "component", "UI component", "React component", "Vue component"
 
 **Skill Loading Strategy**:
 
 - All required skills are independent (no dependencies between them)
 - **Load all required skills in parallel** for faster initialization
-- **Load conditional skills** (`ui-design`, `web-fetch-integration`) based on detection logic, still in parallel with required skills
+- **Load conditional skills** (`ui-design`, `api-design-patterns`, `component-design-patterns`, `web-fetch-integration`) based on detection logic, still in parallel with required skills
 - **Skill Loading Verification**: Verify each skill loaded successfully (read first 100 chars, parse YAML, check content)
 - If loading fails, use Error Recovery Protocol
 

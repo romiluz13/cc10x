@@ -221,8 +221,23 @@ Next: Proceeding to Phase 2 - Plan vs Code
 
 - `project-context-understanding` - **MANDATORY** (understand project structure, dependencies, and conventions before validating)
 - `requirements-analysis`
+- `test-driven-development` - **MANDATORY** (test coverage analysis and validation)
 - `verification-before-completion`
 - `memory-tool-integration` (filesystem-based memory always available)
+
+**Conditional Skills**:
+
+- `code-quality-patterns` - Load if code quality validation needed (keywords: quality, maintainability, complexity, SOLID)
+
+**Detection Logic**:
+
+- Code Quality Validation: Keywords "quality", "maintainability", "complexity", "SOLID"
+
+**Skill Loading Strategy**:
+
+- All required skills are independent (no dependencies between them)
+- **Load all required skills in parallel** for faster initialization
+- **Load conditional skills** (`code-quality-patterns`) based on detection logic, still in parallel with required skills
 
 **Skill Loading Verification Protocol**:
 

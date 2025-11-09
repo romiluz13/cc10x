@@ -331,17 +331,21 @@ Next: Proceeding to Phase 2 - Load Required Skills
 
 - `ui-design` - Load if UI components detected (file patterns: _.tsx, _.jsx, \*.vue, components/, ui/)
 - `design-patterns` - Load if design patterns mentioned or pattern review needed
+- `integration-patterns` - Load if integration code detected
+- `api-design-patterns` - Load if API code detected
 
 **Detection Logic**:
 
 - UI Components: File patterns `*.tsx`, `*.jsx`, `*.vue`, `components/`, `ui/`
 - Design Patterns: Keywords "pattern", "design pattern", "API design", "component design"
+- Integration Code: File patterns `*api*.{ts,tsx,js,jsx}`, `*service*.{ts,tsx}`, `*integration*.{ts,tsx}`, `api/`, `services/`, keywords "API", "endpoint", "fetch", "axios", "external service"
+- API Code: File patterns `*api*.{ts,tsx}`, `*endpoint*.{ts,tsx}`, `routes/`, `controllers/`, keywords "REST", "GraphQL", "endpoint", "route"
 
 **Skill Loading Strategy**:
 
 - All required skills are independent (no dependencies between them)
 - **Load all required skills in parallel** for faster initialization
-- **Load conditional skills** (`ui-design`, `design-patterns`, `web-fetch-integration`) based on detection logic, still in parallel with required skills
+- **Load conditional skills** (`ui-design`, `design-patterns`, `integration-patterns`, `api-design-patterns`, `web-fetch-integration`) based on detection logic, still in parallel with required skills
 
 **Skill Loading Verification Protocol**:
 For each skill above:
