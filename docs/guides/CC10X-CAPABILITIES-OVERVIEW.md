@@ -17,7 +17,7 @@
 **Orchestrator Integration**:
 
 - Loads 9 required skills in parallel (all independent): project-context-understanding (MANDATORY), risk-analysis, security-patterns, performance-patterns, code-quality-patterns, ux-patterns, accessibility-patterns, verification-before-completion (MANDATORY), memory-tool-integration
-- Conditionally loads: web-fetch-integration (if external standards needed)
+- Conditionally loads: ui-design (if UI components detected), design-patterns (if design patterns mentioned), integration-patterns (if integration code detected), api-design-patterns (if API code detected), web-fetch-integration (if external standards needed)
 - Invokes 3 subagents: analysis-risk-security, analysis-performance-quality, analysis-ux-accessibility
   - **Parallel execution** for general/comprehensive reviews (all 3 read-only, isolated contexts, no dependencies)
   - **Single subagent** for focused reviews (security-focused → only analysis-risk-security, performance-focused → only analysis-performance-quality, UX-focused → only analysis-ux-accessibility)
@@ -35,7 +35,8 @@
 **Trigger**: Keywords: "plan", "design", "architect", "create plan", "roadmap", "strategy", "architecture", "system design", "feature design"  
 **Orchestrator Integration**:
 
-- Loads 3 skills in parallel: requirements-analysis, memory-tool-integration, web-fetch-integration
+- Loads 8 required skills in parallel (all independent): project-context-understanding (MANDATORY), requirements-analysis, feature-planning (MANDATORY), design-patterns (MANDATORY), architecture-patterns (MANDATORY), risk-analysis (MANDATORY), verification-before-completion (MANDATORY), memory-tool-integration
+- Conditionally loads: ui-design (if UI features mentioned), api-design-patterns (if API planning detected), component-design-patterns (if component planning detected), web-fetch-integration (if external docs needed)
 - Invokes 2 subagents sequentially (architecture → design dependency): planning-architecture-risk FIRST, then planning-design-deployment SECOND
 - Applies complexity gate (warns if score <=2, requires explicit yes/no)
 - Uses memory for complexity patterns (semantic match by signature: file_count, change_type, has_external_deps)
@@ -51,7 +52,8 @@
 **Trigger**: Keywords: "build", "implement", "create", "write", "code", "develop", "make", "add feature", "implement feature", "build feature"  
 **Orchestrator Integration**:
 
-- Loads 6 skills in parallel: requirements-analysis, security-patterns, test-driven-development, verification-before-completion, memory-tool-integration, web-fetch-integration
+- Loads 9 required skills in parallel (all independent): project-context-understanding (MANDATORY), requirements-analysis, security-patterns, code-quality-patterns (MANDATORY), code-generation (MANDATORY), component-design-patterns (MANDATORY), test-driven-development, verification-before-completion, memory-tool-integration
+- Conditionally loads: ui-design (MANDATORY when UI components detected), design-patterns (if building APIs/components/integrations), performance-patterns (if performance-critical code detected), web-fetch-integration (if external docs needed)
 - Invokes 3 subagents sequentially per component: component-builder → code-reviewer → integration-verifier (must remain sequential within component, parallelization applies BETWEEN components)
 - Applies complexity gate (warns if score <=2)
 - Uses memory for component orders (validates dependency_hash matches current deps), failure modes (high success_rate >60%), and build patterns
@@ -67,8 +69,8 @@
 **Trigger**: Keywords: "debug", "fix", "error", "bug", "investigate", "failure", "broken", "issue", "problem", "troubleshoot", "diagnose"  
 **Orchestrator Integration**:
 
-- Loads 6 core skills in parallel: systematic-debugging, log-analysis-patterns, root-cause-analysis, test-driven-development, verification-before-completion, memory-tool-integration
-- Conditionally loads: performance-patterns (performance bugs), security-patterns (security bugs), integration-patterns (integration bugs)
+- Loads 7 required skills in parallel (all independent): project-context-understanding (MANDATORY), systematic-debugging, log-analysis-patterns, root-cause-analysis, test-driven-development, verification-before-completion, memory-tool-integration
+- Conditionally loads: performance-patterns (performance bugs), security-patterns (security bugs), integration-patterns (integration bugs), code-quality-patterns (code quality bugs), web-fetch-integration (if external resources needed)
 - Invokes 3 subagents sequentially per bug: bug-investigator → code-reviewer → integration-verifier (must remain sequential within bug)
 - Uses memory for failure modes (semantic match by error_pattern regex, top 3 highest success_rate >60%), fix patterns
 - Fetches error documentation with Q&A caching (48h TTL for error docs)
@@ -83,7 +85,8 @@
 **Trigger**: Keywords: "validate", "verify", "check", "confirm implementation", "alignment check", "consistency check"  
 **Orchestrator Integration**:
 
-- Loads 3 skills: requirements-analysis, verification-before-completion, memory-tool-integration
+- Loads 5 required skills in parallel (all independent): project-context-understanding (MANDATORY), requirements-analysis, test-driven-development (MANDATORY), verification-before-completion, memory-tool-integration
+- Conditionally loads: code-quality-patterns (if code quality validation needed)
 - No subagents (direct analysis by workflow)
 - Uses memory for validation preferences
 - Handles missing plan scenarios (options: run planning workflow first / code-only validation / user provides plan manually)
