@@ -1,9 +1,25 @@
 ---
 name: design-patterns
-description: Comprehensive design patterns covering API design (RESTful principles, versioning, error handling), component design (composition, reusability, props design), and integration patterns (retry strategies, circuit breaker, error handling). Use when designing APIs, components, or integrations, reviewing design contracts, planning architecture, ensuring consistency and reliability. Provides design checklists, best practices, and patterns for all three domains. Loaded by PLAN workflow for comprehensive design guidance. Critical for scalability, maintainability, reliability, and developer experience.
+description: Comprehensive design patterns with functionality-first approach. Use PROACTIVELY when planning features. First understands functionality (user flow, admin flow, system flow, integration flow), then designs APIs/components/integrations to support that functionality. Focuses on design that enables functionality, not generic design patterns. Provides design checklists, best practices, and patterns for all three domains.
 ---
 
-# Design Patterns
+# Design Patterns - Functionality First
+
+## Functionality First Mandate
+
+**BEFORE designing APIs/components/integrations, understand functionality**:
+
+1. **What functionality needs APIs/components/integrations?**
+   - What are the user flows?
+   - What are the admin flows?
+   - What are the system flows?
+   - What are the integration flows?
+
+2. **THEN design** - Design APIs/components/integrations to support that functionality
+
+3. **Use patterns** - Apply design patterns AFTER functionality is understood
+
+---
 
 **Comprehensive patterns for API, Component, and Integration design.**
 
@@ -12,11 +28,13 @@ description: Comprehensive design patterns covering API design (RESTful principl
 ### Stage 1: Metadata
 
 **Domains Covered:**
+
 - **API Design**: RESTful principles, versioning, error handling, rate limiting
 - **Component Design**: Composition, reusability, props design, state management
 - **Integration Design**: Retry strategies, circuit breaker, error handling, reliability
 
 **Core Rules:**
+
 - APIs are contracts - breaking changes hurt users
 - Components are building blocks - design for reuse
 - Integrations fail - design for failure
@@ -42,17 +60,19 @@ REST Principles:
 ```
 
 **RESTful Endpoints**:
+
 ```typescript
 // GOOD: Resources with HTTP verbs
-GET /api/users              // List all users
-GET /api/users/123          // Get user 123
-POST /api/users             // Create new user
-PUT /api/users/123          // Update user 123
-DELETE /api/users/123       // Delete user 123
-PATCH /api/users/123        // Partial update
+GET / api / users; // List all users
+GET / api / users / 123; // Get user 123
+POST / api / users; // Create new user
+PUT / api / users / 123; // Update user 123
+DELETE / api / users / 123; // Delete user 123
+PATCH / api / users / 123; // Partial update
 ```
 
 **Error Responses**:
+
 ```typescript
 // CONSISTENT
 {
@@ -84,6 +104,7 @@ Component Structure:
 ```
 
 **Composition Over Inheritance**:
+
 ```typescript
 // COMPOSITION (PREFER)
 function Button({ children, variant = 'default', ...props }) {
@@ -96,6 +117,7 @@ function PrimaryButton(props) {
 ```
 
 **Props Design**:
+
 ```typescript
 // GROUPED PROPS
 <UserCard user={{
@@ -126,6 +148,7 @@ Integration Reliability:
 ```
 
 **Retry with Exponential Backoff**:
+
 ```typescript
 // WITH RETRY
 async function fetchWithRetry(url, maxRetries = 3) {
@@ -133,18 +156,19 @@ async function fetchWithRetry(url, maxRetries = 3) {
     try {
       const response = await fetch(url);
       if (response.ok) return response.json();
-      if (response.status >= 500) throw new Error('Server error');
+      if (response.status >= 500) throw new Error("Server error");
       return response.json();
     } catch (error) {
       if (i === maxRetries - 1) throw error;
       const delay = Math.pow(2, i) * 1000; // 1s, 2s, 4s
-      await new Promise(resolve => setTimeout(resolve, delay));
+      await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
 }
 ```
 
 **Circuit Breaker Pattern**:
+
 ```typescript
 // CIRCUIT BREAKER
 class CircuitBreaker {
@@ -153,16 +177,16 @@ class CircuitBreaker {
     this.threshold = threshold;
     this.timeout = timeout;
     this.failures = 0;
-    this.state = 'CLOSED'; // CLOSED, OPEN, HALF_OPEN
+    this.state = "CLOSED"; // CLOSED, OPEN, HALF_OPEN
     this.nextAttempt = Date.now();
   }
 
   async call(...args) {
-    if (this.state === 'OPEN') {
+    if (this.state === "OPEN") {
       if (Date.now() < this.nextAttempt) {
-        throw new Error('Circuit breaker is OPEN');
+        throw new Error("Circuit breaker is OPEN");
       }
-      this.state = 'HALF_OPEN';
+      this.state = "HALF_OPEN";
     }
 
     try {
@@ -177,13 +201,13 @@ class CircuitBreaker {
 
   onSuccess() {
     this.failures = 0;
-    this.state = 'CLOSED';
+    this.state = "CLOSED";
   }
 
   onFailure() {
     this.failures++;
     if (this.failures >= this.threshold) {
-      this.state = 'OPEN';
+      this.state = "OPEN";
       this.nextAttempt = Date.now() + this.timeout;
     }
   }
@@ -199,6 +223,7 @@ class CircuitBreaker {
 ### RESTful Principles
 
 **Resource-Oriented Design**:
+
 - Use nouns for resources: `/users`, `/posts`, `/comments`
 - Use HTTP verbs for actions: GET (read), POST (create), PUT (update), DELETE (delete)
 - Use hierarchical URLs for relationships: `/users/123/posts`, `/posts/456/comments`
@@ -206,12 +231,14 @@ class CircuitBreaker {
 ### Versioning Strategies
 
 **URL Versioning** (explicit):
+
 ```
 GET /api/v1/users
 GET /api/v2/users
 ```
 
 **Header Versioning** (implicit):
+
 ```
 GET /api/users
 Accept: application/vnd.myapi.v2+json
@@ -220,6 +247,7 @@ Accept: application/vnd.myapi.v2+json
 ### Error Handling
 
 **Consistent Error Format**:
+
 ```json
 {
   "error": {
@@ -242,6 +270,7 @@ Accept: application/vnd.myapi.v2+json
 ### Composition Patterns
 
 **Render Props**:
+
 ```typescript
 function DataFetcher({ url, children }) {
   const [data, setData] = useState(null);
@@ -258,6 +287,7 @@ function DataFetcher({ url, children }) {
 ```
 
 **Higher-Order Components**:
+
 ```typescript
 function withDataFetching(Component, url) {
   return function DataFetchingComponent(props) {
@@ -273,6 +303,7 @@ function withDataFetching(Component, url) {
 ### State Management
 
 **Minimal State**:
+
 - Only store data that changes
 - Derive computed values instead of storing them
 - Use context for shared state, not for everything
@@ -284,11 +315,13 @@ function withDataFetching(Component, url) {
 ### Reliability Patterns
 
 **Idempotency**:
+
 - Design operations to be safe to retry
 - Use idempotency keys for critical operations
 - Ensure repeated calls produce same result
 
 **Monitoring & Observability**:
+
 - Log all integration calls (request, response, errors)
 - Track success/failure rates
 - Alert on circuit breaker state changes

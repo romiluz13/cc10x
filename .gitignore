@@ -102,6 +102,9 @@ plans/
 planning/
 .archive/
 nonprod/
+openspec-reference/
+comparison/
+agent-os-reference/
 
 # Internal documentation (development-only)
 docs/analysis/

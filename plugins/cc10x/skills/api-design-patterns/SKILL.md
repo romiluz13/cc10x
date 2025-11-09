@@ -1,85 +1,584 @@
 ---
 name: api-design-patterns
-description: Focused API design guidance. Thin wrapper around the API section of design-patterns with a compact checklist and examples. Use when designing REST APIs, planning API contracts, reviewing API endpoints, implementing versioning strategies, or ensuring RESTful design principles. Used by planning-workflow, planning-design-deployment, and code-reviewer when API contracts are in scope.
+description: Context-aware API design that understands API requirements from flows before designing. Use PROACTIVELY when planning features that need APIs. First understands functionality requirements and maps them to API needs, then designs API endpoints to support that functionality. Provides specific API designs with examples aligned with project API conventions. Focuses on APIs that enable functionality, not generic REST patterns.
+allowed-tools: Read, Grep, Glob
 ---
 
-# API Design Patterns (Focused)
+# API Design Patterns - Context-Aware & Functionality First
 
-## Progressive Loading Stages
+## Purpose
 
-### Stage 1: Metadata
-- Purpose: Design and review HTTP APIs that are consistent, evolvable, and safe
-- When: Planning new endpoints, reviewing API changes, preventing breaking changes
-- Core Rule: APIs are contracts; prefer compatibility and explicit versioning
+This skill provides context-aware API design that understands API requirements from flows before designing. It maps functionality to API endpoints and designs APIs to support functionality, providing specific API designs with examples aligned with project API conventions.
+
+**Unique Value**:
+
+- Understands API requirements before designing
+- Designs APIs to support functionality (not generic REST)
+- Provides specific API designs with examples
+- Understands project's API conventions
+
+**When to Use**:
+
+- When planning features that need APIs
+- When designing API contracts
+- When reviewing API endpoints
 
 ---
 
-### Stage 2: Quick Reference
+## Functionality First Mandate
 
-#### API Checklist
+**BEFORE designing APIs, complete context-dependent functionality analysis**:
+
+1. **Complete Phase 1: Universal Questions** (from functionality analysis template):
+   - Purpose: What problem does this solve?
+   - Requirements: What must it do?
+   - Constraints: What are the limits? (API constraints: rate limits, payload size)
+   - Dependencies: What does it need? (External APIs, services)
+   - Edge Cases: What can go wrong? (API error cases)
+   - Verification: How do we know it works? (API tests)
+   - Context: Where does it fit?
+
+2. **Complete Phase 2: Context-Dependent Flow Questions** (based on code type - Backend APIs):
+   - Request Flow: Step-by-step how requests are received and processed
+   - Response Flow: Step-by-step how responses are generated
+   - Error Flow: Step-by-step how errors are handled
+   - Data Flow: Step-by-step how data moves through the system
+
+3. **THEN understand project's API conventions** - Before designing APIs
+
+4. **THEN design APIs** - Design endpoints to support functionality
+
+**Reference**: See `plugins/cc10x/skills/cc10x-orchestrator/templates/functionality-analysis.md` for complete template.
+
+---
+
+## Process
+
+### Phase 1: Context-Dependent Functionality Analysis (MANDATORY FIRST STEP)
+
+**Before any API design, complete functionality analysis**:
+
+1. **Load Functionality Analysis Template**:
+   - Reference: `plugins/cc10x/skills/cc10x-orchestrator/templates/functionality-analysis.md`
+   - Complete Phase 1: Universal Questions (especially Constraints - API constraints)
+   - Complete Phase 2: Context-Dependent Flow Questions (Backend APIs - Request Flow, Response Flow, Error Flow, Data Flow)
+
+2. **Understand Functionality**:
+   - What is this API supposed to do?
+   - What functionality does user need?
+   - What are the flows? (Request, Response, Error, Data - context-dependent)
+
+3. **Understand API Requirements** (from flows):
+   - What endpoints are needed? (from Request Flow)
+   - What data formats are needed? (from Data Flow)
+   - What error handling is needed? (from Error Flow)
+
+**Example**: File Upload to CRM
+
+**Purpose**: Users need to upload files to their CRM system via API.
+
+**Requirements**:
+
+- Must accept file uploads (PDF, DOCX, JPG, PNG)
+- Must validate file type and size (max 10MB)
+- Must store files securely
+- Must send file metadata to CRM API
+- Must return file ID and status
+
+**Request Flow**:
+
+1. API receives POST /api/files/upload request
+2. API validates authentication token
+3. API validates request body (file, metadata)
+4. API validates file type and size
+5. API generates unique filename
+6. API uploads file to storage service
+7. API calls CRM API with file metadata
+8. API stores file record in database
+9. API returns success response with file ID
+
+**Response Flow**:
+
+1. API formats response data (file ID, status, URL)
+2. API includes relevant headers (Content-Type, Cache-Control)
+3. API sets appropriate HTTP status code (200, 201, 400, 500)
+4. API serializes response to JSON
+5. API sends response to client
+
+**Error Flow**:
+
+1. API detects error (validation, storage, CRM API failure)
+2. API logs error with context
+3. API determines error type (client error vs server error)
+4. API formats error response (message, code, details)
+5. API returns appropriate HTTP status code
+6. API includes error details for debugging (if development)
+
+---
+
+### Phase 2: Understand Project's API Conventions (MANDATORY SECOND STEP)
+
+**Before designing APIs, understand how this project designs APIs**:
+
+1. **Load Project Context Understanding**:
+   - Load `project-context-understanding` skill
+   - Map project's API patterns (REST, GraphQL, gRPC)
+   - Identify API conventions used
+   - Identify API versioning patterns used
+   - Identify error handling patterns used
+
+2. **Map API Patterns**:
+
+   ```bash
+   # Find API route definitions
+   grep -r "router\.\|app\.(get|post|put|delete)" --include="*.ts" | head -20
+
+   # Find API versioning patterns
+   grep -r "v1\|v2\|version" --include="*.ts" | head -20
+
+   # Find API error handling patterns
+   grep -r "error\|Error\|status.*code" --include="*.ts" | head -20
+   ```
+
+3. **Map API Conventions**:
+
+   ```bash
+   # Find API naming conventions
+   grep -r "/api/" --include="*.ts" | head -20
+
+   # Find API response patterns
+   grep -r "res\.json\|res\.send\|response" --include="*.ts" | head -20
+
+   # Find API authentication patterns
+   grep -r "auth\|Auth\|authenticate\|jwt\|token" --include="*.ts" | head -20
+   ```
+
+**Document Project's API Conventions**:
+
+- API Pattern: REST, GraphQL, gRPC, etc.
+- API Versioning: URL versioning (/v1/), header versioning, etc.
+- API Naming: Resource naming conventions, endpoint naming conventions
+- Error Handling: Error response format, error codes, error messages
+- Authentication: Auth patterns (JWT, OAuth, API keys)
+- Response Format: Response structure, pagination, filtering
+
+**Example Output**:
+
 ```
-Fundamentals
-- [ ] RESTful nouns and proper HTTP verbs
-- [ ] Consistent resource naming and casing
-- [ ] Standard status codes and error schema
-- [ ] Pagination, filtering, sorting where applicable
-- [ ] Authentication and authorization model documented
+Project API Conventions:
+API Pattern: RESTful APIs
+API Versioning: URL versioning (/api/v1/)
+API Naming:
+- Resources: Plural nouns (files, users, orders)
+- Endpoints: RESTful verbs (GET, POST, PUT, DELETE)
+- Paths: kebab-case (/api/files/upload)
 
-Reliability & Evolution
-- [ ] Timeouts and retries defined (idempotency where needed)
-- [ ] Backward-compatible changes or explicit versioning
-- [ ] Rate limiting and headers documented
-- [ ] Deprecation policy and timeline
+Error Handling:
+- Error format: { error: { code, message, status, details } }
+- Error codes: UPPER_SNAKE_CASE (FILE_TOO_LARGE)
+- Status codes: Standard HTTP status codes
 
-DevEx & Quality
-- [ ] OpenAPI/Swagger kept current
-- [ ] Examples for success and error cases
-- [ ] Validation of inputs/outputs (types, enums, ranges)
-- [ ] Monitoring, logging, trace IDs
+Authentication:
+- JWT tokens in Authorization header
+- Bearer token format
+
+Response Format:
+- JSON responses
+- Pagination: ?page=1&limit=20
+- Filtering: ?status=active&type=pdf
 ```
 
-#### Examples
-**Good REST structure**
-```http
-GET /api/users          # list
-GET /api/users/{id}     # fetch one
-POST /api/users         # create
-PUT /api/users/{id}     # replace
-PATCH /api/users/{id}   # partial update
-DELETE /api/users/{id}  # delete
-```
+---
 
-**Error schema**
+### Phase 3: API Design (Design to Support Functionality)
+
+**After understanding functionality and project API conventions, design APIs**:
+
+1. **Map Functionality to API Endpoints**:
+   - For each functionality flow, identify API endpoint needs
+   - Map user flows → API endpoints (user actions)
+   - Map admin flows → API endpoints (admin actions)
+   - Map system flows → API endpoints (system processing)
+   - Map integration flows → API endpoints (external systems)
+
+2. **Design Endpoints** (based on functionality):
+   - Design endpoints aligned with project API conventions
+   - Design request/response schemas aligned with functionality
+   - Design error handling aligned with functionality
+
+3. **Design Request Schemas** (based on functionality):
+   - Map functionality inputs to request schemas
+   - Include validation aligned with functionality requirements
+   - Include authentication aligned with functionality security
+
+4. **Design Response Schemas** (based on functionality):
+   - Map functionality outputs to response schemas
+   - Include data aligned with functionality needs
+   - Include metadata aligned with functionality needs
+
+5. **Design Error Handling** (based on functionality):
+   - Map functionality error cases to error responses
+   - Include error codes aligned with functionality
+   - Include error messages aligned with functionality
+
+**Provide Specific API Designs with Examples**:
+
+For each API endpoint, provide:
+
+- **Endpoint**: HTTP method and path (aligned with project conventions)
+- **Purpose**: Functionality it supports
+- **Request**: Request schema with examples
+- **Response**: Response schema with examples
+- **Errors**: Error responses with examples
+- **Flow Step**: Which functionality flow step it supports
+
+**Example**:
+
+````markdown
+## API Endpoint: POST /api/v1/files/upload
+
+**Purpose**: Supports user flow - file upload functionality
+
+**Functionality Flow Step**: Request Flow Step 1-9 (file upload request → validation → storage → CRM sync → response)
+
+**Request** (aligned with project JSON format):
+
 ```json
+POST /api/v1/files/upload
+Authorization: Bearer {jwt_token}
+Content-Type: multipart/form-data
+
 {
-  "error": { "code": "USER_NOT_FOUND", "message": "User 123 not found", "status": 404, "traceId": "..." }
+  "file": <file binary>,
+  "metadata": {
+    "name": "document.pdf",
+    "type": "application/pdf",
+    "description": "Customer contract"
+  }
+}
+```
+````
+
+**Response** (aligned with project response format):
+
+```json
+HTTP/1.1 201 Created
+Content-Type: application/json
+
+{
+  "file": {
+    "id": "file_123",
+    "name": "document.pdf",
+    "type": "application/pdf",
+    "size": 5242880,
+    "url": "https://storage.example.com/files/file_123",
+    "crmFileId": "crm_456",
+    "status": "uploaded",
+    "uploadedAt": "2024-01-15T10:30:00Z"
+  }
 }
 ```
 
-**Versioning**
-- Prefer URL or header versioning: /v1/users or Accept: application/vnd.app.v1+json
-- Breaking changes require new version; deprecate old with headers and docs
+**Errors** (aligned with project error format):
 
-**Idempotency**
-- For POST operations that can be retried: require Idempotency-Key header and deduplicate server-side
+```json
+HTTP/1.1 413 Payload Too Large
+Content-Type: application/json
+
+{
+  "error": {
+    "code": "FILE_TOO_LARGE",
+    "message": "File exceeds 10MB limit",
+    "status": 413,
+    "details": {
+      "maxSize": "10MB",
+      "fileSize": "15MB"
+    }
+  }
+}
+```
+
+**Priority**: Critical (core functionality)
+
+````
 
 ---
 
-### Stage 3: Review Procedure
-1) Identify touched resources and operations
-2) Compare to existing contracts and clients
-3) Run through the checklist; flag any breaking changes
-4) Update OpenAPI and examples; add error cases
-5) Decide on versioning or compatibility strategy
+## API Design Pattern Library (Reference - Use AFTER Understanding Functionality and Project API Conventions)
+
+### RESTful Structure
+
+**Understand functionality first, then apply REST patterns** (aligned with project conventions):
+
+**RESTful Endpoints** (mapped from functionality flows):
+```http
+# Based on User Flow: File Upload
+POST /api/v1/files/upload          # Start upload (Request Flow Step 1)
+GET /api/v1/files/{id}              # Get file info (User Flow Step 5)
+GET /api/v1/files/{id}/download     # Download file (User Flow Step 5)
+
+# Based on Admin Flow: File Management
+GET /api/v1/files                   # List files (Admin Flow Step 2)
+  ?userId=user_123                  # Filter by user
+  &type=pdf                         # Filter by type
+  &page=1&limit=20                  # Pagination
+DELETE /api/v1/files/{id}           # Delete file (Admin Flow Step 5)
+
+# Based on System Flow: File Processing
+POST /api/v1/files/{id}/process     # Process file (System Flow)
+GET /api/v1/files/{id}/status       # Get processing status (System Flow)
+````
+
+### Request/Response Schemas
+
+**Design schemas to support functionality** (aligned with project conventions):
+
+**Request Schema** (aligned with functionality requirements):
+
+```typescript
+// Request schema for file upload (aligned with functionality)
+interface UploadFileRequest {
+  file: File; // Multipart file
+  metadata: {
+    name: string; // File name
+    type: string; // File type (PDF, DOCX, JPG, PNG)
+    description?: string; // Optional description
+  };
+}
+
+// Validation (aligned with functionality constraints)
+const uploadSchema = z.object({
+  file: z
+    .instanceof(File)
+    .refine((file) => file.size <= 10 * 1024 * 1024, "File exceeds 10MB limit")
+    .refine(
+      (file) =>
+        [
+          "application/pdf",
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          "image/jpeg",
+          "image/png",
+        ].includes(file.type),
+      "Invalid file type",
+    ),
+  metadata: z.object({
+    name: z.string().min(1),
+    type: z.string(),
+    description: z.string().optional(),
+  }),
+});
+```
+
+**Response Schema** (aligned with functionality needs):
+
+```typescript
+// Response schema for file upload (aligned with functionality)
+interface UploadFileResponse {
+  file: {
+    id: string; // File ID (for user flow: view file)
+    name: string; // File name
+    type: string; // File type
+    size: number; // File size
+    url: string; // Storage URL (for user flow: download)
+    crmFileId?: string; // CRM file ID (for integration flow)
+    status: "uploaded" | "processing" | "failed"; // Status (for user flow: progress)
+    uploadedAt: string; // Upload timestamp (for admin flow: filter by date)
+  };
+}
+```
+
+### Error Handling
+
+**Design errors to support functionality** (aligned with project error format):
+
+**Error Schema** (aligned with functionality error cases):
+
+```typescript
+// Error schema (aligned with project error format)
+interface ApiError {
+  error: {
+    code: string; // Error code (aligned with functionality)
+    message: string; // User-friendly message (aligned with functionality)
+    status: number; // HTTP status code
+    details?: Record<string, any>; // Additional details (aligned with functionality)
+  };
+}
+
+// Error examples (aligned with functionality error cases)
+const errors = {
+  FILE_TOO_LARGE: {
+    code: "FILE_TOO_LARGE",
+    message: "File exceeds 10MB limit",
+    status: 413,
+    details: { maxSize: "10MB", fileSize: "15MB" },
+  },
+  INVALID_FILE_TYPE: {
+    code: "INVALID_FILE_TYPE",
+    message: "File type not supported. Please upload PDF, DOCX, JPG, or PNG",
+    status: 400,
+    details: { allowedTypes: ["PDF", "DOCX", "JPG", "PNG"] },
+  },
+  CRM_API_ERROR: {
+    code: "CRM_API_ERROR",
+    message: "Failed to sync file to CRM. Please try again",
+    status: 502,
+    details: { retryable: true },
+  },
+};
+```
+
+### Authentication & Authorization
+
+**Design auth to support functionality** (aligned with project auth patterns):
+
+**Authentication** (aligned with functionality security):
+
+```typescript
+// Authentication middleware (aligned with project JWT pattern)
+import { authenticate } from "../middleware/auth";
+
+app.post("/api/v1/files/upload", authenticate, uploadHandler);
+// authenticate middleware validates JWT token
+// Sets req.user with user info
+```
+
+**Authorization** (aligned with functionality access control):
+
+```typescript
+// Authorization check (aligned with functionality)
+function canUploadFile(user: User, file: File): boolean {
+  // User can upload their own files
+  // Admin can upload any file
+  return file.userId === user.id || user.role === "admin";
+}
+```
+
+### Versioning
+
+**Version APIs to support functionality evolution** (aligned with project versioning):
+
+**Versioning Strategy** (aligned with project URL versioning):
+
+```http
+# URL versioning (aligned with project /api/v1/ pattern)
+POST /api/v1/files/upload    # Current version
+POST /api/v2/files/upload    # New version (breaking changes)
+
+# Deprecation (aligned with functionality evolution)
+HTTP/1.1 200 OK
+Deprecation: true
+Sunset: "2024-12-31"
+Link: </api/v2/files/upload>; rel="successor-version"
+```
 
 ---
 
-### Stage 4: Outputs
-- API Review Notes (summary of decisions, risks, follow-ups)
-- Updated OpenAPI spec and example payloads
+## Priority Classification
+
+**Critical (Must Have - Core Functionality)**:
+
+- API endpoints support core functionality (user flow, system flow)
+- Blocks functionality if missing
+- Required for functionality to work
+- Examples:
+  - Endpoints for user actions (upload, view)
+  - Endpoints for system processing (validate, store)
+  - Request/response schemas for functionality
+
+**Important (Should Have - Supporting Functionality)**:
+
+- API supports functionality growth
+- API supports functionality changes
+- API supports functionality reliability
+- Examples:
+  - Error handling for functionality reliability
+  - Authentication for functionality security
+  - Rate limiting for functionality performance
+
+**Minor (Can Defer - Pattern Compliance)**:
+
+- Perfect REST structure (if functionality is supported)
+- Ideal versioning (if functionality is supported)
+- Perfect OpenAPI spec (if functionality is supported)
 
 ---
 
-### Stage 5: Links
-- See also: design-patterns (API section), security-patterns, performance-patterns, code-quality-patterns
+## Output Format
 
+**MANDATORY TEMPLATE** - Use this exact structure:
+
+```markdown
+# API Design Report
+
+## Functionality Analysis Summary
+
+[Brief summary of functionality from Phase 1]
+
+## Project API Conventions Summary
+
+[Brief summary of project API conventions from Phase 2]
+
+## API Design
+
+### Endpoints
+
+[For each endpoint:]
+
+- **Endpoint**: [HTTP method and path]
+- **Purpose**: [Functionality it supports]
+- **Request**: [Request schema with examples]
+- **Response**: [Response schema with examples]
+- **Errors**: [Error responses with examples]
+- **Flow Step**: [Which functionality flow step it supports]
+- **Priority**: [Critical, Important, or Minor]
+
+### Request/Response Schemas
+
+[Request and response schemas aligned with functionality]
+
+### Error Handling
+
+[Error handling aligned with functionality error cases]
+
+### Authentication & Authorization
+
+[Auth patterns aligned with functionality security]
+
+## Recommendations
+
+[Prioritized list of API designs - Critical first, then Important, then Minor]
+```
+
+---
+
+## Usage Guidelines
+
+### For Planning Workflow
+
+1. **First**: Complete Phase 1 (Context-Dependent Functionality Analysis - especially Request/Response/Error/Data Flows)
+2. **Then**: Complete Phase 2 (Understand Project API Conventions)
+3. **Then**: Complete Phase 3 (API Design - Design to Support Functionality)
+4. **Focus**: APIs that enable functionality, not generic REST patterns
+
+### Key Principles
+
+1. **Functionality First**: Always understand functionality before designing APIs
+2. **Context-Aware**: Understand project API conventions before designing
+3. **Map Flows to Endpoints**: Map functionality flows to API endpoints
+4. **Specific Designs**: Provide specific API designs with examples aligned with project conventions
+5. **Prioritize by Impact**: Critical (core functionality) > Important (supporting functionality) > Minor (pattern compliance)
+
+---
+
+## Common Mistakes to Avoid
+
+1. **Skipping Functionality Analysis**: Don't jump straight to API design
+2. **Ignoring Project Conventions**: Don't design without understanding project API conventions
+3. **Generic REST Patterns**: Don't apply generic REST patterns - design to support functionality
+4. **Missing Specific Designs**: Don't just describe endpoints - provide specific schemas and examples
+5. **No Flow Mapping**: Don't just list endpoints - map them to functionality flows
+6. **Wrong Priority**: Don't prioritize pattern compliance over functionality support
+
+---
+
+_This skill enables context-aware API design that understands API requirements from flows and designs APIs to support functionality, providing specific API designs with examples aligned with project API conventions._

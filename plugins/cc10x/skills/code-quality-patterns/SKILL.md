@@ -1,72 +1,472 @@
 ---
 name: code-quality-patterns
-description: Identifies maintainability, readability, complexity, duplication, and technical-debt issues. Use when reviewing code quality, analyzing code complexity, identifying technical debt, checking for code smells, or ensuring maintainable code patterns. Used by the review, build, and debug workflows to provide actionable quality feedback.
+description: Context-aware code quality analysis that understands codebase standards before checking. Use PROACTIVELY when reviewing code that implements features. First understands project's codebase conventions and functionality requirements, then checks for quality issues that affect functionality or make it hard to maintain. Provides specific improvements with examples aligned with project patterns. Focuses on quality issues that matter (blocks changes, causes bugs, hard to understand), not generic code quality metrics.
+allowed-tools: Read, Grep, Glob
 ---
 
-# Code Quality Patterns
+# Code Quality Patterns - Context-Aware & Functionality First
 
-## Progressive Loading Stages
+## Purpose
 
-### Stage 1: Metadata
-- **Skill**: Code Quality Patterns
-- **Purpose**: Identify code quality issues and ensure maintainability
-- **When**: Code review, quality analysis, refactoring planning
-- **Core Rule**: Code is read 10x more than written - optimize for readers
-- **Sections Available**: Complexity Metrics, DRY Principles, SOLID Patterns, Quick Checks
+This skill provides context-aware code quality analysis that understands the codebase's quality standards before checking. It focuses on quality issues that affect functionality or maintainability, providing specific improvements with examples aligned with project patterns.
+
+**Unique Value**:
+
+- Understands codebase's quality standards before checking
+- Focuses on quality issues that matter (maintainability, readability)
+- Provides specific improvements with examples
+- Respects existing patterns and conventions
+
+**When to Use**:
+
+- After functionality is verified
+- When reviewing code that implements features
+- When analyzing code for maintainability issues
+- When checking if code can be easily modified
 
 ---
 
-### Stage 2: Quick Reference
+## Functionality First Mandate
 
-#### Code Quality Checklist
+**BEFORE applying quality checks, complete context-dependent functionality analysis**:
+
+1. **Complete Phase 1: Universal Questions** (from functionality analysis template):
+   - Purpose: What problem does this solve?
+   - Requirements: What must it do?
+   - Constraints: What are the limits?
+   - Dependencies: What does it need?
+   - Edge Cases: What can go wrong?
+   - Verification: How do we know it works?
+   - Context: Where does it fit?
+
+2. **Complete Phase 2: Context-Dependent Flow Questions** (based on code type):
+   - UI Features → User Flow, Admin Flow, System Flow
+   - Backend APIs → Request Flow, Response Flow, Error Flow, Data Flow
+   - Utilities → Input Flow, Processing Flow, Output Flow, Error Flow
+   - Integrations → Integration Flow, Data Flow, Error Flow, State Flow
+
+3. **THEN understand codebase conventions** - Before checking quality
+
+4. **THEN check quality** - Only quality issues that affect functionality or maintainability
+
+**Reference**: See `plugins/cc10x/skills/cc10x-orchestrator/templates/functionality-analysis.md` for complete template.
+
+---
+
+## Process
+
+### Phase 1: Context-Dependent Functionality Analysis (MANDATORY FIRST STEP)
+
+**Before any quality checks, complete functionality analysis**:
+
+1. **Load Functionality Analysis Template**:
+   - Reference: `plugins/cc10x/skills/cc10x-orchestrator/templates/functionality-analysis.md`
+   - Complete Phase 1: Universal Questions
+   - Complete Phase 2: Context-Dependent Flow Questions (based on code type)
+
+2. **Understand Functionality**:
+   - What is this code supposed to do?
+   - What functionality does user need?
+   - What are the flows? (User, Admin, System, Integration, etc. - context-dependent)
+
+3. **Verify Functionality Works**:
+   - Does functionality work? (tested)
+   - Do flows work? (tested)
+   - Does error handling work? (tested)
+
+**Example**: File Upload to CRM
+
+**Purpose**: Users need to upload files to their CRM system. Files should be stored securely and accessible to authorized users.
+
+**Requirements**:
+
+- Must accept file uploads (PDF, DOCX, JPG, PNG)
+- Must validate file type and size (max 10MB)
+- Must store files securely
+- Must send file metadata to CRM API
+- Must display upload progress to user
+
+**User Flow**:
+
+1. User clicks "Upload File" button
+2. User selects file from device
+3. User sees upload progress indicator
+4. User sees success message with file link
+
+**System Flow**:
+
+1. System receives file upload request
+2. System validates file type and size
+3. System stores file in secure storage
+4. System sends file metadata to CRM API
+5. System returns success response
+
+**Functional Verification**:
+
+- ✅ User can upload file (tested)
+- ✅ File appears in CRM (tested)
+- ✅ Error handling works (tested)
+
+---
+
+### Phase 2: Understand Codebase Conventions (MANDATORY SECOND STEP)
+
+**Before checking quality, understand how this codebase maintains quality**:
+
+1. **Load Project Context Understanding**:
+   - Load `project-context-understanding` skill
+   - Map codebase conventions (naming, structure, style)
+   - Identify quality patterns used
+   - Identify testing patterns used
+
+2. **Map Naming Conventions**:
+
+   ```bash
+   # Find file naming patterns
+   ls -R src/ | grep -E "\.(ts|tsx|js|jsx)$" | head -20
+
+   # Find function naming patterns
+   grep -r "function \|const \|export const " --include="*.ts" | head -20
+
+   # Find component naming patterns
+   grep -r "export.*function\|export.*const.*=" --include="*.tsx" | head -20
+   ```
+
+3. **Map Structure Conventions**:
+
+   ```bash
+   # Find directory structure
+   find src -type d -maxdepth 3
+
+   # Find file organization patterns
+   find src -name "*.ts" -o -name "*.tsx" | head -20
+   ```
+
+4. **Map Style Conventions**:
+
+   ```bash
+   # Read style guide if exists
+   cat .eslintrc.json 2>/dev/null || cat .prettierrc 2>/dev/null || echo "No style config found"
+
+   # Analyze code style from examples
+   head -50 src/components/UploadForm.tsx 2>/dev/null || echo "File not found"
+   ```
+
+5. **Map Quality Patterns**:
+
+   ```bash
+   # Find testing patterns
+   find . -name "*.test.*" -o -name "*.spec.*" | head -10
+
+   # Find error handling patterns
+   grep -r "try\|catch\|throw" --include="*.ts" | head -20
+
+   # Find code organization patterns
+   grep -r "export.*class\|export.*interface\|export.*type" --include="*.ts" | head -20
+   ```
+
+**Document Codebase Conventions**:
+
+- Naming: Files (kebab-case?), Functions (camelCase?), Components (PascalCase?), Constants (UPPER_SNAKE_CASE?)
+- Structure: Directory organization, file organization, module boundaries
+- Style: Formatting rules, linting rules, indentation
+- Quality Patterns: Testing patterns, error handling patterns, code organization patterns
+
+**Example Output**:
 
 ```
-Quality Metrics:
-- [ ] Cyclomatic Complexity < 10 per function
-- [ ] Function length < 50 lines
-- [ ] Class length < 300 lines
-- [ ] Nesting depth < 4 levels
-- [ ] Code duplication < 5%
-- [ ] Test coverage > 80%
-- [ ] No console.log in production
-- [ ] No TODO/FIXME comments
+Codebase Conventions:
+Naming:
+- Files: kebab-case (upload-form.tsx)
+- Components: PascalCase (UploadForm)
+- Functions: camelCase (uploadFile)
+- Constants: UPPER_SNAKE_CASE (MAX_FILE_SIZE)
+
+Structure:
+- Components in components/
+- Pages in pages/
+- API routes in api/
+- Services in services/
+- Utils in utils/
+
+Style:
+- TypeScript strict mode
+- ESLint with React plugin
+- Prettier for formatting
+- 2-space indentation
+
+Quality Patterns:
+- Testing: Jest with React Testing Library
+- Error Handling: Try-catch with custom error classes
+- Code Organization: Functional components with hooks
 ```
 
-#### File Size Policy
+---
 
-Keep files readable and focused. Default guidance:
+### Phase 3: Quality Analysis (Only Issues Affecting Functionality or Maintainability)
 
-- Aim for files under 500 lines
-- Soft caps by type:
-  - Components: < 200 lines
-  - Utilities: < 300 lines
-  - Services: < 400 lines
-  - Config: < 100 lines
+**After understanding functionality and codebase conventions, check quality**:
 
-When a file exceeds its cap, propose a concrete split plan (by responsibility):
+1. **Map Quality Issues to Functionality**:
+   - For each functionality flow, identify quality risks
+   - Check if quality issues affect functionality or maintainability
+   - Prioritize: Critical (blocks changes) > Important (causes bugs) > Minor (hard to understand) > Style
 
-```
-example/large-file.ts (780 lines)
-  → core.ts (business logic)
-  → utils.ts (helpers)
-  → types.ts (interfaces/types)
-  → adapters.ts (I/O, boundaries)
-```
+2. **Check Readability** (if affects understanding functionality):
+   - Is code readable enough to understand what it does?
+   - Are names clear and aligned with codebase conventions?
+   - Is structure clear and aligned with codebase patterns?
+   - Are comments helpful (if needed)?
 
-Quick detection:
-```bash
-find src -type f -name "*.*" -maxdepth 4 -print0 \
-  | xargs -0 wc -l 2>/dev/null \
-  | sort -n | tail -20
-```
+3. **Check Maintainability** (if affects modifying functionality):
+   - Is code organized to support changes?
+   - Are functions/classes focused and aligned with codebase patterns?
+   - Is duplication preventing fixing bugs in one place?
+   - Are dependencies clear and manageable?
 
-Flag oversized files during review/build/debug and suggest a split before closing the task.
+4. **Check Error Handling** (if affects functionality):
+   - Is error handling present and aligned with codebase patterns?
+   - Are errors handled gracefully?
+   - Are error messages helpful?
 
-#### Critical Quality Patterns
+5. **Check Testability** (if affects verifying functionality):
+   - Is code testable?
+   - Are tests present and aligned with codebase testing patterns?
+   - Can functionality be verified with tests?
 
-**Function Complexity** (Cyclomatic Complexity):
+**Provide Specific Improvements with Code Examples**:
+
+For each quality issue found, provide:
+
+- **Issue**: Clear description of the quality issue
+- **Impact**: How it affects functionality or maintainability
+- **Location**: File path and line number
+- **Fix**: Specific code example aligned with codebase patterns
+- **Priority**: Critical, Important, or Minor
+
+**Example**:
+
+````markdown
+## Quality Finding: Unclear Function Name
+
+**Issue**: Function name `process` doesn't indicate what it does, making it hard to understand functionality.
+
+**Impact**: Blocks changes - developers can't understand what this function does without reading implementation.
+
+**Location**: `src/services/file-service.ts:23`
+
+**Current Code** (not aligned with codebase camelCase pattern):
+
 ```typescript
-// HIGH COMPLEXITY (CC = 8)
+function process(file: File): Promise<string> {
+  // Validates, uploads, and syncs file
+  await validateFile(file);
+  const url = await uploadToStorage(file);
+  await syncToCRM(url);
+  return url;
+}
+```
+````
+
+**Fix** (aligned with codebase camelCase pattern and naming conventions):
+
+```typescript
+function uploadAndSyncFile(file: File): Promise<string> {
+  // Validates, uploads, and syncs file to CRM
+  await validateFile(file);
+  const url = await uploadToStorage(file);
+  await syncToCRM(url);
+  return url;
+}
+```
+
+**Priority**: Important (affects maintainability)
+
+````
+
+---
+
+## Quality Pattern Library (Reference - Use AFTER Understanding Codebase Conventions)
+
+### Naming Conventions
+
+**Understand codebase naming conventions first, then check**:
+
+**Function Naming** (aligned with codebase pattern):
+```typescript
+// Check: Are function names clear and aligned with codebase?
+// BAD (if codebase uses camelCase)
+function process_data(file) { }
+
+// GOOD (aligned with codebase camelCase pattern)
+function processFileData(file) { }
+
+// Check: Do names indicate functionality?
+// BAD - Can't understand what it does
+function process(user) { }
+
+// GOOD - Clear what functionality does
+function validateAndSaveUser(user) { }
+````
+
+**Variable Naming** (aligned with codebase pattern):
+
+```typescript
+// Check: Are variable names clear?
+// BAD - Can't understand what data represents
+const d = new Date();
+const x = users.filter((u) => u.age > 18);
+
+// GOOD - Clear what data represents (aligned with codebase)
+const currentDate = new Date();
+const adultUsers = users.filter((user) => user.age > 18);
+```
+
+**Component Naming** (aligned with codebase pattern):
+
+```typescript
+// Check: Are component names aligned with codebase PascalCase?
+// BAD (if codebase uses PascalCase)
+function upload_form() {}
+
+// GOOD (aligned with codebase PascalCase pattern)
+function UploadForm() {}
+```
+
+### Code Organization Patterns
+
+**Understand codebase organization patterns first, then check**:
+
+**File Organization** (aligned with codebase structure):
+
+```typescript
+// Check: Is code organized according to codebase structure?
+// BAD (if codebase separates components and utils)
+// components/UploadForm.tsx (contains utility functions)
+
+// GOOD (aligned with codebase structure)
+// components/UploadForm.tsx (component only)
+// utils/file-validation.ts (utilities)
+```
+
+**Function Organization** (aligned with codebase patterns):
+
+```typescript
+// Check: Are functions organized according to codebase patterns?
+// BAD (if codebase uses small focused functions)
+function handleUpload(file) {
+  // 100 lines of validation, upload, sync logic
+}
+
+// GOOD (aligned with codebase pattern of small focused functions)
+function handleUpload(file) {
+  validateFile(file);
+  const url = uploadFile(file);
+  syncToCRM(url);
+}
+
+function validateFile(file) {
+  /* ... */
+}
+function uploadFile(file) {
+  /* ... */
+}
+function syncToCRM(url) {
+  /* ... */
+}
+```
+
+### Error Handling Patterns
+
+**Understand codebase error handling patterns first, then check**:
+
+**Error Handling** (aligned with codebase pattern):
+
+```typescript
+// Check: Is error handling aligned with codebase patterns?
+// BAD (if codebase uses custom error classes)
+try {
+  await uploadFile(file);
+} catch (error) {
+  console.log(error);
+}
+
+// GOOD (aligned with codebase custom error class pattern)
+import { FileUploadError } from "../errors/file-upload-error";
+
+try {
+  await uploadFile(file);
+} catch (error) {
+  throw new FileUploadError("Failed to upload file", { cause: error });
+}
+```
+
+### Testing Patterns
+
+**Understand codebase testing patterns first, then check**:
+
+**Test Organization** (aligned with codebase testing patterns):
+
+```typescript
+// Check: Are tests aligned with codebase testing patterns?
+// BAD (if codebase uses Jest with React Testing Library)
+// No tests
+
+// GOOD (aligned with codebase Jest + React Testing Library pattern)
+import { render, screen } from '@testing-library/react';
+import { UploadForm } from './UploadForm';
+
+describe('UploadForm', () => {
+  it('should upload file successfully', async () => {
+    render(<UploadForm />);
+    // Test implementation aligned with codebase patterns
+  });
+});
+```
+
+### Code Duplication Patterns
+
+**Understand codebase DRY patterns first, then check**:
+
+**Duplication** (only flag if prevents fixing bugs in one place):
+
+```typescript
+// Check: Does duplication prevent fixing bugs in one place?
+// BAD - Bug fix needs to be applied in multiple places
+function validateEmail(email) {
+  if (!email.includes("@")) throw new Error("Invalid email");
+  if (email.length < 5) throw new Error("Email too short");
+}
+
+function validatePhone(phone) {
+  if (!phone.includes("-")) throw new Error("Invalid phone");
+  if (phone.length < 10) throw new Error("Phone too short");
+}
+
+// GOOD - Bug fix in one place (aligned with codebase validation pattern)
+import { z } from "zod"; // If codebase uses Zod
+
+const emailSchema = z.string().email().min(5);
+const phoneSchema = z.string().regex(/^-/).min(10);
+
+function validateEmail(email) {
+  return emailSchema.parse(email);
+}
+
+function validatePhone(phone) {
+  return phoneSchema.parse(phone);
+}
+```
+
+### Complexity Patterns
+
+**Understand codebase complexity tolerance first, then check**:
+
+**Function Complexity** (only flag if prevents understanding functionality):
+
+```typescript
+// Check: Does complexity prevent understanding functionality?
+// BAD - Can't understand what functionality does
 function processUser(user) {
   if (user.age > 18) {
     if (user.verified) {
@@ -81,7 +481,7 @@ function processUser(user) {
   }
 }
 
-// LOW COMPLEXITY (CC = 1)
+// GOOD - Clear functionality (aligned with codebase pattern of small functions)
 function processUser(user) {
   if (!isEligible(user)) return;
   handlePremiumUser(user);
@@ -90,286 +490,15 @@ function processUser(user) {
 function isEligible(user) {
   return user.age > 18 && user.verified && user.active;
 }
-```
 
-**DRY Principle** (Don't Repeat Yourself):
-```typescript
-// DUPLICATION
-function validateEmail(email) {
-  if (!email.includes('@')) throw new Error('Invalid email');
-  if (email.length < 5) throw new Error('Email too short');
-}
-
-function validatePhone(phone) {
-  if (!phone.includes('-')) throw new Error('Invalid phone');
-  if (phone.length < 10) throw new Error('Phone too short');
-}
-
-// REUSABLE
-function validate(value, pattern, minLength, fieldName) {
-  if (!pattern.test(value)) throw new Error(`Invalid ${fieldName}`);
-  if (value.length < minLength) throw new Error(`${fieldName} too short`);
-}
-
-validate(email, /@/, 5, 'email');
-validate(phone, /-/, 10, 'phone');
-```
-
-**Naming Conventions**:
-```typescript
-// BAD NAMES
-const d = new Date();
-const x = users.filter(u => u.age > 18);
-function fn(a, b) { return a + b; }
-
-// GOOD NAMES
-const currentDate = new Date();
-const adultUsers = users.filter(user => user.age > 18);
-function calculateTotal(subtotal, tax) { return subtotal + tax; }
-```
-
-#### Red Flags 
-```bash
-# Find high complexity functions
-grep -r "if.*if.*if" src/ --include="*.ts"
-
-# Find long functions
-wc -l src/**/*.ts | sort -n | tail -20
-
-# Find duplication
-jscpd src/
-
-# Find console.log
-grep -r "console\." src/ --include="*.ts"
-
-# Find TODO/FIXME
-grep -r "TODO\|FIXME" src/ --include="*.ts"
-```
-
----
-
-### Stage 3: Detailed Guide
-
-## SOLID Principles
-
-### S: Single Responsibility Principle
-
-**What**: Each class/function should have ONE reason to change.
-
-```typescript
-// MULTIPLE RESPONSIBILITIES
-class User {
-  constructor(name, email) {
-    this.name = name;
-    this.email = email;
-  }
-
-  save() {
-    // Saving to database
-    db.insert('users', this);
-  }
-
-  sendEmail() {
-    // Sending email
-    emailService.send(this.email, 'Welcome!');
-  }
-
-  generateReport() {
-    // Generating report
-    return `User: ${this.name}`;
-  }
-}
-
-// SINGLE RESPONSIBILITY
-class User {
-  constructor(name, email) {
-    this.name = name;
-    this.email = email;
-  }
-}
-
-class UserRepository {
-  save(user) {
-    db.insert('users', user);
-  }
-}
-
-class EmailService {
-  sendWelcome(user) {
-    this.send(user.email, 'Welcome!');
-  }
-}
-
-class UserReporter {
-  generate(user) {
-    return `User: ${user.name}`;
+function handlePremiumUser(user) {
+  if (user.premium) {
+    // ... premium logic
+  } else {
+    // ... regular logic
   }
 }
 ```
-
-### O: Open/Closed Principle
-
-**What**: Open for extension, closed for modification.
-
-```typescript
-// VIOLATES OCP
-class PaymentProcessor {
-  process(payment) {
-    if (payment.type === 'credit') {
-      // Process credit card
-    } else if (payment.type === 'paypal') {
-      // Process PayPal
-    } else if (payment.type === 'stripe') {
-      // Process Stripe
-    }
-  }
-}
-
-// FOLLOWS OCP
-interface PaymentMethod {
-  process(payment): Promise<void>;
-}
-
-class CreditCardProcessor implements PaymentMethod {
-  process(payment) { /* ... */ }
-}
-
-class PayPalProcessor implements PaymentMethod {
-  process(payment) { /* ... */ }
-}
-
-class PaymentProcessor {
-  constructor(private method: PaymentMethod) {}
-  process(payment) {
-    return this.method.process(payment);
-  }
-}
-```
-
-### L: Liskov Substitution Principle
-
-**What**: Subtypes must be substitutable for their base types.
-
-```typescript
-// VIOLATES LSP
-class Bird {
-  fly() { return 'flying'; }
-}
-
-class Penguin extends Bird {
-  fly() { throw new Error('Penguins cannot fly'); }
-}
-
-// FOLLOWS LSP
-class Bird {
-  move() { return 'moving'; }
-}
-
-class FlyingBird extends Bird {
-  fly() { return 'flying'; }
-}
-
-class Penguin extends Bird {
-  swim() { return 'swimming'; }
-}
-```
-
-### I: Interface Segregation Principle
-
-**What**: Clients should not depend on interfaces they don't use.
-
-```typescript
-// VIOLATES ISP
-interface Worker {
-  work(): void;
-  eat(): void;
-  sleep(): void;
-}
-
-class Robot implements Worker {
-  work() { /* ... */ }
-  eat() { throw new Error('Robots do not eat'); }
-  sleep() { throw new Error('Robots do not sleep'); }
-}
-
-// FOLLOWS ISP
-interface Workable {
-  work(): void;
-}
-
-interface Eatable {
-  eat(): void;
-}
-
-interface Sleepable {
-  sleep(): void;
-}
-
-class Robot implements Workable {
-  work() { /* ... */ }
-}
-
-class Human implements Workable, Eatable, Sleepable {
-  work() { /* ... */ }
-  eat() { /* ... */ }
-  sleep() { /* ... */ }
-}
-```
-
-### D: Dependency Inversion Principle
-
-**What**: Depend on abstractions, not concretions.
-
-```typescript
-// VIOLATES DIP
-class UserService {
-  private db = new MongoDBClient();
-
-  getUser(id) {
-    return this.db.collection('users').findOne({ _id: id });
-  }
-}
-
-// FOLLOWS DIP
-interface Database {
-  findOne(collection: string, query: any): Promise<any>;
-}
-
-class UserService {
-  constructor(private db: Database) {}
-
-  getUser(id) {
-    return this.db.query(`SELECT * FROM users WHERE id = ${id}`);
-  }
-}
-```
-
-## Code Quality Metrics
-
-| Metric | Good | Warning | Bad |
-|--------|------|---------|-----|
-| Cyclomatic Complexity | < 5 | 5-10 | > 10 |
-| Function Length | < 30 lines | 30-50 | > 50 |
-| Class Length | < 200 lines | 200-300 | > 300 |
-| Nesting Depth | < 3 | 3-4 | > 4 |
-| Code Duplication | < 3% | 3-5% | > 5% |
-| Test Coverage | > 90% | 80-90% | < 80% |
-
-## Code Quality Checklist
-
-- [ ] All functions have single responsibility
-- [ ] No function exceeds 50 lines
-- [ ] No class exceeds 300 lines
-- [ ] Cyclomatic complexity < 10 per function
-- [ ] No code duplication (DRY principle)
-- [ ] Meaningful variable/function names
-- [ ] No console.log in production code
-- [ ] No TODO/FIXME comments
-- [ ] Test coverage > 80%
-- [ ] SOLID principles followed
-- [ ] No magic numbers (use constants)
-- [ ] Error handling present
-- [ ] Comments explain WHY, not WHAT
 
 ---
 
@@ -394,6 +523,7 @@ Code Quality Verification:
 ```
 
 **Verification Checklist**:
+
 1. Run tests: `npm test` (all passing)
 2. Check coverage: `npm run coverage` (>80%)
 3. Lint code: `npm run lint` (no errors)
@@ -407,4 +537,355 @@ Code Quality Verification:
 
 ---
 
-**Remember**: Code quality is an investment in the future. Clean code saves time and money!
+## SOLID Principles
+
+### S: Single Responsibility Principle
+
+**What**: Each class/function should have ONE reason to change.
+
+```typescript
+// MULTIPLE RESPONSIBILITIES
+class User {
+  constructor(name, email) {
+    this.name = name;
+    this.email = email;
+  }
+
+  save() {
+    // Saving to database
+    db.insert("users", this);
+  }
+
+  sendEmail() {
+    // Sending email
+    emailService.send(this.email, "Welcome!");
+  }
+
+  generateReport() {
+    // Generating report
+    return `User: ${this.name}`;
+  }
+}
+
+// SINGLE RESPONSIBILITY
+class User {
+  constructor(name, email) {
+    this.name = name;
+    this.email = email;
+  }
+}
+
+class UserRepository {
+  save(user) {
+    db.insert("users", user);
+  }
+}
+
+class EmailService {
+  sendWelcome(user) {
+    this.send(user.email, "Welcome!");
+  }
+}
+
+class UserReporter {
+  generate(user) {
+    return `User: ${user.name}`;
+  }
+}
+```
+
+### O: Open/Closed Principle
+
+**What**: Open for extension, closed for modification.
+
+```typescript
+// VIOLATES OCP
+class PaymentProcessor {
+  process(payment) {
+    if (payment.type === "credit") {
+      // Process credit card
+    } else if (payment.type === "paypal") {
+      // Process PayPal
+    } else if (payment.type === "stripe") {
+      // Process Stripe
+    }
+  }
+}
+
+// FOLLOWS OCP
+interface PaymentMethod {
+  process(payment): Promise<void>;
+}
+
+class CreditCardProcessor implements PaymentMethod {
+  process(payment) {
+    /* ... */
+  }
+}
+
+class PayPalProcessor implements PaymentMethod {
+  process(payment) {
+    /* ... */
+  }
+}
+
+class PaymentProcessor {
+  constructor(private method: PaymentMethod) {}
+  process(payment) {
+    return this.method.process(payment);
+  }
+}
+```
+
+### L: Liskov Substitution Principle
+
+**What**: Subtypes must be substitutable for their base types.
+
+```typescript
+// VIOLATES LSP
+class Bird {
+  fly() {
+    return "flying";
+  }
+}
+
+class Penguin extends Bird {
+  fly() {
+    throw new Error("Penguins cannot fly");
+  }
+}
+
+// FOLLOWS LSP
+class Bird {
+  move() {
+    return "moving";
+  }
+}
+
+class FlyingBird extends Bird {
+  fly() {
+    return "flying";
+  }
+}
+
+class Penguin extends Bird {
+  swim() {
+    return "swimming";
+  }
+}
+```
+
+### I: Interface Segregation Principle
+
+**What**: Clients should not depend on interfaces they don't use.
+
+```typescript
+// VIOLATES ISP
+interface Worker {
+  work(): void;
+  eat(): void;
+  sleep(): void;
+}
+
+class Robot implements Worker {
+  work() {
+    /* ... */
+  }
+  eat() {
+    throw new Error("Robots do not eat");
+  }
+  sleep() {
+    throw new Error("Robots do not sleep");
+  }
+}
+
+// FOLLOWS ISP
+interface Workable {
+  work(): void;
+}
+
+interface Eatable {
+  eat(): void;
+}
+
+interface Sleepable {
+  sleep(): void;
+}
+
+class Robot implements Workable {
+  work() {
+    /* ... */
+  }
+}
+
+class Human implements Workable, Eatable, Sleepable {
+  work() {
+    /* ... */
+  }
+  eat() {
+    /* ... */
+  }
+  sleep() {
+    /* ... */
+  }
+}
+```
+
+### D: Dependency Inversion Principle
+
+**What**: Depend on abstractions, not concretions.
+
+```typescript
+// VIOLATES DIP
+class UserService {
+  private db = new MongoDBClient();
+
+  getUser(id) {
+    return this.db.collection("users").findOne({ _id: id });
+  }
+}
+
+// FOLLOWS DIP
+interface Database {
+  findOne(collection: string, query: any): Promise<any>;
+}
+
+class UserService {
+  constructor(private db: Database) {}
+
+  getUser(id) {
+    return this.db.findOne("users", { id });
+  }
+}
+```
+
+---
+
+## Code Quality Metrics
+
+| Metric                | Good        | Warning | Bad   |
+| --------------------- | ----------- | ------- | ----- |
+| Cyclomatic Complexity | < 5         | 5-10    | > 10  |
+| Function Length       | < 30 lines  | 30-50   | > 50  |
+| Class Length          | < 200 lines | 200-300 | > 300 |
+| Nesting Depth         | < 3         | 3-4     | > 4   |
+| Code Duplication      | < 3%        | 3-5%    | > 5%  |
+| Test Coverage         | > 90%       | 80-90%  | < 80% |
+
+---
+
+## Priority Classification
+
+**Critical (Must Fix - Blocks Changes)**:
+
+- Blocks changes (unreadable code, high complexity preventing understanding)
+- Prevents fixing bugs (duplication requiring fixes in multiple places)
+- Examples:
+  - Unclear naming preventing understanding functionality
+  - High complexity preventing understanding flow
+  - Duplication preventing fixing bugs in one place
+
+**Important (Should Fix - Causes Bugs or Affects Maintainability)**:
+
+- Causes bugs (missing error handling, unclear logic)
+- Affects maintainability (long functions, large classes, deep nesting)
+- Examples:
+  - Missing error handling breaking functionality
+  - Long functions making it hard to modify functionality
+  - Missing tests making it hard to verify functionality
+
+**Minor (Can Defer - Hard to Understand or Style Issues)**:
+
+- Hard to understand (but functionality works)
+- Style issues (naming conventions, formatting)
+- Examples:
+  - Complexity metrics (if code works and is readable)
+  - Perfect SOLID principles (if code works)
+  - File size (if code works and is organized)
+
+---
+
+## Output Format
+
+**MANDATORY TEMPLATE** - Use this exact structure:
+
+```markdown
+# Code Quality Analysis Report
+
+## Functionality Analysis Summary
+
+[Brief summary of functionality from Phase 1]
+
+## Codebase Conventions Summary
+
+[Brief summary of codebase conventions from Phase 2]
+
+## Quality Findings
+
+### Critical Issues (Blocks Changes)
+
+[For each critical issue:]
+
+- **Issue**: [Description]
+- **Impact**: [How it blocks changes or causes bugs]
+- **Location**: [File:line]
+- **Fix**: [Specific code example aligned with codebase patterns]
+- **Priority**: Critical
+
+### Important Issues (Causes Bugs or Affects Maintainability)
+
+[For each important issue:]
+
+- **Issue**: [Description]
+- **Impact**: [How it causes bugs or affects maintainability]
+- **Location**: [File:line]
+- **Fix**: [Specific code example aligned with codebase patterns]
+- **Priority**: Important
+
+### Minor Issues (Hard to Understand or Style)
+
+[For each minor issue:]
+
+- **Issue**: [Description]
+- **Impact**: [Why it's minor]
+- **Location**: [File:line]
+- **Fix**: [Specific code example - optional]
+- **Priority**: Minor
+
+## Recommendations
+
+[Prioritized list of improvements - Critical first, then Important, then Minor]
+```
+
+---
+
+## Usage Guidelines
+
+### For Review Workflow
+
+1. **First**: Complete Phase 1 (Context-Dependent Functionality Analysis)
+2. **Then**: Complete Phase 2 (Understand Codebase Conventions)
+3. **Then**: Complete Phase 3 (Quality Analysis - Only Issues Affecting Functionality or Maintainability)
+4. **Focus**: Quality issues that block changes, cause bugs, or make code hard to understand
+
+### Key Principles
+
+1. **Functionality First**: Always understand functionality before checking quality
+2. **Context-Aware**: Understand codebase conventions before checking
+3. **Specific Improvements**: Provide code examples aligned with codebase patterns
+4. **Prioritize by Impact**: Critical (blocks changes) > Important (causes bugs) > Minor (hard to understand) > Style
+
+---
+
+## Common Mistakes to Avoid
+
+1. **Skipping Functionality Analysis**: Don't jump straight to quality checks
+2. **Ignoring Codebase Conventions**: Don't provide generic improvements - align with codebase patterns
+3. **Generic Quality Metrics**: Don't check everything - focus on functionality/maintainability-affecting issues
+4. **Missing Specific Fixes**: Don't just identify issues - provide specific code examples aligned with codebase
+5. **Wrong Priority**: Don't mark style issues as critical - prioritize by functionality/maintainability impact
+6. **No Code Examples**: Don't just describe issues - show how to fix them aligned with codebase patterns
+
+---
+
+_This skill enables context-aware code quality analysis that understands codebase conventions and focuses on quality issues affecting functionality or maintainability, providing specific improvements with examples aligned with project patterns._

@@ -1,10 +1,26 @@
 ---
 name: feature-planning
-description: Provides guidance for gathering requirements, analyzing architecture, and preparing implementation plans. Use when planning features, creating feature specifications, analyzing architectural requirements, or preparing implementation roadmaps. Used by the planning workflow and related subagents to create comprehensive feature specifications.
+description: Provides feature planning guidance with functionality-first approach. Use PROACTIVELY when planning features. First understands functionality (user flow, admin flow, system flow, integration flow), then gathers requirements and prepares implementation plans. Focuses on planning functionality, not generic feature planning. Used by the planning workflow and related subagents.
 allowed-tools: Read, Grep, Glob
 ---
 
-# Feature Planning Guidance
+# Feature Planning Guidance - Functionality First
+
+## Functionality First Mandate
+
+**BEFORE planning features, understand functionality**:
+
+1. **What functionality needs to be planned?**
+   - What are the user flows?
+   - What are the admin flows?
+   - What are the system flows?
+   - What are the integration flows?
+
+2. **THEN plan** - Plan features to support that functionality
+
+3. **Use frameworks** - Apply planning frameworks AFTER functionality is understood
+
+---
 
 ## Purpose
 
@@ -19,22 +35,27 @@ Support structured feature planning with concrete templates, examples, and decis
 Use this rubric to determine if comprehensive planning is warranted:
 
 **1 - Trivial** (<50 LOC, single function, no dependencies)
+
 - Examples: Add validation helper, format date string
 - Recommendation: Implement directly, no planning needed
 
 **2 - Simple** (50-200 LOC, single file, minimal risk)
+
 - Examples: Add form field, update CSS styling
 - Recommendation: Brief planning (5-10 min), implement
 
 **3 - Moderate** (200-500 LOC, 2-5 files, adds/updates tests)
+
 - Examples: Add API endpoint, create new component
 - Recommendation: Planning workflow valuable, ~30 min
 
 **4 - Complex** (500+ LOC, 5-10 files, novel patterns or integrations)
+
 - Examples: Authentication flow, payment integration
 - Recommendation: Comprehensive planning critical, ~1-2 hours
 
 **5 - Architectural** (1000+ LOC, 10+ files, cross-cutting changes)
+
 - Examples: Database migration, microservice split
 - Recommendation: Multi-stage planning with approval gates
 
@@ -52,22 +73,27 @@ Use this rubric to determine if comprehensive planning is warranted:
 **Goal**: <One-sentence summary of what we're building and why>
 
 **Stakeholders**:
+
 - <Role>: <Name/Team> - <What they care about>
 
 **User Stories**:
 As a <role>, I want <capability> so that <business value>.
 
 **Acceptance Criteria** (testable):
+
 - [ ] <Specific, measurable criterion>
 - [ ] <Specific, measurable criterion>
 
 **Out of Scope** (what we're NOT doing):
+
 - <Feature or capability explicitly excluded>
 
 **Assumptions**:
+
 - <Assumption that could affect design>
 
 **Open Questions**:
+
 - <Question requiring stakeholder input>
 ```
 
@@ -79,16 +105,19 @@ As a <role>, I want <capability> so that <business value>.
 **Goal**: Allow users to create accounts and log in securely using email/password.
 
 **Stakeholders**:
+
 - Product: Sarah - Wants seamless onboarding, <2s login time
 - Security: Mike - Requires bcrypt hashing, rate limiting
 - Support: Lisa - Needs clear error messages for troubleshooting
 
 **User Stories**:
+
 - As a new user, I want to create an account with email/password so that I can access personalized features.
 - As a returning user, I want to log in quickly so that I can resume my work.
 - As a security-conscious user, I want my password to be securely hashed so that my account is protected.
 
 **Acceptance Criteria**:
+
 - [ ] User can register with valid email (format validated)
 - [ ] Password must be 12+ chars with upper, lower, number, symbol
 - [ ] Passwords hashed with bcrypt (12 rounds)
@@ -98,16 +127,19 @@ As a <role>, I want <capability> so that <business value>.
 - [ ] Clear error messages (e.g., "Invalid credentials", not "Wrong password")
 
 **Out of Scope**:
+
 - Social login (Google, GitHub) - Phase 2
 - Two-factor authentication - Phase 2
 - Password reset via email - Phase 2
 
 **Assumptions**:
+
 - MongoDB for user storage
 - JWT for session management (stateless)
 - No existing authentication system to migrate from
 
 **Open Questions**:
+
 - Should we support "remember me" functionality? (extends token to 30 days)
 - Password strength indicator on registration form?
 ```
@@ -118,29 +150,36 @@ As a <role>, I want <capability> so that <business value>.
 
 ### Architecture Template
 
-```markdown
+````markdown
 ## Architecture
 
 **System Context**:
 <High-level: External actors → System → External services>
 
 **Containers** (services, databases):
+
 - <Container name>: <Technology> - <Purpose>
 
 **Components** (within container):
+
 - <Component>: <Responsibility> - <Key interfaces>
 
 **Data Models**:
+
 ```typescript
 // Entity definitions
 ```
+````
 
 **Key Decisions**:
+
 - <Decision>: <Rationale> - <Trade-offs>
 
 **Integration Points**:
+
 - <External service>: <How we integrate> - <Error handling>
-```
+
+````
 
 ### Populated Example: User Authentication
 
@@ -182,9 +221,10 @@ interface JWT {
   iat: number;  // Issued at
   exp: number;  // Expires (7 days)
 }
-```
+````
 
 **Key Decisions**:
+
 - **JWT vs Sessions**: JWT (stateless, no Redis needed Phase 1)
   - Trade-off: Can't instantly revoke tokens, but simpler infrastructure
   - Mitigation: Short expiry (7 days), add Redis invalidation in Phase 2
@@ -194,10 +234,12 @@ interface JWT {
   - Risk: NoSQL injection if not careful (mitigation: type validation)
 
 **Integration Points**:
+
 - Email service (future): Password reset emails - Phase 2
 - Rate limiter: Express-rate-limit middleware
   - Error handling: Return 429 Too Many Requests
-```
+
+````
 
 ---
 
@@ -211,37 +253,40 @@ interface JWT {
 | Stage | Risk Description | Probability | Impact | Mitigation | Owner |
 |-------|------------------|-------------|--------|-----------|-------|
 | <Framework stage> | <What could go wrong> | H/M/L | H/M/L | <How we'll prevent/handle> | <Team/person> |
-```
+````
 
 ### Populated Example: User Authentication
 
 ```markdown
 ## Risks
 
-| Stage | Risk Description | Probability | Impact | Mitigation | Owner |
-|-------|------------------|-------------|--------|-----------|-------|
-| Security | NoSQL injection via email field | Medium | High | Validate input type (must be string), use parameterized queries | Backend |
-| Security | Brute force password guessing | High | High | Rate limit 5 attempts/15min, lock account after 10 failed attempts | Backend |
-| Security | JWT secret leaked | Low | Critical | Store in env var, rotate every 90 days, never commit to git | DevOps |
-| UX | Vague error messages help attackers | Medium | Medium | Generic "Invalid credentials" message (don't reveal if email exists) | Backend |
-| Performance | Bcrypt hashing blocks event loop | Medium | Medium | Use bcrypt.hash (async), not bcrypt.hashSync | Backend |
-| Data Flow | Password sent over HTTP (not HTTPS) | Low | Critical | Enforce HTTPS in production, redirect HTTP → HTTPS | DevOps |
-| Failure Modes | MongoDB connection failure during login | Low | High | Retry logic (3 attempts), graceful error "Service unavailable, try again" | Backend |
+| Stage         | Risk Description                        | Probability | Impact   | Mitigation                                                                | Owner   |
+| ------------- | --------------------------------------- | ----------- | -------- | ------------------------------------------------------------------------- | ------- |
+| Security      | NoSQL injection via email field         | Medium      | High     | Validate input type (must be string), use parameterized queries           | Backend |
+| Security      | Brute force password guessing           | High        | High     | Rate limit 5 attempts/15min, lock account after 10 failed attempts        | Backend |
+| Security      | JWT secret leaked                       | Low         | Critical | Store in env var, rotate every 90 days, never commit to git               | DevOps  |
+| UX            | Vague error messages help attackers     | Medium      | Medium   | Generic "Invalid credentials" message (don't reveal if email exists)      | Backend |
+| Performance   | Bcrypt hashing blocks event loop        | Medium      | Medium   | Use bcrypt.hash (async), not bcrypt.hashSync                              | Backend |
+| Data Flow     | Password sent over HTTP (not HTTPS)     | Low         | Critical | Enforce HTTPS in production, redirect HTTP → HTTPS                        | DevOps  |
+| Failure Modes | MongoDB connection failure during login | Low         | High     | Retry logic (3 attempts), graceful error "Service unavailable, try again" | Backend |
 ```
 
 ### Risk Scoring Guide
 
 **Probability**:
+
 - High: Likely to occur (>50% chance)
 - Medium: Could occur (10-50%)
 - Low: Unlikely (<10%)
 
 **Impact**:
+
 - High: System unusable, data loss, security breach
 - Medium: Degraded performance, user frustration
 - Low: Minor inconvenience, easy workaround
 
 **Priority** = Probability × Impact
+
 - High × High = P0 (must address before launch)
 - High × Medium or Medium × High = P1 (address before launch if possible)
 - All others = P2 (monitor and address post-launch)
@@ -256,6 +301,7 @@ interface JWT {
 ## Implementation Plan
 
 **Phase 1**: <Summary>
+
 - **Files to Create**: <list>
 - **Files to Modify**: <list>
 - **Tests to Add**: <list>
@@ -266,11 +312,13 @@ interface JWT {
 ...
 
 **Testing Strategy**:
+
 - Unit tests: <what to test>
 - Integration tests: <what to test>
 - E2E tests: <what to test>
 
 **Deployment Strategy**:
+
 - Risk level: <ZERO/LOW/MEDIUM/HIGH>
 - Rollout plan: <feature flag? canary? immediate?>
 - Rollback plan: <how to undo if it breaks>
@@ -282,6 +330,7 @@ interface JWT {
 ## Implementation Plan
 
 **Phase 1: Core Authentication** (Complexity: 4)
+
 - **Files to Create**:
   - `src/auth/auth.controller.ts` - Express routes
   - `src/auth/auth.service.ts` - Business logic
@@ -305,6 +354,7 @@ interface JWT {
 - **Estimated Time**: 8-12 hours
 
 **Phase 2: Rate Limiting & Error Handling**
+
 - **Files to Create**:
   - `src/middleware/rate-limiter.ts`
   - `src/utils/error-responses.ts`
@@ -316,6 +366,7 @@ interface JWT {
 - **Estimated Time**: 2-3 hours
 
 **Phase 3: Deployment**
+
 - Feature flag: `AUTH_ENABLED=true`
 - Rollout: LOW-RISK (new feature, no existing users)
   - Deploy with flag OFF
@@ -326,6 +377,7 @@ interface JWT {
 - **Rollback**: Set `AUTH_ENABLED=false`, restart app (<5 min)
 
 **Testing Strategy**:
+
 - **Unit tests** (20 tests):
   - Password hashing/verification
   - JWT token generation/validation
@@ -342,6 +394,7 @@ interface JWT {
   - Rate limit: 5 failed attempts → 429 error
 
 **Deployment Strategy**:
+
 - **Risk Level**: MEDIUM (authentication is security-critical)
 - **Pre-Deployment Checklist**:
   - [ ] JWT_SECRET configured in production env
@@ -359,6 +412,7 @@ interface JWT {
 ### When to Skip Comprehensive Planning
 
 **Skip if** (Complexity 1-2):
+
 - Single file change <200 LOC
 - No external dependencies
 - Clear, well-documented pattern exists
@@ -369,6 +423,7 @@ interface JWT {
 ### When Planning is Critical
 
 **Always plan if** (Complexity 4-5):
+
 - Security-critical (auth, payments, data access)
 - Novel architecture pattern
 - Breaking changes
@@ -384,34 +439,41 @@ interface JWT {
 ### Requirements Block
 
 **Goal**:
+
 - ❌ Bad: "Improve authentication"
 - ✅ Good: "Allow users to create accounts and log in securely using email/password"
 
 **User Stories**:
+
 - ❌ Bad: "As a user, I want auth"
 - ✅ Good: "As a new user, I want to create an account with email/password so that I can access personalized features"
 
 **Acceptance Criteria**:
+
 - ❌ Bad: "Auth works"
 - ✅ Good: "Password must be 12+ chars with upper, lower, number, symbol"
 
 ### Architecture Block
 
 **Data Models**:
+
 - ❌ Bad: "User has email and password"
 - ✅ Good: Provide TypeScript interface with field types and constraints
 
 **Key Decisions**:
+
 - ❌ Bad: "Use JWT"
 - ✅ Good: "JWT vs Sessions: JWT (stateless) - Trade-off: can't revoke instantly, Mitigation: short expiry + Redis Phase 2"
 
 ### Risk Register
 
 **Risk Description**:
+
 - ❌ Bad: "Security issue"
 - ✅ Good: "NoSQL injection via email field"
 
 **Mitigation**:
+
 - ❌ Bad: "Be careful"
 - ✅ Good: "Validate input type (must be string), use parameterized queries"
 
@@ -425,14 +487,17 @@ Always end planning with a verification summary:
 ## Planning Verification
 
 **Inputs Reviewed**:
+
 - [ ] User requirements gathered from stakeholders
 - [ ] Existing auth patterns in codebase analyzed
 - [ ] Security best practices consulted
 
 **Outstanding Questions**:
+
 - "Remember me" functionality decision pending (ask product team)
 
 **Follow-Up Tasks**:
+
 - Review with security team before implementation
 - Set up monitoring dashboard for auth metrics
 - Schedule deployment for Tuesday 2pm (avoid Friday)

@@ -1,17 +1,34 @@
 ---
 name: build-workflow
-description: Coordinates feature implementation via TDD, review, and integration verification. Loads shared skills and invokes component-builder, code-reviewer, and integration-verifier sequentially. Use when implementing new features, building components, or developing software following TDD practices.
+description: Coordinates feature implementation with functionality-first approach. Use PROACTIVELY when building features. First understands functionality requirements (user flow, admin flow, system flow), then builds features to implement that functionality. Focuses on making functionality work first, then optimizing. Loads shared skills and invokes component-builder, code-reviewer, and integration-verifier sequentially.
 allowed-tools: Read, Grep, Glob, Task, Bash
 ---
 
-# Build Workflow
+# Build Workflow - Functionality First
 
-TDD-driven implementation with review and integration verification.
+## Functionality First Mandate
+
+**BEFORE building features, understand functionality**:
+
+1. **What functionality needs to be built?**
+   - What are the user flows?
+   - What are the admin flows?
+   - What are the system flows?
+
+2. **THEN build** - Build features to implement that functionality
+
+3. **Use TDD** - Apply TDD AFTER functionality is understood
+
+---
+
+TDD-driven implementation with review and integration verification, functionality-first approach.
 
 ## Process
+
 For complete instructions, see `plugins/cc10x/skills/cc10x-orchestrator/workflows/build.md`.
 
 ## Quick Reference
+
 - Gate: use orchestrator Complexity Rubric; confirm if score <=2
 - Loop: RED -> GREEN -> REFACTOR; capture verification outputs
 - Subagents: component-builder -> code-reviewer -> integration-verifier (sequential)
@@ -24,9 +41,11 @@ For complete instructions, see `plugins/cc10x/skills/cc10x-orchestrator/workflow
 # Build Report
 
 ## Executive Summary
+
 [2-3 sentences summarizing components implemented, overall status, and key outcomes]
 
 ## Actions Taken
+
 - Skills loaded: [list]
 - Subagents invoked: [list]
 - Components built: [list in order]
@@ -35,7 +54,9 @@ For complete instructions, see `plugins/cc10x/skills/cc10x-orchestrator/workflow
 ## Findings / Decisions
 
 ### Component Breakdown
+
 For each component:
+
 - **Component {name}**:
   - TDD Cycle: RED → GREEN → REFACTOR (commands and exit codes)
   - Key Changes: [file:line diffs summary]
@@ -44,30 +65,36 @@ For each component:
   - Integration Status: [pass/fail with evidence]
 
 ### Reviews & Integration
+
 - code-reviewer findings: [resolved/open with file:line]
 - integration-verifier scenarios: [pass/fail with logs]
 - Blocking Issues: [list if any]
 - Tech Debt: [suggestions documented]
 
 ## Verification Summary
+
 Scope: <components implemented>
 Criteria: <all acceptance criteria>
 Commands:
+
 - <command> -> exit <code>
-Evidence:
+  Evidence:
 - <test output snippets>
 - <coverage report if available>
 - <build artifacts>
-Risks / Follow-ups: <tech debt, suggestions, known issues>
+  Risks / Follow-ups: <tech debt, suggestions, known issues>
 
 ## Recommendations / Next Steps
+
 [Prioritized: Blocking issues first, then tech debt, then enhancements]
 
 ## Open Questions / Assumptions
+
 [If any decisions need clarification or assumptions made]
 ```
 
 **Validation Checklist**:
+
 - [ ] Executive Summary present (2-3 sentences)
 - [ ] Verification Summary includes all commands with exit codes
 - [ ] All components documented with TDD cycle evidence

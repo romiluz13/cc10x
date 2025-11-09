@@ -1,155 +1,135 @@
 ---
 name: security-patterns
-description: Identifies OWASP Top 10 vulnerabilities including SQL injection, XSS, authentication bypasses, insecure direct object references, CSRF, broken access control, and security misconfigurations. Use when analyzing code for security vulnerabilities, reviewing authentication and authorization logic, auditing input validation and output encoding, checking for injection attacks, or ensuring secure coding practices.
+description: Context-aware security analysis that verifies functionality works securely. Use PROACTIVELY when reviewing code that handles user input, authentication, authorization, file uploads, API integrations, or sensitive data. First understands project's security model and functionality requirements, then checks for security vulnerabilities that affect functionality. Provides specific remediation with code examples aligned with project patterns. Focuses on security issues that block or degrade functionality, not generic OWASP checklist.
+allowed-tools: Read, Grep, Glob
 ---
 
-# Security Patterns - Stage 1: Metadata
+# Security Patterns - Context-Aware & Functionality First
 
-## Skill Overview
+## Purpose
 
-**Name**: Security Patterns
-**Purpose**: Identify security vulnerabilities and ensure secure coding practices
-**When to Use**: Security analysis, code review, vulnerability scanning, auth implementation
-**Core Rule**: Assume all input is malicious until validated
+This skill provides context-aware security analysis that understands the project's security model before checking for vulnerabilities. It focuses on security issues that affect functionality, providing specific remediation with code examples aligned with project patterns.
+
+**Unique Value**:
+
+- Context-aware security analysis (not generic OWASP checklist)
+- Focuses on security issues that affect functionality
+- Provides specific remediation with code examples
+- Understands project's security model before checking
+
+**When to Use**:
+
+- After functionality is verified
+- When reviewing code that handles user input, authentication, authorization, file uploads, API integrations, or sensitive data
+- When security issues might affect functionality
+
+---
+
+## Functionality First Mandate
+
+**BEFORE applying security checks, complete context-dependent functionality analysis**:
+
+1. **Complete Phase 1: Universal Questions** (from functionality analysis template):
+   - Purpose: What problem does this solve?
+   - Requirements: What must it do?
+   - Constraints: What are the limits? (Security constraints)
+   - Dependencies: What does it need? (Auth libraries, security services)
+   - Edge Cases: What can go wrong? (Security edge cases)
+   - Verification: How do we know it works? (Security tests)
+   - Context: Where does it fit? (Codebase structure)
+
+2. **Complete Phase 2: Context-Dependent Flow Questions** (based on code type):
+   - UI Features → User Flow, Admin Flow, System Flow
+   - Backend APIs → Request Flow, Response Flow, Error Flow, Data Flow
+   - Utilities → Input Flow, Processing Flow, Output Flow, Error Flow
+   - Integrations → Integration Flow, Data Flow, Error Flow, State Flow
+
+3. **THEN understand project's security model** - Before checking security
+
+4. **THEN check security** - Only security issues that affect functionality
+
+**Reference**: See `plugins/cc10x/skills/cc10x-orchestrator/templates/functionality-analysis.md` for complete template.
 
 ---
 
 ## Security Coverage
 
 **OWASP Top 10 Vulnerabilities**:
-- A01: Broken Access Control (RBAC, ABAC)
+
+- A01: Broken Access Control (RBAC, ABAC, IDOR)
 - A02: Cryptographic Failures (hashing, encryption, TLS)
 - A03: Injection (SQL, NoSQL, command, XSS)
+- A04: Insecure Design (missing security controls)
+- A05: Security Misconfiguration (default credentials, exposed debug info)
+- A06: Vulnerable and Outdated Components (dependencies)
 - A07: Authentication Failures (MFA, sessions, JWT)
-- Security headers
-- Rate limiting
+- A08: Software and Data Integrity Failures (CI/CD, dependencies)
+- A09: Security Logging and Monitoring Failures (insufficient logging)
+- A10: Server-Side Request Forgery (SSRF)
 
 ---
 
 ## Quick Facts
 
-| Aspect | Details |
-|--------|---------|
-| **OWASP Top 10** | A01-A10 covered |
-| **Key Focus** | Input validation, auth, secrets |
+| Aspect              | Details                                                |
+| ------------------- | ------------------------------------------------------ |
+| **OWASP Top 10**    | A01-A10 covered                                        |
+| **Key Focus**       | Input validation, auth, secrets                        |
 | **Common Mistakes** | Plain text passwords, no validation, hardcoded secrets |
-| **Red Flags** | eval, exec, innerHTML, hardcoded secrets |
-| **Best Practice** | Assume all input is malicious |
+| **Red Flags**       | eval, exec, innerHTML, hardcoded secrets               |
+| **Best Practice**   | Assume all input is malicious                          |
 
 ---
-
-## When to Use
-
-**Always loaded at workflow start**:
-- Shared context in REVIEW workflow
-- Shared context in BUILD workflow
-
-**Use when**:
-- Implementing authentication
-- Handling payment processing
-- Storing sensitive data
-- Building public APIs
-- Analyzing code for vulnerabilities
-
----
-
-# Stage 2: Quick Reference
 
 ## Authentication Decision Framework
 
 ### Decision Matrix: JWT vs Sessions vs OAuth
 
 **Use JWT when**:
+
 - Stateless microservices
 - Mobile apps (token refresh)
 - Cross-domain authentication
 - High read:write ratio
 
 **Use Sessions when**:
+
 - Traditional web apps
 - Need instant revocation
 - Sensitive operations (banking)
 - Server-side rendering
 
 **Use OAuth when**:
+
 - Third-party authentication
 - API delegation (Google, GitHub)
 - Multi-tenant SaaS
 - Social login
 
 **Critical JWT Pitfalls**:
+
 ```typescript
 // INSECURE - No algorithm verification
 const decoded = jwt.verify(token, secret);
 
 // SECURE - Explicit algorithm
-const decoded = jwt.verify(token, secret, { algorithms: ['HS256'] });
+const decoded = jwt.verify(token, secret, { algorithms: ["HS256"] });
 ```
 
-## Injection Patterns
-
-### SQL Injection
-
-```typescript
-// VULNERABLE
-const query = `SELECT * FROM users WHERE email = '${email}'`;
-db.query(query);
-// Attack: email = "' OR '1'='1"
-
-// SECURE - Parameterized queries
-const query = 'SELECT * FROM users WHERE email = ?';
-db.query(query, [email]);
-```
-
-### NoSQL Injection (MongoDB)
-
-```typescript
-// VULNERABLE
-db.collection('users').findOne({ email: req.body.email });
-// Attack: { "email": { "$ne": null } } returns all users
-
-// SECURE - Type validation
-const email = String(req.body.email);
-if (typeof email !== 'string') throw new Error('Invalid input');
-db.collection('users').findOne({ email });
-```
-
-### XSS (Cross-Site Scripting)
-
-```typescript
-// VULNERABLE
-element.innerHTML = userInput;
-// Attack: userInput = "<img src=x onerror='alert(1)'>"
-
-// SECURE - Text nodes or sanitization
-element.textContent = userInput;
-// OR: use DOMPurify for HTML
-import DOMPurify from 'dompurify';
-element.innerHTML = DOMPurify.sanitize(userInput);
-```
-
-### Command Injection
-
-```typescript
-// VULNERABLE
-exec(`convert ${filename} output.png`);
-// Attack: filename = "image.jpg; rm -rf /"
-
-// SECURE - Parameterized execution
-execFile('convert', [filename, 'output.png']);
-```
+---
 
 ## Access Control Patterns
 
 ### Decision Framework: RBAC vs ABAC
 
 **Role-Based Access Control (RBAC)**:
+
 ```typescript
 // Use when: Fixed roles, simple permissions
 const roles = {
-  admin: ['read', 'write', 'delete'],
-  editor: ['read', 'write'],
-  viewer: ['read']
+  admin: ["read", "write", "delete"],
+  editor: ["read", "write"],
+  viewer: ["read"],
 };
 
 function hasPermission(user, action) {
@@ -158,12 +138,15 @@ function hasPermission(user, action) {
 ```
 
 **Attribute-Based Access Control (ABAC)**:
+
 ```typescript
 // Use when: Complex conditions, context-aware
 function canEdit(user, document) {
-  return user.id === document.ownerId
-    || user.role === 'admin'
-    || (user.department === document.department && user.role === 'manager');
+  return (
+    user.id === document.ownerId ||
+    user.role === "admin" ||
+    (user.department === document.department && user.role === "manager")
+  );
 }
 ```
 
@@ -171,21 +154,23 @@ function canEdit(user, document) {
 
 ```typescript
 // VULNERABLE
-app.get('/api/users/:id', (req, res) => {
+app.get("/api/users/:id", (req, res) => {
   const user = db.users.findById(req.params.id);
   res.json(user); // Any user can access any ID
 });
 
 // SECURE - Authorization check
-app.get('/api/users/:id', auth, (req, res) => {
+app.get("/api/users/:id", auth, (req, res) => {
   const requestedId = req.params.id;
   if (requestedId !== req.user.id && !req.user.isAdmin) {
-    return res.status(403).json({ error: 'Forbidden' });
+    return res.status(403).json({ error: "Forbidden" });
   }
   const user = db.users.findById(requestedId);
   res.json(user);
 });
 ```
+
+---
 
 ## Cryptography Patterns
 
@@ -193,10 +178,10 @@ app.get('/api/users/:id', auth, (req, res) => {
 
 ```typescript
 // INSECURE
-const hash = crypto.createHash('md5').update(password).digest('hex');
+const hash = crypto.createHash("md5").update(password).digest("hex");
 
 // SECURE - Bcrypt with salt
-import bcrypt from 'bcrypt';
+import bcrypt from "bcrypt";
 const saltRounds = 12;
 const hash = await bcrypt.hash(password, saltRounds);
 const isValid = await bcrypt.compare(inputPassword, hash);
@@ -206,11 +191,11 @@ const isValid = await bcrypt.compare(inputPassword, hash);
 
 ```typescript
 // INSECURE
-const API_KEY = 'sk_live_abc123def456';
+const API_KEY = "sk_live_abc123def456";
 
 // SECURE - Environment variables
 const API_KEY = process.env.STRIPE_API_KEY;
-if (!API_KEY) throw new Error('Missing STRIPE_API_KEY');
+if (!API_KEY) throw new Error("Missing STRIPE_API_KEY");
 
 // SECURE - Secret rotation
 async function getSecret(name) {
@@ -219,28 +204,34 @@ async function getSecret(name) {
 }
 ```
 
+---
+
 ## Security Headers
 
 ```typescript
 // Express.js security headers
-import helmet from 'helmet';
+import helmet from "helmet";
 
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", "data:", "https:"],
-    }
-  },
-  hsts: {
-    maxAge: 31536000,
-    includeSubDomains: true,
-    preload: true
-  }
-}));
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:", "https:"],
+      },
+    },
+    hsts: {
+      maxAge: 31536000,
+      includeSubDomains: true,
+      preload: true,
+    },
+  }),
+);
 ```
+
+---
 
 ## Rate Limiting
 
@@ -252,16 +243,18 @@ app.use(helmet({
 // - File uploads: Always
 // - Search: If expensive
 
-import rateLimit from 'express-rate-limit';
+import rateLimit from "express-rate-limit";
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 5, // 5 attempts
-  message: 'Too many login attempts, try again later'
+  message: "Too many login attempts, try again later",
 });
 
-app.post('/api/login', loginLimiter, loginHandler);
+app.post("/api/login", loginLimiter, loginHandler);
 ```
+
+---
 
 ## Quick Security Checklist
 
@@ -281,6 +274,8 @@ Critical Checks (Before any code review):
 - [ ] Error messages don't leak sensitive info
 ```
 
+---
+
 ## Red Flags (Grep for these)
 
 ```bash
@@ -297,3 +292,536 @@ grep -r "SELECT.*\${" --include="*.ts"
 # Missing authentication
 grep -r "app\.\(get\|post\|put\|delete\)" src/ | grep -v "auth\|Auth"
 ```
+
+---
+
+## Process
+
+### Phase 1: Context-Dependent Functionality Analysis (MANDATORY FIRST STEP)
+
+**Before any security checks, complete functionality analysis**:
+
+1. **Load Functionality Analysis Template**:
+   - Reference: `plugins/cc10x/skills/cc10x-orchestrator/templates/functionality-analysis.md`
+   - Complete Phase 1: Universal Questions
+   - Complete Phase 2: Context-Dependent Flow Questions (based on code type)
+
+2. **Understand Functionality**:
+   - What is this code supposed to do?
+   - What functionality does user need?
+   - What are the flows? (User, Admin, System, Integration, etc. - context-dependent)
+
+3. **Verify Functionality Works**:
+   - Does functionality work? (tested)
+   - Do flows work? (tested)
+   - Does error handling work? (tested)
+
+**Example**: File Upload to CRM
+
+**Purpose**: Users need to upload files to their CRM system. Files should be stored securely and accessible to authorized users.
+
+**Requirements**:
+
+- Must accept file uploads (PDF, DOCX, JPG, PNG)
+- Must validate file type and size (max 10MB)
+- Must store files securely in S3
+- Must send file metadata to CRM API
+- Must display upload progress to user
+- Must handle errors gracefully
+
+**Constraints**:
+
+- Security: Files must be encrypted at rest, access controlled
+- Performance: Upload must complete within 30 seconds
+- Scale: Must handle 100 concurrent uploads
+
+**User Flow**:
+
+1. User clicks "Upload File" button
+2. User selects file from device
+3. User sees upload progress indicator
+4. User sees success message with file link
+5. User can view uploaded file in CRM
+
+**System Flow**:
+
+1. System receives file upload request (POST /api/files/upload)
+2. System validates file type and size
+3. System stores file in secure storage (S3 bucket)
+4. System sends file metadata to CRM API
+5. System returns success response to user
+
+**Functional Verification**:
+
+- ✅ User can upload file (tested)
+- ✅ File appears in CRM (tested)
+- ✅ Error handling works (tested: invalid file type, size limit)
+
+---
+
+### Phase 2: Understand Project's Security Model (MANDATORY SECOND STEP)
+
+**Before checking security, understand how this project handles security**:
+
+1. **Load Project Context Understanding**:
+   - Load `project-context-understanding` skill
+   - Map project's security patterns
+   - Identify authentication patterns used
+   - Identify authorization patterns used
+   - Identify data handling patterns used
+
+2. **Map Authentication Patterns**:
+
+   ```bash
+   # Find authentication implementation
+   grep -r "jwt\|session\|oauth\|auth" --include="*.ts" --include="*.tsx" | head -20
+
+   # Find authentication middleware
+   grep -r "authenticate\|verifyToken\|checkAuth" --include="*.ts" | head -20
+   ```
+
+3. **Map Authorization Patterns**:
+
+   ```bash
+   # Find authorization checks
+   grep -r "authorize\|permission\|role\|canAccess" --include="*.ts" | head -20
+
+   # Find access control patterns
+   grep -r "RBAC\|ABAC\|ACL" --include="*.ts" -i | head -20
+   ```
+
+4. **Map Data Handling Patterns**:
+
+   ```bash
+   # Find data validation
+   grep -r "validate\|sanitize\|escape" --include="*.ts" | head -20
+
+   # Find encryption/decryption
+   grep -r "encrypt\|decrypt\|hash\|bcrypt" --include="*.ts" | head -20
+   ```
+
+5. **Map Trust Boundaries**:
+   - Identify where user input enters the system
+   - Identify where data crosses trust boundaries
+   - Identify where authentication/authorization checks occur
+   - Identify where sensitive data is stored/transmitted
+
+**Document Project's Security Model**:
+
+- Authentication: JWT, Sessions, OAuth, etc.
+- Authorization: RBAC, ABAC, ACL, etc.
+- Data Validation: Libraries used, patterns followed
+- Encryption: Where used, algorithms used
+- Trust Boundaries: Where checks occur
+
+**Example Output**:
+
+```
+Project Security Model:
+Authentication: JWT tokens (HS256), stored in httpOnly cookies
+Authorization: RBAC (admin, editor, viewer roles)
+Data Validation: Zod schemas for API inputs, React Hook Form for UI
+Encryption: AES-256 for file storage, TLS for transport
+Trust Boundaries:
+- API endpoints: JWT verification middleware
+- File uploads: Authentication + file validation
+- Database queries: Parameterized queries only
+```
+
+---
+
+### Phase 3: Security Analysis (Only Issues Affecting Functionality)
+
+**After understanding functionality and project security model, check security**:
+
+1. **Map Security Issues to Functionality**:
+   - For each functionality flow, identify security risks
+   - Check if security issues affect functionality
+   - Prioritize: Critical (blocks functionality) > Important (affects functionality) > Minor (defer)
+
+2. **Check Authentication** (if functionality requires auth):
+   - Is authentication implemented correctly?
+   - Does it prevent unauthorized access to functionality?
+   - Are tokens validated properly?
+   - Are sessions managed securely?
+
+3. **Check Authorization** (if functionality requires authorization):
+   - Is authorization implemented correctly?
+   - Does it prevent unauthorized access to functionality?
+   - Are permissions checked at the right boundaries?
+   - Are role checks correct?
+
+4. **Check Input Validation** (if functionality handles user input):
+   - Is input validated correctly?
+   - Does validation prevent functionality from working incorrectly?
+   - Are edge cases handled?
+   - Are injection attacks prevented?
+
+5. **Check Data Handling** (if functionality handles sensitive data):
+   - Is sensitive data handled securely?
+   - Is data encrypted at rest and in transit?
+   - Are secrets managed securely?
+   - Are error messages safe?
+
+**Provide Specific Fixes with Code Examples**:
+
+For each security issue found, provide:
+
+- **Issue**: Clear description of the security issue
+- **Impact**: How it affects functionality
+- **Location**: File path and line number
+- **Fix**: Specific code example aligned with project patterns
+- **Priority**: Critical, Important, or Minor
+
+**Example**:
+
+````markdown
+## Security Finding: Missing Authentication Check
+
+**Issue**: File upload endpoint lacks authentication check, allowing unauthorized uploads.
+
+**Impact**: Blocks functionality - unauthorized users can upload files, breaking access control.
+
+**Location**: `src/api/files.ts:45`
+
+**Current Code**:
+
+```typescript
+app.post("/api/files/upload", upload.single("file"), async (req, res) => {
+  const file = req.file;
+  // Missing: Authentication check
+  await storage.upload(file);
+  res.json({ success: true });
+});
+```
+````
+
+**Fix** (aligned with project's JWT pattern):
+
+```typescript
+import { authenticate } from "../middleware/auth";
+
+app.post(
+  "/api/files/upload",
+  authenticate,
+  upload.single("file"),
+  async (req, res) => {
+    const file = req.file;
+    // Now authenticated - req.user is available
+    await storage.upload(file, { userId: req.user.id });
+    res.json({ success: true });
+  },
+);
+```
+
+**Priority**: Critical (blocks functionality)
+
+````
+
+---
+
+## Security Pattern Library (Reference - Use AFTER Understanding Project Context)
+
+### Authentication Patterns
+
+**Understand project's authentication pattern first, then check**:
+
+**JWT Pattern** (if project uses JWT):
+```typescript
+// Check: Is algorithm specified?
+// VULNERABLE (if project uses JWT)
+const decoded = jwt.verify(token, secret);
+
+// SECURE (aligned with project pattern)
+const decoded = jwt.verify(token, secret, { algorithms: ['HS256'] });
+
+// Check: Are tokens validated on every request?
+// VULNERABLE
+app.get('/api/protected', (req, res) => {
+  // Missing: Token validation
+  res.json({ data: sensitiveData });
+});
+
+// SECURE (aligned with project pattern)
+import { authenticate } from '../middleware/auth';
+app.get('/api/protected', authenticate, (req, res) => {
+  res.json({ data: sensitiveData });
+});
+````
+
+**Session Pattern** (if project uses sessions):
+
+```typescript
+// Check: Are sessions managed securely?
+// VULNERABLE
+app.use(
+  session({
+    secret: "hardcoded-secret", // Should be env variable
+    cookie: { httpOnly: false }, // Should be httpOnly: true
+  }),
+);
+
+// SECURE (aligned with project pattern)
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    cookie: {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+    },
+  }),
+);
+```
+
+### Authorization Patterns
+
+**Understand project's authorization pattern first, then check**:
+
+**RBAC Pattern** (if project uses RBAC):
+
+```typescript
+// Check: Are role checks correct?
+// VULNERABLE
+function canDelete(user, file) {
+  return user.role === "admin"; // Missing: Check file ownership
+}
+
+// SECURE (aligned with project pattern)
+function canDelete(user, file) {
+  return user.role === "admin" || file.ownerId === user.id;
+}
+```
+
+**ABAC Pattern** (if project uses ABAC):
+
+```typescript
+// Check: Are attribute checks complete?
+// VULNERABLE
+function canEdit(user, document) {
+  return user.id === document.ownerId; // Missing: Department check
+}
+
+// SECURE (aligned with project pattern)
+function canEdit(user, document) {
+  return (
+    user.id === document.ownerId ||
+    (user.department === document.department && user.role === "manager")
+  );
+}
+```
+
+### Injection Prevention Patterns
+
+**Understand project's validation pattern first, then check**:
+
+**SQL Injection** (if project uses SQL):
+
+```typescript
+// Check: Are queries parameterized?
+// VULNERABLE
+const query = `SELECT * FROM users WHERE email = '${email}'`;
+db.query(query);
+
+// SECURE (aligned with project pattern)
+const query = "SELECT * FROM users WHERE email = ?";
+db.query(query, [email]);
+```
+
+**NoSQL Injection** (if project uses MongoDB):
+
+```typescript
+// Check: Is input validated?
+// VULNERABLE
+db.collection("users").findOne({ email: req.body.email });
+
+// SECURE (aligned with project pattern - if project uses Zod)
+import { z } from "zod";
+const emailSchema = z.string().email();
+const email = emailSchema.parse(req.body.email);
+db.collection("users").findOne({ email });
+```
+
+**XSS Prevention** (if project renders user input):
+
+```typescript
+// Check: Is user input sanitized?
+// VULNERABLE
+element.innerHTML = userInput;
+
+// SECURE (aligned with project pattern)
+element.textContent = userInput;
+// OR if HTML needed (aligned with project pattern)
+import DOMPurify from "dompurify";
+element.innerHTML = DOMPurify.sanitize(userInput);
+```
+
+### File Upload Security Patterns
+
+**Understand project's file handling pattern first, then check**:
+
+```typescript
+// Check: Is file validation correct?
+// VULNERABLE
+app.post("/api/files/upload", upload.single("file"), (req, res) => {
+  const file = req.file;
+  // Missing: File type validation, size check
+  await storage.upload(file);
+});
+
+// SECURE (aligned with project pattern)
+import { z } from "zod";
+const fileSchema = z.object({
+  mimetype: z.enum(["application/pdf", "image/jpeg", "image/png"]),
+  size: z.number().max(10 * 1024 * 1024), // 10MB
+});
+
+app.post(
+  "/api/files/upload",
+  authenticate,
+  upload.single("file"),
+  async (req, res) => {
+    const file = req.file;
+    fileSchema.parse(file); // Validates type and size
+    const sanitizedFilename = sanitizeFilename(file.originalname);
+    await storage.upload(file, { filename: sanitizedFilename });
+  },
+);
+```
+
+### Secrets Management Patterns
+
+**Understand project's secrets management pattern first, then check**:
+
+```typescript
+// Check: Are secrets managed securely?
+// VULNERABLE
+const API_KEY = "sk_live_abc123def456";
+
+// SECURE (aligned with project pattern)
+const API_KEY = process.env.STRIPE_API_KEY;
+if (!API_KEY) throw new Error("Missing STRIPE_API_KEY");
+
+// OR if project uses secrets manager
+import { getSecret } from "../services/secrets";
+const API_KEY = await getSecret("stripe-api-key");
+```
+
+---
+
+## Priority Classification
+
+**Critical (Must Fix - Blocks Functionality)**:
+
+- Blocks functionality (injection attacks, broken auth)
+- Prevents feature from working (unauthorized access, data corruption)
+- Breaks user flows (XSS stealing data, CSRF breaking actions)
+- Examples:
+  - Missing authentication on protected endpoints
+  - SQL injection allowing data corruption
+  - File upload allowing malicious files that break functionality
+
+**Important (Should Fix - Affects Functionality)**:
+
+- Affects functionality negatively (weak auth, missing validation)
+- Degrades user experience (leaked errors, broken flows)
+- Examples:
+  - Weak password hashing (if passwords are used)
+  - Missing input validation (if causes incorrect behavior)
+  - Insecure error messages (if leak sensitive data)
+
+**Minor (Can Defer - Doesn't Affect Functionality)**:
+
+- Doesn't affect functionality (security headers, perfect hashing)
+- Generic best practices (rate limiting, perfect CSP)
+- Examples:
+  - Missing security headers (if functionality works)
+  - Rate limiting (if not causing issues)
+  - Perfect password hashing (if basic hashing works)
+
+---
+
+## Output Format
+
+**MANDATORY TEMPLATE** - Use this exact structure:
+
+```markdown
+# Security Analysis Report
+
+## Functionality Analysis Summary
+
+[Brief summary of functionality from Phase 1]
+
+## Project Security Model Summary
+
+[Brief summary of project's security patterns from Phase 2]
+
+## Security Findings
+
+### Critical Issues (Blocks Functionality)
+
+[For each critical issue:]
+
+- **Issue**: [Description]
+- **Impact**: [How it affects functionality]
+- **Location**: [File:line]
+- **Fix**: [Specific code example aligned with project patterns]
+- **Priority**: Critical
+
+### Important Issues (Affects Functionality)
+
+[For each important issue:]
+
+- **Issue**: [Description]
+- **Impact**: [How it affects functionality]
+- **Location**: [File:line]
+- **Fix**: [Specific code example aligned with project patterns]
+- **Priority**: Important
+
+### Minor Issues (Can Defer)
+
+[For each minor issue:]
+
+- **Issue**: [Description]
+- **Impact**: [Why it doesn't affect functionality]
+- **Location**: [File:line]
+- **Fix**: [Specific code example - optional]
+- **Priority**: Minor
+
+## Recommendations
+
+[Prioritized list of fixes - Critical first, then Important, then Minor]
+```
+
+---
+
+## Usage Guidelines
+
+### For Review Workflow
+
+1. **First**: Complete Phase 1 (Context-Dependent Functionality Analysis)
+2. **Then**: Complete Phase 2 (Understand Project's Security Model)
+3. **Then**: Complete Phase 3 (Security Analysis - Only Issues Affecting Functionality)
+4. **Focus**: Security issues that block or degrade functionality
+
+### Key Principles
+
+1. **Functionality First**: Always understand functionality before checking security
+2. **Context-Aware**: Understand project's security model before checking
+3. **Specific Fixes**: Provide code examples aligned with project patterns
+4. **Prioritize by Impact**: Critical (blocks functionality) > Important (affects functionality) > Minor (defer)
+
+---
+
+## Common Mistakes to Avoid
+
+1. **Skipping Functionality Analysis**: Don't jump straight to security checks
+2. **Ignoring Project Context**: Don't provide generic fixes - align with project patterns
+3. **Generic OWASP Checklist**: Don't check everything - focus on functionality-affecting issues
+4. **Missing Specific Fixes**: Don't just identify issues - provide specific code examples
+5. **Wrong Priority**: Don't mark minor issues as critical - prioritize by functionality impact
+6. **No Code Examples**: Don't just describe issues - show how to fix them
+
+---
+
+_This skill enables context-aware security analysis that understands project's security model and focuses on security issues affecting functionality, providing specific remediation with code examples aligned with project patterns._

@@ -1,239 +1,433 @@
 ---
 name: root-cause-analysis
-description: Identifies root causes of bugs and issues by analyzing symptoms, logs, and code flow. Use when investigating why bugs occur, understanding failure patterns, analyzing error chains, and preventing recurrence. Provides root cause analysis frameworks, symptom-to-cause mapping, and prevention strategies. Loaded by DEBUG workflow for comprehensive bug investigation. Complements systematic-debugging with deeper analysis of why bugs happen, not just how to fix them. Critical for preventing recurring bugs and improving system reliability.
+description: Identifies root causes with functionality-first, context-dependent approach. Use PROACTIVELY when investigating bugs. First understands expected functionality using universal questions and context-dependent flows, then identifies root causes specific to that functionality. Focuses on root causes that affect functionality, not generic root cause analysis. Provides specific fixes with examples.
+allowed-tools: Read, Grep, Glob, Bash
 ---
 
-# Root Cause Analysis
+# Root Cause Analysis - Functionality First, Context-Dependent
 
-**Find the real problem, not just the symptom.**
+## Functionality First Mandate
 
-## Progressive Loading Stages
+**CRITICAL**: Before analyzing root causes, understand expected functionality using context-dependent analysis.
 
-### Stage 1: Metadata
-
-- **Skill**: Root Cause Analysis
-- **Purpose**: Identify why bugs occur, not just fix symptoms
-- **When**: Investigating recurring bugs, understanding failure patterns, preventing recurrence
-- **Core Rule**: Symptoms are clues - follow them to the root cause
-- **Sections Available**: The 5 Whys, Cause-Effect Mapping, Prevention Strategies, Quick Checks
+**Core Principle**: Understand what functionality should work (using universal questions and context-dependent flows), then identify root causes specific to that functionality. Root causes exist in the context of functionality, not in isolation.
 
 ---
 
-### Stage 2: Quick Reference
+## Step 1: Context-Dependent Functionality Analysis (MANDATORY FIRST STEP)
 
-## The 5 Whys Framework
+### Reference Template
 
-**Problem**: Login returns 401 error
+**Reference**: See [Functionality Analysis Template](../cc10x-orchestrator/templates/functionality-analysis.md) for complete template.
+
+### Process
+
+1. **Detect Code Type**: Identify if this is UI, API, Utility, Integration, Database, Configuration, CLI, or Background Job
+2. **Universal Questions First**: Answer Purpose, Requirements, Constraints, Dependencies, Edge Cases, Verification, Context
+3. **Context-Dependent Flows**: Answer flow questions based on code type:
+   - **UI**: User Flow, Admin Flow, System Flow
+   - **API**: Request Flow, Response Flow, Error Flow, Data Flow
+   - **Integration**: Integration Flow, Data Flow, Error Flow, State Flow
+   - **Database**: Migration Flow, Query Flow, Data Flow, State Flow
+   - **Background Jobs**: Job Flow, Processing Flow, State Flow, Error Flow
+   - **CLI**: Command Flow, Processing Flow, Output Flow, Error Flow
+   - **Configuration**: Configuration Flow, Validation Flow, Error Flow
+   - **Utility**: Input Flow, Processing Flow, Output Flow, Error Flow
+
+### Example: File Upload Broken (UI Feature)
+
+**Universal Questions (Expected)**:
+
+**Purpose**: Users should be able to upload files to their CRM system. Files should be stored securely and accessible to authorized users.
+
+**Requirements (Expected)**:
+
+- Must accept file uploads (PDF, DOCX, JPG, PNG)
+- Must validate file type and size (max 10MB)
+- Must store files securely in S3
+- Must send file metadata to CRM API
+- Must display upload progress to user
+- Must handle errors gracefully
+
+**Context-Dependent Flows (Expected - UI Feature)**:
+
+**User Flow (Expected)**:
+
+1. User navigates to "Upload File" page
+2. User selects file from device
+3. User sees upload progress indicator (0% → 100%)
+4. User sees success message: "File uploaded successfully"
+5. User sees link to view uploaded file
+
+**System Flow (Expected)**:
+
+1. System receives file upload request (POST /api/files/upload)
+2. System validates file type and size
+3. System stores file in secure storage (S3 bucket)
+4. System sends file metadata to CRM API
+5. System stores file record in database
+6. System returns success response to user
+
+**Observed Behavior (What's Broken)**:
+
+- ❌ User Flow Broken: User clicks upload → nothing happens (no progress, no response)
+- ❌ System Flow Broken: No server logs, no API call, file not stored
+
+**THEN Root Cause Analysis**: Identify why functionality breaks.
+
+---
+
+## Step 2: Root Cause Analysis (AFTER Functionality Understood)
+
+**⚠️ IMPORTANT**: Only analyze root causes AFTER you understand expected functionality. Analyze root causes specific to functionality, not generic root causes.
+
+### Functionality-Focused Root Cause Checklist
+
+**Priority: Critical (Core Functionality)**:
+
+- [ ] Root cause breaks user flow (user can't complete tasks)
+- [ ] Root cause breaks system flow (system doesn't process)
+- [ ] Root cause breaks integration flow (external systems don't work)
+- [ ] Root cause breaks error handling (errors not handled)
+
+**Priority: Important (Supporting Functionality)**:
+
+- [ ] Root cause affects functionality performance (slows functionality)
+- [ ] Root cause affects functionality reliability (unreliable functionality)
+
+**Priority: Minor (Can Defer)**:
+
+- [ ] Generic root causes that don't affect functionality
+- [ ] Perfect root cause analysis (if functionality is fixed)
+
+---
+
+## Step 3: Provide Specific Root Cause Analysis Strategies (WITH EXAMPLES)
+
+**CRITICAL**: Provide specific, actionable root cause analysis strategies with examples, not generic frameworks.
+
+### Strategy 1: The 5 Whys Framework (Functionality-Focused)
+
+**Example: File Upload Broken**
+
+**Problem**: File upload doesn't work (breaks user flow)
 
 ```
-Why 1: Why does login return 401?
- Token validation fails
+Why 1: Why doesn't file upload work?
+ Answer: Upload button handler not attached
+ Impact: User can't upload files (breaks user flow)
 
-Why 2: Why does token validation fail?
- Token is expired
+Why 2: Why isn't upload button handler attached?
+ Answer: Event listener not added in component mount
+ Impact: Button click doesn't trigger functionality (breaks user flow)
 
-Why 3: Why is token expired?
- Refresh token endpoint not called
+Why 3: Why isn't event listener added?
+ Answer: Component refactored, handler removed
+ Impact: Refactoring broke functionality (breaks user flow)
 
-Why 4: Why isn't refresh token called?
- No refresh logic in auth service
+Why 4: Why was handler removed?
+ Answer: Refactoring didn't preserve functionality
+ Impact: Functionality not preserved during refactoring (breaks user flow)
 
-Why 5: Why is there no refresh logic?
- Feature not implemented
+Why 5: Why didn't refactoring preserve functionality?
+ Answer: No tests for upload functionality
+ Impact: No safety net to catch functionality breakage
 
-ROOT CAUSE: Missing token refresh logic
-FIX: Implement automatic token refresh
-PREVENTION: Add token refresh to auth service
+ROOT CAUSE: Missing tests for upload functionality
+FIX: Add tests for upload functionality, then refactor safely
+PREVENTION: Always test functionality before refactoring
 ```
 
-## Symptom-to-Cause Mapping
+**Specific Fix**:
+
+```typescript
+// Add test for upload functionality
+it('calls upload handler when upload button clicked', async () => {
+  const handleUpload = jest.fn();
+  render(<UploadForm onUpload={handleUpload} />);
+
+  await userEvent.click(screen.getByRole('button', { name: /upload/i }));
+
+  expect(handleUpload).toHaveBeenCalledTimes(1);
+});
+
+// Fix: Add onClick handler to restore functionality
+export function UploadForm({ onUpload }: UploadFormProps) {
+  return (
+    <button onClick={onUpload}>
+      Upload File
+    </button>
+  );
+}
+```
+
+### Strategy 2: Symptom-to-Cause Mapping (Functionality-Focused)
+
+**Example: File Upload Broken**
+
+**Symptom**: "User can't upload file" (breaks user flow)
+
+**Possible Causes** (mapped to functionality flows):
+
+1. **Upload button handler not attached** (breaks user flow step 2)
+   - **Investigation**: Check component code for onClick handler
+   - **Evidence**: No onClick prop, no event listener
+   - **Fix**: Add onClick handler
+
+2. **File validation fails** (breaks system flow step 2)
+   - **Investigation**: Check logs for validation errors
+   - **Evidence**: Logs show "Invalid file type"
+   - **Fix**: Fix validation logic
+
+3. **File storage fails** (breaks system flow step 3)
+   - **Investigation**: Check logs for storage errors
+   - **Evidence**: Logs show "S3 upload failed"
+   - **Fix**: Fix storage configuration
+
+4. **CRM API fails** (breaks system flow step 4)
+   - **Investigation**: Check logs for CRM API errors
+   - **Evidence**: Logs show "CRM API timeout"
+   - **Fix**: Add retry logic, improve error handling
+
+**Root Cause Identification**:
+
+- Most likely: Upload button handler not attached (symptom matches, evidence found)
+- Less likely: File validation fails (would show error message)
+- Less likely: File storage fails (would show error message)
+- Less likely: CRM API fails (would show error message)
+
+### Strategy 3: Flow-Based Root Cause Analysis
+
+**Example: File Upload Broken**
+
+**Trace Expected Flow vs Observed Flow**:
+
+**Expected Flow** (from functionality analysis):
+
+1. User clicks upload button → Handler called
+2. File selected → Validation runs
+3. File validated → Storage called
+4. File stored → CRM API called
+5. CRM API responds → Success shown
+
+**Observed Flow**:
+
+1. User clicks upload button → ❌ Nothing happens
+2. File selected → ❌ Never happens (button doesn't work)
+3. File validated → ❌ Never happens
+4. File stored → ❌ Never happens
+5. CRM API responds → ❌ Never happens
+
+**Analysis**:
+
+- Flow breaks at step 1 (button click doesn't trigger handler)
+- Root cause: Upload button handler not attached
+- Fix: Add onClick handler to restore functionality
+
+### Strategy 4: Evidence-Based Root Cause Analysis
+
+**Example: File Upload Broken**
+
+**Gather Evidence**:
+
+1. **Browser Console**:
+
+   ```
+   Error: Cannot read property 'addEventListener' of null
+   ```
+
+2. **Component Code**:
+
+   ```typescript
+   // Current code (broken)
+   export function UploadForm() {
+     return <button id="upload-btn">Upload File</button>;
+   }
+
+   // Expected code (working)
+   export function UploadForm({ onUpload }: UploadFormProps) {
+     return <button onClick={onUpload}>Upload File</button>;
+   }
+   ```
+
+3. **Recent Changes**:
+
+   ```bash
+   git log --oneline --since="2 days ago" -- src/components/UploadForm.tsx
+   # Output: abc1234 Fix upload button handler
+
+   git diff abc1234^..abc1234 src/components/UploadForm.tsx
+   # Output: -document.getElementById('upload-btn').addEventListener('click', handleUpload);
+   #         +// Upload button handler removed for refactoring
+   ```
+
+**Root Cause Analysis**:
+
+- **Symptom**: Upload button doesn't work
+- **Evidence**: Handler removed during refactoring, not replaced with onClick prop
+- **Root Cause**: Refactoring broke functionality (handler removed, not replaced)
+- **Underlying Cause**: Missing tests (no safety net to catch functionality breakage)
+- **Fix**: Add onClick handler, add tests
+- **Prevention**: Always test functionality before refactoring
+
+---
+
+## Root Cause Analysis Framework (Reference - Use AFTER Functionality Understood)
+
+**⚠️ Use this framework to analyze functionality-specific root causes, not generic root causes**.
+
+### The 5 Whys Framework (Functionality-Focused)
+
+**Apply to functionality, not generically**:
+
+**Problem**: [Functionality issue] (breaks [flow type])
 
 ```
-Symptom: "User can't login"
+Why 1: Why does [functionality issue] occur?
+ Answer: [Immediate cause]
+ Impact: [How it affects functionality]
+
+Why 2: Why does [immediate cause] occur?
+ Answer: [Deeper cause]
+ Impact: [How it affects functionality]
+
+Why 3: Why does [deeper cause] occur?
+ Answer: [Even deeper cause]
+ Impact: [How it affects functionality]
+
+Why 4: Why does [even deeper cause] occur?
+ Answer: [Process/system cause]
+ Impact: [How it affects functionality]
+
+Why 5: Why does [process/system cause] occur?
+ Answer: [Root cause]
+ Impact: [How it affects functionality]
+
+ROOT CAUSE: [Root cause]
+FIX: [Specific fix that restores functionality]
+PREVENTION: [How to prevent functionality breakage]
+```
+
+**Focus**: Root causes that affect functionality, not generic root causes.
+
+### Symptom-to-Cause Mapping (Functionality-Focused)
+
+**Map symptoms to functionality root causes**:
+
+```
+Symptom: "[Functionality issue]" (breaks [flow type])
  Possible Causes:
-   Database connection failed
-   Password hash mismatch
-   User account locked
-   Rate limiting triggered
-   Authentication service down
- Investigation: Check logs for each
-
-Symptom: "Page loads slowly"
- Possible Causes:
-   Database query slow
-   Large data transfer
-   Missing indexes
-   N+1 query problem
-   External API timeout
- Investigation: Profile each layer
-
-Symptom: "Random crashes"
- Possible Causes:
-   Memory leak
-   Race condition
-   Unhandled exception
-   Resource exhaustion
-   Third-party library bug
- Investigation: Check crash logs
+   [Cause 1] (breaks [flow step])
+   [Cause 2] (breaks [flow step])
+   [Cause 3] (breaks [flow step])
+ Investigation: [How to investigate each cause]
+ Evidence: [What evidence to look for]
+ Fix: [Specific fix for each cause]
 ```
 
-## Root Cause Analysis Checklist
+**Focus**: Symptoms and causes related to functionality, not generic symptoms.
+
+---
+
+## Root Cause Analysis Checklist (Functionality-Focused)
+
+**⚠️ Only check these AFTER functionality is understood**:
 
 ```
 Investigation Process:
-- [ ] Reproduce bug consistently
-- [ ] Gather all relevant logs
-- [ ] Identify exact failure point
-- [ ] Trace back to source
-- [ ] Ask "Why?" 5 times
-- [ ] Verify root cause
-- [ ] Plan prevention
-- [ ] Implement fix
-- [ ] Test thoroughly
-- [ ] Document findings
+- [ ] Understand expected functionality (context-dependent analysis)
+- [ ] Map observed behavior to expected behavior (where does flow break?)
+- [ ] Reproduce functionality bug consistently
+- [ ] Gather all relevant logs (functionality-related)
+- [ ] Identify exact functionality failure point (which flow step?)
+- [ ] Trace back to source (functionality root cause)
+- [ ] Ask "Why?" 5 times (functionality-focused)
+- [ ] Verify root cause (affects functionality)
+- [ ] Plan prevention (prevents functionality issues)
+- [ ] Implement fix (fixes functionality)
+- [ ] Test thoroughly (verifies functionality works)
+- [ ] Document findings (functionality-focused)
 ```
 
 ---
 
-### Stage 3: Detailed Guide
+## Prevention Strategies (Functionality-Focused)
 
-## Cause-Effect Analysis
+### Prevent Recurrence (Functionality-Focused)
 
-### Direct Cause vs Root Cause
+**After finding root cause that affects functionality**:
 
-**Direct Cause** (symptom):
-- What immediately caused the failure
-- Example: "Token validation failed"
-- Fixing this stops the symptom
+1. **Understand why it happened** (functionality context):
+   - Was it a missing feature? (functionality not implemented)
+   - Was it a design flaw? (functionality design issue)
+   - Was it an oversight? (functionality oversight)
+   - Was it a refactoring mistake? (functionality not preserved)
 
-**Root Cause** (underlying issue):
-- Why the direct cause happened
-- Example: "Token refresh logic not implemented"
-- Fixing this prevents recurrence
+2. **Implement prevention** (functionality-focused):
+   - Add feature if missing (functionality feature)
+   - Redesign if flawed (functionality redesign)
+   - Add test if oversight (functionality test)
+   - Add tests before refactoring (functionality safety net)
 
-### Failure Chain Analysis
+3. **Add safeguards** (functionality-focused):
+   - Add monitoring (functionality monitoring)
+   - Add alerts (functionality alerts)
+   - Add tests (functionality tests)
+   - Add integration tests (functionality E2E tests)
 
-```
-User Action: Click Login
-  
-Expected: Auth service validates credentials
-  
-Actual: Auth service returns 401
-  
-Investigation:
-  1. Check auth service logs
-  2. Find: "Token expired"
-  3. Check token refresh logic
-  4. Find: "No refresh endpoint"
-  5. ROOT CAUSE: Missing refresh logic
-```
-
-## Prevention Strategies
-
-### Prevent Recurrence
-
-**After finding root cause:**
-
-1. **Understand why it happened**
-   - Was it a missing feature?
-   - Was it a design flaw?
-   - Was it an oversight?
-
-2. **Implement prevention**
-   - Add feature if missing
-   - Redesign if flawed
-   - Add test if oversight
-
-3. **Add safeguards**
-   - Add monitoring
-   - Add alerts
-   - Add tests
-
-4. **Document learning**
-   - Why it happened
-   - How to prevent
-   - What to watch for
-
-### Common Root Causes
-
-**Performance Issues:**
-- Missing database indexes
-- N+1 query problems
-- Inefficient algorithms
-- Memory leaks
-- Blocking operations
-
-**Reliability Issues:**
-- Missing error handling
-- Race conditions
-- Resource exhaustion
-- Timeout issues
-- Cascading failures
-
-**Security Issues:**
-- Missing validation
-- Weak authentication
-- Insufficient authorization
-- Unencrypted data
-- Injection vulnerabilities
+4. **Document learning** (functionality-focused):
+   - Why it happened (functionality context)
+   - How to prevent (functionality prevention)
+   - What to watch for (functionality watch)
 
 ---
 
-## Investigation Workflow
+## Priority Classification
 
-### Step 1: Reproduce
+**Critical (Must Fix)**:
 
-```
-Can you reproduce the bug?
-- YES: Continue to Step 2
-- NO: Gather more information
-  - When does it happen?
-  - What's the pattern?
-  - Can you narrow it down?
-```
+- Root cause breaks functionality (user flow, system flow, integration flow)
+- Prevents functionality from working
+- Breaks functionality completely
 
-### Step 2: Gather Evidence
+**Important (Should Fix)**:
 
-```
-Collect:
-- Error messages
-- Stack traces
-- Log entries
-- Timing information
-- User actions
-- System state
-```
+- Root cause affects functionality negatively (slows functionality, unreliable functionality)
+- Degrades functionality significantly
 
-### Step 3: Isolate
+**Minor (Can Defer)**:
 
-```
-Narrow down:
-- Which component fails?
-- Which function?
-- Which line?
-- What's the exact condition?
-```
-
-### Step 4: Trace Back
-
-```
-Follow the chain:
-- Where did the bad data come from?
-- Who called this function?
-- What was the state before?
-- When did it change?
-```
-
-### Step 5: Verify Root Cause
-
-```
-Confirm:
-- Does fixing this prevent recurrence?
-- Are there other instances?
-- Is this the only cause?
-- Are there related issues?
-```
+- Generic root causes that don't affect functionality
+- Perfect root cause analysis (if functionality is fixed)
 
 ---
 
-**Remember**: The best bugs to fix are the ones that never happen again. Find the root cause, fix it properly, and prevent recurrence.
+## When to Use
+
+**Use PROACTIVELY when**:
+
+- Investigating recurring bugs
+- Understanding failure patterns
+- Preventing recurrence
+
+**Functionality-First Process**:
+
+1. **First**: Understand expected functionality using context-dependent analysis (universal questions + context-dependent flows)
+2. **Then**: Map observed behavior to expected behavior (where does flow break?)
+3. **Then**: Identify root causes specific to that functionality
+4. **Then**: Apply root cause frameworks to analyze functionality-specific root causes
+5. **Then**: Provide specific fixes with examples
+6. **Focus**: Root causes that affect functionality, not generic root causes
+
+---
+
+## Skill Overview
+
+- **Skill**: Root Cause Analysis
+- **Purpose**: Identify root causes with functionality-first, context-dependent approach (not generic root cause analysis)
+- **When**: Investigating bugs, understanding failures, preventing recurrence
+- **Core Rule**: Functionality first (context-dependent analysis), then root cause analysis. Map observed to expected, then identify root causes specific to functionality.
+
+---
+
+**Remember**: Root causes exist in the context of functionality. Don't analyze root causes generically - understand expected functionality first, map observed to expected, then identify root causes specific to functionality! Provide specific fixes with examples, not generic frameworks.

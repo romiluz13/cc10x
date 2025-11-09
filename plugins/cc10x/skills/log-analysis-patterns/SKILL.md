@@ -1,353 +1,502 @@
 ---
 name: log-analysis-patterns
-description: Provides log analysis best practices covering structure, levels, aggregation, and troubleshooting techniques. Use when analyzing logs for debugging, investigating errors, troubleshooting issues, or capturing evidence before proposing fixes. Used by the debug workflow and subagents to capture evidence before proposing fixes.
+description: Analyzes logs with functionality-first, context-dependent approach. Use PROACTIVELY when debugging functionality issues. First understands expected functionality using universal questions and context-dependent flows, then analyzes logs to verify functionality or identify where it breaks. Focuses on logs that help understand functionality issues, not generic log analysis. Provides specific log analysis strategies with examples.
+allowed-tools: Read, Grep, Glob, Bash
 ---
 
-# Log Analysis Patterns
+# Log Analysis Patterns - Functionality First, Context-Dependent
 
-## Progressive Loading Stages
+## Functionality First Mandate
 
-### Stage 1: Metadata
-- **Skill**: Log Analysis Patterns
-- **Purpose**: Analyze logs effectively to debug issues
-- **When**: Debugging, log analysis, troubleshooting
-- **Core Rule**: Good logs make debugging 10x faster
-- **Sections Available**: Log Levels, Structured Logging, Log Parsing, Quick Checks
+**CRITICAL**: Before analyzing logs, understand expected functionality using context-dependent analysis.
+
+**Core Principle**: Understand what functionality should work (using universal questions and context-dependent flows), then analyze logs to verify functionality or identify where it breaks. Logs exist to help understand functionality, not for their own sake.
 
 ---
 
-### Stage 2: Quick Reference
+## Step 1: Context-Dependent Functionality Analysis (MANDATORY FIRST STEP)
 
-#### Log Analysis Checklist
+### Reference Template
+
+**Reference**: See [Functionality Analysis Template](../cc10x-orchestrator/templates/functionality-analysis.md) for complete template.
+
+### Process
+
+1. **Detect Code Type**: Identify if this is UI, API, Utility, Integration, Database, Configuration, CLI, or Background Job
+2. **Universal Questions First**: Answer Purpose, Requirements, Constraints, Dependencies, Edge Cases, Verification, Context
+3. **Context-Dependent Flows**: Answer flow questions based on code type:
+   - **UI**: User Flow, Admin Flow, System Flow
+   - **API**: Request Flow, Response Flow, Error Flow, Data Flow
+   - **Integration**: Integration Flow, Data Flow, Error Flow, State Flow
+   - **Database**: Migration Flow, Query Flow, Data Flow, State Flow
+   - **Background Jobs**: Job Flow, Processing Flow, State Flow, Error Flow
+   - **CLI**: Command Flow, Processing Flow, Output Flow, Error Flow
+   - **Configuration**: Configuration Flow, Validation Flow, Error Flow
+   - **Utility**: Input Flow, Processing Flow, Output Flow, Error Flow
+
+### Example: File Upload Broken (API Feature)
+
+**Universal Questions (Expected)**:
+
+**Purpose**: Users should be able to upload files to their CRM system. Files should be stored securely and accessible to authorized users.
+
+**Requirements (Expected)**:
+
+- Must accept file uploads (PDF, DOCX, JPG, PNG)
+- Must validate file type and size (max 10MB)
+- Must store files securely in S3
+- Must send file metadata to CRM API
+- Must return success response
+
+**Context-Dependent Flows (Expected - API Feature)**:
+
+**Request Flow (Expected)**:
+
+1. API receives POST /api/files/upload request
+2. API validates authentication token
+3. API validates request body (file, metadata)
+4. API validates file type and size
+5. API generates unique filename
+6. API uploads file to storage service
+7. API calls CRM API with file metadata
+8. API stores file record in database
+9. API returns success response with file ID
+
+**Observed Behavior (What's Broken)**:
+
+- ❌ Request Flow Broken: API receives request → validation fails → no response
+
+**THEN Analyze Logs**: Check logs for request received, validation errors, CRM API calls.
+
+---
+
+## Step 2: Log Analysis (AFTER Functionality Understood)
+
+**⚠️ IMPORTANT**: Only analyze logs AFTER you understand expected functionality. Analyze logs to verify functionality or identify where it breaks.
+
+### Functionality-Focused Log Analysis Checklist
+
+**Priority: Critical (Core Functionality)**:
+
+- [ ] Logs show functionality flow (user flow, system flow, integration flow)
+- [ ] Logs show functionality errors (errors that break functionality)
+- [ ] Logs show functionality performance (performance that affects functionality)
+- [ ] Logs help identify where functionality breaks (where expected flow diverges)
+
+**Priority: Important (Supporting Functionality)**:
+
+- [ ] Logs are structured (helps understand functionality)
+- [ ] Logs have request IDs (helps trace functionality)
+- [ ] Logs have timestamps (helps understand functionality timing)
+
+**Priority: Minor (Can Defer)**:
+
+- [ ] Perfect log structure (if functionality logs are clear)
+- [ ] Ideal log levels (if functionality logs are clear)
+- [ ] Perfect log aggregation (if functionality logs are searchable)
+
+---
+
+## Step 3: Provide Specific Log Analysis Strategies (WITH EXAMPLES)
+
+**CRITICAL**: Provide specific, actionable log analysis strategies with examples, not generic patterns.
+
+### Strategy 1: Trace Functionality Flow Through Logs
+
+**Example: File Upload Broken**
+
+**Expected Flow** (from functionality analysis):
+
+1. API receives POST /api/files/upload request
+2. API validates file type and size
+3. API stores file in S3
+4. API calls CRM API
+5. API returns success response
+
+**Log Analysis**:
+
+```bash
+# Find request ID from error log
+grep "ERROR.*file_upload" combined.log | head -1
+# Output: 2024-01-15T10:30:00Z ERROR file_upload_failed requestId=req-123 userId=456
+
+# Trace functionality flow using request ID
+grep "req-123" combined.log | sort
+# Output:
+# 2024-01-15T10:30:00Z INFO request_start requestId=req-123 method=POST path=/api/files/upload
+# 2024-01-15T10:30:01Z INFO file_validation requestId=req-123 fileType=PDF fileSize=1024 valid=true
+# 2024-01-15T10:30:02Z INFO file_stored requestId=req-123 fileId=file-123 storageUrl=s3://...
+# 2024-01-15T10:30:03Z ERROR crm_api_called requestId=req-123 error="Connection timeout"
+# 2024-01-15T10:30:04Z ERROR file_upload_failed requestId=req-123 reason="CRM API timeout"
+
+# Analysis: Functionality breaks at step 4 (CRM API call fails)
+# Expected: CRM API called successfully
+# Observed: CRM API timeout
+# Root cause: CRM API unavailable or slow
+```
+
+### Strategy 2: Compare Expected vs Observed Log Patterns
+
+**Example: File Upload Broken**
+
+**Expected Log Pattern** (from functionality analysis):
 
 ```
-Log Quality:
-- [ ] Log levels used correctly
-- [ ] Structured logging implemented
-- [ ] Timestamps in ISO 8601 format
-- [ ] Request IDs for tracing
-- [ ] Error stack traces included
-- [ ] Context information present
-- [ ] Sensitive data redacted
-- [ ] Log aggregation configured
-- [ ] Log retention policy defined
-- [ ] Alerts configured
+request_start → file_validation → file_stored → crm_api_called → request_end (200)
 ```
 
-#### Critical Log Patterns
+**Observed Log Pattern**:
 
-**Log Levels**:
 ```
-ERROR:   System errors, exceptions, failures
-WARN:    Warnings, deprecated usage, potential issues
-INFO:    Important events, state changes, milestones
-DEBUG:   Detailed information for debugging
-TRACE:   Very detailed information, function calls
-
-BAD LOGGING
-console.log('User login');
-console.log('Error: ' + error);
-console.log('Processing...');
-
-GOOD LOGGING
-logger.info('User login', { userId: 123, timestamp: new Date() });
-logger.error('Login failed', { userId: 123, error: error.message, stack: error.stack });
-logger.debug('Processing user data', { userId: 123, data: userData });
+request_start → file_validation → file_stored → crm_api_called (ERROR) → file_upload_failed
 ```
 
-**Structured Logging**:
+**Analysis**:
+
+- Expected: All steps succeed, request ends with 200
+- Observed: CRM API call fails, request ends with error
+- Divergence: Step 4 (CRM API call) fails
+- Root cause: CRM API timeout
+
+### Strategy 3: Analyze Logs by Functionality Flow Step
+
+**Example: File Upload Broken**
+
+**Step-by-Step Log Analysis**:
+
+**Step 1: Request Received**
+
+```bash
+grep "request_start.*file_upload" combined.log | tail -10
+# Expected: Multiple requests received
+# Observed: ✅ Requests received
+```
+
+**Step 2: File Validation**
+
+```bash
+grep "file_validation.*req-123" combined.log
+# Expected: file_validation valid=true
+# Observed: ✅ file_validation valid=true
+```
+
+**Step 3: File Stored**
+
+```bash
+grep "file_stored.*req-123" combined.log
+# Expected: file_stored fileId=file-123
+# Observed: ✅ file_stored fileId=file-123
+```
+
+**Step 4: CRM API Called**
+
+```bash
+grep "crm_api_called.*req-123" combined.log
+# Expected: crm_api_called success=true
+# Observed: ❌ crm_api_called error="Connection timeout"
+```
+
+**Analysis**: Functionality breaks at step 4 (CRM API call).
+
+### Strategy 4: Analyze Error Logs for Functionality Issues
+
+**Example: File Upload Broken**
+
+**Error Log Analysis**:
+
+```bash
+# Find all file upload errors
+grep "ERROR.*file_upload" combined.log | tail -20
+
+# Group by error type
+grep "ERROR.*file_upload" combined.log | grep -o "error=[^ ]*" | sort | uniq -c
+# Output:
+#   5 error="Connection timeout"
+#   2 error="Invalid file type"
+#   1 error="File too large"
+
+# Analyze most common error
+grep "ERROR.*file_upload.*Connection timeout" combined.log | tail -5
+# Output: All errors occur during CRM API call
+
+# Analysis: Most common error is CRM API timeout (affects functionality)
+```
+
+### Strategy 5: Analyze Performance Logs for Functionality Issues
+
+**Example: File Upload Slow**
+
+**Performance Log Analysis**:
+
+```bash
+# Find slow file upload requests (> 30 seconds)
+grep "request_end.*file_upload" combined.log | awk -F'duration=' '{if ($2 > 30000) print}' | tail -10
+
+# Analyze slow requests
+grep "req-456" combined.log | grep -E "(duration|file_stored|crm_api_called)"
+# Output:
+# file_stored duration=500ms
+# crm_api_called duration=35000ms
+# request_end duration=36000ms
+
+# Analysis: CRM API call takes 35 seconds (affects functionality performance)
+# Expected: Upload completes within 30 seconds
+# Observed: Upload takes 36 seconds
+# Root cause: CRM API slow
+```
+
+---
+
+## Log Analysis Pattern Library (Reference - Use AFTER Functionality Understood)
+
+### Log Levels (Functionality-Focused)
+
+**Use log levels to understand functionality**:
+
+```
+ERROR:   Functionality errors (breaks user flow, system flow, integration flow)
+WARN:    Functionality warnings (might affect functionality)
+INFO:    Functionality events (user actions, system events, flow steps)
+DEBUG:   Functionality details (detailed functionality flow)
+TRACE:   Very detailed functionality information
+```
+
+**Focus**: Log levels that help understand functionality, not generic levels.
+
+### Structured Logging (Functionality-Focused)
+
+**Structure logs to understand functionality**:
+
 ```typescript
-// UNSTRUCTURED
-console.log('User 123 logged in at 2024-01-15 10:30:00');
+// UNSTRUCTURED (hard to understand functionality)
+console.log("User 123 uploaded file at 2024-01-15 10:30:00");
 
-// STRUCTURED
-logger.info('user_login', {
+// STRUCTURED (easy to understand functionality)
+logger.info("file_upload_start", {
+  requestId: "req-123",
   userId: 123,
-  email: 'user@example.com',
-  timestamp: '2024-01-15T10:30:00Z',
-  ipAddress: '192.168.1.1',
-  userAgent: 'Mozilla/5.0...',
-  duration: 245 // ms
+  fileType: "PDF",
+  fileSize: 1024,
+  timestamp: "2024-01-15T10:30:00Z",
+});
+
+logger.info("file_validation", {
+  requestId: "req-123",
+  fileType: "PDF",
+  fileSize: 1024,
+  valid: true,
+  reason: "File type and size valid",
+});
+
+logger.info("file_stored", {
+  requestId: "req-123",
+  fileId: "file-123",
+  storageUrl: "s3://bucket/file-123.pdf",
+  duration: 500,
+});
+
+logger.info("crm_api_called", {
+  requestId: "req-123",
+  crmFileId: "crm-456",
+  success: true,
+  duration: 200,
+});
+
+logger.info("file_upload_complete", {
+  requestId: "req-123",
+  fileId: "file-123",
+  status: 200,
+  duration: 700,
 });
 ```
 
-**Request Tracing**:
+**Focus**: Structure that helps understand functionality flow, not generic structure.
+
+### Request Tracing (Functionality-Focused)
+
+**Trace requests to understand functionality flow**:
+
 ```typescript
-// REQUEST ID TRACING
+// REQUEST ID TRACING (helps trace functionality)
 const requestId = generateUUID();
-logger.info('request_start', {
+logger.info("request_start", {
   requestId,
-  method: 'POST',
-  path: '/api/users',
-  timestamp: new Date().toISOString()
+  method: "POST",
+  path: "/api/files/upload",
+  userId: 123,
+  timestamp: new Date().toISOString(),
 });
 
 // All logs in this request include requestId
-logger.info('database_query', {
+logger.info("file_validation", {
   requestId,
-  query: 'SELECT * FROM users',
-  duration: 45
+  fileType: "PDF",
+  fileSize: 1024,
+  valid: true,
 });
 
-logger.info('request_end', {
+logger.info("file_stored", {
+  requestId,
+  fileId: "file-123",
+  storageUrl: "s3://...",
+});
+
+logger.info("crm_api_called", {
+  requestId,
+  crmFileId: "crm-456",
+  success: true,
+});
+
+logger.info("request_end", {
   requestId,
   status: 200,
-  duration: 245
+  duration: 700,
 });
 ```
 
-**Error Logging**:
-```typescript
-// INCOMPLETE
-logger.error('Error occurred');
+**Focus**: Tracing that helps understand functionality flow, not generic tracing.
 
-// COMPLETE
-logger.error('Payment processing failed', {
-  requestId: 'req-123',
+### Error Logging (Functionality-Focused)
+
+**Log errors that affect functionality**:
+
+```typescript
+// INCOMPLETE (doesn't help understand functionality)
+logger.error("Error occurred");
+
+// COMPLETE (helps understand functionality)
+logger.error("file_upload_failed", {
+  requestId: "req-123",
   userId: 456,
-  amount: 99.99,
+  fileType: "PDF",
+  fileSize: 1024,
   error: error.message,
   stack: error.stack,
   context: {
-    paymentMethod: 'credit_card',
+    validationPassed: true,
+    storagePassed: true,
+    crmApiFailed: true, // Functionality issue
     retryCount: 2,
-    timestamp: new Date().toISOString()
-  }
+    timestamp: new Date().toISOString(),
+  },
+  flowStep: "crm_api_call", // Where functionality breaks
+  expectedBehavior: "CRM API should return file ID",
+  observedBehavior: "CRM API timeout after 5 seconds",
 });
 ```
 
-#### Red Flags 
-```bash
-# Find console.log (should use logger)
-grep -r "console\." src/ --include="*.ts"
-
-# Find unstructured logging
-grep -r "logger\.log\|logger\.info.*\+" src/
-
-# Find missing error context
-grep -r "catch.*{" src/ -A 2 | grep -v "logger\|throw"
-
-# Find missing request IDs
-grep -r "logger\." src/ | grep -v "requestId\|traceId"
-```
+**Focus**: Error logging that helps understand functionality issues, not generic errors.
 
 ---
 
-### Stage 3: Detailed Guide
+## Log Analysis Techniques (Functionality-Focused)
 
-## Structured Logging Implementation
+### Grep Patterns (Functionality-Focused)
 
-### Winston Logger Setup
-
-```typescript
-import winston from 'winston';
-
-const logger = winston.createLogger({
-  level: process.env.LOG_LEVEL || 'info',
-  format: winston.format.combine(
-    winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-    winston.format.errors({ stack: true }),
-    winston.format.json()
-  ),
-  defaultMeta: { service: 'api-service' },
-  transports: [
-    new winston.transports.File({ filename: 'error.log', level: 'error' }),
-    new winston.transports.File({ filename: 'combined.log' })
-  ]
-});
-
-if (process.env.NODE_ENV !== 'production') {
-  logger.add(new winston.transports.Console({
-    format: winston.format.simple()
-  }));
-}
-```
-
-### Pino Logger Setup
-
-```typescript
-import pino from 'pino';
-
-const logger = pino({
-  level: process.env.LOG_LEVEL || 'info',
-  transport: {
-    target: 'pino-pretty',
-    options: {
-      colorize: true,
-      translateTime: 'SYS:standard',
-      ignore: 'pid,hostname'
-    }
-  }
-});
-
-// Usage:
-logger.info({ userId: 123 }, 'User logged in');
-logger.error({ error: err }, 'Payment failed');
-```
-
-## Log Analysis Techniques
-
-### Grep Patterns
+**Grep logs related to functionality**:
 
 ```bash
-# Find all errors
-grep "ERROR" combined.log
+# Find functionality errors
+grep "ERROR.*file_upload" combined.log
 
-# Find errors for specific user
-grep "userId.*123" combined.log | grep "ERROR"
+# Find functionality events for specific user
+grep "userId.*123" combined.log | grep "file_upload"
 
-# Find slow requests (> 1000ms)
-grep "duration.*[0-9]\{4,\}" combined.log
+# Find slow functionality requests (> 30 seconds)
+grep "duration.*[3-9][0-9]\{3,\}" combined.log | grep "file_upload"
 
-# Find failed payments
-grep "payment_failed" combined.log
+# Find failed functionality
+grep "file_upload_failed" combined.log
 
-# Find requests from specific IP
-grep "ipAddress.*192.168" combined.log
+# Find functionality requests in time range
+grep "2024-01-15T10:" combined.log | grep "file_upload"
 
-# Find requests in time range
-grep "2024-01-15T10:" combined.log
+# Trace functionality flow for specific request
+grep "req-123" combined.log | sort
 ```
 
-### Log Aggregation with ELK Stack
+**Focus**: Grep patterns that help find functionality issues, not generic patterns.
+
+### Debugging with Logs (Functionality-Focused)
+
+**Use logs to debug functionality**:
 
 ```
-Elasticsearch: Store and index logs
-Logstash: Parse and transform logs
-Kibana: Visualize and analyze logs
-
-Pipeline:
-Application Logstash Elasticsearch Kibana
-```
-
-### Log Parsing
-
-```typescript
-// Parse log line
-const logLine = '2024-01-15T10:30:00Z ERROR user_login userId=123 error="Invalid password"';
-
-const pattern = /(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z)\s+(\w+)\s+(\w+)\s+(.*)/;
-const match = logLine.match(pattern);
-
-const [, timestamp, level, event, data] = match;
-// timestamp: 2024-01-15T10:30:00Z
-// level: ERROR
-// event: user_login
-// data: userId=123 error="Invalid password"
-```
-
-## Debugging with Logs
-
-### Finding Root Cause
-
-```
-1. Find the error log
-   grep "ERROR" combined.log | grep "payment_failed"
+1. Find the functionality error log
+   grep "ERROR.*file_upload_failed" combined.log | tail -1
 
 2. Get the request ID
-   2024-01-15T10:30:00Z ERROR payment_failed requestId=req-123
+   2024-01-15T10:30:00Z ERROR file_upload_failed requestId=req-123
 
-3. Find all logs for that request
-   grep "req-123" combined.log
+3. Find all logs for that functionality request
+   grep "req-123" combined.log | sort
 
-4. Trace the flow
-   10:30:00 request_start
-   10:30:01 database_query
-   10:30:02 payment_api_call
-   10:30:03 payment_failed
-   10:30:04 request_end
+4. Trace the functionality flow
+   10:30:00 request_start (file upload)
+   10:30:01 file_validation (valid)
+   10:30:02 file_stored (success)
+   10:30:03 crm_api_called (failed - timeout)
+   10:30:04 file_upload_failed
 
-5. Identify the issue
-   payment_api_call returned 500 error
+5. Compare to expected flow
+   Expected: request_start → validation → stored → crm_api → success
+   Observed: request_start → validation → stored → crm_api (ERROR) → failed
+
+6. Identify where functionality breaks
+   Functionality breaks at CRM API call (step 4)
+   Root cause: CRM API timeout
 ```
 
-### Common Log Patterns
-
-```
-Database Connection Error:
-  "error": "ECONNREFUSED",
-  "code": "ECONNREFUSED",
-  "address": "localhost",
-  "port": 5432
-
-Timeout Error:
-  "error": "ETIMEDOUT",
-  "code": "ETIMEDOUT",
-  "timeout": 5000
-
-Memory Leak:
-  "heapUsed": 1024000000,  // 1GB
-  "heapTotal": 2048000000, // 2GB
-  "external": 512000000    // 512MB
-
-Rate Limit:
-  "status": 429,
-  "error": "Too Many Requests",
-  "retryAfter": 60
-```
-
-## Logging Best Practices
-
-### What to Log
-
-```
-DO LOG:
-- Application startup/shutdown
-- User actions (login, logout, purchase)
-- API requests and responses
-- Database queries (in debug mode)
-- Errors and exceptions
-- Performance metrics
-- Security events
-- State changes
-
-DON'T LOG:
-- Passwords or API keys
-- Credit card numbers
-- Personal identification numbers
-- Session tokens
-- Sensitive user data
-- Verbose debug info in production
-```
-
-### Log Retention
-
-```
-ERROR logs:   Keep for 90 days
-WARN logs:    Keep for 30 days
-INFO logs:    Keep for 7 days
-DEBUG logs:   Keep for 1 day (production)
-TRACE logs:   Keep for 1 hour (development only)
-```
-
-## Logging Checklist
-
-### Implementation
-- [ ] Logger configured
-- [ ] Log levels used correctly
-- [ ] Structured logging implemented
-- [ ] Request IDs included
-- [ ] Timestamps in ISO 8601
-- [ ] Error stack traces included
-- [ ] Sensitive data redacted
-- [ ] Performance metrics logged
-
-### Monitoring
-- [ ] Log aggregation configured
-- [ ] Alerts set up for errors
-- [ ] Dashboards created
-- [ ] Log retention policy defined
-- [ ] Log rotation configured
-- [ ] Disk space monitored
-
-### Analysis
-- [ ] Logs searchable
-- [ ] Logs indexed
-- [ ] Queries optimized
-- [ ] Trends identified
-- [ ] Anomalies detected
-- [ ] Root causes found
+**Focus**: Debugging that helps understand functionality, not generic debugging.
 
 ---
 
-**Remember**: Good logs are your best debugging tool. Invest in logging!
+## Priority Classification
+
+**Critical (Must Have)**:
+
+- Logs show functionality flow (user flow, system flow, integration flow)
+- Logs show functionality errors (errors that break functionality)
+- Logs help identify where functionality breaks (where expected flow diverges)
+
+**Important (Should Have)**:
+
+- Logs are structured (helps understand functionality)
+- Logs have request IDs (helps trace functionality)
+- Logs have timestamps (helps understand functionality timing)
+
+**Minor (Can Defer)**:
+
+- Perfect log structure (if functionality logs are clear)
+- Ideal log levels (if functionality logs are clear)
+- Perfect log aggregation (if functionality logs are searchable)
+
+---
+
+## When to Use
+
+**Use PROACTIVELY when**:
+
+- Analyzing logs for debugging
+- Investigating errors
+- Troubleshooting functionality issues
+
+**Functionality-First Process**:
+
+1. **First**: Understand expected functionality using context-dependent analysis (universal questions + context-dependent flows)
+2. **Then**: Analyze logs to verify functionality or identify where it breaks
+3. **Then**: Use log analysis strategies to find functionality issues
+4. **Focus**: Logs that help understand functionality, not generic logs
+
+---
+
+## Skill Overview
+
+- **Skill**: Log Analysis Patterns
+- **Purpose**: Analyze logs with functionality-first, context-dependent approach (not generic log analysis)
+- **When**: Debugging, log analysis, troubleshooting functionality issues
+- **Core Rule**: Functionality first (context-dependent analysis), then log analysis. Analyze logs to verify functionality or identify where it breaks.
+
+---
+
+**Remember**: Logs exist to help understand functionality. Don't analyze logs generically - understand expected functionality first, then analyze logs to verify functionality or identify where it breaks! Provide specific log analysis strategies with examples, not generic patterns.

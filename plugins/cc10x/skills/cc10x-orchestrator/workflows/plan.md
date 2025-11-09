@@ -2,9 +2,220 @@
 
 **Triggered by:** User asks to plan, architect, or design a feature or system update.
 
-## Phase 0 - Complexity Gate
+## TL;DR Quick Checklist
+
+- [ ] Complete Phase 0: Functionality Analysis FIRST (understand what functionality needs planning, document flows, plan research)
+- [ ] Assess complexity (1-5 scale) and gate check if <=2
+- [ ] Gather requirements using Ask Questions tool if needed
+- [ ] Load required skills in parallel (requirements-analysis, architecture-patterns, feature-planning, design-patterns)
+- [ ] Load conditional skills if detected (ui-design if UI features mentioned)
+- [ ] Invoke planning subagents sequentially (architecture-risk → design-deployment)
+- [ ] Synthesize plan with functionality-first approach and generate deliverable
+
+## Guardrails
+
+**CRITICAL**: These guardrails MUST be followed in the Plan workflow. Violations lead to incomplete or incorrect plans.
+
+- **Functionality First**: Always understand what functionality needs to be planned (user flows, admin flows, system flows) BEFORE designing architecture, APIs, components, or deployment. Plan to support functionality, not abstract patterns.
+
+- **Evidence Required**: Every design decision must be justified with functionality requirements. Link architecture decisions to user flows and system flows.
+
+- **No Over-Engineering**: Design for the 80% case. Avoid over-complication. Keep designs simple and focused on functionality requirements.
+
+- **Scope Awareness**: Plan only what was requested. Don't expand beyond the requested scope unless explicitly asked.
+
+## Search Guidance
+
+**CRITICAL**: Use the right tool for each search task in the Plan workflow.
+
+**Phase 0 - Functionality Analysis**:
+
+- **Discovery**: Use `Glob` to find existing similar features (`Glob("src/features/**/*")` to understand structure)
+- **Content Search**: Use `Grep` to find related implementations (`Grep("function.*login")` to see how auth is implemented)
+- **Detail Reading**: Use `Read` to read architecture files (`Read("docs/architecture.md")` for existing patterns)
+- **Example**: Planning a new feature similar to existing ones:
+  - Step 1: `Glob("src/features/**/*")` → Find existing feature structure
+  - Step 2: `Grep("export.*function", path="src/features")` → Find feature exports
+  - Step 3: `Read("src/features/user-profile/index.ts")` → Read feature structure
+
+**Phase 2 - Requirements Intake**:
+
+- **Existing Patterns**: Use `Grep` to find similar patterns (`Grep("useState|useEffect")` for React patterns)
+- **API Patterns**: Use `Glob` to find API files (`Glob("src/api/**/*.ts")`), then `Read` for details
+- **Component Patterns**: Use `Glob` to find components (`Glob("src/components/**/*.tsx")`), then `Read` for patterns
+
+**Phase 3 - Architecture Design**:
+
+- **Dependency Analysis**: Use `Grep` to find imports (`Grep("import.*from")` to map dependencies)
+- **Structure Discovery**: Use `Glob` to understand project structure (`Glob("src/**/*.{ts,tsx}")`)
+
+**Anti-Patterns**:
+
+- ❌ Using `Read` to search for patterns (use `Grep` instead)
+- ❌ Using `Grep` to find files by name (use `Glob` instead)
+- ❌ Reading entire large files when only a section is needed (use `Read` with offset/limit)
+
+## Phase 0 - Functionality Analysis (MANDATORY)
+
+**CRITICAL**: This phase MUST be completed before any complexity gate, skill loading, or subagent dispatching. Understanding functionality is the foundation for all planning activities.
+
+**Purpose**: Understand what functionality needs to be planned (user flows, admin flows, system flows, integration flows) and what research is needed before designing architecture, APIs, components, or deployment.
+
+**Task Tool Usage** (phase tracking):
+
+- Create tasks for all workflow phases at start:
+  ```
+  Task: Create tasks for workflow phases
+  - Phase 0: Functionality Analysis (in_progress)
+  - Phase 1: Complexity Gate (pending)
+  - Phase 2: Requirements Intake (pending)
+  - Phase 3: Delegated Analysis (pending)
+  - Phase 4: Synthesis (pending)
+  - Phase 5: Verification Summary (pending)
+  - Phase 6: Deliverable (pending)
+  ```
+- Update task status as phases complete:
+  ```
+  Task: Update Phase 0 status to completed
+  Task: Update Phase 1 status to in_progress
+  ```
+
+**Process**:
+
+1. **Load Functionality Analysis Template**: Reference `plugins/cc10x/skills/cc10x-orchestrator/templates/functionality-analysis.md`
+
+**MANDATORY Visual Asset Check**:
+
+**CRITICAL**: Run this bash command even if user says "no visuals":
+
+```bash
+# Check for visual assets in common locations
+find . -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.gif" -o -name "*.svg" -o -name "*.pdf" \) \
+  \( -path "*/mockups/*" -o -path "*/designs/*" -o -path "*/screenshots/*" -o -path "*/visuals/*" -o -path "*/assets/*" \) \
+  2>/dev/null | head -20
+```
+
+**IF visual files found**:
+
+- Analyze each visual file using Read tool (read first 100 lines to understand content)
+- Document key design elements in functionality analysis
+- Reference visuals in user flow documentation
+- Note fidelity level (high/low) and design completeness
+- Include visual references in findings section
+
+**IF no visual files found**:
+
+- Document: "No visual assets detected. Proceeding with code-only analysis."
+
+2. **Analyze Requirements**:
+   - Read user request and any provided requirements
+   - Understand the intended functionality
+   - Document user flows, admin flows (if applicable), system flows, and integration flows
+   - Identify external APIs, constraints, or documentation needed
+3. **Research Planning** (if applicable):
+   - Identify external APIs that need documentation
+   - Identify integration constraints or limitations
+   - Plan external resource checks (will be executed in Phase 1)
+4. **Output**: Complete functionality analysis using template format:
+
+   ```markdown
+   ## Functionality Analysis
+
+   ### What Functionality Needs Planning?
+
+   [Clear description of functionality]
+
+   ### User Flow
+
+   1. [Step 1: User action]
+   2. [Step 2: System response]
+   3. [Step 3: User sees result]
+      ...
+
+   ### Admin Flow (if applicable)
+
+   [Similar structure]
+
+   ### System Flow
+
+   1. [Step 1: System receives input]
+   2. [Step 2: System processes]
+   3. [Step 3: System stores/transforms]
+   4. [Step 4: System sends output]
+      ...
+
+   ### Integration Flow (if applicable)
+
+   [Similar structure]
+
+   ### Research Needed (if applicable)
+
+   - [ ] External API documentation
+   - [ ] Integration constraints
+   - [ ] Data format requirements
+   - [ ] Authentication requirements
+   - [ ] Rate limits/quotas
+   - [ ] Error handling patterns
+   ```
+
+**Gate Check**: Before proceeding to Phase 1, ALL items below MUST be checked:
+
+- [ ] Functionality analysis complete (user flow, admin flow if applicable, system flow, integration flow if applicable documented)
+- [ ] Research needs identified (external APIs, constraints, documentation) if applicable
+- [ ] External dependencies identified (libraries, services, APIs) if applicable
+- [ ] Template format followed (all required sections completed)
+- [ ] Functionality clear and understood (no ambiguous requirements)
+
+**CRITICAL**: Do NOT proceed to Phase 1 until ALL items above are checked. If any item is incomplete:
+
+- Ask user: "Functionality unclear. Please clarify: What functionality needs to be planned? What are the user flows? What are the system flows?"
+- Do NOT proceed until functionality is understood and all gate check items are complete
+
+**Display Success Message** (after Phase 0 completion):
+
+```
+✅ Phase 0 Complete: Functionality Analysis
+
+Analyzed:
+- User flows: [X] flows identified
+- Admin flows: [Y] flows identified (if applicable)
+- System flows: [Z] flows identified
+- Integration flows: [W] flows identified (if applicable)
+- Research items: [N] items needed (if any)
+- Visual assets: [M] assets found (if any)
+
+Next: Proceeding to Phase 1 - Complexity Gate
+```
+
+**Ask Questions Tool Usage** (when functionality unclear):
+
+- Use the askquestion tool to clarify requirements before proceeding
+- Ask specific questions about functionality:
+  - What are the specific user flows?
+  - What are the acceptance criteria?
+  - What are the constraints?
+  - What are the dependencies?
+- Proceed with functionality analysis using answers
+
+**Example**:
+
+```
+Use the askquestion tool to clarify requirements:
+- What are the specific user flows for this feature?
+- What are the acceptance criteria?
+- What are the technical constraints?
+- What are the business constraints?
+```
 
 **Memory Integration** (optimized):
+
+- **Store Functionality Patterns**: After workflow completes, save successful functionality analysis patterns to `.claude/memory/patterns.json` (only if validated effective)
+- **Query Similar Functionality**: Check `.claude/memory/patterns.json` for similar functionality patterns (use semantic match, top 3 only)
+
+## Phase 1 - Complexity Gate
+
+**Memory Integration** (optimized):
+
 - **Load Once**: Read `.claude/memory/patterns.json` ONCE, cache for workflow duration
 - **Semantic Match**: Use `jq` to filter by signature (file_count, change_type, has_external_deps) - not exact text
 - **Top 3 Only**: Return top 3 highest-confidence patterns (confidence="high" or accuracy > 70%)
@@ -34,26 +245,51 @@
    - Read `.claude/memory/snapshots/` most recent `snapshot-*.md`
    - Read `.claude/memory/WORKING_PLAN.md`
 
-## Phase 1 - Requirements Intake
+**Display Success Message** (after Phase 1 completion):
+
+```
+✅ Phase 1 Complete: Complexity Gate
+
+Assessed:
+- Complexity score: [1-5]
+- Status: ✅ Proceeding / ⚠️ Low complexity warning shown
+- External dependencies: [N] dependencies detected (if any)
+
+Next: Proceeding to Phase 2 - Requirements Intake
+```
+
+## Phase 2 - Requirements Intake
 
 **Load Requirements Skills**:
+
+- `project-context-understanding` - **MANDATORY** (understand existing architecture, dependencies, and conventions before planning)
 - `requirements-analysis`
+- `feature-planning` - **MANDATORY** (provides feature planning guidance)
+- `design-patterns` - **MANDATORY** (provides API/component/integration patterns)
+- `verification-before-completion` - **MANDATORY** (verify plan completeness and accuracy before completion)
 - `memory-tool-integration` (filesystem-based memory always available)
 - `web-fetch-integration` (if external docs needed)
 
+**Conditional Skills**:
+
+- `ui-design` - Load if UI features mentioned (keywords: UI, interface, design, form, dashboard)
+
 **Skill Loading Strategy**:
-- All 3 skills are independent (no dependencies between them)
-- **Load all skills in parallel** for faster initialization
-- If conditional skill needed (web-fetch-integration), load conditionally but still in parallel with others
+
+- All required skills are independent (no dependencies between them)
+- **Load all required skills in parallel** for faster initialization
+- **Load conditional skills** (`ui-design`, `web-fetch-integration`) based on detection logic, still in parallel with required skills
 - **Skill Loading Verification**: Verify each skill loaded successfully (read first 100 chars, parse YAML, check content)
 - If loading fails, use Error Recovery Protocol
 
 **Memory Integration** (optimized):
+
 - **Load Preferences**: Query `.claude/memory/preferences.json` for user preferences (if exists)
 - **Query Requirements Patterns**: Check `.claude/memory/patterns.json` for similar requirements (use semantic match, top 3 only)
 - **Validation Before Storage**: Only store requirements patterns after workflow completes and validates accuracy
 
 **External Documentation** (smart Q&A caching):
+
 - If external APIs/services mentioned in requirements:
   - **Plan Targeted Questions**: For each API/service, plan 3-4 specific questions:
     - Endpoints: "What are all the API endpoint paths, HTTP methods, and required parameters?"
@@ -72,36 +308,45 @@ Use this structure for requirements intake:
 # Requirements Intake
 
 ## Core Goal
+
 [One sentence describing the primary objective]
 
 ## Key Entities
+
 [Users, data, systems involved]
 
 ## Key Operations
+
 [CRUD operations, workflows, integrations]
 
 ## User Stories
+
 - As a [role], I want [action] so that [benefit]
   - Acceptance Criteria:
     - [ ] Criterion 1 (measurable, testable)
     - [ ] Criterion 2 (measurable, testable)
 
 ## Stakeholders
+
 [Roles and their concerns]
 
 ## Constraints
+
 - Technical: [technology, performance, scale]
 - Business: [timeline, budget, resources]
 - Compliance: [regulations, standards]
 
 ## Assumptions
+
 [List assumptions being made]
 
 ## Open Questions
+
 [List questions requiring user input]
 ```
 
 **Requirements Completeness Threshold**:
+
 - **Critical Questions**: Count unanswered questions in Core Goal, Key Entities, Key Operations, User Stories (with acceptance criteria), Stakeholders, Constraints
 - **Threshold**: If >3 critical questions unanswered → **Abort and request clarification**
 - **Threshold Logic**:
@@ -117,18 +362,42 @@ Use this structure for requirements intake:
   Threshold: 3
   Status: {N <= 3: "Requirements complete enough to proceed" | N > 3: "ABORT - Critical information missing"}
   ```
-- **If Threshold Exceeded**: 
+- **If Threshold Exceeded**:
   - Document: "Requirements incomplete: {list of missing items}. Total critical questions: {N} (threshold: 3)"
   - Ask user: "Critical information missing: {list}. Provide details before proceeding or mark assumptions explicit?"
   - **Do NOT proceed** until critical questions <= 3 or user explicitly confirms assumptions
 
 **If Requirements Incomplete** (within threshold):
+
 - Document what's missing: "Missing: [list]"
 - Ask user: "Critical information missing: [list]. Provide details or proceed with assumptions?"
 - If proceeding with assumptions, document them clearly in Open Questions section
 - **Store in Memory**: Save requirements patterns for future similar tasks
 
+**Ask Questions Tool Usage** (for requirements gathering):
+
+- Use the askquestion tool to gather missing requirements:
+  - What are the user stories?
+  - What are the acceptance criteria?
+  - What are the technical constraints?
+  - What are the business constraints?
+  - What are the dependencies?
+- Proceed with planning using gathered requirements
+
+**Task Tool Usage** (planning checklist):
+
+- Create tasks for planning phases:
+  ```
+  Task: Create planning checklist
+  - Requirements gathered (pending)
+  - Architecture designed (pending)
+  - Risks identified (pending)
+  - Plan compiled (pending)
+  ```
+- Update task status as planning progresses
+
 **Workflow State Persistence** (Checkpoint System):
+
 - **Checkpoint After Each Phase**: Save workflow state to `.claude/memory/workflow_state/plan_{timestamp}.json`
 - **Checkpoint Format**:
   ```json
@@ -151,16 +420,85 @@ Use this structure for requirements intake:
   2. Validate checkpoint state (requirements present, phase valid)
   3. Continue from `next_phase` with checkpoint state restored
   4. Ask user: "Resuming from Phase {N}. Continue from checkpoint or restart?"
-- **Checkpoint Triggers**: After Phase 0, Phase 1, Phase 2, Phase 3, Phase 4 completion
+- **Checkpoint Triggers**: After Phase 0, Phase 1, Phase 2, Phase 3, Phase 4, Phase 5 completion
 
-## Phase 2 - Delegated Analysis
+**Display Success Message** (after Phase 2 completion):
+
+```
+✅ Phase 2 Complete: Requirements Intake
+
+Gathered:
+- Requirements: [X] requirements gathered
+- Reusable patterns: [Y] patterns found (if any)
+- User stories: [Z] stories with acceptance criteria
+- Constraints: [W] constraints identified
+
+Next: Proceeding to Phase 3 - Delegated Analysis
+```
+
+## Phase 3 - Delegated Analysis
+
+**MANDATORY: Reusable Code Search**
+
+**CRITICAL**: Do NOT proceed to architecture design until reusable code search is complete.
+
+**Process**:
+
+1. **Search for Similar Features**:
+   - Extract key functionality patterns from Phase 0 analysis
+   - Use Grep to find similar functionality: `Grep("pattern-keyword", path="src/")`
+   - Use Glob to find similar components: `Glob("src/components/**/*{similar}*.{tsx,jsx}")`
+   - Use Glob to find similar APIs: `Glob("src/api/**/*{similar}*.ts")`
+   - Document all patterns found with file paths
+
+2. **Analyze Existing Patterns**:
+   - Read similar components/APIs using Read tool
+   - Note patterns to follow (naming conventions, structure, error handling)
+   - Identify reusable code (utilities, hooks, services)
+   - Document architectural patterns used
+
+3. **Document Findings**:
+   - List reusable components with file paths: `file:line-range`
+   - List reusable APIs/services with file paths
+   - List reusable utilities/hooks with file paths
+   - Note patterns to follow in architecture design
+   - Reference existing code in architecture decisions
+
+**Output Format**:
+
+```markdown
+## Reusable Code Analysis
+
+### Similar Components Found
+
+- `src/components/Button.tsx:1-50` - Button component pattern
+- `src/components/Modal.tsx:1-80` - Modal component pattern
+
+### Similar APIs Found
+
+- `src/api/auth.ts:10-30` - Authentication API pattern
+
+### Reusable Utilities
+
+- `src/utils/validation.ts:1-20` - Validation utilities
+
+### Patterns to Follow
+
+- Component structure: [pattern description]
+- API structure: [pattern description]
+- Error handling: [pattern description]
+```
+
+**CRITICAL**: Reference reusable code in architecture design section. Do NOT design new patterns if existing ones can be reused.
 
 **When to Invoke Subagents**:
+
 - **INVOKE** - Architecture needed: Complexity score >= 3 OR multi-file/multi-component work → Invoke `planning-architecture-risk`
 - **INVOKE** - Design/deployment needed: Any build work requires API design OR component design OR deployment planning → Invoke `planning-design-deployment`
 - **INVOKE** - Complete planning: Both subagents needed for comprehensive planning (default for complexity >= 3)
 
 **When NOT to Invoke Subagents**:
+
 - **SKIP** - Complexity too low: Complexity score <= 2 → Skip `planning-architecture-risk` (architecture not needed), ask user: "Low complexity ({score}). Skip architecture planning? (yes/no)"
 - **SKIP** - No API/component design needed: If work is pure refactoring or config changes (no new APIs/components) → Skip `planning-design-deployment`, only invoke `planning-architecture-risk` if complexity >= 3
 - **SKIP** - User explicitly skips: If user says "skip architecture" or "skip design" → Skip corresponding subagent, document in Actions Taken
@@ -168,25 +506,30 @@ Use this structure for requirements intake:
 - **SKIP** - Architecture already exists: If user says "architecture already defined" → Skip `planning-architecture-risk`, only invoke `planning-design-deployment` if needed
 
 **Conflict Prevention**:
+
 - **Sequential execution**: Always run `planning-architecture-risk` FIRST, then `planning-design-deployment` (architecture informs design)
 - **No parallel execution**: Never invoke both simultaneously (architecture decisions needed before design)
 - **Share context**: `planning-design-deployment` receives architecture outputs from `planning-architecture-risk` as input
 
 **Subagent Dependency**:
+
 - `planning-design-deployment` DEPENDS on `planning-architecture-risk` outputs (architecture, risk register)
 - If `planning-architecture-risk` fails or skipped, provide minimal context to `planning-design-deployment` and flag limitation
 
 **Default Sequence** (unless conditions above met):
 Run the bundled planning subagents sequentially, sharing the Phase 1 notes as context:
+
 1. `planning-architecture-risk` (loads `architecture-patterns` and `risk-analysis`) - FIRST.
 2. `planning-design-deployment` (loads `api-design-patterns`, `component-design-patterns`, and `deployment-patterns`) - SECOND (receives architecture outputs).
 
 Each subagent must:
+
 - Reference the skill sections used to make decisions.
 - Produce actionable outputs (diagrams, data models, API specs, risk register, deployment steps).
 - Identify outstanding assumptions that require user confirmation.
 
 **Subagent Invocation Pattern**:
+
 - Verify subagent exists: Read first 100 chars of `plugins/cc10x/subagents/{subagent-name}/SUBAGENT.md`
 - Read the subagent's SUBAGENT.md to load its process and output format.
 - Provide the requirements summary and constraints from Phase 1.
@@ -208,15 +551,31 @@ Each subagent must:
 
 **Subagent Output Requirements**:
 Each subagent must produce:
+
 - Actionable outputs (diagrams, data models, API specs, risk register, deployment steps)
 - Traceability: Link each decision back to specific requirements
 - Assumptions: List any assumptions made
 - Open Questions: Items requiring user confirmation
 
-## Phase 3 - Synthesis
+**Display Success Message** (after Phase 3 completion):
+
+```
+✅ Phase 3 Complete: Architecture Design
+
+Designed:
+- Components: [X] components designed
+- APIs: [Y] APIs planned
+- Architecture decisions: [Z] decisions made
+- Risks identified: [W] risks assessed
+
+Next: Proceeding to Phase 4 - Synthesis
+```
+
+## Phase 4 - Synthesis
 
 **Conflict Resolution Protocol**:
 If subagents disagree on architecture decisions:
+
 1. Document both positions explicitly:
    ```
    Conflict Detected:
@@ -235,6 +594,7 @@ If subagents disagree on architecture decisions:
 4. Document resolution clearly in final plan
 
 **Synthesis Steps**:
+
 1. Merge subagent outputs into a single plan outline.
 2. Apply Conflict Resolution Protocol for any conflicts.
 3. Build file manifest and phased roadmap, noting dependencies between components.
@@ -242,6 +602,7 @@ If subagents disagree on architecture decisions:
 
 **Implementability Check** (BEFORE finalizing plan):
 For each component, verify:
+
 - [ ] Dependencies identified and available (libraries, services, APIs)
 - [ ] Technical feasibility confirmed (skills, technology available)
 - [ ] Effort estimated and realistic (time, complexity)
@@ -250,10 +611,69 @@ For each component, verify:
 - [ ] Integration points identified (APIs, events, shared state)
 
 If any check fails:
+
 - Flag immediately: "Implementability concern: {issue}"
 - Ask user: "Resolve {issue} before proceeding or mark as risk?"
 
-## Phase 4 - Verification Summary
+**Validation Gate** (before proceeding to Phase 5):
+
+**CRITICAL**: Execute this bash command to verify all required planning deliverables exist:
+
+```bash
+# Verify planning deliverables exist
+REQUIRED_FILES=("plan.md" "architecture.md")
+PLANNING_DIR="docs/planning"  # Adjust based on actual output directory
+
+MISSING_FILES=()
+for file in "${REQUIRED_FILES[@]}"; do
+    if [ ! -f "$PLANNING_DIR/$file" ]; then
+        MISSING_FILES+=("$file")
+    fi
+done
+
+if [ ${#MISSING_FILES[@]} -gt 0 ]; then
+    echo "Error: Missing planning files: ${MISSING_FILES[*]}"
+    exit 1
+else
+    echo "✓ All required planning files created"
+fi
+
+# Verify plan.md has required sections
+if [ -f "$PLANNING_DIR/plan.md" ]; then
+    REQUIRED_SECTIONS=("Functionality Analysis" "Architecture" "API Design" "Component Design")
+    MISSING_SECTIONS=()
+    for section in "${REQUIRED_SECTIONS[@]}"; do
+        if ! grep -q "## $section" "$PLANNING_DIR/plan.md"; then
+            MISSING_SECTIONS+=("$section")
+        fi
+    done
+
+    if [ ${#MISSING_SECTIONS[@]} -gt 0 ]; then
+        echo "Error: Missing sections in plan.md: ${MISSING_SECTIONS[*]}"
+        exit 1
+    else
+        echo "✓ All required sections present in plan.md"
+    fi
+fi
+```
+
+**CRITICAL**: Do NOT proceed to Phase 5 until bash command exits with code 0.
+
+**Display Success Message** (after Phase 4 completion):
+
+```
+✅ Phase 4 Complete: Synthesis
+
+Synthesized:
+- Architecture decisions: [X] decisions documented
+- Risks identified: [Y] risks assessed
+- Components planned: [Z] components
+- Dependencies mapped: [W] dependencies
+
+Next: Proceeding to Phase 5 - Verification Summary
+```
+
+## Phase 5 - Verification Summary
 
 **MANDATORY**: Use exact template:
 
@@ -269,6 +689,7 @@ Implementability: <all checks passed or concerns flagged>
 ```
 
 **Example**:
+
 ```
 ## Verification Summary
 Scope: User authentication system
@@ -280,9 +701,24 @@ Open Questions: Stripe vs PayPal for payments? Monitoring SLA requirements?
 Implementability: All dependencies available, team has skills, no circular dependencies
 ```
 
-## Phase 5 - Deliverable
+**Display Success Message** (after Phase 5 completion):
+
+```
+✅ Phase 5 Complete: Planning
+
+Delivered:
+- Planning deliverables: [X] deliverables created
+- Architecture: ✅ Documented
+- Risks: ✅ Assessed
+- Ready for build: ✅ Yes
+
+Next: Planning workflow complete - Ready for build
+```
+
+## Phase 6 - Deliverable
 
 **Before Finalizing** (optimized memory):
+
 - **Pattern Validation**:
   - Compare predicted complexity (from Phase 0) → actual complexity experienced
   - Calculate accuracy: `(predicted_match_actual ? 1 : 0) / 1` (first use) or `(matches / total_uses)` (subsequent)
@@ -297,63 +733,111 @@ Implementability: All dependencies available, team has skills, no circular depen
   - If accuracy < 50% after 3+ uses → mark for deletion (cleanup will remove)
 - **Run Cleanup**: Execute memory cleanup script after storing patterns
 
+## Quick Reference
+
+**Phase Summary**:
+
+- **Phase 0**: Functionality Analysis (MANDATORY FIRST) - Understand what functionality needs planning, document flows, plan research
+- **Phase 1**: Complexity Gate - Assess complexity (1-5 scale), gate check if <=2
+- **Phase 2**: Requirements Intake - Gather requirements using Ask Questions tool if needed, load required skills
+- **Phase 3**: Architecture Design - Invoke planning subagents sequentially (architecture-risk → design-deployment)
+- **Phase 4**: Plan Synthesis - Synthesize plan with functionality-first approach
+- **Phase 5**: Deliverable Generation - Generate planning deliverable
+
+**Key Outputs**:
+
+- Functionality analysis (user/admin/system flows)
+- Architecture decisions with trade-offs
+- API designs with examples
+- Component designs with examples
+- Deployment strategies with examples
+- Risk mitigation strategies
+- Planning deliverable document
+
+**Validation Requirements**:
+
+- [ ] Phase 0 complete (functionality analysis done, gate checks passed)
+- [ ] Complexity assessed and gated if <=2
+- [ ] All required skills loaded successfully
+- [ ] Subagents invoked correctly (existence verified, dependencies analyzed, sequential execution)
+- [ ] All design decisions justified with functionality requirements
+- [ ] Evidence provided for all claims (file:line citations, examples)
+
 **MANDATORY OUTPUT FORMAT** - Use exact template from orchestrator:
 
 ```markdown
 # Planning Report
 
 ## Executive Summary
+
 [2-3 sentences summarizing scope, constraints, goals, and overall plan status]
 
 ## Actions Taken
+
+- Functionality analysis completed: [user flow, admin flow, system flow, integration flow documented]
 - Skills loaded: requirements-analysis, architecture-patterns, risk-analysis, api-design-patterns, component-design-patterns, deployment-patterns
 - Subagents invoked: planning-architecture-risk, planning-design-deployment
 - Inputs reviewed: [list]
 - Tools used: [list]
 
+## Functionality Analysis
+
+[Include complete functionality analysis from Phase 0]
+
 ## Findings / Decisions
 
 ### Requirements Overview
+
 - Goals: [list]
 - User Stories: [list with acceptance criteria]
 - Stakeholders: [list]
 - Constraints: [list]
 
 ### Architecture & Component Design
+
 - System Context: [textual diagram]
 - Container View: [components and responsibilities]
 - Component Breakdown: [detailed components]
 - Data Models: [tables, entities, relationships]
 
 ### API/Data Models
+
 - Endpoints: [list with contracts]
 - Data Models: [entities with fields]
 - Integration Points: [external services, events]
 
 ### Risk Register
+
 - Risk 1: [description] - Probability: [1-5] - Impact: [1-5] - Score: [P×I] - Mitigation: [action] - Owner: [role]
 - Risk 2: [same format]
 
 ### Implementation Roadmap
+
 - Phase 1: [components] - Dependencies: [list] - Files: [manifest]
 - Phase 2: [components] - Dependencies: [list] - Files: [manifest]
 
 ### Testing & Deployment Strategy
+
 - Unit Testing: [approach]
 - Integration Testing: [approach]
 - Deployment: [strategy, rollback plan]
 
 ## Verification Summary
+
 [Use exact template from Phase 4]
 
 ## Recommendations / Next Steps
+
 [Prioritized: Critical decisions needed, then implementation phases]
 
 ## Open Questions / Assumptions
+
 [If any conflicts detected, implementability concerns, or assumptions made]
 ```
 
 **Validation Before Presenting**:
+
+- [ ] Functionality analysis complete (from Phase 0)
 - [ ] Executive Summary present (2-3 sentences)
 - [ ] Verification Summary includes inputs, decisions, open questions
 - [ ] All architecture decisions have rationale
@@ -364,6 +848,7 @@ Implementability: All dependencies available, team has skills, no circular depen
 - [ ] All subagents/skills documented in Actions Taken
 
 **Offer Optional Next Steps**:
+
 - "Run build workflow for Phase 1?" (without assuming consent)
 - "Review this plan before implementation?" (without assuming consent)
 
@@ -372,6 +857,7 @@ Implementability: All dependencies available, team has skills, no circular depen
 **Standardized Error Recovery Protocol** (use orchestrator's template):
 
 If any skill or subagent fails:
+
 1. **Context**: What was attempted (skill/subagent name, phase, input provided)
 2. **Problem**: What failed (error message, missing output, invalid format)
 3. **Options**:
@@ -382,11 +868,13 @@ If any skill or subagent fails:
 5. **Default**: Recommended action
 
 **Critical Rules**:
+
 - Do not fabricate architecture decisions; clearly mark any sections that could not be produced
 - Never proceed without user decision when failure occurs
 - Document all failures in Actions Taken section
 - If planning cannot proceed without failed component, abort rather than fabricate
 
 ## References
+
 - Skill format: `docs/reference/04-SKILLS.md`
 - Subagent expectations: `docs/reference/03-SUBAGENTS.md`
