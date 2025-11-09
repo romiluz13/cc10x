@@ -19,6 +19,29 @@ cc10x provides structured workflows for Claude Code:
 
 ## What Makes cc10x Different
 
+### 🎯 **Orchestrator-First Architecture**
+
+**The cc10x-orchestrator is the MANDATORY entry point for all workflows**:
+
+- **Single Entry Point**: All workflows MUST be activated through the orchestrator, not directly
+- **Automatic Activation**: Orchestrator activates automatically on any user request (review, plan, build, debug, validate)
+- **Centralized Coordination**: Orchestrator coordinates skill loading, subagent invocation, and validation
+- **Validation Enforcement**: All validation mechanisms (Skills Inventory Check, Subagents Inventory Check, Phase Checklists) only work when orchestrator runs
+
+**Result**: Consistent, validated execution across all workflows.
+
+### 🎯 **Functionality-First Approach**
+
+**Every workflow starts with understanding functionality**:
+
+- **Phase 0: Functionality Analysis** (MANDATORY FIRST STEP)
+  - Understands user flows, admin flows, system flows
+  - Verifies functionality works before applying specialized checks
+  - Extracts acceptance criteria and requirements
+  - Documents flows and integration points
+
+**Result**: Workflows understand what needs to be done before doing it.
+
 ### 🎯 **Deterministic Workflow Selection**
 
 cc10x uses explicit keyword mapping to select the right workflow:
@@ -32,6 +55,16 @@ cc10x uses explicit keyword mapping to select the right workflow:
 ```
 
 **Result**: Correct workflow selection based on keywords.
+
+### 🎯 **Automatic Context Preset Detection**
+
+cc10x automatically detects task type and loads appropriate context:
+
+- **Frontend tasks**: Detects React/Vue components → loads frontend preset
+- **Backend tasks**: Detects API/server code → loads backend preset
+- **Full-stack tasks**: Detects both → loads app preset
+
+**Result**: Right context loaded automatically, no manual configuration needed.
 
 ### 🧠 **Memory Integration**
 
@@ -93,11 +126,12 @@ Skills load in 3 levels—exactly when needed:
 
 **cc10x executes**:
 
-1. Detects `review` intent → triggers REVIEW workflow
-2. Loads security, quality, performance, UX, accessibility skills
-3. Delegates to 3 specialized subagents (risk-security, performance-quality, ux-accessibility)
-4. Synthesizes findings with severity levels
-5. Provides file:line citations and remediation steps
+1. **Phase 0**: Functionality Analysis → Understands what the code does
+2. Detects `review` intent → triggers REVIEW workflow
+3. Loads security, quality, performance, UX, accessibility skills (parallel)
+4. Delegates to 3 specialized subagents (risk-security, performance-quality, ux-accessibility) in parallel
+5. Synthesizes findings with severity levels
+6. Provides file:line citations and remediation steps
 
 **Output**: Security audit with findings and fixes.
 
@@ -334,9 +368,20 @@ Separate context windows, focused expertise:
 
 ## 💎 Key Features
 
+### ✅ **Functionality-First Mandate**
+
+**Every workflow enforces Phase 0: Functionality Analysis FIRST**:
+
+- Understands what functionality needs to be built/reviewed/debugged
+- Documents user flows, admin flows, system flows
+- Verifies functionality works before applying specialized checks
+- Extracts acceptance criteria and requirements
+
+**Prevents**: Building/reviewing/debugging without understanding what needs to be done.
+
 ### ✅ **Complexity Gating**
 
-cc10x assesses task complexity (1-5 scale) before proceeding:
+cc10x assesses task complexity (1-5 scale) after functionality analysis:
 
 - **1-2**: Simple changes → Recommends direct implementation
 - **3**: Moderate → Planning workflow adds value
@@ -463,13 +508,15 @@ Workflows can resume after interruption:
 
 **cc10x executes**:
 
-1. Detects `build` intent → BUILD workflow
-2. Assesses complexity: 4 (multi-file, security-critical)
-3. Breaks into components: UserModel → AuthService → LoginComponent → AuthGuard
-4. For each component: RED → GREEN → REFACTOR with tests
-5. Code review by code-reviewer subagent
-6. Integration verification by integration-verifier subagent
-7. Evidence verification: Tests pass, coverage >80%, build succeeds
+1. **Phase 0**: Functionality Analysis → Understands auth requirements and flows
+2. Detects `build` intent → BUILD workflow
+3. Assesses complexity: 4 (multi-file, security-critical)
+4. Breaks into components: UserModel → AuthService → LoginComponent → AuthGuard
+5. For each component: RED → GREEN → REFACTOR with tests (sequential per component)
+6. Independent components run in parallel
+7. Code review by code-reviewer subagent (after builder)
+8. Integration verification by integration-verifier subagent (after reviewer)
+9. Evidence verification: Tests pass, coverage >80%, build succeeds
 
 **Time**: 45 minutes  
 **Output**: Production-ready auth system with 95% test coverage
@@ -482,14 +529,15 @@ Workflows can resume after interruption:
 
 **cc10x executes**:
 
-1. Detects `debug` intent → DEBUG workflow
-2. Loads systematic-debugging, log-analysis-patterns skills
-3. Delegates to bug-investigator subagent
-4. LOG FIRST: Gathers logs, metrics, stack traces
-5. Root cause: Event listener not cleaned up
-6. Targeted fix: Added cleanup in useEffect return
-7. Regression test: Added test to prevent future leaks
-8. Verification: Memory leak resolved, tests pass
+1. **Phase 0**: Functionality Analysis → Understands expected vs observed behavior
+2. Detects `debug` intent → DEBUG workflow
+3. Loads systematic-debugging, log-analysis-patterns skills
+4. Delegates to bug-investigator subagent
+5. LOG FIRST: Gathers logs, metrics, stack traces
+6. Root cause: Event listener not cleaned up
+7. Targeted fix: Added cleanup in useEffect return
+8. Regression test: Added test to prevent future leaks
+9. Verification: Memory leak resolved, tests pass
 
 **Time**: 15 minutes  
 **Output**: Memory leak fixed with prevention strategy
@@ -518,32 +566,44 @@ Workflows can resume after interruption:
 
 ```
 cc10x Orchestrator
+├── Phase 0: Functionality Analysis (MANDATORY FIRST)
+│   ├── Understand user/admin/system flows
+│   ├── Verify functionality works
+│   └── Extract acceptance criteria
+├── Context Preset Detection (automatic)
+│   ├── Detect task type (frontend/backend/app)
+│   └── Load appropriate context preset
 ├── Intent Detection (explicit keyword mapping)
 ├── Complexity Assessment (1-5 scale)
 ├── Workflow Selection (review/plan/build/debug/validate)
 │
 ├── REVIEW Workflow
-│   ├── Load: security-patterns, performance-patterns, code-quality-patterns
-│   ├── Delegate: analysis-risk-security, analysis-performance-quality, analysis-ux-accessibility
+│   ├── Phase 0: Functionality Analysis ✅
+│   ├── Load: security-patterns, performance-patterns, code-quality-patterns (parallel)
+│   ├── Delegate: analysis-risk-security, analysis-performance-quality, analysis-ux-accessibility (parallel)
 │   └── Output: Findings with severity, file:line citations, remediation steps
 │
 ├── PLAN Workflow
-│   ├── Load: requirements-analysis, architecture-patterns, risk-analysis
-│   ├── Delegate: planning-architecture-risk, planning-design-deployment
+│   ├── Phase 0: Functionality Analysis ✅
+│   ├── Load: requirements-analysis, architecture-patterns, risk-analysis (parallel)
+│   ├── Delegate: planning-architecture-risk → planning-design-deployment (sequential)
 │   └── Output: Architecture design, risk register, implementation roadmap
 │
 ├── BUILD Workflow
-│   ├── Load: test-driven-development, security-patterns, verification-before-completion
-│   ├── Delegate: component-builder, code-reviewer, integration-verifier
+│   ├── Phase 0: Functionality Analysis ✅
+│   ├── Load: test-driven-development, security-patterns, verification-before-completion (parallel)
+│   ├── Delegate: component-builder → code-reviewer → integration-verifier (sequential per component)
 │   └── Output: Components with tests, verification summary
 │
 ├── DEBUG Workflow
-│   ├── Load: systematic-debugging, log-analysis-patterns, root-cause-analysis
-│   ├── Delegate: bug-investigator
+│   ├── Phase 0: Functionality Analysis ✅
+│   ├── Load: systematic-debugging, log-analysis-patterns, root-cause-analysis (parallel)
+│   ├── Delegate: bug-investigator → code-reviewer → integration-verifier (sequential per bug)
 │   └── Output: Root cause, fix, regression test
 │
 └── VALIDATE Workflow
-    ├── Load: requirements-analysis, verification-before-completion
+    ├── Phase 0: Functionality Analysis ✅
+    ├── Load: requirements-analysis, verification-before-completion (parallel)
     └── Output: Alignment matrix, coverage analysis, documentation freshness
 ```
 

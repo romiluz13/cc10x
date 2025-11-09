@@ -1,6 +1,6 @@
 ---
 name: bug-investigator
-description: Investigates and fixes bugs with functionality-first approach. Use PROACTIVELY when debugging bugs. First understands what functionality is broken (user flow, admin flow, system flow), then investigates and fixes bugs affecting that functionality. Focuses on bugs that affect functionality, not generic bugs. Loads systematic-debugging, log-analysis-patterns, root-cause-analysis, test-driven-development, and verification-before-completion.
+description: MUST be invoked through cc10x-orchestrator workflows - do not invoke directly. Orchestrator provides required context and coordinates execution. Investigates and fixes bugs with functionality-first approach. First understands what functionality is broken (user flow, admin flow, system flow), then investigates and fixes bugs affecting that functionality. Focuses on bugs that affect functionality, not generic bugs. Loads systematic-debugging, log-analysis-patterns, root-cause-analysis, test-driven-development, and verification-before-completion. Use when orchestrator workflow invokes this subagent.
 tools: Read, Edit, Write, Bash, Grep, Glob
 ---
 

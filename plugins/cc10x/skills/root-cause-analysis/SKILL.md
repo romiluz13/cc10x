@@ -270,6 +270,84 @@ export function UploadForm({ onUpload }: UploadFormProps) {
 - **Fix**: Add onClick handler, add tests
 - **Prevention**: Always test functionality before refactoring
 
+### Strategy 5: Backward Tracing (Enhanced with dotai pattern)
+
+**WHEN error is deep in call stack:**
+
+**REQUIRED**: Trace backward through call chain to find original trigger.
+
+**Core principle:** Trace backward through the call chain until you find the original trigger, then fix at the source.
+
+**Process**:
+
+1. **Observe the Symptom**
+   - Error happens deep in execution (not at entry point)
+   - Stack trace shows long call chain
+   - Unclear where invalid data originated
+
+2. **Find Immediate Cause**
+   - What code directly causes this?
+   - Read error message, check stack trace
+
+3. **Ask: What Called This?**
+   - Trace up the call stack
+   - Find what function called this with bad value
+   - Keep tracing up until you find the source
+
+4. **Find Original Trigger**
+   - Where did bad value originate?
+   - What test/code triggers the problem?
+   - Fix at source, not at symptom
+
+**Example: Deep Call Stack Error**
+
+**Symptom**: `Error: git init failed in /Users/jesse/project/packages/core`
+
+**Trace chain**:
+
+1. `git init` runs in `process.cwd()` ← empty cwd parameter
+2. WorktreeManager called with empty projectDir
+3. Session.create() passed empty string
+4. Test accessed `context.tempDir` before beforeEach
+5. setupCoreTest() returns `{ tempDir: '' }` initially
+
+**Root cause:** Top-level variable initialization accessing empty value
+
+**Fix:** Made tempDir a getter that throws if accessed before beforeEach
+
+**Adding Stack Traces** (when can't trace manually):
+
+```typescript
+// Before the problematic operation
+async function gitInit(directory: string) {
+  const stack = new Error().stack;
+  console.error("DEBUG git init:", {
+    directory,
+    cwd: process.cwd(),
+    nodeEnv: process.env.NODE_ENV,
+    stack,
+  });
+
+  await execFileAsync("git", ["init"], { cwd: directory });
+}
+```
+
+**Critical:** Use `console.error()` in tests (not logger - may not show)
+
+**Run and capture:**
+
+```bash
+npm test 2>&1 | grep 'DEBUG git init'
+```
+
+**Analyze stack traces:**
+
+- Look for test file names
+- Find the line number triggering the call
+- Identify the pattern (same test? same parameter?)
+
+**Key Principle**: NEVER fix just where the error appears. Trace back to find the original trigger, then fix at source.
+
 ---
 
 ## Root Cause Analysis Framework (Reference - Use AFTER Functionality Understood)

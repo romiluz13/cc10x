@@ -1,6 +1,6 @@
 ---
 name: code-reviewer
-description: Reviews code changes for quality, security, and performance. Use PROACTIVELY when reviewing code changes. First verifies functionality works, then checks quality, security, and performance issues affecting functionality. Loads code-quality-patterns, security-patterns, performance-patterns, and verification-before-completion.
+description: MUST be invoked through cc10x-orchestrator workflows - do not invoke directly. Orchestrator provides required context and coordinates execution. Reviews code changes for quality, security, and performance. First verifies functionality works, then checks quality, security, and performance issues affecting functionality. Loads code-quality-patterns, security-patterns, performance-patterns, and verification-before-completion. Use when orchestrator workflow invokes this subagent.
 tools: Read, Grep, Glob
 ---
 

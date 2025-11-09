@@ -1,6 +1,6 @@
 ---
 name: analysis-performance-quality
-description: Reviews code for performance risks and code-quality issues. Use PROACTIVELY when reviewing code that handles user interactions, database queries, or API calls. First verifies functionality works, then checks performance and quality issues affecting functionality. Loads performance-patterns and code-quality-patterns. Returns findings with evidence and remediation guidance.
+description: MUST be invoked through cc10x-orchestrator workflows - do not invoke directly. Orchestrator provides required context and coordinates execution. Reviews code for performance risks and code-quality issues. First verifies functionality works, then checks performance and quality issues affecting functionality. Loads performance-patterns and code-quality-patterns. Returns findings with evidence and remediation guidance. Use when orchestrator workflow invokes this subagent.
 tools: Read, Grep, Glob
 ---
 

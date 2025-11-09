@@ -1,5 +1,7 @@
 # PLANNING Workflow - Structured Feature Design
 
+**CRITICAL**: This workflow MUST be activated through cc10x-orchestrator. Do NOT execute this workflow directly. The orchestrator provides required context, coordinates skill loading, and manages subagent invocation. Direct execution bypasses all validation mechanisms.
+
 **Triggered by:** User asks to plan, architect, or design a feature or system update.
 
 ## TL;DR Quick Checklist
@@ -259,6 +261,69 @@ Next: Proceeding to Phase 2 - Requirements Intake
 ```
 
 ## Phase 2 - Requirements Intake
+
+**CRITICAL:** Phase 0 (Functionality Analysis) MUST be complete before proceeding.
+
+**Optional: Documentation Generation** (at start of Phase 2, before requirements intake):
+
+**Detection Logic:**
+
+- Keywords: "document", "docs", "generate docs", "create design doc", "tech stack", "cursor rules", "app design"
+- File patterns: Missing `.cursor/rules/app-design-document.mdc` or `.cursor/rules/tech-stack.mdc`
+- User request contains documentation intent
+
+**If Documentation Needed:**
+
+1. **Detect Documentation Type:**
+   - "app design" / "design doc" → Load `app-design-generation` skill
+   - "tech stack" / "technical stack" → Load `tech-stack-generation` skill
+   - "cursor rules" / "create rule" → Load `cursor-rules-generation` skill
+   - "project structure" / "create doc" → Load `project-structure-generation` skill
+
+2. **Execute Documentation Generation:**
+   - Load appropriate skill (app-design-generation, tech-stack-generation, etc.)
+   - Follow skill's process (codebase analysis, Q&A, document generation)
+   - Save to `.cursor/rules/` directory
+   - Update `.claude/memory/documentation_state.json` with generation timestamp
+
+3. **Continue to Requirements Intake:**
+   - Documentation complete → Proceed to alignment step
+   - Documentation skipped → Continue to alignment step (existing flow)
+
+**If Documentation Not Needed:**
+
+- Continue directly to alignment step (existing flow unchanged)
+
+**Alignment Step** (at start of Phase 2, before requirements gathering):
+
+**Purpose:** Ensure understanding and alignment before planning begins.
+
+**Process:**
+
+1. **Use AskUserQuestion Tool:**
+   - Question 1: "What are you trying to accomplish?" (clear understanding)
+   - Question 2: "How should we approach this?" (step-by-step plan)
+   - Question 3: "Which files/modules will be affected?" (file changes)
+   - Question 4: "What risks or constraints should we consider?" (potential issues)
+   - Question 5: "How will we know this is complete?" (success criteria)
+
+2. **Wait for User Approval:**
+   - Document alignment in Phase 0 Functionality Analysis
+   - Proceed to requirements intake only after approval
+   - If user skips alignment → Continue to requirements intake (existing flow unchanged)
+
+**Integration:**
+
+- Alignment responses feed into requirements intake
+- Alignment documented in Phase 0 Functionality Analysis
+- Alignment ensures requirements gathering is focused and efficient
+- After alignment → Continue to "Integration with Brainstorming Skill" section below
+
+**Integration with Brainstorming Skill**:
+
+- **Load Skill**: Reference `brainstorming` skill for requirements refinement
+- **Use Pattern**: Create design document incrementally (`.claude/docs/plans/<topic>-design.md`), ask questions using AskUserQuestion tool, update document after each answer
+- **Output**: Refined requirements and design document ready for Phase 3
 
 **Load Requirements Skills**:
 
@@ -532,6 +597,18 @@ Run the bundled planning subagents sequentially, sharing the Phase 1 notes as co
 1. `planning-architecture-risk` (loads `architecture-patterns` and `risk-analysis`) - FIRST.
 2. `planning-design-deployment` (loads `api-design-patterns`, `component-design-patterns`, and `deployment-patterns`) - SECOND (receives architecture outputs).
 
+**Integration with Feature Planning Skill**:
+
+- **Load Skill**: Reference `feature-planning` skill (enhanced with writing-plans patterns) for detailed implementation plan creation
+- **Use Pattern**: Create detailed implementation plan with bite-sized tasks, incremental plan file updates, exact file paths, complete code examples
+- **Output**: Detailed implementation plan (`.claude/docs/plans/<feature-name>-plan.md`) ready for execution
+
+**Integration with Planning Workflow Skill**:
+
+- **Load Skill**: Reference `planning-workflow` skill (enhanced with executing-plans patterns) for batch execution guidance
+- **Use Pattern**: Execute plan in batches (default: first 3 tasks), report between batches, verify after each batch
+- **Output**: Execution guidance and checkpoint coordination
+
 Each subagent must:
 
 - Reference the skill sections used to make decisions.
@@ -580,6 +657,17 @@ Designed:
 
 Next: Proceeding to Phase 4 - Synthesis
 ```
+
+**Plan Workflow Inventory Validation** (MANDATORY after Phase 3):
+
+- [ ] planning-architecture-risk documented in Actions Taken (FIRST)
+- [ ] planning-design-deployment documented in Actions Taken (SECOND)
+- [ ] Sequential execution documented
+- [ ] Architecture outputs passed to design subagent documented
+- [ ] All subagent outputs validated
+- [ ] No planning subagent missing (unless skip condition met)
+
+**If ANY item missing**: STOP and invoke missing subagent immediately.
 
 ## Phase 4 - Synthesis
 

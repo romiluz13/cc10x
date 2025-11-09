@@ -1,5 +1,7 @@
 # REVIEW Workflow - Evidence Based Code Analysis
 
+**CRITICAL**: This workflow MUST be activated through cc10x-orchestrator. Do NOT execute this workflow directly. The orchestrator provides required context, coordinates skill loading, and manages subagent invocation. Direct execution bypasses all validation mechanisms.
+
 **Triggered by:** User asks for review, audit, or quality/security checks.
 
 ## TL;DR Quick Checklist
@@ -229,6 +231,39 @@ Verified:
 Next: Proceeding to Phase 1 - Input Validation
 ```
 
+**Phase 0 Completion Checklist** (MANDATORY before proceeding to Phase 1):
+
+**CRITICAL**: Do NOT proceed to Phase 1 until ALL items below are checked.
+
+- [ ] Phase 0 success message displayed
+- [ ] All required actions for Phase 0 completed
+- [ ] All outputs validated (format, evidence, file:line citations)
+- [ ] Actions Taken section updated with Phase 0 activities
+- [ ] Gate check passed (if applicable)
+- [ ] No errors or warnings requiring attention
+- [ ] Phase 0 documented in Actions Taken with completion status
+
+**Phase-Specific Checks**:
+
+**Phase 0 (Functionality Analysis)**:
+
+- [ ] Functionality analysis template completed
+- [ ] User flows documented
+- [ ] Admin flows documented (if applicable)
+- [ ] System flows documented
+- [ ] Integration flows documented (if applicable)
+- [ ] Functional verification attempted or limitation documented
+- [ ] Visual asset check completed (if applicable)
+
+**If ANY item unchecked**:
+
+- STOP workflow execution
+- Complete missing items
+- Re-run checklist
+- Do NOT proceed until ALL items checked
+
+**CRITICAL**: This checklist is non-negotiable. Workflow aborts if any item fails.
+
 ## Phase 1 - Input Validation
 
 **Memory Integration** (optimized):
@@ -312,6 +347,36 @@ Validated:
 Next: Proceeding to Phase 2 - Load Required Skills
 ```
 
+**Phase 1 Completion Checklist** (MANDATORY before proceeding to Phase 2):
+
+**CRITICAL**: Do NOT proceed to Phase 2 until ALL items below are checked.
+
+- [ ] Phase 1 success message displayed
+- [ ] All required actions for Phase 1 completed
+- [ ] All outputs validated (format, evidence, file:line citations)
+- [ ] Actions Taken section updated with Phase 1 activities
+- [ ] Gate check passed (if applicable)
+- [ ] No errors or warnings requiring attention
+- [ ] Phase 1 documented in Actions Taken with completion status
+
+**Phase-Specific Checks**:
+
+**Phase 1 (Input Validation/Complexity Gate)**:
+
+- [ ] Inputs validated (files exist, scope clear)
+- [ ] Complexity assessed (if applicable)
+- [ ] External resources checked (if applicable)
+- [ ] User approval obtained (if complexity <=2)
+
+**If ANY item unchecked**:
+
+- STOP workflow execution
+- Complete missing items
+- Re-run checklist
+- Do NOT proceed until ALL items checked
+
+**CRITICAL**: This checklist is non-negotiable. Workflow aborts if any item fails.
+
 ## Phase 2 - Load Required Skills
 
 **Required Skills** (all exist under `plugins/cc10x/skills/`):
@@ -386,6 +451,36 @@ Loaded:
 
 Next: Proceeding to Phase 3 - Dispatch Analysis Subagents
 ```
+
+**Phase 2 Completion Checklist** (MANDATORY before proceeding to Phase 3):
+
+**CRITICAL**: Do NOT proceed to Phase 3 until ALL items below are checked.
+
+- [ ] Phase 2 success message displayed
+- [ ] All required actions for Phase 2 completed
+- [ ] All outputs validated (format, evidence, file:line citations)
+- [ ] Actions Taken section updated with Phase 2 activities
+- [ ] Gate check passed (if applicable)
+- [ ] No errors or warnings requiring attention
+- [ ] Phase 2 documented in Actions Taken with completion status
+
+**Phase-Specific Checks**:
+
+**Phase 2 (Load Required Skills)**:
+
+- [ ] Skills Inventory Check completed (see orchestrator)
+- [ ] ALL required skills loaded and documented
+- [ ] Conditional skills loaded IF detected and documented
+- [ ] Each skill marked as "loaded successfully" or "failed to load"
+
+**If ANY item unchecked**:
+
+- STOP workflow execution
+- Complete missing items
+- Re-run checklist
+- Do NOT proceed until ALL items checked
+
+**CRITICAL**: This checklist is non-negotiable. Workflow aborts if any item fails.
 
 ## Phase 3 - Dispatch Analysis Subagents
 
@@ -521,6 +616,50 @@ Completed:
 Next: Proceeding to Phase 4 - Synthesis
 ```
 
+**Phase 3 Completion Checklist** (MANDATORY before proceeding to Phase 4):
+
+**CRITICAL**: Do NOT proceed to Phase 4 until ALL items below are checked.
+
+- [ ] Phase 3 success message displayed
+- [ ] All required actions for Phase 3 completed
+- [ ] All outputs validated (format, evidence, file:line citations)
+- [ ] Actions Taken section updated with Phase 3 activities
+- [ ] Gate check passed (if applicable)
+- [ ] No errors or warnings requiring attention
+- [ ] Phase 3 documented in Actions Taken with completion status
+
+**Phase-Specific Checks**:
+
+**Phase 3 (Dispatch Subagents)**:
+
+- [ ] Subagents Inventory Check completed (see orchestrator)
+- [ ] ALL required subagents invoked and documented
+- [ ] Execution mode documented (parallel/sequential)
+- [ ] Skip decisions documented (if any)
+- [ ] Each subagent output validated
+
+**If ANY item unchecked**:
+
+- STOP workflow execution
+- Complete missing items
+- Re-run checklist
+- Do NOT proceed until ALL items checked
+
+**CRITICAL**: This checklist is non-negotiable. Workflow aborts if any item fails.
+
+**Review Workflow Inventory Validation** (MANDATORY after Phase 3):
+
+- [ ] 3 analysis subagents documented in Actions Taken (or focused subagent if focused review)
+- [ ] Execution mode documented (parallel IF comprehensive, single IF focused)
+- [ ] code-reviewer documented IF code changes detected
+- [ ] integration-verifier documented IF integration changes detected
+- [ ] All subagent outputs validated
+- [ ] No analysis subagent missing (unless focused review)
+- [ ] No code-reviewer missing IF code changes detected
+- [ ] No integration-verifier missing IF integration changes detected
+
+**If ANY item missing**: STOP and invoke missing subagent immediately.
+
 ## Phase 4 - Synthesis
 
 **Conflict Resolution Protocol**:
@@ -621,6 +760,35 @@ Synthesized:
 Next: Proceeding to Phase 5 - Verification Summary
 ```
 
+**Phase 4 Completion Checklist** (MANDATORY before proceeding to Phase 5):
+
+**CRITICAL**: Do NOT proceed to Phase 5 until ALL items below are checked.
+
+- [ ] Phase 4 success message displayed
+- [ ] All required actions for Phase 4 completed
+- [ ] All outputs validated (format, evidence, file:line citations)
+- [ ] Actions Taken section updated with Phase 4 activities
+- [ ] Gate check passed (if applicable)
+- [ ] No errors or warnings requiring attention
+- [ ] Phase 4 documented in Actions Taken with completion status
+
+**Phase-Specific Checks**:
+
+**Phase 4+ (Workflow-Specific)**:
+
+- [ ] Workflow-specific phase requirements met
+- [ ] All outputs validated
+- [ ] Actions Taken updated
+
+**If ANY item unchecked**:
+
+- STOP workflow execution
+- Complete missing items
+- Re-run checklist
+- Do NOT proceed until ALL items checked
+
+**CRITICAL**: This checklist is non-negotiable. Workflow aborts if any item fails.
+
 **Validation Gate** (before proceeding to Phase 5):
 
 - [ ] Phase 4 complete (findings synthesized, conflicts resolved, priorities assigned)
@@ -673,6 +841,35 @@ Generated:
 
 Next: Review workflow complete - Report ready
 ```
+
+**Phase 5 Completion Checklist** (MANDATORY before proceeding to Phase 6):
+
+**CRITICAL**: Do NOT proceed to Phase 6 until ALL items below are checked.
+
+- [ ] Phase 5 success message displayed
+- [ ] All required actions for Phase 5 completed
+- [ ] All outputs validated (format, evidence, file:line citations)
+- [ ] Actions Taken section updated with Phase 5 activities
+- [ ] Gate check passed (if applicable)
+- [ ] No errors or warnings requiring attention
+- [ ] Phase 5 documented in Actions Taken with completion status
+
+**Phase-Specific Checks**:
+
+**Phase 5 (Verification Summary)**:
+
+- [ ] Verification summary generated
+- [ ] Evidence documented
+- [ ] All claims supported by evidence
+
+**If ANY item unchecked**:
+
+- STOP workflow execution
+- Complete missing items
+- Re-run checklist
+- Do NOT proceed until ALL items checked
+
+**CRITICAL**: This checklist is non-negotiable. Workflow aborts if any item fails.
 
 ## Phase 6 - Present Results
 

@@ -1,5 +1,7 @@
 # VALIDATION Workflow - Cross-Artifact Consistency
 
+**CRITICAL**: This workflow MUST be activated through cc10x-orchestrator. Do NOT execute this workflow directly. The orchestrator provides required context, coordinates skill loading, and manages subagent invocation. Direct execution bypasses all validation mechanisms.
+
 **Triggered by:** User wants to confirm the implementation matches an existing plan, tests, or documentation set.
 
 ## Prerequisites
@@ -292,6 +294,14 @@ Compared:
 
 Next: Proceeding to Phase 3 - Code vs Tests
 ```
+
+**Validate Workflow Inventory Validation** (MANDATORY after Phase 2):
+
+- [ ] No subagents documented (direct analysis only)
+- [ ] Documented as "No subagents - direct analysis"
+- [ ] All validation phases completed
+
+**If subagents listed**: STOP and remove (validate workflow has no subagents).
 
 ## Phase 3 - Code vs Tests
 

@@ -115,6 +115,46 @@ If you have not logged or observed the failing state, you are guessing.
 - Inspect recent changes (`git log`, `git diff`) that might affect functionality
 - Map observed behavior to expected behavior (where does the flow break?)
 
+**Multi-Component Diagnostic Instrumentation** (Enhanced with dotai pattern):
+
+**WHEN system has multiple components (CI → build → signing, API → service → database):**
+
+**BEFORE proposing fixes, add diagnostic instrumentation:**
+
+```
+For EACH component boundary:
+  - Log what data enters component
+  - Log what data exits component
+  - Verify environment/config propagation
+  - Check state at each layer
+
+Run once to gather evidence showing WHERE it breaks
+THEN analyze evidence to identify failing component
+THEN investigate that specific component
+```
+
+**Example (multi-layer system):**
+
+```bash
+# Layer 1: Workflow
+echo "=== Secrets available in workflow: ==="
+echo "IDENTITY: ${IDENTITY:+SET}${IDENTITY:-UNSET}"
+
+# Layer 2: Build script
+echo "=== Env vars in build script: ==="
+env | grep IDENTITY || echo "IDENTITY not in environment"
+
+# Layer 3: Signing script
+echo "=== Keychain state: ==="
+security list-keychains
+security find-identity -v
+
+# Layer 4: Actual signing
+codesign --sign "$IDENTITY" --verbose=4 "$APP"
+```
+
+**This reveals:** Which layer fails (secrets → workflow ✓, workflow → build ✗)
+
 **Example: File Upload Broken**:
 
 ```bash
@@ -189,6 +229,51 @@ export function UploadForm() {
 - State the suspected root cause in one sentence (how it affects functionality)
 - Write a failing regression test that proves the bug affects functionality
 - Apply the smallest change to make functionality work
+
+**Hypothesis Testing Approach** (Enhanced with dotai pattern):
+
+**Scientific method:**
+
+1. **Form Single Hypothesis**
+   - State clearly: "I think X is the root cause because Y"
+   - Write it down
+   - Be specific, not vague
+
+2. **Test Minimally**
+   - Make the SMALLEST possible change to test hypothesis
+   - One variable at a time
+   - Don't fix multiple things at once
+
+3. **Verify Before Continuing**
+   - Did it work? Yes → Phase 4
+   - Didn't work? Form NEW hypothesis
+   - DON'T add more fixes on top
+
+4. **When You Don't Know**
+   - Say "I don't understand X"
+   - Don't pretend to know
+   - Ask for help
+   - Research more
+
+**Architecture Questioning After 3+ Failed Fixes** (Enhanced with dotai pattern):
+
+**If 3+ Fixes Failed: Question Architecture**
+
+**Pattern indicating architectural problem:**
+
+- Each fix reveals new shared state/coupling/problem in different place
+- Fixes require "massive refactoring" to implement
+- Each fix creates new symptoms elsewhere
+
+**STOP and question fundamentals:**
+
+- Is this pattern fundamentally sound?
+- Are we "sticking with it through sheer inertia"?
+- Should we refactor architecture vs. continue fixing symptoms?
+
+**Discuss with your human partner before attempting more fixes**
+
+This is NOT a failed hypothesis - this is a wrong architecture.
 
 **Example: File Upload Broken**:
 

@@ -1,6 +1,6 @@
 ---
 name: build-workflow
-description: Coordinates feature implementation with functionality-first approach. Use PROACTIVELY when building features. First understands functionality requirements (user flow, admin flow, system flow), then builds features to implement that functionality. Focuses on making functionality work first, then optimizing. Loads shared skills and invokes component-builder, code-reviewer, and integration-verifier sequentially.
+description: MUST be activated through cc10x-orchestrator - do not use directly. Orchestrator coordinates this build workflow with functionality-first approach. First understands functionality requirements (user flow, admin flow, system flow), then builds features to implement that functionality. Focuses on making functionality work first, then optimizing. Loads shared skills and invokes component-builder, code-reviewer, and integration-verifier sequentially. Use when orchestrator detects build intent.
 allowed-tools: Read, Grep, Glob, Task, Bash
 ---
 

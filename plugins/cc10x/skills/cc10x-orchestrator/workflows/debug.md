@@ -1,5 +1,7 @@
 # DEBUG Workflow - Root Cause First
 
+**CRITICAL**: This workflow MUST be activated through cc10x-orchestrator. Do NOT execute this workflow directly. The orchestrator provides required context, coordinates skill loading, and manages subagent invocation. Direct execution bypasses all validation mechanisms.
+
 **Triggered by:** User requests help investigating bugs, errors, or unexpected behaviour.
 
 ## TL;DR Quick Checklist
@@ -186,6 +188,35 @@ Use the askquestion tool to clarify requirements:
 
 ## Phase 1 - Intake
 
+**CRITICAL:** Phase 0 (Functionality Analysis) MUST be complete before proceeding.
+
+**LOG FIRST Principle** (enhanced):
+
+**Quick Log Access** (automatic detection):
+
+**Detection Logic:**
+
+1. **Check package.json for log scripts:**
+   - `pnpm app:log`, `pnpm backend:log`, `pnpm typecheck:watch`
+   - `npm run dev:log`, `npm run watch:logs`
+   - Common patterns: `*:log`, `*:watch`, `*:monitor`
+
+2. **If Log Scripts Found:**
+   - Offer: "Would you like me to start log monitoring? (app logs, backend logs, typecheck)"
+   - If yes → Run appropriate log command in background
+   - Continue with existing LOG FIRST investigation
+   - Integrate log output with bug investigation
+
+3. **If No Log Scripts Found:**
+   - Continue with existing LOG FIRST investigation (existing flow unchanged)
+
+**Integration:**
+
+- Log monitoring runs in background (non-blocking)
+- Log output feeds into bug investigation
+- Existing LOG FIRST principle remains unchanged
+- LOG FIRST happens AFTER Phase 0 completion
+
 **Memory Integration** (optimized):
 
 - **Load Failure Modes Once**: Read `.claude/memory/failure_modes.json` ONCE, cache for workflow duration
@@ -260,13 +291,25 @@ Use the askquestion tool to clarify requirements:
    - ✅ Different root causes (independent investigations)
    - ✅ Different test suites (no verification overlap)
    - ✅ Isolated subagent contexts
+   - **Orchestrator dispatches bug-investigator subagents in parallel** (uses `parallel-agent-dispatch` skill)
 
    **SEQUENTIAL (Required for Related Bugs)**:
    - ❌ Same files (mutation conflicts)
    - ❌ Same root cause (investigation overlap)
    - ❌ Dependent fixes (fix B needs fix A)
 
-3. **Bug Execution Plan**:
+3. **Parallel Dispatch Logic** (when bugs are independent):
+   - **Load Skill**: Reference `parallel-agent-dispatch` skill for independence detection and coordination patterns
+   - **Orchestrator Analysis**: Orchestrator analyzes bugs for independence using parallel-agent-dispatch skill patterns:
+     - File overlap check (different files → independent)
+     - Resource overlap check (different resources → independent)
+     - Dependency check (no dependencies → independent)
+     - State check (no shared state → independent)
+   - **Parallel Dispatch**: If all checks pass → Orchestrator dispatches bug-investigator subagent for each independent bug concurrently
+   - **Coordination**: Orchestrator tracks all subagents, collects results, verifies no conflicts
+   - **Sequential Fallback**: If any check fails → Execute sequentially (existing behavior)
+
+4. **Bug Execution Plan**:
 
    ```
    Bug Independence Graph:
@@ -362,6 +405,7 @@ For each skill above:
 - For security-related bugs: Also load `security-patterns`
 - For integration bugs: Also load `integration-patterns`
 - For code quality bugs: Also load `code-quality-patterns` (complexity, maintainability, SOLID violations)
+- For multiple independent bugs (3+): Also load `parallel-agent-dispatch` (orchestrator coordinates parallel subagent dispatch)
 
 **Display Success Message** (after Phase 2 completion):
 
@@ -501,6 +545,18 @@ If bug investigation requires external services unavailable:
    - **Option B**: Skip investigation, verify contract/structure only
    - **Option C**: Request user to provide test environment
 3. Document approach chosen and limitations
+
+**Debug Workflow Inventory Validation** (MANDATORY after Phase 3):
+
+- [ ] bug-investigator documented for EACH bug in Actions Taken
+- [ ] code-reviewer documented for EACH bug (unless skipped)
+- [ ] integration-verifier documented for EACH bug (unless skipped)
+- [ ] Sequential execution per bug documented
+- [ ] Parallel execution between bugs documented (if independent)
+- [ ] All subagent outputs validated
+- [ ] No bug missing subagent sequence
+
+**If ANY item missing**: STOP and invoke missing subagent immediately.
 
 ## Phase 4 - Consolidation
 

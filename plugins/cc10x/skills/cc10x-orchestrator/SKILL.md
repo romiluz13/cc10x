@@ -1,6 +1,6 @@
 ---
 name: cc10x-orchestrator
-description: Primary orchestrator for cc10x with functionality-first approach. Interprets user intent and coordinates review, planning, build, and debug workflows. ALWAYS starts with functionality analysis (user flows, admin flows, system flows) before applying specialized checks. Honors focus requests, enforces evidence-first rules, and never invokes non-existent agents. Use for complex multi-step engineering tasks that need structured coordination.
+description: Use PROACTIVELY when reviewing code, planning features, building components, debugging errors, or validating implementations - MANDATORY entry point that coordinates all cc10x workflows with functionality-first approach. ALWAYS starts with functionality analysis (user flows, admin flows, system flows) before applying specialized checks. Workflows MUST be activated through orchestrator, not directly. Honors focus requests, enforces evidence-first rules, and never invokes non-existent agents.
 allowed-tools: Read, Grep, Glob, Bash, Task
 ---
 
@@ -10,6 +10,7 @@ allowed-tools: Read, Grep, Glob, Bash, Task
 
 - [ ] Detect user intent (review/plan/build/debug/validate) using keyword matching
 - [ ] Execute Phase 0: Functionality Analysis FIRST (understand user/admin/system flows, verify functionality works)
+- [ ] Execute Phase 0: Context Preset Detection (automatically detect task type and load appropriate preset)
 - [ ] Load required skills in parallel (if independent) or sequentially (if dependencies exist)
 - [ ] Load conditional skills based on detection logic (UI detected → load ui-design, etc.)
 - [ ] Invoke subagents based on conditions and dependencies (check skip conditions, analyze dependencies)
@@ -92,11 +93,90 @@ If a user combines intents (for example "review then plan"), run each workflow i
    - **Verify Functionality**: If possible, verify functionality works (test, check logs, manual verification)
    - **Gate Check**: Do NOT proceed to workflow execution until functionality analysis is complete
    - **If Functionality Unclear**: Ask user: "Functionality unclear. Please clarify: What functionality is needed? What are the user flows?"
-2. **Intent and Context Check**
+2. **Context Preset Detection (AUTOMATIC)**
+   - **After functionality analysis, before skill loading**: Automatically detect task type and load appropriate context preset
+   - **Load Skill**: Load `context-preset-management` skill to handle preset detection
+   - **Detection Process**:
+     1. **Analyze User Request**: Scan for task type indicators (frontend/backend/full-stack keywords)
+     2. **File Pattern Detection**: Use `Glob` to detect file patterns:
+        - `Glob("**/*.{tsx,jsx}")` → frontend detected
+        - `Glob("**/api/**")` → backend detected
+        - Both → app preset
+     3. **Memory Check**: Check `.claude/memory/preset_preferences.json` for remembered preset preference
+     4. **Preset Selection**: Select appropriate preset (frontend/backend/app) based on detection
+     5. **Load Rules**: Load alwaysApply rules + preset-specific rules from `.claude/context.json`
+     6. **Store Preference**: Save selected preset to memory for future reference
+   - **Preset Selection Logic**:
+     - Frontend indicators + frontend files → `frontend` preset
+     - Backend indicators + backend files → `backend` preset
+     - Both indicators + both file types → `app` preset
+     - No clear indicators → Check memory for last used preset, or use default (`app`)
+   - **Error Handling**: If context.json missing or preset not found, use default preset (`app`) and continue workflow
+   - **Output**: Context summary with selected preset and loaded rules
+   - **Integration**: This step is automatic and transparent - no user commands required
+3. **Intent and Context Check**
+
+   **CRITICAL:** Phase 0 (Functionality Analysis) and Context Preset Detection MUST be complete before proceeding.
+
+   **Error Detection** (after Phase 0 and Context Preset Detection, before intent detection):
+
+   **Detection Logic:**
+   - User request contains bash output or error messages
+   - Error count == 1 (single error)
+   - Error message is clear and actionable
+   - Fix is obvious (syntax error, missing import, typo, etc.)
+
+   **Decision Tree:**
+
+   ```
+   User request contains error?
+   ├─ Single clear error + obvious fix?
+   │   └─ YES → Load `quick-error-fixing` skill
+   │       └─ Execute quick fix
+   │           ├─ Fix succeeds → Done (no workflow needed)
+   │           └─ Fix fails → Fall back to DEBUG workflow
+   │   └─ NO → Continue to intent detection (existing flow)
+   └─ Multiple/complex errors?
+       └─ YES → Skip quick fix, proceed to DEBUG workflow
+   ```
+
+   **Quick Fix Criteria:**
+   - Syntax errors (missing semicolon, bracket, etc.)
+   - Import errors (missing import statement)
+   - Type errors (simple type mismatches)
+   - Typo errors (variable name typos)
+   - Single file errors (not cross-file issues)
+
+   **If Quick Fix Applies:**
+   1. Load `quick-error-fixing` skill
+   2. Execute fix (read error, identify cause, apply fix, verify)
+   3. If fix succeeds → Report success, done
+   4. If fix fails → Report failure, proceed to DEBUG workflow
+
+   **If Quick Fix Doesn't Apply:**
+   - Continue to intent detection (existing flow unchanged)
+
+   **Skill Authoring Detection** (before workflow selection):
+
+   **Detection Logic:**
+   - Keywords: "create skill", "write skill", "new skill", "skill authoring", "author skill"
+   - User request explicitly mentions creating/writing skills
+
+   **If Skill Authoring Detected:**
+   1. Load `skill-authoring` skill directly (no workflow needed)
+   2. Execute skill authoring process
+   3. Done (no workflow execution)
+
+   **If Skill Authoring Not Detected:**
+   - Continue to intent detection decision tree (existing flow)
+
    - **Intent Detection Decision Tree**: Match user request to workflow using visual decision tree:
 
      ```
      User request?
+     ├─ Contains "create skill"/"write skill"/"new skill"/"skill authoring"/"author skill"?
+     │   └─ YES → Load `skill-authoring` skill (no workflow needed)
+     │   └─ NO → Continue
      ├─ Contains "review"/"audit"/"analyze"/"assess"/"evaluate"/"inspect"/"examine"?
      │   └─ YES → Review workflow
      │   └─ NO → Continue
@@ -248,6 +328,113 @@ Workflow requires skills?
      - Check detection logic for conditional skills BEFORE loading
      - Load all independent skills in parallel (faster initialization)
      - Verify each skill loaded successfully
+
+   **Skills Inventory Check** (MANDATORY before proceeding to Phase 3):
+
+   **CRITICAL**: This check prevents missing required skills. Execute BEFORE any subagent invocation.
+   1. **Read Workflow Phase 2 Section**:
+      - Read workflow file Phase 2 section to get complete required skills list
+      - Read workflow file Phase 2 section to get conditional skills detection logic
+      - Document expected skills: {list all required + conditional if detected}
+
+   2. **Check Actions Taken Section**:
+      - Read Actions Taken section (or create if not exists)
+      - Verify ALL required skills are listed with load status
+      - Verify conditional skills are listed IF detection logic matched
+      - Verify each skill marked as "loaded successfully" or "failed to load"
+
+   3. **Inventory Validation**:
+      - [ ] ALL required skills from workflow Phase 2 listed in Actions Taken
+      - [ ] Each required skill marked as "loaded successfully" or "failed to load"
+      - [ ] Conditional skills listed IF detection logic matched
+      - [ ] Each conditional skill marked as "loaded successfully" or "failed to load" IF detected
+      - [ ] No required skill missing from Actions Taken
+      - [ ] No conditional skill missing IF detection logic matched
+
+   4. **If ANY required skill missing**:
+      - STOP workflow execution
+      - Report: "CRITICAL: Required skill '{name}' missing from Actions Taken. Loading now."
+      - Load missing skill immediately
+      - Update Actions Taken section
+      - Re-run inventory check
+
+   5. **If conditional skill should have been detected but not listed**:
+      - STOP workflow execution
+      - Report: "CRITICAL: Conditional skill '{name}' should be loaded (detection logic matched) but missing. Loading now."
+      - Check detection logic again
+      - Load skill if detection logic matches
+      - Update Actions Taken section
+      - Re-run inventory check
+
+   6. **If conditional skill listed but detection logic doesn't match**:
+      - Document: "Conditional skill '{name}' loaded but detection logic doesn't match. Continuing."
+      - Continue (not critical, but document for review)
+
+   **CRITICAL**: Do NOT proceed to Phase 3 (subagent invocation) until ALL items above are checked and validated.
+
+   **Real-Time Activation Tracking** (MANDATORY):
+
+   **Purpose**: Track all activations in real-time to prevent misses.
+
+   **Tracking Format**:
+   Maintain running inventory in Actions Taken section:
+
+   ```markdown
+   ## Actions Taken (Real-Time Tracking)
+
+   ### Phase 0: Functionality Analysis
+
+   - ✅ Completed: [timestamp]
+   - User flows: [count] documented
+   - Admin flows: [count] documented (if applicable)
+   - System flows: [count] documented
+
+   ### Phase 1: [Phase Name]
+
+   - ✅ Completed: [timestamp]
+   - [Phase-specific activities]
+
+   ### Phase 2: Skills Loaded
+
+   - ✅ Completed: [timestamp]
+   - Required skills loaded:
+     - ✅ project-context-understanding (loaded successfully)
+     - ✅ [skill-name] (loaded successfully)
+     - ❌ [skill-name] (failed to load: [reason])
+   - Conditional skills loaded (IF detected):
+     - ✅ [skill-name] (detected: [reason], loaded successfully)
+   - Skills Inventory Check: ✅ Passed
+
+   ### Phase 3: Subagents Invoked
+
+   - ✅ Completed: [timestamp]
+   - Subagents invoked:
+     - ✅ analysis-risk-security (invoked successfully, parallel group 1)
+     - ✅ analysis-performance-quality (invoked successfully, parallel group 1)
+     - ✅ analysis-ux-accessibility (invoked successfully, parallel group 1)
+     - ✅ code-reviewer (invoked successfully, sequential after analysis, code changes detected)
+     - ✅ integration-verifier (invoked successfully, sequential after code-reviewer, integration changes detected)
+   - Execution mode: Parallel (analysis subagents), Sequential (code-reviewer → integration-verifier)
+   - Skip decisions: None
+   - Subagents Inventory Check: ✅ Passed
+
+   ### Phase 4+: [Workflow-Specific]
+
+   - ✅ Completed: [timestamp]
+   - [Workflow-specific activities]
+   ```
+
+   **Update Rules**:
+   - Update Actions Taken IMMEDIATELY after each activation
+   - Never proceed to next phase without updating Actions Taken
+   - Verify Actions Taken updated before each phase transition
+   - Use checkmarks (✅) for completed, (❌) for failed, (⏭️) for skipped
+
+   **Validation**:
+   - Before each phase transition: Verify Actions Taken updated
+   - Before final report: Verify ALL phases documented in Actions Taken
+   - If Actions Taken not updated: STOP and update before proceeding
+
    - Follow workflow instructions exactly. Workflows now reference only real subagents and skills.
    - Record which domain skills are invoked so results can point to specific guidance files.
 
@@ -316,6 +503,76 @@ Workflow requires skills?
      - [ ] No placeholder text ("TODO", "TBD", "FIXME") in critical sections
      - [ ] Output is actionable (not just descriptions)
    - **Error Recovery**: If subagent fails, use Error Recovery Protocol
+
+   **Subagents Inventory Check** (MANDATORY before Phase 3 completion):
+
+   **CRITICAL**: This check prevents missing required subagents. Execute AFTER all subagents should have been invoked.
+   1. **Read Workflow Phase 3 Section**:
+      - Read workflow file Phase 3 section to get subagent invocation rules
+      - Read "When to Invoke Subagents" section
+      - Read "When NOT to Invoke Subagents" section
+      - Document expected subagents: {list all that should be invoked}
+
+   2. **Check Actions Taken Section**:
+      - Read Actions Taken section
+      - Verify ALL subagents that should be invoked are listed
+      - Verify execution mode documented (parallel/sequential)
+      - Verify skip decisions documented (if any skipped)
+
+   3. **Inventory Validation**:
+      - [ ] ALL subagents that should be invoked are listed in Actions Taken
+      - [ ] Each subagent marked as "invoked successfully" or "skipped" with reason
+      - [ ] Execution mode documented (parallel/sequential for each subagent group)
+      - [ ] Skip decisions documented with reasons (if any skipped)
+      - [ ] No required subagent missing from Actions Taken
+      - [ ] No subagent listed that shouldn't have been invoked (check skip conditions)
+
+   4. **Workflow-Specific Validation**:
+
+      **Review Workflow**:
+      - [ ] Analysis subagents listed (analysis-risk-security, analysis-performance-quality, analysis-ux-accessibility)
+      - [ ] Execution mode documented (parallel IF comprehensive, single IF focused)
+      - [ ] code-reviewer listed IF code changes detected
+      - [ ] integration-verifier listed IF integration changes detected
+
+      **Plan Workflow**:
+      - [ ] planning-architecture-risk listed (FIRST, sequential)
+      - [ ] planning-design-deployment listed (SECOND, sequential)
+      - [ ] Sequential execution documented
+      - [ ] Architecture outputs passed to design subagent documented
+
+      **Build Workflow**:
+      - [ ] component-builder listed for each component
+      - [ ] code-reviewer listed for each component (unless skipped)
+      - [ ] integration-verifier listed for each component (unless skipped)
+      - [ ] Sequential execution per component documented
+      - [ ] Parallel execution between independent components documented
+
+      **Debug Workflow**:
+      - [ ] bug-investigator listed for each bug
+      - [ ] code-reviewer listed for each bug (unless skipped)
+      - [ ] integration-verifier listed for each bug (unless skipped)
+      - [ ] Sequential execution per bug documented
+      - [ ] Parallel execution between independent bugs documented
+
+      **Validate Workflow**:
+      - [ ] No subagents (direct analysis only)
+      - [ ] Documented as "No subagents - direct analysis"
+
+   5. **If ANY required subagent missing**:
+      - STOP workflow execution
+      - Report: "CRITICAL: Required subagent '{name}' missing from Actions Taken. Checking skip conditions..."
+      - Check skip conditions from workflow Phase 3
+      - If skip condition NOT met → Invoke subagent immediately
+      - If skip condition met → Document skip decision in Actions Taken
+      - Update Actions Taken section
+      - Re-run inventory check
+
+   6. **If subagent listed but shouldn't have been invoked**:
+      - Document: "Subagent '{name}' invoked but skip condition met. Continuing."
+      - Continue (not critical, but document for review)
+
+   **CRITICAL**: Do NOT proceed to Phase 4 (synthesis) until ALL items above are checked and validated.
 
 ### Tool Access Precedence
 
@@ -456,6 +713,51 @@ Task: Create tasks for workflow phases
 
 **Strict Mode** (optional, recommended for production):
 
+**Strict Mode Enforcement** (default for production):
+
+**CRITICAL**: Strict Mode is enabled by default. Workflow aborts if any validation fails.
+
+**Enforcement Points**:
+
+1. **Phase 0 Enforcement**:
+   - Workflow aborts if Phase 0 not completed FIRST
+   - Workflow aborts if functionality analysis incomplete
+   - Workflow aborts if gate check fails
+
+2. **Skills Loading Enforcement**:
+   - Workflow aborts if Actions Taken section missing required skills
+   - Workflow aborts if any required skill not loaded (unless user explicitly skipped)
+   - Workflow aborts if conditional skill should be loaded but missing (detection logic matched)
+   - Skills Inventory Check must pass before proceeding
+
+3. **Subagents Invocation Enforcement**:
+   - Workflow aborts if Actions Taken section missing required subagents
+   - Workflow aborts if any required subagent not invoked (unless skip condition met)
+   - Workflow aborts if subagent should be invoked but missing (skip condition NOT met)
+   - Subagents Inventory Check must pass before proceeding
+
+4. **Phase Transition Enforcement**:
+   - Workflow aborts if any phase skipped without documentation
+   - Workflow aborts if phase completion checklist not verified
+   - Workflow aborts if gate check fails
+   - All phase transitions require explicit checklist completion
+
+5. **Final Report Enforcement**:
+   - Workflow aborts if Pre-Final-Report Validation fails
+   - Workflow aborts if Actions Taken validation fails
+   - Workflow aborts if any required section missing
+   - All audits must pass before presenting final report
+
+**Error Recovery**:
+
+- When Strict Mode enforcement triggers:
+  - Report: "CRITICAL: Strict Mode enforcement failed. Missing: {list}"
+  - Use Error Recovery Protocol
+  - Options: Fix missing items / Abort workflow / Disable Strict Mode (user approval required)
+  - Wait for user decision before proceeding
+
+**CRITICAL**: Strict Mode cannot be disabled without explicit user approval. Default is enabled.
+
 When Strict Mode is enabled:
 
 - Workflow aborts immediately if any validation step fails
@@ -469,6 +771,38 @@ When Strict Mode is enabled:
    - Summarise findings with severity or priority (high/medium/low) based on evidence.
    - Link each recommendation to the skill or subagent that produced it.
    - Surface open questions and next-step offers without assuming consent.
+
+   **Notification Integration** (automatic via hooks):
+   - **Workflow Completion**: Stop hook automatically sends macOS notification when workflow completes
+   - **Notification Content**: Includes workflow name and conversation summary title
+   - **No Action Required**: Notifications are automatic and transparent - no user commands needed
+   - **Prerequisites**: Requires `terminal-notifier` CLI installed (`brew install terminal-notifier`)
+   - **Graceful Failure**: If terminal-notifier not installed, notification is silently skipped (workflow continues normally)
+
+   **Session Summary Generation** (automatic after workflow completion):
+
+   **CRITICAL:** This happens in Orchestrator Phase 5, AFTER all workflow phases complete. Workflow Phase 0-6 execute first, then Orchestrator Phase 5 compiles results.
+
+   **Process:**
+   1. **Load Memory Skill:** Reference `memory-tool-integration` skill
+   2. **Generate Session Summary:**
+      - Extract file changes from workflow report (Actions Taken section)
+      - Extract tool calls from Actions Taken section
+      - Extract accomplishments from Findings/Decisions
+      - Extract decisions from Recommendations
+      - Extract next steps from Open Questions
+   3. **Save Session Summary:**
+      - Format: Use dotai's session-summary.md template structure
+      - Save to: `.claude/memory/session_summaries/session-{timestamp}.md`
+      - Archive: If CURRENT_SESSION.md exists, archive to ARCHIVE/sessions/ (keep last 10)
+   4. **Update Working Plan** (if WORKING_PLAN.md exists):
+      - Load `memory-tool-integration` skill
+      - Update WORKING_PLAN.md with:
+        - Completed tasks (from workflow report)
+        - Current phase (from workflow type)
+        - Next priorities (from Recommendations)
+        - Session timestamp
+      - Use minimal surgical updates (don't rewrite entire file)
 
    **Memory Integration** (filesystem-based, optimized):
    - **Validate Patterns First**: Compare predicted complexity → actual complexity
@@ -813,7 +1147,138 @@ Commands:
 [If any - list questions requiring user input or assumptions made]
 ```
 
+**Pre-Final-Report Validation** (MANDATORY before presenting final report):
+
+**CRITICAL**: This validation prevents incomplete reports. Execute BEFORE presenting final report.
+
+1. **Phase Completion Audit**:
+   - [ ] Phase 0 completed (functionality analysis)
+   - [ ] All workflow phases completed (check workflow-specific phase list)
+   - [ ] All phase success messages displayed
+   - [ ] All gate checks passed
+   - [ ] All phase completion checklists verified
+
+2. **Skills Audit**:
+   - [ ] Skills Inventory Check completed (see Phase 2)
+   - [ ] ALL required skills from workflow Phase 2 loaded and documented in Actions Taken
+   - [ ] ALL conditional skills loaded IF detection logic matched and documented
+   - [ ] Each skill documented in Actions Taken with load status
+   - [ ] No required skill missing
+   - [ ] No conditional skill missing IF detection logic matched
+
+3. **Subagents Audit**:
+   - [ ] Subagents Inventory Check completed (see Phase 3)
+   - [ ] ALL subagents that should be invoked are documented in Actions Taken
+   - [ ] Execution mode documented (parallel/sequential)
+   - [ ] Skip decisions documented with reasons (if any skipped)
+   - [ ] Output validation documented for each subagent
+   - [ ] No required subagent missing
+   - [ ] No subagent listed that shouldn't have been invoked
+
+4. **Evidence Audit**:
+   - [ ] Functionality verification documented FIRST in Verification Summary
+   - [ ] All findings have file:line citations
+   - [ ] All commands have exit codes
+   - [ ] Verification summary complete
+   - [ ] No placeholder text ("TODO", "TBD", "FIXME") in critical sections
+
+5. **Actions Taken Audit**:
+   - [ ] Phase 0: Functionality Analysis documented
+   - [ ] Phase 1: Input Validation/Complexity Gate documented
+   - [ ] Phase 2: Skills loaded documented (ALL required + conditional IF detected)
+   - [ ] Phase 3: Subagents invoked documented (ALL that should be invoked)
+   - [ ] Phase 4+: Workflow-specific phases documented
+   - [ ] Execution mode documented (parallel/sequential)
+   - [ ] Skip decisions documented (if any)
+   - [ ] Phase completion messages documented
+
+6. **Workflow-Specific Audit**:
+
+   **Review Workflow**:
+   - [ ] 3 analysis subagents documented (or focused subagent if focused review)
+   - [ ] code-reviewer documented IF code changes detected
+   - [ ] integration-verifier documented IF integration changes detected
+   - [ ] Parallel execution documented IF comprehensive review
+
+   **Plan Workflow**:
+   - [ ] planning-architecture-risk documented (FIRST)
+   - [ ] planning-design-deployment documented (SECOND)
+   - [ ] Sequential execution documented
+   - [ ] Architecture outputs passed documented
+
+   **Build Workflow**:
+   - [ ] component-builder documented for each component
+   - [ ] code-reviewer documented for each component (unless skipped)
+   - [ ] integration-verifier documented for each component (unless skipped)
+   - [ ] Sequential execution per component documented
+   - [ ] Parallel execution between components documented (if independent)
+
+   **Debug Workflow**:
+   - [ ] bug-investigator documented for each bug
+   - [ ] code-reviewer documented for each bug (unless skipped)
+   - [ ] integration-verifier documented for each bug (unless skipped)
+   - [ ] Sequential execution per bug documented
+   - [ ] Parallel execution between bugs documented (if independent)
+
+   **Validate Workflow**:
+   - [ ] No subagents documented (direct analysis only)
+
+**If ANY audit fails**:
+
+- STOP final report generation
+- Report: "CRITICAL: Pre-final-report validation failed. Missing: {list missing items}"
+- Complete missing items
+- Re-run all audits
+- Do NOT present final report until ALL audits pass
+
+**CRITICAL**: This validation is non-negotiable. Final report generation aborts if any audit fails.
+
 **Validation**: Before presenting final report, verify:
+
+**Actions Taken Validation** (CRITICAL - before final report):
+
+**CRITICAL**: This validation ensures Actions Taken section is complete and accurate.
+
+**Required Structure**:
+
+```markdown
+## Actions Taken
+
+- Functionality analysis completed: [user flow, admin flow, system flow documented]
+- Phase 0: Functionality Analysis ✅ Complete
+- Phase 1: [Phase name] ✅ Complete
+- Phase 2: Skills Loaded ✅ Complete
+  - Required skills loaded: [list ALL required skills with status]
+  - Conditional skills loaded: [list conditional skills IF detected with status]
+- Phase 3: Subagents Invoked ✅ Complete
+  - Subagents invoked: [list ALL subagents that should be invoked with status]
+  - Execution mode: [parallel/sequential for each group]
+  - Skip decisions: [list any skipped subagents with reasons]
+- Phase 4+: [Workflow-specific phases] ✅ Complete
+- Tools used: [list tools used]
+- Commands run: [list key commands with exit codes]
+```
+
+**Validation Checklist**:
+
+- [ ] Phase 0: Functionality Analysis documented
+- [ ] ALL required skills listed (check against workflow Phase 2 required skills list)
+- [ ] ALL conditional skills listed IF detected (check against detection logic)
+- [ ] ALL subagents invoked listed (check against workflow Phase 3 subagent list)
+- [ ] Skip decisions documented (if any subagents/skills skipped, reason documented)
+- [ ] Execution mode documented (parallel/sequential for each subagent group)
+- [ ] Phase completion messages documented (all phases completed)
+- [ ] Verification summary includes functionality verification FIRST
+- [ ] No required skill missing
+- [ ] No required subagent missing (unless skip condition met)
+- [ ] No phase missing
+
+**If ANY item missing**:
+
+- Do NOT proceed to final report
+- Complete missing items first
+- Re-run validation
+- Do NOT present final report until ALL items validated
 
 - [ ] Functionality analysis complete (from Phase 0)
 - [ ] Executive Summary present (2-3 sentences)

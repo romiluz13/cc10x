@@ -266,6 +266,15 @@ load_latest_snapshot() {
     fi
 }
 
+load_skill_discovery() {
+    local skill_file="${CLAUDE_PLUGIN_ROOT:-plugins/cc10x}/skills/skill-discovery/SKILL.md"
+    if [ -f "$skill_file" ]; then
+        cat "$skill_file" 2>/dev/null || echo ""
+    else
+        echo ""
+    fi
+}
+
 main() {
     # Initialize session
     initialize_session
@@ -288,6 +297,23 @@ main() {
             fi
         fi
         return 0
+    fi
+
+    # Load skill-discovery skill for all session starts (startup, resume, clear)
+    local skill_discovery_content
+    skill_discovery_content=$(load_skill_discovery)
+    if [ -n "$skill_discovery_content" ]; then
+        # Escape output for JSON
+        local skill_discovery_escaped
+        if command -v jq >/dev/null 2>&1; then
+            skill_discovery_escaped=$(printf %s "$skill_discovery_content" | jq -Rs .)
+        else
+            skill_discovery_escaped=$(printf %s "$skill_discovery_content" | python -c 'import sys,json;print(json.dumps(sys.stdin.read()))')
+        fi
+        
+        # Output skill-discovery as additionalContext
+        printf '{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":%s}}\n' \
+            "$skill_discovery_escaped"
     fi
 
     # Generate session ID

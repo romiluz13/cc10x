@@ -1,6 +1,6 @@
 ---
 name: review-workflow
-description: Coordinates the review workflow with functionality-first approach. Use PROACTIVELY when reviewing code. First understands functionality (user flow, admin flow, system flow), then reviews code for issues affecting that functionality. Focuses on finding real issues that affect functionality, not generic code review. Loads domain skills, runs bundled analysis subagents, and compiles an evidence-backed report.
+description: MUST be activated through cc10x-orchestrator - do not use directly. Orchestrator coordinates this review workflow with functionality-first approach. First understands functionality (user flow, admin flow, system flow), then reviews code for issues affecting that functionality. Focuses on finding real issues that affect functionality, not generic code review. Loads domain skills, runs bundled analysis subagents, and compiles an evidence-backed report. Use when orchestrator detects review intent.
 allowed-tools: Read, Grep, Glob, Task, Bash
 ---
 

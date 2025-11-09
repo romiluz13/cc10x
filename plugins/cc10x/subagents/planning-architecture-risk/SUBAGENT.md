@@ -1,6 +1,6 @@
 ---
 name: planning-architecture-risk
-description: Designs system architecture and assesses risks with functionality-first approach. Use PROACTIVELY when planning features. First analyzes functionality (user flow, admin flow, system flow, integration flow), then designs architecture to support that functionality, then identifies risks specific to that functionality. Loads architecture-patterns and risk-analysis.
+description: MUST be invoked through cc10x-orchestrator workflows - do not invoke directly. Orchestrator provides required context and coordinates execution. Designs system architecture and assesses risks with functionality-first approach. First analyzes functionality (user flow, admin flow, system flow, integration flow), then designs architecture to support that functionality, then identifies risks specific to that functionality. Loads architecture-patterns and risk-analysis. Use when orchestrator workflow invokes this subagent.
 tools: Read, Grep, Glob
 ---
 

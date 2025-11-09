@@ -1,6 +1,6 @@
 ---
 name: planning-workflow
-description: Coordinates the planning workflow with functionality-first approach. Use PROACTIVELY when planning features. First understands functionality (user flow, admin flow, system flow, integration flow), then plans features to support that functionality. Focuses on planning functionality, not generic feature planning. Runs requirements intake and planning subagents, then compiles a complete plan.
+description: MUST be activated through cc10x-orchestrator - do not use directly. Orchestrator coordinates this planning workflow with functionality-first approach. First understands functionality (user flow, admin flow, system flow, integration flow), then plans features to support that functionality. Focuses on planning functionality, not generic feature planning. Runs requirements intake and planning subagents, then compiles a complete plan. Use when orchestrator detects plan intent.
 allowed-tools: Read, Grep, Glob, Task, Bash
 ---
 

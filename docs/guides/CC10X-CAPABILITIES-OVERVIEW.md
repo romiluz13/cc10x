@@ -3,16 +3,16 @@
 ## Core Orchestrator
 
 **Title**: cc10x-orchestrator  
-**Description**: Primary orchestrator that interprets user intent via explicit keyword mapping, selects workflows (review/plan/build/debug/validate), applies complexity gates (1-5 scale), coordinates subagents with dependency analysis, enforces evidence-first verification, and manages memory integration. Handles intent disambiguation, workflow existence verification, skill loading verification, subagent invocation rules (sequential/parallel), error recovery protocol (5-minute timeout), and memory cleanup.  
-**Trigger**: Automatically activated on any user request in Claude Code when cc10x plugin is installed.  
-**Orchestrator Integration**: Central coordinator; all workflows and subagents flow through it. Uses deterministic keyword mapping for intent detection, complexity rubric for gating, and unified parallel loading strategy for skills.
+**Description**: Primary orchestrator that interprets user intent via explicit keyword mapping, selects workflows (review/plan/build/debug/validate), applies complexity gates (1-5 scale), coordinates subagents with dependency analysis, enforces evidence-first verification, and manages memory integration. Handles intent disambiguation, workflow existence verification, skill loading verification, subagent invocation rules (sequential/parallel), error recovery protocol (5-minute timeout), and memory cleanup. **CRITICAL**: Enforces Phase 0: Functionality Analysis as MANDATORY FIRST STEP in all workflows - understands functionality before applying specialized checks. **CRITICAL**: Orchestrator is the MANDATORY entry point - all workflows and subagents MUST be activated through orchestrator, not directly. **NEW**: Automatically detects task type and loads context presets (frontend/backend/app) in Phase 0. **NEW**: Quick error fixing bypass for simple errors (syntax, imports, typos) - bypasses workflows for obvious fixes. **NEW**: Skill authoring detection - loads skill-authoring skill directly when user requests skill creation.  
+**Trigger**: Automatically activated on any user request in Claude Code when cc10x plugin is installed. Orchestrator is the MANDATORY entry point - workflows and subagents cannot be activated directly.  
+**Orchestrator Integration**: Central coordinator; all workflows and subagents flow through it. Uses deterministic keyword mapping for intent detection, complexity rubric for gating, unified parallel loading strategy for skills, automatic context preset detection, and functionality-first mandate enforcement.
 
 ---
 
 ## Workflow 1: REVIEW
 
 **Title**: Review Workflow - Evidence-Based Code Analysis  
-**Description**: Multi-dimensional code analysis covering security (OWASP Top 10 via security-patterns), performance bottlenecks (N+1 queries, O(n\*n) loops, memory leaks), code quality (complexity, duplication, SOLID principles), UX friction points (missing feedback, confusing flows), and WCAG accessibility compliance (keyboard navigation, focus management, aria labeling). Produces findings grouped by severity (critical/high/medium/low) with file:line citations and remediation steps tied to skill guidance. Includes conflict resolution protocol for subagent disagreements, file size sanity checks (>500 lines), and scope validation (warns if <50 lines).  
+**Description**: Multi-dimensional code analysis covering security (OWASP Top 10 via security-patterns), performance bottlenecks (N+1 queries, O(n\*n) loops, memory leaks), code quality (complexity, duplication, SOLID principles), UX friction points (missing feedback, confusing flows), and WCAG accessibility compliance (keyboard navigation, focus management, aria labeling). **CRITICAL**: Phase 0: Functionality Analysis is MANDATORY FIRST - understands what the code does before reviewing it. Produces findings grouped by severity (critical/high/medium/low) with file:line citations and remediation steps tied to skill guidance. Includes conflict resolution protocol for subagent disagreements, file size sanity checks (>500 lines), and scope validation (warns if <50 lines).  
 **Trigger**: Keywords: "review", "audit", "quality check", "security audit", "analyze code", "code review", "assess", "evaluate", "inspect", "examine"  
 **Orchestrator Integration**:
 
@@ -31,7 +31,7 @@
 ## Workflow 2: PLAN
 
 **Title**: Planning Workflow - Structured Feature Design  
-**Description**: Transforms requirements into complete planning artifacts. Includes requirements intake with completeness threshold (gates if >3 critical questions unanswered), architecture design (system context, container view, component breakdown, data models, integration points), risk analysis (7-stage framework: data flow, dependencies, timing, UX, security, performance, failure modes), API design (endpoints, schemas, authentication), component design (component tree, state management, interfaces), implementation roadmap (phases with file manifest and dependencies), testing strategy (unit/integration/E2E with coverage targets), and deployment strategy (build steps, monitoring, rollback triggers). Includes conflict resolution protocol for subagent disagreements and implementability checks (dependencies, feasibility, circular dependencies).  
+**Description**: Transforms requirements into complete planning artifacts. **CRITICAL**: Phase 0: Functionality Analysis is MANDATORY FIRST - understands functionality needs before planning. Includes requirements intake with completeness threshold (gates if >3 critical questions unanswered), architecture design (system context, container view, component breakdown, data models, integration points), risk analysis (7-stage framework: data flow, dependencies, timing, UX, security, performance, failure modes), API design (endpoints, schemas, authentication), component design (component tree, state management, interfaces), implementation roadmap (phases with file manifest and dependencies), testing strategy (unit/integration/E2E with coverage targets), and deployment strategy (build steps, monitoring, rollback triggers). Includes conflict resolution protocol for subagent disagreements and implementability checks (dependencies, feasibility, circular dependencies).  
 **Trigger**: Keywords: "plan", "design", "architect", "create plan", "roadmap", "strategy", "architecture", "system design", "feature design"  
 **Orchestrator Integration**:
 
@@ -48,7 +48,7 @@
 ## Workflow 3: BUILD
 
 **Title**: Build Workflow - TDD-Driven Implementation  
-**Description**: Enforces strict TDD discipline (RED → GREEN → REFACTOR) for each component. Handles component identification, dependency-aware ordering (builds dependency graph, detects circular dependencies), component execution loop (component-builder → code-reviewer → integration-verifier per component, sequential within component, parallel between independent components), failure cascading (blocks dependent components if dependency fails), review feedback classification (blocking/important/suggestions), and aggregate verification (regression suite, coverage checks, build/lint). Includes file size sanity checks (>500 lines triggers refactor recommendation).  
+**Description**: Enforces strict TDD discipline (RED → GREEN → REFACTOR) for each component. **CRITICAL**: Phase 0: Functionality Analysis is MANDATORY FIRST - understands functionality requirements before building. Handles component identification, dependency-aware ordering (builds dependency graph, detects circular dependencies), component execution loop (component-builder → code-reviewer → integration-verifier per component, sequential within component, parallel between independent components), failure cascading (blocks dependent components if dependency fails), review feedback classification (blocking/important/suggestions), and aggregate verification (regression suite, coverage checks, build/lint). Includes file size sanity checks (>500 lines triggers refactor recommendation).  
 **Trigger**: Keywords: "build", "implement", "create", "write", "code", "develop", "make", "add feature", "implement feature", "build feature"  
 **Orchestrator Integration**:
 
@@ -65,7 +65,7 @@
 ## Workflow 4: DEBUG
 
 **Title**: Debug Workflow - Root Cause First  
-**Description**: Systematic bug investigation using LOG FIRST methodology (gather logs/metrics before guessing). Includes bug classification (reproducible/intermittent/non-reproducible/external/performance/functional), bug independence analysis (parallel for independent bugs, sequential for related bugs), investigation timeout (3 attempts max, then escalation), root cause analysis (hypothesis formation, evidence gathering), targeted fix implementation (minimal changes), regression test writing (RED before fix, GREEN after), and escalation paths (additional logging, user-provided data, external dependency investigation). Includes bug type skill selection (performance-patterns for performance bugs, security-patterns for security bugs, integration-patterns for integration bugs).  
+**Description**: Systematic bug investigation using LOG FIRST methodology (gather logs/metrics before guessing). **CRITICAL**: Phase 0: Functionality Analysis is MANDATORY FIRST - understands expected vs observed functionality before debugging. Includes bug classification (reproducible/intermittent/non-reproducible/external/performance/functional), bug independence analysis (parallel for independent bugs, sequential for related bugs), investigation timeout (3 attempts max, then escalation), root cause analysis (hypothesis formation, evidence gathering), targeted fix implementation (minimal changes), regression test writing (RED before fix, GREEN after), and escalation paths (additional logging, user-provided data, external dependency investigation). Includes bug type skill selection (performance-patterns for performance bugs, security-patterns for security bugs, integration-patterns for integration bugs).  
 **Trigger**: Keywords: "debug", "fix", "error", "bug", "investigate", "failure", "broken", "issue", "problem", "troubleshoot", "diagnose"  
 **Orchestrator Integration**:
 
@@ -81,7 +81,7 @@
 ## Workflow 5: VALIDATE
 
 **Title**: Validation Workflow - Cross-Artifact Consistency  
-**Description**: Verifies alignment between plan, code, tests, and documentation. Includes plan vs code comparison (drift classification: intentional/accidental/missing/extra), code vs tests verification (coverage thresholds: unit 70% min/80% target, integration 50% min/60% target, E2E critical flows), coverage gap analysis (critical/important/acceptable gaps), edge case coverage verification, and documentation freshness verification (extracts code contracts: API endpoints, function signatures, data models, compares with docs, scores: fresh/stale/missing/incorrect). Produces alignment matrix (requirement → code → test → doc mapping) and drift analysis.  
+**Description**: Verifies alignment between plan, code, tests, and documentation. **CRITICAL**: Phase 0: Functionality Analysis is MANDATORY FIRST - understands validation requirements before validating. Includes plan vs code comparison (drift classification: intentional/accidental/missing/extra), code vs tests verification (coverage thresholds: unit 70% min/80% target, integration 50% min/60% target, E2E critical flows), coverage gap analysis (critical/important/acceptable gaps), edge case coverage verification, and documentation freshness verification (extracts code contracts: API endpoints, function signatures, data models, compares with docs, scores: fresh/stale/missing/incorrect). Produces alignment matrix (requirement → code → test → doc mapping) and drift analysis.  
 **Trigger**: Keywords: "validate", "verify", "check", "confirm implementation", "alignment check", "consistency check"  
 **Orchestrator Integration**:
 
@@ -225,3 +225,21 @@
 **Description**: Standardized error handling with structured format. Provides: Context (what was attempted with evidence: file paths, commands run, error messages), Problem (what failed: specific error, exit code, failure point), Options (clear choices: Retry if transient error likely, Continue without {component} if optional, Abort workflow if critical failure, Custom user instructions), Impact (what each choice means), Default (recommended action: Abort for critical failures, Retry for transient, Continue without component for optional). Error Recovery Timeout: 5 minutes waiting for user response, timeout behavior (critical failures → Abort, transient failures → Retry once, optional failures → Continue without component), timeout notification and logging to `.claude/memory/workflow_history.json`. Critical rules: never fabricate outputs for missing agents, wait for explicit user decision, proceed with default after timeout.  
 **Trigger**: Activated automatically when any skill/subagent/workflow fails  
 **Orchestrator Integration**: Defined in orchestrator Phase 6 (failure handling) and used by all workflows. Applied when skill loading fails, subagent fails, workflow fails, or verification fails.
+
+---
+
+## Supporting Capability 7: Context Preset Management
+
+**Title**: Context Preset Management  
+**Description**: Automatic task-specific context loading system that detects task type from user request and file patterns, then loads appropriate context preset (frontend/backend/app). Uses `.claude/context.json` to define rules and presets. Detection logic analyzes user request keywords (frontend: "component", "UI", "React"; backend: "API", "server", "database"; full-stack: "feature", "e2e") and file patterns (`Glob("**/*.{tsx,jsx}")` for frontend, `Glob("**/api/**")` for backend). Loads alwaysApply rules + preset-specific rules. Stores preset preferences in `.claude/memory/preset_preferences.json` for future sessions. Falls back to default preset (`app`) if detection fails or context.json missing.  
+**Trigger**: Automatically executed in orchestrator Phase 0 (after functionality analysis, before skill loading)  
+**Orchestrator Integration**: Integrated into orchestrator Phase 0 as automatic context preset detection step. Uses `context-preset-management` skill for detection logic. No user commands required - fully automatic and transparent.
+
+---
+
+## Supporting Capability 8: Notification System
+
+**Title**: Notification System  
+**Description**: macOS notification system for workflow events. Shows native macOS notifications when workflows complete (Stop hook) and when context compaction occurs (PreCompact hook). Notifications include conversation summary title and workflow-specific messages. Uses `terminal-notifier` CLI for notifications. Gracefully fails if terminal-notifier not installed (workflow continues normally). Notification sounds: Ping for workflow completion, Bottle for compaction.  
+**Trigger**: Automatically triggered by hooks (Stop hook for workflow completion, PreCompact hook for compaction)  
+**Orchestrator Integration**: Integrated via hooks system. Stop hook triggers automatically when workflow completes (orchestrator Phase 5). PreCompact hook triggers automatically before context compaction. No orchestrator code changes required - pure hook-based integration.

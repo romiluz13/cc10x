@@ -1,5 +1,24 @@
 # Changelog
 
+## [4.1.0] - 2025-01-27
+
+### Changed
+
+- **Orchestrator as Mandatory Entry Point**: Updated orchestrator description to be most discoverable with all workflow keywords ("reviewing code", "planning features", "building components", "debugging errors", "validating implementations")
+- **Workflow Activation**: All workflow skills now require orchestrator activation - workflows cannot be activated directly
+- **Subagent Invocation**: All subagents now require orchestrator context - subagents cannot be invoked directly
+- **Skill Discovery Protocol**: Updated skill-discovery to check orchestrator FIRST instead of before orchestrator runs
+
+### Added
+
+- **Workflow File Warnings**: Added explicit CRITICAL warnings at top of all workflow definition files reinforcing orchestrator requirement
+- **Validation Enforcement**: All validation mechanisms (Skills Inventory Check, Subagents Inventory Check, Phase Checklists, Pre-Final-Report Validation) now work correctly as orchestrator always runs first
+
+### Fixed
+
+- **Activation Path Issues**: Fixed uncontrolled bypass mechanisms that allowed workflows/subagents to be activated without orchestrator
+- **Orchestrator Discoverability**: Improved orchestrator description to match common user request keywords, ensuring orchestrator activates for 95%+ of requests
+
 ## [4.0.0] - 2025-01-27
 
 ### Changed

@@ -1,6 +1,6 @@
 ---
 name: debug-workflow
-description: Coordinates systematic debugging with functionality-first approach. Use PROACTIVELY when debugging bugs. First understands what functionality is broken (user flow, admin flow, system flow), then debugs bugs affecting that functionality. Focuses on bugs that affect functionality, not generic debugging. Loads investigation skills and delegates to bug-investigator, code-reviewer, and integration-verifier sequentially.
+description: MUST be activated through cc10x-orchestrator - do not use directly. Orchestrator coordinates this debug workflow with functionality-first approach. First understands what functionality is broken (user flow, admin flow, system flow), then debugs bugs affecting that functionality. Focuses on bugs that affect functionality, not generic debugging. Loads investigation skills and delegates to bug-investigator, code-reviewer, and integration-verifier sequentially. Use when orchestrator detects debug intent.
 allowed-tools: Read, Grep, Glob, Task, Bash
 ---
 

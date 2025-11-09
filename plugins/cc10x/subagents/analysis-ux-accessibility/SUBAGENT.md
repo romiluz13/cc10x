@@ -1,6 +1,6 @@
 ---
 name: analysis-ux-accessibility
-description: Reviews code for user experience and accessibility concerns. Use PROACTIVELY when reviewing user-facing interfaces. First verifies functionality works, then checks UX and accessibility issues affecting functionality. Loads ux-patterns and accessibility-patterns.
+description: MUST be invoked through cc10x-orchestrator workflows - do not invoke directly. Orchestrator provides required context and coordinates execution. Reviews code for user experience and accessibility concerns. First verifies functionality works, then checks UX and accessibility issues affecting functionality. Loads ux-patterns and accessibility-patterns. Use when orchestrator workflow invokes this subagent.
 tools: Read, Grep, Glob
 ---
 

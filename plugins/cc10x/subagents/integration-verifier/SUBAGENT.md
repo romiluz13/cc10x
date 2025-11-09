@@ -1,6 +1,6 @@
 ---
 name: integration-verifier
-description: Validates integrations with functionality-first approach. Use PROACTIVELY when verifying integrations. First understands functionality requirements (user flow, admin flow, system flow, integration flow), then verifies that integrations support that functionality. Focuses on verifying functionality works, not generic integration patterns. Loads integration-patterns, test-driven-development, log-analysis-patterns, and verification-before-completion.
+description: MUST be invoked through cc10x-orchestrator workflows - do not invoke directly. Orchestrator provides required context and coordinates execution. Validates integrations with functionality-first approach. First understands functionality requirements (user flow, admin flow, system flow, integration flow), then verifies that integrations support that functionality. Focuses on verifying functionality works, not generic integration patterns. Loads integration-patterns, test-driven-development, log-analysis-patterns, and verification-before-completion. Use when orchestrator workflow invokes this subagent.
 tools: Bash, Read, Grep
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: component-builder
-description: Builds components with functionality-first approach. Use PROACTIVELY when building features. First understands functionality requirements (user flow, admin flow, system flow), then builds components to implement that functionality. Focuses on making functionality work first, then optimizing. Loads component-design-patterns, code-generation, test-driven-development, and verification-before-completion skills.
+description: MUST be invoked through cc10x-orchestrator workflows - do not invoke directly. Orchestrator provides required context and coordinates execution. Builds components with functionality-first approach. First understands functionality requirements (user flow, admin flow, system flow), then builds components to implement that functionality. Focuses on making functionality work first, then optimizing. Loads component-design-patterns, code-generation, test-driven-development, and verification-before-completion skills. Use when orchestrator workflow invokes this subagent.
 tools: Read, Edit, Write, Bash
 ---
 

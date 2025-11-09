@@ -1,5 +1,7 @@
 # BUILD Workflow - TDD Driven Implementation
 
+**CRITICAL**: This workflow MUST be activated through cc10x-orchestrator. Do NOT execute this workflow directly. The orchestrator provides required context, coordinates skill loading, and manages subagent invocation. Direct execution bypasses all validation mechanisms.
+
 **Triggered by:** User requests implementation or feature build work.
 
 ## TL;DR Quick Checklist
@@ -684,6 +686,18 @@ Built:
 
 Next: Proceeding to Phase 5 - Aggregate Verification
 ```
+
+**Build Workflow Inventory Validation** (MANDATORY after Phase 4):
+
+- [ ] component-builder documented for EACH component in Actions Taken
+- [ ] code-reviewer documented for EACH component (unless skipped)
+- [ ] integration-verifier documented for EACH component (unless skipped)
+- [ ] Sequential execution per component documented
+- [ ] Parallel execution between components documented (if independent)
+- [ ] All subagent outputs validated
+- [ ] No component missing subagent sequence
+
+**If ANY item missing**: STOP and invoke missing subagent immediately.
 
 ## Phase 5 - Aggregate Verification
 

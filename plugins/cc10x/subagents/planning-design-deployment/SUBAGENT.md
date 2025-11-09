@@ -1,6 +1,6 @@
 ---
 name: planning-design-deployment
-description: Produces API, component, testing, and deployment plans with functionality-first approach. Use PROACTIVELY when planning features. First analyzes functionality (user flow, admin flow, system flow, integration flow), then designs APIs/components/deployment to support that functionality. Loads api-design-patterns, component-design-patterns, deployment-patterns, and verification-before-completion.
+description: MUST be invoked through cc10x-orchestrator workflows - do not invoke directly. Orchestrator provides required context and coordinates execution. Produces API, component, testing, and deployment plans with functionality-first approach. First analyzes functionality (user flow, admin flow, system flow, integration flow), then designs APIs/components/deployment to support that functionality. Loads api-design-patterns, component-design-patterns, deployment-patterns, and verification-before-completion. Use when orchestrator workflow invokes this subagent.
 tools: Read, Grep, Glob
 ---
 

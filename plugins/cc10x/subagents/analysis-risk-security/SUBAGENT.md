@@ -1,6 +1,6 @@
 ---
 name: analysis-risk-security
-description: Reviews code for security vulnerabilities and architectural risks. Use PROACTIVELY when reviewing code that handles user input, authentication, authorization, file uploads, API integrations, or sensitive data. First verifies functionality works, then checks security issues affecting functionality. Loads risk-analysis and security-patterns.
+description: MUST be invoked through cc10x-orchestrator workflows - do not invoke directly. Orchestrator provides required context and coordinates execution. Reviews code for security vulnerabilities and architectural risks. First verifies functionality works, then checks security issues affecting functionality. Loads risk-analysis and security-patterns. Use when orchestrator workflow invokes this subagent.
 tools: Read, Grep, Glob
 ---
 
