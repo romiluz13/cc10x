@@ -29,7 +29,72 @@
 
 **Triggered by:** User wants to confirm the implementation matches an existing plan, tests, or documentation set.
 
-## Prerequisites
+## WHEN/HOW/WHY - VALIDATE Workflow
+
+### WHEN to Use This Workflow
+
+**Keywords that trigger VALIDATE workflow:**
+
+- validate, validation, validating, validate this
+- verify, verification, verifying, verify this
+- check, checking, check this, check the
+- confirm implementation, alignment check, consistency check
+
+**Example user requests:**
+
+- "validate this implementation matches the plan"
+- "verify code matches tests"
+- "check if implementation aligns with requirements"
+- "confirm consistency between plan and code"
+
+### HOW Orchestrator Selects This Workflow
+
+**Detection Process:**
+
+1. User says keyword like "validate" → Orchestrator skill loads automatically (via description keywords)
+2. Orchestrator scans user request for workflow keywords
+3. If "validate", "verify", "check", "confirm implementation", "alignment check", or "consistency check" detected → VALIDATE workflow selected
+4. Orchestrator activates this workflow file
+5. Workflow executes phases: Functionality Analysis → Intake → Plan vs Code → Code vs Tests → Code vs Docs → Report
+
+**Decision Tree:**
+
+```
+User request contains "validate"/"verify"/"check"/"confirm implementation"/"alignment check"/"consistency check"?
+├─ YES → VALIDATE workflow
+└─ NO → Check other workflow keywords
+```
+
+### WHY Use VALIDATE Workflow vs Others
+
+**Use VALIDATE workflow when:**
+
+- You need to verify implementation matches plan
+- You need to check test coverage
+- You need to verify documentation accuracy
+- You need alignment/consistency checks
+
+**VALIDATE vs PLAN:**
+
+- VALIDATE: Verify implementation matches plan (verification)
+- PLAN: Create new plans (creation)
+
+**VALIDATE vs BUILD:**
+
+- VALIDATE: Verify implementation (verification)
+- BUILD: Create implementation (creation)
+
+**VALIDATE vs REVIEW:**
+
+- VALIDATE: Verify alignment with plan (alignment focus)
+- REVIEW: Analyze code quality (quality focus)
+
+**VALIDATE vs DEBUG:**
+
+- VALIDATE: Verify implementation matches plan (verification)
+- DEBUG: Fix broken functionality (repair)
+
+## TL;DR Quick Checklist
 
 - Plan or requirements source identified (e.g., `.claude/plans/<feature>.md` or user-specified document).
 - Scope of code to check (directories, modules, PR diff).

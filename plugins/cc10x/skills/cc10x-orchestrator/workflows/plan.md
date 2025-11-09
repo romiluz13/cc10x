@@ -36,6 +36,73 @@
 
 **Triggered by:** User asks to plan, architect, or design a feature or system update.
 
+## WHEN/HOW/WHY - PLAN Workflow
+
+### WHEN to Use This Workflow
+
+**Keywords that trigger PLAN workflow:**
+
+- plan, planning, planner, plan a, plan the, plan for
+- design, designing, designer, design a, design the
+- architect, architecture, architectural, system design
+- roadmap, road map, strategy, strategic planning
+- feature planning, project planning, implementation plan
+
+**Example user requests:**
+
+- "plan a user authentication feature"
+- "design a payment processing system"
+- "create an architecture for file uploads"
+- "I need a roadmap for this feature"
+
+### HOW Orchestrator Selects This Workflow
+
+**Detection Process:**
+
+1. User says keyword like "plan" → Orchestrator skill loads automatically (via description keywords)
+2. Orchestrator scans user request for workflow keywords
+3. If "plan", "design", "architect", "roadmap", or "strategy" detected → PLAN workflow selected
+4. Orchestrator activates this workflow file
+5. Workflow executes phases: Functionality Analysis → Requirements → Architecture → Design → Deployment
+
+**Decision Tree:**
+
+```
+User request contains "plan"/"design"/"architect"/"roadmap"/"strategy"?
+├─ YES → PLAN workflow
+└─ NO → Check other workflow keywords
+```
+
+### WHY Use PLAN Workflow vs Others
+
+**Use PLAN workflow when:**
+
+- You need to design architecture before building
+- You need to identify risks and mitigation strategies
+- You need to create implementation roadmap
+- You need to plan deployment strategy
+- You need to gather requirements and acceptance criteria
+
+**PLAN vs BUILD:**
+
+- PLAN: Design architecture, identify risks, create roadmap (no code written)
+- BUILD: Implement components using TDD (code written)
+
+**PLAN vs REVIEW:**
+
+- PLAN: Design new features (forward-looking)
+- REVIEW: Analyze existing code (backward-looking)
+
+**PLAN vs DEBUG:**
+
+- PLAN: Design solutions (proactive)
+- DEBUG: Fix broken code (reactive)
+
+**PLAN vs VALIDATE:**
+
+- PLAN: Create new plans (creation)
+- VALIDATE: Verify implementation matches plan (verification)
+
 ## TL;DR Quick Checklist
 
 **CRITICAL**: Complete ALL items below. Skipping any item will cause workflow validation to FAIL.

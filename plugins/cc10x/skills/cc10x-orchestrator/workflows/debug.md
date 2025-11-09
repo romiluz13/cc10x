@@ -36,6 +36,76 @@
 
 **Triggered by:** User requests help investigating bugs, errors, or unexpected behaviour.
 
+## WHEN/HOW/WHY - DEBUG Workflow
+
+### WHEN to Use This Workflow
+
+**Keywords that trigger DEBUG workflow:**
+
+- debug, debugging, debugger, debug this
+- fix, fixing, fix this, fix the, fix a
+- error, errors, error in, error with
+- bug, bugs, bug in, bug with
+- investigate, investigation, investigating
+- failure, failures, failed, failing
+- broken, broke, break, breaking
+- issue, issues, issue with, problem, problems
+- troubleshoot, troubleshooting, diagnose, diagnosis
+
+**Example user requests:**
+
+- "debug this memory leak"
+- "fix this error: [error message]"
+- "investigate why this is broken"
+- "troubleshoot authentication failure"
+
+### HOW Orchestrator Selects This Workflow
+
+**Detection Process:**
+
+1. User says keyword like "debug" → Orchestrator skill loads automatically (via description keywords)
+2. Orchestrator scans user request for workflow keywords
+3. If "debug", "fix", "error", "bug", "investigate", "failure", "broken", "issue", "problem", "troubleshoot", or "diagnose" detected → DEBUG workflow selected
+4. Orchestrator activates this workflow file
+5. Workflow executes phases: Functionality Analysis → Intake → Log Analysis → Bug Investigation → Fix → Regression Test → Report
+
+**Decision Tree:**
+
+```
+User request contains "debug"/"fix"/"error"/"bug"/"investigate"/"failure"/"broken"/"issue"/"problem"/"troubleshoot"/"diagnose"?
+├─ YES → DEBUG workflow
+└─ NO → Check other workflow keywords
+```
+
+### WHY Use DEBUG Workflow vs Others
+
+**Use DEBUG workflow when:**
+
+- Code is broken or not working as expected
+- You need to find root cause of bugs
+- You need to fix errors
+- You need to investigate failures
+
+**DEBUG vs PLAN:**
+
+- DEBUG: Fix broken code (reactive)
+- PLAN: Design solutions (proactive)
+
+**DEBUG vs BUILD:**
+
+- DEBUG: Fix existing code (backward)
+- BUILD: Write new code (forward)
+
+**DEBUG vs REVIEW:**
+
+- DEBUG: Fix specific bugs (focused)
+- REVIEW: General code analysis (broad)
+
+**DEBUG vs VALIDATE:**
+
+- DEBUG: Fix broken functionality (repair)
+- VALIDATE: Verify implementation matches plan (verification)
+
 ## TL;DR Quick Checklist
 
 **CRITICAL**: Complete ALL items below. Skipping any item will cause workflow validation to FAIL.

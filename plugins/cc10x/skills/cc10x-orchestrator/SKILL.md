@@ -1,10 +1,71 @@
 ---
 name: cc10x-orchestrator
-description: CRITICAL - LOAD THIS FIRST: MANDATORY entry point for ALL code tasks (review, plan, build, debug, validate, code review, audit, analyze, assess, evaluate, inspect, examine, plan, design, architect, roadmap, strategy, architecture, system design, build, implement, create, write, code, develop, make, add feature, implement feature, build feature, debug, fix, error, bug, investigate, failure, broken, issue, problem, troubleshoot, diagnose, validate, verify, check, confirm implementation, alignment check, consistency check). You MUST load this skill BEFORE writing any code. This orchestrator coordinates subagents (component-builder, code-reviewer, integration-verifier) - do NOT write code directly. Always starts with Phase 0: Functionality Analysis. Enforces TDD cycle (RED → GREEN → REFACTOR), Actions Taken tracking, memory integration, and web fetch integration. DO NOT bypass orchestrator validation mechanisms.
+description: AUTO-LOAD when user says: plan, planning, planner, plan a, plan the, plan for, design, designing, designer, design a, design the, architect, architecture, architectural, system design, roadmap, road map, strategy, strategic planning, feature planning, project planning, implementation plan, build, building, builder, build a, build the, implement, implementation, implementing, create, creating, create a, create the, write code, write a, write the, coding, code, develop, development, developing, developer, make, making, make a, make the, add feature, implement feature, build feature, review, reviewing, reviewer, review this, review the, audit, auditing, auditor, audit this, analyze, analysis, analyzing, analyze this, assess, assessment, assessing, assess this, evaluate, evaluation, evaluating, evaluate this, inspect, inspection, inspecting, inspect this, examine, examination, examining, examine this, debug, debugging, debugger, debug this, fix, fixing, fix this, fix the, fix a, error, errors, error in, error with, bug, bugs, bug in, bug with, investigate, investigation, investigating, failure, failures, failed, failing, broken, broke, break, breaking, issue, issues, issue with, problem, problems, troubleshoot, troubleshooting, diagnose, diagnosis, validate, validation, validating, validate this, verify, verification, verifying, verify this, check, checking, check this, check the, confirm implementation, alignment check, consistency check. CRITICAL - LOAD THIS FIRST: MANDATORY entry point for ALL code tasks. You MUST load this skill BEFORE writing any code. This orchestrator coordinates subagents (component-builder, code-reviewer, integration-verifier) - do NOT write code directly. Always starts with Phase 0: Functionality Analysis. Enforces TDD cycle (RED → GREEN → REFACTOR), Actions Taken tracking, memory integration, and web fetch integration. DO NOT bypass orchestrator validation mechanisms.
 allowed-tools: Read, Grep, Glob, Bash, Task
 ---
 
 # cc10x Orchestrator Skill - Functionality First
+
+## 🚨 AUTO-LOAD TRIGGERS - READ THIS FIRST 🚨
+
+**This skill MUST be loaded automatically when user request contains ANY of these keywords:**
+
+**PLAN Workflow Keywords:**
+
+- plan, planning, planner, plan a, plan the, plan for
+- design, designing, designer, design a, design the
+- architect, architecture, architectural, system design
+- roadmap, road map, strategy, strategic planning
+- feature planning, project planning, implementation plan
+
+**BUILD Workflow Keywords:**
+
+- build, building, builder, build a, build the
+- implement, implementation, implementing
+- create, creating, create a, create the
+- write code, write a, write the, coding, code
+- develop, development, developing, developer
+- make, making, make a, make the
+- add feature, implement feature, build feature
+
+**REVIEW Workflow Keywords:**
+
+- review, reviewing, reviewer, review this, review the
+- audit, auditing, auditor, audit this
+- analyze, analysis, analyzing, analyze this
+- assess, assessment, assessing, assess this
+- evaluate, evaluation, evaluating, evaluate this
+- inspect, inspection, inspecting, inspect this
+- examine, examination, examining, examine this
+
+**DEBUG Workflow Keywords:**
+
+- debug, debugging, debugger, debug this
+- fix, fixing, fix this, fix the, fix a
+- error, errors, error in, error with
+- bug, bugs, bug in, bug with
+- investigate, investigation, investigating
+- failure, failures, failed, failing
+- broken, broke, break, breaking
+- issue, issues, issue with, problem, problems
+- troubleshoot, troubleshooting, diagnose, diagnosis
+
+**VALIDATE Workflow Keywords:**
+
+- validate, validation, validating, validate this
+- verify, verification, verifying, verify this
+- check, checking, check this, check the
+- confirm implementation, alignment check, consistency check
+
+**If user request contains ANY keyword above → LOAD THIS SKILL IMMEDIATELY**
+
+**Examples:**
+
+- User says "plan a feature" → Load orchestrator → PLAN workflow activates
+- User says "build a component" → Load orchestrator → BUILD workflow activates
+- User says "review this code" → Load orchestrator → REVIEW workflow activates
+- User says "debug this error" → Load orchestrator → DEBUG workflow activates
+- User says "validate implementation" → Load orchestrator → VALIDATE workflow activates
 
 ## CRITICAL ENFORCEMENT - READ THIS FIRST
 

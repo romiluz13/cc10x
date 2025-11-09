@@ -25,7 +25,7 @@
     {
       "name": "cc10x-orchestrator-mandatory",
       "path": "plugins/cc10x/skills/cc10x-orchestrator/SKILL.md",
-      "description": "CRITICAL: cc10x-orchestrator is the MANDATORY entry point for ALL code tasks (review, plan, build, debug, validate). You MUST load this skill FIRST before any code review, planning, building, debugging, or validation. DO NOT write code directly - use the orchestrator to invoke subagents (component-builder, code-reviewer, integration-verifier). DO NOT skip the orchestrator process. DO NOT bypass orchestrator validation mechanisms.",
+      "description": "CRITICAL: cc10x-orchestrator is the MANDATORY entry point for ALL code tasks. AUTO-LOAD when user says: plan, planning, design, architect, roadmap, strategy, build, implement, create, write code, develop, make, review, audit, analyze, assess, evaluate, inspect, examine, debug, fix, error, bug, investigate, failure, broken, issue, problem, troubleshoot, diagnose, validate, verify, check, confirm implementation. Example: User says 'plan a feature' → orchestrator loads automatically → PLAN workflow activates. You MUST load this skill FIRST before any code review, planning, building, debugging, or validation. DO NOT write code directly - use the orchestrator to invoke subagents (component-builder, code-reviewer, integration-verifier). DO NOT skip the orchestrator process. DO NOT bypass orchestrator validation mechanisms.",
       "alwaysApply": true,
       "globs": ["**/*"]
     },

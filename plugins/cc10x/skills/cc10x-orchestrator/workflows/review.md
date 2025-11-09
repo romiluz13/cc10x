@@ -36,6 +36,74 @@
 
 **Triggered by:** User asks for review, audit, or quality/security checks.
 
+## WHEN/HOW/WHY - REVIEW Workflow
+
+### WHEN to Use This Workflow
+
+**Keywords that trigger REVIEW workflow:**
+
+- review, reviewing, reviewer, review this, review the
+- audit, auditing, auditor, audit this
+- analyze, analysis, analyzing, analyze this
+- assess, assessment, assessing, assess this
+- evaluate, evaluation, evaluating, evaluate this
+- inspect, inspection, inspecting, inspect this
+- examine, examination, examining, examine this
+
+**Example user requests:**
+
+- "review this authentication code"
+- "audit this API for security issues"
+- "analyze this component for performance"
+- "assess code quality"
+
+### HOW Orchestrator Selects This Workflow
+
+**Detection Process:**
+
+1. User says keyword like "review" → Orchestrator skill loads automatically (via description keywords)
+2. Orchestrator scans user request for workflow keywords
+3. If "review", "audit", "analyze", "assess", "evaluate", "inspect", or "examine" detected → REVIEW workflow selected
+4. Orchestrator activates this workflow file
+5. Workflow executes phases: Functionality Analysis → Input Validation → Load Skills → Analysis Subagents → Synthesis → Report
+
+**Decision Tree:**
+
+```
+User request contains "review"/"audit"/"analyze"/"assess"/"evaluate"/"inspect"/"examine"?
+├─ YES → REVIEW workflow
+└─ NO → Check other workflow keywords
+```
+
+### WHY Use REVIEW Workflow vs Others
+
+**Use REVIEW workflow when:**
+
+- You need to analyze existing code for issues
+- You need security/quality/performance/UX/accessibility checks
+- You need code audit before PR merge
+- You need to identify problems in existing code
+
+**REVIEW vs PLAN:**
+
+- REVIEW: Analyze existing code (backward-looking)
+- PLAN: Design new features (forward-looking)
+
+**REVIEW vs BUILD:**
+
+- REVIEW: Analyze code (analysis)
+- BUILD: Write code (creation)
+
+**REVIEW vs DEBUG:**
+
+- REVIEW: General code analysis (broad)
+- DEBUG: Fix specific bugs (focused)
+
+**REVIEW vs VALIDATE:**
+
+- REVIEW: Analyze code quality (quality focus)
+- VALIDATE: Verify alignment with plan (alignment focus)
+
 ## TL;DR Quick Checklist
 
 **CRITICAL**: Complete ALL items below. Skipping any item will cause workflow validation to FAIL.

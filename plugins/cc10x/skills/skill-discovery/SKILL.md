@@ -17,22 +17,48 @@ This is not negotiable. This is not optional. You cannot rationalize your way ou
 
 Before responding to ANY user message, you MUST complete this checklist:
 
-1. ☐ List available skills in your mind
-2. ☐ Ask yourself: "Does ANY skill match this request?"
-3. ☐ If yes → Use the Skill tool to read and run the skill file
-4. ☐ Announce which skill you're using
-5. ☐ Follow the skill exactly
+1. ☐ **MANDATORY: Check for cc10x-orchestrator FIRST** - Scan user request for workflow keywords (plan, build, review, debug, validate, implement, create, design, architect, fix, error, bug, analyze, assess, verify, check)
+2. ☐ **If workflow keywords found** → Load orchestrator skill IMMEDIATELY using Skill tool: `plugins/cc10x/skills/cc10x-orchestrator/SKILL.md`
+3. ☐ **If orchestrator loaded** → Follow orchestrator's workflow selection and execution
+4. ☐ **If no workflow keywords** → Still check orchestrator (it handles all code tasks) - Load orchestrator skill using Skill tool
+5. ☐ **After orchestrator runs** → Check for additional skills that orchestrator may have missed
+6. ☐ List available skills in your mind
+7. ☐ Ask yourself: "Does ANY skill match this request?"
+8. ☐ If yes → Use the Skill tool to read and run the skill file
+9. ☐ Announce which skill you're using
+10. ☐ Follow the skill exactly
 
 **Responding WITHOUT completing this checklist = automatic failure.**
+
+**CRITICAL**: If orchestrator not loaded and workflow keywords detected, STOP and load orchestrator IMMEDIATELY before proceeding.
 
 ## Integration with cc10x Orchestrator
 
 **Orchestrator-Driven Discovery**:
 
-- CRITICAL: Check cc10x-orchestrator FIRST - orchestrator is the MANDATORY entry point for all workflows
+- **MANDATORY: Load cc10x-orchestrator skill BEFORE any other skill check** - Orchestrator is the MANDATORY entry point for all workflows
+- **Explicit Command**: Use Skill tool to load `plugins/cc10x/skills/cc10x-orchestrator/SKILL.md`
+- **Validation**: If orchestrator not loaded and workflow keywords detected, STOP and load it immediately
 - The cc10x orchestrator automatically loads skills based on workflow selection
 - After orchestrator activates, check for additional skills that orchestrator may have missed
 - The orchestrator coordinates workflow execution, but you should verify no skills are missed
+
+**Orchestrator Keyword Detection**:
+
+Before checking other skills, scan user request for workflow keywords:
+
+**PLAN Keywords**: plan, planning, planner, design, designing, architect, architecture, roadmap, strategy
+**BUILD Keywords**: build, building, implement, implementation, create, creating, write code, coding, develop, development, make, making
+**REVIEW Keywords**: review, reviewing, audit, auditing, analyze, analysis, assess, assessment, evaluate, evaluation, inspect, inspection, examine, examination
+**DEBUG Keywords**: debug, debugging, fix, fixing, error, errors, bug, bugs, investigate, investigation, failure, failures, broken, issue, issues, problem, problems, troubleshoot, troubleshooting, diagnose, diagnosis
+**VALIDATE Keywords**: validate, validation, verify, verification, check, checking, confirm implementation, alignment check, consistency check
+
+**Detection Logic**:
+
+1. Scan user request for ANY workflow keyword above (case-insensitive)
+2. If keywords found → Load orchestrator skill IMMEDIATELY using Skill tool
+3. Then proceed with orchestrator's workflow selection
+4. If no keywords found → Still load orchestrator (it handles all code tasks)
 
 **Workflow Selection**:
 
@@ -42,11 +68,11 @@ Before responding to ANY user message, you MUST complete this checklist:
 
 ## Critical Rules
 
-1. **Follow mandatory workflows.** Check for relevant skills before ANY task.
-
-2. **Execute skills with the Skill tool** - Load skills before announcing usage
-
-3. **Orchestrator coordination** - Check orchestrator FIRST, then verify no additional skills needed
+1. **MANDATORY: Load orchestrator FIRST** - Before checking any other skills, load cc10x-orchestrator skill using Skill tool: `plugins/cc10x/skills/cc10x-orchestrator/SKILL.md`
+2. **Follow mandatory workflows.** Check for relevant skills before ANY task.
+3. **Execute skills with the Skill tool** - Load skills before announcing usage
+4. **Orchestrator coordination** - Check orchestrator FIRST, then verify no additional skills needed
+5. **If orchestrator not loaded** - STOP and load it immediately before proceeding
 
 ## Before Coding
 

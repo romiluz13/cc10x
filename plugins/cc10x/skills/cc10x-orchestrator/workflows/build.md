@@ -43,6 +43,74 @@
 
 **Triggered by:** User requests implementation or feature build work.
 
+## WHEN/HOW/WHY - BUILD Workflow
+
+### WHEN to Use This Workflow
+
+**Keywords that trigger BUILD workflow:**
+
+- build, building, builder, build a, build the
+- implement, implementation, implementing
+- create, creating, create a, create the
+- write code, write a, write the, coding, code
+- develop, development, developing, developer
+- make, making, make a, make the
+- add feature, implement feature, build feature
+
+**Example user requests:**
+
+- "build a user profile component"
+- "implement authentication"
+- "create a file upload feature"
+- "write code for user registration"
+
+### HOW Orchestrator Selects This Workflow
+
+**Detection Process:**
+
+1. User says keyword like "build" → Orchestrator skill loads automatically (via description keywords)
+2. Orchestrator scans user request for workflow keywords
+3. If "build", "implement", "create", "write code", "develop", or "make" detected → BUILD workflow selected
+4. Orchestrator activates this workflow file
+5. Workflow executes phases: Functionality Analysis → Complexity Gate → Component Queue → TDD Build → Review → Integration → Delivery
+
+**Decision Tree:**
+
+```
+User request contains "build"/"implement"/"create"/"write code"/"develop"/"make"?
+├─ YES → BUILD workflow
+└─ NO → Check other workflow keywords
+```
+
+### WHY Use BUILD Workflow vs Others
+
+**Use BUILD workflow when:**
+
+- You need to write new code/components
+- You need to implement features
+- You need to create new functionality
+- You need TDD-driven implementation (RED → GREEN → REFACTOR)
+
+**BUILD vs PLAN:**
+
+- BUILD: Write code to implement features (execution)
+- PLAN: Design architecture before building (design)
+
+**BUILD vs REVIEW:**
+
+- BUILD: Create new code (creation)
+- REVIEW: Analyze existing code (analysis)
+
+**BUILD vs DEBUG:**
+
+- BUILD: Write new code (forward)
+- DEBUG: Fix broken code (backward)
+
+**BUILD vs VALIDATE:**
+
+- BUILD: Create implementation (creation)
+- VALIDATE: Verify implementation matches plan (verification)
+
 ## TL;DR Quick Checklist
 
 **CRITICAL**: Complete ALL items below. Skipping any item will cause workflow validation to FAIL.

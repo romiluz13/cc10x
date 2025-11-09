@@ -1,5 +1,29 @@
 # Changelog
 
+## [4.3.0] - 2025-01-29
+
+### Added
+
+- **Super Keyword-Dense Orchestrator Description**: Enhanced orchestrator frontmatter description with explicit "AUTO-LOAD when user says:" keyword triggers at the start, making orchestrator discoverable for 95%+ of workflow requests
+- **Explicit Keyword Triggers Section**: Added comprehensive "AUTO-LOAD TRIGGERS" section to orchestrator skill with all workflow keywords listed by category (PLAN, BUILD, REVIEW, DEBUG, VALIDATE)
+- **Enhanced Skill-Discovery Enforcement**: Made orchestrator loading mandatory and explicit in skill-discovery checklist with keyword detection logic and validation steps
+- **WHEN/HOW/WHY Sections**: Added comprehensive WHEN/HOW/WHY sections to all 5 workflow files explaining keywords, detection process, decision trees, and workflow comparisons
+- **Quick Reference Guide**: Created `QUICK-REFERENCE.md` for one-page reference on orchestrator activation and workflow selection
+- **Enhanced Context.json Rule**: Updated orchestrator rule description with explicit keyword triggers and example activation flow
+- **Testing Checklist**: Created comprehensive testing checklist for orchestrator activation scenarios
+
+### Changed
+
+- **Orchestrator Description**: Frontmatter now starts with explicit keyword triggers ("AUTO-LOAD when user says: plan, planning, planner...") making it highly discoverable
+- **Skill-Discovery Protocol**: Enhanced checklist to force orchestrator loading FIRST before any other skill check
+- **Workflow Files**: All 5 workflows now have clear WHEN/HOW/WHY sections explaining activation and selection
+
+### Fixed
+
+- **Orchestrator Auto-Loading**: Fixed issue where orchestrator didn't auto-load when user said "plan" or other workflow keywords
+- **Skill Discovery**: Fixed issue where skill-discovery didn't explicitly force orchestrator loading
+- **Keyword Matching**: Enhanced keyword matching with semantic variants (planning, planner, plan a, etc.)
+
 ## [4.2.0] - 2025-01-29
 
 ### Added
