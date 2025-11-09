@@ -10,6 +10,7 @@
 .claude/
 !.claude/memory/
 !.claude/memory/CONSTITUTION.md
+!.claude/context.json
 
 # Dependency directories
 node_modules/
