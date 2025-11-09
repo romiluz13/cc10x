@@ -51,9 +51,9 @@ allowed-tools: Read, Grep, Glob, Bash, Task
 
 ## Purpose
 
-Coordinate the four cc10x workflows using the official Anthropic model-invoked skills pattern. The orchestrator:
+Coordinate the five cc10x workflows using the official Anthropic model-invoked skills pattern. The orchestrator:
 
-- Identifies the requested outcome (review, plan, build, debug).
+- Identifies the requested outcome (review, plan, build, debug, validate).
 - Loads only workflow skills that exist in `plugins/cc10x/skills/`.
 - Analyzes dependencies and parallelizes subagents where safe (read-only, independent, isolated contexts).
 - Falls back to sequential execution for operations with dependencies or shared state.

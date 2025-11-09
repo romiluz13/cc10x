@@ -11,7 +11,7 @@ Your request has a LOW complexity score (≤ 2):
   • Minimal risk, no external dependencies, no test changes expected
 
 cc10x is optimized for higher‑risk, multi‑step workflows
-(review → plan → build → debug) where orchestration adds value.
+(review → plan → build → debug → validate) where orchestration adds value.
 
 You have two options:
   1) Proceed anyway with cc10x workflows (may be overkill)
