@@ -6,6 +6,42 @@ allowed-tools: Read, Grep, Glob, Bash, Task
 
 # cc10x Orchestrator Skill - Functionality First
 
+## 🚨 EXECUTION MODE - THIS IS NOT DOCUMENTATION 🚨
+
+**CRITICAL**: This skill file contains EXECUTABLE INSTRUCTIONS, not reference documentation.
+
+**YOU MUST:**
+
+1. **Load this skill using Skill tool** - NOT just Read tool
+   - Use: `Skill(skill="cc10x:cc10x-orchestrator")` or equivalent
+   - Do NOT just read the file - you must ACTIVATE the skill
+2. **Execute workflows as step-by-step instructions** - NOT as summaries
+   - When workflow says "Run this bash command" → YOU MUST RUN IT
+   - When workflow says "DO NOT proceed until" → YOU MUST STOP AND VALIDATE
+   - When workflow says "You MUST invoke subagents" → YOU MUST USE Task TOOL
+3. **Treat CRITICAL markers as hard stops** - NOT suggestions
+   - CRITICAL = MANDATORY = MUST DO = HARD STOP IF SKIPPED
+4. **Execute validation gates literally** - NOT conceptually
+   - Check each item in checklist
+   - Run validation commands
+   - Verify evidence exists
+   - Do NOT proceed until ALL checks pass
+
+**IF YOU READ THIS AS DOCUMENTATION INSTEAD OF EXECUTING IT:**
+
+- ❌ You will skip mandatory steps
+- ❌ You will bypass validation gates
+- ❌ You will write code directly instead of invoking subagents
+- ❌ Workflow will fail validation
+
+**CORRECT APPROACH:**
+
+1. Load orchestrator skill → Skill activates workflow
+2. Execute each phase literally → Follow step-by-step
+3. Run all bash commands → Capture output
+4. Invoke all subagents → Use Task tool
+5. Validate at each gate → Check checklist items
+
 ## 🚨 AUTO-LOAD TRIGGERS - READ THIS FIRST 🚨
 
 **This skill MUST be loaded automatically when user request contains ANY of these keywords:**

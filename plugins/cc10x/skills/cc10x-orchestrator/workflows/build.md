@@ -1,5 +1,48 @@
 # BUILD Workflow - TDD Driven Implementation
 
+## 🚨 EXECUTION MODE - THIS IS NOT DOCUMENTATION 🚨
+
+**CRITICAL**: This workflow file contains EXECUTABLE INSTRUCTIONS, not reference documentation.
+
+**YOU MUST EXECUTE THIS WORKFLOW STEP-BY-STEP:**
+
+1. **This is an executable script** - NOT a reference guide
+   - Each phase is a mandatory step to execute
+   - Each checklist item must be checked literally
+   - Each bash command must be run and output captured
+
+2. **CRITICAL markers are hard stops** - NOT suggestions
+   - "CRITICAL: Run this command" → YOU MUST RUN IT NOW
+   - "DO NOT proceed until" → YOU MUST STOP AND VALIDATE
+   - "MANDATORY" = MUST DO = HARD STOP IF SKIPPED
+
+3. **Validation gates are mandatory checks** - NOT optional
+   - Before Phase 3: Skills Inventory Check → YOU MUST RUN IT
+   - Before Phase 4: Subagents Inventory Check → YOU MUST RUN IT
+   - Each checklist item → YOU MUST VERIFY IT
+
+4. **Subagent invocation is required** - NOT optional
+   - "You MUST invoke component-builder" → USE Task TOOL
+   - "Invoke code-reviewer" → USE Task TOOL
+   - Do NOT write code directly → INVOKE SUBAGENTS
+
+**IF YOU READ THIS AS DOCUMENTATION:**
+
+- ❌ You will summarize instead of executing
+- ❌ You will skip mandatory bash commands
+- ❌ You will skip validation gates
+- ❌ You will write code directly instead of invoking subagents
+- ❌ Workflow will fail validation
+
+**CORRECT APPROACH:**
+
+1. Orchestrator activates this workflow → Execute Phase 0 FIRST
+2. Execute Phase 1 → Run all commands, capture output
+3. Execute Phase 2 → Load skills, verify each loaded
+4. Execute Phase 3 → Invoke subagents via Task tool
+5. Execute Phase 4 → Validate all outputs
+6. Execute Phase 5 → Generate report with evidence
+
 **CRITICAL**: This workflow MUST be activated through cc10x-orchestrator. Do NOT execute this workflow directly. The orchestrator provides required context, coordinates skill loading, and manages subagent invocation. Direct execution bypasses all validation mechanisms.
 
 **🚨 CRITICAL ENFORCEMENT - DO NOT WRITE CODE DIRECTLY 🚨**
