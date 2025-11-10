@@ -112,6 +112,13 @@ docs/analysis/
 docs/optimization/
 docs/phases/
 
+# Testing and audit files (development-only)
+*TESTING*.md
+*AUDIT*.md
+*test*.md
+*audit*.md
+!plugins/cc10x/skills/cc10x-orchestrator/workflows/*.md
+
 # Internal scripts (should not be in repo)
 push-to-github.sh
 push_v3.1.py

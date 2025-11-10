@@ -161,6 +161,28 @@ generate_session_id() {
     echo "$session_id"
 }
 
+# Check for active plan
+check_active_plan() {
+    local CURRENT_PLAN_FILE="$MEMORY_DIR/current_plan.txt"
+    
+    if [ -f "$CURRENT_PLAN_FILE" ]; then
+        local plan_path
+        plan_path=$(cat "$CURRENT_PLAN_FILE" 2>/dev/null | tr -d '\n' | tr -d '\r')
+        
+        if [ -n "$plan_path" ] && [ -f "$plan_path" ]; then
+            log "INFO" "Active plan found: $plan_path"
+            echo ""
+            echo "📋 Active Plan: $plan_path"
+            echo ""
+            return 0
+        else
+            log "WARN" "current_plan.txt exists but plan file not found: $plan_path"
+        fi
+    fi
+    
+    return 0
+}
+
 # Load or create working plan
 load_working_plan() {
     if [ -f "$WORKING_PLAN_PATH" ]; then
@@ -407,6 +429,9 @@ main() {
     
     # Load remember context
     load_remember
+    
+    # Check for active plan
+    check_active_plan
     
     # Check for snapshots
     check_snapshots

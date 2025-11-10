@@ -835,6 +835,47 @@ Next: Planning workflow complete - Ready for build
 
 ## Phase 6 - Deliverable
 
+**CRITICAL**: After saving the plan file, create plan reference for build workflow access.
+
+**Plan Saving** (MANDATORY after plan creation):
+
+1. **Save Plan File**: Save detailed implementation plan to `.claude/docs/plans/<feature-name>-plan.md`
+   - Extract feature name from Phase 0 functionality analysis or user request
+   - Use kebab-case for filename (e.g., `user-authentication-plan.md`)
+   - Ensure `.claude/docs/plans/` directory exists (create if needed)
+
+2. **Create Plan Reference** (MANDATORY):
+   - Create `.claude/memory/current_plan.txt` containing the plan path: `.claude/docs/plans/<feature-name>-plan.md`
+   - This allows build workflow to find the active plan
+   - Example: `echo ".claude/docs/plans/user-authentication-plan.md" > .claude/memory/current_plan.txt`
+
+3. **Update WORKING_PLAN.md** (optional but recommended):
+   - Update `.claude/memory/WORKING_PLAN.md` with reference to full plan
+   - Add line: "See full plan: `.claude/docs/plans/<feature-name>-plan.md`"
+   - Preserve existing content, just add reference
+
+**Plan Reference Format**:
+
+```bash
+# Create plan reference file
+PLAN_DIR=".claude/docs/plans"
+FEATURE_NAME="user-authentication"  # Extract from functionality analysis
+PLAN_FILE="$PLAN_DIR/${FEATURE_NAME}-plan.md"
+
+# Ensure directory exists
+mkdir -p "$PLAN_DIR"
+
+# Save plan reference
+echo "$PLAN_FILE" > .claude/memory/current_plan.txt
+
+# Update WORKING_PLAN.md with reference
+if [ -f ".claude/memory/WORKING_PLAN.md" ]; then
+    echo "" >> .claude/memory/WORKING_PLAN.md
+    echo "## Active Plan" >> .claude/memory/WORKING_PLAN.md
+    echo "See full plan: $PLAN_FILE" >> .claude/memory/WORKING_PLAN.md
+fi
+```
+
 **Before Finalizing** (optimized memory):
 
 - **Pattern Validation**:

@@ -265,3 +265,100 @@ memory.store({
 
 Last updated: [timestamp]
 ```
+
+### Plan Saving Pattern
+
+**Purpose:** Save plans to specific folder and create reference for build workflow access.
+
+**Process:**
+
+1. **Save Plan File**: Save detailed implementation plan to `.claude/docs/plans/<feature-name>-plan.md`
+   - Extract feature name from functionality analysis or user request
+   - Use kebab-case for filename (e.g., `user-authentication-plan.md`)
+   - Ensure `.claude/docs/plans/` directory exists (create if needed)
+
+2. **Create Plan Reference** (MANDATORY):
+   - Create `.claude/memory/current_plan.txt` containing the plan path: `.claude/docs/plans/<feature-name>-plan.md`
+   - This allows build workflow to find the active plan
+   - Example: `echo ".claude/docs/plans/user-authentication-plan.md" > .claude/memory/current_plan.txt`
+
+3. **Update WORKING_PLAN.md** (optional but recommended):
+   - Update `.claude/memory/WORKING_PLAN.md` with reference to full plan
+   - Add line: "See full plan: `.claude/docs/plans/<feature-name>-plan.md`"
+   - Preserve existing content, just add reference
+
+**Plan Reference Format**:
+
+```bash
+# Create plan reference file
+PLAN_DIR=".claude/docs/plans"
+FEATURE_NAME="user-authentication"  # Extract from functionality analysis
+PLAN_FILE="$PLAN_DIR/${FEATURE_NAME}-plan.md"
+
+# Ensure directory exists
+mkdir -p "$PLAN_DIR"
+
+# Save plan reference
+echo "$PLAN_FILE" > .claude/memory/current_plan.txt
+
+# Update WORKING_PLAN.md with reference
+if [ -f ".claude/memory/WORKING_PLAN.md" ]; then
+    echo "" >> .claude/memory/WORKING_PLAN.md
+    echo "## Active Plan" >> .claude/memory/WORKING_PLAN.md
+    echo "See full plan: $PLAN_FILE" >> .claude/memory/WORKING_PLAN.md
+fi
+```
+
+### Plan Reference Pattern
+
+**Purpose:** Find active plan using priority order for build workflow access.
+
+**Priority Order**:
+
+1. **Check current_plan.txt**: Read `.claude/memory/current_plan.txt` to get active plan path
+2. **Fallback to WORKING_PLAN.md**: If `current_plan.txt` doesn't exist, check `.claude/memory/WORKING_PLAN.md`
+3. **Fallback to most recent plan**: Find most recent plan in `.claude/docs/plans/` directory
+4. **Fallback to snapshot**: Read most recent snapshot from `.claude/memory/snapshots/snapshot-*.md`
+
+**Bash Helper Function**:
+
+```bash
+# Find active plan using priority order
+find_active_plan() {
+    # Priority 1: Check current_plan.txt
+    if [ -f ".claude/memory/current_plan.txt" ]; then
+        PLAN_PATH=$(cat .claude/memory/current_plan.txt)
+        if [ -f "$PLAN_PATH" ]; then
+            echo "$PLAN_PATH"
+            return 0
+        fi
+    fi
+
+    # Priority 2: Check WORKING_PLAN.md
+    if [ -f ".claude/memory/WORKING_PLAN.md" ]; then
+        echo ".claude/memory/WORKING_PLAN.md"
+        return 0
+    fi
+
+    # Priority 3: Find most recent plan in docs/plans
+    if [ -d ".claude/docs/plans" ]; then
+        PLAN_FILE=$(find .claude/docs/plans -name "*-plan.md" -type f 2>/dev/null | sort | tail -1)
+        if [ -n "$PLAN_FILE" ] && [ -f "$PLAN_FILE" ]; then
+            echo "$PLAN_FILE"
+            return 0
+        fi
+    fi
+
+    # Priority 4: Fallback to snapshot
+    if [ -d ".claude/memory/snapshots" ]; then
+        SNAPSHOT=$(find .claude/memory/snapshots -name "snapshot-*.md" -type f 2>/dev/null | sort | tail -1)
+        if [ -n "$SNAPSHOT" ] && [ -f "$SNAPSHOT" ]; then
+            echo "$SNAPSHOT"
+            return 0
+        fi
+    fi
+
+    echo "No plan found"
+    return 1
+}
+```

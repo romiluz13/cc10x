@@ -304,7 +304,7 @@ Use the askquestion tool to clarify requirements:
 
 - Read most recent checkpoint from `.claude/memory/workflow_state/build_*.json`
 - If checkpoint exists: Restore state and continue from `next_phase`
-- If no checkpoint: Read `.claude/memory/snapshots/` most recent `snapshot-*.md` and `.claude/memory/WORKING_PLAN.md` as fallback
+- If no checkpoint: Use plan access priority order (see Phase 2 Plan Access section) to find plan, then read most recent snapshot as final fallback
 
 **Display Success Message** (after Phase 1 completion):
 
@@ -320,6 +320,85 @@ Next: Proceeding to Phase 2 - Shared Context
 ```
 
 ## Phase 2 - Shared Context
+
+**CRITICAL**: Load required skills and establish shared context BEFORE building components.
+
+**Plan Access** (MANDATORY - Check plan location in priority order):
+
+1. **Check for Active Plan Reference**:
+   - Read `.claude/memory/current_plan.txt` to get active plan path
+   - If exists and file exists at that path, use that plan
+   - Example: `PLAN_PATH=$(cat .claude/memory/current_plan.txt 2>/dev/null)`
+
+2. **Fallback to WORKING_PLAN.md**:
+   - If `current_plan.txt` doesn't exist or plan file not found, check `.claude/memory/WORKING_PLAN.md`
+   - Use this as secondary source for plan context
+
+3. **Fallback to Most Recent Plan**:
+   - If no active plan reference, find most recent plan in `.claude/docs/plans/` directory
+   - Use: `find .claude/docs/plans -name "*-plan.md" -type f | sort | tail -1`
+
+4. **Fallback to Snapshot**:
+   - If no plan found, read most recent snapshot from `.claude/memory/snapshots/snapshot-*.md`
+   - Extract plan context from snapshot if available
+
+**Plan Access Priority Order**:
+
+```
+1. .claude/memory/current_plan.txt → Read plan from path specified
+2. .claude/memory/WORKING_PLAN.md → Use working plan
+3. .claude/docs/plans/*-plan.md (most recent) → Use latest plan file
+4. .claude/memory/snapshots/snapshot-*.md (most recent) → Extract from snapshot
+```
+
+**Bash Helper Function** (for plan access):
+
+```bash
+# Find active plan using priority order
+find_active_plan() {
+    # Priority 1: Check current_plan.txt
+    if [ -f ".claude/memory/current_plan.txt" ]; then
+        PLAN_PATH=$(cat .claude/memory/current_plan.txt)
+        if [ -f "$PLAN_PATH" ]; then
+            echo "Using plan: $PLAN_PATH"
+            echo "$PLAN_PATH"
+            return 0
+        fi
+    fi
+
+    # Priority 2: Check WORKING_PLAN.md
+    if [ -f ".claude/memory/WORKING_PLAN.md" ]; then
+        echo "Using working plan: .claude/memory/WORKING_PLAN.md"
+        echo ".claude/memory/WORKING_PLAN.md"
+        return 0
+    fi
+
+    # Priority 3: Find most recent plan in docs/plans
+    if [ -d ".claude/docs/plans" ]; then
+        PLAN_FILE=$(find .claude/docs/plans -name "*-plan.md" -type f 2>/dev/null | sort | tail -1)
+        if [ -n "$PLAN_FILE" ] && [ -f "$PLAN_FILE" ]; then
+            echo "Using most recent plan: $PLAN_FILE"
+            echo "$PLAN_FILE"
+            return 0
+        fi
+    fi
+
+    # Priority 4: Fallback to snapshot
+    if [ -d ".claude/memory/snapshots" ]; then
+        SNAPSHOT=$(find .claude/memory/snapshots -name "snapshot-*.md" -type f 2>/dev/null | sort | tail -1)
+        if [ -n "$SNAPSHOT" ] && [ -f "$SNAPSHOT" ]; then
+            echo "Using snapshot: $SNAPSHOT"
+            echo "$SNAPSHOT"
+            return 0
+        fi
+    fi
+
+    echo "No plan found"
+    return 1
+}
+```
+
+**Process**:
 
 **Required Skills**:
 
