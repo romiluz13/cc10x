@@ -1,74 +1,8 @@
 # VALIDATION Workflow - Cross-Artifact Consistency
 
-## 🚨 EXECUTION MODE - THIS IS NOT DOCUMENTATION 🚨
-
-**CRITICAL**: This workflow file contains EXECUTABLE INSTRUCTIONS, not reference documentation.
-
-**YOU MUST EXECUTE THIS WORKFLOW STEP-BY-STEP:**
-
-1. **This is an executable script** - NOT a reference guide
-   - Each phase is a mandatory step to execute
-   - Each checklist item must be checked literally
-   - Each bash command must be run and output captured
-
-2. **CRITICAL markers are hard stops** - NOT suggestions
-   - "CRITICAL: Run this command" → YOU MUST RUN IT NOW
-   - "DO NOT proceed until" → YOU MUST STOP AND VALIDATE
-   - "MANDATORY" = MUST DO = HARD STOP IF SKIPPED
-
-3. **Validation gates are mandatory checks** - NOT optional
-   - Before Phase 3: Skills Inventory Check → YOU MUST RUN IT
-   - Before Phase 4: Subagents Inventory Check → YOU MUST RUN IT
-   - Each checklist item → YOU MUST VERIFY IT
-
-4. **Direct analysis is required** - NOT optional
-   - "Compare plan vs code" → YOU MUST DO IT
-   - "Compare code vs tests" → YOU MUST DO IT
-   - "Compare code vs docs" → YOU MUST DO IT
-
-**IF YOU READ THIS AS DOCUMENTATION:**
-
-- ❌ You will summarize instead of executing
-- ❌ You will skip mandatory comparisons
-- ❌ You will skip validation gates
-- ❌ You will skip Actions Taken tracking
-- ❌ Workflow will fail validation
-
-**CORRECT APPROACH:**
-
-1. Orchestrator activates this workflow → Execute Phase 0 FIRST
-2. Execute Phase 1 → Run all commands, capture output
-3. Execute Phase 2 → Load plan/code/tests/docs
-4. Execute Phase 3 → Compare plan vs code, code vs tests, code vs docs
-5. Execute Phase 4 → Validate all outputs
-6. Execute Phase 5 → Generate report with evidence
-
 **CRITICAL**: This workflow MUST be activated through cc10x-orchestrator. Do NOT execute this workflow directly. The orchestrator provides required context, coordinates skill loading, and manages subagent invocation. Direct execution bypasses all validation mechanisms.
 
-**🚨 CRITICAL ENFORCEMENT - DO NOT WRITE CODE DIRECTLY 🚨**
-
-**MANDATORY RULES** (Violation = Workflow Failure):
-
-1. **DO NOT write code directly** - This workflow uses direct analysis (no subagents), but you MUST:
-   - Follow orchestrator validation mechanisms
-   - Update Actions Taken IMMEDIATELY after each phase
-   - Never skip Actions Taken tracking
-
-2. **DO NOT skip Actions Taken tracking** - Update Actions Taken IMMEDIATELY after:
-   - Each phase completed (mark phase as complete)
-   - Each comparison performed (plan vs code, code vs tests, code vs docs)
-   - Never proceed to next phase without updating Actions Taken
-
-3. **DO NOT skip memory integration** - You MUST:
-   - Query patterns before complexity scoring (load patterns.json ONCE, cache for workflow duration)
-   - Store patterns after workflow completion (validate first, update accuracy)
-
-4. **DO NOT skip web fetch integration** - You MUST:
-   - When external APIs/libraries/frameworks mentioned, fetch documentation
-   - Use question-based prompts (not raw content requests)
-   - Check cache first, use cache if valid, fetch if needed
-
-**If you violate ANY of these rules, Phase 4 validation will FAIL and you will be forced to correct before proceeding.**
+**See SHARED-ENFORCEMENT.md for MANDATORY execution mode, enforcement rules, guardrails, and validation gates that apply to ALL workflows.**
 
 **Triggered by:** User wants to confirm the implementation matches an existing plan, tests, or documentation set.
 
@@ -137,73 +71,9 @@ User request contains "validate"/"verify"/"check"/"confirm implementation"/"alig
 - VALIDATE: Verify implementation matches plan (verification)
 - DEBUG: Fix broken functionality (repair)
 
-## TL;DR Quick Checklist
+**See SHARED-ENFORCEMENT.md for TL;DR Quick Checklist, Guardrails, and Runtime Compliance Checks.**
 
-- Plan or requirements source identified (e.g., `.claude/plans/<feature>.md` or user-specified document).
-- Scope of code to check (directories, modules, PR diff).
-
-## TL;DR Quick Checklist
-
-**CRITICAL**: Complete ALL items below. Skipping any item will cause workflow validation to FAIL.
-
-- [ ] Complete Phase 0: Functionality Analysis FIRST (understand validation requirements, map functionality from plan/code/tests)
-- [ ] Load plan/requirements and code scope
-- [ ] **UPDATE Actions Taken** - Document plan/requirements loaded IMMEDIATELY
-- [ ] Compare plan vs code (functionality alignment, missing features, extra features)
-- [ ] **UPDATE Actions Taken** - Document plan vs code comparison IMMEDIATELY
-- [ ] Compare code vs tests (test coverage, missing tests, untested code)
-- [ ] **UPDATE Actions Taken** - Document code vs tests comparison IMMEDIATELY
-- [ ] Compare code vs documentation (documentation accuracy, missing docs)
-- [ ] **UPDATE Actions Taken** - Document code vs docs comparison IMMEDIATELY
-- [ ] Generate validation report with functionality verification FIRST, then consistency checks
-
-## Guardrails
-
-**CRITICAL**: These guardrails MUST be followed in the Validate workflow. Violations lead to incomplete or incorrect validation.
-
-- **Functionality First**: Always understand what functionality is being validated (user flows, admin flows, system flows) BEFORE comparing plan vs code, code vs tests, or code vs documentation.
-
-- **Evidence Required**: Every validation finding must include file:line citations or specific references. No assertions without proof.
-
-- **Alignment Focus**: Validate alignment between artifacts (plan, code, tests, docs). Focus on functionality alignment, not style or minor inconsistencies.
-
-- **Scope Awareness**: Validate only what was requested. Don't expand beyond the requested scope unless explicitly asked.
-
-## Search Guidance
-
-**CRITICAL**: Use the right tool for each search task in the Validate workflow.
-
-**Phase 0 - Functionality Analysis**:
-
-- **Discovery**: Use `Glob` to find plan/requirements files (`Glob(".claude/plans/**/*.md")` or `Glob("docs/**/*.md")`)
-- **Content Search**: Use `Grep` to find functionality references (`Grep("user flow|admin flow|system flow")`)
-- **Detail Reading**: Use `Read` to read plan/requirements files (`Read(".claude/plans/feature.md")` for plan)
-- **Example**: Validating implementation against plan:
-  - Step 1: `Glob(".claude/plans/**/*.md")` → Find plan files
-  - Step 2: `Grep("functionality|feature|requirement", path=".claude/plans")` → Find requirements
-  - Step 3: `Read(".claude/plans/feature.md")` → Read plan details
-
-**Phase 1 - Intake**:
-
-- **Plan Discovery**: Use `Glob` to find plan files (`Glob("**/*plan*.md")` or `Glob("**/*requirements*.md")`)
-- **Code Scope**: Use `Glob` to find code files (`Glob("src/**/*.{ts,tsx}")` for TypeScript files)
-- **Test Discovery**: Use `Glob` to find test files (`Glob("**/*.test.{ts,tsx}")`)
-
-**Phase 2 - Plan vs Code**:
-
-- **Feature Mapping**: Use `Grep` to find feature implementations (`Grep("function.*featureName")`)
-- **Requirement Mapping**: Use `Grep` to find requirement references (`Grep("TODO|FIXME|requirement")`)
-
-**Phase 3 - Code vs Tests**:
-
-- **Test Coverage**: Use `Grep` to find test cases (`Grep("describe|it|test")`)
-- **Implementation Mapping**: Use `Grep` to find implementations (`Grep("export.*function")`)
-
-**Anti-Patterns**:
-
-- ❌ Using `Read` to search for patterns (use `Grep` instead)
-- ❌ Using `Grep` to find files by name (use `Glob` instead)
-- ❌ Reading entire large files when only a section is needed (use `Read` with offset/limit)
+**See orchestrator REFERENCE.md for tool usage guides and search guidance.**
 
 ## Phase 0 - Functionality Analysis (MANDATORY)
 

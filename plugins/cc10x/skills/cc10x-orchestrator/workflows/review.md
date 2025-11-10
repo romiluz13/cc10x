@@ -1,81 +1,8 @@
 # REVIEW Workflow - Evidence Based Code Analysis
 
-## 🚨 EXECUTION MODE - THIS IS NOT DOCUMENTATION 🚨
-
-**CRITICAL**: This workflow file contains EXECUTABLE INSTRUCTIONS, not reference documentation.
-
-**YOU MUST EXECUTE THIS WORKFLOW STEP-BY-STEP:**
-
-1. **This is an executable script** - NOT a reference guide
-   - Each phase is a mandatory step to execute
-   - Each checklist item must be checked literally
-   - Each bash command must be run and output captured
-
-2. **CRITICAL markers are hard stops** - NOT suggestions
-   - "CRITICAL: Run this command" → YOU MUST RUN IT NOW
-   - "DO NOT proceed until" → YOU MUST STOP AND VALIDATE
-   - "MANDATORY" = MUST DO = HARD STOP IF SKIPPED
-
-3. **Validation gates are mandatory checks** - NOT optional
-   - Before Phase 3: Skills Inventory Check → YOU MUST RUN IT
-   - Before Phase 4: Subagents Inventory Check → YOU MUST RUN IT
-   - Each checklist item → YOU MUST VERIFY IT
-
-4. **Subagent invocation is required** - NOT optional
-   - "You MUST invoke analysis subagents" → USE Task TOOL
-   - "Invoke code-reviewer" → USE Task TOOL
-   - Do NOT write code directly → INVOKE SUBAGENTS
-
-**IF YOU READ THIS AS DOCUMENTATION:**
-
-- ❌ You will summarize instead of executing
-- ❌ You will skip mandatory bash commands
-- ❌ You will skip validation gates
-- ❌ You will write code directly instead of invoking subagents
-- ❌ Workflow will fail validation
-
-**CORRECT APPROACH:**
-
-1. Orchestrator activates this workflow → Execute Phase 0 FIRST
-2. Execute Phase 1 → Run all commands, capture output
-3. Execute Phase 2 → Load skills, verify each loaded
-4. Execute Phase 3 → Invoke subagents via Task tool
-5. Execute Phase 4 → Validate all outputs
-6. Execute Phase 5 → Generate report with evidence
-
 **CRITICAL**: This workflow MUST be activated through cc10x-orchestrator. Do NOT execute this workflow directly. The orchestrator provides required context, coordinates skill loading, and manages subagent invocation. Direct execution bypasses all validation mechanisms.
 
-**🚨 CRITICAL ENFORCEMENT - DO NOT WRITE CODE DIRECTLY 🚨**
-
-**MANDATORY RULES** (Violation = Workflow Failure):
-
-1. **DO NOT write code directly** - You MUST invoke subagents:
-   - Analysis subagents (analysis-risk-security, analysis-performance-quality, analysis-ux-accessibility) → code-reviewer (if changes) → integration-verifier (if integration)
-   - Read subagent's SUBAGENT.md before invoking
-   - Verify subagent exists before invoking
-   - Check skip conditions before invoking
-
-2. **DO NOT skip Actions Taken tracking** - Update Actions Taken IMMEDIATELY after:
-   - Each skill loaded (mark as "loaded successfully" or "failed to load")
-   - Each subagent invoked (mark as "invoked successfully" or "skipped" with reason)
-   - Each phase completed (mark phase as complete)
-   - Never proceed to next phase without updating Actions Taken
-
-3. **DO NOT skip inventory checks** - You MUST perform:
-   - Skills Inventory Check before Phase 3 (verify ALL required skills loaded)
-   - Subagents Inventory Check before Phase 4 (verify ALL required subagents invoked)
-   - If ANY missing, STOP workflow, fix immediately, re-validate
-
-4. **DO NOT skip memory integration** - You MUST:
-   - Query patterns before complexity scoring (load patterns.json ONCE, cache for workflow duration)
-   - Store patterns after workflow completion (validate first, update accuracy)
-
-5. **DO NOT skip web fetch integration** - You MUST:
-   - When external APIs/libraries/frameworks mentioned, fetch documentation
-   - Use question-based prompts (not raw content requests)
-   - Check cache first, use cache if valid, fetch if needed
-
-**If you violate ANY of these rules, Phase 4 validation will FAIL and you will be forced to correct before proceeding.**
+**See SHARED-ENFORCEMENT.md for MANDATORY execution mode, enforcement rules, guardrails, and validation gates that apply to ALL workflows.**
 
 **Triggered by:** User asks for review, audit, or quality/security checks.
 
@@ -147,64 +74,9 @@ User request contains "review"/"audit"/"analyze"/"assess"/"evaluate"/"inspect"/"
 - REVIEW: Analyze code quality (quality focus)
 - VALIDATE: Verify alignment with plan (alignment focus)
 
-## TL;DR Quick Checklist
+**See SHARED-ENFORCEMENT.md for TL;DR Quick Checklist, Guardrails, and Runtime Compliance Checks.**
 
-**CRITICAL**: Complete ALL items below. Skipping any item will cause workflow validation to FAIL.
-
-- [ ] Complete Phase 0: Functionality Analysis FIRST (understand user/admin/system flows, verify functionality works)
-- [ ] Validate inputs (files exist, scope clear, questions answered)
-- [ ] Load all required skills in parallel (security, quality, performance, UX, accessibility)
-- [ ] Load conditional skills if detected (ui-design if UI components, design-patterns if patterns mentioned)
-- [ ] **UPDATE Actions Taken** - Document ALL skills loaded IMMEDIATELY after loading
-- [ ] **PERFORM Skills Inventory Check** - Verify ALL required skills loaded before Phase 3
-- [ ] **DO NOT write code directly** - Invoke analysis subagents → code-reviewer (if changes) → integration-verifier (if integration)
-- [ ] **UPDATE Actions Taken** - Document ALL subagents invoked IMMEDIATELY after invocation
-- [ ] **PERFORM Subagents Inventory Check** - Verify ALL required subagents invoked before Phase 4
-- [ ] Synthesize findings with file:line citations and evidence
-- [ ] Generate verification summary with functionality verification FIRST, then other checks
-
-## Guardrails
-
-**CRITICAL**: These guardrails MUST be followed in the Review workflow. Violations lead to incomplete or incorrect reviews.
-
-- **Functionality First**: Always understand what the code is supposed to do (user flows, admin flows, system flows) BEFORE applying security, quality, performance, UX, or accessibility checks. Verify functionality works BEFORE checking other concerns.
-
-- **Evidence Required**: Every finding must include file:line citations. No assertions without proof. Use `file:line` format for all code references.
-
-- **No Noise**: Focus on real issues that affect functionality, not minor style issues or theoretical problems. Prioritize functionality-breaking issues over cosmetic concerns.
-
-- **Scope Awareness**: Review only what was requested. Don't expand beyond the requested scope unless explicitly asked.
-
-## Search Guidance
-
-**CRITICAL**: Use the right tool for each search task in the Review workflow.
-
-**Phase 0 - Functionality Analysis**:
-
-- **Discovery**: Use `Glob` to find relevant files (`Glob("src/components/**/*.tsx")` for UI components)
-- **Content Search**: Use `Grep` to find function calls (`Grep("function.*handleSubmit")` for user flows)
-- **Detail Reading**: Use `Read` to read specific files (`Read("src/api/auth.ts")` for authentication logic)
-- **Example**: Understanding user registration flow:
-  - Step 1: `Glob("**/*register*.{ts,tsx}")` → Find registration files
-  - Step 2: `Grep("onSubmit|handleSubmit", path="src/components")` → Find submit handlers
-  - Step 3: `Read("src/components/RegisterForm.tsx")` → Read implementation
-
-**Phase 1 - Input Validation**:
-
-- **File Existence**: Use `Glob` to verify files exist (`Glob("src/**/*.ts")` to list files)
-- **Scope Detection**: Use `Grep` to search for patterns (`Grep("TODO|FIXME")` to find review targets)
-
-**Phase 3 - Analysis Subagents**:
-
-- **Security Patterns**: Use `Grep` to find security-sensitive code (`Grep("password|token|secret")`)
-- **Performance Issues**: Use `Grep` to find performance patterns (`Grep("useEffect|useMemo|useCallback")`)
-- **UX Patterns**: Use `Glob` to find UI components (`Glob("**/*.{tsx,jsx}")`), then `Read` for details
-
-**Anti-Patterns**:
-
-- ❌ Using `Read` to search for patterns (use `Grep` instead)
-- ❌ Using `Grep` to find files by name (use `Glob` instead)
-- ❌ Reading entire large files when only a section is needed (use `Read` with offset/limit)
+**See orchestrator REFERENCE.md for tool usage guides and search guidance.**
 
 ## Phase 0 - Functionality Analysis (MANDATORY)
 

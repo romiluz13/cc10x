@@ -1,81 +1,8 @@
 # DEBUG Workflow - Root Cause First
 
-## 🚨 EXECUTION MODE - THIS IS NOT DOCUMENTATION 🚨
-
-**CRITICAL**: This workflow file contains EXECUTABLE INSTRUCTIONS, not reference documentation.
-
-**YOU MUST EXECUTE THIS WORKFLOW STEP-BY-STEP:**
-
-1. **This is an executable script** - NOT a reference guide
-   - Each phase is a mandatory step to execute
-   - Each checklist item must be checked literally
-   - Each bash command must be run and output captured
-
-2. **CRITICAL markers are hard stops** - NOT suggestions
-   - "CRITICAL: Run this command" → YOU MUST RUN IT NOW
-   - "DO NOT proceed until" → YOU MUST STOP AND VALIDATE
-   - "MANDATORY" = MUST DO = HARD STOP IF SKIPPED
-
-3. **Validation gates are mandatory checks** - NOT optional
-   - Before Phase 3: Skills Inventory Check → YOU MUST RUN IT
-   - Before Phase 4: Subagents Inventory Check → YOU MUST RUN IT
-   - Each checklist item → YOU MUST VERIFY IT
-
-4. **Subagent invocation is required** - NOT optional
-   - "You MUST invoke bug-investigator" → USE Task TOOL
-   - "Invoke code-reviewer" → USE Task TOOL
-   - Do NOT write code directly → INVOKE SUBAGENTS
-
-**IF YOU READ THIS AS DOCUMENTATION:**
-
-- ❌ You will summarize instead of executing
-- ❌ You will skip mandatory bash commands
-- ❌ You will skip validation gates
-- ❌ You will write code directly instead of invoking subagents
-- ❌ Workflow will fail validation
-
-**CORRECT APPROACH:**
-
-1. Orchestrator activates this workflow → Execute Phase 0 FIRST
-2. Execute Phase 1 → Run all commands, capture output
-3. Execute Phase 2 → Load skills, verify each loaded
-4. Execute Phase 3 → Invoke subagents via Task tool
-5. Execute Phase 4 → Validate all outputs
-6. Execute Phase 5 → Generate report with evidence
-
 **CRITICAL**: This workflow MUST be activated through cc10x-orchestrator. Do NOT execute this workflow directly. The orchestrator provides required context, coordinates skill loading, and manages subagent invocation. Direct execution bypasses all validation mechanisms.
 
-**🚨 CRITICAL ENFORCEMENT - DO NOT WRITE CODE DIRECTLY 🚨**
-
-**MANDATORY RULES** (Violation = Workflow Failure):
-
-1. **DO NOT write code directly** - You MUST invoke subagents sequentially per bug:
-   - bug-investigator → code-reviewer → integration-verifier
-   - Read subagent's SUBAGENT.md before invoking
-   - Verify subagent exists before invoking
-   - Check skip conditions before invoking
-
-2. **DO NOT skip Actions Taken tracking** - Update Actions Taken IMMEDIATELY after:
-   - Each skill loaded (mark as "loaded successfully" or "failed to load")
-   - Each subagent invoked (mark as "invoked successfully" or "skipped" with reason)
-   - Each phase completed (mark phase as complete)
-   - Never proceed to next phase without updating Actions Taken
-
-3. **DO NOT skip inventory checks** - You MUST perform:
-   - Skills Inventory Check before Phase 3 (verify ALL required skills loaded)
-   - Subagents Inventory Check before Phase 4 (verify ALL required subagents invoked)
-   - If ANY missing, STOP workflow, fix immediately, re-validate
-
-4. **DO NOT skip memory integration** - You MUST:
-   - Query patterns before complexity scoring (load patterns.json ONCE, cache for workflow duration)
-   - Store patterns after workflow completion (validate first, update accuracy)
-
-5. **DO NOT skip web fetch integration** - You MUST:
-   - When external APIs/libraries/frameworks mentioned, fetch documentation
-   - Use question-based prompts (not raw content requests)
-   - Check cache first, use cache if valid, fetch if needed
-
-**If you violate ANY of these rules, Phase 4 validation will FAIL and you will be forced to correct before proceeding.**
+**See SHARED-ENFORCEMENT.md for MANDATORY execution mode, enforcement rules, guardrails, and validation gates that apply to ALL workflows.**
 
 **Triggered by:** User requests help investigating bugs, errors, or unexpected behaviour.
 
@@ -149,66 +76,9 @@ User request contains "debug"/"fix"/"error"/"bug"/"investigate"/"failure"/"broke
 - DEBUG: Fix broken functionality (repair)
 - VALIDATE: Verify implementation matches plan (verification)
 
-## TL;DR Quick Checklist
+**See SHARED-ENFORCEMENT.md for TL;DR Quick Checklist, Guardrails, and Runtime Compliance Checks.**
 
-**CRITICAL**: Complete ALL items below. Skipping any item will cause workflow validation to FAIL.
-
-- [ ] Complete Phase 0: Functionality Analysis FIRST (understand expected vs observed functionality, document broken flows)
-- [ ] Gather bug details using Ask Questions tool if needed
-- [ ] Check logs FIRST before loading skills (LOG FIRST principle)
-- [ ] Load required skills in parallel (systematic-debugging, log-analysis-patterns, root-cause-analysis)
-- [ ] **UPDATE Actions Taken** - Document ALL skills loaded IMMEDIATELY after loading
-- [ ] **PERFORM Skills Inventory Check** - Verify ALL required skills loaded before Phase 3
-- [ ] **DO NOT write code directly** - Invoke subagents sequentially per bug: bug-investigator → code-reviewer → integration-verifier
-- [ ] **UPDATE Actions Taken** - Document ALL subagents invoked IMMEDIATELY after invocation
-- [ ] **PERFORM Subagents Inventory Check** - Verify ALL required subagents invoked before Phase 4
-- [ ] Verify fix works and functionality restored before claiming completion
-- [ ] Generate debug report with functionality verification FIRST, then root cause analysis
-
-## Guardrails
-
-**CRITICAL**: These guardrails MUST be followed in the Debug workflow. Violations lead to incomplete or incorrect debugging.
-
-- **Functionality First**: Always understand what functionality SHOULD work (expected behavior) and what is actually broken (observed behavior) BEFORE investigating bugs. Map observed to expected flows.
-
-- **Evidence Required**: Every bug finding must include file:line citations, error messages, logs, or reproduction steps. No assertions without proof.
-
-- **LOG FIRST**: Check logs FIRST before loading skills or investigating deeply. Logs often contain the answer.
-
-- **Root Cause Focus**: Find the root cause, not just symptoms. Fix the underlying issue, not just the surface problem.
-
-- **Scope Awareness**: Debug only what was requested. Don't expand beyond the requested scope unless explicitly asked.
-
-## Search Guidance
-
-**CRITICAL**: Use the right tool for each search task in the Debug workflow.
-
-**Phase 0 - Functionality Analysis**:
-
-- **Discovery**: Use `Glob` to find relevant files (`Glob("src/**/*error*.{ts,tsx}")` for error handling)
-- **Content Search**: Use `Grep` to find error patterns (`Grep("throw|Error|catch")` for error handling)
-- **Detail Reading**: Use `Read` to read specific files (`Read("src/api/auth.ts")` for broken functionality)
-- **Example**: Understanding broken authentication flow:
-  - Step 1: `Glob("**/*auth*.{ts,tsx}")` → Find auth-related files
-  - Step 2: `Grep("function.*login|function.*authenticate")` → Find auth functions
-  - Step 3: `Read("src/api/auth.ts")` → Read implementation
-
-**Phase 1 - Intake**:
-
-- **Log Discovery**: Use `Glob` to find log files (`Glob("**/*.log")` or `Glob("logs/**/*")`)
-- **Error Patterns**: Use `Grep` to find error messages (`Grep("ERROR|FATAL|Exception")`)
-
-**Phase 2 - Investigation**:
-
-- **Error Locations**: Use `Grep` to find error handling (`Grep("try|catch|throw")`)
-- **Function Calls**: Use `Grep` to find function invocations (`Grep("function.*name")`)
-- **Dependency Analysis**: Use `Grep` to find imports (`Grep("import.*from")` to map dependencies)
-
-**Anti-Patterns**:
-
-- ❌ Using `Read` to search for patterns (use `Grep` instead)
-- ❌ Using `Grep` to find files by name (use `Glob` instead)
-- ❌ Reading entire large files when only a section is needed (use `Read` with offset/limit)
+**See orchestrator REFERENCE.md for tool usage guides and search guidance.**
 
 ## Phase 0 - Functionality Analysis (MANDATORY)
 

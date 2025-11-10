@@ -1,88 +1,8 @@
 # BUILD Workflow - TDD Driven Implementation
 
-## 🚨 EXECUTION MODE - THIS IS NOT DOCUMENTATION 🚨
-
-**CRITICAL**: This workflow file contains EXECUTABLE INSTRUCTIONS, not reference documentation.
-
-**YOU MUST EXECUTE THIS WORKFLOW STEP-BY-STEP:**
-
-1. **This is an executable script** - NOT a reference guide
-   - Each phase is a mandatory step to execute
-   - Each checklist item must be checked literally
-   - Each bash command must be run and output captured
-
-2. **CRITICAL markers are hard stops** - NOT suggestions
-   - "CRITICAL: Run this command" → YOU MUST RUN IT NOW
-   - "DO NOT proceed until" → YOU MUST STOP AND VALIDATE
-   - "MANDATORY" = MUST DO = HARD STOP IF SKIPPED
-
-3. **Validation gates are mandatory checks** - NOT optional
-   - Before Phase 3: Skills Inventory Check → YOU MUST RUN IT
-   - Before Phase 4: Subagents Inventory Check → YOU MUST RUN IT
-   - Each checklist item → YOU MUST VERIFY IT
-
-4. **Subagent invocation is required** - NOT optional
-   - "You MUST invoke component-builder" → USE Task TOOL
-   - "Invoke code-reviewer" → USE Task TOOL
-   - Do NOT write code directly → INVOKE SUBAGENTS
-
-**IF YOU READ THIS AS DOCUMENTATION:**
-
-- ❌ You will summarize instead of executing
-- ❌ You will skip mandatory bash commands
-- ❌ You will skip validation gates
-- ❌ You will write code directly instead of invoking subagents
-- ❌ Workflow will fail validation
-
-**CORRECT APPROACH:**
-
-1. Orchestrator activates this workflow → Execute Phase 0 FIRST
-2. Execute Phase 1 → Run all commands, capture output
-3. Execute Phase 2 → Load skills, verify each loaded
-4. Execute Phase 3 → Invoke subagents via Task tool
-5. Execute Phase 4 → Validate all outputs
-6. Execute Phase 5 → Generate report with evidence
-
 **CRITICAL**: This workflow MUST be activated through cc10x-orchestrator. Do NOT execute this workflow directly. The orchestrator provides required context, coordinates skill loading, and manages subagent invocation. Direct execution bypasses all validation mechanisms.
 
-**🚨 CRITICAL ENFORCEMENT - DO NOT WRITE CODE DIRECTLY 🚨**
-
-**MANDATORY RULES** (Violation = Workflow Failure):
-
-1. **DO NOT write code directly** - You MUST invoke subagents in sequence:
-   - component-builder → code-reviewer → integration-verifier
-   - Each component gets its own subagent sequence
-   - Read subagent's SUBAGENT.md before invoking
-   - Verify subagent exists before invoking
-   - Check skip conditions before invoking
-
-2. **DO NOT skip TDD cycle** - component-builder MUST follow RED → GREEN → REFACTOR:
-   - RED: Write failing test FIRST, run test, capture failing output with exit code
-   - GREEN: Write minimal code to pass test, run test, capture passing output with exit code
-   - REFACTOR: Clean up while keeping tests green, verify exit code still 0
-   - Do NOT mark component complete without seeing test fail then pass
-
-3. **DO NOT skip Actions Taken tracking** - Update Actions Taken IMMEDIATELY after:
-   - Each skill loaded (mark as "loaded successfully" or "failed to load")
-   - Each subagent invoked (mark as "invoked successfully" or "skipped" with reason)
-   - Each phase completed (mark phase as complete)
-   - Never proceed to next phase without updating Actions Taken
-
-4. **DO NOT skip inventory checks** - You MUST perform:
-   - Skills Inventory Check before Phase 3 (verify ALL required skills loaded)
-   - Subagents Inventory Check before Phase 4 (verify ALL required subagents invoked)
-   - If ANY missing, STOP workflow, fix immediately, re-validate
-
-5. **DO NOT skip memory integration** - You MUST:
-   - Query patterns before complexity scoring (load patterns.json ONCE, cache for workflow duration)
-   - Store patterns after workflow completion (validate first, update accuracy)
-
-6. **DO NOT skip web fetch integration** - You MUST:
-   - When external APIs/libraries/frameworks mentioned, fetch documentation
-   - Use question-based prompts (not raw content requests)
-   - Check cache first, use cache if valid, fetch if needed
-
-**If you violate ANY of these rules, Phase 4 validation will FAIL and you will be forced to correct before proceeding.**
+**See SHARED-ENFORCEMENT.md for MANDATORY execution mode, enforcement rules, guardrails, and validation gates that apply to ALL workflows.**
 
 **Triggered by:** User requests implementation or feature build work.
 
@@ -154,67 +74,9 @@ User request contains "build"/"implement"/"create"/"write code"/"develop"/"make"
 - BUILD: Create implementation (creation)
 - VALIDATE: Verify implementation matches plan (verification)
 
-## TL;DR Quick Checklist
+**See SHARED-ENFORCEMENT.md for TL;DR Quick Checklist, Guardrails, and Runtime Compliance Checks.**
 
-**CRITICAL**: Complete ALL items below. Skipping any item will cause workflow validation to FAIL.
-
-- [ ] Complete Phase 0: Functionality Analysis FIRST (understand functionality requirements, document flows, extract acceptance criteria)
-- [ ] Assess complexity (1-5 scale) and gate check if <=2
-- [ ] Load required skills in parallel (code-generation, test-driven-development, component-design-patterns)
-- [ ] Load conditional skills if detected (ui-design if UI components, design-patterns if building APIs/components/integrations)
-- [ ] **UPDATE Actions Taken** - Document ALL skills loaded IMMEDIATELY after loading
-- [ ] **PERFORM Skills Inventory Check** - Verify ALL required skills loaded before Phase 3
-- [ ] **DO NOT write code directly** - Invoke subagents: component-builder → code-reviewer → integration-verifier
-- [ ] **FOR EACH component** - Follow TDD cycle: RED (failing test) → GREEN (minimal code) → REFACTOR (clean up)
-- [ ] **UPDATE Actions Taken** - Document ALL subagents invoked IMMEDIATELY after invocation
-- [ ] **PERFORM Subagents Inventory Check** - Verify ALL required subagents invoked before Phase 4
-- [ ] Run tests and verify functionality works before claiming completion
-- [ ] Generate build report with functionality verification FIRST, then other checks
-
-## Guardrails
-
-**CRITICAL**: These guardrails MUST be followed in the Build workflow. Violations lead to incomplete or incorrect implementations.
-
-- **Functionality First**: Always understand functionality requirements (user flows, admin flows, system flows) BEFORE implementing components. Build to support functionality, verify it works BEFORE claiming completion.
-
-- **Evidence Required**: Every implementation must include tests or verification commands. Run tests and check exit codes before claiming completion.
-
-- **No Placeholders**: Never use "TODO", "TBD", "FIXME" in critical sections. Complete all required functionality before proceeding.
-
-- **Test-Driven**: Write tests FIRST, then implement. Verify functionality works with tests before claiming completion.
-
-- **Scope Awareness**: Build only what was requested. Don't expand beyond the requested scope unless explicitly asked.
-
-## Search Guidance
-
-**CRITICAL**: Use the right tool for each search task in the Build workflow.
-
-**Phase 0 - Functionality Analysis**:
-
-- **Discovery**: Use `Glob` to find existing similar components (`Glob("src/components/**/*.tsx")` to understand structure)
-- **Content Search**: Use `Grep` to find related implementations (`Grep("function.*Button")` to see component patterns)
-- **Detail Reading**: Use `Read` to read existing components (`Read("src/components/Button.tsx")` for patterns)
-- **Example**: Building a new component similar to existing ones:
-  - Step 1: `Glob("src/components/**/*.tsx")` → Find existing components
-  - Step 2: `Grep("export.*function.*Component", path="src/components")` → Find component exports
-  - Step 3: `Read("src/components/Button.tsx")` → Read component implementation
-
-**Phase 2 - Shared Context**:
-
-- **Test Patterns**: Use `Glob` to find test files (`Glob("**/*.test.{ts,tsx}")`), then `Read` for patterns
-- **API Patterns**: Use `Grep` to find API calls (`Grep("fetch|axios")` to see API patterns)
-- **Hook Patterns**: Use `Grep` to find custom hooks (`Grep("function.*use[A-Z]")` for React hooks)
-
-**Phase 3 - Component Queue**:
-
-- **Dependency Discovery**: Use `Grep` to find imports (`Grep("import.*from")` to map dependencies)
-- **File Structure**: Use `Glob` to understand file organization (`Glob("src/**/*.{ts,tsx}")`)
-
-**Anti-Patterns**:
-
-- ❌ Using `Read` to search for patterns (use `Grep` instead)
-- ❌ Using `Grep` to find files by name (use `Glob` instead)
-- ❌ Reading entire large files when only a section is needed (use `Read` with offset/limit)
+**See orchestrator REFERENCE.md for tool usage guides and search guidance.**
 
 ## Phase 0 - Functionality Analysis (MANDATORY)
 

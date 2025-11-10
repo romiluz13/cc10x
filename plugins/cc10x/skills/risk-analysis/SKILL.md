@@ -144,66 +144,11 @@ allowed-tools: Read, Grep, Glob
 
 **⚠️ Use this framework to analyze functionality-specific risks, not generic risks**.
 
-### 7-Stage Risk Framework (Applied to Functionality)
+**Reference**: See [PATTERNS.md](./PATTERNS.md) for detailed risk analysis framework including:
 
-**Apply to functionality flows, not generically**:
-
-1. **Data Flow Risks** (Based on Functionality):
-   - What data flows through functionality?
-   - What validation is needed?
-   - What risks affect functionality?
-   - **Example**: File upload - invalid file type breaks upload functionality
-
-2. **Dependency Risks** (Based on Functionality):
-   - What external services does functionality depend on?
-   - What happens if dependencies fail?
-   - What risks affect functionality?
-   - **Example**: File upload - CRM API down breaks upload functionality
-
-3. **Timing/Concurrency Risks** (Based on Functionality):
-   - What timing constraints does functionality have?
-   - What race conditions might occur?
-   - What risks affect functionality?
-   - **Example**: File upload - concurrent uploads might cause race conditions
-
-4. **UX & Accessibility Risks** (Based on Functionality):
-   - What UX issues might prevent functionality use?
-   - What accessibility issues might prevent functionality use?
-   - What risks affect functionality?
-   - **Example**: File upload - missing progress indicator confuses users
-
-5. **Security & Compliance Risks** (Based on Functionality):
-   - What security issues might break functionality?
-   - What compliance issues might affect functionality?
-   - What risks affect functionality?
-   - **Example**: File upload - malicious files might break functionality
-
-6. **Performance & Scalability Risks** (Based on Functionality):
-   - What performance issues might break functionality?
-   - What scalability issues might affect functionality?
-   - What risks affect functionality?
-   - **Example**: File upload - large files might cause timeouts
-
-7. **Failure & Recovery Risks** (Based on Functionality):
-   - What failures might break functionality?
-   - How can functionality recover?
-   - What risks affect functionality?
-   - **Example**: File upload - network failure might break upload
-
-### Risk Scoring (Functionality-Focused)
-
-**Score risks by functionality impact**:
-
-```
-Risk: [Description specific to functionality]
-- Probability: 1-5 (how likely to affect functionality)
-- Impact: 1-5 (how much it affects functionality)
-- Score: P × I
-- Source: [Functionality requirement/flow that created this risk]
-- Mitigation: [Specific action to prevent risk from affecting functionality]
-- Owner: [Role responsible]
-- Status: [Open/Tracking/Mitigated]
-```
+- 7-Stage Risk Framework (Data Flow, Dependency, Timing/Concurrency, UX & Accessibility, Security & Compliance, Performance & Scalability, Failure & Recovery)
+- Risk scoring guide (functionality-focused)
+- Risk mitigation patterns (retry logic, fallback storage, graceful degradation, validation, rate limiting, idempotency)
 
 ---
 

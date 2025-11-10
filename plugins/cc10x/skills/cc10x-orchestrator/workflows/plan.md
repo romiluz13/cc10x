@@ -1,81 +1,8 @@
 # PLANNING Workflow - Structured Feature Design
 
-## 🚨 EXECUTION MODE - THIS IS NOT DOCUMENTATION 🚨
-
-**CRITICAL**: This workflow file contains EXECUTABLE INSTRUCTIONS, not reference documentation.
-
-**YOU MUST EXECUTE THIS WORKFLOW STEP-BY-STEP:**
-
-1. **This is an executable script** - NOT a reference guide
-   - Each phase is a mandatory step to execute
-   - Each checklist item must be checked literally
-   - Each bash command must be run and output captured
-
-2. **CRITICAL markers are hard stops** - NOT suggestions
-   - "CRITICAL: Run this command" → YOU MUST RUN IT NOW
-   - "DO NOT proceed until" → YOU MUST STOP AND VALIDATE
-   - "MANDATORY" = MUST DO = HARD STOP IF SKIPPED
-
-3. **Validation gates are mandatory checks** - NOT optional
-   - Before Phase 3: Skills Inventory Check → YOU MUST RUN IT
-   - Before Phase 4: Subagents Inventory Check → YOU MUST RUN IT
-   - Each checklist item → YOU MUST VERIFY IT
-
-4. **Subagent invocation is required** - NOT optional
-   - "You MUST invoke planning-architecture-risk" → USE Task TOOL
-   - "Invoke planning-design-deployment" → USE Task TOOL
-   - Do NOT write code directly → INVOKE SUBAGENTS
-
-**IF YOU READ THIS AS DOCUMENTATION:**
-
-- ❌ You will summarize instead of executing
-- ❌ You will skip mandatory bash commands
-- ❌ You will skip validation gates
-- ❌ You will write code directly instead of invoking subagents
-- ❌ Workflow will fail validation
-
-**CORRECT APPROACH:**
-
-1. Orchestrator activates this workflow → Execute Phase 0 FIRST
-2. Execute Phase 1 → Run all commands, capture output
-3. Execute Phase 2 → Load skills, verify each loaded
-4. Execute Phase 3 → Invoke subagents via Task tool
-5. Execute Phase 4 → Validate all outputs
-6. Execute Phase 5 → Generate report with evidence
-
 **CRITICAL**: This workflow MUST be activated through cc10x-orchestrator. Do NOT execute this workflow directly. The orchestrator provides required context, coordinates skill loading, and manages subagent invocation. Direct execution bypasses all validation mechanisms.
 
-**🚨 CRITICAL ENFORCEMENT - DO NOT WRITE CODE DIRECTLY 🚨**
-
-**MANDATORY RULES** (Violation = Workflow Failure):
-
-1. **DO NOT write code directly** - You MUST invoke subagents sequentially:
-   - planning-architecture-risk → planning-design-deployment
-   - Read subagent's SUBAGENT.md before invoking
-   - Verify subagent exists before invoking
-   - Check skip conditions before invoking
-
-2. **DO NOT skip Actions Taken tracking** - Update Actions Taken IMMEDIATELY after:
-   - Each skill loaded (mark as "loaded successfully" or "failed to load")
-   - Each subagent invoked (mark as "invoked successfully" or "skipped" with reason)
-   - Each phase completed (mark phase as complete)
-   - Never proceed to next phase without updating Actions Taken
-
-3. **DO NOT skip inventory checks** - You MUST perform:
-   - Skills Inventory Check before Phase 3 (verify ALL required skills loaded)
-   - Subagents Inventory Check before Phase 4 (verify ALL required subagents invoked)
-   - If ANY missing, STOP workflow, fix immediately, re-validate
-
-4. **DO NOT skip memory integration** - You MUST:
-   - Query patterns before complexity scoring (load patterns.json ONCE, cache for workflow duration)
-   - Store patterns after workflow completion (validate first, update accuracy)
-
-5. **DO NOT skip web fetch integration** - You MUST:
-   - When external APIs/libraries/frameworks mentioned, fetch documentation
-   - Use question-based prompts (not raw content requests)
-   - Check cache first, use cache if valid, fetch if needed
-
-**If you violate ANY of these rules, Phase 4 validation will FAIL and you will be forced to correct before proceeding.**
+**See SHARED-ENFORCEMENT.md for MANDATORY execution mode, enforcement rules, guardrails, and validation gates that apply to ALL workflows.**
 
 **Triggered by:** User asks to plan, architect, or design a feature or system update.
 
@@ -146,64 +73,9 @@ User request contains "plan"/"design"/"architect"/"roadmap"/"strategy"?
 - PLAN: Create new plans (creation)
 - VALIDATE: Verify implementation matches plan (verification)
 
-## TL;DR Quick Checklist
+**See SHARED-ENFORCEMENT.md for TL;DR Quick Checklist, Guardrails, and Runtime Compliance Checks.**
 
-**CRITICAL**: Complete ALL items below. Skipping any item will cause workflow validation to FAIL.
-
-- [ ] Complete Phase 0: Functionality Analysis FIRST (understand what functionality needs planning, document flows, plan research)
-- [ ] Assess complexity (1-5 scale) and gate check if <=2
-- [ ] Gather requirements using Ask Questions tool if needed
-- [ ] Load required skills in parallel (requirements-analysis, architecture-patterns, feature-planning, design-patterns)
-- [ ] Load conditional skills if detected (ui-design if UI features mentioned)
-- [ ] **UPDATE Actions Taken** - Document ALL skills loaded IMMEDIATELY after loading
-- [ ] **PERFORM Skills Inventory Check** - Verify ALL required skills loaded before Phase 3
-- [ ] **DO NOT write code directly** - Invoke planning subagents sequentially: planning-architecture-risk → planning-design-deployment
-- [ ] **UPDATE Actions Taken** - Document ALL subagents invoked IMMEDIATELY after invocation
-- [ ] **PERFORM Subagents Inventory Check** - Verify ALL required subagents invoked before Phase 4
-- [ ] Synthesize plan with functionality-first approach and generate deliverable
-
-## Guardrails
-
-**CRITICAL**: These guardrails MUST be followed in the Plan workflow. Violations lead to incomplete or incorrect plans.
-
-- **Functionality First**: Always understand what functionality needs to be planned (user flows, admin flows, system flows) BEFORE designing architecture, APIs, components, or deployment. Plan to support functionality, not abstract patterns.
-
-- **Evidence Required**: Every design decision must be justified with functionality requirements. Link architecture decisions to user flows and system flows.
-
-- **No Over-Engineering**: Design for the 80% case. Avoid over-complication. Keep designs simple and focused on functionality requirements.
-
-- **Scope Awareness**: Plan only what was requested. Don't expand beyond the requested scope unless explicitly asked.
-
-## Search Guidance
-
-**CRITICAL**: Use the right tool for each search task in the Plan workflow.
-
-**Phase 0 - Functionality Analysis**:
-
-- **Discovery**: Use `Glob` to find existing similar features (`Glob("src/features/**/*")` to understand structure)
-- **Content Search**: Use `Grep` to find related implementations (`Grep("function.*login")` to see how auth is implemented)
-- **Detail Reading**: Use `Read` to read architecture files (`Read("docs/architecture.md")` for existing patterns)
-- **Example**: Planning a new feature similar to existing ones:
-  - Step 1: `Glob("src/features/**/*")` → Find existing feature structure
-  - Step 2: `Grep("export.*function", path="src/features")` → Find feature exports
-  - Step 3: `Read("src/features/user-profile/index.ts")` → Read feature structure
-
-**Phase 2 - Requirements Intake**:
-
-- **Existing Patterns**: Use `Grep` to find similar patterns (`Grep("useState|useEffect")` for React patterns)
-- **API Patterns**: Use `Glob` to find API files (`Glob("src/api/**/*.ts")`), then `Read` for details
-- **Component Patterns**: Use `Glob` to find components (`Glob("src/components/**/*.tsx")`), then `Read` for patterns
-
-**Phase 3 - Architecture Design**:
-
-- **Dependency Analysis**: Use `Grep` to find imports (`Grep("import.*from")` to map dependencies)
-- **Structure Discovery**: Use `Glob` to understand project structure (`Glob("src/**/*.{ts,tsx}")`)
-
-**Anti-Patterns**:
-
-- ❌ Using `Read` to search for patterns (use `Grep` instead)
-- ❌ Using `Grep` to find files by name (use `Glob` instead)
-- ❌ Reading entire large files when only a section is needed (use `Read` with offset/limit)
+**See orchestrator REFERENCE.md for tool usage guides and search guidance.**
 
 ## Phase 0 - Functionality Analysis (MANDATORY)
 

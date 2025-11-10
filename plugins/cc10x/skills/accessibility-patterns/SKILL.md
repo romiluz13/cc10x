@@ -267,134 +267,14 @@ For each accessibility issue found, provide:
 
 ---
 
-## Accessibility Pattern Library (Reference - Use AFTER Understanding Accessibility Requirements)
+## Accessibility Pattern Library
 
-### Keyboard Navigation
-
-**Understand accessibility requirements first, then check**:
-
-**Keyboard Accessible Buttons** (aligned with project pattern):
-```tsx
-// Check: Is button keyboard accessible?
-// BAD - Div as button (flag if prevents access)
-<div onClick={handleClick}>Submit</div>
-
-// GOOD - Proper button (aligned with project pattern)
-<button onClick={handleClick}>Submit</button>
-
-// GOOD - Custom element with keyboard support (aligned with project pattern)
-<span
-  role="button"
-  tabIndex={0}
-  onClick={handleClick}
-  onKeyDown={(e) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      handleClick();
-    }
-  }}
->
-  Submit
-</span>
-````
-
-### Screen Reader Support
-
-**Understand accessibility requirements first, then check**:
-
-**Form Labels** (aligned with project pattern):
-
-```tsx
-// Check: Are form inputs labeled?
-// BAD - No label (flag if prevents screen reader users)
-<input type="text" placeholder="Email" />
-
-// GOOD - Proper label (aligned with project pattern)
-<label htmlFor="email">Email</label>
-<input id="email" type="email" />
-
-// GOOD - aria-label (aligned with project pattern)
-<input type="email" aria-label="Email address" />
-```
-
-**Alt Text** (aligned with project pattern):
-
-```tsx
-// Check: Are images accessible?
-// BAD - Missing alt text (flag if prevents understanding)
-<img src="logo.png" />
-
-// GOOD - Descriptive alt text (aligned with project pattern)
-<img src="logo.png" alt="Company name logo" />
-
-// GOOD - Decorative image hidden (aligned with project pattern)
-<img src="decoration.png" alt="" aria-hidden="true" />
-```
-
-**Status Announcements** (aligned with project pattern):
-
-```tsx
-// Check: Are status changes announced?
-// BAD - No announcement (flag if prevents understanding)
-<div>{uploadStatus}</div>
-
-// GOOD - aria-live announcement (aligned with project aria-live pattern)
-<div aria-live="polite" aria-atomic="true">
-  {uploadStatus}
-</div>
-```
-
-### Color Contrast
-
-**Understand accessibility requirements first, then check**:
-
-**Color Contrast** (only flag if prevents reading):
-
-```css
-/* Check: Is contrast sufficient? */
-/* BAD - Low contrast (flag if prevents reading) */
-color: #7b7b7b;
-background: #cccccc; /* 3.2:1 - fails WCAG AA */
-
-/* GOOD - WCAG AA compliant (aligned with project 4.5:1 requirement) */
-color: #5a5a5a;
-background: #ffffff; /* 4.5:1 - passes WCAG AA */
-```
-
-### Focus Management
-
-**Understand accessibility requirements first, then check**:
-
-**Focus Indicators** (aligned with project pattern):
-
-```css
-/* Check: Are focus indicators visible? */
-/* BAD - Missing focus indicator (flag if prevents navigation) */
-button:focus {
-  outline: none; /* Bad! */
-}
-
-/* GOOD - Visible focus indicator (aligned with project 2px solid outline pattern) */
-button:focus {
-  outline: 2px solid blue;
-  outline-offset: 2px;
-}
-```
-
-**Semantic HTML** (aligned with project pattern):
-
-```tsx
-// Check: Is semantic HTML used?
-// BAD - Div soup (flag if prevents understanding)
-<div onClick={handleClick}>
-  <div>Submit</div>
-</div>
-
-// GOOD - Semantic HTML (aligned with project pattern)
-<button onClick={handleClick}>
-  Submit
-</button>
-```
+**Reference**: See [PATTERNS.md](./PATTERNS.md) for detailed accessibility patterns including:
+- Keyboard navigation patterns
+- Screen reader support (form labels, alt text, status announcements)
+- Color contrast guidelines
+- Focus management patterns
+- Semantic HTML examples
 
 ---
 
@@ -516,3 +396,4 @@ button:focus {
 ---
 
 _This skill enables context-aware accessibility analysis that understands accessibility requirements and focuses on accessibility issues preventing users from using functionality, providing specific fixes with code examples aligned with project accessibility patterns._
+````
