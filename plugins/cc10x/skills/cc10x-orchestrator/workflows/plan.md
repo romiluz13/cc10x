@@ -362,18 +362,20 @@ Next: Proceeding to Phase 2 - Requirements Intake
 - `ui-design` - Load if UI features mentioned (keywords: UI, interface, design, form, dashboard)
 - `api-design-patterns` - Load if API planning detected (keywords: API, endpoint, REST, GraphQL, route)
 - `component-design-patterns` - Load if component planning detected (keywords: component, UI component, React component, Vue component)
+- `deployment-patterns` - Load if deployment planning detected (keywords: deploy, deployment, production, staging, CI/CD, infrastructure) - Required for `planning-design-deployment` subagent
 
 **Detection Logic**:
 
 - UI Features: Keywords "UI", "interface", "design", "form", "dashboard"
 - API Planning: Keywords "API", "endpoint", "REST", "GraphQL", "route"
 - Component Planning: Keywords "component", "UI component", "React component", "Vue component"
+- Deployment Planning: Keywords "deploy", "deployment", "production", "staging", "CI/CD", "infrastructure", "Docker", "Kubernetes", "AWS", "cloud"
 
 **Skill Loading Strategy**:
 
 - All required skills are independent (no dependencies between them)
 - **Load all required skills in parallel** for faster initialization
-- **Load conditional skills** (`ui-design`, `api-design-patterns`, `component-design-patterns`, `web-fetch-integration`) based on detection logic, still in parallel with required skills
+- **Load conditional skills** (`ui-design`, `api-design-patterns`, `component-design-patterns`, `deployment-patterns`, `web-fetch-integration`) based on detection logic, still in parallel with required skills
 - **Skill Loading Verification**: Verify each skill loaded successfully (read first 100 chars, parse YAML, check content)
 - If loading fails, use Error Recovery Protocol
 

@@ -398,14 +398,16 @@ Next: Proceeding to Phase 2 - Shared Skills
 - `root-cause-analysis`
 - `test-driven-development`
 - `verification-before-completion`
+- `code-quality-patterns` - **MANDATORY** (required for `code-reviewer` subagent which is always invoked)
+- `security-patterns` - **MANDATORY** (required for `code-reviewer` subagent which is always invoked)
 - `memory-tool-integration` (filesystem-based memory always available)
 - `web-fetch-integration` (if external resources needed)
 
 **Skill Loading Strategy**:
 
-- Core 6 skills are independent (no dependencies between them)
+- Core 8 skills are independent (no dependencies between them)
 - **Load all core skills in parallel** for faster initialization
-- Conditional skills (performance-patterns, security-patterns, integration-patterns) added based on bug type, load in parallel when needed
+- Conditional skills (performance-patterns, integration-patterns) added based on bug type, load in parallel when needed
 - If conditional skill needed (web-fetch-integration), load conditionally but still in parallel with others
 
 **Skill Loading Verification Protocol**:
@@ -423,10 +425,10 @@ For each skill above:
 **Bug Type Skill Selection**:
 
 - For performance bugs: Also load `performance-patterns`
-- For security-related bugs: Also load `security-patterns`
-- For integration bugs: Also load `integration-patterns`
-- For code quality bugs: Also load `code-quality-patterns` (complexity, maintainability, SOLID violations)
+- For integration bugs: Also load `integration-patterns` (required for `integration-verifier` subagent)
 - For multiple independent bugs (3+): Also load `parallel-agent-dispatch` (orchestrator coordinates parallel subagent dispatch)
+
+**Note**: `code-quality-patterns` and `security-patterns` are now required skills (loaded in Phase 2) since `code-reviewer` subagent is always invoked.
 
 **Display Success Message** (after Phase 2 completion):
 

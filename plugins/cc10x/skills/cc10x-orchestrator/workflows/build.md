@@ -418,18 +418,21 @@ find_active_plan() {
 - `ui-design` - **MANDATORY** when UI components detected (file patterns: _.tsx, _.jsx, \*.vue, components/, ui/)
 - `design-patterns` - Load if building APIs, components, or integrations
 - `performance-patterns` - Load if performance-critical code detected (keywords: performance, optimization, fast, efficient, bottleneck)
+- `integration-patterns` - Load if integration code detected (API endpoints, external services, data flows) - Required for `integration-verifier` subagent
+- `log-analysis-patterns` - Load if integration code detected (API endpoints, external services, data flows) - Required for `integration-verifier` subagent
 
 **Detection Logic**:
 
 - UI Components: File patterns `*.tsx`, `*.jsx`, `*.vue`, `components/`, `ui/`, component names (Form, Button, Modal, etc.), or user requests UI components
 - Design Patterns: Building APIs, components, or integrations mentioned in requirements
 - Performance-Critical Code: Keywords "performance", "optimization", "fast", "efficient", "bottleneck"
+- Integration Code: File patterns `*api*.{ts,tsx,js,jsx}`, `*service*.{ts,tsx}`, `*integration*.{ts,tsx}`, `api/`, `services/`, keywords "API", "endpoint", "fetch", "axios", "external service", "integration"
 
 **Skill Loading Strategy**:
 
 - All required skills are independent (no dependencies between them)
 - **Load all required skills in parallel** for faster initialization
-- **Load conditional skills** (`ui-design`, `design-patterns`, `performance-patterns`, `web-fetch-integration`) based on detection logic, still in parallel with required skills
+- **Load conditional skills** (`ui-design`, `design-patterns`, `performance-patterns`, `integration-patterns`, `log-analysis-patterns`, `web-fetch-integration`) based on detection logic, still in parallel with required skills
 
 **Memory Integration** (optimized):
 

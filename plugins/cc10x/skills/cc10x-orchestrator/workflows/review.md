@@ -419,6 +419,8 @@ Next: Proceeding to Phase 2 - Load Required Skills
 - `design-patterns` - Load if design patterns mentioned or pattern review needed
 - `integration-patterns` - Load if integration code detected
 - `api-design-patterns` - Load if API code detected
+- `test-driven-development` - Load if integration code detected (required for `integration-verifier` subagent when integration changes detected)
+- `log-analysis-patterns` - Load if integration code detected (required for `integration-verifier` subagent when integration changes detected)
 
 **Detection Logic**:
 
@@ -431,7 +433,7 @@ Next: Proceeding to Phase 2 - Load Required Skills
 
 - All required skills are independent (no dependencies between them)
 - **Load all required skills in parallel** for faster initialization
-- **Load conditional skills** (`ui-design`, `design-patterns`, `integration-patterns`, `api-design-patterns`, `web-fetch-integration`) based on detection logic, still in parallel with required skills
+- **Load conditional skills** (`ui-design`, `design-patterns`, `integration-patterns`, `api-design-patterns`, `test-driven-development`, `log-analysis-patterns`, `web-fetch-integration`) based on detection logic, still in parallel with required skills
 
 **Skill Loading Verification Protocol**:
 For each skill above:
