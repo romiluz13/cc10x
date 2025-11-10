@@ -106,13 +106,36 @@ setup_context_json() {
         fi
     fi
     
-    # Copy template to .claude/context.json
-    if cp "$TEMPLATE_PATH" "$CONTEXT_JSON" 2>/dev/null; then
-        log "INFO" "Auto-created context.json from template"
-        success "Auto-created .claude/context.json (required for orchestrator enforcement)"
+    # Find the actual plugin skill path (works for both local and marketplace installations)
+    local ORCHESTRATOR_SKILL_PATH=""
+    # Try marketplace installation path first
+    if [ -f "$PLUGIN_ROOT/skills/cc10x-orchestrator/SKILL.md" ]; then
+        ORCHESTRATOR_SKILL_PATH="$PLUGIN_ROOT/skills/cc10x-orchestrator/SKILL.md"
+    elif [ -f "plugins/cc10x/skills/cc10x-orchestrator/SKILL.md" ]; then
+        ORCHESTRATOR_SKILL_PATH="plugins/cc10x/skills/cc10x-orchestrator/SKILL.md"
     else
-        log "WARN" "Failed to copy context.json template, user may need to create manually"
-        info "⚠️  context.json not found. Please create .claude/context.json for orchestrator enforcement."
+        # Try to find it relative to CLAUDE_PLUGIN_ROOT
+        if [ -n "$CLAUDE_PLUGIN_ROOT" ] && [ -f "$CLAUDE_PLUGIN_ROOT/skills/cc10x-orchestrator/SKILL.md" ]; then
+            ORCHESTRATOR_SKILL_PATH="$CLAUDE_PLUGIN_ROOT/skills/cc10x-orchestrator/SKILL.md"
+        else
+            log "WARN" "Could not find orchestrator skill path, using default"
+            ORCHESTRATOR_SKILL_PATH="plugins/cc10x/skills/cc10x-orchestrator/SKILL.md"
+        fi
+    fi
+    
+    # Create context.json with correct path
+    if [ -f "$TEMPLATE_PATH" ]; then
+        # Use sed to replace the hardcoded path with the actual path
+        if sed "s|\"path\": \"plugins/cc10x/skills/cc10x-orchestrator/SKILL.md\"|\"path\": \"$ORCHESTRATOR_SKILL_PATH\"|g" "$TEMPLATE_PATH" > "$CONTEXT_JSON" 2>/dev/null; then
+            log "INFO" "Auto-created context.json from template with path: $ORCHESTRATOR_SKILL_PATH"
+            success "Auto-created .claude/context.json (required for orchestrator enforcement)"
+        else
+            log "WARN" "Failed to create context.json from template, user may need to create manually"
+            info "⚠️  context.json not found. Please create .claude/context.json for orchestrator enforcement."
+        fi
+    else
+        log "WARN" "context.json template not found, skipping auto-setup"
+        info "⚠️  context.json template not found. Please create .claude/context.json manually."
     fi
 }
 
