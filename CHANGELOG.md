@@ -1,5 +1,26 @@
 # Changelog
 
+## [4.3.3] - 2025-01-29
+
+### Added
+
+- **Auto-Fill Snapshots**: Post-compact hook now automatically fills snapshot templates with actual context from workflow checkpoints (feature name, phase, progress, completions, next steps)
+- **Plan Reference System**: Plan workflow now creates `.claude/memory/current_plan.txt` reference file pointing to plan location for build workflow access
+- **Plan Access Priority Order**: Build workflow now checks plan location in priority order: current_plan.txt → WORKING_PLAN.md → docs/plans/ → snapshot
+- **Active Plan Display**: Session start hook now displays active plan path if available
+
+### Changed
+
+- **Post-Compact Hook**: Enhanced to extract context from workflow checkpoints and fill snapshot placeholders with actual values using Python-based replacement
+- **Plan Workflow Phase 6**: Added mandatory plan saving instructions with bash example for creating plan reference file
+- **Build Workflow Phase 2**: Added comprehensive plan access section with priority order and helper function
+- **Memory Integration Docs**: Added plan saving pattern and plan reference pattern documentation with priority order
+
+### Fixed
+
+- **Snapshot Templates**: Fixed issue where snapshots remained as templates with placeholders instead of being filled with actual context
+- **Plan Folder Disconnect**: Fixed critical flaw where plans saved to `.claude/docs/plans/` were not accessible to build workflow (now uses current_plan.txt reference)
+
 ## [4.3.2] - 2025-01-29
 
 ### Added
