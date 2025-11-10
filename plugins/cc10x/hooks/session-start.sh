@@ -73,6 +73,9 @@ initialize_session() {
     # Auto-setup context.json if missing (critical for orchestrator enforcement)
     setup_context_json
     
+    # Setup notifications (optional but recommended)
+    setup_notifications
+    
     # Initialize log file
     if ! touch "$LOG_FILE" 2>/dev/null; then
         error_exit "Failed to create log file: $LOG_FILE"
@@ -111,6 +114,41 @@ setup_context_json() {
         log "WARN" "Failed to copy context.json template, user may need to create manually"
         info "⚠️  context.json not found. Please create .claude/context.json for orchestrator enforcement."
     fi
+}
+
+# Setup terminal-notifier for notifications (optional but recommended)
+setup_notifications() {
+    local NOTIFIER_CHECK_FILE="$MEMORY_DIR/.notifier_checked"
+    
+    # Only check once per project (not every session)
+    if [ -f "$NOTIFIER_CHECK_FILE" ]; then
+        return 0
+    fi
+    
+    # Check if terminal-notifier is installed
+    if command -v terminal-notifier &> /dev/null; then
+        log "INFO" "terminal-notifier found, notifications enabled"
+        touch "$NOTIFIER_CHECK_FILE" 2>/dev/null || true
+        return 0
+    fi
+    
+    # Try to install via brew if available
+    if command -v brew &> /dev/null; then
+        log "INFO" "Attempting to install terminal-notifier via brew"
+        if brew install terminal-notifier &>/dev/null 2>&1; then
+            success "Installed terminal-notifier - notifications enabled"
+            touch "$NOTIFIER_CHECK_FILE" 2>/dev/null || true
+            return 0
+        else
+            log "WARN" "brew install terminal-notifier failed"
+        fi
+    fi
+    
+    # If brew install fails or brew not available, inform user once
+    log "WARN" "terminal-notifier not found, notifications disabled"
+    info "💡 Tip: Install terminal-notifier for workflow completion notifications:"
+    info "   brew install terminal-notifier"
+    touch "$NOTIFIER_CHECK_FILE" 2>/dev/null || true
 }
 
 # Generate session ID
