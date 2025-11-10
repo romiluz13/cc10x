@@ -1,5 +1,20 @@
 # Changelog
 
+## [4.3.2] - 2025-01-29
+
+### Added
+
+- **EXECUTION MODE Warnings**: Added explicit "EXECUTION MODE - THIS IS NOT DOCUMENTATION" sections to orchestrator skill and all 5 workflow files. Makes it clear that workflows are executable instructions, not reference documentation. Prevents Claude Code from reading workflows as docs instead of executing them step-by-step.
+
+### Changed
+
+- **Orchestrator Skill**: Added explicit instructions that skill must be loaded using Skill tool (not just Read tool), and workflows must be executed as step-by-step instructions.
+- **All Workflow Files**: Added execution mode warnings explicitly stating CRITICAL markers are hard stops, validation gates are mandatory checks, and subagent invocation is required.
+
+### Fixed
+
+- **Workflow Execution Issue**: Fixed issue where Claude Code was reading workflow files as documentation instead of executing them as step-by-step instructions.
+
 ## [4.3.1] - 2025-01-29
 
 ### Added
