@@ -65,12 +65,52 @@ initialize_session() {
         error_exit "Failed to create snapshot directory: $SNAPSHOT_DIR"
     fi
     
+    # Ensure .claude directory exists
+    if ! mkdir -p ".claude" 2>/dev/null; then
+        error_exit "Failed to create .claude directory"
+    fi
+    
+    # Auto-setup context.json if missing (critical for orchestrator enforcement)
+    setup_context_json
+    
     # Initialize log file
     if ! touch "$LOG_FILE" 2>/dev/null; then
         error_exit "Failed to create log file: $LOG_FILE"
     fi
     
     log "INFO" "Directories initialized successfully"
+}
+
+# Setup context.json automatically if missing
+setup_context_json() {
+    local CONTEXT_JSON=".claude/context.json"
+    local PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-plugins/cc10x}"
+    local TEMPLATE_PATH="$PLUGIN_ROOT/templates/context.json"
+    
+    # Check if context.json already exists
+    if [ -f "$CONTEXT_JSON" ]; then
+        log "INFO" "context.json already exists, skipping auto-setup"
+        return 0
+    fi
+    
+    # Try to find template in plugin directory
+    if [ ! -f "$TEMPLATE_PATH" ]; then
+        # Try alternative paths
+        TEMPLATE_PATH="plugins/cc10x/templates/context.json"
+        if [ ! -f "$TEMPLATE_PATH" ]; then
+            log "WARN" "context.json template not found at $TEMPLATE_PATH, skipping auto-setup"
+            return 0
+        fi
+    fi
+    
+    # Copy template to .claude/context.json
+    if cp "$TEMPLATE_PATH" "$CONTEXT_JSON" 2>/dev/null; then
+        log "INFO" "Auto-created context.json from template"
+        success "Auto-created .claude/context.json (required for orchestrator enforcement)"
+    else
+        log "WARN" "Failed to copy context.json template, user may need to create manually"
+        info "⚠️  context.json not found. Please create .claude/context.json for orchestrator enforcement."
+    fi
 }
 
 # Generate session ID
