@@ -1,5 +1,15 @@
 # Changelog
 
+## [4.3.1] - 2025-01-29
+
+### Added
+
+- **Automatic terminal-notifier Setup**: Added automatic check and installation of terminal-notifier for workflow completion notifications. Checks once per project, auto-installs via brew if available (like dotai), and informs user once if installation not possible.
+
+### Changed
+
+- **Session Start Hook**: Enhanced to automatically setup terminal-notifier on first session, ensuring notifications work automatically for users with brew.
+
 ## [4.3.0] - 2025-01-29
 
 ### Added
