@@ -338,7 +338,7 @@ display_welcome() {
     echo ""
     echo "╔══════════════════════════════════════════════════════════════╗"
     echo "║                                                              ║"
-    echo "║                    cc10x v4.3.3                              ║"
+    echo "║                    cc10x v4.3.9                              ║"
     echo "║         Orchestration Plugin for Claude Code                  ║"
     echo "║                                                              ║"
     echo "╚══════════════════════════════════════════════════════════════╝"
