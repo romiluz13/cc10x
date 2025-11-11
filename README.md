@@ -106,22 +106,26 @@ Skills load in 3 levels—exactly when needed:
 
 ### Installation
 
+1. Add the marketplace
+
 ```bash
-# Step 1: Add the marketplace
 /plugin marketplace add romiluz13/cc10x
-
-# Step 2: Install the plugin
-/plugin install cc10x@romiluz13
-
-# Step 3: Restart Claude Code
-# Done. That's it.
 ```
+
+2. Install the plugin
+
+```bash
+/plugin install cc10x@romiluz13
+```
+
+3. Restart Claude Code
 
 ### Your First Workflow
 
-```bash
-# Just ask naturally - cc10x detects intent
-"Review this authentication code for security issues"
+Just ask naturally - cc10x detects intent:
+
+```
+Review the uncommitted changes
 ```
 
 **cc10x executes**:
