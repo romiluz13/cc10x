@@ -6,7 +6,7 @@
 # Post-compact hook - fills snapshot templates with actual context and loads afterCompact instructions
 # Based on dotai's proven post-compact recovery pattern
 
-set -euo pipefail
+set -e
 
 # Configuration
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-.}"
@@ -234,21 +234,32 @@ extract_next_steps() {
 fill_snapshot_template() {
     local snapshot_file="$1"
     
+    echo "DEBUG: fill_snapshot_template called with: $snapshot_file" >&2
+    
     if [ -z "$snapshot_file" ] || [ ! -f "$snapshot_file" ]; then
         log "WARN" "No snapshot file found to fill"
+        echo "DEBUG: No snapshot file found" >&2
         return 0
     fi
     
     log "INFO" "Filling snapshot template: $snapshot_file"
+    echo "DEBUG: Filling snapshot template: $snapshot_file" >&2
     
     # Find most recent checkpoint (try all workflow types)
     local checkpoint_file=""
+    echo "DEBUG: Searching for checkpoint files..." >&2
     for workflow in build plan review debug validate; do
         checkpoint_file=$(get_most_recent_checkpoint "$workflow")
         if [ -n "$checkpoint_file" ] && [ -f "$checkpoint_file" ]; then
+            echo "DEBUG: Found checkpoint: $checkpoint_file" >&2
             break
         fi
     done
+    
+    if [ -z "$checkpoint_file" ] || [ ! -f "$checkpoint_file" ]; then
+        echo "DEBUG: No checkpoint file found, will use fallback values" >&2
+        log "WARN" "No checkpoint file found for snapshot filling"
+    fi
     
     # Extract context
     local feature_name
@@ -268,9 +279,11 @@ fill_snapshot_template() {
     temp_file=$(mktemp)
     
     # Use Python for more reliable text replacement
+    echo "DEBUG: Starting Python script to fill template" >&2
     python3 <<PYTHON_SCRIPT
 import re
 import sys
+import os
 
 snapshot_file = "$snapshot_file"
 feature_name = "$feature_name"
@@ -278,10 +291,19 @@ phase = "$phase"
 progress = "$progress"
 completions = """$completions"""
 next_steps = """$next_steps"""
+temp_file = "$temp_file"
 
 try:
-    with open(snapshot_file, 'r') as f:
+    # Check if snapshot file exists
+    if not os.path.exists(snapshot_file):
+        print(f"ERROR: Snapshot file does not exist: {snapshot_file}", file=sys.stderr)
+        sys.exit(1)
+    
+    # Read snapshot file
+    with open(snapshot_file, 'r', encoding='utf-8') as f:
         content = f.read()
+    
+    print(f"DEBUG: Read snapshot file, length: {len(content)}", file=sys.stderr)
     
     # Replace simple placeholders
     content = content.replace('[Claude will fill this automatically]', feature_name)
@@ -291,28 +313,35 @@ try:
     # Replace Recent Completions section
     completions_pattern = r'### Recent Completions\n(?:- \[.*?\]\n)+'
     completions_replacement = f'### Recent Completions\n{completions}\n'
-    content = re.sub(completions_pattern, completions_replacement, content)
+    content = re.sub(completions_pattern, completions_replacement, content, flags=re.MULTILINE)
     
     # Replace Next Steps section
     next_steps_pattern = r'### Next Steps\n(?:[0-9]+\. \[.*?\]\n)+'
     next_steps_replacement = f'### Next Steps\n{next_steps}\n'
-    content = re.sub(next_steps_pattern, next_steps_replacement, content)
+    content = re.sub(next_steps_pattern, next_steps_replacement, content, flags=re.MULTILINE)
     
     # Write to temp file
-    with open("$temp_file", 'w') as f:
+    with open(temp_file, 'w', encoding='utf-8') as f:
         f.write(content)
     
+    print(f"DEBUG: Successfully wrote filled template to temp file", file=sys.stderr)
     sys.exit(0)
 except Exception as e:
-    print(f"Error filling snapshot: {e}", file=sys.stderr)
+    print(f"ERROR: Error filling snapshot: {e}", file=sys.stderr)
+    import traceback
+    traceback.print_exc(file=sys.stderr)
     sys.exit(1)
 PYTHON_SCRIPT
     
-    if [ $? -eq 0 ]; then
+    local python_exit_code=$?
+    if [ $python_exit_code -eq 0 ]; then
         # Replace original file
+        echo "DEBUG: Python script succeeded, moving temp file to snapshot" >&2
         mv "$temp_file" "$snapshot_file"
         log "INFO" "Snapshot template filled successfully"
+        echo "DEBUG: Snapshot template filled successfully" >&2
     else
+        echo "DEBUG: Python script failed (exit code: $python_exit_code), using sed fallback" >&2
         log "WARN" "Failed to fill snapshot template (Python failed, using simple sed replacement)"
         rm -f "$temp_file"
         # Fallback: simple sed replacement for critical fields only
@@ -322,21 +351,29 @@ PYTHON_SCRIPT
             -e "s|\[e\.g\., 60% complete, 3/5 increments done\]|$progress|g" \
             "$snapshot_file" 2>/dev/null || true
         rm -f "${snapshot_file}.bak" 2>/dev/null || true
+        echo "DEBUG: Used sed fallback replacement" >&2
     fi
     
-    log "INFO" "Snapshot template filled successfully"
+    log "INFO" "Snapshot template filling completed"
 }
 
 # Main execution
 main() {
+    echo "DEBUG: post-compact.sh started" >&2
+    echo "DEBUG: PROJECT_DIR=$PROJECT_DIR" >&2
+    echo "DEBUG: SNAPSHOT_DIR=$SNAPSHOT_DIR" >&2
+    
     # Fill snapshot template if it exists
     local snapshot_file
     snapshot_file=$(get_most_recent_snapshot)
+    
+    echo "DEBUG: Most recent snapshot: $snapshot_file" >&2
     
     if [ -n "$snapshot_file" ]; then
         fill_snapshot_template "$snapshot_file"
     else
         log "INFO" "No snapshot file found to fill"
+        echo "DEBUG: No snapshot file found to fill" >&2
     fi
     
     # Original functionality: Read and format afterCompact from prompt.json

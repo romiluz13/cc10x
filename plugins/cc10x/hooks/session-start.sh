@@ -6,7 +6,7 @@
 # Session Start Hook - cc10x Orchestration System
 # Initializes session with progress tracking and context management
 
-set -euo pipefail
+set -e
 
 # Configuration
 PROJECT_ROOT="$(pwd)"
@@ -55,19 +55,33 @@ info() {
 initialize_session() {
     log "INFO" "=== Session Start ==="
     log "INFO" "Project root: $PROJECT_ROOT"
+    echo "DEBUG: session-start.sh initialize_session() started" >&2
+    echo "DEBUG: Project root: $PROJECT_ROOT" >&2
+    echo "DEBUG: Memory directory: $MEMORY_DIR" >&2
     
-    # Create directories if they don't exist
-    if ! mkdir -p "$MEMORY_DIR" 2>/dev/null; then
-        error_exit "Failed to create memory directory: $MEMORY_DIR"
+    # Create directories if they don't exist (non-fatal)
+    if mkdir -p "$MEMORY_DIR" 2>/dev/null; then
+        log "INFO" "Memory directory ready: $MEMORY_DIR"
+        echo "DEBUG: Memory directory created/verified" >&2
+    else
+        log "WARN" "Failed to create memory directory: $MEMORY_DIR (will continue anyway)"
+        echo "DEBUG: Warning - memory directory creation failed, continuing" >&2
     fi
     
-    if ! mkdir -p "$SNAPSHOT_DIR" 2>/dev/null; then
-        error_exit "Failed to create snapshot directory: $SNAPSHOT_DIR"
+    if mkdir -p "$SNAPSHOT_DIR" 2>/dev/null; then
+        log "INFO" "Snapshot directory ready: $SNAPSHOT_DIR"
+        echo "DEBUG: Snapshot directory created/verified" >&2
+    else
+        log "WARN" "Failed to create snapshot directory: $SNAPSHOT_DIR (will continue anyway)"
+        echo "DEBUG: Warning - snapshot directory creation failed, continuing" >&2
     fi
     
-    # Ensure .claude directory exists
-    if ! mkdir -p ".claude" 2>/dev/null; then
-        error_exit "Failed to create .claude directory"
+    # Ensure .claude directory exists (non-fatal)
+    if mkdir -p ".claude" 2>/dev/null; then
+        echo "DEBUG: .claude directory created/verified" >&2
+    else
+        log "WARN" "Failed to create .claude directory (will continue anyway)"
+        echo "DEBUG: Warning - .claude directory creation failed, continuing" >&2
     fi
     
     # Auto-setup context.json if missing (critical for orchestrator enforcement)
@@ -76,9 +90,12 @@ initialize_session() {
     # Setup notifications (optional but recommended)
     setup_notifications
     
-    # Initialize log file
-    if ! touch "$LOG_FILE" 2>/dev/null; then
-        error_exit "Failed to create log file: $LOG_FILE"
+    # Initialize log file (non-fatal)
+    if touch "$LOG_FILE" 2>/dev/null; then
+        echo "DEBUG: Log file ready: $LOG_FILE" >&2
+    else
+        log "WARN" "Failed to create log file: $LOG_FILE (will continue without logging)"
+        echo "DEBUG: Warning - log file creation failed, continuing" >&2
     fi
     
     log "INFO" "Directories initialized successfully"
@@ -178,9 +195,12 @@ setup_notifications() {
 generate_session_id() {
     local session_id
     session_id="$(date +%Y%m%d_%H%M%S)"
-    echo "$session_id" > "$MEMORY_DIR/current_session.txt" 2>/dev/null || {
-        error_exit "Failed to write session ID"
-    }
+    if echo "$session_id" > "$MEMORY_DIR/current_session.txt" 2>/dev/null; then
+        echo "DEBUG: Session ID written: $session_id" >&2
+    else
+        log "WARN" "Failed to write session ID (will continue anyway)"
+        echo "DEBUG: Warning - session ID write failed, continuing" >&2
+    fi
     echo "$session_id"
 }
 
@@ -376,15 +396,19 @@ get_hook_field() {
 }
 
 load_latest_snapshot() {
+    echo "DEBUG: load_latest_snapshot() called" >&2
     if [ ! -d "$SNAPSHOT_DIR" ]; then
+        echo "DEBUG: Snapshot directory does not exist" >&2
         echo ""
         return 0
     fi
     local latest
     latest=$(ls -1t "$SNAPSHOT_DIR"/snapshot-*.md 2>/dev/null | head -n1 || true)
     if [ -n "$latest" ] && [ -f "$latest" ]; then
+        echo "DEBUG: Found latest snapshot: $latest" >&2
         cat "$latest"
     else
+        echo "DEBUG: No snapshot files found" >&2
         echo ""
     fi
 }
@@ -399,6 +423,9 @@ load_skill_discovery() {
 }
 
 main() {
+    echo "DEBUG: session-start.sh main() started" >&2
+    echo "DEBUG: PROJECT_ROOT=$PROJECT_ROOT" >&2
+    
     # Initialize session
     initialize_session
     # Read hook input (if any)
@@ -407,9 +434,13 @@ main() {
     # If resuming after compaction, emit JSON additionalContext ONLY and exit
     local source snapshot_content
     source=$(get_hook_field "source")
+    echo "DEBUG: Hook source: $source" >&2
+    
     if [ "$source" = "compact" ]; then
+        echo "DEBUG: Source is 'compact', loading snapshot and exiting early" >&2
         snapshot_content=$(load_latest_snapshot)
         if [ -n "$snapshot_content" ]; then
+            echo "DEBUG: Snapshot content loaded, emitting JSON" >&2
             # Prefer jq for JSON string escape; fallback to Python if jq not available
             if command -v jq >/dev/null 2>&1; then
                 printf '{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":%s}}\n' \
@@ -418,7 +449,10 @@ main() {
                 printf '{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":%s}}\n' \
                     "$(printf %s "$snapshot_content" | python -c 'import sys,json;print(json.dumps(sys.stdin.read()))')"
             fi
+        else
+            echo "DEBUG: No snapshot content found" >&2
         fi
+        echo "DEBUG: Exiting early (compact source)" >&2
         return 0
     fi
 
@@ -426,6 +460,7 @@ main() {
     local skill_discovery_content
     skill_discovery_content=$(load_skill_discovery)
     if [ -n "$skill_discovery_content" ]; then
+        echo "DEBUG: Skill discovery content loaded" >&2
         # Escape output for JSON
         local skill_discovery_escaped
         if command -v jq >/dev/null 2>&1; then
@@ -437,12 +472,15 @@ main() {
         # Output skill-discovery as additionalContext
         printf '{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":%s}}\n' \
             "$skill_discovery_escaped"
+    else
+        echo "DEBUG: No skill discovery content found" >&2
     fi
 
     # Generate session ID
     local session_id
     session_id=$(generate_session_id)
     log "INFO" "Session ID: $session_id"
+    echo "DEBUG: Session ID generated: $session_id" >&2
     
     # Display welcome
     display_welcome "$session_id"
@@ -469,6 +507,7 @@ main() {
     log "INFO" "Session start complete"
     success "Ready for orchestration! 🚀"
     echo ""
+    echo "DEBUG: Session start completed successfully" >&2
     
     return 0
 }

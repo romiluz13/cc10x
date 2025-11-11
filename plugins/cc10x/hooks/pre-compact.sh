@@ -6,7 +6,7 @@
 # Pre-Compact Hook - cc10x Orchestration System
 # Creates comprehensive snapshot before context compaction (auto-healing at 75% tokens)
 
-set -euo pipefail
+set -e
 
 # Configuration
 PROJECT_ROOT="$(pwd)"
@@ -55,10 +55,18 @@ info() {
 initialize() {
     log "INFO" "=== Pre-Compact Hook Started ==="
     log "INFO" "Project root: $PROJECT_ROOT"
+    echo "DEBUG: Pre-compact hook started" >&2
+    echo "DEBUG: Project root: $PROJECT_ROOT" >&2
+    echo "DEBUG: Snapshot directory: $SNAPSHOT_DIR" >&2
     
-    # Create snapshot directory if it doesn't exist
-    if ! mkdir -p "$SNAPSHOT_DIR" 2>/dev/null; then
-        error_exit "Failed to create snapshot directory: $SNAPSHOT_DIR"
+    # Create snapshot directory if it doesn't exist (non-fatal)
+    if mkdir -p "$SNAPSHOT_DIR" 2>/dev/null; then
+        log "INFO" "Snapshot directory ready: $SNAPSHOT_DIR"
+        echo "DEBUG: Snapshot directory created/verified" >&2
+    else
+        log "WARN" "Failed to create snapshot directory: $SNAPSHOT_DIR (will continue anyway)"
+        echo "DEBUG: Warning - snapshot directory creation failed, continuing" >&2
+        # Don't exit - try to continue anyway
     fi
     
     log "INFO" "Directories initialized"
@@ -111,17 +119,19 @@ create_snapshot() {
     local working_plan
     local git_changes
     
+    echo "DEBUG: Creating snapshot..." >&2
     session_id=$(get_session_id)
     metrics=$(get_metrics)
     working_plan=$(get_working_plan)
     git_changes=$(count_git_changes)
     
     log "INFO" "Creating snapshot: $SNAPSHOT_FILE"
+    echo "DEBUG: Snapshot file: $SNAPSHOT_FILE" >&2
     info "Creating context snapshot before compaction..."
     echo ""
     
-    # Create the snapshot file
-    if ! cat > "$SNAPSHOT_FILE" << EOF
+    # Create the snapshot file (non-fatal if it fails)
+    if cat > "$SNAPSHOT_FILE" << EOF
 # Context Snapshot - Auto-Healing
 
 **Created**: $(date +'%Y-%m-%d %H:%M:%S %Z')
@@ -285,13 +295,17 @@ $(git status --short 2>/dev/null || echo "Not a git repository")
 
 EOF
     then
-        error_exit "Failed to create snapshot file: $SNAPSHOT_FILE"
+        log "INFO" "Snapshot created successfully"
+        echo "DEBUG: Snapshot file written successfully" >&2
+        success "Snapshot created: snapshot-$TIMESTAMP.md"
+        echo ""
+    else
+        log "WARN" "Failed to create snapshot file: $SNAPSHOT_FILE (will continue anyway)"
+        echo "DEBUG: Warning - snapshot creation failed, continuing" >&2
+        # Don't exit - compaction can still proceed
     fi
     
-    log "INFO" "Snapshot created successfully"
-    success "Snapshot created: snapshot-$TIMESTAMP.md"
-    echo ""
-}
+    log "INFO" "Snapshot creation completed"
 
 # Clean old snapshots
 cleanup_old_snapshots() {
@@ -362,6 +376,8 @@ display_summary() {
 
 # Main execution
 main() {
+    echo "DEBUG: pre-compact.sh main() started" >&2
+    
     # Initialize
     initialize
     
@@ -379,6 +395,7 @@ main() {
     
     # Final log
     log "INFO" "Pre-compact hook complete"
+    echo "DEBUG: Pre-compact hook completed successfully" >&2
     
     return 0
 }

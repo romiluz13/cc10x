@@ -6,13 +6,18 @@
 # UserPromptSubmit hook - Combined skills enforcement and verification checklist
 # Based on dotai's proven beforeStart/beforeComplete pattern
 
-set -euo pipefail
+set -e
 
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-.}"
 PROMPT_FILE="$PROJECT_DIR/.claude/prompt.json"
 
+echo "DEBUG: user-prompt-submit.sh started" >&2
+echo "DEBUG: PROJECT_DIR=$PROJECT_DIR" >&2
+echo "DEBUG: PROMPT_FILE=$PROMPT_FILE" >&2
+
 # Read and format prompt from JSON file (only if file exists)
 if [ -f "$PROMPT_FILE" ]; then
+  echo "DEBUG: Prompt file found, parsing with Node.js" >&2
   # Use Node.js to parse JSON and format output
   FORMATTED_OUTPUT=$(node -e "
     try {
@@ -83,10 +88,20 @@ if [ -f "$PROMPT_FILE" ]; then
 
       console.log(output);
     } catch (error) {
-      // Silently fail on parse errors
+      console.error('ERROR: Failed to parse prompt.json:', error.message);
+      process.exit(1);
     }
   " 2>&1)
+  
+  local node_exit_code=$?
+  if [ $node_exit_code -eq 0 ]; then
+    echo "DEBUG: Node.js script succeeded" >&2
+  else
+    echo "DEBUG: Node.js script failed (exit code: $node_exit_code)" >&2
+    FORMATTED_OUTPUT=""
+  fi
 else
+  echo "DEBUG: Prompt file not found: $PROMPT_FILE" >&2
   FORMATTED_OUTPUT=""
 fi
 
@@ -95,6 +110,7 @@ FORMATTED_OUTPUT_ESCAPED=$(echo "$FORMATTED_OUTPUT" | sed 's/\\/\\\\/g' | sed 's
 
 # Only output JSON if FORMATTED_OUTPUT is non-empty
 if [ -n "$FORMATTED_OUTPUT" ]; then
+  echo "DEBUG: Outputting JSON with formatted content" >&2
   cat <<EOF
 {
   "hookSpecificOutput": {
@@ -103,7 +119,10 @@ if [ -n "$FORMATTED_OUTPUT" ]; then
   }
 }
 EOF
+else
+  echo "DEBUG: No formatted output, exiting without JSON" >&2
 fi
 
+echo "DEBUG: user-prompt-submit.sh completed" >&2
 exit 0
 

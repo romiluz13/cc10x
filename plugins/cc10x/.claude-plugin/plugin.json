@@ -1,6 +1,6 @@
 {
   "name": "cc10x",
-  "version": "4.3.4",
+  "version": "4.3.5",
   "description": "Orchestration plugin for Claude Code with 5 workflows: review, plan, build, debug, validate. Features deterministic intent detection, complexity gating, evidence-first verification, and filesystem-based memory integration.",
   "agents": [
     "./subagents/code-reviewer/SUBAGENT.md",
