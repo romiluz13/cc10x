@@ -1,5 +1,19 @@
 # Changelog
 
+## [4.3.6] - 2025-01-29
+
+### Fixed
+
+- **Hook Execution Order**: Fixed critical bug where snapshots were filled but never loaded into context after compaction. Post-compact hook now loads and outputs snapshot content as additionalContext.
+- **JSON Escaping**: Fixed error-prone manual sed/awk JSON escaping in post-compact.sh. Now uses proper jq or Python json.dumps() for reliable JSON output.
+- **Error Handling**: Added comprehensive error handling for mktemp, mv operations, and checkpoint extraction with fallback mechanisms.
+- **Hook Timeouts**: Increased timeout values for pre-compact.sh and post-compact.sh from 3000ms to 5000ms to accommodate complex file I/O operations.
+
+### Changed
+
+- **Post-Compact Hook**: Enhanced to load snapshot content after filling and output as JSON additionalContext, ensuring snapshots are injected into context after compaction.
+- **Hook Error Handling**: Improved resilience with fallback mechanisms for all critical operations.
+
 ## [4.3.3] - 2025-01-29
 
 ### Added

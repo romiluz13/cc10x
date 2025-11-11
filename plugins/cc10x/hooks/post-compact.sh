@@ -249,7 +249,7 @@ fill_snapshot_template() {
     local checkpoint_file=""
     echo "DEBUG: Searching for checkpoint files..." >&2
     for workflow in build plan review debug validate; do
-        checkpoint_file=$(get_most_recent_checkpoint "$workflow")
+        checkpoint_file=$(get_most_recent_checkpoint "$workflow" 2>/dev/null || echo "")
         if [ -n "$checkpoint_file" ] && [ -f "$checkpoint_file" ]; then
             echo "DEBUG: Found checkpoint: $checkpoint_file" >&2
             break
@@ -258,7 +258,7 @@ fill_snapshot_template() {
     
     if [ -z "$checkpoint_file" ] || [ ! -f "$checkpoint_file" ]; then
         echo "DEBUG: No checkpoint file found, will use fallback values" >&2
-        log "WARN" "No checkpoint file found for snapshot filling"
+        log "WARN" "No checkpoint file found for snapshot filling (workflows may not have created checkpoints yet)"
     fi
     
     # Extract context
@@ -268,15 +268,28 @@ fill_snapshot_template() {
     local completions
     local next_steps
     
-    feature_name=$(extract_feature_name "$checkpoint_file")
-    phase=$(extract_phase "$checkpoint_file")
-    progress=$(calculate_progress "$checkpoint_file")
-    completions=$(extract_recent_completions "$checkpoint_file")
-    next_steps=$(extract_next_steps "$checkpoint_file")
+    feature_name=$(extract_feature_name "$checkpoint_file" 2>/dev/null || echo "Unknown feature")
+    phase=$(extract_phase "$checkpoint_file" 2>/dev/null || echo "Unknown phase")
+    progress=$(calculate_progress "$checkpoint_file" 2>/dev/null || echo "Progress unknown")
+    completions=$(extract_recent_completions "$checkpoint_file" 2>/dev/null || echo "- No recent completions recorded")
+    next_steps=$(extract_next_steps "$checkpoint_file" 2>/dev/null || echo "1. Review snapshot context\n2. Continue workflow from last checkpoint")
     
-    # Create temp file for replacement
+    # Create temp file for replacement (with error handling)
     local temp_file
-    temp_file=$(mktemp)
+    temp_file=$(mktemp 2>/dev/null || echo "")
+    if [ -z "$temp_file" ]; then
+        log "ERROR" "Failed to create temp file for snapshot filling"
+        echo "DEBUG: mktemp failed, using sed fallback directly" >&2
+        # Fallback: use sed directly on snapshot file
+        sed -i.bak \
+            -e "s|\[Claude will fill this automatically\]|$feature_name|g" \
+            -e "s|\[e\.g\., Implementation Phase 2 of 5\]|$phase|g" \
+            -e "s|\[e\.g\., 60% complete, 3/5 increments done\]|$progress|g" \
+            "$snapshot_file" 2>/dev/null || true
+        rm -f "${snapshot_file}.bak" 2>/dev/null || true
+        log "INFO" "Used sed fallback for snapshot filling"
+        return 0
+    fi
     
     # Use Python for more reliable text replacement
     echo "DEBUG: Starting Python script to fill template" >&2
@@ -334,16 +347,28 @@ except Exception as e:
 PYTHON_SCRIPT
     
     local python_exit_code=$?
-    if [ $python_exit_code -eq 0 ]; then
-        # Replace original file
+    if [ $python_exit_code -eq 0 ] && [ -f "$temp_file" ]; then
+        # Replace original file (with error handling)
         echo "DEBUG: Python script succeeded, moving temp file to snapshot" >&2
-        mv "$temp_file" "$snapshot_file"
-        log "INFO" "Snapshot template filled successfully"
-        echo "DEBUG: Snapshot template filled successfully" >&2
+        if mv "$temp_file" "$snapshot_file" 2>/dev/null; then
+            log "INFO" "Snapshot template filled successfully"
+            echo "DEBUG: Snapshot template filled successfully" >&2
+        else
+            log "WARN" "Failed to move temp file to snapshot, using sed fallback"
+            rm -f "$temp_file" 2>/dev/null || true
+            # Fallback: simple sed replacement for critical fields only
+            sed -i.bak \
+                -e "s|\[Claude will fill this automatically\]|$feature_name|g" \
+                -e "s|\[e\.g\., Implementation Phase 2 of 5\]|$phase|g" \
+                -e "s|\[e\.g\., 60% complete, 3/5 increments done\]|$progress|g" \
+                "$snapshot_file" 2>/dev/null || true
+            rm -f "${snapshot_file}.bak" 2>/dev/null || true
+            echo "DEBUG: Used sed fallback after mv failed" >&2
+        fi
     else
         echo "DEBUG: Python script failed (exit code: $python_exit_code), using sed fallback" >&2
         log "WARN" "Failed to fill snapshot template (Python failed, using simple sed replacement)"
-        rm -f "$temp_file"
+        rm -f "$temp_file" 2>/dev/null || true
         # Fallback: simple sed replacement for critical fields only
         sed -i.bak \
             -e "s|\[Claude will fill this automatically\]|$feature_name|g" \
@@ -374,6 +399,16 @@ main() {
     else
         log "INFO" "No snapshot file found to fill"
         echo "DEBUG: No snapshot file found to fill" >&2
+    fi
+    
+    # Load snapshot content after filling (CRITICAL FIX: This was missing!)
+    local snapshot_content=""
+    if [ -n "$snapshot_file" ] && [ -f "$snapshot_file" ]; then
+        echo "DEBUG: Loading filled snapshot content" >&2
+        snapshot_content=$(cat "$snapshot_file" 2>/dev/null || echo "")
+    else
+        # Try to load most recent snapshot even if filling failed
+        snapshot_content=$(get_most_recent_snapshot | xargs cat 2>/dev/null || echo "")
     fi
     
     # Original functionality: Read and format afterCompact from prompt.json
@@ -419,22 +454,43 @@ main() {
             } catch (error) {
                 // Silently fail on parse errors
             }
-        " 2>&1)
+        " 2>&1 || echo "")
     fi
 
-    # Escape output for JSON
-    aftercompact_escaped=$(echo "$aftercompact_output" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | awk '{printf "%s\\n", $0}')
+    # Build combined context: snapshot + afterCompact
+    local combined_context=""
+    if [ -n "$snapshot_content" ]; then
+        combined_context="$snapshot_content"
+        if [ -n "$aftercompact_output" ]; then
+            combined_context="$combined_context
 
-    # Output context injection as JSON
-    if [ -n "$aftercompact_output" ]; then
-        cat <<EOF
-{
-  "hookSpecificOutput": {
-    "hookEventName": "SessionStart",
-    "additionalContext": "<CONTEXT-COMPACTION-RECOVERY>\nYour conversation context was just compacted.\n\n${aftercompact_escaped}\n</CONTEXT-COMPACTION-RECOVERY>"
-  }
-}
-EOF
+<CONTEXT-COMPACTION-RECOVERY>
+Your conversation context was just compacted.
+
+$aftercompact_output
+</CONTEXT-COMPACTION-RECOVERY>"
+        fi
+    elif [ -n "$aftercompact_output" ]; then
+        combined_context="<CONTEXT-COMPACTION-RECOVERY>
+Your conversation context was just compacted.
+
+$aftercompact_output
+</CONTEXT-COMPACTION-RECOVERY>"
+    fi
+
+    # Output context injection as JSON (FIXED: Use proper JSON escaping)
+    if [ -n "$combined_context" ]; then
+        echo "DEBUG: Outputting JSON with snapshot and afterCompact context" >&2
+        # Use jq or Python for proper JSON escaping (consistent with session-start.sh)
+        if command -v jq >/dev/null 2>&1; then
+            printf '{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":%s}}\n' \
+                "$(printf %s "$combined_context" | jq -Rs .)"
+        else
+            printf '{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":%s}}\n' \
+                "$(printf %s "$combined_context" | python3 -c 'import sys,json;print(json.dumps(sys.stdin.read()))')"
+        fi
+    else
+        echo "DEBUG: No context to output (snapshot or afterCompact)" >&2
     fi
 
     exit 0

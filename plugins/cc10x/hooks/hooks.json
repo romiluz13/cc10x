@@ -29,7 +29,7 @@
           {
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/post-compact.sh",
-            "timeout": 3000
+            "timeout": 5000
           }
         ]
       }
@@ -41,7 +41,7 @@
           {
             "type": "command",
             "command": "${CLAUDE_PLUGIN_ROOT}/hooks/pre-compact.sh",
-            "timeout": 3000
+            "timeout": 5000
           },
           {
             "type": "command",
