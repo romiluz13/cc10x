@@ -1,5 +1,65 @@
 # Changelog
 
+## [4.4.0] - 2025-01-29
+
+### Added
+
+- **Session Summary Skill**: Comprehensive session summary creation for context preservation
+  - New skill: `plugins/cc10x/skills/session-summary/SKILL.md`
+  - Creates Claude-generated comprehensive session documentation
+  - Analyzes conversation transcript to extract tool calls, file changes, accomplishments, decisions
+  - Saves to `.claude/memory/CURRENT_SESSION.md` and archives to `.claude/memory/session_summaries/session-{timestamp}.md`
+  - Archives previous sessions automatically (keeps last 10)
+- **Pre-Compact Hook Context Extraction**: Enhanced programmatic context extraction before compaction
+  - `extract_git_context()`: Extracts recent commits, branch, staged/unstaged files with diffs, file change statistics
+  - `extract_file_changes()`: Lists recently modified files (last 2 hours) with sizes and line counts
+  - `extract_workflow_context()`: Extracts active workflow, current phase, progress, completed items, next steps from checkpoints
+  - `extract_feature_name()`: Extracts feature name from checkpoints or working plan
+  - `extract_key_decisions()`: Extracts key decisions from working plan
+  - Snapshots now filled with real data instead of placeholders
+  - Git context, file changes, workflow state automatically included in snapshots
+- **Post-Compact Hook Session Summary Loading**: Enhanced context recovery after compaction
+  - Loads session summary from `.claude/memory/CURRENT_SESSION.md` (highest priority)
+  - Falls back to most recent session summary from archive if CURRENT_SESSION.md missing
+  - Combines context sources in priority order: Session Summary → Snapshot → afterCompact → Workflow Outputs
+  - Comprehensive context recovery with both Claude-generated and programmatic data
+- **Workflow Session Summary Integration**: Phase 5.5 added to all workflows
+  - **Plan Workflow**: Phase 5.5 - Context Preservation (before Phase 6)
+  - **Build Workflow**: Phase 5.5 - Context Preservation (before Phase 6)
+  - **Review Workflow**: Phase 5.5 - Context Preservation (before Phase 6)
+  - **Debug Workflow**: Phase 5.5 - Context Preservation (before Phase 6)
+  - Workflows load and execute session-summary skill when approaching token limits or after major phases
+  - Session summaries complement programmatic snapshot extraction
+
+### Fixed
+
+- **Snapshot Template Placeholders**: Fixed critical issue where snapshots contained placeholders that never got filled
+  - Pre-compact hook now extracts and fills all placeholders with real data
+  - Feature names, phases, progress, completions, next steps extracted from checkpoints and working plan
+  - Git context and file changes extracted programmatically
+  - Key decisions extracted from working plan
+- **Context Loss During Compaction**: Fixed issue where context was lost because snapshots were empty templates
+  - Snapshots now contain real extracted data
+  - Session summaries provide comprehensive Claude-generated analysis
+  - Post-compact hook loads both sources for complete context recovery
+
+### Changed
+
+- **Pre-Compact Hook**: Enhanced to extract context programmatically and fill snapshots with real data
+  - Replaced placeholder sections with extracted data
+  - Added git context extraction with diff summaries
+  - Added file change tracking
+  - Added workflow state extraction from checkpoints
+  - Snapshots now contain actionable context instead of templates
+- **Post-Compact Hook**: Enhanced to load session summaries and combine all context sources
+  - Loads session summary as highest priority context source
+  - Combines session summary, snapshot, afterCompact, and workflow outputs
+  - Proper priority ordering ensures most comprehensive context is available
+- **All Workflows**: Added Phase 5.5 - Context Preservation for session summary creation
+  - Phase 5.5 is optional but recommended before Phase 6
+  - Workflows can create session summaries when approaching token limits
+  - Session summaries preserve comprehensive context across compaction
+
 ## [4.3.9] - 2025-01-29
 
 ### Added

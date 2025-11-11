@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# cc10x v4.3.9 - Orchestration plugin for Claude Code
+# cc10x v4.4.0 - Orchestration plugin for Claude Code
 # Copyright (c) 2025 Rom Iluz
 # Licensed under MIT License
 
@@ -514,6 +514,27 @@ main() {
         snapshot_content=$(get_most_recent_snapshot | xargs cat 2>/dev/null || echo "")
     fi
     
+    # Load session summary (CRITICAL: Load comprehensive Claude-generated summary)
+    local session_summary_content=""
+    local CURRENT_SESSION_FILE="$MEMORY_DIR/CURRENT_SESSION.md"
+    if [ -f "$CURRENT_SESSION_FILE" ]; then
+        echo "DEBUG: Loading session summary from CURRENT_SESSION.md" >&2
+        session_summary_content=$(cat "$CURRENT_SESSION_FILE" 2>/dev/null || echo "")
+        log "INFO" "Loaded session summary from CURRENT_SESSION.md"
+    else
+        # Fallback: try to load most recent session summary from archive
+        local SESSION_SUMMARIES_DIR="$MEMORY_DIR/session_summaries"
+        if [ -d "$SESSION_SUMMARIES_DIR" ]; then
+            local latest_summary
+            latest_summary=$(find "$SESSION_SUMMARIES_DIR" -name "session-*.md" -type f 2>/dev/null | sort | tail -1)
+            if [ -n "$latest_summary" ] && [ -f "$latest_summary" ]; then
+                echo "DEBUG: Loading most recent session summary from archive" >&2
+                session_summary_content=$(cat "$latest_summary" 2>/dev/null || echo "")
+                log "INFO" "Loaded session summary from archive: $latest_summary"
+            fi
+        fi
+    fi
+    
     # Original functionality: Read and format afterCompact from prompt.json
     aftercompact_output=""
     if [ -f "$PROMPT_FILE" ]; then
@@ -560,30 +581,34 @@ main() {
         " 2>&1 || echo "")
     fi
 
-    # Build combined context: snapshot + afterCompact
+    # Build combined context: session summary (highest priority) → snapshot → afterCompact → workflow outputs
     local combined_context=""
-    if [ -n "$snapshot_content" ]; then
-        combined_context="$snapshot_content"
-        if [ -n "$aftercompact_output" ]; then
-            combined_context="$combined_context
-
-<CONTEXT-COMPACTION-RECOVERY>
-Your conversation context was just compacted.
-
-$aftercompact_output
-</CONTEXT-COMPACTION-RECOVERY>"
-        fi
-    elif [ -n "$aftercompact_output" ]; then
-        combined_context="<CONTEXT-COMPACTION-RECOVERY>
-Your conversation context was just compacted.
-
-$aftercompact_output
-</CONTEXT-COMPACTION-RECOVERY>"
+    
+    # Priority 1: Session Summary (most comprehensive, Claude-generated)
+    if [ -n "$session_summary_content" ]; then
+        combined_context="<SESSION-SUMMARY>\nComprehensive session summary created before compaction:\n\n${session_summary_content}\n</SESSION-SUMMARY>\n\n"
+        echo "DEBUG: Added session summary to combined context" >&2
     fi
+    
+    # Priority 2: Snapshot (programmatic context extraction)
+    if [ -n "$snapshot_content" ]; then
+        combined_context="${combined_context}<SNAPSHOT>\nContext snapshot with extracted programmatic data:\n\n${snapshot_content}\n</SNAPSHOT>\n\n"
+        echo "DEBUG: Added snapshot to combined context" >&2
+    fi
+    
+    # Priority 3: afterCompact instructions (from prompt.json)
+    if [ -n "$aftercompact_output" ]; then
+        combined_context="${combined_context}<CONTEXT-COMPACTION-RECOVERY>\nYour conversation context was just compacted.\n\n${aftercompact_output}\n</CONTEXT-COMPACTION-RECOVERY>\n\n"
+        echo "DEBUG: Added afterCompact instructions to combined context" >&2
+    fi
+    
+    # Priority 4: Workflow outputs (reference files already restored above)
+    # Note: Workflow outputs are restored via restore_workflow_outputs() and restore_missing_references_from_checkpoints()
+    # They're available via reference files, so we don't need to include them in context unless specifically needed
 
     # Output context injection as JSON (FIXED: Use proper JSON escaping)
     if [ -n "$combined_context" ]; then
-        echo "DEBUG: Outputting JSON with snapshot and afterCompact context" >&2
+        echo "DEBUG: Outputting JSON with session summary, snapshot, and afterCompact context" >&2
         # Use jq or Python for proper JSON escaping (consistent with session-start.sh)
         if command -v jq >/dev/null 2>&1; then
             printf '{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":%s}}\n' \
@@ -593,7 +618,7 @@ $aftercompact_output
                 "$(printf %s "$combined_context" | python3 -c 'import sys,json;print(json.dumps(sys.stdin.read()))')"
         fi
     else
-        echo "DEBUG: No context to output (snapshot or afterCompact)" >&2
+        echo "DEBUG: No context to output (session summary, snapshot, or afterCompact)" >&2
     fi
 
     exit 0

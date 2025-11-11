@@ -95,6 +95,8 @@ User request contains "review"/"audit"/"analyze"/"assess"/"evaluate"/"inspect"/"
   - Phase 3: Dispatch Analysis Subagents (pending)
   - Phase 4: Synthesis (pending)
   - Phase 5: Verification Summary (pending)
+  - Phase 5.5: Context Preservation (optional, pending)
+  - Phase 6: Present Results (pending)
   ```
 - Update task status as phases complete:
   ```
@@ -895,6 +897,64 @@ Next: Review workflow complete - Report ready
 - Do NOT proceed until ALL items checked
 
 **CRITICAL**: This checklist is non-negotiable. Workflow aborts if any item fails.
+
+## Phase 5.5 - Context Preservation (Optional but Recommended)
+
+**CRITICAL**: Create session summary before final deliverable to preserve context across compaction.
+
+**When to Create Session Summary**:
+
+- Approaching token limits (75%+ usage or user indicates)
+- After Phase 4 (Synthesis) if many files reviewed
+- Before Phase 6 (Present Results) if significant work completed
+- User explicitly requests session summary
+
+**Skip Conditions**:
+
+- Context is small (<50% token usage)
+- User explicitly skips
+- Workflow is very simple (complexity <=2)
+- No significant work completed
+
+**Process**:
+
+1. **Load Session Summary Skill**:
+   - Use Skill tool to load `session-summary` skill
+   - Skill path: `plugins/cc10x/skills/session-summary/SKILL.md`
+
+2. **Execute Session Summary**:
+   - Follow skill instructions to create comprehensive summary
+   - Archive previous session if exists
+   - Analyze conversation transcript
+   - Extract tool calls, file changes, accomplishments, decisions
+   - Document next steps explicitly
+
+3. **Save Session Summary**:
+   - Save summary to `.claude/memory/session_summaries/session-{timestamp}.md`
+   - Update `.claude/memory/CURRENT_SESSION.md` with latest summary
+   - Ensure directory exists: `mkdir -p .claude/memory/session_summaries`
+
+4. **Document in Actions Taken**:
+   - Add entry: "Session summary created before Phase 6 (Context Preservation)"
+   - Include summary path if available
+
+**Bash Helper**:
+
+```bash
+# Create session summary directory if needed
+mkdir -p .claude/memory/session_summaries
+
+# Session summary will be created by Claude using session-summary skill
+# Summary saved to: .claude/memory/CURRENT_SESSION.md
+# Archived to: .claude/memory/session_summaries/session-{timestamp}.md
+```
+
+**Integration Note**:
+
+- Session summary complements snapshot created by pre-compact hook
+- Summary provides Claude-generated context analysis
+- Snapshot provides programmatic context extraction
+- Both are loaded by post-compact hook for comprehensive recovery
 
 ## Phase 6 - Present Results
 

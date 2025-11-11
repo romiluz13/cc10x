@@ -1,5 +1,5 @@
 #!/bin/bash
-# cc10x v4.3.9 - Orchestration plugin for Claude Code
+# cc10x v4.4.0 - Orchestration plugin for Claude Code
 # Copyright (c) 2025 Rom Iluz
 # Licensed under MIT License
 
@@ -277,6 +277,259 @@ get_workflow_outputs() {
     fi
 }
 
+# Extract git context (recent commits, branch, diffs)
+extract_git_context() {
+    local git_context=""
+    
+    if ! git rev-parse --git-dir > /dev/null 2>&1; then
+        echo ""
+        return 0
+    fi
+    
+    # Current branch
+    local branch
+    branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
+    git_context="${git_context}**Branch**: $branch\n\n"
+    
+    # Recent commits (last hour)
+    local recent_commits
+    recent_commits=$(git log --since="1 hour ago" --pretty=format:"- %s (%h)" 2>/dev/null | head -5)
+    if [ -n "$recent_commits" ]; then
+        git_context="${git_context}**Recent Commits** (last hour):\n${recent_commits}\n\n"
+    fi
+    
+    # Staged files with diff summaries (first 50 lines)
+    local staged_files
+    staged_files=$(git diff --cached --name-only 2>/dev/null)
+    local staged_count=0
+    if [ -n "$staged_files" ]; then
+        git_context="${git_context}**Staged Files**:\n"
+        while IFS= read -r file; do
+            if [ -n "$file" ]; then
+                staged_count=$((staged_count + 1))
+                local diff_summary
+                diff_summary=$(git diff --cached "$file" 2>/dev/null | head -50 | sed 's/^/  /')
+                git_context="${git_context}- \`$file\`\n\`\`\`\n${diff_summary}\n\`\`\`\n"
+            fi
+        done <<< "$staged_files"
+        git_context="${git_context}\n"
+    fi
+    
+    # Unstaged files with diff summaries (first 50 lines)
+    local unstaged_files
+    unstaged_files=$(git diff --name-only 2>/dev/null)
+    local unstaged_count=0
+    if [ -n "$unstaged_files" ]; then
+        git_context="${git_context}**Unstaged Files**:\n"
+        while IFS= read -r file; do
+            if [ -n "$file" ]; then
+                unstaged_count=$((unstaged_count + 1))
+                local diff_summary
+                diff_summary=$(git diff "$file" 2>/dev/null | head -50 | sed 's/^/  /')
+                git_context="${git_context}- \`$file\`\n\`\`\`\n${diff_summary}\n\`\`\`\n"
+            fi
+        done <<< "$unstaged_files"
+        git_context="${git_context}\n"
+    fi
+    
+    # File change statistics
+    git_context="${git_context}**File Change Statistics**: $((staged_count + unstaged_count)) files changed ($staged_count staged, $unstaged_count unstaged)\n"
+    
+    echo -e "$git_context"
+}
+
+# Extract file changes (recently modified files)
+extract_file_changes() {
+    local file_changes=""
+    
+    # Find recently modified files (last 2 hours)
+    local recent_files
+    if command -v find >/dev/null 2>&1; then
+        recent_files=$(find "$PROJECT_ROOT" -type f -mmin -120 -not -path "*/node_modules/*" -not -path "*/.git/*" -not -path "*/.claude/*" 2>/dev/null | head -20)
+        
+        if [ -n "$recent_files" ]; then
+            file_changes="${file_changes}**Recently Modified Files** (last 2 hours):\n"
+            while IFS= read -r file; do
+                if [ -n "$file" ] && [ -f "$file" ]; then
+                    local file_size line_count file_type
+                    file_size=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file" 2>/dev/null || echo "unknown")
+                    line_count=$(wc -l < "$file" 2>/dev/null | tr -d ' ' || echo "unknown")
+                    file_type="${file##*.}"
+                    file_changes="${file_changes}- \`$file\` ($file_type, ${file_size} bytes, ${line_count} lines)\n"
+                fi
+            done <<< "$recent_files"
+            file_changes="${file_changes}\n"
+        fi
+    fi
+    
+    echo -e "$file_changes"
+}
+
+# Extract workflow context from checkpoints
+extract_workflow_context() {
+    local workflow_context=""
+    local WORKFLOW_STATE_DIR="$MEMORY_DIR/workflow_state"
+    
+    if [ ! -d "$WORKFLOW_STATE_DIR" ]; then
+        echo ""
+        return 0
+    fi
+    
+    # Find most recent checkpoint (try all workflow types)
+    local checkpoint_file=""
+    for workflow in build plan review debug validate; do
+        checkpoint_file=$(find "$WORKFLOW_STATE_DIR" -name "${workflow}_*.json" -type f 2>/dev/null | sort | tail -1)
+        if [ -n "$checkpoint_file" ] && [ -f "$checkpoint_file" ]; then
+            break
+        fi
+    done
+    
+    if [ -z "$checkpoint_file" ] || [ ! -f "$checkpoint_file" ]; then
+        echo ""
+        return 0
+    fi
+    
+    if ! command -v jq >/dev/null 2>&1; then
+        echo ""
+        return 0
+    fi
+    
+    # Extract workflow info
+    local workflow_name phase next_phase
+    workflow_name=$(jq -r '.workflow // empty' "$checkpoint_file" 2>/dev/null)
+    phase=$(jq -r '.phase // empty' "$checkpoint_file" 2>/dev/null)
+    next_phase=$(jq -r '.next_phase // empty' "$checkpoint_file" 2>/dev/null)
+    
+    if [ -n "$workflow_name" ] && [ "$workflow_name" != "null" ]; then
+        workflow_context="${workflow_context}**Active Workflow**: $workflow_name\n"
+    fi
+    
+    if [ -n "$phase" ] && [ "$phase" != "null" ]; then
+        workflow_context="${workflow_context}**Current Phase**: $phase\n"
+    fi
+    
+    if [ -n "$next_phase" ] && [ "$next_phase" != "null" ]; then
+        workflow_context="${workflow_context}**Next Phase**: $next_phase\n"
+    fi
+    
+    # Extract progress based on workflow type
+    case "$workflow_name" in
+        "build")
+            local total completed
+            total=$(jq '[.state.components[]?] | length' "$checkpoint_file" 2>/dev/null || echo "0")
+            completed=$(jq '[.state.completed_components[]?] | length' "$checkpoint_file" 2>/dev/null || echo "0")
+            if [ "$total" -gt 0 ]; then
+                local percent=$((completed * 100 / total))
+                workflow_context="${workflow_context}**Progress**: $percent% complete ($completed/$total components)\n"
+            fi
+            ;;
+        "plan")
+            case "$phase" in
+                *"Phase_0"*) workflow_context="${workflow_context}**Progress**: 0% complete (Functionality Analysis)\n" ;;
+                *"Phase_1"*) workflow_context="${workflow_context}**Progress**: 20% complete (Requirements Intake)\n" ;;
+                *"Phase_2"*) workflow_context="${workflow_context}**Progress**: 40% complete (Delegated Analysis)\n" ;;
+                *"Phase_3"*) workflow_context="${workflow_context}**Progress**: 60% complete (Architecture Design)\n" ;;
+                *"Phase_4"*) workflow_context="${workflow_context}**Progress**: 80% complete (Synthesis)\n" ;;
+                *"Phase_5"*) workflow_context="${workflow_context}**Progress**: 90% complete (Verification)\n" ;;
+            esac
+            ;;
+        "review")
+            local total reviewed
+            total=$(jq '[.state.files_reviewed[]?] | length' "$checkpoint_file" 2>/dev/null || echo "0")
+            reviewed=$(jq '[.state.files_reviewed[]? | select(.status == "reviewed")] | length' "$checkpoint_file" 2>/dev/null || echo "0")
+            if [ "$total" -gt 0 ]; then
+                local percent=$((reviewed * 100 / total))
+                workflow_context="${workflow_context}**Progress**: $percent% complete ($reviewed/$total files reviewed)\n"
+            fi
+            ;;
+        "debug")
+            local total fixed
+            total=$(jq '[.state.bugs[]?] | length' "$checkpoint_file" 2>/dev/null || echo "0")
+            fixed=$(jq '[.state.bugs[]? | select(.status == "fixed")] | length' "$checkpoint_file" 2>/dev/null || echo "0")
+            if [ "$total" -gt 0 ]; then
+                local percent=$((fixed * 100 / total))
+                workflow_context="${workflow_context}**Progress**: $percent% complete ($fixed/$total bugs fixed)\n"
+            fi
+            ;;
+    esac
+    
+    # Extract completed items
+    local completions=""
+    case "$workflow_name" in
+        "build")
+            completions=$(jq -r '.state.completed_components[]? | "- " + .name + " (" + (.status // "completed") + ")"' "$checkpoint_file" 2>/dev/null | head -5)
+            ;;
+        "review")
+            completions=$(jq -r '.state.files_reviewed[]? | select(.status == "reviewed") | "- " + .path + " reviewed"' "$checkpoint_file" 2>/dev/null | head -5)
+            ;;
+        "debug")
+            completions=$(jq -r '.state.bugs[]? | select(.status == "fixed") | "- " + .name + " fixed"' "$checkpoint_file" 2>/dev/null | head -5)
+            ;;
+    esac
+    
+    if [ -n "$completions" ]; then
+        workflow_context="${workflow_context}\n**Recent Completions**:\n${completions}\n"
+    fi
+    
+    echo -e "$workflow_context"
+}
+
+# Extract feature name from checkpoint or working plan
+extract_feature_name() {
+    local checkpoint_file=""
+    local WORKFLOW_STATE_DIR="$MEMORY_DIR/workflow_state"
+    
+    # Find most recent checkpoint
+    for workflow in build plan review debug validate; do
+        checkpoint_file=$(find "$WORKFLOW_STATE_DIR" -name "${workflow}_*.json" -type f 2>/dev/null | sort | tail -1)
+        if [ -n "$checkpoint_file" ] && [ -f "$checkpoint_file" ]; then
+            break
+        fi
+    done
+    
+    local feature_name="Unknown feature"
+    
+    # Try to extract from checkpoint
+    if [ -n "$checkpoint_file" ] && [ -f "$checkpoint_file" ] && command -v jq >/dev/null 2>&1; then
+        local name
+        name=$(jq -r '.state.feature_name // .state.current_component // .state.current_bug // .workflow // empty' "$checkpoint_file" 2>/dev/null)
+        if [ -n "$name" ] && [ "$name" != "null" ]; then
+            feature_name="$name"
+        fi
+    fi
+    
+    # Fallback: try to extract from working plan
+    if [ "$feature_name" = "Unknown feature" ] && [ -f "$WORKING_PLAN_PATH" ]; then
+        local plan_name
+        plan_name=$(grep -i "^#\|^##" "$WORKING_PLAN_PATH" 2>/dev/null | head -1 | sed 's/^#* *//' | sed 's/ *$//')
+        if [ -n "$plan_name" ]; then
+            feature_name="$plan_name"
+        fi
+    fi
+    
+    echo "$feature_name"
+}
+
+# Extract key decisions from working plan
+extract_key_decisions() {
+    local decisions=""
+    
+    if [ ! -f "$WORKING_PLAN_PATH" ]; then
+        echo ""
+        return 0
+    fi
+    
+    # Extract sections that might contain decisions
+    local decision_sections
+    decision_sections=$(grep -A 10 -i "decision\|decide\|choice\|approach\|pattern" "$WORKING_PLAN_PATH" 2>/dev/null | head -20)
+    
+    if [ -n "$decision_sections" ]; then
+        decisions="${decisions}**From Working Plan**:\n\`\`\`\n${decision_sections}\n\`\`\`\n"
+    fi
+    
+    echo -e "$decisions"
+}
+
 # Create comprehensive snapshot
 create_snapshot() {
     local session_id
@@ -293,6 +546,48 @@ create_snapshot() {
     git_changes=$(count_git_changes)
     workflow_outputs=$(get_workflow_outputs)
     workflow_summaries=$(get_workflow_output_summaries)
+    
+    # Extract enriched context
+    local feature_name
+    local workflow_context
+    local git_context
+    local file_changes
+    local key_decisions
+    
+    feature_name=$(extract_feature_name)
+    workflow_context=$(extract_workflow_context)
+    git_context=$(extract_git_context)
+    file_changes=$(extract_file_changes)
+    key_decisions=$(extract_key_decisions)
+    
+    # Extract next steps from workflow context
+    local next_steps="1. Review snapshot context\n2. Continue workflow from last checkpoint\n3. Verify current state"
+    if echo "$workflow_context" | grep -q "Next Phase"; then
+        local next_phase
+        next_phase=$(echo "$workflow_context" | grep "Next Phase" | sed 's/.*Next Phase**: //' | head -1)
+        if [ -n "$next_phase" ] && [ "$next_phase" != "null" ]; then
+            next_steps="1. Continue to $next_phase\n2. Verify current state\n3. Complete remaining tasks"
+        fi
+    fi
+    
+    # Extract recent completions from workflow context
+    local recent_completions="- No recent completions recorded"
+    if echo "$workflow_context" | grep -q "Recent Completions"; then
+        recent_completions=$(echo "$workflow_context" | sed -n '/Recent Completions/,/^$/p' | tail -n +2 | head -10)
+        if [ -z "$recent_completions" ]; then
+            recent_completions="- No recent completions recorded"
+        fi
+    fi
+    
+    # Extract phase and progress from workflow context
+    local phase="Unknown phase"
+    local progress="Progress unknown"
+    if echo "$workflow_context" | grep -q "Current Phase"; then
+        phase=$(echo "$workflow_context" | grep "Current Phase" | sed 's/.*Current Phase**: //' | head -1)
+    fi
+    if echo "$workflow_context" | grep -q "Progress"; then
+        progress=$(echo "$workflow_context" | grep "Progress" | sed 's/.*Progress**: //' | head -1)
+    fi
     
     log "INFO" "Creating snapshot: $SNAPSHOT_FILE"
     echo "DEBUG: Snapshot file: $SNAPSHOT_FILE" >&2
@@ -343,21 +638,34 @@ $(git status --short 2>/dev/null || echo "Not a git repository")
 
 ---
 
-## Active Work (To Be Filled by Claude)
+## Git Context
+
+$git_context
+
+---
+
+## File Changes
+
+$file_changes
+
+---
+
+## Active Work
 
 ### Current Task
-- Feature/Bug: [Claude will fill this automatically]
-- Phase: [e.g., Implementation Phase 2 of 5]
-- Progress: [e.g., 60% complete, 3/5 increments done]
+- Feature/Bug: $feature_name
+- Phase: $phase
+- Progress: $progress
 
 ### Recent Completions
-- [What was just finished]
-- [Important milestones reached]
+$recent_completions
 
 ### Next Steps
-1. [Immediate next action]
-2. [Following action]
-3. [Subsequent actions]
+$next_steps
+
+### Active Workflow Context
+
+$workflow_context
 
 ### Active Workflow Outputs (To Be Filled by Claude)
 
@@ -388,20 +696,11 @@ $workflow_summaries
 
 ---
 
-## Key Decisions Made (To Be Filled by Claude)
+## Key Decisions Made
 
-### Architecture Decisions
-- [Important technical choices]
-- [Justifications for approaches taken]
+$key_decisions
 
-### Pattern Discoveries
-- [Codebase patterns found]
-- [Project conventions identified]
-
-### Important Context
-- [Critical information to remember]
-- [Gotchas discovered]
-- [Dependencies identified]
+**Note**: Additional decisions may be documented in WORKING_PLAN.md or workflow checkpoints.
 
 ---
 
@@ -485,9 +784,10 @@ $workflow_summaries
 ## Notes
 
 - This snapshot was automatically created at 75% token usage
-- Claude will automatically fill in the marked sections
+- Context extracted programmatically from git, checkpoints, and working plan
 - Previous snapshots are retained (up to $MAX_SNAPSHOTS most recent)
 - Snapshots are cleaned up automatically (oldest removed first)
+- For comprehensive session summaries, see `.claude/memory/CURRENT_SESSION.md` or `.claude/memory/session_summaries/`
 
 EOF
     then

@@ -1,5 +1,5 @@
 #!/bin/bash
-# cc10x v4.3.9 - Orchestration plugin for Claude Code
+# cc10x v4.4.0 - Orchestration plugin for Claude Code
 # Copyright (c) 2025 Rom Iluz
 # Licensed under MIT License
 
@@ -338,7 +338,7 @@ display_welcome() {
     echo ""
     echo "╔══════════════════════════════════════════════════════════════╗"
     echo "║                                                              ║"
-    echo "║                    cc10x v4.3.9                              ║"
+    echo "║                    cc10x v4.4.0                              ║"
     echo "║         Orchestration Plugin for Claude Code                  ║"
     echo "║                                                              ║"
     echo "╚══════════════════════════════════════════════════════════════╝"

@@ -126,3 +126,63 @@ Task: Create tasks for workflow phases
 - ❌ Using `Read` to search for patterns (use `Grep` instead)
 - ❌ Reading entire large files when you only need a section (use `Read` with offset/limit)
 - ❌ Using `Glob` to search file contents (use `Grep` instead)
+
+## Session Summary Skill Usage
+
+**Purpose**: Create comprehensive session summaries before compaction to preserve context across token limit events.
+
+**When to Use**:
+
+- Approaching token limits (75%+ usage or user indicates)
+- After major workflow phase completion (Phase 4 or Phase 5)
+- Before final deliverable phase (Phase 6)
+- End of session or workflow completion
+- User explicitly requests session summary
+
+**Skill Path**: `plugins/cc10x/skills/session-summary/SKILL.md`
+
+**Usage Pattern**:
+
+```
+1. Load session-summary skill using Skill tool
+2. Execute skill to create comprehensive summary
+3. Archive previous session if exists
+4. Analyze conversation transcript
+5. Extract tool calls, file changes, accomplishments, decisions
+6. Save summary to .claude/memory/CURRENT_SESSION.md
+7. Archive to .claude/memory/session_summaries/session-{timestamp}.md
+```
+
+**Integration**:
+
+- Integrated into all workflows as Phase 5.5 - Context Preservation
+- Workflows automatically load and execute skill when approaching token limits
+- Session summaries complement programmatic snapshot extraction
+- Post-compact hook loads session summaries as highest priority context source
+
+**Output Format**:
+
+- Session overview (2-3 sentences)
+- Files modified (with detailed descriptions)
+- Tool calls & operations
+- Key accomplishments
+- Problems solved
+- Technical decisions
+- Next steps
+- Learning & insights
+- Session metrics
+- Git repository state
+- Active workflow state
+
+**Example**:
+
+```
+User: "We're approaching token limits, create a session summary"
+
+Claude: [Loads session-summary skill]
+        [Executes archive management]
+        [Analyzes conversation]
+        [Creates comprehensive summary]
+        [Saves to CURRENT_SESSION.md]
+        [Outputs summary in conversation]
+```

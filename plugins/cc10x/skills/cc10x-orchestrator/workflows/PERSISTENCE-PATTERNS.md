@@ -100,15 +100,17 @@ All workflow checkpoints MUST include:
 
 ### Pre-Compact Hook Integration
 
-The pre-compact hook (`pre-compact.sh`) automatically captures workflow outputs:
+The pre-compact hook (`pre-compact.sh`) automatically captures workflow outputs and extracts context:
 
 1. **Validation**: Validates workflow outputs before compaction (warns if outputs not saved)
 2. **Detection**: Checks for reference files (`.claude/memory/current_{workflow}.txt`)
 3. **Capture**: Reads output file paths from reference files
 4. **Summaries**: Includes first 200 lines of each output file in snapshot
 5. **Snapshot**: Includes output paths and summaries in snapshot "Active Workflow Outputs" section
-6. **Preservation**: Output paths and summaries survive compaction in snapshot
-7. **Cleanup**: Automatically cleans old output files (keeps last 20 per workflow type)
+6. **Context Extraction**: Extracts git context, file changes, workflow state, and key decisions programmatically
+7. **Enrichment**: Fills snapshot placeholders with real data (feature names, phases, progress, completions, next steps)
+8. **Preservation**: Output paths and summaries survive compaction in snapshot
+9. **Cleanup**: Automatically cleans old output files (keeps last 20 per workflow type)
 
 **Validation Function**:
 
@@ -118,19 +120,69 @@ The pre-compact hook (`pre-compact.sh`) automatically captures workflow outputs:
 
 - `get_workflow_output_summaries()`: Extracts first 200 lines of each output file for context recovery
 
+**Context Extraction Functions**:
+
+- `extract_git_context()`: Extracts recent commits, branch, staged/unstaged files with diffs, file change statistics
+- `extract_file_changes()`: Lists recently modified files (last 2 hours) with sizes and line counts
+- `extract_workflow_context()`: Extracts active workflow, current phase, progress, completed items, next steps from checkpoints
+- `extract_feature_name()`: Extracts feature name from checkpoints or working plan
+- `extract_key_decisions()`: Extracts key decisions from working plan
+
 ### Post-Compact Hook Integration
 
-The post-compact hook (`post-compact.sh`) restores workflow outputs:
+The post-compact hook (`post-compact.sh`) restores workflow outputs and loads comprehensive context:
 
 1. **Restore from Snapshot**: Reads output paths from snapshot "Active Workflow Outputs" section
 2. **Restore from Checkpoints**: If snapshot doesn't have outputs, restores from checkpoint `output_file` field
 3. **Reference**: Recreates reference files (`.claude/memory/current_{workflow}.txt`) if missing
-4. **Context**: Includes output paths in restored context
+4. **Load Session Summary**: Loads comprehensive Claude-generated session summary from `.claude/memory/CURRENT_SESSION.md` or archive
+5. **Combine Context**: Combines session summary (highest priority) → snapshot → afterCompact → workflow outputs
+6. **Context**: Includes all context sources in restored context with proper priority ordering
 
 **Restoration Functions**:
 
 - `restore_workflow_outputs()`: Extracts output paths from snapshot and recreates reference files
 - `restore_missing_references_from_checkpoints()`: Falls back to checkpoints if snapshot doesn't have outputs
+- `fill_snapshot_template()`: Fills snapshot template placeholders with extracted context data
+
+### Session Summary Integration
+
+**CRITICAL**: Session summaries provide comprehensive Claude-generated context analysis before compaction.
+
+**Session Summary Skill**:
+
+- Skill path: `plugins/cc10x/skills/session-summary/SKILL.md`
+- Creates comprehensive session documentation analyzing conversation transcript
+- Extracts tool calls, file changes, accomplishments, decisions, next steps
+- Saves to `.claude/memory/CURRENT_SESSION.md` and archives to `.claude/memory/session_summaries/session-{timestamp}.md`
+
+**Workflow Integration**:
+
+- **Phase 5.5 - Context Preservation**: Optional but recommended phase in all workflows
+- Created before Phase 6 (final deliverable) when approaching token limits or after major phases
+- Workflows load and execute session-summary skill to create comprehensive summaries
+- Summaries complement programmatic snapshot extraction for complete context preservation
+
+**When to Create Session Summary**:
+
+- Approaching token limits (75%+ usage or user indicates)
+- After major workflow phase completion (Phase 4 or Phase 5)
+- Before final deliverable phase (Phase 6)
+- User explicitly requests session summary
+
+**Skip Conditions**:
+
+- Context is small (<50% token usage)
+- User explicitly skips
+- Workflow is very simple (complexity <=2)
+- No significant work completed
+
+**Context Priority Order** (post-compact hook):
+
+1. **Session Summary** (highest priority - most comprehensive, Claude-generated)
+2. **Snapshot** (programmatic context extraction with real data)
+3. **afterCompact Instructions** (from prompt.json)
+4. **Workflow Outputs** (via reference files, restored automatically)
 
 ## Validation Checklist
 
@@ -164,14 +216,16 @@ If resuming from snapshot:
 
 ## Implementation Status
 
-- ✅ **Plan Workflow**: Already implements persistence pattern
-- ✅ **Review Workflow**: Added in Phase 6 (Phase 6 - Present Results)
-- ✅ **Build Workflow**: Added in Phase 6 (Phase 6 - Delivery)
-- ✅ **Debug Workflow**: Added in Phase 6 (Phase 6 - Report)
-- ✅ **Pre-Compact Hook**: Captures workflow outputs automatically, validates before compaction, includes summaries
-- ✅ **Post-Compact Hook**: Restores workflow outputs from snapshot and checkpoints
+- ✅ **Plan Workflow**: Already implements persistence pattern + Phase 5.5 session summary integration
+- ✅ **Review Workflow**: Added in Phase 6 (Phase 6 - Present Results) + Phase 5.5 session summary integration
+- ✅ **Build Workflow**: Added in Phase 6 (Phase 6 - Delivery) + Phase 5.5 session summary integration
+- ✅ **Debug Workflow**: Added in Phase 6 (Phase 6 - Report) + Phase 5.5 session summary integration
+- ✅ **Pre-Compact Hook**: Captures workflow outputs automatically, validates before compaction, includes summaries, extracts context programmatically, fills snapshots with real data
+- ✅ **Post-Compact Hook**: Restores workflow outputs from snapshot and checkpoints, loads session summaries, combines all context sources
 - ✅ **Output Cleanup**: Automatically cleans old output files (keeps last 20 per workflow type)
 - ✅ **Checkpoint Recovery**: Restores missing reference files from checkpoint `output_file` field
+- ✅ **Session Summary Skill**: Created comprehensive session summary skill for Claude-generated context analysis
+- ✅ **Context Extraction**: Pre-compact hook extracts git context, file changes, workflow state, and decisions programmatically
 
 ## Examples
 
