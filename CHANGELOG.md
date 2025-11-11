@@ -1,5 +1,37 @@
 # Changelog
 
+## [4.3.9] - 2025-01-29
+
+### Added
+
+- **Workflow Output Persistence**: Comprehensive persistence system for all workflow outputs (review, build, debug)
+  - All workflows now save outputs to `.claude/docs/{workflow}/` directories in Phase 6
+  - Reference files created (`.claude/memory/current_{workflow}.txt`) for easy access
+  - Checkpoints updated with `output_file` and `output_saved` fields
+- **Pre-Compact Hook Enhancements**:
+  - Validation function checks if workflows are active but outputs not saved (warns before compaction)
+  - Captures workflow output paths in snapshots
+  - Includes output summaries (first 200 lines) in snapshots for better context recovery
+  - Automatic cleanup of old output files (keeps last 20 per workflow type)
+- **Post-Compact Hook Enhancements**:
+  - Restores workflow output reference files from snapshots
+  - Falls back to checkpoints if snapshot doesn't have outputs
+  - Ensures outputs survive context compaction
+- **PERSISTENCE-PATTERNS.md**: Comprehensive documentation of persistence patterns, recovery mechanisms, and examples
+
+### Fixed
+
+- **Output Loss During Compaction**: Fixed critical issue where review/build/debug outputs were lost during context compaction
+- **Missing Output Restoration**: Fixed issue where workflow outputs weren't restored after compaction
+- **No Output Validation**: Added validation to warn if outputs aren't saved before compaction
+
+### Changed
+
+- **Review Workflow Phase 6**: Added mandatory output persistence with save instructions and validation checklist
+- **Build Workflow Phase 6**: Added mandatory output persistence with save instructions and validation checklist
+- **Debug Workflow Phase 6**: Added mandatory output persistence with save instructions and validation checklist
+- **Checkpoint Format**: Updated to include `output_file` and `output_saved` fields for all workflows
+
 ## [4.3.8] - 2025-01-29
 
 ### Added
