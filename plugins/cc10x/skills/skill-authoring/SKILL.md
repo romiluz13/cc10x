@@ -5,6 +5,14 @@ description: Use when creating new skills, editing existing skills, or verifying
 
 # Skill Authoring
 
+## The Iron Law
+
+```
+NO SKILL WITHOUT IDENTIFYING FAILURE PATTERNS FIRST
+```
+
+**CRITICAL**: If you didn't identify what agents naturally do wrong, you don't know if the skill prevents the right failures.
+
 ## Overview
 
 **Writing skills IS Test-Driven Development applied to process documentation.**

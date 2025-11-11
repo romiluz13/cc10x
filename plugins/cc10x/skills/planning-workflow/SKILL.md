@@ -30,6 +30,33 @@ For complete instructions, see `plugins/cc10x/skills/cc10x-orchestrator/workflow
 
 ## Quick Reference
 
+**Decision Tree**:
+
+```
+PLANNING NEEDED?
+│
+├─ Understand Functionality First
+│  ├─ User/Admin/System/Integration flows identified? → Continue
+│  └─ Not identified? → STOP, complete functionality analysis first
+│
+├─ Complexity Check
+│  ├─ Score <=2? → Continue
+│  └─ Score >2? → STOP, break down into smaller features
+│
+├─ Requirements Intake
+│  ├─ Goals, stories, acceptance criteria clear? → Continue
+│  └─ Not clear? → STOP, clarify requirements
+│
+├─ Delegate Analysis
+│  ├─ planning-architecture-risk → planning-design-deployment
+│  ├─ Analysis complete? → Continue
+│  └─ Not complete? → Wait for subagents
+│
+└─ Consolidate Plan
+   ├─ Plan complete? → Verify
+   └─ Plan incomplete? → Return to requirements intake
+```
+
 - Gate: use the orchestrator's Complexity Rubric; confirm if score <=2
 - Intake: summarise goals, stories, acceptance criteria, assumptions
 - Delegate: `planning-architecture-risk`, `planning-design-deployment`

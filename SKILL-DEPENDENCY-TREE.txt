@@ -1,0 +1,230 @@
+
+================================================================================
+SKILL & SUBAGENT DEPENDENCY TREE
+================================================================================
+
+ORCHESTRATOR
+│
+├─ Workflows:
+│  ├─ SHARED-ENFORCEMENT
+│  │  ├─ Skills (0):
+│  │  └─ Subagents (0):
+│  ├─ build
+│  │  ├─ Skills (19):
+│  │  │  ├─ jq
+│  │  │  ├─ project-context-understanding
+│  │  │  ├─ requirements-analysis
+│  │  │  ├─ security-patterns
+│  │  │  ├─ code-quality-patterns
+│  │  │  └─ ... (+14 more)
+│  │  └─ Subagents (3):
+│  │     ├─ integration-verifier
+│  │     ├─ component-builder
+│  │     ├─ code-reviewer
+│  ├─ debug
+│  │  ├─ Skills (18):
+│  │  │  ├─ jq
+│  │  │  ├─ grep
+│  │  │  ├─ parallel-agent-dispatch
+│  │  │  ├─ project-context-understanding
+│  │  │  ├─ systematic-debugging
+│  │  │  └─ ... (+13 more)
+│  │  └─ Subagents (3):
+│  │     ├─ code-reviewer
+│  │     ├─ integration-verifier
+│  │     ├─ bug-investigator
+│  ├─ plan
+│  │  ├─ Skills (22):
+│  │  │  ├─ jq
+│  │  │  ├─ app-design-generation
+│  │  │  ├─ tech-stack-generation
+│  │  │  ├─ cursor-rules-generation
+│  │  │  ├─ project-structure-generation
+│  │  │  └─ ... (+17 more)
+│  │  └─ Subagents (0):
+│  ├─ review
+│  │  ├─ Skills (22):
+│  │  │  ├─ jq
+│  │  │  ├─ project-context-understanding
+│  │  │  ├─ risk-analysis
+│  │  │  ├─ security-patterns
+│  │  │  ├─ performance-patterns
+│  │  │  └─ ... (+17 more)
+│  │  └─ Subagents (2):
+│  │     ├─ integration-verifier
+│  │     ├─ code-reviewer
+│  ├─ validate
+│  │  ├─ Skills (6):
+│  │  │  ├─ project-context-understanding
+│  │  │  ├─ requirements-analysis
+│  │  │  ├─ test-driven-development
+│  │  │  ├─ verification-before-completion
+│  │  │  ├─ memory-tool-integration
+│  │  │  └─ ... (+1 more)
+│  │  └─ Subagents (0):
+
+SKILLS BY WORKFLOW:
+--------------------------------------------------------------------------------
+accessibility-patterns
+  └─ review
+analysis-performance-quality
+  └─ review
+analysis-risk-security
+  └─ review
+analysis-ux-accessibility
+  └─ review
+api-design-patterns
+  └─ plan
+  └─ review
+app-design-generation
+  └─ plan
+architecture-patterns
+  └─ plan
+brainstorming
+  └─ plan
+bug-investigator
+  └─ debug
+code-generation
+  └─ build
+code-quality-patterns
+  └─ build
+  └─ debug
+  └─ review
+  └─ validate
+code-reviewer
+  └─ build
+  └─ debug
+  └─ review
+component-builder
+  └─ build
+component-design-patterns
+  └─ build
+  └─ plan
+cursor-rules-generation
+  └─ plan
+deployment-patterns
+  └─ plan
+design-patterns
+  └─ build
+  └─ plan
+  └─ review
+feature-planning
+  └─ plan
+grep
+  └─ debug
+integration-patterns
+  └─ build
+  └─ debug
+  └─ review
+integration-verifier
+  └─ build
+  └─ debug
+  └─ review
+jq
+  └─ build
+  └─ debug
+  └─ plan
+  └─ review
+log-analysis-patterns
+  └─ build
+  └─ debug
+  └─ review
+memory-tool-integration
+  └─ build
+  └─ debug
+  └─ plan
+  └─ review
+  └─ validate
+parallel-agent-dispatch
+  └─ debug
+performance-patterns
+  └─ build
+  └─ debug
+  └─ review
+planning-architecture-risk
+  └─ plan
+planning-design-deployment
+  └─ plan
+planning-workflow
+  └─ plan
+project-context-understanding
+  └─ build
+  └─ debug
+  └─ plan
+  └─ review
+  └─ validate
+project-structure-generation
+  └─ plan
+requirements-analysis
+  └─ build
+  └─ plan
+  └─ validate
+risk-analysis
+  └─ plan
+  └─ review
+root-cause-analysis
+  └─ debug
+security-patterns
+  └─ build
+  └─ debug
+  └─ review
+systematic-debugging
+  └─ debug
+tech-stack-generation
+  └─ plan
+test-driven-development
+  └─ build
+  └─ debug
+  └─ review
+  └─ validate
+ui-design
+  └─ build
+  └─ plan
+  └─ review
+ux-patterns
+  └─ review
+verification-before-completion
+  └─ build
+  └─ debug
+  └─ plan
+  └─ review
+  └─ validate
+web-fetch-integration
+  └─ build
+  └─ debug
+  └─ plan
+  └─ review
+
+SUBAGENTS BY WORKFLOW:
+--------------------------------------------------------------------------------
+integration-verifier
+  └─ build
+  └─ debug
+  └─ review
+component-builder
+  └─ build
+code-reviewer
+  └─ build
+  └─ debug
+  └─ review
+bug-investigator
+  └─ debug
+
+⚠️  ORPHANED SKILLS (not referenced in any workflow):
+--------------------------------------------------------------------------------
+  - build-workflow
+  - cc10x-orchestrator
+  - context-preset-management
+  - debug-workflow
+  - quick-error-fixing
+  - review-workflow
+  - skill-authoring
+  - skill-discovery
+
+================================================================================
+Total Skills: 39
+Referenced Skills: 31
+Orphaned Skills: 8
+Total Subagents: 4
+Orphaned Subagents: 0
+================================================================================

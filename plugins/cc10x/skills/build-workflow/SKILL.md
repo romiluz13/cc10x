@@ -29,6 +29,35 @@ For complete instructions, see `plugins/cc10x/skills/cc10x-orchestrator/workflow
 
 ## Quick Reference
 
+**Decision Tree**:
+
+```
+BUILD NEEDED?
+│
+├─ Understand Functionality First
+│  ├─ User/Admin/System flows identified? → Continue
+│  └─ Not identified? → STOP, complete functionality analysis first
+│
+├─ Complexity Check
+│  ├─ Score <=2? → Continue
+│  └─ Score >2? → STOP, break down into smaller components
+│
+├─ TDD Cycle (Per Component)
+│  ├─ RED: Write failing test → Continue
+│  ├─ GREEN: Make test pass → Continue
+│  ├─ REFACTOR: Improve code → Continue
+│  └─ Component complete? → Next component
+│
+├─ Review & Integration
+│  ├─ code-reviewer → integration-verifier (sequential)
+│  ├─ All checks pass? → Continue
+│  └─ Issues found? → Fix and re-verify
+│
+└─ Verify
+   ├─ Functionality works? → Complete
+   └─ Functionality broken? → Return to TDD cycle
+```
+
 - Gate: use orchestrator Complexity Rubric; confirm if score <=2
 - Loop: RED -> GREEN -> REFACTOR; capture verification outputs
 - Subagents: component-builder -> code-reviewer -> integration-verifier (sequential)

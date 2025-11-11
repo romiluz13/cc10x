@@ -1,5 +1,39 @@
 # Changelog
 
+## [4.3.7] - 2025-01-29
+
+### Added
+
+- **Progressive Disclosure**: Refactored 5 large skills (>400 lines) with progressive disclosure architecture:
+  - `deployment-patterns` (557 → 187 lines + 4 reference files)
+  - `systematic-debugging` (489 → 230 lines + 3 reference files)
+  - `root-cause-analysis` (511 → 197 lines + 3 reference files)
+  - `component-design-patterns` (495 → 173 lines + 3 reference files)
+  - `risk-analysis` (493 → 150 lines + 4 reference files)
+- **Iron Law Statements**: Added Iron Law enforcement statements to key skills:
+  - `deployment-patterns`: "NO DEPLOYMENT WITHOUT VERIFICATION FIRST"
+  - `systematic-debugging`: "NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST"
+  - `review-workflow`: "NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE"
+  - `verification-before-completion`: "NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE"
+  - `skill-authoring`: "NO SKILL WITHOUT IDENTIFYING FAILURE PATTERNS FIRST"
+- **Decision Trees**: Added decision trees to all workflow skills for clear navigation:
+  - `review-workflow`, `debug-workflow`, `build-workflow`, `planning-workflow`
+- **Red Flags Sections**: Added red flags sections to prevent common mistakes:
+  - `deployment-patterns`, `systematic-debugging`
+- **Skill Reference Analyzer**: Added script to analyze skill references and build dependency tree
+- **Dependency Tree Visualization**: Generated ASCII tree visualization of all skill/workflow connections
+
+### Changed
+
+- **Token Efficiency**: Reduced entry point sizes to ~200 lines with progressive disclosure
+- **Reference Files**: Created focused reference files (200-300 lines each) for detailed guidance
+- **Workflow Skills**: Enhanced with decision trees and Iron Law statements
+
+### Fixed
+
+- **No Orphaned Skills**: Verified all skills are referenced in correct workflows
+- **No Orphaned Subagents**: Verified all subagents are referenced in workflows
+
 ## [4.3.6] - 2025-01-29
 
 ### Fixed

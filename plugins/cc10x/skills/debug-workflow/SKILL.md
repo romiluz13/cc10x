@@ -29,6 +29,34 @@ For complete instructions, see `plugins/cc10x/skills/cc10x-orchestrator/workflow
 
 ## Quick Reference
 
+**Decision Tree**:
+
+```
+DEBUG NEEDED?
+│
+├─ Understand Functionality First
+│  ├─ Expected flows identified? → Continue
+│  └─ Not identified? → STOP, complete functionality analysis first
+│
+├─ Confirm Reproduction
+│  ├─ Bug reproducible? → Continue
+│  └─ Not reproducible? → STOP, gather more information
+│
+├─ Investigate (Sequential Loop)
+│  ├─ bug-investigator → code-reviewer → integration-verifier
+│  ├─ Root cause found? → Continue to Fix
+│  └─ Not found? → Continue investigation loop
+│
+├─ Fix & Test
+│  ├─ Fix applied? → Write regression test
+│  ├─ Test passes (GREEN)? → Continue
+│  └─ Test fails (RED)? → Return to investigation
+│
+└─ Verify
+   ├─ Functionality works? → Complete
+   └─ Functionality broken? → Return to investigation
+```
+
 - Intake: confirm repro, errors/logs, recent changes
 - Loop: bug-investigator -> code-reviewer -> integration-verifier (sequential)
 - Evidence: logs + failing test -> fix -> GREEN; include Verification Summary

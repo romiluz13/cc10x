@@ -6,6 +6,14 @@ allowed-tools: Read, Grep, Glob, Bash
 
 # Verification Before Completion - Functionality First
 
+## The Iron Law
+
+```
+NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE
+```
+
+**CRITICAL**: Before claiming completion, verify functionality. No success claims without fresh, local evidence collected after the latest change.
+
 ## Functionality First Mandate
 
 **BEFORE claiming completion, verify functionality**:

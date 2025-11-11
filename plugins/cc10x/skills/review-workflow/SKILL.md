@@ -6,6 +6,14 @@ allowed-tools: Read, Grep, Glob, Task, Bash
 
 # Review Workflow - Functionality First
 
+## The Iron Law
+
+```
+NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE
+```
+
+**CRITICAL**: Before reviewing code, understand functionality. Before claiming completion, verify with fresh evidence.
+
 ## Functionality First Mandate
 
 **BEFORE reviewing code, understand functionality**:
@@ -28,6 +36,28 @@ Orchestrates multi-dimensional code analysis with functionality-first approach.
 For complete instructions, see `plugins/cc10x/skills/cc10x-orchestrator/workflows/review.md`.
 
 ## Quick Reference
+
+**Decision Tree**:
+
+```
+REVIEW NEEDED?
+│
+├─ Understand Functionality First
+│  ├─ User/Admin/System flows identified? → Continue
+│  └─ Not identified? → STOP, complete functionality analysis first
+│
+├─ Load Domain Skills
+│  ├─ Skills loaded? → Continue
+│  └─ Not loaded? → Load risk, security, performance, quality, UX, a11y skills
+│
+├─ Run Analysis Subagents
+│  ├─ Subagents run sequentially? → Continue
+│  └─ Parallel execution? → STOP, run sequentially
+│
+└─ Compile Report
+   ├─ Evidence-backed findings? → Complete
+   └─ Missing evidence? → STOP, gather evidence first
+```
 
 - Loads: risk, security, performance, quality, UX, a11y skills
 - Runs: analysis subagents sequentially (no parallelism)
