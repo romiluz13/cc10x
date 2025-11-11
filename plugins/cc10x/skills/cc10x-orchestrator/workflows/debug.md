@@ -358,6 +358,8 @@ Use the askquestion tool to clarify requirements:
       "fixes_applied": [...],
       "current_bug": "BugName"
     },
+    "output_file": ".claude/docs/debug/debug-{timestamp}.md",
+    "output_saved": false,
     "next_phase": "Phase_3_Consolidation"
   }
   ```
@@ -685,6 +687,55 @@ Next: Debug workflow complete - Issue resolved
 
 ## Phase 6 - Report
 
+**CRITICAL**: Save debug summary to disk before presenting (ensures persistence across compaction).
+
+**Debug Summary Persistence** (MANDATORY):
+
+1. **Save Debug Summary File**:
+   - Extract bug/issue name from Phase 0 functionality analysis or user request
+   - Use kebab-case for filename (e.g., `debug-auth-failure-20250129-143022.md`)
+   - Save debug summary to `.claude/docs/debug/debug-{timestamp}.md`
+   - Ensure `.claude/docs/debug/` directory exists (create if needed)
+   - Format: Use exact template from "MANDATORY OUTPUT FORMAT" section below
+   - Include complete debug report with all sections (Executive Summary, Actions Taken, Functionality Analysis, Findings, Verification Summary, Recommendations, Open Questions)
+
+2. **Create Debug Reference File** (MANDATORY):
+   - Create `.claude/memory/current_debug.txt` containing the debug summary path: `.claude/docs/debug/debug-{timestamp}.md`
+   - This allows other workflows and hooks to find the active debug session
+   - Example: `echo ".claude/docs/debug/debug-auth-failure-20250129-143022.md" > .claude/memory/current_debug.txt`
+
+3. **Update Checkpoint with Output Path**:
+   - Update most recent checkpoint (`.claude/memory/workflow_state/debug_{timestamp}.json`) to include:
+     ```json
+     {
+       "output_file": ".claude/docs/debug/debug-{timestamp}.md",
+       "output_saved": true
+     }
+     ```
+
+4. **Bash Command to Save Summary**:
+
+   ```bash
+   # Create debug directory if needed
+   mkdir -p .claude/docs/debug
+
+   # Generate timestamp
+   TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+
+   # Extract bug name from functionality analysis or use default
+   BUG_NAME="debug"  # Replace with actual bug name from Phase 0
+
+   # Save debug summary
+   DEBUG_FILE=".claude/docs/debug/debug-${BUG_NAME}-${TIMESTAMP}.md"
+   # Write complete debug summary to $DEBUG_FILE
+
+   # Create reference file
+   echo "$DEBUG_FILE" > .claude/memory/current_debug.txt
+
+   # Update checkpoint with output path
+   # (Checkpoint update logic handled by workflow)
+   ```
+
 **Before Reporting** (optimized memory):
 
 - **Validate Fix Success**:
@@ -811,6 +862,9 @@ Next: Debug workflow complete - Issue resolved
 - [ ] Reviews and integration status documented
 - [ ] Recommendations prioritized
 - [ ] All subagents/skills documented in Actions Taken
+- [ ] **Debug summary saved to `.claude/docs/debug/debug-{timestamp}.md`** (MANDATORY)
+- [ ] **Reference file created: `.claude/memory/current_debug.txt`** (MANDATORY)
+- [ ] **Checkpoint updated with output file path** (MANDATORY)
 
 **Offer Optional Next Steps**:
 

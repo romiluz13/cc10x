@@ -290,6 +290,8 @@ Use the askquestion tool to clarify requirements:
       "blocked_components": [...],
       "current_component": "ComponentName"
     },
+    "output_file": ".claude/docs/builds/build-{timestamp}.md",
+    "output_saved": false,
     "next_phase": "Phase_3_Component_Execution_Loop"
   }
   ```
@@ -942,6 +944,55 @@ Next: Proceeding to Phase 6 - Delivery
 
 ## Phase 6 - Delivery
 
+**CRITICAL**: Save build summary to disk before presenting (ensures persistence across compaction).
+
+**Build Summary Persistence** (MANDATORY):
+
+1. **Save Build Summary File**:
+   - Extract feature name from Phase 0 functionality analysis or plan reference
+   - Use kebab-case for filename (e.g., `build-user-auth-20250129-143022.md`)
+   - Save build summary to `.claude/docs/builds/build-{timestamp}.md`
+   - Ensure `.claude/docs/builds/` directory exists (create if needed)
+   - Format: Use exact template from "MANDATORY OUTPUT FORMAT" section below
+   - Include complete build report with all sections (Executive Summary, Actions Taken, Functionality Analysis, Component Breakdown, Reviews & Integration, Verification Summary, Recommendations, Open Questions)
+
+2. **Create Build Reference File** (MANDATORY):
+   - Create `.claude/memory/current_build.txt` containing the build summary path: `.claude/docs/builds/build-{timestamp}.md`
+   - This allows other workflows and hooks to find the active build
+   - Example: `echo ".claude/docs/builds/build-user-auth-20250129-143022.md" > .claude/memory/current_build.txt`
+
+3. **Update Checkpoint with Output Path**:
+   - Update most recent checkpoint (`.claude/memory/workflow_state/build_{timestamp}.json`) to include:
+     ```json
+     {
+       "output_file": ".claude/docs/builds/build-{timestamp}.md",
+       "output_saved": true
+     }
+     ```
+
+4. **Bash Command to Save Summary**:
+
+   ```bash
+   # Create builds directory if needed
+   mkdir -p .claude/docs/builds
+
+   # Generate timestamp
+   TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+
+   # Extract feature name from functionality analysis or plan reference
+   FEATURE_NAME="build"  # Replace with actual feature name from Phase 0
+
+   # Save build summary
+   BUILD_FILE=".claude/docs/builds/build-${FEATURE_NAME}-${TIMESTAMP}.md"
+   # Write complete build summary to $BUILD_FILE
+
+   # Create reference file
+   echo "$BUILD_FILE" > .claude/memory/current_build.txt
+
+   # Update checkpoint with output path
+   # (Checkpoint update logic handled by workflow)
+   ```
+
 **Display Success Message** (after Phase 6 completion):
 
 ```
@@ -1050,6 +1101,9 @@ For each component:
 - [ ] Integration status documented with evidence
 - [ ] Recommendations prioritized
 - [ ] All subagents/skills documented in Actions Taken
+- [ ] **Build summary saved to `.claude/docs/builds/build-{timestamp}.md`** (MANDATORY)
+- [ ] **Reference file created: `.claude/memory/current_build.txt`** (MANDATORY)
+- [ ] **Checkpoint updated with output file path** (MANDATORY)
 
 **Offer Optional Next Steps**:
 

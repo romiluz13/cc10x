@@ -112,18 +112,187 @@ count_git_changes() {
     fi
 }
 
+# Check and validate workflow outputs before compaction
+check_and_validate_workflow_outputs() {
+    log "INFO" "Validating workflow outputs before compaction"
+    echo "DEBUG: Checking workflow outputs before compaction" >&2
+    
+    local warnings=0
+    
+    # Check each workflow type
+    for workflow in review build debug plan; do
+        local checkpoint_file
+        checkpoint_file=$(find "$MEMORY_DIR/workflow_state" -name "${workflow}_*.json" -type f 2>/dev/null | sort | tail -1)
+        
+        if [ -z "$checkpoint_file" ] || [ ! -f "$checkpoint_file" ]; then
+            continue
+        fi
+        
+        # Check if workflow is active (recent checkpoint, within last hour)
+        local checkpoint_age
+        if [ -f "$checkpoint_file" ]; then
+            checkpoint_age=$(find "$checkpoint_file" -mmin -60 2>/dev/null | wc -l)
+            if [ "$checkpoint_age" -eq 0 ]; then
+                continue  # Checkpoint is old, workflow likely inactive
+            fi
+        fi
+        
+        # Extract output status from checkpoint
+        if command -v jq >/dev/null 2>&1; then
+            local output_saved
+            local output_file
+            local phase
+            output_saved=$(jq -r '.output_saved // false' "$checkpoint_file" 2>/dev/null)
+            output_file=$(jq -r '.output_file // empty' "$checkpoint_file" 2>/dev/null)
+            phase=$(jq -r '.phase // empty' "$checkpoint_file" 2>/dev/null)
+            
+            # Check if workflow is in Phase 6 or later (should have saved output)
+            if echo "$phase" | grep -q "Phase_6\|Phase_5"; then
+                if [ "$output_saved" != "true" ]; then
+                    log "WARN" "Workflow ${workflow} is in ${phase} but output not saved (output_saved: ${output_saved})"
+                    echo "DEBUG: WARNING - ${workflow} workflow output not saved before compaction" >&2
+                    warnings=$((warnings + 1))
+                fi
+            fi
+            
+            # Check if reference file exists but output file doesn't
+            local reference_file="$MEMORY_DIR/current_${workflow}.txt"
+            if [ -f "$reference_file" ]; then
+                local ref_path
+                ref_path=$(cat "$reference_file" 2>/dev/null)
+                if [ -n "$ref_path" ] && [ ! -f "$ref_path" ]; then
+                    log "WARN" "Reference file exists for ${workflow} but output file missing: $ref_path"
+                    echo "DEBUG: WARNING - Reference file exists but output file missing for ${workflow}" >&2
+                    warnings=$((warnings + 1))
+                fi
+            fi
+        fi
+    done
+    
+    if [ "$warnings" -gt 0 ]; then
+        log "WARN" "Found $warnings workflow output validation warnings before compaction"
+        echo "DEBUG: Found $warnings validation warnings" >&2
+    else
+        log "INFO" "All workflow outputs validated successfully"
+        echo "DEBUG: All workflow outputs validated" >&2
+    fi
+    
+    return 0
+}
+
+# Get workflow output summaries (first 200 lines of each output file)
+get_workflow_output_summaries() {
+    local summaries=""
+    
+    # Check for review output
+    if [ -f "$MEMORY_DIR/current_review.txt" ]; then
+        local review_file
+        review_file=$(cat "$MEMORY_DIR/current_review.txt" 2>/dev/null)
+        if [ -n "$review_file" ] && [ -f "$review_file" ]; then
+            local review_summary
+            review_summary=$(head -n 200 "$review_file" 2>/dev/null | sed 's/^/  /')
+            if [ -n "$review_summary" ]; then
+                summaries="${summaries}Review Report Summary:\n\`\`\`markdown\n${review_summary}\n\`\`\`\n\n"
+            fi
+        fi
+    fi
+    
+    # Check for build output
+    if [ -f "$MEMORY_DIR/current_build.txt" ]; then
+        local build_file
+        build_file=$(cat "$MEMORY_DIR/current_build.txt" 2>/dev/null)
+        if [ -n "$build_file" ] && [ -f "$build_file" ]; then
+            local build_summary
+            build_summary=$(head -n 200 "$build_file" 2>/dev/null | sed 's/^/  /')
+            if [ -n "$build_summary" ]; then
+                summaries="${summaries}Build Summary:\n\`\`\`markdown\n${build_summary}\n\`\`\`\n\n"
+            fi
+        fi
+    fi
+    
+    # Check for debug output
+    if [ -f "$MEMORY_DIR/current_debug.txt" ]; then
+        local debug_file
+        debug_file=$(cat "$MEMORY_DIR/current_debug.txt" 2>/dev/null)
+        if [ -n "$debug_file" ] && [ -f "$debug_file" ]; then
+            local debug_summary
+            debug_summary=$(head -n 200 "$debug_file" 2>/dev/null | sed 's/^/  /')
+            if [ -n "$debug_summary" ]; then
+                summaries="${summaries}Debug Summary:\n\`\`\`markdown\n${debug_summary}\n\`\`\`\n\n"
+            fi
+        fi
+    fi
+    
+    if [ -z "$summaries" ]; then
+        echo ""
+    else
+        echo -e "$summaries"
+    fi
+}
+
+# Get workflow output files if active
+get_workflow_outputs() {
+    local outputs=""
+    
+    # Check for review output
+    if [ -f "$MEMORY_DIR/current_review.txt" ]; then
+        local review_file
+        review_file=$(cat "$MEMORY_DIR/current_review.txt" 2>/dev/null)
+        if [ -n "$review_file" ] && [ -f "$review_file" ]; then
+            outputs="${outputs}Review report: $review_file\n"
+        fi
+    fi
+    
+    # Check for build output
+    if [ -f "$MEMORY_DIR/current_build.txt" ]; then
+        local build_file
+        build_file=$(cat "$MEMORY_DIR/current_build.txt" 2>/dev/null)
+        if [ -n "$build_file" ] && [ -f "$build_file" ]; then
+            outputs="${outputs}Build summary: $build_file\n"
+        fi
+    fi
+    
+    # Check for debug output
+    if [ -f "$MEMORY_DIR/current_debug.txt" ]; then
+        local debug_file
+        debug_file=$(cat "$MEMORY_DIR/current_debug.txt" 2>/dev/null)
+        if [ -n "$debug_file" ] && [ -f "$debug_file" ]; then
+            outputs="${outputs}Debug summary: $debug_file\n"
+        fi
+    fi
+    
+    # Check for plan output
+    if [ -f "$MEMORY_DIR/current_plan.txt" ]; then
+        local plan_file
+        plan_file=$(cat "$MEMORY_DIR/current_plan.txt" 2>/dev/null)
+        if [ -n "$plan_file" ] && [ -f "$plan_file" ]; then
+            outputs="${outputs}Plan: $plan_file\n"
+        fi
+    fi
+    
+    if [ -z "$outputs" ]; then
+        echo "No active workflow outputs found"
+    else
+        echo -e "$outputs"
+    fi
+}
+
 # Create comprehensive snapshot
 create_snapshot() {
     local session_id
     local metrics
     local working_plan
     local git_changes
+    local workflow_outputs
+    local workflow_summaries
     
     echo "DEBUG: Creating snapshot..." >&2
     session_id=$(get_session_id)
     metrics=$(get_metrics)
     working_plan=$(get_working_plan)
     git_changes=$(count_git_changes)
+    workflow_outputs=$(get_workflow_outputs)
+    workflow_summaries=$(get_workflow_output_summaries)
     
     log "INFO" "Creating snapshot: $SNAPSHOT_FILE"
     echo "DEBUG: Snapshot file: $SNAPSHOT_FILE" >&2
@@ -189,6 +358,33 @@ $(git status --short 2>/dev/null || echo "Not a git repository")
 1. [Immediate next action]
 2. [Following action]
 3. [Subsequent actions]
+
+### Active Workflow Outputs (To Be Filled by Claude)
+
+**CRITICAL**: If a workflow is active, capture its output file path:
+
+- **Review Workflow**: Check `.claude/memory/current_review.txt` → If exists, read review report path
+- **Build Workflow**: Check `.claude/memory/current_build.txt` → If exists, read build summary path
+- **Debug Workflow**: Check `.claude/memory/current_debug.txt` → If exists, read debug summary path
+- **Plan Workflow**: Check `.claude/memory/current_plan.txt` → If exists, read plan path
+
+**Workflow Output Files**:
+- Review report: [path from current_review.txt if exists]
+- Build summary: [path from current_build.txt if exists]
+- Debug summary: [path from current_debug.txt if exists]
+- Plan: [path from current_plan.txt if exists]
+
+**Active Workflow Outputs** (Auto-detected):
+
+\`\`\`
+$workflow_outputs
+\`\`\`
+
+**Note**: These outputs are preserved in snapshot to enable recovery after compaction.
+
+**Workflow Output Summaries** (First 200 lines):
+
+$workflow_summaries
 
 ---
 
@@ -307,6 +503,53 @@ EOF
     
     log "INFO" "Snapshot creation completed"
 
+# Clean old workflow output files (keep last 20 per workflow type)
+cleanup_old_outputs() {
+    local MAX_OUTPUTS=20
+    
+    log "INFO" "Cleaning old workflow output files (keeping last $MAX_OUTPUTS per type)"
+    echo "DEBUG: Cleaning old workflow outputs" >&2
+    
+    # Clean review outputs
+    local review_dir="$PROJECT_ROOT/.claude/docs/reviews"
+    if [ -d "$review_dir" ]; then
+        local review_count
+        review_count=$(find "$review_dir" -name "review-*.md" -type f 2>/dev/null | wc -l | tr -d ' ')
+        if [ "$review_count" -gt "$MAX_OUTPUTS" ]; then
+            local to_remove=$((review_count - MAX_OUTPUTS))
+            find "$review_dir" -name "review-*.md" -type f | sort | head -n "$to_remove" | xargs rm -f 2>/dev/null || true
+            log "INFO" "Cleaned $to_remove old review outputs"
+        fi
+    fi
+    
+    # Clean build outputs
+    local build_dir="$PROJECT_ROOT/.claude/docs/builds"
+    if [ -d "$build_dir" ]; then
+        local build_count
+        build_count=$(find "$build_dir" -name "build-*.md" -type f 2>/dev/null | wc -l | tr -d ' ')
+        if [ "$build_count" -gt "$MAX_OUTPUTS" ]; then
+            local to_remove=$((build_count - MAX_OUTPUTS))
+            find "$build_dir" -name "build-*.md" -type f | sort | head -n "$to_remove" | xargs rm -f 2>/dev/null || true
+            log "INFO" "Cleaned $to_remove old build outputs"
+        fi
+    fi
+    
+    # Clean debug outputs
+    local debug_dir="$PROJECT_ROOT/.claude/docs/debug"
+    if [ -d "$debug_dir" ]; then
+        local debug_count
+        debug_count=$(find "$debug_dir" -name "debug-*.md" -type f 2>/dev/null | wc -l | tr -d ' ')
+        if [ "$debug_count" -gt "$MAX_OUTPUTS" ]; then
+            local to_remove=$((debug_count - MAX_OUTPUTS))
+            find "$debug_dir" -name "debug-*.md" -type f | sort | head -n "$to_remove" | xargs rm -f 2>/dev/null || true
+            log "INFO" "Cleaned $to_remove old debug outputs"
+        fi
+    fi
+    
+    # Note: Plan outputs are kept indefinitely (they're referenced by build workflow)
+    # Plans are cleaned up separately if needed
+}
+
 # Clean old snapshots
 cleanup_old_snapshots() {
     log "INFO" "Cleaning old snapshots (keeping last $MAX_SNAPSHOTS)"
@@ -381,11 +624,17 @@ main() {
     # Initialize
     initialize
     
+    # Validate workflow outputs before creating snapshot
+    check_and_validate_workflow_outputs
+    
     # Create snapshot
     create_snapshot
     
     # Clean old snapshots
     cleanup_old_snapshots
+    
+    # Clean old workflow outputs
+    cleanup_old_outputs
     
     # Update metrics
     update_metrics

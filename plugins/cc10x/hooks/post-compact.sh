@@ -230,6 +230,108 @@ extract_next_steps() {
     echo "$next_steps"
 }
 
+# Extract workflow output paths from snapshot and restore reference files
+restore_workflow_outputs() {
+    local snapshot_file="$1"
+    
+    if [ -z "$snapshot_file" ] || [ ! -f "$snapshot_file" ]; then
+        return 0
+    fi
+    
+    log "INFO" "Restoring workflow output references from snapshot"
+    echo "DEBUG: Restoring workflow outputs from snapshot" >&2
+    
+    # Extract workflow output paths from snapshot "Active Workflow Outputs" section
+    # Pattern: "Review report: .claude/docs/reviews/review-*.md"
+    # Pattern: "Build summary: .claude/docs/builds/build-*.md"
+    # Pattern: "Debug summary: .claude/docs/debug/debug-*.md"
+    # Pattern: "Plan: .claude/docs/plans/*-plan.md"
+    
+    # Find the "Active Workflow Outputs" section
+    local outputs_section
+    outputs_section=$(grep -A 30 "Active Workflow Outputs" "$snapshot_file" 2>/dev/null | grep -A 20 "Auto-detected" | tail -n +2)
+    
+    if [ -z "$outputs_section" ]; then
+        echo "DEBUG: No Active Workflow Outputs section found in snapshot" >&2
+        return 0
+    fi
+    
+    # Extract review report path
+    local review_path
+    review_path=$(echo "$outputs_section" | grep "Review report:" | sed 's/.*Review report: //' | sed 's/[[:space:]]*$//')
+    
+    if [ -n "$review_path" ] && [ -f "$PROJECT_DIR/$review_path" ]; then
+        echo "$review_path" > "$MEMORY_DIR/current_review.txt"
+        log "INFO" "Restored review reference: $review_path"
+        echo "DEBUG: Restored review reference: $review_path" >&2
+    fi
+    
+    # Extract build summary path
+    local build_path
+    build_path=$(echo "$outputs_section" | grep "Build summary:" | sed 's/.*Build summary: //' | sed 's/[[:space:]]*$//')
+    
+    if [ -n "$build_path" ] && [ -f "$PROJECT_DIR/$build_path" ]; then
+        echo "$build_path" > "$MEMORY_DIR/current_build.txt"
+        log "INFO" "Restored build reference: $build_path"
+        echo "DEBUG: Restored build reference: $build_path" >&2
+    fi
+    
+    # Extract debug summary path
+    local debug_path
+    debug_path=$(echo "$outputs_section" | grep "Debug summary:" | sed 's/.*Debug summary: //' | sed 's/[[:space:]]*$//')
+    
+    if [ -n "$debug_path" ] && [ -f "$PROJECT_DIR/$debug_path" ]; then
+        echo "$debug_path" > "$MEMORY_DIR/current_debug.txt"
+        log "INFO" "Restored debug reference: $debug_path"
+        echo "DEBUG: Restored debug reference: $debug_path" >&2
+    fi
+    
+    # Extract plan path (already handled, but ensure it's restored)
+    local plan_path
+    plan_path=$(echo "$outputs_section" | grep "^Plan:" | sed 's/.*Plan: //' | sed 's/[[:space:]]*$//')
+    
+    if [ -n "$plan_path" ] && [ -f "$PROJECT_DIR/$plan_path" ]; then
+        echo "$plan_path" > "$MEMORY_DIR/current_plan.txt"
+        log "INFO" "Restored plan reference: $plan_path"
+        echo "DEBUG: Restored plan reference: $plan_path" >&2
+    fi
+}
+
+# Restore missing reference files from checkpoints
+restore_missing_references_from_checkpoints() {
+    log "INFO" "Checking checkpoints for missing workflow output references"
+    echo "DEBUG: Checking checkpoints for missing references" >&2
+    
+    # Check each workflow type
+    for workflow in review build debug plan; do
+        local checkpoint_file
+        checkpoint_file=$(get_most_recent_checkpoint "$workflow" 2>/dev/null || echo "")
+        
+        if [ -z "$checkpoint_file" ] || [ ! -f "$checkpoint_file" ]; then
+            continue
+        fi
+        
+        # Extract output_file from checkpoint
+        if command -v jq >/dev/null 2>&1; then
+            local output_file
+            local output_saved
+            output_file=$(jq -r '.output_file // empty' "$checkpoint_file" 2>/dev/null)
+            output_saved=$(jq -r '.output_saved // false' "$checkpoint_file" 2>/dev/null)
+            
+            if [ -n "$output_file" ] && [ "$output_file" != "null" ] && [ "$output_saved" = "true" ]; then
+                # Check if reference file exists
+                local reference_file="$MEMORY_DIR/current_${workflow}.txt"
+                
+                if [ ! -f "$reference_file" ] && [ -f "$PROJECT_DIR/$output_file" ]; then
+                    echo "$output_file" > "$reference_file"
+                    log "INFO" "Restored ${workflow} reference from checkpoint: $output_file"
+                    echo "DEBUG: Restored ${workflow} reference from checkpoint: $output_file" >&2
+                fi
+            fi
+        fi
+    done
+}
+
 # Fill snapshot template with actual context
 fill_snapshot_template() {
     local snapshot_file="$1"
@@ -396,10 +498,11 @@ main() {
     
     if [ -n "$snapshot_file" ]; then
         fill_snapshot_template "$snapshot_file"
-    else
-        log "INFO" "No snapshot file found to fill"
-        echo "DEBUG: No snapshot file found to fill" >&2
+        restore_workflow_outputs "$snapshot_file"
     fi
+    
+    # Also restore from checkpoints (in case snapshot doesn't have outputs)
+    restore_missing_references_from_checkpoints
     
     # Load snapshot content after filling (CRITICAL FIX: This was missing!)
     local snapshot_content=""

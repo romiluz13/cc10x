@@ -331,6 +331,8 @@ Next: Proceeding to Phase 1 - Input Validation
       "findings": {...},
       "conflicts": [...]
     },
+    "output_file": ".claude/docs/reviews/review-{timestamp}.md",
+    "output_saved": false,
     "next_phase": "Phase_3_Synthesis"
   }
   ```
@@ -896,6 +898,55 @@ Next: Review workflow complete - Report ready
 
 ## Phase 6 - Present Results
 
+**CRITICAL**: Save review report to disk before presenting (ensures persistence across compaction).
+
+**Review Report Persistence** (MANDATORY):
+
+1. **Save Review Report File**:
+   - Extract feature/scope name from Phase 0 functionality analysis or user request
+   - Use kebab-case for filename (e.g., `review-auth-code-20250129-143022.md`)
+   - Save review report to `.claude/docs/reviews/review-{timestamp}.md`
+   - Ensure `.claude/docs/reviews/` directory exists (create if needed)
+   - Format: Use exact template from "MANDATORY OUTPUT FORMAT" section below
+   - Include complete review report with all sections (Executive Summary, Actions Taken, Functionality Analysis, Findings, Verification Summary, Recommendations, Open Questions)
+
+2. **Create Review Reference File** (MANDATORY):
+   - Create `.claude/memory/current_review.txt` containing the review report path: `.claude/docs/reviews/review-{timestamp}.md`
+   - This allows other workflows and hooks to find the active review
+   - Example: `echo ".claude/docs/reviews/review-auth-code-20250129-143022.md" > .claude/memory/current_review.txt`
+
+3. **Update Checkpoint with Output Path**:
+   - Update most recent checkpoint (`.claude/memory/workflow_state/review_{timestamp}.json`) to include:
+     ```json
+     {
+       "output_file": ".claude/docs/reviews/review-{timestamp}.md",
+       "output_saved": true
+     }
+     ```
+
+4. **Bash Command to Save Report**:
+
+   ```bash
+   # Create reviews directory if needed
+   mkdir -p .claude/docs/reviews
+
+   # Generate timestamp
+   TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+
+   # Extract scope name from functionality analysis or use default
+   SCOPE_NAME="review"  # Replace with actual scope from Phase 0
+
+   # Save review report
+   REVIEW_FILE=".claude/docs/reviews/review-${SCOPE_NAME}-${TIMESTAMP}.md"
+   # Write complete review report to $REVIEW_FILE
+
+   # Create reference file
+   echo "$REVIEW_FILE" > .claude/memory/current_review.txt
+
+   # Update checkpoint with output path
+   # (Checkpoint update logic handled by workflow)
+   ```
+
 **Before Presenting** (optimized memory):
 
 - **Store Common Issues** (only high-value):
@@ -1005,6 +1056,9 @@ Next: Review workflow complete - Report ready
 - [ ] Recommendations prioritized (CRITICAL → HIGH → MEDIUM → LOW)
 - [ ] All subagents/skills documented in Actions Taken (including code-reviewer and integration-verifier if invoked)
 - [ ] Conflicts documented if any
+- [ ] **Review report saved to `.claude/docs/reviews/review-{timestamp}.md`** (MANDATORY)
+- [ ] **Reference file created: `.claude/memory/current_review.txt`** (MANDATORY)
+- [ ] **Checkpoint updated with output file path** (MANDATORY)
 
 ## Failure Handling
 
