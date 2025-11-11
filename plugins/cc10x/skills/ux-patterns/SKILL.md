@@ -26,6 +26,19 @@ This skill provides context-aware UX analysis that understands user flows before
 
 ---
 
+## Quick Start
+
+Check UX by first understanding functionality and user flows, then checking for UX issues affecting functionality.
+
+**Example:**
+
+1. **Understand functionality**: File upload feature (User Flow: select → upload → confirm)
+2. **Check UX**: Upload button hidden → blocks user flow
+3. **Provide improvement**: Make upload button prominent, add visual feedback
+4. **Align with flows**: UX improvements support user flow steps
+
+**Result:** UX issues affecting functionality identified and improved.
+
 ## Functionality First Mandate
 
 **BEFORE applying UX checks, complete context-dependent functionality analysis**:
@@ -427,6 +440,37 @@ function UploadForm() {
 4. **Generic UX Checklist**: Don't check everything - focus on functionality/user satisfaction-affecting issues
 5. **Missing Specific Fixes**: Don't just identify issues - provide specific code examples aligned with project patterns
 6. **Wrong Priority**: Don't mark style issues as critical - prioritize by functionality/user satisfaction impact
+
+---
+
+## Troubleshooting
+
+**Common Issues:**
+
+1. **UX checks without understanding user flows**
+   - **Symptom**: Finding UX issues that don't affect functionality or user satisfaction
+   - **Cause**: Skipped functionality analysis or user flow understanding
+   - **Fix**: Complete functionality analysis with user flows first
+   - **Prevention**: Always understand user flows before UX checks
+
+2. **Generic improvements not aligned with project patterns**
+   - **Symptom**: UX improvements don't match project's UX patterns
+   - **Cause**: Didn't understand project's UX patterns
+   - **Fix**: Understand project patterns, provide aligned improvements
+   - **Prevention**: Always understand project patterns before providing improvements
+
+3. **Perfect UX patterns instead of functionality blockers**
+   - **Symptom**: Focusing on minor UX violations instead of blockers
+   - **Cause**: Didn't prioritize by functionality/user satisfaction impact
+   - **Fix**: Focus on UX issues that block or degrade functionality/user satisfaction
+   - **Prevention**: Always prioritize functionality/user satisfaction-affecting issues
+
+**If issues persist:**
+
+- Verify functionality analysis with user flows was completed first
+- Check that project's UX patterns were understood
+- Ensure improvements align with project patterns
+- Review REFERENCE.md for UX pattern examples
 
 ---
 

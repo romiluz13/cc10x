@@ -16,6 +16,19 @@ This skill provides context-aware component design that understands component re
 
 **Core Principle**: Understand functionality requirements first, then understand project component patterns, then design components to support functionality.
 
+## Quick Start
+
+Design components by first understanding functionality, then mapping to component needs.
+
+**Example:**
+
+1. **Understand functionality**: File upload feature (User Flow: select → upload → confirm)
+2. **Understand project patterns**: React functional components, TypeScript interfaces
+3. **Map to components**: UploadForm (select), ProgressBar (upload), SuccessMessage (confirm)
+4. **Design hierarchy**: UploadForm contains ProgressBar and SuccessMessage
+
+**Result:** Component hierarchy designed to support functionality using project patterns.
+
 ## Quick Decision Tree
 
 ```
@@ -180,6 +193,37 @@ This skill is loaded by orchestrator workflows when component design is detected
 - Component design execution
 
 **CRITICAL**: Maintain functionality-first approach. Component design must follow functionality analysis.
+
+---
+
+## Troubleshooting
+
+**Common Issues:**
+
+1. **Component design without understanding functionality**
+   - **Symptom**: Components designed but don't support functionality flows
+   - **Cause**: Skipped functionality analysis
+   - **Fix**: Complete functionality analysis first, then design components
+   - **Prevention**: Always understand functionality before component design
+
+2. **Generic component patterns instead of functionality-focused**
+   - **Symptom**: Components follow generic patterns but don't support functionality
+   - **Cause**: Didn't map functionality flows to component needs
+   - **Fix**: Map flows to components, design to support flows
+   - **Prevention**: Always map functionality to component needs first
+
+3. **Component designs not aligned with project patterns**
+   - **Symptom**: Components don't match project's component patterns
+   - **Cause**: Didn't understand project component patterns
+   - **Fix**: Understand project patterns, align component design
+   - **Prevention**: Always understand project patterns first
+
+**If issues persist:**
+
+- Verify functionality analysis was completed first
+- Check that functionality flows were mapped to components
+- Ensure component designs align with project patterns
+- Review reference files for detailed guidance
 
 ---
 

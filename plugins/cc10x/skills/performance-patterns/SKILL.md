@@ -25,6 +25,49 @@ This skill provides context-aware performance analysis that understands performa
 
 ---
 
+## Quick Start
+
+Check performance by first understanding functionality and performance requirements, then checking for bottlenecks affecting functionality.
+
+**Example:**
+
+1. **Understand functionality**: File upload feature (User Flow: select → upload → confirm)
+2. **Understand performance requirements**: Upload must complete within 30 seconds
+3. **Check performance**: Upload takes 60 seconds → degrades functionality
+4. **Provide optimization**: Add file chunking, expected improvement: 20 seconds
+
+**Result:** Performance issues affecting functionality identified and optimized.
+
+## Requirements
+
+**Dependencies:**
+
+- Functionality analysis template - Reference: `plugins/cc10x/skills/cc10x-orchestrator/templates/functionality-analysis.md`
+- Performance requirements understanding - Must identify performance constraints in functionality analysis
+
+**Prerequisites:**
+
+- Phase 1: Context-Dependent Functionality Analysis completed (MANDATORY FIRST STEP)
+- Performance constraints identified (latency, throughput, scale requirements)
+
+**Tool Access:**
+
+- Required tools: Read, Grep, Glob, Bash
+- Read tool: To analyze code for performance issues
+- Bash tool: To run benchmarks and measure performance
+
+**When to Use:**
+
+- After functionality is verified
+- When reviewing code that handles user interactions, database queries, or API calls
+- When performance issues might affect functionality
+
+**Focus Areas:**
+
+- Performance bottlenecks affecting functionality (not premature optimization)
+- Performance issues degrading user experience
+- Performance issues breaking functionality
+
 ## Functionality First Mandate
 
 **BEFORE applying performance checks, complete context-dependent functionality analysis**:
@@ -392,6 +435,37 @@ app.get("/api/files", authenticate, async (req, res) => {
 
 [Prioritized list of optimizations - Critical first, then Important, then Minor]
 ```
+
+---
+
+## Troubleshooting
+
+**Common Issues:**
+
+1. **Performance checks without understanding functionality**
+   - **Symptom**: Optimizing code that doesn't affect functionality
+   - **Cause**: Skipped functionality analysis
+   - **Fix**: Complete functionality analysis first, then check performance
+   - **Prevention**: Always understand functionality before performance checks
+
+2. **Missing performance requirements**
+   - **Symptom**: Don't know what performance targets to meet
+   - **Cause**: Didn't identify performance constraints in functionality analysis
+   - **Fix**: Complete functionality analysis with performance constraints
+   - **Prevention**: Always identify performance requirements first
+
+3. **Premature optimization**
+   - **Symptom**: Optimizing code that doesn't affect functionality performance
+   - **Cause**: Didn't verify performance issues affect functionality
+   - **Fix**: Focus only on performance issues affecting functionality
+   - **Prevention**: Always verify performance issues affect functionality first
+
+**If issues persist:**
+
+- Verify functionality analysis was completed first
+- Check that performance requirements were identified
+- Ensure optimizations focus on functionality-affecting issues
+- Review PATTERNS.md and REFERENCE.md for examples
 
 ---
 

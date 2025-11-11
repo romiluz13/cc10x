@@ -26,6 +26,85 @@ This skill provides context-aware requirements analysis that deeply understands 
 
 ---
 
+## Quick Start
+
+Analyze requirements by first understanding functionality, then mapping to flows and identifying gaps.
+
+**Example:**
+
+1. **Understand functionality**: User needs file upload feature (User Flow: select → upload → confirm)
+2. **Map requirements**: "Must accept PDF files" → maps to User Flow step 1 (file selection)
+3. **Identify gaps**: Missing requirement for error handling when upload fails
+4. **Create acceptance criteria**: "Given user selects invalid file type, When upload attempted, Then error message displayed"
+
+**Result:** Requirements mapped to functionality with testable acceptance criteria.
+
+## Examples
+
+### Example: File Upload Feature Requirements
+
+**Context:** Analyzing requirements for file upload feature
+
+**Step 1: Understand Functionality**
+
+```
+User Flow:
+1. User selects file
+2. User uploads file
+3. User sees progress
+4. User gets confirmation
+
+System Flow:
+1. System receives file
+2. System validates file
+3. System stores file
+4. System syncs to CRM
+```
+
+**Step 2: Map Requirements to Functionality**
+
+```
+Requirement: "Must accept PDF files"
+→ Maps to: User Flow step 1 (file selection)
+→ Maps to: System Flow step 2 (file validation)
+
+Requirement: "Must show upload progress"
+→ Maps to: User Flow step 3 (see progress)
+→ Maps to: System Flow step 3 (store file)
+
+Requirement: "Files must sync to CRM"
+→ Maps to: System Flow step 4 (sync to CRM)
+```
+
+**Step 3: Identify Gaps**
+
+```
+Missing Requirements:
+- Error handling when upload fails
+- File size limit specification
+- Invalid file type handling
+- Network failure handling
+```
+
+**Step 4: Create Testable Acceptance Criteria**
+
+```
+Given user selects valid PDF file
+When user uploads file
+Then file is uploaded successfully
+And success message is displayed
+
+Given user selects invalid file type
+When user attempts upload
+Then error message "File type not supported" is displayed
+
+Given file size exceeds 10MB
+When user attempts upload
+Then error message "File exceeds size limit" is displayed
+```
+
+**Result:** Requirements mapped to functionality flows with testable acceptance criteria.
+
 ## Functionality First Mandate
 
 **BEFORE analyzing requirements format, complete context-dependent functionality analysis**:
@@ -398,3 +477,32 @@ For each requirement, provide:
 ---
 
 _This skill enables context-aware requirements analysis that deeply understands requirements, maps them to functionality, identifies gaps, and creates testable acceptance criteria aligned with functionality flows._
+
+## Troubleshooting
+
+**Common Issues:**
+
+1. **Requirements don't map to functionality flows**
+   - **Symptom**: Requirements listed but not connected to user/system flows
+   - **Cause**: Skipped Phase 2 (Map Requirements to Functionality)
+   - **Fix**: Complete Phase 2, map each requirement to flow steps
+   - **Prevention**: Always complete functionality analysis before mapping
+
+2. **Missing requirements not identified**
+   - **Symptom**: Gaps found later during implementation
+   - **Cause**: Skipped Phase 3 (Identify Gaps)
+   - **Fix**: Complete Phase 3, check all flows for missing requirements
+   - **Prevention**: Always check functionality coverage after mapping
+
+3. **Acceptance criteria not testable**
+   - **Symptom**: Criteria vague, can't write tests from them
+   - **Cause**: Didn't align criteria with functionality flows
+   - **Fix**: Rewrite criteria aligned with flow steps, make them specific
+   - **Prevention**: Always create criteria from functionality flows
+
+**If issues persist:**
+
+- Verify functionality analysis was completed first
+- Check that all phases were completed in order
+- Review REFERENCE.md for detailed templates
+- Ensure requirements map to functionality flows

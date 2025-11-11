@@ -9,6 +9,19 @@ description: Use when user request contains single clear error message from bash
 
 Quickly fix simple, obvious errors from bash output without invoking the full DEBUG workflow. This skill handles single-file errors with clear, actionable fixes.
 
+## Quick Start
+
+Fix simple errors quickly without full debug workflow.
+
+**Example:**
+
+1. **Detect error**: Single syntax error in bash output: "Missing semicolon at line 45"
+2. **Identify fix**: Add semicolon at line 45
+3. **Apply fix**: Make minimal change
+4. **Verify**: Check syntax correct, no new errors
+
+**Result:** Simple error fixed quickly, no workflow needed.
+
 ## When to Use
 
 - User request contains bash output or error messages
@@ -89,6 +102,35 @@ This skill is invoked automatically by the orchestrator in Phase 3 (Intent and C
 3. Orchestrator Phase 3: Error Detection (this skill)
 4. If quick fix succeeds → Done
 5. If quick fix fails → Proceed to DEBUG workflow
+
+## Troubleshooting
+
+**Common Issues:**
+
+1. **Quick fix attempted for complex error**
+   - **Symptom**: Fix doesn't work, error persists or multiplies
+   - **Cause**: Error doesn't meet quick fix criteria (multiple errors, complex, cross-file)
+   - **Fix**: Proceed to DEBUG workflow instead
+   - **Prevention**: Always verify error meets quick fix criteria first
+
+2. **Fix applied but new errors introduced**
+   - **Symptom**: Original error fixed but new errors appear
+   - **Cause**: Fix wasn't minimal or didn't preserve code structure
+   - **Fix**: Revert fix, proceed to DEBUG workflow
+   - **Prevention**: Always make minimal changes, verify no new errors
+
+3. **Error not reproducible or unclear**
+   - **Symptom**: Can't identify exact error or fix
+   - **Cause**: Error message unclear or fix not obvious
+   - **Fix**: Proceed to DEBUG workflow for investigation
+   - **Prevention**: Only use quick fix for clear, obvious errors
+
+**If issues persist:**
+
+- Verify error meets quick fix criteria (single, clear, obvious)
+- Check that fix is minimal and preserves structure
+- If fix fails, proceed to DEBUG workflow immediately
+- Don't attempt multiple quick fixes
 
 ## Example Scenarios
 

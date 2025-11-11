@@ -20,6 +20,20 @@ NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST
 
 **Core Principle**: Understand what functionality should work (using universal questions and context-dependent flows), then map observed behavior to expected behavior, then debug bugs that affect functionality. Bugs exist in the context of functionality, not in isolation.
 
+## Quick Start
+
+Debug systematically by first understanding expected functionality, then logging evidence, then investigating.
+
+**Example:**
+
+1. **Understand expected functionality**: File upload should work (User Flow: select → upload → confirm)
+2. **LOG FIRST**: Capture error logs, network requests, state at failure point
+3. **Map observed**: Upload fails at step 2, error: "network timeout"
+4. **Investigate**: Check network requests, verify timeout settings
+5. **Fix**: Increase timeout, add retry logic
+
+**Result:** Bug fixed through systematic investigation with evidence.
+
 ## Quick Decision Tree
 
 ```
@@ -235,6 +249,35 @@ This skill is loaded by orchestrator workflows when debugging is detected. The o
 - Debugging execution
 
 **CRITICAL**: Maintain functionality-first approach. Debugging must follow functionality analysis.
+
+## Troubleshooting
+
+**Common Issues:**
+
+1. **Debugging without understanding expected functionality**
+   - **Symptom**: Can't identify where functionality breaks
+   - **Cause**: Skipped functionality analysis
+   - **Fix**: Complete functionality analysis first, understand expected flows
+   - **Prevention**: Always understand expected functionality before debugging
+
+2. **LOG FIRST not followed**
+   - **Symptom**: Fixing bugs without evidence
+   - **Cause**: Didn't capture logs before fixing
+   - **Fix**: Capture logs first, then investigate
+   - **Prevention**: Always log first, never fix without evidence
+
+3. **Observed behavior not mapped to expected**
+   - **Symptom**: Can't identify where flow breaks
+   - **Cause**: Didn't map observed to expected behavior
+   - **Fix**: Map observed to expected flows, identify break point
+   - **Prevention**: Always map observed to expected before debugging
+
+**If issues persist:**
+
+- Verify expected functionality was understood first
+- Check that LOG FIRST was followed (evidence captured)
+- Ensure observed was mapped to expected
+- Review reference files for detailed guidance
 
 ## References
 

@@ -26,6 +26,19 @@ This skill provides context-aware architecture design that understands existing 
 
 ---
 
+## Quick Start
+
+Design architecture by first understanding functionality and existing architecture, then designing to support functionality.
+
+**Example:**
+
+1. **Understand functionality**: File upload feature (User Flow: select → upload → confirm)
+2. **Understand existing architecture**: Project uses microservices, REST APIs
+3. **Design architecture**: Map flows to components, design system context
+4. **Provide decisions**: Architecture decisions with trade-offs and roadmap
+
+**Result:** Architecture designed to support functionality with clear decisions.
+
 ## Functionality First Mandate
 
 **BEFORE designing architecture, complete context-dependent functionality analysis**:
@@ -285,6 +298,35 @@ For each architecture decision, provide:
 ```
 
 ---
+
+## Troubleshooting
+
+**Common Issues:**
+
+1. **Architecture design without understanding functionality**
+   - **Symptom**: Architecture doesn't support functionality flows
+   - **Cause**: Skipped functionality analysis
+   - **Fix**: Complete functionality analysis first, then design architecture
+   - **Prevention**: Always understand functionality before architecture design
+
+2. **Generic architecture patterns instead of functionality-focused**
+   - **Symptom**: Architecture follows generic patterns but doesn't support functionality
+   - **Cause**: Didn't map functionality flows to architecture needs
+   - **Fix**: Map flows to architecture, design to support flows
+   - **Prevention**: Always map functionality to architecture needs first
+
+3. **Architecture decisions not aligned with project patterns**
+   - **Symptom**: Architecture doesn't match project's architecture patterns
+   - **Cause**: Didn't understand existing architecture
+   - **Fix**: Understand existing architecture, align design
+   - **Prevention**: Always understand existing architecture first
+
+**If issues persist:**
+
+- Verify functionality analysis was completed first
+- Check that functionality flows were mapped to architecture
+- Ensure architecture design aligns with project patterns
+- Review PATTERNS.md for detailed guidance
 
 ## Reference Materials
 

@@ -19,6 +19,50 @@ description: Visual design principles with functionality-first approach. Use PRO
 
 ---
 
+## Quick Start
+
+Design UI by first understanding functionality, then applying visual design principles to support it.
+
+**Example:**
+
+1. **Understand functionality**: File upload feature (User Flow: select → upload → confirm)
+2. **Apply visual hierarchy**: Upload button larger than cancel (size conveys importance)
+3. **Use design tokens**: Button uses primary color token, matches project theme
+4. **Design states**: Hover, active, disabled states support functionality
+
+**Result:** UI designed to enable functionality with consistent visual design.
+
+## Requirements
+
+**Dependencies:**
+
+- Functionality flows understanding - Must understand user flows and admin flows
+
+**Prerequisites:**
+
+- Functionality analysis completed (user flow, admin flow)
+
+**When to Use:**
+
+- When designing UI for functionality
+- When creating new UI components
+- When establishing design system or style guide
+- When refactoring visual inconsistencies
+
+**Focus Areas:**
+
+- Visual hierarchy supporting functionality
+- Design tokens enabling functionality
+- Layout systems supporting functionality flows
+- Typography supporting readability
+- State design supporting functionality states
+
+**Related Skills:**
+
+- `ux-patterns` - Complements with interaction behavior
+- `accessibility-patterns` - Enforces WCAG compliance
+- `component-design-patterns` - Applies visual tokens to components
+
 # UI Design - Stage 1: Metadata
 
 ## Skill Overview
@@ -158,6 +202,37 @@ body {
 - `accessibility-patterns`: Enforces WCAG compliance in visual design
 - `component-design-patterns`: Applies visual tokens to component APIs
 - `design-patterns`: Coordinates with API and integration patterns
+
+---
+
+## Troubleshooting
+
+**Common Issues:**
+
+1. **UI design without understanding functionality**
+   - **Symptom**: Designing UI that doesn't support user/admin flows
+   - **Cause**: Skipped functionality analysis
+   - **Fix**: Complete functionality analysis first, then design UI
+   - **Prevention**: Always understand functionality before UI design
+
+2. **Generic visual design instead of functionality-focused**
+   - **Symptom**: Beautiful UI that doesn't enable functionality
+   - **Cause**: Applied visual principles without understanding functionality
+   - **Fix**: Understand functionality first, then apply visual principles
+   - **Prevention**: Always design UI to support functionality
+
+3. **Design tokens not aligned with project**
+   - **Symptom**: UI uses different tokens than project theme
+   - **Cause**: Didn't understand project's design system
+   - **Fix**: Understand project design tokens, align UI design
+   - **Prevention**: Always understand project design system first
+
+**If issues persist:**
+
+- Verify functionality analysis was completed first
+- Check that UI design supports functionality flows
+- Ensure design tokens align with project theme
+- Review REFERENCE.md for design system examples
 
 ---
 

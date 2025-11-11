@@ -1,6 +1,6 @@
 ---
 name: project-context-understanding
-description: Deeply understands project structure, dependencies, connections, architecture patterns, and conventions. Use PROACTIVELY before any major planning/build/review to map codebase structure, dependencies, connections, and patterns. Essential for context-aware analysis and personalized recommendations. Maps files, directories, modules, dependencies (internal/external), imports/exports, API calls, data flows, architecture patterns, and codebase conventions.
+description: Provides deep project context mapping and analysis. Use PROACTIVELY before any major planning/build/review to map codebase structure, dependencies, connections, and patterns. Maps files, directories, modules, dependencies (internal/external), imports/exports, API calls, data flows, architecture patterns, and codebase conventions. Essential for context-aware analysis and personalized recommendations.
 allowed-tools: Read, Grep, Glob, Bash
 ---
 
@@ -28,6 +28,19 @@ This skill provides deep understanding of project structure, dependencies, conne
 - When codebase conventions need to be understood
 
 ---
+
+## Quick Start
+
+Understand project context by mapping codebase structure, dependencies, and patterns.
+
+**Example:**
+
+1. **Identify purpose**: Planning file upload feature, need to understand project structure
+2. **Map structure**: Scan directories, identify modules, components
+3. **Map dependencies**: Internal dependencies, external libraries
+4. **Map patterns**: Architecture patterns, conventions, style
+
+**Result:** Complete project context map for context-aware analysis.
 
 ## Functionality First Mandate
 
@@ -244,6 +257,39 @@ User selects file → FileInput → UploadForm → api/files → storage service
 4. **Map conventions** to verify style compliance
 
 ---
+
+6. **Accurate**: Verify findings by reading actual files
+
+---
+
+## Troubleshooting
+
+**Common Issues:**
+
+1. **Context mapping without understanding purpose**
+   - **Symptom**: Mapping everything, not relevant context
+   - **Cause**: Didn't identify purpose of analysis
+   - **Fix**: Identify purpose first, map only relevant context
+   - **Prevention**: Always identify purpose before mapping
+
+2. **Incomplete context mapping**
+   - **Symptom**: Missing dependencies or connections
+   - **Cause**: Didn't complete all mapping steps
+   - **Fix**: Complete all steps: structure, dependencies, connections, patterns, conventions
+   - **Prevention**: Always complete all mapping steps
+
+3. **Context not verified**
+   - **Symptom**: Mapped context inaccurate or outdated
+   - **Cause**: Didn't verify findings by reading files
+   - **Fix**: Verify findings by reading actual files
+   - **Prevention**: Always verify findings by reading files
+
+**If issues persist:**
+
+- Verify purpose was identified first
+- Check that all mapping steps were completed
+- Ensure findings were verified by reading files
+- Review key principles section
 
 ## Key Principles
 

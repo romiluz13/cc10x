@@ -24,6 +24,44 @@ allowed-tools: Read, Grep, Glob, Task, Bash
 
 Coordinates structured planning and delegated analysis with functionality-first approach.
 
+## Quick Start
+
+Plan features by first understanding functionality, then creating structured plan.
+
+**Example:**
+
+1. **Understand functionality**: User needs file upload (User Flow: select → upload → confirm)
+2. **Requirements intake**: Goals, user stories, acceptance criteria
+3. **Delegate analysis**: planning-architecture-risk → planning-design-deployment
+4. **Compile plan**: Architecture, components, risks, implementation roadmap
+5. **Verify**: Plan covers all functionality flows
+
+**Result:** Complete plan aligned with functionality requirements.
+
+## Requirements
+
+**Dependencies:**
+
+- `cc10x-orchestrator` - Must be activated through orchestrator (do not use directly)
+- `requirements-analysis` - Required for requirements mapping
+- `feature-planning` - Required for structured planning
+- Planning subagents - Runs requirements intake and planning subagents
+
+**Prerequisites:**
+
+- Phase 0 (Functionality Analysis) completed via orchestrator
+- Functionality flows understood (user flow, admin flow, system flow, integration flow)
+
+**Tool Access:**
+
+- Required tools: Read, Grep, Glob, Task, Bash
+- Task tool: Used to invoke planning subagents
+
+**Planning Subagents:**
+
+- planning-architecture-risk - Analyzes architecture and risks
+- planning-design-deployment - Plans design and deployment
+
 ## Process
 
 For complete instructions, see `plugins/cc10x/skills/cc10x-orchestrator/workflows/plan.md`.
@@ -133,6 +171,35 @@ Implementability: <all checks passed or concerns flagged>
 
 [If any conflicts detected, implementability concerns, or assumptions made]
 ```
+
+## Troubleshooting
+
+**Common Issues:**
+
+1. **Functionality not understood before planning**
+   - **Symptom**: Planning without understanding user/admin/system flows
+   - **Cause**: Skipped functionality analysis
+   - **Fix**: Complete functionality analysis first, then plan
+   - **Prevention**: Always understand functionality before planning
+
+2. **Requirements not mapped to flows**
+   - **Symptom**: Requirements listed but not connected to flows
+   - **Cause**: Skipped requirements mapping phase
+   - **Fix**: Map requirements to functionality flows
+   - **Prevention**: Always map requirements to flows
+
+3. **Plan doesn't cover all flows**
+   - **Symptom**: Missing implementation for some flows
+   - **Cause**: Didn't check flow coverage
+   - **Fix**: Review plan, ensure all flows covered
+   - **Prevention**: Always verify flow coverage in plan
+
+**If issues persist:**
+
+- Verify functionality analysis was completed first
+- Check that requirements were mapped to flows
+- Ensure plan covers all functionality flows
+- Review workflow instructions in `workflows/plan.md`
 
 **Validation Checklist**:
 

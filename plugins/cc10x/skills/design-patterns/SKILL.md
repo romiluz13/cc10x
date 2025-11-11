@@ -21,6 +21,19 @@ description: Comprehensive design patterns with functionality-first approach. Us
 
 ---
 
+## Quick Start
+
+Design APIs/components/integrations by first understanding functionality, then applying design patterns.
+
+**Example:**
+
+1. **Understand functionality**: File upload feature (User Flow: select → upload → confirm)
+2. **Design API**: REST endpoint with versioning, error handling
+3. **Design component**: Reusable UploadForm with composition
+4. **Design integration**: S3 integration with retry strategy
+
+**Result:** APIs/components/integrations designed to support functionality.
+
 **Comprehensive patterns for API, Component, and Integration design.**
 
 ## Progressive Loading Stages
@@ -328,5 +341,34 @@ function withDataFetching(Component, url) {
 - Monitor retry counts and backoff delays
 
 ---
+
+## Troubleshooting
+
+**Common Issues:**
+
+1. **Design patterns applied without understanding functionality**
+   - **Symptom**: Patterns applied but don't support functionality flows
+   - **Cause**: Skipped functionality analysis
+   - **Fix**: Complete functionality analysis first, then apply patterns
+   - **Prevention**: Always understand functionality before applying patterns
+
+2. **Generic patterns instead of functionality-focused**
+   - **Symptom**: Patterns follow generic best practices but don't support functionality
+   - **Cause**: Didn't map functionality flows to pattern needs
+   - **Fix**: Map flows to patterns, apply patterns to support flows
+   - **Prevention**: Always map functionality to pattern needs first
+
+3. **Patterns not aligned with project conventions**
+   - **Symptom**: Patterns don't match project's design patterns
+   - **Cause**: Didn't understand project patterns
+   - **Fix**: Understand project patterns, align design
+   - **Prevention**: Always understand project patterns first
+
+**If issues persist:**
+
+- Verify functionality analysis was completed first
+- Check that functionality flows were mapped to pattern needs
+- Ensure patterns align with project conventions
+- Review pattern libraries for detailed guidance
 
 **Remember**: Good design prevents bugs, improves maintainability, and scales with your system.

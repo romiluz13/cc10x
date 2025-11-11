@@ -12,6 +12,19 @@ allowed-tools: Read, Grep, Glob
 
 **Core Principle**: Understand what functionality needs risk analysis (using universal questions and context-dependent flows), then identify risks specific to that functionality. Risks exist in the context of functionality, not in isolation.
 
+## Quick Start
+
+Analyze risks by first understanding functionality, then identifying risks specific to that functionality.
+
+**Example:**
+
+1. **Understand functionality**: File upload feature (User Flow: select → upload → confirm)
+2. **Identify functionality risks**: Upload fails if network unstable → blocks user flow
+3. **Analyze risk**: High impact (blocks functionality), Medium probability
+4. **Mitigate**: Add retry logic, show user-friendly error message
+
+**Result:** Risks affecting functionality identified and mitigated.
+
 ## Quick Decision Tree
 
 ```
@@ -155,6 +168,37 @@ This skill is loaded by orchestrator workflows when risk analysis is needed. The
 - Risk analysis execution
 
 **CRITICAL**: Maintain functionality-first approach. Risk analysis must follow functionality analysis.
+
+---
+
+## Troubleshooting
+
+**Common Issues:**
+
+1. **Risk analysis without understanding functionality**
+   - **Symptom**: Risks identified but don't relate to functionality
+   - **Cause**: Skipped functionality analysis
+   - **Fix**: Complete functionality analysis first, understand functionality flows
+   - **Prevention**: Always understand functionality before risk analysis
+
+2. **Generic risks instead of functionality-specific**
+   - **Symptom**: Risks are generic, not mapped to functionality flows
+   - **Cause**: Didn't map risks to functionality flows
+   - **Fix**: Map risks to functionality flows, identify functionality-specific risks
+   - **Prevention**: Always map risks to functionality flows
+
+3. **Mitigation strategies not specific**
+   - **Symptom**: Generic mitigations that don't address functionality risks
+   - **Cause**: Didn't create functionality-specific mitigations
+   - **Fix**: Create mitigations specific to functionality risks
+   - **Prevention**: Always create functionality-specific mitigations
+
+**If issues persist:**
+
+- Verify functionality analysis was completed first
+- Check that risks were mapped to functionality flows
+- Ensure mitigations are functionality-specific
+- Review reference files for detailed guidance
 
 ---
 

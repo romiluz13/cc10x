@@ -14,6 +14,122 @@ allowed-tools: Read, Grep, Glob, Bash
 
 ---
 
+## Quick Start
+
+Generate code by first understanding functionality, then aligning with project patterns.
+
+**Example:**
+
+1. **Understand functionality**: User needs to upload files (User Flow: select file → see progress → get confirmation)
+2. **Analyze project patterns**: Read existing upload components, identify patterns (React hooks, error handling style)
+3. **Generate code**: Create UploadForm component matching project patterns to implement the upload functionality
+
+**Result:** Code that implements functionality using project conventions.
+
+## Requirements
+
+**Dependencies:**
+
+- Functionality analysis template - Reference: `plugins/cc10x/skills/cc10x-orchestrator/templates/functionality-analysis.md`
+- Project patterns understanding - Must analyze existing code patterns before generating
+
+**Prerequisites:**
+
+- Step 1: Context-Dependent Functionality Analysis completed (MANDATORY FIRST STEP)
+- Step 2: Project patterns analyzed (code conventions, file structure, naming patterns)
+
+**Tool Access:**
+
+- Required tools: Read, Grep, Glob, Bash
+- Read tool: To analyze project patterns and existing code
+- Grep tool: To find similar code patterns
+- Glob tool: To discover file patterns
+
+**Related Skills:**
+
+- `test-driven-development` - Use TDD when generating code
+- `code-quality-patterns` - Check code quality after generation
+- `security-patterns` - Check security after generation
+
+---
+
+## Examples
+
+### Example: File Upload Feature (UI Component)
+
+**Context:** Building file upload component aligned with project patterns
+
+**Functionality Flow:**
+
+- User Flow: Select file → Upload → See progress → Get confirmation
+- System Flow: Receive file → Validate → Store → Sync to CRM
+
+**UploadForm Component:**
+
+```typescript
+// src/components/UploadForm.tsx
+import React, { useState } from 'react';
+import { useDropzone } from 'react-dropzone';
+import { uploadFile } from '@/api/files';
+import { cn } from '@/lib/utils';
+
+export function UploadForm({ onUploadSuccess }: UploadFormProps) {
+  const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    accept: {
+      'application/pdf': ['.pdf'],
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+      'image/jpeg': ['.jpg', '.jpeg'],
+      'image/png': ['.png']
+    },
+    maxSize: 10 * 1024 * 1024,
+    onDrop: async (acceptedFiles) => {
+      // Implementation aligned with project patterns
+      // ...
+    }
+  });
+
+  return (
+    <div className="upload-form">
+      {/* UI implementation */}
+    </div>
+  );
+}
+```
+
+**File Upload API:**
+
+```typescript
+// src/api/files.ts
+export async function uploadFile(
+  file: File,
+  onProgress?: (progressPercent: number) => void,
+): Promise<string> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await axios.post<{ fileId: string }>(
+    `${API_BASE_URL}/files/upload`,
+    formData,
+    {
+      onUploadProgress: (progressEvent) => {
+        // Progress handling
+      },
+      timeout: 30000,
+    },
+  );
+
+  return response.data.fileId;
+}
+```
+
+**Result:** Code implements functionality flows, aligned with project patterns (React hooks, TypeScript, axios).
+
+**See [EXAMPLES.md](EXAMPLES.md) for complete example with all components (UploadForm, API, Service, CRM Client, Backend Route).**
+
 ## Step 1: Context-Dependent Functionality Analysis (MANDATORY FIRST STEP)
 
 ### Reference Template
@@ -274,6 +390,37 @@ export function Button({ variant = 'primary', onClick, children }: ButtonProps) 
 
 - [Code Generation Playbook](PLAYBOOK.md) - Detailed patterns (use AFTER functionality understood)
 - Related skills: `test-driven-development`, `code-quality-patterns`, `security-patterns`
+
+---
+
+## Troubleshooting
+
+**Common Issues:**
+
+1. **Generated code doesn't match project patterns**
+   - **Symptom**: Code uses different patterns than existing codebase
+   - **Cause**: Didn't analyze project patterns before generating
+   - **Fix**: Complete Step 2 (Understand Project Patterns) before generating code
+   - **Prevention**: Always read existing similar code first
+
+2. **Code doesn't implement functionality correctly**
+   - **Symptom**: Code compiles but doesn't work as expected
+   - **Cause**: Skipped functionality analysis (Step 1)
+   - **Fix**: Complete functionality analysis first, then regenerate code
+   - **Prevention**: Never skip Step 1 (Context-Dependent Functionality Analysis)
+
+3. **Missing edge cases or error handling**
+   - **Symptom**: Code works for happy path but fails on edge cases
+   - **Cause**: Didn't complete edge cases in functionality analysis
+   - **Fix**: Complete edge cases section in functionality analysis, regenerate code
+   - **Prevention**: Always complete all functionality analysis sections
+
+**If issues persist:**
+
+- Verify functionality analysis was completed first
+- Check that project patterns were analyzed
+- Review EXAMPLES.md for complete examples
+- Ensure code aligns with project conventions
 
 ---
 

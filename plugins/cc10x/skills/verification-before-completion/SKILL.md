@@ -1,6 +1,6 @@
 ---
 name: verification-before-completion
-description: Evidence-first gate with functionality-first approach. Use PROACTIVELY before claiming completion. First verifies functionality works (user flow, admin flow, system flow), then verifies other concerns. Blocks success claims without fresh verification evidence. Apply before saying "done", "fixed", or "ready".
+description: Provides evidence-first verification gate with functionality-first approach. Use PROACTIVELY before claiming completion, saying "done", "fixed", or "ready". First verifies functionality works (user flow, admin flow, system flow), then verifies other concerns. Blocks success claims without fresh verification evidence. Apply before saying "done", "fixed", or "ready".
 allowed-tools: Read, Grep, Glob, Bash
 ---
 
@@ -29,6 +29,19 @@ NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE
 3. **Use evidence** - Commands, exit codes, artifacts
 
 ---
+
+## Quick Start
+
+Verify functionality works before claiming completion.
+
+**Example:**
+
+1. **Identify functionality**: File upload feature (User Flow: select → upload → confirm)
+2. **Run verification**: `npm test -- --testNamePattern="file upload"` → exit 0
+3. **Capture evidence**: All upload tests pass, user flow works
+4. **Then verify other concerns**: Security, performance (if applicable)
+
+**Result:** Completion claim backed by fresh verification evidence.
 
 ## Core Rule
 
@@ -199,10 +212,91 @@ Risks / Follow-ups: <items still pending>
 
 ---
 
+## Examples
+
+### Example: Verifying File Upload Feature Completion
+
+**Context:** Verifying file upload feature before claiming completion
+
+**Step 1: Functionality Verification (MANDATORY FIRST)**
+
+```bash
+# Test user flow
+npm test -- --testNamePattern="file upload"
+# Expected: exit 0
+
+# Test system flow
+npm test -- --testNamePattern="file validation"
+# Expected: exit 0
+
+# Test integration flow
+npm test -- --testNamePattern="CRM sync"
+# Expected: exit 0
+```
+
+**Evidence Captured:**
+
+```
+Functionality Verified:
+- [x] User flow works (tested) - Users can upload files, see progress, get confirmation
+- [x] System flow works (tested) - File validation, storage, CRM sync work
+- [x] Error handling works (tested) - Invalid file types, size limits, network errors handled
+
+Commands:
+- npm test -- --testNamePattern="file upload" -> exit 0
+- npm test -- --testNamePattern="file validation" -> exit 0
+- npm test -- --testNamePattern="CRM sync" -> exit 0
+```
+
+**Step 2: Other Verification (After Functionality)**
+
+```bash
+# Security check
+npm run lint:security
+# Expected: exit 0
+
+# Code quality check
+npm run lint
+# Expected: exit 0
+```
+
+**Result:** Completion claim backed by fresh verification evidence showing functionality works.
+
 ## References
 
 - Skill contract: `docs/reference/04-SKILLS.md`
 - Related skills: `test-driven-development`, `verification-before-completion`
+
+---
+
+## Troubleshooting
+
+**Common Issues:**
+
+1. **Verification evidence missing or stale**
+   - **Symptom**: Evidence from previous runs, not fresh
+   - **Cause**: Didn't run verification commands after latest change
+   - **Fix**: Run verification commands again, capture fresh evidence
+   - **Prevention**: Always run verification after each change
+
+2. **Functionality not verified first**
+   - **Symptom**: Other concerns verified but functionality broken
+   - **Cause**: Skipped Step 1 (Functionality Verification)
+   - **Fix**: Verify functionality first, then other concerns
+   - **Prevention**: Always verify functionality before other checks
+
+3. **Evidence doesn't map to acceptance criteria**
+   - **Symptom**: Evidence present but doesn't prove functionality works
+   - **Cause**: Evidence doesn't match what needs verification
+   - **Fix**: Map evidence to each acceptance criterion explicitly
+   - **Prevention**: Always map evidence to criteria
+
+**If issues persist:**
+
+- Verify functionality was tested first
+- Check that fresh evidence was collected
+- Ensure evidence maps to acceptance criteria
+- Review verification summary template
 
 ---
 

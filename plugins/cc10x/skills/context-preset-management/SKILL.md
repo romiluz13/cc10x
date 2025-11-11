@@ -1,6 +1,6 @@
 ---
 name: context-preset-management
-description: Use when orchestrator needs to detect task type and load appropriate context presets automatically. Detects task type from user request and file patterns, selects appropriate preset (frontend/backend/app), loads rules, and stores preset preference in memory. Works autonomously through orchestrator Phase 0 - no commands required.
+description: Provides automatic context preset detection and loading. Use when orchestrator needs to detect task type and load appropriate context presets automatically. Detects task type from user request and file patterns, selects appropriate preset (frontend/backend/app), loads rules, and stores preset preference in memory. Works autonomously through orchestrator Phase 0 - no commands required.
 allowed-tools: Read, Grep, Glob, Bash
 ---
 
@@ -17,6 +17,19 @@ Automatically detect task type and load appropriate context presets for cc10x or
 ## Core Principle
 
 **Automatic Detection**: The orchestrator analyzes the user request and file patterns to determine task type, then automatically loads the appropriate context preset. No user commands required.
+
+## Quick Start
+
+Orchestrator automatically detects task type and loads appropriate context preset.
+
+**Example:**
+
+1. **User says**: "Build a React component for file upload"
+2. **Orchestrator detects**: Frontend indicators ("React", "component") → Frontend task
+3. **Load preset**: Automatically loads frontend context preset
+4. **Store preference**: Saves preset preference in memory for future use
+
+**Result:** Appropriate context preset loaded automatically without user commands.
 
 ## Detection Logic
 
@@ -81,6 +94,35 @@ Task type detected?
 **Output**: Selected preset name, loaded rules list, context summary
 
 **Memory Integration**: Stores selected preset in `.claude/memory/preset_preferences.json`
+
+## Troubleshooting
+
+**Common Issues:**
+
+1. **Wrong preset detected**
+   - **Symptom**: Frontend preset loaded for backend task or vice versa
+   - **Cause**: Detection logic didn't match user request or file patterns
+   - **Fix**: Review detection logic, check user request and file patterns
+   - **Prevention**: Verify detection logic matches task type
+
+2. **Preset not loaded**
+   - **Symptom**: No preset loaded, rules missing
+   - **Cause**: Orchestrator didn't invoke skill or detection failed
+   - **Fix**: Verify orchestrator invoked skill, check detection logic
+   - **Prevention**: Ensure orchestrator invokes skill in Phase 0
+
+3. **Preset preference not stored**
+   - **Symptom**: Preset selected but not saved to memory
+   - **Cause**: Memory storage failed or wrong location
+   - **Fix**: Store to `.claude/memory/preset_preferences.json`
+   - **Prevention**: Always store preset preference after selection
+
+**If issues persist:**
+
+- Verify orchestrator invoked skill in Phase 0
+- Check that detection logic matches task type
+- Ensure preset preference stored to memory
+- Review detection logic section
 
 ## Memory Integration
 

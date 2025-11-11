@@ -1,6 +1,6 @@
 ---
 name: cc10x-orchestrator
-description: AUTO-LOAD on: plan/design/architect/roadmap/strategy, build/implement/create/write/code/develop/make, review/audit/analyze/assess/evaluate/inspect/examine, debug/fix/error/bug/investigate/failure/issue/problem/troubleshoot/diagnose, validate/verify/check/confirm. CRITICAL: MANDATORY entry for ALL code tasks. Load BEFORE writing code. Coordinates subagents - do NOT write directly. Phase 0: Functionality Analysis first. Enforces TDD (RED→GREEN→REFACTOR), Actions Taken tracking, memory/web fetch. DO NOT bypass validation.
+description: Use when user request contains workflow keywords (plan/design/architect/roadmap/strategy, build/implement/create/write/code/develop/make, review/audit/analyze/assess/evaluate/inspect/examine, debug/fix/error/bug/investigate/failure/issue/problem/troubleshoot/diagnose, validate/verify/check/confirm). AUTO-LOAD on these keywords. CRITICAL: MANDATORY entry for ALL code tasks. Coordinates subagents - do NOT write directly. Phase 0: Functionality Analysis first. Enforces TDD (RED→GREEN→REFACTOR), Actions Taken tracking, memory/web fetch. DO NOT bypass validation.
 allowed-tools: Read, Grep, Glob, Bash, Task
 ---
 
@@ -41,6 +41,21 @@ allowed-tools: Read, Grep, Glob, Bash, Task
 3. Run all bash commands → Capture output
 4. Invoke all subagents → Use Task tool
 5. Validate at each gate → Check checklist items
+
+## Quick Start
+
+The orchestrator automatically loads when you detect workflow keywords, then coordinates the appropriate workflow.
+
+**Example:**
+
+1. **User says**: "Build a file upload feature"
+2. **Detect keyword**: "build" → Load orchestrator skill
+3. **Orchestrator activates**: BUILD workflow
+4. **Phase 0**: Complete functionality analysis (user flow, system flow)
+5. **Phase 2**: Load required skills (code-generation, test-driven-development)
+6. **Phase 3**: Invoke subagents (component-builder → code-reviewer → integration-verifier)
+
+**Result:** Coordinated workflow execution with functionality-first approach.
 
 ## 🚨 AUTO-LOAD TRIGGERS - READ THIS FIRST 🚨
 
@@ -245,6 +260,46 @@ For detailed information, see these progressive disclosure files:
 - **REFERENCE.md**: Tool usage guides, search guidance, and reference materials
 
 **CRITICAL**: All detailed instructions in these files are MANDATORY. They are not optional reference material - they contain executable instructions that must be followed.
+
+- Orchestration Coordination Matrix: `audit/orchestration-coordination-matrix.md` (complete skill/subagent activation matrix)
+- Anthropic Context Editing: https://docs.claude.com/en/docs/build-with-claude/context-editing
+- Anthropic Memory Tool: https://docs.claude.com/en/docs/agents-and-tools/tool-use/memory-tool
+
+## Troubleshooting
+
+**Common Issues:**
+
+1. **Orchestrator not loaded when workflow keywords detected**
+   - **Symptom**: Workflow keywords present but orchestrator not activated
+   - **Cause**: Skill discovery didn't detect keywords or orchestrator not loaded
+   - **Fix**: Manually load orchestrator skill, verify keyword detection
+   - **Prevention**: Always check orchestrator first in skill-discovery
+
+2. **Phase 0 (Functionality Analysis) skipped**
+   - **Symptom**: Workflow proceeds without functionality analysis
+   - **Cause**: Bypassed Phase 0 enforcement
+   - **Fix**: Complete Phase 0 first, document user/admin/system flows
+   - **Prevention**: Never skip Phase 0 - it's mandatory
+
+3. **Subagents not invoked (code written directly)**
+   - **Symptom**: Code written directly instead of using subagents
+   - **Cause**: Bypassed orchestrator subagent dispatch
+   - **Fix**: Use Task tool to invoke subagents, don't write code directly
+   - **Prevention**: Always invoke subagents through orchestrator
+
+4. **Actions Taken not updated**
+   - **Symptom**: Actions Taken section missing or incomplete
+   - **Cause**: Didn't update Actions Taken after each phase
+   - **Fix**: Update Actions Taken immediately after each activation
+   - **Prevention**: Always update Actions Taken in real-time
+
+**If issues persist:**
+
+- Verify orchestrator was loaded first
+- Check that Phase 0 was completed
+- Ensure subagents were invoked, not bypassed
+- Review ENFORCEMENT.md for validation gates
+- Check VALIDATION.md for compliance requirements
 
 ## References
 

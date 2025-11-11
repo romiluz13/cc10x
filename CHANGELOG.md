@@ -1,5 +1,29 @@
 # Changelog
 
+## [4.3.8] - 2025-01-29
+
+### Added
+
+- **Quick Start Sections**: Added Quick Start sections to all 39 skills with concise usage examples and step-by-step guidance
+- **Troubleshooting Sections**: Added Troubleshooting sections to 38 skills covering common issues, symptoms, causes, fixes, and prevention strategies
+- **Examples Sections**: Added inline Examples sections to 6 high-value skills (`code-generation`, `requirements-analysis`, `test-driven-development`, `verification-before-completion`, `security-patterns`, `context-preset-management`) with complete functionality-focused examples
+- **Requirements/Dependencies Sections**: Added Requirements/Dependencies sections to 14 workflow, tool-using, and pattern skills clarifying prerequisites, tool access, and related skills
+- **Skill Improvement Template**: Created `.skill-improvement-template.md` to standardize future skill enhancements
+
+### Changed
+
+- **Description Optimization**: Optimized all 39 skill descriptions to meet skill-writer guide standards:
+  - All descriptions ≤1024 characters
+  - All include "what it does" (provides/generates/identifies/etc.)
+  - All include "when to use" (use when/use proactively/auto-load)
+  - All include trigger words (keywords/intent scenarios)
+- **Standardized Structure**: All skills now follow consistent section ordering: Overview → Quick Start → When to Use → Instructions → Examples → Troubleshooting → References
+- **Enhanced Discoverability**: Descriptions optimized with explicit trigger words for improved Claude Search discovery
+
+### Fixed
+
+- **Missing Description Components**: Fixed 6 skills missing description components (`cc10x-orchestrator`, `context-preset-management`, `parallel-agent-dispatch`, `project-context-understanding`, `skill-discovery`, `verification-before-completion`)
+
 ## [4.3.7] - 2025-01-29
 
 ### Added

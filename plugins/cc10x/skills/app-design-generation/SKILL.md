@@ -9,6 +9,19 @@ description: Use when planning features and user request contains "app design", 
 
 Generate comprehensive Application Design Document based on deep codebase analysis and user input. The document provides a high-level overview of the application's architecture, core features, user experience, and business logic while remaining technology-agnostic and focused on the "what" rather than the "how".
 
+## Quick Start
+
+Generate app design document by analyzing codebase and user input.
+
+**Example:**
+
+1. **Detect trigger**: User says "create design document" or "app design"
+2. **Analyze codebase**: Deep dive into structure, features, user flows
+3. **Interactive Q&A**: Ask about architecture, features, business logic
+4. **Generate doc**: Create comprehensive design document with architecture, features, UX
+
+**Result:** Complete application design document for planning and onboarding.
+
 ## When to Use
 
 - User request contains "app design", "design doc", "create design document"
@@ -156,6 +169,37 @@ The generated document must follow this high-level structure:
 - **Database Schemas:** Keep data models conceptual
 - **API Specifications:** Focus on capabilities, not endpoints
 - **Performance Metrics:** Describe goals, not technical benchmarks
+
+- Suggest next steps (tech stack doc, PRD, etc.)
+
+## Troubleshooting
+
+**Common Issues:**
+
+1. **Design document not generated**
+   - **Symptom**: User requested but no document created
+   - **Cause**: Trigger keywords not detected or skill not invoked
+   - **Fix**: Check trigger keywords ("app design", "design doc"), invoke skill manually if needed
+   - **Prevention**: Verify trigger keywords in user request
+
+2. **Incomplete codebase analysis**
+   - **Symptom**: Document missing key features or architecture details
+   - **Cause**: Didn't complete deep codebase analysis
+   - **Fix**: Complete all analysis steps: structure, features, flows, models, integrations
+   - **Prevention**: Always complete deep codebase analysis
+
+3. **Document not saved in correct location**
+   - **Symptom**: Document created but not in `.cursor/rules/`
+   - **Cause**: Wrong save location
+   - **Fix**: Save to `.cursor/rules/` as `app-design-document.mdc`
+   - **Prevention**: Always use correct save location
+
+**If issues persist:**
+
+- Verify trigger keywords were detected
+- Check that deep codebase analysis was completed
+- Ensure document saved to correct location
+- Review process steps in skill
 
 ## Output
 

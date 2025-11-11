@@ -25,6 +25,19 @@ You identify common failure patterns (baseline behavior), write the skill (docum
 
 **REQUIRED BACKGROUND:** You MUST understand test-driven-development before using this skill. That skill defines the fundamental RED-GREEN-REFACTOR cycle. This skill adapts TDD to documentation.
 
+## Quick Start
+
+Create a skill by identifying failure patterns first, then writing the skill to address them.
+
+**Example:**
+
+1. **Identify failure pattern**: Agents skip verification before claiming completion
+2. **Write skill** (RED): Document the verification-before-completion skill
+3. **Apply skill** (GREEN): Use it in a workflow, verify it prevents skipping verification
+4. **Refactor** (REFACTOR): Add edge cases and close loopholes found during application
+
+**Result:** A skill that prevents the identified failure pattern through documented process.
+
 ## What is a Skill?
 
 A **skill** is a reference guide for proven techniques, patterns, or tools. Skills help future Claude instances find and apply effective approaches.

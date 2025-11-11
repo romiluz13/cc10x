@@ -22,6 +22,19 @@ allowed-tools: Read, Grep, Glob, Bash, WebFetch
 
 ---
 
+## Quick Start
+
+Fetch external docs by first understanding functionality, then fetching docs related to that functionality.
+
+**Example:**
+
+1. **Understand functionality**: File upload feature needs S3 integration (Integration Flow)
+2. **Identify need**: Need AWS S3 SDK documentation
+3. **Fetch docs**: Load S3 SDK docs using WebFetch tool
+4. **Use docs**: Reference docs when implementing S3 integration
+
+**Result:** External documentation loaded for functionality implementation.
+
 ## Purpose
 
 Integrate Anthropic's Web Fetch Tool to load external documentation, API specifications, and reference materials into workflows with functionality-first approach. This enables workflows to access current external resources when needed for functionality.
@@ -241,6 +254,35 @@ Use multiple targeted functionality questions instead of expecting full content:
 4. **Focus**: Fetch docs related to functionality, not generic docs
 
 ---
+
+## Troubleshooting
+
+**Common Issues:**
+
+1. **Web fetch without understanding functionality**
+   - **Symptom**: Fetching generic docs not related to functionality
+   - **Cause**: Skipped functionality analysis
+   - **Fix**: Complete functionality analysis first, then fetch related docs
+   - **Prevention**: Always understand functionality before fetching docs
+
+2. **Docs fetched but not used**
+   - **Symptom**: Docs loaded but not referenced in implementation
+   - **Cause**: Didn't identify how docs support functionality
+   - **Fix**: Map docs to functionality needs, use docs in implementation
+   - **Prevention**: Always identify how docs support functionality before fetching
+
+3. **Cache not checked first**
+   - **Symptom**: Fetching docs that were already cached
+   - **Cause**: Didn't check cache before fetching
+   - **Fix**: Check cache first, use cache if valid, fetch if needed
+   - **Prevention**: Always check cache before fetching
+
+**If issues persist:**
+
+- Verify functionality analysis was completed first
+- Check that docs are related to functionality needs
+- Ensure cache is checked before fetching
+- Review integration points section for usage patterns
 
 ## References
 

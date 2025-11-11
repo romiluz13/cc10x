@@ -13,6 +13,20 @@ Help turn ideas into fully formed designs and specs through natural collaborativ
 
 Start by understanding the current project context, then ask multiple related questions together (up to 4 at once) to efficiently refine the idea. Once you understand what you're building, present the design in small sections (200-300 words), checking after each section whether it looks right so far.
 
+## Quick Start
+
+Refine ideas into designs through collaborative questioning and incremental validation.
+
+**Example:**
+
+1. **Create plan file**: `.claude/docs/plans/file-upload-design.md` (BEFORE asking questions)
+2. **Ask questions**: "What file types? What size limits? Where stored?"
+3. **Update plan**: Add answers to plan file immediately
+4. **Present design**: Show architecture section (200-300 words), validate
+5. **Refine**: Adjust based on feedback, update plan file
+
+**Result:** Fully-formed design document ready for implementation planning.
+
 ## Integration with PLAN Workflow
 
 **PLAN Workflow Phase 1**: This skill is used in Phase 1 for requirements refinement:
@@ -128,3 +142,32 @@ The plan file is your **working document**, not a final deliverable to write at 
 - Complete design document feeds into Phase 2 (feature-planning)
 
 **Result**: Refined requirements and complete design document ready for implementation planning.
+
+## Troubleshooting
+
+**Common Issues:**
+
+1. **Plan file not created before asking questions**
+   - **Symptom**: Questions asked but plan file doesn't exist
+   - **Cause**: Skipped CRITICAL FIRST STEP
+   - **Fix**: Create plan file immediately, then ask questions
+   - **Prevention**: Always create plan file BEFORE asking questions
+
+2. **Plan file not updated incrementally**
+   - **Symptom**: Plan file written at end, missing intermediate updates
+   - **Cause**: Didn't update plan file after each answer
+   - **Fix**: Update plan file after EACH answer immediately
+   - **Prevention**: Always update plan file incrementally
+
+3. **Questions not using AskUserQuestion tool**
+   - **Symptom**: Questions output as plain text instead of tool
+   - **Cause**: Didn't use AskUserQuestion tool
+   - **Fix**: Use AskUserQuestion tool for ALL questions
+   - **Prevention**: Always use AskUserQuestion tool, never plain text
+
+**If issues persist:**
+
+- Verify plan file was created before questions
+- Check that plan file is updated after each answer
+- Ensure AskUserQuestion tool is used for questions
+- Review incremental writing pattern section

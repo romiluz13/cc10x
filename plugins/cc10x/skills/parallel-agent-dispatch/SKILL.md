@@ -1,6 +1,6 @@
 ---
 name: parallel-agent-dispatch
-description: Use when facing 3+ independent failures that can be investigated without shared state or dependencies - orchestrator dispatches multiple bug-investigator subagents to investigate and fix independent problems concurrently
+description: Provides parallel subagent dispatch for independent bugs. Use when facing 3+ independent failures that can be investigated without shared state or dependencies - orchestrator dispatches multiple bug-investigator subagents to investigate and fix independent problems concurrently
 ---
 
 # Parallel Agent Dispatch - Orchestrator-Driven
@@ -12,6 +12,19 @@ When you have multiple unrelated failures (different test files, different subsy
 **Core principle:** Orchestrator dispatches one bug-investigator subagent per independent problem domain. Let them work concurrently.
 
 **Integration with cc10x**: This skill is used by the DEBUG workflow orchestrator to coordinate parallel subagent dispatch for independent bugs.
+
+## Quick Start
+
+Dispatch multiple subagents in parallel when facing independent failures.
+
+**Example:**
+
+1. **Detect 3+ failures**: Test files A, B, C failing with different errors
+2. **Check independence**: Different files, no shared state → Independent
+3. **Dispatch subagents**: bug-investigator-A, bug-investigator-B, bug-investigator-C (parallel)
+4. **Collect results**: All subagents complete independently, fixes applied
+
+**Result:** Multiple independent bugs fixed concurrently, faster resolution.
 
 ## When to Use
 
@@ -172,6 +185,35 @@ Return: Summary of what you found and what you fixed.
 3. **Parallel Dispatch**: If independent → Orchestrator dispatches bug-investigator subagents in parallel
 4. **Sequential Fallback**: If dependent → Orchestrator executes sequentially (existing behavior)
 5. **Coordination**: Orchestrator tracks all subagents, collects results, verifies no conflicts
+
+## Troubleshooting
+
+**Common Issues:**
+
+1. **Bugs not independent but dispatched in parallel**
+   - **Symptom**: Subagents interfere with each other or conflicts occur
+   - **Cause**: Independence check failed or bugs share files/resources
+   - **Fix**: Re-check independence, dispatch sequentially if dependent
+   - **Prevention**: Always verify independence before parallel dispatch
+
+2. **Too few bugs for parallel dispatch**
+   - **Symptom**: Only 1-2 bugs but parallel dispatch attempted
+   - **Cause**: Didn't check bug count (needs 3+)
+   - **Fix**: Use sequential dispatch for <3 bugs
+   - **Prevention**: Always check bug count before parallel dispatch
+
+3. **Subagents not coordinated**
+   - **Symptom**: Results not collected or conflicts not detected
+   - **Cause**: Orchestrator didn't coordinate properly
+   - **Fix**: Ensure orchestrator tracks all subagents, collects results
+   - **Prevention**: Always coordinate subagents through orchestrator
+
+**If issues persist:**
+
+- Verify bugs are independent (different files, no shared state)
+- Check that bug count is 3+ for parallel dispatch
+- Ensure orchestrator coordinates all subagents
+- Review independence detection section
 
 **Workflow**:
 

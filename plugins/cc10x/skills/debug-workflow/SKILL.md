@@ -23,6 +23,46 @@ allowed-tools: Read, Grep, Glob, Task, Bash
 
 Systematic debugging with evidence-first verification, functionality-first approach.
 
+## Quick Start
+
+Debug bugs by first understanding expected functionality, then investigating systematically.
+
+**Example:**
+
+1. **Understand expected functionality**: File upload should work (User Flow: select → upload → confirm)
+2. **Reproduce bug**: Upload fails with error message
+3. **Investigate**: bug-investigator → code-reviewer → integration-verifier (sequential)
+4. **Find root cause**: Missing file validation
+5. **Fix & verify**: Add validation, test passes, functionality works
+
+**Result:** Bug fixed with systematic investigation, functionality restored.
+
+## Requirements
+
+**Dependencies:**
+
+- `cc10x-orchestrator` - Must be activated through orchestrator (do not use directly)
+- `systematic-debugging` - Required for systematic debugging approach
+- `root-cause-analysis` - Required for root cause identification
+- Investigation skills - Loaded based on bug type
+
+**Prerequisites:**
+
+- Phase 0 (Functionality Analysis) completed via orchestrator
+- Expected functionality understood (what should work)
+- Bug reproducible and confirmed
+
+**Tool Access:**
+
+- Required tools: Read, Grep, Glob, Task, Bash
+- Task tool: Used to invoke subagents (bug-investigator, code-reviewer, integration-verifier)
+
+**Subagents:**
+
+- bug-investigator - Investigates bugs systematically
+- code-reviewer - Reviews code for issues
+- integration-verifier - Verifies integration works
+
 ## Process
 
 For complete instructions, see `plugins/cc10x/skills/cc10x-orchestrator/workflows/debug.md`.
@@ -130,6 +170,35 @@ Commands:
 ## Recommendations / Next Steps
 
 [Prioritized: Monitoring setup, additional tests, prevention measures]
+
+## Troubleshooting
+
+**Common Issues:**
+
+1. **Expected functionality not understood**
+   - **Symptom**: Debugging without knowing what should work
+   - **Cause**: Skipped functionality analysis
+   - **Fix**: Complete functionality analysis first, understand expected flows
+   - **Prevention**: Always understand expected functionality before debugging
+
+2. **Bug not reproducible**
+   - **Symptom**: Can't reproduce the bug
+   - **Cause**: Didn't gather enough information
+   - **Fix**: Gather more information, check logs, ask user for details
+   - **Prevention**: Always confirm bug is reproducible before investigating
+
+3. **Root cause not found**
+   - **Symptom**: Fixes symptoms but bug returns
+   - **Cause**: Didn't complete root cause investigation
+   - **Fix**: Use systematic-debugging skill, complete investigation
+   - **Prevention**: Always find root cause before fixing
+
+**If issues persist:**
+
+- Verify expected functionality was understood first
+- Check that bug is reproducible
+- Ensure root cause investigation was completed
+- Review workflow instructions in `workflows/debug.md`
 
 ## Open Questions / Assumptions
 

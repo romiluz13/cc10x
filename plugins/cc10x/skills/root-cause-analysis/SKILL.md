@@ -12,6 +12,20 @@ allowed-tools: Read, Grep, Glob, Bash
 
 **Core Principle**: Understand what functionality should work (using universal questions and context-dependent flows), then identify root causes specific to that functionality. Root causes exist in the context of functionality, not in isolation.
 
+## Quick Start
+
+Find root causes by first understanding expected functionality, then mapping observed to expected behavior.
+
+**Example:**
+
+1. **Understand expected functionality**: File upload should work (User Flow: select → upload → confirm)
+2. **Map observed**: Upload fails at step 2 (upload) with "file too large" error
+3. **Choose strategy**: Flow-based analysis (where does flow break?)
+4. **Find root cause**: Missing file size validation before upload
+5. **Fix**: Add validation at flow step 1 (file selection)
+
+**Result:** Root cause identified and fixed at the source.
+
 ## Quick Decision Tree
 
 ```
@@ -201,6 +215,37 @@ This skill is loaded by orchestrator workflows when root cause analysis is neede
 - Root cause analysis execution
 
 **CRITICAL**: Maintain functionality-first approach. Root cause analysis must follow functionality analysis.
+
+---
+
+## Troubleshooting
+
+**Common Issues:**
+
+1. **Root cause analysis without understanding expected functionality**
+   - **Symptom**: Root causes identified but don't relate to functionality
+   - **Cause**: Skipped functionality analysis
+   - **Fix**: Complete functionality analysis first, understand expected flows
+   - **Prevention**: Always understand expected functionality before analysis
+
+2. **Observed behavior not mapped to expected**
+   - **Symptom**: Can't identify where flow breaks
+   - **Cause**: Didn't map observed to expected behavior
+   - **Fix**: Map observed behavior to expected flows, identify break point
+   - **Prevention**: Always map observed to expected before analysis
+
+3. **Wrong analysis strategy chosen**
+   - **Symptom**: Analysis doesn't find root cause
+   - **Cause**: Chose wrong strategy for problem type
+   - **Fix**: Review decision tree, choose appropriate strategy
+   - **Prevention**: Always use decision tree to choose strategy
+
+**If issues persist:**
+
+- Verify expected functionality was understood first
+- Check that observed was mapped to expected
+- Ensure correct analysis strategy was chosen
+- Review reference files for detailed guidance
 
 ---
 

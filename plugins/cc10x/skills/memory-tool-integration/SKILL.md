@@ -21,6 +21,19 @@ allowed-tools: Read, Grep, Glob, Bash
 
 ---
 
+## Quick Start
+
+Store memory by first understanding functionality, then storing functionality-related patterns.
+
+**Example:**
+
+1. **Understand functionality**: File upload feature (User Flow: select → upload → confirm)
+2. **Identify pattern**: Project uses React hooks for file handling
+3. **Store memory**: Save pattern to `.claude/memory/` for future reference
+4. **Use pattern**: Load pattern when building similar features
+
+**Result:** Functionality patterns remembered for future use.
+
 ## Purpose
 
 Provide memory functionality for cc10x workflows using filesystem-based memory with functionality-first approach. **NOTE**: Converted from hooks to skill - now model-invoked (more reliable than hooks).
@@ -330,6 +343,35 @@ For detailed guidance on memory storage strategies, cleanup rules, query pattern
 - **Core Rule**: Functionality first, then memory. Store functionality patterns, not generic patterns.
 
 ---
+
+## Troubleshooting
+
+**Common Issues:**
+
+1. **Memory stored without understanding functionality**
+   - **Symptom**: Generic patterns stored, not functionality-specific
+   - **Cause**: Skipped functionality analysis
+   - **Fix**: Complete functionality analysis first, then store functionality patterns
+   - **Prevention**: Always understand functionality before storing memory
+
+2. **Memory not stored in correct location**
+   - **Symptom**: Memory not accessible or not found
+   - **Cause**: Wrong storage location or format
+   - **Fix**: Store to `.claude/memory/` directory or use MCP memory server
+   - **Prevention**: Always use correct storage location
+
+3. **Memory patterns not validated**
+   - **Symptom**: Invalid or inaccurate patterns stored
+   - **Cause**: Didn't validate patterns before storing
+   - **Fix**: Validate patterns first, then store only validated patterns
+   - **Prevention**: Always validate patterns before storing
+
+**If issues persist:**
+
+- Verify functionality analysis was completed first
+- Check that memory is stored in correct location
+- Ensure patterns are validated before storing
+- Review memory usage patterns in skill
 
 ## References
 

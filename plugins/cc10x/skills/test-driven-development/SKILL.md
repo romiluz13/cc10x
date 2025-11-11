@@ -14,6 +14,126 @@ allowed-tools: Read, Grep, Glob, Bash
 
 ---
 
+## Quick Start
+
+Write tests by first understanding functionality, then writing tests that verify it works.
+
+**Example:**
+
+1. **Understand functionality**: User uploads file (User Flow: select → upload → confirm)
+2. **Write failing test** (RED): `test('user can upload valid file', () => { ... })` → test fails
+3. **Write minimal code** (GREEN): Implement upload functionality → test passes
+4. **Refactor** (REFACTOR): Clean up code while keeping tests green
+
+**Result:** Tests that verify functionality works, implemented through TDD cycle.
+
+## Requirements
+
+**Dependencies:**
+
+- Functionality analysis template - Reference: `plugins/cc10x/skills/cc10x-orchestrator/templates/functionality-analysis.md`
+- Project test patterns understanding - Must analyze existing test patterns before writing tests
+
+**Prerequisites:**
+
+- Step 1: Context-Dependent Functionality Analysis completed (MANDATORY FIRST STEP)
+- Step 2: Project test patterns analyzed (test framework, test structure, naming conventions)
+
+**Tool Access:**
+
+- Required tools: Read, Grep, Glob, Bash
+- Read tool: To analyze project test patterns
+- Grep tool: To find similar test patterns
+- Bash tool: To run tests and verify TDD cycle (RED → GREEN → REFACTOR)
+
+**Related Skills:**
+
+- `code-generation` - Generate code after tests written
+- `verification-before-completion` - Verify tests pass before completion
+
+**TDD Cycle Enforcement:**
+
+- RED: Write failing test, verify it fails (Bash command required)
+- GREEN: Write minimal code, verify test passes (Bash command required)
+- REFACTOR: Improve code while keeping tests green (Bash command required)
+
+---
+
+## Examples
+
+### Example: File Upload Feature (UI Feature)
+
+**Context:** Building file upload component with TDD
+
+**Functionality Flow:**
+
+- User Flow: Select file → Upload → See progress → Get confirmation
+- Error Flow: Invalid file type → Show error message
+
+**RED - Write Failing Tests:**
+
+```typescript
+// src/components/UploadForm.test.tsx
+describe('UploadForm', () => {
+  it('allows user to upload valid file and shows success message', async () => {
+    // Test implementation
+    const mockUploadFile = uploadFile as jest.MockedFunction<typeof uploadFile>;
+    mockUploadFile.mockResolvedValue('file-123');
+
+    render(<UploadForm />);
+    const file = new File(['test content'], 'test.pdf', { type: 'application/pdf' });
+    const input = screen.getByLabelText(/drag and drop/i).closest('div')?.querySelector('input');
+
+    if (input) {
+      await userEvent.upload(input, file);
+    }
+
+    await waitFor(() => {
+      expect(mockUploadFile).toHaveBeenCalledWith(file, expect.any(Function));
+    });
+
+    expect(await screen.findByText(/file uploaded successfully/i)).toBeInTheDocument();
+  });
+
+  it('shows upload progress during upload', async () => {
+    // Test progress functionality
+  });
+
+  it('shows error message for invalid file type', async () => {
+    // Test error handling
+  });
+});
+```
+
+**GREEN - Minimal Implementation:**
+
+```typescript
+// src/components/UploadForm.tsx
+export function UploadForm({ onUploadSuccess }: UploadFormProps) {
+  const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+
+  // Minimal implementation to make tests pass
+  // ...
+}
+```
+
+**REFACTOR - Clean Up:**
+
+```bash
+# Run tests to verify they still pass
+npm test UploadForm.test.tsx
+# Expected: All tests pass
+
+# Refactor: Extract constants, helper functions
+# After each refactor, run tests again
+```
+
+**Result:** Tests verify functionality flows, aligned with project test patterns.
+
+**See [EXAMPLES.md](EXAMPLES.md) for complete example with all test cases.**
+
 ## Step 1: Context-Dependent Functionality Analysis (MANDATORY FIRST STEP)
 
 ### Reference Template
@@ -320,6 +440,37 @@ Include this block whenever reporting completion.
 
 - Official skills guidance: `docs/reference/04-SKILLS.md`
 - Related skills: `code-generation`, `verification-before-completion`
+
+---
+
+## Troubleshooting
+
+**Common Issues:**
+
+1. **Tests don't verify functionality**
+   - **Symptom**: Tests pass but functionality doesn't work
+   - **Cause**: Tests written without understanding functionality first
+   - **Fix**: Complete Step 1 (Functionality Analysis), rewrite tests to verify flows
+   - **Prevention**: Always understand functionality before writing tests
+
+2. **Tests don't follow project patterns**
+   - **Symptom**: Tests use different patterns than existing tests
+   - **Cause**: Skipped Step 2 (Understand Project Test Patterns)
+   - **Fix**: Analyze existing tests, rewrite using project patterns
+   - **Prevention**: Always read existing tests before writing new ones
+
+3. **TDD cycle not followed (RED → GREEN → REFACTOR)**
+   - **Symptom**: Code written before tests, or tests written after code
+   - **Cause**: Skipped RED step or wrote code before test fails
+   - **Fix**: Delete code, write failing test first, then implement
+   - **Prevention**: Always write failing test first, verify it fails
+
+**If issues persist:**
+
+- Verify functionality analysis was completed first
+- Check that project test patterns were analyzed
+- Review EXAMPLES.md for complete TDD examples
+- Ensure tests verify functionality flows
 
 ---
 

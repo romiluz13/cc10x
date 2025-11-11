@@ -20,6 +20,19 @@ NO DEPLOYMENT WITHOUT VERIFICATION FIRST
 
 **Core Principle**: Understand what functionality needs deployment (using universal questions and context-dependent flows), then plan deployment strategy to support that functionality. Deployment exists to enable functionality, not for its own sake.
 
+## Quick Start
+
+Plan deployment by first understanding functionality, then creating deployment strategy.
+
+**Example:**
+
+1. **Understand functionality**: File upload feature (User Flow: select → upload → confirm)
+2. **Understand deployment patterns**: Project uses Docker, staged deployment
+3. **Plan strategy**: Deploy to staging → verify functionality → deploy to production
+4. **Rollback plan**: If functionality broken, rollback to previous version
+
+**Result:** Deployment strategy that enables functionality with rollback safety.
+
 ## Quick Decision Tree
 
 ```
@@ -174,6 +187,35 @@ This skill is loaded by orchestrator workflows when deployment planning is detec
 - Deployment planning execution
 
 **CRITICAL**: Maintain functionality-first approach. Deployment planning must follow functionality analysis.
+
+## Troubleshooting
+
+**Common Issues:**
+
+1. **Deployment planning without understanding functionality**
+   - **Symptom**: Deployment strategy doesn't support functionality flows
+   - **Cause**: Skipped functionality analysis
+   - **Fix**: Complete functionality analysis first, then plan deployment
+   - **Prevention**: Always understand functionality before deployment planning
+
+2. **Generic deployment patterns instead of functionality-focused**
+   - **Symptom**: Deployment follows generic patterns but doesn't support functionality
+   - **Cause**: Didn't map functionality flows to deployment needs
+   - **Fix**: Map flows to deployment strategy, design to support flows
+   - **Prevention**: Always map functionality to deployment needs first
+
+3. **Deployment strategy not aligned with project patterns**
+   - **Symptom**: Deployment doesn't match project's deployment patterns
+   - **Cause**: Didn't understand project deployment patterns
+   - **Fix**: Understand project patterns, align deployment strategy
+   - **Prevention**: Always understand project patterns first
+
+**If issues persist:**
+
+- Verify functionality analysis was completed first
+- Check that functionality flows were mapped to deployment needs
+- Ensure deployment strategy aligns with project patterns
+- Review PATTERNS.md and REFERENCE.md for detailed guidance
 
 ## Priority Classification
 

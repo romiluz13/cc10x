@@ -1,6 +1,6 @@
 ---
 name: skill-discovery
-description: Use when starting any conversation - establishes mandatory workflows for finding and using skills in orchestrator-driven system. Ensures skills are discovered before workflow selection and prevents rationalization.
+description: Provides mandatory skill discovery workflows for orchestrator-driven system. Use when starting any conversation - establishes mandatory workflows for finding and using skills in orchestrator-driven system. Ensures skills are discovered before workflow selection and prevents rationalization.
 ---
 
 <EXTREMELY-IMPORTANT>
@@ -31,6 +31,20 @@ Before responding to ANY user message, you MUST complete this checklist:
 **Responding WITHOUT completing this checklist = automatic failure.**
 
 **CRITICAL**: If orchestrator not loaded and workflow keywords detected, STOP and load orchestrator IMMEDIATELY before proceeding.
+
+## Quick Start
+
+Always check for orchestrator first, then discover additional skills.
+
+**Example:**
+
+1. **User says**: "Review this code for security issues"
+2. **Check orchestrator**: Detect "review" keyword → Load orchestrator skill
+3. **Orchestrator activates**: REVIEW workflow loads security-patterns skill
+4. **Check for additional skills**: Verify no other skills needed
+5. **Use skills**: Follow orchestrator workflow and security-patterns skill
+
+**Result:** Correct skills loaded and used through orchestrator coordination.
 
 ## Integration with cc10x Orchestrator
 
@@ -153,6 +167,35 @@ Your human partner's specific instructions describe WHAT to do, not HOW.
 **Skill has checklist?** TodoWrite for every item.
 
 **Finding a relevant skill = mandatory to read and use it. Not optional.**
+
+## Troubleshooting
+
+**Common Issues:**
+
+1. **Orchestrator not checked first**
+   - **Symptom**: Other skills loaded but orchestrator missed
+   - **Cause**: Didn't follow mandatory first response protocol
+   - **Fix**: Always check orchestrator FIRST before other skills
+   - **Prevention**: Follow mandatory checklist in order
+
+2. **Skills not discovered**
+   - **Symptom**: Relevant skill exists but not used
+   - **Cause**: Didn't complete skill discovery checklist
+   - **Fix**: Complete checklist, list available skills, check for matches
+   - **Prevention**: Always complete discovery checklist before tasks
+
+3. **Rationalizing skill usage away**
+   - **Symptom**: Skill exists but not used, rationalizations given
+   - **Cause**: Falling into rationalization traps
+   - **Fix**: Review "Common Rationalizations" section, use skill anyway
+   - **Prevention**: Never rationalize away skill usage
+
+**If issues persist:**
+
+- Verify orchestrator was checked first
+- Complete mandatory first response protocol
+- Review common rationalizations section
+- Ensure skill discovery checklist completed
 
 ## Integration with cc10x Workflows
 

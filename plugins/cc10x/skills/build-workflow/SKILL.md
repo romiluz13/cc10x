@@ -23,6 +23,46 @@ allowed-tools: Read, Grep, Glob, Task, Bash
 
 TDD-driven implementation with review and integration verification, functionality-first approach.
 
+## Quick Start
+
+Build features using TDD cycle after understanding functionality.
+
+**Example:**
+
+1. **Understand functionality**: User uploads files (User Flow: select → upload → confirm)
+2. **Phase 0**: Complete functionality analysis
+3. **TDD Cycle**: Write failing test (RED) → Implement code (GREEN) → Refactor
+4. **Invoke subagents**: component-builder → code-reviewer → integration-verifier
+5. **Verify**: All tests pass, functionality works
+
+**Result:** Feature built with TDD, functionality verified, code reviewed.
+
+## Requirements
+
+**Dependencies:**
+
+- `cc10x-orchestrator` - Must be activated through orchestrator (do not use directly)
+- `test-driven-development` - Required for TDD cycle
+- `code-generation` - Required for code implementation
+- `verification-before-completion` - Required for completion verification
+
+**Prerequisites:**
+
+- Phase 0 (Functionality Analysis) completed via orchestrator
+- Complexity assessment completed (score ≤2 to proceed)
+- Project context understood
+
+**Tool Access:**
+
+- Required tools: Read, Grep, Glob, Task, Bash
+- Task tool: Used to invoke subagents (component-builder, code-reviewer, integration-verifier)
+
+**Subagents:**
+
+- component-builder - Builds code components
+- code-reviewer - Reviews code for issues
+- integration-verifier - Verifies integration works
+
 ## Process
 
 For complete instructions, see `plugins/cc10x/skills/cc10x-orchestrator/workflows/build.md`.
@@ -121,6 +161,35 @@ Commands:
 
 [If any decisions need clarification or assumptions made]
 ```
+
+## Troubleshooting
+
+**Common Issues:**
+
+1. **TDD cycle not followed**
+   - **Symptom**: Code written without failing test first
+   - **Cause**: Skipped RED step in TDD cycle
+   - **Fix**: Delete code, write failing test first, verify it fails, then implement
+   - **Prevention**: Always follow RED → GREEN → REFACTOR cycle
+
+2. **Functionality analysis skipped**
+   - **Symptom**: Building without understanding user/admin/system flows
+   - **Cause**: Skipped Phase 0 (Functionality Analysis)
+   - **Fix**: Complete functionality analysis first, then proceed
+   - **Prevention**: Never skip Phase 0
+
+3. **Subagents not invoked**
+   - **Symptom**: Code written directly instead of using subagents
+   - **Cause**: Bypassed orchestrator subagent dispatch
+   - **Fix**: Use Task tool to invoke component-builder, code-reviewer, integration-verifier
+   - **Prevention**: Always invoke subagents through orchestrator
+
+**If issues persist:**
+
+- Verify Phase 0 (Functionality Analysis) was completed
+- Check that TDD cycle was followed (RED → GREEN → REFACTOR)
+- Ensure subagents were invoked, not bypassed
+- Review workflow instructions in `workflows/build.md`
 
 **Validation Checklist**:
 

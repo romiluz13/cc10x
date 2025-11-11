@@ -9,6 +9,19 @@ description: Use when planning features and user request contains "tech stack", 
 
 Generate comprehensive Tech Stack Documentation based on deep codebase analysis. Document all technologies, frameworks, libraries, development tools, deployment strategies, and implementation patterns with specific versions and configurations.
 
+## Quick Start
+
+Generate tech stack documentation by analyzing codebase dependencies and configurations.
+
+**Example:**
+
+1. **Detect trigger**: User says "create tech stack" or "technical stack"
+2. **Parse dependencies**: Analyze package.json, config files
+3. **Detect patterns**: Framework usage, architecture patterns, tooling
+4. **Generate doc**: Create comprehensive tech stack document with versions and configs
+
+**Result:** Complete technical stack documentation for onboarding and planning.
+
 ## When to Use
 
 - User request contains "tech stack", "technical stack", "create tech stack"
@@ -186,6 +199,37 @@ The generated document must follow this technical structure:
 - **Wishful Thinking:** Document current state, not future plans
 - **Sensitive Data:** No API keys, secrets, or credentials
 - **Redundant Info:** Link to official docs instead of copying
+
+- Deployment strategies and configurations
+
+## Troubleshooting
+
+**Common Issues:**
+
+1. **Tech stack documentation not generated**
+   - **Symptom**: User requested but no documentation created
+   - **Cause**: Trigger keywords not detected or skill not invoked
+   - **Fix**: Check trigger keywords ("tech stack", "technical stack"), invoke skill manually if needed
+   - **Prevention**: Verify trigger keywords in user request
+
+2. **Incomplete technical discovery**
+   - **Symptom**: Documentation missing dependencies or configurations
+   - **Cause**: Didn't complete all discovery steps
+   - **Fix**: Complete all steps: parse dependencies, analyze configs, detect patterns
+   - **Prevention**: Always complete all discovery steps
+
+3. **Documentation not saved in correct location**
+   - **Symptom**: Documentation created but not in `.cursor/rules/`
+   - **Cause**: Wrong save location
+   - **Fix**: Save to `.cursor/rules/` as `tech-stack.mdc`
+   - **Prevention**: Always use correct save location
+
+**If issues persist:**
+
+- Verify trigger keywords were detected
+- Check that all discovery steps were completed
+- Ensure documentation saved to correct location
+- Review process steps in skill
 
 ## Output
 

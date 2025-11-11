@@ -26,6 +26,50 @@ This skill provides context-aware accessibility analysis that understands access
 
 ---
 
+## Quick Start
+
+Check accessibility by first understanding functionality and accessibility requirements, then checking for issues preventing users from using functionality.
+
+**Example:**
+
+1. **Understand functionality**: File upload feature (User Flow: select → upload → confirm)
+2. **Understand accessibility requirements**: WCAG AA, keyboard accessible
+3. **Check accessibility**: Upload button not keyboard accessible → blocks functionality
+4. **Provide fix**: Add keyboard handlers aligned with project patterns
+
+**Result:** Accessibility blockers preventing functionality use identified and fixed.
+
+## Requirements
+
+**Dependencies:**
+
+- Functionality analysis template - Reference: `plugins/cc10x/skills/cc10x-orchestrator/templates/functionality-analysis.md`
+- Accessibility requirements understanding - Must understand accessibility standards (WCAG level)
+
+**Prerequisites:**
+
+- Phase 1: Context-Dependent Functionality Analysis completed (MANDATORY FIRST STEP)
+- User flows understood (keyboard navigation, screen reader compatibility)
+
+**Tool Access:**
+
+- Required tools: Read, Grep, Glob
+- Read tool: To analyze accessibility patterns
+- Grep tool: To find accessibility-related code
+
+**When to Use:**
+
+- After functionality is verified
+- When reviewing user-facing interfaces
+- When building UI components
+- When checking keyboard navigation and screen reader compatibility
+
+**Focus Areas:**
+
+- Accessibility blockers (keyboard navigation, screen readers, contrast)
+- Issues preventing users from using functionality
+- Not perfect WCAG compliance (focus on blockers)
+
 ## Functionality First Mandate
 
 **BEFORE applying accessibility checks, complete context-dependent functionality analysis**:
@@ -392,6 +436,37 @@ For each accessibility issue found, provide:
 4. **Generic WCAG Checklist**: Don't check everything - focus on functionality-blocking issues
 5. **Missing Specific Fixes**: Don't just identify issues - provide specific code examples aligned with project patterns
 6. **Wrong Priority**: Don't mark style issues as critical - prioritize by functionality impact
+
+---
+
+## Troubleshooting
+
+**Common Issues:**
+
+1. **Accessibility checks without understanding user flows**
+   - **Symptom**: Finding accessibility issues that don't block functionality
+   - **Cause**: Skipped functionality analysis or user flow understanding
+   - **Fix**: Complete functionality analysis with user flows first
+   - **Prevention**: Always understand user flows before accessibility checks
+
+2. **Generic fixes not aligned with project patterns**
+   - **Symptom**: Accessibility fixes don't match project's component patterns
+   - **Cause**: Didn't understand project's accessibility patterns
+   - **Fix**: Understand project patterns, provide aligned fixes
+   - **Prevention**: Always understand project patterns before providing fixes
+
+3. **Perfect WCAG compliance instead of functionality blockers**
+   - **Symptom**: Focusing on minor WCAG violations instead of blockers
+   - **Cause**: Didn't prioritize by functionality impact
+   - **Fix**: Focus on accessibility blockers (keyboard nav, screen readers, contrast)
+   - **Prevention**: Always prioritize functionality-blocking accessibility issues
+
+**If issues persist:**
+
+- Verify functionality analysis with user flows was completed first
+- Check that project's accessibility patterns were understood
+- Ensure fixes align with project patterns
+- Review PATTERNS.md for accessibility pattern examples
 
 ---
 

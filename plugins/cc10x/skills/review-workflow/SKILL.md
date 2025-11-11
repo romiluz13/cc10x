@@ -31,6 +31,45 @@ NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE
 
 Orchestrates multi-dimensional code analysis with functionality-first approach.
 
+## Quick Start
+
+Review code by first understanding functionality, then checking for issues affecting it.
+
+**Example:**
+
+1. **Understand functionality**: File upload feature (User Flow: select → upload → confirm)
+2. **Load domain skills**: security-patterns, code-quality-patterns, performance-patterns
+3. **Run subagents**: Analysis subagents check for issues affecting functionality
+4. **Compile report**: Evidence-backed findings with file:line citations
+5. **Verify**: Fresh evidence collected, functionality verified
+
+**Result:** Comprehensive review focused on functionality-affecting issues.
+
+## Requirements
+
+**Dependencies:**
+
+- `cc10x-orchestrator` - Must be activated through orchestrator (do not use directly)
+- Domain skills (security-patterns, code-quality-patterns, performance-patterns, accessibility-patterns) - Loaded based on review scope
+- Analysis subagents - Run bundled analysis subagents
+
+**Prerequisites:**
+
+- Phase 0 (Functionality Analysis) completed via orchestrator
+- Functionality flows understood (user flow, admin flow, system flow)
+
+**Tool Access:**
+
+- Required tools: Read, Grep, Glob, Task, Bash
+- Task tool: Used to invoke analysis subagents
+
+**Review Scope:**
+
+- Security - Checks security issues affecting functionality
+- Code Quality - Checks quality issues affecting maintainability
+- Performance - Checks performance issues affecting functionality
+- Accessibility - Checks accessibility issues blocking functionality
+
 ## Process
 
 For complete instructions, see `plugins/cc10x/skills/cc10x-orchestrator/workflows/review.md`.
@@ -126,6 +165,35 @@ Commands:
 
 [If any conflicts detected or clarification needed]
 ```
+
+## Troubleshooting
+
+**Common Issues:**
+
+1. **Functionality not understood before review**
+   - **Symptom**: Reviewing code without understanding what it should do
+   - **Cause**: Skipped functionality analysis
+   - **Fix**: Complete functionality analysis first, then review
+   - **Prevention**: Always understand functionality before reviewing
+
+2. **Missing evidence or file:line citations**
+   - **Symptom**: Findings without evidence or citations
+   - **Cause**: Didn't capture evidence during review
+   - **Fix**: Review again, capture evidence and citations
+   - **Prevention**: Always include file:line citations and evidence
+
+3. **Generic issues instead of functionality-focused**
+   - **Symptom**: Finding generic code quality issues, not functionality-affecting
+   - **Cause**: Didn't focus on functionality-affecting issues
+   - **Fix**: Refocus review on issues affecting functionality flows
+   - **Prevention**: Always prioritize functionality-affecting issues
+
+**If issues persist:**
+
+- Verify functionality analysis was completed first
+- Check that evidence was captured with file:line citations
+- Ensure review focuses on functionality-affecting issues
+- Review workflow instructions in `workflows/review.md`
 
 **Validation Checklist**:
 

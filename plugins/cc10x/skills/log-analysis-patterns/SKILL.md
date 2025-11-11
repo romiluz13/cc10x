@@ -14,6 +14,19 @@ allowed-tools: Read, Grep, Glob, Bash
 
 ---
 
+## Quick Start
+
+Analyze logs by first understanding expected functionality, then analyzing logs to verify or identify issues.
+
+**Example:**
+
+1. **Understand expected functionality**: File upload should work (User Flow: select → upload → confirm)
+2. **Analyze logs**: Check logs for upload flow steps
+3. **Identify issue**: Log shows "timeout" at upload step → functionality breaks here
+4. **Fix**: Address timeout issue, verify logs show successful flow
+
+**Result:** Logs analyzed to understand functionality issues and verify fixes.
+
 ## Step 1: Context-Dependent Functionality Analysis (MANDATORY FIRST STEP)
 
 ### Reference Template
@@ -259,6 +272,35 @@ grep "req-456" combined.log | grep -E "(duration|file_stored|crm_api_called)"
 - Step-by-step debugging techniques
 
 ---
+
+## Troubleshooting
+
+**Common Issues:**
+
+1. **Log analysis without understanding expected functionality**
+   - **Symptom**: Can't identify where functionality breaks from logs
+   - **Cause**: Skipped functionality analysis
+   - **Fix**: Complete functionality analysis first, understand expected flows
+   - **Prevention**: Always understand expected functionality before log analysis
+
+2. **Logs not captured or incomplete**
+   - **Symptom**: Missing logs needed to understand functionality issues
+   - **Cause**: Didn't capture logs at right points or log levels too high
+   - **Fix**: Capture logs at functionality flow steps, use appropriate log levels
+   - **Prevention**: Always capture logs at functionality flow steps
+
+3. **Log analysis focuses on generic issues**
+   - **Symptom**: Analyzing logs for generic issues, not functionality-specific
+   - **Cause**: Didn't focus on functionality-affecting log patterns
+   - **Fix**: Focus log analysis on functionality flow steps
+   - **Prevention**: Always analyze logs in context of functionality flows
+
+**If issues persist:**
+
+- Verify expected functionality was understood first
+- Check that logs were captured at functionality flow steps
+- Ensure log analysis focuses on functionality-affecting patterns
+- Review PATTERNS.md for log analysis patterns
 
 ## Priority Classification
 

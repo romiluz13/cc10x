@@ -25,6 +25,50 @@ This skill provides context-aware API design that understands API requirements f
 
 ---
 
+## Quick Start
+
+Design APIs by first understanding functionality and mapping to API needs, then designing endpoints aligned with project conventions.
+
+**Example:**
+
+1. **Understand functionality**: File upload feature (User Flow: select → upload → confirm)
+2. **Map to API needs**: Need POST /api/files/upload endpoint
+3. **Understand API conventions**: Project uses REST, JSON responses, Bearer auth
+4. **Design API**: POST /api/files/upload with request/response aligned with conventions
+
+**Result:** API endpoints designed to support functionality using project conventions.
+
+## Requirements
+
+**Dependencies:**
+
+- Functionality analysis template - Reference: `plugins/cc10x/skills/cc10x-orchestrator/templates/functionality-analysis.md`
+- Project API conventions understanding - Must understand project's API patterns
+
+**Prerequisites:**
+
+- Phase 1: Context-Dependent Functionality Analysis completed (MANDATORY FIRST STEP)
+- Functionality flows mapped to API needs (Request Flow, Response Flow, Error Flow, Data Flow)
+- Project API conventions understood (REST patterns, versioning, error handling)
+
+**Tool Access:**
+
+- Required tools: Read, Grep, Glob
+- Read tool: To analyze project API patterns
+- Grep tool: To find API endpoint patterns
+
+**When to Use:**
+
+- When planning features that need APIs
+- When designing API contracts
+- When reviewing API endpoints
+
+**Focus Areas:**
+
+- APIs that enable functionality (not generic REST patterns)
+- Endpoints aligned with functionality flows
+- APIs aligned with project conventions
+
 ## Functionality First Mandate
 
 **BEFORE designing APIs, complete context-dependent functionality analysis**:
@@ -390,6 +434,37 @@ Content-Type: application/json
 
 [Prioritized list of API designs - Critical first, then Important, then Minor]
 ```
+
+---
+
+## Troubleshooting
+
+**Common Issues:**
+
+1. **API design without understanding functionality**
+   - **Symptom**: Designing APIs that don't support functionality flows
+   - **Cause**: Skipped functionality analysis
+   - **Fix**: Complete functionality analysis first, then design APIs
+   - **Prevention**: Always understand functionality before API design
+
+2. **Generic REST patterns instead of functionality-focused**
+   - **Symptom**: APIs follow generic REST but don't support functionality
+   - **Cause**: Didn't map functionality flows to API needs
+   - **Fix**: Map flows to API needs, design endpoints to support flows
+   - **Prevention**: Always map functionality to API needs first
+
+3. **API designs not aligned with project conventions**
+   - **Symptom**: APIs don't match project's API patterns
+   - **Cause**: Didn't understand project's API conventions
+   - **Fix**: Understand project conventions, align API design
+   - **Prevention**: Always understand project API conventions first
+
+**If issues persist:**
+
+- Verify functionality analysis was completed first
+- Check that functionality flows were mapped to API needs
+- Ensure API designs align with project conventions
+- Review REFERENCE.md for API design examples
 
 ---
 

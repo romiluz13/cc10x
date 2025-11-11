@@ -22,6 +22,19 @@ allowed-tools: Read, Grep, Glob
 
 ---
 
+## Quick Start
+
+Plan features by first understanding functionality, then creating structured implementation plan.
+
+**Example:**
+
+1. **Understand functionality**: User needs file upload (User Flow: select → upload → confirm)
+2. **Assess complexity**: Moderate (3) - 200-500 LOC, 2-5 files
+3. **Gather requirements**: Goals, user stories, acceptance criteria
+4. **Create plan**: Architecture, components, risks, implementation roadmap
+
+**Result:** Complete feature plan aligned with functionality requirements.
+
 ## Purpose
 
 Support structured feature planning with concrete templates, examples, and decision frameworks. Ensure requirements are testable, architecture is clear, risks are mitigated, and implementation is phased.
@@ -94,5 +107,36 @@ Use this rubric to determine if comprehensive planning is warranted:
 **Use Implementation Roadmap Template from REFERENCE.md** to create implementation plan.
 
 For detailed implementation plan creation with bite-sized tasks, see REFERENCE.md section "Detailed Implementation Plan Creation".
+
+---
+
+## Troubleshooting
+
+**Common Issues:**
+
+1. **Planning without understanding functionality**
+   - **Symptom**: Plan doesn't align with functionality requirements
+   - **Cause**: Skipped functionality analysis
+   - **Fix**: Complete functionality analysis first, then plan
+   - **Prevention**: Always understand functionality before planning
+
+2. **Complexity assessment incorrect**
+   - **Symptom**: Plan too detailed for simple feature or too simple for complex feature
+   - **Cause**: Didn't use complexity rubric correctly
+   - **Fix**: Re-assess complexity using rubric, adjust plan accordingly
+   - **Prevention**: Always use complexity rubric before planning
+
+3. **Missing requirements or acceptance criteria**
+   - **Symptom**: Plan incomplete, missing requirements
+   - **Cause**: Didn't complete requirements gathering stage
+   - **Fix**: Complete Stage 2 (Requirements Gathering), use template
+   - **Prevention**: Always complete all planning stages
+
+**If issues persist:**
+
+- Verify functionality analysis was completed first
+- Check that complexity was assessed correctly
+- Ensure all planning stages were completed
+- Review REFERENCE.md for templates and examples
 
 ---

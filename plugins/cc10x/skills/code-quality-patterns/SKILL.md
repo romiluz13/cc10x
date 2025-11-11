@@ -26,6 +26,50 @@ This skill provides context-aware code quality analysis that understands the cod
 
 ---
 
+## Quick Start
+
+Check code quality by first understanding functionality and codebase conventions, then checking for quality issues affecting maintainability.
+
+**Example:**
+
+1. **Understand functionality**: File upload feature (User Flow: select → upload → confirm)
+2. **Understand codebase conventions**: React hooks, TypeScript interfaces, named exports
+3. **Check quality**: Code uses class components → hard to maintain
+4. **Provide improvement**: Convert to functional component aligned with project patterns
+
+**Result:** Quality issues affecting maintainability identified and improved.
+
+## Requirements
+
+**Dependencies:**
+
+- Functionality analysis template - Reference: `plugins/cc10x/skills/cc10x-orchestrator/templates/functionality-analysis.md`
+- Codebase conventions understanding - Must understand project's codebase conventions
+
+**Prerequisites:**
+
+- Phase 1: Context-Dependent Functionality Analysis completed (MANDATORY FIRST STEP)
+- Phase 2: Codebase conventions understood (naming, structure, patterns)
+
+**Tool Access:**
+
+- Required tools: Read, Grep, Glob
+- Read tool: To analyze codebase conventions
+- Grep tool: To find code patterns
+
+**When to Use:**
+
+- After functionality is verified
+- When reviewing code that implements features
+- When analyzing code for maintainability issues
+- When checking if code can be easily modified
+
+**Focus Areas:**
+
+- Quality issues that block changes
+- Quality issues that cause bugs
+- Quality issues that make code hard to understand (not generic metrics)
+
 ## Functionality First Mandate
 
 **BEFORE applying quality checks, complete context-dependent functionality analysis**:
@@ -377,6 +421,37 @@ function uploadAndSyncFile(file: File): Promise<string> {
 
 [Prioritized list of improvements - Critical first, then Important, then Minor]
 ```
+
+---
+
+## Troubleshooting
+
+**Common Issues:**
+
+1. **Quality checks without understanding functionality**
+   - **Symptom**: Finding quality issues that don't affect functionality or maintainability
+   - **Cause**: Skipped functionality analysis
+   - **Fix**: Complete functionality analysis first, then check quality
+   - **Prevention**: Always understand functionality before quality checks
+
+2. **Generic improvements not aligned with codebase**
+   - **Symptom**: Quality improvements don't match codebase conventions
+   - **Cause**: Didn't understand codebase conventions
+   - **Fix**: Complete Phase 2 (Understand Codebase Conventions), provide aligned improvements
+   - **Prevention**: Always understand codebase conventions first
+
+3. **Focusing on metrics instead of maintainability**
+   - **Symptom**: Checking generic metrics, not maintainability issues
+   - **Cause**: Didn't focus on quality issues that matter
+   - **Fix**: Focus on issues that block changes, cause bugs, or are hard to understand
+   - **Prevention**: Always prioritize maintainability-impacting issues
+
+**If issues persist:**
+
+- Verify functionality analysis was completed first
+- Check that codebase conventions were understood
+- Ensure improvements align with codebase patterns
+- Review REFERENCE.md for quality pattern examples
 
 ---
 

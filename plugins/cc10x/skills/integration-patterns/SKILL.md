@@ -14,6 +14,19 @@ allowed-tools: Read, Grep, Glob
 
 ---
 
+## Quick Start
+
+Design integrations by first understanding functionality, then designing integration strategy.
+
+**Example:**
+
+1. **Understand functionality**: File upload needs CRM sync (Integration Flow)
+2. **Understand integration requirements**: CRM API, retry logic, error handling
+3. **Design integration**: API client with retry, circuit breaker, error recovery
+4. **Align with flows**: Integration supports functionality flows
+
+**Result:** Integration designed to support functionality with reliability patterns.
+
 ## Step 1: Context-Dependent Functionality Analysis (MANDATORY FIRST STEP)
 
 ### Reference Template
@@ -294,6 +307,35 @@ export async function syncFileToCRM(
 **Focus**: Integration strategies that support functionality flows, aligned with project patterns, not generic patterns.
 
 ---
+
+## Troubleshooting
+
+**Common Issues:**
+
+1. **Integration design without understanding functionality**
+   - **Symptom**: Integration doesn't support functionality flows
+   - **Cause**: Skipped functionality analysis
+   - **Fix**: Complete functionality analysis first, then design integration
+   - **Prevention**: Always understand functionality before integration design
+
+2. **Generic integration patterns instead of functionality-focused**
+   - **Symptom**: Integration follows generic patterns but doesn't support functionality
+   - **Cause**: Didn't map functionality flows to integration needs
+   - **Fix**: Map flows to integration, design to support flows
+   - **Prevention**: Always map functionality to integration needs first
+
+3. **Integration design not aligned with project patterns**
+   - **Symptom**: Integration doesn't match project's integration patterns
+   - **Cause**: Didn't understand project integration patterns
+   - **Fix**: Understand project patterns, align integration design
+   - **Prevention**: Always understand project patterns first
+
+**If issues persist:**
+
+- Verify functionality analysis was completed first
+- Check that functionality flows were mapped to integration needs
+- Ensure integration design aligns with project patterns
+- Review integration pattern library for detailed guidance
 
 ## Integration Pattern Library (Reference - Use AFTER Functionality Understood)
 
