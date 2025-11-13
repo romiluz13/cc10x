@@ -11,18 +11,12 @@ description: Create comprehensive session summaries before compaction to preserv
 
 **Use this skill when**:
 
-- Approaching token limits (75%+ usage or user indicates)
+- Before Phase 6 (final deliverable) - MANDATORY
+- Approaching token limits (75%+ usage)
 - After major workflow phase completion (Phase 4 or Phase 5)
-- Before final deliverable phase (Phase 6)
 - End of session or workflow completion
-- User explicitly requests session summary
 
-**Skip this skill when**:
-
-- Context is small (<50% token usage)
-- Workflow is very simple (complexity <=2)
-- User explicitly skips
-- No significant work has been done
+**CRITICAL**: This skill is MANDATORY before Phase 6 in all workflows. It cannot be skipped.
 
 ## CRITICAL REQUIREMENT
 
@@ -191,7 +185,7 @@ This skill is integrated into all cc10x workflows:
 - **Review Workflow**: Create summary after Phase 4 (Synthesis) if many files reviewed
 - **Debug Workflow**: Create summary after Phase 3 (Consolidation) if many bugs fixed
 
-Workflows will call this skill in Phase 5.5 (Context Preservation) before final deliverables.
+Workflows MUST call this skill in Phase 5.5 (Context Preservation) before final deliverables. Phase 5.5 is MANDATORY and cannot be skipped.
 
 ## CRITICAL REMINDERS
 

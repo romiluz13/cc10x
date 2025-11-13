@@ -201,6 +201,7 @@ Commands:
 **Mandatory Validation Steps** (before proceeding):
 
 - [ ] Phase 0 complete and verified (functionality analysis complete, all gate checks passed)
+- [ ] Phase 5.5 complete (session summary created, file exists, Actions Taken updated)
 - [ ] Skills loaded successfully (all required skills loaded, conditional skills loaded if detected)
 - [ ] Subagents invoked correctly (existence verified, skip conditions checked, dependencies analyzed, execution mode determined)
 - [ ] Outputs validated (format matches expected template, all required fields present, file:line citations provided)
@@ -237,7 +238,13 @@ Commands:
    - Workflow aborts if verification summary incomplete
    - Workflow aborts if placeholder text in critical sections
 
-5. **Actions Taken Enforcement**:
+5. **Phase 5.5 Enforcement**:
+   - Workflow aborts if Phase 5.5 not completed before Phase 6
+   - Workflow aborts if session summary file missing or empty
+   - Workflow aborts if session summary missing required sections
+   - Phase 5.5 Completion Checklist must pass before proceeding
+
+6. **Actions Taken Enforcement**:
    - Workflow aborts if Actions Taken section missing
    - Workflow aborts if any phase not documented
    - Workflow aborts if execution mode not documented

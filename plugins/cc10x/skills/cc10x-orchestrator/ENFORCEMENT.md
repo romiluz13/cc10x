@@ -106,6 +106,7 @@ All CRITICAL enforcement rules, validation gates, and compliance checks for the 
 **Checklist** (ALL must pass):
 
 - [ ] ALL workflow phases completed
+- [ ] Phase 5.5: Context Preservation complete (session summary created)
 - [ ] Actions Taken section complete (ALL phases documented)
 - [ ] Skills Inventory Check passed
 - [ ] Subagents Inventory Check passed
@@ -140,25 +141,31 @@ All CRITICAL enforcement rules, validation gates, and compliance checks for the 
    - Workflow aborts if functionality analysis incomplete
    - Workflow aborts if gate check fails
 
-2. **Skills Loading Enforcement**:
+2. **Phase 5.5 Enforcement**:
+   - Workflow aborts if Phase 5.5 not completed before Phase 6
+   - Workflow aborts if session summary file missing
+   - Workflow aborts if session summary incomplete (missing required sections)
+   - Phase 5.5 Completion Checklist must pass before proceeding
+
+3. **Skills Loading Enforcement**:
    - Workflow aborts if Actions Taken section missing required skills
    - Workflow aborts if any required skill not loaded (unless user explicitly skipped)
    - Workflow aborts if conditional skill should be loaded but missing (detection logic matched)
    - Skills Inventory Check must pass before proceeding
 
-3. **Subagents Invocation Enforcement**:
+4. **Subagents Invocation Enforcement**:
    - Workflow aborts if Actions Taken section missing required subagents
    - Workflow aborts if any required subagent not invoked (unless skip condition met)
    - Workflow aborts if subagent should be invoked but missing (skip condition NOT met)
    - Subagents Inventory Check must pass before proceeding
 
-4. **Phase Transition Enforcement**:
+5. **Phase Transition Enforcement**:
    - Workflow aborts if any phase skipped without documentation
    - Workflow aborts if phase completion checklist not verified
    - Workflow aborts if gate check fails
    - All phase transitions require explicit checklist completion
 
-5. **Final Report Enforcement**:
+6. **Final Report Enforcement**:
    - Workflow aborts if Pre-Final-Report Validation fails
    - Workflow aborts if Actions Taken validation fails
    - Workflow aborts if any required section missing

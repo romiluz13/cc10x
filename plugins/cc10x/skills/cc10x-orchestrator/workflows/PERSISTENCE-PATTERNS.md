@@ -155,27 +155,28 @@ The post-compact hook (`post-compact.sh`) restores workflow outputs and loads co
 - Creates comprehensive session documentation analyzing conversation transcript
 - Extracts tool calls, file changes, accomplishments, decisions, next steps
 - Saves to `.claude/memory/CURRENT_SESSION.md` and archives to `.claude/memory/session_summaries/session-{timestamp}.md`
+- Automatically prunes old archives (keeps only 10 most recent session summaries)
 
 **Workflow Integration**:
 
-- **Phase 5.5 - Context Preservation**: Optional but recommended phase in all workflows
-- Created before Phase 6 (final deliverable) when approaching token limits or after major phases
+- **Phase 5.5 - Context Preservation**: MANDATORY phase in all workflows (must complete before Phase 6)
+- Created before Phase 6 (final deliverable) - required for all workflows
 - Workflows load and execute session-summary skill to create comprehensive summaries
 - Summaries complement programmatic snapshot extraction for complete context preservation
 
 **When to Create Session Summary**:
 
-- Approaching token limits (75%+ usage or user indicates)
+- Before Phase 6 (final deliverable) - MANDATORY
+- Approaching token limits (75%+ usage)
 - After major workflow phase completion (Phase 4 or Phase 5)
-- Before final deliverable phase (Phase 6)
-- User explicitly requests session summary
+- End of session or workflow completion
 
-**Skip Conditions**:
+**Enforcement**:
 
-- Context is small (<50% token usage)
-- User explicitly skips
-- Workflow is very simple (complexity <=2)
-- No significant work completed
+- Phase 5.5 is MANDATORY before Phase 6
+- Validation gate blocks Phase 6 until Phase 5.5 completes
+- Phase 5.5 Completion Checklist must pass
+- Session summary file must exist and be non-empty
 
 **Context Priority Order** (post-compact hook):
 

@@ -1,5 +1,33 @@
 # Changelog
 
+## [4.5.0] - 2025-01-29
+
+### Changed
+
+- **Phase 5.5 Made Mandatory**: Context Preservation phase is now mandatory in all workflows
+  - Changed from "Optional but Recommended" to "MANDATORY" in all workflow files
+  - Added validation gates that block Phase 6 until Phase 5.5 completes
+  - Added Phase 5.5 Completion Checklist with mandatory verification steps
+  - Updated orchestrator enforcement to require Phase 5.5 completion
+  - Updated validation documentation to include Phase 5.5 enforcement
+  - Session summaries are now automatically created before final deliverables
+
+### Added
+
+- **Archive Cleanup Documentation**: Explicit archive management and cleanup verification
+  - All workflows now document archive pruning (keeps 10 most recent session summaries)
+  - Added archive cleanup verification to Phase 5.5 Completion Checklist
+  - Updated success messages to include archive cleanup confirmation
+  - Added archive cleanup verification step in all workflow processes
+  - Updated persistence patterns to document automatic archive pruning
+
+### Fixed
+
+- **Context Preservation Reliability**: Ensured session summaries are always created before compaction
+  - Removed skip conditions that allowed Phase 5.5 to be bypassed
+  - Added enforcement mechanisms to prevent workflow progression without session summaries
+  - Context preservation is now consistent and reliable across all workflows
+
 ## [4.4.0] - 2025-01-29
 
 ### Added

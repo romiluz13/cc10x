@@ -155,8 +155,9 @@ Task: Create tasks for workflow phases
 
 **Integration**:
 
-- Integrated into all workflows as Phase 5.5 - Context Preservation
-- Workflows automatically load and execute skill when approaching token limits
+- Integrated into all workflows as Phase 5.5 - Context Preservation (MANDATORY)
+- Workflows automatically enforce Phase 5.5 completion before Phase 6
+- Workflows automatically load and execute skill before final deliverables
 - Session summaries complement programmatic snapshot extraction
 - Post-compact hook loads session summaries as highest priority context source
 

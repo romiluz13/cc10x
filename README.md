@@ -701,4 +701,4 @@ MIT License - Use freely, modify as needed.
 
 ---
 
-_cc10x v4.4.0 | Production Ready | Built for Claude Code_
+_cc10x v4.5.0 | Production Ready | Built for Claude Code_

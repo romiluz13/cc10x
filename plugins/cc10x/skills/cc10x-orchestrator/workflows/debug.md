@@ -97,7 +97,7 @@ User request contains "debug"/"fix"/"error"/"bug"/"investigate"/"failure"/"broke
   - Phase 3: Bug Investigation Loop (pending)
   - Phase 4: Consolidation (pending)
   - Phase 5: Verification Summary (pending)
-  - Phase 5.5: Context Preservation (optional, pending)
+  - Phase 5.5: Context Preservation (mandatory, pending)
   - Phase 6: Report (pending)
   ```
 - Update task status as phases complete:
@@ -686,23 +686,16 @@ Completed:
 Next: Debug workflow complete - Issue resolved
 ```
 
-## Phase 5.5 - Context Preservation (Optional but Recommended)
+## Phase 5.5 - Context Preservation (MANDATORY)
 
-**CRITICAL**: Create session summary before final deliverable to preserve context across compaction.
+**CRITICAL**: Create session summary before final deliverable to preserve context across compaction. This phase is MANDATORY and cannot be skipped.
 
 **When to Create Session Summary**:
 
-- Approaching token limits (75%+ usage or user indicates)
-- After Phase 3 (Consolidation) if many bugs fixed
-- Before Phase 6 (Report) if significant work completed
-- User explicitly requests session summary
-
-**Skip Conditions**:
-
-- Context is small (<50% token usage)
-- User explicitly skips
-- Workflow is very simple (complexity <=2)
-- No significant work completed
+- Before Phase 6 (final deliverable) - MANDATORY
+- Approaching token limits (75%+ usage)
+- After major workflow phase completion (Phase 4 or Phase 5)
+- End of session or workflow completion
 
 **Process**:
 
@@ -712,15 +705,17 @@ Next: Debug workflow complete - Issue resolved
 
 2. **Execute Session Summary**:
    - Follow skill instructions to create comprehensive summary
-   - Archive previous session if exists
+   - Archive previous session if exists (saves to `.claude/memory/session_summaries/session-{timestamp}.md`)
+   - Prune old archives (keep only 10 most recent session summaries)
    - Analyze conversation transcript
    - Extract tool calls, file changes, accomplishments, decisions
    - Document next steps explicitly
 
 3. **Save Session Summary**:
-   - Save summary to `.claude/memory/session_summaries/session-{timestamp}.md`
+   - Save summary to `.claude/memory/session_summaries/session-{timestamp}.md` (archived)
    - Update `.claude/memory/CURRENT_SESSION.md` with latest summary
    - Ensure directory exists: `mkdir -p .claude/memory/session_summaries`
+   - Verify old archives cleaned (only 10 most recent remain)
 
 4. **Document in Actions Taken**:
    - Add entry: "Session summary created before Phase 6 (Context Preservation)"
@@ -744,7 +739,61 @@ mkdir -p .claude/memory/session_summaries
 - Snapshot provides programmatic context extraction
 - Both are loaded by post-compact hook for comprehensive recovery
 
+**Display Success Message** (after Phase 5.5 completion):
+
+```
+✅ Phase 5.5 Complete: Context Preservation
+
+Completed:
+- Session summary created and saved
+- Previous session archived (if existed)
+- Old archives pruned (kept 10 most recent)
+- Summary file: .claude/memory/CURRENT_SESSION.md
+
+Next: Proceeding to Phase 6 - Report
+```
+
+**Phase 5.5 Completion Checklist** (MANDATORY before proceeding to Phase 6):
+
+**CRITICAL**: Do NOT proceed to Phase 6 until ALL items below are checked.
+
+- [ ] Phase 5.5 success message displayed
+- [ ] Session summary skill loaded successfully
+- [ ] Session summary created and saved to `.claude/memory/CURRENT_SESSION.md`
+- [ ] Previous session archived (if existed) to `.claude/memory/session_summaries/session-{timestamp}.md`
+- [ ] Old archives pruned (only 10 most recent session summaries remain)
+- [ ] Actions Taken section updated with Phase 5.5 activities
+- [ ] Phase 5.5 documented in Actions Taken with completion status
+- [ ] Session summary file exists and is non-empty
+
+**Phase-Specific Checks**:
+
+- [ ] Session summary contains all required sections (overview, files modified, tool calls, accomplishments, decisions, next steps)
+- [ ] Summary file path verified: `.claude/memory/CURRENT_SESSION.md`
+- [ ] Archive directory exists: `.claude/memory/session_summaries/`
+- [ ] Archive cleanup verified (count session files, ensure ≤10 most recent)
+
+**If ANY item unchecked**:
+
+- STOP workflow execution
+- Complete missing items
+- Re-run checklist
+- Do NOT proceed until ALL items checked
+
+**CRITICAL**: This checklist is non-negotiable. Workflow aborts if any item fails.
+
+**Validation Gate** (before proceeding to Phase 6):
+
+- [ ] Phase 5.5 complete (session summary created, archived, saved)
+- [ ] Session summary file exists: `.claude/memory/CURRENT_SESSION.md`
+- [ ] Summary contains required sections (verify file is non-empty and well-formed)
+- [ ] Actions Taken updated with Phase 5.5 completion
+
+**CRITICAL**: Do NOT proceed to Phase 6 until ALL validation items above are checked.
+
 ## Phase 6 - Report
+
+**CRITICAL**: Phase 5.5 (Context Preservation) MUST be completed before this phase.
 
 **CRITICAL**: Save debug summary to disk before presenting (ensures persistence across compaction).
 
