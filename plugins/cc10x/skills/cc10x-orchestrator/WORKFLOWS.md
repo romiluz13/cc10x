@@ -164,9 +164,9 @@ Workflow requires skills?
 │       └─ NO → Report error, ask user: "Required skill '{name}' not found. Continue without it? (yes/no)"
 ├─ Identify conditional skills (from workflow detection logic)
 │   └─ Detection logic check
-│       ├─ UI components detected? → Load ui-design
+│       ├─ UI components detected? → Load frontend-patterns
 │       ├─ Design patterns mentioned? → Load design-patterns
-│       ├─ Feature planning needed? → Load feature-planning
+│       ├─ Feature planning needed? → Load planning-patterns
 │       └─ None detected → Skip conditional skills
 ├─ Check skill dependencies
 │   └─ Skills have dependencies?
@@ -206,11 +206,8 @@ Workflow requires skills?
 
    Dependency Analysis:
    - risk-analysis: no deps → Parallel group 1
-   - security-patterns: no deps → Parallel group 1
-   - performance-patterns: no deps → Parallel group 1
-   - code-quality-patterns: no deps → Parallel group 1
-   - ux-patterns: no deps → Parallel group 1
-   - accessibility-patterns: no deps → Parallel group 1
+   - code-review-patterns: no deps → Parallel group 1 (covers security, quality, performance)
+   - frontend-patterns: no deps → Parallel group 1 (covers UX, UI design, accessibility)
    - memory-tool-integration: no deps → Parallel group 1
    - web-fetch-integration: no deps → Parallel group 1
 
@@ -330,12 +327,9 @@ Workflow requires skills?
 
    - ✅ Completed: [timestamp]
    - Subagents invoked:
-     - ✅ analysis-risk-security (invoked successfully, parallel group 1)
-     - ✅ analysis-performance-quality (invoked successfully, parallel group 1)
-     - ✅ analysis-ux-accessibility (invoked successfully, parallel group 1)
-     - ✅ code-reviewer (invoked successfully, sequential after analysis, code changes detected)
+     - ✅ code-reviewer (invoked successfully, covers security, quality, performance, UX, accessibility)
      - ✅ integration-verifier (invoked successfully, sequential after code-reviewer, integration changes detected)
-   - Execution mode: Parallel (analysis subagents), Sequential (code-reviewer → integration-verifier)
+   - Execution mode: Sequential (code-reviewer → integration-verifier)
    - Skip decisions: None
    - Subagents Inventory Check: ✅ Passed
 
@@ -451,16 +445,11 @@ Workflow requires skills?
    4. **Workflow-Specific Validation**:
 
       **Review Workflow**:
-      - [ ] Analysis subagents listed (analysis-risk-security, analysis-performance-quality, analysis-ux-accessibility)
-      - [ ] Execution mode documented (parallel IF comprehensive, single IF focused)
-      - [ ] code-reviewer listed IF code changes detected
+      - [ ] code-reviewer listed
       - [ ] integration-verifier listed IF integration changes detected
 
       **Plan Workflow**:
-      - [ ] planning-architecture-risk listed (FIRST, sequential)
-      - [ ] planning-design-deployment listed (SECOND, sequential)
-      - [ ] Sequential execution documented
-      - [ ] Architecture outputs passed to design subagent documented
+      - [ ] planner listed
 
       **Build Workflow**:
       - [ ] component-builder listed for each component

@@ -1,6 +1,6 @@
 ---
 name: bug-investigator
-description: MUST be invoked through cc10x-orchestrator workflows - do not invoke directly. Orchestrator provides required context and coordinates execution. Investigates and fixes bugs with functionality-first approach. First understands what functionality is broken (user flow, admin flow, system flow), then investigates and fixes bugs affecting that functionality. Focuses on bugs that affect functionality, not generic bugs. Loads systematic-debugging, log-analysis-patterns, root-cause-analysis, test-driven-development, and verification-before-completion. Use when orchestrator workflow invokes this subagent.
+description: MUST be invoked through cc10x-orchestrator workflows - do not invoke directly. Orchestrator provides required context and coordinates execution. Investigates and fixes bugs with functionality-first approach. First understands what functionality is broken (user flow, admin flow, system flow), then investigates and fixes bugs affecting that functionality. Focuses on bugs that affect functionality, not generic bugs. Loads debugging-patterns, test-driven-development, and verification-before-completion. Use when orchestrator workflow invokes this subagent.
 tools: Read, Edit, Write, Bash, Grep, Glob
 ---
 
@@ -29,9 +29,7 @@ tools: Read, Edit, Write, Bash, Grep, Glob
 
 ## Required Skills
 
-- `systematic-debugging`
-- `log-analysis-patterns`
-- `root-cause-analysis`
+- `debugging-patterns` (consolidates systematic-debugging, log-analysis-patterns, root-cause-analysis)
 - `test-driven-development`
 - `verification-before-completion`
 
@@ -110,9 +108,7 @@ tools: Read, Edit, Write, Bash, Grep, Glob
 
 ## How to Apply Required Skills
 
-- `systematic-debugging`: **First understand functionality**, then LOG FIRST for functionality-related data. Form a single hypothesis about functionality. Avoid speculative fixes that don't address functionality.
-- `log-analysis-patterns`: **First understand functionality**, then capture and cite specific log lines or metrics that demonstrate functionality failure.
-- `root-cause-analysis`: **First understand functionality**, then explain why the bug occurs (functionality context). Link cause to functionality code paths.
+- `debugging-patterns`: **First understand functionality**, then LOG FIRST for functionality-related data. Form a single hypothesis about functionality. Capture and cite specific log lines or metrics that demonstrate functionality failure. Explain why the bug occurs (functionality context). Link cause to functionality code paths. Avoid speculative fixes that don't address functionality.
 - `test-driven-development`: **First understand functionality**, then write a failing regression test for functionality before the fix. Show commands and exit codes.
 - `verification-before-completion`: Include a Verification Summary with commands and results. Verify functionality works with evidence.
 

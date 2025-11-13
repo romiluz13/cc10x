@@ -231,14 +231,14 @@ Next: Proceeding to Phase 2 - Plan vs Code
 **Required Skills**:
 
 - `project-context-understanding` - **MANDATORY** (understand project structure, dependencies, and conventions before validating)
-- `requirements-analysis`
+- `planning-patterns` (covers requirements analysis)
 - `test-driven-development` - **MANDATORY** (test coverage analysis and validation)
 - `verification-before-completion`
 - `memory-tool-integration` (filesystem-based memory always available)
 
 **Conditional Skills**:
 
-- `code-quality-patterns` - Load if code quality validation needed (keywords: quality, maintainability, complexity, SOLID)
+- `code-review-patterns` - Load if code quality validation needed (covers quality, maintainability, complexity, SOLID)
 
 **Detection Logic**:
 
@@ -248,7 +248,7 @@ Next: Proceeding to Phase 2 - Plan vs Code
 
 - All required skills are independent (no dependencies between them)
 - **Load all required skills in parallel** for faster initialization
-- **Load conditional skills** (`code-quality-patterns`) based on detection logic, still in parallel with required skills
+- **Load conditional skills** (`code-review-patterns`) based on detection logic, still in parallel with required skills
 
 **Skill Loading Verification Protocol**:
 
@@ -351,7 +351,7 @@ Next: Proceeding to Phase 3 - Code vs Tests
 
 Invocation pattern:
 
-- Read `requirements-analysis` and the plan to anchor checks.
+- Read `planning-patterns` and the plan to anchor checks.
 - Run only the necessary commands; capture command and exit code.
 - If a step fails or is unclear, stop and ask for direction.
 
@@ -544,7 +544,7 @@ Next: Validation workflow complete - Report ready
 ## Actions Taken
 
 - Functionality analysis completed: [user flow, admin flow, system flow documented]
-- Skills loaded: requirements-analysis, verification-before-completion, test-driven-development
+- Skills loaded: planning-patterns, verification-before-completion, test-driven-development
 - Plan reviewed: <path>
 - Code scope: <files/modules>
 - Tests run: <commands with exit codes>

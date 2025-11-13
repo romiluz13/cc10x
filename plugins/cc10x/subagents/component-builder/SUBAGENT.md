@@ -101,7 +101,7 @@ tools: Read, Edit, Write, Bash
    - **Focus**: Keep functionality working, improve code quality
 
 5. **Check accessibility/UX** (If Relevant):
-   - Reference `ux-patterns`/`accessibility-patterns` when needed
+   - Reference `frontend-patterns` when needed (consolidates ux-patterns, ui-design, accessibility-patterns)
    - **Focus**: Accessibility/UX that affects functionality
 
 ### Phase 3: Apply Patterns (Only If Needed)

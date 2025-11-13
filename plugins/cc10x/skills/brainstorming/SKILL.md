@@ -35,9 +35,9 @@ Refine ideas into designs through collaborative questioning and incremental vali
 - Create design document incrementally
 - Ask questions to clarify requirements
 - Present design sections for validation
-- Output feeds into Phase 2 (feature-planning skill)
+- Output feeds into Phase 2 (planning-patterns skill, which consolidates feature-planning)
 
-**Orchestrator Coordination**: The orchestrator loads this skill in PLAN Phase 1, coordinates question-answer cycles, then transitions to feature-planning in Phase 2.
+**Orchestrator Coordination**: The orchestrator loads this skill in PLAN Phase 1, coordinates question-answer cycles, then transitions to planning-patterns in Phase 2.
 
 ## The Process
 
@@ -116,11 +116,11 @@ Example workflow:
 
 The plan file is your **working document**, not a final deliverable to write at the end
 
-**Handoff to Feature Planning**:
+**Handoff to Planning Patterns**:
 
 - After design is complete, orchestrator transitions to Phase 2
-- Phase 2 uses feature-planning skill to create detailed implementation plan
-- Design document feeds into feature-planning as input
+- Phase 2 uses planning-patterns skill (consolidates feature-planning) to create detailed implementation plan
+- Design document feeds into planning-patterns as input
 
 ## Key Principles
 
@@ -139,7 +139,7 @@ The plan file is your **working document**, not a final deliverable to write at 
 - Create design document immediately
 - Ask questions incrementally, update document after each answer
 - Present design in sections, validate each section
-- Complete design document feeds into Phase 2 (feature-planning)
+- Complete design document feeds into Phase 2 (planning-patterns, which consolidates feature-planning)
 
 **Result**: Refined requirements and complete design document ready for implementation planning.
 

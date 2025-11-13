@@ -1,17 +1,13 @@
 {
   "name": "cc10x",
-  "version": "4.5.0",
+  "version": "4.6.0",
   "description": "Orchestration plugin for Claude Code with 5 workflows: review, plan, build, debug, validate. Features deterministic intent detection, complexity gating, evidence-first verification, and filesystem-based memory integration.",
   "agents": [
     "./subagents/code-reviewer/SUBAGENT.md",
     "./subagents/component-builder/SUBAGENT.md",
     "./subagents/integration-verifier/SUBAGENT.md",
     "./subagents/bug-investigator/SUBAGENT.md",
-    "./subagents/analysis-risk-security/SUBAGENT.md",
-    "./subagents/analysis-performance-quality/SUBAGENT.md",
-    "./subagents/analysis-ux-accessibility/SUBAGENT.md",
-    "./subagents/planning-architecture-risk/SUBAGENT.md",
-    "./subagents/planning-design-deployment/SUBAGENT.md"
+    "./subagents/planner/SUBAGENT.md"
   ],
   "author": {
     "name": "Rom Iluz",

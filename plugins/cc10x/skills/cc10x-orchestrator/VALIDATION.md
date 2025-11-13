@@ -102,16 +102,11 @@ Commands:
 6. **Workflow-Specific Audit**:
 
    **Review Workflow**:
-   - [ ] 3 analysis subagents documented (or focused subagent if focused review)
-   - [ ] code-reviewer documented IF code changes detected
+   - [ ] code-reviewer documented
    - [ ] integration-verifier documented IF integration changes detected
-   - [ ] Parallel execution documented IF comprehensive review
 
    **Plan Workflow**:
-   - [ ] planning-architecture-risk documented (FIRST)
-   - [ ] planning-design-deployment documented (SECOND)
-   - [ ] Sequential execution documented
-   - [ ] Architecture outputs passed documented
+   - [ ] planner documented
 
    **Build Workflow**:
    - [ ] component-builder documented for each component

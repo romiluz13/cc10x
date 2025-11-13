@@ -40,9 +40,9 @@ Always check for orchestrator first, then discover additional skills.
 
 1. **User says**: "Review this code for security issues"
 2. **Check orchestrator**: Detect "review" keyword → Load orchestrator skill
-3. **Orchestrator activates**: REVIEW workflow loads security-patterns skill
+3. **Orchestrator activates**: REVIEW workflow loads code-review-patterns skill (consolidates security-patterns, code-quality-patterns, performance-patterns)
 4. **Check for additional skills**: Verify no other skills needed
-5. **Use skills**: Follow orchestrator workflow and security-patterns skill
+5. **Use skills**: Follow orchestrator workflow and code-review-patterns skill
 
 **Result:** Correct skills loaded and used through orchestrator coordination.
 

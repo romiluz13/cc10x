@@ -290,7 +290,7 @@ Use the askquestion tool to clarify requirements:
 - **Intermittent**: Add monitoring/logging, investigate patterns, estimate probability, may require multiple attempts
 - **Non-reproducible**: Request more data (logs, environment, steps), pause investigation until data available
 - **External**: Investigate external dependency, document limitation
-- **Performance**: Focus on profiling, bottlenecks, resource usage (load performance-patterns skill)
+- **Performance**: Focus on profiling, bottlenecks, resource usage (load code-review-patterns skill - covers performance)
 - **Functional**: Focus on logic, state, data flow
 
 **Multiple Bugs Handling**:
@@ -396,13 +396,10 @@ Next: Proceeding to Phase 2 - Shared Skills
 **Required Skills**:
 
 - `project-context-understanding` - **MANDATORY** (understand project structure, dependencies, and conventions before debugging)
-- `systematic-debugging`
-- `log-analysis-patterns`
-- `root-cause-analysis`
+- `debugging-patterns` (covers systematic debugging, log analysis, root cause analysis)
 - `test-driven-development`
 - `verification-before-completion`
-- `code-quality-patterns` - **MANDATORY** (required for `code-reviewer` subagent which is always invoked)
-- `security-patterns` - **MANDATORY** (required for `code-reviewer` subagent which is always invoked)
+- `code-review-patterns` - **MANDATORY** (covers security, quality, required for `code-reviewer` subagent which is always invoked)
 - `memory-tool-integration` (filesystem-based memory always available)
 - `web-fetch-integration` (if external resources needed)
 
@@ -410,7 +407,7 @@ Next: Proceeding to Phase 2 - Shared Skills
 
 - Core 8 skills are independent (no dependencies between them)
 - **Load all core skills in parallel** for faster initialization
-- Conditional skills (performance-patterns, integration-patterns) added based on bug type, load in parallel when needed
+- Conditional skills (code-review-patterns covers performance, architecture-patterns covers integration) added based on bug type, load in parallel when needed
 - If conditional skill needed (web-fetch-integration), load conditionally but still in parallel with others
 
 **Skill Loading Verification Protocol**:
@@ -427,11 +424,11 @@ For each skill above:
 
 **Bug Type Skill Selection**:
 
-- For performance bugs: Also load `performance-patterns`
-- For integration bugs: Also load `integration-patterns` (required for `integration-verifier` subagent)
+- For performance bugs: `code-review-patterns` already covers performance
+- For integration bugs: Also load `architecture-patterns` (covers integration patterns, required for `integration-verifier` subagent)
 - For multiple independent bugs (3+): Also load `parallel-agent-dispatch` (orchestrator coordinates parallel subagent dispatch)
 
-**Note**: `code-quality-patterns` and `security-patterns` are now required skills (loaded in Phase 2) since `code-reviewer` subagent is always invoked.
+**Note**: `code-review-patterns` is now a required skill (loaded in Phase 2) since `code-reviewer` subagent is always invoked.
 
 **Display Success Message** (after Phase 2 completion):
 
@@ -904,7 +901,7 @@ Next: Proceeding to Phase 6 - Report
 ## Actions Taken
 
 - Functionality analysis completed: [expected functionality documented, broken behavior documented]
-- Skills loaded: systematic-debugging, log-analysis-patterns, root-cause-analysis, test-driven-development, verification-before-completion
+- Skills loaded: debugging-patterns, test-driven-development, verification-before-completion
 - Subagents invoked: bug-investigator, code-reviewer, integration-verifier
 - Bugs investigated: [list]
 - Tools used: [Read, Edit, Write, Bash, Grep, Glob]
@@ -1014,5 +1011,5 @@ Next: Proceeding to Phase 6 - Report
 
 ## References
 
-- Debugging discipline: `plugins/cc10x/skills/systematic-debugging/SKILL.md`
+- Debugging discipline: `plugins/cc10x/skills/debugging-patterns/SKILL.md`
 - Official guidance: `docs/reference/03-SUBAGENTS.md`, `docs/reference/04-SKILLS.md`

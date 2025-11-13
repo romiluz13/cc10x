@@ -82,7 +82,7 @@ The orchestrator automatically loads when you detect workflow keywords, then coo
 1. **DO NOT write code directly** - You MUST invoke subagents instead:
    - BUILD workflow: component-builder → code-reviewer → integration-verifier
    - REVIEW workflow: analysis subagents → code-reviewer (if changes) → integration-verifier (if integration)
-   - PLAN workflow: planning-architecture-risk → planning-design-deployment
+   - PLAN workflow: planner
    - DEBUG workflow: bug-investigator → code-reviewer → integration-verifier
    - VALIDATE workflow: Direct analysis (no subagents)
 
@@ -128,7 +128,7 @@ The orchestrator automatically loads when you detect workflow keywords, then coo
 - [ ] Execute Phase 0: Functionality Analysis FIRST (understand user/admin/system flows, verify functionality works)
 - [ ] Execute Phase 0: Context Preset Detection (automatically detect task type and load appropriate preset)
 - [ ] Load required skills in parallel (if independent) or sequentially (if dependencies exist)
-- [ ] Load conditional skills based on detection logic (UI detected → load ui-design, etc.)
+  - [ ] Load conditional skills based on detection logic (UI detected → load frontend-patterns, etc.)
 - [ ] **UPDATE Actions Taken** - Document skills loaded IMMEDIATELY after loading
 - [ ] **PERFORM Skills Inventory Check** - Verify ALL required skills loaded before Phase 3
 - [ ] **DO NOT write code directly** - Invoke subagents instead (component-builder → code-reviewer → integration-verifier)

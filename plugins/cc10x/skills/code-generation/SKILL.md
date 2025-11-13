@@ -48,8 +48,7 @@ Generate code by first understanding functionality, then aligning with project p
 **Related Skills:**
 
 - `test-driven-development` - Use TDD when generating code
-- `code-quality-patterns` - Check code quality after generation
-- `security-patterns` - Check security after generation
+- `code-review-patterns` - Check code quality, security, and performance after generation (consolidates code-quality-patterns, security-patterns, performance-patterns)
 
 ---
 
@@ -389,7 +388,7 @@ export function Button({ variant = 'primary', onClick, children }: ButtonProps) 
 ## References
 
 - [Code Generation Playbook](PLAYBOOK.md) - Detailed patterns (use AFTER functionality understood)
-- Related skills: `test-driven-development`, `code-quality-patterns`, `security-patterns`
+- Related skills: `test-driven-development`, `code-review-patterns` (consolidates code-quality-patterns, security-patterns, performance-patterns)
 
 ---
 

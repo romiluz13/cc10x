@@ -408,23 +408,19 @@ Next: Proceeding to Phase 2 - Load Required Skills
 
 - `project-context-understanding` - **MANDATORY** (understand project structure, dependencies, and conventions before reviewing)
 - `risk-analysis`
-- `security-patterns`
-- `performance-patterns`
-- `code-quality-patterns`
-- `ux-patterns`
-- `accessibility-patterns`
+- `code-review-patterns` (covers security, quality, performance)
+- `frontend-patterns` (covers UX, UI design, accessibility - for UI code only)
 - `verification-before-completion` - **MANDATORY** (verify findings before completion)
 - `memory-tool-integration` (filesystem-based memory always available)
 - `web-fetch-integration` (if external standards needed)
 
 **Conditional Skills**:
 
-- `ui-design` - Load if UI components detected (file patterns: _.tsx, _.jsx, \*.vue, components/, ui/)
+- `frontend-patterns` - Load if UI components detected (file patterns: _.tsx, _.jsx, \*.vue, components/, ui/)
 - `design-patterns` - Load if design patterns mentioned or pattern review needed
-- `integration-patterns` - Load if integration code detected
-- `api-design-patterns` - Load if API code detected
+- `architecture-patterns` - Load if integration or API code detected (covers integration and API design patterns)
 - `test-driven-development` - Load if integration code detected (required for `integration-verifier` subagent when integration changes detected)
-- `log-analysis-patterns` - Load if integration code detected (required for `integration-verifier` subagent when integration changes detected)
+- `debugging-patterns` - Load if integration code detected (covers log analysis, required for `integration-verifier` subagent when integration changes detected)
 
 **Detection Logic**:
 
@@ -437,7 +433,7 @@ Next: Proceeding to Phase 2 - Load Required Skills
 
 - All required skills are independent (no dependencies between them)
 - **Load all required skills in parallel** for faster initialization
-- **Load conditional skills** (`ui-design`, `design-patterns`, `integration-patterns`, `api-design-patterns`, `test-driven-development`, `log-analysis-patterns`, `web-fetch-integration`) based on detection logic, still in parallel with required skills
+- **Load conditional skills** (`frontend-patterns`, `design-patterns`, `architecture-patterns`, `debugging-patterns`, `test-driven-development`, `web-fetch-integration`) based on detection logic, still in parallel with required skills
 
 **Skill Loading Verification Protocol**:
 For each skill above:
@@ -515,12 +511,12 @@ Next: Proceeding to Phase 3 - Dispatch Analysis Subagents
 
 - **INVOKE** - Scope is substantial: Multiple files OR single file >100 lines OR explicit user request
 - **INVOKE** - Code changes detected: Modified/new files present
-- **INVOKE** - Review type matches: Security review → invoke `analysis-risk-security`, Performance review → invoke `analysis-performance-quality`, etc.
+- **INVOKE** - Always invoke `code-reviewer` subagent (covers security, quality, performance, UX, accessibility)
 
 **When NOT to Invoke Subagents** (skip to save context/tokens):
 
 - **SKIP** - Scope too small: Single file < 50 lines OR single function < 20 lines → Ask user: "Scope is very small ({N} lines). Skip subagent analysis or proceed?"
-- **SKIP** - Read-only files: If scope contains only markdown/docs/config files (no code) → Skip code-quality and performance subagents, only invoke `analysis-risk-security` if security review requested
+- **SKIP** - Read-only files: If scope contains only markdown/docs/config files (no code) → Skip `code-reviewer` subagent unless security review requested
 - **SKIP** - User explicitly skips: If user says "skip review" or "quick check only" → Document in Actions Taken and skip subagent invocation
 - **SKIP** - No code files: If scope is empty or contains no code files → Report: "No code files in scope. Subagent analysis skipped."
 
@@ -538,36 +534,20 @@ Next: Proceeding to Phase 3 - Dispatch Analysis Subagents
 
 - **IF focused request** (security/performance/UX mentioned):
   - Invoke ONLY the relevant subagent:
-    - Security-focused → `analysis-risk-security` ONLY (skip others if not relevant)
-    - Performance-focused → `analysis-performance-quality` ONLY (skip others if not relevant)
-    - UX-focused → `analysis-ux-accessibility` ONLY (skip others if not relevant)
+    - Security/Performance/Quality-focused → `code-reviewer` subagent (covers all dimensions)
+    - UX/Accessibility-focused → `code-reviewer` subagent (covers UX, UI design, accessibility for UI code)
 - **IF general request** (comprehensive review):
-  - Dependency Analysis:
-    - All 3 subagents: Read-only operations ✓
-    - All 3 subagents: Analyze same code scope ✓
-    - All 3 subagents: No output dependencies ✓
-    - All 3 subagents: Isolated contexts (separate subagent) ✓
-    - Conclusion: **SAFE FOR PARALLEL EXECUTION**
-  - Invoke all 3 subagents **IN PARALLEL**:
+  - Invoke `code-reviewer` subagent (covers all dimensions):
     ```
-    Parallel Execution:
-    ├─ analysis-risk-security (concurrent)
-    ├─ analysis-performance-quality (concurrent)
-    └─ analysis-ux-accessibility (concurrent)
+    Execution:
+    └─ code-reviewer (covers security, quality, performance, UX, accessibility)
     ```
 
-- **Default behavior** (general/comprehensive review): Invoke all 3 in parallel for optimal performance
-
-**Step 3: Post-Analysis Subagent Selection** (after analysis subagents complete):
-
-- **INVOKE code-reviewer** - Code changes detected: After analysis subagents complete, if code changes detected (modified/new files) → Invoke `code-reviewer` for code review
-  - **When to invoke**: Code changes detected in scope (modified/new files present)
-  - **When NOT to invoke**: Read-only review (no code changes), user explicitly skips code review
-  - **Execution**: Sequential after analysis subagents (code-reviewer needs analysis findings)
+- **Default behavior** (general/comprehensive review): Invoke `code-reviewer` subagent
 - **INVOKE integration-verifier** - Integration changes detected: After code-reviewer completes (if invoked), if integration changes detected → Invoke `integration-verifier` for integration verification
   - **When to invoke**: Integration changes detected (API endpoints, external services, data flows)
   - **When NOT to invoke**: No integration changes, user explicitly skips integration verification
-  - **Execution**: Sequential after code-reviewer (if invoked) or after analysis subagents (if code-reviewer skipped)
+  - **Execution**: Sequential after code-reviewer (if invoked)
 
 For each subagent (parallel or single), pass the scoped files and relevant user notes. Require every subagent to produce:
 
@@ -695,8 +675,7 @@ If subagents report conflicting findings:
 1. Document the conflict explicitly with both positions:
    ```
    Conflict Detected:
-   - analysis-risk-security: [finding/position]
-   - analysis-performance-quality: [conflicting finding/position]
+   - code-reviewer: [finding/position covering security, quality, performance, UX, accessibility]
    ```
 2. Identify root cause:
    - Different assumptions
@@ -843,7 +822,7 @@ Outstanding Questions: <if clarification is needed>
 
 **Evidence Quality Examples**:
 
-- **Good evidence**: "HIGH - SQL injection via string concatenation - src/db/user.ts:42 - Evidence: user input concatenated into query without parameterization. Mitigation: use prepared statements (see security-patterns 'SQL Injection')."
+- **Good evidence**: "HIGH - SQL injection via string concatenation - src/db/user.ts:42 - Evidence: user input concatenated into query without parameterization. Mitigation: use prepared statements (see code-review-patterns 'SQL Injection')."
 - **Weak evidence**: "maybe insecure DB calls somewhere in user code" (reject - must cite specific file:line)
 
 **Required**: Every finding must include file:line citation. If unable to cite, state "Insufficient evidence - requires manual review" instead of guessing.
@@ -1109,8 +1088,8 @@ Next: Proceeding to Phase 6 - Present Results
 ## Actions Taken
 
 - Functionality analysis completed: [user flow, admin flow, system flow documented]
-- Skills loaded: project-context-understanding, risk-analysis, security-patterns, performance-patterns, code-quality-patterns, ux-patterns, accessibility-patterns, verification-before-completion
-- Subagents invoked: analysis-risk-security, analysis-performance-quality, analysis-ux-accessibility[, code-reviewer if code changes detected][, integration-verifier if integration changes detected]
+- Skills loaded: project-context-understanding, risk-analysis, code-review-patterns, frontend-patterns, verification-before-completion
+- Subagents invoked: code-reviewer[, integration-verifier if integration changes detected]
 - Files reviewed: [list]
 - Tools used: [Read, Grep, Glob, Bash if any]
 

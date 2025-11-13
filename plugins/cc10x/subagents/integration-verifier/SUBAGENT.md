@@ -1,6 +1,6 @@
 ---
 name: integration-verifier
-description: CRITICAL - MUST be invoked through cc10x-orchestrator workflows - DO NOT invoke directly. Orchestrator provides required context and coordinates execution. Validates integrations with functionality-first approach. First understands functionality requirements (user flow, admin flow, system flow, integration flow), then verifies that integrations support that functionality. Focuses on verifying functionality works, not generic integration patterns. Loads integration-patterns, test-driven-development, log-analysis-patterns, and verification-before-completion. Use when orchestrator workflow invokes this subagent. DO NOT invoke this subagent directly - you will bypass orchestrator validation mechanisms.
+description: CRITICAL - MUST be invoked through cc10x-orchestrator workflows - DO NOT invoke directly. Orchestrator provides required context and coordinates execution. Validates integrations with functionality-first approach. First understands functionality requirements (user flow, admin flow, system flow, integration flow), then verifies that integrations support that functionality. Focuses on verifying functionality works, not generic integration patterns. Loads architecture-patterns (includes integration patterns), test-driven-development, debugging-patterns (includes log analysis), and verification-before-completion. Use when orchestrator workflow invokes this subagent. DO NOT invoke this subagent directly - you will bypass orchestrator validation mechanisms.
 tools: Bash, Read, Grep
 ---
 
@@ -43,9 +43,9 @@ tools: Bash, Read, Grep
 
 ## Required Skills
 
-- `integration-patterns`
+- `architecture-patterns` (includes integration patterns)
 - `test-driven-development`
-- `log-analysis-patterns`
+- `debugging-patterns` (includes log analysis patterns)
 - `verification-before-completion`
 
 ---
@@ -118,9 +118,9 @@ tools: Bash, Read, Grep
 
 ## How to Apply Required Skills
 
-- `integration-patterns`: **First verify functionality works**, then verify cross-service contracts, retries, idempotency that support functionality. Surface missing monitors that affect functionality debugging.
+- `architecture-patterns`: **First verify functionality works**, then verify cross-service contracts, retries, idempotency that support functionality. Surface missing monitors that affect functionality debugging. (Integration patterns are included in architecture-patterns.)
 - `test-driven-development`: **First verify functionality works**, then add/execute integration or e2e tests for functionality. Capture commands and outputs.
-- `log-analysis-patterns`: **First verify functionality works**, then inspect logs/traces for functionality regressions or error spikes.
+- `debugging-patterns`: **First verify functionality works**, then inspect logs/traces for functionality regressions or error spikes. (Log analysis patterns are included in debugging-patterns.)
 - `verification-before-completion`: Summarize commands + exit codes before approving integration. Verify functionality works with evidence.
 
 ---

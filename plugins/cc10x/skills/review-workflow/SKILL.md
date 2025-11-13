@@ -38,8 +38,8 @@ Review code by first understanding functionality, then checking for issues affec
 **Example:**
 
 1. **Understand functionality**: File upload feature (User Flow: select → upload → confirm)
-2. **Load domain skills**: security-patterns, code-quality-patterns, performance-patterns
-3. **Run subagents**: Analysis subagents check for issues affecting functionality
+2. **Load domain skills**: code-review-patterns (consolidates security-patterns, code-quality-patterns, performance-patterns), frontend-patterns (consolidates ux-patterns, ui-design, accessibility-patterns)
+3. **Run subagents**: code-reviewer subagent checks for issues affecting functionality
 4. **Compile report**: Evidence-backed findings with file:line citations
 5. **Verify**: Fresh evidence collected, functionality verified
 
@@ -50,8 +50,8 @@ Review code by first understanding functionality, then checking for issues affec
 **Dependencies:**
 
 - `cc10x-orchestrator` - Must be activated through orchestrator (do not use directly)
-- Domain skills (security-patterns, code-quality-patterns, performance-patterns, accessibility-patterns) - Loaded based on review scope
-- Analysis subagents - Run bundled analysis subagents
+- Domain skills (code-review-patterns, frontend-patterns) - Loaded based on review scope
+- Analysis subagents - code-reviewer subagent (consolidates all review dimensions)
 
 **Prerequisites:**
 

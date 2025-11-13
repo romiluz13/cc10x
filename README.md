@@ -301,21 +301,19 @@ Domain experts that activate automatically:
 
 **Code Quality & Security**:
 
-- `security-patterns` - OWASP Top 10, injection prevention, auth frameworks
-- `code-quality-patterns` - SOLID principles, complexity metrics, maintainability
-- `performance-patterns` - Bottleneck identification, optimization techniques
+- `code-review-patterns` - Security, quality, and performance analysis (consolidates security-patterns, code-quality-patterns, performance-patterns)
+- OWASP Top 10, injection prevention, SOLID principles, complexity metrics, bottleneck identification
 
 **Design & Planning**:
 
-- `requirements-analysis` - Stakeholder analysis, acceptance criteria, scope management
-- `architecture-patterns` - System design, component boundaries, integration patterns
+- `planning-patterns` - Requirements analysis and feature planning (consolidates requirements-analysis, feature-planning)
+- `architecture-patterns` - System design, component boundaries, API design, integration patterns
 - `risk-analysis` - 7-stage risk framework with mitigation strategies
 
 **User Experience**:
 
-- `ux-patterns` - Loading states, error handling, form usability
-- `ui-design` - Visual hierarchy, design tokens, layout systems
-- `accessibility-patterns` - WCAG compliance, keyboard navigation, screen readers
+- `frontend-patterns` - UX, UI design, and accessibility (consolidates ux-patterns, ui-design, accessibility-patterns)
+- Loading states, error handling, visual hierarchy, WCAG compliance, keyboard navigation
 
 **Implementation**:
 
@@ -325,9 +323,8 @@ Domain experts that activate automatically:
 
 **Operations**:
 
-- `systematic-debugging` - LOG FIRST methodology
-- `log-analysis-patterns` - Structured logging, aggregation, parsing
-- `root-cause-analysis` - Evidence-based investigation
+- `debugging-patterns` - Systematic debugging, log analysis, root cause analysis (consolidates systematic-debugging, log-analysis-patterns, root-cause-analysis)
+- LOG FIRST methodology, structured logging, evidence-based investigation
 
 ### 5 Workflow Skills
 
@@ -339,20 +336,17 @@ Orchestration and workflow management:
 - `build-workflow` - Build workflow coordination
 - `debug-workflow` - Debug workflow coordination
 
-### 9 Specialized Subagents
+### 5 Specialized Subagents
 
 Separate context windows, focused expertise:
 
 **Review Subagents**:
 
-- `analysis-risk-security` - Security vulnerabilities, risk assessment
-- `analysis-performance-quality` - Performance bottlenecks, code quality metrics
-- `analysis-ux-accessibility` - UX friction points, accessibility compliance
+- `code-reviewer` - Comprehensive review covering security, quality, performance, UX, and accessibility (consolidates analysis-risk-security, analysis-performance-quality, analysis-ux-accessibility)
 
 **Plan Subagents**:
 
-- `planning-architecture-risk` - System architecture, component design, risk identification
-- `planning-design-deployment` - API design, deployment strategy, rollback plans
+- `planner` - Comprehensive planning covering architecture, risks, API design, component design, testing, and deployment (consolidates planning-architecture-risk, planning-design-deployment)
 
 **Build Subagents**:
 
@@ -492,9 +486,9 @@ Workflows can resume after interruption:
 **cc10x executes**:
 
 1. Detects `review` intent → REVIEW workflow
-2. Loads security-patterns, code-quality-patterns skills
-3. Delegates to analysis-risk-security subagent
-4. Scans payment code for OWASP Top 10 issues
+2. Loads code-review-patterns skill (consolidates security-patterns, code-quality-patterns, performance-patterns)
+3. Delegates to code-reviewer subagent (consolidates analysis-risk-security, analysis-performance-quality, analysis-ux-accessibility)
+4. Scans payment code for OWASP Top 10 issues, performance bottlenecks, and code quality issues
 5. Returns findings with severity levels and fixes
 
 **Time**: 3 minutes  
@@ -531,7 +525,7 @@ Workflows can resume after interruption:
 
 1. **Phase 0**: Functionality Analysis → Understands expected vs observed behavior
 2. Detects `debug` intent → DEBUG workflow
-3. Loads systematic-debugging, log-analysis-patterns skills
+3. Loads debugging-patterns skill (consolidates systematic-debugging, log-analysis-patterns, root-cause-analysis)
 4. Delegates to bug-investigator subagent
 5. LOG FIRST: Gathers logs, metrics, stack traces
 6. Root cause: Event listener not cleaned up
@@ -579,31 +573,31 @@ cc10x Orchestrator
 │
 ├── REVIEW Workflow
 │   ├── Phase 0: Functionality Analysis ✅
-│   ├── Load: security-patterns, performance-patterns, code-quality-patterns (parallel)
-│   ├── Delegate: analysis-risk-security, analysis-performance-quality, analysis-ux-accessibility (parallel)
+│   ├── Load: code-review-patterns, frontend-patterns (parallel)
+│   ├── Delegate: code-reviewer → integration-verifier (if integration changes detected)
 │   └── Output: Findings with severity, file:line citations, remediation steps
 │
 ├── PLAN Workflow
 │   ├── Phase 0: Functionality Analysis ✅
-│   ├── Load: requirements-analysis, architecture-patterns, risk-analysis (parallel)
-│   ├── Delegate: planning-architecture-risk → planning-design-deployment (sequential)
+│   ├── Load: planning-patterns, architecture-patterns, risk-analysis (parallel)
+│   ├── Delegate: planner
 │   └── Output: Architecture design, risk register, implementation roadmap
 │
 ├── BUILD Workflow
 │   ├── Phase 0: Functionality Analysis ✅
-│   ├── Load: test-driven-development, security-patterns, verification-before-completion (parallel)
+│   ├── Load: test-driven-development, code-review-patterns, verification-before-completion (parallel)
 │   ├── Delegate: component-builder → code-reviewer → integration-verifier (sequential per component)
 │   └── Output: Components with tests, verification summary
 │
 ├── DEBUG Workflow
 │   ├── Phase 0: Functionality Analysis ✅
-│   ├── Load: systematic-debugging, log-analysis-patterns, root-cause-analysis (parallel)
+│   ├── Load: debugging-patterns, code-review-patterns (parallel)
 │   ├── Delegate: bug-investigator → code-reviewer → integration-verifier (sequential per bug)
 │   └── Output: Root cause, fix, regression test
 │
 └── VALIDATE Workflow
     ├── Phase 0: Functionality Analysis ✅
-    ├── Load: requirements-analysis, verification-before-completion (parallel)
+    ├── Load: planning-patterns, verification-before-completion (parallel)
     └── Output: Alignment matrix, coverage analysis, documentation freshness
 ```
 
@@ -646,8 +640,8 @@ Claude: *starts over again*
 ```bash
 You: "Review this code"
 cc10x: *triggers REVIEW workflow*
-  → Loads 6 specialized skills
-  → Delegates to 3 subagents (parallel contexts)
+  → Loads code-review-patterns and frontend-patterns skills
+  → Delegates to code-reviewer subagent (consolidated review expertise)
   → Synthesizes findings with severity levels
   → Provides file:line citations and fixes
 ```
@@ -701,4 +695,4 @@ MIT License - Use freely, modify as needed.
 
 ---
 
-_cc10x v4.5.0 | Production Ready | Built for Claude Code_
+_cc10x v4.6.0 | Production Ready | Built for Claude Code_

@@ -27,8 +27,8 @@ Dependency analysis and parallel execution safety validation.
    - ❌ Shared state (both modify same data)
 
 3. **Workflow-Specific Parallel Execution Rules**:
-   - **Review Workflow**: Analysis subagents (analysis-risk-security, analysis-performance-quality, analysis-ux-accessibility) CAN run in parallel IF comprehensive review (read-only, independent, isolated contexts)
-   - **Plan Workflow**: Planning subagents MUST run sequentially (planning-architecture-risk → planning-design-deployment, architecture informs design)
+   - **Review Workflow**: `code-reviewer` subagent runs independently (covers all analysis dimensions)
+   - **Plan Workflow**: `planner` subagent runs independently (covers all planning aspects)
    - **Build Workflow**: Component subagents MUST run sequentially per component (component-builder → code-reviewer → integration-verifier), but components can run in parallel IF independent
    - **Debug Workflow**: Bug subagents MUST run sequentially per bug (bug-investigator → code-reviewer → integration-verifier), but bugs can run in parallel IF independent
    - **Validate Workflow**: No subagents (direct comparisons)

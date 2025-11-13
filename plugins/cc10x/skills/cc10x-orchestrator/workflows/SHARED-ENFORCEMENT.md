@@ -53,7 +53,7 @@
 1. **DO NOT write code directly** - You MUST invoke subagents in sequence:
    - BUILD workflow: component-builder → code-reviewer → integration-verifier
    - REVIEW workflow: analysis subagents → code-reviewer (if changes) → integration-verifier (if integration)
-   - PLAN workflow: planning-architecture-risk → planning-design-deployment
+   - PLAN workflow: planner
    - DEBUG workflow: bug-investigator → code-reviewer → integration-verifier
    - VALIDATE workflow: Direct analysis (no subagents)
    - Read subagent's SUBAGENT.md before invoking

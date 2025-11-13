@@ -1,6 +1,6 @@
 ---
 name: component-design-patterns
-description: Context-aware component design that understands component requirements from flows before designing. Use PROACTIVELY when planning features that need UI components. First understands functionality requirements and maps them to component needs, then designs component hierarchy to support that functionality. Provides specific component designs with examples aligned with project component patterns. Focuses on components that enable functionality, not generic component patterns.
+description: Context-aware component design that understands component requirements from flows before designing. Use PROACTIVELY when planning features that need UI components. First understands functionality requirements and maps them to component needs, then designs component hierarchy to support that functionality. Provides specific component designs with examples aligned with project component patterns. Focuses on components that enable functionality.
 allowed-tools: Read, Grep, Glob
 ---
 
@@ -109,6 +109,7 @@ COMPONENT DESIGN NEEDED?
 
 **For detailed component design guidance, see**:
 
+- **PATTERNS.md**: Component design patterns, structure, state management, component checklist
 - **`references/functionality-mapping.md`**: Functionality analysis, component requirement mapping, flow-to-component mapping, examples
 - **`references/project-patterns.md`**: Project component pattern analysis, structure patterns, naming conventions, state management patterns, UI library patterns, composition patterns
 - **`references/component-design.md`**: Component design patterns, hierarchy design, interface design, contract design, examples, checklist

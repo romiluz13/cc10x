@@ -406,9 +406,8 @@ find_active_plan() {
 **Required Skills**:
 
 - `project-context-understanding` - **MANDATORY** (understand project patterns, conventions, and structure before building)
-- `requirements-analysis`
-- `security-patterns`
-- `code-quality-patterns` - **MANDATORY** (build quality code with SOLID principles, maintainability)
+- `planning-patterns` (covers requirements analysis)
+- `code-review-patterns` (covers security, quality) - **MANDATORY** (build quality code with SOLID principles, maintainability)
 - `code-generation` - **MANDATORY** (code generation patterns and best practices)
 - `component-design-patterns` - **MANDATORY** (component design patterns and best practices)
 - `test-driven-development`
@@ -418,11 +417,11 @@ find_active_plan() {
 
 **Conditional Skills**:
 
-- `ui-design` - **MANDATORY** when UI components detected (file patterns: _.tsx, _.jsx, \*.vue, components/, ui/)
+- `frontend-patterns` - **MANDATORY** when UI components detected (file patterns: _.tsx, _.jsx, \*.vue, components/, ui/)
 - `design-patterns` - Load if building APIs, components, or integrations
-- `performance-patterns` - Load if performance-critical code detected (keywords: performance, optimization, fast, efficient, bottleneck)
-- `integration-patterns` - Load if integration code detected (API endpoints, external services, data flows) - Required for `integration-verifier` subagent
-- `log-analysis-patterns` - Load if integration code detected (API endpoints, external services, data flows) - Required for `integration-verifier` subagent
+- `code-review-patterns` - Already loaded (covers performance)
+- `architecture-patterns` - Load if integration code detected (covers integration patterns, API endpoints, external services, data flows) - Required for `integration-verifier` subagent
+- `debugging-patterns` - Load if integration code detected (covers log analysis, API endpoints, external services, data flows) - Required for `integration-verifier` subagent
 
 **Detection Logic**:
 
@@ -435,7 +434,7 @@ find_active_plan() {
 
 - All required skills are independent (no dependencies between them)
 - **Load all required skills in parallel** for faster initialization
-- **Load conditional skills** (`ui-design`, `design-patterns`, `performance-patterns`, `integration-patterns`, `log-analysis-patterns`, `web-fetch-integration`) based on detection logic, still in parallel with required skills
+- **Load conditional skills** (`frontend-patterns`, `design-patterns`, `architecture-patterns`, `debugging-patterns`, `web-fetch-integration`) based on detection logic, still in parallel with required skills
 
 **Memory Integration** (optimized):
 
@@ -468,7 +467,7 @@ For each skill above:
 **Requirements Summary**:
 After loading skills, summarise:
 
-- Requirements: [list from requirements-analysis]
+- Requirements: [list from planning-patterns]
 - Constraints: [technical, business, timeline]
 - Acceptance Tests: [measurable criteria]
 - Dependencies: [external services, libraries, other components]
@@ -1157,7 +1156,7 @@ Next: Build workflow complete - All components delivered
 ## Actions Taken
 
 - Functionality analysis completed: [user flow, admin flow, system flow documented, acceptance criteria defined]
-- Skills loaded: requirements-analysis, security-patterns, test-driven-development, verification-before-completion
+- Skills loaded: planning-patterns, code-review-patterns, test-driven-development, verification-before-completion
 - Subagents invoked: component-builder, code-reviewer, integration-verifier
 - Components built: [list in order]
 - Tools used: [Read, Edit, Write, Bash, Task]

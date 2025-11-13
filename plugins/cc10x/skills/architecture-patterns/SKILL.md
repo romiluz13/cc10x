@@ -1,6 +1,6 @@
 ---
 name: architecture-patterns
-description: Context-aware architecture design that understands existing architecture before designing. Use PROACTIVELY when planning features. First understands functionality requirements and existing architecture, then designs architecture to support that functionality. Maps system context, containers, components based on functionality. Provides architecture decisions with trade-offs and implementation roadmap. Focuses on architecture that enables functionality, not generic architecture patterns.
+description: Context-aware architecture design covering system architecture, API design, and integration patterns. Use PROACTIVELY when planning features. First understands functionality requirements and existing architecture, then designs architecture, APIs, and integrations to support that functionality. Maps system context, containers, components, API endpoints, and integration strategies based on functionality. Provides architecture decisions with trade-offs and implementation roadmap. Focuses on architecture that enables functionality, not generic patterns.
 allowed-tools: Read, Grep, Glob
 ---
 
@@ -255,6 +255,19 @@ Integration Patterns:
    - Relationships: Map to functionality flows
    - Indexes: Map to functionality queries
 
+6. **Design API Endpoints** (based on functionality):
+   - Map user flows → API endpoints (user actions)
+   - Map admin flows → API endpoints (admin actions)
+   - Map system flows → API endpoints (system processing)
+   - Design request/response schemas aligned with functionality
+   - Design error handling aligned with functionality error cases
+
+7. **Design Integration Strategies** (based on functionality):
+   - Map integration flows → integration clients/adapters
+   - Design retry logic aligned with functionality reliability needs
+   - Design circuit breakers aligned with functionality resilience needs
+   - Design error handling aligned with functionality error flows
+
 **Provide Architecture Decisions with Trade-offs**:
 
 For each architecture decision, provide:
@@ -333,6 +346,8 @@ For each architecture decision, provide:
 **For detailed architecture patterns and reference materials, see:**
 
 - **PATTERNS.md**: Architecture Pattern Library (Architecture Views, Component Boundaries, Data Modeling, Data Flow, Cross-Cutting Concerns, NFRs Checklist, ADR Template)
+- **API Design Patterns**: RESTful structure, request/response schemas, error handling, authentication & authorization, versioning (merged from api-design-patterns)
+- **Integration Patterns**: Retry logic, circuit breakers, error handling, reliability patterns, resilience & consistency patterns (merged from integration-patterns)
 
 ---
 
@@ -398,6 +413,14 @@ For each architecture decision, provide:
 ### Data Models
 
 [Entities, relationships, indexes - based on functionality]
+
+### API Design
+
+[Endpoints mapped from functionality flows, request/response schemas, error handling - based on functionality]
+
+### Integration Strategies
+
+[Integration clients/adapters mapped from integration flows, retry logic, circuit breakers, error handling - based on functionality]
 
 ### Data Flow & Integration
 

@@ -349,8 +349,7 @@ Next: Proceeding to Phase 2 - Requirements Intake
 **Load Requirements Skills**:
 
 - `project-context-understanding` - **MANDATORY** (understand existing architecture, dependencies, and conventions before planning)
-- `requirements-analysis`
-- `feature-planning` - **MANDATORY** (provides feature planning guidance)
+- `planning-patterns` - **MANDATORY** (covers requirements analysis and feature planning)
 - `design-patterns` - **MANDATORY** (provides API/component/integration patterns)
 - `architecture-patterns` - **MANDATORY** (provides architecture design patterns)
 - `risk-analysis` - **MANDATORY** (provides risk analysis framework)
@@ -360,10 +359,10 @@ Next: Proceeding to Phase 2 - Requirements Intake
 
 **Conditional Skills**:
 
-- `ui-design` - Load if UI features mentioned (keywords: UI, interface, design, form, dashboard)
-- `api-design-patterns` - Load if API planning detected (keywords: API, endpoint, REST, GraphQL, route)
+- `frontend-patterns` - Load if UI features mentioned (keywords: UI, interface, design, form, dashboard)
+- `architecture-patterns` - Load if API planning detected (covers API design patterns, keywords: API, endpoint, REST, GraphQL, route)
 - `component-design-patterns` - Load if component planning detected (keywords: component, UI component, React component, Vue component)
-- `deployment-patterns` - Load if deployment planning detected (keywords: deploy, deployment, production, staging, CI/CD, infrastructure) - Required for `planning-design-deployment` subagent
+- `deployment-patterns` - Load if deployment planning detected (keywords: deploy, deployment, production, staging, CI/CD, infrastructure) - Required for `planner` subagent
 
 **Detection Logic**:
 
@@ -376,7 +375,7 @@ Next: Proceeding to Phase 2 - Requirements Intake
 
 - All required skills are independent (no dependencies between them)
 - **Load all required skills in parallel** for faster initialization
-- **Load conditional skills** (`ui-design`, `api-design-patterns`, `component-design-patterns`, `deployment-patterns`, `web-fetch-integration`) based on detection logic, still in parallel with required skills
+- **Load conditional skills** (`frontend-patterns`, `architecture-patterns`, `component-design-patterns`, `deployment-patterns`, `web-fetch-integration`) based on detection logic, still in parallel with required skills
 - **Skill Loading Verification**: Verify each skill loaded successfully (read first 100 chars, parse YAML, check content)
 - If loading fails, use Error Recovery Protocol
 
@@ -591,38 +590,32 @@ Next: Proceeding to Phase 3 - Delegated Analysis
 
 **When to Invoke Subagents**:
 
-- **INVOKE** - Architecture needed: Complexity score >= 3 OR multi-file/multi-component work → Invoke `planning-architecture-risk`
-- **INVOKE** - Design/deployment needed: Any build work requires API design OR component design OR deployment planning → Invoke `planning-design-deployment`
-- **INVOKE** - Complete planning: Both subagents needed for comprehensive planning (default for complexity >= 3)
+- **INVOKE** - Planning needed: Complexity score >= 3 OR multi-file/multi-component work OR API/component/deployment planning → Invoke `planner` subagent (covers architecture, risks, API design, component design, testing, deployment)
+- **INVOKE** - Complete planning: `planner` subagent provides comprehensive planning (default for complexity >= 3)
 
 **When NOT to Invoke Subagents**:
 
-- **SKIP** - Complexity too low: Complexity score <= 2 → Skip `planning-architecture-risk` (architecture not needed), ask user: "Low complexity ({score}). Skip architecture planning? (yes/no)"
-- **SKIP** - No API/component design needed: If work is pure refactoring or config changes (no new APIs/components) → Skip `planning-design-deployment`, only invoke `planning-architecture-risk` if complexity >= 3
-- **SKIP** - User explicitly skips: If user says "skip architecture" or "skip design" → Skip corresponding subagent, document in Actions Taken
-- **SKIP** - Single-file trivial change: If change is single file, <200 lines, no architectural impact → Skip both subagents, proceed with build workflow directly
-- **SKIP** - Architecture already exists: If user says "architecture already defined" → Skip `planning-architecture-risk`, only invoke `planning-design-deployment` if needed
+- **SKIP** - Complexity too low: Complexity score <= 2 → Ask user: "Low complexity ({score}). Skip planning? (yes/no)"
+- **SKIP** - User explicitly skips: If user says "skip planning" → Skip `planner` subagent, document in Actions Taken
+- **SKIP** - Single-file trivial change: If change is single file, <200 lines, no architectural impact → Skip `planner` subagent, proceed with build workflow directly
+- **SKIP** - Planning already exists: If user says "planning already defined" → Skip `planner` subagent
 
 **Conflict Prevention**:
 
-- **Sequential execution**: Always run `planning-architecture-risk` FIRST, then `planning-design-deployment` (architecture informs design)
-- **No parallel execution**: Never invoke both simultaneously (architecture decisions needed before design)
-- **Share context**: `planning-design-deployment` receives architecture outputs from `planning-architecture-risk` as input
+- **Single subagent**: `planner` subagent covers all planning aspects in one comprehensive output
 
 **Subagent Dependency**:
 
-- `planning-design-deployment` DEPENDS on `planning-architecture-risk` outputs (architecture, risk register)
-- If `planning-architecture-risk` fails or skipped, provide minimal context to `planning-design-deployment` and flag limitation
+- `planner` subagent produces comprehensive planning output covering all aspects
 
 **Default Sequence** (unless conditions above met):
-Run the bundled planning subagents sequentially, sharing the Phase 1 notes as context:
+Invoke `planner` subagent with Phase 1 notes as context:
 
-1. `planning-architecture-risk` (loads `architecture-patterns` and `risk-analysis`) - FIRST.
-2. `planning-design-deployment` (loads `api-design-patterns`, `component-design-patterns`, and `deployment-patterns`) - SECOND (receives architecture outputs).
+1. `planner` (loads `architecture-patterns`, `planning-patterns`, `component-design-patterns`, `deployment-patterns`, `risk-analysis`) - Comprehensive planning covering architecture, risks, API design, component design, testing, deployment.
 
 **Integration with Feature Planning Skill**:
 
-- **Load Skill**: Reference `feature-planning` skill (enhanced with writing-plans patterns) for detailed implementation plan creation
+- **Load Skill**: Reference `planning-patterns` skill for detailed implementation plan creation
 - **Use Pattern**: Create detailed implementation plan with bite-sized tasks, incremental plan file updates, exact file paths, complete code examples
 - **Output**: Detailed implementation plan (`.claude/docs/plans/<feature-name>-plan.md`) ready for execution
 
@@ -683,10 +676,7 @@ Next: Proceeding to Phase 4 - Synthesis
 
 **Plan Workflow Inventory Validation** (MANDATORY after Phase 3):
 
-- [ ] planning-architecture-risk documented in Actions Taken (FIRST)
-- [ ] planning-design-deployment documented in Actions Taken (SECOND)
-- [ ] Sequential execution documented
-- [ ] Architecture outputs passed to design subagent documented
+- [ ] planner subagent documented in Actions Taken
 - [ ] All subagent outputs validated
 - [ ] No planning subagent missing (unless skip condition met)
 
@@ -700,8 +690,7 @@ If subagents disagree on architecture decisions:
 1. Document both positions explicitly:
    ```
    Conflict Detected:
-   - planning-architecture-risk: [decision/position] - Rationale: [reason]
-   - planning-design-deployment: [conflicting decision/position] - Rationale: [reason]
+   - planner: [decision/position] - Rationale: [reason]
    ```
 2. Identify root cause:
    - Different assumptions (e.g., scalability requirements)
@@ -1044,8 +1033,8 @@ fi
 ## Actions Taken
 
 - Functionality analysis completed: [user flow, admin flow, system flow, integration flow documented]
-- Skills loaded: requirements-analysis, architecture-patterns, risk-analysis, api-design-patterns, component-design-patterns, deployment-patterns
-- Subagents invoked: planning-architecture-risk, planning-design-deployment
+- Skills loaded: planning-patterns, architecture-patterns, risk-analysis, component-design-patterns, deployment-patterns
+- Subagents invoked: planner
 - Inputs reviewed: [list]
 - Tools used: [list]
 

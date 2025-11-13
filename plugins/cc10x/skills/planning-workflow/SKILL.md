@@ -32,7 +32,7 @@ Plan features by first understanding functionality, then creating structured pla
 
 1. **Understand functionality**: User needs file upload (User Flow: select → upload → confirm)
 2. **Requirements intake**: Goals, user stories, acceptance criteria
-3. **Delegate analysis**: planning-architecture-risk → planning-design-deployment
+3. **Delegate analysis**: planner subagent (consolidates planning-architecture-risk and planning-design-deployment)
 4. **Compile plan**: Architecture, components, risks, implementation roadmap
 5. **Verify**: Plan covers all functionality flows
 
@@ -43,9 +43,8 @@ Plan features by first understanding functionality, then creating structured pla
 **Dependencies:**
 
 - `cc10x-orchestrator` - Must be activated through orchestrator (do not use directly)
-- `requirements-analysis` - Required for requirements mapping
-- `feature-planning` - Required for structured planning
-- Planning subagents - Runs requirements intake and planning subagents
+- `planning-patterns` - Required for requirements mapping and structured planning (consolidates requirements-analysis and feature-planning)
+- Planning subagents - planner subagent (consolidates planning-architecture-risk and planning-design-deployment)
 
 **Prerequisites:**
 
@@ -59,8 +58,7 @@ Plan features by first understanding functionality, then creating structured pla
 
 **Planning Subagents:**
 
-- planning-architecture-risk - Analyzes architecture and risks
-- planning-design-deployment - Plans design and deployment
+- planner - Analyzes architecture, risks, design, and deployment (consolidates planning-architecture-risk and planning-design-deployment)
 
 ## Process
 
@@ -86,9 +84,9 @@ PLANNING NEEDED?
 │  └─ Not clear? → STOP, clarify requirements
 │
 ├─ Delegate Analysis
-│  ├─ planning-architecture-risk → planning-design-deployment
+│  ├─ planner subagent (consolidates planning-architecture-risk and planning-design-deployment)
 │  ├─ Analysis complete? → Continue
-│  └─ Not complete? → Wait for subagents
+│  └─ Not complete? → Wait for subagent
 │
 └─ Consolidate Plan
    ├─ Plan complete? → Verify
@@ -97,7 +95,7 @@ PLANNING NEEDED?
 
 - Gate: use the orchestrator's Complexity Rubric; confirm if score <=2
 - Intake: summarise goals, stories, acceptance criteria, assumptions
-- Delegate: `planning-architecture-risk`, `planning-design-deployment`
+- Delegate: `planner` subagent (consolidates planning-architecture-risk and planning-design-deployment)
 - Output: consolidated plan + Verification Summary
 
 ## Output Format (REQUIRED)
@@ -113,8 +111,8 @@ PLANNING NEEDED?
 
 ## Actions Taken
 
-- Skills loaded: requirements-analysis, architecture-patterns, risk-analysis, api-design-patterns, component-design-patterns, deployment-patterns
-- Subagents invoked: planning-architecture-risk, planning-design-deployment
+- Skills loaded: planning-patterns (consolidates requirements-analysis, feature-planning), architecture-patterns, risk-analysis, component-design-patterns, deployment-patterns
+- Subagents invoked: planner (consolidates planning-architecture-risk, planning-design-deployment)
 - Inputs reviewed: [list]
 - Tools used: [list]
 

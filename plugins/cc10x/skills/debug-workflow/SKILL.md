@@ -42,8 +42,7 @@ Debug bugs by first understanding expected functionality, then investigating sys
 **Dependencies:**
 
 - `cc10x-orchestrator` - Must be activated through orchestrator (do not use directly)
-- `systematic-debugging` - Required for systematic debugging approach
-- `root-cause-analysis` - Required for root cause identification
+- `debugging-patterns` - Required for systematic debugging approach (consolidates systematic-debugging, log-analysis-patterns, root-cause-analysis)
 - Investigation skills - Loaded based on bug type
 
 **Prerequisites:**
@@ -190,7 +189,7 @@ Commands:
 3. **Root cause not found**
    - **Symptom**: Fixes symptoms but bug returns
    - **Cause**: Didn't complete root cause investigation
-   - **Fix**: Use systematic-debugging skill, complete investigation
+   - **Fix**: Use debugging-patterns skill, complete investigation
    - **Prevention**: Always find root cause before fixing
 
 **If issues persist:**

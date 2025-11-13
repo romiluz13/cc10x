@@ -49,7 +49,7 @@
     },
     {
       "name": "cc10x-subagent-invocation",
-      "description": "CRITICAL: Do NOT write code directly. For BUILD workflow, you MUST invoke subagents in sequence: component-builder → code-reviewer → integration-verifier. For REVIEW workflow, you MUST invoke analysis subagents (analysis-risk-security, analysis-performance-quality, analysis-ux-accessibility). For PLAN workflow, you MUST invoke planning subagents (planning-architecture-risk → planning-design-deployment). For DEBUG workflow, you MUST invoke bug-investigator → code-reviewer → integration-verifier. Each subagent has a SUBAGENT.md file - read it before invoking. Verify subagent exists before invoking. Check skip conditions before invoking.",
+      "description": "CRITICAL: Do NOT write code directly. For BUILD workflow, you MUST invoke subagents in sequence: component-builder → code-reviewer → integration-verifier. For REVIEW workflow, you MUST invoke code-reviewer → integration-verifier (if integration changes detected). For PLAN workflow, you MUST invoke planner. For DEBUG workflow, you MUST invoke bug-investigator → code-reviewer → integration-verifier. Each subagent has a SUBAGENT.md file - read it before invoking. Verify subagent exists before invoking. Check skip conditions before invoking.",
       "alwaysApply": true,
       "globs": ["**/*"]
     },
