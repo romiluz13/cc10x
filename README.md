@@ -695,4 +695,4 @@ MIT License - Use freely, modify as needed.
 
 ---
 
-_cc10x v4.6.0 | Production Ready | Built for Claude Code_
+_cc10x v4.7.0 | Production Ready | Built for Claude Code_
