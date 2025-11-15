@@ -231,14 +231,12 @@ Next: Proceeding to Phase 2 - Plan vs Code
 **Required Skills**:
 
 - `project-context-understanding` - **MANDATORY** (understand project structure, dependencies, and conventions before validating)
+- `session-summary` - **MANDATORY** (load early for context preservation across compaction)
 - `planning-patterns` (covers requirements analysis)
 - `test-driven-development` - **MANDATORY** (test coverage analysis and validation)
+- `code-review-patterns` - **MANDATORY** (covers quality, maintainability, complexity, SOLID - required for code quality validation)
 - `verification-before-completion`
 - `memory-tool-integration` (filesystem-based memory always available)
-
-**Conditional Skills**:
-
-- `code-review-patterns` - Load if code quality validation needed (covers quality, maintainability, complexity, SOLID)
 
 **Detection Logic**:
 

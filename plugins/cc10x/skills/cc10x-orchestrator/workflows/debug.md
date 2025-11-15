@@ -396,12 +396,13 @@ Next: Proceeding to Phase 2 - Shared Skills
 **Required Skills**:
 
 - `project-context-understanding` - **MANDATORY** (understand project structure, dependencies, and conventions before debugging)
+- `session-summary` - **MANDATORY** (load early for context preservation across compaction)
+- `debug-workflow` - **MANDATORY** (workflow-specific guidance and coordination)
 - `debugging-patterns` (covers systematic debugging, log analysis, root cause analysis)
 - `test-driven-development`
 - `verification-before-completion`
 - `code-review-patterns` - **MANDATORY** (covers security, quality, required for `code-reviewer` subagent which is always invoked)
 - `memory-tool-integration` (filesystem-based memory always available)
-- `web-fetch-integration` (if external resources needed)
 
 **Skill Loading Strategy**:
 
@@ -425,8 +426,11 @@ For each skill above:
 **Bug Type Skill Selection**:
 
 - For performance bugs: `code-review-patterns` already covers performance
-- For integration bugs: Also load `architecture-patterns` (covers integration patterns, required for `integration-verifier` subagent)
-- For multiple independent bugs (3+): Also load `parallel-agent-dispatch` (orchestrator coordinates parallel subagent dispatch)
+- For integration bugs: Also load `architecture-patterns` (covers integration patterns, file patterns: `*api*.{ts,tsx}`, `*service*.{ts,tsx}`, `*integration*.{ts,tsx}`, `api/`, `services/`, `integrations/`, `external/`, `third-party/`, keywords: "API", "endpoint", "external service", "integration", required for `integration-verifier` subagent)
+- For multiple independent bugs (2+): Also load `parallel-agent-dispatch` (orchestrator coordinates parallel subagent dispatch)
+- For error handling bugs: Also load `debugging-patterns` (already loaded, covers error handling, file patterns: `*error*.{ts,tsx}`, `*exception*.{ts,tsx}`, `error-handlers/`, `exceptions/`, keywords: "error handling", "exception", "try-catch", "error recovery")
+- For test-related bugs: Also load `test-driven-development` (already loaded, file patterns: `*.test.{ts,tsx}`, `*.spec.{ts,tsx}`, `__tests__/`, `tests/`, `test/`, keywords: "test", "testing", "TDD", "unit test", "integration test", "e2e test", "spec")
+- When external resources needed: Load `web-fetch-integration` - **MANDATORY** when external dependencies detected (keywords: "API", "endpoint", "REST", "GraphQL", "external service", "library", "package", "npm", "import", "require", "third-party", "external", "integration", "webhook")
 
 **Note**: `code-review-patterns` is now a required skill (loaded in Phase 2) since `code-reviewer` subagent is always invoked.
 
@@ -457,7 +461,7 @@ For each identified bug:
 
 - **INVOKE** - Bug needs investigation: Always invoke `bug-investigator` (required for systematic debugging)
 - **INVOKE** - Fix implemented: After bug-investigator proposes fix, invoke `code-reviewer` (always for quality/security check)
-- **INVOKE** - Integration risk: After review passes, invoke `integration-verifier` (always to prevent regressions)
+- **INVOKE** - Integration risk: After review passes, invoke `integration-verifier` for all integration code (file patterns: `*api*.{ts,tsx}`, `*service*.{ts,tsx}`, `*integration*.{ts,tsx}`, `api/`, `services/`, `integrations/`, `external/`, `third-party/`, keywords: "API", "endpoint", "external service", "integration") - always to prevent regressions
 
 **When NOT to Invoke Subagents**:
 
@@ -474,16 +478,39 @@ For each identified bug:
 - **Sequential flow**: Investigation → Fix → Review → Integration (never parallel)
 - **Skip if blocked**: If bug-investigator fails, don't invoke code-reviewer or integration-verifier until investigation succeeds
 
+**CRITICAL**: Before invoking subagents, verify all required skills are loaded:
+
+**For `bug-investigator` subagent**:
+
+- ✅ `debugging-patterns` - Required skill (already loaded)
+- ✅ `test-driven-development` - Required skill (already loaded)
+- ✅ `verification-before-completion` - Required skill (already loaded)
+
+**For `code-reviewer` subagent**:
+
+- ✅ `code-review-patterns` - Required skill (already loaded)
+- ✅ `verification-before-completion` - Required skill (already loaded)
+
+**For `integration-verifier` subagent**:
+
+- ⚠️ `architecture-patterns` - Conditional skill (load if integration bugs detected) - Required for `integration-verifier`
+- ⚠️ `debugging-patterns` - Conditional skill (already loaded if integration bugs) - Required for `integration-verifier`
+- ✅ `test-driven-development` - Required skill (already loaded)
+- ✅ `verification-before-completion` - Required skill (already loaded)
+
 **Default Sequence** (unless conditions above met):
 
-1. Invoke `bug-investigator` with all context. Require:
+1. **Verify Skills**: Ensure all required skills for `bug-investigator` are loaded
+2. Invoke `bug-investigator` with all context. Require:
    - Reproduction of the failure.
    - Collection of relevant logs/metrics (LOG FIRST).
    - Written hypothesis before implementing fixes.
    - Failing regression test proving the bug.
-2. Once the fix is proposed, re-run the regression test to verify GREEN and document commands run.
-3. Send the changes to `code-reviewer` for validation (quality, security, performance) (unless user skipped or trivial fix).
-4. Use `integration-verifier` to confirm there are no regressions in the broader flow (unless user skipped or trivial fix).
+3. Once the fix is proposed, re-run the regression test to verify GREEN and document commands run.
+4. **Verify Skills**: Ensure all required skills for `code-reviewer` are loaded
+5. Send the changes to `code-reviewer` for validation (quality, security, performance) (unless user skipped or trivial fix).
+6. **Verify Skills**: Ensure all required skills for `integration-verifier` are loaded (especially `architecture-patterns` if integration code detected)
+7. Use `integration-verifier` to confirm there are no regressions in the broader flow (unless user skipped or trivial fix).
 
 File size sanity check: As fixes accumulate, if any modified file exceeds ~500 lines, propose a focused refactor/split plan (after green tests).
 

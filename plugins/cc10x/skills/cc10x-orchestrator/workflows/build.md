@@ -406,29 +406,34 @@ find_active_plan() {
 **Required Skills**:
 
 - `project-context-understanding` - **MANDATORY** (understand project patterns, conventions, and structure before building)
+- `session-summary` - **MANDATORY** (load early for context preservation across compaction)
 - `planning-patterns` (covers requirements analysis)
+- `build-workflow` - **MANDATORY** (workflow-specific guidance and coordination)
 - `code-review-patterns` (covers security, quality) - **MANDATORY** (build quality code with SOLID principles, maintainability)
 - `code-generation` - **MANDATORY** (code generation patterns and best practices)
 - `component-design-patterns` - **MANDATORY** (component design patterns and best practices)
 - `test-driven-development`
 - `verification-before-completion`
 - `memory-tool-integration` (filesystem-based memory always available)
-- `web-fetch-integration` (if external docs needed)
 
 **Conditional Skills**:
 
-- `frontend-patterns` - **MANDATORY** when UI components detected (file patterns: _.tsx, _.jsx, \*.vue, components/, ui/)
-- `design-patterns` - Load if building APIs, components, or integrations
+- `frontend-patterns` - **MANDATORY** when UI components detected (file patterns: `*.tsx`, `*.jsx`, `*.vue`, `*.svelte`, `*.astro`, `components/`, `ui/`, `pages/`, `views/`, `src/components/`, `app/components/`, `lib/components/`, `shared/components/`, keywords: "button", "modal", "layout", "component", "page", "screen", "view", "widget")
+- `design-patterns` - Load if building APIs, components, or integrations (keywords: "pattern", "design pattern", "API design", "component design", "architectural pattern", "structural pattern", "behavioral pattern", "creational pattern", "design system")
 - `code-review-patterns` - Already loaded (covers performance)
-- `architecture-patterns` - Load if integration code detected (covers integration patterns, API endpoints, external services, data flows) - Required for `integration-verifier` subagent
-- `debugging-patterns` - Load if integration code detected (covers log analysis, API endpoints, external services, data flows) - Required for `integration-verifier` subagent
+- `architecture-patterns` - Load if integration code detected (covers integration patterns, API endpoints, external services, data flows, file patterns: `*api*.{ts,tsx}`, `*service*.{ts,tsx}`, `*integration*.{ts,tsx}`, `api/`, `services/`, `integrations/`, `external/`, `third-party/`, `handlers/`, `resolvers/`, keywords: "API", "endpoint", "external service", "integration", "HTTP client", "RPC", "gRPC", "webhook") - Required for `integration-verifier` subagent
+- `debugging-patterns` - Load if integration code detected OR error handling code detected (file patterns: `*error*.{ts,tsx}`, `*exception*.{ts,tsx}`, `error-handlers/`, `exceptions/`, keywords: "error handling", "exception", "try-catch", "error recovery") - Required for `integration-verifier` subagent
+- `web-fetch-integration` - **MANDATORY** when external dependencies detected (keywords: "API", "endpoint", "REST", "GraphQL", "external service", "library", "package", "npm", "import", "require", "third-party", "external", "integration", "webhook")
 
 **Detection Logic**:
 
-- UI Components: File patterns `*.tsx`, `*.jsx`, `*.vue`, `components/`, `ui/`, component names (Form, Button, Modal, etc.), or user requests UI components
-- Design Patterns: Building APIs, components, or integrations mentioned in requirements
+- UI Components: File patterns `*.tsx`, `*.jsx`, `*.vue`, `*.svelte`, `*.astro`, `components/`, `ui/`, `pages/`, `views/`, `src/components/`, `app/components/`, `lib/components/`, `shared/components/`, component names (Form, Button, Modal, etc.), or user requests UI components, keywords "button", "modal", "layout", "component", "page", "screen", "view", "widget"
+- Design Patterns: Building APIs, components, or integrations mentioned in requirements, keywords "pattern", "design pattern", "API design", "component design", "architectural pattern", "structural pattern", "behavioral pattern", "creational pattern", "design system"
 - Performance-Critical Code: Keywords "performance", "optimization", "fast", "efficient", "bottleneck"
-- Integration Code: File patterns `*api*.{ts,tsx,js,jsx}`, `*service*.{ts,tsx}`, `*integration*.{ts,tsx}`, `api/`, `services/`, keywords "API", "endpoint", "fetch", "axios", "external service", "integration"
+- Integration Code: File patterns `*api*.{ts,tsx,js,jsx}`, `*service*.{ts,tsx}`, `*integration*.{ts,tsx}`, `api/`, `services/`, `integrations/`, `external/`, `third-party/`, `handlers/`, `resolvers/`, keywords "API", "endpoint", "fetch", "axios", "external service", "integration", "HTTP client", "RPC", "gRPC", "webhook", "third-party", "external API"
+- Test Files: File patterns `*.test.{ts,tsx}`, `*.spec.{ts,tsx}`, `__tests__/`, `tests/`, `test/`, keywords "test", "testing", "TDD", "unit test", "integration test", "e2e test", "spec"
+- Error Handling: File patterns `*error*.{ts,tsx}`, `*exception*.{ts,tsx}`, `error-handlers/`, `exceptions/`, keywords "error handling", "exception", "try-catch", "error recovery"
+- External Dependencies: Keywords "API", "endpoint", "REST", "GraphQL", "external service", "library", "package", "npm", "import", "require", "third-party", "external", "integration", "webhook"
 
 **Skill Loading Strategy**:
 
@@ -693,7 +698,7 @@ For every component:
 
 - **INVOKE** - Component building needed: Always invoke `component-builder` (required for TDD)
 - **INVOKE** - Code changes made: After component-builder completes, invoke `code-reviewer` (always)
-- **INVOKE** - Integration checks needed: After review passes, invoke `integration-verifier` (always unless user skips)
+- **INVOKE** - Integration checks needed: After review passes, invoke `integration-verifier` for all integration code (file patterns: `*api*.{ts,tsx}`, `*service*.{ts,tsx}`, `*integration*.{ts,tsx}`, `api/`, `services/`, `integrations/`, `external/`, `third-party/`, keywords: "API", "endpoint", "external service", "integration") - always unless user skips
 
 **When NOT to Invoke Subagents**:
 
@@ -705,10 +710,18 @@ For every component:
 
 **Conflict Prevention**:
 
-- **Never invoke multiple builders simultaneously**: Each component gets its own `component-builder` invocation
+- **Independent components can be built in parallel**: If components are independent (no dependencies), build them in parallel using parallel subagent invocation
+- **Dependent components built sequentially**: If components have dependencies, build sequentially (respect dependency order)
 - **Sequential review**: Review happens AFTER build completes, not in parallel
 - **Sequential integration**: Integration check happens AFTER review, not in parallel
 - **One bug at a time**: If debugging needed, finish bug-investigator before invoking code-reviewer
+
+**Parallel Execution for Independent Components**:
+
+- **When to use parallel execution**: Multiple independent components (2+ components, no dependencies)
+- **How to detect independence**: Components don't import each other, don't share state, operate independently
+- **Execution mode**: Invoke `component-builder` subagent for each component in parallel
+- **Fallback**: If parallel execution fails, retry sequentially
 
 **Display Success Message** (after Phase 3 completion):
 
@@ -738,20 +751,23 @@ Next: Proceeding to Phase 4 - Component Execution Loop
 
 **Default Sequence** (unless user skips):
 
-1. Invoke `component-builder` with the brief. Require:
+1. **Verify Skills**: Ensure all required skills for `component-builder` are loaded
+2. Invoke `component-builder` with the brief. Require:
    - Failing test first (RED) with command output captured.
    - Minimal implementation (GREEN).
    - Refactor while keeping tests green.
    - Verification log referencing commands executed.
-2. Invoke `code-reviewer` on the resulting changes (unless user skipped). Expect:
+3. **Verify Skills**: Ensure all required skills for `code-reviewer` are loaded (especially `frontend-patterns` if UI code)
+4. Invoke `code-reviewer` on the resulting changes (unless user skipped). Expect:
    - Findings with file/line references.
    - Security/performance considerations tied to the relevant skills.
    - Recommendations or approval status.
-3. Invoke `integration-verifier` to confirm broader system behaviour (unless user skipped). Expect:
+5. **Verify Skills**: Ensure all required skills for `integration-verifier` are loaded (especially `architecture-patterns` and `debugging-patterns` if integration code detected)
+6. Invoke `integration-verifier` to confirm broader system behaviour (unless user skipped). Expect:
    - Integration or end-to-end checks.
    - Additional tests or scripts run, plus their outputs.
-4. Consolidate notes. Address blocking review feedback before moving to the next component.
-5. File size sanity check: Before moving on, scan changed files; if any exceeds ~500 lines, propose a concrete refactor/split plan.
+7. Consolidate notes. Address blocking review feedback before moving to the next component.
+8. File size sanity check: Before moving on, scan changed files; if any exceeds ~500 lines, propose a concrete refactor/split plan.
 
 **Subagent Invocation Pattern** (for each subagent):
 

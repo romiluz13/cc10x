@@ -407,27 +407,32 @@ Next: Proceeding to Phase 2 - Load Required Skills
 **Required Skills** (all exist under `plugins/cc10x/skills/`):
 
 - `project-context-understanding` - **MANDATORY** (understand project structure, dependencies, and conventions before reviewing)
+- `session-summary` - **MANDATORY** (load early for context preservation across compaction)
 - `risk-analysis`
 - `code-review-patterns` (covers security, quality, performance)
-- `frontend-patterns` (covers UX, UI design, accessibility - for UI code only)
+- `review-workflow` - **MANDATORY** (workflow-specific guidance and coordination)
 - `verification-before-completion` - **MANDATORY** (verify findings before completion)
 - `memory-tool-integration` (filesystem-based memory always available)
-- `web-fetch-integration` (if external standards needed)
 
 **Conditional Skills**:
 
-- `frontend-patterns` - Load if UI components detected (file patterns: _.tsx, _.jsx, \*.vue, components/, ui/)
-- `design-patterns` - Load if design patterns mentioned or pattern review needed
+- `frontend-patterns` - **MANDATORY** when UI components detected (file patterns: `*.tsx`, `*.jsx`, `*.vue`, `*.svelte`, `*.astro`, `components/`, `ui/`, `pages/`, `views/`, `src/components/`, `app/components/`, `lib/components/`, `shared/components/`)
+- `design-patterns` - Load if design patterns mentioned or pattern review needed (keywords: "pattern", "design pattern", "API design", "component design", "architectural pattern", "structural pattern", "behavioral pattern", "creational pattern", "design system")
 - `architecture-patterns` - Load if integration or API code detected (covers integration and API design patterns)
-- `test-driven-development` - Load if integration code detected (required for `integration-verifier` subagent when integration changes detected)
-- `debugging-patterns` - Load if integration code detected (covers log analysis, required for `integration-verifier` subagent when integration changes detected)
+- `test-driven-development` - Load if integration code detected OR test files detected (file patterns: `*.test.{ts,tsx}`, `*.spec.{ts,tsx}`, `__tests__/`, `tests/`, `test/`, keywords: "test", "testing", "TDD", "unit test", "integration test", "e2e test", "spec")
+- `debugging-patterns` - Load if integration code detected OR error handling code detected (file patterns: `*error*.{ts,tsx}`, `*exception*.{ts,tsx}`, `error-handlers/`, `exceptions/`, keywords: "error handling", "exception", "try-catch", "error recovery")
+- `web-fetch-integration` - **MANDATORY** when external dependencies detected (keywords: "API", "endpoint", "REST", "GraphQL", "external service", "library", "package", "npm", "import", "require", "third-party", "external", "integration", "webhook")
 
 **Detection Logic**:
 
-- UI Components: File patterns `*.tsx`, `*.jsx`, `*.vue`, `components/`, `ui/`
-- Design Patterns: Keywords "pattern", "design pattern", "API design", "component design"
-- Integration Code: File patterns `*api*.{ts,tsx,js,jsx}`, `*service*.{ts,tsx}`, `*integration*.{ts,tsx}`, `api/`, `services/`, keywords "API", "endpoint", "fetch", "axios", "external service"
-- API Code: File patterns `*api*.{ts,tsx}`, `*endpoint*.{ts,tsx}`, `routes/`, `controllers/`, keywords "REST", "GraphQL", "endpoint", "route"
+- UI Components: File patterns `*.tsx`, `*.jsx`, `*.vue`, `*.svelte`, `*.astro`, `components/`, `ui/`, `pages/`, `views/`, `src/components/`, `app/components/`, `lib/components/`, `shared/components/`, keywords "button", "modal", "layout", "component", "page", "screen", "view", "widget"
+- Design Patterns: Keywords "pattern", "design pattern", "API design", "component design", "architectural pattern", "structural pattern", "behavioral pattern", "creational pattern", "design system"
+- Integration Code: File patterns `*api*.{ts,tsx,js,jsx}`, `*service*.{ts,tsx}`, `*integration*.{ts,tsx}`, `api/`, `services/`, `integrations/`, `external/`, `third-party/`, `handlers/`, `resolvers/`, keywords "API", "endpoint", "fetch", "axios", "external service", "HTTP client", "RPC", "gRPC", "webhook", "third-party", "external API"
+- API Code: File patterns `*api*.{ts,tsx}`, `*endpoint*.{ts,tsx}`, `routes/`, `controllers/`, `handlers/`, `resolvers/`, `services/`, `api/`, `endpoints/`, keywords "REST", "GraphQL", "endpoint", "route", "controller", "handler", "resolver", "service", "microservice"
+- Test Files: File patterns `*.test.{ts,tsx}`, `*.spec.{ts,tsx}`, `__tests__/`, `tests/`, `test/`, keywords "test", "testing", "TDD", "unit test", "integration test", "e2e test", "spec"
+- Error Handling: File patterns `*error*.{ts,tsx}`, `*exception*.{ts,tsx}`, `error-handlers/`, `exceptions/`, keywords "error handling", "exception", "try-catch", "error recovery"
+- Config Files: File patterns `*.config.{js,ts,json}`, `*.env`, `config/`, keywords "config", "configuration", "settings"
+- External Dependencies: Keywords "API", "endpoint", "REST", "GraphQL", "external service", "library", "package", "npm", "import", "require", "third-party", "external", "integration", "webhook"
 
 **Skill Loading Strategy**:
 
@@ -515,8 +520,8 @@ Next: Proceeding to Phase 3 - Dispatch Analysis Subagents
 
 **When NOT to Invoke Subagents** (skip to save context/tokens):
 
-- **SKIP** - Scope too small: Single file < 50 lines OR single function < 20 lines → Ask user: "Scope is very small ({N} lines). Skip subagent analysis or proceed?"
-- **SKIP** - Read-only files: If scope contains only markdown/docs/config files (no code) → Skip `code-reviewer` subagent unless security review requested
+- **SKIP** - Scope too small: Single file < 50 lines OR single function < 20 lines → Ask user: "Scope is very small ({N} lines). Skip subagent analysis or proceed?" (Always ask, don't auto-skip)
+- **SKIP** - Read-only files: If scope contains only markdown/docs files (no code) → Ask user: "Scope contains only documentation files. Skip code review or proceed?" (Config files should be reviewed for security issues)
 - **SKIP** - User explicitly skips: If user says "skip review" or "quick check only" → Document in Actions Taken and skip subagent invocation
 - **SKIP** - No code files: If scope is empty or contains no code files → Report: "No code files in scope. Subagent analysis skipped."
 
@@ -530,7 +535,15 @@ Next: Proceeding to Phase 3 - Dispatch Analysis Subagents
   - "UX" or "accessibility" → UX/Accessibility-focused
   - General "review" or "audit" → Comprehensive review
 
-**Step 2: Conditional Subagent Selection**:
+**Step 2: File Scope Analysis**:
+
+- **Multiple independent files** (2+ files, no dependencies between them):
+  - Analyze file dependencies: Check if files import each other or share state
+  - If independent: Review files in parallel using parallel subagent invocation
+  - If dependent: Review sequentially (respect dependencies)
+- **Single file or dependent files**: Review sequentially
+
+**Step 3: Conditional Subagent Selection**:
 
 - **IF focused request** (security/performance/UX mentioned):
   - Invoke ONLY the relevant subagent:
@@ -544,10 +557,35 @@ Next: Proceeding to Phase 3 - Dispatch Analysis Subagents
     ```
 
 - **Default behavior** (general/comprehensive review): Invoke `code-reviewer` subagent
-- **INVOKE integration-verifier** - Integration changes detected: After code-reviewer completes (if invoked), if integration changes detected → Invoke `integration-verifier` for integration verification
-  - **When to invoke**: Integration changes detected (API endpoints, external services, data flows)
-  - **When NOT to invoke**: No integration changes, user explicitly skips integration verification
+
+**CRITICAL**: Before invoking `code-reviewer` subagent, verify required skills are loaded:
+
+- ✅ `code-review-patterns` - Required skill (already loaded)
+- ✅ `verification-before-completion` - Required skill (already loaded)
+- ⚠️ `frontend-patterns` - Conditional skill (load if UI code detected) - Required for `code-reviewer` when UI code present
+
+**If UI code detected**: Ensure `frontend-patterns` is loaded before invoking `code-reviewer`
+
+- **INVOKE integration-verifier** - Integration code present: After code-reviewer completes (if invoked), if integration code detected → Invoke `integration-verifier` for integration verification
+  - **When to invoke**: Integration code detected (API endpoints, external services, data flows, file patterns: `*api*.{ts,tsx}`, `*service*.{ts,tsx}`, `*integration*.{ts,tsx}`, `api/`, `services/`, `integrations/`, `external/`, `third-party/`, keywords: "API", "endpoint", "external service", "integration")
+  - **When NOT to invoke**: No integration code detected, user explicitly skips integration verification
   - **Execution**: Sequential after code-reviewer (if invoked)
+
+**CRITICAL**: Before invoking `integration-verifier` subagent, verify required skills are loaded:
+
+- ⚠️ `architecture-patterns` - Conditional skill (load if integration code detected) - Required for `integration-verifier`
+- ⚠️ `debugging-patterns` - Conditional skill (load if integration code detected) - Required for `integration-verifier`
+- ⚠️ `test-driven-development` - Conditional skill (load if integration code detected) - Required for `integration-verifier`
+- ✅ `verification-before-completion` - Required skill (already loaded)
+
+**If integration code detected**: Ensure `architecture-patterns`, `debugging-patterns`, and `test-driven-development` are loaded before invoking `integration-verifier`
+
+**Parallel Execution for Multiple Files**:
+
+- **When to use parallel execution**: Multiple independent files (2+ files, no dependencies)
+- **How to detect independence**: Files don't import each other, don't share state, operate independently
+- **Execution mode**: Invoke `code-reviewer` subagent for each file in parallel
+- **Fallback**: If parallel execution fails, retry sequentially
 
 For each subagent (parallel or single), pass the scoped files and relevant user notes. Require every subagent to produce:
 

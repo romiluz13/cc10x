@@ -349,27 +349,39 @@ Next: Proceeding to Phase 2 - Requirements Intake
 **Load Requirements Skills**:
 
 - `project-context-understanding` - **MANDATORY** (understand existing architecture, dependencies, and conventions before planning)
+- `session-summary` - **MANDATORY** (load early for context preservation across compaction)
 - `planning-patterns` - **MANDATORY** (covers requirements analysis and feature planning)
+- `planning-workflow` - **MANDATORY** (workflow-specific guidance and coordination)
 - `design-patterns` - **MANDATORY** (provides API/component/integration patterns)
 - `architecture-patterns` - **MANDATORY** (provides architecture design patterns)
 - `risk-analysis` - **MANDATORY** (provides risk analysis framework)
 - `verification-before-completion` - **MANDATORY** (verify plan completeness and accuracy before completion)
 - `memory-tool-integration` (filesystem-based memory always available)
-- `web-fetch-integration` (if external docs needed)
 
 **Conditional Skills**:
 
-- `frontend-patterns` - Load if UI features mentioned (keywords: UI, interface, design, form, dashboard)
-- `architecture-patterns` - Load if API planning detected (covers API design patterns, keywords: API, endpoint, REST, GraphQL, route)
-- `component-design-patterns` - Load if component planning detected (keywords: component, UI component, React component, Vue component)
-- `deployment-patterns` - Load if deployment planning detected (keywords: deploy, deployment, production, staging, CI/CD, infrastructure) - Required for `planner` subagent
+- `frontend-patterns` - **MANDATORY** when UI features mentioned (keywords: "UI", "interface", "design", "form", "dashboard", "button", "modal", "layout", "component", "page", "screen", "view", "widget")
+- `component-design-patterns` - Load if component planning detected (keywords: "component", "UI component", "React component", "Vue component", "Svelte component", "Angular component", "Solid component", "Preact component", "Next.js component") - Required for `planner` subagent when component planning detected
+- `deployment-patterns` - Load if deployment planning detected (keywords: "deploy", "deployment", "production", "staging", "CI/CD", "infrastructure", "Docker", "Kubernetes", "AWS", "cloud", "Vercel", "Netlify", "Heroku", "Railway", "Fly.io", "Render", "Cloudflare", "Azure", "GCP") - Required for `planner` subagent
+- `brainstorming` - Load if requirements refinement needed (keywords: "refine", "brainstorm", "explore", "alternatives", "questions") - Used in Phase 1 for requirements refinement
+- `app-design-generation` - Load if app design document needed (keywords: "app design", "design doc", "create design document", "application design")
+- `tech-stack-generation` - Load if tech stack documentation needed (keywords: "tech stack", "technical stack", "create tech stack", "technology stack")
+- `cursor-rules-generation` - Load if cursor rules needed (keywords: "cursor rules", "create rule", "generate cursor rules", "cursor conventions")
+- `project-structure-generation` - Load if project structure documentation needed (keywords: "project structure", "create doc", "generate project docs", "project organization")
+- `web-fetch-integration` - **MANDATORY** when external dependencies detected (keywords: "API", "endpoint", "REST", "GraphQL", "external service", "library", "package", "npm", "import", "require", "third-party", "external", "integration", "webhook")
 
 **Detection Logic**:
 
-- UI Features: Keywords "UI", "interface", "design", "form", "dashboard"
-- API Planning: Keywords "API", "endpoint", "REST", "GraphQL", "route"
-- Component Planning: Keywords "component", "UI component", "React component", "Vue component"
-- Deployment Planning: Keywords "deploy", "deployment", "production", "staging", "CI/CD", "infrastructure", "Docker", "Kubernetes", "AWS", "cloud"
+- UI Features: Keywords "UI", "interface", "design", "form", "dashboard", "button", "modal", "layout", "component", "page", "screen", "view", "widget"
+- API Planning: Keywords "API", "endpoint", "REST", "GraphQL", "route", "controller", "handler", "resolver", "service", "microservice", "HTTP client", "RPC", "gRPC"
+- Component Planning: Keywords "component", "UI component", "React component", "Vue component", "Svelte component", "Angular component", "Solid component", "Preact component", "Next.js component"
+- Deployment Planning: Keywords "deploy", "deployment", "production", "staging", "CI/CD", "infrastructure", "Docker", "Kubernetes", "AWS", "cloud", "Vercel", "Netlify", "Heroku", "Railway", "Fly.io", "Render", "Cloudflare", "Azure", "GCP"
+- Requirements Refinement: Keywords "refine", "brainstorm", "explore", "alternatives", "questions", "clarify"
+- App Design Documentation: Keywords "app design", "design doc", "create design document", "application design"
+- Tech Stack Documentation: Keywords "tech stack", "technical stack", "create tech stack", "technology stack"
+- Cursor Rules Documentation: Keywords "cursor rules", "create rule", "generate cursor rules", "cursor conventions"
+- Project Structure Documentation: Keywords "project structure", "create doc", "generate project docs", "project organization"
+- External Dependencies: Keywords "API", "endpoint", "REST", "GraphQL", "external service", "library", "package", "npm", "import", "require", "third-party", "external", "integration", "webhook"
 
 **Skill Loading Strategy**:
 
@@ -590,12 +602,12 @@ Next: Proceeding to Phase 3 - Delegated Analysis
 
 **When to Invoke Subagents**:
 
-- **INVOKE** - Planning needed: Complexity score >= 3 OR multi-file/multi-component work OR API/component/deployment planning → Invoke `planner` subagent (covers architecture, risks, API design, component design, testing, deployment)
-- **INVOKE** - Complete planning: `planner` subagent provides comprehensive planning (default for complexity >= 3)
+- **INVOKE** - Planning needed: Complexity score >= 2 OR multi-file/multi-component work OR API/component/deployment planning → Invoke `planner` subagent (covers architecture, risks, API design, component design, testing, deployment)
+- **INVOKE** - Complete planning: `planner` subagent provides comprehensive planning (default for complexity >= 2)
 
 **When NOT to Invoke Subagents**:
 
-- **SKIP** - Complexity too low: Complexity score <= 2 → Ask user: "Low complexity ({score}). Skip planning? (yes/no)"
+- **SKIP** - Complexity too low: Complexity score < 2 → Ask user: "Very low complexity ({score}). Skip planning? (yes/no)"
 - **SKIP** - User explicitly skips: If user says "skip planning" → Skip `planner` subagent, document in Actions Taken
 - **SKIP** - Single-file trivial change: If change is single file, <200 lines, no architectural impact → Skip `planner` subagent, proceed with build workflow directly
 - **SKIP** - Planning already exists: If user says "planning already defined" → Skip `planner` subagent
@@ -608,10 +620,29 @@ Next: Proceeding to Phase 3 - Delegated Analysis
 
 - `planner` subagent produces comprehensive planning output covering all aspects
 
+**CRITICAL**: Before invoking `planner` subagent, verify all required skills are loaded:
+
+- ✅ `architecture-patterns` - Required skill (already loaded)
+- ✅ `planning-patterns` - Required skill (already loaded)
+- ✅ `risk-analysis` - Required skill (already loaded)
+- ✅ `verification-before-completion` - Required skill (already loaded)
+- ⚠️ `component-design-patterns` - Conditional skill (load if component planning detected)
+- ⚠️ `deployment-patterns` - Conditional skill (load if deployment planning detected)
+
+**If component planning detected**: Ensure `component-design-patterns` is loaded before invoking `planner`
+**If deployment planning detected**: Ensure `deployment-patterns` is loaded before invoking `planner`
+
 **Default Sequence** (unless conditions above met):
 Invoke `planner` subagent with Phase 1 notes as context:
 
-1. `planner` (loads `architecture-patterns`, `planning-patterns`, `component-design-patterns`, `deployment-patterns`, `risk-analysis`) - Comprehensive planning covering architecture, risks, API design, component design, testing, deployment.
+1. **Verify Skills Loaded**: Check that all required skills for `planner` subagent are loaded:
+   - `architecture-patterns` ✅
+   - `planning-patterns` ✅
+   - `risk-analysis` ✅
+   - `verification-before-completion` ✅
+   - `component-design-patterns` ✅ (if component planning detected)
+   - `deployment-patterns` ✅ (if deployment planning detected)
+2. **Invoke `planner` subagent** - Comprehensive planning covering architecture, risks, API design, component design, testing, deployment.
 
 **Integration with Feature Planning Skill**:
 
