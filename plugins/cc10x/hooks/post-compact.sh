@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# cc10x v4.6.0 - Post-Compact Hook (Simplified)
+# cc10x v4.7.0 - Post-Compact Hook (Simplified)
 # Restores workflow state and outputs after context compaction
 
 set -e

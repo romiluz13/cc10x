@@ -1,5 +1,5 @@
 #!/bin/bash
-# cc10x v4.6.0 - Pre-Compact Hook (Simplified)
+# cc10x v4.7.0 - Pre-Compact Hook (Simplified)
 # Creates snapshot before context compaction to preserve workflow state
 
 set -e
