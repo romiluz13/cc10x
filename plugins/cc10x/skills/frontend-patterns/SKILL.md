@@ -1,6 +1,6 @@
 ---
 name: frontend-patterns
-description: Context-aware frontend analysis covering UX, UI design, and accessibility. Use PROACTIVELY when reviewing or designing user-facing interfaces. First understands functionality requirements and user flows, then checks for UX issues, visual design problems, and accessibility blockers that affect functionality. Provides specific improvements with examples aligned with project patterns. Focuses on issues that prevent users from using functionality, not perfect UX/UI/accessibility patterns.
+description: Context-aware frontend analysis and design covering UX, UI design, accessibility, and creative aesthetic excellence. Use PROACTIVELY when reviewing or designing user-facing interfaces. First understands functionality requirements and user flows, then checks for UX issues, visual design problems, accessibility blockers, and opportunities for distinctive aesthetic design. Provides specific improvements with examples aligned with project patterns. Focuses on issues that prevent users from using functionality AND opportunities to create distinctive, memorable interfaces that avoid generic AI aesthetics.
 allowed-tools: Read, Grep, Glob
 ---
 
@@ -13,10 +13,12 @@ This skill provides comprehensive frontend analysis covering UX, UI design, and 
 **Unique Value**:
 
 - Understands user flows before checking UX/UI/accessibility
-- Covers UX, UI design, and accessibility in one skill
-- Focuses on issues affecting functionality
+- Covers UX, UI design, accessibility, AND creative aesthetic excellence in one skill
+- Focuses on issues affecting functionality AND opportunities for distinctive design
 - Provides specific improvements with examples
 - Understands project's frontend patterns
+- Guides bold aesthetic direction and distinctive design choices
+- Avoids generic AI aesthetics (Inter, Roboto, purple gradients, predictable layouts)
 
 **When to Use**:
 
@@ -24,6 +26,8 @@ This skill provides comprehensive frontend analysis covering UX, UI design, and 
 - When reviewing user-facing interfaces
 - When designing UI components
 - When checking accessibility compliance
+- When creating distinctive, memorable interfaces
+- When avoiding generic AI aesthetics
 
 ---
 
@@ -275,8 +279,10 @@ Review frontend by first understanding functionality and user flows, then checki
 **For detailed patterns, see**:
 
 - **UX Patterns**: Loading states, error messages, form validation, action feedback, touch targets, consistency patterns
-- **UI Design Patterns**: Visual hierarchy, design tokens, layout systems, typography, state design
+- **UI Design Patterns**: Visual hierarchy, design tokens, layout systems, typography, color themes, motion, spatial composition, visual details, state design
+- **Design Thinking**: Bold aesthetic direction, tone selection, differentiation, avoiding generic AI aesthetics
 - **Accessibility Patterns**: Keyboard navigation, screen reader support, color contrast, focus management, semantic HTML, WCAG compliance
+- **PATTERNS.md**: Comprehensive pattern library including all concepts from Anthropic's [frontend-design skill](https://github.com/anthropics/skills/tree/main/frontend-design)
 
 ---
 

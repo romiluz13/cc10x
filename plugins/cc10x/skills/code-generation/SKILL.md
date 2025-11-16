@@ -327,8 +327,12 @@ export function Button({ variant = 'primary', onClick, children }: ButtonProps) 
 
 **For detailed examples and checklist, see:**
 
+- **PATTERNS.md**: Complete pattern library covering API scaffolding, component scaffolding, page scaffolding, security patterns
 - **EXAMPLES.md**: Complete code generation examples (File Upload to CRM implementation)
 - **REFERENCE.md**: Code Generation Checklist
+- **API Scaffolding**: Next.js 15 App Router patterns, Zod validation, consistent error format, TypeScript strict typing
+- **Component Scaffolding**: React 19 features, component type selection, accessibility-first, performance optimization
+- **Security Patterns**: Multi-layer security approach, stack-specific auth patterns, security checklist
 
 ---
 

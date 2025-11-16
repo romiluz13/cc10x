@@ -8,12 +8,17 @@ allowed-tools: Read, Grep, Glob, Bash
 
 ## Purpose
 
-This skill provides comprehensive code review analysis covering security, code quality, and performance. It understands functionality and project patterns before checking, focusing on issues that affect functionality and providing specific remediation aligned with project patterns.
+This skill provides comprehensive code review analysis covering security, code quality, performance, refactoring, code explanation, and code cleanup. It understands functionality and project patterns before checking, focusing on issues that affect functionality and providing specific remediation aligned with project patterns.
 
 **Unique Value**:
 
 - Context-aware analysis (not generic checklists)
-- Covers security, quality, and performance in one skill
+- Covers security, quality, performance, refactoring, explanation, cleanup in one skill
+- Performance measurement-first approach (measure before optimizing)
+- Refactoring methodology with complexity metrics and proven techniques
+- Security threat modeling with systematic vulnerability scanning
+- Code explanation with visual diagrams and progressive disclosure
+- Code cleanup with code smell detection and refactoring catalog
 - Focuses on issues affecting functionality
 - Provides specific fixes with code examples
 - Understands project patterns before checking
@@ -23,6 +28,9 @@ This skill provides comprehensive code review analysis covering security, code q
 - After functionality is verified
 - When reviewing code that implements features
 - When checking for security, quality, or performance issues
+- When refactoring code to improve structure
+- When explaining complex code
+- When cleaning up technical debt
 
 ---
 
@@ -273,9 +281,13 @@ Review code by first understanding functionality and project patterns, then chec
 
 **For detailed patterns, see**:
 
-- **Security Patterns**: Authentication, Authorization, Injection Prevention, File Upload, Secrets Management, OWASP Top 10
+- **PATTERNS.md**: Complete pattern library covering security, quality, performance, refactoring, code explanation, code cleanup
+- **Security Patterns**: Authentication, Authorization, Injection Prevention, File Upload, Secrets Management, Threat Modeling, OWASP Top 10
 - **Quality Patterns**: Naming, Organization, Error Handling, Testing, Duplication, Complexity, SOLID Principles
-- **Performance Patterns**: Database, Algorithm, Frontend, Memory Leak, Caching Patterns
+- **Performance Patterns**: Measurement-first approach, Frontend optimization, Backend optimization, Critical path analysis, Database optimization
+- **Refactoring Patterns**: Complexity metrics, Refactoring catalog techniques, Code simplification, Technical debt reduction
+- **Code Explanation Patterns**: Complexity assessment, Visual diagrams (Mermaid), Progressive explanation, Pattern recognition
+- **Code Cleanup Patterns**: Code smell detection, Refactoring techniques, Modern pattern application, Dead code removal
 
 ---
 

@@ -345,7 +345,7 @@ For each architecture decision, provide:
 
 **For detailed architecture patterns and reference materials, see:**
 
-- **PATTERNS.md**: Architecture Pattern Library (Architecture Views, Component Boundaries, Data Modeling, Data Flow, Cross-Cutting Concerns, NFRs Checklist, ADR Template)
+- **PATTERNS.md**: Architecture Pattern Library (System Architecture Methodology, Backend Architecture Methodology, Architecture Views, Component Boundaries, Data Modeling, Data Flow, Cross-Cutting Concerns, NFRs Checklist, ADR Template)
 - **API Design Patterns**: RESTful structure, request/response schemas, error handling, authentication & authorization, versioning (merged from api-design-patterns)
 - **Integration Patterns**: Retry logic, circuit breakers, error handling, reliability patterns, resilience & consistency patterns (merged from integration-patterns)
 

@@ -4,6 +4,90 @@ Reference architecture patterns. Use AFTER understanding functionality and exist
 
 ## Architecture Pattern Library
 
+## System Architecture Methodology
+
+### 10x Growth Thinking
+
+- **Design for scale**: Consider 10x growth in users, data, traffic
+- **Ripple effect analysis**: Understand how changes affect entire system
+- **Future-proof decisions**: Make decisions that support growth
+- **Scalability patterns**: Use patterns that scale horizontally
+
+### System Boundary Definition
+
+- **Clear boundaries**: Define what's inside vs outside the system
+- **Loose coupling**: Minimize dependencies between system components
+- **High cohesion**: Group related functionality together
+- **Interface contracts**: Define clear interfaces between boundaries
+
+### Trade-off Analysis for Architectural Decisions
+
+- **Performance vs maintainability**: Fast code vs readable code
+- **Scalability vs complexity**: Scale vs simplicity
+- **Reliability vs cost**: High availability vs infrastructure cost
+- **Security vs usability**: Security controls vs user experience
+- **Consistency vs flexibility**: Standard patterns vs custom solutions
+
+### Ripple Effect Analysis
+
+- **Impact assessment**: How does this change affect other components?
+- **Dependency mapping**: What depends on this component?
+- **Change propagation**: How do changes propagate through the system?
+- **Risk assessment**: What are the risks of this architectural decision?
+
+## Backend Architecture Methodology
+
+### Reliability-First Mindset
+
+- **Fault tolerance**: System continues working when components fail
+- **Graceful degradation**: System degrades functionality, not crashes
+- **Error recovery**: System recovers from errors automatically
+- **Data consistency**: Ensure data integrity even during failures
+
+### Fault Tolerance Patterns
+
+- **Retry strategies**: Retry failed operations with exponential backoff
+- **Circuit breakers**: Prevent cascading failures
+- **Bulkheads**: Isolate failures to prevent spread
+- **Timeouts**: Prevent hanging operations
+
+### Security by Default
+
+- **Authentication required**: All endpoints require authentication
+- **Authorization checks**: Verify permissions before allowing actions
+- **Input validation**: Validate all inputs at boundaries
+- **Secure defaults**: Default to secure configurations
+
+### Operational Observability
+
+- **Logging**: Log all important events with context
+- **Metrics**: Track key performance indicators
+- **Monitoring**: Monitor system health and performance
+- **Alerting**: Alert on critical issues
+- **Tracing**: Trace requests through the system
+
+### ACID Compliance Patterns
+
+- **Atomicity**: All operations succeed or fail together
+- **Consistency**: Data remains consistent after operations
+- **Isolation**: Concurrent operations don't interfere
+- **Durability**: Committed data persists
+
+### Database Architecture Patterns
+
+- **Read replicas**: Scale read operations
+- **Sharding**: Partition data for scale
+- **Caching layers**: Cache frequently accessed data
+- **Connection pooling**: Efficient database connections
+
+### API Architecture Patterns
+
+- **RESTful design**: Use REST principles for APIs
+- **Versioning**: Version APIs for backward compatibility
+- **Rate limiting**: Prevent abuse
+- **Pagination**: Handle large result sets
+- **Filtering and sorting**: Support flexible queries
+
 ### Architecture Views (C4-inspired)
 
 **System Context** (Level 1):

@@ -439,6 +439,8 @@ Include this block whenever reporting completion.
 ## References
 
 - Official skills guidance: `docs/reference/04-SKILLS.md`
+- **EXAMPLES.md**: Complete TDD examples including UI component testing and API endpoint testing
+- **API Testing Patterns**: Comprehensive test coverage, test structure organization, testing principles, tool recommendations
 - Related skills: `code-generation`, `verification-before-completion`
 
 ---

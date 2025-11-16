@@ -8,14 +8,17 @@ allowed-tools: Read, Grep, Glob
 
 ## Purpose
 
-This skill provides comprehensive planning guidance covering requirements analysis and feature planning. It deeply understands requirements before formatting, maps requirements to functionality, identifies gaps, and creates testable acceptance criteria aligned with functionality flows.
+This skill provides comprehensive planning guidance covering requirements analysis, tech stack research, feature planning, and technical writing. It deeply understands requirements before formatting, maps requirements to functionality, identifies gaps, creates testable acceptance criteria, evaluates technology options, and structures documentation.
 
 **Unique Value**:
 
-- Deeply understands requirements before planning
+- Deeply understands requirements before planning (Socratic questioning, stakeholder analysis)
 - Maps requirements to functionality flows
 - Identifies missing requirements
 - Creates testable acceptance criteria
+- Provides tech stack research with 2-3 options and trade-offs
+- Feature planning with solo developer estimation (double initial estimate)
+- Technical writing with audience-first, examples-first approach
 - Provides structured planning templates
 
 **When to Use**:
@@ -24,6 +27,8 @@ This skill provides comprehensive planning guidance covering requirements analys
 - When gathering requirements
 - When analyzing stakeholder needs
 - When defining acceptance criteria
+- When researching technology options
+- When writing technical documentation
 
 ---
 
@@ -259,7 +264,11 @@ Plan features by first understanding functionality, then mapping requirements to
 
 **For detailed templates and frameworks, see**:
 
+- **PATTERNS.md**: Complete pattern library covering requirements analysis, tech stack research, feature planning, technical writing
 - **Requirements Template**: SMART criteria, acceptance criteria format, user stories format
+- **Tech Stack Research**: Technology evaluation, comparison framework, trade-off analysis, context analysis
+- **Feature Planning**: Feature breakdown, solo developer estimation, phased implementation, success criteria
+- **Technical Writing**: Audience-first writing, documentation structure, writing quality patterns
 - **Architecture Template**: System context, containers, components, data models
 - **Risk Register Template**: Risk identification, probability, impact, mitigation
 - **Implementation Roadmap Template**: Phased implementation, dependencies, milestones
