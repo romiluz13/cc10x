@@ -85,19 +85,18 @@ snapshot_file=$(get_most_recent_snapshot)
 
 if [ -n "$snapshot_file" ]; then
     restore_workflow_outputs "$snapshot_file"
-    
+
     # Load snapshot content
-    local snapshot_content=""
+    snapshot_content=""
     if [ -f "$snapshot_file" ]; then
         snapshot_content=$(cat "$snapshot_file" 2>/dev/null || echo "")
     fi
-    
+
     # Load session summary
-    local session_summary_content
     session_summary_content=$(load_session_summary)
-    
+
     # Build combined context
-    local combined_context=""
+    combined_context=""
     
     if [ -n "$session_summary_content" ]; then
         combined_context="<SESSION-SUMMARY>\n${session_summary_content}\n</SESSION-SUMMARY>\n\n"

@@ -4,7 +4,6 @@
 
 set -e
 
-PROJECT_ROOT="$(pwd)"
 MEMORY_DIR=".claude/memory"
 SNAPSHOT_DIR="$MEMORY_DIR/snapshots"
 TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
@@ -114,8 +113,8 @@ cleanup_old_snapshots() {
     snapshot_count=$(find "$SNAPSHOT_DIR" -name "snapshot-*.md" 2>/dev/null | wc -l | tr -d ' ')
     
     if [ "$snapshot_count" -gt "$MAX_SNAPSHOTS" ]; then
-    local to_remove=$((snapshot_count - MAX_SNAPSHOTS))
-        find "$SNAPSHOT_DIR" -name "snapshot-*.md" -type f | sort | head -n "$to_remove" | xargs rm -f 2>/dev/null || true
+        local to_remove=$((snapshot_count - MAX_SNAPSHOTS))
+        find "$SNAPSHOT_DIR" -name "snapshot-*.md" -type f -print0 | sort -z | head -z -n "$to_remove" | xargs -0 rm -f 2>/dev/null || true
     fi
 }
 
