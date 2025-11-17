@@ -117,7 +117,24 @@ docs/phases/
 *AUDIT*.md
 *test*.md
 *audit*.md
+REFACTOR_*.md
+*RANKING*.md
+*COMPARISON*.md
+*COMPREHENSIVE*.md
+*INTEGRATION*.md
+*PRODUCTION_READINESS*.md
+*MAXIMIZATION*.md
+ranking-summary.md
+SKILL-DEPENDENCY-TREE.txt
 !plugins/cc10x/skills/cc10x-orchestrator/workflows/*.md
+
+# Analysis and comparison data (development-only)
+comparison-data/
+scripts/analyze-*.js
+scripts/compare-*.sh
+scripts/measure-*.js
+scripts/generate-*.js
+restore_*.sh
 
 # Internal scripts (should not be in repo)
 push-to-github.sh
