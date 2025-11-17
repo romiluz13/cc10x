@@ -124,6 +124,7 @@ REFACTOR_*.md
 *INTEGRATION*.md
 *PRODUCTION_READINESS*.md
 *MAXIMIZATION*.md
+*PLAN*.md
 ranking-summary.md
 SKILL-DEPENDENCY-TREE.txt
 !plugins/cc10x/skills/cc10x-orchestrator/workflows/*.md
