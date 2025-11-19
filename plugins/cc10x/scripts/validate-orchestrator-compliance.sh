@@ -23,6 +23,7 @@ check_actions_taken() {
   local phase="$2"
   
   # Check for workflow state file
+  # shellcheck disable=SC2155 # Exit code masking is intentional with set -euo pipefail
   local state_file=$(find "$WORKFLOW_STATE_DIR" -name "${workflow}_*.json" -type f | sort -r | head -1)
   
   if [[ -z "$state_file" ]]; then
@@ -47,6 +48,7 @@ check_actions_taken() {
 # Function to check if required skills are loaded
 check_skills_inventory() {
   local workflow="$1"
+  # shellcheck disable=SC2155 # Exit code masking is intentional with set -euo pipefail
   local state_file=$(find "$WORKFLOW_STATE_DIR" -name "${workflow}_*.json" -type f | sort -r | head -1)
   
   if [[ -z "$state_file" ]]; then
@@ -56,6 +58,7 @@ check_skills_inventory() {
   
   # Check if skills are documented in Actions Taken
   if jq -e '.actions_taken.skills_loaded' "$state_file" >/dev/null 2>&1; then
+    # shellcheck disable=SC2155 # Exit code masking is intentional with set -euo pipefail
     local skills_count=$(jq '.actions_taken.skills_loaded | length' "$state_file" 2>/dev/null || echo "0")
     if [[ "$skills_count" -gt 0 ]]; then
       echo -e "${GREEN}✓${NC} Skills Inventory: $skills_count skills documented"
@@ -72,6 +75,7 @@ check_skills_inventory() {
 # Function to check if required subagents are invoked
 check_subagents_inventory() {
   local workflow="$1"
+  # shellcheck disable=SC2155 # Exit code masking is intentional with set -euo pipefail
   local state_file=$(find "$WORKFLOW_STATE_DIR" -name "${workflow}_*.json" -type f | sort -r | head -1)
   
   if [[ -z "$state_file" ]]; then
@@ -81,6 +85,7 @@ check_subagents_inventory() {
   
   # Check if subagents are documented in Actions Taken
   if jq -e '.actions_taken.subagents_invoked' "$state_file" >/dev/null 2>&1; then
+    # shellcheck disable=SC2155 # Exit code masking is intentional with set -euo pipefail
     local subagents_count=$(jq '.actions_taken.subagents_invoked | length' "$state_file" 2>/dev/null || echo "0")
     if [[ "$subagents_count" -gt 0 ]]; then
       echo -e "${GREEN}✓${NC} Subagents Inventory: $subagents_count subagents documented"
@@ -101,7 +106,8 @@ check_tdd_cycle() {
   if [[ "$workflow" != "build" ]]; then
     return 0  # TDD only applies to BUILD workflow
   fi
-  
+
+  # shellcheck disable=SC2155 # Exit code masking is intentional with set -euo pipefail
   local state_file=$(find "$WORKFLOW_STATE_DIR" -name "${workflow}_*.json" -type f | sort -r | head -1)
   
   if [[ -z "$state_file" ]]; then
@@ -111,8 +117,11 @@ check_tdd_cycle() {
   
   # Check for TDD cycle evidence (RED → GREEN → REFACTOR)
   if jq -e '.actions_taken.tdd_cycle' "$state_file" >/dev/null 2>&1; then
+    # shellcheck disable=SC2155 # Exit code masking is intentional with set -euo pipefail
     local has_red=$(jq -e '.actions_taken.tdd_cycle.red' "$state_file" >/dev/null 2>&1 && echo "true" || echo "false")
+    # shellcheck disable=SC2155 # Exit code masking is intentional with set -euo pipefail
     local has_green=$(jq -e '.actions_taken.tdd_cycle.green' "$state_file" >/dev/null 2>&1 && echo "true" || echo "false")
+    # shellcheck disable=SC2155 # Exit code masking is intentional with set -euo pipefail
     local has_refactor=$(jq -e '.actions_taken.tdd_cycle.refactor' "$state_file" >/dev/null 2>&1 && echo "true" || echo "false")
     
     if [[ "$has_red" == "true" && "$has_green" == "true" && "$has_refactor" == "true" ]]; then
@@ -133,6 +142,7 @@ check_memory_integration() {
   local patterns_file="$MEMORY_DIR/patterns.json"
   
   if [[ -f "$patterns_file" ]]; then
+    # shellcheck disable=SC2155 # Exit code masking is intentional with set -euo pipefail
     local file_age=$(find "$patterns_file" -mtime -1 2>/dev/null && echo "recent" || echo "old")
     if [[ "$file_age" == "recent" ]]; then
       echo -e "${GREEN}✓${NC} Memory Integration: patterns.json found and recently updated"
@@ -152,6 +162,7 @@ check_web_fetch_integration() {
   local cache_index="$MEMORY_DIR/web_cache/cache_index.json"
   
   if [[ -f "$cache_index" ]]; then
+    # shellcheck disable=SC2155 # Exit code masking is intentional with set -euo pipefail
     local cache_count=$(jq '.entries | length' "$cache_index" 2>/dev/null || echo "0")
     if [[ "$cache_count" -gt 0 ]]; then
       echo -e "${GREEN}✓${NC} Web Fetch Integration: $cache_count cached entries found"
@@ -192,7 +203,7 @@ main() {
   fi
   
   # Check TDD Cycle (for BUILD workflow, before Phase 4)
-  if [[ "$workflow" == "build" ]] && ([[ -z "$phase" ]] || [[ "$phase" -ge 4 ]]); then
+  if [[ "$workflow" == "build" ]] && { [[ -z "$phase" ]] || [[ "$phase" -ge 4 ]]; }; then
     check_tdd_cycle "$workflow"
   fi
   
