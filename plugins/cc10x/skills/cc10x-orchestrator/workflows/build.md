@@ -405,6 +405,7 @@ find_active_plan() {
 
 **Required Skills**:
 
+- `build-process-context` - **MANDATORY FIRST** (load and read STATUS.md, NEXT-STEPS.md, CONTEXT-SNAPSHOT.md before ANY other skill)
 - `project-context-understanding` - **MANDATORY** (understand project patterns, conventions, and structure before building)
 - `session-summary` - **MANDATORY** (load early for context preservation across compaction)
 - `planning-patterns` (covers requirements analysis)
@@ -1114,6 +1115,18 @@ Next: Proceeding to Phase 6 - Delivery
 
    # Update checkpoint with output path
    # (Checkpoint update logic handled by workflow)
+   ```
+
+5. **Update Build Process Context** (MANDATORY - Session End Protocol):
+   - Update `.claude/build-process/progress/STATUS.md` with completion state
+   - Update `.claude/build-process/progress/NEXT-STEPS.md` with new priorities
+   - Update `.claude/build-process/progress/completed.md` with evidence
+   - Update `.claude/build-process/learnings/` if new patterns/solutions discovered
+
+   ```bash
+   # Update STATUS.md with build completion
+   # Update NEXT-STEPS.md with post-build priorities
+   # Add to completed.md with evidence
    ```
 
 **Display Success Message** (after Phase 6 completion):

@@ -71,6 +71,8 @@ The orchestrator automatically loads when you detect workflow keywords, then coo
 
 **VALIDATE**: validate, validation, validating, validate this, verify, verification, verifying, verify this, check, checking, check this, check the, confirm implementation, alignment check, consistency check
 
+**CONTEXT/RESUME**: continue, resume, where are we, what's the status, status, next steps, context, load context, pick up, carry on, what was I doing, what's next
+
 **If user request contains ANY keyword above → LOAD THIS SKILL IMMEDIATELY**
 
 ## CRITICAL ENFORCEMENT - READ THIS FIRST
@@ -235,10 +237,142 @@ Coordinate the five cc10x workflows using the official Anthropic model-invoked s
 
 If a user combines intents (for example "review then plan"), run each workflow in the order requested and confirm between phases. Never promise simultaneous execution or reference agents that are not bundled with the plugin.
 
+## 🚨 MANDATORY FIRST: Build Process Context (AUTOMATIC) 🚨
+
+**CRITICAL**: This happens AUTOMATICALLY before ANY workflow. No manual steps required.
+
+**Why This is Non-Negotiable**:
+- Without context, you start blind every session
+- With context, you pick up exactly where you left off
+- This is the MOST CRITICAL capability of cc10x
+
+### AUTO-INIT: Run This IMMEDIATELY When Orchestrator Loads
+
+```bash
+# Step 1: Check if build-process exists, if not initialize
+if [ ! -d ".claude/build-process" ]; then
+    echo "Initializing build-process-context..."
+    mkdir -p .claude/build-process/{requirements,decisions,progress,learnings,context}
+
+    # Create minimal STATUS.md
+    cat > .claude/build-process/progress/STATUS.md << 'STATUSEOF'
+## Current State
+Project initialized. Ready to begin work.
+
+## Last Session
+- Date: Not yet started
+- What was done: Project setup
+- Exit state: clean
+
+## Active Work
+- Component: none
+- Phase: initialization
+- Status: ready to begin
+
+## Critical Context
+- Build process context initialized
+- Update this file at start and end of each session
+
+## Blockers
+None
+STATUSEOF
+
+    # Create minimal NEXT-STEPS.md
+    cat > .claude/build-process/progress/NEXT-STEPS.md << 'NEXTSTEPSEOF'
+## Immediate (Do First)
+1. Define project requirements
+2. Document tech stack decisions
+3. Create initial architecture
+
+## Soon (After Immediate)
+- Create user stories
+- Set up project structure
+
+## Later (When Time Permits)
+- Add comprehensive documentation
+
+## Dependencies
+- None yet
+NEXTSTEPSEOF
+
+    # Create minimal CONTEXT-SNAPSHOT.md
+    cat > .claude/build-process/context/CONTEXT-SNAPSHOT.md << 'CONTEXTEOF'
+## Project
+[Update this with project description]
+
+## Tech Stack
+- Language: [update]
+- Framework: [update]
+
+## Architecture
+[Update with architecture]
+
+## Key Files
+- [Update with key files]
+
+## Current Focus
+[Update with current focus]
+
+## Quick Commands
+- Build: [command]
+- Test: [command]
+- Run: [command]
+CONTEXTEOF
+
+    echo "✅ Build process context initialized"
+fi
+
+# Step 2: Load context (ALWAYS runs)
+echo "=== LOADING BUILD PROCESS CONTEXT ==="
+echo ""
+echo "--- STATUS ---"
+cat .claude/build-process/progress/STATUS.md 2>/dev/null || echo "No STATUS.md found"
+echo ""
+echo "--- NEXT STEPS ---"
+cat .claude/build-process/progress/NEXT-STEPS.md 2>/dev/null || echo "No NEXT-STEPS.md found"
+echo ""
+echo "--- CONTEXT SNAPSHOT ---"
+cat .claude/build-process/context/CONTEXT-SNAPSHOT.md 2>/dev/null || echo "No CONTEXT-SNAPSHOT.md found"
+echo ""
+echo "=== CONTEXT LOADED ==="
+```
+
+**CRITICAL**: Run the bash command above IMMEDIATELY when orchestrator loads. Do NOT wait for user confirmation. This is AUTOMATIC.
+
+### AUTO-UPDATE: After Each Workflow Phase
+
+After completing ANY workflow phase, AUTOMATICALLY run:
+
+```bash
+# Update STATUS.md with current state
+TIMESTAMP=$(date "+%Y-%m-%d %H:%M")
+# Use Edit tool to update STATUS.md with:
+# - Current State: [what just happened]
+# - Last Session Date: $TIMESTAMP
+# - Active Work: [current component/phase]
+```
+
+### AUTO-SAVE: At Workflow End
+
+Before presenting final deliverable, AUTOMATICALLY run:
+
+```bash
+# Final context update
+TIMESTAMP=$(date "+%Y-%m-%d %H:%M")
+
+# 1. Update STATUS.md with completion
+# 2. Update NEXT-STEPS.md with new priorities
+# 3. Add to completed.md with evidence
+# 4. Update learnings/ if patterns discovered
+```
+
+**This is ALL AUTOMATIC. The orchestrator handles it. User never needs to think about it.**
+
 ## Before Any Task
 
 **Context Checklist** (complete ALL before proceeding):
 
+- [ ] **FIRST**: Load `build-process-context` skill and execute Session Start Protocol (read STATUS.md, NEXT-STEPS.md, CONTEXT-SNAPSHOT.md)
 - [ ] Read user request and understand intent (what does user want to accomplish?)
 - [ ] Check existing workflows/skills/subagents (verify what's available in `plugins/cc10x/skills/` and `plugins/cc10x/subagents/`)
 - [ ] Load functionality analysis template (`plugins/cc10x/skills/cc10x-orchestrator/templates/functionality-analysis.md`)
