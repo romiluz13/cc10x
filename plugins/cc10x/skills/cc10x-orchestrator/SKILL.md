@@ -1,6 +1,6 @@
 ---
 name: cc10x-orchestrator
-description: Use when user request contains workflow keywords (plan/design/architect/roadmap/strategy, build/implement/create/write/code/develop/make, review/audit/analyze/assess/evaluate/inspect/examine, debug/fix/error/bug/investigate/failure/issue/problem/troubleshoot/diagnose, validate/verify/check/confirm). AUTO-LOAD on these keywords. CRITICAL: MANDATORY entry for ALL code tasks. Coordinates subagents - do NOT write directly. Phase 0: Functionality Analysis first. Enforces TDD (RED→GREEN→REFACTOR), Actions Taken tracking, memory/web fetch. DO NOT bypass validation.
+description: Central coordinator for development workflows. Use when planning, building, reviewing, or debugging code. Routes to appropriate workflow and coordinates agents for TDD, code review, and verification.
 allowed-tools: Read, Grep, Glob, Bash, Task
 ---
 
