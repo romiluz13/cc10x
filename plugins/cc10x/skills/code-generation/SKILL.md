@@ -1,426 +1,97 @@
 ---
 name: code-generation
-description: Generates code with functionality-first, context-dependent approach. Use PROACTIVELY when building features. First understands functionality requirements using universal questions and context-dependent flows, then generates code aligned with project patterns to implement that functionality. Understands project codebase structure, conventions, and patterns. Focuses on making functionality work first, then optimizing. Provides specific implementations with examples.
-allowed-tools: Read, Grep, Glob, Bash
+description: This skill should be used when the user asks to "write code", "implement a function", "create a component", "generate code", or needs guidance on code implementation patterns and best practices.
 ---
 
-# Code Generation - Functionality First, Context-Dependent
+# Code Generation
 
-## Functionality First Mandate
+Generate code aligned with project patterns and functionality requirements.
 
-**CRITICAL**: Before generating code, understand functionality using context-dependent analysis.
+## Process
 
-**Core Principle**: Understand what functionality needs to be built (using universal questions and context-dependent flows), then generate code aligned with project patterns to implement that functionality. Code exists to implement functionality, not for its own sake.
+### 1. Understand Requirements
 
----
+Before writing code:
 
-## Quick Start
+- What functionality is needed?
+- What are the inputs and outputs?
+- What are the edge cases?
+- What project patterns exist?
 
-Generate code by first understanding functionality, then aligning with project patterns.
+### 2. Study Project Patterns
 
-**Example:**
+```bash
+# Find similar code
+grep -r "similar_pattern" --include="*.ts" src/ | head -10
 
-1. **Understand functionality**: User needs to upload files (User Flow: select file → see progress → get confirmation)
-2. **Analyze project patterns**: Read existing upload components, identify patterns (React hooks, error handling style)
-3. **Generate code**: Create UploadForm component matching project patterns to implement the upload functionality
+# Check existing conventions
+find src -name "*.ts" | head -20
+```
 
-**Result:** Code that implements functionality using project conventions.
+Match: Naming conventions, file structure, coding style.
 
-## Requirements
+### 3. Write Minimal Code
 
-**Dependencies:**
+Follow the principle of minimal implementation:
 
-- Functionality analysis template - Reference: `plugins/cc10x/skills/cc10x-orchestrator/templates/functionality-analysis.md`
-- Project patterns understanding - Must analyze existing code patterns before generating
+- Write only what's needed for the requirement
+- No premature abstraction
+- No over-engineering
+- Keep it simple
 
-**Prerequisites:**
+### 4. Follow Project Conventions
 
-- Step 1: Context-Dependent Functionality Analysis completed (MANDATORY FIRST STEP)
-- Step 2: Project patterns analyzed (code conventions, file structure, naming patterns)
+Align with existing patterns:
 
-**Tool Access:**
+- Naming: Match project naming style
+- Structure: Match project file organization
+- Style: Match project coding conventions
+- Error handling: Match project error patterns
 
-- Required tools: Read, Grep, Glob, Bash
-- Read tool: To analyze project patterns and existing code
-- Grep tool: To find similar code patterns
-- Glob tool: To discover file patterns
+## Code Quality Checklist
 
-**Related Skills:**
+Before completing:
 
-- `test-driven-development` - Use TDD when generating code
-- `code-review-patterns` - Check code quality, security, and performance after generation (consolidates code-quality-patterns, security-patterns, performance-patterns)
+- [ ] Handles expected inputs correctly
+- [ ] Handles edge cases
+- [ ] Follows project naming conventions
+- [ ] Follows project structure
+- [ ] No hardcoded values (use constants)
+- [ ] No commented-out code
+- [ ] No console.log debugging statements
 
----
+## Common Patterns
 
-## Examples
-
-### Example: File Upload Feature (UI Component)
-
-**Context:** Building file upload component aligned with project patterns
-
-**Functionality Flow:**
-
-- User Flow: Select file → Upload → See progress → Get confirmation
-- System Flow: Receive file → Validate → Store → Sync to CRM
-
-**UploadForm Component:**
-
+### Functions
 ```typescript
-// src/components/UploadForm.tsx
-import React, { useState } from 'react';
-import { useDropzone } from 'react-dropzone';
-import { uploadFile } from '@/api/files';
-import { cn } from '@/lib/utils';
-
-export function UploadForm({ onUploadSuccess }: UploadFormProps) {
-  const [uploading, setUploading] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [error, setError] = useState<string | null>(null);
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    accept: {
-      'application/pdf': ['.pdf'],
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
-      'image/jpeg': ['.jpg', '.jpeg'],
-      'image/png': ['.png']
-    },
-    maxSize: 10 * 1024 * 1024,
-    onDrop: async (acceptedFiles) => {
-      // Implementation aligned with project patterns
-      // ...
-    }
-  });
-
-  return (
-    <div className="upload-form">
-      {/* UI implementation */}
-    </div>
-  );
+// Clear name, typed parameters, return type
+function calculateTotal(items: Item[]): number {
+  return items.reduce((sum, item) => sum + item.price, 0);
 }
 ```
 
-**File Upload API:**
-
+### Error Handling
 ```typescript
-// src/api/files.ts
-export async function uploadFile(
-  file: File,
-  onProgress?: (progressPercent: number) => void,
-): Promise<string> {
-  const formData = new FormData();
-  formData.append("file", file);
-
-  const response = await axios.post<{ fileId: string }>(
-    `${API_BASE_URL}/files/upload`,
-    formData,
-    {
-      onUploadProgress: (progressEvent) => {
-        // Progress handling
-      },
-      timeout: 30000,
-    },
-  );
-
-  return response.data.fileId;
+// Match project error handling patterns
+try {
+  const result = await riskyOperation();
+  return result;
+} catch (error) {
+  throw new AppError('Operation failed', { cause: error });
 }
 ```
 
-**Result:** Code implements functionality flows, aligned with project patterns (React hooks, TypeScript, axios).
+## Output
 
-**See [EXAMPLES.md](EXAMPLES.md) for complete example with all components (UploadForm, API, Service, CRM Client, Backend Route).**
+When generating code, provide:
 
-## Step 1: Context-Dependent Functionality Analysis (MANDATORY FIRST STEP)
+1. The code implementation
+2. Brief explanation of key decisions
+3. Any assumptions made
 
-### Reference Template
+## Common Mistakes
 
-**Reference**: See [Functionality Analysis Template](../cc10x-orchestrator/templates/functionality-analysis.md) for complete template.
-
-### Process
-
-1. **Detect Code Type**: Identify if this is UI, API, Utility, Integration, Database, Configuration, CLI, or Background Job
-2. **Universal Questions First**: Answer Purpose, Requirements, Constraints, Dependencies, Edge Cases, Verification, Context
-3. **Context-Dependent Flows**: Answer flow questions based on code type:
-   - **UI**: User Flow, Admin Flow, System Flow
-   - **API**: Request Flow, Response Flow, Error Flow, Data Flow
-   - **Integration**: Integration Flow, Data Flow, Error Flow, State Flow
-   - **Database**: Migration Flow, Query Flow, Data Flow, State Flow
-   - **Background Jobs**: Job Flow, Processing Flow, State Flow, Error Flow
-   - **CLI**: Command Flow, Processing Flow, Output Flow, Error Flow
-   - **Configuration**: Configuration Flow, Validation Flow, Error Flow
-   - **Utility**: Input Flow, Processing Flow, Output Flow, Error Flow
-
-### Example: File Upload to CRM (UI Feature)
-
-**Universal Questions**:
-
-**Purpose**: Users need to upload files to their CRM system. Files should be stored securely and accessible to authorized users.
-
-**Requirements**:
-
-- Must accept file uploads (PDF, DOCX, JPG, PNG)
-- Must validate file type and size (max 10MB)
-- Must store files securely in S3
-- Must send file metadata to CRM API
-- Must display upload progress to user
-- Must handle errors gracefully
-
-**Constraints**:
-
-- Performance: Upload must complete within 30 seconds for files up to 10MB
-- Scale: Must handle 100 concurrent uploads
-- Security: Files must be encrypted at rest, access controlled
-- Storage: 100GB storage limit
-
-**Dependencies**:
-
-- Files: `components/UploadForm.tsx`, `api/files.ts`, `services/storage.ts`, `services/crm-client.ts`
-- APIs: CRM API (POST /crm/files)
-- Services: S3 storage service, CRM API service
-- Libraries: `aws-sdk`, `axios`, `react-dropzone`
-
-**Edge Cases**:
-
-- File exceeds size limit
-- Invalid file type
-- Network failure during upload
-- CRM API unavailable
-- Storage quota exceeded
-
-**Verification**:
-
-- E2E tests: Complete user flow from upload to CRM visibility
-- Acceptance criteria: File appears in CRM within 5 seconds
-- Success metrics: 99% upload success rate, <30s upload time
-
-**Context**:
-
-- Location: `src/features/file-upload/`
-- Codebase structure: React frontend, Node.js backend, PostgreSQL database
-- Architecture: MVC pattern, RESTful API
-
-**Context-Dependent Flows (UI Feature)**:
-
-**User Flow**:
-
-1. User navigates to "Upload File" page
-2. User selects file from device
-3. User sees upload progress indicator (0% → 100%)
-4. User sees success message: "File uploaded successfully"
-5. User sees link to view uploaded file
-
-**System Flow**:
-
-1. System receives file upload request (POST /api/files/upload)
-2. System validates file type and size
-3. System stores file in secure storage (S3 bucket)
-4. System sends file metadata to CRM API
-5. System stores file record in database
-6. System returns success response to user
-
-**Integration Flow**:
-
-1. System sends file metadata to CRM API (POST /crm/files)
-2. CRM API stores file reference
-3. CRM API returns file ID
-4. System receives response and updates local record
-
----
-
-## Step 2: Understand Project Patterns (BEFORE Generating Code)
-
-**CRITICAL**: Understand how this project structures code before generating code.
-
-### Project Context Analysis
-
-1. **Read Existing Code**:
-   - Similar components/services/utilities (how are they structured?)
-   - Naming conventions (camelCase, PascalCase, kebab-case?)
-   - File organization (feature-based, layer-based, type-based?)
-   - Import patterns (relative paths, absolute paths, aliases?)
-
-2. **Identify Project Patterns**:
-   - Component structure (functional components, class components, hooks?)
-   - Service structure (classes, functions, modules?)
-   - Error handling (try-catch, Result types, error boundaries?)
-   - State management (local state, context, Redux, Zustand?)
-
-3. **Understand Project Conventions**:
-   - How are features organized? (feature folders, shared folders?)
-   - How are APIs structured? (REST, GraphQL, RPC?)
-   - How are tests written? (Jest, Vitest, unit tests, integration tests?)
-
-### Example: Project Patterns
-
-**From existing code** (`src/components/Button.tsx`):
-
-```typescript
-import React from 'react';
-import { cn } from '@/lib/utils';
-
-interface ButtonProps {
-  variant?: 'primary' | 'secondary';
-  onClick?: () => void;
-  children: React.ReactNode;
-}
-
-export function Button({ variant = 'primary', onClick, children }: ButtonProps) {
-  return (
-    <button
-      className={cn('btn', variant === 'primary' ? 'btn-primary' : 'btn-secondary')}
-      onClick={onClick}
-    >
-      {children}
-    </button>
-  );
-}
-```
-
-**Identified Patterns**:
-
-- Functional components with TypeScript interfaces
-- Props destructuring with default values
-- `cn` utility for className composition
-- Path alias `@/lib/utils`
-- Named exports
-
-**Conventions**:
-
-- Components in `src/components/`
-- Utilities in `src/lib/`
-- TypeScript interfaces for props
-- Named exports for components
-
----
-
-## Step 3: Generate Code (AFTER Functionality Understood)
-
-**⚠️ IMPORTANT**: Only generate code AFTER you understand functionality and project patterns. Generate code aligned with project patterns to implement functionality.
-
-### Functionality-Focused Code Checklist
-
-**Priority: Critical (Core Functionality)**:
-
-- [ ] Code implements user flow (user can complete tasks)
-- [ ] Code implements admin flow (if applicable, admin can manage)
-- [ ] Code implements system flow (system processes correctly)
-- [ ] Code implements integration flow (if applicable, external systems work)
-- [ ] Code implements error handling (errors handled correctly)
-- [ ] Code aligns with project patterns (follows existing structure)
-
-**Priority: Important (Supporting Functionality)**:
-
-- [ ] Code handles edge cases (boundary conditions)
-- [ ] Code is readable (can understand functionality)
-- [ ] Code is testable (can test functionality)
-
-**Priority: Minor (Can Defer)**:
-
-- [ ] Perfect code structure (if functionality works)
-- [ ] Ideal design patterns (if functionality works)
-- [ ] Perfect error handling (if functionality works)
-
----
-
----
-
-## Reference Materials
-
-**For detailed examples and checklist, see:**
-
-- **EXAMPLES.md**: Complete code generation examples (File Upload to CRM implementation)
-- **REFERENCE.md**: Code Generation Checklist
-
----
-
----
-
-## Priority Classification
-
-**Critical (Must Have)**:
-
-- Code implements core functionality (user flow, system flow, integration flow)
-- Code aligns with project patterns (follows existing structure)
-- Blocks functionality if missing
-- Required for functionality to work
-
-**Important (Should Have)**:
-
-- Code supports functionality growth
-- Code supports functionality changes
-- Code supports functionality reliability
-- Code is readable and testable
-
-**Minor (Can Defer)**:
-
-- Perfect code structure (if functionality works)
-- Ideal design patterns (if functionality works)
-- Perfect error handling (if functionality works)
-
----
-
-## When to Use
-
-**Use PROACTIVELY when**:
-
-- Implementing new functionality
-- Refactoring existing code
-- Building features
-
-**Functionality-First Process**:
-
-1. **First**: Understand functionality using context-dependent analysis (universal questions + context-dependent flows)
-2. **Then**: Understand project patterns and conventions
-3. **Then**: Generate code aligned with project patterns to implement functionality
-4. **Then**: Make functionality work first, then optimize
-5. **Focus**: Code that implements functionality, not generic code patterns
-
----
-
-## Skill Overview
-
-- **Skill**: Code Generation
-- **Purpose**: Generate code with functionality-first, context-dependent approach (not generic code patterns)
-- **When**: Building features, refactoring code
-- **Core Rule**: Functionality first (context-dependent analysis), then code. Understand project patterns, then generate code aligned with patterns to implement functionality.
-
----
-
-## References
-
-- [Code Generation Playbook](PLAYBOOK.md) - Detailed patterns (use AFTER functionality understood)
-- Related skills: `test-driven-development`, `code-review-patterns` (consolidates code-quality-patterns, security-patterns, performance-patterns)
-
----
-
-## Troubleshooting
-
-**Common Issues:**
-
-1. **Generated code doesn't match project patterns**
-   - **Symptom**: Code uses different patterns than existing codebase
-   - **Cause**: Didn't analyze project patterns before generating
-   - **Fix**: Complete Step 2 (Understand Project Patterns) before generating code
-   - **Prevention**: Always read existing similar code first
-
-2. **Code doesn't implement functionality correctly**
-   - **Symptom**: Code compiles but doesn't work as expected
-   - **Cause**: Skipped functionality analysis (Step 1)
-   - **Fix**: Complete functionality analysis first, then regenerate code
-   - **Prevention**: Never skip Step 1 (Context-Dependent Functionality Analysis)
-
-3. **Missing edge cases or error handling**
-   - **Symptom**: Code works for happy path but fails on edge cases
-   - **Cause**: Didn't complete edge cases in functionality analysis
-   - **Fix**: Complete edge cases section in functionality analysis, regenerate code
-   - **Prevention**: Always complete all functionality analysis sections
-
-**If issues persist:**
-
-- Verify functionality analysis was completed first
-- Check that project patterns were analyzed
-- Review EXAMPLES.md for complete examples
-- Ensure code aligns with project conventions
-
----
-
-**Remember**: Code exists to implement functionality. Don't generate code generically - generate code aligned with project patterns to implement functionality! Provide specific implementations with examples, not generic patterns.
+1. **Over-engineering** - Write minimal code, not framework
+2. **Ignoring project patterns** - Match existing conventions
+3. **Missing edge cases** - Handle errors and edge cases
+4. **Premature abstraction** - Don't abstract until needed

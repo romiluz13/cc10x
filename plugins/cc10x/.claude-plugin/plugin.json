@@ -1,7 +1,7 @@
 {
   "name": "cc10x",
-  "version": "4.9.0",
-  "description": "Development workflow plugin with 5 agents (code-reviewer, bug-investigator, component-builder, integration-verifier, planner) and skills for TDD, code review, debugging, and planning.",
+  "version": "5.0.0",
+  "description": "Lean development workflow plugin with 5 agents and 9 focused skills. Features simple intent-based routing (build/review/debug/plan), TDD enforcement, and evidence-based verification.",
   "author": {
     "name": "Rom Iluz",
     "email": "rom@iluz.net",
@@ -11,15 +11,15 @@
   "repository": "https://github.com/romiluz13/cc10x",
   "license": "MIT",
   "keywords": [
-    "orchestration",
+    "workflow-routing",
     "code-review",
-    "risk-analysis",
-    "complexity-gate",
-    "progressive-loading",
-    "context-management",
-    "what-could-go-wrong",
     "tdd",
-    "log-first",
+    "debugging",
+    "planning",
+    "architecture",
+    "frontend",
+    "verification",
+    "lean-skills",
     "claude-code"
   ]
 }
