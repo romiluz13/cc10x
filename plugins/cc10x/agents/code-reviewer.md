@@ -1,6 +1,6 @@
 ---
 name: code-reviewer
-description: Reviews code for security, quality, performance, and accessibility. Use when reviewing PRs, auditing code, or checking changes before merge.
+description: Use this agent when reviewing PRs, auditing code, or checking changes before merge. Reviews code for security, quality, performance, and accessibility. Examples: "review this PR", "audit the auth module", "check the API changes", "review the new component"
 tools: Read, Grep, Glob
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: bug-investigator
-description: Investigates and fixes bugs with evidence-first approach. Use when debugging errors, test failures, or unexpected behavior.
+description: Use this agent when debugging errors, test failures, or unexpected behavior. Investigates and fixes bugs with evidence-first LOG FIRST approach. Examples: "debug the login error", "fix the failing test", "investigate why uploads are slow", "troubleshoot the API timeout"
 tools: Read, Edit, Write, Bash, Grep, Glob
 ---
 

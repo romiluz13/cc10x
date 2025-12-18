@@ -1,6 +1,7 @@
 ---
 name: component-builder
-description: Builds components using TDD cycle (RED-GREEN-REFACTOR). Use when implementing new features, creating components, or adding functionality.
+description: Use this agent when implementing new features, creating components, or adding functionality. Builds components using TDD cycle (RED-GREEN-REFACTOR). Examples: "build the upload form", "create the API endpoint", "implement user authentication", "add the payment integration"
+model: sonnet
 tools: Read, Edit, Write, Bash
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: planner
-description: Creates comprehensive plans covering architecture, risks, APIs, and implementation roadmap. Use when planning features, designing systems, or creating technical specs.
+description: Use this agent when planning features, designing systems, or creating technical specs. Creates comprehensive plans covering architecture, risks, APIs, and implementation roadmap. Examples: "plan the authentication system", "design the API architecture", "create a spec for user management", "architect the data flow for payments"
 tools: Read, Grep, Glob
 ---
 

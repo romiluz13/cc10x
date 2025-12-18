@@ -1,6 +1,6 @@
 ---
 name: integration-verifier
-description: Validates integrations across components, APIs, and external services. Use when verifying end-to-end flows, API contracts, or service integrations.
+description: Use this agent when verifying end-to-end flows, API contracts, or service integrations. Validates integrations across components, APIs, and external services. Examples: "verify the checkout flow", "test the API integration", "check the payment service connection", "validate the auth flow end-to-end"
 tools: Bash, Read, Grep
 ---
 
@@ -37,7 +37,9 @@ Validates that integrations work correctly.
 - Result: ✅ PASS / ❌ FAIL
 - Evidence: <output snippet>
 
-### Recommendations
-- Critical: <blocks functionality>
-- Important: <affects reliability>
+### Recommendations by Severity
+- **Critical**: <blocks functionality - must fix before merge>
+- **High**: <breaks flow in edge cases - fix soon>
+- **Medium**: <affects reliability - plan fix>
+- **Low**: <minor issues - can defer>
 ```

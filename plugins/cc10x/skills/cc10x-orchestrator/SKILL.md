@@ -1,6 +1,6 @@
 ---
 name: cc10x-orchestrator
-description: Central coordinator for development workflows. Use when planning, building, reviewing, or debugging code. Routes to appropriate workflow and coordinates agents for TDD, code review, and verification.
+description: Central coordinator for development workflows. Use when user says "build", "implement", "create", "plan", "design", "review", "audit", "debug", "fix", "investigate", "check code", or "analyze". Routes to BUILD, PLAN, REVIEW, or DEBUG workflow based on intent. Coordinates agents for TDD, code review, and verification. Examples: "build the login feature", "plan the API", "review this PR", "debug the upload error"
 allowed-tools: Read, Grep, Glob, Bash, Task
 ---
 
