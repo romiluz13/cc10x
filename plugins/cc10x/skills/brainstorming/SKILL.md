@@ -1,6 +1,8 @@
 ---
 name: brainstorming
-description: Use BEFORE any creative work to explore ideas before implementation. Triggers on "brainstorm", "idea", "explore", "think through", "design". Turns rough ideas into fully-formed designs through collaborative dialogue.
+description: |
+  Loaded by planner agent. DO NOT invoke directly - use PLAN workflow via cc10x-router.
+  Provides brainstorming patterns: explore ideas before implementation, collaborative dialogue, understand purpose before design. Iron Law: NO DESIGN WITHOUT UNDERSTANDING PURPOSE.
 allowed-tools: Read, Grep, Glob
 ---
 

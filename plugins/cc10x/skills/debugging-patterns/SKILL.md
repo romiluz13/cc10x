@@ -1,6 +1,8 @@
 ---
 name: debugging-patterns
-description: Use when encountering bugs, test failures, or unexpected behavior. Triggers on "debug", "fix", "error", "bug", "failing", "broken", "investigate". Requires root cause investigation with LOG FIRST approach before proposing fixes.
+description: |
+  Loaded by bug-investigator agent. DO NOT invoke directly - use DEBUG workflow via cc10x-router.
+  Provides systematic debugging patterns: LOG FIRST approach, root cause investigation, evidence-based fixes. Iron Law: NO FIXES WITHOUT ROOT CAUSE INVESTIGATION.
 ---
 
 # Systematic Debugging

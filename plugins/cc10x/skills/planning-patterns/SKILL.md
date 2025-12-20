@@ -1,6 +1,8 @@
 ---
 name: planning-patterns
-description: Use when planning implementation of multi-step tasks before writing code. Triggers on "plan", "design", "architect", "roadmap", "strategy". Requires spec/requirements, outputs bite-sized TDD tasks.
+description: |
+  Loaded by planner agent. DO NOT invoke directly - use PLAN workflow via cc10x-router.
+  Provides planning patterns: comprehensive plans with bite-sized TDD tasks, spec-based, DRY/YAGNI. Iron Law: NO VAGUE STEPS - EVERY STEP IS SPECIFIC.
 allowed-tools: Read, Grep, Glob
 ---
 

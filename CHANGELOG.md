@@ -1,5 +1,39 @@
 # Changelog
 
+## [5.5.0] - 2025-12-20
+
+### Fixed
+
+- **Skill Keyword Conflicts**: Fixed critical issue where individual skills had same trigger keywords as router, causing Claude to match skills directly instead of using router
+  - All 9 skills now say "Loaded by X agent. DO NOT invoke directly - use X workflow via cc10x-router"
+  - Removed workflow trigger keywords (build, debug, review, plan, etc.) from individual skill descriptions
+  - Router is now the ONLY entry point for workflow keywords
+
+### Changed
+
+- **test-driven-development**: Now loaded by component-builder agent only
+- **code-generation**: Now loaded by component-builder agent only
+- **debugging-patterns**: Now loaded by bug-investigator agent only
+- **code-review-patterns**: Now loaded by code-reviewer agent only
+- **planning-patterns**: Now loaded by planner agent only
+- **brainstorming**: Now loaded by planner agent only
+- **frontend-patterns**: Now loaded by code-reviewer agent (for UI code) only
+- **architecture-patterns**: Now loaded by planner/code-reviewer agents only
+- **verification-before-completion**: Now loaded by ALL agents automatically
+
+### Root Cause
+
+In v5.4.0, when user said "build a task tracker", Claude matched BOTH:
+1. cc10x-router (keyword: "build")
+2. test-driven-development skill (keyword: "build")
+
+Claude picked the individual skill instead of the router, bypassing workflow orchestration.
+
+### Fix Applied
+
+Skills no longer have workflow trigger keywords. Only cc10x-router responds to:
+`build, implement, create, make, write, add, develop, code, feature, component, app, application, review, audit, check, analyze, debug, fix, error, bug, broken, troubleshoot, plan, design, architect, roadmap, strategy`
+
 ## [5.4.0] - 2025-12-20
 
 ### Fixed

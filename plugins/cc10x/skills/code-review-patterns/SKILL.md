@@ -1,6 +1,8 @@
 ---
 name: code-review-patterns
-description: Use when reviewing code changes, auditing security, or evaluating code quality. Triggers on "review", "audit", "check", "evaluate", "inspect". Two-stage review (spec compliance first, then code quality).
+description: |
+  Loaded by code-reviewer agent. DO NOT invoke directly - use REVIEW workflow via cc10x-router.
+  Provides code review patterns: two-stage review (spec compliance first, then quality), security, performance. Iron Law: NO QUALITY REVIEW BEFORE SPEC COMPLIANCE.
 allowed-tools: Read, Grep, Glob
 ---
 

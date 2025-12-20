@@ -1,6 +1,8 @@
 ---
 name: verification-before-completion
-description: Use before claiming work is complete, fixed, or passing. Triggers on "done", "complete", "finished", "fixed", "working", "commit", "PR". Requires running verification commands and confirming output with evidence before any success claims.
+description: |
+  Loaded by ALL agents before completion claims. DO NOT invoke directly - loaded automatically via agent frontmatter.
+  Requires running verification commands and confirming output with evidence before any success claims. Iron Law: EVIDENCE BEFORE CLAIMS.
 ---
 
 # Verification Before Completion

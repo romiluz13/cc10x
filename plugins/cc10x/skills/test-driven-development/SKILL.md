@@ -1,6 +1,8 @@
 ---
 name: test-driven-development
-description: Use when implementing features, fixing bugs, or writing new code. Triggers on "build", "implement", "create", "write", "add", "feature", "bugfix". Enforces RED-GREEN-REFACTOR cycle with failing test first.
+description: |
+  Loaded by component-builder agent. DO NOT invoke directly - use BUILD workflow via cc10x-router.
+  Enforces RED-GREEN-REFACTOR cycle: failing test first, minimal code, clean up. Iron Law: NO PRODUCTION CODE WITHOUT A FAILING TEST FIRST.
 ---
 
 # Test-Driven Development (TDD)

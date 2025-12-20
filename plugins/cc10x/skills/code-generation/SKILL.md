@@ -1,6 +1,8 @@
 ---
 name: code-generation
-description: Use when writing code for features, functions, or components. Triggers on "implement", "write", "create", "add", "code". Requires understanding functionality first, then writing minimal code aligned with project patterns.
+description: |
+  Loaded by component-builder agent. DO NOT invoke directly - use BUILD workflow via cc10x-router.
+  Provides code writing patterns: understand functionality first, write minimal code, match project patterns. Iron Law: NO CODE BEFORE UNDERSTANDING FUNCTIONALITY.
 ---
 
 # Code Generation

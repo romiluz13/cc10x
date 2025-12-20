@@ -1,6 +1,8 @@
 ---
 name: frontend-patterns
-description: Use when designing or reviewing user interfaces. Triggers on "UI", "UX", "frontend", "component", "accessibility", "responsive". Covers UX, visual design, accessibility, and responsive design with success criteria.
+description: |
+  Loaded by code-reviewer agent (for UI code). DO NOT invoke directly - use REVIEW/BUILD workflow via cc10x-router.
+  Provides frontend patterns: UX, visual design, accessibility, responsive design. Iron Law: NO UI DESIGN BEFORE USER FLOW IS UNDERSTOOD.
 allowed-tools: Read, Grep, Glob
 ---
 

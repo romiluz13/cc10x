@@ -1,6 +1,8 @@
 ---
 name: architecture-patterns
-description: Use when designing system architecture, planning integrations, or creating API endpoints. Triggers on "architecture", "system design", "API design", "integration", "data model". Requires mapping functionality flows before designing.
+description: |
+  Loaded by planner and code-reviewer agents. DO NOT invoke directly - use PLAN/REVIEW workflow via cc10x-router.
+  Provides architecture patterns: system design, API design, integrations, data models. Iron Law: DESIGN ARCHITECTURE FROM FUNCTIONALITY.
 allowed-tools: Read, Grep, Glob
 ---
 
