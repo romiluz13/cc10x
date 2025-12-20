@@ -7,6 +7,33 @@ description: This skill should be used when the user asks to "build", "implement
 
 Route user requests to the appropriate agent based on intent detection.
 
+## MANDATORY: Memory Operations
+
+**EVERY workflow MUST:**
+
+### 1. LOAD Memory FIRST (Before ANY routing)
+
+```bash
+echo "=== LOADING MEMORY ===" && mkdir -p .claude/cc10x
+cat .claude/cc10x/activeContext.md 2>/dev/null || echo "No active context - starting fresh"
+cat .claude/cc10x/patterns.md 2>/dev/null || echo "No patterns saved"
+cat .claude/cc10x/progress.md 2>/dev/null || echo "No progress tracked"
+echo "=== MEMORY LOADED ==="
+```
+
+**If memory exists:** Resume from context, avoid repeating work.
+**If memory empty:** Start fresh, but WILL save at end.
+
+### 2. UPDATE Memory LAST (After workflow completes)
+
+Update `.claude/cc10x/activeContext.md` with:
+- What was accomplished
+- Decisions made and why
+- Learnings discovered
+- Next steps
+
+**Failure to update memory = incomplete workflow.**
+
 ## Intent Detection
 
 Detect intent from user request and route to the appropriate workflow:
@@ -24,33 +51,59 @@ Detect intent from user request and route to the appropriate workflow:
 
 When user wants to build/implement/create something:
 
+0. **LOAD MEMORY** - Load ALL 3 files:
+   - activeContext.md → prior decisions, current focus
+   - patterns.md → project conventions to follow
+   - progress.md → check if already done!
 1. **Understand what to build** - Clarify requirements if unclear
+   - **CHECK**: activeContext.md Active Decisions before choosing approach
 2. **Invoke component-builder** - Uses TDD cycle (RED → GREEN → REFACTOR)
+   - **CHECK**: patterns.md for code conventions during build
 3. **Invoke code-reviewer** - Reviews the built code
 4. **Invoke integration-verifier** - Verifies end-to-end functionality
+5. **UPDATE MEMORY** - Save learnings, decisions, and progress
 
 ### REVIEW Workflow
 
 When user wants to review/audit code:
 
+0. **LOAD MEMORY** - Load ALL 3 files:
+   - activeContext.md → what we're reviewing and why
+   - patterns.md → project conventions to enforce
+   - progress.md → related review findings
 1. **Understand what to review** - Identify files/PR/changes
 2. **Invoke code-reviewer** - Reviews for security, quality, performance
+   - **CHECK**: patterns.md to apply project-specific standards
+3. **UPDATE MEMORY** - Save review findings and patterns learned
 
 ### DEBUG Workflow
 
 When user encounters errors/bugs:
 
+0. **LOAD MEMORY** - Load ALL 3 files:
+   - activeContext.md → may have clues from prior work
+   - patterns.md → check Common Gotchas section!
+   - progress.md → when did it last work?
 1. **Understand what's broken** - Clarify the error/symptom
+   - **CHECK**: patterns.md Common Gotchas before investigating
 2. **Invoke bug-investigator** - Uses LOG FIRST approach to diagnose and fix
 3. **Invoke code-reviewer** - Reviews the fix
 4. **Invoke integration-verifier** - Verifies fix works end-to-end
+5. **UPDATE MEMORY** - Save root cause, fix, and lessons learned (add to Common Gotchas!)
 
 ### PLAN Workflow
 
 When user wants to plan/design:
 
+0. **LOAD MEMORY** - Load ALL 3 files:
+   - activeContext.md → prior decisions to align with
+   - patterns.md → existing architecture to extend
+   - progress.md → what's already done
 1. **Understand what to plan** - Clarify scope and goals
+   - **CHECK**: activeContext.md Active Decisions before proposing approach
 2. **Invoke planner** - Creates architecture, identifies risks, builds roadmap
+   - **CHECK**: patterns.md to align with existing patterns
+3. **UPDATE MEMORY** - Save architectural decisions and rationale
 
 ## Agent Invocation
 
@@ -83,12 +136,35 @@ After workflow completion, provide:
 - **Intent**: [BUILD/REVIEW/DEBUG/PLAN]
 - **Agents Used**: [list]
 - **Result**: [success/issues found]
+- **Memory Updated**: Yes/No
 
 ## Key Outcomes
 
 [Summary of what was accomplished]
 
+## Learnings & Decisions
+
+[What was learned, decisions made and why]
+
 ## Next Steps
 
 [If any follow-up needed]
 ```
+
+## Memory Checklist
+
+### READ Verification (Start + During)
+- [ ] ALL 3 memory files loaded at workflow start
+- [ ] Active Decisions checked before choosing approach
+- [ ] patterns.md checked before making implementation choices
+- [ ] progress.md checked to avoid repeating done work
+- [ ] Common Gotchas checked when debugging
+
+### WRITE Verification (End)
+- [ ] activeContext.md updated with current state
+- [ ] Learnings/decisions documented with reasoning
+- [ ] patterns.md updated (if new patterns discovered)
+- [ ] progress.md updated (if tasks completed)
+- [ ] Common Gotchas updated (if bug was found/fixed)
+
+**Workflow is NOT complete until BOTH checklists pass.**

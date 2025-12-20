@@ -1,6 +1,7 @@
 ---
 name: code-review-patterns
-description: Use when reviewing code changes, auditing security, or evaluating code quality - requires two-stage review (spec compliance first, then code quality)
+description: Use when reviewing code changes, auditing security, or evaluating code quality. Triggers on "review", "audit", "check", "evaluate", "inspect". Two-stage review (spec compliance first, then code quality).
+allowed-tools: Read, Grep, Glob
 ---
 
 # Code Review Patterns

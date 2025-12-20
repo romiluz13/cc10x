@@ -1,6 +1,6 @@
 ---
 name: test-driven-development
-description: Use when implementing any feature or bugfix, before writing implementation code
+description: Use when implementing features, fixing bugs, or writing new code. Triggers on "build", "implement", "create", "write", "add", "feature", "bugfix". Enforces RED-GREEN-REFACTOR cycle with failing test first.
 ---
 
 # Test-Driven Development (TDD)

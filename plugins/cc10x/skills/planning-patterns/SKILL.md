@@ -1,6 +1,7 @@
 ---
 name: planning-patterns
-description: Use when you have a spec or requirements for a multi-step task, before touching code
+description: Use when planning implementation of multi-step tasks before writing code. Triggers on "plan", "design", "architect", "roadmap", "strategy". Requires spec/requirements, outputs bite-sized TDD tasks.
+allowed-tools: Read, Grep, Glob
 ---
 
 # Writing Plans

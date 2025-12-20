@@ -1,6 +1,7 @@
 ---
 name: brainstorming
-description: Use BEFORE any creative work - creating features, building components, or adding functionality - explores user intent, requirements, and design before implementation
+description: Use BEFORE any creative work to explore ideas before implementation. Triggers on "brainstorm", "idea", "explore", "think through", "design". Turns rough ideas into fully-formed designs through collaborative dialogue.
+allowed-tools: Read, Grep, Glob
 ---
 
 # Brainstorming Ideas Into Designs

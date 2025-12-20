@@ -1,7 +1,7 @@
 {
   "name": "cc10x",
-  "version": "5.1.0",
-  "description": "Lean development workflow plugin with 5 agents and 10 focused skills. Features simple intent-based routing (build/review/debug/plan), TDD enforcement, and evidence-based verification.",
+  "version": "5.2.0",
+  "description": "Lean development workflow plugin with 5 agents, 11 skills, and mandatory memory persistence. Features intent-based routing (build/review/debug/plan), TDD enforcement, evidence-based verification, and session memory with READ+WRITE triggers.",
   "author": {
     "name": "Rom Iluz",
     "email": "rom@iluz.net",

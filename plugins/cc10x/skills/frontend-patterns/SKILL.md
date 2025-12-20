@@ -1,6 +1,7 @@
 ---
 name: frontend-patterns
-description: Use when designing or reviewing user interfaces - covers UX, visual design, accessibility, and responsive design with success criteria
+description: Use when designing or reviewing user interfaces. Triggers on "UI", "UX", "frontend", "component", "accessibility", "responsive". Covers UX, visual design, accessibility, and responsive design with success criteria.
+allowed-tools: Read, Grep, Glob
 ---
 
 # Frontend Patterns

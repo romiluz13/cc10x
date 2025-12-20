@@ -1,6 +1,6 @@
 ---
 name: debugging-patterns
-description: Use when encountering any bug, test failure, or unexpected behavior, before proposing fixes
+description: Use when encountering bugs, test failures, or unexpected behavior. Triggers on "debug", "fix", "error", "bug", "failing", "broken", "investigate". Requires root cause investigation with LOG FIRST approach before proposing fixes.
 ---
 
 # Systematic Debugging

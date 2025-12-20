@@ -1,5 +1,65 @@
 # Changelog
 
+## [5.2.0] - 2025-12-20
+
+### Added
+
+- **Session Memory Skill**: New mandatory memory persistence system
+  - `session-memory` skill auto-loaded by all 5 agents as FIRST skill
+  - Iron Law: LOAD at START, UPDATE at END (both mandatory)
+  - Three memory files: `activeContext.md`, `patterns.md`, `progress.md`
+  - Persists context across conversation compaction
+
+- **READ Triggers**: Explicit guidance for WHEN to load memory
+  - File Selection Matrix (which file for which situation)
+  - Decision Integration (check memory before any decision)
+  - Read BEFORE actions table (architectural decisions, implementation choices, debugging)
+  - READ Red Flags and READ Excuses tables
+
+- **Skills Auto-Loading**: Agents now auto-load skills via frontmatter
+  - Added `skills:` field to all 5 agent definitions
+  - Skills loaded automatically without manual `Skill()` calls
+  - Conditional skills still use `Skill()` tool when needed
+
+- **Tool Restrictions**: Read-only skills now have `allowed-tools`
+  - code-review-patterns: Read, Grep, Glob
+  - planning-patterns: Read, Grep, Glob
+  - brainstorming: Read, Grep, Glob
+  - architecture-patterns: Read, Grep, Glob
+  - frontend-patterns: Read, Grep, Glob
+
+### Improved
+
+- **Skill Descriptions**: All 9 skills have specific trigger keywords
+  - Added "Triggers on:" phrases for better discovery
+  - More specific "when to use" guidance
+
+- **Router Workflows**: Enhanced memory operations in all 4 workflows
+  - Step 0: LOAD ALL 3 memory files (not just activeContext)
+  - CHECK points during workflow (before decisions)
+  - Dual verification checklist (READ + WRITE)
+
+- **Agent Consistency**: All agents follow same pattern
+  - MANDATORY FIRST: Load Memory section in all agents
+  - session-memory as first skill in all agents
+  - Conditional skills documented in each agent
+
+### Architecture
+
+```
+Router (cc10x-router)
+    │
+    ├── BUILD → component-builder → code-reviewer → integration-verifier
+    ├── REVIEW → code-reviewer
+    ├── DEBUG → bug-investigator → code-reviewer → integration-verifier
+    └── PLAN → planner
+
+Memory (.claude/cc10x/)
+    ├── activeContext.md (current focus, decisions, learnings)
+    ├── patterns.md (project conventions, gotchas)
+    └── progress.md (completed, remaining, evidence)
+```
+
 ## [4.8.0] - 2025-11-15
 
 ### Added

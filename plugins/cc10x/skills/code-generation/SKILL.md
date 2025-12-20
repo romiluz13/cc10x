@@ -1,6 +1,6 @@
 ---
 name: code-generation
-description: Use when implementing features, functions, or components - requires understanding functionality first, then writing minimal code aligned with project patterns
+description: Use when writing code for features, functions, or components. Triggers on "implement", "write", "create", "add", "code". Requires understanding functionality first, then writing minimal code aligned with project patterns.
 ---
 
 # Code Generation

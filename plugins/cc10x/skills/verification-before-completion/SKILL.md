@@ -1,6 +1,6 @@
 ---
 name: verification-before-completion
-description: Use when about to claim work is complete, fixed, or passing, before committing or creating PRs - requires running verification commands and confirming output before making any success claims; evidence before assertions always
+description: Use before claiming work is complete, fixed, or passing. Triggers on "done", "complete", "finished", "fixed", "working", "commit", "PR". Requires running verification commands and confirming output with evidence before any success claims.
 ---
 
 # Verification Before Completion

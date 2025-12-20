@@ -1,6 +1,7 @@
 ---
 name: architecture-patterns
-description: Use when designing system architecture, planning integrations, or creating API endpoints - requires understanding functionality flows before designing architecture
+description: Use when designing system architecture, planning integrations, or creating API endpoints. Triggers on "architecture", "system design", "API design", "integration", "data model". Requires mapping functionality flows before designing.
+allowed-tools: Read, Grep, Glob
 ---
 
 # Architecture Patterns
