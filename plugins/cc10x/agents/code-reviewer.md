@@ -31,7 +31,7 @@ Triggers on "check" + "changes". Agent validates code is safe to merge/deploy.
 
 model: inherit
 color: blue
-tools: Read, Grep, Glob, Bash, Skill
+tools: Read, Write, Bash, Grep, Glob, Skill
 skills: cc10x:session-memory, cc10x:code-review-patterns, cc10x:verification-before-completion
 ---
 

@@ -31,7 +31,7 @@ Triggers on "implement" for new functionality. TDD approach prevents bugs.
 
 model: sonnet
 color: green
-tools: Read, Edit, Write, Bash, Skill
+tools: Read, Edit, Write, Bash, Grep, Glob, Skill
 skills: cc10x:session-memory, cc10x:test-driven-development, cc10x:code-generation, cc10x:verification-before-completion
 ---
 

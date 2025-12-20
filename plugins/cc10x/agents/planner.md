@@ -40,7 +40,7 @@ Triggers on "architect" for system design. Agent considers security and scale.
 
 model: inherit
 color: cyan
-tools: Read, Grep, Glob, Skill
+tools: Read, Write, Bash, Grep, Glob, Skill
 skills: cc10x:session-memory, cc10x:planning-patterns, cc10x:architecture-patterns
 ---
 

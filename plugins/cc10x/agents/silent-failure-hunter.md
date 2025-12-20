@@ -22,7 +22,7 @@ Triggers on "check" + "error handling". Proactive after BUILD if error handling 
 
 model: inherit
 color: orange
-tools: Read, Grep, Glob, Bash
+tools: Read, Write, Bash, Grep, Glob, Skill
 skills: cc10x:session-memory, cc10x:code-review-patterns
 ---
 

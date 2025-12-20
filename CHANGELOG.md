@@ -1,5 +1,36 @@
 # Changelog
 
+## [5.6.0] - 2025-12-21
+
+### Fixed
+
+- **Agent Tool Misconfiguration**: Fixed critical issue where agents were missing essential tools
+  - **planner**: Was missing Write/Bash - couldn't save plans or run memory commands!
+  - **silent-failure-hunter**: Was missing Write/Skill - couldn't update memory or load conditional skills!
+  - **code-reviewer**: Was missing Write - couldn't update memory at end of review!
+  - **integration-verifier**: Was missing Write - couldn't save verification results!
+  - **component-builder**: Was missing Grep/Glob - couldn't search codebase for patterns!
+
+### Changed
+
+- All 6 agents now have consistent tool configuration:
+  - **Builders** (component-builder, bug-investigator): Read, Edit, Write, Bash, Grep, Glob, Skill
+  - **Analyzers** (code-reviewer, integration-verifier, planner, silent-failure-hunter): Read, Write, Bash, Grep, Glob, Skill
+- Edit tool reserved for agents that modify code (builders)
+- Write tool for all agents (needed for memory updates)
+- Bash tool for all agents (needed for memory load command)
+
+### Agent Tool Matrix
+
+| Agent | Edit | Write | Bash | Grep | Glob | Skill |
+|-------|------|-------|------|------|------|-------|
+| component-builder | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| bug-investigator | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| code-reviewer | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| integration-verifier | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| planner | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| silent-failure-hunter | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ |
+
 ## [5.5.0] - 2025-12-20
 
 ### Fixed

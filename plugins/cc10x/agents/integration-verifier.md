@@ -40,7 +40,7 @@ Triggers on "validate" + "end-to-end". Agent performs comprehensive flow testing
 
 model: inherit
 color: yellow
-tools: Bash, Read, Grep, Glob, Skill
+tools: Read, Write, Bash, Grep, Glob, Skill
 skills: cc10x:session-memory, cc10x:architecture-patterns, cc10x:debugging-patterns, cc10x:verification-before-completion
 ---
 
