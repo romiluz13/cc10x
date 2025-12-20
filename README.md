@@ -1,698 +1,449 @@
-# cc10x - Claude Code Orchestrator
+# cc10x - The Perfect Claude Code Workflow System
 
-> **Orchestration plugin for Claude Code with 5 workflows: review, plan, build, debug, validate.**
+> **v5.6.0** | 6 Agents | 11 Skills | 1 Router | Memory Persistence | TDD Enforcement
 
-cc10x provides structured workflows that coordinate 24 domain skills, 5 workflow skills, and 9 subagents to deliver consistent, production-grade code.
-
-## What cc10x Provides
-
-cc10x provides structured workflows for Claude Code:
-
-- **Systematic workflows** that enforce TDD, security checks, and quality gates
-- **24 domain skills** that activate when needed
-- **5 workflow skills** for orchestration and workflow management
-- **9 specialized subagents** working in parallel contexts
-- **Evidence-first verification** that requires proof before completion
-- **Memory integration** that learns from your patterns
+**cc10x is what Claude Code should be.** It transforms Claude from a helpful assistant into a disciplined engineering system that never cuts corners.
 
 ---
 
-## What Makes cc10x Different
+## Why cc10x is Perfect
 
-### 🎯 **Orchestrator-First Architecture**
+### The Problem with Vanilla Claude Code
 
-**The cc10x-orchestrator is the MANDATORY entry point for all workflows**:
+Without cc10x, Claude Code:
+- **Guesses** instead of investigating (fixes bugs without checking logs)
+- **Skips tests** ("I'll add tests later" = never)
+- **Claims success without evidence** ("It should work now")
+- **Forgets context** on long sessions (compaction loses everything)
+- **Picks random skills** instead of following workflows
 
-- **Single Entry Point**: All workflows MUST be activated through the orchestrator, not directly
-- **Automatic Activation**: Orchestrator activates automatically on any user request (review, plan, build, debug, validate)
-- **Centralized Coordination**: Orchestrator coordinates skill loading, subagent invocation, and validation
-- **Validation Enforcement**: All validation mechanisms (Skills Inventory Check, Subagents Inventory Check, Phase Checklists) only work when orchestrator runs
+### What cc10x Fixes
 
-**Result**: Consistent, validated execution across all workflows.
-
-### 🎯 **Functionality-First Approach**
-
-**Every workflow starts with understanding functionality**:
-
-- **Phase 0: Functionality Analysis** (MANDATORY FIRST STEP)
-  - Understands user flows, admin flows, system flows
-  - Verifies functionality works before applying specialized checks
-  - Extracts acceptance criteria and requirements
-  - Documents flows and integration points
-
-**Result**: Workflows understand what needs to be done before doing it.
-
-### 🎯 **Deterministic Workflow Selection**
-
-cc10x uses explicit keyword mapping to select the right workflow:
-
-```bash
-"Review this auth module"     → REVIEW workflow ✅
-"Plan payment processing"     → PLAN workflow ✅
-"Build user dashboard"        → BUILD workflow ✅
-"Debug memory leak"           → DEBUG workflow ✅
-"Validate implementation"     → VALIDATION workflow ✅
-```
-
-**Result**: Correct workflow selection based on keywords.
-
-### 🎯 **Automatic Context Preset Detection**
-
-cc10x automatically detects task type and loads appropriate context:
-
-- **Frontend tasks**: Detects React/Vue components → loads frontend preset
-- **Backend tasks**: Detects API/server code → loads backend preset
-- **Full-stack tasks**: Detects both → loads app preset
-
-**Result**: Right context loaded automatically, no manual configuration needed.
-
-### 🧠 **Memory Integration**
-
-cc10x learns from your patterns:
-
-- **Complexity patterns**: Similar tasks? It remembers how you scored them
-- **Failure modes**: Common bugs? It remembers the fixes
-- **Component orders**: Dependency patterns? It builds in the right sequence
-- **User preferences**: Your review depth, test coverage targets, build approach
-
-**Result**: Workflows improve with usage.
-
-### 🔍 **Evidence-First Verification**
-
-No "trust me, it works" claims. cc10x requires proof:
-
-```bash
-✅ Tests run → exit code 0
-✅ Coverage >80% → verified
-✅ Build succeeds → confirmed
-✅ Integration tests pass → validated
-```
-
-**Result**: Code completion requires evidence.
-
-### 🎨 **Progressive Disclosure Architecture**
-
-Skills load in 3 levels—exactly when needed:
-
-- **Level 1**: Metadata (always loaded) - ~100 tokens
-- **Level 2**: Instructions (when triggered) - ~5k tokens
-- **Level 3**: Resources (on-demand) - unlimited
-
-**Result**: Skills load only when needed.
+| Problem | cc10x Solution |
+|---------|---------------|
+| Guessing at bugs | **LOG FIRST** - Evidence before fixes |
+| Skipping tests | **TDD Enforcement** - RED-GREEN-REFACTOR or nothing |
+| "It works" claims | **Verification** - Exit code 0 or it didn't happen |
+| Context loss | **Memory Persistence** - Survives compaction |
+| Random skill picking | **Single Router** - One entry point, correct workflow |
+| False positives | **Confidence Scoring** - Only report issues with 80%+ confidence |
+| Building wrong thing | **User Confirmation Gates** - Clarify before implementing |
 
 ---
 
-## 🚀 Quick Start
+## Architecture
 
-### Installation
-
-```bash
-# Step 1: Add the marketplace
-/plugin marketplace add romiluz13/cc10x
-
-# Step 2: Install the plugin
-/plugin install cc10x@romiluz13
-
-# Step 3: Restart Claude Code
-# Done. That's it.
 ```
+USER REQUEST
+     │
+     ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    cc10x-router (ONLY ENTRY POINT)          │
+│  AUTO-EXECUTE on: build, review, debug, plan, fix, etc.     │
+└─────────────────────────────────────────────────────────────┘
+     │
+     ├── BUILD intent ──► component-builder ──► code-reviewer ──► silent-failure-hunter ──► integration-verifier
+     │
+     ├── REVIEW intent ─► code-reviewer (or silent-failure-hunter for error handling)
+     │
+     ├── DEBUG intent ──► bug-investigator ──► code-reviewer ──► integration-verifier
+     │
+     └── PLAN intent ───► planner
 
-### Your First Workflow
-
-```bash
-# Just ask naturally - cc10x detects intent
-"Review this authentication code for security issues"
-```
-
-**cc10x executes**:
-
-1. **Phase 0**: Functionality Analysis → Understands what the code does
-2. Detects `review` intent → triggers REVIEW workflow
-3. Loads security, quality, performance, UX, accessibility skills (parallel)
-4. Delegates to 3 specialized subagents (risk-security, performance-quality, ux-accessibility) in parallel
-5. Synthesizes findings with severity levels
-6. Provides file:line citations and remediation steps
-
-**Output**: Security audit with findings and fixes.
-
----
-
-## 🎭 The Five Workflows
-
-### 1. **REVIEW** - Multi-Dimensional Code Analysis
-
-**When**: Before PRs, security audits, performance optimization
-
-**What You Get**:
-
-- ✅ OWASP Top 10 security scanning
-- ✅ Performance bottleneck detection
-- ✅ Code quality metrics (complexity, duplication, maintainability)
-- ✅ UX friction point analysis
-- ✅ WCAG accessibility compliance
-
-**Example Output**:
-
-```markdown
-## Security Findings
-
-**Critical** (must fix):
-
-- [src/auth.ts:42] SQL injection risk: User input not sanitized
-- [src/payment.ts:89] Missing CSRF token validation
-
-**High** (should fix):
-
-- [src/api/users.ts:156] Rate limiting not implemented
-```
-
-### 2. **PLAN** - Feature Planning
-
-**When**: New features, architecture decisions, system design
-
-**What You Get**:
-
-- ✅ Requirements analysis with acceptance criteria
-- ✅ Architecture design with component breakdown
-- ✅ Risk identification (7 dimensions: data flow, dependencies, timing, UX, security, performance, failure modes)
-- ✅ Implementation roadmap with file manifest
-- ✅ Deployment strategy with rollback plans
-
-**Example Output**:
-
-```markdown
-## Architecture Design
-
-**Components**:
-
-1. UserService (new) - Handles user CRUD operations
-2. AuthGuard (new) - Route protection middleware
-3. LoginComponent (modify) - Update existing component
-
-**Dependencies**:
-UserService → AuthGuard → LoadComponent
-
-**Risks**:
-
-- Data flow: User data validation (HIGH) - Mitigation: Input sanitization
-- Security: Token storage (CRITICAL) - Mitigation: HttpOnly cookies
-```
-
-### 3. **BUILD** - TDD-Driven Implementation
-
-**When**: Implementing features, building components, adding functionality
-
-**What You Get**:
-
-- ✅ RED → GREEN → REFACTOR cycle enforcement
-- ✅ Component implementation with tests
-- ✅ Code quality verification
-- ✅ Integration testing
-- ✅ Evidence-based completion verification
-
-**Example Output**:
-
-```markdown
-## Component: UserService
-
-**TDD Cycle**:
-
-1. ✅ RED: Test written (test/user-service.spec.ts:12) → exit 1
-2. ✅ GREEN: Implementation complete (src/user-service.ts:45) → exit 0
-3. ✅ REFACTOR: Code cleaned, tests green → exit 0
-
-**Verification**:
-
-- Unit tests: 100% coverage ✅
-- Integration tests: Pass ✅
-- Build: Success ✅
-```
-
-### 4. **DEBUG** - Systematic Bug Investigation
-
-**When**: Production issues, bugs, unexpected behavior
-
-**What You Get**:
-
-- ✅ Log-first evidence gathering (no assumption-driven debugging)
-- ✅ Root cause identification
-- ✅ Targeted fix implementation
-- ✅ Regression prevention
-- ✅ Verification of fix effectiveness
-
-**Example Output**:
-
-```markdown
-## Bug Investigation
-
-**Root Cause**:
-Memory leak in event listener not cleaned up (src/listener.ts:67)
-
-**Evidence**:
-
-- Logs show memory growth pattern
-- Stack trace points to listener.ts:67
-- Fix pattern: Remove listener on component unmount
-
-**Fix Applied**:
-
-- Added cleanup in useEffect return (src/listener.ts:78) ✅
-- Regression test added (test/listener.spec.ts:42) ✅
-```
-
-### 5. **VALIDATE** - Cross-Artifact Consistency
-
-**When**: Verifying implementation matches plan, checking test coverage, validating docs
-
-**What You Get**:
-
-- ✅ Plan → Code alignment matrix
-- ✅ Code → Test coverage analysis
-- ✅ Documentation freshness verification
-- ✅ Drift detection (planned vs implemented)
-
-**Example Output**:
-
-```markdown
-## Validation Report
-
-**Alignment Matrix**:
-| Requirement | Code Location | Test Coverage | Status |
-|-------------|---------------|---------------|--------|
-| User Auth | src/auth.ts:42 | ✅ 95% | Aligned |
-| Payment Flow | src/payment.ts:100 | ⚠️ 65% | Partial |
-
-**Coverage Gaps**:
-
-- src/payment.ts:65-89 (below 70% threshold)
-
-**Documentation**:
-
-- API docs: 10 fresh, 2 stale (outdated endpoints)
+MEMORY (.claude/cc10x/)
+├── activeContext.md  ◄── Current focus, decisions, learnings
+├── patterns.md       ◄── Project conventions, gotchas
+└── progress.md       ◄── Completed work, remaining tasks
 ```
 
 ---
 
-## The Architecture
+## The 6 Agents
 
-### 24 Domain Skills
+| Agent | Role | Tools | Key Behavior |
+|-------|------|-------|--------------|
+| **component-builder** | Builds features | Read, Edit, Write, Bash, Grep, Glob, Skill | TDD: RED-GREEN-REFACTOR |
+| **bug-investigator** | Fixes bugs | Read, Edit, Write, Bash, Grep, Glob, Skill | LOG FIRST: Evidence before fixes |
+| **code-reviewer** | Reviews code | Read, Write, Bash, Grep, Glob, Skill | Confidence scoring: Only report >= 80% |
+| **integration-verifier** | Verifies E2E | Read, Write, Bash, Grep, Glob, Skill | Evidence-based: Exit codes matter |
+| **planner** | Creates plans | Read, Write, Bash, Grep, Glob, Skill | Saves plans to `.claude/docs/plans/` |
+| **silent-failure-hunter** | Audits errors | Read, Write, Bash, Grep, Glob, Skill | Zero tolerance for empty catch blocks |
 
-Domain experts that activate automatically:
+### Why These Tools?
 
-**Code Quality & Security**:
-
-- `code-review-patterns` - Security, quality, and performance analysis (consolidates security-patterns, code-quality-patterns, performance-patterns)
-- OWASP Top 10, injection prevention, SOLID principles, complexity metrics, bottleneck identification
-
-**Design & Planning**:
-
-- `planning-patterns` - Requirements analysis and feature planning (consolidates requirements-analysis, feature-planning)
-- `architecture-patterns` - System design, component boundaries, API design, integration patterns
-- `risk-analysis` - 7-stage risk framework with mitigation strategies
-
-**User Experience**:
-
-- `frontend-patterns` - UX, UI design, and accessibility (consolidates ux-patterns, ui-design, accessibility-patterns)
-- Loading states, error handling, visual hierarchy, WCAG compliance, keyboard navigation
-
-**Implementation**:
-
-- `test-driven-development` - RED → GREEN → REFACTOR discipline
-- `component-design-patterns` - Composition, reusability, API design
-- `deployment-patterns` - 3-level rollback, staged rollouts, monitoring
-
-**Operations**:
-
-- `debugging-patterns` - Systematic debugging, log analysis, root cause analysis (consolidates systematic-debugging, log-analysis-patterns, root-cause-analysis)
-- LOG FIRST methodology, structured logging, evidence-based investigation
-
-### 5 Workflow Skills
-
-Orchestration and workflow management:
-
-- `cc10x-orchestrator` - Primary orchestrator, intent detection, workflow coordination
-- `review-workflow` - Review workflow coordination
-- `planning-workflow` - Planning workflow coordination
-- `build-workflow` - Build workflow coordination
-- `debug-workflow` - Debug workflow coordination
-
-### 5 Specialized Subagents
-
-Separate context windows, focused expertise:
-
-**Review Subagents**:
-
-- `code-reviewer` - Comprehensive review covering security, quality, performance, UX, and accessibility (consolidates analysis-risk-security, analysis-performance-quality, analysis-ux-accessibility)
-
-**Plan Subagents**:
-
-- `planner` - Comprehensive planning covering architecture, risks, API design, component design, testing, and deployment (consolidates planning-architecture-risk, planning-design-deployment)
-
-**Build Subagents**:
-
-- `component-builder` - TDD implementation, component building
-- `code-reviewer` - Quality and security verification
-- `integration-verifier` - Integration testing, evidence-based completion
-
-**Debug Subagents**:
-
-- `bug-investigator` - Log analysis, root cause identification, fix implementation
+- **Edit**: Only for agents that modify code (builder, bug-fix)
+- **Write**: All agents (for memory updates, saving outputs)
+- **Bash**: All agents (for running tests, memory load command)
+- **Grep/Glob**: All agents (for searching codebase)
+- **Skill**: All agents (for loading conditional skills)
 
 ---
 
-## 💎 Key Features
+## The 11 Skills
 
-### ✅ **Functionality-First Mandate**
+Skills are **loaded by agents**, not invoked directly. This prevents Claude from picking skills randomly.
 
-**Every workflow enforces Phase 0: Functionality Analysis FIRST**:
-
-- Understands what functionality needs to be built/reviewed/debugged
-- Documents user flows, admin flows, system flows
-- Verifies functionality works before applying specialized checks
-- Extracts acceptance criteria and requirements
-
-**Prevents**: Building/reviewing/debugging without understanding what needs to be done.
-
-### ✅ **Complexity Gating**
-
-cc10x assesses task complexity (1-5 scale) after functionality analysis:
-
-- **1-2**: Simple changes → Recommends direct implementation
-- **3**: Moderate → Planning workflow adds value
-- **4-5**: Complex → Comprehensive planning critical
-
-**Prevents**: Over-engineering simple tasks, under-planning complex ones.
-
-### ✅ **Component Failure Cascading**
-
-If Component A fails, Components B and C that depend on it are automatically blocked:
-
-```markdown
-Component Failure Cascade Detected:
-
-- Component 1: FAILED (build error)
-- Component 2: BLOCKED (depends on Component 1)
-- Component 3: BLOCKED (depends on Component 1)
-
-Options:
-
-1. Fix Component 1 first → Then continue
-2. Skip Component 1 → Build separately
-3. Abort workflow → Restart after fix
-```
-
-**Prevents**: Building on broken foundations.
-
-### ✅ **Requirements Completeness Threshold**
-
-Plan workflow gates if >3 critical questions unanswered:
-
-- Core Goal missing → +1 critical question
-- Key Entities empty → +1 critical question
-- User Stories missing acceptance criteria → +1 per story
-
-**Prevents**: Planning with incomplete requirements.
-
-### ✅ **Investigation Timeout**
-
-Debug workflow escalates after 3 investigation attempts:
-
-```markdown
-Investigation Timeout (3 attempts):
-Root cause not identified after 3 attempts.
-
-Options:
-
-1. Add strategic logging → Capture bug naturally
-2. Request more data → User provides environment details
-3. Skip investigation → Mark as "needs manual investigation"
-```
-
-**Prevents**: Infinite investigation loops.
-
-### ✅ **Subagent Output Validation**
-
-Every subagent output is validated against expected format:
-
-- ✅ Format matches template
-- ✅ Required fields present
-- ✅ File:line citations included
-- ✅ No placeholder text ("TODO", "TBD")
-- ✅ Output is actionable
-
-**Prevents**: Incomplete or invalid subagent outputs.
-
-### ✅ **Web Fetch Caching**
-
-External documentation is cached with TTL-based expiration:
-
-- API specs: 7-day TTL
-- Library docs: 14-day TTL
-- Framework docs: 30-day TTL
-- Standards: 90-day TTL
-
-**Result**: Faster workflows, fewer external fetches.
-
-### ✅ **Workflow State Persistence**
-
-Workflows can resume after interruption:
-
-```json
-{
-  "workflow": "build",
-  "phase": "Phase_2_Component_Queue",
-  "timestamp": "2025-10-29T10:00:00Z",
-  "state": {
-    "components": [...],
-    "completed_components": [...],
-    "current_component": "ComponentName"
-  },
-  "next_phase": "Phase_3_Component_Execution_Loop"
-}
-```
-
-**Result**: No lost progress on long-running workflows.
+| Skill | Loaded By | Purpose |
+|-------|-----------|---------|
+| **session-memory** | ALL agents | Persist context across compaction |
+| **test-driven-development** | component-builder | RED-GREEN-REFACTOR enforcement |
+| **code-generation** | component-builder | Write minimal code, match patterns |
+| **debugging-patterns** | bug-investigator | LOG FIRST, root cause analysis |
+| **code-review-patterns** | code-reviewer | Two-stage review, security, quality |
+| **planning-patterns** | planner | Comprehensive plans, TDD tasks |
+| **brainstorming** | planner | Explore ideas before implementation |
+| **architecture-patterns** | planner, code-reviewer | System design, API design |
+| **frontend-patterns** | code-reviewer | UX, accessibility, visual design |
+| **verification-before-completion** | ALL agents | Evidence before claims |
+| **cc10x-router** | ENTRY POINT | Routes to correct workflow |
 
 ---
 
-## 📊 Real-World Examples
+## The 4 Workflows
 
-### Example 1: Security Audit Before Production
+### BUILD Workflow
 
-```bash
-"Review our payment processing code for security vulnerabilities"
+**Trigger**: "build", "implement", "create", "make", "write", "add", "develop", "code"
+
+```
+1. LOAD MEMORY (activeContext, patterns, progress)
+2. CLARIFY REQUIREMENTS (CRITICAL: DO NOT SKIP)
+   - What exactly needs to be built?
+   - What are the acceptance criteria?
+   - What edge cases should be handled?
+   - WAIT for user answers
+3. INVOKE component-builder (TDD cycle)
+4. INVOKE code-reviewer (confidence scoring)
+5. INVOKE silent-failure-hunter (if error handling code)
+6. INVOKE integration-verifier (end-to-end)
+7. UPDATE MEMORY (learnings, decisions, progress)
 ```
 
-**cc10x executes**:
+### REVIEW Workflow
 
-1. Detects `review` intent → REVIEW workflow
-2. Loads code-review-patterns skill (consolidates security-patterns, code-quality-patterns, performance-patterns)
-3. Delegates to code-reviewer subagent (consolidates analysis-risk-security, analysis-performance-quality, analysis-ux-accessibility)
-4. Scans payment code for OWASP Top 10 issues, performance bottlenecks, and code quality issues
-5. Returns findings with severity levels and fixes
+**Trigger**: "review", "audit", "check", "analyze"
 
-**Time**: 3 minutes  
-**Output**: Found 2 critical SQL injection risks before production
-
-### Example 2: Complete Feature Implementation
-
-```bash
-"Build user authentication with JWT tokens and refresh tokens"
+```
+1. LOAD MEMORY
+2. INVOKE code-reviewer
+   - Check git history (git log, git blame)
+   - Verify functionality first
+   - Security, quality, performance review
+   - Only report issues with confidence >= 80
+3. UPDATE MEMORY
 ```
 
-**cc10x executes**:
+### DEBUG Workflow
 
-1. **Phase 0**: Functionality Analysis → Understands auth requirements and flows
-2. Detects `build` intent → BUILD workflow
-3. Assesses complexity: 4 (multi-file, security-critical)
-4. Breaks into components: UserModel → AuthService → LoginComponent → AuthGuard
-5. For each component: RED → GREEN → REFACTOR with tests (sequential per component)
-6. Independent components run in parallel
-7. Code review by code-reviewer subagent (after builder)
-8. Integration verification by integration-verifier subagent (after reviewer)
-9. Evidence verification: Tests pass, coverage >80%, build succeeds
+**Trigger**: "debug", "fix", "error", "bug", "broken", "troubleshoot"
 
-**Time**: 45 minutes  
-**Output**: Production-ready auth system with 95% test coverage
-
-### Example 3: Production Bug Investigation
-
-```bash
-"Debug the memory leak in our data pipeline"
+```
+1. LOAD MEMORY (check Common Gotchas!)
+2. INVOKE bug-investigator
+   - LOG FIRST: Gather evidence before fixing
+   - Root cause analysis
+   - Minimal targeted fix
+   - Regression test
+3. INVOKE code-reviewer (review the fix)
+4. INVOKE integration-verifier (verify fix works)
+5. UPDATE MEMORY (add to Common Gotchas!)
 ```
 
-**cc10x executes**:
+### PLAN Workflow
 
-1. **Phase 0**: Functionality Analysis → Understands expected vs observed behavior
-2. Detects `debug` intent → DEBUG workflow
-3. Loads debugging-patterns skill (consolidates systematic-debugging, log-analysis-patterns, root-cause-analysis)
-4. Delegates to bug-investigator subagent
-5. LOG FIRST: Gathers logs, metrics, stack traces
-6. Root cause: Event listener not cleaned up
-7. Targeted fix: Added cleanup in useEffect return
-8. Regression test: Added test to prevent future leaks
-9. Verification: Memory leak resolved, tests pass
+**Trigger**: "plan", "design", "architect", "roadmap", "strategy"
 
-**Time**: 15 minutes  
-**Output**: Memory leak fixed with prevention strategy
+```
+1. LOAD MEMORY
+2. INVOKE planner
+   - Understand functionality
+   - Design architecture
+   - Identify risks
+   - Create roadmap
+3. UPDATE MEMORY (save architectural decisions)
+```
 
 ---
 
-## When to Use cc10x
+## Expected Behavior
 
-### Use cc10x for:
+### When You Say "Build a Task Tracker"
 
-- **Complex features** (complexity 4-5) that need systematic planning
-- **Security-critical code** that requires thorough review
-- **Production bugs** that need root cause analysis
-- **Large codebases** where quality gates matter
-- **Team projects** where consistency is critical
+**CORRECT (cc10x v5.6.0)**:
+```
+Detected BUILD intent. Executing BUILD workflow.
 
-### Not needed for:
+Loading memory...
+[Runs memory load command]
 
-- **Trivial changes** (complexity 1-2) - cc10x will recommend direct implementation
-- **Quick experiments** - Use Claude Code directly
-- **One-off scripts** - Overkill for simple tasks
+Clarifying requirements (CRITICAL: DO NOT SKIP):
+1. What framework/language should I use? (Node.js, Python, etc.)
+2. Should tasks have priorities, due dates, or categories?
+3. CLI app or web app?
+4. Any specific features beyond basic CRUD?
+
+Waiting for your answers before invoking component-builder.
+```
+
+**WRONG (without cc10x)**:
+```
+I'll help you build a task tracker! Let me start by creating the files...
+
+[Writes code without asking questions]
+[Skips tests]
+[Claims "it should work"]
+```
+
+### When You Say "Fix the Login Bug"
+
+**CORRECT (cc10x v5.6.0)**:
+```
+Detected DEBUG intent. Executing DEBUG workflow.
+
+Loading memory...
+[Checks Common Gotchas for similar issues]
+
+Understanding the issue:
+1. What error message are you seeing?
+2. What's the expected behavior vs actual behavior?
+3. When did it start happening?
+
+Waiting for details before invoking bug-investigator with LOG FIRST approach.
+```
+
+**WRONG (without cc10x)**:
+```
+The login bug is probably caused by [guesses at random cause].
+
+Let me try this fix... [changes code without checking logs]
+
+It should work now! [no verification]
+```
+
+### When You Say "Review This PR"
+
+**CORRECT (cc10x v5.6.0)**:
+```
+Detected REVIEW intent. Executing REVIEW workflow.
+
+Loading memory...
+
+Invoking code-reviewer...
+
+## Review Summary
+
+### Git Context
+- Recent commits: [relevant changes]
+- Authors: [who touched these files]
+
+### Skills Loaded
+- code-review-patterns: loaded
+- verification-before-completion: loaded
+
+## Critical Findings (confidence >= 80)
+- [95] SQL injection risk - src/api.ts:42
+  - Fix: Use parameterized queries
+
+## Important Findings (confidence >= 80)
+- [85] Missing input validation - src/form.ts:18
+  - Fix: Add email format check
+```
+
+**WRONG (without cc10x)**:
+```
+The code looks good overall. I noticed a few things:
+- Maybe add some comments?
+- The variable names could be better
+- Have you considered using TypeScript?
+
+[Vague feedback, no file:line citations, no confidence levels]
+```
 
 ---
 
-## 🏗️ Architecture Overview
+## Memory Persistence
+
+cc10x survives context compaction. This is critical for long sessions.
+
+### Memory Files
 
 ```
-cc10x Orchestrator
-├── Phase 0: Functionality Analysis (MANDATORY FIRST)
-│   ├── Understand user/admin/system flows
-│   ├── Verify functionality works
-│   └── Extract acceptance criteria
-├── Context Preset Detection (automatic)
-│   ├── Detect task type (frontend/backend/app)
-│   └── Load appropriate context preset
-├── Intent Detection (explicit keyword mapping)
-├── Complexity Assessment (1-5 scale)
-├── Workflow Selection (review/plan/build/debug/validate)
+.claude/cc10x/
+├── activeContext.md   # What we're working on NOW
+│   - Current Task
+│   - Active Decisions (and WHY)
+│   - Learnings from this session
+│   - Immediate Next Steps
 │
-├── REVIEW Workflow
-│   ├── Phase 0: Functionality Analysis ✅
-│   ├── Load: code-review-patterns, frontend-patterns (parallel)
-│   ├── Delegate: code-reviewer → integration-verifier (if integration changes detected)
-│   └── Output: Findings with severity, file:line citations, remediation steps
+├── patterns.md        # Project conventions
+│   - Code Patterns (how this project writes code)
+│   - Common Gotchas (bugs we've seen and fixes)
+│   - Architectural Decisions (and rationale)
 │
-├── PLAN Workflow
-│   ├── Phase 0: Functionality Analysis ✅
-│   ├── Load: planning-patterns, architecture-patterns, risk-analysis (parallel)
-│   ├── Delegate: planner
-│   └── Output: Architecture design, risk register, implementation roadmap
-│
-├── BUILD Workflow
-│   ├── Phase 0: Functionality Analysis ✅
-│   ├── Load: test-driven-development, code-review-patterns, verification-before-completion (parallel)
-│   ├── Delegate: component-builder → code-reviewer → integration-verifier (sequential per component)
-│   └── Output: Components with tests, verification summary
-│
-├── DEBUG Workflow
-│   ├── Phase 0: Functionality Analysis ✅
-│   ├── Load: debugging-patterns, code-review-patterns (parallel)
-│   ├── Delegate: bug-investigator → code-reviewer → integration-verifier (sequential per bug)
-│   └── Output: Root cause, fix, regression test
-│
-└── VALIDATE Workflow
-    ├── Phase 0: Functionality Analysis ✅
-    ├── Load: planning-patterns, verification-before-completion (parallel)
-    └── Output: Alignment matrix, coverage analysis, documentation freshness
+└── progress.md        # What's done, what's left
+    - Completed Items (with evidence)
+    - Remaining Tasks
+    - Blockers
 ```
 
----
+### Iron Law
 
-## 🚦 Getting Started Checklist
-
-- [ ] Add marketplace: `/plugin marketplace add romiluz13/cc10x`
-- [ ] Install cc10x: `/plugin install cc10x@romiluz13`
-- [ ] Restart Claude Code
-- [ ] Try REVIEW: `"Review this code for security issues"`
-- [ ] Try PLAN: `"Plan a user authentication feature"`
-- [ ] Try BUILD: `"Build a user profile component"`
-- [ ] Try DEBUG: `"Debug this error: [paste error]"`
-- [ ] Try VALIDATE: `"Validate this implementation matches the plan"`
-
-**That's it. You're ready to use cc10x workflows.**
-
----
-
-## Workflow Comparison
-
-### Without cc10x:
-
-```bash
-You: "Review this code"
-Claude: *scans code, gives generic feedback*
-You: "Check for security issues"
-Claude: *maybe finds some, maybe doesn't*
-You: "What about performance?"
-Claude: *separate conversation, lost context*
-You: "Is it accessible?"
-Claude: *starts over again*
+```
+EVERY WORKFLOW MUST:
+1. LOAD memory at START (and before key decisions)
+2. UPDATE memory at END (and after learnings/decisions)
 ```
 
-**Result**: Inconsistent reviews, missed issues, wasted time.
-
-### With cc10x:
-
-```bash
-You: "Review this code"
-cc10x: *triggers REVIEW workflow*
-  → Loads code-review-patterns and frontend-patterns skills
-  → Delegates to code-reviewer subagent (consolidated review expertise)
-  → Synthesizes findings with severity levels
-  → Provides file:line citations and fixes
-```
-
-**Output**: Security audit with findings and fixes.
+**Failure to update memory = incomplete workflow.**
 
 ---
 
-## Getting Started
+## Why This System is the Best
 
-1. **Start Simple**: Use REVIEW workflow for code audits
-2. **Scale Up**: Use PLAN workflow for new features
-3. **Go Deep**: Use BUILD workflow for TDD implementation
-4. **Master It**: Use DEBUG workflow for systematic investigation
-5. **Verify**: Use VALIDATE workflow for consistency checks
+### 1. Single Entry Point (Router)
 
----
+Other systems let Claude pick any skill randomly. cc10x has ONE entry point that routes to the correct workflow. No more:
+- "Let me use brainstorming..." when you said "build"
+- "Let me load planning-patterns..." when you said "fix"
 
-## Documentation
+### 2. Agents with Correct Tools
 
-- **Skills Reference**: See `plugins/cc10x/skills/` for individual skill docs
-- **Subagents Reference**: See `plugins/cc10x/subagents/` for subagent specs
-- **Workflow Details**: See `plugins/cc10x/skills/cc10x-orchestrator/workflows/`
+Every agent has exactly the tools it needs:
+- Builders have Edit (they modify code)
+- Analyzers don't have Edit (they only report)
+- ALL agents have Write (for memory updates)
+- ALL agents have Bash (for running tests/commands)
 
----
+### 3. TDD Enforcement
 
-## License
+The component-builder agent MUST follow RED-GREEN-REFACTOR:
+1. Write failing test (RED)
+2. Write minimal code to pass (GREEN)
+3. Clean up (REFACTOR)
 
-MIT License - Use freely, modify as needed.
+**No exceptions.** If you wrote code before the test, delete it and start over.
 
----
+### 4. Evidence-Based Verification
 
-## Contributing
+No "it should work" claims. cc10x requires:
+- Exit code 0 from test runs
+- Actual command output
+- Pass/fail evidence
 
-- ⭐ Star the repository
-- 🐛 Report issues
-- 💡 Suggest improvements
-- 🤝 Contribute skills or workflows
+### 5. Confidence Scoring
+
+The code-reviewer only reports issues with confidence >= 80%. This eliminates:
+- False positives
+- Nitpicks
+- Style preferences
+- "Maybe this is an issue?"
+
+### 6. User Confirmation Gates
+
+BUILD workflow MUST clarify requirements before implementing:
+- What exactly needs to be built?
+- What are the acceptance criteria?
+- WAIT for user answers
+
+If user says "whatever you think", state your recommendation and get confirmation.
+
+### 7. Memory That Survives
+
+Context compaction loses everything in vanilla Claude. cc10x persists:
+- What you're working on
+- Decisions made and why
+- Common gotchas
+- Progress tracking
+
+### 8. Silent Failure Hunting
+
+The silent-failure-hunter agent finds error handling issues with zero tolerance:
+- Empty catch blocks
+- Log-only catches (user never knows)
+- Generic "Something went wrong" messages
+- Fallbacks without logging
 
 ---
 
 ## Installation
 
 ```bash
-# Step 1: Add the marketplace
+# Add marketplace
 /plugin marketplace add romiluz13/cc10x
 
-# Step 2: Install the plugin
+# Install plugin
 /plugin install cc10x@romiluz13
+
+# Restart Claude Code
 ```
 
 ---
 
-_cc10x v4.8.0 | Production Ready | Built for Claude Code_
+## Quick Start
+
+```bash
+# BUILD - Creates features with TDD
+"build a user authentication system"
+
+# REVIEW - Audits code with confidence scoring
+"review this PR for security issues"
+
+# DEBUG - Fixes bugs with LOG FIRST
+"debug the payment processing error"
+
+# PLAN - Creates comprehensive plans
+"plan the microservices architecture"
+```
+
+---
+
+## Files Changed in v5.6.0
+
+### Agents (6 files)
+- `plugins/cc10x/agents/component-builder.md`
+- `plugins/cc10x/agents/bug-investigator.md`
+- `plugins/cc10x/agents/code-reviewer.md`
+- `plugins/cc10x/agents/integration-verifier.md`
+- `plugins/cc10x/agents/planner.md`
+- `plugins/cc10x/agents/silent-failure-hunter.md`
+
+### Skills (11 files)
+- `plugins/cc10x/skills/cc10x-router/SKILL.md`
+- `plugins/cc10x/skills/session-memory/SKILL.md`
+- `plugins/cc10x/skills/test-driven-development/SKILL.md`
+- `plugins/cc10x/skills/code-generation/SKILL.md`
+- `plugins/cc10x/skills/debugging-patterns/SKILL.md`
+- `plugins/cc10x/skills/code-review-patterns/SKILL.md`
+- `plugins/cc10x/skills/planning-patterns/SKILL.md`
+- `plugins/cc10x/skills/brainstorming/SKILL.md`
+- `plugins/cc10x/skills/architecture-patterns/SKILL.md`
+- `plugins/cc10x/skills/frontend-patterns/SKILL.md`
+- `plugins/cc10x/skills/verification-before-completion/SKILL.md`
+
+---
+
+## Version History
+
+- **v5.6.0** - Fixed agent tool misconfigurations (planner couldn't save plans!)
+- **v5.5.0** - Fixed skill keyword conflicts (router is now ONLY entry point)
+- **v5.4.0** - Fixed router to AUTO-EXECUTE instead of listing capabilities
+- **v5.3.0** - Added confidence scoring, user confirmation gates, silent-failure-hunter
+- **v5.2.0** - Added session memory with READ+WRITE triggers
+
+---
+
+## License
+
+MIT License
+
+---
+
+## Contributing
+
+- Star the repository
+- Report issues
+- Suggest improvements
+
+---
+
+_cc10x v5.6.0 | The Perfect Claude Code Workflow System_
