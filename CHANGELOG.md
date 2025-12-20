@@ -1,5 +1,40 @@
 # Changelog
 
+## [5.4.0] - 2025-12-20
+
+### Fixed
+
+- **Router Auto-Execute Enforcement**: Fixed critical issue where Claude would list cc10x capabilities instead of executing workflows
+  - Changed description from passive "should be used" to aggressive "AUTO-LOAD AND EXECUTE"
+  - Added "What NOT To Do" section explicitly forbidding capability listing
+  - Added 3 execution examples showing the RIGHT way to respond
+  - Router now triggers on expanded keywords: app, application, feature, component, develop, code
+
+### Changed
+
+- **Router Title**: Changed from "Simple Workflow Coordination" to "Workflow Execution Engine"
+- **Router Behavior**: Now explicitly states "THIS IS AN EXECUTION ENGINE, NOT DOCUMENTATION"
+- **Plugin Description**: Updated to emphasize "AUTO-EXECUTE routing (not just describe capabilities)"
+
+### Key Behavior Change
+
+**Before v5.4.0** (WRONG):
+```
+user: "build a task tracker"
+assistant: "cc10x has these capabilities: brainstorming, planning, building..."
+```
+
+**After v5.4.0** (CORRECT):
+```
+user: "build a task tracker"
+assistant: "Detected BUILD intent. Executing BUILD workflow.
+Loading memory...
+Clarifying requirements:
+1. What framework?
+2. What features?
+..."
+```
+
 ## [5.3.0] - 2025-12-20
 
 ### Added

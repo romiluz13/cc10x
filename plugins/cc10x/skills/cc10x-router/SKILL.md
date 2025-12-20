@@ -1,11 +1,85 @@
 ---
 name: cc10x-router
-description: This skill should be used when the user asks to "build", "implement", "create", "review", "audit", "debug", "fix", "plan", or "design" something. Routes requests to appropriate agents (component-builder, code-reviewer, bug-investigator, planner) based on detected intent.
+description: |
+  AUTO-LOAD AND EXECUTE when user says: build, implement, create, make, write, add, develop, code, feature, component, app, application, review, audit, check, analyze, debug, fix, error, bug, broken, troubleshoot, plan, design, architect, roadmap, strategy.
+
+  MANDATORY: Execute the workflow - DO NOT just list capabilities or describe what cc10x can do.
+
+  When triggered: (1) Detect intent, (2) Load memory, (3) Clarify requirements, (4) Execute agent chain, (5) Update memory.
 ---
 
-# cc10x Router - Simple Workflow Coordination
+# cc10x Router - Workflow Execution Engine
 
-Route user requests to the appropriate agent based on intent detection.
+**THIS IS AN EXECUTION ENGINE, NOT DOCUMENTATION.**
+
+When this skill loads, you MUST:
+1. Detect intent from user request
+2. Execute the matching workflow
+3. Invoke agents via Task tool
+4. Update memory with results
+
+## CRITICAL: What NOT To Do
+
+**NEVER respond with:**
+- "cc10x has these capabilities..."
+- "Here are the skills available..."
+- "I can use cc10x to..."
+- "Let me list what cc10x can do..."
+
+**ALWAYS respond with:**
+- Detecting intent → Executing [WORKFLOW] workflow
+- Loading memory...
+- Clarifying requirements: [questions]
+- Invoking [agent]...
+
+## Execution Examples
+
+<example>
+user: "I want to build a task tracker app"
+assistant: "Detected **BUILD** intent. Executing BUILD workflow.
+
+**Loading memory...**
+[Runs memory load command]
+
+**Clarifying requirements (CRITICAL: DO NOT SKIP):**
+1. What framework/language should I use? (Node.js, Python, etc.)
+2. Should tasks have priorities, due dates, or categories?
+3. CLI app or web app?
+4. Any specific features beyond basic CRUD?
+
+Please answer these questions so I can proceed with the right approach."
+</example>
+
+<example>
+user: "help me create a simple API"
+assistant: "Detected **BUILD** intent. Executing BUILD workflow.
+
+**Loading memory...**
+[Runs memory load command]
+
+**Clarifying requirements (CRITICAL: DO NOT SKIP):**
+1. What should this API do? (e.g., user management, data storage)
+2. REST or GraphQL?
+3. What language/framework? (Express, FastAPI, etc.)
+4. Authentication needed?
+
+Waiting for your answers before invoking component-builder."
+</example>
+
+<example>
+user: "there's a bug in my login function"
+assistant: "Detected **DEBUG** intent. Executing DEBUG workflow.
+
+**Loading memory...**
+[Runs memory load command - checking Common Gotchas]
+
+**Understanding the issue:**
+1. What error message are you seeing?
+2. What's the expected behavior vs actual behavior?
+3. When did it start happening?
+
+Waiting for details before invoking bug-investigator with LOG FIRST approach."
+</example>
 
 ## MANDATORY: Memory Operations
 
