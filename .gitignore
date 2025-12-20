@@ -3,6 +3,23 @@
 # ========================================
 
 # ========================================
+# INTERNAL DEVELOPMENT FILES (ROOT)
+# ========================================
+
+# Planning and improvement docs (internal only)
+REFACTORING-PLAN.md
+PROMPT-ENGINEERING-IMPROVEMENTS.md
+*-PLAN.md
+*-IMPROVEMENTS.md
+*-AUDIT.md
+*-ANALYSIS.md
+*-NOTES.md
+*-DRAFT.md
+*-WIP.md
+*-OLD.md
+*-BACKUP.md
+
+# ========================================
 # RUNTIME & DEPENDENCIES
 # ========================================
 
