@@ -1,5 +1,57 @@
 # Changelog
 
+## [5.3.0] - 2025-12-20
+
+### Added
+
+- **Confidence Scoring**: code-reviewer now rates findings 0-100, only reports issues with confidence >= 80
+  - Reduces false positives and improves signal-to-noise ratio
+  - Self-check questions before reporting any issue
+  - Output format includes confidence scores
+
+- **User Confirmation Gates**: BUILD workflow now REQUIRES user confirmation before implementing
+  - Phase 1 "CLARIFY REQUIREMENTS" marked as "CRITICAL: DO NOT SKIP"
+  - Must present questions to user and wait for answers
+  - If user says "whatever you think", state recommendation and get confirmation
+
+- **Git History Context**: code-reviewer checks git blame and recent commits
+  - Run `git log --oneline -10 -- <file>` for recent changes
+  - Run `git blame <file>` for authorship context
+  - Check if similar issues were fixed before
+  - Output format includes Git Context section
+
+- **Silent Failure Hunter**: New specialized agent for error handling audits
+  - Triggers on "error handling", "audit errors", "catch blocks", "silent failures"
+  - Zero tolerance for empty catch blocks, log-only catches, generic error messages
+  - Integrated into BUILD workflow (after code-reviewer, if error handling code)
+  - Severity rating: CRITICAL / HIGH / MEDIUM / LOW
+
+### Changed
+
+- BUILD workflow: Added clarification step and silent-failure-hunter
+- REVIEW workflow: Can now invoke silent-failure-hunter for error handling focus
+- code-reviewer output format: Now includes confidence scores and git context
+- Intent Detection: Added "error handling, audit errors, catch blocks, silent failures" routing
+
+### Architecture
+
+```
+Router (cc10x-router)
+    |
+    +-- BUILD -> component-builder -> code-reviewer -> silent-failure-hunter -> integration-verifier
+    +-- REVIEW -> code-reviewer (or silent-failure-hunter for error focus)
+    +-- DEBUG -> bug-investigator -> code-reviewer -> integration-verifier
+    +-- PLAN -> planner
+
+Agents (6 total)
+    +-- component-builder (TDD cycle)
+    +-- code-reviewer (confidence scoring, git context)
+    +-- bug-investigator (LOG FIRST)
+    +-- integration-verifier (end-to-end)
+    +-- planner (architecture, risks)
+    +-- silent-failure-hunter (error handling audits) [NEW]
+```
+
 ## [5.2.0] - 2025-12-20
 
 ### Added

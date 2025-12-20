@@ -40,8 +40,9 @@ Detect intent from user request and route to the appropriate workflow:
 
 | Intent Keywords | Workflow | Agent Chain |
 |-----------------|----------|-------------|
-| build, implement, create, write, add, make | BUILD | component-builder → code-reviewer → integration-verifier |
+| build, implement, create, write, add, make | BUILD | component-builder → code-reviewer → silent-failure-hunter (if error handling) → integration-verifier |
 | review, audit, check, analyze, assess | REVIEW | code-reviewer |
+| error handling, audit errors, catch blocks, silent failures | REVIEW (error focus) | silent-failure-hunter |
 | debug, fix, error, bug, troubleshoot, broken | DEBUG | bug-investigator → code-reviewer → integration-verifier |
 | plan, design, architect, roadmap, strategy | PLAN | planner |
 
@@ -55,13 +56,26 @@ When user wants to build/implement/create something:
    - activeContext.md → prior decisions, current focus
    - patterns.md → project conventions to follow
    - progress.md → check if already done!
-1. **Understand what to build** - Clarify requirements if unclear
+
+1. **CLARIFY REQUIREMENTS** - **CRITICAL: DO NOT SKIP**
+   - What exactly needs to be built?
+   - What are the acceptance criteria?
+   - What edge cases should be handled?
+   - **Present questions to user in a clear list**
+   - **WAIT for user answers before proceeding**
+   - If user says "whatever you think", state your recommendation and get confirmation
    - **CHECK**: activeContext.md Active Decisions before choosing approach
+
 2. **Invoke component-builder** - Uses TDD cycle (RED → GREEN → REFACTOR)
    - **CHECK**: patterns.md for code conventions during build
+
 3. **Invoke code-reviewer** - Reviews the built code
-4. **Invoke integration-verifier** - Verifies end-to-end functionality
-5. **UPDATE MEMORY** - Save learnings, decisions, and progress
+
+4. **Invoke silent-failure-hunter** - (if error handling code) Audits error handling
+
+5. **Invoke integration-verifier** - Verifies end-to-end functionality
+
+6. **UPDATE MEMORY** - Save learnings, decisions, and progress
 
 ### REVIEW Workflow
 
@@ -115,13 +129,14 @@ Task(subagent_type="cc10x:code-reviewer", prompt="Review [code/PR description]")
 Task(subagent_type="cc10x:bug-investigator", prompt="Debug [error description]")
 Task(subagent_type="cc10x:integration-verifier", prompt="Verify [integration description]")
 Task(subagent_type="cc10x:planner", prompt="Plan [feature description]")
+Task(subagent_type="cc10x:silent-failure-hunter", prompt="Audit error handling in [description]")
 ```
 
 ## Sequential vs Parallel
 
-- **BUILD workflow**: Sequential (component-builder → code-reviewer → integration-verifier)
+- **BUILD workflow**: Sequential (component-builder → code-reviewer → silent-failure-hunter → integration-verifier)
 - **DEBUG workflow**: Sequential (bug-investigator → code-reviewer → integration-verifier)
-- **REVIEW workflow**: Single agent (code-reviewer)
+- **REVIEW workflow**: Single agent (code-reviewer) or silent-failure-hunter (for error handling focus)
 - **PLAN workflow**: Single agent (planner)
 
 Always run agents sequentially when outputs depend on previous steps.
