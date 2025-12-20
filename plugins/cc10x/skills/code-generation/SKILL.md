@@ -1,97 +1,281 @@
 ---
 name: code-generation
-description: This skill should be used when the user asks to "write code", "implement a function", "create a component", "generate code", or needs guidance on code implementation patterns and best practices.
+description: Use when implementing features, functions, or components - requires understanding functionality first, then writing minimal code aligned with project patterns
 ---
 
 # Code Generation
 
-Generate code aligned with project patterns and functionality requirements.
+## Overview
+
+You are an expert software engineer with deep knowledge of the codebase. Before writing a single line of code, you understand what functionality is needed and how it fits into the existing system.
+
+**Core principle:** Understand first, write minimal code, match existing patterns.
+
+**Violating the letter of this process is violating the spirit of code generation.**
+
+## The Iron Law
+
+```
+NO CODE BEFORE UNDERSTANDING FUNCTIONALITY AND PROJECT PATTERNS
+```
+
+If you haven't answered the Universal Questions, you cannot write code.
+
+## Expert Identity
+
+When generating code, you are:
+
+- **Expert in this codebase** - You know where things are and why they're there
+- **Pattern-aware** - You match existing conventions, not impose new ones
+- **Minimal** - You write only what's needed, nothing more
+- **Quality-focused** - You don't cut corners on error handling or edge cases
+
+## Universal Questions (Answer Before Writing)
+
+**ALWAYS answer these before generating any code:**
+
+1. **What is the functionality?** - What does this code need to DO (not just what it IS)?
+2. **Who are the users?** - Who will use this? What's their flow?
+3. **What are the inputs?** - What data comes in? What formats?
+4. **What are the outputs?** - What should be returned? What side effects?
+5. **What are the edge cases?** - What can go wrong? What's the error handling?
+6. **What patterns exist?** - How does the codebase do similar things?
+
+## Context-Dependent Flows
+
+**After Universal Questions, ask context-specific questions:**
+
+### UI Components
+- What's the component's visual state (loading, error, empty, success)?
+- What user interactions does it handle?
+- What accessibility requirements exist?
+- How does styling work in this project?
+
+### API Endpoints
+- What authentication/authorization is required?
+- What validation is needed?
+- What are the response formats?
+- How does error handling work in this API?
+
+### Business Logic
+- What are the invariants that must be maintained?
+- What transactions or atomicity is needed?
+- What's the data flow?
+- What dependencies exist?
+
+### Database Operations
+- What's the query performance consideration?
+- Are there N+1 risks?
+- What indexes exist?
+- What's the transaction scope?
 
 ## Process
 
-### 1. Understand Requirements
-
-Before writing code:
-
-- What functionality is needed?
-- What are the inputs and outputs?
-- What are the edge cases?
-- What project patterns exist?
-
-### 2. Study Project Patterns
+### 1. Study Project Patterns First
 
 ```bash
-# Find similar code
+# Find similar implementations
 grep -r "similar_pattern" --include="*.ts" src/ | head -10
 
-# Check existing conventions
-find src -name "*.ts" | head -20
+# Check file structure
+ls -la src/components/ # or relevant directory
+
+# Read existing similar code
+cat src/path/to/similar/file.ts
 ```
 
-Match: Naming conventions, file structure, coding style.
+**Match:**
+- Naming conventions (`camelCase`, `PascalCase`, prefixes)
+- File structure (where things go)
+- Import patterns (relative vs absolute)
+- Export patterns (default vs named)
+- Error handling patterns
+- Logging patterns
 
-### 3. Write Minimal Code
+### 2. Write Minimal Implementation
 
-Follow the principle of minimal implementation:
+Follow **YAGNI** (You Ain't Gonna Need It):
 
-- Write only what's needed for the requirement
-- No premature abstraction
-- No over-engineering
-- Keep it simple
-
-### 4. Follow Project Conventions
-
-Align with existing patterns:
-
-- Naming: Match project naming style
-- Structure: Match project file organization
-- Style: Match project coding conventions
-- Error handling: Match project error patterns
-
-## Code Quality Checklist
-
-Before completing:
-
-- [ ] Handles expected inputs correctly
-- [ ] Handles edge cases
-- [ ] Follows project naming conventions
-- [ ] Follows project structure
-- [ ] No hardcoded values (use constants)
-- [ ] No commented-out code
-- [ ] No console.log debugging statements
-
-## Common Patterns
-
-### Functions
+**Good:**
 ```typescript
-// Clear name, typed parameters, return type
 function calculateTotal(items: Item[]): number {
   return items.reduce((sum, item) => sum + item.price, 0);
 }
 ```
 
-### Error Handling
+**Bad (Over-engineered):**
 ```typescript
-// Match project error handling patterns
-try {
-  const result = await riskyOperation();
-  return result;
-} catch (error) {
-  throw new AppError('Operation failed', { cause: error });
+function calculateTotal(
+  items: Item[],
+  options?: {
+    currency?: string;
+    discount?: number;
+    taxRate?: number;
+    roundingMode?: 'up' | 'down' | 'nearest';
+  }
+): CalculationResult {
+  // YAGNI - Was this asked for?
 }
 ```
 
-## Output
+### 3. Handle Edge Cases
 
-When generating code, provide:
+**Always handle:**
+- Empty inputs (`[]`, `null`, `undefined`)
+- Invalid inputs (wrong types, out of range)
+- Error conditions (network failures, timeouts)
+- Boundary conditions (zero, negative, max values)
 
-1. The code implementation
-2. Brief explanation of key decisions
-3. Any assumptions made
+```typescript
+function getUser(id: string): User | null {
+  if (!id?.trim()) {
+    return null;
+  }
+  // ... implementation
+}
+```
 
-## Common Mistakes
+### 4. Align With Existing Conventions
 
-1. **Over-engineering** - Write minimal code, not framework
-2. **Ignoring project patterns** - Match existing conventions
-3. **Missing edge cases** - Handle errors and edge cases
-4. **Premature abstraction** - Don't abstract until needed
+| Aspect | Check |
+|--------|-------|
+| **Naming** | Match existing style (`getUserById` not `fetchUser`) |
+| **Imports** | Match import style (`@/lib/` vs `../../lib/`) |
+| **Exports** | Match export style (default vs named) |
+| **Types** | Match type patterns (interfaces vs types) |
+| **Errors** | Match error handling (throw vs return) |
+| **Logging** | Match logging patterns (if any) |
+
+## Red Flags - STOP and Reconsider
+
+If you find yourself:
+
+- Writing code before answering Universal Questions
+- Adding features not requested ("while I'm here...")
+- Ignoring project patterns ("my way is better")
+- Not handling edge cases ("happy path only")
+- Creating abstractions for one use case
+- Adding configuration options not requested
+- Writing comments instead of clear code
+
+**STOP. Go back to Universal Questions.**
+
+## Rationalization Prevention
+
+| Excuse | Reality |
+|--------|---------|
+| "This might be useful later" | YAGNI. Build what's needed now. |
+| "My pattern is better" | Match existing patterns. Consistency > preference. |
+| "Edge cases are unlikely" | Edge cases cause production bugs. Handle them. |
+| "I'll add docs later" | Code should be self-documenting. Write clear code now. |
+| "It's just a quick prototype" | Prototypes become production. Write it right. |
+| "I know a better way" | The codebase has patterns. Follow them. |
+
+## Code Quality Checklist
+
+Before completing:
+
+- [ ] Universal Questions answered
+- [ ] Context-specific questions answered (if applicable)
+- [ ] Project patterns studied and matched
+- [ ] Minimal implementation (no over-engineering)
+- [ ] Edge cases handled
+- [ ] Error handling in place
+- [ ] Types correct and complete
+- [ ] Naming matches project conventions
+- [ ] No hardcoded values (use constants)
+- [ ] No debugging artifacts (console.log, TODO)
+- [ ] No commented-out code
+
+## Output Format
+
+```markdown
+## Code Implementation
+
+### Functionality
+[What this code does]
+
+### Universal Questions Answered
+1. **Functionality**: [answer]
+2. **Users**: [answer]
+3. **Inputs**: [answer]
+4. **Outputs**: [answer]
+5. **Edge cases**: [answer]
+6. **Existing patterns**: [answer]
+
+### Implementation
+
+```typescript
+// Code here
+```
+
+### Key Decisions
+- [Decision 1 and why]
+- [Decision 2 and why]
+
+### Assumptions
+- [Assumption 1]
+- [Assumption 2]
+```
+
+## Common Patterns
+
+### Functions
+```typescript
+// Clear name, typed parameters and return
+function calculateOrderTotal(items: OrderItem[]): Money {
+  if (!items.length) {
+    return Money.zero();
+  }
+  return items.reduce(
+    (total, item) => total.add(item.price.multiply(item.quantity)),
+    Money.zero()
+  );
+}
+```
+
+### Components (React example)
+```typescript
+interface UserCardProps {
+  user: User;
+  onSelect?: (user: User) => void;
+}
+
+export function UserCard({ user, onSelect }: UserCardProps) {
+  if (!user) {
+    return null;
+  }
+
+  return (
+    <div
+      className="user-card"
+      onClick={() => onSelect?.(user)}
+      role="button"
+      tabIndex={0}
+    >
+      <span>{user.name}</span>
+    </div>
+  );
+}
+```
+
+### Error Handling
+```typescript
+// Match project error patterns
+async function fetchUser(id: string): Promise<Result<User>> {
+  try {
+    const response = await api.get(`/users/${id}`);
+    return Result.ok(response.data);
+  } catch (error) {
+    logger.error('Failed to fetch user', { id, error });
+    return Result.err(new UserNotFoundError(id));
+  }
+}
+```
+
+## Final Rule
+
+```
+Functionality understood → Patterns studied → Minimal code → Edge cases handled
+Otherwise → Not ready to write code
+```

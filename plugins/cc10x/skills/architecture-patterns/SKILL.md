@@ -1,124 +1,292 @@
 ---
 name: architecture-patterns
-description: This skill should be used when the user asks to "design architecture", "plan system design", "create API endpoints", "design data models", "plan integrations", or mentions system architecture, containers, components, or data flow.
+description: Use when designing system architecture, planning integrations, or creating API endpoints - requires understanding functionality flows before designing architecture
 ---
 
 # Architecture Patterns
 
-Design architecture to support functionality, not generic patterns.
+## Overview
 
-## Process
+Architecture exists to support functionality. Every architectural decision should trace back to a functionality requirement.
 
-### 1. Understand Functionality First
+**Core principle:** Design architecture FROM functionality, not TO functionality.
 
-Before designing architecture, understand what needs to be built:
+**Violating the letter of this process is violating the spirit of architecture.**
 
-- What problem does this solve?
-- What are the user flows?
-- What are the system flows?
-- What are the integration requirements?
+## The Iron Law
 
-### 2. Map Existing Architecture
-
-Understand current architecture before designing:
-
-```bash
-# Find project structure
-find src -type d -maxdepth 3
-
-# Find patterns used
-grep -r "interface\|service\|model" --include="*.ts" src/ | head -20
+```
+NO ARCHITECTURE DESIGN BEFORE FUNCTIONALITY FLOWS ARE MAPPED
 ```
 
-Document: System context, containers, components, data models.
+If you haven't documented user flows, admin flows, and system flows, you cannot design architecture.
 
-### 3. Design to Support Functionality
+## Intake Routing
 
-Map functionality to architecture:
+**First, determine what kind of architectural work is needed:**
 
-| Functionality | Architecture |
-|---------------|--------------|
-| User flows | UI components |
-| System flows | Services |
-| Integration flows | Clients/adapters |
-| Data flows | Data models |
+| Request Type | Route To |
+|--------------|----------|
+| "Design API endpoints" | API Design section |
+| "Plan system architecture" | Full Architecture Design |
+| "Design data models" | Data Model section |
+| "Plan integrations" | Integration Patterns section |
+| "Make decisions" | Decision Framework section |
 
-### 4. Document Decisions
+## Universal Questions (Answer First)
 
-For each decision, document:
+**ALWAYS answer before designing:**
 
-- **Context**: What functionality requirement drives this?
-- **Options**: What alternatives were considered?
-- **Trade-offs**: Pros and cons of each
-- **Decision**: Which option and why
+1. **What functionality are we building?** - User stories, not technical features
+2. **Who are the actors?** - Users, admins, external systems
+3. **What are the user flows?** - Step-by-step user actions
+4. **What are the system flows?** - Internal processing steps
+5. **What integrations exist?** - External dependencies
+6. **What are the constraints?** - Performance, security, compliance
+
+## Functionality-First Design Process
+
+### Phase 1: Map Functionality Flows
+
+**Before any architecture:**
+
+```
+User Flow (example):
+1. User opens upload page
+2. User selects file
+3. System validates file type/size
+4. System uploads to storage
+5. System shows success message
+
+Admin Flow (example):
+1. Admin opens dashboard
+2. Admin views all uploads
+3. Admin can delete uploads
+4. System logs admin action
+
+System Flow (example):
+1. Request received at API
+2. Auth middleware validates token
+3. Service processes request
+4. Database stores data
+5. Response returned
+```
+
+### Phase 2: Map to Architecture
+
+**Each flow maps to components:**
+
+| Flow Step | Architecture Component |
+|-----------|----------------------|
+| User opens page | Frontend route + component |
+| User submits data | API endpoint |
+| System validates | Validation service |
+| System processes | Business logic service |
+| System stores | Database + repository |
+| System integrates | External client/adapter |
+
+### Phase 3: Design Components
+
+**For each component, define:**
+
+- **Purpose**: What functionality it supports
+- **Inputs**: What data it receives
+- **Outputs**: What data it returns
+- **Dependencies**: What it needs
+- **Error handling**: What can fail
 
 ## Architecture Views
 
-### System Context
-- External actors (users, admins, external systems)
-- System responsibilities
-- External dependencies
-
-### Containers
-- Web app (UI)
-- API service (business logic)
-- Database (data storage)
-- External services (integrations)
-
-### Components
-- UI components (mapped from user flows)
-- Services (mapped from system flows)
-- Clients/adapters (mapped from integration flows)
-- Models (mapped from data flows)
-
-## API Design
-
-Design APIs aligned with functionality:
-
+### System Context (C4 Level 1)
 ```
-POST /api/files          # Create (from user flow: upload)
-GET /api/files/:id       # Read (from user flow: view)
-PUT /api/files/:id       # Update (from user flow: edit)
-DELETE /api/files/:id    # Delete (from admin flow: delete)
+┌─────────────────────────────────────────────┐
+│                 SYSTEM                       │
+│  ┌─────────┐  ┌─────────┐  ┌─────────┐     │
+│  │   Web   │  │   API   │  │Database │     │
+│  │   App   │──│ Service │──│         │     │
+│  └─────────┘  └─────────┘  └─────────┘     │
+└─────────────────────────────────────────────┘
+       │              │              │
+    ┌──┴──┐        ┌──┴──┐        ┌──┴──┐
+    │User │        │Admin│        │ Ext │
+    └─────┘        └─────┘        └─────┘
 ```
 
-For each endpoint:
-- Request schema (what the flow needs)
-- Response schema (what the flow returns)
-- Error handling (what can go wrong in the flow)
+### Container View (C4 Level 2)
+- **Web App**: React/Vue/Angular frontend
+- **API Service**: REST/GraphQL backend
+- **Database**: PostgreSQL/MongoDB/etc
+- **Cache**: Redis/Memcached
+- **Queue**: RabbitMQ/SQS for async
+
+### Component View (C4 Level 3)
+- **Controllers**: Handle HTTP requests
+- **Services**: Business logic
+- **Repositories**: Data access
+- **Clients**: External integrations
+- **Models**: Data structures
+
+## API Design (Functionality-Aligned)
+
+**Map user flows to endpoints:**
+
+```
+User Flow: Upload file
+→ POST /api/files
+  Request: { file: binary, metadata: {...} }
+  Response: { id: string, url: string }
+  Errors: 400 (invalid), 413 (too large), 500 (storage failed)
+
+User Flow: View file
+→ GET /api/files/:id
+  Response: { id, url, metadata, createdAt }
+  Errors: 404 (not found), 403 (not authorized)
+
+Admin Flow: Delete file
+→ DELETE /api/files/:id
+  Response: { success: true }
+  Errors: 404, 403
+```
+
+**API Design Checklist:**
+- [ ] Each endpoint maps to a user/admin flow
+- [ ] Request schema matches flow inputs
+- [ ] Response schema matches flow outputs
+- [ ] Errors cover all failure modes
+- [ ] Auth/authz requirements documented
 
 ## Integration Patterns
 
-Design integrations aligned with functionality:
+**Map integration requirements to patterns:**
 
-- **Retry logic**: When integrations can fail transiently
-- **Circuit breakers**: When integrations can fail persistently
-- **Error handling**: Map to functionality error flows
+| Requirement | Pattern |
+|-------------|---------|
+| Flaky external service | Retry with exponential backoff |
+| Slow external service | Circuit breaker + timeout |
+| Async processing needed | Message queue |
+| Real-time updates needed | WebSocket/SSE |
+| Data sync needed | Event sourcing |
+
+**For each integration:**
+```markdown
+### [Integration Name]
+
+**Functionality**: What user flow depends on this?
+**Pattern**: [Retry/Circuit breaker/Queue/etc]
+**Error handling**: What happens when it fails?
+**Fallback**: What's the degraded experience?
+```
+
+## Decision Framework
+
+**For each architectural decision:**
+
+```markdown
+### Decision: [Title]
+
+**Context**: What functionality requirement drives this?
+
+**Options**:
+1. [Option A] - [Brief description]
+2. [Option B] - [Brief description]
+3. [Option C] - [Brief description]
+
+**Trade-offs**:
+| Criterion | Option A | Option B | Option C |
+|-----------|----------|----------|----------|
+| Performance | Good | Better | Best |
+| Complexity | Low | Medium | High |
+| Cost | Low | Medium | High |
+
+**Decision**: [Option chosen]
+
+**Rationale**: [Why this option best supports functionality]
+```
+
+## Red Flags - STOP and Redesign
+
+If you find yourself:
+
+- Designing architecture before mapping flows
+- Adding components without clear functionality
+- Choosing patterns because "it's best practice"
+- Over-engineering for hypothetical scale
+- Ignoring existing architecture patterns
+- Making decisions without documenting trade-offs
+
+**STOP. Go back to functionality flows.**
+
+## Rationalization Prevention
+
+| Excuse | Reality |
+|--------|---------|
+| "This pattern is industry standard" | Does it support THIS functionality? |
+| "We might need it later" | YAGNI. Design for now. |
+| "Microservices are better" | For this functionality? Justify it. |
+| "Everyone uses this" | That's not a trade-off analysis. |
+| "It's more flexible" | Flexibility without need = complexity. |
 
 ## Output Format
 
 ```markdown
-# Architecture Design
+# Architecture Design: [Feature/System Name]
 
 ## Functionality Summary
-[What this architecture supports]
+[What this architecture supports - trace to user value]
 
-## System Context
-[External actors, responsibilities, dependencies]
+## Flows Mapped
+
+### User Flows
+1. [Flow 1 steps]
+2. [Flow 2 steps]
+
+### System Flows
+1. [Flow 1 steps]
+2. [Flow 2 steps]
 
 ## Architecture
-[Containers, components, data models]
 
-## Decisions
-[Key decisions with trade-offs]
+### System Context
+[Diagram or description of actors and system boundaries]
+
+### Components
+| Component | Purpose (Functionality) | Dependencies |
+|-----------|------------------------|--------------|
+| [Name] | [What flow it supports] | [What it needs] |
+
+### API Endpoints
+| Endpoint | Flow | Request | Response |
+|----------|------|---------|----------|
+| POST /api/x | User uploads | {...} | {...} |
+
+## Key Decisions
+
+### Decision 1: [Title]
+- Context: [Functionality driver]
+- Options: [List]
+- Trade-offs: [Table]
+- Decision: [Choice]
+- Rationale: [Why]
 
 ## Implementation Roadmap
-[Prioritized steps: Critical → Important → Minor]
+
+### Critical (Must have for core flow)
+1. [Component/feature]
+
+### Important (Completes flows)
+1. [Component/feature]
+
+### Enhancement (Improves experience)
+1. [Component/feature]
 ```
 
-## Common Mistakes
+## Final Check
 
-1. **Designing without understanding functionality** - Always understand flows first
-2. **Generic patterns over functionality** - Design to support specific flows
-3. **Missing trade-offs** - Document why each decision was made
-4. **No implementation roadmap** - Provide prioritized steps
+Before completing architecture design:
+
+- [ ] All user flows mapped
+- [ ] All system flows mapped
+- [ ] Each component traces to functionality
+- [ ] Each API endpoint traces to flow
+- [ ] Decisions documented with trade-offs
+- [ ] Implementation roadmap prioritized

@@ -1,11 +1,17 @@
 ---
 name: verification-before-completion
-description: This skill should be used before claiming "done", "fixed", "complete", "ready", or any completion claim. Requires fresh verification evidence before success claims.
+description: Use when about to claim work is complete, fixed, or passing, before committing or creating PRs - requires running verification commands and confirming output before making any success claims; evidence before assertions always
 ---
 
 # Verification Before Completion
 
-Never claim completion without fresh verification evidence.
+## Overview
+
+Claiming work is complete without verification is dishonesty, not efficiency.
+
+**Core principle:** Evidence before claims, always.
+
+**Violating the letter of this rule is violating the spirit of this rule.**
 
 ## The Iron Law
 
@@ -13,60 +19,135 @@ Never claim completion without fresh verification evidence.
 NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE
 ```
 
-Before saying "done", "fixed", "complete", or "ready":
+If you haven't run the verification command in this message, you cannot claim it passes.
 
-1. Run verification commands
-2. Capture exit codes
-3. Show evidence
+## The Gate Function
 
-## Process
+```
+BEFORE claiming any status or expressing satisfaction:
 
-### 1. Define Verification Criteria
+1. IDENTIFY: What command proves this claim?
+2. RUN: Execute the FULL command (fresh, complete)
+3. READ: Full output, check exit code, count failures
+4. VERIFY: Does output confirm the claim?
+   - If NO: State actual status with evidence
+   - If YES: State claim WITH evidence
+5. ONLY THEN: Make the claim
 
-What must be true for completion?
-
-- Tests pass?
-- Build succeeds?
-- Functionality works?
-- No regressions?
-
-### 2. Run Verification Commands
-
-```bash
-# Run tests
-npm test
-# Expected: exit 0
-
-# Run build
-npm run build
-# Expected: exit 0
-
-# Run specific verification
-npm test -- --grep "feature being completed"
-# Expected: exit 0
+Skip any step = lying, not verifying
 ```
 
-### 3. Capture Evidence
+## Common Failures
 
-For each command, capture:
+| Claim | Requires | Not Sufficient |
+|-------|----------|----------------|
+| Tests pass | Test command output: 0 failures | Previous run, "should pass" |
+| Linter clean | Linter output: 0 errors | Partial check, extrapolation |
+| Build succeeds | Build command: exit 0 | Linter passing, logs look good |
+| Bug fixed | Test original symptom: passes | Code changed, assumed fixed |
+| Regression test works | Red-green cycle verified | Test passes once |
+| Agent completed | VCS diff shows changes | Agent reports "success" |
+| Requirements met | Line-by-line checklist | Tests passing |
 
-- Command run
-- Exit code
-- Relevant output snippet
+## Red Flags - STOP
 
-### 4. Only Then Claim Completion
+If you find yourself:
 
-With evidence in hand, claim completion.
+- Using "should", "probably", "seems to"
+- Expressing satisfaction before verification ("Great!", "Perfect!", "Done!", etc.)
+- About to commit/push/PR without verification
+- Trusting agent success reports
+- Relying on partial verification
+- Thinking "just this once"
+- Tired and wanting work over
+- **ANY wording implying success without having run verification**
+
+**STOP. Run verification. Get evidence. THEN speak.**
+
+## Rationalization Prevention
+
+| Excuse | Reality |
+|--------|---------|
+| "Should work now" | RUN the verification |
+| "I'm confident" | Confidence ≠ evidence |
+| "Just this once" | No exceptions |
+| "Linter passed" | Linter ≠ compiler |
+| "Agent said success" | Verify independently |
+| "I'm tired" | Exhaustion ≠ excuse |
+| "Partial check is enough" | Partial proves nothing |
+| "Different words so rule doesn't apply" | Spirit over letter |
+| "I already tested it manually" | Manual ≠ automated evidence |
+| "The code looks correct" | Looking ≠ running |
+
+## Key Patterns
+
+**Tests:**
+```
+✅ [Run test command] [See: 34/34 pass] "All tests pass"
+❌ "Should pass now" / "Looks correct"
+```
+
+**Regression tests (TDD Red-Green):**
+```
+✅ Write → Run (pass) → Revert fix → Run (MUST FAIL) → Restore → Run (pass)
+❌ "I've written a regression test" (without red-green verification)
+```
+
+**Build:**
+```
+✅ [Run build] [See: exit 0] "Build passes"
+❌ "Linter passed" (linter doesn't check compilation)
+```
+
+**Requirements:**
+```
+✅ Re-read plan → Create checklist → Verify each → Report gaps or completion
+❌ "Tests pass, phase complete"
+```
+
+**Agent delegation:**
+```
+✅ Agent reports success → Check VCS diff → Verify changes → Report actual state
+❌ Trust agent report
+```
+
+## Why This Matters
+
+From real failure patterns:
+
+- Your user said "I don't believe you" - trust broken
+- Undefined functions shipped - would crash in production
+- Missing requirements shipped - incomplete features
+- Time wasted on false completion → redirect → rework
+- Violates: "Honesty is a core value. If you lie, you'll be replaced."
+
+## When To Apply
+
+**ALWAYS before:**
+
+- ANY variation of success/completion claims
+- ANY expression of satisfaction
+- ANY positive statement about work state
+- Committing, PR creation, task completion
+- Moving to next task
+- Delegating to agents
+
+**Rule applies to:**
+
+- Exact phrases
+- Paraphrases and synonyms
+- Implications of success
+- ANY communication suggesting completion/correctness
 
 ## Verification Checklist
 
-Before claiming completion:
+Before marking work complete:
 
-- [ ] All relevant tests pass (exit 0)
-- [ ] Build succeeds (exit 0)
-- [ ] Feature functionality verified
-- [ ] No regressions introduced
-- [ ] Evidence captured for each check
+- [ ] All relevant tests pass (exit 0) - **with fresh evidence**
+- [ ] Build succeeds (exit 0) - **with fresh evidence**
+- [ ] Feature functionality verified - **with command output**
+- [ ] No regressions introduced - **with test output**
+- [ ] Evidence captured for each check - **in this message**
 
 ## Output Format
 
@@ -83,17 +164,18 @@ Before claiming completion:
 
 | Check | Command | Exit Code | Result |
 |-------|---------|-----------|--------|
-| Tests | `npm test` | 0 | PASS |
+| Tests | `npm test` | 0 | PASS (34/34) |
 | Build | `npm run build` | 0 | PASS |
-| Feature | `npm test -- --grep "feature"` | 0 | PASS |
+| Feature | `npm test -- --grep "feature"` | 0 | PASS (3/3) |
 
 ### Status
-COMPLETE - All verifications passed with evidence
+COMPLETE - All verifications passed with fresh evidence
 ```
 
-## Common Mistakes
+## The Bottom Line
 
-1. **Claiming done without running tests** - Always run verification
-2. **Missing exit codes** - Capture exit codes as evidence
-3. **Stale evidence** - Evidence must be fresh (from this session)
-4. **Partial verification** - Verify ALL criteria, not just some
+**No shortcuts for verification.**
+
+Run the command. Read the output. THEN claim the result.
+
+This is non-negotiable.

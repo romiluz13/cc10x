@@ -1,120 +1,293 @@
 ---
 name: frontend-patterns
-description: This skill should be used when the user asks about "UI design", "UX patterns", "accessibility", "frontend components", "user interface", or needs guidance on building user-facing interfaces.
+description: Use when designing or reviewing user interfaces - covers UX, visual design, accessibility, and responsive design with success criteria
 ---
 
 # Frontend Patterns
 
-Design and review user interfaces for UX, visual design, and accessibility.
+## Overview
 
-## Process
+User interfaces exist to help users accomplish tasks. Every UI decision should make the user's task easier or the interface more accessible.
 
-### 1. Understand User Flows
+**Core principle:** Design for user success, not aesthetic preference.
 
-Before designing/reviewing:
+**Violating the letter of this process is violating the spirit of frontend design.**
 
-- What is the user trying to accomplish?
-- What are the steps in the flow?
-- What can go wrong?
+## The Iron Law
 
-### 2. Check UX Issues
+```
+NO UI DESIGN BEFORE USER FLOW IS UNDERSTOOD
+```
 
-Usability problems that block functionality:
+If you haven't mapped what the user is trying to accomplish, you cannot design UI.
 
-- Can user complete the task?
-- Is the flow intuitive?
-- Are errors clear and actionable?
+## Success Criteria Framework
 
-### 3. Check Visual Design
+**Every UI must have explicit success criteria:**
 
-Visual issues affecting usability:
+1. **Task completion**: Can user complete their goal?
+2. **Error recovery**: Can user recover from mistakes?
+3. **Accessibility**: Can all users access it?
+4. **Performance**: Does it feel responsive?
 
-- Is hierarchy clear?
-- Are interactive elements obvious?
-- Is feedback visible?
+## Universal Questions (Answer First)
 
-### 4. Check Accessibility
+**ALWAYS answer before designing/reviewing:**
 
-Accessibility issues blocking users:
+1. **What is the user trying to accomplish?** - Specific task, not feature
+2. **What are the steps?** - Click by click
+3. **What can go wrong?** - Every error state
+4. **Who might struggle?** - Accessibility needs
+5. **What's the existing pattern?** - Project conventions
 
-- Keyboard navigation works?
-- Screen reader compatible?
-- Color contrast sufficient?
+## User Flow First
 
-## UX Checklist
+**Before any UI work, map the flow:**
 
-- [ ] Task can be completed (happy path works)
-- [ ] Errors are clear and actionable
-- [ ] Loading states visible
-- [ ] Success feedback provided
-- [ ] Flow is intuitive (no confusion)
+```
+User Flow: Create Account
+1. User lands on signup page
+2. User enters email
+3. User enters password
+4. User confirms password
+5. System validates inputs (inline)
+6. User clicks submit
+7. System processes (loading state)
+8. Success: User sees confirmation + redirect
+9. Error: User sees error + can retry
+```
 
-## Accessibility Checklist
+**For each step, identify:**
+- What user sees
+- What user does
+- What feedback they get
+- What can go wrong
 
-- [ ] Keyboard navigation (all interactive elements reachable)
-- [ ] Focus visible (current element highlighted)
-- [ ] Screen reader labels (aria-label where needed)
-- [ ] Color contrast (4.5:1 for text)
-- [ ] No reliance on color alone (use icons/text too)
+## UX Review Checklist
+
+| Check | Criteria | Example Issue |
+|-------|----------|---------------|
+| **Task completion** | Can user complete goal? | Button doesn't work |
+| **Discoverability** | Can user find what they need? | Hidden navigation |
+| **Feedback** | Does user know what's happening? | No loading state |
+| **Error handling** | Can user recover from errors? | No error message |
+| **Efficiency** | Can user complete task quickly? | Too many steps |
+
+**Severity levels:**
+- **BLOCKS**: User cannot complete task
+- **IMPAIRS**: User can complete but with difficulty
+- **MINOR**: Small friction, not blocking
+
+## Accessibility Review Checklist (WCAG 2.1 AA)
+
+| Check | Criterion | How to Verify |
+|-------|-----------|---------------|
+| **Keyboard** | All interactive elements keyboard accessible | Tab through entire flow |
+| **Focus visible** | Current focus clearly visible | Tab and check highlight |
+| **Focus order** | Logical tab order | Tab matches visual order |
+| **Labels** | All inputs have labels | Check `<label>` or `aria-label` |
+| **Alt text** | Images have meaningful alt | Check `alt` attributes |
+| **Color contrast** | 4.5:1 for text, 3:1 for large | Use contrast checker |
+| **Color alone** | Info not conveyed by color only | Check without color |
+| **Screen reader** | Content accessible via SR | Test with VoiceOver/NVDA |
+
+**For each issue found:**
+```markdown
+- [WCAG 2.1 1.4.3] Color contrast at `component:line`
+  - Current: 3.2:1 (fails AA)
+  - Required: 4.5:1
+  - Fix: Change text color to #333 (7.1:1)
+```
+
+## Visual Design Checklist
+
+| Check | Good | Bad |
+|-------|------|-----|
+| **Hierarchy** | Clear visual priority | Everything same size |
+| **Spacing** | Consistent rhythm | Random gaps |
+| **Alignment** | Elements aligned to grid | Misaligned elements |
+| **Interactive states** | Hover/active/focus distinct | No state changes |
+| **Feedback** | Clear response to actions | Silent interactions |
 
 ## Component Patterns
 
 ### Buttons
 ```tsx
-// Clear purpose, accessible
+// Primary action button with all states
 <button
-  onClick={handleSubmit}
-  disabled={isLoading}
+  type="button"
+  onClick={handleAction}
+  disabled={isLoading || isDisabled}
   aria-busy={isLoading}
+  aria-disabled={isDisabled}
+  className={cn(
+    'btn-primary',
+    isLoading && 'btn-loading'
+  )}
 >
-  {isLoading ? 'Saving...' : 'Save'}
+  {isLoading ? (
+    <>
+      <Spinner aria-hidden />
+      <span>Processing...</span>
+    </>
+  ) : (
+    'Submit'
+  )}
 </button>
 ```
 
-### Forms
+### Forms with Validation
 ```tsx
-// Labels, validation, error messages
-<label htmlFor="email">Email</label>
-<input
-  id="email"
-  type="email"
-  aria-invalid={hasError}
-  aria-describedby={hasError ? 'email-error' : undefined}
-/>
-{hasError && <span id="email-error" role="alert">{errorMessage}</span>}
+<form onSubmit={handleSubmit} noValidate>
+  <div className="form-field">
+    <label htmlFor="email">
+      Email <span aria-hidden>*</span>
+      <span className="sr-only">(required)</span>
+    </label>
+    <input
+      id="email"
+      type="email"
+      value={email}
+      onChange={handleChange}
+      aria-invalid={errors.email ? 'true' : undefined}
+      aria-describedby={errors.email ? 'email-error' : 'email-hint'}
+      required
+    />
+    <span id="email-hint" className="hint">
+      We'll never share your email
+    </span>
+    {errors.email && (
+      <span id="email-error" role="alert" className="error">
+        {errors.email}
+      </span>
+    )}
+  </div>
+</form>
 ```
 
 ### Loading States
 ```tsx
-// Clear feedback during async operations
-{isLoading ? (
-  <span aria-live="polite">Loading...</span>
-) : (
-  <Content />
-)}
+function DataList({ isLoading, data, error }) {
+  if (isLoading) {
+    return (
+      <div aria-live="polite" aria-busy="true">
+        <Spinner />
+        <span>Loading items...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div role="alert" className="error-state">
+        <p>Failed to load items: {error.message}</p>
+        <button onClick={retry}>Try again</button>
+      </div>
+    );
+  }
+
+  if (!data?.length) {
+    return (
+      <div className="empty-state">
+        <p>No items found</p>
+        <button onClick={createNew}>Create your first item</button>
+      </div>
+    );
+  }
+
+  return <ul>{data.map(item => <Item key={item.id} {...item} />)}</ul>;
+}
 ```
+
+### Error Messages
+```tsx
+// Inline error with recovery action
+<div role="alert" className="error-banner">
+  <Icon name="error" aria-hidden />
+  <div>
+    <p className="error-title">Upload failed</p>
+    <p className="error-detail">File too large. Maximum size is 10MB.</p>
+  </div>
+  <button onClick={selectFile}>Choose different file</button>
+</div>
+```
+
+## Responsive Design Checklist
+
+| Breakpoint | Check |
+|------------|-------|
+| **Mobile (< 640px)** | Touch targets 44px+, no horizontal scroll |
+| **Tablet (640-1024px)** | Layout adapts, navigation accessible |
+| **Desktop (> 1024px)** | Content readable, not too wide |
+
+## Red Flags - STOP and Reconsider
+
+If you find yourself:
+
+- Designing UI before mapping user flow
+- Focusing on aesthetics before functionality
+- Ignoring accessibility ("we'll add it later")
+- Not handling error states
+- Not providing loading feedback
+- Using color alone to convey information
+- Making decisions based on "it looks nice"
+
+**STOP. Go back to user flow.**
+
+## Rationalization Prevention
+
+| Excuse | Reality |
+|--------|---------|
+| "Most users don't use keyboard" | Some users ONLY use keyboard. |
+| "We'll add accessibility later" | Retrofitting is 10x harder. |
+| "Error states are edge cases" | Errors happen. Handle them. |
+| "Loading is fast, no need for state" | Network varies. Show state. |
+| "It looks better without labels" | Unlabeled inputs are inaccessible. |
+| "Users can figure it out" | If it's confusing, fix it. |
 
 ## Output Format
 
 ```markdown
-## Frontend Review
+## Frontend Review: [Component/Feature]
 
 ### User Flow
-[What user is trying to do]
+[Step-by-step what user is trying to do]
+
+### Success Criteria
+- [ ] User can complete [task]
+- [ ] User can recover from errors
+- [ ] All users can access (keyboard, screen reader)
+- [ ] Interface feels responsive
 
 ### UX Issues
-- [Issue] - [Impact on user] - [Fix]
+| Severity | Issue | Location | Impact | Fix |
+|----------|-------|----------|--------|-----|
+| BLOCKS | [Issue] | `file:line` | [Impact] | [Fix] |
 
 ### Accessibility Issues
-- [Issue] - [WCAG criterion] - [Fix]
+| WCAG | Issue | Location | Fix |
+|------|-------|----------|-----|
+| 1.4.3 | [Issue] | `file:line` | [Fix] |
 
 ### Visual Issues
-- [Issue] - [Impact] - [Fix]
+| Issue | Location | Fix |
+|-------|----------|-----|
+| [Issue] | `file:line` | [Fix] |
+
+### Recommendations
+1. [Most critical fix]
+2. [Second fix]
 ```
 
-## Common Mistakes
+## Final Check
 
-1. **Reviewing without understanding user flow** - Know what user needs to accomplish
-2. **Accessibility afterthought** - Check accessibility alongside UX
-3. **Generic feedback** - Be specific about impact on users
-4. **Missing WCAG references** - Cite accessibility standards
+Before completing frontend work:
+
+- [ ] User flow mapped and understood
+- [ ] All states handled (loading, error, empty, success)
+- [ ] Keyboard navigation works
+- [ ] Screen reader tested
+- [ ] Color contrast verified
+- [ ] Touch targets adequate on mobile
+- [ ] Error messages clear and actionable
+- [ ] Success criteria met
