@@ -1,6 +1,6 @@
 # cc10x - The Perfect Claude Code Workflow System
 
-> **v5.7.0** | 6 Agents | 11 Skills | 1 Router | Memory Persistence | TDD Enforcement
+> **v5.7.1** | 6 Agents | 11 Skills | 1 Router | Memory Persistence | TDD Enforcement
 
 **cc10x is what Claude Code should be.** It transforms Claude from a helpful assistant into a disciplined engineering system that never cuts corners.
 
@@ -169,7 +169,7 @@ Skills are **loaded by agents**, not invoked directly. This prevents Claude from
 
 ### When You Say "Build a Task Tracker"
 
-**CORRECT (cc10x v5.7.0)**:
+**CORRECT (cc10x v5.7.1)**:
 ```
 Detected BUILD intent. Executing BUILD workflow.
 
@@ -196,7 +196,7 @@ I'll help you build a task tracker! Let me start by creating the files...
 
 ### When You Say "Fix the Login Bug"
 
-**CORRECT (cc10x v5.7.0)**:
+**CORRECT (cc10x v5.7.1)**:
 ```
 Detected DEBUG intent. Executing DEBUG workflow.
 
@@ -222,7 +222,7 @@ It should work now! [no verification]
 
 ### When You Say "Review This PR"
 
-**CORRECT (cc10x v5.7.0)**:
+**CORRECT (cc10x v5.7.1)**:
 ```
 Detected REVIEW intent. Executing REVIEW workflow.
 
@@ -424,6 +424,7 @@ The silent-failure-hunter agent finds error handling issues with zero tolerance:
 
 ## Version History
 
+- **v5.7.1** - Added verification-before-completion to silent-failure-hunter
 - **v5.7.0** - Fixed agent keyword conflicts (agents were bypassing router!)
 - **v5.6.0** - Fixed agent tool misconfigurations (planner couldn't save plans!)
 - **v5.5.0** - Fixed skill keyword conflicts (router is now ONLY entry point)
@@ -447,4 +448,4 @@ MIT License
 
 ---
 
-_cc10x v5.7.0 | The Perfect Claude Code Workflow System_
+_cc10x v5.7.1 | The Perfect Claude Code Workflow System_

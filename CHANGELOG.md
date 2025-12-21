@@ -1,5 +1,27 @@
 # Changelog
 
+## [5.7.1] - 2025-12-21
+
+### Fixed
+
+- **silent-failure-hunter**: Added missing `verification-before-completion` skill
+  - Agent audits error handling and reports findings
+  - Now verifies findings before reporting (evidence-based)
+  - All 5 code-touching agents now have verification skill
+
+### Skill Loading Matrix (Updated)
+
+| Agent | Auto-Loaded Skills |
+|-------|-------------------|
+| component-builder | session-memory, test-driven-development, code-generation, verification-before-completion |
+| bug-investigator | session-memory, debugging-patterns, test-driven-development, verification-before-completion |
+| code-reviewer | session-memory, code-review-patterns, verification-before-completion |
+| integration-verifier | session-memory, architecture-patterns, debugging-patterns, verification-before-completion |
+| silent-failure-hunter | session-memory, code-review-patterns, **verification-before-completion** ← ADDED |
+| planner | session-memory, planning-patterns, architecture-patterns |
+
+Note: planner doesn't need verification (creates plans, doesn't verify code)
+
 ## [5.7.0] - 2025-12-21
 
 ### Fixed

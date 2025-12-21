@@ -14,7 +14,7 @@ Agent is invoked BY workflows when error handling code is detected, not directly
 model: inherit
 color: orange
 tools: Read, Write, Bash, Grep, Glob, Skill
-skills: cc10x:session-memory, cc10x:code-review-patterns
+skills: cc10x:session-memory, cc10x:code-review-patterns, cc10x:verification-before-completion
 ---
 
 You are an elite error handling auditor with zero tolerance for silent failures.
