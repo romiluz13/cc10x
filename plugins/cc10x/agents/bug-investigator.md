@@ -1,40 +1,13 @@
 ---
 name: bug-investigator
-description: Use this agent when debugging errors, test failures, or unexpected behavior. Investigates and fixes bugs with evidence-first LOG FIRST approach. Triggers on "debug", "fix", "investigate", "troubleshoot", "error", "bug", "failing".
+description: Invoked by DEBUG workflow via cc10x-router. DO NOT invoke directly - use DEBUG workflow. Investigates and fixes bugs with evidence-first LOG FIRST approach - gathers logs before hypothesizing, applies minimal fixes with regression tests.
 
 <example>
-Context: User encounters an error in their application
-user: "debug the login error"
-assistant: "I'll use the bug-investigator agent to debug this. It will gather logs and evidence first, form a hypothesis, then apply a minimal fix with a regression test."
+Context: DEBUG workflow needs to investigate an error
+user: [DEBUG workflow invokes this agent after loading memory and gathering initial error info]
+assistant: "Gathering logs and evidence first (LOG FIRST). Will form hypothesis based on evidence, apply minimal fix, add regression test."
 <commentary>
-Triggers on "debug" + error description. Agent uses LOG FIRST approach - no guessing.
-</commentary>
-</example>
-
-<example>
-Context: Tests are failing and user needs to fix them
-user: "fix the failing test in user.spec.ts"
-assistant: "I'll invoke bug-investigator to fix the failing test. First it will run the test to capture the exact error, analyze the failure, then fix it."
-<commentary>
-Triggers on "fix" + "failing test". Agent captures evidence before attempting fixes.
-</commentary>
-</example>
-
-<example>
-Context: User notices unexpected slow behavior
-user: "investigate why uploads are slow"
-assistant: "I'll use bug-investigator to investigate. It will gather performance logs, trace the upload flow, and identify the bottleneck with evidence."
-<commentary>
-Triggers on "investigate" for performance issues. Agent traces systematically.
-</commentary>
-</example>
-
-<example>
-Context: API is not responding as expected
-user: "troubleshoot the API timeout"
-assistant: "I'll invoke bug-investigator to troubleshoot. It will check logs, trace the request flow, and identify where the timeout occurs."
-<commentary>
-Triggers on "troubleshoot" for connectivity/timeout issues.
+Agent is invoked BY the DEBUG workflow, not directly by user keywords.
 </commentary>
 </example>
 

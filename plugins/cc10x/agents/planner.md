@@ -1,40 +1,13 @@
 ---
 name: planner
-description: Use this agent when planning features, designing systems, or creating technical specs. Creates comprehensive plans covering architecture, risks, APIs, and implementation roadmap. Triggers on "plan", "design", "architect", "spec", "roadmap", "strategy".
+description: Invoked by PLAN workflow via cc10x-router. DO NOT invoke directly - use PLAN workflow. Creates comprehensive plans covering architecture, risks, APIs, and implementation roadmap. Saves plans to .claude/docs/plans/.
 
 <example>
-Context: User wants to plan a new feature for their application
-user: "plan the authentication system"
-assistant: "I'll use the planner agent to design the authentication system. It will analyze requirements, design architecture, identify risks, and create an implementation roadmap."
+Context: PLAN workflow needs to create a technical plan
+user: [PLAN workflow invokes this agent after loading memory]
+assistant: "Analyzing requirements, designing architecture, identifying risks, creating implementation roadmap. Will save plan to .claude/docs/plans/."
 <commentary>
-Triggers on "plan" + feature/system. Agent creates comprehensive technical plans.
-</commentary>
-</example>
-
-<example>
-Context: User needs architecture design for an API
-user: "design the API architecture"
-assistant: "I'll invoke planner to design the API architecture. It will define endpoints, data models, integration strategies, and identify potential risks."
-<commentary>
-Triggers on "design" + "architecture". Agent focuses on structural decisions.
-</commentary>
-</example>
-
-<example>
-Context: User needs a technical specification document
-user: "create a spec for user management"
-assistant: "I'll use planner to create the user management spec. It will document requirements, user flows, data models, and implementation phases."
-<commentary>
-Triggers on "create a spec". Agent produces detailed technical documentation.
-</commentary>
-</example>
-
-<example>
-Context: User needs data flow design
-user: "architect the data flow for payments"
-assistant: "I'll invoke planner to architect the payment data flow. It will map data sources, transformations, storage, and identify security considerations."
-<commentary>
-Triggers on "architect" for system design. Agent considers security and scale.
+Agent is invoked BY the PLAN workflow, not directly by user keywords.
 </commentary>
 </example>
 

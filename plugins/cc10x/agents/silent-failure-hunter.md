@@ -1,22 +1,13 @@
 ---
 name: silent-failure-hunter
-description: Use when reviewing error handling code. Audits catch blocks, fallbacks, and silent failures with zero tolerance. Triggers on "error handling", "audit errors", "catch blocks", "silent failures".
+description: Invoked by BUILD/REVIEW workflows via cc10x-router when error handling code is present. DO NOT invoke directly. Audits catch blocks, fallbacks, and silent failures with zero tolerance.
 
 <example>
-Context: User has code with try-catch blocks to review
-user: "audit the error handling in the API module"
-assistant: "I'll use the silent-failure-hunter agent to audit all error handling. It will find silent failures, empty catch blocks, and inadequate error messages."
+Context: BUILD workflow detected error handling code and invokes this agent
+user: [BUILD workflow invokes this agent after code-reviewer, when error handling code was added]
+assistant: "Auditing all error handling for silent failures, empty catch blocks, and inadequate error messages. Zero tolerance policy."
 <commentary>
-Triggers on "audit" + "error handling". Agent specializes in finding hidden failure modes.
-</commentary>
-</example>
-
-<example>
-Context: After building code that includes error handling
-user: "check if the error handling is complete"
-assistant: "I'll invoke silent-failure-hunter to verify error handling completeness. It checks for silent failures, proper logging, and user-facing error messages."
-<commentary>
-Triggers on "check" + "error handling". Proactive after BUILD if error handling was added.
+Agent is invoked BY workflows when error handling code is detected, not directly by user keywords.
 </commentary>
 </example>
 

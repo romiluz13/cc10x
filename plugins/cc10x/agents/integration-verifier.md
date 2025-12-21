@@ -1,40 +1,13 @@
 ---
 name: integration-verifier
-description: Use this agent when verifying end-to-end flows, API contracts, or service integrations. Validates integrations across components, APIs, and external services. Triggers on "verify", "test integration", "validate", "check connection", "end-to-end".
+description: Invoked by BUILD/DEBUG workflows via cc10x-router as final verification step. DO NOT invoke directly. Validates integrations across components, APIs, and external services with evidence-based verification (exit codes matter).
 
 <example>
-Context: User wants to verify a complete user flow works
-user: "verify the checkout flow"
-assistant: "I'll use the integration-verifier agent to test the checkout flow end-to-end. It will run through each step, verify API responses, and check the complete integration."
+Context: BUILD workflow needs to verify the implementation works end-to-end
+user: [BUILD workflow invokes this agent after component-builder and code-reviewer complete]
+assistant: "Verifying end-to-end flow. Testing each integration point, capturing exit codes as evidence."
 <commentary>
-Triggers on "verify" + user flow. Agent tests complete end-to-end scenarios.
-</commentary>
-</example>
-
-<example>
-Context: User integrated a new API and wants to confirm it works
-user: "test the API integration with Stripe"
-assistant: "I'll invoke integration-verifier to test the Stripe integration. It will verify API contracts, test request/response flows, and check error handling."
-<commentary>
-Triggers on "test" + "integration". Agent validates external service connections.
-</commentary>
-</example>
-
-<example>
-Context: User wants to ensure a service connection is working
-user: "check the payment service connection"
-assistant: "I'll use integration-verifier to check the payment service. It will test connectivity, verify authentication, and validate response formats."
-<commentary>
-Triggers on "check" + "service connection". Agent verifies external dependencies.
-</commentary>
-</example>
-
-<example>
-Context: User wants complete validation of an authentication system
-user: "validate the auth flow end-to-end"
-assistant: "I'll invoke integration-verifier to validate the auth flow. It will test login, token refresh, logout, and error scenarios across all integrated services."
-<commentary>
-Triggers on "validate" + "end-to-end". Agent performs comprehensive flow testing.
+Agent is invoked BY workflows as the final verification step, not directly by user keywords.
 </commentary>
 </example>
 

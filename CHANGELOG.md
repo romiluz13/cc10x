@@ -1,5 +1,42 @@
 # Changelog
 
+## [5.7.0] - 2025-12-21
+
+### Fixed
+
+- **Agent Keyword Collision with Router**: Fixed critical issue where agent descriptions had same trigger keywords as cc10x-router, causing Claude to invoke agents directly instead of using workflows
+  - **Same bug as v5.5.0 (skills) but for agents**
+  - All 6 agents now say "Invoked by X workflow via cc10x-router. DO NOT invoke directly"
+  - Removed workflow trigger keywords (build, debug, review, plan, etc.) from agent descriptions
+  - Router is now the ONLY entry point - agents are only invoked BY workflows
+
+### Root Cause
+
+When user said "build a task tracker", Claude could match EITHER:
+1. cc10x-router skill (keyword: "build") → Correct: Full workflow
+2. component-builder agent (keyword: "build") → WRONG: Bypasses router
+
+Claude sometimes picked the agent directly, bypassing:
+- Memory loading
+- User confirmation gates
+- Agent chain (builder → reviewer → verifier)
+
+### Fix Applied
+
+Agents no longer have workflow trigger keywords. Only cc10x-router responds to:
+`build, implement, create, make, write, add, develop, code, feature, component, app, application, review, audit, check, analyze, debug, fix, error, bug, broken, troubleshoot, plan, design, architect, roadmap, strategy`
+
+### Agent Description Changes
+
+| Agent | Before | After |
+|-------|--------|-------|
+| component-builder | "Triggers on build, create, implement..." | "Invoked by BUILD workflow. DO NOT invoke directly" |
+| code-reviewer | "Triggers on review, audit, check..." | "Invoked by REVIEW workflow. DO NOT invoke directly" |
+| bug-investigator | "Triggers on debug, fix, error, bug..." | "Invoked by DEBUG workflow. DO NOT invoke directly" |
+| planner | "Triggers on plan, design, architect..." | "Invoked by PLAN workflow. DO NOT invoke directly" |
+| integration-verifier | "Triggers on verify, validate..." | "Invoked by BUILD/DEBUG workflows. DO NOT invoke directly" |
+| silent-failure-hunter | "Triggers on error handling, audit errors..." | "Invoked by BUILD/REVIEW workflows. DO NOT invoke directly" |
+
 ## [5.6.0] - 2025-12-21
 
 ### Fixed

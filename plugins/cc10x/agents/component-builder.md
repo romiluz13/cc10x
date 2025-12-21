@@ -1,31 +1,13 @@
 ---
 name: component-builder
-description: Use this agent when implementing new features, creating components, or adding functionality. Builds components using TDD cycle (RED-GREEN-REFACTOR). Triggers on "build", "create", "implement", "add", "make".
+description: Invoked by BUILD workflow via cc10x-router. DO NOT invoke directly - use BUILD workflow. Builds components using TDD cycle (RED-GREEN-REFACTOR) with failing test first, then minimal implementation, then refactor.
 
 <example>
-Context: User wants to add a new feature to an existing application
-user: "build the upload form"
-assistant: "I'll use the component-builder agent to implement the upload form using TDD. First I'll write failing tests, then implement the minimal code to pass, then refactor."
+Context: BUILD workflow needs to implement a feature
+user: [BUILD workflow invokes this agent after loading memory and clarifying requirements]
+assistant: "Starting TDD cycle. First I'll write a failing test, then implement minimal code to pass, then refactor."
 <commentary>
-Triggers on "build" keyword with a feature/component to create. Agent will follow TDD cycle.
-</commentary>
-</example>
-
-<example>
-Context: User needs a new API endpoint created
-user: "create the API endpoint for user registration"
-assistant: "I'll invoke the component-builder agent to create the registration endpoint. It will start with test cases for validation, success, and error scenarios."
-<commentary>
-Triggers on "create" with technical component. Agent ensures tests come first.
-</commentary>
-</example>
-
-<example>
-Context: User wants authentication added to their app
-user: "implement user authentication"
-assistant: "I'll use component-builder to implement authentication with TDD. First we'll define the test cases, then build the minimal implementation."
-<commentary>
-Triggers on "implement" for new functionality. TDD approach prevents bugs.
+Agent is invoked BY the BUILD workflow, not directly by user keywords.
 </commentary>
 </example>
 

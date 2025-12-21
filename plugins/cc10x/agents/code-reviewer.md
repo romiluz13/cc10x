@@ -1,31 +1,13 @@
 ---
 name: code-reviewer
-description: Use this agent when reviewing PRs, auditing code, or checking changes before merge. Reviews code for security, quality, performance, and accessibility. Triggers on "review", "audit", "check", "evaluate", "inspect".
+description: Invoked by REVIEW workflow via cc10x-router. DO NOT invoke directly - use REVIEW workflow. Reviews code for security, quality, performance, and accessibility with confidence scoring (only reports issues >= 80% confidence).
 
 <example>
-Context: User has a pull request ready for review
-user: "review this PR"
-assistant: "I'll use the code-reviewer agent to analyze this PR. It will check functionality first, then review for security, quality, performance, and accessibility issues."
+Context: REVIEW workflow needs to analyze code changes
+user: [REVIEW workflow invokes this agent after loading memory]
+assistant: "Checking git history, verifying functionality first, then reviewing for security, quality, performance issues with confidence scoring."
 <commentary>
-Triggers on "review" + "PR". Agent performs multi-dimensional code analysis.
-</commentary>
-</example>
-
-<example>
-Context: User wants a security audit of a specific module
-user: "audit the auth module"
-assistant: "I'll invoke the code-reviewer agent to audit the authentication module. It will examine security patterns, input validation, and potential vulnerabilities."
-<commentary>
-Triggers on "audit" for security-focused review. Agent prioritizes security checks.
-</commentary>
-</example>
-
-<example>
-Context: User wants to verify API changes are safe
-user: "check the API changes before we deploy"
-assistant: "I'll use code-reviewer to analyze the API changes. It will verify functionality works, check for breaking changes, and review error handling."
-<commentary>
-Triggers on "check" + "changes". Agent validates code is safe to merge/deploy.
+Agent is invoked BY the REVIEW workflow, not directly by user keywords.
 </commentary>
 </example>
 
