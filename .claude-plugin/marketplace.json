@@ -6,13 +6,13 @@
     "url": "https://github.com/romiluz13"
   },
   "metadata": {
-    "description": "cc10x v5.8.0 - Lean development workflow plugin with Auto-Claude patterns for bug prevention",
+    "description": "cc10x v5.8.0 - Orchestrated development workflow with specialized subagents and composable skills",
     "version": "5.8.0"
   },
   "plugins": [
     {
       "name": "cc10x",
-      "description": "Lean development workflow plugin with 6 agents, 11 skills, and Auto-Claude patterns for bug prevention. Features AUTO-EXECUTE routing, TDD enforcement, evidence-based verification, pre-implementation checklists, self-critique gates, and risk-based testing.",
+      "description": "Orchestrated development workflow with specialized subagents and composable skills. Features smart routing via cc10x-router, TDD-first building, multi-dimensional code review, evidence-based debugging, pre-implementation checklists, self-critique gates, and 7-layer memory architecture.",
       "version": "5.8.0",
       "author": {
         "name": "Rom Iluz",

@@ -1,7 +1,7 @@
 {
   "name": "cc10x",
   "version": "5.8.0",
-  "description": "Lean development workflow plugin with 6 agents, 11 skills, and mandatory memory persistence. Features AUTO-EXECUTE routing (not just describe capabilities), TDD enforcement, evidence-based verification, confidence scoring, user confirmation gates, and session memory with READ+WRITE triggers.",
+  "description": "Orchestrated development workflow with specialized subagents and composable skills. Features smart routing via cc10x-router, TDD-first building, multi-dimensional code review, evidence-based debugging, pre-implementation checklists, self-critique gates, and 7-layer memory architecture.",
   "author": {
     "name": "Rom Iluz",
     "email": "rom@iluz.net",
