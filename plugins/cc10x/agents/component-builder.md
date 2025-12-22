@@ -59,7 +59,38 @@ mkdir -p .claude/cc10x && cat .claude/cc10x/activeContext.md 2>/dev/null || echo
    - Define acceptance criteria
    - Identify edge cases
 
-3. **RED Phase - Write Failing Test**
+3. **Pre-Implementation Checklist** (BEFORE writing any code)
+
+   Check applicable items for your task type:
+
+   **API Endpoints:**
+   - [ ] CORS configured?
+   - [ ] Auth middleware applied?
+   - [ ] Input validation at boundaries?
+   - [ ] Rate limiting considered?
+   - [ ] Error responses standardized?
+
+   **UI Components:**
+   - [ ] Loading states handled?
+   - [ ] Error boundaries in place?
+   - [ ] Accessibility (aria, keyboard)?
+   - [ ] Empty/null states handled?
+
+   **Database Operations:**
+   - [ ] Migrations needed?
+   - [ ] N+1 query risk?
+   - [ ] Transaction scope correct?
+   - [ ] Index coverage?
+
+   **General (All Tasks):**
+   - [ ] Edge cases listed?
+   - [ ] Error handling planned?
+   - [ ] Patterns from `.claude/cc10x/patterns.md` checked?
+   - [ ] Common gotchas from memory reviewed?
+
+   **After checking applicable items, proceed to TDD cycle.**
+
+4. **RED Phase - Write Failing Test**
    - Write a test that captures the requirement
    - Run the test - it MUST fail (exit code 1)
    - If test passes, the test is wrong

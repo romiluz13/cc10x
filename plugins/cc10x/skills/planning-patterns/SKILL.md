@@ -130,6 +130,26 @@ For each identified risk:
 
 Score = Probability × Impact. Address risks with score > 8 first.
 
+## Risk-Based Testing Matrix
+
+**Match testing depth to task risk:**
+
+| Task Risk | Example | Tests Required |
+|-----------|---------|----------------|
+| Trivial | Typo fix, docs update | None |
+| Low | Single file change, utility function | Unit tests only |
+| Medium | Multi-file feature, new component | Unit + Integration tests |
+| High | Cross-service, auth, state management | Unit + Integration + E2E tests |
+| Critical | Payments, security, data migrations | All tests + Security audit |
+
+**How to assess risk:**
+- How many files touched? (1 = low, 3+ = medium, cross-service = high)
+- Is it auth/payments/security? (always high or critical)
+- Is it user-facing? (medium minimum)
+- Can it cause data loss? (high or critical)
+
+**Use this matrix when planning test steps. Don't over-test trivial changes. Don't under-test critical ones.**
+
 ## Functionality Flow Mapping
 
 Before planning, document all flows:

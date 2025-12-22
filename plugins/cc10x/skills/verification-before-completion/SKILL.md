@@ -141,6 +141,34 @@ From real failure patterns:
 - Implications of success
 - ANY communication suggesting completion/correctness
 
+## Self-Critique Gate (BEFORE Verification Commands)
+
+**MANDATORY: Check these BEFORE running verification commands:**
+
+### Code Quality
+- [ ] Follows patterns from reference files?
+- [ ] Naming matches project conventions?
+- [ ] Error handling in place?
+- [ ] No debug artifacts (console.log, TODO)?
+- [ ] No commented-out code?
+- [ ] No hardcoded values that should be constants?
+
+### Implementation Completeness
+- [ ] All required files modified?
+- [ ] No unexpected files changed?
+- [ ] Requirements fully met?
+- [ ] No scope creep?
+
+### Self-Critique Verdict
+
+**PROCEED:** [YES/NO]
+**CONFIDENCE:** [High/Medium/Low]
+
+- If NO → Fix issues before verification
+- If YES → Proceed to verification commands below
+
+---
+
 ## Verification Checklist
 
 Before marking work complete:
