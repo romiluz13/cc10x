@@ -1,7 +1,9 @@
 ---
 name: architecture-patterns
 description: |
-  Loaded by planner and code-reviewer agents. DO NOT invoke directly - use PLAN/REVIEW workflow via cc10x-router.
+  DO NOT invoke directly - loaded by workflow agents via cc10x-router.
+  Always loaded by: planner, integration-verifier.
+  Conditionally loaded by: code-reviewer (API code), component-builder (API endpoint), bug-investigator (integration issue).
   Provides architecture patterns: system design, API design, integrations, data models. Iron Law: DESIGN ARCHITECTURE FROM FUNCTIONALITY.
 allowed-tools: Read, Grep, Glob
 ---

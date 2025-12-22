@@ -1,6 +1,8 @@
 ---
 name: session-memory
-description: MANDATORY skill that MUST be loaded at start and updated at end of EVERY workflow. Persists context, learnings, decisions, and progress to .claude/cc10x/ folder. Without this, context is lost on compaction.
+description: |
+  DO NOT invoke directly - loaded automatically by ALL agents via frontmatter.
+  MANDATORY skill loaded at start and updated at end of EVERY workflow. Persists context, learnings, decisions, and progress to .claude/cc10x/ folder. Without this, context is lost on compaction.
 allowed-tools: Read, Write, Bash
 ---
 

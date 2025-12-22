@@ -1,6 +1,6 @@
 # cc10x - The Perfect Claude Code Workflow System
 
-> **v5.7.1** | 6 Agents | 11 Skills | 1 Router | Memory Persistence | TDD Enforcement
+> **v5.7.2** | 6 Agents | 11 Skills | 1 Router | Memory Persistence | TDD Enforcement
 
 **cc10x is what Claude Code should be.** It transforms Claude from a helpful assistant into a disciplined engineering system that never cuts corners.
 
@@ -83,19 +83,19 @@ MEMORY (.claude/cc10x/)
 
 Skills are **loaded by agents**, not invoked directly. This prevents Claude from picking skills randomly.
 
-| Skill | Loaded By | Purpose |
-|-------|-----------|---------|
-| **session-memory** | ALL agents | Persist context across compaction |
-| **test-driven-development** | component-builder | RED-GREEN-REFACTOR enforcement |
-| **code-generation** | component-builder | Write minimal code, match patterns |
-| **debugging-patterns** | bug-investigator | LOG FIRST, root cause analysis |
-| **code-review-patterns** | code-reviewer | Two-stage review, security, quality |
-| **planning-patterns** | planner | Comprehensive plans, TDD tasks |
-| **brainstorming** | planner | Explore ideas before implementation |
-| **architecture-patterns** | planner, code-reviewer | System design, API design |
-| **frontend-patterns** | code-reviewer | UX, accessibility, visual design |
-| **verification-before-completion** | ALL agents | Evidence before claims |
-| **cc10x-router** | ENTRY POINT | Routes to correct workflow |
+| Skill | Always Loaded By | Conditionally Loaded By | Purpose |
+|-------|------------------|------------------------|---------|
+| **session-memory** | ALL agents | - | Persist context across compaction |
+| **test-driven-development** | component-builder, bug-investigator | - | RED-GREEN-REFACTOR enforcement |
+| **code-generation** | component-builder | - | Write minimal code, match patterns |
+| **debugging-patterns** | bug-investigator, integration-verifier | - | LOG FIRST, root cause analysis |
+| **code-review-patterns** | code-reviewer, silent-failure-hunter | - | Two-stage review, security, quality |
+| **planning-patterns** | planner | - | Comprehensive plans, TDD tasks |
+| **brainstorming** | - | planner (idea exploration) | Explore ideas before implementation |
+| **architecture-patterns** | planner, integration-verifier | code-reviewer, component-builder, bug-investigator | System design, API design |
+| **frontend-patterns** | - | code-reviewer, component-builder, bug-investigator, integration-verifier, planner | UX, accessibility, visual design |
+| **verification-before-completion** | ALL agents | - | Evidence before claims |
+| **cc10x-router** | ENTRY POINT | - | Routes to correct workflow |
 
 ---
 
@@ -424,6 +424,7 @@ The silent-failure-hunter agent finds error handling issues with zero tolerance:
 
 ## Version History
 
+- **v5.7.2** - Fixed skill documentation inconsistencies (accurate agent→skill mappings)
 - **v5.7.1** - Added verification-before-completion to silent-failure-hunter
 - **v5.7.0** - Fixed agent keyword conflicts (agents were bypassing router!)
 - **v5.6.0** - Fixed agent tool misconfigurations (planner couldn't save plans!)
@@ -448,4 +449,4 @@ MIT License
 
 ---
 
-_cc10x v5.7.1 | The Perfect Claude Code Workflow System_
+_cc10x v5.7.2 | The Perfect Claude Code Workflow System_

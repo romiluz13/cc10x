@@ -1,7 +1,8 @@
 ---
 name: debugging-patterns
 description: |
-  Loaded by bug-investigator agent. DO NOT invoke directly - use DEBUG workflow via cc10x-router.
+  DO NOT invoke directly - loaded by workflow agents via cc10x-router.
+  Always loaded by: bug-investigator, integration-verifier.
   Provides systematic debugging patterns: LOG FIRST approach, root cause investigation, evidence-based fixes. Iron Law: NO FIXES WITHOUT ROOT CAUSE INVESTIGATION.
 ---
 

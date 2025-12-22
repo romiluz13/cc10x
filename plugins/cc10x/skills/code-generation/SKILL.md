@@ -1,7 +1,8 @@
 ---
 name: code-generation
 description: |
-  Loaded by component-builder agent. DO NOT invoke directly - use BUILD workflow via cc10x-router.
+  DO NOT invoke directly - loaded by workflow agents via cc10x-router.
+  Always loaded by: component-builder.
   Provides code writing patterns: understand functionality first, write minimal code, match project patterns. Iron Law: NO CODE BEFORE UNDERSTANDING FUNCTIONALITY.
 ---
 

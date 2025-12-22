@@ -1,7 +1,8 @@
 ---
 name: brainstorming
 description: |
-  Loaded by planner agent. DO NOT invoke directly - use PLAN workflow via cc10x-router.
+  DO NOT invoke directly - loaded by workflow agents via cc10x-router.
+  Conditionally loaded by: planner (when idea exploration needed).
   Provides brainstorming patterns: explore ideas before implementation, collaborative dialogue, understand purpose before design. Iron Law: NO DESIGN WITHOUT UNDERSTANDING PURPOSE.
 allowed-tools: Read, Grep, Glob
 ---
