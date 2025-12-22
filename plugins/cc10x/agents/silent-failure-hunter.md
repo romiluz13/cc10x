@@ -1,6 +1,6 @@
 ---
 name: silent-failure-hunter
-description: Invoked by BUILD/REVIEW workflows via cc10x-router when error handling code is present. DO NOT invoke directly. Audits catch blocks, fallbacks, and silent failures with zero tolerance.
+description: DO NOT invoke directly - internal agent for cc10x workflows only. Invoked automatically when error handling code is detected.
 
 <example>
 Context: BUILD workflow detected error handling code and invokes this agent

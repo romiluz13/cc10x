@@ -1,6 +1,6 @@
 ---
 name: code-reviewer
-description: Invoked by REVIEW workflow via cc10x-router. DO NOT invoke directly - use REVIEW workflow. Reviews code for security, quality, performance, and accessibility with confidence scoring (only reports issues >= 80% confidence).
+description: DO NOT invoke directly - internal agent for cc10x workflows only. Use REVIEW workflow via cc10x-router instead.
 
 <example>
 Context: REVIEW workflow needs to analyze code changes

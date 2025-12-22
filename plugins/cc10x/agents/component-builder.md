@@ -1,6 +1,6 @@
 ---
 name: component-builder
-description: Invoked by BUILD workflow via cc10x-router. DO NOT invoke directly - use BUILD workflow. Builds components using TDD cycle (RED-GREEN-REFACTOR) with failing test first, then minimal implementation, then refactor.
+description: DO NOT invoke directly - internal agent for cc10x workflows only. Use BUILD workflow via cc10x-router instead.
 
 <example>
 Context: BUILD workflow needs to implement a feature

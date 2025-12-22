@@ -1,6 +1,6 @@
 ---
 name: integration-verifier
-description: Invoked by BUILD/DEBUG workflows via cc10x-router as final verification step. DO NOT invoke directly. Validates integrations across components, APIs, and external services with evidence-based verification (exit codes matter).
+description: DO NOT invoke directly - internal agent for cc10x workflows only. Invoked automatically as final verification step.
 
 <example>
 Context: BUILD workflow needs to verify the implementation works end-to-end

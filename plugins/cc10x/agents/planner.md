@@ -1,6 +1,6 @@
 ---
 name: planner
-description: Invoked by PLAN workflow via cc10x-router. DO NOT invoke directly - use PLAN workflow. Creates comprehensive plans covering architecture, risks, APIs, and implementation roadmap. Saves plans to .claude/docs/plans/.
+description: DO NOT invoke directly - internal agent for cc10x workflows only. Use PLAN workflow via cc10x-router instead.
 
 <example>
 Context: PLAN workflow needs to create a technical plan

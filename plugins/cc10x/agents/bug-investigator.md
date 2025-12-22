@@ -1,6 +1,6 @@
 ---
 name: bug-investigator
-description: Invoked by DEBUG workflow via cc10x-router. DO NOT invoke directly - use DEBUG workflow. Investigates and fixes bugs with evidence-first LOG FIRST approach - gathers logs before hypothesizing, applies minimal fixes with regression tests.
+description: DO NOT invoke directly - internal agent for cc10x workflows only. Use DEBUG workflow via cc10x-router instead.
 
 <example>
 Context: DEBUG workflow needs to investigate an error
