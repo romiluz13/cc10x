@@ -6,14 +6,14 @@
     "url": "https://github.com/romiluz13"
   },
   "metadata": {
-    "description": "cc10x v5.2.0 - Lean development workflow plugin with mandatory memory persistence",
-    "version": "5.2.0"
+    "description": "cc10x v5.8.0 - Lean development workflow plugin with Auto-Claude patterns for bug prevention",
+    "version": "5.8.0"
   },
   "plugins": [
     {
       "name": "cc10x",
-      "description": "Lean development workflow plugin with 5 agents, 11 skills, and mandatory memory persistence. Features intent-based routing (build/review/debug/plan), TDD enforcement, evidence-based verification, and session memory with READ+WRITE triggers.",
-      "version": "5.2.0",
+      "description": "Lean development workflow plugin with 6 agents, 11 skills, and Auto-Claude patterns for bug prevention. Features AUTO-EXECUTE routing, TDD enforcement, evidence-based verification, pre-implementation checklists, self-critique gates, and risk-based testing.",
+      "version": "5.8.0",
       "author": {
         "name": "Rom Iluz",
         "email": "rom@iluz.net",
