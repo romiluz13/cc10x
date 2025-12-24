@@ -1,6 +1,6 @@
 # cc10x - The Perfect Claude Code Workflow System
 
-> **v5.7.3** | 6 Agents | 11 Skills | 1 Router | Memory Persistence | TDD Enforcement
+> **v5.8.1** | 6 Agents | 11 Skills | 1 Router | Memory Persistence | TDD Enforcement
 
 **cc10x is what Claude Code should be.** It transforms Claude from a helpful assistant into a disciplined engineering system that never cuts corners.
 
@@ -424,6 +424,7 @@ The silent-failure-hunter agent finds error handling issues with zero tolerance:
 
 ## Version History
 
+- **v5.8.1** - Strengthened router bypass prevention - all agents and skills explicitly prevent direct invocation
 - **v5.7.3** - Removed action keywords from agent descriptions (prevents router bypass!)
 - **v5.7.2** - Fixed skill documentation inconsistencies (accurate agent→skill mappings)
 - **v5.7.1** - Added verification-before-completion to silent-failure-hunter
@@ -450,4 +451,4 @@ MIT License
 
 ---
 
-_cc10x v5.7.3 | The Perfect Claude Code Workflow System_
+_cc10x v5.8.1 | The Perfect Claude Code Workflow System_

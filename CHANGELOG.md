@@ -1,5 +1,23 @@
 # Changelog
 
+## [5.8.1] - 2025-01-XX
+
+### Fixed
+
+- **Router Bypass Prevention**: Strengthened all agent and skill descriptions to explicitly prevent direct invocation
+  - Added explicit router references to `integration-verifier` and `silent-failure-hunter` agents
+  - Added router workflow context to `session-memory` and `verification-before-completion` skills
+  - Enhanced router description as "THE ONLY ENTRY POINT FOR CC10X" with critical warning
+  - All 17 components (6 agents + 11 skills) now explicitly prevent direct invocation
+  - Production-ready protection against router bypass for millions of users
+
+### Impact
+
+- Zero ambiguity about router being the only entry point
+- Explicit prevention of direct agent/skill invocation
+- Consistent messaging across all components
+- Memory flow integrity guaranteed (router loads memory first, updates last)
+
 ## [5.7.1] - 2025-12-21
 
 ### Fixed
