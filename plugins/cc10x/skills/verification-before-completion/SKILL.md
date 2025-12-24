@@ -1,8 +1,9 @@
 ---
 name: verification-before-completion
 description: |
-  Loaded by ALL agents before completion claims. DO NOT invoke directly - loaded automatically via agent frontmatter.
+  Loaded by ALL agents before completion claims in cc10x-router workflows. DO NOT invoke directly - loaded automatically via agent frontmatter.
   Requires running verification commands and confirming output with evidence before any success claims. Iron Law: EVIDENCE BEFORE CLAIMS.
+  Agents are invoked through cc10x-router workflows (BUILD/REVIEW/DEBUG/PLAN) - do not invoke agents or this skill directly.
 ---
 
 # Verification Before Completion

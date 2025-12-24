@@ -1,6 +1,6 @@
 ---
 name: integration-verifier
-description: DO NOT invoke directly - internal agent for cc10x workflows only. Invoked automatically as final verification step.
+description: DO NOT invoke directly - internal agent for cc10x workflows only. Invoked automatically by cc10x-router as final verification step in BUILD/DEBUG workflows. Use BUILD or DEBUG workflow via cc10x-router instead.
 
 <example>
 Context: BUILD workflow needs to verify the implementation works end-to-end

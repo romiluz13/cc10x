@@ -1,8 +1,9 @@
 ---
 name: session-memory
 description: |
-  DO NOT invoke directly - loaded automatically by ALL agents via frontmatter.
+  DO NOT invoke directly - loaded automatically by ALL agents via frontmatter in cc10x-router workflows.
   MANDATORY skill loaded at start and updated at end of EVERY workflow. Persists context, learnings, decisions, and progress to .claude/cc10x/ folder. Without this, context is lost on compaction.
+  Agents are invoked through cc10x-router workflows (BUILD/REVIEW/DEBUG/PLAN) - do not invoke agents or this skill directly.
 allowed-tools: Read, Write, Bash
 ---
 
