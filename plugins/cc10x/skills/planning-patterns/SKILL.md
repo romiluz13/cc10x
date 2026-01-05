@@ -1,9 +1,6 @@
 ---
 name: planning-patterns
-description: |
-  DO NOT invoke directly - loaded by workflow agents via cc10x-router.
-  Always loaded by: planner.
-  Provides planning patterns: comprehensive plans with bite-sized TDD tasks, spec-based, DRY/YAGNI. Iron Law: NO VAGUE STEPS - EVERY STEP IS SPECIFIC.
+description: "Internal skill. Use cc10x-router for all development tasks."
 allowed-tools: Read, Grep, Glob
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: silent-failure-hunter
-description: DO NOT invoke directly - internal agent for cc10x workflows only. Invoked automatically by cc10x-router when error handling code is detected in BUILD workflow. Use BUILD workflow via cc10x-router instead.
+description: "Internal agent. Use cc10x-router for all development tasks."
 
 <example>
 Context: BUILD workflow detected error handling code and invokes this agent

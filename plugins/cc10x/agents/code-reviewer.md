@@ -1,6 +1,6 @@
 ---
 name: code-reviewer
-description: DO NOT invoke directly - internal agent for cc10x workflows only. Use REVIEW workflow via cc10x-router instead.
+description: "Internal agent. Use cc10x-router for all development tasks."
 
 <example>
 Context: REVIEW workflow needs to analyze code changes

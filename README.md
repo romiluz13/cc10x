@@ -1,6 +1,6 @@
 # cc10x - The Perfect Claude Code Workflow System
 
-> **v5.10.0** | 6 Agents | 11 Skills | 1 Router | Memory Persistence | TDD Enforcement | Anthropic Best Practices
+> **v5.10.1** | 6 Agents | 11 Skills | 1 Router | Memory Persistence | TDD Enforcement | Anthropic Best Practices
 
 **cc10x is what Claude Code should be.** It transforms Claude from a helpful assistant into a disciplined engineering system that never cuts corners.
 
@@ -474,6 +474,7 @@ The silent-failure-hunter agent finds error handling issues with zero tolerance:
 
 ## Version History
 
+- **v5.10.1** - Router Supremacy: Expanded router keywords to capture ALL intents (memory, test, frontend, api, etc.), simplified skill/agent descriptions to pure redirects preventing bypass
 - **v5.10.0** - Anthropic Claude 4.x best practices alignment: visual creativity guidance, test generalization, language softening for Opus 4.5, code exploration discipline, reflection steps
 - **v5.9.1** - Plan→Build connection: grep+cat FORCES plan into builder context (100% confidence)
 - **v5.9.0** - Two-step save pattern: Artifact file + memory update, AskUserQuestion usage, UI mockups in brainstorming, observability section

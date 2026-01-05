@@ -1,6 +1,6 @@
 ---
 name: bug-investigator
-description: DO NOT invoke directly - internal agent for cc10x workflows only. Use DEBUG workflow via cc10x-router instead.
+description: "Internal agent. Use cc10x-router for all development tasks."
 
 <example>
 Context: DEBUG workflow needs to investigate an error

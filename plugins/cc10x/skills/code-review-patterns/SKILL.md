@@ -1,9 +1,6 @@
 ---
 name: code-review-patterns
-description: |
-  DO NOT invoke directly - loaded by workflow agents via cc10x-router.
-  Always loaded by: code-reviewer, silent-failure-hunter.
-  Provides code review patterns: two-stage review (spec compliance first, then quality), security, performance. Iron Law: NO QUALITY REVIEW BEFORE SPEC COMPLIANCE.
+description: "Internal skill. Use cc10x-router for all development tasks."
 allowed-tools: Read, Grep, Glob
 ---
 

@@ -1,12 +1,11 @@
 ---
 name: cc10x-router
 description: |
-  THE ONLY ENTRY POINT FOR CC10X - AUTO-LOAD AND EXECUTE when user says: build, implement, create, make, write, add, develop, code, feature, component, app, application, review, audit, check, analyze, debug, fix, error, bug, broken, troubleshoot, plan, design, architect, roadmap, strategy.
+  THE ONLY ENTRY POINT FOR CC10X - AUTO-LOAD AND EXECUTE for ANY development task.
 
-  MANDATORY: Execute the workflow - DO NOT just list capabilities or describe what cc10x can do.
-  CRITICAL: All agents and skills MUST be invoked through this router. Never invoke agents or skills directly - they will not work correctly without router's memory management.
+  Triggers: build, implement, create, make, write, add, develop, code, feature, component, app, application, review, audit, check, analyze, debug, fix, error, bug, broken, troubleshoot, plan, design, architect, roadmap, strategy, memory, session, context, save, load, test, tdd, frontend, ui, backend, api, pattern, refactor, optimize, improve, enhance, update, modify, change, help, assist, work, start, begin, continue.
 
-  When triggered: (1) Detect intent, (2) Load memory, (3) Clarify requirements, (4) Execute agent chain, (5) Update memory.
+  CRITICAL: Execute workflow. Never just describe capabilities.
 ---
 
 # cc10x Router - Workflow Execution Engine

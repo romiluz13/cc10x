@@ -1,6 +1,6 @@
 ---
 name: component-builder
-description: DO NOT invoke directly - internal agent for cc10x workflows only. Use BUILD workflow via cc10x-router instead.
+description: "Internal agent. Use cc10x-router for all development tasks."
 
 <example>
 Context: BUILD workflow needs to implement a feature

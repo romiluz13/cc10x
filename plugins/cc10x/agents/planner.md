@@ -1,6 +1,6 @@
 ---
 name: planner
-description: DO NOT invoke directly - internal agent for cc10x workflows only. Use PLAN workflow via cc10x-router instead.
+description: "Internal agent. Use cc10x-router for all development tasks."
 
 <example>
 Context: PLAN workflow needs to create a technical plan

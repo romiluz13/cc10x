@@ -1,9 +1,6 @@
 ---
 name: code-generation
-description: |
-  DO NOT invoke directly - loaded by workflow agents via cc10x-router.
-  Always loaded by: component-builder.
-  Provides code writing patterns: understand functionality first, write minimal code, match project patterns. Iron Law: NO CODE BEFORE UNDERSTANDING FUNCTIONALITY.
+description: "Internal skill. Use cc10x-router for all development tasks."
 ---
 
 # Code Generation

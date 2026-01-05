@@ -1,9 +1,6 @@
 ---
 name: frontend-patterns
-description: |
-  DO NOT invoke directly - loaded by workflow agents via cc10x-router.
-  Conditionally loaded by: code-reviewer (UI code), component-builder (UI component), bug-investigator (UI bug), integration-verifier (UI flow testing), planner (UI planning).
-  Provides frontend patterns: UX, visual design, accessibility, responsive design. Iron Law: NO UI DESIGN BEFORE USER FLOW IS UNDERSTOOD.
+description: "Internal skill. Use cc10x-router for all development tasks."
 allowed-tools: Read, Grep, Glob
 ---
 

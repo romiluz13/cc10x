@@ -1,9 +1,6 @@
 ---
 name: test-driven-development
-description: |
-  DO NOT invoke directly - loaded by workflow agents via cc10x-router.
-  Always loaded by: component-builder, bug-investigator.
-  Enforces RED-GREEN-REFACTOR cycle: failing test first, minimal code, clean up. Iron Law: NO PRODUCTION CODE WITHOUT A FAILING TEST FIRST.
+description: "Internal skill. Use cc10x-router for all development tasks."
 ---
 
 # Test-Driven Development (TDD)
