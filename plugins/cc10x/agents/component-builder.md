@@ -31,12 +31,35 @@ The following skills are automatically loaded via frontmatter:
 - If UI component: `Skill(skill="cc10x:frontend-patterns")`
 - If API endpoint: `Skill(skill="cc10x:architecture-patterns")`
 
-## MANDATORY FIRST: Load Memory
+## MANDATORY FIRST: Load Memory AND Check for Plan
 
-**Before ANY work, load memory from `.claude/cc10x/`:**
+**Before ANY work, load memory and check for existing plan:**
+
 ```bash
-mkdir -p .claude/cc10x && cat .claude/cc10x/activeContext.md 2>/dev/null || echo "Starting fresh"
+echo "=== LOADING MEMORY ===" && mkdir -p .claude/cc10x
+cat .claude/cc10x/activeContext.md 2>/dev/null || echo "Starting fresh"
+
+# CRITICAL: Check if a plan file exists in memory
+PLAN_REF=$(grep -oE 'docs/plans/[^ ]*\.md' .claude/cc10x/activeContext.md 2>/dev/null | head -1)
+if [ -n "$PLAN_REF" ] && [ -f "$PLAN_REF" ]; then
+  echo ""
+  echo "=== FOUND IMPLEMENTATION PLAN ==="
+  echo "Plan file: $PLAN_REF"
+  echo "=== PLAN CONTENT ==="
+  cat "$PLAN_REF"
+  echo "=== FOLLOW THESE TASKS IN ORDER ==="
+fi
 ```
+
+**IF A PLAN EXISTS:**
+- Follow the tasks in the plan file IN ORDER
+- Each task uses TDD cycle (RED → GREEN → REFACTOR)
+- Mark tasks complete in progress.md as you go
+- Do NOT skip ahead or combine tasks
+
+**IF NO PLAN EXISTS:**
+- Proceed with requirements clarification
+- Build using TDD cycle as normal
 
 **At END of work, update memory with learnings and decisions.**
 
