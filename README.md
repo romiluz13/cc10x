@@ -1,6 +1,6 @@
 # cc10x - The Perfect Claude Code Workflow System
 
-> **v5.8.1** | 6 Agents | 11 Skills | 1 Router | Memory Persistence | TDD Enforcement
+> **v5.9.1** | 6 Agents | 11 Skills | 1 Router | Memory Persistence | TDD Enforcement | Plan→Build Automation
 
 **cc10x is what Claude Code should be.** It transforms Claude from a helpful assistant into a disciplined engineering system that never cuts corners.
 
@@ -66,7 +66,7 @@ MEMORY (.claude/cc10x/)
 | **bug-investigator** | Fixes bugs | Read, Edit, Write, Bash, Grep, Glob, Skill | LOG FIRST: Evidence before fixes |
 | **code-reviewer** | Reviews code | Read, Write, Bash, Grep, Glob, Skill | Confidence scoring: Only report >= 80% |
 | **integration-verifier** | Verifies E2E | Read, Write, Bash, Grep, Glob, Skill | Evidence-based: Exit codes matter |
-| **planner** | Creates plans | Read, Write, Bash, Grep, Glob, Skill | Saves plans to `.claude/docs/plans/` |
+| **planner** | Creates plans | Read, Write, Bash, Grep, Glob, Skill | Saves plans to `docs/plans/` + updates memory |
 | **silent-failure-hunter** | Audits errors | Read, Write, Bash, Grep, Glob, Skill | Zero tolerance for empty catch blocks |
 
 ### Why These Tools?
@@ -169,7 +169,7 @@ Skills are **loaded by agents**, not invoked directly. This prevents Claude from
 
 ### When You Say "Build a Task Tracker"
 
-**CORRECT (cc10x v5.7.1)**:
+**CORRECT (cc10x v5.9.1)**:
 ```
 Detected BUILD intent. Executing BUILD workflow.
 
@@ -196,7 +196,7 @@ I'll help you build a task tracker! Let me start by creating the files...
 
 ### When You Say "Fix the Login Bug"
 
-**CORRECT (cc10x v5.7.1)**:
+**CORRECT (cc10x v5.9.1)**:
 ```
 Detected DEBUG intent. Executing DEBUG workflow.
 
@@ -222,7 +222,7 @@ It should work now! [no verification]
 
 ### When You Say "Review This PR"
 
-**CORRECT (cc10x v5.7.1)**:
+**CORRECT (cc10x v5.9.1)**:
 ```
 Detected REVIEW intent. Executing REVIEW workflow.
 
@@ -295,6 +295,56 @@ EVERY WORKFLOW MUST:
 ```
 
 **Failure to update memory = incomplete workflow.**
+
+---
+
+## Plan→Build Automation (v5.9.1)
+
+cc10x connects planning to building automatically. No more lost plans.
+
+### Two-Step Save Pattern
+
+When you create a plan:
+1. **Save artifact** → `docs/plans/YYYY-MM-DD-<feature>-plan.md`
+2. **Update memory** → `.claude/cc10x/activeContext.md` references the plan
+
+### Automatic Plan Detection
+
+When component-builder starts, it:
+```bash
+# Extracts plan reference from memory
+PLAN_REF=$(grep -oE 'docs/plans/[^ ]*\.md' .claude/cc10x/activeContext.md)
+
+# If plan exists, shows it
+if [ -f "$PLAN_REF" ]; then
+  cat "$PLAN_REF"
+  echo "=== FOLLOW THESE TASKS IN ORDER ==="
+fi
+```
+
+### Why This Matters
+
+| Without cc10x | With cc10x v5.9.1 |
+|---------------|-------------------|
+| Plan exists only in conversation | Plan saved to file |
+| Compaction loses the plan | Plan survives compaction |
+| Builder doesn't know about plan | Builder auto-loads plan |
+| Manual copy-paste needed | Automatic handoff |
+
+### Example Flow
+
+```
+Day 1: "Plan a task tracker"
+  → Planner creates docs/plans/2025-01-05-task-tracker-plan.md
+  → Memory updated: "Plan ready at docs/plans/..."
+
+Day 2: "Build it"
+  → Router detects BUILD intent
+  → component-builder loads memory
+  → grep finds plan reference
+  → cat shows plan content
+  → Builder follows plan tasks with TDD
+```
 
 ---
 
@@ -424,6 +474,8 @@ The silent-failure-hunter agent finds error handling issues with zero tolerance:
 
 ## Version History
 
+- **v5.9.1** - Plan→Build connection: grep+cat FORCES plan into builder context (100% confidence)
+- **v5.9.0** - Two-step save pattern: Artifact file + memory update, AskUserQuestion usage, UI mockups in brainstorming, observability section
 - **v5.8.1** - Strengthened router bypass prevention - all agents and skills explicitly prevent direct invocation
 - **v5.7.3** - Removed action keywords from agent descriptions (prevents router bypass!)
 - **v5.7.2** - Fixed skill documentation inconsistencies (accurate agent→skill mappings)
@@ -451,4 +503,4 @@ MIT License
 
 ---
 
-_cc10x v5.8.1 | The Perfect Claude Code Workflow System_
+_cc10x v5.9.1 | The Perfect Claude Code Workflow System_
