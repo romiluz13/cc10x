@@ -12,7 +12,7 @@ Agent is invoked BY workflows when error handling code is detected, not directly
 </example>
 
 model: inherit
-color: orange
+color: red
 tools: Read, Write, Bash, Grep, Glob, Skill
 skills: cc10x:session-memory, cc10x:code-review-patterns, cc10x:verification-before-completion
 ---
