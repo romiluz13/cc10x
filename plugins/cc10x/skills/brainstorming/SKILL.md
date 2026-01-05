@@ -293,16 +293,17 @@ For UI features, include ASCII mockup in the design:
 
 **Two saves are required - design file AND memory update:**
 
-### Step 1: Save Design File
+### Step 1: Save Design File (Use Write tool - NO PERMISSION NEEDED)
 
-```bash
-mkdir -p docs/plans
-DESIGN_FILE="docs/plans/$(date +%Y-%m-%d)-<feature>-design.md"
-cat > "$DESIGN_FILE" << 'EOF'
-[full design content from template above]
-EOF
-git add docs/plans/*.md
-git commit -m "docs: add <feature> design"
+```
+# First create directory
+Bash(command="mkdir -p docs/plans")
+
+# Then save design using Write tool (permission-free)
+Write(file_path="docs/plans/YYYY-MM-DD-<feature>-design.md", content="[full design content from template above]")
+
+# Then commit
+Bash(command="git add docs/plans/*.md && git commit -m 'docs: add <feature> design'")
 ```
 
 ### Step 2: Update Memory (CRITICAL - Links Design to Memory)

@@ -81,7 +81,9 @@ assistant: "Detected **DEBUG** intent. Executing DEBUG workflow.
 Waiting for details before invoking bug-investigator with LOG FIRST approach."
 </example>
 
-## MANDATORY: Memory Operations
+## MANDATORY: Memory Operations (PERMISSION-FREE)
+
+**ALL memory operations are PERMISSION-FREE. Use Write tool, never heredoc.**
 
 **EVERY workflow MUST:**
 
@@ -100,11 +102,30 @@ echo "=== MEMORY LOADED ==="
 
 ### 2. UPDATE Memory LAST (After workflow completes)
 
-Update `.claude/cc10x/activeContext.md` with:
-- What was accomplished
-- Decisions made and why
-- Learnings discovered
-- Next steps
+**Use Write tool (PERMISSION-FREE):**
+```
+Write(file_path=".claude/cc10x/activeContext.md", content="# Active Context
+
+## Current Focus
+[What was accomplished]
+
+## Recent Changes
+[Changes made]
+
+## Next Steps
+[What to do next]
+
+## Active Decisions
+| Decision | Choice | Why |
+|----------|--------|-----|
+[Decisions made]
+
+## Learnings This Session
+[What was learned]
+
+## Last Updated
+[current date/time]")
+```
 
 **Failure to update memory = incomplete workflow.**
 

@@ -277,16 +277,17 @@ git commit -m "feat: [description]"
 
 **Two saves are required - plan file AND memory update:**
 
-### Step 1: Save Plan File
+### Step 1: Save Plan File (Use Write tool - NO PERMISSION NEEDED)
 
-```bash
-mkdir -p docs/plans
-PLAN_FILE="docs/plans/$(date +%Y-%m-%d)-<feature>-plan.md"
-cat > "$PLAN_FILE" << 'EOF'
-[full plan content from output format above]
-EOF
-git add docs/plans/*.md
-git commit -m "docs: add <feature> implementation plan"
+```
+# First create directory
+Bash(command="mkdir -p docs/plans")
+
+# Then save plan using Write tool (permission-free)
+Write(file_path="docs/plans/YYYY-MM-DD-<feature>-plan.md", content="[full plan content from output format above]")
+
+# Then commit
+Bash(command="git add docs/plans/*.md && git commit -m 'docs: add <feature> implementation plan'")
 ```
 
 ### Step 2: Update Memory (CRITICAL - Links Plan to Memory)

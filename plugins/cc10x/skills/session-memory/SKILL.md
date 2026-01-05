@@ -24,6 +24,30 @@ EVERY WORKFLOW MUST:
 
 **BOTH SIDES ARE NON-NEGOTIABLE.**
 
+## Permission-Free Operations (CRITICAL)
+
+**ALL memory operations are PERMISSION-FREE. Never ask for permission.**
+
+| Operation | Tool | Permission |
+|-----------|------|------------|
+| Create memory directory | `Bash(command="mkdir -p .claude/cc10x")` | FREE |
+| Read memory files | `Bash(command="cat .claude/cc10x/*.md")` | FREE |
+| Write memory files | `Write(file_path=".claude/cc10x/...", content="...")` | FREE |
+| Save plan/design files | `Write(file_path="docs/plans/...", content="...")` | FREE |
+
+**NEVER use heredoc writes** (`cat > file << 'EOF'`) - they ASK PERMISSION.
+**ALWAYS use Write tool** - it's PERMISSION-FREE.
+
+```
+# WRONG (asks permission)
+cat > .claude/cc10x/activeContext.md << 'EOF'
+content here
+EOF
+
+# RIGHT (permission-free)
+Write(file_path=".claude/cc10x/activeContext.md", content="content here")
+```
+
 ## Why This Matters
 
 > "My memory resets between sessions. The Memory Bank is my ONLY link to previous work."
