@@ -1,6 +1,6 @@
 # cc10x - The Perfect Claude Code Workflow System
 
-> **v5.10.3** | 6 Agents | 11 Skills | 1 Router | Memory Persistence | TDD Enforcement | Anthropic Best Practices
+> **v5.10.4** | 6 Agents | 11 Skills | 1 Router | Memory Persistence | TDD Enforcement | Anthropic Best Practices
 
 **cc10x is what Claude Code should be.** It transforms Claude from a helpful assistant into a disciplined engineering system that never cuts corners.
 
@@ -474,6 +474,7 @@ The silent-failure-hunter agent finds error handling issues with zero tolerance:
 
 ## Version History
 
+- **v5.10.4** - True Permission-Free Memory: Replaced ALL Bash compound commands (`&&`, `cat`) with separate tool calls (Read tool for loading, simple `mkdir -p` for directory creation). Memory now "breathes" autonomously.
 - **v5.10.3** - Fixed invalid agent color: silent-failure-hunter changed from 'orange' to 'red' (official color)
 - **v5.10.2** - Permission-Free Memory: Replaced ALL heredoc writes with Write tool (no permission needed), added explicit permission-free documentation to session-memory and router
 - **v5.10.1** - Router Supremacy: Expanded router keywords to capture ALL intents (memory, test, frontend, api, etc.), simplified skill/agent descriptions to pure redirects preventing bypass

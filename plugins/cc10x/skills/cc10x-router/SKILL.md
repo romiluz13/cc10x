@@ -83,22 +83,32 @@ Waiting for details before invoking bug-investigator with LOG FIRST approach."
 
 ## MANDATORY: Memory Operations (PERMISSION-FREE)
 
-**ALL memory operations are PERMISSION-FREE. Use Write tool, never heredoc.**
+**ALL memory operations are PERMISSION-FREE using the correct tools.**
 
 **EVERY workflow MUST:**
 
 ### 1. LOAD Memory FIRST (Before ANY routing)
 
+**Use separate tool calls (PERMISSION-FREE):**
+
+```
+# Step 1: Create directory (single Bash command)
+Bash(command="mkdir -p .claude/cc10x")
+
+# Step 2: Load ALL 3 memory files using Read tool
+Read(file_path=".claude/cc10x/activeContext.md")
+Read(file_path=".claude/cc10x/patterns.md")
+Read(file_path=".claude/cc10x/progress.md")
+```
+
+**NEVER use compound commands (they ask permission):**
 ```bash
-echo "=== LOADING MEMORY ===" && mkdir -p .claude/cc10x
-cat .claude/cc10x/activeContext.md 2>/dev/null || echo "No active context - starting fresh"
-cat .claude/cc10x/patterns.md 2>/dev/null || echo "No patterns saved"
-cat .claude/cc10x/progress.md 2>/dev/null || echo "No progress tracked"
-echo "=== MEMORY LOADED ==="
+# WRONG - asks permission
+mkdir -p .claude/cc10x && cat .claude/cc10x/activeContext.md
 ```
 
 **If memory exists:** Resume from context, avoid repeating work.
-**If memory empty:** Start fresh, but WILL save at end.
+**If file doesn't exist:** Read returns error - means starting fresh.
 
 ### 2. UPDATE Memory LAST (After workflow completes)
 

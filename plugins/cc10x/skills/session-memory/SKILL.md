@@ -26,14 +26,28 @@ EVERY WORKFLOW MUST:
 
 ## Permission-Free Operations (CRITICAL)
 
-**ALL memory operations are PERMISSION-FREE. Never ask for permission.**
+**ALL memory operations are PERMISSION-FREE using the correct tools.**
 
 | Operation | Tool | Permission |
 |-----------|------|------------|
 | Create memory directory | `Bash(command="mkdir -p .claude/cc10x")` | FREE |
-| Read memory files | `Bash(command="cat .claude/cc10x/*.md")` | FREE |
+| **Read memory files** | `Read(file_path=".claude/cc10x/activeContext.md")` | **FREE** |
 | Write memory files | `Write(file_path=".claude/cc10x/...", content="...")` | FREE |
 | Save plan/design files | `Write(file_path="docs/plans/...", content="...")` | FREE |
+
+### CRITICAL: Use Read Tool, NOT Bash(cat)
+
+**NEVER use Bash compound commands** (`mkdir && cat`) - they ASK PERMISSION.
+**ALWAYS use Read tool** for reading files - it's PERMISSION-FREE.
+
+```
+# WRONG (asks permission - compound Bash command)
+mkdir -p .claude/cc10x && cat .claude/cc10x/activeContext.md
+
+# RIGHT (permission-free - separate tools)
+Bash(command="mkdir -p .claude/cc10x")
+Read(file_path=".claude/cc10x/activeContext.md")
+```
 
 **NEVER use heredoc writes** (`cat > file << 'EOF'`) - they ASK PERMISSION.
 **ALWAYS use Write tool** - it's PERMISSION-FREE.
@@ -254,37 +268,25 @@ Verification evidence        → progress.md
 
 ### At Workflow START (REQUIRED)
 
-```bash
-# MUST run before ANY work
-echo "=== LOADING MEMORY ==="
-mkdir -p .claude/cc10x
+**Use separate tool calls (PERMISSION-FREE):**
 
-# Load active context (CRITICAL)
-if [ -f .claude/cc10x/activeContext.md ]; then
-  echo "--- Active Context ---"
-  cat .claude/cc10x/activeContext.md
-else
-  echo "No active context found - starting fresh"
-fi
-
-# Load patterns
-if [ -f .claude/cc10x/patterns.md ]; then
-  echo "--- Patterns ---"
-  cat .claude/cc10x/patterns.md
-else
-  echo "No patterns found"
-fi
-
-# Load progress
-if [ -f .claude/cc10x/progress.md ]; then
-  echo "--- Progress ---"
-  cat .claude/cc10x/progress.md
-else
-  echo "No progress found"
-fi
-
-echo "=== MEMORY LOADED ==="
 ```
+# Step 1: Create directory (single Bash command - permission-free)
+Bash(command="mkdir -p .claude/cc10x")
+
+# Step 2: Load ALL 3 memory files using Read tool (permission-free)
+Read(file_path=".claude/cc10x/activeContext.md")
+Read(file_path=".claude/cc10x/patterns.md")
+Read(file_path=".claude/cc10x/progress.md")
+```
+
+**NEVER use this (asks permission):**
+```bash
+# WRONG - compound command asks permission
+mkdir -p .claude/cc10x && cat .claude/cc10x/activeContext.md
+```
+
+**If file doesn't exist:** Read tool returns an error - that's fine, means starting fresh.
 
 ### At Workflow END (REQUIRED)
 

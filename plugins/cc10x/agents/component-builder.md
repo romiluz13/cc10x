@@ -33,22 +33,24 @@ The following skills are automatically loaded via frontmatter:
 
 ## MANDATORY FIRST: Load Memory AND Check for Plan
 
-**Before ANY work, load memory and check for existing plan:**
+**Before ANY work, load memory and check for existing plan (PERMISSION-FREE):**
 
+```
+# Step 1: Create directory
+Bash(command="mkdir -p .claude/cc10x")
+
+# Step 2: Load memory using Read tool (permission-free)
+Read(file_path=".claude/cc10x/activeContext.md")
+
+# Step 3: Check for plan reference in activeContext.md
+# If activeContext mentions docs/plans/*.md, load that plan file too:
+Read(file_path="docs/plans/<plan-file-from-activeContext>.md")
+```
+
+**NEVER use compound Bash commands (they ask permission):**
 ```bash
-echo "=== LOADING MEMORY ===" && mkdir -p .claude/cc10x
-cat .claude/cc10x/activeContext.md 2>/dev/null || echo "Starting fresh"
-
-# CRITICAL: Check if a plan file exists in memory
-PLAN_REF=$(grep -oE 'docs/plans/[^ ]*\.md' .claude/cc10x/activeContext.md 2>/dev/null | head -1)
-if [ -n "$PLAN_REF" ] && [ -f "$PLAN_REF" ]; then
-  echo ""
-  echo "=== FOUND IMPLEMENTATION PLAN ==="
-  echo "Plan file: $PLAN_REF"
-  echo "=== PLAN CONTENT ==="
-  cat "$PLAN_REF"
-  echo "=== FOLLOW THESE TASKS IN ORDER ==="
-fi
+# WRONG - asks permission
+mkdir -p .claude/cc10x && cat .claude/cc10x/activeContext.md
 ```
 
 **IF A PLAN EXISTS:**
