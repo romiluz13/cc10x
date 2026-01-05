@@ -155,6 +155,11 @@ Without memory persistence:
 
 ## Evolution of Decisions
 - [Date]: [Decision changed from X to Y because Z]
+
+## Implementation Results (append-only after build)
+| Planned | Actual | Deviation Reason |
+|---------|--------|------------------|
+| [What was planned] | [What happened] | [Why it differed] |
 ```
 
 ## READ Triggers - When to Load Memory
@@ -262,12 +267,10 @@ echo "=== MEMORY LOADED ==="
 
 ### At Workflow END (REQUIRED)
 
-**MUST update before completing ANY workflow:**
+**MUST update before completing ANY workflow. Use Write tool (no permission needed):**
 
-```bash
-# Update active context with current state
-cat > .claude/cc10x/activeContext.md << 'EOF'
-# Active Context
+```
+Write(file_path=".claude/cc10x/activeContext.md", content="# Active Context
 
 ## Current Focus
 [What we just finished / what's next]
@@ -287,21 +290,20 @@ cat > .claude/cc10x/activeContext.md << 'EOF'
 - [What we learned]
 
 ## Last Updated
-[current date/time]
-EOF
-
-echo "Memory updated successfully"
+[current date/time]")
 ```
 
 ### When Learning Patterns (APPEND)
 
-```bash
-# Append new pattern to patterns.md
-cat >> .claude/cc10x/patterns.md << 'EOF'
+**Read existing patterns.md, then append and Write:**
+
+```
+Read(".claude/cc10x/patterns.md") then append:
 
 ## [Category]
 - [Pattern]: [Details learned]
-EOF
+
+Then Write the combined content back.
 ```
 
 ### When Completing Tasks (UPDATE)

@@ -49,6 +49,7 @@ NO VAGUE STEPS - EVERY STEP IS A SPECIFIC ACTION
 # [Feature Name] Implementation Plan
 
 > **For Claude:** REQUIRED: Follow this plan task-by-task using TDD.
+> **Design:** See `docs/plans/YYYY-MM-DD-<feature>-design.md` for full specification.
 
 **Goal:** [One sentence describing what this builds]
 
@@ -60,6 +61,8 @@ NO VAGUE STEPS - EVERY STEP IS A SPECIFIC ACTION
 
 ---
 ```
+
+**Note:** If a design document exists, always reference it in the header.
 
 ## Task Structure
 
@@ -273,11 +276,69 @@ git commit -m "feat: [description]"
 - [ ] Code reviewed
 ```
 
+## Save the Plan (MANDATORY)
+
+**Two saves are required - plan file AND memory update:**
+
+### Step 1: Save Plan File
+
+```bash
+mkdir -p docs/plans
+PLAN_FILE="docs/plans/$(date +%Y-%m-%d)-<feature>-plan.md"
+cat > "$PLAN_FILE" << 'EOF'
+[full plan content from output format above]
+EOF
+git add docs/plans/*.md
+git commit -m "docs: add <feature> implementation plan"
+```
+
+### Step 2: Update Memory (CRITICAL - Links Plan to Memory)
+
+**Use Write tool (no permission needed):**
+
+```
+Write(file_path=".claude/cc10x/activeContext.md", content="# Active Context
+
+## Current Focus
+Plan created for [feature]. Ready for execution.
+
+## Recent Changes
+- Plan saved to docs/plans/YYYY-MM-DD-<feature>-plan.md
+
+## Next Steps
+1. Execute plan at docs/plans/YYYY-MM-DD-<feature>-plan.md
+2. Follow TDD cycle for each task
+3. Update progress.md after each task
+
+## Active Decisions
+| Decision | Choice | Why |
+|----------|--------|-----|
+| [Key decisions from plan] | [Choice] | [Reason] |
+
+## Plan Reference
+**Execute:** `docs/plans/YYYY-MM-DD-<feature>-plan.md`
+
+## Last Updated
+[current date/time]")
+```
+
+**Also append to progress.md:**
+```
+Read(".claude/cc10x/progress.md") then append:
+
+## Plan Created
+- [x] Plan saved - docs/plans/YYYY-MM-DD-<feature>-plan.md
+```
+
+**WHY BOTH:** Plan files are artifacts. Memory is the index. Without memory update, next session won't know the plan exists.
+
+**This is non-negotiable.** Memory is the single source of truth.
+
 ## Execution Handoff
 
 After saving the plan, offer execution choice:
 
-**"Plan complete. Two execution options:**
+**"Plan complete and saved to `docs/plans/<filename>.md`. Two execution options:**
 
 **1. Subagent-Driven (this session)** - Fresh subagent per task, review between tasks, fast iteration
 

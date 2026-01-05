@@ -4,7 +4,7 @@ description: |
   DO NOT invoke directly - loaded by workflow agents via cc10x-router.
   Conditionally loaded by: planner (when idea exploration needed).
   Provides brainstorming patterns: explore ideas before implementation, collaborative dialogue, understand purpose before design. Iron Law: NO DESIGN WITHOUT UNDERSTANDING PURPOSE.
-allowed-tools: Read, Grep, Glob
+allowed-tools: Read, Grep, Glob, AskUserQuestion
 ---
 
 # Brainstorming Ideas Into Designs
@@ -40,6 +40,19 @@ If you can't articulate why the user needs this and what success looks like, you
 - Success criteria unclear
 - User intent ambiguous
 
+## Spec File Workflow (Optional)
+
+If user references a spec file (SPEC.md, spec.md, plan.md):
+
+1. **Read existing spec** - Use as interview foundation
+2. **Interview to expand** - Fill gaps using Phase 2 questions
+3. **Write back** - Save expanded design to same file
+
+```bash
+# Check for existing spec
+cat SPEC.md 2>/dev/null || cat spec.md 2>/dev/null || echo "No spec file"
+```
+
 ## The Process
 
 ### Phase 1: Understand Context
@@ -57,6 +70,8 @@ ls -la src/ # or relevant directory
 ```
 
 ### Phase 2: Explore the Idea (One Question at a Time)
+
+**Use `AskUserQuestion` tool** - provides multiple choice options, better UX than text questions.
 
 **Ask questions sequentially, not all at once.**
 
@@ -242,10 +257,90 @@ After brainstorming, save the validated design:
 ## Testing Strategy
 [How to verify]
 
+## Observability (if applicable)
+- Logging: [what to log]
+- Metrics: [what to track]
+- Alerts: [when to alert]
+
+## UI Mockup (if applicable)
+[ASCII mockup for UI features]
+
 ## Questions Resolved
 - Q: [Question asked]
   A: [Answer given]
 ```
+
+## UI Mockup (For UI Features Only)
+
+For UI features, include ASCII mockup in the design:
+
+```
+┌─────────────────────────────────────────┐
+│  [Component Name]                       │
+├─────────────────────────────────────────┤
+│  [Header/Navigation]                    │
+├─────────────────────────────────────────┤
+│                                         │
+│  [Main content area]                    │
+│                                         │
+│  [Input fields, buttons, etc.]          │
+│                                         │
+├─────────────────────────────────────────┤
+│  [Footer/Actions]                       │
+└─────────────────────────────────────────┘
+```
+
+**Skip this for API-only or backend features.**
+
+## Saving the Design (MANDATORY)
+
+**Two saves are required - design file AND memory update:**
+
+### Step 1: Save Design File
+
+```bash
+mkdir -p docs/plans
+DESIGN_FILE="docs/plans/$(date +%Y-%m-%d)-<feature>-design.md"
+cat > "$DESIGN_FILE" << 'EOF'
+[full design content from template above]
+EOF
+git add docs/plans/*.md
+git commit -m "docs: add <feature> design"
+```
+
+### Step 2: Update Memory (CRITICAL - Links Design to Memory)
+
+**Use Write tool (no permission needed):**
+
+```
+Write(file_path=".claude/cc10x/activeContext.md", content="# Active Context
+
+## Current Focus
+Design created for [feature]. Ready for planning or building.
+
+## Recent Changes
+- Design saved to docs/plans/YYYY-MM-DD-<feature>-design.md
+
+## Next Steps
+1. Create implementation plan (if complex)
+2. Or start building directly (if simple)
+3. Reference design at docs/plans/YYYY-MM-DD-<feature>-design.md
+
+## Active Decisions
+| Decision | Choice | Why |
+|----------|--------|-----|
+| [Key decisions from design] | [Choice] | [Reason] |
+
+## Design Reference
+**Design:** `docs/plans/YYYY-MM-DD-<feature>-design.md`
+
+## Last Updated
+[current date/time]")
+```
+
+**WHY BOTH:** Design files are artifacts. Memory is the index. Without memory update, next session won't know the design exists.
+
+**This is non-negotiable.** Memory is the single source of truth.
 
 ## After Brainstorming
 

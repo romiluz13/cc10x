@@ -133,10 +133,10 @@ When user wants to build/implement/create something:
    - progress.md → check if already done!
 
 1. **CLARIFY REQUIREMENTS** - **CRITICAL: DO NOT SKIP**
+   - Use `AskUserQuestion` tool for structured questions with options
    - What exactly needs to be built?
    - What are the acceptance criteria?
    - What edge cases should be handled?
-   - **Present questions to user in a clear list**
    - **WAIT for user answers before proceeding**
    - If user says "whatever you think", state your recommendation and get confirmation
    - **CHECK**: activeContext.md Active Decisions before choosing approach

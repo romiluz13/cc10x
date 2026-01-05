@@ -48,6 +48,7 @@ If you haven't documented user flows, admin flows, and system flows, you cannot 
 4. **What are the system flows?** - Internal processing steps
 5. **What integrations exist?** - External dependencies
 6. **What are the constraints?** - Performance, security, compliance
+7. **What observability is needed?** - Logging, metrics, monitoring, alerting
 
 ## Functionality-First Design Process
 
@@ -181,6 +182,23 @@ Admin Flow: Delete file
 **Error handling**: What happens when it fails?
 **Fallback**: What's the degraded experience?
 ```
+
+## Observability Design
+
+**For each component, define:**
+
+| Aspect | Questions |
+|--------|-----------|
+| **Logging** | What events? What level? Structured format? |
+| **Metrics** | What to measure? Counters, gauges, histograms? |
+| **Alerts** | What thresholds? Who gets notified? |
+| **Tracing** | Span boundaries? Correlation IDs? |
+
+**Minimum observability:**
+- Request/response logging at boundaries
+- Error rates and latencies
+- Health check endpoint
+- Correlation ID propagation
 
 ## Decision Framework
 

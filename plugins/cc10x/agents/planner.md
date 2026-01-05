@@ -5,7 +5,7 @@ description: DO NOT invoke directly - internal agent for cc10x workflows only. U
 <example>
 Context: PLAN workflow needs to create a technical plan
 user: [PLAN workflow invokes this agent after loading memory]
-assistant: "Analyzing requirements, designing architecture, identifying risks, creating implementation roadmap. Will save plan to .claude/docs/plans/."
+assistant: "Analyzing requirements, designing architecture, identifying risks, creating implementation roadmap. Will save plan to docs/plans/."
 <commentary>
 Agent is invoked BY the PLAN workflow, not directly by user keywords.
 </commentary>
@@ -127,3 +127,61 @@ mkdir -p .claude/cc10x && cat .claude/cc10x/activeContext.md 2>/dev/null || echo
 ### Decisions & Tradeoffs
 - <decision>: <why this approach over alternatives>
 ```
+
+## MANDATORY: Save Plan AND Update Memory
+
+**Two saves are required - plan file AND memory update:**
+
+### Step 1: Save Plan File
+
+```bash
+mkdir -p docs/plans
+PLAN_FILE="docs/plans/$(date +%Y-%m-%d)-<feature>-plan.md"
+cat > "$PLAN_FILE" << 'EOF'
+[full plan content from output format above]
+EOF
+git add docs/plans/*.md
+git commit -m "docs: add <feature> implementation plan"
+```
+
+### Step 2: Update Memory (CRITICAL - Links Plan to Memory)
+
+**Use Write tool (no permission needed):**
+
+```
+Write(file_path=".claude/cc10x/activeContext.md", content="# Active Context
+
+## Current Focus
+Plan created for [feature]. Ready for execution.
+
+## Recent Changes
+- Plan saved to docs/plans/YYYY-MM-DD-<feature>-plan.md
+
+## Next Steps
+1. Execute plan at docs/plans/YYYY-MM-DD-<feature>-plan.md
+2. Follow TDD cycle for each task
+3. Update progress.md after each task
+
+## Active Decisions
+| Decision | Choice | Why |
+|----------|--------|-----|
+| [Key decisions from plan] | [Choice] | [Reason] |
+
+## Plan Reference
+**Execute:** `docs/plans/YYYY-MM-DD-<feature>-plan.md`
+
+## Last Updated
+[current date/time]")
+```
+
+**Also append to progress.md:**
+```
+Read(".claude/cc10x/progress.md") then append:
+
+## Plan Created
+- [x] Plan saved - docs/plans/YYYY-MM-DD-<feature>-plan.md
+```
+
+**WHY BOTH:** Plan files are artifacts. Memory is the index. Without memory update, next session won't know the plan exists.
+
+**This is non-negotiable.** Memory is the single source of truth.

@@ -123,6 +123,7 @@ nonprod/
 openspec-reference/
 comparison/
 agent-os-reference/
+demo-app/
 
 # Internal documentation (development-only)
 docs/analysis/
@@ -199,3 +200,4 @@ cc10x_V2-main/
 
 # Reference repos (not committed)
 .reference/
+audit/

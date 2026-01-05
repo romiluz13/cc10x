@@ -179,6 +179,7 @@ Before marking work complete:
 - [ ] Feature functionality verified - **with command output**
 - [ ] No regressions introduced - **with test output**
 - [ ] Evidence captured for each check - **in this message**
+- [ ] Deviations from plan documented - **if implementation differed from design**
 
 ## Output Format
 
@@ -198,6 +199,11 @@ Before marking work complete:
 | Tests | `npm test` | 0 | PASS (34/34) |
 | Build | `npm run build` | 0 | PASS |
 | Feature | `npm test -- --grep "feature"` | 0 | PASS (3/3) |
+
+### Deviations from Plan (if any)
+| Planned | Actual | Reason |
+|---------|--------|--------|
+| [Original design] | [What changed] | [Why] |
 
 ### Status
 COMPLETE - All verifications passed with fresh evidence
