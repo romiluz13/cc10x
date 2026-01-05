@@ -78,6 +78,7 @@ fi
    - If API endpoint: Load architecture-patterns
 
 2. **Understand Requirements**
+   - Read relevant files before proposing any edits
    - Clarify what the user needs
    - Define acceptance criteria
    - Identify edge cases

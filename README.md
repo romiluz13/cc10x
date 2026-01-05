@@ -1,6 +1,6 @@
 # cc10x - The Perfect Claude Code Workflow System
 
-> **v5.9.1** | 6 Agents | 11 Skills | 1 Router | Memory Persistence | TDD Enforcement | Plan→Build Automation
+> **v5.10.0** | 6 Agents | 11 Skills | 1 Router | Memory Persistence | TDD Enforcement | Anthropic Best Practices
 
 **cc10x is what Claude Code should be.** It transforms Claude from a helpful assistant into a disciplined engineering system that never cuts corners.
 
@@ -169,7 +169,7 @@ Skills are **loaded by agents**, not invoked directly. This prevents Claude from
 
 ### When You Say "Build a Task Tracker"
 
-**CORRECT (cc10x v5.9.1)**:
+**CORRECT (cc10x v5.10.0)**:
 ```
 Detected BUILD intent. Executing BUILD workflow.
 
@@ -196,7 +196,7 @@ I'll help you build a task tracker! Let me start by creating the files...
 
 ### When You Say "Fix the Login Bug"
 
-**CORRECT (cc10x v5.9.1)**:
+**CORRECT (cc10x v5.10.0)**:
 ```
 Detected DEBUG intent. Executing DEBUG workflow.
 
@@ -222,7 +222,7 @@ It should work now! [no verification]
 
 ### When You Say "Review This PR"
 
-**CORRECT (cc10x v5.9.1)**:
+**CORRECT (cc10x v5.10.0)**:
 ```
 Detected REVIEW intent. Executing REVIEW workflow.
 
@@ -474,6 +474,7 @@ The silent-failure-hunter agent finds error handling issues with zero tolerance:
 
 ## Version History
 
+- **v5.10.0** - Anthropic Claude 4.x best practices alignment: visual creativity guidance, test generalization, language softening for Opus 4.5, code exploration discipline, reflection steps
 - **v5.9.1** - Plan→Build connection: grep+cat FORCES plan into builder context (100% confidence)
 - **v5.9.0** - Two-step save pattern: Artifact file + memory update, AskUserQuestion usage, UI mockups in brainstorming, observability section
 - **v5.8.1** - Strengthened router bypass prevention - all agents and skills explicitly prevent direct invocation
@@ -503,4 +504,4 @@ MIT License
 
 ---
 
-_cc10x v5.9.1 | The Perfect Claude Code Workflow System_
+_cc10x v5.10.0 | The Perfect Claude Code Workflow System_

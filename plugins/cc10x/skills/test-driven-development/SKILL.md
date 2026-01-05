@@ -151,7 +151,7 @@ async function retryOperation<T>(
 ```
 Over-engineered
 
-Don't add features, refactor other code, or "improve" beyond the test.
+Don't add features, refactor other code, or "improve" beyond the test. Don't hard-code test values - implement general logic that works for ALL inputs.
 
 ### Verify GREEN - Watch It Pass
 

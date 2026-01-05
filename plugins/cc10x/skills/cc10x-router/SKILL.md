@@ -132,7 +132,7 @@ When user wants to build/implement/create something:
    - patterns.md → project conventions to follow
    - progress.md → check if already done!
 
-1. **CLARIFY REQUIREMENTS** - **CRITICAL: DO NOT SKIP**
+1. **CLARIFY REQUIREMENTS** - DO NOT SKIP
    - Use `AskUserQuestion` tool for structured questions with options
    - What exactly needs to be built?
    - What are the acceptance criteria?
@@ -218,7 +218,7 @@ Always run agents sequentially when outputs depend on previous steps.
 
 ## Output Format
 
-After workflow completion, provide:
+Provide brief progress updates after each significant tool use. After workflow completion, provide:
 
 ```markdown
 ## Workflow Summary

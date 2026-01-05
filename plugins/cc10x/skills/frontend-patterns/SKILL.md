@@ -113,6 +113,16 @@ User Flow: Create Account
 | **Interactive states** | Hover/active/focus distinct | No state changes |
 | **Feedback** | Clear response to actions | Silent interactions |
 
+### Visual Creativity (Avoid AI Slop)
+
+When creating frontends, avoid generic AI aesthetics:
+
+- **Fonts**: Choose distinctive typography, not defaults (avoid Inter, Roboto, Arial, system fonts)
+- **Colors**: Commit to cohesive palette. Dominant colors with sharp accents > safe gradients
+- **Avoid**: Purple gradients on white, predictable layouts, cookie-cutter Bootstrap/Tailwind defaults
+
+Make creative choices that feel designed for the specific context.
+
 ## Component Patterns
 
 ### Buttons
