@@ -61,16 +61,21 @@ Read(file_path=".claude/cc10x/activeContext.md")
 ```
 
 **NEVER use heredoc writes** (`cat > file << 'EOF'`) - they ASK PERMISSION.
-**ALWAYS use Write tool** - it's PERMISSION-FREE.
+**Use Write for NEW files, Edit for EXISTING files.**
 
 ```
-# WRONG (asks permission)
+# WRONG (asks permission - heredoc)
 cat > .claude/cc10x/activeContext.md << 'EOF'
 content here
 EOF
 
-# RIGHT (permission-free)
+# RIGHT for NEW files (permission-free)
 Write(file_path=".claude/cc10x/activeContext.md", content="content here")
+
+# RIGHT for EXISTING files (permission-free)
+Edit(file_path=".claude/cc10x/activeContext.md",
+     old_string="# Active Context",
+     new_string="# Active Context\n\n[new content]")
 ```
 
 ## Why This Matters
