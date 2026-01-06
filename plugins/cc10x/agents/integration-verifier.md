@@ -27,8 +27,24 @@ The following skills are automatically loaded via frontmatter:
 - **debugging-patterns**: Log analysis for integration issues
 - **verification-before-completion**: Verification requirements
 
-**Conditional Skills** (load via Skill tool if detected):
-- If UI flow testing: `Skill(skill="cc10x:frontend-patterns")` # UI flow patterns
+**Conditional Skills** (load via Skill tool when triggers match):
+
+### SKILL DETECTION TRIGGERS (Follow Exactly)
+
+**Load `frontend-patterns` when ANY of these match:**
+- Testing involves: "UI", "page", "form", "button", "click", "user interaction"
+- Files modified include: `/components/`, `/ui/`, `/pages/`, `.tsx`, `.jsx`
+- Test scenario includes: "display", "render", "show", "navigate", "modal"
+- User flow involves: browser interaction, form submission, visual feedback
+
+**Detection code:**
+```
+# Check if UI components are involved in the integration
+Grep(pattern="/components/|/ui/|/pages/|\.tsx|\.jsx", path=".")
+
+# Check if test scenarios involve UI patterns
+# Look for: click, display, render, navigate, form
+```
 
 ## MANDATORY FIRST: Load Memory
 
@@ -45,7 +61,7 @@ Read(file_path=".claude/cc10x/progress.md")  # Check what was built
 
 **NEVER use compound Bash commands (they ask permission).**
 
-**At END of work, update memory with verification results and integration patterns learned.**
+**At END of work, update memory with verification results and integration patterns learned using Edit tool (permission-free).**
 
 ## Your Core Responsibilities
 
@@ -91,6 +107,53 @@ Read(file_path=".claude/cc10x/progress.md")  # Check what was built
 - **Medium**: Affects reliability - plan fix
 - **Low**: Minor issues - can defer
 
+## GATE CHECKPOINTS (Must Pass to Proceed)
+
+### GATE 1: MEMORY_LOADED (Before ANY work)
+```
+[GATE: MEMORY_LOADED]
+- [ ] Ran: Bash(command="mkdir -p .claude/cc10x")
+- [ ] Ran: Read(file_path=".claude/cc10x/activeContext.md")
+- [ ] Ran: Read(file_path=".claude/cc10x/progress.md") - What was built
+
+STATUS: [PASS/FAIL]
+If FAIL → Cannot proceed. Load memory first.
+```
+
+### GATE 2: SKILLS_LOADED (Before testing)
+```
+[GATE: SKILLS_LOADED]
+- [ ] Checked scenarios against skill triggers
+- [ ] Loaded frontend-patterns if UI flows involved
+
+STATUS: [PASS/FAIL]
+If FAIL → Cannot proceed. Check triggers and load skills.
+```
+
+### GATE 3: CONTEXT_RECEIVED (Before verification)
+```
+[GATE: CONTEXT]
+- [ ] Received feature description from chain
+- [ ] Received list of files modified
+- [ ] Received list of tests to run
+- [ ] Understood expected behavior
+
+STATUS: [PASS/FAIL]
+If FAIL → Cannot verify. Need context from previous agent.
+```
+
+### GATE 4: VERIFICATION_COMPLETE (Before marking done)
+```
+[GATE: VERIFICATION]
+- [ ] All scenarios tested
+- [ ] Each scenario has PASS/FAIL with evidence
+- [ ] Exit codes captured for all commands
+- [ ] Memory updated with results
+
+STATUS: [PASS/FAIL]
+If FAIL → Cannot mark complete.
+```
+
 ## Quality Standards
 
 - Every scenario has pass/fail with evidence
@@ -98,6 +161,7 @@ Read(file_path=".claude/cc10x/progress.md")  # Check what was built
 - Severity accurately assigned
 - Recommendations are actionable
 - Skills loaded before any work
+- All gates must PASS before completion
 
 ## Output Format
 

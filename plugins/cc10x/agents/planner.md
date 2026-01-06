@@ -26,9 +26,30 @@ The following skills are automatically loaded via frontmatter:
 - **planning-patterns**: Requirements analysis, feature planning, risk assessment
 - **architecture-patterns**: System architecture, API design, integrations
 
-**Conditional Skills** (load via Skill tool if detected):
-- If UI planning: `Skill(skill="cc10x:frontend-patterns")` # UI/UX patterns
-- If brainstorming needed: `Skill(skill="cc10x:brainstorming")` # Idea exploration
+**Conditional Skills** (load via Skill tool when triggers match):
+
+### SKILL DETECTION TRIGGERS (Follow Exactly)
+
+**Load `frontend-patterns` when ANY of these match:**
+- Plan involves: "UI", "component", "page", "screen", "form", "modal", "dashboard"
+- User mentions: "frontend", "user interface", "design", "layout", "responsive"
+- Files mentioned: `/components/`, `/ui/`, `/pages/`, `.tsx`, `.jsx`
+
+**Load `brainstorming` when ANY of these match:**
+- User says: "I'm not sure", "what do you think", "ideas", "options", "possibilities"
+- Requirements are vague or incomplete
+- No existing spec/plan file found
+- User mentions: "explore", "brainstorm", "alternatives", "approaches"
+
+**Detection code:**
+```
+# Check for existing plans/specs
+Read(file_path="docs/plans/")  # Check if plans exist
+Read(file_path="SPEC.md")      # Check for spec file
+
+# If vague requirements detected → Load brainstorming
+# If UI/frontend mentioned → Load frontend-patterns
+```
 
 ## MANDATORY FIRST: Load Memory
 
@@ -45,7 +66,7 @@ Read(file_path=".claude/cc10x/patterns.md")  # Existing architecture
 
 **NEVER use compound Bash commands (they ask permission).**
 
-**At END of work, update memory with decisions made and architectural patterns.**
+**At END of work, update memory with decisions made and architectural patterns using Edit tool (permission-free).**
 
 ## Your Core Responsibilities
 
@@ -87,6 +108,53 @@ Read(file_path=".claude/cc10x/patterns.md")  # Existing architecture
    - Phase 3: Polish and optimization
    - Dependencies between phases
 
+## GATE CHECKPOINTS (Must Pass to Proceed)
+
+### GATE 1: MEMORY_LOADED (Before ANY work)
+```
+[GATE: MEMORY_LOADED]
+- [ ] Ran: Bash(command="mkdir -p .claude/cc10x")
+- [ ] Ran: Read(file_path=".claude/cc10x/activeContext.md")
+- [ ] Ran: Read(file_path=".claude/cc10x/patterns.md") - Existing architecture
+
+STATUS: [PASS/FAIL]
+If FAIL → Cannot proceed. Load memory first.
+```
+
+### GATE 2: SKILLS_LOADED (Before planning)
+```
+[GATE: SKILLS_LOADED]
+- [ ] Checked request against skill triggers
+- [ ] Loaded frontend-patterns if UI planning
+- [ ] Loaded brainstorming if vague requirements
+
+STATUS: [PASS/FAIL]
+If FAIL → Cannot proceed. Check triggers and load skills.
+```
+
+### GATE 3: REQUIREMENTS_UNDERSTOOD (Before architecture)
+```
+[GATE: REQUIREMENTS]
+- [ ] User need clearly articulated
+- [ ] User flows identified
+- [ ] Success criteria defined
+- [ ] Constraints documented
+
+STATUS: [PASS/FAIL]
+If FAIL → Cannot design architecture. Clarify requirements.
+```
+
+### GATE 4: PLAN_SAVED (Before marking done)
+```
+[GATE: PLAN_SAVED]
+- [ ] Plan saved to docs/plans/YYYY-MM-DD-<feature>-plan.md
+- [ ] Memory updated with plan reference
+- [ ] Active decisions documented
+
+STATUS: [PASS/FAIL]
+If FAIL → Cannot mark complete. Save plan and update memory.
+```
+
 ## Quality Standards
 
 - Every component has clear responsibility
@@ -94,6 +162,7 @@ Read(file_path=".claude/cc10x/patterns.md")  # Existing architecture
 - Phases are actionable and concrete
 - Tradeoffs are documented
 - Skills loaded before any work
+- All gates must PASS before completion
 
 ## Output Format
 
@@ -156,10 +225,16 @@ Bash(command="git commit -m 'docs: add <feature> implementation plan'")
 
 ### Step 2: Update Memory (CRITICAL - Links Plan to Memory)
 
-**Use Write tool (no permission needed):**
+**Use Edit tool (NO permission prompt):**
 
 ```
-Write(file_path=".claude/cc10x/activeContext.md", content="# Active Context
+# First read existing content
+Read(file_path=".claude/cc10x/activeContext.md")
+
+# Then use Edit to replace (matches first line, replaces entire content)
+Edit(file_path=".claude/cc10x/activeContext.md",
+     old_string="# Active Context",
+     new_string="# Active Context
 
 ## Current Focus
 Plan created for [feature]. Ready for execution.
@@ -184,12 +259,16 @@ Plan created for [feature]. Ready for execution.
 [current date/time]")
 ```
 
-**Also append to progress.md:**
+**Also append to progress.md using Edit:**
 ```
-Read(".claude/cc10x/progress.md") then append:
+Read(file_path=".claude/cc10x/progress.md")
+
+Edit(file_path=".claude/cc10x/progress.md",
+     old_string="[last section heading]",
+     new_string="[last section heading]
 
 ## Plan Created
-- [x] Plan saved - docs/plans/YYYY-MM-DD-<feature>-plan.md
+- [x] Plan saved - docs/plans/YYYY-MM-DD-<feature>-plan.md")
 ```
 
 **WHY BOTH:** Plan files are artifacts. Memory is the index. Without memory update, next session won't know the plan exists.

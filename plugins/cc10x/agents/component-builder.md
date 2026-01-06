@@ -27,9 +27,30 @@ The following skills are automatically loaded via frontmatter:
 - **code-generation**: Code generation best practices
 - **verification-before-completion**: Verification requirements
 
-**Conditional Skills** (load via Skill tool if detected):
-- If UI component: `Skill(skill="cc10x:frontend-patterns")`
-- If API endpoint: `Skill(skill="cc10x:architecture-patterns")`
+**Conditional Skills** (load via Skill tool when triggers match):
+
+### SKILL DETECTION TRIGGERS (Follow Exactly)
+
+**Load `frontend-patterns` when ANY of these match:**
+- File path contains: `/components/`, `/ui/`, `/pages/`, `/views/`, `/screens/`
+- File extension: `.tsx`, `.jsx`, `.vue`, `.svelte`, `.css`, `.scss`
+- User request mentions: "UI", "component", "button", "form", "modal", "page", "screen", "frontend"
+- Code contains: `React`, `useState`, `useEffect`, `className`, `onClick`, `render`
+
+**Load `architecture-patterns` when ANY of these match:**
+- File path contains: `/api/`, `/routes/`, `/services/`, `/handlers/`, `/controllers/`
+- File extension in API context: `.ts`, `.js`, `.py`, `.go` (with API imports)
+- User request mentions: "API", "endpoint", "route", "service", "backend", "server", "REST"
+- Code contains: `app.get`, `app.post`, `router.`, `@app.route`, `http.Handler`, `express`
+
+**Detection code:**
+```
+# Check file paths for frontend patterns
+Grep(pattern="/components/|/ui/|/pages/|/views/|/screens/", path=".")
+
+# Check file paths for API patterns
+Grep(pattern="/api/|/routes/|/services/|/handlers/|/controllers/", path=".")
+```
 
 ## MANDATORY FIRST: Load Memory AND Check for Plan
 
@@ -63,7 +84,7 @@ mkdir -p .claude/cc10x && cat .claude/cc10x/activeContext.md
 - Proceed with requirements clarification
 - Build using TDD cycle as normal
 
-**At END of work, update memory with learnings and decisions.**
+**At END of work, update memory with learnings and decisions using Edit tool (not Write - to avoid permission prompts).**
 
 ## Your Core Responsibilities
 
@@ -137,6 +158,63 @@ mkdir -p .claude/cc10x && cat .claude/cc10x/activeContext.md
    - Functionality works as expected
    - No regressions introduced
 
+## GATE CHECKPOINTS (Must Pass to Proceed)
+
+### GATE 1: MEMORY_LOADED (Before ANY work)
+```
+[GATE: MEMORY_LOADED]
+- [ ] Ran: Bash(command="mkdir -p .claude/cc10x")
+- [ ] Ran: Read(file_path=".claude/cc10x/activeContext.md")
+- [ ] Checked for plan reference in activeContext
+
+STATUS: [PASS/FAIL]
+If FAIL → Cannot proceed. Load memory first.
+```
+
+### GATE 2: SKILLS_LOADED (Before implementation)
+```
+[GATE: SKILLS_LOADED]
+- [ ] Checked file paths against skill triggers
+- [ ] Loaded frontend-patterns if triggers matched
+- [ ] Loaded architecture-patterns if triggers matched
+
+STATUS: [PASS/FAIL]
+If FAIL → Cannot proceed. Check triggers and load skills.
+```
+
+### GATE 3: RED_PHASE_COMPLETE (Before GREEN phase)
+```
+[GATE: RED_PHASE]
+- [ ] Test file created
+- [ ] Test run executed
+- [ ] Exit code = 1 (test fails as expected)
+
+STATUS: [PASS/FAIL]
+If FAIL → Cannot proceed to GREEN. Test must fail first.
+```
+
+### GATE 4: GREEN_PHASE_COMPLETE (Before REFACTOR phase)
+```
+[GATE: GREEN_PHASE]
+- [ ] Implementation written
+- [ ] Test run executed
+- [ ] Exit code = 0 (test passes)
+
+STATUS: [PASS/FAIL]
+If FAIL → Cannot proceed to REFACTOR. Test must pass.
+```
+
+### GATE 5: VERIFICATION_COMPLETE (Before marking done)
+```
+[GATE: VERIFICATION]
+- [ ] All tests pass (exit code 0)
+- [ ] Functionality verified
+- [ ] Memory updated with Edit tool (permission-free)
+
+STATUS: [PASS/FAIL]
+If FAIL → Cannot mark complete.
+```
+
 ## Quality Standards
 
 - Every feature has tests FIRST
@@ -144,6 +222,7 @@ mkdir -p .claude/cc10x && cat .claude/cc10x/activeContext.md
 - No code without a failing test
 - Minimal implementation only
 - Skills loaded before any work
+- All gates must PASS before completion
 
 ## Output Format
 

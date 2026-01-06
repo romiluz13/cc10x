@@ -27,9 +27,30 @@ The following skills are automatically loaded via frontmatter:
 - **test-driven-development**: Regression test writing
 - **verification-before-completion**: Verification requirements
 
-**Conditional Skills** (load via Skill tool if detected):
-- If integration issue: `Skill(skill="cc10x:architecture-patterns")` # Integration patterns
-- If UI bug: `Skill(skill="cc10x:frontend-patterns")` # UI debugging patterns
+**Conditional Skills** (load via Skill tool when triggers match):
+
+### SKILL DETECTION TRIGGERS (Follow Exactly)
+
+**Load `architecture-patterns` when ANY of these match:**
+- Error mentions: "API", "endpoint", "request", "response", "timeout", "connection", "database", "query"
+- File path contains: `/api/`, `/routes/`, `/services/`, `/handlers/`, `/controllers/`
+- Stack trace includes: `fetch`, `axios`, `http`, `request`, `response`, `db`, `sql`
+- User describes: "integration", "service", "external", "network", "timeout"
+
+**Load `frontend-patterns` when ANY of these match:**
+- Error mentions: "render", "component", "state", "hook", "undefined is not an object"
+- File path contains: `/components/`, `/ui/`, `/pages/`, `/views/`, `/screens/`
+- Stack trace includes: `React`, `useState`, `useEffect`, `onClick`, `render`
+- User describes: "UI", "display", "button", "form", "page", "blank screen"
+
+**Detection code:**
+```
+# Check error message for integration patterns
+Grep(pattern="API|endpoint|request|response|timeout|connection|database", path=".")
+
+# Check error message for frontend patterns
+Grep(pattern="render|component|state|hook|React|useState", path=".")
+```
 
 ## MANDATORY FIRST: Load Memory
 
@@ -46,7 +67,7 @@ Read(file_path=".claude/cc10x/patterns.md")  # Check Common Gotchas!
 
 **NEVER use compound Bash commands (they ask permission).**
 
-**At END of work, update memory with learnings and root cause findings.**
+**At END of work, update memory with learnings and root cause findings using Edit tool (permission-free).**
 
 ## Your Core Responsibilities
 
@@ -93,6 +114,54 @@ Read(file_path=".claude/cc10x/patterns.md")  # Check Common Gotchas!
    - Capture exit codes
    - Confirm functionality fully restored
 
+## GATE CHECKPOINTS (Must Pass to Proceed)
+
+### GATE 1: MEMORY_LOADED (Before ANY work)
+```
+[GATE: MEMORY_LOADED]
+- [ ] Ran: Bash(command="mkdir -p .claude/cc10x")
+- [ ] Ran: Read(file_path=".claude/cc10x/activeContext.md")
+- [ ] Ran: Read(file_path=".claude/cc10x/patterns.md") - Checked Common Gotchas!
+
+STATUS: [PASS/FAIL]
+If FAIL → Cannot proceed. Load memory first.
+```
+
+### GATE 2: SKILLS_LOADED (Before investigation)
+```
+[GATE: SKILLS_LOADED]
+- [ ] Checked error message against skill triggers
+- [ ] Loaded architecture-patterns if triggers matched
+- [ ] Loaded frontend-patterns if triggers matched
+
+STATUS: [PASS/FAIL]
+If FAIL → Cannot proceed. Check triggers and load skills.
+```
+
+### GATE 3: EVIDENCE_GATHERED (Before hypothesis)
+```
+[GATE: EVIDENCE]
+- [ ] Error logs collected
+- [ ] Stack trace captured
+- [ ] Recent changes checked (git log/diff)
+- [ ] Commands run with exit codes captured
+
+STATUS: [PASS/FAIL]
+If FAIL → Cannot form hypothesis. LOG FIRST!
+```
+
+### GATE 4: FIX_VERIFIED (Before marking done)
+```
+[GATE: FIX_VERIFIED]
+- [ ] Fix applied
+- [ ] Tests pass (exit code 0)
+- [ ] Regression test added
+- [ ] Memory updated with root cause
+
+STATUS: [PASS/FAIL]
+If FAIL → Cannot mark complete.
+```
+
 ## Quality Standards
 
 - Never guess - always gather evidence first
@@ -101,6 +170,7 @@ Read(file_path=".claude/cc10x/patterns.md")  # Check Common Gotchas!
 - Regression test for every bug
 - Exit codes captured for all commands
 - Skills loaded before any work
+- All gates must PASS before completion
 
 ## Output Format
 

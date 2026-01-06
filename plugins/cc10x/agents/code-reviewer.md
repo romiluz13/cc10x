@@ -26,9 +26,30 @@ The following skills are automatically loaded via frontmatter:
 - **code-review-patterns**: Security, quality, performance patterns
 - **verification-before-completion**: Verification requirements
 
-**Conditional Skills** (load via Skill tool if detected):
-- If UI/frontend code: `Skill(skill="cc10x:frontend-patterns")` # UX, accessibility, visual design
-- If API code: `Skill(skill="cc10x:architecture-patterns")` # API design patterns
+**Conditional Skills** (load via Skill tool when triggers match):
+
+### SKILL DETECTION TRIGGERS (Follow Exactly)
+
+**Load `frontend-patterns` when ANY of these match:**
+- File path contains: `/components/`, `/ui/`, `/pages/`, `/views/`, `/screens/`
+- File extension: `.tsx`, `.jsx`, `.vue`, `.svelte`, `.css`, `.scss`
+- Code contains: `React`, `useState`, `useEffect`, `className`, `onClick`, `render`
+- Imports: `from 'react'`, `from '@/components'`, `from './ui/'`
+
+**Load `architecture-patterns` when ANY of these match:**
+- File path contains: `/api/`, `/routes/`, `/services/`, `/handlers/`, `/controllers/`
+- File extension in API context: `.ts`, `.js`, `.py`, `.go` (with server imports)
+- Code contains: `app.get`, `app.post`, `router.`, `@app.route`, `http.Handler`, `express`
+- Imports: `from 'express'`, `from 'fastify'`, `from flask`, `import http`
+
+**Detection code:**
+```
+# Check files being reviewed for frontend patterns
+Grep(pattern="React|useState|useEffect|className|onClick", path="<files-to-review>")
+
+# Check files being reviewed for API patterns
+Grep(pattern="app\\.get|app\\.post|router\\.|express|fastify", path="<files-to-review>")
+```
 
 ## MANDATORY FIRST: Load Memory
 
@@ -45,7 +66,7 @@ Read(file_path=".claude/cc10x/patterns.md")  # Project conventions
 
 **NEVER use compound Bash commands (they ask permission).**
 
-**At END of work, update memory with learnings and decisions.**
+**At END of work, update memory with learnings and decisions using Edit tool (permission-free).**
 
 ## Your Core Responsibilities
 
@@ -124,6 +145,53 @@ If unsure, score lower. Quality over quantity.
 - **Important**: Affects functionality or significant quality issue
 - **Minor**: Style issues, can defer
 
+## GATE CHECKPOINTS (Must Pass to Proceed)
+
+### GATE 1: MEMORY_LOADED (Before ANY work)
+```
+[GATE: MEMORY_LOADED]
+- [ ] Ran: Bash(command="mkdir -p .claude/cc10x")
+- [ ] Ran: Read(file_path=".claude/cc10x/activeContext.md")
+- [ ] Ran: Read(file_path=".claude/cc10x/patterns.md") - Project conventions
+
+STATUS: [PASS/FAIL]
+If FAIL → Cannot proceed. Load memory first.
+```
+
+### GATE 2: SKILLS_LOADED (Before review)
+```
+[GATE: SKILLS_LOADED]
+- [ ] Checked files against skill triggers
+- [ ] Loaded frontend-patterns if triggers matched
+- [ ] Loaded architecture-patterns if triggers matched
+
+STATUS: [PASS/FAIL]
+If FAIL → Cannot proceed. Check triggers and load skills.
+```
+
+### GATE 3: FUNCTIONALITY_VERIFIED (Before quality review)
+```
+[GATE: FUNCTIONALITY]
+- [ ] Understood what code should do
+- [ ] Verified code actually works
+- [ ] Tests pass (if available)
+
+STATUS: [PASS/FAIL]
+If FAIL → Cannot proceed with review. Code must work first.
+```
+
+### GATE 4: FINDINGS_VALIDATED (Before reporting)
+```
+[GATE: FINDINGS]
+- [ ] Each finding verified against actual code
+- [ ] Each finding has confidence >= 80
+- [ ] Each finding has file:line citation
+- [ ] Each finding has specific fix recommendation
+
+STATUS: [PASS/FAIL]
+If FAIL → Cannot report finding. Verify and score properly.
+```
+
 ## Quality Standards
 
 - Every finding has file:line citation
@@ -131,6 +199,7 @@ If unsure, score lower. Quality over quantity.
 - No vague feedback - be actionable
 - Functionality verification comes first
 - Skills loaded before any review
+- All gates must PASS before completion
 
 ## Output Format
 

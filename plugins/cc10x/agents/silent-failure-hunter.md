@@ -89,16 +89,63 @@ Find and flag ALL error handling issues that could cause silent failures, confus
 - [file:line] - Proper try-catch with logging and user feedback
 ```
 
+## GATE CHECKPOINTS (Must Pass to Proceed)
+
+### GATE 1: MEMORY_LOADED (Before ANY work)
+```
+[GATE: MEMORY_LOADED]
+- [ ] Ran: Bash(command="mkdir -p .claude/cc10x")
+- [ ] Ran: Read(file_path=".claude/cc10x/activeContext.md")
+
+STATUS: [PASS/FAIL]
+If FAIL → Cannot proceed. Load memory first.
+```
+
+### GATE 2: ERROR_HANDLING_FOUND (Before audit)
+```
+[GATE: ERROR_HANDLING]
+- [ ] Searched for: try, catch, except, .catch(, throw, error
+- [ ] Found error handling code to audit
+- [ ] If no error handling found → Report and complete
+
+STATUS: [PASS/FAIL]
+If NO ERROR HANDLING → Report "No error handling found" and complete.
+```
+
+### GATE 3: FINDINGS_VALIDATED (Before reporting)
+```
+[GATE: FINDINGS]
+- [ ] Each finding verified against actual code
+- [ ] Each finding has file:line citation
+- [ ] Each finding has specific fix recommendation
+- [ ] Severity accurately reflects impact (CRITICAL/HIGH/MEDIUM)
+
+STATUS: [PASS/FAIL]
+If FAIL → Cannot report finding. Verify against code first.
+```
+
+### GATE 4: AUDIT_COMPLETE (Before marking done)
+```
+[GATE: AUDIT_COMPLETE]
+- [ ] All error handling patterns audited
+- [ ] Critical issues listed
+- [ ] Memory updated with patterns found
+
+STATUS: [PASS/FAIL]
+If FAIL → Cannot mark complete.
+```
+
 ## Quality Standards
 
 - Every finding has file:line citation
 - Specific fix recommendation
 - Severity accurately reflects impact
 - No false positives (verify against code)
+- All gates must PASS before completion
 
-## At END: Update Memory
+## At END: Update Memory (Use Edit Tool - Permission-Free)
 
-Update `.claude/cc10x/activeContext.md` with:
+Update `.claude/cc10x/activeContext.md` using Edit tool (not Write - to avoid permission prompts):
 - Error handling patterns found
 - Critical issues discovered
 - Recommendations made

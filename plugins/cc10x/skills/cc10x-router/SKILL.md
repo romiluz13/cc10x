@@ -112,9 +112,15 @@ mkdir -p .claude/cc10x && cat .claude/cc10x/activeContext.md
 
 ### 2. UPDATE Memory LAST (After workflow completes)
 
-**Use Write tool (PERMISSION-FREE):**
+**Use Edit tool (NO permission prompt):**
 ```
-Write(file_path=".claude/cc10x/activeContext.md", content="# Active Context
+# First read existing content
+Read(file_path=".claude/cc10x/activeContext.md")
+
+# Then use Edit to replace (matches first line, replaces entire content)
+Edit(file_path=".claude/cc10x/activeContext.md",
+     old_string="# Active Context",
+     new_string="# Active Context
 
 ## Current Focus
 [What was accomplished]
@@ -137,19 +143,127 @@ Write(file_path=".claude/cc10x/activeContext.md", content="# Active Context
 [current date/time]")
 ```
 
+**WHY Edit not Write?** Write asks "Do you want to overwrite?" for existing files. Edit is always permission-free.
+
 **Failure to update memory = incomplete workflow.**
 
-## Intent Detection
+## WORKFLOW SELECTION - Decision Tree (FOLLOW IN ORDER)
 
-Detect intent from user request and route to the appropriate workflow:
+**DO NOT use intuition. Follow this decision tree EXACTLY.**
 
-| Intent Keywords | Workflow | Agent Chain |
-|-----------------|----------|-------------|
-| build, implement, create, write, add, make | BUILD | component-builder → code-reviewer → silent-failure-hunter (if error handling) → integration-verifier |
-| review, audit, check, analyze, assess | REVIEW | code-reviewer |
-| error handling, audit errors, catch blocks, silent failures | REVIEW (error focus) | silent-failure-hunter |
-| debug, fix, error, bug, troubleshoot, broken | DEBUG | bug-investigator → code-reviewer → integration-verifier |
-| plan, design, architect, roadmap, strategy | PLAN | planner |
+### Step 1: Check for ERROR signals (HIGHEST PRIORITY)
+**Keywords:** error, bug, fix, broken, crash, fail, exception, debug, troubleshoot, issue, problem, wrong, doesn't work, not working, stopped working
+
+**If ANY of these appear → DEBUG workflow**
+
+### Step 2: Check for PLAN signals (Priority 2)
+**Keywords:** plan, design, architect, roadmap, strategy, structure, blueprint, spec, specification
+
+**User phrases:** "before we build", "let's think about", "how should we", "what's the best approach"
+
+**If ANY of these appear (and NO error signals) → PLAN workflow**
+
+### Step 3: Check for REVIEW signals (Priority 3)
+**Keywords:** review, audit, check, analyze, assess, look at, examine, inspect
+
+**User phrases:** "what do you think of", "is this good", "check my code", "any issues with"
+
+**If ANY of these appear (and NO error/plan signals) → REVIEW workflow**
+
+### Step 4: Default to BUILD (Priority 4)
+**Everything else → BUILD workflow**
+
+---
+
+## CONFLICT RESOLUTION TABLE
+
+When multiple keywords appear, use this table:
+
+| User Says | Contains | Workflow | Why |
+|-----------|----------|----------|-----|
+| "fix the build script" | fix + build | **DEBUG** | "fix" = error signal (priority 1) |
+| "plan how to fix the bug" | plan + fix + bug | **DEBUG** | "fix/bug" = error signal (priority 1) |
+| "review and fix this" | review + fix | **DEBUG** | "fix" = error signal (priority 1) |
+| "build a new feature" | build | **BUILD** | No error signal, default |
+| "plan the new feature" | plan + feature | **PLAN** | Plan signal (priority 2) |
+| "design the API" | design + API | **PLAN** | Design = plan signal |
+| "review my changes" | review | **REVIEW** | Review signal (priority 3) |
+| "check this code" | check | **REVIEW** | Check = review signal |
+| "help me with this" | help | **BUILD** | No specific signal, default |
+| "there's an issue with login" | issue | **DEBUG** | Issue = error signal |
+
+---
+
+## Intent Summary Table
+
+| Workflow | Agent Chain | When |
+|----------|-------------|------|
+| DEBUG | bug-investigator → code-reviewer → integration-verifier | Error/bug/fix signals detected |
+| PLAN | planner | Plan/design signals (no errors) |
+| REVIEW | code-reviewer (or silent-failure-hunter for error audits) | Review signals (no errors/plan) |
+| BUILD | component-builder → code-reviewer → silent-failure-hunter → integration-verifier | Default (no other signals) |
+
+---
+
+## HARD GATES (MUST PASS TO PROCEED)
+
+**Gates are BLOCKING. Cannot proceed to next step without passing.**
+
+### GATE 1: MEMORY_LOADED (Before ANY routing)
+
+```
+[GATE: MEMORY_LOADED]
+- [ ] Ran: Bash(command="mkdir -p .claude/cc10x")
+- [ ] Ran: Read(file_path=".claude/cc10x/activeContext.md")
+- [ ] Ran: Read(file_path=".claude/cc10x/patterns.md")
+- [ ] Ran: Read(file_path=".claude/cc10x/progress.md")
+
+STATUS: [PASS/FAIL]
+```
+
+**If FAIL → STOP. Load memory before proceeding.**
+
+### GATE 2: REQUIREMENTS_CLARIFIED (Before invoking any agent)
+
+```
+[GATE: REQUIREMENTS_CLARIFIED]
+- [ ] Asked clarifying questions via AskUserQuestion
+- [ ] Received user answers (not empty)
+- [ ] If user said "whatever you think" → stated recommendation AND got confirmation
+
+STATUS: [PASS/FAIL]
+```
+
+**If FAIL → STOP. Clarify requirements before invoking agent.**
+
+### GATE 3: AGENT_COMPLETED (Before next agent in chain)
+
+```
+[GATE: AGENT_COMPLETED]
+- [ ] Previous agent returned (not error)
+- [ ] Captured: files modified
+- [ ] Captured: key outputs for handoff
+
+STATUS: [PASS/FAIL]
+```
+
+**If FAIL → STOP. Previous agent must complete before next.**
+
+### GATE 4: WORKFLOW_COMPLETE (Before marking done)
+
+```
+[GATE: WORKFLOW_COMPLETE]
+- [ ] All agents in chain invoked
+- [ ] Each agent completed successfully
+- [ ] Verification evidence captured (exit codes)
+- [ ] Memory updated with Edit tool (permission-free)
+
+STATUS: [PASS/FAIL]
+```
+
+**If FAIL → STOP. Cannot mark workflow complete.**
+
+---
 
 ## Workflow Execution
 
@@ -224,17 +338,151 @@ When user wants to plan/design:
    - **CHECK**: patterns.md to align with existing patterns
 3. **UPDATE MEMORY** - Save architectural decisions and rationale
 
-## Agent Invocation
+## Agent Invocation - EXPLICIT HANDOFF TEMPLATES
 
-Use Task tool to invoke agents:
+**DO NOT use vague prompts. Use these exact templates with filled values.**
+
+### BUILD Chain Templates
+
+**Step 1: BUILDER**
+```
+Task(subagent_type="cc10x:component-builder", prompt="
+CONTEXT FROM ROUTER:
+- User request: {exact user request}
+- Requirements: {answers from AskUserQuestion}
+- Memory context: {relevant info from activeContext.md}
+- Patterns to follow: {from patterns.md}
+- Files to modify: {identified files}
+
+SKILL TRIGGERS:
+- If files in /components/, /ui/, /pages/ OR .tsx/.jsx → Load frontend-patterns
+- If files in /api/, /routes/, /services/ → Load architecture-patterns
+
+YOUR TASK: Build using TDD (RED → GREEN → REFACTOR)
+
+HANDOFF OUTPUT (REQUIRED):
+- Files created: [list]
+- Files modified: [list]
+- Tests added: [list]
+- Exit codes: [test results]
+")
+```
+
+**Step 2: REVIEWER (after builder)**
+```
+Task(subagent_type="cc10x:code-reviewer", prompt="
+CONTEXT FROM BUILDER:
+- Files modified: {from builder output}
+- Tests added: {from builder output}
+- Feature built: {description}
+
+SKILL TRIGGERS:
+- If .tsx/.jsx/.vue files → Load frontend-patterns
+- If /api/, /routes/ files → Load architecture-patterns
+
+YOUR TASK: Review for security, quality, performance (confidence >= 80 only)
+
+HANDOFF OUTPUT (REQUIRED):
+- Findings: [list with file:line]
+- Fixes needed: [yes/no]
+")
+```
+
+**Step 3: ERROR HUNTER (if error handling code)**
+**TRIGGER:** If builder output contains: try, catch, except, .catch(, throw, error
+```
+Task(subagent_type="cc10x:silent-failure-hunter", prompt="
+CONTEXT FROM REVIEWER:
+- Files with error handling: {from grep}
+- Review findings: {from reviewer}
+
+YOUR TASK: Audit all error handling for silent failures
+
+HANDOFF OUTPUT (REQUIRED):
+- Critical issues: [list]
+- Silent failures found: [yes/no]
+")
+```
+
+**Step 4: VERIFIER (final)**
+```
+Task(subagent_type="cc10x:integration-verifier", prompt="
+CONTEXT FROM CHAIN:
+- Feature: {description}
+- Files: {list}
+- Tests: {list}
+
+YOUR TASK: Verify end-to-end
+
+HANDOFF OUTPUT (REQUIRED):
+- Status: PASS/FAIL
+- Evidence: [exit codes]
+")
+```
+
+### DEBUG Chain Templates
+
+**Step 1: INVESTIGATOR**
+```
+Task(subagent_type="cc10x:bug-investigator", prompt="
+CONTEXT FROM ROUTER:
+- Error reported: {user's error description}
+- Expected behavior: {what should happen}
+- Actual behavior: {what happens}
+- Common Gotchas: {from patterns.md}
+
+SKILL TRIGGERS:
+- If error in /components/, /ui/ → Load frontend-patterns
+- If error in /api/, /services/ → Load architecture-patterns
+
+YOUR TASK: LOG FIRST, then diagnose and fix
+
+HANDOFF OUTPUT (REQUIRED):
+- Root cause: [description]
+- Fix applied: [file:line]
+- Regression test: [test file]
+")
+```
+
+### PLAN Chain Template
 
 ```
-Task(subagent_type="cc10x:component-builder", prompt="Build [component description]")
-Task(subagent_type="cc10x:code-reviewer", prompt="Review [code/PR description]")
-Task(subagent_type="cc10x:bug-investigator", prompt="Debug [error description]")
-Task(subagent_type="cc10x:integration-verifier", prompt="Verify [integration description]")
-Task(subagent_type="cc10x:planner", prompt="Plan [feature description]")
-Task(subagent_type="cc10x:silent-failure-hunter", prompt="Audit error handling in [description]")
+Task(subagent_type="cc10x:planner", prompt="
+CONTEXT FROM ROUTER:
+- User request: {what to plan}
+- Existing architecture: {from patterns.md}
+- Prior decisions: {from activeContext.md}
+
+SKILL TRIGGERS:
+- If planning UI → Load frontend-patterns
+- If requirements vague → Load brainstorming
+
+YOUR TASK: Create architecture, risks, roadmap
+
+OUTPUT (REQUIRED):
+- Plan saved to: docs/plans/{date}-{feature}-plan.md
+- Key decisions: [list]
+")
+```
+
+### REVIEW Chain Template
+
+```
+Task(subagent_type="cc10x:code-reviewer", prompt="
+CONTEXT FROM ROUTER:
+- Files to review: {file list or PR}
+- Project patterns: {from patterns.md}
+
+SKILL TRIGGERS:
+- If reviewing UI code → Load frontend-patterns
+- If reviewing API code → Load architecture-patterns
+
+YOUR TASK: Review with confidence scoring (report >= 80 only)
+
+OUTPUT (REQUIRED):
+- Status: Approve/Changes requested
+- Findings: [list with confidence scores]
+")
 ```
 
 ## Sequential vs Parallel
