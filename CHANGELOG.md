@@ -1,5 +1,32 @@
 # Changelog
 
+## [5.11.0] - 2025-01-06
+
+### Fixed
+
+- **Workflow Chain Enforcement**: Fixed critical issue where BUILD workflow stopped after component-builder
+  - Root cause: Agent chains were documented but not enforced - Claude had no signal to continue
+  - Added `WORKFLOW_CONTINUES` and `NEXT_AGENT` output signals to all agents
+  - Added Chain Enforcement section to cc10x-router with explicit continuation rules
+  - All 4 workflows now have complete chain coverage (BUILD, DEBUG, REVIEW, PLAN)
+
+### Changed
+
+- **component-builder**: Now outputs `NEXT_AGENT: code-reviewer` after completion
+- **code-reviewer**: Context-aware - continues chain in BUILD/DEBUG, ends in REVIEW
+- **silent-failure-hunter**: Now outputs `NEXT_AGENT: integration-verifier`
+- **integration-verifier**: Outputs `WORKFLOW_CONTINUES: NO` to signal chain completion
+- **bug-investigator**: Now outputs `NEXT_AGENT: code-reviewer` for DEBUG workflow
+- **planner**: Outputs `WORKFLOW_CONTINUES: NO` (single-agent workflow)
+- **cc10x-router**: Added Chain Enforcement section with explicit loop instructions
+
+### Impact
+
+- BUILD workflow now executes full chain: component-builder → code-reviewer → silent-failure-hunter → integration-verifier
+- DEBUG workflow now executes full chain: bug-investigator → code-reviewer → integration-verifier
+- REVIEW and PLAN workflows properly signal completion
+- Claude can no longer "forget" to invoke subsequent agents in the chain
+
 ## [5.8.1] - 2025-01-XX
 
 ### Fixed

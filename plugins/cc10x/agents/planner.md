@@ -47,4 +47,9 @@ Edit(file_path=".claude/cc10x/activeContext.md", ...)
 - Phases: [count]
 - Risks: [count identified]
 - Key decisions: [list]
+
+---
+WORKFLOW_CONTINUES: NO
+CHAIN_COMPLETE: PLAN workflow finished
+CHAIN_PROGRESS: planner ✓ [1/1]
 ```

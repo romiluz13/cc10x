@@ -99,3 +99,27 @@ Patterns: {from patterns.md}
 2. **REQUIREMENTS_CLARIFIED** - Before invoking agent (BUILD only)
 3. **AGENT_COMPLETED** - Before next agent in chain
 4. **MEMORY_UPDATED** - Before marking done
+
+## Chain Enforcement (CRITICAL)
+
+**NEVER stop after one agent.** The workflow is NOT complete until the chain finishes.
+
+After EACH agent completes, check its output for:
+- `WORKFLOW_CONTINUES: YES` → **MUST invoke next agent**
+- `WORKFLOW_CONTINUES: NO` → Chain complete, update memory
+
+### Chain Execution Loop
+```
+1. Invoke agent via Task tool
+2. Read agent output
+3. Find NEXT_AGENT: field in output
+4. If NEXT_AGENT exists → Invoke that agent (return to step 1)
+5. If WORKFLOW_CONTINUES: NO → Chain complete
+```
+
+### Chain Completion Criteria
+The workflow is complete ONLY when:
+- Final agent (integration-verifier) outputs `WORKFLOW_CONTINUES: NO`
+- OR a critical error prevents continuation
+
+**If you see `NEXT_AGENT: X` in output → You MUST invoke agent X. No exceptions.**

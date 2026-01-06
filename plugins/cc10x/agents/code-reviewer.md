@@ -46,4 +46,14 @@ Read(file_path=".claude/cc10x/patterns.md")  # Project conventions
 
 ### Important (≥80)
 - [85] [issue] - file:line → Fix: [action]
+
+---
+# Chain continuation depends on workflow:
+# BUILD: WORKFLOW_CONTINUES: YES, NEXT_AGENT: silent-failure-hunter (if try/catch) OR integration-verifier
+# DEBUG: WORKFLOW_CONTINUES: YES, NEXT_AGENT: integration-verifier
+# REVIEW: WORKFLOW_CONTINUES: NO, CHAIN_COMPLETE: REVIEW workflow finished
+
+WORKFLOW_CONTINUES: [YES if BUILD/DEBUG, NO if REVIEW]
+NEXT_AGENT: [silent-failure-hunter/integration-verifier if BUILD/DEBUG, none if REVIEW]
+CHAIN_PROGRESS: [context-dependent]
 ```

@@ -42,4 +42,9 @@ Check for plan reference → If exists, follow plan tasks in order.
 - TDD: RED (exit 1) → GREEN (exit 0) → REFACTOR (exit 0)
 - Files: [created/modified]
 - Tests: [added]
+
+---
+WORKFLOW_CONTINUES: YES
+NEXT_AGENT: code-reviewer
+CHAIN_PROGRESS: component-builder [1/4] → code-reviewer → silent-failure-hunter → integration-verifier
 ```

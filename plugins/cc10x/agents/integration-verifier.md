@@ -41,4 +41,11 @@ Read(file_path=".claude/cc10x/progress.md")  # What was built
 ### Summary
 - Passed: X/Y
 - Blockers: [if any]
+
+---
+WORKFLOW_CONTINUES: NO
+CHAIN_COMPLETE: [BUILD/DEBUG] workflow finished
+# BUILD chain: component-builder ✓ → code-reviewer ✓ → silent-failure-hunter ✓ → integration-verifier ✓ [4/4]
+# DEBUG chain: bug-investigator ✓ → code-reviewer ✓ → integration-verifier ✓ [3/3]
+CHAIN_PROGRESS: [context-dependent - see above]
 ```

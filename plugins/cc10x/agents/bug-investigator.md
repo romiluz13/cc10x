@@ -38,4 +38,9 @@ Read(file_path=".claude/cc10x/patterns.md")  # Check Common Gotchas!
 - Fix: [file:line change]
 - Evidence: [command] → exit 0
 - Regression test: [test file]
+
+---
+WORKFLOW_CONTINUES: YES
+NEXT_AGENT: code-reviewer
+CHAIN_PROGRESS: bug-investigator [1/3] → code-reviewer → integration-verifier
 ```
