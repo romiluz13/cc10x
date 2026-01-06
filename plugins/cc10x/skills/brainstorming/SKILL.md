@@ -309,10 +309,16 @@ Bash(command="git commit -m 'docs: add <feature> design'")
 
 ### Step 2: Update Memory (CRITICAL - Links Design to Memory)
 
-**Use Write tool (no permission needed):**
+**Use Edit tool (NO permission prompt):**
 
 ```
-Write(file_path=".claude/cc10x/activeContext.md", content="# Active Context
+# First read existing content
+Read(file_path=".claude/cc10x/activeContext.md")
+
+# Then use Edit to replace (matches first line, replaces entire content)
+Edit(file_path=".claude/cc10x/activeContext.md",
+     old_string="# Active Context",
+     new_string="# Active Context
 
 ## Current Focus
 Design created for [feature]. Ready for planning or building.

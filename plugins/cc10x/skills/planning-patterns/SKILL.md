@@ -293,10 +293,16 @@ Bash(command="git commit -m 'docs: add <feature> implementation plan'")
 
 ### Step 2: Update Memory (CRITICAL - Links Plan to Memory)
 
-**Use Write tool (no permission needed):**
+**Use Edit tool (NO permission prompt):**
 
 ```
-Write(file_path=".claude/cc10x/activeContext.md", content="# Active Context
+# First read existing content
+Read(file_path=".claude/cc10x/activeContext.md")
+
+# Then use Edit to replace (matches first line, replaces entire content)
+Edit(file_path=".claude/cc10x/activeContext.md",
+     old_string="# Active Context",
+     new_string="# Active Context
 
 ## Current Focus
 Plan created for [feature]. Ready for execution.
@@ -321,12 +327,16 @@ Plan created for [feature]. Ready for execution.
 [current date/time]")
 ```
 
-**Also append to progress.md:**
+**Also append to progress.md using Edit:**
 ```
-Read(".claude/cc10x/progress.md") then append:
+Read(file_path=".claude/cc10x/progress.md")
+
+Edit(file_path=".claude/cc10x/progress.md",
+     old_string="[last section heading]",
+     new_string="[last section heading]
 
 ## Plan Created
-- [x] Plan saved - docs/plans/YYYY-MM-DD-<feature>-plan.md
+- [x] Plan saved - docs/plans/YYYY-MM-DD-<feature>-plan.md")
 ```
 
 **WHY BOTH:** Plan files are artifacts. Memory is the index. Without memory update, next session won't know the plan exists.
