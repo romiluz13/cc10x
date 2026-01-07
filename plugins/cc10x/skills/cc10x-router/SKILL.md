@@ -110,6 +110,7 @@ Patterns: {from patterns.md}
 
 After EACH agent completes, check its output for:
 - `PARALLEL_AGENTS: X, Y` → **Invoke BOTH agents in same message (parallel)**
+- `PARALLEL_COMPLETE` + `SYNC_NEXT: X` → **After BOTH parallel agents complete, invoke X**
 - `NEXT_AGENT: X` → **Invoke that single agent**
 - `WORKFLOW_CONTINUES: NO` → Chain complete, update memory
 
@@ -131,9 +132,14 @@ When you see `PARALLEL_AGENTS:`, invoke ALL listed agents in ONE message:
 Task(subagent_type="cc10x:code-reviewer", prompt="...")
 Task(subagent_type="cc10x:silent-failure-hunter", prompt="...")
 ```
-Both run simultaneously. Both will output `PARALLEL_COMPLETE` and `SYNC_NEXT: integration-verifier`.
+**CRITICAL:** Both tasks in same message = both complete before you continue.
 
-After BOTH complete → Invoke integration-verifier with merged findings from both agents.
+After both return:
+1. Check BOTH outputs have `PARALLEL_COMPLETE`
+2. Check BOTH have same `SYNC_NEXT: X` value
+3. Invoke X (integration-verifier) with merged findings from both agents
+
+**DO NOT invoke integration-verifier until BOTH parallel agents have completed.**
 
 ### Chain Completion Criteria
 The workflow is complete ONLY when:

@@ -56,23 +56,20 @@ git ls-files --others --exclude-standard      # NEW untracked files
 - [85] [issue] - file:line → Fix: [action]
 
 ---
-# Chain continuation depends on workflow:
-# BUILD: Running PARALLEL with silent-failure-hunter → then integration-verifier
-# DEBUG: NEXT_AGENT: integration-verifier
-# REVIEW: WORKFLOW_CONTINUES: NO (standalone)
+## Chain Output (USE ONE based on how you were invoked):
 
-# BUILD workflow (parallel):
+**If invoked from BUILD (after component-builder, parallel with silent-failure-hunter):**
 WORKFLOW_CONTINUES: YES
-PARALLEL_COMPLETE: code-reviewer done (waiting for silent-failure-hunter)
+PARALLEL_COMPLETE: code-reviewer done
 SYNC_NEXT: integration-verifier
 CHAIN_PROGRESS: component-builder ✓ → [code-reviewer ✓ ∥ silent-failure-hunter] → integration-verifier
 
-# DEBUG workflow:
+**If invoked from DEBUG (after bug-investigator):**
 WORKFLOW_CONTINUES: YES
 NEXT_AGENT: integration-verifier
 CHAIN_PROGRESS: bug-investigator ✓ → code-reviewer [2/3] → integration-verifier
 
-# REVIEW workflow:
+**If invoked standalone (REVIEW workflow):**
 WORKFLOW_CONTINUES: NO
 CHAIN_COMPLETE: REVIEW workflow finished
 ```
