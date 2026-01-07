@@ -18,6 +18,14 @@ Read(file_path=".claude/cc10x/activeContext.md")
 Read(file_path=".claude/cc10x/patterns.md")  # Project conventions
 ```
 
+## Git Context (Before Review)
+```
+git status                                    # What's changed
+git diff HEAD                                 # ALL changes (staged + unstaged)
+git diff --stat HEAD                          # Summary of changes
+git ls-files --others --exclude-standard      # NEW untracked files
+```
+
 ## Skill Triggers
 - UI code (.tsx, .jsx, components/, ui/) → `Skill(skill="cc10x:frontend-patterns")`
 - API code (api/, routes/, services/) → `Skill(skill="cc10x:architecture-patterns")`

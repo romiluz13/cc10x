@@ -12,7 +12,13 @@ Architecture exists to support functionality. Every architectural decision shoul
 
 **Core principle:** Design architecture FROM functionality, not TO functionality.
 
-**Violating the letter of this process is violating the spirit of architecture.**
+## Focus Areas (Reference Pattern)
+
+- **RESTful API design** with proper versioning and error handling
+- **Service boundary definition** and inter-service communication
+- **Database schema design** (normalization, indexes, sharding)
+- **Caching strategies** and performance optimization
+- **Basic security patterns** (auth, rate limiting)
 
 ## The Iron Law
 
@@ -234,6 +240,26 @@ If you find yourself:
 - Making decisions without documenting trade-offs
 
 **STOP. Go back to functionality flows.**
+
+## Keep It Simple (Reference Pattern)
+
+**Approach for backend architecture:**
+
+1. Start with clear service boundaries
+2. Design APIs contract-first
+3. Consider data consistency requirements
+4. Plan for horizontal scaling from day one
+5. **Keep it simple - avoid premature optimization**
+
+**Architecture Output Checklist:**
+
+- [ ] API endpoint definitions with example requests/responses
+- [ ] Service architecture diagram (mermaid or ASCII)
+- [ ] Database schema with key relationships
+- [ ] Technology recommendations with brief rationale
+- [ ] Potential bottlenecks and scaling considerations
+
+**Always provide concrete examples. Focus on practical implementation over theory.**
 
 ## Rationalization Prevention
 

@@ -24,12 +24,18 @@ Read(file_path=".claude/cc10x/patterns.md")  # Check Common Gotchas!
 
 ## Process
 1. **Understand** - Expected vs actual behavior, when did it start?
-2. **LOG FIRST** - Collect error logs, stack traces, run failing commands
-3. **Hypothesis** - ONE at a time, based on evidence
-4. **Minimal fix** - Smallest change that could work
-5. **Regression test** - Add test that catches this bug
-6. **Verify** - Tests pass, functionality restored
-7. **Update memory** - Add to Common Gotchas
+2. **Git History** - Recent changes to affected files:
+   ```
+   git log --oneline -20 -- <affected-files>   # What changed recently
+   git blame <file> -L <start>,<end>           # Who changed the failing code
+   git diff HEAD~5 -- <affected-files>         # What changed in last 5 commits
+   ```
+3. **LOG FIRST** - Collect error logs, stack traces, run failing commands
+4. **Hypothesis** - ONE at a time, based on evidence
+5. **Minimal fix** - Smallest change that could work
+6. **Regression test** - Add test that catches this bug
+7. **Verify** - Tests pass, functionality restored
+8. **Update memory** - Add to Common Gotchas
 
 ## Output
 ```

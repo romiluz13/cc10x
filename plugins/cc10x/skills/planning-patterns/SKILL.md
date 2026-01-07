@@ -1,7 +1,7 @@
 ---
 name: planning-patterns
 description: "Internal skill. Use cc10x-router for all development tasks."
-allowed-tools: Read, Grep, Glob
+allowed-tools: Read, Grep, Glob, AskUserQuestion
 ---
 
 # Writing Plans
@@ -106,6 +106,47 @@ git commit -m "feat: add specific feature"
 ```
 ```
 
+## Context is King (Cole Medin Principle)
+
+**The plan must contain ALL information for a single-pass implementation.**
+
+A developer with zero codebase context should be able to execute the plan WITHOUT asking any questions.
+
+### Context References Section (MUST READ!)
+
+**Every plan MUST include a Context References section:**
+
+```markdown
+## Relevant Codebase Files
+
+### Patterns to Follow
+- `src/components/Button.tsx` (lines 15-45) - Component structure pattern
+- `src/services/api.ts` (lines 23-67) - API service pattern
+
+### Configuration Files
+- `tsconfig.json` - TypeScript settings
+- `.env.example` - Environment variables needed
+
+### Related Documentation
+- `docs/architecture.md#authentication` - Auth flow overview
+- `README.md#running-tests` - Test commands
+```
+
+**Why:** Claude forgets context. External docs get stale. File:line references are always accurate.
+
+## Validation Levels
+
+**Match validation depth to plan complexity:**
+
+| Level | Name | Commands | When |
+|-------|------|----------|------|
+| 1 | Syntax & Style | `npm run lint`, `tsc --noEmit` | Every task |
+| 2 | Unit Tests | `npm test` | Low-Medium risk |
+| 3 | Integration Tests | `npm run test:integration` | Medium-High risk |
+| 4 | Manual Validation | User flow walkthrough | High-Critical risk |
+
+**Include specific validation commands in each task step.**
+
 ## Requirements Checklist
 
 Before writing a plan:
@@ -117,6 +158,7 @@ Before writing a plan:
 - [ ] Constraints documented
 - [ ] Success criteria defined
 - [ ] Existing code patterns understood
+- [ ] Context References section prepared with file:line references
 
 ## Risk Assessment Table
 

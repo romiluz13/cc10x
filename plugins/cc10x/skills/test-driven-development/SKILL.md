@@ -1,6 +1,7 @@
 ---
 name: test-driven-development
 description: "Internal skill. Use cc10x-router for all development tasks."
+allowed-tools: Read, Grep, Glob, Bash, Write, Edit
 ---
 
 # Test-Driven Development (TDD)
@@ -187,6 +188,40 @@ Next failing test for next feature.
 | **Minimal** | One thing. "and" in name? Split it. | `test('validates email and domain and whitespace')` |
 | **Clear** | Name describes behavior | `test('test1')` |
 | **Shows intent** | Demonstrates desired API | Obscures what code should do |
+
+## Factory Pattern for Tests (Reference Pattern)
+
+Create `getMockX(overrides?: Partial<X>)` functions for reusable test data:
+
+```typescript
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: 'admin' | 'user';
+}
+
+const getMockUser = (overrides?: Partial<User>): User => ({
+  id: '123',
+  name: 'John Doe',
+  email: 'john@example.com',
+  role: 'user',
+  ...overrides,
+});
+
+// Usage - override only what matters for the test
+it('shows admin badge for admin users', () => {
+  const user = getMockUser({ role: 'admin' });
+  render(<UserCard user={user} />);
+  expect(screen.getByText('Admin')).toBeTruthy();
+});
+```
+
+**Benefits:**
+- Sensible defaults - less boilerplate per test
+- Override specific properties - focus on what test cares about
+- Type-safe - catches missing properties
+- DRY - change mock in one place
 
 ## Why Order Matters
 

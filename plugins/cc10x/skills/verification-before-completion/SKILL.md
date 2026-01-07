@@ -1,6 +1,7 @@
 ---
 name: verification-before-completion
 description: "Internal skill. Use cc10x-router for all development tasks."
+allowed-tools: Read, Grep, Glob, Bash
 ---
 
 # Verification Before Completion
@@ -168,6 +169,19 @@ From real failure patterns:
 
 ---
 
+## Validation Levels
+
+**Match validation depth to task complexity:**
+
+| Level | Name | Commands | When to Use |
+|-------|------|----------|-------------|
+| 1 | Syntax & Style | `npm run lint`, `tsc --noEmit` | Every task |
+| 2 | Unit Tests | `npm test` | Low-Medium risk tasks |
+| 3 | Integration Tests | `npm run test:integration` | Medium-High risk tasks |
+| 4 | Manual Validation | User flow walkthrough | High-Critical risk tasks |
+
+**Include the appropriate validation level for each verification step.**
+
 ## Verification Checklist
 
 Before marking work complete:
@@ -178,6 +192,7 @@ Before marking work complete:
 - [ ] No regressions introduced - **with test output**
 - [ ] Evidence captured for each check - **in this message**
 - [ ] Deviations from plan documented - **if implementation differed from design**
+- [ ] Appropriate validation level applied for task risk
 
 ## Output Format
 

@@ -1,6 +1,7 @@
 ---
 name: debugging-patterns
 description: "Internal skill. Use cc10x-router for all development tasks."
+allowed-tools: Read, Grep, Glob, Bash
 ---
 
 # Systematic Debugging
@@ -20,6 +21,79 @@ NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST
 ```
 
 If you haven't completed Phase 1, you cannot propose fixes.
+
+## Quick Five-Step Process (Reference Pattern)
+
+For rapid debugging, use this concise flow:
+
+```
+1. Capture error message and stack trace
+2. Identify reproduction steps
+3. Isolate the failure location
+4. Implement minimal fix
+5. Verify solution works
+```
+
+**Debugging techniques:**
+- Analyze error messages and logs
+- Check recent code changes
+- Form and test hypotheses
+- **Add strategic debug logging**
+- **Inspect variable states**
+
+**Root Cause Tracing Technique:**
+```
+1. Observe symptom - Where does error manifest?
+2. Find immediate cause - Which code produces the error?
+3. Ask "What called this?" - Map call chain upward
+4. Keep tracing up - Follow invalid data backward
+5. Find original trigger - Where did problem actually start?
+```
+**Never fix solely where errors appear—trace to the original trigger.**
+
+**For each issue provide:**
+- Root cause explanation
+- Evidence supporting diagnosis
+- Specific code fix
+- Testing approach
+- Prevention recommendations
+
+## Common Debugging Scenarios
+
+### Test Failures
+```
+1. Read FULL error message and stack trace
+2. Identify which assertion failed and why
+3. Check test setup - is environment correct?
+4. Check test data - are mocks/fixtures correct?
+5. Trace to source of unexpected value
+```
+
+### Runtime Errors
+```
+1. Capture full stack trace
+2. Identify line that throws
+3. Check what values are undefined/null
+4. Trace backward to where bad value originated
+5. Add validation at the source
+```
+
+### "It worked before"
+```
+1. Use `git bisect` to find breaking commit
+2. Compare change with previous working version
+3. Identify what assumption changed
+4. Fix at source of assumption violation
+```
+
+### Intermittent Failures
+```
+1. Look for race conditions
+2. Check for shared mutable state
+3. Examine async operation ordering
+4. Look for timing dependencies
+5. Add deterministic waits or proper synchronization
+```
 
 ## When to Use
 

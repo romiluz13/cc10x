@@ -14,6 +14,35 @@ User interfaces exist to help users accomplish tasks. Every UI decision should m
 
 **Violating the letter of this process is violating the spirit of frontend design.**
 
+## Focus Areas (Reference Pattern)
+
+- **React component architecture** (hooks, context, performance)
+- **Responsive CSS** with Tailwind/CSS-in-JS
+- **State management** (Redux, Zustand, Context API)
+- **Frontend performance** (lazy loading, code splitting, memoization)
+- **Accessibility** (WCAG compliance, ARIA labels, keyboard navigation)
+
+## Approach (Reference Pattern)
+
+1. **Component-first thinking** - reusable, composable UI pieces
+2. **Mobile-first responsive design** - start small, scale up
+3. **Performance budgets** - aim for sub-3s load times
+4. **Semantic HTML** and proper ARIA attributes
+5. **Type safety** with TypeScript when applicable
+
+## Component Output Checklist
+
+**Every frontend deliverable should include:**
+
+- [ ] Complete React component with props interface
+- [ ] Styling solution (Tailwind classes or styled-components)
+- [ ] State management implementation if needed
+- [ ] Basic unit test structure
+- [ ] Accessibility checklist for the component
+- [ ] Performance considerations and optimizations
+
+**Focus on working code over explanations. Include usage examples in comments.**
+
 ## The Iron Law
 
 ```
@@ -21,6 +50,49 @@ NO UI DESIGN BEFORE USER FLOW IS UNDERSTOOD
 ```
 
 If you haven't mapped what the user is trying to accomplish, you cannot design UI.
+
+## Loading State Order (CRITICAL)
+
+**Always handle states in this order:**
+
+```typescript
+// CORRECT order
+if (error) return <ErrorState error={error} onRetry={refetch} />;
+if (loading && !data) return <LoadingState />;
+if (!data?.items.length) return <EmptyState />;
+return <ItemList items={data.items} />;
+```
+
+**Loading State Decision Tree:**
+```
+Is there an error? → Yes: Show error with retry
+                   → No: Continue
+Is loading AND no data? → Yes: Show loading indicator
+                        → No: Continue
+Do we have data? → Yes, with items: Show data
+                 → Yes, but empty: Show empty state
+                 → No: Show loading (fallback)
+```
+
+**Golden Rule:** Show loading indicator ONLY when there's no data to display.
+
+## Skeleton vs Spinner
+
+| Use Skeleton When | Use Spinner When |
+|-------------------|------------------|
+| Known content shape | Unknown content shape |
+| List/card layouts | Modal actions |
+| Initial page load | Button submissions |
+| Content placeholders | Inline operations |
+
+## Error Handling Hierarchy
+
+| Level | Use For |
+|-------|---------|
+| **Inline error** | Field-level validation |
+| **Toast notification** | Recoverable errors, user can retry |
+| **Error banner** | Page-level errors, data still partially usable |
+| **Full error screen** | Unrecoverable, needs user action |
 
 ## Success Criteria Framework
 
@@ -289,6 +361,26 @@ If you find yourself:
 1. [Most critical fix]
 2. [Second fix]
 ```
+
+## UI States Checklist (CRITICAL)
+
+**Before completing ANY UI component:**
+
+### States
+- [ ] Error state handled and shown to user
+- [ ] Loading state shown ONLY when no data exists
+- [ ] Empty state provided for all collections/lists
+- [ ] Success state with appropriate feedback
+
+### Buttons & Mutations
+- [ ] Buttons disabled during async operations
+- [ ] Buttons show loading indicator
+- [ ] Mutations have onError handler with user feedback
+- [ ] No double-click possible on submit buttons
+
+### Data Handling
+- [ ] State order: Error → Loading (no data) → Empty → Success
+- [ ] All user actions have feedback (toast/visual)
 
 ## Final Check
 

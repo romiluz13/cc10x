@@ -12,7 +12,18 @@ Code reviews catch bugs before they ship. But reviewing code quality before func
 
 **Core principle:** First verify it works, THEN verify it's good.
 
-**Violating the letter of this process is violating the spirit of review.**
+## Quick Review Checklist (Reference Pattern)
+
+**For rapid reviews, check these 8 items:**
+
+- [ ] Code is simple and readable
+- [ ] Functions and variables are well-named
+- [ ] No duplicated code
+- [ ] Proper error handling
+- [ ] No exposed secrets or API keys
+- [ ] Input validation implemented
+- [ ] Good test coverage
+- [ ] Performance considerations addressed
 
 ## The Iron Law
 
@@ -130,6 +141,29 @@ Review in priority order:
 | **MAJOR** | Affects functionality or significant quality issue | Should fix before merge |
 | **MINOR** | Style issues, small improvements | Can merge, fix later |
 | **NIT** | Purely stylistic preferences | Optional |
+
+## Priority Output Format (Feedback Grouping)
+
+**Organize feedback by priority (from reference pattern):**
+
+```markdown
+## Code Review Feedback
+
+### Critical (must fix before merge)
+- [95] SQL injection at `src/api/users.ts:45`
+  → Fix: Use parameterized query `db.query('SELECT...', [userId])`
+
+### Warnings (should fix)
+- [85] N+1 query at `src/services/posts.ts:23`
+  → Fix: Batch query with WHERE IN clause
+
+### Suggestions (consider improving)
+- [70] Function `calc()` could be renamed to `calculateTotal()`
+  → More descriptive naming
+```
+
+**ALWAYS include specific examples of how to fix each issue.**
+Don't just say "this is wrong" - show the correct approach.
 
 ## Red Flags - STOP and Re-review
 

@@ -40,6 +40,24 @@ Write(file_path="docs/plans/YYYY-MM-DD-<feature>-plan.md", content="...")
 Edit(file_path=".claude/cc10x/activeContext.md", ...)
 ```
 
+## Confidence Score (REQUIRED)
+
+**Rate plan's likelihood of one-pass success:**
+
+| Score | Meaning | Action |
+|-------|---------|--------|
+| 1-4 | Low confidence | Plan needs more detail/context |
+| 5-6 | Medium | Acceptable for smaller features |
+| 7-8 | High | Good for most features |
+| 9-10 | Very high | Comprehensive, ready for execution |
+
+**Factors affecting confidence:**
+- Context References included with file:line? (+2)
+- All edge cases documented? (+1)
+- Test commands specific? (+1)
+- Risk mitigations defined? (+1)
+- File paths exact? (+1)
+
 ## Output
 ```
 ## Plan: [feature]
@@ -47,6 +65,10 @@ Edit(file_path=".claude/cc10x/activeContext.md", ...)
 - Phases: [count]
 - Risks: [count identified]
 - Key decisions: [list]
+
+**Confidence Score: X/10** for one-pass success
+- [reason for score]
+- [factors that could improve it]
 
 ---
 WORKFLOW_CONTINUES: NO

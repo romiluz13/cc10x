@@ -101,6 +101,50 @@ Without memory persistence:
     └── progress.md        # What works, what's left, verification evidence
 ```
 
+## Context Tiers (Reference Pattern)
+
+**Optimize context for relevance, not completeness:**
+
+### Quick Context (< 500 tokens)
+Use for simple tasks and handoffs:
+- Current task and immediate goals
+- Recent decisions affecting current work
+- Active blockers or dependencies
+
+### Full Context (< 2000 tokens)
+Use for complex tasks and session starts:
+- Project architecture overview
+- Key design decisions
+- Integration points and APIs
+- Active work streams
+
+### Archived Context (stored in memory files)
+Reference when needed:
+- Historical decisions with rationale
+- Resolved issues and solutions
+- Pattern library
+- Performance benchmarks
+
+**Good context accelerates work; bad context creates confusion.**
+
+## Context Management Functions (Reference Pattern)
+
+### Context Capture (at workflow end)
+1. Extract key decisions and rationale from outputs
+2. Identify reusable patterns and solutions
+3. Document integration points between components
+4. Track unresolved issues and TODOs
+
+### Context Distribution (at workflow start)
+1. Prepare minimal, relevant context for the task
+2. Maintain a context index for quick retrieval
+3. Prune outdated or irrelevant information
+
+### Memory Management (ongoing)
+- Store critical project decisions in memory
+- Maintain a rolling summary of recent changes
+- Create context checkpoints at major milestones
+
 ## File Purposes
 
 ### activeContext.md (Read/Write EVERY session)
@@ -294,6 +338,11 @@ Bash(command="mkdir -p .claude/cc10x")
 Read(file_path=".claude/cc10x/activeContext.md")
 Read(file_path=".claude/cc10x/patterns.md")
 Read(file_path=".claude/cc10x/progress.md")
+
+# Step 3: Git Context - Understand project state (RECOMMENDED)
+Bash(command="git status")                 # Current working state
+Bash(command="git ls-files | head -50")    # Project file structure
+Bash(command="git log --oneline -10")      # Recent commits
 ```
 
 **NEVER use this (asks permission):**
@@ -380,63 +429,31 @@ Edit(file_path=".claude/cc10x/progress.md",
 
 ## Red Flags - STOP IMMEDIATELY
 
-### READ Red Flags
 If you catch yourself:
 - Starting work WITHOUT loading memory
-- Making a decision WITHOUT checking Active Decisions table
-- Choosing an approach WITHOUT checking patterns.md
-- Building something WITHOUT checking progress.md (might be done)
-- Debugging WITHOUT checking Common Gotchas
-- Saying "I think we should..." without checking what we decided before
-
-### WRITE Red Flags
-If you catch yourself:
+- Making decisions WITHOUT checking Active Decisions table
 - Completing work WITHOUT updating memory
 - Saying "I'll remember" instead of writing to memory
-- Skipping memory because "task is small"
-- Not recording a decision or learning
-- Making a decision without recording the reasoning
 
 **STOP. Load/update memory FIRST.**
 
 ## Rationalization Prevention
 
-### READ Excuses
 | Excuse | Reality |
 |--------|---------|
-| "I know what we decided" | You might not. Check the Active Decisions table. |
-| "No patterns yet" | Check anyway. Absence of pattern is also info. |
-| "Fresh project" | Still load - may have user preferences recorded. |
-| "I just read it" | Conversation may have compacted. Re-read to be sure. |
-| "Quick question, no need" | Quick questions often need prior context. |
-
-### WRITE Excuses
-| Excuse | Reality |
-|--------|---------|
+| "I know what we decided" | Check the Active Decisions table. |
 | "Small task, no need" | Small tasks have context too. Always update. |
 | "I'll remember" | You won't. Conversation compacts. Write it down. |
-| "Takes too long" | 30 seconds to save vs losing hours of context. |
 | "Memory is optional" | Memory is MANDATORY. No exceptions. |
-| "Already in conversation" | Conversation gets compacted. Files persist. |
-| "Just this once skip" | One skip = lost context = repeated mistakes. |
 
-## Verification
+## Verification Checklist
 
-### READ Verification (At Start)
-- [ ] All 3 memory files loaded at session/workflow start
-- [ ] Active Decisions table checked before making decisions
-- [ ] patterns.md checked before choosing approach
-- [ ] progress.md checked before starting new work
-
-### WRITE Verification (At End)
+- [ ] Memory loaded at workflow start
+- [ ] Decisions checked before making new ones
 - [ ] Learnings documented in activeContext.md
-- [ ] Decisions recorded with reasoning in Active Decisions table
-- [ ] New patterns added to patterns.md
 - [ ] Progress updated in progress.md
-- [ ] Active context reflects current state
-- [ ] Next steps documented
 
-**Cannot check all boxes? Memory cycle incomplete. Fix before continuing.**
+**Cannot check all boxes? Memory cycle incomplete.**
 
 ## The Bottom Line
 
