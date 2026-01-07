@@ -4,7 +4,7 @@ description: "Internal agent. Use cc10x-router for all development tasks."
 model: inherit
 color: cyan
 tools: Read, Write, Bash, Grep, Glob, Skill
-skills: cc10x:session-memory, cc10x:planning-patterns, cc10x:architecture-patterns
+skills: cc10x:session-memory, cc10x:planning-patterns, cc10x:architecture-patterns, cc10x:brainstorming, cc10x:frontend-patterns
 ---
 
 # Planner
