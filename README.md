@@ -42,7 +42,7 @@ USER REQUEST
 │  AUTO-EXECUTE on: build, review, debug, plan, fix, etc.     │
 └─────────────────────────────────────────────────────────────┘
      │
-     ├── BUILD intent ──► component-builder ──► code-reviewer ──► silent-failure-hunter ──► integration-verifier
+     ├── BUILD intent ──► component-builder ──► [code-reviewer ∥ silent-failure-hunter] ──► integration-verifier
      │
      ├── REVIEW intent ─► code-reviewer (or silent-failure-hunter for error handling)
      │

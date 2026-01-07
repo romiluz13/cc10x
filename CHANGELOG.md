@@ -22,7 +22,7 @@
 
 ### Impact
 
-- BUILD workflow now executes full chain: component-builder → code-reviewer → silent-failure-hunter → integration-verifier
+- BUILD workflow now executes full chain: component-builder → [code-reviewer ∥ silent-failure-hunter] → integration-verifier
 - DEBUG workflow now executes full chain: bug-investigator → code-reviewer → integration-verifier
 - REVIEW and PLAN workflows properly signal completion
 - Claude can no longer "forget" to invoke subsequent agents in the chain
