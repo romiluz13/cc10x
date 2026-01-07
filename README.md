@@ -1,6 +1,6 @@
 # cc10x - The Perfect Claude Code Workflow System
 
-> **v5.12.1** | 6 Agents | 11 Skills | 1 Router | Memory Persistence | TDD Enforcement | Anthropic Best Practices
+> **v5.13.0** | 6 Agents | 11 Skills | 1 Router | Memory Persistence | TDD Enforcement | Anthropic Best Practices
 
 **cc10x is what Claude Code should be.** It transforms Claude from a helpful assistant into a disciplined engineering system that never cuts corners.
 
@@ -474,6 +474,7 @@ The silent-failure-hunter agent finds error handling issues with zero tolerance:
 
 ## Version History
 
+- **v5.13.0** - Parallel agent execution: code-reviewer and silent-failure-hunter now run simultaneously in BUILD workflow (~30-50% faster review phase).
 - **v5.12.1** - Fixed orphan skills: Added brainstorming and frontend-patterns to planner, frontend-patterns to component-builder. All 10 skills now invokable.
 - **v5.12.0** - Pre-publish audit: Trimmed session-memory (512→480 lines), added missing `allowed-tools` to 4 skills, added AskUserQuestion to planning-patterns.
 - **v5.11.0** - Workflow chain enforcement: Agents now signal continuation with WORKFLOW_CONTINUES output format.
@@ -513,4 +514,4 @@ MIT License
 
 ---
 
-_cc10x v5.12.1 | The Perfect Claude Code Workflow System_
+_cc10x v5.13.0 | The Perfect Claude Code Workflow System_

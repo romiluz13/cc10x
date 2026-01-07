@@ -45,7 +45,10 @@ Read(file_path=".claude/cc10x/activeContext.md")
 - [file:line] - Proper handling
 
 ---
+# Running PARALLEL with code-reviewer in BUILD workflow
+
 WORKFLOW_CONTINUES: YES
-NEXT_AGENT: integration-verifier
-CHAIN_PROGRESS: component-builder ✓ → code-reviewer ✓ → silent-failure-hunter [3/4] → integration-verifier
+PARALLEL_COMPLETE: silent-failure-hunter done (waiting for code-reviewer)
+SYNC_NEXT: integration-verifier
+CHAIN_PROGRESS: component-builder ✓ → [code-reviewer ∥ silent-failure-hunter ✓] → integration-verifier
 ```

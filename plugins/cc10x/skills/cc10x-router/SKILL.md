@@ -27,14 +27,14 @@ description: |
 
 ## Agent Chains
 
-| Workflow | Agents (Sequential) |
-|----------|---------------------|
-| BUILD | component-builder → code-reviewer → silent-failure-hunter* → integration-verifier |
+| Workflow | Agents |
+|----------|--------|
+| BUILD | component-builder → **[code-reviewer ∥ silent-failure-hunter]** → integration-verifier |
 | DEBUG | bug-investigator → code-reviewer → integration-verifier |
 | REVIEW | code-reviewer |
 | PLAN | planner |
 
-*silent-failure-hunter only if error handling code exists (try/catch/except)
+**∥ = PARALLEL** - code-reviewer and silent-failure-hunter run simultaneously (both read-only)
 
 ## Memory (PERMISSION-FREE)
 
@@ -54,8 +54,12 @@ Read(file_path=".claude/cc10x/progress.md")
 1. Load memory → Check if already done in progress.md
 2. **Clarify requirements** (DO NOT SKIP) → Use AskUserQuestion
 3. Invoke component-builder (TDD: RED→GREEN→REFACTOR)
-4. Invoke code-reviewer (confidence ≥80 only)
-5. Invoke silent-failure-hunter (if try/catch exists)
+4. **PARALLEL:** Invoke code-reviewer AND silent-failure-hunter simultaneously
+   ```
+   Task(subagent_type="cc10x:code-reviewer", ...)
+   Task(subagent_type="cc10x:silent-failure-hunter", ...)  // Same message = parallel
+   ```
+5. Wait for BOTH to complete → Merge findings
 6. Invoke integration-verifier
 7. Update memory
 
@@ -105,21 +109,36 @@ Patterns: {from patterns.md}
 **NEVER stop after one agent.** The workflow is NOT complete until the chain finishes.
 
 After EACH agent completes, check its output for:
-- `WORKFLOW_CONTINUES: YES` → **MUST invoke next agent**
+- `PARALLEL_AGENTS: X, Y` → **Invoke BOTH agents in same message (parallel)**
+- `NEXT_AGENT: X` → **Invoke that single agent**
 - `WORKFLOW_CONTINUES: NO` → Chain complete, update memory
 
 ### Chain Execution Loop
 ```
 1. Invoke agent via Task tool
 2. Read agent output
-3. Find NEXT_AGENT: field in output
-4. If NEXT_AGENT exists → Invoke that agent (return to step 1)
-5. If WORKFLOW_CONTINUES: NO → Chain complete
+3. Check output type:
+   a. PARALLEL_AGENTS: X, Y → Invoke BOTH in single message (parallel execution)
+   b. PARALLEL_COMPLETE + SYNC_NEXT: X → Wait for parallel peer, then invoke X
+   c. NEXT_AGENT: X → Invoke single agent
+   d. WORKFLOW_CONTINUES: NO → Chain complete
+4. Return to step 1 until chain complete
 ```
+
+### Parallel Agent Invocation
+When you see `PARALLEL_AGENTS:`, invoke ALL listed agents in ONE message:
+```
+Task(subagent_type="cc10x:code-reviewer", prompt="...")
+Task(subagent_type="cc10x:silent-failure-hunter", prompt="...")
+```
+Both run simultaneously. Both will output `PARALLEL_COMPLETE` and `SYNC_NEXT: integration-verifier`.
+
+After BOTH complete → Invoke integration-verifier with merged findings from both agents.
 
 ### Chain Completion Criteria
 The workflow is complete ONLY when:
 - Final agent (integration-verifier) outputs `WORKFLOW_CONTINUES: NO`
 - OR a critical error prevents continuation
 
-**If you see `NEXT_AGENT: X` in output → You MUST invoke agent X. No exceptions.**
+**If you see `PARALLEL_AGENTS:` → Invoke ALL listed agents in parallel. No exceptions.**
+**If you see `NEXT_AGENT: X` → Invoke agent X. No exceptions.**

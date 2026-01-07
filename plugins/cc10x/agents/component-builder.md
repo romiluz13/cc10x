@@ -45,6 +45,6 @@ Check for plan reference → If exists, follow plan tasks in order.
 
 ---
 WORKFLOW_CONTINUES: YES
-NEXT_AGENT: code-reviewer
-CHAIN_PROGRESS: component-builder [1/4] → code-reviewer → silent-failure-hunter → integration-verifier
+PARALLEL_AGENTS: code-reviewer, silent-failure-hunter
+CHAIN_PROGRESS: component-builder [1/4] → [code-reviewer ∥ silent-failure-hunter] → integration-verifier
 ```
