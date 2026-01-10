@@ -101,6 +101,100 @@ Without memory persistence:
     └── progress.md        # What works, what's left, verification evidence
 ```
 
+## Memory Efficiency (Token-Aware Loading)
+
+### Quick Index Pattern (OPTIONAL)
+
+When a memory file exceeds ~200 lines, add a Quick Index at the top for faster scanning:
+
+```markdown
+## Quick Index
+| Section | Summary | Lines |
+|---------|---------|-------|
+| Current Focus | [1-line summary of active work] | 5-15 |
+| Recent Changes | [count] changes recorded | 20-50 |
+| Active Decisions | [count] decisions | 10-30 |
+| Learnings | [count] insights | 15-25 |
+| Blockers | [None / count active] | 5-10 |
+
+---
+[Rest of file content below...]
+```
+
+**When to add Quick Index:**
+- File exceeds 200 lines
+- Multiple distinct sections with significant content
+- Frequent partial reads needed
+
+**When NOT needed:**
+- File under 200 lines (most projects)
+- Simple, focused content
+- File rarely referenced
+
+### Selective Loading
+
+For large memory files (200+ lines), agents MAY load selectively:
+
+```
+# Step 1: Load first 50 lines (Quick Index + Current Focus)
+Read(file_path=".claude/cc10x/activeContext.md", limit=50)
+
+# Step 2: Decide which sections are relevant to current task
+# - Building new feature → Load "Active Decisions", "Patterns"
+# - Debugging → Load "Learnings", "Recent Changes"
+# - Continuing work → Load "Current Focus", "Next Steps"
+
+# Step 3: Load specific sections using offset/limit
+Read(file_path=".claude/cc10x/activeContext.md", offset=100, limit=50)
+```
+
+**Selective Loading Decision Matrix:**
+| Task Type | Load First | Then Load If Needed |
+|-----------|------------|---------------------|
+| BUILD (new feature) | Current Focus, Active Decisions | Patterns, Recent Changes |
+| DEBUG (fix issue) | Learnings, Recent Changes | Blockers, Patterns |
+| REVIEW (audit code) | Patterns, Active Decisions | Recent Changes |
+| PLAN (design) | Current Focus, Active Decisions | Full file |
+| Continue session | Current Focus, Next Steps | As needed |
+
+**DEFAULT: For files under 200 lines, load the entire file. Selective loading adds complexity—only use when needed.**
+
+### Pruning Guidelines
+
+Keep memory files trim for token efficiency:
+
+**When to prune (any file exceeding 200 lines):**
+
+| Memory File | Prune By | Move To |
+|-------------|----------|---------|
+| **activeContext.md** | Archive completed decisions | patterns.md (if reusable) |
+| **activeContext.md** | Remove old "Recent Changes" | Keep last 10 only |
+| **activeContext.md** | Move resolved blockers | progress.md "Completed" |
+| **patterns.md** | Archive rarely-used patterns | Separate archive file |
+| **progress.md** | Collapse old completed items | Keep last 2 workflows |
+
+**Pruning Rules:**
+1. **Recent Changes**: Keep last 10 entries. Older changes move to git history.
+2. **Active Decisions**: Archive decisions older than 2 workflows if no longer referenced.
+3. **Learnings**: Promote repeated learnings to patterns.md, then remove from activeContext.
+4. **Completed Tasks**: Summarize completed workflows into a single line after verification.
+
+**Pruning is a READ operation first:**
+```
+# Step 1: Read and assess size
+Read(file_path=".claude/cc10x/activeContext.md")
+
+# Step 2: If > 200 lines, identify prunable content
+# Step 3: Move reusable content to appropriate file
+# Step 4: Edit to remove old content
+```
+
+**DO NOT prune:**
+- Active decisions still being referenced
+- Recent learnings (< 2 sessions old)
+- Unresolved blockers
+- Current focus content
+
 ## Context Tiers (Reference Pattern)
 
 **Optimize context for relevance, not completeness:**
