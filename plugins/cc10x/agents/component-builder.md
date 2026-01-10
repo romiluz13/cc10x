@@ -3,7 +3,8 @@ name: component-builder
 description: "Internal agent. Use cc10x-router for all development tasks."
 model: sonnet
 color: green
-tools: Read, Edit, Write, Bash, Grep, Glob, Skill
+context: fork
+tools: Read, Edit, Write, Bash, Grep, Glob, Skill, LSP
 skills: cc10x:session-memory, cc10x:test-driven-development, cc10x:code-generation, cc10x:verification-before-completion, cc10x:frontend-patterns
 ---
 

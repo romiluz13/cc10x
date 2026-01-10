@@ -3,7 +3,8 @@ name: bug-investigator
 description: "Internal agent. Use cc10x-router for all development tasks."
 model: inherit
 color: red
-tools: Read, Edit, Write, Bash, Grep, Glob, Skill
+context: fork
+tools: Read, Edit, Write, Bash, Grep, Glob, Skill, LSP
 skills: cc10x:session-memory, cc10x:debugging-patterns, cc10x:test-driven-development, cc10x:verification-before-completion
 ---
 

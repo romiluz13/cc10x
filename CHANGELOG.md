@@ -1,5 +1,35 @@
 # Changelog
 
+## [5.14.0] - 2025-01-10
+
+### Added
+
+- **LSP Tool for All Agents**: Added Language Server Protocol (LSP) tool to all 6 agents
+  - Enables go-to-definition, find-references, and hover documentation
+  - Enhances code analysis capabilities for all workflows
+  - Particularly valuable for bug-investigator (code path tracing) and code-reviewer (reference tracking)
+
+- **Agent Context Isolation**: Added `context: fork` to all 6 agents
+  - Each agent now runs in an isolated forked context
+  - Prevents state leakage between agents in workflow chains
+  - Improves reliability of parallel execution (code-reviewer ∥ silent-failure-hunter)
+
+### Changed
+
+- **All 6 Agents Updated**:
+  - component-builder: Added LSP, context:fork
+  - bug-investigator: Added LSP, context:fork
+  - code-reviewer: Added LSP, context:fork
+  - silent-failure-hunter: Added LSP, context:fork
+  - integration-verifier: Added LSP, context:fork
+  - planner: Added LSP, context:fork
+
+### Compatibility
+
+- Requires Claude Code v2.0.74+ for LSP tool support
+- Requires Claude Code v2.1.0+ for `context: fork` feature
+- Recommended: Claude Code v2.1.3+ for best experience
+
 ## [5.11.0] - 2025-01-06
 
 ### Fixed

@@ -3,7 +3,8 @@ name: silent-failure-hunter
 description: "Internal agent. Use cc10x-router for all development tasks."
 model: inherit
 color: red
-tools: Read, Write, Bash, Grep, Glob, Skill
+context: fork
+tools: Read, Write, Bash, Grep, Glob, Skill, LSP
 skills: cc10x:session-memory, cc10x:code-review-patterns, cc10x:verification-before-completion
 ---
 
