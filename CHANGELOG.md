@@ -1,5 +1,24 @@
 # Changelog
 
+## [5.15.0] - 2025-01-11
+
+### Added
+
+- **Token-Aware Memory Efficiency**: Enhanced session-memory skill with guidelines for large memory files
+  - Quick Index Pattern: Optional index header for files exceeding 200 lines
+  - Selective Loading: Load memory sections on-demand using offset/limit
+  - Pruning Guidelines: Keep memory files trim, archive old content
+
+- **Pre-Compaction Memory Safety**: Proactive memory updates to prevent context loss
+  - Context Length Awareness: Recognize when sessions are getting long
+  - Proactive Update Triggers: Update memory before auto-compact erases context
+  - Checkpoint Pattern: Mid-session checkpoints for critical decisions
+  - Red Flags table: Clear signals for when to update memory immediately
+
+### Changed
+
+- **session-memory Skill**: Added 146 lines of memory efficiency and safety guidance
+
 ## [5.14.0] - 2025-01-10
 
 ### Added
