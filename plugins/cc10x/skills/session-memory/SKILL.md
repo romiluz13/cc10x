@@ -195,6 +195,58 @@ Read(file_path=".claude/cc10x/activeContext.md")
 - Unresolved blockers
 - Current focus content
 
+## Pre-Compaction Memory Safety
+
+### Context Length Awareness
+
+Conversations auto-compact when they get too long. If memory isn't updated before compaction, context is lost forever.
+
+**The Risk:**
+```
+Long session → Auto-compact → Memory NOT updated → Context LOST
+```
+
+### Proactive Update Triggers
+
+Update memory IMMEDIATELY when you notice:
+- Extended debugging sessions (5+ error cycles)
+- Long planning discussions
+- Multi-file refactoring
+- Any session with 30+ tool calls
+- User says "we've been at this a while"
+
+### The Rule
+
+**When in doubt, update memory NOW.**
+
+Don't wait for workflow end. It's better to have duplicate entries than lost context.
+
+### Checkpoint Pattern
+
+During long sessions, periodically checkpoint:
+```
+# After significant progress, even mid-task:
+Edit(file_path=".claude/cc10x/activeContext.md",
+     old_string="## Current Focus",
+     new_string="## Current Focus
+
+[Updated focus with recent progress]
+
+### Checkpoint (mid-session)
+- [Key decision made]
+- [Important learning]
+- [Current state]")
+```
+
+### Red Flags - Update Memory NOW
+
+| Situation | Action |
+|-----------|--------|
+| "We've made several decisions" | Checkpoint decisions to activeContext.md |
+| "We've been debugging for a while" | Record learnings + what we've tried |
+| "Let me try a different approach" | Record why previous approach failed |
+| "This is getting complex" | Update memory before continuing |
+
 ## Context Tiers (Reference Pattern)
 
 **Optimize context for relevance, not completeness:**
