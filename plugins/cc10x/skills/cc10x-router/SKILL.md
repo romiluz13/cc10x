@@ -90,12 +90,23 @@ User request: {request}
 Requirements: {from AskUserQuestion}
 Memory: {from activeContext.md}
 Patterns: {from patterns.md}
+SKILL_HINTS: {detected skills from table below - agent MUST load these}
 ")
 ```
 
-**Skill triggers for agents:**
-- Frontend code (components/, ui/, pages/, .tsx, .jsx) → Load frontend-patterns
-- API code (api/, routes/, services/) → Load architecture-patterns
+**SKILL_HINTS are MANDATORY.** Agent MUST call `Skill(skill="...")` for each hint immediately after loading memory.
+
+**Skill triggers for agents (DETECT AND PASS AS SKILL_HINTS):**
+
+| Detected Pattern | Skill | Agents |
+|------------------|-------|--------|
+| Frontend: components/, ui/, pages/, .tsx, .jsx, CSS, styling, "button", "form", "modal" | cc10x:frontend-patterns | planner, component-builder |
+| API/Backend: api/, routes/, services/, "endpoint", "REST", "GraphQL" | cc10x:architecture-patterns | planner, bug-investigator |
+| Vague: "not sure", "maybe", "options", "ideas", unclear requirements | cc10x:brainstorming | planner |
+| External: new tech (post-2024), unfamiliar library, complex integration (auth, payments) | cc10x:github-research | planner, bug-investigator |
+| Debug exhausted: 3+ local attempts failed, external service error | cc10x:github-research | bug-investigator |
+
+**Detection runs BEFORE agent invocation. Pass detected skills in SKILL_HINTS.**
 
 ## Gates (Must Pass)
 

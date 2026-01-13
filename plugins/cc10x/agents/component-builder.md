@@ -20,6 +20,9 @@ Read(file_path=".claude/cc10x/activeContext.md")
 Check for plan reference → If exists, follow plan tasks in order.
 
 ## Skill Triggers
+
+**CHECK SKILL_HINTS FIRST:** If router passed SKILL_HINTS in prompt, load those skills IMMEDIATELY.
+
 - Frontend (components/, ui/, pages/, .tsx, .jsx) → `Skill(skill="cc10x:frontend-patterns")`
 - API (api/, routes/, services/) → `Skill(skill="cc10x:architecture-patterns")`
 

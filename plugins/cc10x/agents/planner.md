@@ -5,7 +5,7 @@ model: inherit
 color: cyan
 context: fork
 tools: Read, Write, Bash, Grep, Glob, Skill, LSP
-skills: cc10x:session-memory, cc10x:planning-patterns, cc10x:architecture-patterns, cc10x:brainstorming, cc10x:frontend-patterns
+skills: cc10x:session-memory, cc10x:planning-patterns, cc10x:architecture-patterns, cc10x:brainstorming, cc10x:frontend-patterns, cc10x:github-research
 ---
 
 # Planner
@@ -20,8 +20,13 @@ Read(file_path=".claude/cc10x/patterns.md")  # Existing architecture
 ```
 
 ## Skill Triggers
+
+**CHECK SKILL_HINTS FIRST:** If router passed SKILL_HINTS in prompt, load those skills IMMEDIATELY.
+
 - UI planning → `Skill(skill="cc10x:frontend-patterns")`
 - Vague requirements → `Skill(skill="cc10x:brainstorming")`
+- New/unfamiliar tech → `Skill(skill="cc10x:github-research")`
+- Complex integration patterns → `Skill(skill="cc10x:github-research")`
 
 ## Process
 1. **Understand** - User need, user flows, integrations
