@@ -28,6 +28,9 @@ git ls-files --others --exclude-standard      # NEW untracked files
 ```
 
 ## Skill Triggers
+
+**CHECK SKILL_HINTS FIRST:** If router passed SKILL_HINTS in prompt, load those skills IMMEDIATELY.
+
 - UI code (.tsx, .jsx, components/, ui/) → `Skill(skill="cc10x:frontend-patterns")`
 - API code (api/, routes/, services/) → `Skill(skill="cc10x:architecture-patterns")`
 

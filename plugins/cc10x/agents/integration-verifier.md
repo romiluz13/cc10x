@@ -20,6 +20,9 @@ Read(file_path=".claude/cc10x/progress.md")  # What was built
 ```
 
 ## Skill Triggers
+
+**CHECK SKILL_HINTS FIRST:** If router passed SKILL_HINTS in prompt, load those skills IMMEDIATELY.
+
 - UI flows → `Skill(skill="cc10x:frontend-patterns")`
 
 ## Process

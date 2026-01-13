@@ -100,8 +100,8 @@ SKILL_HINTS: {detected skills from table below - agent MUST load these}
 
 | Detected Pattern | Skill | Agents |
 |------------------|-------|--------|
-| Frontend: components/, ui/, pages/, .tsx, .jsx, CSS, styling, "button", "form", "modal" | cc10x:frontend-patterns | planner, component-builder |
-| API/Backend: api/, routes/, services/, "endpoint", "REST", "GraphQL" | cc10x:architecture-patterns | planner, bug-investigator |
+| Frontend: components/, ui/, pages/, .tsx, .jsx, CSS, styling, "button", "form", "modal" | cc10x:frontend-patterns | planner, component-builder, code-reviewer, integration-verifier |
+| API/Backend: api/, routes/, services/, "endpoint", "REST", "GraphQL" | cc10x:architecture-patterns | planner, bug-investigator, code-reviewer |
 | Vague: "not sure", "maybe", "options", "ideas", unclear requirements | cc10x:brainstorming | planner |
 | External: new tech (post-2024), unfamiliar library, complex integration (auth, payments) | cc10x:github-research | planner, bug-investigator |
 | Debug exhausted: 3+ local attempts failed, external service error | cc10x:github-research | bug-investigator |
