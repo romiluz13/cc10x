@@ -3,7 +3,7 @@ name: cc10x-router
 description: |
   THE ONLY ENTRY POINT FOR CC10X - AUTO-LOAD AND EXECUTE for ANY development task.
 
-  Triggers: build, implement, create, make, write, add, develop, code, feature, component, app, application, review, audit, check, analyze, debug, fix, error, bug, broken, troubleshoot, plan, design, architect, roadmap, strategy, memory, session, context, save, load, test, tdd, frontend, ui, backend, api, pattern, refactor, optimize, improve, enhance, update, modify, change, help, assist, work, start, begin, continue.
+  Triggers: build, implement, create, make, write, add, develop, code, feature, component, app, application, review, audit, check, analyze, debug, fix, error, bug, broken, troubleshoot, plan, design, architect, roadmap, strategy, memory, session, context, save, load, test, tdd, frontend, ui, backend, api, pattern, refactor, optimize, improve, enhance, update, modify, change, help, assist, work, start, begin, continue, research.
 
   CRITICAL: Execute workflow. Never just describe capabilities.
 ---
@@ -66,10 +66,13 @@ Read(file_path=".claude/cc10x/progress.md")
 ### DEBUG
 1. Load memory → Check patterns.md Common Gotchas
 2. Clarify: What error? Expected vs actual? When started?
-3. Invoke bug-investigator (LOG FIRST)
-4. Invoke code-reviewer
-5. Invoke integration-verifier
-6. Update memory → Add to Common Gotchas
+3. **If github-research detected (external service error OR explicit request):**
+   - Execute research FIRST using octocode tools directly
+   - Search for error patterns, PRs with similar issues
+4. Invoke bug-investigator (LOG FIRST, pass research results if step 3 executed)
+5. Invoke code-reviewer
+6. Invoke integration-verifier
+7. Update memory → Add to Common Gotchas
 
 ### REVIEW
 1. Load memory
@@ -78,8 +81,20 @@ Read(file_path=".claude/cc10x/progress.md")
 
 ### PLAN
 1. Load memory
-2. Invoke planner
-3. Update memory → Reference saved plan
+2. **If github-research detected (external tech OR explicit request):**
+   - Execute research FIRST using octocode tools directly (NOT as hint)
+   - Use: `mcp__octocode__packageSearch`, `mcp__octocode__githubSearchCode`, etc.
+   - Summarize findings before invoking planner
+3. Invoke planner (pass research results in prompt if step 2 was executed)
+4. Update memory → Reference saved plan
+
+**TWO-PHASE for External Research (MANDATORY):**
+```
+If SKILL_HINTS includes github-research:
+  → FIRST: Execute research using octocode tools
+  → THEN: Task(cc10x:planner, prompt="...Research findings: {results}...")
+```
+Research is a PREREQUISITE, not a hint. Planner cannot skip it.
 
 ## Agent Invocation
 
@@ -105,15 +120,17 @@ SKILL_HINTS: {detected skills from table below - agent MUST load these}
 | Vague: "not sure", "maybe", "options", "ideas", unclear requirements | cc10x:brainstorming | planner |
 | External: new tech (post-2024), unfamiliar library, complex integration (auth, payments) | cc10x:github-research | planner, bug-investigator |
 | Debug exhausted: 3+ local attempts failed, external service error | cc10x:github-research | bug-investigator |
+| User explicitly requests: "research", "github", "octocode", "find on github", "how do others", "best practices" | cc10x:github-research | planner, bug-investigator |
 
 **Detection runs BEFORE agent invocation. Pass detected skills in SKILL_HINTS.**
 
 ## Gates (Must Pass)
 
 1. **MEMORY_LOADED** - Before routing
-2. **REQUIREMENTS_CLARIFIED** - Before invoking agent (BUILD only)
-3. **AGENT_COMPLETED** - Before next agent in chain
-4. **MEMORY_UPDATED** - Before marking done
+2. **RESEARCH_EXECUTED** - Before planner (if github-research detected)
+3. **REQUIREMENTS_CLARIFIED** - Before invoking agent (BUILD only)
+4. **AGENT_COMPLETED** - Before next agent in chain
+5. **MEMORY_UPDATED** - Before marking done
 
 ## Chain Enforcement (CRITICAL)
 

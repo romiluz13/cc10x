@@ -1,6 +1,6 @@
 {
   "name": "cc10x",
-  "version": "5.17.0",
+  "version": "5.18.0",
   "description": "Orchestrated development workflow with specialized subagents and composable skills. Features smart routing via cc10x-router, TDD-first building, multi-dimensional code review, evidence-based debugging, pre-implementation checklists, self-critique gates, and 7-layer memory architecture.",
   "author": {
     "name": "Rom Iluz",

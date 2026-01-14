@@ -6,14 +6,14 @@
     "url": "https://github.com/romiluz13"
   },
   "metadata": {
-    "description": "cc10x v5.17.0 - Orchestrated development workflow with specialized subagents and composable skills",
-    "version": "5.17.0"
+    "description": "cc10x v5.18.0 - Orchestrated development workflow with specialized subagents and composable skills",
+    "version": "5.18.0"
   },
   "plugins": [
     {
       "name": "cc10x",
       "description": "Orchestrated development workflow with specialized subagents and composable skills. Features smart routing via cc10x-router, TDD-first building, multi-dimensional code review, evidence-based debugging, pre-implementation checklists, self-critique gates, and 7-layer memory architecture.",
-      "version": "5.17.0",
+      "version": "5.18.0",
       "author": {
         "name": "Rom Iluz",
         "email": "rom@iluz.net",

@@ -1,5 +1,37 @@
 # Changelog
 
+## [5.18.0] - 2025-01-14
+
+### Fixed
+
+- **Two-Phase GitHub Research Enforcement**: Fixed critical issue where planner agent was ignoring SKILL_HINTS for github-research
+  - Router now executes research FIRST using octocode tools directly (not as advisory hint)
+  - Research results are passed to planner/bug-investigator in prompt
+  - Research is now a PREREQUISITE, not a hint that can be skipped
+  - Added RESEARCH_EXECUTED gate before planner when github-research detected
+
+- **Explicit Research Request Trigger**: Added "research" to router triggers and explicit user request detection
+  - Keywords: "research", "github", "octocode", "find on github", "how do others", "best practices"
+  - Ensures router activates when user explicitly asks for GitHub research
+
+### Changed
+
+- **github-research Skill Simplified**: Reduced from ~201 lines to ~138 lines (31% smaller)
+  - Removed duplicated octocode guidance (octocode MCP handles HOW)
+  - Skill now focuses on WHEN to invoke and OUTPUT format for cc10x memory
+  - Updated Iron Law: "NO EXTERNAL RESEARCH WITHOUT CLEAR AI KNOWLEDGE GAP OR EXPLICIT USER REQUEST"
+  - Updated Integration Points to reflect Two-Phase execution model
+
+- **cc10x-router Workflows**: Updated PLAN and DEBUG workflows
+  - PLAN: Execute research FIRST, then invoke planner with results
+  - DEBUG: Execute research FIRST for external service errors, then invoke bug-investigator
+
+### Added
+
+- **New SKILL_HINTS Detection Row**: Explicit user request detection for github-research
+  - Pattern: User says "research", "github", "octocode", "find on github", "how do others", "best practices"
+  - Agents: planner, bug-investigator
+
 ## [5.15.0] - 2025-01-11
 
 ### Added
