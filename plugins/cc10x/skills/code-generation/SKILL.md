@@ -120,6 +120,10 @@ function calculateTotal(
 }
 ```
 
+### Minimal Diffs Principle
+
+**Only change what's necessary.** When fixing a bug, fix the bug - don't refactor surrounding code. When adding a feature, add the feature - don't "improve" unrelated code. Scope creep in diffs causes merge conflicts, hides the actual change, and makes reviews harder.
+
 ### 3. Handle Edge Cases
 
 **Always handle:**

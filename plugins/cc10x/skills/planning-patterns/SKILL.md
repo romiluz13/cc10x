@@ -224,6 +224,33 @@ Before planning, document all flows:
 5. Response returns [data]
 ```
 
+## Architecture Decision Records (ADR)
+
+**When comparing approaches, document the decision formally:**
+
+Use this format when a plan involves choosing between multiple valid approaches:
+
+```markdown
+## ADR: [Decision Title]
+
+**Context:** What situation or requirement prompted this decision?
+
+**Decision:** What approach did we choose?
+
+**Consequences:**
+- **Positive:** [benefits of this choice]
+- **Negative:** [tradeoffs we accept]
+- **Alternatives Considered:** [what we didn't choose and why]
+```
+
+**When to use ADR:**
+- Choosing between architectures (monolith vs microservices)
+- Selecting libraries/frameworks (React vs Vue)
+- Database decisions (SQL vs NoSQL)
+- Authentication approaches (JWT vs sessions)
+
+**Save ADRs to:** `docs/decisions/ADR-NNN-title.md`
+
 ## Red Flags - STOP and Revise
 
 If you find yourself:

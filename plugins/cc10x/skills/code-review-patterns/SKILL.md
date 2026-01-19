@@ -71,6 +71,8 @@ Review in priority order:
 
 ## Security Review Checklist
 
+**Reference:** [OWASP Top 10](https://owasp.org/www-project-top-ten/) - Check against industry standard vulnerabilities.
+
 | Check | Looking For | Example Vulnerability |
 |-------|-------------|----------------------|
 | Input validation | Unvalidated user input | SQL injection, XSS |

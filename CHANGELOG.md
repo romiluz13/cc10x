@@ -1,5 +1,17 @@
 # Changelog
 
+## [5.19.0] - 2025-01-19
+
+### Added
+
+- **OWASP Top 10 Reference**: Added link to OWASP Top 10 in code-review-patterns Security Review Checklist
+- **Minimal Diffs Principle**: Added section to code-generation skill emphasizing focused changes without scope creep
+- **Architecture Decision Records (ADR)**: Added ADR pattern template to planning-patterns for documenting architectural decisions
+
+### Notes
+
+- Console.log check already exists in verification-before-completion/SKILL.md:152
+
 ## [5.18.0] - 2025-01-14
 
 ### Fixed
