@@ -200,4 +200,6 @@ cc10x_V2-main/
 
 # Reference repos (not committed)
 .reference/
+ref/
 audit/
+docs/viral-reddit-post.md
