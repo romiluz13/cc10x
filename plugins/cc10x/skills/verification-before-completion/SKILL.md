@@ -222,6 +222,51 @@ Before marking work complete:
 COMPLETE - All verifications passed with fresh evidence
 ```
 
+## Goal-Backward Lens (GSD-Inspired)
+
+After standard verification passes, apply this additional check:
+
+### Three Questions
+1. **Truths:** What must be OBSERVABLE? (user-facing behaviors)
+2. **Artifacts:** What must EXIST? (files, endpoints, tests)
+3. **Wiring:** What must be CONNECTED? (component → API → database)
+
+### Why This Catches Stubs
+A component can:
+- Exist ✓
+- Pass lint ✓
+- Have tests ✓
+- But NOT be wired to the system ✗
+
+Goal-backward asks: "Does the GOAL work?" not "Did the TASK complete?"
+
+### Quick Check Template
+```
+GOAL: [What user wants to achieve]
+
+TRUTHS (observable):
+- [ ] [User-facing behavior 1]
+- [ ] [User-facing behavior 2]
+
+ARTIFACTS (exist):
+- [ ] [Required file/endpoint 1]
+- [ ] [Required file/endpoint 2]
+
+WIRING (connected):
+- [ ] [Component] → [calls] → [API]
+- [ ] [API] → [queries] → [Database]
+
+Standard verification: exit code 0 ✓
+Goal check: All boxes checked?
+```
+
+### When to Apply
+- After integration-verifier runs
+- After any "feature complete" claim
+- Before marking BUILD workflow as done
+
+**Iron Law unchanged:** Exit code 0 still required. This is an additional verification lens, not a replacement.
+
 ## The Bottom Line
 
 **No shortcuts for verification.**
