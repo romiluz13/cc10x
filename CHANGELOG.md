@@ -1,5 +1,16 @@
 # Changelog
 
+## [5.22.0] - 2025-01-25
+
+### Added
+
+- **Stub Detection Patterns**: Added to verification-before-completion skill
+  - Universal stubs: TODO/FIXME markers, empty returns
+  - React component stubs: placeholder divs, no-op handlers
+  - API route stubs: unimplemented responses, empty JSON
+  - Function stubs: throw errors, debug artifacts
+  - Quick stub check bash commands for pre-completion scanning
+
 ## [5.21.0] - 2025-01-25
 
 ### Added

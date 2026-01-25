@@ -1,6 +1,6 @@
 # cc10x - The Perfect Claude Code Workflow System
 
-> **v5.21.0** | 6 Agents | 12 Skills | 1 Router | Memory Persistence | TDD Enforcement | Anthropic Best Practices
+> **v5.22.0** | 6 Agents | 12 Skills | 1 Router | Memory Persistence | TDD Enforcement | Anthropic Best Practices
 
 **cc10x is what Claude Code should be.** It transforms Claude from a helpful assistant into a disciplined engineering system that never cuts corners.
 
@@ -536,6 +536,7 @@ The silent-failure-hunter agent finds error handling issues with zero tolerance:
 
 ## Version History
 
+- **v5.22.0** - Stub Detection Patterns: Added GSD-inspired stub detection to verification-before-completion. Catches code that exists and passes lint/tests but is actually a placeholder stub.
 - **v5.21.0** - Task-Based Orchestration: Integrated Anthropic Tasks system (TaskCreate, TaskUpdate, TaskList) for workflow orchestration. Resume capability via TaskList() check. blockedBy dependencies for parallel execution. All agents now call TaskUpdate(status="completed").
 - **v5.20.0** - Goal-Backward Lens: Added verification-before-completion enhancements with backward tracing from user request.
 - **v5.19.0** - OWASP Reference + Minimal Diffs + ADR patterns in code-review-patterns and architecture-patterns.
@@ -581,4 +582,4 @@ MIT License
 
 ---
 
-_cc10x v5.21.0 | The Perfect Claude Code Workflow System_
+_cc10x v5.22.0 | The Perfect Claude Code Workflow System_

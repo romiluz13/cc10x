@@ -267,6 +267,51 @@ Goal check: All boxes checked?
 
 **Iron Law unchanged:** Exit code 0 still required. This is an additional verification lens, not a replacement.
 
+## Stub Detection Patterns
+
+After Goal-Backward Lens passes, scan for these stub indicators:
+
+### Universal Stubs
+```bash
+# Check for TODO/placeholder markers
+grep -rE "TODO|FIXME|placeholder|not implemented|coming soon" --include="*.ts" --include="*.tsx" --include="*.js"
+
+# Check for empty returns
+grep -rE "return null|return undefined|return \{\}|return \[\]" --include="*.ts" --include="*.tsx"
+```
+
+### React Component Stubs
+| Pattern | Why It's a Stub |
+|---------|-----------------|
+| `return <div>Placeholder</div>` | Renders nothing useful |
+| `onClick={() => {}}` | Click does nothing |
+| `onSubmit={(e) => e.preventDefault()}` | Only prevents default, no action |
+| `useState` with no setter calls | State never changes |
+
+### API Route Stubs
+| Pattern | Why It's a Stub |
+|---------|-----------------|
+| `return Response.json({ message: "Not implemented" })` | Explicit stub |
+| `return Response.json([])` without DB query | Returns empty, no real data |
+| `return NextResponse.json({})` with no logic | Empty response |
+
+### Function Stubs
+| Pattern | Why It's a Stub |
+|---------|-----------------|
+| `throw new Error("Not implemented")` | Will crash at runtime |
+| `console.log("TODO")` | Debug artifact |
+| `// TODO: implement` | Marked incomplete |
+
+### Quick Stub Check
+```bash
+# Run before claiming completion
+grep -rE "(TODO|FIXME|placeholder|not implemented)" src/
+grep -rE "onClick=\{?\(\) => \{\}\}?" src/
+grep -rE "return (null|undefined|\{\}|\[\])" src/
+```
+
+**If any stub patterns found:** DO NOT claim completion. Fix or document why it's intentional.
+
 ## The Bottom Line
 
 **No shortcuts for verification.**
