@@ -1,6 +1,6 @@
 # cc10x - The Perfect Claude Code Workflow System
 
-> **v5.19.0** | 6 Agents | 11 Skills | 1 Router | Memory Persistence | TDD Enforcement | Anthropic Best Practices
+> **v5.21.0** | 6 Agents | 12 Skills | 1 Router | Memory Persistence | TDD Enforcement | Anthropic Best Practices
 
 **cc10x is what Claude Code should be.** It transforms Claude from a helpful assistant into a disciplined engineering system that never cuts corners.
 
@@ -56,6 +56,66 @@ MEMORY (.claude/cc10x/)
 └── progress.md       ◄── Completed work, remaining tasks
 ```
 
+### Task-Based Orchestration (v5.21.0)
+
+cc10x uses Anthropic's Tasks system (`TaskCreate`, `TaskUpdate`, `TaskList`) for workflow orchestration:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           TASK-BASED WORKFLOW                               │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  1. Router creates task hierarchy:                                          │
+│     ┌──────────────────────────────────────────────────────────┐            │
+│     │ BUILD: {feature}                                         │            │
+│     │   ├── component-builder (pending)                        │            │
+│     │   ├── code-reviewer (blocked by: builder)                │            │
+│     │   ├── silent-failure-hunter (blocked by: builder)        │            │
+│     │   └── integration-verifier (blocked by: reviewer, hunter)│            │
+│     └──────────────────────────────────────────────────────────┘            │
+│                                                                             │
+│  2. Execution follows dependency chain:                                     │
+│     component-builder ──► [code-reviewer ∥ silent-failure-hunter] ──► verifier
+│                             (parallel - both wait on builder)               │
+│                                                                             │
+│  3. Each agent calls TaskUpdate(status="completed") when done               │
+│                                                                             │
+│  4. Resume capability: TaskList() checks for active workflows on restart    │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Skill Usage Matrix
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          SKILL → AGENT MATRIX                               │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  SKILL                          │ CB │ BI │ CR │ IV │ PL │ SFH │            │
+│  ───────────────────────────────┼────┼────┼────┼────┼────┼─────┤            │
+│  session-memory                 │ ✓  │ ✓  │ ✓  │ ✓  │ ✓  │  ✓  │ ALL       │
+│  verification-before-completion │ ✓  │ ✓  │ ✓  │ ✓  │ ✓  │  ✓  │ ALL       │
+│  test-driven-development        │ ✓  │ ✓  │    │    │    │     │ Builders  │
+│  code-generation                │ ✓  │    │    │    │    │     │ Builder   │
+│  debugging-patterns             │    │ ✓  │    │ ✓  │    │     │ Debug     │
+│  code-review-patterns           │    │    │ ✓  │    │    │  ✓  │ Review    │
+│  planning-patterns              │    │    │    │    │ ✓  │     │ Planner   │
+│  architecture-patterns          │ C  │ C  │ C  │ ✓  │ ✓  │     │ Arch      │
+│  frontend-patterns              │ C  │ C  │ C  │ C  │ C  │     │ Frontend  │
+│  brainstorming                  │    │    │    │    │ C  │     │ Ideation  │
+│  github-research                │    │ C  │    │    │ C  │     │ External  │
+│  cc10x-router                   │ ENTRY POINT (not loaded by agents)       │
+│                                                                             │
+│  Legend: CB=component-builder, BI=bug-investigator, CR=code-reviewer        │
+│          IV=integration-verifier, PL=planner, SFH=silent-failure-hunter     │
+│          ✓=Always loaded, C=Conditionally loaded                            │
+│                                                                             │
+│  VALIDATION: 12 skills, 6 agents, 0 orphans                                 │
+│              All skills reachable via router → workflow → agent chain       │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
 ---
 
 ## The 6 Agents
@@ -79,7 +139,7 @@ MEMORY (.claude/cc10x/)
 
 ---
 
-## The 11 Skills
+## The 12 Skills
 
 Skills are **loaded by agents**, not invoked directly. This prevents Claude from picking skills randomly.
 
@@ -94,6 +154,7 @@ Skills are **loaded by agents**, not invoked directly. This prevents Claude from
 | **brainstorming** | - | planner (idea exploration) | Explore ideas before implementation |
 | **architecture-patterns** | planner, integration-verifier | code-reviewer, component-builder, bug-investigator | System design, API design |
 | **frontend-patterns** | - | code-reviewer, component-builder, bug-investigator, integration-verifier, planner | UX, accessibility, visual design |
+| **github-research** | - | planner, bug-investigator (external tech/debug) | External package/library research |
 | **verification-before-completion** | ALL agents | - | Evidence before claims |
 | **cc10x-router** | ENTRY POINT | - | Routes to correct workflow |
 
@@ -457,7 +518,7 @@ The silent-failure-hunter agent finds error handling issues with zero tolerance:
 - `plugins/cc10x/agents/planner.md`
 - `plugins/cc10x/agents/silent-failure-hunter.md`
 
-### Skills (11 files)
+### Skills (12 files)
 - `plugins/cc10x/skills/cc10x-router/SKILL.md`
 - `plugins/cc10x/skills/session-memory/SKILL.md`
 - `plugins/cc10x/skills/test-driven-development/SKILL.md`
@@ -468,12 +529,17 @@ The silent-failure-hunter agent finds error handling issues with zero tolerance:
 - `plugins/cc10x/skills/brainstorming/SKILL.md`
 - `plugins/cc10x/skills/architecture-patterns/SKILL.md`
 - `plugins/cc10x/skills/frontend-patterns/SKILL.md`
+- `plugins/cc10x/skills/github-research/SKILL.md`
 - `plugins/cc10x/skills/verification-before-completion/SKILL.md`
 
 ---
 
 ## Version History
 
+- **v5.21.0** - Task-Based Orchestration: Integrated Anthropic Tasks system (TaskCreate, TaskUpdate, TaskList) for workflow orchestration. Resume capability via TaskList() check. blockedBy dependencies for parallel execution. All agents now call TaskUpdate(status="completed").
+- **v5.20.0** - Goal-Backward Lens: Added verification-before-completion enhancements with backward tracing from user request.
+- **v5.19.0** - OWASP Reference + Minimal Diffs + ADR patterns in code-review-patterns and architecture-patterns.
+- **v5.18.0** - Two-Phase github-research: Mandatory research execution BEFORE planner when external tech detected.
 - **v5.13.1** - Bulletproof chain enforcement: Added PARALLEL_COMPLETE+SYNC_NEXT to enforcement rules, explicit 3-step parallel sync, clarified code-reviewer output selection.
 - **v5.13.0** - Parallel agent execution: code-reviewer and silent-failure-hunter now run simultaneously in BUILD workflow (~30-50% faster review phase).
 - **v5.12.1** - Fixed orphan skills: Added brainstorming and frontend-patterns to planner, frontend-patterns to component-builder. All 10 skills now invokable.
@@ -515,4 +581,4 @@ MIT License
 
 ---
 
-_cc10x v5.13.1 | The Perfect Claude Code Workflow System_
+_cc10x v5.21.0 | The Perfect Claude Code Workflow System_
