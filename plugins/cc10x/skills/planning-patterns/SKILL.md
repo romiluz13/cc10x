@@ -412,6 +412,62 @@ Edit(file_path=".claude/cc10x/progress.md",
 
 **This is non-negotiable.** Memory is the single source of truth.
 
+## Task-Based Execution Tracking
+
+After saving plan, create execution tasks for tracking progress:
+
+### Step 1: Create Parent Task
+```
+TaskCreate({
+  subject: "Execute: {feature} Plan",
+  description: "Plan file: docs/plans/YYYY-MM-DD-{feature}-plan.md\n\n{brief_plan_summary}",
+  activeForm: "Executing {feature} plan"
+})
+# Returns parent_task_id
+```
+
+### Step 2: Create Phase Tasks with Dependencies
+```
+# For each phase in plan:
+TaskCreate({
+  subject: "Phase 1: {phase_title}",
+  description: "From plan: docs/plans/YYYY-MM-DD-{feature}-plan.md\n\n{phase_details}",
+  activeForm: "Working on {phase_title}"
+})
+# Returns phase_1_id
+
+TaskCreate({
+  subject: "Phase 2: {phase_title}",
+  description: "From plan: docs/plans/YYYY-MM-DD-{feature}-plan.md\n\n{phase_details}",
+  activeForm: "Working on {phase_title}"
+})
+TaskUpdate({ taskId: phase_2_id, addBlockedBy: [phase_1_id] })
+
+# Continue for all phases...
+```
+
+### Step 3: Store Task IDs in Memory
+
+Update `.claude/cc10x/progress.md` with task IDs:
+```
+Edit(file_path=".claude/cc10x/progress.md",
+     old_string="## Current Workflow",
+     new_string="## Current Workflow
+PLAN → Execution
+
+## Active Workflow Tasks
+
+| Task ID | Subject | Status | Blocked By |
+|---------|---------|--------|------------|
+| {parent_id} | Execute: {feature} Plan | pending | - |
+| {phase_1_id} | Phase 1: {title} | pending | - |
+| {phase_2_id} | Phase 2: {title} | pending | {phase_1_id} |
+
+Last Updated: {timestamp}")
+```
+
+**WHY:** Tasks enable resume capability across sessions. If conversation compacts or session ends, TaskList() will show where to continue.
+
 ## Execution Handoff
 
 After saving the plan, offer execution choice:

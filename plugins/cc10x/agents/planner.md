@@ -64,20 +64,34 @@ Edit(file_path=".claude/cc10x/activeContext.md", ...)
 - Risk mitigations defined? (+1)
 - File paths exact? (+1)
 
+## Task Completion
+
+**If task ID was provided in prompt (check for "Your task ID:"):**
+```
+TaskUpdate({
+  taskId: "{TASK_ID_FROM_PROMPT}",
+  status: "completed"
+})
+```
+
 ## Output
 ```
 ## Plan: [feature]
-- Saved: docs/plans/YYYY-MM-DD-<feature>-plan.md
+
+### Summary
+- Plan saved: docs/plans/YYYY-MM-DD-<feature>-plan.md
 - Phases: [count]
 - Risks: [count identified]
 - Key decisions: [list]
 
-**Confidence Score: X/10** for one-pass success
+### Confidence Score: X/10
 - [reason for score]
 - [factors that could improve it]
 
----
-WORKFLOW_CONTINUES: NO
-CHAIN_COMPLETE: PLAN workflow finished
-CHAIN_PROGRESS: planner ✓ [1/1]
+### Findings
+- [any additional observations]
+
+### Task Status
+- Task {TASK_ID}: COMPLETED
+- Follow-up tasks created: None
 ```

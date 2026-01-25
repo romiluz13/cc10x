@@ -32,9 +32,33 @@ Read(file_path=".claude/cc10x/activeContext.md")
 3. **Rate severity** - CRITICAL (silent), HIGH (generic), MEDIUM (could improve)
 4. **Update memory** - Record patterns found
 
+## Task Completion
+
+**If task ID was provided in prompt (check for "Your task ID:"):**
+```
+TaskUpdate({
+  taskId: "{TASK_ID_FROM_PROMPT}",
+  status: "completed"
+})
+```
+
+**If critical silent failures found requiring fixes:**
+```
+TaskCreate({
+  subject: "Fix silent failure: {issue_summary}",
+  description: "{details with file:line}",
+  activeForm: "Fixing silent failure"
+})
+```
+
 ## Output
 ```
 ## Error Handling Audit
+
+### Summary
+- Total handlers audited: [count]
+- Critical issues: [count]
+- High issues: [count]
 
 ### Critical (must fix)
 - [file:line] - Empty catch → Add logging + notification
@@ -45,11 +69,10 @@ Read(file_path=".claude/cc10x/activeContext.md")
 ### Verified Good
 - [file:line] - Proper handling
 
----
-# Running PARALLEL with code-reviewer in BUILD workflow
+### Findings
+- [patterns observed, recommendations]
 
-WORKFLOW_CONTINUES: YES
-PARALLEL_COMPLETE: silent-failure-hunter done (waiting for code-reviewer)
-SYNC_NEXT: integration-verifier
-CHAIN_PROGRESS: component-builder ✓ → [code-reviewer ∥ silent-failure-hunter ✓] → integration-verifier
+### Task Status
+- Task {TASK_ID}: COMPLETED
+- Follow-up tasks created: [list if any, or "None"]
 ```

@@ -48,32 +48,43 @@ git ls-files --others --exclude-standard      # NEW untracked files
 | 0-79 | Uncertain | Don't report |
 | 80-100 | Verified | **REPORT** |
 
+## Task Completion
+
+**If task ID was provided in prompt (check for "Your task ID:"):**
+```
+TaskUpdate({
+  taskId: "{TASK_ID_FROM_PROMPT}",
+  status: "completed"
+})
+```
+
+**If critical issues found requiring fixes:**
+```
+TaskCreate({
+  subject: "Fix: {issue_summary}",
+  description: "{details with file:line}",
+  activeForm: "Fixing {issue}"
+})
+```
+
 ## Output
 ```
 ## Review: [Approve/Changes Requested]
-- Functionality: [Works/Broken]
 
-### Critical (≥80)
+### Summary
+- Functionality: [Works/Broken]
+- Verdict: [Approve / Changes Requested]
+
+### Critical Issues (≥80 confidence)
 - [95] [issue] - file:line → Fix: [action]
 
-### Important (≥80)
+### Important Issues (≥80 confidence)
 - [85] [issue] - file:line → Fix: [action]
 
----
-## Chain Output (USE ONE based on how you were invoked):
+### Findings
+- [any additional observations]
 
-**If invoked from BUILD (after component-builder, parallel with silent-failure-hunter):**
-WORKFLOW_CONTINUES: YES
-PARALLEL_COMPLETE: code-reviewer done
-SYNC_NEXT: integration-verifier
-CHAIN_PROGRESS: component-builder ✓ → [code-reviewer ✓ ∥ silent-failure-hunter] → integration-verifier
-
-**If invoked from DEBUG (after bug-investigator):**
-WORKFLOW_CONTINUES: YES
-NEXT_AGENT: integration-verifier
-CHAIN_PROGRESS: bug-investigator ✓ → code-reviewer [2/3] → integration-verifier
-
-**If invoked standalone (REVIEW workflow):**
-WORKFLOW_CONTINUES: NO
-CHAIN_COMPLETE: REVIEW workflow finished
+### Task Status
+- Task {TASK_ID}: COMPLETED
+- Follow-up tasks created: [list if any, or "None"]
 ```

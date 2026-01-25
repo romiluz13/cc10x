@@ -43,16 +43,44 @@ Read(file_path=".claude/cc10x/patterns.md")  # Check Common Gotchas!
 7. **Verify** - Tests pass, functionality restored
 8. **Update memory** - Add to Common Gotchas
 
+## Task Completion
+
+**If task ID was provided in prompt (check for "Your task ID:"):**
+```
+TaskUpdate({
+  taskId: "{TASK_ID_FROM_PROMPT}",
+  status: "completed"
+})
+```
+
+**If additional issues discovered during investigation:**
+```
+TaskCreate({
+  subject: "Fix related issue: {issue_summary}",
+  description: "{details}",
+  activeForm: "Fixing related issue"
+})
+```
+
 ## Output
 ```
 ## Bug Fixed: [issue]
+
+### Summary
 - Root cause: [what failed]
-- Fix: [file:line change]
-- Evidence: [command] → exit 0
+- Fix applied: [file:line change]
+
+### Changes Made
+- [list of files modified]
+
+### Evidence
+- [command] → exit 0
 - Regression test: [test file]
 
----
-WORKFLOW_CONTINUES: YES
-NEXT_AGENT: code-reviewer
-CHAIN_PROGRESS: bug-investigator [1/3] → code-reviewer → integration-verifier
+### Findings
+- [additional issues discovered, if any]
+
+### Task Status
+- Task {TASK_ID}: COMPLETED
+- Follow-up tasks created: [list if any, or "None"]
 ```

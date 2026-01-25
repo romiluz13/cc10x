@@ -32,9 +32,33 @@ Read(file_path=".claude/cc10x/progress.md")  # What was built
 4. **Test edges** - Network failures, invalid responses, auth expiry
 5. **Update memory** - Save verification results
 
+## Task Completion
+
+**If task ID was provided in prompt (check for "Your task ID:"):**
+```
+TaskUpdate({
+  taskId: "{TASK_ID_FROM_PROMPT}",
+  status: "completed"
+})
+```
+
+**If verification fails and fixes needed:**
+```
+TaskCreate({
+  subject: "Fix verification failure: {issue_summary}",
+  description: "{details with scenario and error}",
+  activeForm: "Fixing verification issue"
+})
+```
+
 ## Output
 ```
 ## Verification: [PASS/FAIL]
+
+### Summary
+- Overall: [PASS/FAIL]
+- Scenarios Passed: X/Y
+- Blockers: [if any]
 
 ### Scenarios
 | Scenario | Result | Evidence |
@@ -42,14 +66,10 @@ Read(file_path=".claude/cc10x/progress.md")  # What was built
 | [name] | PASS | exit 0 |
 | [name] | FAIL | exit 1 - [error] |
 
-### Summary
-- Passed: X/Y
-- Blockers: [if any]
+### Findings
+- [observations about integration quality]
 
----
-WORKFLOW_CONTINUES: NO
-CHAIN_COMPLETE: [BUILD/DEBUG] workflow finished
-# BUILD chain: component-builder ✓ → [code-reviewer ∥ silent-failure-hunter] ✓ → integration-verifier ✓ [4/4]
-# DEBUG chain: bug-investigator ✓ → code-reviewer ✓ → integration-verifier ✓ [3/3]
-CHAIN_PROGRESS: [context-dependent - see above]
+### Task Status
+- Task {TASK_ID}: COMPLETED
+- Follow-up tasks created: [list if any, or "None"]
 ```

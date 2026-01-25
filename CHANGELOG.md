@@ -1,5 +1,49 @@
 # Changelog
 
+## [5.21.0] - 2025-01-25
+
+### Added
+
+- **Tasks System Integration**: Replaced text-based workflow signals with Anthropic's new Tasks system
+  - Router creates task hierarchy with `TaskCreate` at workflow start
+  - Agents call `TaskUpdate(status="completed")` when done
+  - Dependencies managed via `blockedBy` for proper chain execution
+  - `TaskList()` check at startup enables resume capability across sessions
+
+- **Task-Based Orchestration**: New orchestration pattern for all 4 workflows
+  - BUILD: component-builder → [code-reviewer ∥ silent-failure-hunter] → integration-verifier
+  - DEBUG: bug-investigator → code-reviewer → integration-verifier
+  - REVIEW: code-reviewer (single agent)
+  - PLAN: planner (single agent)
+
+- **Chain Execution Loop**: Task-based execution replacing text signal parsing
+  - Parallel execution when multiple tasks unblocked simultaneously
+  - Sync points via blockedBy dependencies
+  - Clear completion criteria: all tasks status="completed"
+
+- **New Gates**: TASKS_CHECKED, TASKS_CREATED, ALL_TASKS_COMPLETED
+
+### Removed
+
+- **Text-Based Workflow Signals**: Removed from all 6 agents
+  - WORKFLOW_CONTINUES, NEXT_AGENT, PARALLEL_AGENTS
+  - PARALLEL_COMPLETE, SYNC_NEXT, CHAIN_PROGRESS, CHAIN_COMPLETE
+
+### Changed
+
+- **Agent Output Format**: Simplified to Summary, Changes, Findings, Task Status
+- **planning-patterns**: Added Task-Based Execution Tracking section
+- **session-memory**: Added Active Workflow Tasks table to progress.md structure
+
+## [5.20.0] - 2025-01-20
+
+### Added
+
+- **Goal-Backward Lens**: Added to verification-before-completion skill
+  - TRUTHS: What observable user-facing behaviors exist?
+  - ARTIFACTS: What files, endpoints, tests were created?
+  - WIRING: What's connected (component → API → database)?
+
 ## [5.19.0] - 2025-01-19
 
 ### Added

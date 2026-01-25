@@ -40,15 +40,40 @@ Check for plan reference → If exists, follow plan tasks in order.
 - DB: Migrations? N+1 queries? Transactions?
 - All: Edge cases listed? Error handling planned?
 
+## Task Completion
+
+**If task ID was provided in prompt (check for "Your task ID:"):**
+```
+TaskUpdate({
+  taskId: "{TASK_ID_FROM_PROMPT}",
+  status: "completed"
+})
+```
+
+**If issues found requiring follow-up:**
+```
+TaskCreate({
+  subject: "Follow-up: {issue_summary}",
+  description: "{details}",
+  activeForm: "Addressing {issue}"
+})
+```
+
 ## Output
 ```
 ## Built: [feature]
+
+### Summary
 - TDD: RED (exit 1) → GREEN (exit 0) → REFACTOR (exit 0)
+
+### Changes Made
 - Files: [created/modified]
 - Tests: [added]
 
----
-WORKFLOW_CONTINUES: YES
-PARALLEL_AGENTS: code-reviewer, silent-failure-hunter
-CHAIN_PROGRESS: component-builder [1/4] → [code-reviewer ∥ silent-failure-hunter] → integration-verifier
+### Findings
+- [any issues or recommendations]
+
+### Task Status
+- Task {TASK_ID}: COMPLETED
+- Follow-up tasks created: [list if any, or "None"]
 ```

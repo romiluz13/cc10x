@@ -374,6 +374,19 @@ Reference when needed:
 ## Current Workflow
 [PLAN | BUILD | REVIEW | DEBUG]
 
+## Active Workflow Tasks
+
+**Task-based tracking for resume capability:**
+
+| Task ID | Subject | Status | Blocked By |
+|---------|---------|--------|------------|
+| {id}    | {subject} | pending/in_progress/completed | {deps} |
+
+Last Updated: {timestamp}
+Workflow: BUILD/DEBUG/REVIEW/PLAN
+
+**Note:** Use `TaskList()` to get current state. This table is for reference/backup.
+
 ## Completed
 - [x] [Task 1] - [verification evidence]
 - [x] [Task 2] - [verification evidence]
