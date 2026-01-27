@@ -1,7 +1,7 @@
 ---
 name: github-research
 description: "Internal skill. Use cc10x-router for all development tasks."
-allowed-tools: WebFetch, mcp__octocode__githubSearchCode, mcp__octocode__githubSearchRepositories, mcp__octocode__githubViewRepoStructure, mcp__octocode__githubGetFileContent, mcp__octocode__githubSearchPullRequests, mcp__octocode__packageSearch, mcp__context7__resolve-library-id, mcp__context7__query-docs
+allowed-tools: WebFetch, mcp__octocode__githubSearchCode, mcp__octocode__githubSearchRepositories, mcp__octocode__githubViewRepoStructure, mcp__octocode__githubGetFileContent, mcp__octocode__githubSearchPullRequests, mcp__octocode__packageSearch, mcp__context7__resolve-library-id, mcp__context7__query-docs, Read, Write, Edit, Bash
 ---
 
 # External Code Research
@@ -135,3 +135,101 @@ The router executes research BEFORE invoking agents. This is NOT a hint - it's a
 - `code-reviewer` - Review focuses on code itself
 - `silent-failure-hunter` - Speed is priority
 - `integration-verifier` - Verification, not research
+
+## Save Research (MANDATORY)
+
+**Research insights are LOST after context compaction unless saved.** This section is NON-NEGOTIABLE.
+
+### Step 1: Save Research File
+
+```
+# Create directory (permission-free)
+Bash(command="mkdir -p docs/research")
+
+# Save research using Write tool (permission-free for new files)
+Write(file_path="docs/research/YYYY-MM-DD-<topic>-research.md", content="[full research from Output Format above]")
+```
+
+**File naming convention:** `YYYY-MM-DD-<topic>-research.md`
+- Use today's date
+- Use kebab-case for topic (e.g., `claude-code-tasks-system`, `react-server-components`)
+
+### Step 2: Update Memory (Links Research to Memory)
+
+**Use Edit tool (permission-free):**
+
+```
+# First read existing content
+Read(file_path=".claude/cc10x/activeContext.md")
+
+# Then append to Research References section using Edit
+Edit(file_path=".claude/cc10x/activeContext.md",
+     old_string="## Research References",
+     new_string="## Research References
+| [Topic] | docs/research/YYYY-MM-DD-topic-research.md | [Key insight from findings] |")
+```
+
+**If Research References section doesn't exist, add it:**
+```
+Edit(file_path=".claude/cc10x/activeContext.md",
+     old_string="## Last Updated",
+     new_string="## Research References
+| Topic | File | Key Insight |
+|-------|------|-------------|
+| [Topic] | docs/research/YYYY-MM-DD-topic-research.md | [Key insight] |
+
+## Last Updated")
+```
+
+### Step 3: Extract Patterns (Auto-Promote Learnings)
+
+**If research found gotchas or reusable patterns, add to patterns.md:**
+
+```
+Read(file_path=".claude/cc10x/patterns.md")
+
+Edit(file_path=".claude/cc10x/patterns.md",
+     old_string="## Common Gotchas",
+     new_string="## Common Gotchas
+- [Gotcha from research]: [Solution] (Source: docs/research/YYYY-MM-DD-topic-research.md)")
+```
+
+**What to extract:**
+- Error patterns and their solutions
+- API quirks and workarounds
+- Integration gotchas
+- Best practices discovered
+
+**What NOT to extract:**
+- Task-specific implementation details
+- One-time findings not applicable to future work
+- Raw code snippets without context
+
+### Step 4: Commit Research (Optional but Recommended)
+
+```
+Bash(command="git add docs/research/*.md")
+Bash(command="git commit -m 'docs: add <topic> research'")
+```
+
+## Red Flags - Research NOT Complete
+
+If you finish research WITHOUT:
+- [ ] Saving to `docs/research/YYYY-MM-DD-topic-research.md`
+- [ ] Updating `activeContext.md` with research reference
+- [ ] Extracting patterns to `patterns.md` (if applicable)
+
+**STOP. Research is NOT complete. Go back and save.**
+
+## Why This Matters
+
+```
+WITHOUT SAVE:
+Research → Context compaction → LOST FOREVER
+
+WITH SAVE:
+Research → docs/research/ → Memory reference → PERSISTS ACROSS SESSIONS
+         → patterns.md → LEARNINGS COMPOUND
+```
+
+**Research without documentation is wasted effort.**

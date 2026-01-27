@@ -328,6 +328,11 @@ Reference when needed:
 ## User Preferences Discovered
 - [Preference]: [Details]
 
+## Research References
+| Topic | File | Key Insight |
+|-------|------|-------------|
+| [Research topic] | docs/research/YYYY-MM-DD-topic-research.md | [One-line key insight] |
+
 ## Last Updated
 [timestamp]
 ```
@@ -353,6 +358,7 @@ Reference when needed:
 
 ## Common Gotchas
 - [Gotcha]: [How to avoid / solution]
+- [Gotcha from research]: [Solution] (Source: docs/research/YYYY-MM-DD-topic.md)
 
 ## API Patterns
 - [Endpoint pattern]: [Convention used]
@@ -462,6 +468,7 @@ How to structure code        → patterns.md
 Common gotchas to avoid      → patterns.md
 What's done / remaining      → progress.md
 Verification evidence        → progress.md
+Prior research on topic      → activeContext.md (Research References) → docs/research/
 ```
 
 ### Decision Integration
