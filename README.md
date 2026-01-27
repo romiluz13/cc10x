@@ -6,10 +6,6 @@
 
 ---
 
-<a href="https://github.video/v/romiluz13/cc10x">
-  <img src="https://github.video/badge/romiluz13/cc10x.svg" alt="Watch the video" />
-</a>
-
 ## Why cc10x is Perfect
 
 ### The Problem with Vanilla Claude Code
