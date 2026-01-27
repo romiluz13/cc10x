@@ -69,16 +69,31 @@ TaskList()  # Check for pending/in-progress workflow tasks
 
 ### BUILD Workflow Tasks
 ```
+# 0. Check if following a plan (from activeContext.md)
+# If activeContext contains "Plan Reference:" or "Execute:" with plan path:
+#   → Extract plan_file path (e.g., docs/plans/2024-01-27-auth-plan.md)
+#   → Include in task metadata for context preservation
+
 # 1. Parent workflow task
 TaskCreate({
   subject: "BUILD: {feature_summary}",
-  description: "User request: {request}\n\nWorkflow: BUILD\nChain: component-builder → [code-reviewer ∥ silent-failure-hunter] → integration-verifier",
-  activeForm: "Building {feature}"
+  description: "User request: {request}\n\nWorkflow: BUILD\nChain: component-builder → [code-reviewer ∥ silent-failure-hunter] → integration-verifier\n\n**Plan:** {plan_file or 'N/A'}",
+  activeForm: "Building {feature}",
+  metadata: {
+    workflow: "BUILD",
+    feature: "{feature}",
+    planFile: "{plan_file or null}"  # Links task to plan for context recovery
+  }
 })
 # Returns workflow_task_id
 
 # 2. Agent tasks with dependencies
-TaskCreate({ subject: "component-builder: Implement {feature}", description: "Build the feature per user request", activeForm: "Building components" })
+TaskCreate({
+  subject: "component-builder: Implement {feature}",
+  description: "Build the feature per user request\n\n**Plan:** {plan_file or 'N/A'}",
+  activeForm: "Building components",
+  metadata: { agent: "component-builder", planFile: "{plan_file or null}" }
+})
 # Returns builder_task_id
 
 TaskCreate({ subject: "code-reviewer: Review implementation", description: "Review code quality, patterns, security", activeForm: "Reviewing code" })

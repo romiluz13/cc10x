@@ -293,7 +293,9 @@ If you find yourself:
 
 ---
 
-## Phase 1: Foundation
+## Phase 1: [Demonstrable Milestone]
+
+> **Exit Criteria:** [What must be true when this phase is complete - e.g., "User can log in and receive JWT"]
 
 ### Task 1: [First Component]
 
@@ -421,7 +423,12 @@ After saving plan, create execution tasks for tracking progress:
 TaskCreate({
   subject: "Execute: {feature} Plan",
   description: "Plan file: docs/plans/YYYY-MM-DD-{feature}-plan.md\n\n{brief_plan_summary}",
-  activeForm: "Executing {feature} plan"
+  activeForm: "Executing {feature} plan",
+  metadata: {
+    planFile: "docs/plans/YYYY-MM-DD-{feature}-plan.md",
+    workflow: "PLAN_EXECUTION",
+    feature: "{feature}"
+  }
 })
 # Returns parent_task_id
 ```
@@ -431,15 +438,25 @@ TaskCreate({
 # For each phase in plan:
 TaskCreate({
   subject: "Phase 1: {phase_title}",
-  description: "From plan: docs/plans/YYYY-MM-DD-{feature}-plan.md\n\n{phase_details}",
-  activeForm: "Working on {phase_title}"
+  description: "**Plan:** docs/plans/YYYY-MM-DD-{feature}-plan.md\n**Section:** Phase 1\n**Exit Criteria:** {demonstrable_milestone}\n\n{phase_details}",
+  activeForm: "Working on {phase_title}",
+  metadata: {
+    planFile: "docs/plans/YYYY-MM-DD-{feature}-plan.md",
+    phase: "1",
+    phaseTitle: "{phase_title}"
+  }
 })
 # Returns phase_1_id
 
 TaskCreate({
   subject: "Phase 2: {phase_title}",
-  description: "From plan: docs/plans/YYYY-MM-DD-{feature}-plan.md\n\n{phase_details}",
-  activeForm: "Working on {phase_title}"
+  description: "**Plan:** docs/plans/YYYY-MM-DD-{feature}-plan.md\n**Section:** Phase 2\n**Exit Criteria:** {demonstrable_milestone}\n\n{phase_details}",
+  activeForm: "Working on {phase_title}",
+  metadata: {
+    planFile: "docs/plans/YYYY-MM-DD-{feature}-plan.md",
+    phase: "2",
+    phaseTitle: "{phase_title}"
+  }
 })
 TaskUpdate({ taskId: phase_2_id, addBlockedBy: [phase_1_id] })
 
@@ -467,6 +484,35 @@ Last Updated: {timestamp}")
 ```
 
 **WHY:** Tasks enable resume capability across sessions. If conversation compacts or session ends, TaskList() will show where to continue.
+
+## Plan-Task Linkage (Context Preservation)
+
+**The relationship between Plan Files and Tasks:**
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  PLAN FILE (Persistent - Source of Truth)                           │
+│  Location: docs/plans/YYYY-MM-DD-{feature}-plan.md                 │
+│  Contains: Full implementation details, TDD steps, file paths      │
+│  Survives: Session close, context compaction, conversation reset   │
+└─────────────────────────────────────────────────────────────────────┘
+                              ↕ metadata.planFile links them
+┌─────────────────────────────────────────────────────────────────────┐
+│  TASKS (Session-Scoped - Execution Engine)                          │
+│  Storage: In-memory (ephemeral per session)                        │
+│  Contains: Status, dependencies, progress tracking                 │
+│  Survives: Within session only (unless using TASK_LIST_ID)         │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**metadata.planFile is CRITICAL:** If context compacts mid-execution, the task description contains enough info to:
+1. Find the plan file
+2. Locate the exact phase/task
+3. Continue without asking questions
+
+**Phase Exit Criteria are CRITICAL:** Each phase MUST have a demonstrable milestone (not arbitrary naming):
+- ❌ "Phase 1: Foundation" - Vague, when is it done?
+- ✅ "Phase 1: User can authenticate" - Demonstrable, testable
 
 ## Execution Handoff
 
