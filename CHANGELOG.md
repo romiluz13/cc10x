@@ -1,5 +1,32 @@
 # Changelog
 
+## [5.24.0] - 2025-01-27
+
+### Added
+
+- **Research Documentation Persistence**: Research insights no longer lost after context compaction
+  - `github-research` skill: Added mandatory 4-step save process
+  - `cc10x-router`: Added `RESEARCH_PERSISTED` gate to workflows
+  - `session-memory`: Added Research References table to activeContext template
+  - Research saved to `docs/research/YYYY-MM-DD-topic-research.md`
+  - Auto-extraction of gotchas to `patterns.md` with source tracking
+
+### Changed
+
+- **THREE-PHASE Research Pattern**: Replaced TWO-PHASE with persistence step
+  - Phase 1: Execute research (octocode tools)
+  - Phase 2: PERSIST to docs/research/ + update memory
+  - Phase 3: Pass results to agent
+
+## [5.23.0] - 2025-01-27
+
+### Added
+
+- **Plan-Task Linkage**: Tasks now include `metadata.planFile` for context recovery
+  - BUILD workflow tasks reference plan file in description and metadata
+  - Enables agents to access original plan during execution
+  - Supports resume capability with full plan context
+
 ## [5.22.0] - 2025-01-25
 
 ### Added
