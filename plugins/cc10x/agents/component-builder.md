@@ -28,7 +28,7 @@ If task metadata contains `planFile`:
 
 **CANNOT proceed without reading plan when planFile exists in metadata.**
 
-**Note:** Self-enforced gate. External validation by router may or may not occur depending on orchestration mechanism.
+**Enforcement:** You are responsible for following this gate strictly. Router may validate plan adherence after completion.
 
 ## Skill Triggers
 

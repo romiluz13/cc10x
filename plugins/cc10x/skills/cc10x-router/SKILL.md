@@ -222,7 +222,7 @@ When agent returns:
 
 **Why soft validation:** Hard blocking would break workflows. Soft validation surfaces the issue for iteration.
 
-**Note:** This validation occurs IF router receives agent output when Task() completes. Orchestration mechanism TBD.
+**How it works:** Task() is synchronous - router waits for agent to complete and receives its output before proceeding to next agent.
 
 **Skill triggers for agents (DETECT AND PASS AS SKILL_HINTS):**
 
