@@ -213,6 +213,17 @@ SKILL_HINTS: {detected skills from table below - agent MUST load these}
 **TASK ID is REQUIRED.** Agent MUST call `TaskUpdate(taskId, status="completed")` when done.
 **SKILL_HINTS are MANDATORY.** Agent MUST call `Skill(skill="...")` for each hint immediately after loading memory.
 
+**Post-Agent Validation (After agent completes):**
+
+When agent returns:
+1. Check agent output for skill loading evidence
+2. Each SKILL_HINT should appear in output as "Loading skill: {skill}" or similar
+3. If skills not loaded: Note for improvement, continue workflow (don't block)
+
+**Why soft validation:** Hard blocking would break workflows. Soft validation surfaces the issue for iteration.
+
+**Note:** This validation occurs IF router receives agent output when Task() completes. Orchestration mechanism TBD.
+
 **Skill triggers for agents (DETECT AND PASS AS SKILL_HINTS):**
 
 | Detected Pattern | Skill | Agents |

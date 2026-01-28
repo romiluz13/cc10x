@@ -19,14 +19,16 @@ Read(file_path=".claude/cc10x/activeContext.md")
 ```
 Check for plan reference → If exists, follow plan tasks in order.
 
-**SELF-DISCIPLINE: Plan File Reading**
+**GATE: Plan File Verification**
 
 If task metadata contains `planFile`:
 1. Read(file_path="{metadata.planFile}")
 2. Confirm plan phase/task matches your task ID
 3. Follow plan's specific steps (file paths, test commands, exact code)
 
-**You are responsible for following the plan. No external enforcement exists.**
+**CANNOT proceed without reading plan when planFile exists in metadata.**
+
+**Note:** Self-enforced gate. External validation by router may or may not occur depending on orchestration mechanism.
 
 ## Skill Triggers
 
