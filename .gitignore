@@ -9,10 +9,12 @@
 # Planning and improvement docs (internal only)
 REFACTORING-PLAN.md
 PROMPT-ENGINEERING-IMPROVEMENTS.md
+ORCHESTRATION_INVESTIGATION.md
 *-PLAN.md
 *-IMPROVEMENTS.md
 *-AUDIT.md
 *-ANALYSIS.md
+*-INVESTIGATION.md
 *-NOTES.md
 *-DRAFT.md
 *-WIP.md
