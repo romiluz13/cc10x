@@ -34,7 +34,7 @@ description: |
 | REVIEW | code-reviewer |
 | PLAN | planner |
 
-**∥ = PARALLEL** - code-reviewer (read-only review) and silent-failure-hunter (fixes CRITICAL issues inline) run simultaneously
+**∥ = PARALLEL** - code-reviewer and silent-failure-hunter - run simultaneously
 
 ## Memory (PERMISSION-FREE)
 
@@ -198,15 +198,30 @@ Research is a PREREQUISITE, not a hint. Planner cannot skip it.
 
 ## Agent Invocation
 
-**Pass task ID and context to each agent (see Chain Execution Loop for full pattern):**
+**Pass task ID, plan file, and context to each agent:**
 ```
 Task(subagent_type="cc10x:component-builder", prompt="
-Your task ID: {taskId}
-User request: {request}
-Requirements: {from AskUserQuestion}
-Memory: {from activeContext.md}
-Patterns: {from patterns.md}
-SKILL_HINTS: {detected skills from table below - agent MUST load these}
+## Task Context
+- **Task ID:** {taskId}
+- **Plan File:** {planFile or 'None'}
+
+## User Request
+{request}
+
+## Requirements
+{from AskUserQuestion or 'See plan file'}
+
+## Memory Summary
+{brief summary from activeContext.md}
+
+## Project Patterns
+{key patterns from patterns.md}
+
+## SKILL_HINTS (Load IMMEDIATELY after memory)
+{detected skills from table below}
+
+---
+Execute the task. When complete, call TaskUpdate(taskId, status='completed').
 ")
 ```
 
@@ -215,12 +230,51 @@ SKILL_HINTS: {detected skills from table below - agent MUST load these}
 
 **Post-Agent Validation (After agent completes):**
 
-When agent returns:
-1. Check agent output for skill loading evidence
-2. Each SKILL_HINT should appear in output as "Loading skill: {skill}" or similar
-3. If skills not loaded: Note for improvement, continue workflow (don't block)
+When agent returns, verify output quality before proceeding.
 
-**Why soft validation:** Hard blocking would break workflows. Soft validation surfaces the issue for iteration.
+### Required Output by Agent
+
+| Agent | Required Sections | Required Evidence |
+|-------|-------------------|-------------------|
+| component-builder | TDD Evidence (RED + GREEN) | Exit codes: 1 (RED), 0 (GREEN) |
+| code-reviewer | Critical Issues, Verdict | Confidence scores (≥80) |
+| silent-failure-hunter | Critical (must fix) | Count of issues found |
+| integration-verifier | Scenarios table, Verdict | PASS/FAIL per scenario |
+| bug-investigator | Root cause, Fix applied | Exit 0 after fix |
+| planner | Plan saved path, Phases | Confidence score |
+
+### Validation Logic
+
+```
+After agent completes:
+
+1. Check for required sections in output
+2. Check for skill loading evidence (SKILL_HINTS loaded?)
+
+3. If CRITICAL missing (no exit codes, no verdict):
+   → Option A: Create remediation task:
+     TaskCreate({
+       subject: "Complete {agent}: Missing {section}",
+       description: "Agent output incomplete. Missing: {sections}",
+       activeForm: "Completing output"
+     })
+   → Option B: Ask user:
+     "Agent output incomplete ({missing}). Continue anyway?"
+
+4. If NON-CRITICAL missing (skill evidence):
+   → Note for improvement, continue workflow
+
+5. If validation PASSES:
+   → Proceed to next agent in chain
+```
+
+**Validation Evidence Format (include in your response):**
+```
+### Agent Validation: {agent_name}
+- Required Sections: [Present/Missing]
+- Evidence: [Present/Missing]
+- Proceeding: [Yes/No + reason]
+```
 
 **How it works:** Task() is synchronous - router waits for agent to complete and receives its output before proceeding to next agent.
 
@@ -236,6 +290,44 @@ When agent returns:
 | User explicitly requests: "research", "github", "octocode", "find on github", "how do others", "best practices" | cc10x:github-research | planner, bug-investigator |
 
 **Detection runs BEFORE agent invocation. Pass detected skills in SKILL_HINTS.**
+
+## Skill Loading Hierarchy (DEFINITIVE)
+
+**Three mechanisms exist. Here's how they interact:**
+
+### 1. Agent Frontmatter `skills:` (PRELOAD - Automatic)
+```yaml
+skills: cc10x:session-memory, cc10x:code-generation
+```
+- Load AUTOMATICALLY when agent starts
+- Full skill content injected into agent context
+- Agent does NOT need to call `Skill()` for these
+- Use for: Skills agent ALWAYS needs
+
+### 2. Router's SKILL_HINTS (MANDATORY - Agent Must Load)
+- Router detects patterns and passes hints in prompt
+- Agent MUST call `Skill(skill="cc10x:...")` for EACH hint
+- Loaded AFTER frontmatter (additive, not duplicate)
+- Use for: Context-specific skills based on task
+
+### 3. Agent's Skill Triggers (OPTIONAL - Agent Judgment)
+- Agent's internal conditional logic
+- Agent MAY call `Skill()` if triggers match
+- Loaded as needed during execution
+- Use for: Agent's own judgment calls
+
+### Loading Order
+```
+1. Frontmatter skills (auto, at agent startup)
+   ↓
+2. SKILL_HINTS from router (mandatory, after memory load)
+   ↓
+3. Agent's trigger-based skills (optional, during execution)
+```
+
+### Deduplication
+- Same skill loaded multiple times: OK (idempotent)
+- No need for "is this already loaded?" checks
 
 ## Gates (Must Pass)
 
@@ -313,3 +405,50 @@ The workflow is complete ONLY when:
 - OR a critical error prevents continuation
 
 **DO NOT update memory until ALL tasks are completed.**
+
+## Results Collection (Parallel Agents)
+
+**Task system handles coordination. Router handles results.**
+
+When parallel agents complete (code-reviewer + silent-failure-hunter), their outputs must be passed to the next agent.
+
+### Pattern: Collect and Pass Findings
+
+```
+# After both parallel agents complete:
+1. TaskList()  # Verify both show "completed"
+
+2. Collect outputs from this response:
+   REVIEWER_FINDINGS = {code-reviewer's Critical Issues + Verdict}
+   HUNTER_FINDINGS = {silent-failure-hunter's Critical section}
+
+3. Pass to integration-verifier:
+   Task(subagent_type="cc10x:integration-verifier", prompt="
+   ## Task Context
+   - **Task ID:** {verifier_task_id}
+
+   ## Previous Agent Findings (REVIEW BEFORE VERIFYING)
+
+   ### Code Reviewer
+   **Verdict:** {Approve/Changes Requested}
+   **Critical Issues:**
+   {REVIEWER_FINDINGS}
+
+   ### Silent Failure Hunter
+   **Critical Issues:**
+   {HUNTER_FINDINGS}
+
+   ---
+   Verify the implementation. Consider ALL findings above.
+   Any CRITICAL issues should block PASS verdict.
+   ")
+```
+
+### Why Both Task System AND Results Passing
+
+| Aspect | Tasks Handle | Router Handles |
+|--------|--------------|----------------|
+| Completion status | Automatic | - |
+| Dependency unblocking | Automatic | - |
+| Agent findings/output | NOT shared | Pass in prompt |
+| Conflict resolution | - | Include both findings |

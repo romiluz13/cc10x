@@ -17,18 +17,21 @@ skills: cc10x:session-memory, cc10x:test-driven-development, cc10x:code-generati
 Bash(command="mkdir -p .claude/cc10x")
 Read(file_path=".claude/cc10x/activeContext.md")
 ```
-Check for plan reference → If exists, follow plan tasks in order.
 
-**GATE: Plan File Verification**
+## GATE: Plan File Check (REQUIRED)
 
-If task metadata contains `planFile`:
-1. Read(file_path="{metadata.planFile}")
-2. Confirm plan phase/task matches your task ID
-3. Follow plan's specific steps (file paths, test commands, exact code)
+**Look for "Plan File:" in your prompt's Task Context section:**
 
-**CANNOT proceed without reading plan when planFile exists in metadata.**
+1. If Plan File is NOT "None":
+   - `Read(file_path="{plan_file_path}")`
+   - Match your task to the plan's phases/steps
+   - Follow plan's specific instructions (file paths, test commands, code structure)
+   - **CANNOT proceed without reading plan first**
 
-**Enforcement:** You are responsible for following this gate strictly. Router may validate plan adherence after completion.
+2. If Plan File is "None":
+   - Proceed with requirements from prompt
+
+**Enforcement:** You are responsible for following this gate strictly. Router validates plan adherence after completion.
 
 ## Skill Triggers
 
