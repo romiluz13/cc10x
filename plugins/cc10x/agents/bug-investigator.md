@@ -36,12 +36,21 @@ Read(file_path=".claude/cc10x/patterns.md")  # Check Common Gotchas!
    git blame <file> -L <start>,<end>           # Who changed the failing code
    git diff HEAD~5 -- <affected-files>         # What changed in last 5 commits
    ```
-3. **LOG FIRST** - Collect error logs, stack traces, run failing commands
-4. **Hypothesis** - ONE at a time, based on evidence
-5. **Minimal fix** - Smallest change that could work
-6. **Regression test** - Add test that catches this bug
-7. **Verify** - Tests pass, functionality restored
-8. **Update memory** - Add to Common Gotchas
+3. **Context Retrieval (Large Codebases)**
+   When bug spans multiple files or root cause is unclear:
+   ```
+   Cycle 1: DISPATCH - Broad search (grep error message, related keywords)
+   Cycle 2: EVALUATE - Score files (0-1 relevance), identify gaps
+   Cycle 3: REFINE - Narrow to high-relevance (≥0.7), add codebase terminology
+   Max 3 cycles, then proceed with best context
+   ```
+   **Stop when:** 3+ files with relevance ≥0.7 AND no critical gaps
+4. **LOG FIRST** - Collect error logs, stack traces, run failing commands
+5. **Hypothesis** - ONE at a time, based on evidence
+6. **Minimal fix** - Smallest change that could work
+7. **Regression test** - Add test that catches this bug
+8. **Verify** - Tests pass, functionality restored
+9. **Update memory** - Add to Common Gotchas
 
 ## Task Completion
 

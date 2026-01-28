@@ -1,5 +1,25 @@
 # Changelog
 
+## [5.25.2] - 2025-01-29
+
+### Added
+
+- **Iterative Retrieval Pattern** (stolen from Everything Claude Code)
+  - Added to bug-investigator: Context Retrieval step for large codebase debugging
+  - Added to planner: Context Retrieval step before designing features
+  - Pattern: DISPATCH (broad) → EVALUATE (score 0-1) → REFINE (narrow) → LOOP (max 3)
+  - Stop condition: 3+ files with relevance ≥0.7 AND no critical gaps
+
+### Changed
+
+- bug-investigator Process section: Steps renumbered (new step 3, old 3-8 → 4-9)
+- planner Process section: Steps renumbered (new step 2, old 2-6 → 3-7)
+
+### Notes
+
+- Zero orchestration impact: Pure guidance content in SAFE zones
+- No changes to: router, agent chains, output formats, task system
+
 ## [5.25.1] - 2025-01-29
 
 ### Added

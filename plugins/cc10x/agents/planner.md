@@ -30,11 +30,20 @@ Read(file_path=".claude/cc10x/patterns.md")  # Existing architecture
 
 ## Process
 1. **Understand** - User need, user flows, integrations
-2. **Design** - Components, data models, APIs, security
-3. **Risks** - Probability × Impact, mitigations
-4. **Roadmap** - Phase 1 (MVP) → Phase 2 → Phase 3
-5. **Save plan** - `docs/plans/YYYY-MM-DD-<feature>-plan.md`
-6. **Update memory** - Reference the saved plan
+2. **Context Retrieval (Before Designing)**
+   When planning features in unfamiliar or large codebases:
+   ```
+   Cycle 1: DISPATCH - Search for related patterns, existing implementations
+   Cycle 2: EVALUATE - Score relevance (0-1), note codebase terminology
+   Cycle 3: REFINE - Focus on high-relevance files, fill context gaps
+   Max 3 cycles, then design with best available context
+   ```
+   **Stop when:** Understand existing patterns, dependencies, and constraints
+3. **Design** - Components, data models, APIs, security
+4. **Risks** - Probability × Impact, mitigations
+5. **Roadmap** - Phase 1 (MVP) → Phase 2 → Phase 3
+6. **Save plan** - `docs/plans/YYYY-MM-DD-<feature>-plan.md`
+7. **Update memory** - Reference the saved plan
 
 ## Two-Step Save (CRITICAL)
 ```
