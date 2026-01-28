@@ -4,41 +4,43 @@
 
 ### Fixed
 
-- **FLAW #4: Research Persistence Race Condition** - Added atomic checkpoint gate to `github-research/SKILL.md`
+- **Research Persistence** - Added atomic checkpoint guidance to `github-research/SKILL.md`
+  - Documentation reminder to save research + update memory sequentially
   - Prevents research files from becoming orphaned during context compaction
-  - Enforces sequential execution of research save + memory update
 
-- **FLAW #5: TDD Red-Green Verification** - Added mandatory evidence requirement to `component-builder.md`
-  - Output template now requires exit code evidence for both RED (exit 1) and GREEN (exit 0) phases
-  - Cannot mark task complete without proof of test failure → test pass cycle
+- **TDD Evidence Template** - Enhanced `component-builder.md` output format
+  - Output template now includes exit code evidence for RED (exit 1) and GREEN (exit 0) phases
+  - Builder self-enforces TDD discipline through structured output
 
-- **FLAW #2: Task-Plan Linkage** - Added plan-reading gate to `component-builder.md`
-  - Builder must verify and read plan file when `metadata.planFile` exists
-  - Explicit gate prevents builder from ignoring linked plans
+- **Plan Reading Discipline** - Added plan-reading reminder to `component-builder.md`
+  - Builder checks for `metadata.planFile` and reads plan before implementing
+  - Self-enforced responsibility (no external validation)
 
-- **FLAW #6: Silent Failure Hunter Read-Only** - Added Edit tool and CRITICAL fix logic to `silent-failure-hunter.md`
+- **Silent Failure Hunter** - Enhanced `silent-failure-hunter.md` with active fixing
   - Changed from read-only to active fixer for CRITICAL silent failures
   - Empty catch blocks and silent failures fixed immediately, not deferred
   - HIGH/MEDIUM issues still create follow-up tasks
 
-- **FLAW #10: No Rollback Strategy** - Added rollback decision tree to `integration-verifier.md`
+- **Rollback Strategy** - Added rollback decision tree to `integration-verifier.md`
   - Three explicit options when verification fails: Create Fix Task, Revert Branch, or Document & Continue
   - Prevents broken state from being left unaddressed
 
-- **FLAW #7: Skill Trigger Validation** - Added skill loading validation to `cc10x-router/SKILL.md`
-  - Router now validates agents loaded required SKILL_HINTS
-  - Soft validation approach (surfaces issues without blocking workflows)
-
-- **FLAW #12: DEBUG Research Triggers** - Aligned DEBUG workflow research triggers in `cc10x-router/SKILL.md`
+- **DEBUG Research Triggers** - Aligned DEBUG workflow research triggers in `cc10x-router/SKILL.md`
   - Added missing "3+ local debugging attempts failed" trigger
   - Now consistent with skill trigger table
 
+### Removed
+
+- **Router Post-Agent Validation** - Removed from `cc10x-router/SKILL.md`
+  - Router is a one-shot starter, not a persistent orchestrator
+  - Cannot validate agent outputs after invocation (architectural reality)
+  - Agent self-discipline is the enforcement mechanism
+
 ### Changed
 
-- **Documentation Gates Approach**: All fixes use explicit checklists and enforcement gates
-  - No code complexity added (documentation only)
-  - Line budget: +84 lines across 5 files (~17 lines/file average)
-  - 48% under planned budget of 165 lines
+- **Agent Self-Enforcement Approach**: All agent improvements rely on self-discipline
+  - Gates and checklists are for agents to follow, not router to enforce
+  - Router starts workflow, agents are responsible for quality
 
 ## [5.24.0] - 2025-01-27
 
