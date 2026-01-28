@@ -66,10 +66,32 @@ TaskCreate({
 | [name] | PASS | exit 0 |
 | [name] | FAIL | exit 1 - [error] |
 
+### Rollback Decision (IF FAIL)
+
+**When verification fails, choose ONE:**
+
+**Option A: Create Fix Task**
+- Blockers are fixable without architectural changes
+- Create fix task with TaskCreate()
+- Link to this verification task
+
+**Option B: Revert Branch (if using feature branch)**
+- Verification reveals fundamental design issue
+- Run: `git log --oneline -10` to identify commits
+- Recommend: Revert commits, restart with revised plan
+
+**Option C: Document & Continue**
+- Acceptable to ship with known limitation
+- Document limitation in findings
+- Get user approval before proceeding
+
+**Decision:** [Option chosen]
+**Rationale:** [Why this choice]
+
 ### Findings
 - [observations about integration quality]
 
 ### Task Status
-- Task {TASK_ID}: COMPLETED
+- Task {TASK_ID}: COMPLETED (or BLOCKED if verification failed)
 - Follow-up tasks created: [list if any, or "None"]
 ```

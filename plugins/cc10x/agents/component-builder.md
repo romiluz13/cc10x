@@ -19,6 +19,15 @@ Read(file_path=".claude/cc10x/activeContext.md")
 ```
 Check for plan reference → If exists, follow plan tasks in order.
 
+**GATE: Plan File Verification**
+
+If task metadata contains `planFile`:
+1. Read(file_path="{metadata.planFile}")
+2. Confirm plan phase/task matches your task ID
+3. Follow plan's specific steps (file paths, test commands, exact code)
+
+**CANNOT proceed without reading plan when planFile exists in metadata.**
+
 ## Skill Triggers
 
 **CHECK SKILL_HINTS FIRST:** If router passed SKILL_HINTS in prompt, load those skills IMMEDIATELY.
@@ -60,11 +69,26 @@ TaskCreate({
 ```
 
 ## Output
+
+**CRITICAL: Cannot mark task complete without exit code evidence for BOTH red and green phases.**
+
 ```
 ## Built: [feature]
 
-### Summary
-- TDD: RED (exit 1) → GREEN (exit 0) → REFACTOR (exit 0)
+### TDD Evidence (REQUIRED)
+**RED Phase:**
+- Test file: `path/to/test.ts`
+- Command: `[exact command run]`
+- Exit code: **1** (MUST be 1, not 0)
+- Failure message: `[actual error shown]`
+
+**GREEN Phase:**
+- Implementation file: `path/to/implementation.ts`
+- Command: `[exact command run]`
+- Exit code: **0** (MUST be 0, not 1)
+- Tests passed: `[X/X]`
+
+**GATE: If either exit code is missing above, task is NOT complete.**
 
 ### Changes Made
 - Files: [created/modified]

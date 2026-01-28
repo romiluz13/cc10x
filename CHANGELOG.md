@@ -1,5 +1,45 @@
 # Changelog
 
+## [5.24.1] - 2025-01-28
+
+### Fixed
+
+- **FLAW #4: Research Persistence Race Condition** - Added atomic checkpoint gate to `github-research/SKILL.md`
+  - Prevents research files from becoming orphaned during context compaction
+  - Enforces sequential execution of research save + memory update
+
+- **FLAW #5: TDD Red-Green Verification** - Added mandatory evidence requirement to `component-builder.md`
+  - Output template now requires exit code evidence for both RED (exit 1) and GREEN (exit 0) phases
+  - Cannot mark task complete without proof of test failure → test pass cycle
+
+- **FLAW #2: Task-Plan Linkage** - Added plan-reading gate to `component-builder.md`
+  - Builder must verify and read plan file when `metadata.planFile` exists
+  - Explicit gate prevents builder from ignoring linked plans
+
+- **FLAW #6: Silent Failure Hunter Read-Only** - Added Edit tool and CRITICAL fix logic to `silent-failure-hunter.md`
+  - Changed from read-only to active fixer for CRITICAL silent failures
+  - Empty catch blocks and silent failures fixed immediately, not deferred
+  - HIGH/MEDIUM issues still create follow-up tasks
+
+- **FLAW #10: No Rollback Strategy** - Added rollback decision tree to `integration-verifier.md`
+  - Three explicit options when verification fails: Create Fix Task, Revert Branch, or Document & Continue
+  - Prevents broken state from being left unaddressed
+
+- **FLAW #7: Skill Trigger Validation** - Added skill loading validation to `cc10x-router/SKILL.md`
+  - Router now validates agents loaded required SKILL_HINTS
+  - Soft validation approach (surfaces issues without blocking workflows)
+
+- **FLAW #12: DEBUG Research Triggers** - Aligned DEBUG workflow research triggers in `cc10x-router/SKILL.md`
+  - Added missing "3+ local debugging attempts failed" trigger
+  - Now consistent with skill trigger table
+
+### Changed
+
+- **Documentation Gates Approach**: All fixes use explicit checklists and enforcement gates
+  - No code complexity added (documentation only)
+  - Line budget: +84 lines across 5 files (~17 lines/file average)
+  - 48% under planned budget of 165 lines
+
 ## [5.24.0] - 2025-01-27
 
 ### Added

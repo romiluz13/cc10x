@@ -154,7 +154,17 @@ Write(file_path="docs/research/YYYY-MM-DD-<topic>-research.md", content="[full r
 - Use today's date
 - Use kebab-case for topic (e.g., `claude-code-tasks-system`, `react-server-components`)
 
+### ATOMIC CHECKPOINT (DO NOT PROCEED UNTIL BOTH COMPLETE)
+
+**The next two operations MUST complete in sequence with NO agent invocations between them:**
+- ✓ Research file saved to docs/research/
+- ⏸️ IMMEDIATELY proceed to Step 2 (do not invoke agents, do not pass go)
+
+**Why this is critical:** If context compaction occurs between Step 1 and Step 2, the research file becomes orphaned (exists but not indexed in memory). These two operations must be atomic.
+
 ### Step 2: Update Memory (Links Research to Memory)
+
+**CRITICAL: This must happen in the same execution block as Step 1**
 
 **Use Edit tool (permission-free):**
 

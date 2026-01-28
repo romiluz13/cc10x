@@ -143,7 +143,12 @@ TaskCreate({ subject: "planner: Create plan for {feature}", description: "Create
 ### DEBUG
 1. Load memory → Check patterns.md Common Gotchas
 2. Clarify: What error? Expected vs actual? When started?
-3. **If github-research detected (external service error OR explicit request):**
+3. **Check for research trigger:**
+   - User explicitly requested research ("research", "github", "octocode"), OR
+   - External service error (API timeout, auth failure, third-party), OR
+   - **3+ local debugging attempts failed (check activeContext Recent Changes for attempt count)**
+
+   **If ANY trigger met:**
    - Execute research FIRST using octocode tools directly
    - Search for error patterns, PRs with similar issues
    - **PERSIST research** → Save to `docs/research/YYYY-MM-DD-<error-topic>-research.md`
@@ -199,6 +204,15 @@ SKILL_HINTS: {detected skills from table below - agent MUST load these}
 
 **TASK ID is REQUIRED.** Agent MUST call `TaskUpdate(taskId, status="completed")` when done.
 **SKILL_HINTS are MANDATORY.** Agent MUST call `Skill(skill="...")` for each hint immediately after loading memory.
+
+**Post-Agent Validation (After agent completes):**
+
+When agent returns:
+1. Check agent output for skill loading evidence
+2. Each SKILL_HINT should appear in output as "Loading skill: {skill}" or similar
+3. If skills not loaded: Note for improvement, continue workflow (don't block)
+
+**Why soft validation:** Hard blocking would break workflows. Soft validation surfaces the issue for iteration.
 
 **Skill triggers for agents (DETECT AND PASS AS SKILL_HINTS):**
 
