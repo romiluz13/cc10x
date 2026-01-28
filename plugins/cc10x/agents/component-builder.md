@@ -94,6 +94,12 @@ TaskCreate({
 - Files: [created/modified]
 - Tests: [added]
 
+### Assumptions
+- [List assumptions made during implementation]
+- [If wrong, impact: {consequence}]
+
+**Confidence**: [High/Medium/Low - based on assumption certainty]
+
 ### Findings
 - [any issues or recommendations]
 

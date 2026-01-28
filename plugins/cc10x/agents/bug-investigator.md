@@ -70,6 +70,12 @@ TaskCreate({
 - Root cause: [what failed]
 - Fix applied: [file:line change]
 
+### Assumptions
+- [Assumptions about root cause]
+- [Assumptions about fix approach]
+
+**Confidence**: [High/Medium/Low]
+
 ### Changes Made
 - [list of files modified]
 

@@ -142,7 +142,11 @@ TaskCreate({ subject: "planner: Create plan for {feature}", description: "Create
 
 ### DEBUG
 1. Load memory → Check patterns.md Common Gotchas
-2. Clarify: What error? Expected vs actual? When started?
+2. **CLARIFY (REQUIRED)**: Use AskUserQuestion if ANY ambiguity:
+   - What error message/behavior?
+   - Expected vs actual?
+   - When did it start?
+   - Which component/file affected?
 3. **Check for research trigger:**
    - User explicitly requested research ("research", "github", "octocode"), OR
    - External service error (API timeout, auth failure, third-party), OR
@@ -159,9 +163,13 @@ TaskCreate({ subject: "planner: Create plan for {feature}", description: "Create
 
 ### REVIEW
 1. Load memory
-2. **Create task hierarchy** (see Task-Based Orchestration above)
-3. **Start chain execution** (see Chain Execution Loop below)
-4. Update memory when task completed
+2. **CLARIFY (REQUIRED)**: Use AskUserQuestion to confirm scope:
+   - Review entire codebase OR specific files?
+   - Focus area: security/performance/quality/all?
+   - Blocking issues only OR all findings?
+3. **Create task hierarchy** (see Task-Based Orchestration above)
+4. **Start chain execution** (see Chain Execution Loop below)
+5. Update memory when task completed
 
 ### PLAN
 1. Load memory
@@ -231,12 +239,13 @@ When agent returns:
 
 1. **MEMORY_LOADED** - Before routing
 2. **TASKS_CHECKED** - Check TaskList() for active workflow
-3. **RESEARCH_EXECUTED** - Before planner (if github-research detected)
-4. **RESEARCH_PERSISTED** - Save to docs/research/ + update activeContext.md (if research was executed)
-5. **REQUIREMENTS_CLARIFIED** - Before invoking agent (BUILD only)
-6. **TASKS_CREATED** - Workflow task hierarchy created
-7. **ALL_TASKS_COMPLETED** - All agent tasks status="completed"
-8. **MEMORY_UPDATED** - Before marking done
+3. **INTENT_CLARIFIED** - User intent is unambiguous (all workflows)
+4. **RESEARCH_EXECUTED** - Before planner (if github-research detected)
+5. **RESEARCH_PERSISTED** - Save to docs/research/ + update activeContext.md (if research was executed)
+6. **REQUIREMENTS_CLARIFIED** - Before invoking agent (BUILD only)
+7. **TASKS_CREATED** - Workflow task hierarchy created
+8. **ALL_TASKS_COMPLETED** - All agent tasks status="completed"
+9. **MEMORY_UPDATED** - Before marking done
 
 ## Chain Execution Loop (Task-Based)
 

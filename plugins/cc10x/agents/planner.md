@@ -88,6 +88,10 @@ TaskUpdate({
 - [reason for score]
 - [factors that could improve it]
 
+**Key Assumptions**:
+- [Assumption 1 affecting plan]
+- [Assumption 2 affecting plan]
+
 ### Findings
 - [any additional observations]
 

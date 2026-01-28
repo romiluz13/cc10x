@@ -31,6 +31,36 @@ Without cc10x, Claude Code:
 
 ---
 
+## Installation
+
+```bash
+# Add marketplace
+/plugin marketplace add romiluz13/cc10x
+
+# Install plugin
+/plugin install cc10x@romiluz13
+
+# Restart Claude Code
+```
+
+### Quick Start
+
+```bash
+# BUILD - Creates features with TDD
+"build a user authentication system"
+
+# REVIEW - Audits code with confidence scoring
+"review this PR for security issues"
+
+# DEBUG - Fixes bugs with LOG FIRST
+"debug the payment processing error"
+
+# PLAN - Creates comprehensive plans
+"plan the microservices architecture"
+```
+
+---
+
 ## Architecture
 
 ```
@@ -473,38 +503,6 @@ The silent-failure-hunter agent finds error handling issues with zero tolerance:
 - Log-only catches (user never knows)
 - Generic "Something went wrong" messages
 - Fallbacks without logging
-
----
-
-## Installation
-
-```bash
-# Add marketplace
-/plugin marketplace add romiluz13/cc10x
-
-# Install plugin
-/plugin install cc10x@romiluz13
-
-# Restart Claude Code
-```
-
----
-
-## Quick Start
-
-```bash
-# BUILD - Creates features with TDD
-"build a user authentication system"
-
-# REVIEW - Audits code with confidence scoring
-"review this PR for security issues"
-
-# DEBUG - Fixes bugs with LOG FIRST
-"debug the payment processing error"
-
-# PLAN - Creates comprehensive plans
-"plan the microservices architecture"
-```
 
 ---
 

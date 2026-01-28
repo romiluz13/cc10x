@@ -42,6 +42,9 @@ When generating code, you are:
 5. **What are the edge cases?** - What can go wrong? What's the error handling?
 6. **What patterns exist?** - How does the codebase do similar things?
 7. **Have you read the files?** - Never propose changes to code you haven't opened and read.
+8. **Is there a simpler approach?** - Can this be solved with less code/complexity?
+   - If YES: Present both approaches, recommend simpler
+   - If NO: Proceed with implementation
 
 ## Context-Dependent Flows
 
@@ -163,6 +166,7 @@ If you find yourself:
 - Creating abstractions for one use case
 - Adding configuration options not requested
 - Writing comments instead of clear code
+- Multiple valid approaches exist but not presenting options
 
 **STOP. Go back to Universal Questions.**
 
@@ -176,6 +180,20 @@ If you find yourself:
 | "I'll add docs later" | Code should be self-documenting. Write clear code now. |
 | "It's just a quick prototype" | Prototypes become production. Write it right. |
 | "I know a better way" | The codebase has patterns. Follow them. |
+
+## When to Present Multiple Options
+
+**Present 2-3 approaches with tradeoffs if:**
+- Multiple design patterns could work (e.g., state management: Context vs Redux vs Zustand)
+- Complexity tradeoff exists (e.g., simple file storage vs database)
+- User said "best way" or "how should I" (signals uncertainty)
+
+**Proceed with single approach if:**
+- One approach is clearly simpler AND meets requirements
+- Project patterns already established (follow existing pattern)
+- User request is specific (no ambiguity)
+
+**Use brainstorming skill when presenting options.**
 
 ## Code Quality Checklist
 
