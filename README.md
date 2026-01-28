@@ -317,6 +317,7 @@ I'll help you build a task tracker! Let me start...
 
 | Version | Highlights |
 |---------|------------|
+| **v5.25.0** | Critical orchestration fixes + README redesign |
 | **v5.24.0** | Research persistence with THREE-PHASE pattern |
 | **v5.23.0** | Plan-task linkage via metadata.planFile |
 | **v5.22.0** | Stub detection patterns |
@@ -329,6 +330,7 @@ I'll help you build a task tracker! Let me start...
 <details>
 <summary>Full version history</summary>
 
+- **v5.25.0** - Critical orchestration fixes: Plan propagation, results collection, skill hierarchy, validation + README redesign
 - **v5.24.0** - Research Documentation Persistence: THREE-PHASE research pattern
 - **v5.23.0** - Plan-Task Linkage: metadata.planFile for context recovery
 - **v5.22.0** - Stub Detection Patterns: GSD-inspired stub detection
@@ -405,6 +407,6 @@ MIT License
 ---
 
 <p align="center">
-  <strong>cc10x v5.24.0</strong><br>
+  <strong>cc10x v5.25.0</strong><br>
   <em>The Intelligent Orchestrator for Claude Code</em>
 </p>

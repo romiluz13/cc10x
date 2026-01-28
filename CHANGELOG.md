@@ -1,5 +1,40 @@
 # Changelog
 
+## [5.25.0] - 2025-01-29
+
+### Added
+
+- **Plan File Propagation (FIX 1)**: Router now passes `Plan File:` explicitly in agent prompt
+  - component-builder checks prompt's Task Context for plan file path
+  - No longer relies on inaccessible task metadata
+
+- **Results Collection (FIX 2)**: New pattern for parallel agent output passing
+  - Router collects code-reviewer + silent-failure-hunter findings
+  - Passes merged findings to integration-verifier in prompt
+  - Task system handles coordination, router handles content
+
+- **Skill Loading Hierarchy (FIX 3)**: Documented 3-tier skill loading priority
+  - Tier 1: Agent frontmatter `skills:` (automatic preload)
+  - Tier 2: Router's SKILL_HINTS (mandatory, agent must load)
+  - Tier 3: Agent's Skill Triggers (optional, agent judgment)
+
+- **Enhanced Post-Agent Validation (FIX 4)**: Structured validation with required sections table
+  - Per-agent required sections and evidence documented
+  - Options: create remediation task OR ask user
+  - Soft validation to avoid breaking workflows
+
+### Changed
+
+- **Agent Invocation Template**: Restructured with clear markdown sections
+  - Task Context, User Request, Requirements, Memory Summary, Project Patterns, SKILL_HINTS
+  - Consistent format across all agent invocations
+
+- **README Redesign**: Complete visual overhaul as landing page
+  - Strong positioning vs bloated plugins (50+ skills, 30+ agents problem)
+  - Visual flow diagram showing orchestration
+  - Side-by-side comparison (without vs with cc10x)
+  - Collapsible version history
+
 ## [5.24.1] - 2025-01-28
 
 ### Fixed
