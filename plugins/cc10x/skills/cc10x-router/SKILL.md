@@ -34,7 +34,7 @@ description: |
 | REVIEW | code-reviewer |
 | PLAN | planner |
 
-**∥ = PARALLEL** - code-reviewer and silent-failure-hunter run simultaneously (both read-only)
+**∥ = PARALLEL** - code-reviewer (read-only review) and silent-failure-hunter (fixes CRITICAL issues inline) run simultaneously
 
 ## Memory (PERMISSION-FREE)
 

@@ -18,6 +18,13 @@ Bash(command="mkdir -p .claude/cc10x")
 Read(file_path=".claude/cc10x/activeContext.md")
 ```
 
+## Skill Triggers
+
+**CHECK SKILL_HINTS FIRST:** If router passed SKILL_HINTS in prompt, load those skills IMMEDIATELY.
+
+- UI code (.tsx, .jsx, components/, ui/) → `Skill(skill="cc10x:frontend-patterns")`
+- API code (api/, routes/, services/) → `Skill(skill="cc10x:architecture-patterns")`
+
 ## Red Flags
 | Pattern | Problem | Fix |
 |---------|---------|-----|
