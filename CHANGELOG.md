@@ -1,5 +1,25 @@
 # Changelog
 
+## [5.25.1] - 2025-01-29
+
+### Added
+
+- **Wiring Verification Patterns** (verification-before-completion skill)
+  - Component → API check: grep patterns to verify fetch calls exist and response is used
+  - API → Database check: grep patterns to verify queries exist and results are returned
+  - Red flags table for common wiring stubs
+  - Line count minimums by file type (Component: 15, API: 10, Hook: 10)
+
+- **Hypothesis Quality Criteria** (debugging-patterns skill)
+  - Falsifiability requirement: "A good hypothesis can be proven wrong"
+  - Bad vs Good hypothesis examples (vague → specific)
+  - Cognitive biases table: Confirmation, Anchoring, Availability, Sunk Cost with antidotes
+
+### Changed
+
+- Enhanced stub detection with GSD-inspired wiring verification patterns
+- Enhanced debugging guidance with scientific hypothesis criteria
+
 ## [5.25.0] - 2025-01-29
 
 ### Added

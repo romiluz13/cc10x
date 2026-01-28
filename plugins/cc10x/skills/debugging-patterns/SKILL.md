@@ -233,6 +233,31 @@ You MUST complete each phase before proceeding to the next.
    - Ask for help
    - Research more
 
+### Hypothesis Quality Criteria
+
+**Falsifiability Requirement:** A good hypothesis can be proven wrong. If you can't design an experiment to disprove it, it's not useful.
+
+**Bad (unfalsifiable):**
+- "Something is wrong with the state"
+- "The timing is off"
+- "There's a race condition somewhere"
+
+**Good (falsifiable):**
+- "User state resets because component remounts when route changes"
+- "API call completes after unmount, causing state update on unmounted component"
+- "Two async operations modify same array without locking, causing data loss"
+
+**The difference:** Specificity. Good hypotheses make specific, testable claims.
+
+### Cognitive Biases in Debugging
+
+| Bias | Trap | Antidote |
+|------|------|----------|
+| **Confirmation** | Only look for evidence supporting your hypothesis | "What would prove me wrong?" |
+| **Anchoring** | First explanation becomes your anchor | Generate 3+ hypotheses before investigating any |
+| **Availability** | Recent bugs → assume similar cause | Treat each bug as novel until evidence suggests otherwise |
+| **Sunk Cost** | Spent 2 hours on path, keep going despite evidence | Every 30 min: "If fresh, would I take this path?" |
+
 ### Phase 4: Implementation
 
 **Fix the root cause, not the symptom:**

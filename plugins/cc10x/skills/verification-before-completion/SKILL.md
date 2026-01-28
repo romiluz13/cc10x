@@ -312,6 +312,40 @@ grep -rE "return (null|undefined|\{\}|\[\])" src/
 
 **If any stub patterns found:** DO NOT claim completion. Fix or document why it's intentional.
 
+### Wiring Verification (Component → API → Database)
+
+Artifacts can exist, pass lint, and have tests but NOT be wired to the system.
+
+**Component → API Check:**
+```bash
+# Does component actually call the API?
+grep -E "fetch\(['\"].*api|axios\.(get|post)" src/components/
+# Is response actually used?
+grep -A 5 "fetch\|axios" src/components/ | grep -E "await|\.then|setData|setState"
+```
+
+**API → Database Check:**
+```bash
+# Does API actually query database?
+grep -E "prisma\.|db\.|mongoose\." src/app/api/
+# Is result actually returned?
+grep -E "return.*json.*data|Response\.json" src/app/api/
+```
+
+**Red Flags:**
+| Pattern | Problem |
+|---------|---------|
+| `fetch('/api/x')` with no `await` | Call ignored |
+| `await prisma.findMany()` → `return { ok: true }` | Query result discarded |
+| Handler only has `e.preventDefault()` | Form does nothing |
+
+**Line Count Minimums:**
+| File Type | Minimum Lines | Below = Likely Stub |
+|-----------|---------------|---------------------|
+| Component | 15 | Too thin |
+| API route | 10 | Too thin |
+| Hook/util | 10 | Too thin |
+
 ## The Bottom Line
 
 **No shortcuts for verification.**
