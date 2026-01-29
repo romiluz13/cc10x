@@ -1,11 +1,13 @@
 ---
 name: cc10x-router
 description: |
-  THE ONLY ENTRY POINT FOR CC10X - AUTO-LOAD AND EXECUTE for ANY development task.
+  THE ONLY ENTRY POINT FOR CC10X. This skill MUST be activated for ANY development task - never skip.
+
+  Use this skill when: building, implementing, debugging, fixing, reviewing, planning, refactoring, testing, or ANY coding request. If user asks to write code, fix bugs, review code, or plan features - USE THIS SKILL.
 
   Triggers: build, implement, create, make, write, add, develop, code, feature, component, app, application, review, audit, check, analyze, debug, fix, error, bug, broken, troubleshoot, plan, design, architect, roadmap, strategy, memory, session, context, save, load, test, tdd, frontend, ui, backend, api, pattern, refactor, optimize, improve, enhance, update, modify, change, help, assist, work, start, begin, continue, research, cc10x, c10x.
 
-  CRITICAL: Execute workflow. Never just describe capabilities.
+  CRITICAL: Execute workflow immediately. Never just describe capabilities.
 ---
 
 # cc10x Router
