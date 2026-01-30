@@ -2,6 +2,8 @@
 
 ### The Intelligent Orchestrator for Claude Code
 
+**Recommended (best results): copy `CLAUDE.md` / `AGENTS.md` into your project root so the router is always active. Plugin installs do not inject these files into your repo.**
+
 <p align="center">
   <strong>1 Router</strong> &nbsp;•&nbsp; <strong>6 Agents</strong> &nbsp;•&nbsp; <strong>12 Skills</strong> &nbsp;•&nbsp; <strong>4 Workflows</strong>
 </p>
