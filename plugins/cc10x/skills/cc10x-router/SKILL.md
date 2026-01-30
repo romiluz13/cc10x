@@ -240,7 +240,7 @@ When agent returns, verify output quality before proceeding.
 |-------|-------------------|-------------------|
 | component-builder | TDD Evidence (RED + GREEN) | Exit codes: 1 (RED), 0 (GREEN) |
 | code-reviewer | Critical Issues, Verdict | Confidence scores (≥80) |
-| silent-failure-hunter | Critical (must fix) | Count of issues found |
+| silent-failure-hunter | Critical (blocks ship), Router Handoff | Count of issues found |
 | integration-verifier | Scenarios table, Verdict | PASS/FAIL per scenario |
 | bug-investigator | Root cause, Fix applied | Exit 0 after fix |
 | planner | Plan saved path, Phases | Confidence score |
@@ -263,10 +263,15 @@ After agent completes:
    → Option B: Ask user:
      "Agent output incomplete ({missing}). Continue anyway?"
 
-4. If NON-CRITICAL missing (skill evidence):
+4. If silent-failure-hunter reports CRITICAL issues (count > 0):
+   → Treat as WORKFLOW BLOCKER until fixed.
+   → Create a remediation task for component-builder (or resume builder) to fix the CRITICAL issues.
+   → Do NOT proceed to integration-verifier until remediation is completed (or user explicitly accepts shipping with known issues).
+
+5. If NON-CRITICAL missing (skill evidence):
    → Note for improvement, continue workflow
 
-5. If validation PASSES:
+6. If validation PASSES:
    → Proceed to next agent in chain
 ```
 
@@ -410,7 +415,7 @@ The workflow is complete ONLY when:
 
 ## Results Collection (Parallel Agents)
 
-**Task system handles coordination. Router handles results.**
+**Task system handles coordination. The main assistant (running this router) handles results.**
 
 When parallel agents complete (code-reviewer + silent-failure-hunter), their outputs must be passed to the next agent.
 
@@ -422,7 +427,7 @@ When parallel agents complete (code-reviewer + silent-failure-hunter), their out
 
 2. Collect outputs from this response:
    REVIEWER_FINDINGS = {code-reviewer's Critical Issues + Verdict}
-   HUNTER_FINDINGS = {silent-failure-hunter's Critical section}
+   HUNTER_FINDINGS = {silent-failure-hunter's Router Handoff section (preferred), else Critical section}
 
 3. Pass to integration-verifier:
    Task(subagent_type="cc10x:integration-verifier", prompt="
