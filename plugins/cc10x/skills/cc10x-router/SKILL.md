@@ -242,7 +242,7 @@ When agent returns, verify output quality before proceeding.
 | code-reviewer | Critical Issues, Verdict | Confidence scores (≥80) |
 | silent-failure-hunter | Critical (blocks ship), Router Handoff | Count of issues found |
 | integration-verifier | Scenarios table, Verdict | PASS/FAIL per scenario |
-| bug-investigator | Root cause, Fix applied | Exit 0 after fix |
+| bug-investigator | Root cause, TDD Evidence (RED + GREEN), Variant Coverage, Fix applied | Exit codes: 1 (RED), 0 (GREEN) |
 | planner | Plan saved path, Phases | Confidence score |
 
 ### Validation Logic
@@ -268,10 +268,15 @@ After agent completes:
    → Create a remediation task for component-builder (or resume builder) to fix the CRITICAL issues.
    → Do NOT proceed to integration-verifier until remediation is completed (or user explicitly accepts shipping with known issues).
 
-5. If NON-CRITICAL missing (skill evidence):
+5. If bug-investigator is missing TDD Evidence (RED+GREEN) or Variant Coverage:
+   → Treat as WORKFLOW BLOCKER until evidence is provided.
+   → Create remediation task: add regression test + rerun with exit-code evidence + document variants covered.
+   → Do NOT proceed to code-reviewer/integration-verifier until remediation is completed (or user explicitly accepts bypassing TDD).
+
+6. If NON-CRITICAL missing (skill evidence):
    → Note for improvement, continue workflow
 
-6. If validation PASSES:
+7. If validation PASSES:
    → Proceed to next agent in chain
 ```
 

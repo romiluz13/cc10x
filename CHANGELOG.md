@@ -1,5 +1,25 @@
 # Changelog
 
+## [5.25.3] - 2026-01-30
+
+### Added
+
+- **Anti-Hardcode Gate** (bug-investigator)
+  - Variant scan required before fixing (locale/config/roles/runtime/time/data/concurrency/network/cache)
+  - Regression tests must cover at least one non-default variant when applicable
+
+### Changed
+
+- bug-investigator now **TDD-first** for DEBUG:
+  - RED regression test before fix, GREEN after
+  - Output requires TDD evidence + variant coverage summary
+- Router validation requires bug-investigator TDD evidence + variant coverage before proceeding
+
+### Notes
+
+- No changes to task DAGs or workflow order
+- Router change is validation-only (evidence gate)
+
 ## [5.25.2] - 2025-01-29
 
 ### Added

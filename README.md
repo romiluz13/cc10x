@@ -2,6 +2,8 @@
 
 ### The Intelligent Orchestrator for Claude Code
 
+**Current version:** 5.25.3
+
 **Recommended (best results): copy `CLAUDE.md` / `AGENTS.md` into your project root so the router is always active. Plugin installs do not inject these files into your repo.**
 
 <p align="center">

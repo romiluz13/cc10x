@@ -12,6 +12,25 @@ skills: cc10x:session-memory, cc10x:debugging-patterns, cc10x:test-driven-develo
 
 **Core:** Evidence-first debugging. Never guess - gather logs before hypothesizing.
 
+**Non-negotiable:** Fixes must follow TDD (regression test first). "Minimal fix" means minimal diff while preserving correct general behavior (not hardcoding a single case).
+
+## Anti-Hardcode Gate (REQUIRED)
+
+Before writing the regression test and before implementing a fix, explicitly check whether the bug depends on *variants*.
+
+Common variant dimensions (consider only what applies to this bug):
+- Locale/i18n (language, RTL/LTR, formatting)
+- Configuration/environment (feature flags, env vars, build modes)
+- Roles/permissions (admin vs user, auth vs unauth)
+- Platform/runtime (browser/device/OS/node version)
+- Time (timezone, locale formatting, clock/time-dependent logic)
+- Data shape (missing fields, empty lists, ordering, nullability)
+- Concurrency/ordering (races, retries, eventual consistency)
+- Network/external dependencies (timeouts, partial failures)
+- Caching/state (stale cache, revalidation, memoization)
+
+If variants apply, your regression test MUST cover at least one **non-default** variant case (e.g., a different locale or RTL if relevant, a different role, a different config flag) to prevent patchy/hardcoded fixes.
+
 ## Memory First
 ```
 Bash(command="mkdir -p .claude/cc10x")
@@ -46,11 +65,12 @@ Read(file_path=".claude/cc10x/patterns.md")  # Check Common Gotchas!
    ```
    **Stop when:** 3+ files with relevance ≥0.7 AND no critical gaps
 4. **LOG FIRST** - Collect error logs, stack traces, run failing commands
-5. **Hypothesis** - ONE at a time, based on evidence
-6. **Minimal fix** - Smallest change that could work
-7. **Regression test** - Add test that catches this bug
-8. **Verify** - Tests pass, functionality restored
-9. **Update memory** - Add to Common Gotchas
+5. **Variant Scan (REQUIRED)** - Identify which variant dimensions must keep working (only those relevant to the bug)
+6. **Hypothesis** - ONE at a time, based on evidence
+7. **RED: Regression test first** - Add a failing test that reproduces the bug (must fail before any fix)
+8. **GREEN: Minimal general fix** - Smallest diff that fixes the root cause across required variants (no hardcoding)
+9. **Verify** - Regression test passes + relevant test suite passes, functionality restored
+10. **Update memory** - Add to Common Gotchas
 
 ## Task Completion
 
@@ -78,6 +98,23 @@ TaskCreate({
 ### Summary
 - Root cause: [what failed]
 - Fix applied: [file:line change]
+
+### TDD Evidence (REQUIRED)
+**RED Phase:**
+- Test (or repro script): [path]
+- Command: [exact command]
+- Exit code: **1**
+- Failure: [key failure line]
+
+**GREEN Phase:**
+- Command: [exact command]
+- Exit code: **0**
+- Tests: [X/X pass]
+
+### Variant Coverage (REQUIRED)
+- Variant dimensions considered: [list]
+- Regression cases added: [baseline + non-default case(s)]
+- Hardcoding check: [explicitly state "no hardcoding" OR explain any unavoidable constants]
 
 ### Assumptions
 - [Assumptions about root cause]
