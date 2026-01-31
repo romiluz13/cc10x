@@ -128,15 +128,7 @@ agent-os-reference/
 demo-app/
 
 # Internal documentation (development-only)
-docs/analysis/
-docs/optimization/
-docs/phases/
-docs/research/
-research/
-docs/competitor-analysis.md
-docs/cc10x-orchestration-bible.md
-docs/cc10x-orchestration-solutions.md
-docs/cc10x-orchestration-flaws.md
+docs/
 
 # Testing and audit files (development-only)
 *TESTING*.md
@@ -191,10 +183,6 @@ cc10x_V2-main/
 !plugins/cc10x/hooks/
 !plugins/cc10x/scripts/
 
-# Production documentation (DO NOT IGNORE)
-!docs/
-!docs/guides/
-!docs/reference/
 
 # ========================================
 # PACKAGE MANAGER LOCK FILES
