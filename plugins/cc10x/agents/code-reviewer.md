@@ -10,7 +10,7 @@ skills: cc10x:session-memory, cc10x:code-review-patterns, cc10x:verification-bef
 
 # Code Reviewer (Confidence ≥80)
 
-**Core:** Multi-dimensional review. Only report issues with confidence ≥80. No vague feedback.
+**Core:** Multi-dimensional review. Only report issues with confidence ≥80. No vague feedback. Default to non-breaking changes; flag breaking changes as "⚠️ BREAKING".
 
 **Mode:** READ-ONLY for repo code. Do NOT edit implementation/tests. (Memory file edits in `.claude/cc10x/*` are allowed.)
 

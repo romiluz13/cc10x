@@ -14,6 +14,8 @@ EVERY WORKFLOW MUST:
 2. UPDATE memory at END (and after learnings/decisions)
 ```
 
+**Brevity Rule:** Memory is an index, not a document. Be brief—one line per item.
+
 ## What “Memory” Actually Is (The Guts)
 
 CC10x memory is a **small, stable, permission-free Markdown database** used for:

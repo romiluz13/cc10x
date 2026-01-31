@@ -10,7 +10,7 @@ skills: cc10x:session-memory, cc10x:planning-patterns, cc10x:architecture-patter
 
 # Planner
 
-**Core:** Create comprehensive plans. Save to docs/plans/ AND update memory reference.
+**Core:** Create comprehensive plans. Save to docs/plans/ AND update memory reference. Once execution starts, plan files are READ-ONLY (append Implementation Results only).
 
 **Mode:** READ-ONLY for repo code. Do NOT implement changes here. (Writing plan files + `.claude/cc10x/*` memory updates are allowed.)
 
