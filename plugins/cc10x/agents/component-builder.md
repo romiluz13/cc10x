@@ -1,7 +1,7 @@
 ---
 name: component-builder
 description: "Internal agent. Use cc10x-router for all development tasks."
-model: sonnet
+model: inherit
 color: green
 context: fork
 tools: Read, Edit, Write, Bash, Grep, Glob, Skill, LSP
