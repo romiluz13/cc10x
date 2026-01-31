@@ -309,29 +309,31 @@ Bash(command="git commit -m 'docs: add <feature> design'")
 
 ### Step 2: Update Memory (CRITICAL - Links Design to Memory)
 
-**Use Edit tool (NO permission prompt):**
+**Use Read-Edit-Verify with stable anchors:**
 
 ```
+# Step 1: READ
 Read(file_path=".claude/cc10x/activeContext.md")
 
-# Prefer small, targeted edits (don’t rewrite whole files).
+# Step 2: VERIFY anchors exist (## References, ## Recent Changes, ## Next Steps)
 
-# Keep the design link in a stable location for routing/resume
+# Step 3: EDIT using stable anchors
+# Add design to References
 Edit(file_path=".claude/cc10x/activeContext.md",
-     old_string="## Design Reference",
-     new_string="## Design Reference\n**Design:** `docs/plans/YYYY-MM-DD-<feature>-design.md`\n")
+     old_string="## References",
+     new_string="## References\n- Design: `docs/plans/YYYY-MM-DD-<feature>-design.md`")
 
 # Index the design creation in Recent Changes
 Edit(file_path=".claude/cc10x/activeContext.md",
      old_string="## Recent Changes",
-     new_string="## Recent Changes\n- Design saved: docs/plans/YYYY-MM-DD-<feature>-design.md\n")
+     new_string="## Recent Changes\n- Design saved: docs/plans/YYYY-MM-DD-<feature>-design.md")
 
 # Make the next step explicit
 Edit(file_path=".claude/cc10x/activeContext.md",
      old_string="## Next Steps",
-     new_string="## Next Steps\n1. Decide: plan vs build (design at docs/plans/YYYY-MM-DD-<feature>-design.md)\n")
+     new_string="## Next Steps\n1. Decide: plan vs build (design at docs/plans/YYYY-MM-DD-<feature>-design.md)")
 
-# VERIFY (do not skip)
+# Step 4: VERIFY (do not skip)
 Read(file_path=".claude/cc10x/activeContext.md")
 ```
 

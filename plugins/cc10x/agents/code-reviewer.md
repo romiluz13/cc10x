@@ -45,15 +45,25 @@ git ls-files --others --exclude-standard      # NEW untracked files
 5. **Performance** - N+1, loops, memory, unnecessary computation
 6. **Update memory** - Save findings (see below)
 
-## Memory Update (REQUIRED)
+## Memory Updates (Read-Edit-Verify)
+
+**Every memory edit MUST follow this sequence:**
+
+1. `Read(...)` - see current content
+2. Verify anchor exists (if not, use `## Last Updated` fallback)
+3. `Edit(...)` - use stable anchor
+4. `Read(...)` - confirm change applied
+
+**Stable anchors:** `## Recent Changes`, `## Learnings`, `## References`,
+`## Common Gotchas`, `## Completed`, `## Verification`
 
 **Parallel-safety rule:** If your Task Context says you are running as part of **BUILD** (the parallel review phase),
-prefer **NO memory edits**. Put “Memory Notes” in your output and let the main assistant persist them after both parallel tasks complete.
+prefer **NO memory edits**. Put "Memory Notes" in your output and let the main assistant persist them after both parallel tasks complete.
 
-Otherwise (REVIEW workflow, DEBUG workflow, or non-parallel context), persist:
-- `activeContext.md`: add key review learnings (and any decision changes) + a Recent Changes entry
+**Update targets (non-parallel context):**
+- `activeContext.md`: add key review learnings + a Recent Changes entry
 - `patterns.md`: promote reusable gotchas/conventions (especially under `## Common Gotchas`)
-- `progress.md`: only if you’re recording workflow-level blockers/next steps; do not invent verification evidence
+- `progress.md`: only if recording workflow-level blockers/next steps
 
 ## Confidence Scoring
 | Score | Meaning | Action |

@@ -73,12 +73,39 @@ Read(file_path=".claude/cc10x/progress.md")  # Prior attempts + evidence
 9. **Verify** - Regression test passes + relevant test suite passes, functionality restored
 10. **Update memory** - Update `.claude/cc10x/{activeContext,patterns,progress}.md` via `Edit(...)`, then `Read(...)` back to verify the change applied
 
-## Memory Update Targets (REQUIRED)
+## Memory Updates (Read-Edit-Verify)
 
-After fixing the bug:
+**Every memory edit MUST follow this sequence:**
+
+1. `Read(...)` - see current content
+2. Verify anchor exists (if not, use `## Last Updated` fallback)
+3. `Edit(...)` - use stable anchor
+4. `Read(...)` - confirm change applied
+
+**Stable anchors:** `## Recent Changes`, `## Learnings`, `## References`,
+`## Common Gotchas`, `## Completed`, `## Verification`
+
+**Update targets after fixing the bug:**
 - `activeContext.md`: record root cause + key learning and what was tried
-- `patterns.md`: add a reusable entry under `## Common Gotchas` (bug → fix) if it’s likely to recur
-- `progress.md`: add Verification Evidence (regression test + relevant suite) with exit codes
+- `patterns.md`: add entry under `## Common Gotchas` (bug → fix) if likely to recur
+- `progress.md`: add Verification Evidence (regression test + suite) with exit codes
+
+**Debug Attempt Format (REQUIRED for DEBUG workflow):**
+
+When recording debugging attempts in activeContext.md Recent Changes, use:
+```
+[DEBUG-N]: {what was tried} → {result}
+```
+
+Examples:
+- `[DEBUG-1]: Added null check to parseData() → still failing (same error)`
+- `[DEBUG-2]: Wrapped in try-catch with logging → error is in upstream fetch()`
+- `[DEBUG-3]: Fixed fetch() URL encoding → tests pass`
+
+**Why this format:**
+- Router counts `[DEBUG-N]:` lines to trigger external research after 3+ failures
+- Consistent format enables reliable counting
+- Captures both action AND result for context
 
 ## Task Completion
 

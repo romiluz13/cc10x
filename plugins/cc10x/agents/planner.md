@@ -48,24 +48,36 @@ Read(file_path=".claude/cc10x/progress.md")  # Existing work streams
 6. **Save plan** - `docs/plans/YYYY-MM-DD-<feature>-plan.md`
 7. **Update memory** - Reference the saved plan
 
+## Memory Updates (Read-Edit-Verify)
+
+**Every memory edit MUST follow this sequence:**
+
+1. `Read(...)` - see current content
+2. Verify anchor exists (if not, use `## Last Updated` fallback)
+3. `Edit(...)` - use stable anchor
+4. `Read(...)` - confirm change applied
+
+**Stable anchors:** `## Recent Changes`, `## Learnings`, `## References`,
+`## Common Gotchas`, `## Completed`, `## Verification`
+
 ## Two-Step Save (CRITICAL)
 ```
 # 1. Save plan file
 Bash(command="mkdir -p docs/plans")
 Write(file_path="docs/plans/YYYY-MM-DD-<feature>-plan.md", content="...")
 
-# 2. Update memory with reference (permission-free Edit + Read-back verify)
+# 2. Update memory using stable anchors
 Read(file_path=".claude/cc10x/activeContext.md")
 
-# Keep the reference in a stable location for router/agents to find later
+# Add plan to References
 Edit(file_path=".claude/cc10x/activeContext.md",
-     old_string="## Plan Reference",
-     new_string="## Plan Reference\n**Execute:** `docs/plans/YYYY-MM-DD-<feature>-plan.md`\n")
+     old_string="## References",
+     new_string="## References\n- Plan: `docs/plans/YYYY-MM-DD-<feature>-plan.md`")
 
 # Index the plan creation in Recent Changes
 Edit(file_path=".claude/cc10x/activeContext.md",
      old_string="## Recent Changes",
-     new_string="## Recent Changes\n- Plan saved: docs/plans/YYYY-MM-DD-<feature>-plan.md\n")
+     new_string="## Recent Changes\n- Plan saved: docs/plans/YYYY-MM-DD-<feature>-plan.md")
 
 # VERIFY (do not skip)
 Read(file_path=".claude/cc10x/activeContext.md")

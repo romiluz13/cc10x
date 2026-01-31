@@ -52,23 +52,39 @@ If any memory file is missing:
 - Create it with `Write(...)` using the templates from `cc10x:session-memory` (include the contract comment + required headings).
 - Then `Read(...)` it before continuing.
 
-**TEMPLATE VALIDATION GATE (Auto-Heal Old Projects):**
+**TEMPLATE VALIDATION GATE (Auto-Heal):**
 
-After loading `activeContext.md`, check for canonical sections. If missing, add them:
+After loading memory files, ensure ALL required sections exist.
 
+### activeContext.md - Required Sections
+`## Current Focus`, `## Recent Changes`, `## Next Steps`, `## Decisions`,
+`## Learnings`, `## References`, `## Blockers`, `## Last Updated`
+
+### progress.md - Required Sections
+`## Current Workflow`, `## Tasks`, `## Completed`, `## Verification`, `## Last Updated`
+
+### patterns.md - Required Sections
+`## Common Gotchas` (minimum)
+
+**Auto-heal pattern:**
 ```
-# Check if activeContext.md has canonical sections (required for Edit anchors)
-# If "## Plan Reference" is NOT in the file:
+# If any section missing in activeContext.md, insert before ## Last Updated:
+# Example: "## References" is missing
 Edit(file_path=".claude/cc10x/activeContext.md",
      old_string="## Last Updated",
-     new_string="## Plan Reference\n\n## Design Reference\n\n## Research References\n| Topic | File | Key Insight |\n|-------|------|-------------|\n\n## Last Updated")
+     new_string="## References\n- Plan: N/A\n- Design: N/A\n- Research: N/A\n\n## Last Updated")
 
-# VERIFY the sections now exist
+# Example: progress.md missing "## Verification"
+Edit(file_path=".claude/cc10x/progress.md",
+     old_string="## Last Updated",
+     new_string="## Verification\n- [None yet]\n\n## Last Updated")
+
+# VERIFY after each heal
 Read(file_path=".claude/cc10x/activeContext.md")
 ```
 
 This is idempotent: runs once per project (subsequent sessions find sections present).
-**Why:** v6.0.1 introduced targeted Edit anchors (e.g., `## Plan Reference`). Old projects lack these sections, causing silent Edit failures.
+**Why:** v6.0.4 uses stable section anchors. Old projects may lack these sections, causing Edit failures.
 
 **UPDATE (Checkpoint + Final):**
 - Avoid memory edits during parallel phases.
@@ -193,7 +209,18 @@ TaskCreate({ subject: "CC10X planner: Create plan for {feature}", description: "
 3. **Check for research trigger:**
    - User explicitly requested research ("research", "github", "octocode"), OR
    - External service error (API timeout, auth failure, third-party), OR
-   - **3+ local debugging attempts failed (check activeContext Recent Changes for attempt count)**
+   - **3+ local debugging attempts failed**
+
+   **Debug Attempt Counting:**
+   - Format in activeContext.md Recent Changes: `[DEBUG-N]: {what was tried} → {result}`
+   - Example: `[DEBUG-1]: Added null check → still failing (TypeError persists)`
+   - Count lines matching `[DEBUG-N]:` pattern
+   - If count ≥ 3 AND all show failure → trigger external research
+
+   **What counts as an attempt:**
+   - A hypothesis tested with code change or command
+   - NOT: reading files, thinking, planning
+   - Each attempt must have a concrete action + observed result
 
    **If ANY trigger met:**
    - Execute research FIRST using octocode tools directly

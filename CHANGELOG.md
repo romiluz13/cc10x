@@ -1,5 +1,84 @@
 # Changelog
 
+## [6.0.4] - 2026-01-31
+
+### Added
+
+- **Debug Attempt Tracking Format** (FLAW 8 Fix)
+  - Explicit `[DEBUG-N]:` format for tracking debugging attempts in activeContext.md
+  - Router counts lines matching `[DEBUG-N]:` pattern to trigger external research after 3+ failures
+  - Bug-investigator documents required format with examples
+  - Session-memory template includes format placeholder
+
+### Changed
+
+- **Router** (cc10x-router/SKILL.md:214-223)
+  - Added "Debug Attempt Counting" section with format specification
+  - Added "What counts as an attempt" clarification (hypothesis tested with code change, NOT reading/thinking)
+
+- **Bug-Investigator** (bug-investigator.md:93-108)
+  - Added "Debug Attempt Format (REQUIRED for DEBUG workflow)" section
+  - Includes examples and explains why format is needed
+
+- **Session-Memory** (session-memory/SKILL.md:381)
+  - Added `[DEBUG-N]:` format to Recent Changes template
+
+### Fixed
+
+- **Research trigger undefined** (FLAW 8)
+  - Root cause: "3+ local debugging attempts failed" had no defined format
+  - Solution: `[DEBUG-N]: {what was tried} → {result}` format enables reliable counting
+
+## [6.0.3] - 2026-01-31
+
+### Added
+
+- **Stable Anchor Registry** (session-memory)
+  - Defined 7 guaranteed anchors: `## Recent Changes`, `## Learnings`, `## References`, `## Last Updated`, `## Common Gotchas`, `## Completed`, `## Verification`
+  - Explicit guidance: NEVER use table headers or checkbox text as anchors
+
+- **Read-Edit-Verify Pattern** (MANDATORY)
+  - 4-step sequence: Read → Verify Anchor → Edit → Verify Change
+  - Added to session-memory and all agent files
+  - Prevents "Error editing file" by ensuring anchors exist before use
+
+- **Extended Template Validation Gate** (Router)
+  - Now validates all canonical sections in activeContext.md and progress.md
+  - Auto-heals any missing sections using `## Last Updated` fallback
+
+### Changed
+
+- **activeContext.md Template** (12 → 8 sections)
+  - Merged: `## Active Decisions` + `## Learnings This Session` → `## Decisions` + `## Learnings`
+  - Merged: `## Plan Reference` + `## Design Reference` + `## Research References` → `## References`
+  - Removed: `## User Preferences Discovered` (goes in Learnings)
+
+- **progress.md Template** (8 → 5 sections)
+  - Merged: `## Active Workflow Tasks` + `## In Progress` + `## Remaining` → `## Tasks`
+  - Changed: `## Verification Evidence` table → `## Verification` bullets
+  - Removed: `## Known Issues`, `## Evolution of Decisions`, `## Implementation Results`
+
+- **Skills** (Table → Bullet Anchors)
+  - github-research: Changed from table header to `## References` anchor
+  - planning-patterns: Changed from `## Plan Reference` to `## References` anchor
+  - brainstorming: Changed from `## Design Reference` to `## References` anchor
+
+- **All Agents** (R-E-V Reminder)
+  - Added "Memory Updates (Read-Edit-Verify)" section with stable anchors list
+  - component-builder, bug-investigator, planner, integration-verifier, code-reviewer
+
+### Fixed
+
+- **"Error editing file" on Memory Operations**
+  - Root cause: 14 different Edit anchors, many brittle (table headers, optional sections)
+  - Solution: 7 stable anchors guaranteed to exist + Read-Edit-Verify pattern
+
+### Notes
+
+- Reduced anchor count from 14 to 7 (50% reduction)
+- All table-header anchors eliminated
+- Backward compatible: Template Validation Gate auto-heals old projects
+
 ## [6.0.2] - 2026-01-31
 
 ### Added

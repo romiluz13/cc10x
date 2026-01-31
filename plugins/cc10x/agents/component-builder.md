@@ -50,11 +50,21 @@ Read(file_path=".claude/cc10x/progress.md")
 5. **Verify** - All tests pass, functionality works
 6. **Update memory** - Update `.claude/cc10x/{activeContext,patterns,progress}.md` via `Edit(...)`, then `Read(...)` back to verify the change applied
 
-## Memory Update Targets (REQUIRED)
+## Memory Updates (Read-Edit-Verify)
 
-After implementation:
+**Every memory edit MUST follow this sequence:**
+
+1. `Read(...)` - see current content
+2. Verify anchor exists (if not, use `## Last Updated` fallback)
+3. `Edit(...)` - use stable anchor
+4. `Read(...)` - confirm change applied
+
+**Stable anchors:** `## Recent Changes`, `## Learnings`, `## References`,
+`## Common Gotchas`, `## Completed`, `## Verification`
+
+**Update targets after implementation:**
 - `activeContext.md`: add a Recent Changes entry + update Next Steps
-- `progress.md`: add Verification Evidence (tests/build) with exit codes; mark completed items
+- `progress.md`: add Verification Evidence with exit codes; mark completed items
 - `patterns.md`: only if you discovered a reusable convention/gotcha worth keeping
 
 ## Pre-Implementation Checklist

@@ -371,50 +371,40 @@ If an Edit does not apply cleanly:
 
 ```markdown
 # Active Context
-<!-- CC10X MEMORY CONTRACT: Do not rename headings. Used as Edit anchors. -->
+<!-- CC10X: Do not rename headings. Used as Edit anchors. -->
 
 ## Current Focus
-[What we're actively working on RIGHT NOW]
+[Active work]
 
 ## Recent Changes
-- [Change 1] - [file:line]
-- [Change 2] - [file:line]
+- [Change] - [file:line]
+- [DEBUG-N]: {what was tried} → {result}  <!-- Use for debug workflow -->
 
 ## Next Steps
-1. [Immediate next action]
-2. [Following action]
-3. [After that]
+1. [Step]
 
-## Active Decisions
-| Decision | Choice | Why |
-|----------|--------|-----|
-| [Decision 1] | [What we chose] | [Reasoning] |
-| [Decision 2] | [What we chose] | [Reasoning] |
+## Decisions
+- [Decision]: [Choice] - [Why]
 
-## Learnings This Session
-- [Insight 1]: [What we learned]
-- [Insight 2]: [What we learned]
+## Learnings
+- [Insight]
 
-## Blockers / Issues
-- [Blocker 1]: [Status]
+## References
+- Plan: `docs/plans/...` (or N/A)
+- Design: `docs/plans/...` (or N/A)
+- Research: `docs/research/...` → [insight]
 
-## User Preferences Discovered
-- [Preference]: [Details]
-
-## Plan Reference
-**Execute:** `docs/plans/YYYY-MM-DD-<feature>-plan.md`
-
-## Design Reference
-**Design:** `docs/plans/YYYY-MM-DD-<feature>-design.md`
-
-## Research References
-| Topic | File | Key Insight |
-|-------|------|-------------|
-| [Research topic] | docs/research/YYYY-MM-DD-topic-research.md | [One-line key insight] |
+## Blockers
+- [None]
 
 ## Last Updated
 [timestamp]
 ```
+
+**Merged sections:**
+- `## Active Decisions` + `## Learnings This Session` → `## Decisions` + `## Learnings`
+- `## Plan Reference` + `## Design Reference` + `## Research References` → `## References`
+- Removed: `## User Preferences Discovered` (goes in Learnings)
 
 ### patterns.md (Accumulates over time)
 
@@ -456,53 +446,84 @@ If an Edit does not apply cleanly:
 
 ```markdown
 # Progress Tracking
-<!-- CC10X MEMORY CONTRACT: Do not rename headings. Used as Edit anchors. -->
+<!-- CC10X: Do not rename headings. Used as Edit anchors. -->
 
 ## Current Workflow
 [PLAN | BUILD | REVIEW | DEBUG]
 
-## Active Workflow Tasks
-
-**Task-based tracking for resume capability:**
-
-| Subject | Status | Blocked By (Subject) | Task ID (optional) |
-|---------|--------|----------------------|--------------------|
-| {subject} | pending/in_progress/completed | {deps_subjects} | {id_or_dash} |
-
-Last Updated: {timestamp}
-Workflow: BUILD/DEBUG/REVIEW/PLAN
-
-**Note:** Use `TaskList()` to get current state. This table is for reference/backup.
-Prefer subjects/namespacing for continuity; task IDs may change depending on how Tasks are configured.
+## Tasks
+- [ ] Task 1
+- [x] Task 2 - evidence
 
 ## Completed
-- [x] [Task 1] - [verification evidence]
-- [x] [Task 2] - [verification evidence]
+- [x] Item - evidence
 
-## In Progress
-- [ ] [Task 3] - [current status]
+## Verification
+- `command` → exit 0 (X/X)
 
-## Remaining
-- [ ] [Task 4]
-- [ ] [Task 5]
-
-## Verification Evidence
-| Check | Command | Result |
-|-------|---------|--------|
-| Tests | `npm test` | exit 0 (34/34) |
-| Build | `npm run build` | exit 0 |
-
-## Known Issues
-- [Issue 1]: [Status]
-
-## Evolution of Decisions
-- [Date]: [Decision changed from X to Y because Z]
-
-## Implementation Results (append-only after build)
-| Planned | Actual | Deviation Reason |
-|---------|--------|------------------|
-| [What was planned] | [What happened] | [Why it differed] |
+## Last Updated
+[timestamp]
 ```
+
+**Merged sections:**
+- `## Active Workflow Tasks` + `## In Progress` + `## Remaining` → `## Tasks`
+- `## Verification Evidence` table → `## Verification` bullets
+- Removed: `## Known Issues`, `## Evolution of Decisions`, `## Implementation Results` (rarely used, clutters template)
+
+## Stable Anchors (ONLY use these)
+
+| Anchor | File | Stability |
+|--------|------|-----------|
+| `## Recent Changes` | activeContext | GUARANTEED |
+| `## Learnings` | activeContext | GUARANTEED |
+| `## References` | activeContext | GUARANTEED |
+| `## Last Updated` | all files | GUARANTEED (fallback) |
+| `## Common Gotchas` | patterns | GUARANTEED |
+| `## Completed` | progress | GUARANTEED |
+| `## Verification` | progress | GUARANTEED |
+
+**NEVER use as anchors:**
+- Table headers (`| Col | Col |`)
+- Checkbox text (`- [ ] specific text`)
+- Optional sections that may not exist
+
+---
+
+## Read-Edit-Verify (MANDATORY)
+
+Every memory edit MUST follow this exact sequence:
+
+### Step 1: READ
+```
+Read(file_path=".claude/cc10x/activeContext.md")
+```
+
+### Step 2: VERIFY ANCHOR
+```
+# Check if intended anchor exists in the content you just read
+# If "## References" not found → use "## Last Updated" as fallback
+```
+
+### Step 3: EDIT
+```
+Edit(file_path=".claude/cc10x/activeContext.md",
+     old_string="## Recent Changes",
+     new_string="## Recent Changes\n- [New entry]\n")
+```
+
+### Step 4: VERIFY
+```
+Read(file_path=".claude/cc10x/activeContext.md")
+# Confirm your change appears. If not → STOP and retry.
+```
+
+**Why this works:**
+- Step 1 shows you what's actually there
+- Step 2 prevents "anchor not found" errors
+- Step 3 uses verified anchor
+- Step 4 catches silent failures
+
+---
 
 ## READ Triggers - When to Load Memory
 
@@ -616,16 +637,16 @@ Edit(file_path=".claude/cc10x/activeContext.md",
      old_string="## Recent Changes",
      new_string="## Recent Changes\n- [YYYY-MM-DD] [What changed] - [file:line]\n")
 
-# Example B: Add a decision row (prepend under the header)
+# Example B: Add a decision (stable anchor)
 Edit(file_path=".claude/cc10x/activeContext.md",
-     old_string="| Decision | Choice | Why |\n|----------|--------|-----|",
-     new_string="| Decision | Choice | Why |\n|----------|--------|-----|\n| [Decision] | [Choice] | [Why] |")
+     old_string="## Decisions",
+     new_string="## Decisions\n- [Decision]: [Choice] - [Why]")
 
-# Example C: Add verification evidence to progress.md
+# Example C: Add verification evidence to progress.md (stable anchor)
 Read(file_path=".claude/cc10x/progress.md")
 Edit(file_path=".claude/cc10x/progress.md",
-     old_string="| Check | Command | Result |\n|-------|---------|--------|",
-     new_string="| Check | Command | Result |\n|-------|---------|--------|\n| Tests | `[cmd]` | exit 0 (X/X) |")
+     old_string="## Verification",
+     new_string="## Verification\n- `[cmd]` → exit 0 (X/X)")
 
 # VERIFY (do not skip)
 Read(file_path=".claude/cc10x/activeContext.md")

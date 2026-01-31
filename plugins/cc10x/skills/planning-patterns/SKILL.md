@@ -364,39 +364,41 @@ Bash(command="git commit -m 'docs: add <feature> implementation plan'")
 
 ### Step 2: Update Memory (CRITICAL - Links Plan to Memory)
 
-**Use Edit tool (NO permission prompt):**
+**Use Read-Edit-Verify with stable anchors:**
 
 ```
+# Step 1: READ
 Read(file_path=".claude/cc10x/activeContext.md")
 
-# Prefer small, targeted edits (don’t rewrite whole files).
+# Step 2: VERIFY anchors exist (## References, ## Recent Changes, ## Next Steps)
 
-# Keep the plan link in a stable location for routing/resume
+# Step 3: EDIT using stable anchors
+# Add plan to References
 Edit(file_path=".claude/cc10x/activeContext.md",
-     old_string="## Plan Reference",
-     new_string="## Plan Reference\n**Execute:** `docs/plans/YYYY-MM-DD-<feature>-plan.md`\n")
+     old_string="## References",
+     new_string="## References\n- Plan: `docs/plans/YYYY-MM-DD-<feature>-plan.md`")
 
 # Index the plan creation in Recent Changes
 Edit(file_path=".claude/cc10x/activeContext.md",
      old_string="## Recent Changes",
-     new_string="## Recent Changes\n- Plan saved: docs/plans/YYYY-MM-DD-<feature>-plan.md\n")
+     new_string="## Recent Changes\n- Plan saved: docs/plans/YYYY-MM-DD-<feature>-plan.md")
 
 # Make execution the default next step
 Edit(file_path=".claude/cc10x/activeContext.md",
      old_string="## Next Steps",
-     new_string="## Next Steps\n1. Execute plan: docs/plans/YYYY-MM-DD-<feature>-plan.md\n")
+     new_string="## Next Steps\n1. Execute plan: docs/plans/YYYY-MM-DD-<feature>-plan.md")
 
-# VERIFY (do not skip)
+# Step 4: VERIFY (do not skip)
 Read(file_path=".claude/cc10x/activeContext.md")
 ```
 
-**Also append to progress.md using Edit:**
+**Also append to progress.md using stable anchor:**
 ```
 Read(file_path=".claude/cc10x/progress.md")
 
 Edit(file_path=".claude/cc10x/progress.md",
      old_string="## Completed",
-     new_string="## Completed\n- [x] Plan saved - docs/plans/YYYY-MM-DD-<feature>-plan.md\n")
+     new_string="## Completed\n- [x] Plan saved - docs/plans/YYYY-MM-DD-<feature>-plan.md")
 
 # VERIFY (do not skip)
 Read(file_path=".claude/cc10x/progress.md")

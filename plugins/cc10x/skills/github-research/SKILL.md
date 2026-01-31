@@ -166,31 +166,28 @@ Write(file_path="docs/research/YYYY-MM-DD-<topic>-research.md", content="[full r
 
 **CRITICAL: This must happen in the same execution block as Step 1**
 
-**Use Edit tool (permission-free):**
+**Use Edit tool with stable anchor (permission-free):**
 
 ```
-# First read existing content
+# Step 1: READ
 Read(file_path=".claude/cc10x/activeContext.md")
 
-# Then append a row to the Research References table (stable anchor = table header)
+# Step 2: VERIFY "## References" exists (if not, use fallback below)
+
+# Step 3: EDIT using stable anchor
 Edit(file_path=".claude/cc10x/activeContext.md",
-     old_string="| Topic | File | Key Insight |\n|-------|------|-------------|",
-     new_string="| Topic | File | Key Insight |\n|-------|------|-------------|\n| [Topic] | docs/research/YYYY-MM-DD-topic-research.md | [Key insight from findings] |")
+     old_string="## References",
+     new_string="## References\n- Research: `docs/research/YYYY-MM-DD-topic-research.md` → [Key insight]")
 
-# VERIFY (do not skip)
+# Step 4: VERIFY (do not skip)
 Read(file_path=".claude/cc10x/activeContext.md")
 ```
 
-**If Research References section doesn't exist, add it:**
+**If References section doesn't exist (fallback):**
 ```
 Edit(file_path=".claude/cc10x/activeContext.md",
      old_string="## Last Updated",
-     new_string="## Research References
-| Topic | File | Key Insight |
-|-------|------|-------------|
-| [Topic] | docs/research/YYYY-MM-DD-topic-research.md | [Key insight] |
-
-## Last Updated")
+     new_string="## References\n- Research: `docs/research/YYYY-MM-DD-topic-research.md` → [Key insight]\n\n## Last Updated")
 
 # VERIFY (do not skip)
 Read(file_path=".claude/cc10x/activeContext.md")

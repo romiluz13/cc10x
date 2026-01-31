@@ -35,12 +35,22 @@ Read(file_path=".claude/cc10x/patterns.md")  # Known gotchas and conventions
 4. **Test edges** - Network failures, invalid responses, auth expiry
 5. **Update memory** - Save verification results
 
-## Memory Update Targets (REQUIRED)
+## Memory Updates (Read-Edit-Verify)
 
-After verification:
-- `progress.md`: add rows to `## Verification Evidence` (commands + exit codes) and summarize PASS/FAIL
+**Every memory edit MUST follow this sequence:**
+
+1. `Read(...)` - see current content
+2. Verify anchor exists (if not, use `## Last Updated` fallback)
+3. `Edit(...)` - use stable anchor
+4. `Read(...)` - confirm change applied
+
+**Stable anchors:** `## Recent Changes`, `## Learnings`, `## References`,
+`## Common Gotchas`, `## Completed`, `## Verification`
+
+**Update targets after verification:**
+- `progress.md`: add rows to `## Verification` (commands + exit codes) and summarize PASS/FAIL
 - `activeContext.md`: record any new learnings + next steps (especially if FAIL)
-- `patterns.md`: only if you discovered a reusable “gotcha” (not a one-off failure)
+- `patterns.md`: only if you discovered a reusable "gotcha" (not a one-off failure)
 
 ## Task Completion
 
