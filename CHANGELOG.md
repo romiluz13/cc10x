@@ -1,5 +1,23 @@
 # Changelog
 
+## [6.0.5] - 2026-01-31
+
+### Changed
+
+- **Ultra-Conservative Skill Cleanup**
+  - Removed only 3 truly redundant sections (-41 lines total)
+  - session-memory: Removed "The Bottom Line" (restates Iron Law)
+  - planning-patterns: Removed "Remember" (repeats earlier content)
+  - debugging-patterns: Removed "Real-World Impact" (statistics don't affect AI)
+
+### Preserved
+
+- All philosophical statements ("Violating the letter is violating the spirit")
+- All "Why This Matters" sections (provide context for rules)
+- All conceptual frameworks (Context Tiers, Quick Index, etc.)
+- All Rationalization Prevention tables
+- All Bible-mandated content (100%)
+
 ## [6.0.4] - 2026-01-31
 
 ### Added
