@@ -507,12 +507,3 @@ After saving the plan, offer execution choice:
 **2. Manual Execution** - Follow plan step by step, verify each step
 
 **Which approach?"**
-
-## Remember
-
-- Exact file paths always
-- Complete code in plan (not "add validation")
-- Exact commands with expected output
-- DRY, YAGNI, TDD, frequent commits
-- Each step = one action (2-5 minutes)
-- No assumptions about context

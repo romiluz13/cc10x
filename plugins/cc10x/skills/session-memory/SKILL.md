@@ -727,27 +727,3 @@ If you catch yourself:
 - [ ] Progress updated in progress.md
 
 **Cannot check all boxes? Memory cycle incomplete.**
-
-## The Bottom Line
-
-```
-START → Load Memory → Do Work → Update Memory → END
-         ↑               ↑              ↑
-      MANDATORY    Check before    MANDATORY
-                   decisions
-```
-
-**The Full Cycle:**
-```
-1. LOAD all memory (START)
-2. CHECK memory before decisions (DURING)
-3. UPDATE memory with learnings (END)
-```
-
-**Memory persistence is not a feature. It's a requirement.**
-
-Your effectiveness depends entirely on memory accuracy. Treat it with the same importance as the code itself.
-
-READ without WRITE = Stale memory.
-WRITE without READ = Contradictory decisions.
-**Both are equally critical.**
