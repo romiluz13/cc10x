@@ -1,5 +1,53 @@
 # Changelog
 
+## [6.0.1] - 2026-01-31
+
+### Added
+
+- **Parallel-Safety Rules** (fixes FLAW 5 - memory race condition)
+  - Router now instructs: "Avoid memory edits during parallel phases"
+  - code-reviewer has explicit parallel-safety rule for BUILD workflow
+  - Memory updates deferred to workflow-final checkpoint
+
+- **Memory Update Targets** (all agents)
+  - Each agent now has explicit guidance on which files/sections to update
+  - Reduces ambiguity and prevents over-writing
+
+- **Session Memory "Guts" Documentation**
+  - Added "What Memory Actually Is" section explaining memory surfaces
+  - Added Promotion Ladder (observation → pattern → artifact → evidence)
+  - Added Ownership rules (who reads/writes)
+  - Added Concurrency Rule for parallel phases
+
+- **Canonical Sections in activeContext.md template**
+  - `## Plan Reference` and `## Design Reference` now in template
+  - Ensures Edit anchors exist for all new projects
+
+### Changed
+
+- **Agent Tools**
+  - code-reviewer: `Write` → `Edit` (proper tool for memory updates)
+  - integration-verifier: `Write` → `Edit`
+  - planner: added `Edit` tool
+
+- **Agent Modes**
+  - code-reviewer: READ-ONLY for repo code (memory edits still allowed)
+  - integration-verifier: READ-ONLY for repo code
+  - planner: READ-ONLY for repo code (plan files + memory still writable)
+
+- **Memory Loading**
+  - All agents now read all 3 memory files (activeContext, patterns, progress)
+  - Previously some agents only read 1-2 files
+
+- **Edit Patterns**
+  - brainstorming/planning-patterns: changed from whole-file replacement to small targeted edits
+  - github-research: Edit anchor changed to table header row for stability
+
+### Notes
+
+- This release completes the FLAW 5 fix from the orchestration analysis
+- Small targeted edits require canonical sections to exist (handled by updated templates)
+
 ## [6.0.0] - 2026-01-31
 
 ### Added
