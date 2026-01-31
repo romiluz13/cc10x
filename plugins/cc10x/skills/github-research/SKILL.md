@@ -177,6 +177,9 @@ Edit(file_path=".claude/cc10x/activeContext.md",
      old_string="## Research References",
      new_string="## Research References
 | [Topic] | docs/research/YYYY-MM-DD-topic-research.md | [Key insight from findings] |")
+
+# VERIFY (do not skip)
+Read(file_path=".claude/cc10x/activeContext.md")
 ```
 
 **If Research References section doesn't exist, add it:**
@@ -189,6 +192,9 @@ Edit(file_path=".claude/cc10x/activeContext.md",
 | [Topic] | docs/research/YYYY-MM-DD-topic-research.md | [Key insight] |
 
 ## Last Updated")
+
+# VERIFY (do not skip)
+Read(file_path=".claude/cc10x/activeContext.md")
 ```
 
 ### Step 3: Extract Patterns (Auto-Promote Learnings)
@@ -202,6 +208,9 @@ Edit(file_path=".claude/cc10x/patterns.md",
      old_string="## Common Gotchas",
      new_string="## Common Gotchas
 - [Gotcha from research]: [Solution] (Source: docs/research/YYYY-MM-DD-topic-research.md)")
+
+# VERIFY (do not skip)
+Read(file_path=".claude/cc10x/patterns.md")
 ```
 
 **What to extract:**

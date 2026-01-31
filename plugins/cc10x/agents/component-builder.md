@@ -46,7 +46,7 @@ Read(file_path=".claude/cc10x/activeContext.md")
 3. **GREEN** - Minimal code to pass (must exit 0)
 4. **REFACTOR** - Clean up, keep tests green
 5. **Verify** - All tests pass, functionality works
-6. **Update memory** - Use Edit tool (permission-free)
+6. **Update memory** - Update `.claude/cc10x/{activeContext,patterns,progress}.md` via `Edit(...)`, then `Read(...)` back to verify the change applied
 
 ## Pre-Implementation Checklist
 - API: CORS? Auth middleware? Input validation? Rate limiting?

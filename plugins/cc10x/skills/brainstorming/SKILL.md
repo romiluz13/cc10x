@@ -341,6 +341,9 @@ Design created for [feature]. Ready for planning or building.
 
 ## Last Updated
 [current date/time]")
+
+# VERIFY (do not skip)
+Read(file_path=".claude/cc10x/activeContext.md")
 ```
 
 **WHY BOTH:** Design files are artifacts. Memory is the index. Without memory update, next session won't know the design exists.

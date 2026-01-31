@@ -1,5 +1,27 @@
 # Changelog
 
+## [6.0.0] - 2026-01-31
+
+### Added
+
+- **Tasks Contract Hardening (official-schema aligned)**
+  - CC10X Tasks are now namespaced (subjects prefixed with `CC10X ...`) to prevent collisions and enable safer resumption.
+  - Router notes official task-list sharing via `CLAUDE_CODE_TASK_LIST_ID` and treats TaskLists as potentially long-lived.
+
+- **Task-Enforced Orchestration Gates (Flaw 4)**
+  - Missing critical evidence now creates a `CC10X REM-EVIDENCE:` task and blocks downstream tasks via `addBlockedBy`.
+  - Critical issues now create `CC10X REM-FIX:` tasks and block downstream tasks.
+  - BUILD workflows enforce a **re-review loop after remediation** (re-run reviewer + hunter before integration verification).
+
+### Changed
+
+- Router + planning skills no longer rely on undocumented TaskCreate fields (e.g., `metadata`).
+- Task examples standardized to canonical object-form calls (e.g., `TaskUpdate({ taskId: ..., status: \"...\" })`).
+
+### Notes
+
+- This release hardens orchestration reliability; it is intentionally strict to protect the system.
+
 ## [5.25.3] - 2026-01-30
 
 ### Added
@@ -108,7 +130,7 @@
   - Builder self-enforces TDD discipline through structured output
 
 - **Plan Reading Discipline** - Added plan-reading reminder to `component-builder.md`
-  - Builder checks for `metadata.planFile` and reads plan before implementing
+  - Builder reads plan file when provided (legacy references to `metadata.planFile` are deprecated as of v6.0.0)
   - Self-enforced responsibility (no external validation)
 
 - **Silent Failure Hunter** - Enhanced `silent-failure-hunter.md` with active fixing
@@ -159,8 +181,8 @@
 
 ### Added
 
-- **Plan-Task Linkage**: Tasks now include `metadata.planFile` for context recovery
-  - BUILD workflow tasks reference plan file in description and metadata
+- **Plan-Task Linkage (legacy; deprecated in v6.0.0)**: Tasks included `metadata.planFile` for context recovery
+  - BUILD workflow tasks referenced plan file in description and metadata
   - Enables agents to access original plan during execution
   - Supports resume capability with full plan context
 

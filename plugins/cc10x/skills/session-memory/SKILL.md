@@ -236,6 +236,9 @@ Edit(file_path=".claude/cc10x/activeContext.md",
 - [Key decision made]
 - [Important learning]
 - [Current state]")
+
+# VERIFY (do not skip)
+Read(file_path=".claude/cc10x/activeContext.md")
 ```
 
 ### Red Flags - Update Memory NOW
@@ -293,11 +296,26 @@ Reference when needed:
 
 ## File Purposes
 
+## Memory File Contract (Never Break)
+
+CC10x memory files are not "notes" - they are **contracts** used as Edit anchors.
+
+Hard rules:
+- Do not rename the top-level headers (`# Active Context`, `# Project Patterns`, `# Progress Tracking`).
+- Do not rename section headers (e.g., `## Current Focus`, `## Last Updated`).
+- Only add content *inside* existing sections (append lists/rows).
+- After every `Edit(...)`, **Read back** the file and confirm the intended change exists.
+
+If an Edit does not apply cleanly:
+- STOP (do not guess).
+- Re-read the file and re-apply using a correct, exact `old_string` anchor.
+
 ### activeContext.md (Read/Write EVERY session)
 
 **Current state of work - ALWAYS check this first:**
 
 ```markdown
+<!-- CC10X MEMORY CONTRACT: Do not rename headings. Used as Edit anchors. -->
 # Active Context
 
 ## Current Focus
@@ -342,6 +360,7 @@ Reference when needed:
 **Project-specific knowledge that persists:**
 
 ```markdown
+<!-- CC10X MEMORY CONTRACT: Do not rename headings. Used as Edit anchors. -->
 # Project Patterns
 
 ## Architecture Patterns
@@ -375,6 +394,7 @@ Reference when needed:
 **What's done, what's not:**
 
 ```markdown
+<!-- CC10X MEMORY CONTRACT: Do not rename headings. Used as Edit anchors. -->
 # Progress Tracking
 
 ## Current Workflow
@@ -384,14 +404,15 @@ Reference when needed:
 
 **Task-based tracking for resume capability:**
 
-| Task ID | Subject | Status | Blocked By |
-|---------|---------|--------|------------|
-| {id}    | {subject} | pending/in_progress/completed | {deps} |
+| Subject | Status | Blocked By (Subject) | Task ID (optional) |
+|---------|--------|----------------------|--------------------|
+| {subject} | pending/in_progress/completed | {deps_subjects} | {id_or_dash} |
 
 Last Updated: {timestamp}
 Workflow: BUILD/DEBUG/REVIEW/PLAN
 
 **Note:** Use `TaskList()` to get current state. This table is for reference/backup.
+Prefer subjects/namespacing for continuity; task IDs may change depending on how Tasks are configured.
 
 ## Completed
 - [x] [Task 1] - [verification evidence]
@@ -551,6 +572,9 @@ Edit(file_path=".claude/cc10x/activeContext.md",
 
 ## Last Updated
 [current date/time]")
+
+# VERIFY (do not skip)
+Read(file_path=".claude/cc10x/activeContext.md")
 ```
 
 **WHY Edit not Write?** Write asks "Do you want to overwrite?" for existing files. Edit is always permission-free.
@@ -590,6 +614,10 @@ Edit(file_path=".claude/cc10x/progress.md",
 1. **START**: Load memory files before any work
 2. **DURING**: Note learnings and decisions
 3. **END**: Update memory files with new context
+
+If an agent cannot safely update memory (e.g., no `Edit` tool available):
+- Include "memory-worthy" notes in the agent output (decisions, learnings, verification evidence).
+- The main assistant (router) must persist those notes into `.claude/cc10x/*.md` using `Edit(...)` + Read-back verification.
 
 **Failure to update memory = incomplete work.**
 

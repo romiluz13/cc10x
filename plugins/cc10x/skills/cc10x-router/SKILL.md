@@ -48,7 +48,16 @@ Read(file_path=".claude/cc10x/patterns.md")
 Read(file_path=".claude/cc10x/progress.md")
 ```
 
-**UPDATE LAST (After workflow):** Use Edit tool on activeContext.md (permission-free).
+If any memory file is missing:
+- Create it with `Write(...)` using the templates from `cc10x:session-memory` (include the contract comment + required headings).
+- Then `Read(...)` it before continuing.
+
+**UPDATE LAST (After workflow):** Use Edit tool on memory files (permission-free), then Read-back verify.
+
+Memory update rules (do not improvise):
+1. Use `Edit(...)` (not `Write`) to update existing `.claude/cc10x/*.md`.
+2. Immediately `Read(...)` the edited file and confirm the expected text exists.
+3. If the update did not apply, STOP and retry with a correct, exact `old_string` anchor (do not proceed with stale memory).
 
 ## Check Active Workflow Tasks
 
@@ -57,10 +66,19 @@ Read(file_path=".claude/cc10x/progress.md")
 TaskList()  # Check for pending/in-progress workflow tasks
 ```
 
-**If active CC10x workflow task exists (subject starts with BUILD/DEBUG/REVIEW/PLAN):**
-- Resume from task state (read task description for context)
+**If active CC10x workflow task exists (preferred: subject starts with `CC10X `):**
+- Resume from task state (use `TaskGet({ taskId })` for the task you plan to resume)
 - Skip workflow selection - continue execution from where it stopped
-- Check blockedBy to determine which agent to run next
+- Check `blockedBy` to determine which agent to run next
+
+**Safety rule (avoid cross-project collisions):**
+- If you find tasks that do NOT clearly belong to CC10x, do not resume them.
+- If unsure, ask the user whether to resume or create a fresh task hierarchy.
+
+**Legacy compatibility:** Older CC10x versions may have created tasks with subjects starting `BUILD:` / `DEBUG:` / `REVIEW:` / `PLAN:` (without the `CC10X` prefix).
+- If such tasks exist, ask the user whether to resume the legacy tasks or start a fresh CC10X-namespaced workflow.
+
+**Official Claude Code note:** Task lists can be shared across sessions via `CLAUDE_CODE_TASK_LIST_ID`. Treat TaskLists as potentially long-lived; always scope before resuming.
 
 **If no active tasks:**
 - Proceed with workflow selection below
@@ -74,63 +92,65 @@ TaskList()  # Check for pending/in-progress workflow tasks
 # 0. Check if following a plan (from activeContext.md)
 # If activeContext contains "Plan Reference:" or "Execute:" with plan path:
 #   → Extract plan_file path (e.g., docs/plans/2024-01-27-auth-plan.md)
-#   → Include in task metadata for context preservation
+#   → Include in task description for context preservation (do not rely on undocumented TaskCreate fields)
 
 # 1. Parent workflow task
 TaskCreate({
-  subject: "BUILD: {feature_summary}",
-  description: "User request: {request}\n\nWorkflow: BUILD\nChain: component-builder → [code-reviewer ∥ silent-failure-hunter] → integration-verifier\n\n**Plan:** {plan_file or 'N/A'}",
-  activeForm: "Building {feature}",
-  metadata: {
-    workflow: "BUILD",
-    feature: "{feature}",
-    planFile: "{plan_file or null}"  # Links task to plan for context recovery
-  }
+  subject: "CC10X BUILD: {feature_summary}",
+  description: "User request: {request}\n\nWorkflow: BUILD\nChain: component-builder → [code-reviewer ∥ silent-failure-hunter] → integration-verifier\n\nPlan: {plan_file or 'N/A'}",
+  activeForm: "Building {feature}"
 })
 # Returns workflow_task_id
 
 # 2. Agent tasks with dependencies
 TaskCreate({
-  subject: "component-builder: Implement {feature}",
-  description: "Build the feature per user request\n\n**Plan:** {plan_file or 'N/A'}",
-  activeForm: "Building components",
-  metadata: { agent: "component-builder", planFile: "{plan_file or null}" }
+  subject: "CC10X component-builder: Implement {feature}",
+  description: "Build the feature per user request\n\nPlan: {plan_file or 'N/A'}",
+  activeForm: "Building components"
 })
 # Returns builder_task_id
 
-TaskCreate({ subject: "code-reviewer: Review implementation", description: "Review code quality, patterns, security", activeForm: "Reviewing code" })
+TaskCreate({ subject: "CC10X code-reviewer: Review implementation", description: "Review code quality, patterns, security", activeForm: "Reviewing code" })
+# Returns reviewer_task_id
 TaskUpdate({ taskId: reviewer_task_id, addBlockedBy: [builder_task_id] })
 
-TaskCreate({ subject: "silent-failure-hunter: Hunt edge cases", description: "Find silent failures and edge cases", activeForm: "Hunting failures" })
+TaskCreate({ subject: "CC10X silent-failure-hunter: Hunt edge cases", description: "Find silent failures and edge cases", activeForm: "Hunting failures" })
+# Returns hunter_task_id
 TaskUpdate({ taskId: hunter_task_id, addBlockedBy: [builder_task_id] })
 
-TaskCreate({ subject: "integration-verifier: Verify integration", description: "Run tests, verify E2E functionality", activeForm: "Verifying integration" })
+TaskCreate({ subject: "CC10X integration-verifier: Verify integration", description: "Run tests, verify E2E functionality", activeForm: "Verifying integration" })
+# Returns verifier_task_id
 TaskUpdate({ taskId: verifier_task_id, addBlockedBy: [reviewer_task_id, hunter_task_id] })
 ```
 
 ### DEBUG Workflow Tasks
 ```
-TaskCreate({ subject: "DEBUG: {error_summary}", description: "User request: {request}\n\nWorkflow: DEBUG\nChain: bug-investigator → code-reviewer → integration-verifier", activeForm: "Debugging {error}" })
+TaskCreate({ subject: "CC10X DEBUG: {error_summary}", description: "User request: {request}\n\nWorkflow: DEBUG\nChain: bug-investigator → code-reviewer → integration-verifier", activeForm: "Debugging {error}" })
 
-TaskCreate({ subject: "bug-investigator: Investigate {error}", description: "Find root cause and fix", activeForm: "Investigating bug" })
-TaskCreate({ subject: "code-reviewer: Review fix", description: "Review the fix quality", activeForm: "Reviewing fix" })
+TaskCreate({ subject: "CC10X bug-investigator: Investigate {error}", description: "Find root cause and fix", activeForm: "Investigating bug" })
+# Returns investigator_task_id
+TaskCreate({ subject: "CC10X code-reviewer: Review fix", description: "Review the fix quality", activeForm: "Reviewing fix" })
+# Returns reviewer_task_id
 TaskUpdate({ taskId: reviewer_task_id, addBlockedBy: [investigator_task_id] })
-TaskCreate({ subject: "integration-verifier: Verify fix", description: "Verify fix works E2E", activeForm: "Verifying fix" })
+TaskCreate({ subject: "CC10X integration-verifier: Verify fix", description: "Verify fix works E2E", activeForm: "Verifying fix" })
+# Returns verifier_task_id
 TaskUpdate({ taskId: verifier_task_id, addBlockedBy: [reviewer_task_id] })
 ```
 
 ### REVIEW Workflow Tasks
 ```
-TaskCreate({ subject: "REVIEW: {target_summary}", description: "User request: {request}\n\nWorkflow: REVIEW\nChain: code-reviewer (single agent)", activeForm: "Reviewing {target}" })
+TaskCreate({ subject: "CC10X REVIEW: {target_summary}", description: "User request: {request}\n\nWorkflow: REVIEW\nChain: code-reviewer (single agent)", activeForm: "Reviewing {target}" })
 
-TaskCreate({ subject: "code-reviewer: Review {target}", description: "Comprehensive code review", activeForm: "Reviewing code" })
+TaskCreate({ subject: "CC10X code-reviewer: Review {target}", description: "Comprehensive code review", activeForm: "Reviewing code" })
+# Returns reviewer_task_id
 ```
 
 ### PLAN Workflow Tasks
 ```
-TaskCreate({ subject: "PLAN: {feature_summary}", description: "User request: {request}\n\nWorkflow: PLAN\nChain: planner (single agent)", activeForm: "Planning {feature}" })
+TaskCreate({ subject: "CC10X PLAN: {feature_summary}", description: "User request: {request}\n\nWorkflow: PLAN\nChain: planner (single agent)", activeForm: "Planning {feature}" })
 
-TaskCreate({ subject: "planner: Create plan for {feature}", description: "Create comprehensive implementation plan", activeForm: "Creating plan" })
+TaskCreate({ subject: "CC10X planner: Create plan for {feature}", description: "Create comprehensive implementation plan", activeForm: "Creating plan" })
+# Returns planner_task_id
 ```
 
 ## Workflow Execution
@@ -223,11 +243,15 @@ Task(subagent_type="cc10x:component-builder", prompt="
 {detected skills from table below}
 
 ---
-Execute the task. When complete, call TaskUpdate(taskId, status='completed').
+IMPORTANT:
+- If your tools include `Edit`, update `.claude/cc10x/{activeContext,patterns,progress}.md` at the end per `cc10x:session-memory` and `Read(...)` back to verify.
+- If your tools do NOT include `Edit`, put memory-worthy notes in your output (so the main assistant can update memory safely).
+
+Execute the task. When complete, call TaskUpdate({ taskId: "{TASK_ID_FROM_PROMPT}", status: "completed" }).
 ")
 ```
 
-**TASK ID is REQUIRED.** Agent MUST call `TaskUpdate(taskId, status="completed")` when done.
+**TASK ID is REQUIRED.** Agent MUST call `TaskUpdate({ taskId: "{TASK_ID_FROM_PROMPT}", status: "completed" })` when done.
 **SKILL_HINTS are MANDATORY.** Agent MUST call `Skill(skill="...")` for each hint immediately after loading memory.
 
 **Post-Agent Validation (After agent completes):**
@@ -253,25 +277,60 @@ After agent completes:
 1. Check for required sections in output
 2. Check for skill loading evidence (SKILL_HINTS loaded?)
 
-3. If CRITICAL missing (no exit codes, no verdict):
-   → Option A: Create remediation task:
+3. If REQUIRED sections are missing:
+   → Create remediation task (evidence-only; no code changes intended):
      TaskCreate({
-       subject: "Complete {agent}: Missing {section}",
-       description: "Agent output incomplete. Missing: {sections}",
-       activeForm: "Completing output"
+       subject: "CC10X REM-EVIDENCE: {agent} missing {sections}",
+       description: "Agent output incomplete. Missing: {sections}\n\nRequired: re-run the relevant command(s) and report the missing evidence in the required format (exit codes, verdicts, etc).",
+       activeForm: "Collecting missing evidence"
      })
-   → Option B: Ask user:
-     "Agent output incomplete ({missing}). Continue anyway?"
+
+   → Task-enforced gate (do not rely on self-discipline):
+     - Find downstream workflow tasks via TaskList() (subjects prefixed with `CC10X `)
+     - For every downstream task that is not completed:
+       TaskUpdate({ taskId: downstream_task_id, addBlockedBy: [remediation_task_id] })
+
+   → STOP. Do not invoke the next agent.
+     Only proceed after remediation completes OR user explicitly approves bypass (and record it in memory).
 
 4. If silent-failure-hunter reports CRITICAL issues (count > 0):
    → Treat as WORKFLOW BLOCKER until fixed.
-   → Create a remediation task for component-builder (or resume builder) to fix the CRITICAL issues.
-   → Do NOT proceed to integration-verifier until remediation is completed (or user explicitly accepts shipping with known issues).
+   → Create a remediation task for component-builder (code changes intended):
+     TaskCreate({
+       subject: "CC10X REM-FIX: Fix CRITICAL silent failures",
+       description: "Fix the CRITICAL issues reported by silent-failure-hunter.\n\nAfter fixing: include TDD Evidence (RED+GREEN) and list files changed.",
+       activeForm: "Fixing silent failures"
+     })
+   → Task-enforced gate:
+     - Block all downstream CC10x tasks until remediation completes:
+       TaskUpdate({ taskId: downstream_task_id, addBlockedBy: [remediation_task_id] })
+   → STOP. Do not proceed to integration-verifier until remediation is completed (or user explicitly accepts shipping with known issues and records it in memory).
+
+4b. If code-reviewer verdict is "Changes Requested" OR Critical Issues exist:
+   → Treat as WORKFLOW BLOCKER until fixed.
+   → Create a remediation task (code changes intended):
+     TaskCreate({
+       subject: "CC10X REM-FIX: Address code-reviewer critical issues",
+       description: "Fix the Critical Issues reported by code-reviewer.\n\nAfter fixing: include TDD Evidence (RED+GREEN) and list files changed.",
+       activeForm: "Fixing review issues"
+     })
+   → Task-enforced gate:
+     - Block all downstream CC10x tasks until remediation completes:
+       TaskUpdate({ taskId: downstream_task_id, addBlockedBy: [remediation_task_id] })
+   → STOP. Do not proceed until remediation is completed (or user explicitly accepts shipping with known issues and records it in memory).
 
 5. If bug-investigator is missing TDD Evidence (RED+GREEN) or Variant Coverage:
    → Treat as WORKFLOW BLOCKER until evidence is provided.
-   → Create remediation task: add regression test + rerun with exit-code evidence + document variants covered.
-   → Do NOT proceed to code-reviewer/integration-verifier until remediation is completed (or user explicitly accepts bypassing TDD).
+   → Create remediation task (may involve code/test changes):
+     TaskCreate({
+       subject: "CC10X REM-FIX: bug-investigator missing TDD/variants",
+       description: "Add regression test (RED), then fix (GREEN) and report exit codes.\nAlso document Variant Coverage and confirm no hardcoding.",
+       activeForm: "Adding regression coverage"
+     })
+   → Task-enforced gate:
+     - Block all downstream CC10x tasks until remediation completes:
+       TaskUpdate({ taskId: downstream_task_id, addBlockedBy: [remediation_task_id] })
+   → STOP. Do not proceed to code-reviewer/integration-verifier until remediation is completed (or user explicitly accepts bypassing TDD and records it in memory).
 
 6. If NON-CRITICAL missing (skill evidence):
    → Note for improvement, continue workflow
@@ -287,6 +346,23 @@ After agent completes:
 - Evidence: [Present/Missing]
 - Proceeding: [Yes/No + reason]
 ```
+
+## Remediation Re-Review Loop (BUILD - Non-Negotiable)
+
+If any remediation task that implies code/test changes is created/completed (subjects starting with `CC10X REM-FIX:`), then:
+
+1. Create re-review tasks (blocked by the remediation task):
+   - `CC10X code-reviewer: Re-review after remediation`
+   - `CC10X silent-failure-hunter: Re-hunt after remediation`
+
+2. Ensure integration-verifier is blocked on BOTH re-review tasks:
+   - Find the integration-verifier task via `TaskList()` (subject contains `integration-verifier`)
+   - Apply:
+     - `TaskUpdate({ taskId: verifier_task_id, addBlockedBy: [re_reviewer_task_id, re_hunter_task_id] })`
+
+3. Only after the re-review tasks complete, proceed to integration-verifier.
+
+**Why:** Otherwise we can ship code changes that were never reviewed/hunted (the heart of orchestration integrity).
 
 **How it works:** Task() is synchronous - router waits for agent to complete and receives its output before proceeding to next agent.
 
@@ -366,8 +442,8 @@ skills: cc10x:session-memory, cc10x:code-generation
    - blockedBy is empty OR all blockedBy tasks are "completed"
 
 2. Start agent(s):
-   - TaskUpdate(taskId, status="in_progress")
-   - If multiple tasks ready (e.g., code-reviewer + silent-failure-hunter):
+   - TaskUpdate({ taskId: runnable_task_id, status: "in_progress" })
+   - Otherwise, if multiple agent tasks are ready (e.g., code-reviewer + silent-failure-hunter):
      → Invoke BOTH in same message (parallel execution)
    - Pass task ID in prompt:
      Task(subagent_type="cc10x:{agent}", prompt="
@@ -379,7 +455,7 @@ skills: cc10x:session-memory, cc10x:code-generation
      ")
 
 3. After agent completes:
-   - Agent will have called TaskUpdate(taskId, status="completed")
+   - Agent will have called TaskUpdate({ taskId: runnable_task_id, status: "completed" })
    - Router calls TaskList() to check state
 
 4. Determine next:
@@ -400,8 +476,8 @@ When multiple tasks become unblocked simultaneously (e.g., code-reviewer AND sil
 
 ```
 # Both ready after builder completes
-TaskUpdate(taskId=reviewer_id, status="in_progress")
-TaskUpdate(taskId=hunter_id, status="in_progress")
+TaskUpdate({ taskId: reviewer_id, status: "in_progress" })
+TaskUpdate({ taskId: hunter_id, status: "in_progress" })
 
 # Invoke BOTH in same message = parallel execution
 Task(subagent_type="cc10x:code-reviewer", prompt="Your task ID: {reviewer_id}...")

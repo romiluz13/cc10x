@@ -1,6 +1,12 @@
 # Claude Code Tasks Research Findings (Jan 2026 Feature)
 
-> **Source:** VentureBeat, Medium articles by Joe Njenga and Rick Hightower, official changelog analysis
+> **Source mix:** official changelog analysis + community writeups (VentureBeat/Medium).
+>
+> **CC10x policy:** Treat this doc as background context only. For CC10x orchestration decisions, prefer:
+> - `plugins/cc10x/` (source of truth for behavior)
+> - `docs/research/anthropic-2026-features-research.md` (repo-audited integration notes)
+>
+> When sources disagree, CC10x takes the safest path: assume Tasks can be long-lived/shared and keep task examples schema-minimal.
 
 ---
 
@@ -23,7 +29,7 @@ The Tasks feature was released in **Claude Code v2.1.16 (January 23, 2026)** as 
 
 ---
 
-## The Four Task Tools (Official API)
+## The Four Task Tools (Reported API)
 
 ### 1. TaskCreate
 ```javascript
@@ -31,7 +37,7 @@ TaskCreate({
   subject: "Implement JWT authentication middleware",  // Imperative form
   description: "Add JWT validation to API routes...", // Full requirements
   activeForm: "Implementing JWT authentication",       // Present continuous (spinner)
-  metadata: { feature: "auth", phase: "2.1" }         // Arbitrary key-value pairs
+  metadata: { feature: "auth", phase: "2.1" }         // Optional (do not rely on this in CC10x examples unless verified)
 })
 ```
 
@@ -39,7 +45,7 @@ TaskCreate({
 - `subject` (required): Brief imperative title
 - `description` (required): Detailed requirements and acceptance criteria
 - `activeForm` (optional): Present-tense form shown in progress spinner
-- `metadata` (optional): Arbitrary key-value pairs for tracking
+- `metadata` (optional): Arbitrary key-value pairs for tracking (CC10x avoids relying on this unless runtime-verified)
 
 ### 2. TaskUpdate
 ```javascript
@@ -86,15 +92,17 @@ TaskGet({ taskId: "task-123" })
 
 ---
 
-## Critical Architecture Insight: Session-Scoped by Design
+## Architecture Note: Session Scope vs Shared Task Lists
 
 > **"Tasks are session-scoped. They don't persist across sessions. This isn't a bug. It's a design choice."**
 > — Rick Hightower, Medium
 
-### What This Means:
-1. Tasks stored at `~/.claude/tasks/` contain **only lock files for coordination**
-2. When session ends, task data is **gone**
-3. To persist across sessions, use the **Hydration Pattern**
+### Practical CC10x stance:
+- Some sources describe Tasks as session-scoped, while other docs mention shared task lists via `CLAUDE_CODE_TASK_LIST_ID`.
+- For safety, CC10x treats Tasks as **potentially long-lived/shared**:
+  - Namespace task subjects (e.g., `CC10X ...`)
+  - Avoid relying on task IDs for durable identity; prefer subject-based scope
+  - Keep TaskCreate/TaskUpdate examples schema-minimal (no undocumented fields)
 
 ### The Hydration Pattern (CRITICAL)
 

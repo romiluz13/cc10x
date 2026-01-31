@@ -136,6 +136,7 @@ research/
 docs/competitor-analysis.md
 docs/cc10x-orchestration-bible.md
 docs/cc10x-orchestration-solutions.md
+docs/cc10x-orchestration-flaws.md
 
 # Testing and audit files (development-only)
 *TESTING*.md

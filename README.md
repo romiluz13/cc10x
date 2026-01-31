@@ -2,7 +2,7 @@
 
 ### The Intelligent Orchestrator for Claude Code
 
-**Current version:** 5.25.3
+**Current version:** 6.0.0
 
 **Recommended (best results): copy `CLAUDE.md` / `AGENTS.md` into your project root so the router is always active. Plugin installs do not inject these files into your repo.**
 
@@ -321,10 +321,11 @@ I'll help you build a task tracker! Let me start...
 
 | Version | Highlights |
 |---------|------------|
+| **v6.0.0** | Orchestration hardening: Tasks contract correctness + Task-enforced gates + re-review loop |
 | **v5.25.1** | GSD-inspired enhancements (wiring verification, hypothesis criteria) |
 | **v5.25.0** | Critical orchestration fixes + README redesign |
 | **v5.24.0** | Research persistence with THREE-PHASE pattern |
-| **v5.23.0** | Plan-task linkage via metadata.planFile |
+| **v5.23.0** | Plan-task linkage (legacy: metadata.planFile; now deprecated) |
 | **v5.22.0** | Stub detection patterns |
 | **v5.21.0** | Task-based orchestration with TaskCreate/TaskUpdate |
 | **v5.20.0** | Goal-backward verification lens |
@@ -335,10 +336,14 @@ I'll help you build a task tracker! Let me start...
 <details>
 <summary>Full version history</summary>
 
+- **v6.0.0** - Orchestration hardening:
+  - Tasks contract correctness (no undocumented TaskCreate fields; canonical TaskUpdate object form)
+  - CC10X task namespacing + safer resume rules
+  - Task-enforced gates + re-review loop after remediation (prevents unreviewed changes)
 - **v5.25.1** - GSD-inspired enhancements: Wiring verification patterns, hypothesis quality criteria, cognitive biases table
 - **v5.25.0** - Critical orchestration fixes: Plan propagation, results collection, skill hierarchy, validation + README redesign
 - **v5.24.0** - Research Documentation Persistence: THREE-PHASE research pattern
-- **v5.23.0** - Plan-Task Linkage: metadata.planFile for context recovery
+- **v5.23.0** - Plan-Task Linkage: metadata.planFile for context recovery (legacy; deprecated in v6.0.0)
 - **v5.22.0** - Stub Detection Patterns: GSD-inspired stub detection
 - **v5.21.0** - Task-Based Orchestration: TaskCreate, TaskUpdate, TaskList integration
 - **v5.20.0** - Goal-Backward Lens: Verification enhancements
@@ -413,6 +418,6 @@ MIT License
 ---
 
 <p align="center">
-  <strong>cc10x v5.25.1</strong><br>
+  <strong>cc10x v6.0.0</strong><br>
   <em>The Intelligent Orchestrator for Claude Code</em>
 </p>

@@ -396,6 +396,9 @@ Plan created for [feature]. Ready for execution.
 
 ## Last Updated
 [current date/time]")
+
+# VERIFY (do not skip)
+Read(file_path=".claude/cc10x/activeContext.md")
 ```
 
 **Also append to progress.md using Edit:**
@@ -408,6 +411,9 @@ Edit(file_path=".claude/cc10x/progress.md",
 
 ## Plan Created
 - [x] Plan saved - docs/plans/YYYY-MM-DD-<feature>-plan.md")
+
+# VERIFY (do not skip)
+Read(file_path=".claude/cc10x/progress.md")
 ```
 
 **WHY BOTH:** Plan files are artifacts. Memory is the index. Without memory update, next session won't know the plan exists.
@@ -421,14 +427,9 @@ After saving plan, create execution tasks for tracking progress:
 ### Step 1: Create Parent Task
 ```
 TaskCreate({
-  subject: "Execute: {feature} Plan",
+  subject: "CC10X Execute Plan: {feature}",
   description: "Plan file: docs/plans/YYYY-MM-DD-{feature}-plan.md\n\n{brief_plan_summary}",
-  activeForm: "Executing {feature} plan",
-  metadata: {
-    planFile: "docs/plans/YYYY-MM-DD-{feature}-plan.md",
-    workflow: "PLAN_EXECUTION",
-    feature: "{feature}"
-  }
+  activeForm: "Executing {feature} plan"
 })
 # Returns parent_task_id
 ```
@@ -437,26 +438,16 @@ TaskCreate({
 ```
 # For each phase in plan:
 TaskCreate({
-  subject: "Phase 1: {phase_title}",
+  subject: "CC10X Phase 1: {phase_title}",
   description: "**Plan:** docs/plans/YYYY-MM-DD-{feature}-plan.md\n**Section:** Phase 1\n**Exit Criteria:** {demonstrable_milestone}\n\n{phase_details}",
-  activeForm: "Working on {phase_title}",
-  metadata: {
-    planFile: "docs/plans/YYYY-MM-DD-{feature}-plan.md",
-    phase: "1",
-    phaseTitle: "{phase_title}"
-  }
+  activeForm: "Working on {phase_title}"
 })
 # Returns phase_1_id
 
 TaskCreate({
-  subject: "Phase 2: {phase_title}",
+  subject: "CC10X Phase 2: {phase_title}",
   description: "**Plan:** docs/plans/YYYY-MM-DD-{feature}-plan.md\n**Section:** Phase 2\n**Exit Criteria:** {demonstrable_milestone}\n\n{phase_details}",
-  activeForm: "Working on {phase_title}",
-  metadata: {
-    planFile: "docs/plans/YYYY-MM-DD-{feature}-plan.md",
-    phase: "2",
-    phaseTitle: "{phase_title}"
-  }
+  activeForm: "Working on {phase_title}"
 })
 TaskUpdate({ taskId: phase_2_id, addBlockedBy: [phase_1_id] })
 
@@ -465,25 +456,28 @@ TaskUpdate({ taskId: phase_2_id, addBlockedBy: [phase_1_id] })
 
 ### Step 3: Store Task IDs in Memory
 
-Update `.claude/cc10x/progress.md` with task IDs:
+Update `.claude/cc10x/progress.md` with task *subjects* (and optionally task IDs for the current session).
+Do not rely on task IDs for long-term continuity unless you deliberately share the task list across sessions.
+
+Use Edit + Read-back verify:
+
 ```
+Read(file_path=".claude/cc10x/progress.md")
+
 Edit(file_path=".claude/cc10x/progress.md",
-     old_string="## Current Workflow",
-     new_string="## Current Workflow
-PLAN → Execution
+     old_string="## Active Workflow Tasks",
+     new_string="## Active Workflow Tasks
 
-## Active Workflow Tasks
+- CC10X Execute Plan: {feature} (blocked by: -)
+- CC10X Phase 1: {title} (blocked by: -)
+- CC10X Phase 2: {title} (blocked by: CC10X Phase 1: {title})
+")
 
-| Task ID | Subject | Status | Blocked By |
-|---------|---------|--------|------------|
-| {parent_id} | Execute: {feature} Plan | pending | - |
-| {phase_1_id} | Phase 1: {title} | pending | - |
-| {phase_2_id} | Phase 2: {title} | pending | {phase_1_id} |
-
-Last Updated: {timestamp}")
+# VERIFY (do not skip)
+Read(file_path=".claude/cc10x/progress.md")
 ```
 
-**WHY:** Tasks enable resume capability across sessions. If conversation compacts or session ends, TaskList() will show where to continue.
+**WHY:** Tasks help orchestration (dependencies + parallelism) and survive context compactions. For cross-session continuity, the plan file + CC10x memory files are the durable source of truth. If you intentionally share a task list across sessions (official Claude Code supports this), subjects/namespacing keep scope safe.
 
 ## Plan-Task Linkage (Context Preservation)
 
@@ -496,16 +490,16 @@ Last Updated: {timestamp}")
 │  Contains: Full implementation details, TDD steps, file paths      │
 │  Survives: Session close, context compaction, conversation reset   │
 └─────────────────────────────────────────────────────────────────────┘
-                              ↕ metadata.planFile links them
+                     ↕ task description includes the plan file path
 ┌─────────────────────────────────────────────────────────────────────┐
-│  TASKS (Session-Scoped - Execution Engine)                          │
-│  Storage: In-memory (ephemeral per session)                        │
+│  TASKS (Execution Engine)                                           │
 │  Contains: Status, dependencies, progress tracking                 │
-│  Survives: Within session only (unless using TASK_LIST_ID)         │
+│  Survives: Context compaction; can be shared across sessions via   │
+│            task list configuration (official Claude Code)          │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-**metadata.planFile is CRITICAL:** If context compacts mid-execution, the task description contains enough info to:
+**Plan path-in-description is CRITICAL:** If context compacts mid-execution, the task description contains enough info to:
 1. Find the plan file
 2. Locate the exact phase/task
 3. Continue without asking questions

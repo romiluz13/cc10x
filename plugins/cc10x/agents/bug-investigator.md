@@ -70,7 +70,7 @@ Read(file_path=".claude/cc10x/patterns.md")  # Check Common Gotchas!
 7. **RED: Regression test first** - Add a failing test that reproduces the bug (must fail before any fix)
 8. **GREEN: Minimal general fix** - Smallest diff that fixes the root cause across required variants (no hardcoding)
 9. **Verify** - Regression test passes + relevant test suite passes, functionality restored
-10. **Update memory** - Add to Common Gotchas
+10. **Update memory** - Update `.claude/cc10x/{activeContext,patterns,progress}.md` via `Edit(...)`, then `Read(...)` back to verify the change applied
 
 ## Task Completion
 
