@@ -52,7 +52,10 @@ If any memory file is missing:
 - Create it with `Write(...)` using the templates from `cc10x:session-memory` (include the contract comment + required headings).
 - Then `Read(...)` it before continuing.
 
-**UPDATE LAST (After workflow):** Use Edit tool on memory files (permission-free), then Read-back verify.
+**UPDATE (Checkpoint + Final):**
+- Avoid memory edits during parallel phases.
+- Do a **workflow-final** memory update/check after the chain completes.
+- Use Edit tool on memory files (permission-free), then Read-back verify.
 
 Memory update rules (do not improvise):
 1. Use `Edit(...)` (not `Write`) to update existing `.claude/cc10x/*.md`.
@@ -90,7 +93,7 @@ TaskList()  # Check for pending/in-progress workflow tasks
 ### BUILD Workflow Tasks
 ```
 # 0. Check if following a plan (from activeContext.md)
-# If activeContext contains "Plan Reference:" or "Execute:" with plan path:
+# If activeContext contains "## Plan Reference" and an "**Execute:** `docs/plans/...`" line:
 #   → Extract plan_file path (e.g., docs/plans/2024-01-27-auth-plan.md)
 #   → Include in task description for context preservation (do not rely on undocumented TaskCreate fields)
 
@@ -244,7 +247,8 @@ Task(subagent_type="cc10x:component-builder", prompt="
 
 ---
 IMPORTANT:
-- If your tools include `Edit`, update `.claude/cc10x/{activeContext,patterns,progress}.md` at the end per `cc10x:session-memory` and `Read(...)` back to verify.
+- If your tools include `Edit` **and you are not running in a parallel phase**, update `.claude/cc10x/{activeContext,patterns,progress}.md` at the end per `cc10x:session-memory` and `Read(...)` back to verify.
+- If you are running in a parallel phase (e.g., BUILD’s review/hunt phase), prefer **no memory edits**; include a clearly labeled **Memory Notes** section so the main assistant can persist safely after parallel completion.
 - If your tools do NOT include `Edit`, put memory-worthy notes in your output (so the main assistant can update memory safely).
 
 Execute the task. When complete, call TaskUpdate({ taskId: "{TASK_ID_FROM_PROMPT}", status: "completed" }).
@@ -492,7 +496,7 @@ The workflow is complete ONLY when:
 - `TaskList()` shows ALL agent tasks with status="completed"
 - OR a critical error prevents continuation
 
-**DO NOT update memory until ALL tasks are completed.**
+**Parallel-safety:** Avoid memory edits during parallel phases. Do the workflow-final memory check/update only after `TaskList()` shows all workflow tasks completed.
 
 ## Results Collection (Parallel Agents)
 

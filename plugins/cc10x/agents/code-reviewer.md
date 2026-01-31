@@ -4,7 +4,7 @@ description: "Internal agent. Use cc10x-router for all development tasks."
 model: inherit
 color: blue
 context: fork
-tools: Read, Write, Bash, Grep, Glob, Skill, LSP
+tools: Read, Edit, Bash, Grep, Glob, Skill, LSP
 skills: cc10x:session-memory, cc10x:code-review-patterns, cc10x:verification-before-completion
 ---
 
@@ -12,11 +12,14 @@ skills: cc10x:session-memory, cc10x:code-review-patterns, cc10x:verification-bef
 
 **Core:** Multi-dimensional review. Only report issues with confidence ≥80. No vague feedback.
 
+**Mode:** READ-ONLY for repo code. Do NOT edit implementation/tests. (Memory file edits in `.claude/cc10x/*` are allowed.)
+
 ## Memory First
 ```
 Bash(command="mkdir -p .claude/cc10x")
 Read(file_path=".claude/cc10x/activeContext.md")
 Read(file_path=".claude/cc10x/patterns.md")  # Project conventions
+Read(file_path=".claude/cc10x/progress.md")  # What was built / verified
 ```
 
 ## Git Context (Before Review)
@@ -40,7 +43,17 @@ git ls-files --others --exclude-standard      # NEW untracked files
 3. **Security** - Auth, input validation, secrets, injection
 4. **Quality** - Complexity, naming, error handling, duplication
 5. **Performance** - N+1, loops, memory, unnecessary computation
-6. **Update memory** - Save findings
+6. **Update memory** - Save findings (see below)
+
+## Memory Update (REQUIRED)
+
+**Parallel-safety rule:** If your Task Context says you are running as part of **BUILD** (the parallel review phase),
+prefer **NO memory edits**. Put “Memory Notes” in your output and let the main assistant persist them after both parallel tasks complete.
+
+Otherwise (REVIEW workflow, DEBUG workflow, or non-parallel context), persist:
+- `activeContext.md`: add key review learnings (and any decision changes) + a Recent Changes entry
+- `patterns.md`: promote reusable gotchas/conventions (especially under `## Common Gotchas`)
+- `progress.md`: only if you’re recording workflow-level blockers/next steps; do not invent verification evidence
 
 ## Confidence Scoring
 | Score | Meaning | Action |

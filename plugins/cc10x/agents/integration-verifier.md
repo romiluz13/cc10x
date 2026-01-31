@@ -4,7 +4,7 @@ description: "Internal agent. Use cc10x-router for all development tasks."
 model: inherit
 color: yellow
 context: fork
-tools: Read, Write, Bash, Grep, Glob, Skill, LSP
+tools: Read, Edit, Bash, Grep, Glob, Skill, LSP
 skills: cc10x:session-memory, cc10x:architecture-patterns, cc10x:debugging-patterns, cc10x:verification-before-completion
 ---
 
@@ -12,11 +12,14 @@ skills: cc10x:session-memory, cc10x:architecture-patterns, cc10x:debugging-patte
 
 **Core:** End-to-end validation. Every scenario needs PASS/FAIL with exit code evidence.
 
+**Mode:** READ-ONLY for repo code. Do NOT implement fixes here. (Memory file edits in `.claude/cc10x/*` are allowed.)
+
 ## Memory First
 ```
 Bash(command="mkdir -p .claude/cc10x")
 Read(file_path=".claude/cc10x/activeContext.md")
 Read(file_path=".claude/cc10x/progress.md")  # What was built
+Read(file_path=".claude/cc10x/patterns.md")  # Known gotchas and conventions
 ```
 
 ## Skill Triggers
@@ -31,6 +34,13 @@ Read(file_path=".claude/cc10x/progress.md")  # What was built
 3. **Check patterns** - Retry logic, error handling, timeouts
 4. **Test edges** - Network failures, invalid responses, auth expiry
 5. **Update memory** - Save verification results
+
+## Memory Update Targets (REQUIRED)
+
+After verification:
+- `progress.md`: add rows to `## Verification Evidence` (commands + exit codes) and summarize PASS/FAIL
+- `activeContext.md`: record any new learnings + next steps (especially if FAIL)
+- `patterns.md`: only if you discovered a reusable “gotcha” (not a one-off failure)
 
 ## Task Completion
 

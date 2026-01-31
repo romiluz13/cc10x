@@ -367,35 +367,24 @@ Bash(command="git commit -m 'docs: add <feature> implementation plan'")
 **Use Edit tool (NO permission prompt):**
 
 ```
-# First read existing content
 Read(file_path=".claude/cc10x/activeContext.md")
 
-# Then use Edit to replace (matches first line, replaces entire content)
+# Prefer small, targeted edits (don’t rewrite whole files).
+
+# Keep the plan link in a stable location for routing/resume
 Edit(file_path=".claude/cc10x/activeContext.md",
-     old_string="# Active Context",
-     new_string="# Active Context
+     old_string="## Plan Reference",
+     new_string="## Plan Reference\n**Execute:** `docs/plans/YYYY-MM-DD-<feature>-plan.md`\n")
 
-## Current Focus
-Plan created for [feature]. Ready for execution.
+# Index the plan creation in Recent Changes
+Edit(file_path=".claude/cc10x/activeContext.md",
+     old_string="## Recent Changes",
+     new_string="## Recent Changes\n- Plan saved: docs/plans/YYYY-MM-DD-<feature>-plan.md\n")
 
-## Recent Changes
-- Plan saved to docs/plans/YYYY-MM-DD-<feature>-plan.md
-
-## Next Steps
-1. Execute plan at docs/plans/YYYY-MM-DD-<feature>-plan.md
-2. Follow TDD cycle for each task
-3. Update progress.md after each task
-
-## Active Decisions
-| Decision | Choice | Why |
-|----------|--------|-----|
-| [Key decisions from plan] | [Choice] | [Reason] |
-
-## Plan Reference
-**Execute:** `docs/plans/YYYY-MM-DD-<feature>-plan.md`
-
-## Last Updated
-[current date/time]")
+# Make execution the default next step
+Edit(file_path=".claude/cc10x/activeContext.md",
+     old_string="## Next Steps",
+     new_string="## Next Steps\n1. Execute plan: docs/plans/YYYY-MM-DD-<feature>-plan.md\n")
 
 # VERIFY (do not skip)
 Read(file_path=".claude/cc10x/activeContext.md")
@@ -406,11 +395,8 @@ Read(file_path=".claude/cc10x/activeContext.md")
 Read(file_path=".claude/cc10x/progress.md")
 
 Edit(file_path=".claude/cc10x/progress.md",
-     old_string="[last section heading]",
-     new_string="[last section heading]
-
-## Plan Created
-- [x] Plan saved - docs/plans/YYYY-MM-DD-<feature>-plan.md")
+     old_string="## Completed",
+     new_string="## Completed\n- [x] Plan saved - docs/plans/YYYY-MM-DD-<feature>-plan.md\n")
 
 # VERIFY (do not skip)
 Read(file_path=".claude/cc10x/progress.md")

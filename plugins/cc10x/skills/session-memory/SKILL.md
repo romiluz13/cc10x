@@ -14,6 +14,37 @@ EVERY WORKFLOW MUST:
 2. UPDATE memory at END (and after learnings/decisions)
 ```
 
+## What “Memory” Actually Is (The Guts)
+
+CC10x memory is a **small, stable, permission-free Markdown database** used for:
+- **Continuity:** survive compaction/session resets
+- **Consistency:** avoid contradicting prior decisions
+- **Compounding:** promote learnings into reusable patterns
+- **Resumability:** recover where a workflow stopped
+
+### Memory Surfaces (Types)
+
+1. **Index / Working Memory**: `.claude/cc10x/activeContext.md`
+   - “What matters right now”: focus, next steps, active decisions, learnings
+   - Links to durable artifacts (plans/research)
+2. **Long-Term Project Memory**: `.claude/cc10x/patterns.md`
+   - Conventions, architecture decisions, common gotchas, reusable solutions
+3. **Progress + Evidence Memory**: `.claude/cc10x/progress.md`
+   - What’s done/remaining + verification evidence (commands + exit codes)
+4. **Artifact Memory (Durable)**: `docs/plans/*`, `docs/research/*`
+   - The details. Memory files are the index.
+5. **Tasks (Execution State)**: Claude Code Tasks
+   - Great for orchestration, but not guaranteed to be the only durable source.
+   - Mirror key task subjects/status into `progress.md` for backup/resume.
+
+### Promotion Ladder (“Rises To”)
+
+Information “graduates” to more durable layers:
+- **One-off observation** → `activeContext.md` (Learnings / Recent Changes)
+- **Repeated or reusable** → `patterns.md` (Pattern / Gotcha)
+- **Needs detail** → `docs/research/*` or `docs/plans/*` + link from `activeContext.md`
+- **Proven** → `progress.md` (Verification Evidence)
+
 ### READ Side (Equally Important)
 **If memory is not loaded:** You work blind, repeat mistakes, lose context.
 **If decisions made without checking memory:** You contradict prior choices, waste effort.
@@ -100,6 +131,22 @@ Without memory persistence:
     ├── patterns.md        # Project patterns, conventions, gotchas
     └── progress.md        # What works, what's left, verification evidence
 ```
+
+## Who Reads/Writes Memory (Ownership)
+
+### Read
+- **Router (always):** loads all 3 files before workflow selection and before resuming Tasks.
+- **All agents:** load the memory files they need at the start of their task (never assume the prompt contains all context).
+
+### Write
+- **Agents with `Edit`:** update memory at the end of their task (and `Read(...)` back to verify).
+- **Agents without `Edit`:** must output “memory-worthy notes” in a clearly labeled section so the main assistant can persist them.
+
+### Concurrency Rule (Parallel Phases)
+
+BUILD runs `code-reviewer ∥ silent-failure-hunter` in parallel. To avoid conflicting edits:
+- Prefer **no memory edits during parallel phases**.
+- If you must persist something mid-parallel, only the main assistant should do it, and only after both parallel tasks complete.
 
 ## Memory Efficiency (Token-Aware Loading)
 
@@ -296,6 +343,11 @@ Reference when needed:
 
 ## File Purposes
 
+Use these purposes to decide where information belongs:
+- **activeContext.md:** current state + pointers (what we’re doing, why, what’s next)
+- **patterns.md:** reusable knowledge (conventions, architecture, gotchas, “do it this way here”)
+- **progress.md:** execution tracking + hard evidence (tests/build/run commands, exit codes, scenario tables)
+
 ## Memory File Contract (Never Break)
 
 CC10x memory files are not "notes" - they are **contracts** used as Edit anchors.
@@ -304,6 +356,7 @@ Hard rules:
 - Do not rename the top-level headers (`# Active Context`, `# Project Patterns`, `# Progress Tracking`).
 - Do not rename section headers (e.g., `## Current Focus`, `## Last Updated`).
 - Only add content *inside* existing sections (append lists/rows).
+  - If a **canonical section from this template** is missing (e.g., `## Plan Reference`, `## Design Reference`, `## Research References`), add it by inserting it just above `## Last Updated`.
 - After every `Edit(...)`, **Read back** the file and confirm the intended change exists.
 
 If an Edit does not apply cleanly:
@@ -315,8 +368,8 @@ If an Edit does not apply cleanly:
 **Current state of work - ALWAYS check this first:**
 
 ```markdown
-<!-- CC10X MEMORY CONTRACT: Do not rename headings. Used as Edit anchors. -->
 # Active Context
+<!-- CC10X MEMORY CONTRACT: Do not rename headings. Used as Edit anchors. -->
 
 ## Current Focus
 [What we're actively working on RIGHT NOW]
@@ -346,6 +399,12 @@ If an Edit does not apply cleanly:
 ## User Preferences Discovered
 - [Preference]: [Details]
 
+## Plan Reference
+**Execute:** `docs/plans/YYYY-MM-DD-<feature>-plan.md`
+
+## Design Reference
+**Design:** `docs/plans/YYYY-MM-DD-<feature>-design.md`
+
 ## Research References
 | Topic | File | Key Insight |
 |-------|------|-------------|
@@ -360,8 +419,8 @@ If an Edit does not apply cleanly:
 **Project-specific knowledge that persists:**
 
 ```markdown
-<!-- CC10X MEMORY CONTRACT: Do not rename headings. Used as Edit anchors. -->
 # Project Patterns
+<!-- CC10X MEMORY CONTRACT: Do not rename headings. Used as Edit anchors. -->
 
 ## Architecture Patterns
 - [Pattern]: [How this project implements it]
@@ -394,8 +453,8 @@ If an Edit does not apply cleanly:
 **What's done, what's not:**
 
 ```markdown
-<!-- CC10X MEMORY CONTRACT: Do not rename headings. Used as Edit anchors. -->
 # Progress Tracking
+<!-- CC10X MEMORY CONTRACT: Do not rename headings. Used as Edit anchors. -->
 
 ## Current Workflow
 [PLAN | BUILD | REVIEW | DEBUG]
@@ -542,39 +601,33 @@ mkdir -p .claude/cc10x && cat .claude/cc10x/activeContext.md
 
 ### At Workflow END (REQUIRED)
 
-**MUST update before completing ANY workflow. Use Edit tool (NO permission prompt):**
+**MUST update before completing ANY workflow. Use Edit tool (NO permission prompt).**
 
 ```
-# First, read the existing content
+# First, read existing content
 Read(file_path=".claude/cc10x/activeContext.md")
 
-# Then use Edit to replace (matches first line, replaces entire content)
+# Prefer small, targeted edits. Avoid rewriting whole files.
+
+# Example A: Add a bullet to Recent Changes (prepend)
 Edit(file_path=".claude/cc10x/activeContext.md",
-     old_string="# Active Context",
-     new_string="# Active Context
+     old_string="## Recent Changes",
+     new_string="## Recent Changes\n- [YYYY-MM-DD] [What changed] - [file:line]\n")
 
-## Current Focus
-[What we just finished / what's next]
+# Example B: Add a decision row (prepend under the header)
+Edit(file_path=".claude/cc10x/activeContext.md",
+     old_string="| Decision | Choice | Why |\n|----------|--------|-----|",
+     new_string="| Decision | Choice | Why |\n|----------|--------|-----|\n| [Decision] | [Choice] | [Why] |")
 
-## Recent Changes
-- [Changes made this session]
-
-## Next Steps
-1. [What to do next]
-
-## Active Decisions
-| Decision | Choice | Why |
-|----------|--------|-----|
-| [Decisions made] | [Choice] | [Reason] |
-
-## Learnings This Session
-- [What we learned]
-
-## Last Updated
-[current date/time]")
+# Example C: Add verification evidence to progress.md
+Read(file_path=".claude/cc10x/progress.md")
+Edit(file_path=".claude/cc10x/progress.md",
+     old_string="| Check | Command | Result |\n|-------|---------|--------|",
+     new_string="| Check | Command | Result |\n|-------|---------|--------|\n| Tests | `[cmd]` | exit 0 (X/X) |")
 
 # VERIFY (do not skip)
 Read(file_path=".claude/cc10x/activeContext.md")
+Read(file_path=".claude/cc10x/progress.md")
 ```
 
 **WHY Edit not Write?** Write asks "Do you want to overwrite?" for existing files. Edit is always permission-free.
@@ -587,21 +640,24 @@ Read(file_path=".claude/cc10x/activeContext.md")
 # Read existing content
 Read(file_path=".claude/cc10x/patterns.md")
 
-# Append by matching end of file and adding new content
+# Append under an existing section header (preferred: stable anchor)
 Edit(file_path=".claude/cc10x/patterns.md",
-     old_string="[last section heading]",
-     new_string="[last section heading]
-
-## [New Category]
-- [Pattern]: [Details learned]")
+     old_string="## Common Gotchas",
+     new_string="## Common Gotchas\n- [Gotcha]: [Solution / how to avoid]\n")
 ```
 
 ### When Completing Tasks (UPDATE)
 
 ```
-# Read progress.md, find the task, mark it complete using Edit
+# Read progress.md, then record completion with evidence
 Read(file_path=".claude/cc10x/progress.md")
 
+# Option A (preferred): append a completed line under "## Completed"
+Edit(file_path=".claude/cc10x/progress.md",
+     old_string="## Completed",
+     new_string="## Completed\n- [x] [What was completed] - [evidence: command → exit 0]\n")
+
+# Option B: flip an existing checkbox if one exists (more brittle)
 Edit(file_path=".claude/cc10x/progress.md",
      old_string="- [ ] [Task being completed]",
      new_string="- [x] [Task being completed] - [verification evidence]")

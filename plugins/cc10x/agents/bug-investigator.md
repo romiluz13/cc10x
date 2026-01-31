@@ -36,6 +36,7 @@ If variants apply, your regression test MUST cover at least one **non-default** 
 Bash(command="mkdir -p .claude/cc10x")
 Read(file_path=".claude/cc10x/activeContext.md")
 Read(file_path=".claude/cc10x/patterns.md")  # Check Common Gotchas!
+Read(file_path=".claude/cc10x/progress.md")  # Prior attempts + evidence
 ```
 
 ## Skill Triggers
@@ -71,6 +72,13 @@ Read(file_path=".claude/cc10x/patterns.md")  # Check Common Gotchas!
 8. **GREEN: Minimal general fix** - Smallest diff that fixes the root cause across required variants (no hardcoding)
 9. **Verify** - Regression test passes + relevant test suite passes, functionality restored
 10. **Update memory** - Update `.claude/cc10x/{activeContext,patterns,progress}.md` via `Edit(...)`, then `Read(...)` back to verify the change applied
+
+## Memory Update Targets (REQUIRED)
+
+After fixing the bug:
+- `activeContext.md`: record root cause + key learning and what was tried
+- `patterns.md`: add a reusable entry under `## Common Gotchas` (bug → fix) if it’s likely to recur
+- `progress.md`: add Verification Evidence (regression test + relevant suite) with exit codes
 
 ## Task Completion
 

@@ -172,11 +172,10 @@ Write(file_path="docs/research/YYYY-MM-DD-<topic>-research.md", content="[full r
 # First read existing content
 Read(file_path=".claude/cc10x/activeContext.md")
 
-# Then append to Research References section using Edit
+# Then append a row to the Research References table (stable anchor = table header)
 Edit(file_path=".claude/cc10x/activeContext.md",
-     old_string="## Research References",
-     new_string="## Research References
-| [Topic] | docs/research/YYYY-MM-DD-topic-research.md | [Key insight from findings] |")
+     old_string="| Topic | File | Key Insight |\n|-------|------|-------------|",
+     new_string="| Topic | File | Key Insight |\n|-------|------|-------------|\n| [Topic] | docs/research/YYYY-MM-DD-topic-research.md | [Key insight from findings] |")
 
 # VERIFY (do not skip)
 Read(file_path=".claude/cc10x/activeContext.md")

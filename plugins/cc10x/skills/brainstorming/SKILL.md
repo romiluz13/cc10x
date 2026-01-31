@@ -312,35 +312,24 @@ Bash(command="git commit -m 'docs: add <feature> design'")
 **Use Edit tool (NO permission prompt):**
 
 ```
-# First read existing content
 Read(file_path=".claude/cc10x/activeContext.md")
 
-# Then use Edit to replace (matches first line, replaces entire content)
+# Prefer small, targeted edits (don’t rewrite whole files).
+
+# Keep the design link in a stable location for routing/resume
 Edit(file_path=".claude/cc10x/activeContext.md",
-     old_string="# Active Context",
-     new_string="# Active Context
+     old_string="## Design Reference",
+     new_string="## Design Reference\n**Design:** `docs/plans/YYYY-MM-DD-<feature>-design.md`\n")
 
-## Current Focus
-Design created for [feature]. Ready for planning or building.
+# Index the design creation in Recent Changes
+Edit(file_path=".claude/cc10x/activeContext.md",
+     old_string="## Recent Changes",
+     new_string="## Recent Changes\n- Design saved: docs/plans/YYYY-MM-DD-<feature>-design.md\n")
 
-## Recent Changes
-- Design saved to docs/plans/YYYY-MM-DD-<feature>-design.md
-
-## Next Steps
-1. Create implementation plan (if complex)
-2. Or start building directly (if simple)
-3. Reference design at docs/plans/YYYY-MM-DD-<feature>-design.md
-
-## Active Decisions
-| Decision | Choice | Why |
-|----------|--------|-----|
-| [Key decisions from design] | [Choice] | [Reason] |
-
-## Design Reference
-**Design:** `docs/plans/YYYY-MM-DD-<feature>-design.md`
-
-## Last Updated
-[current date/time]")
+# Make the next step explicit
+Edit(file_path=".claude/cc10x/activeContext.md",
+     old_string="## Next Steps",
+     new_string="## Next Steps\n1. Decide: plan vs build (design at docs/plans/YYYY-MM-DD-<feature>-design.md)\n")
 
 # VERIFY (do not skip)
 Read(file_path=".claude/cc10x/activeContext.md")

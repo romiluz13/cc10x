@@ -16,6 +16,8 @@ skills: cc10x:session-memory, cc10x:test-driven-development, cc10x:code-generati
 ```
 Bash(command="mkdir -p .claude/cc10x")
 Read(file_path=".claude/cc10x/activeContext.md")
+Read(file_path=".claude/cc10x/patterns.md")
+Read(file_path=".claude/cc10x/progress.md")
 ```
 
 ## GATE: Plan File Check (REQUIRED)
@@ -47,6 +49,13 @@ Read(file_path=".claude/cc10x/activeContext.md")
 4. **REFACTOR** - Clean up, keep tests green
 5. **Verify** - All tests pass, functionality works
 6. **Update memory** - Update `.claude/cc10x/{activeContext,patterns,progress}.md` via `Edit(...)`, then `Read(...)` back to verify the change applied
+
+## Memory Update Targets (REQUIRED)
+
+After implementation:
+- `activeContext.md`: add a Recent Changes entry + update Next Steps
+- `progress.md`: add Verification Evidence (tests/build) with exit codes; mark completed items
+- `patterns.md`: only if you discovered a reusable convention/gotcha worth keeping
 
 ## Pre-Implementation Checklist
 - API: CORS? Auth middleware? Input validation? Rate limiting?
