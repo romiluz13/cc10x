@@ -1,5 +1,27 @@
 # Changelog
 
+## [6.0.2] - 2026-01-31
+
+### Added
+
+- **Template Validation Gate** (Router - Backward Compatibility Fix)
+  - Router now auto-heals old projects by adding missing canonical sections
+  - Checks for `## Plan Reference`, `## Design Reference`, `## Research References` after loading memory
+  - If missing, inserts them before `## Last Updated` using a single Edit operation
+  - Idempotent: runs once per project (subsequent sessions find sections present)
+
+### Fixed
+
+- **Silent Edit Failures on Old Projects**
+  - v6.0.1 introduced targeted Edit anchors (e.g., `old_string="## Plan Reference"`)
+  - Projects created before v6.0.1 lacked these sections, causing Edits to fail silently
+  - Template Validation Gate ensures anchors exist before any skill tries to use them
+
+### Notes
+
+- This is a backward compatibility fix for projects migrating from pre-6.0.1 versions
+- New projects are unaffected (templates already include canonical sections)
+
 ## [6.0.1] - 2026-01-31
 
 ### Added

@@ -52,6 +52,24 @@ If any memory file is missing:
 - Create it with `Write(...)` using the templates from `cc10x:session-memory` (include the contract comment + required headings).
 - Then `Read(...)` it before continuing.
 
+**TEMPLATE VALIDATION GATE (Auto-Heal Old Projects):**
+
+After loading `activeContext.md`, check for canonical sections. If missing, add them:
+
+```
+# Check if activeContext.md has canonical sections (required for Edit anchors)
+# If "## Plan Reference" is NOT in the file:
+Edit(file_path=".claude/cc10x/activeContext.md",
+     old_string="## Last Updated",
+     new_string="## Plan Reference\n\n## Design Reference\n\n## Research References\n| Topic | File | Key Insight |\n|-------|------|-------------|\n\n## Last Updated")
+
+# VERIFY the sections now exist
+Read(file_path=".claude/cc10x/activeContext.md")
+```
+
+This is idempotent: runs once per project (subsequent sessions find sections present).
+**Why:** v6.0.1 introduced targeted Edit anchors (e.g., `## Plan Reference`). Old projects lack these sections, causing silent Edit failures.
+
 **UPDATE (Checkpoint + Final):**
 - Avoid memory edits during parallel phases.
 - Do a **workflow-final** memory update/check after the chain completes.
