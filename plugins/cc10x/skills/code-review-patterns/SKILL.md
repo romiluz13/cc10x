@@ -145,6 +145,22 @@ grep -rn "console\.log" --include="*.ts" --include="*.tsx" src/
 | **Error handling** | Graceful failures | Silent failures |
 | **Testability** | Injectable dependencies | Global state |
 
+## Pattern Recognition Criteria
+
+**During reviews, identify patterns worth documenting:**
+
+| Criteria | What to Look For | Example |
+|----------|------------------|---------|
+| **Tribal** | Knowledge new devs wouldn't know | "All API responses use envelope structure" |
+| **Opinionated** | Specific choices that could differ | "We use snake_case for DB, camelCase for JS" |
+| **Unusual** | Not standard framework patterns | "Custom retry logic with backoff" |
+| **Consistent** | Repeated across multiple files | "All services have health check endpoint" |
+
+**If you spot these during review:**
+1. Note the pattern in review feedback
+2. Suggest documenting in CLAUDE.md or standards
+3. Flag inconsistencies from established patterns
+
 ## Performance Review Checklist
 
 | Pattern | Problem | Fix |

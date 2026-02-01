@@ -1,5 +1,20 @@
 # Changelog
 
+## [6.0.9] - 2026-02-01
+
+### Added
+
+- **Code Review Patterns Enhancement** (308 → 324 lines)
+  - **Pattern Recognition Criteria**: 4 criteria for identifying undocumented conventions during reviews (Tribal, Opinionated, Unusual, Consistent)
+  - Guidance for documenting discovered patterns in CLAUDE.md or standards
+
+### Notes
+
+- SAFE edit to existing skill (no orchestration impact)
+- Improvement extracted from `agent-os` reference audit
+- File remains well under 500-line limit (324 lines)
+- Follows cc10x-orchestration-safety protocol (edit-only, no new files)
+
 ## [6.0.8] - 2026-02-01
 
 ### Added
