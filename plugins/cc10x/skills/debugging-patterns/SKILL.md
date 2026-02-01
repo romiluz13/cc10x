@@ -60,6 +60,43 @@ For rapid debugging, use this concise flow:
 
 ## Common Debugging Scenarios
 
+### Build & Type Errors (Quick Reference)
+
+**Commands:**
+```bash
+npx tsc --noEmit --pretty          # TypeScript check
+npm run build                       # Full build
+npx eslint . --ext .ts,.tsx        # Lint check
+```
+
+**Common Error → Fix Patterns:**
+
+| Error Pattern | Cause | Fix |
+|---------------|-------|-----|
+| `Parameter 'x' implicitly has 'any' type` | Missing type annotation | Add `: Type` annotation |
+| `Object is possibly 'undefined'` | Null safety violation | Add `?.` optional chaining or null check |
+| `Property 'x' does not exist on type` | Missing property | Add to interface or fix typo |
+| `Cannot find module 'x'` | Import path wrong or missing package | Fix path or `npm install` |
+| `Type 'string' is not assignable to 'number'` | Type mismatch | Parse string or fix type |
+| `'await' only allowed in async function` | Missing async keyword | Add `async` to function |
+| `JSX element 'X' has no corresponding closing tag` | Malformed JSX | Fix tag structure |
+| `Module not found: Can't resolve` | Path alias misconfigured | Check tsconfig paths |
+| `Export 'X' was not found in 'Y'` | Named export missing | Check export name/default |
+
+**Minimal Diff Strategy:**
+- Add type annotation where missing
+- Add null check where needed
+- Fix import path
+- **DO NOT:** Refactor, rename, or "improve" unrelated code
+
+**Build Error Priority:**
+
+| Level | Symptom | Action |
+|-------|---------|--------|
+| 🔴 CRITICAL | Build completely broken | Fix immediately |
+| 🟡 HIGH | Type errors in new code | Fix before commit |
+| 🟢 MEDIUM | Lint warnings | Fix when possible |
+
 ### Test Failures
 ```
 1. Read FULL error message and stack trace

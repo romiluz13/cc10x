@@ -84,6 +84,48 @@ Review in priority order:
 | CSRF | Missing tokens | Cross-site request forgery |
 | File handling | Path traversal | Reading arbitrary files |
 
+### Security Quick-Scan Commands
+
+**Run before any review:**
+```bash
+# Check for hardcoded secrets
+grep -rE "(api[_-]?key|password|secret|token)\s*[:=]" --include="*.ts" --include="*.js" src/
+
+# Check for SQL injection risk
+grep -rE "(query|exec)\s*\(" --include="*.ts" src/ | grep -v "parameterized"
+
+# Check for dangerous patterns
+grep -rE "(eval\(|innerHTML\s*=|dangerouslySetInnerHTML)" --include="*.ts" --include="*.tsx" src/
+
+# Check for console.log (remove before production)
+grep -rn "console\.log" --include="*.ts" --include="*.tsx" src/
+```
+
+**Critical Security Patterns:**
+
+| Pattern | Risk | Detection | Fix |
+|---------|------|-----------|-----|
+| Hardcoded secret | API key exposure | `grep -r "sk-" src/` | Use env var |
+| SQL concatenation | SQL injection | `query(\`SELECT...${id}\`)` | Parameterized query |
+| `innerHTML = userInput` | XSS | grep for innerHTML | Use textContent |
+| `eval(userInput)` | Code injection | grep for eval | Never eval user input |
+| Missing auth check | Unauthorized access | Review API routes | Add middleware |
+| CORS `*` | Cross-origin attacks | Check CORS config | Whitelist origins |
+
+**OWASP Top 10 Quick Reference:**
+1. Injection (SQL, Command, XSS)
+2. Broken Authentication
+3. Sensitive Data Exposure
+4. XXE (XML External Entities)
+5. Broken Access Control
+6. Security Misconfiguration
+7. Cross-Site Scripting (XSS)
+8. Insecure Deserialization
+9. Using Vulnerable Components
+10. Insufficient Logging
+
+**Full security review:** See [OWASP Top 10](https://owasp.org/www-project-top-ten/)
+
 **For each security issue found:**
 ```markdown
 - [CRITICAL] SQL injection at `src/api/users.ts:45`

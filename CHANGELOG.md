@@ -1,5 +1,31 @@
 # Changelog
 
+## [6.0.7] - 2026-02-01
+
+### Added
+
+- **TDD Skill Enhancements** (386 → 470 lines)
+  - **Coverage Threshold**: 80%+ coverage target for branches, functions, lines, statements
+  - **Test Smells Table**: 8 anti-patterns with examples and fixes (testing implementation, dependent tests, mocking everything, giant setup, magic numbers, test name lies, no assertions, commented tests)
+  - **Mocking Examples**: Common mock patterns for Supabase, Fetch/API, Redis, environment variables, and time
+
+- **Debugging Patterns Enhancement** (399 → 436 lines)
+  - **Build & Type Errors Quick Reference**: 9 common TypeScript/build error patterns with causes and fixes
+  - **Minimal Diff Strategy**: Explicit guidance on fixing without over-engineering
+  - **Build Error Priority Table**: CRITICAL/HIGH/MEDIUM severity classification
+
+- **Code Review Security Enhancement** (266 → 308 lines)
+  - **Security Quick-Scan Commands**: 4 bash commands to detect hardcoded secrets, SQL injection risks, dangerous patterns, and console.log
+  - **Critical Security Patterns Table**: 6 patterns with risk, detection, and fix guidance
+  - **OWASP Top 10 Quick Reference**: Complete list for easy reference
+
+### Notes
+
+- All changes are SAFE edits to existing skills (no orchestration impact)
+- Improvements extracted from `everything-claude-code` reference audit
+- All files remain under 500-line limit
+- Follows cc10x-orchestration-safety protocol (edit-only, no new files)
+
 ## [6.0.6] - 2026-02-01
 
 ### Added
