@@ -346,6 +346,49 @@ grep -E "return.*json.*data|Response\.json" src/app/api/
 | API route | 10 | Too thin |
 | Hook/util | 10 | Too thin |
 
+### Export/Import Verification
+
+Exports can exist but never be consumed. Check that key exports are actually used:
+
+```bash
+# Check if export is imported AND used (not just imported)
+check_export_used() {
+  local export_name="$1"
+  grep -r "import.*$export_name" src/ --include="*.ts" --include="*.tsx" | wc -l
+  grep -r "$export_name" src/ --include="*.ts" --include="*.tsx" | grep -v "import\|export" | wc -l
+}
+
+# Example: Check auth exports are consumed
+check_export_used "getCurrentUser"
+check_export_used "useAuth"
+```
+
+**Export Status:**
+| Status | Meaning | Action |
+|--------|---------|--------|
+| CONNECTED | Imported AND used | ✓ Good |
+| IMPORTED_NOT_USED | Import exists but never called | Remove dead import or implement |
+| ORPHANED | Export exists, never imported | Dead code or missing integration |
+
+### Auth Protection Verification
+
+Sensitive routes must check authentication:
+
+```bash
+# Find routes that should be protected
+protected_patterns="dashboard|settings|profile|account|admin"
+grep -r -l "$protected_patterns" src/app/ --include="*.tsx"
+
+# For each, verify auth usage
+check_auth_protection() {
+  local file="$1"
+  grep -E "useAuth|useSession|getCurrentUser|isAuthenticated" "$file"
+  grep -E "redirect.*login|router.push.*login" "$file"
+}
+```
+
+**If sensitive route lacks auth check:** Add protection before claiming completion.
+
 ## The Bottom Line
 
 **No shortcuts for verification.**

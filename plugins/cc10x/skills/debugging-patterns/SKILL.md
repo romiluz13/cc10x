@@ -295,6 +295,39 @@ You MUST complete each phase before proceeding to the next.
 | **Availability** | Recent bugs → assume similar cause | Treat each bug as novel until evidence suggests otherwise |
 | **Sunk Cost** | Spent 2 hours on path, keep going despite evidence | Every 30 min: "If fresh, would I take this path?" |
 
+### Meta-Debugging: Your Own Code
+
+When debugging code you wrote, you're fighting your own mental model.
+
+**Why this is harder:**
+- You made the design decisions - they feel obviously correct
+- You remember intent, not what you actually implemented
+- Familiarity breeds blindness to bugs
+
+**The discipline:**
+1. **Treat your code as foreign** - Read it as if someone else wrote it
+2. **Question your design decisions** - Your implementation choices are hypotheses, not facts
+3. **Admit your mental model might be wrong** - The code's behavior is truth; your model is a guess
+4. **Prioritize code you touched** - If you modified 100 lines and something breaks, those are prime suspects
+
+**The hardest admission:** "I implemented this wrong." Not "requirements were unclear" - YOU made an error.
+
+### When to Restart Investigation
+
+Consider starting over when:
+1. **2+ hours with no progress** - You're likely tunnel-visioned
+2. **3+ "fixes" that didn't work** - Your mental model is wrong
+3. **You can't explain the current behavior** - Don't add changes on top of confusion
+4. **You're debugging the debugger** - Something fundamental is wrong
+5. **The fix works but you don't know why** - This isn't fixed, this is luck
+
+**Restart protocol:**
+1. Close all files and terminals
+2. Write down what you know for certain
+3. Write down what you've ruled out
+4. List new hypotheses (different from before)
+5. Begin again from Phase 1
+
 ### Phase 4: Implementation
 
 **Fix the root cause, not the symptom:**

@@ -1,5 +1,24 @@
 # Changelog
 
+## [6.0.8] - 2026-02-01
+
+### Added
+
+- **Debugging Patterns Enhancement** (436 → 469 lines)
+  - **Meta-Debugging: Your Own Code**: Mindset for debugging code you wrote (fighting your own mental model)
+  - **When to Restart Investigation**: 5 criteria for starting over (2+ hours stuck, 3+ failed fixes, can't explain behavior, debugging the debugger, fix works but don't know why) plus restart protocol
+
+- **Verification Enhancement** (355 → 398 lines)
+  - **Export/Import Verification**: Scripts to check that exports are actually imported AND used (not just imported)
+  - **Auth Protection Verification**: Scripts to verify sensitive routes check authentication
+
+### Notes
+
+- All changes are SAFE edits to existing skills (no orchestration impact)
+- Improvements extracted from `get-shit-done` reference audit
+- All files remain under 500-line limit
+- Follows cc10x-orchestration-safety protocol (edit-only, no new files)
+
 ## [6.0.7] - 2026-02-01
 
 ### Added
