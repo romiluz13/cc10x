@@ -51,6 +51,20 @@ NO UI DESIGN BEFORE USER FLOW IS UNDERSTOOD
 
 If you haven't mapped what the user is trying to accomplish, you cannot design UI.
 
+## Design Thinking (Pre-Code)
+
+Before writing any UI code, commit to answers for:
+
+1. **Purpose**: What specific problem does this interface solve?
+2. **Tone**: Choose an aesthetic direction and commit to it:
+   - Brutally minimal, maximalist, retro-futuristic, organic/natural
+   - Luxury/refined, playful/toy-like, editorial/magazine, brutalist/raw
+   - Art deco/geometric, soft/pastel, industrial/utilitarian
+3. **Constraints**: Framework requirements, performance budget, accessibility level
+4. **Differentiation**: What's the ONE thing someone will remember about this UI?
+
+**Key insight:** Bold maximalism and refined minimalism both work. The enemy is indecision and generic defaults.
+
 ## Loading State Order (CRITICAL)
 
 **Always handle states in this order:**
@@ -85,6 +99,24 @@ Do we have data? → Yes, with items: Show data
 | Initial page load | Button submissions |
 | Content placeholders | Inline operations |
 
+## Motion & Animation
+
+| Rule | Do | Don't |
+|------|-----|-------|
+| **Reduced motion** | Honor `prefers-reduced-motion` | Ignore user preferences |
+| **Properties** | Animate `transform`/`opacity` only | Animate `width`/`height`/`top`/`left` |
+| **Transitions** | List properties explicitly | Use `transition: all` |
+| **Duration** | 150-300ms for micro-interactions | Too fast (<100ms) or slow (>500ms) |
+| **Interruptible** | Allow animation cancellation | Lock UI during animation |
+
+```css
+/* CORRECT: Compositor-friendly, respects preferences */
+@media (prefers-reduced-motion: no-preference) {
+  .card { transition: transform 200ms ease-out, opacity 200ms ease-out; }
+  .card:hover { transform: translateY(-2px); opacity: 0.95; }
+}
+```
+
 ## Error Handling Hierarchy
 
 | Level | Use For |
@@ -102,6 +134,41 @@ Do we have data? → Yes, with items: Show data
 2. **Error recovery**: Can user recover from mistakes?
 3. **Accessibility**: Can all users access it?
 4. **Performance**: Does it feel responsive?
+
+## Typography Rules
+
+| Rule | Correct | Wrong |
+|------|---------|-------|
+| Ellipsis | `…` (single character) | `...` (three periods) |
+| Quotes | `" "` curly quotes | `" "` straight quotes |
+| Units | `10&nbsp;MB` (non-breaking) | `10 MB` (can break) |
+| Shortcuts | `⌘&nbsp;K` (non-breaking) | `⌘ K` (can break) |
+| Loading text | `Loading…` | `Loading...` |
+| Numbers in tables | `font-variant-numeric: tabular-nums` | Default proportional |
+| Headings | `text-wrap: balance` | Unbalanced line breaks |
+| Line length | 65-75 characters max | Unlimited width |
+
+## Content Overflow Handling
+
+**Prevent broken layouts from user-generated content:**
+
+| Scenario | Solution |
+|----------|----------|
+| Single-line overflow | `truncate` (Tailwind) or `text-overflow: ellipsis` |
+| Multi-line overflow | `line-clamp-2` / `line-clamp-3` |
+| Long words/URLs | `break-words` or `overflow-wrap: break-word` |
+| Flex child truncation | Add `min-w-0` to flex children (critical!) |
+| Empty strings/arrays | Show placeholder, not broken UI |
+
+```tsx
+{/* Flex truncation pattern - min-w-0 is REQUIRED */}
+<div className="flex items-center gap-2 min-w-0">
+  <Avatar />
+  <span className="truncate min-w-0">{user.name}</span>
+</div>
+```
+
+**Test with:** short text, average text, and absurdly long text (50+ characters).
 
 ## Universal Questions (Answer First)
 
@@ -172,6 +239,29 @@ User Flow: Create Account
   - Fix: Change text color to #333 (7.1:1)
 ```
 
+## Form Best Practices
+
+| Rule | Implementation |
+|------|----------------|
+| **Autocomplete** | Add `autocomplete="email"`, `autocomplete="name"`, etc. |
+| **Input types** | Use `type="email"`, `type="tel"`, `type="url"` for mobile keyboards |
+| **Input modes** | Add `inputMode="numeric"` for number-only fields |
+| **Never block paste** | No `onPaste` + `preventDefault()` — users paste passwords |
+| **Spellcheck off** | `spellCheck={false}` on emails, codes, usernames |
+| **Unsaved changes** | Warn before navigation (`beforeunload` or router guard) |
+| **Error focus** | Focus first error field on submit |
+| **Shared hit targets** | Checkbox/radio label + control = one clickable area |
+
+```tsx
+<input
+  type="email"
+  autoComplete="email"
+  spellCheck={false}
+  inputMode="email"
+  // Never: onPaste={(e) => e.preventDefault()}
+/>
+```
+
 ## Visual Design Checklist
 
 | Check | Good | Bad |
@@ -189,8 +279,27 @@ When creating frontends, avoid generic AI aesthetics:
 - **Fonts**: Choose distinctive typography, not defaults (avoid Inter, Roboto, Arial, system fonts)
 - **Colors**: Commit to cohesive palette. Dominant colors with sharp accents > safe gradients
 - **Avoid**: Purple gradients on white, predictable layouts, cookie-cutter Bootstrap/Tailwind defaults
+- **Icons**: Use SVG icons (Heroicons, Lucide, Simple Icons). **NEVER use emoji as UI icons**
+- **Cursor**: Add `cursor-pointer` to ALL clickable elements
+- **Hover**: Use color/opacity transitions. Avoid `scale` transforms that shift layout
+- **Backgrounds**: Add depth with subtle textures, gradients, or grain instead of flat colors
 
-Make creative choices that feel designed for the specific context.
+Make creative choices that feel designed for the specific context. No two designs should look the same.
+
+### Spatial Composition (Break the Grid)
+
+Move beyond safe, centered layouts:
+
+| Technique | Effect | When to Use |
+|-----------|--------|-------------|
+| **Asymmetry** | Dynamic tension, visual interest | Hero sections, feature highlights |
+| **Overlap** | Depth, connection between elements | Cards, images, testimonials |
+| **Diagonal flow** | Energy, movement | Landing pages, marketing |
+| **Grid-breaking** | Emphasis, surprise | Key CTAs, focal points |
+| **Generous negative space** | Luxury, breathing room | Premium products, editorial |
+| **Controlled density** | Information-rich, productive | Dashboards, data-heavy UIs |
+
+**Rule:** Match spatial composition to the aesthetic direction chosen in Design Thinking. Minimalist = negative space. Maximalist = controlled density.
 
 ## Component Patterns
 
@@ -303,6 +412,46 @@ function DataList({ isLoading, data, error }) {
 | **Tablet (640-1024px)** | Layout adapts, navigation accessible |
 | **Desktop (> 1024px)** | Content readable, not too wide |
 
+## Performance Rules
+
+| Rule | Why | Implementation |
+|------|-----|----------------|
+| **Virtualize large lists** | >50 items kills performance | Use `virtua`, `react-window`, or `content-visibility: auto` |
+| **No layout reads in render** | Causes forced reflow | Avoid `getBoundingClientRect`, `offsetHeight` in render |
+| **Lazy load images** | Reduces initial load | `loading="lazy"` on below-fold images |
+| **Prioritize critical images** | Faster LCP | `fetchpriority="high"` or Next.js `priority` |
+| **Preconnect CDN** | Faster asset loading | `<link rel="preconnect" href="https://cdn...">` |
+| **Preload fonts** | Prevents FOUT | `<link rel="preload" as="font" crossorigin>` |
+
+## URL & State Management
+
+**URL should reflect UI state.** If it uses `useState`, consider URL sync.
+
+| State Type | URL Strategy |
+|------------|--------------|
+| Filters/search | `?q=term&category=books` |
+| Active tab | `?tab=settings` |
+| Pagination | `?page=3` |
+| Expanded panels | `?panel=details` |
+| Sort order | `?sort=price&dir=asc` |
+
+**Benefits:** Shareable links, back button works, refresh preserves state.
+
+```tsx
+// Use nuqs, next-usequerystate, or similar
+const [tab, setTab] = useQueryState('tab', { defaultValue: 'overview' })
+```
+
+## Touch & Mobile
+
+| Rule | Implementation |
+|------|----------------|
+| **44px touch targets** | Minimum for buttons, links, controls |
+| **No double-tap delay** | `touch-action: manipulation` on interactive elements |
+| **Modal scroll lock** | `overscroll-behavior: contain` in modals/drawers |
+| **Safe areas** | `padding: env(safe-area-inset-bottom)` for notches |
+| **Tap highlight** | Set `-webkit-tap-highlight-color` intentionally |
+
 ## Red Flags - STOP and Reconsider
 
 If you find yourself:
@@ -327,6 +476,38 @@ If you find yourself:
 | "Loading is fast, no need for state" | Network varies. Show state. |
 | "It looks better without labels" | Unlabeled inputs are inaccessible. |
 | "Users can figure it out" | If it's confusing, fix it. |
+
+## Anti-patterns Blocklist (Flag These)
+
+| Anti-pattern | Why It's Wrong | Fix |
+|--------------|----------------|-----|
+| `user-scalable=no` | Blocks accessibility zoom | Remove it |
+| `maximum-scale=1` | Blocks accessibility zoom | Remove it |
+| `transition: all` | Performance + unexpected effects | List properties explicitly |
+| `outline-none` without replacement | Removes focus indicator | Add `focus-visible:ring-*` |
+| `<div onClick>` | Not keyboard accessible | Use `<button>` or `<a>` |
+| Images without `width`/`height` | Causes layout shift (CLS) | Add explicit dimensions |
+| Form inputs without labels | Inaccessible | Add `<label>` or `aria-label` |
+| Icon buttons without `aria-label` | Unnamed to screen readers | Add `aria-label` |
+| Emoji icons (🚀 ✨ 💫) | Unprofessional, inconsistent | Use SVG icons |
+| Hardcoded date/number formats | Breaks internationalization | Use `Intl.DateTimeFormat` |
+| `autoFocus` everywhere | Disorienting, mobile issues | Use sparingly, desktop only |
+
+## Light/Dark Mode
+
+| Rule | Light Mode | Dark Mode |
+|------|------------|-----------|
+| Glass/transparent | `bg-white/80` or higher | `bg-black/80` or darker |
+| Text contrast | Minimum 4.5:1 (slate-900) | Minimum 4.5:1 (slate-100) |
+| Borders | `border-gray-200` | `border-white/10` |
+| HTML attribute | — | `color-scheme: dark` on `<html>` |
+| Meta tag | Match background | Match background |
+
+```html
+<!-- Dark mode setup -->
+<html style="color-scheme: dark">
+<head><meta name="theme-color" content="#0f172a"></head>
+```
 
 ## Output Format
 
@@ -390,7 +571,12 @@ Before completing frontend work:
 - [ ] All states handled (loading, error, empty, success)
 - [ ] Keyboard navigation works
 - [ ] Screen reader tested
-- [ ] Color contrast verified
-- [ ] Touch targets adequate on mobile
+- [ ] Color contrast verified (4.5:1 minimum)
+- [ ] Touch targets adequate on mobile (44px+)
 - [ ] Error messages clear and actionable
 - [ ] Success criteria met
+- [ ] No emoji icons (SVG only)
+- [ ] `prefers-reduced-motion` respected
+- [ ] Light/dark mode contrast verified
+- [ ] `cursor-pointer` on all clickable elements
+- [ ] No `transition: all` in codebase

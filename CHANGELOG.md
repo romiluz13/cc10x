@@ -1,5 +1,31 @@
 # Changelog
 
+## [6.0.6] - 2026-02-01
+
+### Added
+
+- **Enhanced Frontend Patterns Skill** (582 lines, was 396)
+  - Extracted best practices from Vercel Web Interface Guidelines, Anti-AI Slop SKILL, and UI/UX Pro Max
+  - New sections:
+    - **Design Thinking (Pre-Code)**: Purpose, Tone, Constraints, Differentiation framework
+    - **Motion & Animation**: `prefers-reduced-motion`, compositor-friendly properties, timing rules
+    - **Typography Rules**: Ellipsis, curly quotes, non-breaking spaces, `tabular-nums`, `text-wrap: balance`
+    - **Content Overflow Handling**: `truncate`, `line-clamp`, `min-w-0` for flex children
+    - **Form Best Practices**: `autocomplete`, `inputMode`, never block paste, spellcheck off
+    - **Spatial Composition**: Asymmetry, overlap, diagonal flow, grid-breaking, negative space
+    - **Anti-patterns Blocklist**: 11 concrete items to flag with fixes
+    - **Light/Dark Mode**: Contrast rules, opacity values, `color-scheme`, `theme-color`
+    - **Performance Rules**: Virtualization, lazy loading, preconnect, font preload
+    - **URL & State Management**: Deep-linking, query params for filters/tabs/pagination
+    - **Touch & Mobile**: 44px targets, `touch-action`, `overscroll-behavior`, safe areas
+  - Expanded Visual Creativity with icons (SVG only, no emoji), cursor, hover, backgrounds
+  - Expanded Final Check with 5 additional verification items
+
+### Changed
+
+- **Frontend Patterns Skill** now covers comprehensive UI/UX guidelines from multiple industry sources
+- Follows cc10x-orchestration-safety protocol (edit-only, no new files)
+
 ## [6.0.5] - 2026-01-31
 
 ### Changed
