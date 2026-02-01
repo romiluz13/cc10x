@@ -158,7 +158,7 @@ grep -rn "console\.log" --include="*.ts" --include="*.tsx" src/
 
 **If you spot these during review:**
 1. Note the pattern in review feedback
-2. Suggest documenting in CLAUDE.md or standards
+2. Promote to `patterns.md` if reusable (per session-memory protocol)
 3. Flag inconsistencies from established patterns
 
 ## Performance Review Checklist
