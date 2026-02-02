@@ -92,6 +92,77 @@ Try each tier in order. Fall back only if current tier is unavailable or fails.
 
 **NO LOCAL SEARCH** - This skill is for external research only. Local codebase search uses Grep/Glob/Read directly.
 
+## Incremental Checkpoints (During Research)
+
+**Trigger:** If research involves 5+ octocode tool calls, checkpoint progress incrementally.
+
+**Why:** Long research can fill context before reaching "Save Research" section. Incremental saves prevent total loss.
+
+### Checkpoint Triggers (ANY of these)
+
+| Trigger | Action |
+|---------|--------|
+| 5+ tool calls completed | Save current findings |
+| Significant discovery | Save immediately |
+| Switching research direction | Save before pivoting |
+| 10+ minutes of research | Save progress |
+
+### Checkpoint Format (Quick Save)
+
+```
+# In docs/research/YYYY-MM-DD-<topic>-research.md (append mode)
+
+## Checkpoint [N] - [timestamp]
+**Tools used so far:** [count]
+**Findings:**
+- [Finding 1]
+- [Finding 2]
+---
+```
+
+### Checkpoint Operations (Permission-Free)
+
+**First checkpoint (creates file):**
+```
+Bash(command="mkdir -p docs/research")
+Write(file_path="docs/research/YYYY-MM-DD-<topic>-research.md", content="# Research: <topic>\n\n## Checkpoint 1 - [timestamp]\n**Findings:**\n- [findings so far]\n---")
+```
+
+**Subsequent checkpoints (append):**
+```
+Read(file_path="docs/research/YYYY-MM-DD-<topic>-research.md")
+Edit(file_path="docs/research/YYYY-MM-DD-<topic>-research.md",
+     old_string="---",
+     new_string="---\n\n## Checkpoint [N] - [timestamp]\n**Findings:**\n- [new findings]\n---")
+```
+
+### Memory Link (First Checkpoint Only)
+
+**After first checkpoint, immediately update memory:**
+```
+Read(file_path=".claude/cc10x/activeContext.md")
+Edit(file_path=".claude/cc10x/activeContext.md",
+     old_string="## References",
+     new_string="## References\n- Research (in progress): `docs/research/YYYY-MM-DD-<topic>-research.md`")
+```
+
+**Why first checkpoint links memory:** Even partial research is recoverable if memory points to the file.
+
+### Final Save (Still Required)
+
+Incremental checkpoints do NOT replace "Save Research (MANDATORY)".
+
+**After research completes:**
+1. Finalize the research file (remove checkpoint markers, structure properly)
+2. Update memory reference from "in progress" to final
+3. Extract patterns to patterns.md
+
+### Red Flag - Research Without Checkpoints
+
+If research uses 5+ tool calls and NO checkpoint was saved:
+- You are at risk of total context loss
+- STOP and save current progress before continuing
+
 ## Output Format
 
 ```markdown
