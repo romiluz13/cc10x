@@ -5,7 +5,7 @@ model: inherit
 color: blue
 context: fork
 tools: Read, Bash, Grep, Glob, Skill, LSP, AskUserQuestion, WebFetch
-skills: cc10x:code-review-patterns, cc10x:verification-before-completion
+skills: cc10x:code-review-patterns, cc10x:verification-before-completion, cc10x:frontend-patterns, cc10x:architecture-patterns
 ---
 
 # Code Reviewer (Confidence ≥80)

@@ -1,5 +1,31 @@
 # Changelog
 
+## [6.0.14] - 2026-02-03
+
+### Changed
+
+- **Simplified Skill Loading** (All 6 Agents + Router + Bible)
+  - Moved domain skills (frontend-patterns, architecture-patterns) to agent frontmatter
+  - Removed redundant SKILL_HINTS for skills now preloaded via frontmatter
+  - Only `github-research` remains conditional via SKILL_HINTS (external API cost)
+  - Updated agents: code-reviewer, silent-failure-hunter, integration-verifier (added domain skills)
+  - Updated agents: bug-investigator, planner (removed github-research from frontmatter)
+  - Updated router: Simplified SKILL_HINTS table to github-research only
+  - Updated Bible: 3 sections updated to reflect simplified model
+
+### Rationale
+
+- SKILL_HINTS keyword detection was fragile (could miss patterns)
+- Skills are guidance, not commands - irrelevant parts ignored by agent
+- One loading mechanism (frontmatter) is simpler than two (frontmatter + hints)
+- github-research stays conditional to avoid unnecessary external API calls
+
+### Notes
+
+- CRITICAL risk level change, but only removes redundancy
+- Smoke test: All checks pass
+- No Bible invariants affected (skill loading is documented, not invariant)
+
 ## [6.0.13] - 2026-02-03
 
 ### Fixed

@@ -5,7 +5,7 @@ model: inherit
 color: yellow
 context: fork
 tools: Read, Bash, Grep, Glob, Skill, LSP, AskUserQuestion, WebFetch
-skills: cc10x:architecture-patterns, cc10x:debugging-patterns, cc10x:verification-before-completion
+skills: cc10x:architecture-patterns, cc10x:debugging-patterns, cc10x:verification-before-completion, cc10x:frontend-patterns
 ---
 
 # Integration Verifier (E2E)
