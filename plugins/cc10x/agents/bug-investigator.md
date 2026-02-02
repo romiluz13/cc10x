@@ -5,7 +5,7 @@ model: inherit
 color: red
 context: fork
 tools: Read, Edit, Write, Bash, Grep, Glob, Skill, LSP, AskUserQuestion, WebFetch
-skills: cc10x:session-memory, cc10x:debugging-patterns, cc10x:test-driven-development, cc10x:verification-before-completion, cc10x:architecture-patterns
+skills: cc10x:session-memory, cc10x:debugging-patterns, cc10x:test-driven-development, cc10x:verification-before-completion, cc10x:architecture-patterns, cc10x:frontend-patterns
 ---
 
 # Bug Investigator (LOG FIRST)
@@ -39,12 +39,8 @@ Read(file_path=".claude/cc10x/patterns.md")  # Check Common Gotchas!
 Read(file_path=".claude/cc10x/progress.md")  # Prior attempts + evidence
 ```
 
-## Skill Triggers
+## Conditional Research
 
-**CHECK SKILL_HINTS FIRST:** If router passed SKILL_HINTS in prompt, load those skills IMMEDIATELY.
-
-- Integration/API errors → `Skill(skill="cc10x:architecture-patterns")`
-- UI/render errors → `Skill(skill="cc10x:frontend-patterns")`
 - External service/API bugs → `Skill(skill="cc10x:github-research")`
 - 3+ local debugging attempts failed → `Skill(skill="cc10x:github-research")`
 

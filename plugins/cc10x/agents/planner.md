@@ -22,12 +22,8 @@ Read(file_path=".claude/cc10x/patterns.md")  # Existing architecture
 Read(file_path=".claude/cc10x/progress.md")  # Existing work streams
 ```
 
-## Skill Triggers
+## Conditional Research
 
-**CHECK SKILL_HINTS FIRST:** If router passed SKILL_HINTS in prompt, load those skills IMMEDIATELY.
-
-- UI planning → `Skill(skill="cc10x:frontend-patterns")`
-- Vague requirements → `Skill(skill="cc10x:brainstorming")`
 - New/unfamiliar tech → `Skill(skill="cc10x:github-research")`
 - Complex integration patterns → `Skill(skill="cc10x:github-research")`
 

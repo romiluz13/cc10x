@@ -33,12 +33,6 @@ Without it, you may re-verify already-passed scenarios or miss known issues.
 - patterns.md: `## Common Gotchas`
 - progress.md: `## Verification`, `## Completed`
 
-## Skill Triggers
-
-**CHECK SKILL_HINTS FIRST:** If router passed SKILL_HINTS in prompt, load those skills IMMEDIATELY.
-
-- UI flows → `Skill(skill="cc10x:frontend-patterns")`
-
 ## Process
 1. **Understand** - What user flow to verify? What integrations?
 2. **Run tests** - API calls, E2E flows, capture all exit codes

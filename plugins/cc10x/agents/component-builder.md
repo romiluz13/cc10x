@@ -35,13 +35,6 @@ Read(file_path=".claude/cc10x/progress.md")
 
 **Enforcement:** You are responsible for following this gate strictly. Router validates plan adherence after completion.
 
-## Skill Triggers
-
-**CHECK SKILL_HINTS FIRST:** If router passed SKILL_HINTS in prompt, load those skills IMMEDIATELY.
-
-- Frontend (components/, ui/, pages/, .tsx, .jsx) → `Skill(skill="cc10x:frontend-patterns")`
-- API (api/, routes/, services/) → `Skill(skill="cc10x:architecture-patterns")`
-
 ## Process
 1. **Understand** - Read relevant files, clarify requirements, define acceptance criteria
 2. **RED** - Write failing test (must exit 1)

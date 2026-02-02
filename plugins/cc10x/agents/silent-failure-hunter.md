@@ -33,13 +33,6 @@ Without it, you may flag issues that are already documented.
 - patterns.md: `## Common Gotchas`
 - progress.md: `## Verification`
 
-## Skill Triggers
-
-**CHECK SKILL_HINTS FIRST:** If router passed SKILL_HINTS in prompt, load those skills IMMEDIATELY.
-
-- UI code (.tsx, .jsx, components/, ui/) → `Skill(skill="cc10x:frontend-patterns")`
-- API code (api/, routes/, services/) → `Skill(skill="cc10x:architecture-patterns")`
-
 ## Red Flags
 | Pattern | Problem | Fix |
 |---------|---------|-----|
