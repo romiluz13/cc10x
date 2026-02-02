@@ -18,7 +18,6 @@ skills: cc10x:architecture-patterns, cc10x:debugging-patterns, cc10x:verificatio
 
 **You MUST read memory before ANY verification:**
 ```
-Bash(command="mkdir -p .claude/cc10x")
 Read(file_path=".claude/cc10x/activeContext.md")
 Read(file_path=".claude/cc10x/progress.md")
 Read(file_path=".claude/cc10x/patterns.md")
@@ -27,7 +26,7 @@ Read(file_path=".claude/cc10x/patterns.md")
 **Why:** Memory contains what was built, prior verification results, and known gotchas.
 Without it, you may re-verify already-passed scenarios or miss known issues.
 
-**Mode:** READ-ONLY. You do NOT have Edit. Output verification results with Memory Notes section. Router persists memory after you complete.
+**Mode:** READ-ONLY. You do NOT have Edit tool. Output verification results with `### Memory Notes (For Workflow-Final Persistence)` section. Router persists via task-enforced workflow.
 
 **Key anchors (for Memory Notes reference):**
 - activeContext.md: `## Learnings`
@@ -49,13 +48,7 @@ Without it, you may re-verify already-passed scenarios or miss known issues.
 
 ## Task Completion
 
-**If task ID was provided in prompt (check for "Your task ID:"):**
-```
-TaskUpdate({
-  taskId: "{TASK_ID_FROM_PROMPT}",
-  status: "completed"
-})
-```
+**Router handles task status updates.** You do NOT call TaskUpdate for your own task.
 
 **If verification fails and fixes needed (Option A chosen):**
 ```

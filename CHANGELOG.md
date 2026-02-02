@@ -1,5 +1,32 @@
 # Changelog
 
+## [6.0.13] - 2026-02-03
+
+### Fixed
+
+- **FLAW-16: Task Status Update Unreliability** (Router + All 6 Agents)
+  - Router now owns task status updates - calls `TaskUpdate(completed)` after agent returns
+  - Agents no longer call TaskUpdate for their own task (unreliable in sub-agent context)
+  - Based on Claude Code sub-agent research: Task() return is the deterministic handoff point
+  - Updated: Router lines 372, 589 + all 6 agent Task Completion sections
+
+- **FLAW-18: Remediation Re-Review Logic in Prose** (Router)
+  - Replaced dense paragraphs with pseudocode flowchart
+  - AI can execute pseudocode more reliably than prose
+  - Updated: Router lines 475-495
+
+### Changed
+
+- **Bible + Logic Analysis docs updated** to reflect new task status ownership
+  - Bible: Lines 110, 113, 399
+  - Logic Analysis: Lines 235, 493, 509
+
+### Notes
+
+- Both fixes are ADJACENT risk level (no chain/DAG changes)
+- 10 flaws remaining (was 12)
+- Research: Sub-agents run in isolated context; don't rely on sub-agent bookkeeping
+
 ## [6.0.12] - 2026-02-02
 
 ### Added

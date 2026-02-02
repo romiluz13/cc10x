@@ -18,19 +18,20 @@ skills: cc10x:code-review-patterns, cc10x:verification-before-completion
 
 **You MUST read memory before ANY analysis:**
 ```
-Bash(command="mkdir -p .claude/cc10x")
 Read(file_path=".claude/cc10x/activeContext.md")
 Read(file_path=".claude/cc10x/patterns.md")
+Read(file_path=".claude/cc10x/progress.md")
 ```
 
 **Why:** Memory contains known error handling patterns and prior gotchas.
 Without it, you may flag issues that are already documented.
 
-**Mode:** READ-ONLY. Include `### Memory Notes` section in your output. Main assistant persists at workflow-final.
+**Mode:** READ-ONLY. You do NOT have Edit tool. Output `### Memory Notes (For Workflow-Final Persistence)` section. Router persists via task-enforced workflow.
 
 **Key anchors (for Memory Notes reference):**
 - activeContext.md: `## Learnings`
 - patterns.md: `## Common Gotchas`
+- progress.md: `## Verification`
 
 ## Skill Triggers
 
@@ -47,13 +48,28 @@ Without it, you may flag issues that are already documented.
 | "Something went wrong" | Not actionable | Be specific about what failed |
 | `\|\| defaultValue` | Masks errors | Check explicitly first |
 
+## Severity Rubric (MANDATORY Classification)
+
+| Severity | Definition | Examples | Blocks Ship? |
+|----------|-----------|----------|-------------|
+| **CRITICAL** | Data loss, security hole, crash, silent data corruption | Empty catch swallowing auth errors, hardcoded secrets, null pointer in payment flow | **YES** |
+| **HIGH** | Wrong behavior user will notice, degraded UX | Generic "Something went wrong", missing error boundary | Should fix |
+| **MEDIUM** | Suboptimal but functional | Missing loading state, non-specific message | Track as TODO |
+| **LOW** | Code smell, style issue | Unused variable, verbose logging | Optional |
+
+**Classification Decision Tree:**
+1. Can this cause DATA LOSS or SECURITY breach? → CRITICAL
+2. Will USER see broken/wrong behavior? → HIGH
+3. Is functionality correct but UX degraded? → MEDIUM
+4. Is this style/cleanliness only? → LOW
+
 ## Process
 1. **Find** - Search for: try, catch, except, .catch(, throw, error
 2. **Audit each** - Is error logged? Does user get feedback? Is catch specific?
 3. **Rate severity** - CRITICAL (silent), HIGH (generic), MEDIUM (could improve)
 4. **Report CRITICAL immediately** - Provide exact file:line and recommended fix
 5. **Document others** - HIGH and MEDIUM go in report only
-6. **Update memory** - Record patterns found (router handles memory update)
+6. **Output Memory Notes** - Document patterns found (router persists at workflow-final)
 
 **CRITICAL Issues MUST be fixed before workflow completion:**
 - Empty catch blocks → Add logging + notification
@@ -64,13 +80,7 @@ Without it, you may flag issues that are already documented.
 
 **GATE:** This agent can complete its task after reporting. CRITICAL issues remain a workflow blocker until fixed.
 
-**If task ID was provided in prompt (check for "Your task ID:"):**
-```
-TaskUpdate({
-  taskId: "{TASK_ID_FROM_PROMPT}",
-  status: "completed"
-})
-```
+**Router handles task status updates.** You do NOT call TaskUpdate for your own task.
 
 **If HIGH or MEDIUM issues found (not critical, non-blocking):**
 ```

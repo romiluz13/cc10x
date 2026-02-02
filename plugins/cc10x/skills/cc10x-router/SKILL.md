@@ -365,11 +365,11 @@ IMPORTANT:
   - **Patterns:** [gotchas for patterns.md]
   - **Verification:** [results for progress.md]
 
-Execute the task. When complete, call TaskUpdate({ taskId: "{TASK_ID_FROM_PROMPT}", status: "completed" }).
+Execute the task and include 'Task {TASK_ID}: COMPLETED' in your output when done.
 ")
 ```
 
-**TASK ID is REQUIRED.** Agent MUST call `TaskUpdate({ taskId: "{TASK_ID_FROM_PROMPT}", status: "completed" })` when done.
+**TASK ID is REQUIRED in prompt.** Router updates task status after agent returns (agents do NOT call TaskUpdate for their own task).
 **SKILL_HINTS are MANDATORY.** Agent MUST call `Skill(skill="...")` for each hint immediately after loading memory.
 
 **Post-Agent Validation (After agent completes):**
@@ -472,22 +472,28 @@ After agent completes:
 - Proceeding: [Yes/No + reason]
 ```
 
-## Remediation Re-Review Loop (BUILD - Non-Negotiable)
+## Remediation Re-Review Loop (Pseudocode)
 
-If any remediation task that implies code/test changes is created/completed (subjects starting with `CC10X REM-FIX:`), then:
+```
+WHEN any CC10X REM-FIX task COMPLETES:
+  │
+  ├─→ 1. TaskCreate({ subject: "CC10X code-reviewer: Re-review after remediation" })
+  │      → Returns re_reviewer_id
+  │
+  ├─→ 2. TaskCreate({ subject: "CC10X silent-failure-hunter: Re-hunt after remediation" })
+  │      → Returns re_hunter_id
+  │
+  ├─→ 3. Find verifier task:
+  │      TaskList() → Find task where subject contains "integration-verifier"
+  │      → verifier_task_id
+  │
+  ├─→ 4. Block verifier on re-reviews:
+  │      TaskUpdate({ taskId: verifier_task_id, addBlockedBy: [re_reviewer_id, re_hunter_id] })
+  │
+  └─→ 5. Resume chain execution (re-reviews run before verifier)
+```
 
-1. Create re-review tasks (blocked by the remediation task):
-   - `CC10X code-reviewer: Re-review after remediation`
-   - `CC10X silent-failure-hunter: Re-hunt after remediation`
-
-2. Ensure integration-verifier is blocked on BOTH re-review tasks:
-   - Find the integration-verifier task via `TaskList()` (subject contains `integration-verifier`)
-   - Apply:
-     - `TaskUpdate({ taskId: verifier_task_id, addBlockedBy: [re_reviewer_task_id, re_hunter_task_id] })`
-
-3. Only after the re-review tasks complete, proceed to integration-verifier.
-
-**Why:** Otherwise we can ship code changes that were never reviewed/hunted (the heart of orchestration integrity).
+**Why:** Code changes must be re-reviewed before shipping (orchestration integrity).
 
 **How it works:** Task() is synchronous - router waits for agent to complete and receives its output before proceeding to next agent.
 
@@ -580,8 +586,9 @@ skills: cc10x:session-memory, cc10x:code-generation
      ")
 
 3. After agent completes:
-   - Agent will have called TaskUpdate({ taskId: runnable_task_id, status: "completed" })
-   - Router calls TaskList() to check state
+   - Router updates task: TaskUpdate({ taskId: runnable_task_id, status: "completed" })
+   - Router validates output (see Post-Agent Validation)
+   - Router calls TaskList() to find next available tasks
 
 4. Determine next:
    - Find tasks where ALL blockedBy tasks are "completed"

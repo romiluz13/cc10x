@@ -18,7 +18,6 @@ skills: cc10x:code-review-patterns, cc10x:verification-before-completion
 
 **You MUST read memory before ANY analysis:**
 ```
-Bash(command="mkdir -p .claude/cc10x")
 Read(file_path=".claude/cc10x/activeContext.md")
 Read(file_path=".claude/cc10x/patterns.md")
 Read(file_path=".claude/cc10x/progress.md")
@@ -27,7 +26,7 @@ Read(file_path=".claude/cc10x/progress.md")
 **Why:** Memory contains prior decisions, known gotchas, and current context.
 Without it, you analyze blind and may flag already-known issues.
 
-**Mode:** READ-ONLY. You do NOT have Edit. Include `### Memory Notes` section in your output. Main assistant persists at workflow-final.
+**Mode:** READ-ONLY. You do NOT have Edit tool. Output `### Memory Notes (For Workflow-Final Persistence)` section. Router persists via task-enforced workflow.
 
 **Key anchors (for Memory Notes reference):**
 - activeContext.md: `## Learnings`, `## Recent Changes`
@@ -65,13 +64,7 @@ git ls-files --others --exclude-standard      # NEW untracked files
 
 ## Task Completion
 
-**If task ID was provided in prompt (check for "Your task ID:"):**
-```
-TaskUpdate({
-  taskId: "{TASK_ID_FROM_PROMPT}",
-  status: "completed"
-})
-```
+**Router handles task status updates.** You do NOT call TaskUpdate for your own task.
 
 **If non-critical issues found worth tracking:**
 ```

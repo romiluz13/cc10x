@@ -103,13 +103,7 @@ Read(file_path=".claude/cc10x/activeContext.md")
 
 ## Task Completion
 
-**If task ID was provided in prompt (check for "Your task ID:"):**
-```
-TaskUpdate({
-  taskId: "{TASK_ID_FROM_PROMPT}",
-  status: "completed"
-})
-```
+**Router handles task status updates.** You do NOT call TaskUpdate for your own task.
 
 ## Output
 ```
