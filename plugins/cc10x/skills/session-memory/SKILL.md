@@ -162,7 +162,7 @@ When a memory file exceeds ~200 lines, add a Quick Index at the top for faster s
 |---------|---------|-------|
 | Current Focus | [1-line summary of active work] | 5-15 |
 | Recent Changes | [count] changes recorded | 20-50 |
-| Active Decisions | [count] decisions | 10-30 |
+| Decisions | [count] decisions | 10-30 |
 | Learnings | [count] insights | 15-25 |
 | Blockers | [None / count active] | 5-10 |
 
@@ -189,7 +189,7 @@ For large memory files (200+ lines), agents MAY load selectively:
 Read(file_path=".claude/cc10x/activeContext.md", limit=50)
 
 # Step 2: Decide which sections are relevant to current task
-# - Building new feature → Load "Active Decisions", "Patterns"
+# - Building new feature → Load "Decisions", "Patterns"
 # - Debugging → Load "Learnings", "Recent Changes"
 # - Continuing work → Load "Current Focus", "Next Steps"
 
@@ -200,10 +200,10 @@ Read(file_path=".claude/cc10x/activeContext.md", offset=100, limit=50)
 **Selective Loading Decision Matrix:**
 | Task Type | Load First | Then Load If Needed |
 |-----------|------------|---------------------|
-| BUILD (new feature) | Current Focus, Active Decisions | Patterns, Recent Changes |
+| BUILD (new feature) | Current Focus, Decisions | Patterns, Recent Changes |
 | DEBUG (fix issue) | Learnings, Recent Changes | Blockers, Patterns |
-| REVIEW (audit code) | Patterns, Active Decisions | Recent Changes |
-| PLAN (design) | Current Focus, Active Decisions | Full file |
+| REVIEW (audit code) | Patterns, Decisions | Recent Changes |
+| PLAN (design) | Current Focus, Decisions | Full file |
 | Continue session | Current Focus, Next Steps | As needed |
 
 **DEFAULT: For files under 200 lines, load the entire file. Selective loading adds complexity—only use when needed.**
@@ -224,7 +224,7 @@ Keep memory files trim for token efficiency:
 
 **Pruning Rules:**
 1. **Recent Changes**: Keep last 10 entries. Older changes move to git history.
-2. **Active Decisions**: Archive decisions older than 2 workflows if no longer referenced.
+2. **Decisions**: Archive decisions older than 2 workflows if no longer referenced.
 3. **Learnings**: Promote repeated learnings to patterns.md, then remove from activeContext.
 4. **Completed Tasks**: Summarize completed workflows into a single line after verification.
 
@@ -358,7 +358,7 @@ Hard rules:
 - Do not rename the top-level headers (`# Active Context`, `# Project Patterns`, `# Progress Tracking`).
 - Do not rename section headers (e.g., `## Current Focus`, `## Last Updated`).
 - Only add content *inside* existing sections (append lists/rows).
-  - If a **canonical section from this template** is missing (e.g., `## Plan Reference`, `## Design Reference`, `## Research References`), add it by inserting it just above `## Last Updated`.
+  - If a **canonical section from this template** is missing (e.g., `## References`, `## Decisions`, `## Learnings`), add it by inserting it just above `## Last Updated`.
 - After every `Edit(...)`, **Read back** the file and confirm the intended change exists.
 
 If an Edit does not apply cleanly:
@@ -546,7 +546,7 @@ Read(file_path=".claude/cc10x/activeContext.md")
 | **Debugging an error** | activeContext.md + patterns.md | May have seen before + known gotchas |
 | **Planning next steps** | progress.md | Know what's remaining |
 | **Reviewing code** | patterns.md | Apply project conventions |
-| **Making any decision** | activeContext.md (Active Decisions table) | Check prior decisions |
+| **Making any decision** | activeContext.md (Decisions) | Check prior decisions |
 
 ### Read WHEN You Notice
 
@@ -564,21 +564,21 @@ Read(file_path=".claude/cc10x/activeContext.md")
 What do I need?              → Which file?
 ─────────────────────────────────────────
 Current state / focus        → activeContext.md
-Prior decisions + reasoning  → activeContext.md (Active Decisions)
+Prior decisions + reasoning  → activeContext.md (Decisions)
 What we learned              → activeContext.md (Learnings)
 Project conventions          → patterns.md
 How to structure code        → patterns.md
 Common gotchas to avoid      → patterns.md
 What's done / remaining      → progress.md
 Verification evidence        → progress.md
-Prior research on topic      → activeContext.md (Research References) → docs/research/
+Prior research on topic      → activeContext.md (References) → docs/research/
 ```
 
 ### Decision Integration
 
 **Before ANY decision, ask:**
 
-1. **Did we decide this before?** → Check activeContext.md Active Decisions table
+1. **Did we decide this before?** → Check activeContext.md Decisions section
 2. **Is there a project pattern?** → Check patterns.md
 3. **Did we learn something relevant?** → Check activeContext.md Learnings
 
@@ -704,7 +704,7 @@ If an agent cannot safely update memory (e.g., no `Edit` tool available):
 
 If you catch yourself:
 - Starting work WITHOUT loading memory
-- Making decisions WITHOUT checking Active Decisions table
+- Making decisions WITHOUT checking Decisions section
 - Completing work WITHOUT updating memory
 - Saying "I'll remember" instead of writing to memory
 
@@ -714,7 +714,7 @@ If you catch yourself:
 
 | Excuse | Reality |
 |--------|---------|
-| "I know what we decided" | Check the Active Decisions table. |
+| "I know what we decided" | Check the Decisions section. |
 | "Small task, no need" | Small tasks have context too. Always update. |
 | "I'll remember" | You won't. Conversation compacts. Write it down. |
 | "Memory is optional" | Memory is MANDATORY. No exceptions. |

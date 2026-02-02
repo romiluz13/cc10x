@@ -229,7 +229,7 @@ TaskCreate({ subject: "CC10X planner: Create plan for {feature}", description: "
    - Execute research FIRST using octocode tools directly
    - Search for error patterns, PRs with similar issues
    - **PERSIST research** → Save to `docs/research/YYYY-MM-DD-<error-topic>-research.md`
-   - **Update memory** → Add to activeContext.md Research References table
+   - **Update memory** → Add to activeContext.md References section
 4. **Create task hierarchy** (see Task-Based Orchestration above)
 5. **Start chain execution** (pass research file path if step 3 was executed)
 6. Update memory → Add to Common Gotchas when all tasks completed
@@ -250,7 +250,7 @@ TaskCreate({ subject: "CC10X planner: Create plan for {feature}", description: "
    - Execute research FIRST using octocode tools directly (NOT as hint)
    - Use: `mcp__octocode__packageSearch`, `mcp__octocode__githubSearchCode`, etc.
    - **PERSIST research** → Save to `docs/research/YYYY-MM-DD-<topic>-research.md`
-   - **Update memory** → Add to activeContext.md Research References table
+   - **Update memory** → Add to activeContext.md References section
    - Summarize findings before invoking planner
 3. **Create task hierarchy** (see Task-Based Orchestration above)
 4. **Start chain execution** (pass research results + file path in prompt if step 2 was executed)
@@ -263,7 +263,7 @@ If SKILL_HINTS includes github-research:
   → PHASE 2: PERSIST research (prevents context loss):
       Bash(command="mkdir -p docs/research")
       Write(file_path="docs/research/YYYY-MM-DD-<topic>-research.md", content="[research summary]")
-      Edit(file_path=".claude/cc10x/activeContext.md", ...)  # Add to Research References
+      Edit(file_path=".claude/cc10x/activeContext.md", ...)  # Add to References section
   → PHASE 3: Task(cc10x:planner, prompt="...Research findings: {results}...\nResearch saved to: docs/research/YYYY-MM-DD-<topic>-research.md")
 ```
 Research is a PREREQUISITE, not a hint. Planner cannot skip it.

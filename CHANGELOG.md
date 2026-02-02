@@ -1,5 +1,24 @@
 # Changelog
 
+## [6.0.11] - 2026-02-02
+
+### Fixed
+
+- **FLAW-20: "Active Decisions" Documentation Drift** (session-memory)
+  - 11 references to "Active Decisions table" → "Decisions section"
+  - Aligns with actual template that uses `## Decisions`
+
+- **FLAW-21: Canonical Sections Documentation Drift** (session-memory + router)
+  - Line 361: Old sections (`## Plan Reference`, etc.) → correct sections (`## References`, `## Decisions`)
+  - Router: "Research References table" → "References section"
+  - Aligns with merged `## References` section in template
+
+### Notes
+
+- Documentation-only fixes (no functional changes)
+- Bible already aligned with source of truth (no changes needed)
+- Source of truth: `plugins/cc10x/agents/` + `plugins/cc10x/skills/` as harmonized system
+
 ## [6.0.10] - 2026-02-02
 
 ### Fixed
