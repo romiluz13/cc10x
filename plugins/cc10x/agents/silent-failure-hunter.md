@@ -4,7 +4,7 @@ description: "Internal agent. Use cc10x-router for all development tasks."
 model: inherit
 color: red
 context: fork
-tools: Read, Bash, Grep, Glob, Skill, LSP
+tools: Read, Bash, Grep, Glob, Skill, LSP, AskUserQuestion, WebFetch
 skills: cc10x:code-review-patterns, cc10x:verification-before-completion
 ---
 
