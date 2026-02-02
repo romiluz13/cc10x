@@ -257,10 +257,13 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [planner_task_id] })
 
 ### BUILD
 1. Load memory → Check if already done in progress.md
-2. **Clarify requirements** (DO NOT SKIP) → Use AskUserQuestion
-3. **Create task hierarchy** (see Task-Based Orchestration above)
-4. **Start chain execution** (see Chain Execution Loop below)
-5. Update memory when all tasks completed
+2. **Plan-First Gate** (new features only):
+   - Skip if continuing ("build it", "proceed", "go ahead", or plan just created)
+   - Otherwise ask: "Plan first (Recommended) / Just build"
+3. **Clarify requirements** (DO NOT SKIP) → Use AskUserQuestion
+4. **Create task hierarchy** (see Task-Based Orchestration above)
+5. **Start chain execution** (see Chain Execution Loop below)
+6. Update memory when all tasks completed
 
 ### DEBUG
 1. Load memory → Check patterns.md Common Gotchas
