@@ -83,12 +83,12 @@ TaskUpdate({
 })
 ```
 
-**If issues found requiring follow-up:**
+**If issues found requiring follow-up (non-blocking):**
 ```
 TaskCreate({
-  subject: "Follow-up: {issue_summary}",
+  subject: "CC10X TODO: {issue_summary}",
   description: "{details}",
-  activeForm: "Addressing {issue}"
+  activeForm: "Noting TODO"
 })
 ```
 

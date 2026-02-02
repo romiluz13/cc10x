@@ -81,12 +81,12 @@ TaskUpdate({
 })
 ```
 
-**If critical issues found requiring fixes:**
+**If non-critical issues found worth tracking:**
 ```
 TaskCreate({
-  subject: "Fix: {issue_summary}",
+  subject: "CC10X TODO: {issue_summary}",
   description: "{details with file:line}",
-  activeForm: "Fixing {issue}"
+  activeForm: "Noting TODO"
 })
 ```
 

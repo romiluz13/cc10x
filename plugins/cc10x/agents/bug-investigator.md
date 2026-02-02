@@ -117,12 +117,12 @@ TaskUpdate({
 })
 ```
 
-**If additional issues discovered during investigation:**
+**If additional issues discovered during investigation (non-blocking):**
 ```
 TaskCreate({
-  subject: "Fix related issue: {issue_summary}",
+  subject: "CC10X TODO: {issue_summary}",
   description: "{details}",
-  activeForm: "Fixing related issue"
+  activeForm: "Noting TODO"
 })
 ```
 

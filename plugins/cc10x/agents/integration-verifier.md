@@ -62,12 +62,12 @@ TaskUpdate({
 })
 ```
 
-**If verification fails and fixes needed:**
+**If verification fails and fixes needed (Option A chosen):**
 ```
 TaskCreate({
-  subject: "Fix verification failure: {issue_summary}",
+  subject: "CC10X TODO: Fix verification failure - {issue_summary}",
   description: "{details with scenario and error}",
-  activeForm: "Fixing verification issue"
+  activeForm: "Noting TODO"
 })
 ```
 

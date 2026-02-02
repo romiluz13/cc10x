@@ -453,8 +453,8 @@ Use Edit + Read-back verify:
 Read(file_path=".claude/cc10x/progress.md")
 
 Edit(file_path=".claude/cc10x/progress.md",
-     old_string="## Active Workflow Tasks",
-     new_string="## Active Workflow Tasks
+     old_string="## Tasks",
+     new_string="## Tasks
 
 - CC10X Execute Plan: {feature} (blocked by: -)
 - CC10X Phase 1: {title} (blocked by: -)

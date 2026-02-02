@@ -60,12 +60,12 @@ TaskUpdate({
 })
 ```
 
-**If HIGH or MEDIUM issues found (not critical):**
+**If HIGH or MEDIUM issues found (not critical, non-blocking):**
 ```
 TaskCreate({
-  subject: "Improve error handling: {issue_summary}",
+  subject: "CC10X TODO: {issue_summary}",
   description: "{details with file:line}",
-  activeForm: "Improving error handling"
+  activeForm: "Noting TODO"
 })
 ```
 

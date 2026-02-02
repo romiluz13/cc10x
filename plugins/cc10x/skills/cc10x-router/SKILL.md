@@ -103,6 +103,8 @@ Memory update rules (do not improvise):
 TaskList()  # Check for pending/in-progress workflow tasks
 ```
 
+**Orphan check:** If any CC10X task has status="in_progress" → Ask user: Resume (reset to pending) / Complete (skip) / Delete.
+
 **If active CC10x workflow task exists (preferred: subject starts with `CC10X `):**
 - Resume from task state (use `TaskGet({ taskId })` for the task you plan to resume)
 - Skip workflow selection - continue execution from where it stopped
@@ -127,9 +129,10 @@ TaskList()  # Check for pending/in-progress workflow tasks
 ### BUILD Workflow Tasks
 ```
 # 0. Check if following a plan (from activeContext.md)
-# If activeContext contains "## Plan Reference" and an "**Execute:** `docs/plans/...`" line:
-#   → Extract plan_file path (e.g., docs/plans/2024-01-27-auth-plan.md)
-#   → Include in task description for context preservation (do not rely on undocumented TaskCreate fields)
+# Look in "## References" section for "- Plan:" entry (not "N/A"):
+#   → Extract plan_file path from the line (e.g., `docs/plans/2024-01-27-auth-plan.md`)
+#   → Include in task description for context preservation
+# Example match: "- Plan: `docs/plans/auth-flow-plan.md`" → plan_file = "docs/plans/auth-flow-plan.md"
 
 # 1. Parent workflow task
 TaskCreate({
@@ -342,6 +345,8 @@ After agent completes:
    → STOP. Do not invoke the next agent.
      Only proceed after remediation completes OR user explicitly approves bypass (and record it in memory).
 
+**Circuit breaker:** Before creating any `CC10X REM-FIX:` task, count existing ones. If count ≥ 3 → Ask user: Continue anyway / Abort workflow / Manual fix.
+
 4. If silent-failure-hunter reports CRITICAL issues (count > 0):
    → Treat as WORKFLOW BLOCKER until fixed.
    → Create a remediation task for component-builder (code changes intended):
@@ -542,6 +547,28 @@ The workflow is complete ONLY when:
 - OR a critical error prevents continuation
 
 **Parallel-safety:** Avoid memory edits during parallel phases. Do the workflow-final memory check/update only after `TaskList()` shows all workflow tasks completed.
+
+### TODO Task Handling (After Workflow Completes)
+
+After all workflow tasks complete, check for `CC10X TODO:` tasks created by agents:
+
+```
+1. TaskList() → Find tasks with subject starting "CC10X TODO:"
+
+2. If TODO tasks exist:
+   → List them: "Agents identified these items for follow-up:"
+     - [task subject] - [first line of description]
+   → Ask user: "Address now (start new workflow) / Keep for later / Delete"
+
+3. User chooses:
+   - "Address now" → Start new BUILD/DEBUG workflow for the TODO
+   - "Keep" → Leave tasks pending (will appear next session)
+   - "Delete" → TaskUpdate({ taskId, status: "deleted" }) for each
+
+4. Continue to MEMORY_UPDATED gate
+```
+
+**Why TODO tasks are separate:** They are non-blocking discoveries made during agent work. They don't auto-execute because they lack proper context/dependencies. User decides priority.
 
 ## Results Collection (Parallel Agents)
 

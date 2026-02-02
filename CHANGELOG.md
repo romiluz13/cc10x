@@ -1,5 +1,38 @@
 # Changelog
 
+## [6.0.10] - 2026-02-02
+
+### Fixed
+
+- **FLAW-15: Plan Reference Section Mismatch** (Router)
+  - Router now looks for `## References` + `- Plan:` instead of old `## Plan Reference` format
+  - Fixes plan detection that was silently failing
+
+- **FLAW-16: Agent Follow-up Task Naming** (All 5 Agents + Router)
+  - All agents now use `CC10X TODO:` prefix for follow-up tasks
+  - Router has new TODO handling section (lines 553-571)
+  - User gets visibility + control over non-blocking discoveries
+
+- **FLAW-17: Task Owner Check** (Bible)
+  - Removed owner check from task availability criteria (CC10x doesn't use owners)
+
+- **FLAW-18: planning-patterns Outdated Anchor** (planning-patterns)
+  - Changed `## Active Workflow Tasks` → `## Tasks` to match session-memory template
+
+- **FLAW-19: integration-verifier Non-namespaced Task** (integration-verifier)
+  - Added `CC10X TODO:` prefix for verification failure tasks
+
+### Changed
+
+- **Bible Task Types Table** expanded to show ALL task prefixes
+- **7 total flaws now fixed** (1, 2, 15, 16, 17, 18, 19)
+
+### Notes
+
+- External AI review validated orchestration - 5/6 claims were real issues
+- All functional files, agents, skills, router, and Bible now perfectly aligned
+- Zero risk of Edit anchor failures or orphaned tasks
+
 ## [6.0.9] - 2026-02-01
 
 ### Added
