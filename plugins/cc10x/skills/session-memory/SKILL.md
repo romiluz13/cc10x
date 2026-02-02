@@ -138,11 +138,12 @@ Without memory persistence:
 
 ### Read
 - **Router (always):** loads all 3 files before workflow selection and before resuming Tasks.
-- **All agents:** load the memory files they need at the start of their task (never assume the prompt contains all context).
+- **WRITE agents** (component-builder, bug-investigator, planner): load memory files at task start via this skill.
+- **READ-ONLY agents** (code-reviewer, silent-failure-hunter, integration-verifier): receive memory summary in prompt, do NOT load this skill.
 
 ### Write
-- **Agents with `Edit`:** update memory at the end of their task (and `Read(...)` back to verify).
-- **Agents without `Edit`:** must output “memory-worthy notes” in a clearly labeled section so the main assistant can persist them.
+- **WRITE agents:** update memory directly at task end using `Edit(...)` + `Read(...)` verify pattern.
+- **READ-ONLY agents:** output `### Memory Notes (For Workflow-Final Persistence)` section. The task-enforced "CC10X Memory Update" task ensures these are persisted.
 
 ### Concurrency Rule (Parallel Phases)
 
@@ -150,198 +151,23 @@ BUILD runs `code-reviewer ∥ silent-failure-hunter` in parallel. To avoid confl
 - Prefer **no memory edits during parallel phases**.
 - If you must persist something mid-parallel, only the main assistant should do it, and only after both parallel tasks complete.
 
-## Memory Efficiency (Token-Aware Loading)
-
-### Quick Index Pattern (OPTIONAL)
-
-When a memory file exceeds ~200 lines, add a Quick Index at the top for faster scanning:
-
-```markdown
-## Quick Index
-| Section | Summary | Lines |
-|---------|---------|-------|
-| Current Focus | [1-line summary of active work] | 5-15 |
-| Recent Changes | [count] changes recorded | 20-50 |
-| Decisions | [count] decisions | 10-30 |
-| Learnings | [count] insights | 15-25 |
-| Blockers | [None / count active] | 5-10 |
-
----
-[Rest of file content below...]
-```
-
-**When to add Quick Index:**
-- File exceeds 200 lines
-- Multiple distinct sections with significant content
-- Frequent partial reads needed
-
-**When NOT needed:**
-- File under 200 lines (most projects)
-- Simple, focused content
-- File rarely referenced
-
-### Selective Loading
-
-For large memory files (200+ lines), agents MAY load selectively:
-
-```
-# Step 1: Load first 50 lines (Quick Index + Current Focus)
-Read(file_path=".claude/cc10x/activeContext.md", limit=50)
-
-# Step 2: Decide which sections are relevant to current task
-# - Building new feature → Load "Decisions", "Patterns"
-# - Debugging → Load "Learnings", "Recent Changes"
-# - Continuing work → Load "Current Focus", "Next Steps"
-
-# Step 3: Load specific sections using offset/limit
-Read(file_path=".claude/cc10x/activeContext.md", offset=100, limit=50)
-```
-
-**Selective Loading Decision Matrix:**
-| Task Type | Load First | Then Load If Needed |
-|-----------|------------|---------------------|
-| BUILD (new feature) | Current Focus, Decisions | Patterns, Recent Changes |
-| DEBUG (fix issue) | Learnings, Recent Changes | Blockers, Patterns |
-| REVIEW (audit code) | Patterns, Decisions | Recent Changes |
-| PLAN (design) | Current Focus, Decisions | Full file |
-| Continue session | Current Focus, Next Steps | As needed |
-
-**DEFAULT: For files under 200 lines, load the entire file. Selective loading adds complexity—only use when needed.**
-
-### Pruning Guidelines
-
-Keep memory files trim for token efficiency:
-
-**When to prune (any file exceeding 200 lines):**
-
-| Memory File | Prune By | Move To |
-|-------------|----------|---------|
-| **activeContext.md** | Archive completed decisions | patterns.md (if reusable) |
-| **activeContext.md** | Remove old "Recent Changes" | Keep last 10 only |
-| **activeContext.md** | Move resolved blockers | progress.md "Completed" |
-| **patterns.md** | Archive rarely-used patterns | Separate archive file |
-| **progress.md** | Collapse old completed items | Keep last 2 workflows |
-
-**Pruning Rules:**
-1. **Recent Changes**: Keep last 10 entries. Older changes move to git history.
-2. **Decisions**: Archive decisions older than 2 workflows if no longer referenced.
-3. **Learnings**: Promote repeated learnings to patterns.md, then remove from activeContext.
-4. **Completed Tasks**: Summarize completed workflows into a single line after verification.
-
-**Pruning is a READ operation first:**
-```
-# Step 1: Read and assess size
-Read(file_path=".claude/cc10x/activeContext.md")
-
-# Step 2: If > 200 lines, identify prunable content
-# Step 3: Move reusable content to appropriate file
-# Step 4: Edit to remove old content
-```
-
-**DO NOT prune:**
-- Active decisions still being referenced
-- Recent learnings (< 2 sessions old)
-- Unresolved blockers
-- Current focus content
-
 ## Pre-Compaction Memory Safety
 
-### Context Length Awareness
-
-Conversations auto-compact when they get too long. If memory isn't updated before compaction, context is lost forever.
-
-**The Risk:**
-```
-Long session → Auto-compact → Memory NOT updated → Context LOST
-```
-
-### Proactive Update Triggers
-
-Update memory IMMEDIATELY when you notice:
-- Extended debugging sessions (5+ error cycles)
+**Update memory IMMEDIATELY when you notice:**
+- Extended debugging (5+ cycles)
 - Long planning discussions
 - Multi-file refactoring
-- Any session with 30+ tool calls
-- User says "we've been at this a while"
+- 30+ tool calls in session
 
-### The Rule
-
-**When in doubt, update memory NOW.**
-
-Don't wait for workflow end. It's better to have duplicate entries than lost context.
-
-### Checkpoint Pattern
-
-During long sessions, periodically checkpoint:
+**Checkpoint Pattern:**
 ```
-# After significant progress, even mid-task:
 Edit(file_path=".claude/cc10x/activeContext.md",
      old_string="## Current Focus",
-     new_string="## Current Focus
-
-[Updated focus with recent progress]
-
-### Checkpoint (mid-session)
-- [Key decision made]
-- [Important learning]
-- [Current state]")
-
-# VERIFY (do not skip)
-Read(file_path=".claude/cc10x/activeContext.md")
+     new_string="## Current Focus\n\n[Updated focus + key decisions]")
+Read(file_path=".claude/cc10x/activeContext.md")  # Verify
 ```
 
-### Red Flags - Update Memory NOW
-
-| Situation | Action |
-|-----------|--------|
-| "We've made several decisions" | Checkpoint decisions to activeContext.md |
-| "We've been debugging for a while" | Record learnings + what we've tried |
-| "Let me try a different approach" | Record why previous approach failed |
-| "This is getting complex" | Update memory before continuing |
-
-## Context Tiers (Reference Pattern)
-
-**Optimize context for relevance, not completeness:**
-
-### Quick Context (< 500 tokens)
-Use for simple tasks and handoffs:
-- Current task and immediate goals
-- Recent decisions affecting current work
-- Active blockers or dependencies
-
-### Full Context (< 2000 tokens)
-Use for complex tasks and session starts:
-- Project architecture overview
-- Key design decisions
-- Integration points and APIs
-- Active work streams
-
-### Archived Context (stored in memory files)
-Reference when needed:
-- Historical decisions with rationale
-- Resolved issues and solutions
-- Pattern library
-- Performance benchmarks
-
-**Good context accelerates work; bad context creates confusion.**
-
-## Context Management Functions (Reference Pattern)
-
-### Context Capture (at workflow end)
-1. Extract key decisions and rationale from outputs
-2. Identify reusable patterns and solutions
-3. Document integration points between components
-4. Track unresolved issues and TODOs
-
-### Context Distribution (at workflow start)
-1. Prepare minimal, relevant context for the task
-2. Maintain a context index for quick retrieval
-3. Prune outdated or irrelevant information
-
-### Memory Management (ongoing)
-- Store critical project decisions in memory
-- Maintain a rolling summary of recent changes
-- Create context checkpoints at major milestones
+**Rule:** When in doubt, update memory NOW. Better duplicate entries than lost context.
 
 ## File Purposes
 

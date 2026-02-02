@@ -41,12 +41,20 @@ description: |
 ## Memory (PERMISSION-FREE)
 
 **LOAD FIRST (Before routing):**
+
+**Step 1 - Create directory (MUST complete before Step 2):**
 ```
 Bash(command="mkdir -p .claude/cc10x")
+```
+
+**Step 2 - Load memory files (AFTER Step 1 completes):**
+```
 Read(file_path=".claude/cc10x/activeContext.md")
 Read(file_path=".claude/cc10x/patterns.md")
 Read(file_path=".claude/cc10x/progress.md")
 ```
+
+**IMPORTANT:** Do NOT run Step 1 and Step 2 in parallel. Wait for mkdir to complete before reading files.
 
 If any memory file is missing:
 - Create it with `Write(...)` using the templates from `cc10x:session-memory` (include the contract comment + required headings).
@@ -122,6 +130,22 @@ TaskList()  # Check for pending/in-progress workflow tasks
 **If no active tasks:**
 - Proceed with workflow selection below
 
+## Task Dependency Safety
+
+**All `addBlockedBy` calls MUST follow these rules:**
+1. Dependencies flow FORWARD only (downstream blocked by upstream)
+2. NEVER block an upstream task by a downstream task
+3. If unsure, list current dependencies before adding new ones
+
+**If you suspect a cycle:**
+1. Run `TaskList()` to see all task dependencies
+2. Trace the dependency chain
+3. If cycle detected → Skip the dependency, log warning, continue
+
+**Current design guarantees no cycles:** All workflows are DAGs with forward-only dependencies.
+
+---
+
 ## Task-Based Orchestration
 
 **At workflow start, create task hierarchy using TaskCreate/TaskUpdate:**
@@ -161,6 +185,15 @@ TaskUpdate({ taskId: hunter_task_id, addBlockedBy: [builder_task_id] })
 TaskCreate({ subject: "CC10X integration-verifier: Verify integration", description: "Run tests, verify E2E functionality", activeForm: "Verifying integration" })
 # Returns verifier_task_id
 TaskUpdate({ taskId: verifier_task_id, addBlockedBy: [reviewer_task_id, hunter_task_id] })
+
+# 3. Memory Update task (blocked by final agent - TASK-ENFORCED)
+TaskCreate({
+  subject: "CC10X Memory Update: Persist workflow learnings",
+  description: "REQUIRED: Collect Memory Notes from agent outputs and persist to memory files.\n\n**Instructions:**\n1. Find all '### Memory Notes' sections from completed agents\n2. Persist learnings to .claude/cc10x/activeContext.md ## Learnings\n3. Persist patterns to .claude/cc10x/patterns.md ## Common Gotchas\n4. Persist verification to .claude/cc10x/progress.md ## Verification\n\n**Pattern:**\nRead(file_path=\".claude/cc10x/activeContext.md\")\nEdit(old_string=\"## Learnings\", new_string=\"## Learnings\\n- [from agent]: {insight}\")\nRead(file_path=\".claude/cc10x/activeContext.md\")  # Verify\n\nRepeat for patterns.md and progress.md.",
+  activeForm: "Persisting workflow learnings"
+})
+# Returns memory_task_id
+TaskUpdate({ taskId: memory_task_id, addBlockedBy: [verifier_task_id] })
 ```
 
 ### DEBUG Workflow Tasks
@@ -175,6 +208,15 @@ TaskUpdate({ taskId: reviewer_task_id, addBlockedBy: [investigator_task_id] })
 TaskCreate({ subject: "CC10X integration-verifier: Verify fix", description: "Verify fix works E2E", activeForm: "Verifying fix" })
 # Returns verifier_task_id
 TaskUpdate({ taskId: verifier_task_id, addBlockedBy: [reviewer_task_id] })
+
+# Memory Update task (blocked by final agent - TASK-ENFORCED)
+TaskCreate({
+  subject: "CC10X Memory Update: Persist debug learnings",
+  description: "REQUIRED: Collect Memory Notes from agent outputs and persist to memory files.\n\nFocus on:\n- Root cause for patterns.md ## Common Gotchas\n- Debug attempt history for activeContext.md\n- Verification evidence for progress.md\n\n**Use Read-Edit-Read pattern for each file.**",
+  activeForm: "Persisting debug learnings"
+})
+# Returns memory_task_id
+TaskUpdate({ taskId: memory_task_id, addBlockedBy: [verifier_task_id] })
 ```
 
 ### REVIEW Workflow Tasks
@@ -183,6 +225,15 @@ TaskCreate({ subject: "CC10X REVIEW: {target_summary}", description: "User reque
 
 TaskCreate({ subject: "CC10X code-reviewer: Review {target}", description: "Comprehensive code review", activeForm: "Reviewing code" })
 # Returns reviewer_task_id
+
+# Memory Update task (blocked by final agent - TASK-ENFORCED)
+TaskCreate({
+  subject: "CC10X Memory Update: Persist review learnings",
+  description: "REQUIRED: Collect Memory Notes from code-reviewer output and persist to memory files.\n\nFocus on:\n- Patterns discovered for patterns.md\n- Review verdict for progress.md\n\n**Use Read-Edit-Read pattern for each file.**",
+  activeForm: "Persisting review learnings"
+})
+# Returns memory_task_id
+TaskUpdate({ taskId: memory_task_id, addBlockedBy: [reviewer_task_id] })
 ```
 
 ### PLAN Workflow Tasks
@@ -191,6 +242,15 @@ TaskCreate({ subject: "CC10X PLAN: {feature_summary}", description: "User reques
 
 TaskCreate({ subject: "CC10X planner: Create plan for {feature}", description: "Create comprehensive implementation plan", activeForm: "Creating plan" })
 # Returns planner_task_id
+
+# Memory Update task (blocked by final agent - TASK-ENFORCED)
+TaskCreate({
+  subject: "CC10X Memory Update: Index plan in memory",
+  description: "REQUIRED: Update memory files with plan reference.\n\nFocus on:\n- Add plan file to activeContext.md ## References\n- Update progress.md with plan status\n\n**Use Read-Edit-Read pattern for each file.**",
+  activeForm: "Indexing plan in memory"
+})
+# Returns memory_task_id
+TaskUpdate({ taskId: memory_task_id, addBlockedBy: [planner_task_id] })
 ```
 
 ## Workflow Execution
@@ -297,7 +357,10 @@ Task(subagent_type="cc10x:component-builder", prompt="
 IMPORTANT:
 - If your tools include `Edit` **and you are not running in a parallel phase**, update `.claude/cc10x/{activeContext,patterns,progress}.md` at the end per `cc10x:session-memory` and `Read(...)` back to verify.
 - If you are running in a parallel phase (e.g., BUILD’s review/hunt phase), prefer **no memory edits**; include a clearly labeled **Memory Notes** section so the main assistant can persist safely after parallel completion.
-- If your tools do NOT include `Edit`, put memory-worthy notes in your output (so the main assistant can update memory safely).
+- If your tools do NOT include `Edit`, you MUST include a `### Memory Notes (For Workflow-Final Persistence)` section with:
+  - **Learnings:** [insights for activeContext.md]
+  - **Patterns:** [gotchas for patterns.md]
+  - **Verification:** [results for progress.md]
 
 Execute the task. When complete, call TaskUpdate({ taskId: "{TASK_ID_FROM_PROMPT}", status: "completed" }).
 ")
@@ -312,14 +375,19 @@ When agent returns, verify output quality before proceeding.
 
 ### Required Output by Agent
 
-| Agent | Required Sections | Required Evidence |
-|-------|-------------------|-------------------|
-| component-builder | TDD Evidence (RED + GREEN) | Exit codes: 1 (RED), 0 (GREEN) |
-| code-reviewer | Critical Issues, Verdict | Confidence scores (≥80) |
-| silent-failure-hunter | Critical (blocks ship), Router Handoff | Count of issues found |
-| integration-verifier | Scenarios table, Verdict | PASS/FAIL per scenario |
-| bug-investigator | Root cause, TDD Evidence (RED + GREEN), Variant Coverage, Fix applied | Exit codes: 1 (RED), 0 (GREEN) |
-| planner | Plan saved path, Phases | Confidence score |
+| Agent | Mode | Required Sections | Required Evidence |
+|-------|------|-------------------|-------------------|
+| component-builder | WRITE | TDD Evidence (RED + GREEN) | Exit codes: 1 (RED), 0 (GREEN) |
+| code-reviewer | READ-ONLY | Critical Issues, Verdict, **Memory Notes** | Confidence scores (≥80) |
+| silent-failure-hunter | READ-ONLY | Critical (blocks ship), Router Handoff, **Memory Notes** | Count of issues found |
+| integration-verifier | READ-ONLY | Scenarios table, Verdict, **Memory Notes** | PASS/FAIL per scenario |
+| bug-investigator | WRITE | Root cause, TDD Evidence (RED + GREEN), Variant Coverage, Fix applied | Exit codes: 1 (RED), 0 (GREEN) |
+| planner | WRITE | Plan saved path, Phases | Confidence score |
+
+**Memory Notes schema (READ-ONLY agents):**
+- **Learnings:** [insights for activeContext.md]
+- **Patterns:** [gotchas for patterns.md]
+- **Verification:** [results for progress.md]
 
 ### Validation Logic
 
@@ -520,8 +588,11 @@ skills: cc10x:session-memory, cc10x:code-generation
    - If ALL tasks completed → Workflow complete
 
 5. Repeat until:
-   - All tasks have status="completed"
+   - All tasks have status="completed" (INCLUDING the Memory Update task)
    - OR critical error detected (create error task, halt)
+
+**CRITICAL:** The workflow is NOT complete until the "CC10X Memory Update" task is completed.
+This ensures Memory Notes from READ-ONLY agents are persisted even if context compacted.
 ```
 
 ### Parallel Execution
@@ -547,6 +618,27 @@ The workflow is complete ONLY when:
 - OR a critical error prevents continuation
 
 **Parallel-safety:** Avoid memory edits during parallel phases. Do the workflow-final memory check/update only after `TaskList()` shows all workflow tasks completed.
+
+### Workflow-Final Memory Persistence (Task-Enforced)
+
+Memory persistence is enforced via the "CC10X Memory Update" task in the task hierarchy.
+
+**When you see this task become available:**
+1. Review agent outputs for `### Memory Notes` sections
+2. Follow the task description to persist learnings
+3. Use Read-Edit-Read pattern for each memory file
+4. Mark task completed
+
+**Why task-enforced:**
+- Tasks survive context compaction
+- Tasks are visible in TaskList() - can't be forgotten
+- Task description contains explicit instructions
+- Workflow isn't complete until Memory Update task is done
+
+**Why this design:**
+- READ-ONLY agents (code-reviewer, silent-failure-hunter, integration-verifier) cannot persist memory themselves
+- You (main assistant) collect their Memory Notes and persist at workflow-final
+- This avoids parallel edit conflicts and ensures nothing is lost
 
 ### TODO Task Handling (After Workflow Completes)
 

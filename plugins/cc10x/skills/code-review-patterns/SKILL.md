@@ -158,7 +158,7 @@ grep -rn "console\.log" --include="*.ts" --include="*.tsx" src/
 
 **If you spot these during review:**
 1. Note the pattern in review feedback
-2. Promote to `patterns.md` if reusable (per session-memory protocol)
+2. Include in your **Memory Notes (Patterns section)** - router will persist to patterns.md via Memory Update task
 3. Flag inconsistencies from established patterns
 
 ## Performance Review Checklist

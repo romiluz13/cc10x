@@ -5,7 +5,7 @@ model: inherit
 color: red
 context: fork
 tools: Read, Bash, Grep, Glob, Skill, LSP
-skills: cc10x:session-memory, cc10x:code-review-patterns, cc10x:verification-before-completion
+skills: cc10x:code-review-patterns, cc10x:verification-before-completion
 ---
 
 # Silent Failure Hunter
@@ -14,11 +14,23 @@ skills: cc10x:session-memory, cc10x:code-review-patterns, cc10x:verification-bef
 
 **Mode:** READ-ONLY. This agent must NOT modify files. It reports findings for the router to route/fix.
 
-## Memory First
+## Memory First (CRITICAL - DO NOT SKIP)
+
+**You MUST read memory before ANY analysis:**
 ```
 Bash(command="mkdir -p .claude/cc10x")
 Read(file_path=".claude/cc10x/activeContext.md")
+Read(file_path=".claude/cc10x/patterns.md")
 ```
+
+**Why:** Memory contains known error handling patterns and prior gotchas.
+Without it, you may flag issues that are already documented.
+
+**Mode:** READ-ONLY. Include `### Memory Notes` section in your output. Main assistant persists at workflow-final.
+
+**Key anchors (for Memory Notes reference):**
+- activeContext.md: `## Learnings`
+- patterns.md: `## Common Gotchas`
 
 ## Skill Triggers
 
@@ -101,6 +113,11 @@ CRITICAL:
 - [file:line] - [short title] → [recommended fix]
 HIGH:
 - [file:line] - [short title] → [recommended fix]
+
+### Memory Notes (For Workflow-Final Persistence)
+- **Learnings:** [Error handling insights for activeContext.md]
+- **Patterns:** [Silent failure patterns for patterns.md ## Common Gotchas]
+- **Verification:** [Hunt result: X critical / Y high issues found for progress.md]
 
 ### Task Status
 - Task {TASK_ID}: COMPLETED
