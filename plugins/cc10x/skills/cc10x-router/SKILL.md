@@ -505,24 +505,11 @@ WHEN any CC10X REM-FIX task COMPLETES:
 | Debug exhausted: 3+ local attempts failed, external service error | cc10x:github-research | bug-investigator |
 | User explicitly requests: "research", "github", "octocode", "find on github", "how do others", "best practices" | cc10x:github-research | planner, bug-investigator |
 
-**Note (v6.0.13+):** frontend-patterns, architecture-patterns, and brainstorming are now preloaded via agent frontmatter. Only github-research remains conditional (external API cost).
-
 **Detection runs BEFORE agent invocation. Pass detected skills in SKILL_HINTS.**
 
 ## Skill Loading Hierarchy (DEFINITIVE)
 
 **Three mechanisms exist. Here's how they interact:**
-
-### Simplified Loading (v6.0.13+)
-
-Most skills are now preloaded via frontmatter. Only `github-research` uses SKILL_HINTS (triggers external API calls).
-
-| Skill | Loading Method |
-|-------|----------------|
-| frontend-patterns | Frontmatter (always) |
-| architecture-patterns | Frontmatter (always) |
-| brainstorming | Frontmatter (planner only) |
-| github-research | SKILL_HINTS (conditional) |
 
 ### 1. Agent Frontmatter `skills:` (PRELOAD - Automatic)
 ```yaml

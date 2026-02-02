@@ -20,6 +20,12 @@
 - One loading mechanism (frontmatter) is simpler than two (frontmatter + hints)
 - github-research stays conditional to avoid unnecessary external API calls
 
+### Fixed
+
+- Removed human-oriented version notes from AI instructions (router and Bible)
+  - Removed "v6.0.13+" notes and "Simplified Loading" subsection
+  - AI instructions should state current facts, not version history
+
 ### Notes
 
 - CRITICAL risk level change, but only removes redundancy
