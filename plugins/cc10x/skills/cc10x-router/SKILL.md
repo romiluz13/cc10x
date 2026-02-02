@@ -551,7 +551,7 @@ skills: cc10x:session-memory, cc10x:code-generation
 5. **RESEARCH_PERSISTED** - Save to docs/research/ + update activeContext.md (if research was executed)
 6. **REQUIREMENTS_CLARIFIED** - Before invoking agent (BUILD only)
 7. **TASKS_CREATED** - Workflow task hierarchy created
-8. **ALL_TASKS_COMPLETED** - All agent tasks status="completed"
+8. **ALL_TASKS_COMPLETED** - All workflow tasks (including Memory Update) status="completed"
 9. **MEMORY_UPDATED** - Before marking done
 
 ## Chain Execution Loop (Task-Based)
@@ -617,7 +617,7 @@ Task(subagent_type="cc10x:silent-failure-hunter", prompt="Your task ID: {hunter_
 ### Chain Completion Criteria
 
 The workflow is complete ONLY when:
-- `TaskList()` shows ALL agent tasks with status="completed"
+- `TaskList()` shows ALL workflow tasks (including Memory Update) with status="completed"
 - OR a critical error prevents continuation
 
 **Parallel-safety:** Avoid memory edits during parallel phases. Do the workflow-final memory check/update only after `TaskList()` shows all workflow tasks completed.

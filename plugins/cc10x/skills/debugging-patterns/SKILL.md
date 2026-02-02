@@ -154,6 +154,42 @@ npx eslint . --ext .ts,.tsx        # Lint check
 5. Add deterministic waits or proper synchronization
 ```
 
+### Git Bisect (Finding Breaking Commit)
+
+**When to use:** "It worked before" scenarios.
+
+```bash
+# Start bisect
+git bisect start
+
+# Mark current (broken) as bad
+git bisect bad
+
+# Mark known good commit (e.g., last release)
+git bisect good v1.2.0
+
+# Git will checkout middle commit - test it
+npm test  # or whatever reproduces the bug
+
+# Mark result
+git bisect good  # if tests pass
+git bisect bad   # if tests fail
+
+# Repeat until git identifies the breaking commit
+# Git will output: "abc123 is the first bad commit"
+
+# End bisect
+git bisect reset
+```
+
+**Automate if you have a test:**
+```bash
+git bisect start
+git bisect bad HEAD
+git bisect good v1.2.0
+git bisect run npm test -- --grep "failing test"
+```
+
 ## When to Use
 
 Use for ANY technical issue:

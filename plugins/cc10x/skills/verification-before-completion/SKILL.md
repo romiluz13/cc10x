@@ -1,7 +1,7 @@
 ---
 name: verification-before-completion
 description: "Internal skill. Use cc10x-router for all development tasks."
-allowed-tools: Read, Grep, Glob, Bash
+allowed-tools: Read, Grep, Glob, Bash, LSP
 ---
 
 # Verification Before Completion

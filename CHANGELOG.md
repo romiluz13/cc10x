@@ -1,5 +1,27 @@
 # Changelog
 
+## [6.0.12] - 2026-02-02
+
+### Added
+
+- **LSP Tool Support Expanded** (7 skills, 3 agents)
+  - Added LSP to `code-review-patterns`, `debugging-patterns`, `architecture-patterns` (with usage guidance sections)
+  - Added LSP to `frontend-patterns`, `code-generation`, `planning-patterns`, `verification-before-completion`
+  - All 6 agents already had LSP - now skills guide usage
+
+- **Git Bisect Example** (debugging-patterns)
+  - Full step-by-step workflow for "it worked before" scenarios
+  - Includes automated bisect with test command
+
+- **architecture-patterns Skill** (component-builder agent)
+  - Added to component-builder frontmatter skills for backend work support
+
+### Notes
+
+- All changes are ADJACENT risk level (safe patterns)
+- Smoke test: 19/19 passed
+- No Bible invariants affected
+
 ## [6.0.11] - 2026-02-02
 
 ### Fixed
