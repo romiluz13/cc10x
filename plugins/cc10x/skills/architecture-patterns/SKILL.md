@@ -1,7 +1,7 @@
 ---
 name: architecture-patterns
 description: "Internal skill. Use cc10x-router for all development tasks."
-allowed-tools: Read, Grep, Glob
+allowed-tools: Read, Grep, Glob, LSP
 ---
 
 # Architecture Patterns
@@ -133,6 +133,29 @@ System Flow (example):
 - **Repositories**: Data access
 - **Clients**: External integrations
 - **Models**: Data structures
+
+## LSP-Powered Architecture Analysis
+
+**Use LSP to map actual code dependencies:**
+
+| Architecture Task | LSP Tool | Output |
+|-------------------|----------|--------|
+| Map component dependencies | `lspCallHierarchy(outgoing)` | What each component uses |
+| Find all consumers of a service | `lspCallHierarchy(incoming)` | Impact analysis |
+| Verify interface implementations | `lspFindReferences` | All implementers |
+| Trace data flow | Chain `lspCallHierarchy` calls | Full flow map |
+
+**Mapping Actual Architecture:**
+```
+1. localSearchCode("ServiceName") → find entry points
+2. lspCallHierarchy(outgoing) → map dependencies
+3. For each dependency: repeat step 2
+4. Build dependency graph from results
+```
+
+**Use LSP BEFORE drawing architecture diagrams** - verify assumptions with code.
+
+**CRITICAL:** Always get lineHint from localSearchCode first. Never guess line numbers.
 
 ## API Design (Functionality-Aligned)
 

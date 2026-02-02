@@ -1,7 +1,7 @@
 ---
 name: debugging-patterns
 description: "Internal skill. Use cc10x-router for all development tasks."
-allowed-tools: Read, Grep, Glob, Bash
+allowed-tools: Read, Grep, Glob, Bash, LSP
 ---
 
 # Systematic Debugging
@@ -50,6 +50,28 @@ For rapid debugging, use this concise flow:
 5. Find original trigger - Where did problem actually start?
 ```
 **Never fix solely where errors appear—trace to the original trigger.**
+
+## LSP-Powered Root Cause Tracing
+
+**Use LSP to trace execution flow systematically:**
+
+| Debugging Need | LSP Tool | Usage |
+|----------------|----------|-------|
+| "Where is this function defined?" | `lspGotoDefinition` | Jump to source |
+| "What calls this function?" | `lspCallHierarchy(incoming)` | Trace callers up |
+| "What does this function call?" | `lspCallHierarchy(outgoing)` | Trace callees down |
+| "All usages of this variable?" | `lspFindReferences` | Find all access points |
+
+**Systematic Call Chain Tracing:**
+```
+1. localSearchCode("errorFunction") → get file + lineHint
+2. lspGotoDefinition(lineHint=N) → see implementation
+3. lspCallHierarchy(incoming, lineHint=N) → who calls this?
+4. For each caller: lspCallHierarchy(incoming) → trace up
+5. Continue until you find the root cause
+```
+
+**CRITICAL:** Always get lineHint from localSearchCode first. Never guess line numbers.
 
 **For each issue provide:**
 - Root cause explanation

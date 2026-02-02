@@ -1,7 +1,7 @@
 ---
 name: code-review-patterns
 description: "Internal skill. Use cc10x-router for all development tasks."
-allowed-tools: Read, Grep, Glob
+allowed-tools: Read, Grep, Glob, LSP
 ---
 
 # Code Review Patterns
@@ -100,6 +100,25 @@ grep -rE "(eval\(|innerHTML\s*=|dangerouslySetInnerHTML)" --include="*.ts" --inc
 # Check for console.log (remove before production)
 grep -rn "console\.log" --include="*.ts" --include="*.tsx" src/
 ```
+
+## LSP-Powered Code Analysis
+
+**Use LSP for semantic understanding during reviews:**
+
+| Task | LSP Tool | Why Better Than Grep |
+|------|----------|---------------------|
+| Find all callers of a function | `lspCallHierarchy(incoming)` | Finds actual calls, not string matches |
+| Find all usages of a type/variable | `lspFindReferences` | Semantic, not text-based |
+| Navigate to definition | `lspGotoDefinition` | Jumps to actual definition |
+| Understand what function calls | `lspCallHierarchy(outgoing)` | Maps call chain |
+
+**Review Workflow with LSP:**
+1. `localSearchCode` → find symbol + get lineHint
+2. `lspGotoDefinition(lineHint=N)` → understand implementation
+3. `lspFindReferences(lineHint=N)` → check all usages for consistency
+4. `lspCallHierarchy(incoming)` → verify callers handle changes
+
+**CRITICAL:** Always get lineHint from localSearchCode first. Never guess line numbers.
 
 **Critical Security Patterns:**
 
