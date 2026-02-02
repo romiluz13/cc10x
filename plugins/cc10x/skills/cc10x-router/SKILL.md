@@ -92,7 +92,7 @@ Read(file_path=".claude/cc10x/activeContext.md")
 ```
 
 This is idempotent: runs once per project (subsequent sessions find sections present).
-**Why:** v6.0.4 uses stable section anchors. Old projects may lack these sections, causing Edit failures.
+**Why:** Old projects may lack these sections, causing Edit failures.
 
 **UPDATE (Checkpoint + Final):**
 - Avoid memory edits during parallel phases.
@@ -125,7 +125,7 @@ TaskList()  # Check for pending/in-progress workflow tasks
 **Legacy compatibility:** Older CC10x versions may have created tasks with subjects starting `BUILD:` / `DEBUG:` / `REVIEW:` / `PLAN:` (without the `CC10X` prefix).
 - If such tasks exist, ask the user whether to resume the legacy tasks or start a fresh CC10X-namespaced workflow.
 
-**Official Claude Code note:** Task lists can be shared across sessions via `CLAUDE_CODE_TASK_LIST_ID`. Treat TaskLists as potentially long-lived; always scope before resuming.
+Task lists can be shared across sessions via `CLAUDE_CODE_TASK_LIST_ID`. Treat TaskLists as potentially long-lived; always scope before resuming.
 
 **If no active tasks:**
 - Proceed with workflow selection below

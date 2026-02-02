@@ -59,7 +59,7 @@ NO VAGUE STEPS - EVERY STEP IS A SPECIFIC ACTION
 ---
 ```
 
-**Note:** If a design document exists, always reference it in the header.
+If a design document exists, always reference it in the header.
 
 ## Task Structure
 
