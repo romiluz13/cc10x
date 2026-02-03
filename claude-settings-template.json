@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(mkdir -p .claude/cc10x)"
+      "Bash(mkdir -p .claude/cc10x)",
+      "Bash(mkdir -p docs/plans)",
+      "Bash(mkdir -p docs/research)"
     ]
   }
 }
