@@ -2,7 +2,7 @@
 
 ### The Intelligent Orchestrator for Claude Code
 
-**Current version:** 6.0.13
+**Current version:** 6.0.14
 
 **Recommended (best results): copy `CLAUDE.md` / `AGENTS.md` into your project root so the router is always active. Plugin installs do not inject these files into your repo.**
 
@@ -71,6 +71,22 @@ Most Claude Code plugins are **bloated and over-engineered**:
 
 # Restart Claude Code
 ```
+
+### Recommended: Pre-approve memory commands
+
+cc10x uses `.claude/cc10x/` for memory persistence. To avoid repeated permission prompts (especially on Windows), add to your project's `.claude/settings.json`:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p .claude/cc10x)"
+    ]
+  }
+}
+```
+
+Or copy the template: `cp claude-settings-template.json .claude/settings.json`
 
 **That's it.** cc10x activates automatically on development keywords.
 
@@ -208,17 +224,17 @@ Skills are **loaded automatically by agents**. You never invoke them directly.
 
 | Skill | Used By | Purpose |
 |-------|---------|---------|
-| **session-memory** | ALL agents | Persist context across compaction |
+| **session-memory** | WRITE agents | Persist context across compaction |
 | **verification-before-completion** | ALL agents | Evidence before claims |
 | **test-driven-development** | builder, bug-investigator | RED-GREEN-REFACTOR enforcement |
 | **code-generation** | component-builder | Minimal code, match patterns |
 | **debugging-patterns** | bug-investigator, verifier | Root cause analysis |
 | **code-review-patterns** | code-reviewer, hunter | Security, quality, performance |
 | **planning-patterns** | planner | Comprehensive plans |
-| **architecture-patterns** | planner, verifier | System & API design |
-| **frontend-patterns** | conditional | UX, accessibility |
-| **brainstorming** | planner (conditional) | Idea exploration |
-| **github-research** | planner, bug-investigator | External package research |
+| **architecture-patterns** | ALL agents | System & API design |
+| **frontend-patterns** | ALL agents | UX, accessibility |
+| **brainstorming** | planner | Idea exploration |
+| **github-research** | planner, bug-investigator (conditional) | External package research |
 | **cc10x-router** | ENTRY POINT | Routes to correct workflow |
 
 ---
@@ -418,6 +434,6 @@ MIT License
 ---
 
 <p align="center">
-  <strong>cc10x v6.0.0</strong><br>
+  <strong>cc10x v6.0.14</strong><br>
   <em>The Intelligent Orchestrator for Claude Code</em>
 </p>

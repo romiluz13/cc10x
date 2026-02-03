@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p .claude/cc10x)"
+    ]
+  }
+}
