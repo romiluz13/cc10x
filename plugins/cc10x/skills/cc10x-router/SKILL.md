@@ -257,9 +257,9 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [planner_task_id] })
 
 ### BUILD
 1. Load memory → Check if already done in progress.md
-2. **Plan-First Gate** (new features only):
-   - Skip if continuing ("build it", "proceed", "go ahead", or plan just created)
-   - Otherwise ask: "Plan first (Recommended) / Just build"
+2. **Plan-First Gate** (STATE-BASED, not phrase-based):
+   - Skip ONLY if: (plan in `## References` ≠ "N/A") AND (active `CC10X` task exists)
+   - Otherwise → AskUserQuestion: "Plan first (Recommended) / Build directly"
 3. **Clarify requirements** (DO NOT SKIP) → Use AskUserQuestion
 4. **Create task hierarchy** (see Task-Based Orchestration above)
 5. **Start chain execution** (see Chain Execution Loop below)
