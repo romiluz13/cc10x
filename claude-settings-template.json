@@ -3,7 +3,12 @@
     "allow": [
       "Bash(mkdir -p .claude/cc10x)",
       "Bash(mkdir -p docs/plans)",
-      "Bash(mkdir -p docs/research)"
+      "Bash(mkdir -p docs/research)",
+      "Bash(git status)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git blame:*)",
+      "Bash(git ls-files:*)"
     ]
   }
 }
