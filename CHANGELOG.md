@@ -1,5 +1,37 @@
 # Changelog
 
+## [6.0.15] - 2026-02-03
+
+### Added
+
+- **User Confirmation Gate** (github-research)
+  - Asks user before any research: "Do you want me to research GitHub and web for this task?"
+  - Bypass conditions: User said "research", debug workflow with 3+ failures
+  - Prevents unwanted research delays - user controls external calls
+
+- **Parallel Search Chain** (github-research)
+  - Tier 1: Octocode + Bright Data execute in SAME message (parallel)
+  - Different strengths: Octocode for real code, Bright Data for docs/tutorials
+  - Merge strategy: Code patterns from Octocode, context/warnings from Bright Data
+
+- **3-Tier Fallback System** (github-research)
+  - Tier 1: Parallel Search (Octocode + Bright Data MCP)
+  - Tier 2: Native Claude Code (WebSearch + WebFetch) if MCP unavailable
+  - Tier 3: Ask User for Context if all automated sources fail
+  - Graceful degradation - never fails silently
+
+- **New Tools Added** (github-research frontmatter)
+  - `WebSearch` - Native Claude Code fallback
+  - `AskUserQuestion` - User gate + final fallback
+  - `mcp__brightdata__search_engine` - Google/Bing search
+  - `mcp__brightdata__scrape_as_markdown` - Doc scraping
+
+### Notes
+
+- ADJACENT risk level (skill-only change, no router/agent chain modifications)
+- No Bible invariants affected
+- User experience improvement: Research happens when user wants it
+
 ## [6.0.14] - 2026-02-03
 
 ### Changed
