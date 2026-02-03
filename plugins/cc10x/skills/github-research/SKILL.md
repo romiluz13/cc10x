@@ -1,7 +1,7 @@
 ---
 name: github-research
 description: "Internal skill. Use cc10x-router for all development tasks."
-allowed-tools: WebFetch, mcp__octocode__githubSearchCode, mcp__octocode__githubSearchRepositories, mcp__octocode__githubViewRepoStructure, mcp__octocode__githubGetFileContent, mcp__octocode__githubSearchPullRequests, mcp__octocode__packageSearch, mcp__context7__resolve-library-id, mcp__context7__query-docs, Read, Write, Edit, Bash
+allowed-tools: WebFetch, WebSearch, AskUserQuestion, mcp__octocode__githubSearchCode, mcp__octocode__githubSearchRepositories, mcp__octocode__githubViewRepoStructure, mcp__octocode__githubGetFileContent, mcp__octocode__githubSearchPullRequests, mcp__octocode__packageSearch, mcp__brightdata__search_engine, mcp__brightdata__scrape_as_markdown, mcp__context7__resolve-library-id, mcp__context7__query-docs, Read, Write, Edit, Bash
 ---
 
 # External Code Research
@@ -38,6 +38,35 @@ If AI training knowledge covers the technology well, skip external research - UN
 
 **The rule:** Trust octocode for HOW. This skill only decides WHEN.
 
+## User Confirmation Gate (REQUIRED)
+
+**BEFORE any research, ask the user:**
+
+```
+AskUserQuestion({
+  questions: [{
+    question: "Do you want me to research GitHub and web for this task?",
+    header: "Research?",
+    options: [
+      { label: "Yes, research", description: "Search GitHub code + web docs (~30s)" },
+      { label: "No, skip", description: "Proceed with AI knowledge only" }
+    ],
+    multiSelect: false
+  }]
+})
+```
+
+**Gate Logic:**
+- User says "Yes" → Proceed to Phase 1 (Parallel Search)
+- User says "No" → STOP. Return control to calling agent with: "Research skipped by user."
+
+**Bypass Conditions (Skip gate, auto-research):**
+- User already said "research" in original request
+- User said "yes" to research in previous turn
+- Debug workflow with 3+ failed attempts (urgent)
+
+**Why this gate:** Prevents unwanted research delays. User controls when external calls happen.
+
 ## Availability Check (REQUIRED)
 
 **Before using Octocode tools, verify availability:**
@@ -52,13 +81,17 @@ mcp__octocode__packageSearch(name="express", ecosystem="npm")
 
 ## Research Process
 
-### Phase 1: Confirm Need
+### Phase 1: Parallel Search Execution
 
-Before using octocode tools, verify:
-1. User explicitly requested research? → Proceed
-2. Technology is post-2024? → Proceed
-3. Complex integration with uncertainty? → Proceed
-4. None of the above? → STOP. Use AI knowledge.
+**After user confirms (gate passed), execute parallel search:**
+
+```
+# SAME MESSAGE - parallel execution
+mcp__octocode__packageSearch(name="{library}", ecosystem="npm")
+mcp__brightdata__search_engine(query="{library} best practices tutorial", engine="google")
+```
+
+**If one source fails, continue with the other. Only fall to Tier 2 if BOTH fail.**
 
 ### Phase 2: Let Octocode Guide the Research
 
@@ -82,13 +115,80 @@ Extract only what's needed for the task at hand:
 
 **DO NOT dump entire files - summarize and cite.**
 
-## Fallback Chain
+## Research Chain (3-Tier with Parallel Search)
+
+### Tier 1: Parallel Search (PRIMARY)
+
+**Run Octocode + Bright Data in SAME MESSAGE (parallel execution):**
 
 ```
-TIER 1: Octocode MCP → TIER 2: Context7 MCP → TIER 3: WebFetch
+# In same message block - both execute in parallel
+mcp__octocode__packageSearch(name="{library}", ecosystem="npm")
+mcp__brightdata__search_engine(query="{library} tutorial best practices 2024", engine="google")
 ```
 
-Try each tier in order. Fall back only if current tier is unavailable or fails.
+**Why parallel:** Different strengths complement each other:
+| Source | Strength | Best For |
+|--------|----------|----------|
+| Octocode | Real code, PRs, implementations | "How do others implement X?" |
+| Bright Data | Official docs, tutorials, blogs | "What are the gotchas?" |
+
+**Merge Strategy:** Use Octocode for code patterns, Bright Data for context/warnings.
+
+### Tier 2: Native Claude Code (FALLBACK)
+
+**If Tier 1 fails (MCP unavailable):**
+
+```
+# Native Claude Code tools - always available
+WebSearch(query="{library} best practices")
+WebFetch(url="https://docs.{library}.com/getting-started", prompt="Extract key setup steps")
+```
+
+**When to use:**
+- Octocode MCP unavailable
+- Bright Data MCP unavailable
+- Both Tier 1 sources return empty results
+
+### Tier 3: Ask User for Context (FINAL FALLBACK)
+
+**If Tier 1 AND Tier 2 fail:**
+
+```
+AskUserQuestion({
+  questions: [{
+    question: "Research sources unavailable. Can you provide documentation or context?",
+    header: "Need help",
+    options: [
+      { label: "I'll paste docs", description: "I have documentation to share" },
+      { label: "Try specific URL", description: "I have a URL you can fetch" },
+      { label: "Skip research", description: "Proceed without external context" }
+    ],
+    multiSelect: false
+  }]
+})
+```
+
+**Why this fallback:** Graceful degradation. Never fail silently - always give user options.
+
+### Tier Progression Logic
+
+```
+START
+  │
+  ├─→ Tier 1: Parallel (Octocode + Bright Data)
+  │     ├─ Both succeed → Merge results, DONE
+  │     ├─ One succeeds → Use that result, DONE
+  │     └─ Both fail → Fall to Tier 2
+  │
+  ├─→ Tier 2: Native (WebSearch + WebFetch)
+  │     ├─ Success → Use result, DONE
+  │     └─ Fail → Fall to Tier 3
+  │
+  └─→ Tier 3: Ask User
+        ├─ User provides context → Use that, DONE
+        └─ User says skip → Return "No research available"
+```
 
 **NO LOCAL SEARCH** - This skill is for external research only. Local codebase search uses Grep/Glob/Read directly.
 
