@@ -370,7 +370,7 @@ Execute the task and include 'Task {TASK_ID}: COMPLETED' in your output when don
 ```
 
 **TASK ID is REQUIRED in prompt.** Router updates task status after agent returns (agents do NOT call TaskUpdate for their own task).
-**SKILL_HINTS are MANDATORY.** Agent MUST call `Skill(skill="...")` for each hint immediately after loading memory.
+**SKILL_HINTS (github-research only):** If router passes `github-research` in SKILL_HINTS, agent MUST call `Skill(skill="cc10x:github-research")` after loading memory. Other skills load automatically via frontmatter.
 
 **Post-Agent Validation (After agent completes):**
 
@@ -509,36 +509,27 @@ WHEN any CC10X REM-FIX task COMPLETES:
 
 ## Skill Loading Hierarchy (DEFINITIVE)
 
-**Three mechanisms exist. Here's how they interact:**
+**Two mechanisms exist:**
 
 ### 1. Agent Frontmatter `skills:` (PRELOAD - Automatic)
 ```yaml
-skills: cc10x:session-memory, cc10x:code-generation
+skills: cc10x:session-memory, cc10x:code-generation, cc10x:frontend-patterns
 ```
 - Load AUTOMATICALLY when agent starts
 - Full skill content injected into agent context
 - Agent does NOT need to call `Skill()` for these
-- Use for: Skills agent ALWAYS needs
+- **This is the PRIMARY mechanism for ALL skills except github-research**
 
-### 2. Router's SKILL_HINTS (MANDATORY - Agent Must Load)
-- Router detects patterns and passes hints in prompt
-- Agent MUST call `Skill(skill="cc10x:...")` for EACH hint
-- Loaded AFTER frontmatter (additive, not duplicate)
-- Use for: Context-specific skills based on task
-
-### 3. Agent's Skill Triggers (OPTIONAL - Agent Judgment)
-- Agent's internal conditional logic
-- Agent MAY call `Skill()` if triggers match
-- Loaded as needed during execution
-- Use for: Agent's own judgment calls
+### 2. Router's SKILL_HINTS (github-research ONLY)
+- Router detects external research triggers and passes hint in prompt
+- Agent calls `Skill(skill="cc10x:github-research")` when hint is present
+- Only used for github-research (requires external API, not always needed)
 
 ### Loading Order
 ```
-1. Frontmatter skills (auto, at agent startup)
+1. Frontmatter skills (auto, at agent startup) - ALL skills except github-research
    ↓
-2. SKILL_HINTS from router (mandatory, after memory load)
-   ↓
-3. Agent's trigger-based skills (optional, during execution)
+2. github-research via SKILL_HINTS (conditional, only when triggered)
 ```
 
 ### Deduplication
