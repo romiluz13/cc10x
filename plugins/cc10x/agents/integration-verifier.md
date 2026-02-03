@@ -93,6 +93,13 @@ TaskCreate({
 ### Findings
 - [observations about integration quality]
 
+### Router Handoff (Stable Extraction)
+STATUS: [PASS/FAIL]
+SCENARIOS_PASSED: [X/Y]
+BLOCKERS_COUNT: [N]
+BLOCKERS:
+- [scenario] - [error] → [recommended action]
+
 ### Memory Notes (For Workflow-Final Persistence)
 - **Learnings:** [Integration insights for activeContext.md]
 - **Patterns:** [Edge cases discovered for patterns.md ## Common Gotchas]

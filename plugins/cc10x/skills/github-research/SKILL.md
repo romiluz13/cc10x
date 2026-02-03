@@ -22,6 +22,16 @@ NO EXTERNAL RESEARCH WITHOUT CLEAR AI KNOWLEDGE GAP OR EXPLICIT USER REQUEST
 
 If AI training knowledge covers the technology well, skip external research - UNLESS user explicitly asks. This skill is for NEW technologies, complex integrations, unfamiliar APIs, and explicit user requests.
 
+## Rationalization Prevention
+
+| Excuse | Reality |
+|--------|---------|
+| "I already know this" | Check if post-2024. API may have changed. |
+| "Research takes too long" | 30s research prevents 2hr debugging. |
+| "Docs are enough" | GitHub shows real implementations, not ideal cases. |
+| "I'll research if stuck" | Research BEFORE is faster than research DURING. |
+| "Not worth the tokens" | One good pattern saves 10 bad attempts. |
+
 ## When to Use
 
 **ALWAYS invoke when:**

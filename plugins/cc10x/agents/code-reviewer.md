@@ -85,6 +85,16 @@ TaskCreate({
 ### Findings
 - [any additional observations]
 
+### Router Handoff (Stable Extraction)
+STATUS: [Approve/Changes Requested]
+CONFIDENCE: [0-100]
+CRITICAL_COUNT: [N]
+CRITICAL:
+- [file:line] - [issue] → [fix]
+HIGH_COUNT: [N]
+HIGH:
+- [file:line] - [issue] → [fix]
+
 ### Memory Notes (For Workflow-Final Persistence)
 - **Learnings:** [Key code quality insights for activeContext.md]
 - **Patterns:** [Conventions or gotchas discovered for patterns.md]
