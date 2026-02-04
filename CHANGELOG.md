@@ -1,5 +1,25 @@
 # Changelog
 
+## [6.0.17] - 2026-02-04
+
+### Added
+
+- **Planner Clarification Gate** (planner.md)
+  - Planner now asks clarifying questions BEFORE planning when requirements are ambiguous
+  - Decision table: vague idea → AskUserQuestion, multiple interpretations → AskUserQuestion with options
+  - If 3+ questions needed → invokes brainstorming skill for structured discovery
+
+- **Circuit Breaker Research Option** (cc10x-router)
+  - When 3+ remediations fail, "Research best practices" is now the recommended first option
+  - Triggers `github-research` skill to find external patterns before retrying
+  - Options: Research (recommended) / Fix locally / Skip / Abort
+
+### Notes
+
+- ADJACENT risk level (no router decision tree or agent chain changes)
+- 2 files changed: planner.md, cc10x-router/SKILL.md
+- Fixes gap where AI wouldn't ask clarifying questions
+
 ## [6.0.16] - 2026-02-04
 
 ### Fixed
