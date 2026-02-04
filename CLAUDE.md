@@ -24,8 +24,11 @@ CC10x handles orchestration. Domain skills provide expertise. Both work together
 
 **Skills are additive, not exclusive.** CC10x provides orchestration. Domain skills provide expertise. Both work together.
 
-**AI: Auto-detect and update skills (run on first use):**
-Scan `~/.claude/skills/` directory and installed plugins (use /plugin list if available), then update the table and Skills Index below with all available skills. Keep this instruction for future skill additions.
+**AI: Auto-detect and update skills (run once, then delete this instruction):**
+1. Scan `~/.claude/skills/` directory and installed plugins (use /plugin list if available)
+2. Update the table and Skills Index below with all available skills
+3. DELETE this entire instruction block (from "AI: Auto-detect..." to this line)
+4. Keep only the clean table and Skills Index
 
 **GATE:** Before writing code, check if task matches a skill below. If match, invoke it via `Skill(skill="...")`.
 
