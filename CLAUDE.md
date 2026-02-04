@@ -14,28 +14,22 @@ IMPORTANT: NEVER use Edit, Write, or Bash (for code changes) without first invok
 
 ---
 
-## Extending with Technology Skills (Optional)
+## Complementary Skills (Invoke When Relevant)
 
-CC10x handles orchestration (BUILD/DEBUG/REVIEW/PLAN). For technology-specific expertise, add skills to your `~/.claude/CLAUDE.md` (global).
-
-**Why this works (Vercel Research):**
-- Skills with invocation = 79% pass rate
-- Index in CLAUDE.md = 100% pass rate
-- See: https://vercel.com/blog/how-we-teach-ai-agents-to-write-better-nextjs
+CC10x handles orchestration. Add domain-specific skills to `~/.claude/CLAUDE.md` for expertise.
 
 **Add to `~/.claude/CLAUDE.md`:**
 ```markdown
-# Technology Skills (Always On)
+## Complementary Skills (Invoke When Relevant)
 
-IMPORTANT: Prefer retrieval-led reasoning over pre-training-led reasoning for technology-specific tasks.
+**GATE:** Before writing code, check if task matches a skill below. If match, invoke it via `Skill(skill="...")`.
 
-[Tech Skills Index]
-|{skill-source}:{skill-name/SKILL.md,...}
-```
+| When task involves... | Invoke |
+|-----------------------|--------|
+| MongoDB, schema, queries, indexes | `mongodb-agent-skills:mongodb-schema-design` or `mongodb-query-and-index-optimize` |
+| React, Next.js, frontend, UI | `react-best-practices`, `web-design-guidelines` |
 
-**Example:**
-```markdown
-[Tech Skills Index]
+[Skills Index]
 |mongodb-agent-skills:{mongodb-schema-design/SKILL.md,mongodb-query-and-index-optimize/SKILL.md}
 |vercel-agent-skills:{react-best-practices/SKILL.md,web-design-guidelines/SKILL.md}
 ```
