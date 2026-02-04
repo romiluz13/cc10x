@@ -72,11 +72,47 @@ Most Claude Code plugins are **bloated and over-engineered**:
 # Restart Claude Code
 ```
 
-### Recommended: Pre-approve memory commands
+### Recommended: Pre-approve Allowed Tools
 
-cc10x uses `.claude/cc10x/` for memory persistence. To avoid repeated permission prompts (especially on Windows), add to your project's `.claude/settings.json`:
+To avoid repeated permission prompts, configure allowed tools. You have two options:
 
-```{
+**Option 1: Global settings** (`~/.claude/settings.json`) - applies to ALL projects:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git blame:*)",
+      "Bash(git ls-files:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(npm run:*)",
+      "Bash(npm test:*)",
+      "Bash(npx:*)",
+      "Bash(yarn:*)",
+      "Bash(pnpm:*)",
+      "Bash(python -m pytest:*)",
+      "Bash(go test:*)",
+      "Bash(cargo test:*)",
+      "Read",
+      "Edit",
+      "Write",
+      "Glob",
+      "Grep",
+      "Task"
+    ]
+  }
+}
+```
+
+**Option 2: Project settings** (`.claude/settings.json`) - applies to current project only:
+
+```json
+{
   "permissions": {
     "allow": [
       "Bash(mkdir -p .claude/cc10x)",
@@ -85,12 +121,20 @@ cc10x uses `.claude/cc10x/` for memory persistence. To avoid repeated permission
       "Bash(git status)",
       "Bash(git diff:*)",
       "Bash(git log:*)",
-      "Bash(git blame:*)",
-      "Bash(git ls-files:*)"
+      "Bash(npm run:*)",
+      "Bash(npm test:*)"
     ]
   }
 }
 ```
+
+**Quick reference:**
+| Pattern | Meaning |
+|---------|---------|
+| `ToolName` | Allow tool with no args |
+| `ToolName(*)` | Allow tool with any args |
+| `ToolName(prefix:*)` | Allow tool with args starting with prefix |
+| `Bash(git commit:*)` | Allow git commit with any message |
 
 **That's it.** cc10x activates automatically on development keywords.
 
