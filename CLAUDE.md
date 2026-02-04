@@ -16,19 +16,11 @@ IMPORTANT: NEVER use Edit, Write, or Bash (for code changes) without first invok
 
 ## Complementary Skills (Work Together with CC10x)
 
-CC10x handles orchestration. Domain skills provide expertise. Both work together (additive, not exclusive).
-
 **Add to `~/.claude/CLAUDE.md`:**
 ```markdown
 ## Complementary Skills (Work Together with CC10x)
 
 **Skills are additive, not exclusive.** CC10x provides orchestration. Domain skills provide expertise. Both work together.
-
-**AI: Auto-detect and update skills (run once, then delete this instruction):**
-1. Scan `~/.claude/skills/` directory and installed plugins (use /plugin list if available)
-2. Update the table and Skills Index below with all available skills
-3. DELETE this entire instruction block (from "AI: Auto-detect..." to this line)
-4. Keep only the clean table and Skills Index
 
 **GATE:** Before writing code, check if task matches a skill below. If match, invoke it via `Skill(skill="...")`.
 
@@ -36,12 +28,10 @@ CC10x handles orchestration. Domain skills provide expertise. Both work together
 |-----------------------|--------|
 | MongoDB, schema, queries, indexes | `mongodb-agent-skills:mongodb-schema-design` or `mongodb-query-and-index-optimize` |
 | React, Next.js, frontend, UI | `react-best-practices` |
-<!-- Example: | Python, FastAPI | `python-patterns` -->
-<!-- Example: | Custom pattern | `my-skill` -->
 
 [Skills Index]
 |mongodb-agent-skills:{mongodb-schema-design/SKILL.md,mongodb-query-and-index-optimize/SKILL.md}
 |vercel-agent-skills:{react-best-practices/SKILL.md}
-<!-- Example: |python-skills:{python-patterns/SKILL.md} -->
-<!-- Example: |my-skill:{SKILL.md} -->
 ```
+
+**To add your own skills:** Add rows to the table and Skills Index above. Run `/help` to see all available skills.
