@@ -417,7 +417,23 @@ After agent completes:
    → STOP. Do not invoke the next agent.
      Only proceed after remediation completes OR user explicitly approves bypass (and record it in memory).
 
-**Circuit breaker:** Before creating any `CC10X REM-FIX:` task, count existing ones. If count ≥ 3 → Ask user: Continue anyway / Abort workflow / Manual fix.
+**Circuit breaker:** Before creating any `CC10X REM-FIX:` task, count existing ones. If count ≥ 3:
+```
+AskUserQuestion({
+  questions: [{
+    question: "This is remediation #{count}. Local fixes aren't working. How should we proceed?",
+    header: "Circuit Break",
+    options: [
+      { label: "Research best practices (Recommended)", description: "Search GitHub/web for patterns, then retry with new knowledge" },
+      { label: "Fix errors now", description: "Create another REM-FIX task and continue trying locally" },
+      { label: "Skip and continue anyway", description: "Proceed despite errors (not recommended)" },
+      { label: "Abort workflow", description: "Stop workflow, address issues manually" }
+    ],
+    multiSelect: false
+  }]
+})
+```
+→ If "Research best practices" selected: Execute `Skill(skill="cc10x:github-research")` with error context, persist findings to `docs/research/`, then create new REM-FIX task with research insights.
 
 4. If silent-failure-hunter reports CRITICAL issues (count > 0):
    → Treat as WORKFLOW BLOCKER until fixed.
