@@ -60,34 +60,30 @@ Most Claude Code plugins are **bloated and over-engineered**:
 
 ---
 
-## Installation
+## 👤 FOR HUMANS: Read This
 
-**Option A: Ask Claude Code to set it up**
-> Just paste this README into Claude Code and say: **"Set up cc10x for me"**
+**Installation is simple:**
 
-**Option B: Manual installation**
-```bash
-/plugin marketplace add romiluz13/cc10x
-/plugin install cc10x@romiluz13
-# Then restart Claude Code
-```
+1. Copy this README
+2. Paste it into Claude Code
+3. Say: **"Set up cc10x for me"**
+4. Restart Claude Code
+
+That's it. Claude Code will handle everything below.
 
 ---
 
-<!-- CLAUDE CODE SETUP INSTRUCTIONS
-When user says "set up cc10x" or "install cc10x", do the following:
+## 🤖 FOR CLAUDE CODE: Execute This
 
-1. RUN THESE COMMANDS:
-   /plugin marketplace add romiluz13/cc10x
-   /plugin install cc10x@romiluz13
+**When user says "set up cc10x", "install cc10x", or similar, execute these steps:**
 
-2. CREATE ~/.claude/CLAUDE.md with this content:
--->
+### Step 1: Install Plugin
+```bash
+/plugin marketplace add romiluz13/cc10x
+/plugin install cc10x@romiluz13
+```
 
-## Setup Files
-
-### File 1: `~/.claude/CLAUDE.md`
-
+### Step 2: Create `~/.claude/CLAUDE.md`
 ```markdown
 # CC10x Orchestration (Always On)
 
@@ -121,21 +117,7 @@ IMPORTANT: NEVER use Edit, Write, or Bash (for code changes) without first invok
 |vercel-agent-skills:{react-best-practices/SKILL.md}
 ```
 
-<!--
-3. CREATE ~/.claude/settings.json with the allowed tools below
-
-4. SCAN for user's installed skills:
-   - Run: /plugin list
-   - Check: ~/.claude/skills/
-   - Add any found skills to the Complementary Skills table in CLAUDE.md
-
-5. TELL USER: "Restart Claude Code to activate cc10x"
--->
-
-### File 2: `~/.claude/settings.json` (Allowed Tools)
-
-These are **safe, read-only** permissions for cc10x memory operations:
-
+### Step 3: Create `~/.claude/settings.json`
 ```json
 {
   "permissions": {
@@ -152,7 +134,13 @@ These are **safe, read-only** permissions for cc10x memory operations:
 }
 ```
 
-**After setup, restart Claude Code.**
+### Step 4: Scan for User's Installed Skills
+- Check what skills the user has installed
+- Add them to the Complementary Skills table in `~/.claude/CLAUDE.md`
+- Skills work TOGETHER with cc10x, they don't conflict
+
+### Step 5: Tell User
+> "cc10x is installed! Please restart Claude Code to activate."
 
 ---
 
