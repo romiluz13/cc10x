@@ -139,9 +139,30 @@ IMPORTANT: NEVER use Edit, Write, or Bash (for code changes) without first invok
 ```
 
 ### Step 4: Scan Installed Skills & Add to Table
-- Check user's installed plugins and skills
-- Add ONLY the skills that are actually installed to the Complementary Skills table
-- Example skills to look for: `mongodb-agent-skills`, `react-best-practices`, `python-patterns`, etc.
+
+**Where to find installed skills:**
+1. `~/.claude/settings.json` → check `enabledPlugins` object (plugins with value `true`)
+2. `~/.claude/plugins/installed_plugins.json` → detailed plugin info
+3. `~/.claude/skills/` → personal skills (all projects)
+4. `.claude/skills/` → project-specific skills
+
+**Example:** If user has these in `enabledPlugins`:
+```json
+{
+  "enabledPlugins": {
+    "mongodb-agent-skills@mongodb-agent-skills": true,
+    "react-best-practices@vercel": true
+  }
+}
+```
+
+**Add to the Complementary Skills table:**
+```markdown
+| When task involves... | Invoke |
+|-----------------------|--------|
+| MongoDB, schema, queries | `mongodb-agent-skills:mongodb-schema-design` |
+| React, Next.js, UI | `react-best-practices` |
+```
 
 ### Step 5: Confirm
 > "cc10x is set up! Please restart Claude Code to activate."
