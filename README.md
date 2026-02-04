@@ -63,13 +63,17 @@ Most Claude Code plugins are **bloated and over-engineered**:
 ## 👤 FOR HUMANS: Read This
 
 ### Step 1: Install Plugin
-Run these commands in Claude Code:
-```
+
+```bash
+# Add marketplace
 /plugin marketplace add romiluz13/cc10x
+
+# Install plugin
 /plugin install cc10x@romiluz13
 ```
 
 ### Step 2: Setup Config Files
+
 Copy this README, paste it into Claude Code, and say: **"Set up cc10x for me"**
 
 ### Step 3: Restart Claude Code
