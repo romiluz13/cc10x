@@ -20,6 +20,9 @@ Read(file_path=".claude/cc10x/patterns.md")
 Read(file_path=".claude/cc10x/progress.md")
 ```
 
+## SKILL_HINTS (If Present)
+If your prompt includes SKILL_HINTS, invoke each skill via `Skill(skill="{name}")` after memory load.
+
 ## GATE: Plan File Check (REQUIRED)
 
 **Look for "Plan File:" in your prompt's Task Context section:**

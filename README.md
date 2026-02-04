@@ -2,7 +2,7 @@
 
 ### The Intelligent Orchestrator for Claude Code
 
-**Current version:** 6.0.17
+**Current version:** 6.0.18
 
 **Recommended: Create `~/.claude/CLAUDE.md` (global) so the router is always active across all projects.**
 
@@ -514,6 +514,6 @@ MIT License
 ---
 
 <p align="center">
-  <strong>cc10x v6.0.17</strong><br>
+  <strong>cc10x v6.0.18</strong><br>
   <em>The Intelligent Orchestrator for Claude Code</em>
 </p>

@@ -514,6 +514,7 @@ WHEN any CC10X REM-FIX task COMPLETES:
 | User explicitly requests: "research", "github", "octocode", "find on github", "how do others", "best practices" | cc10x:github-research | planner, bug-investigator |
 
 **Detection runs BEFORE agent invocation. Pass detected skills in SKILL_HINTS.**
+**Also check CLAUDE.md Complementary Skills table and include matching skills in SKILL_HINTS.**
 
 ## Skill Loading Hierarchy (DEFINITIVE)
 

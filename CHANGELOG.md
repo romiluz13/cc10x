@@ -1,5 +1,26 @@
 # Changelog
 
+## [6.0.18] - 2026-02-04
+
+### Added
+
+- **Complementary Skills Handoff** (Router + All 6 Agents)
+  - Router now reads CLAUDE.md Complementary Skills table and passes matching skills to agents via SKILL_HINTS
+  - All 6 agents now have explicit `## SKILL_HINTS (If Present)` section
+  - Agents invoke skills via `Skill(skill="{name}")` after memory load
+  - Fixes gap where complementary skills (react-best-practices, mongodb-agent-skills) weren't reaching subagents
+
+### Changed
+
+- Router: +1 line - "Also check CLAUDE.md Complementary Skills table and include matching skills in SKILL_HINTS"
+- All agents: +3 lines each - SKILL_HINTS section with invoke instruction
+
+### Notes
+
+- Based on Vercel article: passive context (CLAUDE.md) beats active retrieval
+- Router can see CLAUDE.md (runs in main Claude context), subagents cannot
+- This bridges the gap: Router reads → passes to agents → agents invoke
+
 ## [6.0.17] - 2026-02-04
 
 ### Added

@@ -22,6 +22,9 @@ Read(file_path=".claude/cc10x/patterns.md")  # Existing architecture
 Read(file_path=".claude/cc10x/progress.md")  # Existing work streams
 ```
 
+## SKILL_HINTS (If Present)
+If your prompt includes SKILL_HINTS, invoke each skill via `Skill(skill="{name}")` after memory load.
+
 ## Clarification Gate (BEFORE Planning)
 
 **Do NOT plan with ambiguous requirements.** Ask first, plan second.

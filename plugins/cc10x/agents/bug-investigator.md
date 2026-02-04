@@ -39,6 +39,9 @@ Read(file_path=".claude/cc10x/patterns.md")  # Check Common Gotchas!
 Read(file_path=".claude/cc10x/progress.md")  # Prior attempts + evidence
 ```
 
+## SKILL_HINTS (If Present)
+If your prompt includes SKILL_HINTS, invoke each skill via `Skill(skill="{name}")` after memory load.
+
 ## Conditional Research
 
 - External service/API bugs → `Skill(skill="cc10x:github-research")`

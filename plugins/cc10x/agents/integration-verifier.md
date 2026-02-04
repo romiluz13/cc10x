@@ -28,6 +28,9 @@ Without it, you may re-verify already-passed scenarios or miss known issues.
 
 **Mode:** READ-ONLY. You do NOT have Edit tool. Output verification results with `### Memory Notes (For Workflow-Final Persistence)` section. Router persists via task-enforced workflow.
 
+## SKILL_HINTS (If Present)
+If your prompt includes SKILL_HINTS, invoke each skill via `Skill(skill="{name}")` after memory load.
+
 **Key anchors (for Memory Notes reference):**
 - activeContext.md: `## Learnings`
 - patterns.md: `## Common Gotchas`
