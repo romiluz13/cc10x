@@ -76,6 +76,25 @@ When generating code, you are:
 
 ## Process
 
+### 0. Use LSP Before Writing Code
+
+**Understand existing code semantically before adding to it:**
+
+| Before Writing... | LSP Tool | Why |
+|-------------------|----------|-----|
+| New function | `lspCallHierarchy(incoming)` on similar fn | See usage patterns |
+| Modify existing | `lspFindReferences` | Know all call sites |
+| Add import | `lspGotoDefinition` | Verify it exists |
+| Implement interface | `lspFindReferences` | See other implementations |
+
+```
+localSearchCode("SimilarFunction") → get lineHint
+lspGotoDefinition(lineHint=N) → see implementation
+lspFindReferences(lineHint=N) → see all usages
+```
+
+**CRITICAL:** Get lineHint from search first. Never guess line numbers.
+
 ### 1. Study Project Patterns First
 
 ```bash
