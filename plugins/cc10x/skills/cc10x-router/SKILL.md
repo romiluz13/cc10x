@@ -353,8 +353,9 @@ Task(subagent_type="cc10x:component-builder", prompt="
 ## Project Patterns
 {key patterns from patterns.md}
 
-## SKILL_HINTS (Load IMMEDIATELY after memory)
+## SKILL_HINTS (INVOKE via Skill() - not optional)
 {detected skills from table below}
+**If skills listed:** Call `Skill(skill="{skill-name}")` immediately after memory load.
 
 ---
 IMPORTANT:
@@ -370,7 +371,7 @@ Execute the task and include 'Task {TASK_ID}: COMPLETED' in your output when don
 ```
 
 **TASK ID is REQUIRED in prompt.** Router updates task status after agent returns (agents do NOT call TaskUpdate for their own task).
-**SKILL_HINTS (github-research only):** If router passes `github-research` in SKILL_HINTS, agent MUST call `Skill(skill="cc10x:github-research")` after loading memory. Other skills load automatically via frontmatter.
+**SKILL_HINTS:** If router passes skills in SKILL_HINTS, agent MUST call `Skill(skill="{skill-name}")` after loading memory. This includes both cc10x skills (github-research) and complementary skills (react-best-practices, mongodb-agent-skills, etc.).
 
 **Post-Agent Validation (After agent completes):**
 

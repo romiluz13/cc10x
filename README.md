@@ -2,7 +2,7 @@
 
 ### The Intelligent Orchestrator for Claude Code
 
-**Current version:** 6.0.14
+**Current version:** 6.0.16
 
 **Recommended (best results): copy `CLAUDE.md` into your project root so the router is always active. Plugin installs do not inject these files into your repo.**
 
@@ -460,6 +460,6 @@ MIT License
 ---
 
 <p align="center">
-  <strong>cc10x v6.0.14</strong><br>
+  <strong>cc10x v6.0.16</strong><br>
   <em>The Intelligent Orchestrator for Claude Code</em>
 </p>

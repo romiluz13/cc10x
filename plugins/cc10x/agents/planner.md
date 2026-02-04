@@ -111,6 +111,12 @@ Read(file_path=".claude/cc10x/activeContext.md")
 - Risks: [count identified]
 - Key decisions: [list]
 
+### Recommended Skills for BUILD
+If task involves specific technologies, list skills component-builder should invoke:
+- React/Next.js → `Skill(skill="react-best-practices")`
+- MongoDB → `Skill(skill="mongodb-agent-skills:mongodb-schema-design")`
+- [Add relevant skills for this plan]
+
 ### Confidence Score: X/10
 - [reason for score]
 - [factors that could improve it]

@@ -1,5 +1,26 @@
 # Changelog
 
+## [6.0.16] - 2026-02-04
+
+### Fixed
+
+- **SKILL_HINTS now MUST be invoked** (Router)
+  - Changed: "Load IMMEDIATELY after memory" → "INVOKE via Skill() - not optional"
+  - Added explicit instruction: "Call `Skill(skill='{skill-name}')` immediately after memory load"
+  - Fixes bug where agents received hints but didn't invoke complementary skills (react-best-practices, mongodb-agent-skills)
+
+- **Plans include Recommended Skills for BUILD** (Planner)
+  - Plan output now lists skills component-builder should invoke
+  - Example: React/Next.js → `Skill(skill="react-best-practices")`
+  - Double safety: Skill invocation in plan + explicit SKILL_HINTS instruction
+
+### Notes
+
+- ADJACENT risk level (no router decision tree, agent chain, or task protocol changes)
+- 2 files changed: cc10x-router/SKILL.md, planner.md
+- ~8 lines added total
+- Version sync: plugin.json, README.md, CHANGELOG.md all aligned to 6.0.16
+
 ## [6.0.15] - 2026-02-03
 
 ### Added
