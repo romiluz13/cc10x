@@ -22,6 +22,36 @@ Read(file_path=".claude/cc10x/patterns.md")  # Existing architecture
 Read(file_path=".claude/cc10x/progress.md")  # Existing work streams
 ```
 
+## Clarification Gate (BEFORE Planning)
+
+**Do NOT plan with ambiguous requirements.** Ask first, plan second.
+
+| Situation | Action |
+|-----------|--------|
+| Vague idea ("add feature X") | → `AskUserQuestion` to clarify scope, users, success criteria |
+| Multiple valid interpretations | → `AskUserQuestion` with options |
+| Missing critical info (auth method, data source, etc.) | → `AskUserQuestion` before proceeding |
+| Clear, specific requirements | → Proceed to planning directly |
+
+**Use `AskUserQuestion` tool** - provides multiple choice options, better UX than open questions.
+
+**Example:**
+```
+AskUserQuestion({
+  questions: [{
+    question: "What's the primary goal for this feature?",
+    header: "Goal",
+    options: [
+      { label: "Option A", description: "..." },
+      { label: "Option B", description: "..." }
+    ],
+    multiSelect: false
+  }]
+})
+```
+
+**If 3+ questions needed** → `Skill(skill="cc10x:brainstorming")` for structured discovery.
+
 ## Conditional Research
 
 - New/unfamiliar tech → `Skill(skill="cc10x:github-research")`
