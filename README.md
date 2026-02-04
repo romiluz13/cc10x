@@ -92,6 +92,32 @@ Or copy the template: `cp claude-settings-template.json .claude/settings.json`
 
 ---
 
+## Setup: Add Your Skills (Optional)
+
+cc10x includes MongoDB and React skills by default. To add your own installed skills:
+
+### Quick Setup
+
+1. **Copy the template to your global config:**
+   ```bash
+   cp CLAUDE.md ~/.claude/CLAUDE.md
+   ```
+
+2. **Your AI will auto-detect and add your skills:**
+   - On first use, Claude will scan `~/.claude/skills/` and installed plugins
+   - Automatically updates the Complementary Skills table
+   - No manual editing needed
+
+### What Gets Auto-Added
+
+- Plugin skills (e.g., `python-patterns`, `docker-skills`)
+- Personal skills from `~/.claude/skills/`
+- Project skills from `.claude/skills/`
+
+The AI instruction in CLAUDE.md handles this automatically. Just copy the file and start coding.
+
+---
+
 ## The 4 Workflows
 
 | Intent | Trigger Words | What Happens |
