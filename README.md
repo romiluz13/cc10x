@@ -62,91 +62,31 @@ Most Claude Code plugins are **bloated and over-engineered**:
 
 ## Installation
 
+**Option A: Ask Claude Code to set it up**
+> Just paste this README into Claude Code and say: **"Set up cc10x for me"**
+
+**Option B: Manual installation**
 ```bash
-# Add marketplace
 /plugin marketplace add romiluz13/cc10x
-
-# Install plugin
 /plugin install cc10x@romiluz13
-
-# Restart Claude Code
+# Then restart Claude Code
 ```
-
-### Recommended: Pre-approve Allowed Tools
-
-To avoid repeated permission prompts, configure allowed tools. You have two options:
-
-**Option 1: Global settings** (`~/.claude/settings.json`) - applies to ALL projects:
-
-```json
-{
-  "permissions": {
-    "allow": [
-      "Bash(mkdir:*)",
-      "Bash(git status:*)",
-      "Bash(git diff:*)",
-      "Bash(git log:*)",
-      "Bash(git blame:*)",
-      "Bash(git ls-files:*)",
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
-      "Bash(npm run:*)",
-      "Bash(npm test:*)",
-      "Bash(npx:*)",
-      "Bash(yarn:*)",
-      "Bash(pnpm:*)",
-      "Bash(python -m pytest:*)",
-      "Bash(go test:*)",
-      "Bash(cargo test:*)",
-      "Read",
-      "Edit",
-      "Write",
-      "Glob",
-      "Grep",
-      "Task"
-    ]
-  }
-}
-```
-
-**Option 2: Project settings** (`.claude/settings.json`) - applies to current project only:
-
-```json
-{
-  "permissions": {
-    "allow": [
-      "Bash(mkdir -p .claude/cc10x)",
-      "Bash(mkdir -p docs/plans)",
-      "Bash(mkdir -p docs/research)",
-      "Bash(git status)",
-      "Bash(git diff:*)",
-      "Bash(git log:*)",
-      "Bash(npm run:*)",
-      "Bash(npm test:*)"
-    ]
-  }
-}
-```
-
-**Quick reference:**
-| Pattern | Meaning |
-|---------|---------|
-| `ToolName` | Allow tool with no args |
-| `ToolName(*)` | Allow tool with any args |
-| `ToolName(prefix:*)` | Allow tool with args starting with prefix |
-| `Bash(git commit:*)` | Allow git commit with any message |
-
-**That's it.** cc10x activates automatically on development keywords.
 
 ---
 
-## Global CLAUDE.md (Required)
+<!-- CLAUDE CODE SETUP INSTRUCTIONS
+When user says "set up cc10x" or "install cc10x", do the following:
 
-Create `~/.claude/CLAUDE.md` with the content below. This activates cc10x across all your projects.
+1. RUN THESE COMMANDS:
+   /plugin marketplace add romiluz13/cc10x
+   /plugin install cc10x@romiluz13
 
-**For Claude Code:** After creating this file, scan the user's installed skills (`/plugin list`, `~/.claude/skills/`) and add them to the Complementary Skills table. Skills work TOGETHER with cc10x - they don't conflict.
+2. CREATE ~/.claude/CLAUDE.md with this content:
+-->
 
----
+## Setup Files
+
+### File 1: `~/.claude/CLAUDE.md`
 
 ```markdown
 # CC10x Orchestration (Always On)
@@ -175,12 +115,44 @@ IMPORTANT: NEVER use Edit, Write, or Bash (for code changes) without first invok
 |-----------------------|--------|
 | MongoDB, schema, queries, indexes | `mongodb-agent-skills:mongodb-schema-design` or `mongodb-query-and-index-optimize` |
 | React, Next.js, frontend, UI | `react-best-practices` |
-| *[Claude: Add user's other installed skills here]* | |
 
 [Skills Index]
 |mongodb-agent-skills:{mongodb-schema-design/SKILL.md,mongodb-query-and-index-optimize/SKILL.md}
 |vercel-agent-skills:{react-best-practices/SKILL.md}
 ```
+
+<!--
+3. CREATE ~/.claude/settings.json with the allowed tools below
+
+4. SCAN for user's installed skills:
+   - Run: /plugin list
+   - Check: ~/.claude/skills/
+   - Add any found skills to the Complementary Skills table in CLAUDE.md
+
+5. TELL USER: "Restart Claude Code to activate cc10x"
+-->
+
+### File 2: `~/.claude/settings.json` (Allowed Tools)
+
+These are **safe, read-only** permissions for cc10x memory operations:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p .claude/cc10x)",
+      "Bash(mkdir -p docs/plans)",
+      "Bash(mkdir -p docs/research)",
+      "Bash(git status)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git branch:*)"
+    ]
+  }
+}
+```
+
+**After setup, restart Claude Code.**
 
 ---
 
