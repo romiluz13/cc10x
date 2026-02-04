@@ -84,9 +84,17 @@ Done!
 
 ## 🤖 FOR CLAUDE CODE: Execute This
 
-**When user says "set up cc10x", "install cc10x", or similar, create these files:**
+**When user says "set up cc10x", "install cc10x", or similar:**
 
-### File 1: Create `~/.claude/CLAUDE.md`
+### Step 1: Check Existing Files
+- Read `~/.claude/CLAUDE.md` (may not exist)
+- Read `~/.claude/settings.json` (may not exist)
+
+### Step 2: Update `~/.claude/CLAUDE.md`
+
+**If file doesn't exist:** CREATE with the template below.
+**If file exists:** PREPEND the cc10x section below, keep user's existing content.
+
 ```markdown
 # CC10x Orchestration (Always On)
 
@@ -112,37 +120,30 @@ IMPORTANT: NEVER use Edit, Write, or Bash (for code changes) without first invok
 
 | When task involves... | Invoke |
 |-----------------------|--------|
-| MongoDB, schema, queries, indexes | `mongodb-agent-skills:mongodb-schema-design` or `mongodb-query-and-index-optimize` |
-| React, Next.js, frontend, UI | `react-best-practices` |
-
-[Skills Index]
-|mongodb-agent-skills:{mongodb-schema-design/SKILL.md,mongodb-query-and-index-optimize/SKILL.md}
-|vercel-agent-skills:{react-best-practices/SKILL.md}
+| *(Add user's installed skills here)* | |
 ```
 
-### File 2: Create `~/.claude/settings.json`
+### Step 3: Update `~/.claude/settings.json`
+
+**If file doesn't exist:** CREATE with the template below.
+**If file exists:** MERGE these permissions into the existing `permissions.allow` array (don't overwrite!):
+
 ```json
-{
-  "permissions": {
-    "allow": [
-      "Bash(mkdir -p .claude/cc10x)",
-      "Bash(mkdir -p docs/plans)",
-      "Bash(mkdir -p docs/research)",
-      "Bash(git status)",
-      "Bash(git diff:*)",
-      "Bash(git log:*)",
-      "Bash(git branch:*)"
-    ]
-  }
-}
+"Bash(mkdir -p .claude/cc10x)",
+"Bash(mkdir -p docs/plans)",
+"Bash(mkdir -p docs/research)",
+"Bash(git status)",
+"Bash(git diff:*)",
+"Bash(git log:*)",
+"Bash(git branch:*)"
 ```
 
-### Then: Scan for User's Installed Skills
-- Check what skills the user has installed
-- Add them to the Complementary Skills table in `~/.claude/CLAUDE.md`
-- Skills work TOGETHER with cc10x, they don't conflict
+### Step 4: Scan Installed Skills & Add to Table
+- Check user's installed plugins and skills
+- Add ONLY the skills that are actually installed to the Complementary Skills table
+- Example skills to look for: `mongodb-agent-skills`, `react-best-practices`, `python-patterns`, etc.
 
-### Finally: Tell User
+### Step 5: Confirm
 > "cc10x is set up! Please restart Claude Code to activate."
 
 ---
