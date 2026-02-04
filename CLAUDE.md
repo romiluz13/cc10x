@@ -29,9 +29,9 @@ CC10x handles orchestration. Domain skills provide expertise. Both work together
 | When task involves... | Invoke |
 |-----------------------|--------|
 | MongoDB, schema, queries, indexes | `mongodb-agent-skills:mongodb-schema-design` or `mongodb-query-and-index-optimize` |
-| React, Next.js, frontend, UI | `react-best-practices`, `web-design-guidelines` |
+| React, Next.js, frontend, UI | `react-best-practices` |
 
 [Skills Index]
 |mongodb-agent-skills:{mongodb-schema-design/SKILL.md,mongodb-query-and-index-optimize/SKILL.md}
-|vercel-agent-skills:{react-best-practices/SKILL.md,web-design-guidelines/SKILL.md}
+|vercel-agent-skills:{react-best-practices/SKILL.md}
 ```
