@@ -525,17 +525,6 @@ skills: cc10x:session-memory, cc10x:code-generation, cc10x:frontend-patterns
 - Agent calls `Skill(skill="cc10x:github-research")` when hint is present
 - Only used for github-research (requires external API, not always needed)
 
-### Loading Order
-```
-1. Frontmatter skills (auto, at agent startup) - ALL skills except github-research
-   ↓
-2. github-research via SKILL_HINTS (conditional, only when triggered)
-```
-
-### Deduplication
-- Same skill loaded multiple times: OK (idempotent)
-- No need for "is this already loaded?" checks
-
 ## Gates (Must Pass)
 
 1. **MEMORY_LOADED** - Before routing
