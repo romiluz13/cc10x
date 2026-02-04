@@ -598,14 +598,6 @@ Task(subagent_type="cc10x:silent-failure-hunter", prompt="Your task ID: {hunter_
 
 **CRITICAL:** Both Task calls in same message = both complete before you continue.
 
-### Chain Completion Criteria
-
-The workflow is complete ONLY when:
-- `TaskList()` shows ALL workflow tasks (including Memory Update) with status="completed"
-- OR a critical error prevents continuation
-
-**Parallel-safety:** Avoid memory edits during parallel phases. Do the workflow-final memory check/update only after `TaskList()` shows all workflow tasks completed.
-
 ### Workflow-Final Memory Persistence (Task-Enforced)
 
 Memory persistence is enforced via the "CC10X Memory Update" task in the task hierarchy.
