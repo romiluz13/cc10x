@@ -14,13 +14,15 @@ IMPORTANT: NEVER use Edit, Write, or Bash (for code changes) without first invok
 
 ---
 
-## Complementary Skills (Invoke When Relevant)
+## Complementary Skills (Work Together with CC10x)
 
-CC10x handles orchestration. Add domain-specific skills to `~/.claude/CLAUDE.md` for expertise.
+CC10x handles orchestration. Domain skills provide expertise. Both work together (additive, not exclusive).
 
 **Add to `~/.claude/CLAUDE.md`:**
 ```markdown
-## Complementary Skills (Invoke When Relevant)
+## Complementary Skills (Work Together with CC10x)
+
+**Skills are additive, not exclusive.** CC10x provides orchestration. Domain skills provide expertise. Both work together.
 
 **GATE:** Before writing code, check if task matches a skill below. If match, invoke it via `Skill(skill="...")`.
 
