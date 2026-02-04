@@ -92,8 +92,6 @@ cc10x uses `.claude/cc10x/` for memory persistence. To avoid repeated permission
 }
 ```
 
-Or copy the template: `cp claude-settings-template.json .claude/settings.json`
-
 **That's it.** cc10x activates automatically on development keywords.
 
 ---
