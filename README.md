@@ -62,28 +62,27 @@ Most Claude Code plugins are **bloated and over-engineered**:
 
 ## 👤 FOR HUMANS: Read This
 
-**Installation is simple:**
+### Step 1: Install Plugin
+Run these commands in Claude Code:
+```
+/plugin marketplace add romiluz13/cc10x
+/plugin install cc10x@romiluz13
+```
 
-1. Copy this README
-2. Paste it into Claude Code
-3. Say: **"Set up cc10x for me"**
-4. Restart Claude Code
+### Step 2: Setup Config Files
+Copy this README, paste it into Claude Code, and say: **"Set up cc10x for me"**
 
-That's it. Claude Code will handle everything below.
+### Step 3: Restart Claude Code
+
+Done!
 
 ---
 
 ## 🤖 FOR CLAUDE CODE: Execute This
 
-**When user says "set up cc10x", "install cc10x", or similar, execute these steps:**
+**When user says "set up cc10x", "install cc10x", or similar, create these files:**
 
-### Step 1: Install Plugin
-```bash
-/plugin marketplace add romiluz13/cc10x
-/plugin install cc10x@romiluz13
-```
-
-### Step 2: Create `~/.claude/CLAUDE.md`
+### File 1: Create `~/.claude/CLAUDE.md`
 ```markdown
 # CC10x Orchestration (Always On)
 
@@ -117,7 +116,7 @@ IMPORTANT: NEVER use Edit, Write, or Bash (for code changes) without first invok
 |vercel-agent-skills:{react-best-practices/SKILL.md}
 ```
 
-### Step 3: Create `~/.claude/settings.json`
+### File 2: Create `~/.claude/settings.json`
 ```json
 {
   "permissions": {
@@ -134,13 +133,13 @@ IMPORTANT: NEVER use Edit, Write, or Bash (for code changes) without first invok
 }
 ```
 
-### Step 4: Scan for User's Installed Skills
+### Then: Scan for User's Installed Skills
 - Check what skills the user has installed
 - Add them to the Complementary Skills table in `~/.claude/CLAUDE.md`
 - Skills work TOGETHER with cc10x, they don't conflict
 
-### Step 5: Tell User
-> "cc10x is installed! Please restart Claude Code to activate."
+### Finally: Tell User
+> "cc10x is set up! Please restart Claude Code to activate."
 
 ---
 
