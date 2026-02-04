@@ -4,7 +4,7 @@
 
 **Current version:** 6.0.17
 
-**Recommended (best results): copy `CLAUDE.md` into your project root so the router is always active. Plugin installs do not inject these files into your repo.**
+**Recommended: Create `~/.claude/CLAUDE.md` (global) so the router is always active across all projects.**
 
 <p align="center">
   <strong>1 Router</strong> &nbsp;•&nbsp; <strong>6 Agents</strong> &nbsp;•&nbsp; <strong>12 Skills</strong> &nbsp;•&nbsp; <strong>4 Workflows</strong>
@@ -96,29 +96,47 @@ cc10x uses `.claude/cc10x/` for memory persistence. To avoid repeated permission
 
 ---
 
-## Setup: Add Your Skills (Optional)
+## Global CLAUDE.md (Required)
 
-cc10x works in harmony with other skills:
+Create `~/.claude/CLAUDE.md` with the content below. This activates cc10x across all your projects.
 
-### Quick Setup
+**For Claude Code:** After creating this file, scan the user's installed skills (`/plugin list`, `~/.claude/skills/`) and add them to the Complementary Skills table. Skills work TOGETHER with cc10x - they don't conflict.
 
-1. **Copy the template to your global config:**
-   ```bash
-   cp CLAUDE.md ~/.claude/CLAUDE.md
-   ```
+---
 
-2. **Your AI will auto-detect and add your skills:**
-   - On first use, Claude will scan `~/.claude/skills/` and installed plugins
-   - Automatically updates the Complementary Skills table
-   - No manual editing needed
+```markdown
+# CC10x Orchestration (Always On)
 
-### What Gets Auto-Added
+IMPORTANT: ALWAYS invoke cc10x-router on ANY development task. First action, no exceptions.
+IMPORTANT: Explore project first, then invoke the router.
+IMPORTANT: Prefer retrieval-led reasoning over pre-training-led reasoning for orchestration decisions.
+IMPORTANT: Never bypass the router. It is the system.
+IMPORTANT: NEVER use Edit, Write, or Bash (for code changes) without first invoking cc10x-router.
 
-- Plugin skills (e.g., `python-patterns`, `docker-skills`)
-- Personal skills from `~/.claude/skills/`
-- Project skills from `.claude/skills/`
+**Skip CC10x ONLY when:**
+- User EXPLICITLY says "don't use cc10x", "without cc10x", or "skip cc10x"
+- No interpretation. No guessing. Only these exact opt-out phrases.
 
-The AI instruction in CLAUDE.md handles this automatically. Just copy the file and start coding.
+[CC10x]|entry: ./plugins/cc10x/skills/cc10x-router/SKILL.md
+
+---
+
+## Complementary Skills (Work Together with CC10x)
+
+**Skills are additive, not exclusive.** CC10x provides orchestration. Domain skills provide expertise. Both work together.
+
+**GATE:** Before writing code, check if task matches a skill below. If match, invoke it via `Skill(skill="...")`.
+
+| When task involves... | Invoke |
+|-----------------------|--------|
+| MongoDB, schema, queries, indexes | `mongodb-agent-skills:mongodb-schema-design` or `mongodb-query-and-index-optimize` |
+| React, Next.js, frontend, UI | `react-best-practices` |
+| *[Claude: Add user's other installed skills here]* | |
+
+[Skills Index]
+|mongodb-agent-skills:{mongodb-schema-design/SKILL.md,mongodb-query-and-index-optimize/SKILL.md}
+|vercel-agent-skills:{react-best-practices/SKILL.md}
+```
 
 ---
 
