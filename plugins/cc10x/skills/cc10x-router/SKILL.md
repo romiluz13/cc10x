@@ -424,7 +424,10 @@ After agent completes:
 - **Abort** → Stop workflow, manual fix
 
 4. If silent-failure-hunter reports CRITICAL issues (count > 0):
-   → Treat as WORKFLOW BLOCKER until fixed.
+   → **Conflict check:** If code-reviewer verdict is "APPROVE" AND confidence ≥ 80:
+     AskUserQuestion: "Reviewer approved ({confidence}%), but Hunter found: {issue}. Investigate or Skip?"
+     If "Skip" → proceed to integration-verifier (hunter's concern was likely false positive)
+   → Otherwise: Treat as WORKFLOW BLOCKER until fixed.
    → Create a remediation task for component-builder (code changes intended):
      TaskCreate({
        subject: "CC10X REM-FIX: Fix CRITICAL silent failures",
