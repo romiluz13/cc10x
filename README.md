@@ -98,7 +98,7 @@ cc10x uses `.claude/cc10x/` for memory persistence. To avoid repeated permission
 
 ## Setup: Add Your Skills (Optional)
 
-cc10x includes MongoDB and React skills by default. To add your own installed skills:
+cc10x works in harmony with other skills:
 
 ### Quick Setup
 
