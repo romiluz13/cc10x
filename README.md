@@ -76,11 +76,17 @@ Most Claude Code plugins are **bloated and over-engineered**:
 
 cc10x uses `.claude/cc10x/` for memory persistence. To avoid repeated permission prompts (especially on Windows), add to your project's `.claude/settings.json`:
 
-```json
-{
+```{
   "permissions": {
     "allow": [
-      "Bash(mkdir -p .claude/cc10x)"
+      "Bash(mkdir -p .claude/cc10x)",
+      "Bash(mkdir -p docs/plans)",
+      "Bash(mkdir -p docs/research)",
+      "Bash(git status)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git blame:*)",
+      "Bash(git ls-files:*)"
     ]
   }
 }
