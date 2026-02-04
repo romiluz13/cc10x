@@ -108,7 +108,7 @@ IMPORTANT: NEVER use Edit, Write, or Bash (for code changes) without first invok
 - User EXPLICITLY says "don't use cc10x", "without cc10x", or "skip cc10x"
 - No interpretation. No guessing. Only these exact opt-out phrases.
 
-[CC10x]|entry: ./plugins/cc10x/skills/cc10x-router/SKILL.md
+[CC10x]|entry: cc10x:cc10x-router
 
 ---
 
@@ -146,14 +146,17 @@ IMPORTANT: NEVER use Edit, Write, or Bash (for code changes) without first invok
 3. `~/.claude/skills/` → personal skills (all projects)
 4. `.claude/skills/` → project-specific skills
 
-**Example:** If user has these in `enabledPlugins`:
-```json
-{
-  "enabledPlugins": {
-    "mongodb-agent-skills@mongodb-agent-skills": true,
-    "react-best-practices@vercel": true
-  }
-}
+**Skill naming in table:**
+- **Plugin skills:** `plugin-name:skill-name` (e.g., `mongodb-agent-skills:mongodb-schema-design`)
+- **Personal/project skills:** just the skill name (e.g., `react-best-practices`)
+
+**Example:** If user has these:
+```
+# In enabledPlugins:
+"mongodb-agent-skills@mongodb-agent-skills": true
+
+# In ~/.claude/skills/:
+react-best-practices/SKILL.md
 ```
 
 **Add to the Complementary Skills table:**
