@@ -377,6 +377,71 @@ Execute the task and include 'Task {TASK_ID}: COMPLETED' in your output when don
 
 When agent returns, verify output quality before proceeding.
 
+---
+
+### Router Contract Validation (PRIMARY - Use This First)
+
+**Step 1: Check for Router Contract**
+```
+Look for "### Router Contract (MACHINE-READABLE)" section in agent output.
+If found → Use contract-based validation below.
+If NOT found → Skip to "Legacy Validation Fallback" section.
+```
+
+**Step 2: Parse and Validate Contract**
+```
+Parse the YAML block inside Router Contract section.
+
+CONTRACT FIELDS:
+- STATUS: Agent's self-reported status (PASS/FAIL/APPROVE/etc)
+- BLOCKING: true/false - whether workflow should stop
+- REQUIRES_REMEDIATION: true/false - whether REM-FIX task needed
+- REMEDIATION_REASON: Exact text for remediation task description
+- CRITICAL_ISSUES: Count of blocking issues (if applicable)
+- MEMORY_NOTES: Structured notes for workflow-final persistence
+
+VALIDATION RULES:
+1. If contract.BLOCKING == true:
+   → Create remediation task using contract.REMEDIATION_REASON
+   → Block downstream tasks
+   → STOP workflow
+
+2. If contract.REQUIRES_REMEDIATION == true:
+   → TaskCreate({
+       subject: "CC10X REM-FIX: {agent_name}",
+       description: contract.REMEDIATION_REASON,
+       activeForm: "Fixing {agent_name} issues"
+     })
+   → Block downstream tasks
+   → STOP workflow
+
+3. If contract.CRITICAL_ISSUES > 0 AND parallel phase (reviewer + hunter):
+   → Check for conflict: reviewer APPROVE vs hunter CRITICAL
+   → If conflict: AskUserQuestion to resolve
+   → Otherwise: treat as blocking
+
+4. Collect contract.MEMORY_NOTES for workflow-final persistence
+
+5. If none of above triggered → Proceed to next agent
+```
+
+**Step 3: Output Validation Evidence**
+```
+### Agent Validation: {agent_name}
+- Router Contract: Found
+- STATUS: {contract.STATUS}
+- BLOCKING: {contract.BLOCKING}
+- CRITICAL_ISSUES: {contract.CRITICAL_ISSUES}
+- Proceeding: [Yes/No + reason]
+```
+
+---
+
+### Legacy Validation Fallback (If No Router Contract)
+
+**Use this section ONLY if agent output lacks "### Router Contract" section.**
+**This preserves backward compatibility with older agent versions.**
+
 ### Required Output by Agent
 
 | Agent | Mode | Required Sections | Required Evidence |
@@ -479,6 +544,11 @@ After agent completes:
 - Evidence: [Present/Missing]
 - Proceeding: [Yes/No + reason]
 ```
+
+---
+**END OF LEGACY VALIDATION FALLBACK**
+
+---
 
 ## Remediation Re-Review Loop (Pseudocode)
 
