@@ -385,7 +385,13 @@ When agent returns, verify output quality before proceeding.
 ```
 Look for "### Router Contract (MACHINE-READABLE)" section in agent output.
 If found → Use contract-based validation below.
-If NOT found → Skip to "Legacy Validation Fallback" section.
+If NOT found → Agent output is non-compliant. Create REM-EVIDENCE task:
+  TaskCreate({
+    subject: "CC10X REM-EVIDENCE: {agent} missing Router Contract",
+    description: "Agent output lacks Router Contract section. Re-run agent or manually verify output quality.",
+    activeForm: "Collecting agent contract"
+  })
+  Block downstream tasks and STOP.
 ```
 
 **Step 2: Parse and Validate Contract**
@@ -401,28 +407,38 @@ CONTRACT FIELDS:
 - MEMORY_NOTES: Structured notes for workflow-final persistence
 
 VALIDATION RULES:
-1. If contract.BLOCKING == true:
-   → Create remediation task using contract.REMEDIATION_REASON
-   → Block downstream tasks
-   → STOP workflow
 
-2. If contract.REQUIRES_REMEDIATION == true:
+**Circuit Breaker (BEFORE creating any REM-FIX):**
+Before creating a new REM-FIX task, count existing REM-FIX tasks in workflow.
+If count ≥ 3 → AskUserQuestion:
+- **Research best practices (Recommended)** → Skill(skill="cc10x:github-research"), persist, retry
+- **Fix locally** → Create another REM-FIX task
+- **Skip** → Proceed despite errors (not recommended)
+- **Abort** → Stop workflow, manual fix
+
+1. If contract.BLOCKING == true OR contract.REQUIRES_REMEDIATION == true:
    → TaskCreate({
        subject: "CC10X REM-FIX: {agent_name}",
        description: contract.REMEDIATION_REASON,
        activeForm: "Fixing {agent_name} issues"
      })
-   → Block downstream tasks
-   → STOP workflow
+   → Task-enforced gate:
+     - Find downstream workflow tasks via TaskList() (subjects prefixed with `CC10X `)
+     - For every downstream task not completed:
+       TaskUpdate({ taskId: downstream_task_id, addBlockedBy: [remediation_task_id] })
+   → STOP. Do not invoke next agent until remediation completes.
+   → User can bypass (record decision in memory).
 
-3. If contract.CRITICAL_ISSUES > 0 AND parallel phase (reviewer + hunter):
-   → Check for conflict: reviewer APPROVE vs hunter CRITICAL
-   → If conflict: AskUserQuestion to resolve
-   → Otherwise: treat as blocking
+2. If contract.CRITICAL_ISSUES > 0 AND parallel phase (reviewer + hunter):
+   → Conflict check: If code-reviewer STATUS=APPROVE AND silent-failure-hunter CRITICAL_ISSUES > 0:
+     AskUserQuestion: "Reviewer approved, but Hunter found {N} critical issues. Investigate or Skip?"
+     - If "Investigate" → Create REM-FIX for hunter issues
+     - If "Skip" → Proceed (record decision in memory)
+   → If no conflict and CRITICAL_ISSUES > 0: treat as blocking (rule 1)
 
-4. Collect contract.MEMORY_NOTES for workflow-final persistence
+3. Collect contract.MEMORY_NOTES for workflow-final persistence
 
-5. If none of above triggered → Proceed to next agent
+4. If none of above triggered → Proceed to next agent
 ```
 
 **Step 3: Output Validation Evidence**
@@ -434,119 +450,6 @@ VALIDATION RULES:
 - CRITICAL_ISSUES: {contract.CRITICAL_ISSUES}
 - Proceeding: [Yes/No + reason]
 ```
-
----
-
-### Legacy Validation Fallback (If No Router Contract)
-
-**Use this section ONLY if agent output lacks "### Router Contract" section.**
-**This preserves backward compatibility with older agent versions.**
-
-### Required Output by Agent
-
-| Agent | Mode | Required Sections | Required Evidence |
-|-------|------|-------------------|-------------------|
-| component-builder | WRITE | TDD Evidence (RED + GREEN) | Exit codes: 1 (RED), 0 (GREEN) |
-| code-reviewer | READ-ONLY | Critical Issues, Verdict, **Memory Notes** | Confidence scores (≥80) |
-| silent-failure-hunter | READ-ONLY | Critical (blocks ship), Router Handoff, **Memory Notes** | Count of issues found |
-| integration-verifier | READ-ONLY | Scenarios table, Verdict, **Memory Notes** | PASS/FAIL per scenario |
-| bug-investigator | WRITE | Root cause, TDD Evidence (RED + GREEN), Variant Coverage, Fix applied | Exit codes: 1 (RED), 0 (GREEN) |
-| planner | WRITE | Plan saved path, Phases | Confidence score |
-
-**Memory Notes schema (READ-ONLY agents):**
-- **Learnings:** [insights for activeContext.md]
-- **Patterns:** [gotchas for patterns.md]
-- **Verification:** [results for progress.md]
-
-### Validation Logic
-
-```
-After agent completes:
-
-1. Check for required sections in output
-2. Check for skill loading evidence (SKILL_HINTS loaded?)
-
-3. If REQUIRED sections are missing:
-   → Create remediation task (evidence-only; no code changes intended):
-     TaskCreate({
-       subject: "CC10X REM-EVIDENCE: {agent} missing {sections}",
-       description: "Agent output incomplete. Missing: {sections}\n\nRequired: re-run the relevant command(s) and report the missing evidence in the required format (exit codes, verdicts, etc).",
-       activeForm: "Collecting missing evidence"
-     })
-
-   → Task-enforced gate (do not rely on self-discipline):
-     - Find downstream workflow tasks via TaskList() (subjects prefixed with `CC10X `)
-     - For every downstream task that is not completed:
-       TaskUpdate({ taskId: downstream_task_id, addBlockedBy: [remediation_task_id] })
-
-   → STOP. Do not invoke the next agent.
-     Only proceed after remediation completes OR user explicitly approves bypass (and record it in memory).
-
-**Circuit breaker:** Before creating `CC10X REM-FIX:` task, if count ≥ 3 → AskUserQuestion:
-- **Research best practices (Recommended)** → `Skill(skill="cc10x:github-research")`, persist to `docs/research/`, retry with insights
-- **Fix locally** → Create another REM-FIX task
-- **Skip** → Proceed despite errors (not recommended)
-- **Abort** → Stop workflow, manual fix
-
-4. If silent-failure-hunter reports CRITICAL issues (count > 0):
-   → **Conflict check:** If code-reviewer verdict is "APPROVE" AND confidence ≥ 80:
-     AskUserQuestion: "Reviewer approved ({confidence}%), but Hunter found: {issue}. Investigate or Skip?"
-     If "Skip" → proceed to integration-verifier (hunter's concern was likely false positive)
-   → Otherwise: Treat as WORKFLOW BLOCKER until fixed.
-   → Create a remediation task for component-builder (code changes intended):
-     TaskCreate({
-       subject: "CC10X REM-FIX: Fix CRITICAL silent failures",
-       description: "Fix the CRITICAL issues reported by silent-failure-hunter.\n\nAfter fixing: include TDD Evidence (RED+GREEN) and list files changed.",
-       activeForm: "Fixing silent failures"
-     })
-   → Task-enforced gate:
-     - Block all downstream CC10x tasks until remediation completes:
-       TaskUpdate({ taskId: downstream_task_id, addBlockedBy: [remediation_task_id] })
-   → STOP. Do not proceed to integration-verifier until remediation is completed (or user explicitly accepts shipping with known issues and records it in memory).
-
-4b. If code-reviewer verdict is "Changes Requested" OR Critical Issues exist:
-   → Treat as WORKFLOW BLOCKER until fixed.
-   → Create a remediation task (code changes intended):
-     TaskCreate({
-       subject: "CC10X REM-FIX: Address code-reviewer critical issues",
-       description: "Fix the Critical Issues reported by code-reviewer.\n\nAfter fixing: include TDD Evidence (RED+GREEN) and list files changed.",
-       activeForm: "Fixing review issues"
-     })
-   → Task-enforced gate:
-     - Block all downstream CC10x tasks until remediation completes:
-       TaskUpdate({ taskId: downstream_task_id, addBlockedBy: [remediation_task_id] })
-   → STOP. Do not proceed until remediation is completed (or user explicitly accepts shipping with known issues and records it in memory).
-
-5. If bug-investigator is missing TDD Evidence (RED+GREEN) or Variant Coverage:
-   → Treat as WORKFLOW BLOCKER until evidence is provided.
-   → Create remediation task (may involve code/test changes):
-     TaskCreate({
-       subject: "CC10X REM-FIX: bug-investigator missing TDD/variants",
-       description: "Add regression test (RED), then fix (GREEN) and report exit codes.\nAlso document Variant Coverage and confirm no hardcoding.",
-       activeForm: "Adding regression coverage"
-     })
-   → Task-enforced gate:
-     - Block all downstream CC10x tasks until remediation completes:
-       TaskUpdate({ taskId: downstream_task_id, addBlockedBy: [remediation_task_id] })
-   → STOP. Do not proceed to code-reviewer/integration-verifier until remediation is completed (or user explicitly accepts bypassing TDD and records it in memory).
-
-6. If NON-CRITICAL missing (skill evidence):
-   → Note for improvement, continue workflow
-
-7. If validation PASSES:
-   → Proceed to next agent in chain
-```
-
-**Validation Evidence Format (include in your response):**
-```
-### Agent Validation: {agent_name}
-- Required Sections: [Present/Missing]
-- Evidence: [Present/Missing]
-- Proceeding: [Yes/No + reason]
-```
-
----
-**END OF LEGACY VALIDATION FALLBACK**
 
 ---
 
