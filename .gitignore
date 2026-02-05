@@ -178,6 +178,10 @@ cc10x_V2-main/
 !docs/plans/
 !docs/plans/*.md
 
+# Orchestration documentation (source of truth)
+!docs/cc10x-orchestration-bible.md
+!docs/cc10x-orchestration-logic-analysis.md
+
 # Production code (DO NOT IGNORE)
 !plugins/
 !plugins/cc10x/
