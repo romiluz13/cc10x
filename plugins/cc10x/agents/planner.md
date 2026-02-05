@@ -179,4 +179,21 @@ If task involves specific technologies, list skills component-builder should inv
 ### Task Status
 - Task {TASK_ID}: COMPLETED
 - Follow-up tasks created: None
+
+### Router Contract (MACHINE-READABLE)
+```yaml
+STATUS: PLAN_CREATED | NEEDS_CLARIFICATION
+CONFIDENCE: [1-10 from Confidence Score above]
+PLAN_FILE: "[path to saved plan, e.g., docs/plans/2026-02-05-feature-plan.md]"
+PHASES: [count of phases in plan]
+RISKS_IDENTIFIED: [count of risks identified]
+BLOCKING: false
+REQUIRES_REMEDIATION: false
+REMEDIATION_REASON: null
+MEMORY_NOTES:
+  learnings: ["Planning approach and key insights"]
+  patterns: ["Architectural decisions made"]
+  verification: ["Plan: {PLAN_FILE} with {CONFIDENCE}/10 confidence"]
+```
+**CONTRACT RULE:** STATUS=PLAN_CREATED requires PLAN_FILE is valid path and CONFIDENCE>=5
 ```

@@ -133,4 +133,21 @@ TaskCreate({
 ### Task Status
 - Task {TASK_ID}: COMPLETED
 - Follow-up tasks created: [list if any, or "None"]
+
+### Router Contract (MACHINE-READABLE)
+```yaml
+STATUS: PASS | FAIL
+CONFIDENCE: [0-100]
+TDD_RED_EXIT: [1 if red phase ran, null if missing]
+TDD_GREEN_EXIT: [0 if green phase ran, null if missing]
+CRITICAL_ISSUES: 0
+BLOCKING: [true if STATUS=FAIL]
+REQUIRES_REMEDIATION: [true if TDD evidence missing]
+REMEDIATION_REASON: null | "Missing TDD evidence - need RED exit=1 and GREEN exit=0"
+MEMORY_NOTES:
+  learnings: ["What was built and key patterns used"]
+  patterns: ["Any new conventions discovered"]
+  verification: ["TDD evidence: RED exit={X}, GREEN exit={Y}"]
+```
+**CONTRACT RULE:** STATUS=PASS requires TDD_RED_EXIT=1 AND TDD_GREEN_EXIT=0
 ```

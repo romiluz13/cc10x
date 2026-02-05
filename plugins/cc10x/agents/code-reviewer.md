@@ -118,4 +118,20 @@ HIGH:
 ### Task Status
 - Task {TASK_ID}: COMPLETED
 - Follow-up tasks created: [list if any, or "None"]
+
+### Router Contract (MACHINE-READABLE)
+```yaml
+STATUS: APPROVE | CHANGES_REQUESTED
+CONFIDENCE: [80-100]
+CRITICAL_ISSUES: [count from CRITICAL_COUNT above]
+HIGH_ISSUES: [count from HIGH_COUNT above]
+BLOCKING: [true if CRITICAL_ISSUES > 0]
+REQUIRES_REMEDIATION: [true if STATUS=CHANGES_REQUESTED or CRITICAL_ISSUES > 0]
+REMEDIATION_REASON: null | "Fix critical issues: {summary of CRITICAL list}"
+MEMORY_NOTES:
+  learnings: ["Code quality insights"]
+  patterns: ["Conventions or anti-patterns found"]
+  verification: ["Review: {STATUS} with {CONFIDENCE}% confidence"]
+```
+**CONTRACT RULE:** STATUS=APPROVE requires CRITICAL_ISSUES=0 and CONFIDENCE>=80
 ```

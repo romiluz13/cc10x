@@ -178,4 +178,22 @@ TaskCreate({
 ### Task Status
 - Task {TASK_ID}: COMPLETED
 - Follow-up tasks created: [list if any, or "None"]
+
+### Router Contract (MACHINE-READABLE)
+```yaml
+STATUS: FIXED | INVESTIGATING | BLOCKED
+CONFIDENCE: [0-100]
+ROOT_CAUSE: "[one-line summary of root cause]"
+TDD_RED_EXIT: [1 if regression test failed before fix, null if missing]
+TDD_GREEN_EXIT: [0 if regression test passed after fix, null if missing]
+VARIANTS_COVERED: [count of variant cases in regression test]
+BLOCKING: [true if STATUS != FIXED]
+REQUIRES_REMEDIATION: [true if TDD evidence missing or VARIANTS_COVERED=0]
+REMEDIATION_REASON: null | "Add regression test (RED→GREEN) + variant coverage"
+MEMORY_NOTES:
+  learnings: ["Root cause and fix approach"]
+  patterns: ["Bug pattern for Common Gotchas"]
+  verification: ["Fix: RED exit={X}, GREEN exit={Y}, {N} variants covered"]
+```
+**CONTRACT RULE:** STATUS=FIXED requires TDD_RED_EXIT=1 AND TDD_GREEN_EXIT=0 AND VARIANTS_COVERED>=1
 ```

@@ -125,4 +125,20 @@ BLOCKERS:
 ### Task Status
 - Task {TASK_ID}: COMPLETED (or BLOCKED if verification failed)
 - Follow-up tasks created: [list if any, or "None"]
+
+### Router Contract (MACHINE-READABLE)
+```yaml
+STATUS: PASS | FAIL
+SCENARIOS_TOTAL: [Y from X/Y]
+SCENARIOS_PASSED: [X from X/Y]
+BLOCKERS: [count from BLOCKERS_COUNT]
+BLOCKING: [true if STATUS=FAIL]
+REQUIRES_REMEDIATION: [true if BLOCKERS > 0]
+REMEDIATION_REASON: null | "Fix E2E failures: {summary of BLOCKERS list}"
+MEMORY_NOTES:
+  learnings: ["Integration insights"]
+  patterns: ["Edge cases discovered"]
+  verification: ["E2E: {SCENARIOS_PASSED}/{SCENARIOS_TOTAL} passed"]
+```
+**CONTRACT RULE:** STATUS=PASS requires BLOCKERS=0 and SCENARIOS_PASSED=SCENARIOS_TOTAL
 ```
