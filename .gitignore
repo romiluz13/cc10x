@@ -174,6 +174,10 @@ cc10x_V2-main/
 !plugins/cc10x/QUICKSTART.md
 !plugins/cc10x/CLAUDE.md
 
+# Roadmap plans (tracked for collaboration)
+!docs/plans/
+!docs/plans/*.md
+
 # Production code (DO NOT IGNORE)
 !plugins/
 !plugins/cc10x/
@@ -200,3 +204,8 @@ ref/
 audit/
 docs/viral-reddit-post.md
 FINAL_ORCHESTRATION_UNDERSTANDING.md
+
+# ========================================
+# LIVE CODING PREP (NEVER COMMIT)
+# ========================================
+Live Coding Prep/
