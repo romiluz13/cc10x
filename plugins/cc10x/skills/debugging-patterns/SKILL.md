@@ -154,6 +154,15 @@ npx eslint . --ext .ts,.tsx        # Lint check
 5. Add deterministic waits or proper synchronization
 ```
 
+### Frontend Browser Errors
+```
+1. Request clean console: AskUserQuestion → "F12 → Console → Clear → reproduce → Copy all"
+2. Analyze grouped messages for repetition patterns
+3. Check for hidden CORS errors (enable "Show CORS errors in console")
+4. If insufficient: request user add console.log at suspected locations
+5. Trace to source of unexpected value
+```
+
 ### Git Bisect (Finding Breaking Commit)
 
 **When to use:** "It worked before" scenarios.
