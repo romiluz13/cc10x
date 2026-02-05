@@ -174,14 +174,9 @@ cc10x_V2-main/
 !plugins/cc10x/QUICKSTART.md
 !plugins/cc10x/CLAUDE.md
 
-# Roadmap plans (tracked for collaboration)
-!docs/plans/
-!docs/plans/*.md
-
 # Orchestration documentation (source of truth)
 !docs/cc10x-orchestration-bible.md
 !docs/cc10x-orchestration-logic-analysis.md
-!docs/cc10x-orchestration-flaws.md
 
 # Production code (DO NOT IGNORE)
 !plugins/
