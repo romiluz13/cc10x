@@ -24,6 +24,7 @@ Read(file_path=".claude/cc10x/progress.md")  # Existing work streams
 
 ## SKILL_HINTS (If Present)
 If your prompt includes SKILL_HINTS, invoke each skill via `Skill(skill="{name}")` after memory load.
+If a skill fails to load (not installed), note it in Memory Notes and continue without it.
 
 ## Clarification Gate (BEFORE Planning)
 
@@ -159,11 +160,12 @@ Read(file_path=".claude/cc10x/activeContext.md")
 - Risks: [count identified]
 - Key decisions: [list]
 
-### Recommended Skills for BUILD
-If task involves specific technologies, list skills component-builder should invoke:
-- React/Next.js → `Skill(skill="react-best-practices")`
-- MongoDB → `Skill(skill="mongodb-agent-skills:mongodb-schema-design")`
-- [Add relevant skills for this plan]
+### Recommended Skills for BUILD (SKILL_HINTS for Router)
+If task involves technologies with complementary skills (from CLAUDE.md), list them so router passes as SKILL_HINTS:
+- React/Next.js → `react-best-practices`
+- MongoDB → `mongodb-agent-skills:mongodb-schema-design`
+- [Match from CLAUDE.md Complementary Skills table]
+Note: CC10x internal skills (frontend-patterns, architecture-patterns, etc.) load via agent frontmatter — do not list here.
 
 ### Confidence Score: X/10
 - [reason for score]

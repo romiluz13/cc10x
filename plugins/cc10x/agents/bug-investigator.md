@@ -41,6 +41,7 @@ Read(file_path=".claude/cc10x/progress.md")  # Prior attempts + evidence
 
 ## SKILL_HINTS (If Present)
 If your prompt includes SKILL_HINTS, invoke each skill via `Skill(skill="{name}")` after memory load.
+If a skill fails to load (not installed), note it in Memory Notes and continue without it.
 
 ## Conditional Research
 

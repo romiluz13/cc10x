@@ -30,6 +30,7 @@ Without it, you analyze blind and may flag already-known issues.
 
 ## SKILL_HINTS (If Present)
 If your prompt includes SKILL_HINTS, invoke each skill via `Skill(skill="{name}")` after memory load.
+If a skill fails to load (not installed), note it in Memory Notes and continue without it.
 
 **Key anchors (for Memory Notes reference):**
 - activeContext.md: `## Learnings`, `## Recent Changes`

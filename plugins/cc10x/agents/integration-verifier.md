@@ -30,6 +30,7 @@ Without it, you may re-verify already-passed scenarios or miss known issues.
 
 ## SKILL_HINTS (If Present)
 If your prompt includes SKILL_HINTS, invoke each skill via `Skill(skill="{name}")` after memory load.
+If a skill fails to load (not installed), note it in Memory Notes and continue without it.
 
 **Key anchors (for Memory Notes reference):**
 - activeContext.md: `## Learnings`
@@ -123,7 +124,7 @@ BLOCKERS:
 - **Verification:** [Scenario results for progress.md ## Verification]
 
 ### Task Status
-- Task {TASK_ID}: COMPLETED (or BLOCKED if verification failed)
+- Task {TASK_ID}: COMPLETED
 - Follow-up tasks created: [list if any, or "None"]
 
 ### Router Contract (MACHINE-READABLE)

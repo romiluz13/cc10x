@@ -1,6 +1,6 @@
 # CC10x Orchestration Bible (Plugin-Only Source of Truth)
 
-> **Last synced with agents/skills:** 2026-02-05 | **Status:** IN SYNC
+> **Last synced with agents/skills:** 2026-02-05 (post-SKILL_HINTS fix) | **Status:** IN SYNC
 
 > This document is derived **only** from `plugins/cc10x/` (agents + skills).
 > Ignore all other docs. Do not trust external narratives.
@@ -23,6 +23,89 @@ This document defines the **non-negotiable** routing, tasking, agent chaining, a
 - **Memory**: `.claude/cc10x/{activeContext.md, patterns.md, progress.md}`.
 - **Router Contract**: Machine-readable YAML section in agent output for validation.
 - **Dev Journal**: User transparency section in agent output (narrative of what was done).
+
+---
+
+## Skills vs Agents (Claude Code Concepts)
+
+> This section documents the Claude Code platform concepts that CC10x is built on.
+> Source: Claude Code official documentation. This is reference for maintainers.
+
+### What is a Skill?
+
+A **skill** is a Markdown file (`SKILL.md`) with optional YAML frontmatter. It provides instructions, reference material, or task workflows that teach Claude how to do something. Skills do NOT execute — they INSTRUCT.
+
+**Skill frontmatter fields:**
+```yaml
+name: skill-name          # Identifier (lowercase, hyphens)
+description: "..."        # When Claude should use this skill
+allowed-tools: Read, Grep # Tools that skip permission prompts when skill is active
+```
+
+**Key facts:**
+- `allowed-tools` is **NOT runtime enforcement**. It defines which tools skip permission prompts. The agent's `tools:` field controls actual tool availability.
+- Skills are loaded as text context — injected into the agent's system prompt.
+- Skills cannot call tools themselves. They instruct the hosting agent to call tools.
+
+### What is an Agent?
+
+An **agent** is a Markdown file with YAML frontmatter that defines an isolated subprocess. When invoked via `Task(subagent_type="...")`, Claude Code spawns a new process with its own context window, tools, and instructions.
+
+**Agent frontmatter fields:**
+```yaml
+name: agent-name          # Identifier
+tools: Read, Edit, Bash   # Actual tool allowlist (enforced at runtime)
+skills: skill-a, skill-b  # Skills to preload (full content injected at startup)
+context: fork             # Run in isolated subprocess (cannot see parent conversation)
+model: inherit            # Model to use
+```
+
+**Key facts:**
+- `tools:` is the **actual runtime allowlist**. Agent can ONLY use tools listed here.
+- `skills:` preloads full skill content into the agent's system prompt at startup. Agent does NOT need to call `Skill()` for preloaded skills.
+- `context: fork` means the agent runs in a fresh context. It cannot see the parent conversation, CLAUDE.md, or other agents' outputs.
+- Agent outputs are returned to the caller (router) as a single result.
+
+### Skills vs Agents — The Distinction
+
+| Aspect | Skill | Agent |
+|--------|-------|-------|
+| **Nature** | Instructions (text) | Execution unit (subprocess) |
+| **Runs as** | Context injected into an agent | Isolated process with own context window |
+| **Can use tools?** | No — instructs the hosting agent to use tools | Yes — has its own `tools:` allowlist |
+| **Can see parent context?** | Only if loaded into parent; forked agents cannot see parent | No (`context: fork`) |
+| **Loaded via** | Agent frontmatter `skills:` (automatic) or `Skill()` call (on-demand) | `Task(subagent_type="...")` |
+| **Frontmatter tool field** | `allowed-tools` (permission hint, NOT enforcement) | `tools` (actual allowlist, enforced) |
+
+### How CC10x Uses This Architecture
+
+**6 Agents (execution units):**
+- `component-builder` — Builds features (has Edit, Write, Bash)
+- `bug-investigator` — Debugs issues (has Edit, Write, Bash)
+- `planner` — Creates plans (has Edit, Write, Bash for plan files + memory only)
+- `code-reviewer` — Reviews code (READ-ONLY: no Edit, no Write)
+- `silent-failure-hunter` — Finds silent failures (READ-ONLY: no Edit, no Write)
+- `integration-verifier` — Verifies E2E (READ-ONLY: no Edit, no Write)
+
+**12 Skills (instruction sets loaded into agents):**
+- `cc10x-router` — Orchestration engine (loaded by main Claude, not agents)
+- `session-memory` — Memory protocol (WRITE agents only)
+- `code-generation` — Code writing patterns (component-builder)
+- `test-driven-development` — TDD protocol (component-builder, bug-investigator)
+- `debugging-patterns` — Debug methodology (bug-investigator, integration-verifier)
+- `code-review-patterns` — Review methodology (code-reviewer, silent-failure-hunter)
+- `verification-before-completion` — Verification gates (4 agents)
+- `planning-patterns` — Plan writing (planner)
+- `brainstorming` — Idea exploration (planner)
+- `architecture-patterns` — Architecture design (5 agents)
+- `frontend-patterns` — Frontend patterns (all 6 agents)
+- `github-research` — External research (conditional via SKILL_HINTS)
+
+**Why this separation:**
+1. **Skills are reusable** — `architecture-patterns` loads into 5 different agents. One source of truth for architecture rules.
+2. **Agents are isolated** — code-reviewer cannot accidentally edit files because its `tools:` field excludes Edit/Write. This is enforced by Claude Code, not by English instruction.
+3. **Skills compose** — An agent's behavior is the combination of its base instructions + all preloaded skills. Adding a skill to an agent's frontmatter changes its behavior without modifying the agent file.
+4. **SKILL_HINTS bridge the gap** — Forked agents cannot see CLAUDE.md. The router (running in main context) reads CLAUDE.md, detects matching complementary skills, and passes them via SKILL_HINTS in the agent's prompt. The agent then calls `Skill()` on demand.
 
 ---
 
@@ -254,7 +337,7 @@ Mandatory steps:
 
 ### Mechanism 1: Agent Frontmatter `skills:` (PRIMARY - Automatic)
 
-All skills load automatically via agent frontmatter. No `Skill()` calls needed.
+All CC10x internal skills listed below load automatically via agent frontmatter. No `Skill()` calls needed for these. (Conditional skills use Mechanism 2 below.)
 
 | Agent | Frontmatter Skills |
 |-------|-------------------|
@@ -441,8 +524,9 @@ Task(subagent_type="cc10x:component-builder", prompt="
 ## Project Patterns
 {patterns summary}
 
-## SKILL_HINTS (github-research only if triggered)
-{github-research if external research needed, otherwise "None"}
+## SKILL_HINTS (conditional skills if triggered)
+{detected skills from router detection table + CLAUDE.md, otherwise "None"}
+**If skills listed:** Call `Skill(skill="{skill-name}")` after memory load. If unavailable, note in Memory Notes and continue.
 
 ---
 IMPORTANT:
