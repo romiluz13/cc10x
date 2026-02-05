@@ -181,6 +181,7 @@ cc10x_V2-main/
 # Orchestration documentation (source of truth)
 !docs/cc10x-orchestration-bible.md
 !docs/cc10x-orchestration-logic-analysis.md
+!docs/cc10x-orchestration-flaws.md
 
 # Production code (DO NOT IGNORE)
 !plugins/
