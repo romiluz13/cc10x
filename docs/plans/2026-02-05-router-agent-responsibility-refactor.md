@@ -415,6 +415,7 @@ TDD_GREEN_EXIT: [0 or missing]
 CRITICAL_ISSUES: 0
 BLOCKING: false
 REQUIRES_REMEDIATION: false
+REMEDIATION_REASON: null | "Missing TDD evidence - need RED exit=1 and GREEN exit=0"
 MEMORY_NOTES:
   learnings: ["What was built and key patterns used"]
   patterns: ["Any new conventions discovered"]
@@ -422,6 +423,7 @@ MEMORY_NOTES:
 ```
 
 **IMPORTANT:** STATUS=PASS requires BOTH TDD_RED_EXIT=1 AND TDD_GREEN_EXIT=0
+**KEY:** REMEDIATION_REASON tells router exactly what to put in REM-FIX task description
 ```
 
 **Why safe:**
@@ -449,6 +451,7 @@ CRITICAL_LIST:
 HIGH_ISSUES: [count]
 BLOCKING: [true if CRITICAL_ISSUES > 0]
 REQUIRES_REMEDIATION: [true if CHANGES_REQUESTED]
+REMEDIATION_REASON: null | "Fix critical issues: {CRITICAL_LIST summary}"
 MEMORY_NOTES:
   learnings: ["Code quality insights"]
   patterns: ["Conventions or anti-patterns found"]
@@ -479,6 +482,7 @@ CRITICAL_LIST:
 HIGH_ISSUES: [count]
 BLOCKING: [true if CRITICAL_ISSUES > 0]
 REQUIRES_REMEDIATION: [true if CRITICAL_ISSUES > 0]
+REMEDIATION_REASON: null | "Fix silent failures: {CRITICAL_LIST summary}"
 MEMORY_NOTES:
   learnings: ["Error handling insights"]
   patterns: ["Silent failure patterns found"]
@@ -510,6 +514,7 @@ BLOCKER_LIST:
   - scenario - error → action
 BLOCKING: [true if STATUS=FAIL]
 REQUIRES_REMEDIATION: [true if BLOCKERS > 0]
+REMEDIATION_REASON: null | "Fix E2E failures: {BLOCKER_LIST summary}"
 MEMORY_NOTES:
   learnings: ["Integration insights"]
   patterns: ["Edge cases discovered"]
@@ -540,7 +545,8 @@ TDD_RED_EXIT: [1 or missing]
 TDD_GREEN_EXIT: [0 or missing]
 VARIANTS_COVERED: [count]
 BLOCKING: [true if STATUS != FIXED]
-REQUIRES_REMEDIATION: false
+REQUIRES_REMEDIATION: [true if missing TDD or variants]
+REMEDIATION_REASON: null | "Add regression test (RED→GREEN) + variant coverage"
 MEMORY_NOTES:
   learnings: ["Root cause and fix approach"]
   patterns: ["Bug pattern for Common Gotchas"]
@@ -548,6 +554,7 @@ MEMORY_NOTES:
 ```
 
 **IMPORTANT:** STATUS=FIXED requires TDD_RED_EXIT=1 AND TDD_GREEN_EXIT=0 AND VARIANTS_COVERED >= 1
+**KEY:** Agent sets REMEDIATION_REASON if requirements not met
 ```
 
 **Why safe:**
@@ -587,30 +594,106 @@ MEMORY_NOTES:
 
 ---
 
-### 12.2 Phase 2: Simplify Router Validation
+### 12.2 Phase 2: TRIM THE ROUTER
 
 **File:** `plugins/cc10x/skills/cc10x-router/SKILL.md`
-**Location:** Replace lines 398-473 (Validation Logic section)
-**Action:** REPLACE with simplified version + KEEP old as fallback
 
-#### WHAT TO DELETE (lines 398-473 approximately):
+#### WEIGHT TRANSFER SUMMARY
 
+| Component | Current Lines | After Trim | Change |
+|-----------|---------------|------------|--------|
+| Router validation | ~100 | ~25 | **-75 lines** |
+| Router tables | ~15 | 0 | **-15 lines** |
+| Agent output (each) | ~30 | ~45 | +15 lines each |
+| **NET ROUTER** | **~115** | **~25** | **-90 lines** |
+| **NET AGENTS (6x)** | **~180** | **~270** | +90 lines total |
+
+**Result:** Router loses 90 lines, distributed to 6 agents (15 each). Same total, better distribution.
+
+---
+
+#### DELETE BLOCK 1: Required Output Table (lines 380-394)
+
+**CURRENT (DELETE THIS):**
 ```markdown
-### Validation Logic
+### Required Output by Agent
+
+| Agent | Mode | Required Sections | Required Evidence |
+|-------|------|-------------------|-------------------|
+| component-builder | WRITE | TDD Evidence (RED + GREEN) | Exit codes: 1 (RED), 0 (GREEN) |
+| code-reviewer | READ-ONLY | Critical Issues, Verdict, **Memory Notes** | Confidence scores (≥80) |
+| silent-failure-hunter | READ-ONLY | Critical (blocks ship), Router Handoff, **Memory Notes** | Count of issues found |
+| integration-verifier | READ-ONLY | Scenarios table, Verdict, **Memory Notes** | PASS/FAIL per scenario |
+| bug-investigator | WRITE | Root cause, TDD Evidence (RED + GREEN), Variant Coverage, Fix applied | Exit codes: 1 (RED), 0 (GREEN) |
+| planner | WRITE | Plan saved path, Phases | Confidence score |
+
+**Memory Notes schema (READ-ONLY agents):**
+- **Learnings:** [insights for activeContext.md]
+- **Patterns:** [gotchas for patterns.md]
+- **Verification:** [results for progress.md]
+```
+
+**WHY DELETE:** This duplicates what agents already know. With Router Contract, each agent declares its own requirements. Router doesn't need to maintain a parallel list.
+
+**LINES SAVED:** 15
+
+---
+
+#### DELETE BLOCK 2: Verbose Validation Logic (lines 396-473)
+
+**CURRENT (DELETE THIS - 77 lines):**
 
 ```
+### Validation Logic
+
 After agent completes:
 
 1. Check for required sections in output
 2. Check for skill loading evidence (SKILL_HINTS loaded?)
 
 3. If REQUIRED sections are missing:
-   → Create remediation task...
-   [... ~75 lines of complex if/else logic ...]
-```
+   → Create remediation task (evidence-only; no code changes intended):
+     TaskCreate({
+       subject: "CC10X REM-EVIDENCE: {agent} missing {sections}",
+       description: "Agent output incomplete..."
+     })
+   → Task-enforced gate...
+   → STOP.
+
+**Circuit breaker:** Before creating REM-FIX task, if count ≥ 3 → AskUserQuestion...
+
+4. If silent-failure-hunter reports CRITICAL issues (count > 0):
+   → **Conflict check:** If code-reviewer verdict is "APPROVE"...
+   → Create remediation task:
+     TaskCreate({ subject: "CC10X REM-FIX: Fix CRITICAL silent failures"... })
+   → Block downstream tasks
+   → STOP.
+
+4b. If code-reviewer verdict is "Changes Requested":
+   → Create remediation task:
+     TaskCreate({ subject: "CC10X REM-FIX: Address code-reviewer issues"... })
+   → Block downstream tasks
+   → STOP.
+
+5. If bug-investigator missing TDD Evidence or Variant Coverage:
+   → Create remediation task:
+     TaskCreate({ subject: "CC10X REM-FIX: bug-investigator missing TDD/variants"... })
+   → STOP.
+
+6. If NON-CRITICAL missing → Note for improvement, continue
+7. If validation PASSES → Proceed to next agent
 ```
 
-#### WHAT TO ADD (replacement):
+**WHY DELETE:** This is agent-specific if/else logic. With Router Contract:
+- Agents declare `BLOCKING: true/false` and `REQUIRES_REMEDIATION: true/false`
+- Agents include `REMEDIATION_REASON: "..."`
+- Router just reads the contract - no agent-specific parsing
+
+**LINES SAVED:** 75
+
+---
+
+#### REPLACEMENT: Simplified Validation (25 lines)
 
 ```markdown
 ### Validation Logic (Simplified via Router Contract)
