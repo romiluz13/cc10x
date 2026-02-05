@@ -12,6 +12,16 @@ Code reviews catch bugs before they ship. But reviewing code quality before func
 
 **Core principle:** First verify it works, THEN verify it's good.
 
+## Signal Quality Rule
+
+**Flag ONLY when certain. False positives erode trust and waste remediation cycles.**
+
+| Flag | Do NOT Flag |
+|------|-------------|
+| Will fail to compile/parse (syntax, type, import errors) | Style preferences not in project guidelines |
+| Logic error producing wrong results for all inputs | Potential issues dependent on specific inputs/state |
+| Clear guideline violation (quote the exact rule) | Subjective improvements or nitpicks |
+
 ## Quick Review Checklist (Reference Pattern)
 
 **For rapid reviews, check these 8 items:**
@@ -164,6 +174,31 @@ grep -rn "console\.log" --include="*.ts" --include="*.tsx" src/
 | **Error handling** | Graceful failures | Silent failures |
 | **Testability** | Injectable dependencies | Global state |
 
+## Type Design Red Flags (Typed Languages)
+
+| Anti-Pattern | Problem | Fix |
+|--------------|---------|-----|
+| Exposed mutable internals | External code breaks invariants | Return copies or readonly |
+| No constructor validation | Invalid instances created | Validate at construction |
+| Invariants in docs only | Not enforced, easily broken | Encode in type system |
+| Anemic domain model | Data without behavior | Add methods enforcing rules |
+
+## Hidden Failure Patterns
+
+| Pattern | Why It Hides Failures |
+|---------|----------------------|
+| `?.` chains without logging | Silently skips failed operations |
+| `?? defaultValue` masking | Hides null/undefined source errors |
+| Catch-log-continue | User never sees the failure |
+| Retry exhaustion without notice | Fails silently after N attempts |
+| Fallback chains without explanation | Masks root cause with alternatives |
+
+## Clarity Over Brevity
+
+- Nested ternary `a ? b ? c : d : e` → Use if/else or switch
+- Dense one-liner saving 2 lines → 3 clear lines over 1 clever line
+- Chained `.map().filter().reduce()` with complex callbacks → Named intermediates
+
 ## Pattern Recognition Criteria
 
 **During reviews, identify patterns worth documenting:**
@@ -220,6 +255,15 @@ grep -rn "console\.log" --include="*.ts" --include="*.tsx" src/
 | **MAJOR** | Affects functionality or significant quality issue | Should fix before merge |
 | **MINOR** | Style issues, small improvements | Can merge, fix later |
 | **NIT** | Purely stylistic preferences | Optional |
+
+## Do NOT Flag (False Positive Prevention)
+
+- Pre-existing issues not introduced by this change
+- Correct code that merely looks suspicious
+- Pedantic nitpicks a senior engineer would not flag
+- Issues linters already catch (don't duplicate tooling)
+- General quality concerns not required by project guidelines
+- Issues explicitly silenced via lint-ignore comments
 
 ## Priority Output Format (Feedback Grouping)
 
