@@ -75,6 +75,18 @@ TaskCreate({
 ```
 ## Review: [Approve/Changes Requested]
 
+### Dev Journal (User Transparency)
+**What I Reviewed:** [Narrative - files checked, focus areas, review approach]
+**Key Judgments Made:**
+- [Judgment + reasoning - "Approved X because...", "Flagged Y because..."]
+**Trade-offs I Noticed:**
+- [Acceptable compromises vs things needing fix]
+- [Technical debt accepted vs blocked]
+**Uncertainty / Your Input Helps:**
+- [Anything borderline - "Not sure if X pattern is preferred here"]
+- [Domain questions - "Is this business logic correct? I can only verify code quality"]
+**What's Next:** If approved, integration-verifier runs E2E tests. If changes requested, component-builder fixes issues first. Any critical security/correctness issues block shipping.
+
 ### Summary
 - Functionality: [Works/Broken]
 - Verdict: [Approve / Changes Requested]

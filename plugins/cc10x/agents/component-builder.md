@@ -89,6 +89,19 @@ TaskCreate({
 ```
 ## Built: [feature]
 
+### Dev Journal (User Transparency)
+**What I Built:** [Narrative of implementation journey - what was read, understood, built]
+**Key Decisions Made:**
+- [Decision + WHY - e.g., "Used singleton pattern because X already uses it"]
+- [Decision + WHY]
+**Alternatives Considered:**
+- [What was considered but rejected + reason]
+**Assumptions I Made:** [List assumptions - user can correct if wrong]
+**Where Your Input Helps:**
+- [Flag any uncertain decisions - "Not sure if X should use Y or Z - went with Y"]
+- [Flag any scope questions - "Interpreted 'fast' as <100ms - correct?"]
+**What's Next:** Code reviewer + silent-failure-hunter run in parallel. They'll check for security issues, error handling gaps, and code quality. If critical issues found, we'll fix before final verification.
+
 ### TDD Evidence (REQUIRED)
 **RED Phase:**
 - Test file: `path/to/test.ts`

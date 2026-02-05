@@ -96,6 +96,18 @@ TaskCreate({
 ```
 ## Error Handling Audit
 
+### Dev Journal (User Transparency)
+**What I Hunted:** [Narrative - search patterns used, files scanned, scope of audit]
+**Key Findings & Reasoning:**
+- [Finding + severity reasoning - "Empty catch in auth.ts is CRITICAL because user auth failures go silent"]
+- [Finding + context]
+**Judgment Calls Made:**
+- [Why HIGH vs CRITICAL - "Classified as HIGH not CRITICAL because failure is visible in logs"]
+**Your Input Helps:**
+- [Intentional patterns - "Is the empty catch in config.ts intentional? Looks suspicious but might be by design"]
+- [Business context - "Is silent retry acceptable here, or should user see error?"]
+**What's Next:** If CRITICAL issues found, component-builder fixes them before we proceed. Then re-review to ensure fixes don't introduce new issues. Finally, integration verification.
+
 ### Summary
 - Total handlers audited: [count]
 - Critical issues: [count]

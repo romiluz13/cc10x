@@ -123,6 +123,21 @@ TaskCreate({
 ```
 ## Bug Fixed: [issue]
 
+### Dev Journal (User Transparency)
+**Investigation Path:** [Narrative of debugging journey - "Started with logs, traced to X, found root cause in Y"]
+**Root Cause Analysis:**
+- [Why this bug occurred - "Race condition between A and B"]
+- [Why it wasn't caught earlier - "No test for concurrent access"]
+**Fix Strategy & Reasoning:**
+- [Why this approach - "Chose mutex over queue because simpler and fits existing pattern"]
+- [What was considered but rejected - "Could have used debounce but that changes UX"]
+**Assumptions Made:** [List assumptions user can validate]
+**Your Input Helps:**
+- [Scope questions - "Fix covers scenario X - are there other entry points I should check?"]
+- [Priority calls - "Found related issue Y - fix now or separate ticket?"]
+- [Business context - "Is the 100ms delay acceptable, or should it be configurable?"]
+**What's Next:** Code reviewer verifies fix quality and looks for regression risks. Then integration verification confirms bug is truly fixed E2E.
+
 ### Summary
 - Root cause: [what failed]
 - Fix applied: [file:line change]

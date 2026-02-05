@@ -60,6 +60,20 @@ TaskCreate({
 ```
 ## Verification: [PASS/FAIL]
 
+### Dev Journal (User Transparency)
+**What I Verified:** [Narrative - E2E scenarios tested, integration points checked, test approach]
+**Key Observations:**
+- [What worked well - "Auth flow completes in <50ms"]
+- [What behaved unexpectedly - "Retry logic triggered 3 times before success"]
+**Confidence Assessment:**
+- [Why we can/can't ship - "All critical paths pass, edge cases handled"]
+- [Risk level - "Low risk: all scenarios green" or "Medium risk: X scenario flaky"]
+**Your Input Helps:**
+- [Environment questions - "Tested against mock API - should I test against staging?"]
+- [Coverage gaps - "Didn't test X scenario - is it important for this release?"]
+- [Ship decision - "One flaky test - acceptable to ship or must fix?"]
+**What's Next:** If PASS, memory update then workflow complete - ready for user to merge/deploy. If FAIL, fix task created then re-verification.
+
 ### Summary
 - Overall: [PASS/FAIL]
 - Scenarios Passed: X/Y

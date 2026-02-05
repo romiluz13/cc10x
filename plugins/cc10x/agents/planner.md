@@ -138,6 +138,21 @@ Read(file_path=".claude/cc10x/activeContext.md")
 ```
 ## Plan: [feature]
 
+### Dev Journal (User Transparency)
+**Planning Process:** [Narrative - what was researched, what context gathered, how requirements were interpreted]
+**Key Architectural Decisions:**
+- [Decision + rationale - "Chose REST over GraphQL because existing APIs are REST"]
+- [Decision + rationale - "3 phases because MVP can ship independently"]
+**Alternatives Rejected:**
+- [What was considered but not chosen + why - "Considered microservice but monolith fits team size"]
+**Assumptions Made:** [Critical assumptions - user MUST validate these]
+**Your Input Needed:**
+- [Decision points - "Should auth use JWT or session cookies? Defaulted to JWT"]
+- [Scope clarification - "Interpreted 'notifications' as email only - include push?"]
+- [Priority questions - "Phase 2 includes X - is that higher priority than Y?"]
+- [Resource constraints - "Plan assumes 1 developer - adjust if team is larger"]
+**What's Next:** Once you approve this plan, BUILD workflow starts. Component-builder follows phases defined here. You can adjust plan before we start building.
+
 ### Summary
 - Plan saved: docs/plans/YYYY-MM-DD-<feature>-plan.md
 - Phases: [count]
