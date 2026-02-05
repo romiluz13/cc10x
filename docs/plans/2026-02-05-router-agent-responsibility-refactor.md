@@ -393,6 +393,341 @@ This proves router should ask questions, not agents.
 
 ---
 
+## Part 12: EXACT IMPLEMENTATION DIFFS
+
+### 12.1 Phase 1: Add Router Contract to Each Agent
+
+---
+
+#### 12.1.1 component-builder.md
+
+**File:** `plugins/cc10x/agents/component-builder.md`
+**Location:** AFTER `### Task Status` section (end of output template)
+**Action:** ADD (not delete anything)
+
+```markdown
+### Router Contract (MACHINE-READABLE)
+```yaml
+STATUS: PASS | FAIL
+CONFIDENCE: [0-100]
+TDD_RED_EXIT: [1 or missing]
+TDD_GREEN_EXIT: [0 or missing]
+CRITICAL_ISSUES: 0
+BLOCKING: false
+REQUIRES_REMEDIATION: false
+MEMORY_NOTES:
+  learnings: ["What was built and key patterns used"]
+  patterns: ["Any new conventions discovered"]
+  verification: ["TDD evidence summary"]
+```
+
+**IMPORTANT:** STATUS=PASS requires BOTH TDD_RED_EXIT=1 AND TDD_GREEN_EXIT=0
+```
+
+**Why safe:**
+- ADDITIVE ONLY - no existing content removed
+- Existing `### Task Status` still works
+- Router can use new OR old format
+- If agent forgets this section, old parsing kicks in
+
+---
+
+#### 12.1.2 code-reviewer.md
+
+**File:** `plugins/cc10x/agents/code-reviewer.md`
+**Location:** AFTER `### Task Status` section (end of output template)
+**Action:** ADD (not delete anything)
+
+```markdown
+### Router Contract (MACHINE-READABLE)
+```yaml
+STATUS: APPROVE | CHANGES_REQUESTED
+CONFIDENCE: [80-100]
+CRITICAL_ISSUES: [count]
+CRITICAL_LIST:
+  - file:line - issue → fix
+HIGH_ISSUES: [count]
+BLOCKING: [true if CRITICAL_ISSUES > 0]
+REQUIRES_REMEDIATION: [true if CHANGES_REQUESTED]
+MEMORY_NOTES:
+  learnings: ["Code quality insights"]
+  patterns: ["Conventions or anti-patterns found"]
+  verification: ["Review verdict summary"]
+```
+```
+
+**Why safe:**
+- ADDITIVE ONLY - existing Router Handoff section preserved
+- New section is MORE structured, easier to parse
+- Backward compatible - old parsing still works
+
+---
+
+#### 12.1.3 silent-failure-hunter.md
+
+**File:** `plugins/cc10x/agents/silent-failure-hunter.md`
+**Location:** AFTER `### Task Status` section (end of output template)
+**Action:** ADD (not delete anything)
+
+```markdown
+### Router Contract (MACHINE-READABLE)
+```yaml
+STATUS: CLEAN | ISSUES_FOUND
+CRITICAL_ISSUES: [count]
+CRITICAL_LIST:
+  - file:line - issue → fix
+HIGH_ISSUES: [count]
+BLOCKING: [true if CRITICAL_ISSUES > 0]
+REQUIRES_REMEDIATION: [true if CRITICAL_ISSUES > 0]
+MEMORY_NOTES:
+  learnings: ["Error handling insights"]
+  patterns: ["Silent failure patterns found"]
+  verification: ["Hunt result summary"]
+```
+```
+
+**Why safe:**
+- ADDITIVE ONLY - existing Router Handoff section preserved
+- Duplicates info in machine-readable format
+- If conflict with old format, router uses new (more reliable)
+
+---
+
+#### 12.1.4 integration-verifier.md
+
+**File:** `plugins/cc10x/agents/integration-verifier.md`
+**Location:** AFTER `### Task Status` section (end of output template)
+**Action:** ADD (not delete anything)
+
+```markdown
+### Router Contract (MACHINE-READABLE)
+```yaml
+STATUS: PASS | FAIL
+SCENARIOS_TOTAL: [count]
+SCENARIOS_PASSED: [count]
+BLOCKERS: [count]
+BLOCKER_LIST:
+  - scenario - error → action
+BLOCKING: [true if STATUS=FAIL]
+REQUIRES_REMEDIATION: [true if BLOCKERS > 0]
+MEMORY_NOTES:
+  learnings: ["Integration insights"]
+  patterns: ["Edge cases discovered"]
+  verification: ["E2E test results"]
+```
+```
+
+**Why safe:**
+- ADDITIVE ONLY
+- Existing Router Handoff preserved
+- Machine-readable version of same data
+
+---
+
+#### 12.1.5 bug-investigator.md
+
+**File:** `plugins/cc10x/agents/bug-investigator.md`
+**Location:** AFTER `### Task Status` section (end of output template)
+**Action:** ADD (not delete anything)
+
+```markdown
+### Router Contract (MACHINE-READABLE)
+```yaml
+STATUS: FIXED | INVESTIGATING | BLOCKED
+CONFIDENCE: [0-100]
+ROOT_CAUSE: "[one-line summary]"
+TDD_RED_EXIT: [1 or missing]
+TDD_GREEN_EXIT: [0 or missing]
+VARIANTS_COVERED: [count]
+BLOCKING: [true if STATUS != FIXED]
+REQUIRES_REMEDIATION: false
+MEMORY_NOTES:
+  learnings: ["Root cause and fix approach"]
+  patterns: ["Bug pattern for Common Gotchas"]
+  verification: ["Regression test evidence"]
+```
+
+**IMPORTANT:** STATUS=FIXED requires TDD_RED_EXIT=1 AND TDD_GREEN_EXIT=0 AND VARIANTS_COVERED >= 1
+```
+
+**Why safe:**
+- ADDITIVE ONLY
+- Existing TDD Evidence section preserved (human-readable)
+- Contract is machine-readable summary
+
+---
+
+#### 12.1.6 planner.md
+
+**File:** `plugins/cc10x/agents/planner.md`
+**Location:** AFTER `### Task Status` section (end of output template)
+**Action:** ADD (not delete anything)
+
+```markdown
+### Router Contract (MACHINE-READABLE)
+```yaml
+STATUS: PLAN_CREATED | NEEDS_CLARIFICATION
+CONFIDENCE: [1-10]
+PLAN_FILE: "[path to saved plan]"
+PHASES: [count]
+RISKS_IDENTIFIED: [count]
+BLOCKING: false
+REQUIRES_REMEDIATION: false
+MEMORY_NOTES:
+  learnings: ["Planning insights"]
+  patterns: ["Architectural decisions"]
+  verification: ["Plan confidence factors"]
+```
+```
+
+**Why safe:**
+- ADDITIVE ONLY
+- Existing output preserved
+- Contract makes plan status explicit
+
+---
+
+### 12.2 Phase 2: Simplify Router Validation
+
+**File:** `plugins/cc10x/skills/cc10x-router/SKILL.md`
+**Location:** Replace lines 398-473 (Validation Logic section)
+**Action:** REPLACE with simplified version + KEEP old as fallback
+
+#### WHAT TO DELETE (lines 398-473 approximately):
+
+```markdown
+### Validation Logic
+
+```
+After agent completes:
+
+1. Check for required sections in output
+2. Check for skill loading evidence (SKILL_HINTS loaded?)
+
+3. If REQUIRED sections are missing:
+   → Create remediation task...
+   [... ~75 lines of complex if/else logic ...]
+```
+```
+
+#### WHAT TO ADD (replacement):
+
+```markdown
+### Validation Logic (Simplified via Router Contract)
+
+```
+After agent completes:
+
+1. PARSE Router Contract:
+   - Look for "### Router Contract" section
+   - Parse YAML block
+   - If not found → FALLBACK to legacy parsing (see 12.2.1)
+
+2. VALIDATE Contract:
+   contract = parse_yaml(agent_output)
+
+   if contract.BLOCKING == true:
+       → Create remediation task
+       → Block downstream tasks
+       → STOP
+
+   if contract.REQUIRES_REMEDIATION == true:
+       → Create REM-FIX task
+       → Block downstream tasks
+       → STOP
+
+   if contract.CRITICAL_ISSUES > 0:
+       → Log critical issues
+       → If code-reviewer APPROVE + silent-failure-hunter CRITICAL:
+           AskUserQuestion: "Conflict: Reviewer approved, Hunter found issues. Investigate or Skip?"
+
+   → Collect contract.MEMORY_NOTES for workflow-final persistence
+   → Proceed to next agent
+
+3. VALIDATION EVIDENCE (include in response):
+   ### Agent Validation: {agent_name}
+   - Contract Found: [Yes/No]
+   - Status: [contract.STATUS]
+   - Blocking: [contract.BLOCKING]
+   - Proceeding: [Yes/No + reason]
+```
+
+#### 12.2.1 LEGACY FALLBACK (KEEP - do not delete)
+
+```markdown
+### Legacy Validation Fallback
+
+If Router Contract section NOT found, use original parsing:
+
+**component-builder:** Check for "### TDD Evidence", parse exit codes from text
+**code-reviewer:** Check for "### Critical Issues", parse CRITICAL_COUNT from Router Handoff
+**silent-failure-hunter:** Check for "### Router Handoff", parse CRITICAL_COUNT
+**integration-verifier:** Check for "### Router Handoff", parse STATUS
+**bug-investigator:** Check for "### TDD Evidence" + "### Variant Coverage"
+**planner:** Check for "Plan saved:" in output
+
+This fallback ensures backward compatibility with older agent versions.
+```
+
+**Why safe:**
+- OLD LOGIC PRESERVED as fallback
+- New logic only activates if Router Contract exists
+- If new logic fails, old logic catches it
+- No behavior change for existing agents until they add Contract
+- Gradual migration - each agent can add Contract independently
+
+---
+
+### 12.3 Phase 3: Remove Legacy Fallback (FUTURE - NOT NOW)
+
+**DO NOT IMPLEMENT PHASE 3 until Phase 1+2 stable for 2+ weeks.**
+
+When ready:
+- DELETE the "Legacy Validation Fallback" section
+- All agents MUST have Router Contract
+- Add pre-flight check: `grep -l "Router Contract" plugins/cc10x/agents/*.md | wc -l` must equal 6
+
+---
+
+### 12.4 Safety Verification Checklist
+
+Before implementing each phase:
+
+#### Phase 1 (Agent Changes):
+- [ ] Each change is ADDITIVE ONLY (grep for deletions = 0)
+- [ ] Existing output sections unchanged
+- [ ] New section follows YAML format exactly
+- [ ] Run smoke test after each agent update
+
+#### Phase 2 (Router Changes):
+- [ ] Legacy fallback section EXISTS and is COMPLETE
+- [ ] New validation only activates on "### Router Contract" presence
+- [ ] Conflict resolution logic preserved
+- [ ] Remediation loop logic preserved
+- [ ] Memory Notes collection preserved
+- [ ] Run smoke test
+- [ ] Run 3 test workflows: BUILD, DEBUG, REVIEW
+
+#### Phase 3 (Legacy Removal):
+- [ ] All 6 agents confirmed to have Router Contract
+- [ ] 2+ weeks of stable operation with Phase 1+2
+- [ ] User explicitly approves removal
+- [ ] Backup of legacy code saved somewhere
+
+---
+
+### 12.5 Rollback Plan
+
+If anything breaks:
+
+**Phase 1 rollback:** `git revert` the agent changes - no router impact
+**Phase 2 rollback:** Legacy fallback handles everything - just remove new validation code
+**Phase 3 rollback:** Restore legacy fallback section from git history
+
+Each phase is independently reversible.
+
+---
+
 ## Approval Required
 
 - [ ] User approves approach
