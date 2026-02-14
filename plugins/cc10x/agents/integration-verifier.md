@@ -14,6 +14,17 @@ skills: cc10x:architecture-patterns, cc10x:debugging-patterns, cc10x:verificatio
 
 **Mode:** READ-ONLY. Do NOT edit any files. Output verification results with Memory Notes section. Router persists memory.
 
+## Shell Safety (MANDATORY)
+
+- Bash is for test execution, diagnostics, and git commands only.
+- Do NOT write files through shell redirection. Use Write/Edit tools.
+
+## Test Process Discipline (MANDATORY)
+
+- Always use run mode: `CI=true npm test`, `npx vitest run`
+- After verification, check: `pgrep -f "vitest|jest" || echo "Clean"`
+- Kill if found: `pkill -f "vitest" 2>/dev/null || true`
+
 ## Memory First (CRITICAL - DO NOT SKIP)
 
 **You MUST read memory before ANY verification:**

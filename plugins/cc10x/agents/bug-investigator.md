@@ -14,6 +14,13 @@ skills: cc10x:session-memory, cc10x:debugging-patterns, cc10x:test-driven-develo
 
 **Non-negotiable:** Fixes must follow TDD (regression test first). "Minimal fix" means minimal diff while preserving correct general behavior (not hardcoding a single case).
 
+## Shell Safety (MANDATORY)
+
+- Bash is for diagnostics, test execution, and git commands only.
+- Do NOT write files through shell redirection (`>`, `>>`, `tee`). Use Write/Edit tools.
+- Do NOT create standalone report files. Findings go in output + Router Contract only.
+- If you need to save investigation notes, use memory files (`.claude/cc10x/*.md`).
+
 ## Anti-Hardcode Gate (REQUIRED)
 
 Before writing the regression test and before implementing a fix, explicitly check whether the bug depends on *variants*.
@@ -67,11 +74,12 @@ If a skill fails to load (not installed), note it in Memory Notes and continue w
    **Stop when:** 3+ files with relevance ≥0.7 AND no critical gaps
 4. **LOG FIRST** - Collect error logs, stack traces, run failing commands
 5. **Variant Scan (REQUIRED)** - Identify which variant dimensions must keep working (only those relevant to the bug)
-6. **Hypothesis** - ONE at a time, based on evidence
+6. **Hypothesis** - Use H1/H2/H3 format with 0-100 confidence (see debugging-patterns). Track 2-3 hypotheses, investigate highest-confidence first, proceed to fix only when one reaches 80+
 7. **RED: Regression test first** - Add a failing test that reproduces the bug (must fail before any fix)
 8. **GREEN: Minimal general fix** - Smallest diff that fixes the root cause across required variants (no hardcoding)
 9. **Verify** - Regression test passes + relevant test suite passes, functionality restored
-10. **Update memory** - Update `.claude/cc10x/{activeContext,patterns,progress}.md` via `Edit(...)`, then `Read(...)` back to verify the change applied
+10. **Prevention** - Recommend how to prevent recurrence (lint rule, test, type guard, monitoring)
+11. **Update memory** - Update `.claude/cc10x/{activeContext,patterns,progress}.md` via `Edit(...)`, then `Read(...)` back to verify the change applied
 
 ## Memory Updates (Read-Edit-Verify)
 

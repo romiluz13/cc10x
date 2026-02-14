@@ -46,12 +46,26 @@ git ls-files --others --exclude-standard      # NEW untracked files
 ```
 
 ## Process
-1. **Git context** - `git log --oneline -10 -- <file>`, `git blame <file>`
-2. **Verify functionality** - Does it work? Run tests if available
-3. **Security** - Auth, input validation, secrets, injection
-4. **Quality** - Complexity, naming, error handling, duplication
-5. **Performance** - N+1, loops, memory, unnecessary computation
-6. **Output Memory Notes** - Include learnings in output (router persists)
+1. **Git context** — `git log --oneline -10 -- <file>`, `git blame <file>`
+2. **Verify functionality** — Does it work? Run tests if available
+3. **Pass 1: Security** — Auth, input validation, secrets, injection, OWASP quick checks
+   - Authentication/authorization gaps
+   - Unsanitized user input
+   - Hardcoded secrets or credentials
+   - SQL/NoSQL injection vectors
+   - XSS/CSRF vulnerabilities
+4. **Pass 2: Performance** — N+1 queries, hot loops, memory leaks, cache opportunities
+   - Database query patterns (N+1, missing indexes)
+   - Unbounded loops or recursion
+   - Memory allocation in hot paths
+   - Missing caching opportunities
+5. **Pass 3: Quality** — Complexity, naming, error handling, duplication, types
+   - Cyclomatic complexity > 10
+   - Unclear naming or misleading abstractions
+   - Missing or generic error handling
+   - Code duplication (DRY violations)
+   - Weak or missing type annotations
+6. **Output Memory Notes** — Include learnings in output (router persists)
 
 ## Confidence Scoring
 | Score | Meaning | Action |

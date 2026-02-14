@@ -45,6 +45,20 @@ Write code before the test? Delete it. Start over.
 
 Implement fresh from tests. Period.
 
+## Test Process Discipline (CRITICAL)
+
+**Problem:** Test runners (Vitest, Jest) default to watch mode, leaving processes hanging indefinitely.
+
+**Mandatory Rules:**
+1. **Always use run mode** — Never invoke watch mode:
+   - Vitest: `npx vitest run` (NOT `npx vitest`)
+   - Jest: `CI=true npx jest` or `npx jest --watchAll=false`
+   - npm scripts: `CI=true npm test` or `npm test -- --run`
+2. **Prefer CI=true prefix** for all test commands: `CI=true npm test`
+3. **After TDD cycle complete**, verify no orphaned processes:
+   `pgrep -f "vitest|jest" || echo "Clean"`
+4. **Kill if found**: `pkill -f "vitest" 2>/dev/null || true`
+
 ## Red-Green-Refactor
 
 ```
@@ -103,7 +117,7 @@ Vague name, tests mock not code
 **MANDATORY. Never skip.**
 
 ```bash
-npm test path/to/test.test.ts
+CI=true npm test path/to/test.test.ts
 ```
 
 Confirm:
@@ -156,7 +170,7 @@ Don't add features, refactor other code, or "improve" beyond the test. Don't har
 **MANDATORY.**
 
 ```bash
-npm test path/to/test.test.ts
+CI=true npm test path/to/test.test.ts
 ```
 
 Confirm:
@@ -395,6 +409,7 @@ Before marking work complete:
 - [ ] Output pristine (no errors, warnings)
 - [ ] Tests use real code (mocks only if unavoidable)
 - [ ] Edge cases and errors covered
+- [ ] No hanging test processes (pgrep -f "vitest|jest" returns empty)
 
 Can't check all boxes? You skipped TDD. Start over.
 

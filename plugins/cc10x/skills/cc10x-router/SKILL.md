@@ -265,6 +265,23 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [planner_task_id] })
 5. **Start chain execution** (see Chain Execution Loop below)
 6. Update memory when all tasks completed
 
+### Execution Depth Selector (BUILD only)
+
+**Default: FULL.** Use QUICK only if ALL 5 conditions are met:
+1. Single-unit change (one file, one function)
+2. No security implications
+3. No cross-layer dependencies (e.g., API + DB + UI)
+4. No open `CC10X REM-FIX` tasks in current workflow
+5. Requirements are explicit and unambiguous
+
+| Depth | Chain | When |
+|-------|-------|------|
+| **FULL** | component-builder → [code-reviewer ∥ silent-failure-hunter] → integration-verifier | Default for all BUILD |
+| **QUICK** | component-builder → integration-verifier | ALL 5 conditions above met |
+
+**QUICK still requires:** Router Contract validation + verifier + memory update.
+**Blocking signal during QUICK** (verifier FAIL, test failure, lint error) → **escalate to FULL** immediately.
+
 ### DEBUG
 1. Load memory → Check patterns.md Common Gotchas
 2. **CLARIFY (REQUIRED)**: Use AskUserQuestion if ANY ambiguity:
@@ -520,6 +537,7 @@ skills: cc10x:session-memory, cc10x:code-generation, cc10x:frontend-patterns
 7. **TASKS_CREATED** - Workflow task hierarchy created
 8. **ALL_TASKS_COMPLETED** - All workflow tasks (including Memory Update) status="completed"
 9. **MEMORY_UPDATED** - Before marking done
+10. **TEST_PROCESSES_CLEANED** - Kill orphaned vitest/jest/mocha: `pkill -f "vitest|jest|mocha" 2>/dev/null || true`
 
 ## Chain Execution Loop (Task-Based)
 

@@ -119,17 +119,17 @@ Read(file_path=".claude/cc10x/activeContext.md")
 
 | Score | Meaning | Action |
 |-------|---------|--------|
-| 1-4 | Low confidence | Plan needs more detail/context |
-| 5-6 | Medium | Acceptable for smaller features |
-| 7-8 | High | Good for most features |
-| 9-10 | Very high | Comprehensive, ready for execution |
+| 0-49 | Low confidence | Plan needs more detail/context |
+| 50-69 | Medium | Acceptable for smaller features |
+| 70-89 | High | Good for most features |
+| 90-100 | Very high | Comprehensive, ready for execution |
 
 **Factors affecting confidence:**
-- Context References included with file:line? (+2)
-- All edge cases documented? (+1)
-- Test commands specific? (+1)
-- Risk mitigations defined? (+1)
-- File paths exact? (+1)
+- Context References included with file:line? (+25)
+- All edge cases documented? (+20)
+- Test commands specific? (+20)
+- Risk mitigations defined? (+20)
+- File paths exact? (+15)
 
 ## Task Completion
 
@@ -167,7 +167,7 @@ If task involves technologies with complementary skills (from CLAUDE.md), list t
 - [Match from CLAUDE.md Complementary Skills table]
 Note: CC10x internal skills (frontend-patterns, architecture-patterns, etc.) load via agent frontmatter — do not list here.
 
-### Confidence Score: X/10
+### Confidence Score: X/100
 - [reason for score]
 - [factors that could improve it]
 
@@ -185,7 +185,7 @@ Note: CC10x internal skills (frontend-patterns, architecture-patterns, etc.) loa
 ### Router Contract (MACHINE-READABLE)
 ```yaml
 STATUS: PLAN_CREATED | NEEDS_CLARIFICATION
-CONFIDENCE: [1-10 from Confidence Score above]
+CONFIDENCE: [0-100 from Confidence Score above]
 PLAN_FILE: "[path to saved plan, e.g., docs/plans/2026-02-05-feature-plan.md]"
 PHASES: [count of phases in plan]
 RISKS_IDENTIFIED: [count of risks identified]
@@ -195,7 +195,7 @@ REMEDIATION_REASON: null
 MEMORY_NOTES:
   learnings: ["Planning approach and key insights"]
   patterns: ["Architectural decisions made"]
-  verification: ["Plan: {PLAN_FILE} with {CONFIDENCE}/10 confidence"]
+  verification: ["Plan: {PLAN_FILE} with {CONFIDENCE}/100 confidence"]
 ```
-**CONTRACT RULE:** STATUS=PLAN_CREATED requires PLAN_FILE is valid path and CONFIDENCE>=5
+**CONTRACT RULE:** STATUS=PLAN_CREATED requires PLAN_FILE is valid path and CONFIDENCE>=50
 ```

@@ -12,6 +12,26 @@ skills: cc10x:session-memory, cc10x:test-driven-development, cc10x:code-generati
 
 **Core:** Build features using TDD cycle (RED → GREEN → REFACTOR). No code without failing test first.
 
+## Write Policy (MANDATORY)
+
+1. **Write/Edit tools** for all file creation and modification — no exceptions.
+2. **Bash** for execution only: test runners, linters, git commands, build tools.
+3. Do NOT create standalone report files. Findings go in output + Router Contract only.
+
+## Test Process Discipline (CRITICAL)
+
+**Problem:** Test runners (Vitest, Jest) default to watch mode, leaving processes hanging indefinitely.
+
+**Mandatory Rules:**
+1. **Always use run mode** — Never invoke watch mode:
+   - Vitest: `npx vitest run` (NOT `npx vitest`)
+   - Jest: `CI=true npx jest` or `npx jest --watchAll=false`
+   - npm scripts: `CI=true npm test` or `npm test -- --run`
+2. **Prefer CI=true prefix** for all test commands: `CI=true npm test`
+3. **After TDD cycle complete**, verify no orphaned processes:
+   `pgrep -f "vitest|jest" || echo "Clean"`
+4. **Kill if found**: `pkill -f "vitest" 2>/dev/null || true`
+
 ## Memory First
 ```
 Bash(command="mkdir -p .claude/cc10x")

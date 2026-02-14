@@ -353,6 +353,39 @@ You MUST complete each phase before proceeding to the next.
 
 **The difference:** Specificity. Good hypotheses make specific, testable claims.
 
+### Hypothesis Confidence Scoring
+
+**Track multiple hypotheses with confidence levels:**
+
+```
+H1: [hypothesis] — Confidence: [0-100]
+    Evidence for: [what supports this]
+    Evidence against: [what contradicts this]
+    Next test: [what would raise or lower confidence]
+
+H2: [hypothesis] — Confidence: [0-100]
+    Evidence for: [...]
+    Evidence against: [...]
+    Next test: [...]
+
+H3: [hypothesis] — Confidence: [0-100]
+    Evidence for: [...]
+    Evidence against: [...]
+    Next test: [...]
+```
+
+**Scoring guidance:**
+| Range | Meaning | Action |
+|-------|---------|--------|
+| 80-100 | Strong evidence, high certainty | Proceed to fix |
+| 50-79 | Circumstantial, needs more data | Run "Next test" |
+| 0-49 | Speculation, weak evidence | Deprioritize or discard |
+
+**Rules:**
+- Always maintain 2-3 hypotheses until one reaches 80+
+- Update confidence after EVERY piece of new evidence
+- Never proceed to fix with highest hypothesis below 50
+
 ### Cognitive Biases in Debugging
 
 | Bias | Trap | Antidote |

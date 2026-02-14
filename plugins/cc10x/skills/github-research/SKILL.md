@@ -145,9 +145,28 @@ mcp__brightdata__search_engine(query="{library} tutorial best practices 2024", e
 
 **Merge Strategy:** Use Octocode for code patterns, Bright Data for context/warnings.
 
+### Tier 1.5: Context7 Library Docs
+
+**When to use:** Octocode unavailable, or need quick library API reference.
+
+```
+# Step 1: Resolve the library ID
+mcp__context7__resolve-library-id(libraryName="{library}")
+
+# Step 2: Query docs with specific topic
+mcp__context7__query-docs(context7CompatibleLibraryID="{resolved_id}", topic="{specific API or feature}")
+```
+
+**Best for:**
+- Library API reference and usage examples
+- Framework-specific patterns and configuration
+- Quick answers without full GitHub exploration
+
+**Falls to Tier 2 when:** Context7 MCP unavailable or library not indexed.
+
 ### Tier 2: Native Claude Code (FALLBACK)
 
-**If Tier 1 fails (MCP unavailable):**
+**If Tier 1 AND Tier 1.5 fail (MCPs unavailable):**
 
 ```
 # Native Claude Code tools - always available
@@ -189,7 +208,11 @@ START
   ├─→ Tier 1: Parallel (Octocode + Bright Data)
   │     ├─ Both succeed → Merge results, DONE
   │     ├─ One succeeds → Use that result, DONE
-  │     └─ Both fail → Fall to Tier 2
+  │     └─ Both fail → Fall to Tier 1.5
+  │
+  ├─→ Tier 1.5: Context7 Library Docs
+  │     ├─ Success → Use result, DONE
+  │     └─ Fail → Fall to Tier 2
   │
   ├─→ Tier 2: Native (WebSearch + WebFetch)
   │     ├─ Success → Use result, DONE
@@ -401,12 +424,9 @@ Read(file_path=".claude/cc10x/patterns.md")
 - One-time findings not applicable to future work
 - Raw code snippets without context
 
-### Step 4: Commit Research (Optional but Recommended)
+### Step 4: Commit Research (User-Directed Only)
 
-```
-Bash(command="git add docs/research/*.md")
-Bash(command="git commit -m 'docs: add <topic> research'")
-```
+Do NOT auto-commit. If the user requests a commit, they will handle it.
 
 ## Red Flags - Research NOT Complete
 

@@ -302,9 +302,7 @@ Bash(command="mkdir -p docs/plans")
 # Then save design using Write tool (permission-free)
 Write(file_path="docs/plans/YYYY-MM-DD-<feature>-design.md", content="[full design content from template above]")
 
-# Then commit (separate commands to avoid permission prompt)
-Bash(command="git add docs/plans/*.md")
-Bash(command="git commit -m 'docs: add <feature> design'")
+# Do NOT auto-commit — let the user decide when to commit
 ```
 
 ### Step 2: Update Memory (CRITICAL - Links Design to Memory)

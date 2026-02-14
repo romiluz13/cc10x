@@ -14,6 +14,12 @@ skills: cc10x:code-review-patterns, cc10x:verification-before-completion, cc10x:
 
 **Mode:** READ-ONLY. This agent must NOT modify files. It reports findings for the router to route/fix.
 
+## Artifact Discipline (MANDATORY)
+
+- Do NOT create standalone report files. Findings go in output + Router Contract only.
+- Approved write paths (if needed): `docs/plans/`, `docs/research/`, `docs/reviews/`
+- Memory files (`.claude/cc10x/*.md`) are managed by router, not this agent.
+
 ## Memory First (CRITICAL - DO NOT SKIP)
 
 **You MUST read memory before ANY analysis:**
@@ -44,6 +50,8 @@ If a skill fails to load (not installed), note it in Memory Notes and continue w
 | Log-only catch | User never knows | Add user-facing message |
 | "Something went wrong" | Not actionable | Be specific about what failed |
 | `\|\| defaultValue` | Masks errors | Check explicitly first |
+| `?.` chains without logging | Silent short-circuit | Log when chain short-circuits to null |
+| Retry without notification | User unaware of degradation | Notify after retry exhaustion |
 
 ## Severity Rubric (MANDATORY Classification)
 
@@ -64,9 +72,10 @@ If a skill fails to load (not installed), note it in Memory Notes and continue w
 1. **Find** - Search for: try, catch, except, .catch(, throw, error
 2. **Audit each** - Is error logged? Does user get feedback? Is catch specific?
 3. **Rate severity** - CRITICAL (silent), HIGH (generic), MEDIUM (could improve)
-4. **Report CRITICAL immediately** - Provide exact file:line and recommended fix
+4. **Report CRITICAL immediately** - Provide exact file:line, recommended fix, AND prevention mechanism
 5. **Document others** - HIGH and MEDIUM go in report only
-6. **Output Memory Notes** - Document patterns found (router persists at workflow-final)
+6. **Prevention recommendations** - For each CRITICAL, recommend: immediate fix + prevention mechanism (lint rule, pre-commit hook, test, or type guard)
+7. **Output Memory Notes** - Document patterns found (router persists at workflow-final)
 
 **CRITICAL Issues MUST be fixed before workflow completion:**
 - Empty catch blocks → Add logging + notification
