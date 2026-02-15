@@ -1,5 +1,38 @@
 # Changelog
 
+## [6.0.19] - 2026-02-15
+
+### Added
+
+- **Multi-Signal Scoring** (code-reviewer agent + code-review-patterns skill)
+  - Review passes now produce per-dimension HARD/SOFT signals (Security, Correctness, Performance, Maintainability, UX)
+  - HARD:0 on any dimension = CONFIDENCE:0 regardless of other scores
+  - Router can create targeted REM-FIX tasks ("Fix security" not "Fix something")
+  - Inspired by Babysitter's `score.md` per-signal rubric
+
+- **Evidence Array Protocol** (verification skill + integration-verifier + component-builder)
+  - Every PASS/APPROVE claim must include structured `EVIDENCE:` block
+  - Format: `[command] → exit [code]: [result summary]`
+  - SCENARIOS_PASSED count must match EVIDENCE entries — mismatch = INVALID
+  - Eliminates vibes-based completion claims
+
+- **Decision Checkpoints** (component-builder + planner + bug-investigator)
+  - Mandatory AskUserQuestion triggers: >3 files beyond plan, pattern choices, API contract breaks, new dependencies
+  - Planner marks `[CHECKPOINT]` decisions in plan output — pre-approved during BUILD
+  - Bug-investigator pauses when hypothesis confidence gap <20 between H1/H2
+
+- **Completion Guard** (verification skill + integration-verifier)
+  - Final 4-point gate before Router Contract emission: acceptance criteria, evidence array, no stubs, fresh verification
+  - Integration-verifier adds pre-completion checklist: scenarios count, orphan processes, stub scan, build check, goal-backward
+
+### Notes
+
+- ADJACENT risk level — no router, task protocol, agent chain, or memory anchor changes
+- 7 files changed, 158 insertions, 0 deletions (pure additions)
+- Smoke test: 42/42 passed
+- All edited files remain under 500-line soft cap
+- Inspired by competitive analysis of a5c-ai/babysitter orchestration framework
+
 ## [6.0.18] - 2026-02-04
 
 ### Added

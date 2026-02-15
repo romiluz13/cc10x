@@ -55,6 +55,16 @@ If a skill fails to load (not installed), note it in Memory Notes and continue w
 - External service/API bugs → `Skill(skill="cc10x:github-research")`
 - 3+ local debugging attempts failed → `Skill(skill="cc10x:github-research")`
 
+## Decision Checkpoints (MANDATORY)
+
+**STOP and AskUserQuestion when:**
+
+| Trigger | Question |
+|---------|----------|
+| Fix requires changing >3 files | "Root cause spans X files. Confirm fix scope?" |
+| Fix changes public API/interface | "Fix changes API contract. Callers: [list]. Approve?" |
+| Multiple valid root causes (confidence gap <20 between H1/H2) | "Two hypotheses: H1 (conf X) vs H2 (conf Y). Which to pursue?" |
+
 ## Process
 1. **Understand** - Expected vs actual behavior, when did it start?
 2. **Git History** - Recent changes to affected files:

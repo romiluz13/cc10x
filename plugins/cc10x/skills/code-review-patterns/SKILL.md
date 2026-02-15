@@ -256,6 +256,27 @@ grep -rn "console\.log" --include="*.ts" --include="*.tsx" src/
 | **MINOR** | Style issues, small improvements | Can merge, fix later |
 | **NIT** | Purely stylistic preferences | Optional |
 
+## Multi-Signal Review Methodology
+
+**Each Stage 2 pass produces an independent signal. Score each dimension separately.**
+
+**HARD signals** (any failure blocks approval):
+- **Security:** One real vulnerability = dimension score 0
+- **Correctness:** One logic error producing wrong output = dimension score 0
+
+**SOFT signals** (concerns noted, don't block alone):
+- **Performance:** Scaling concern without immediate impact
+- **Maintainability:** Complex but functional code
+- **UX/A11y:** Missing states but core flow works
+
+**Aggregation rule:**
+1. If ANY HARD signal = 0 → STATUS: CHANGES_REQUESTED (non-negotiable)
+2. CONFIDENCE = min(HARD scores), reduced by max 10 if SOFT signals are low
+3. Include per-signal breakdown in Router Handoff for targeted remediation
+
+**Evidence requirement per signal:**
+Each signal MUST cite specific file:line. A signal without evidence = not reported.
+
 ## Do NOT Flag (False Positive Prevention)
 
 - Pre-existing issues not introduced by this change

@@ -222,6 +222,30 @@ Before marking work complete:
 COMPLETE - All verifications passed with fresh evidence
 ```
 
+## Evidence Array Protocol
+
+**Every claim in verification output MUST have a corresponding evidence entry.**
+
+**Format:** `[command] → exit [code]: [result summary]`
+
+**Rules:**
+1. One evidence entry per claim — no claim without evidence, no evidence without claim
+2. Evidence must be from THIS session (not recalled from memory)
+3. Exit codes are mandatory — "looks good" is not evidence
+4. Group evidence by claim type:
+
+```
+EVIDENCE:
+  tests: ["CI=true npm test → exit 0: 34/34 passed"]
+  build: ["npm run build → exit 0: compiled in 2.3s"]
+  feature: ["curl localhost:3000/api/health → exit 0: {status: ok}"]
+  regression: ["npm test -- auth.test.ts → exit 0: regression case passes"]
+```
+
+**Verification Summary must include this EVIDENCE block before the Status line.**
+
+**Anti-pattern:** `Status: COMPLETE - All verifications passed` without EVIDENCE block = INVALID.
+
 ## Goal-Backward Lens (GSD-Inspired)
 
 After standard verification passes, apply this additional check:
@@ -396,3 +420,16 @@ check_auth_protection() {
 Run the command. Read the output. THEN claim the result.
 
 This is non-negotiable.
+
+## Completion Guard (Final Gate Before Router Contract)
+
+**IMMEDIATELY before writing `### Router Contract (MACHINE-READABLE)`, verify ALL:**
+
+1. **Acceptance criteria met?** — Re-read task description. Check each criterion. Any gap = STATUS:FAIL
+2. **Evidence array complete?** — Every claim has `[command] → exit [code]` entry from THIS session
+3. **No stubs in changed files?** — Run stub detection on files YOU modified (not entire repo)
+4. **Fresh verification?** — Last test/build command ran in THIS message (not earlier in conversation)
+
+**If ANY check fails:** Fix it FIRST, then re-run Completion Guard. Do NOT emit Router Contract with STATUS:PASS/FIXED/APPROVE until all 4 pass.
+
+**This is the LAST gate. No exceptions. No "close enough."**

@@ -2,7 +2,7 @@
 
 ### The Intelligent Orchestrator for Claude Code
 
-**Current version:** 6.0.18
+**Current version:** 6.0.19
 
 **Recommended: Create `~/.claude/CLAUDE.md` (global) so the router is always active across all projects.**
 
@@ -417,6 +417,7 @@ I'll help you build a task tracker! Let me start...
 
 | Version | Highlights |
 |---------|------------|
+| **v6.0.19** | Babysitter-inspired: Multi-signal HARD/SOFT scoring, evidence arrays, decision checkpoints, completion guard |
 | **v6.0.0** | Orchestration hardening: Tasks contract correctness + Task-enforced gates + re-review loop |
 | **v5.25.1** | GSD-inspired enhancements (wiring verification, hypothesis criteria) |
 | **v5.25.0** | Critical orchestration fixes + README redesign |
@@ -432,6 +433,7 @@ I'll help you build a task tracker! Let me start...
 <details>
 <summary>Full version history</summary>
 
+- **v6.0.19** - Babysitter-inspired enhancements: Multi-signal HARD/SOFT scoring (per-dimension review), evidence array protocol (structured proof), decision checkpoints (mandatory pause points), completion guard (final gate before Router Contract)
 - **v6.0.0** - Orchestration hardening:
   - Tasks contract correctness (no undocumented TaskCreate fields; canonical TaskUpdate object form)
   - CC10X task namespacing + safer resume rules
@@ -514,6 +516,6 @@ MIT License
 ---
 
 <p align="center">
-  <strong>cc10x v6.0.18</strong><br>
+  <strong>cc10x v6.0.19</strong><br>
   <em>The Intelligent Orchestrator for Claude Code</em>
 </p>

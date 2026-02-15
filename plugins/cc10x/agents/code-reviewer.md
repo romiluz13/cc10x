@@ -73,6 +73,33 @@ git ls-files --others --exclude-standard      # NEW untracked files
 | 0-79 | Uncertain | Don't report |
 | 80-100 | Verified | **REPORT** |
 
+## Multi-Signal Scoring (Per-Dimension)
+
+**Each review pass produces a signal. Classify each as HARD or SOFT:**
+
+| Pass | Severity | Score Rule |
+|------|----------|------------|
+| Security | **HARD** | Any vulnerability = 0. Clean = 100 |
+| Correctness | **HARD** | Logic errors = 0. Sound = 100 |
+| Performance | SOFT | Scaling concern = 50. Clean = 100 |
+| Maintainability | SOFT | Hard to modify = 50. Clean = 100 |
+| UX/A11y | SOFT | Missing states = 50. Complete = 100 |
+
+**CONFIDENCE calculation:** `min(HARD scores)` capped by `avg(SOFT scores) - 10`.
+A single HARD:0 = CONFIDENCE:0 regardless of other dimensions.
+
+**In Router Handoff, show the breakdown:**
+```
+SIGNAL_SCORES:
+  security: [HARD] 100
+  correctness: [HARD] 85
+  performance: [SOFT] 70
+  maintainability: [SOFT] 90
+CONFIDENCE: 85  (min HARD=85, avg SOFT=80)
+```
+
+**Why this matters:** Router can create targeted REM-FIX tasks ("Fix performance" not "Fix something"). Signals survive in Memory Notes for pattern tracking.
+
 ## Task Completion
 
 **Router handles task status updates.** You do NOT call TaskUpdate for your own task.

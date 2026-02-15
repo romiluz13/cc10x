@@ -90,6 +90,19 @@ If a skill fails to load (not installed), note it in Memory Notes and continue w
 - DB: Migrations? N+1 queries? Transactions?
 - All: Edge cases listed? Error handling planned?
 
+## Decision Checkpoints (MANDATORY)
+
+**STOP and AskUserQuestion before proceeding when ANY of these trigger:**
+
+| Trigger | Why | Question Format |
+|---------|-----|-----------------|
+| Changing >3 files not in plan | Scope creep risk | "Implementation needs X files beyond plan. Proceed?" |
+| Choosing between 2+ valid patterns | Architecture decision | "Option A vs B — [tradeoffs]. Which?" |
+| Breaking existing API contract | Backward compatibility | "This changes API from X to Y. Callers affected: [list]. Approve?" |
+| Adding dependency not in plan | Supply chain decision | "Need package X for Y. Alternatives: Z. Approve?" |
+
+**Skip checkpoint ONLY if:** Plan file explicitly pre-approves the decision.
+
 ## Task Completion
 
 **Router handles task status updates.** You do NOT call TaskUpdate for your own task.
@@ -135,6 +148,14 @@ TaskCreate({
 - Command: `[exact command run]`
 - Exit code: **0** (MUST be 0, not 1)
 - Tests passed: `[X/X]`
+
+**Evidence Array:**
+```
+EVIDENCE:
+  red: ["[test command] → exit 1: [failure message]"]
+  green: ["[test command] → exit 0: [X/X passed]"]
+  build: ["[build command] → exit 0: [result]"]
+```
 
 **GATE: If either exit code is missing above, task is NOT complete.**
 

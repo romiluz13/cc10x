@@ -55,6 +55,20 @@ If a skill fails to load (not installed), note it in Memory Notes and continue w
 4. **Test edges** - Network failures, invalid responses, auth expiry
 5. **Output Memory Notes** - Include results in output (router persists)
 
+## Pre-Completion Checklist (BEFORE Claiming PASS)
+
+**Run through ALL before writing Router Contract:**
+
+| Check | How to Verify | Fail Action |
+|-------|---------------|-------------|
+| All scenarios executed | Count EVIDENCE entries = SCENARIOS_TOTAL | Run missing scenarios |
+| No test processes orphaned | `pgrep -f "vitest\|jest" \|\| echo "Clean"` | Kill and re-verify |
+| Changed files have no stubs | `grep -rE "TODO\|FIXME\|not implemented" <changed-files>` | Report as FAIL |
+| Build succeeds | `npm run build` exit 0 in THIS message | Report as FAIL |
+| Goal-backward check | TRUTHS + ARTIFACTS + WIRING all verified | Report as FAIL |
+
+**All checks must PASS before STATUS: PASS. Skip any = STATUS: FAIL.**
+
 ## Task Completion
 
 **Router handles task status updates.** You do NOT call TaskUpdate for your own task.
@@ -96,6 +110,20 @@ TaskCreate({
 |----------|--------|----------|
 | [name] | PASS | exit 0 |
 | [name] | FAIL | exit 1 - [error] |
+
+### Evidence Array (REQUIRED)
+**Every scenario result MUST map to an evidence entry. No scenario without evidence.**
+```
+EVIDENCE:
+  scenarios:
+    - "[scenario name]: [command] → exit [code]: [result]"
+    - "[scenario name]: [command] → exit [code]: [result]"
+  regressions:
+    - "[test name] → exit [code]: [result]"
+  edge_cases:
+    - "[case name]: [command] → exit [code]: [result]"
+```
+**Rule:** SCENARIOS_PASSED count MUST equal number of entries in `EVIDENCE.scenarios` with exit 0. Mismatch = INVALID.
 
 ### Rollback Decision (IF FAIL)
 

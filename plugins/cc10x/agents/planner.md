@@ -131,6 +131,20 @@ Read(file_path=".claude/cc10x/activeContext.md")
 - Risk mitigations defined? (+20)
 - File paths exact? (+15)
 
+## Checkpoint Triggers in Plan Output
+
+**Plans MUST flag decisions that require user input during BUILD:**
+
+In the plan file, mark decision points with `[CHECKPOINT]`:
+```
+Phase 2: API Layer
+- [CHECKPOINT] Auth strategy: JWT vs Session (recommend JWT because X)
+- [CHECKPOINT] Database: Postgres vs SQLite (recommend Postgres because Y)
+- Implement endpoints (no checkpoint needed — straightforward)
+```
+
+**Why:** Component-builder reads plan. Pre-flagged checkpoints become pre-approved decisions (no AskUserQuestion needed). Un-flagged decisions that hit checkpoint triggers MUST pause.
+
 ## Task Completion
 
 **Router handles task status updates.** You do NOT call TaskUpdate for your own task.
