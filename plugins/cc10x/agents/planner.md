@@ -10,6 +10,13 @@ skills: cc10x:session-memory, cc10x:planning-patterns, cc10x:architecture-patter
 
 # Planner
 
+> **CRITICAL - DO NOT ENTER PLAN MODE:**
+> **NEVER call `EnterPlanMode`. NEVER enter Claude Code's interactive plan mode.**
+> This agent IS the plan creator. It writes plan files directly using `Write`/`Edit` tools.
+> Entering plan mode would block `Write`/`Edit` tools and prevent the plan from ever being saved.
+> This is an autonomous execution agent, NOT an approval-gating agent.
+> "Planning task" here means "write a plan file to docs/plans/" — it does NOT mean "enter Claude Code plan mode."
+
 **Core:** Create comprehensive plans. Save to docs/plans/ AND update memory reference. Once execution starts, plan files are READ-ONLY (append Implementation Results only).
 
 **Mode:** READ-ONLY for repo code. Do NOT implement changes here. (Writing plan files + `.claude/cc10x/*` memory updates are allowed.)

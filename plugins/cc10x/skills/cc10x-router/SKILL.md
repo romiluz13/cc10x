@@ -256,6 +256,11 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [planner_task_id] })
 ## Workflow Execution
 
 ### BUILD
+> **CRITICAL - DO NOT ENTER PLAN MODE:**
+> **NEVER call `EnterPlanMode` during the BUILD workflow.**
+> The "Plan-First Gate" below asks the user whether to plan first — it does NOT mean enter Claude Code's interactive plan mode.
+> All work here is autonomous execution. Use `AskUserQuestion` for user decisions, never `EnterPlanMode`.
+
 1. Load memory → Check if already done in progress.md
 2. **Plan-First Gate** (STATE-BASED, not phrase-based):
    - Skip ONLY if: (plan in `## References` ≠ "N/A") AND (active `CC10X` task exists)
@@ -325,6 +330,12 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [planner_task_id] })
 5. Update memory when task completed
 
 ### PLAN
+> **CRITICAL - DO NOT ENTER PLAN MODE:**
+> **NEVER call `EnterPlanMode` during the PLAN workflow.**
+> The PLAN workflow means "invoke the planner agent to autonomously write a plan file."
+> It does NOT mean "enter Claude Code's interactive plan mode."
+> The planner agent handles autonomous plan creation and writes files directly — it does not need human approval gating.
+
 1. Load memory
 2. **If github-research detected (external tech OR explicit request):**
    - Execute research FIRST using octocode tools directly (NOT as hint)
@@ -376,6 +387,7 @@ Task(subagent_type="cc10x:component-builder", prompt="
 
 ---
 IMPORTANT:
+- **NEVER call `EnterPlanMode`.** This is an execution agent that writes files directly. Plan mode would block Write/Edit tools and prevent saving outputs.
 - If your tools include `Edit` **and you are not running in a parallel phase**, update `.claude/cc10x/{activeContext,patterns,progress}.md` at the end per `cc10x:session-memory` and `Read(...)` back to verify.
 - If you are running in a parallel phase (e.g., BUILD’s review/hunt phase), prefer **no memory edits**; include a clearly labeled **Memory Notes** section so the main assistant can persist safely after parallel completion.
 - If your tools do NOT include `Edit`, you MUST include a `### Memory Notes (For Workflow-Final Persistence)` section with:
@@ -383,7 +395,7 @@ IMPORTANT:
   - **Patterns:** [gotchas for patterns.md]
   - **Verification:** [results for progress.md]
 
-Execute the task and include 'Task {TASK_ID}: COMPLETED' in your output when done.
+Execute the task and include ‘Task {TASK_ID}: COMPLETED’ in your output when done.
 ")
 ```
 
