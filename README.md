@@ -2,7 +2,7 @@
 
 ### The Intelligent Orchestrator for Claude Code
 
-**Current version:** 6.0.20
+**Current version:** 6.0.21
 
 **Recommended: Create `~/.claude/CLAUDE.md` (global) so the router is always active across all projects.**
 
@@ -95,6 +95,8 @@ Done!
 **If file doesn't exist:** CREATE with the template below.
 **If file exists:** PREPEND the cc10x section below, keep user's existing content.
 
+> **Multi-project note:** The global `~/.claude/CLAUDE.md` activates cc10x in **every** project automatically — you do not need to reinstall or reconfigure per project. Only add the cc10x section to a project's `.claude/CLAUDE.md` if that project has its own conflicting CLAUDE.md already.
+
 ```markdown
 # CC10x Orchestration (Always On)
 
@@ -142,7 +144,31 @@ IMPORTANT: NEVER use Edit, Write, or Bash (for code changes) without first invok
 
 > **Why the Edit/Write permissions?** cc10x memory files (`activeContext.md`, `patterns.md`, `progress.md`) live in `.claude/cc10x/`. Without these lines, Claude Code will prompt you for permission on every memory write. Adding them pre-approves edits to that folder only.
 
-### Step 4: Scan Installed Skills & Add to Table
+### Step 4: Set User Standards (Optional)
+
+Ask the user:
+> "Do you have coding standards or principles you want cc10x agents to always follow? (e.g. 'always use TypeScript strict mode', 'follow SOLID principles', 'never use `any`', 'prefer functional patterns')"
+
+**If user provides standards**, write them to the project's memory:
+```
+Bash(command="mkdir -p .claude/cc10x")
+# Check if patterns.md already exists (Read returns error = doesn't exist)
+Read(file_path=".claude/cc10x/patterns.md")
+
+# If it DOESN'T exist — create with standards already populated:
+Write(file_path=".claude/cc10x/patterns.md", content="# Project Patterns\n<!-- CC10X MEMORY CONTRACT: Do not rename headings. Used as Edit anchors. -->\n\n## User Standards\n- {standard 1}\n- {standard 2}\n\n## Architecture Patterns\n\n## Code Conventions\n\n## Common Gotchas\n\n## Last Updated\n{date}")
+
+# If it DOES exist — append under User Standards:
+Edit(file_path=".claude/cc10x/patterns.md",
+     old_string="## User Standards",
+     new_string="## User Standards\n- {standard 1}\n- {standard 2}")
+
+Read(file_path=".claude/cc10x/patterns.md")  # Verify
+```
+
+**If user skips:** No action. The memory file will be created on first workflow run with an empty `## User Standards` section for them to fill in later.
+
+### Step 5: Scan Installed Skills & Add to Table
 
 **Where to find installed skills:**
 1. `~/.claude/settings.json` → check `enabledPlugins` object (plugins with value `true`)
@@ -171,7 +197,7 @@ react-best-practices/SKILL.md
 | React, Next.js, UI | `react-best-practices` |
 ```
 
-### Step 5: Confirm
+### Step 6: Confirm
 > "cc10x is set up! Please restart Claude Code to activate."
 
 ---
@@ -421,6 +447,7 @@ I'll help you build a task tracker! Let me start...
 
 | Version | Highlights |
 |---------|------------|
+| **v6.0.21** | User standards support; multi-project docs; Linux install troubleshooting |
 | **v6.0.20** | Agent self-report task completion; MCP docs; permissions fix for memory files |
 | **v6.0.19** | Babysitter-inspired: Multi-signal HARD/SOFT scoring, evidence arrays, decision checkpoints, completion guard |
 | **v6.0.0** | Orchestration hardening: Tasks contract correctness + Task-enforced gates + re-review loop |
@@ -521,6 +548,56 @@ cc10x works out of the box with no MCPs required. These are **optional** — the
 
 ---
 
+## Troubleshooting
+
+### Claude Code keeps asking for permission to edit memory files
+
+Add these two lines to `~/.claude/settings.json` under `permissions.allow`:
+
+```json
+"Edit(.claude/cc10x/*)",
+"Write(.claude/cc10x/*)"
+```
+
+Or run **"Set up cc10x for me"** again — the setup wizard adds them automatically.
+
+---
+
+### cc10x not activating in a specific project
+
+The global `~/.claude/CLAUDE.md` activates cc10x in every project — you only need one install. If it's not activating in a specific project:
+
+1. **Check if that project has its own `.claude/CLAUDE.md`** — open it and verify the cc10x section is present. If the project-level file exists but doesn't have the cc10x entry, add it there.
+2. **Verify the entry format** — use `[CC10x]|entry: cc10x:cc10x-router` (plugin reference). A relative path like `./plugins/cc10x/...` only works in the cc10x repo itself, not in your projects.
+3. **Restart Claude Code** — the plugin system requires a restart after any CLAUDE.md change.
+
+---
+
+### Ubuntu / Linux install error: EXDEV cross-device link
+
+If you see:
+```
+Error: Failed to install: EXDEV: cross-device link not permitted
+```
+
+This is a Linux filesystem issue — `/tmp` and your home directory are on different filesystems, so the installer can't `rename()` across them. Fix:
+
+```bash
+# Set TMPDIR to a directory on the same filesystem as your home:
+mkdir -p ~/.claude/tmp
+TMPDIR=~/.claude/tmp claude
+# Then install normally: /plugin install cc10x@romiluz13
+```
+
+If that doesn't work, install manually:
+```bash
+# Clone directly into the plugins directory
+git clone https://github.com/romiluz13/cc10x.git ~/.claude/plugins/cc10x
+```
+Then follow Step 2 in the setup guide above to add the cc10x entry to `~/.claude/CLAUDE.md`.
+
+---
+
 ## Contributing
 
 - Star the repository
@@ -536,6 +613,6 @@ MIT License
 ---
 
 <p align="center">
-  <strong>cc10x v6.0.20</strong><br>
+  <strong>cc10x v6.0.21</strong><br>
   <em>The Intelligent Orchestrator for Claude Code</em>
 </p>

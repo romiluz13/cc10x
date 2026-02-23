@@ -173,7 +173,7 @@ Read(file_path=".claude/cc10x/activeContext.md")  # Verify
 
 Use these purposes to decide where information belongs:
 - **activeContext.md:** current state + pointers (what we’re doing, why, what’s next)
-- **patterns.md:** reusable knowledge (conventions, architecture, gotchas, “do it this way here”)
+- **patterns.md:** reusable knowledge (conventions, architecture, gotchas, “do it this way here”). `## User Standards` entries are **non-negotiable** — always follow them regardless of other context.
 - **progress.md:** execution tracking + hard evidence (tests/build/run commands, exit codes, scenario tables)
 
 ## Memory File Contract (Never Break)
@@ -239,6 +239,9 @@ If an Edit does not apply cleanly:
 ```markdown
 # Project Patterns
 <!-- CC10X MEMORY CONTRACT: Do not rename headings. Used as Edit anchors. -->
+
+## User Standards
+- [Your non-negotiable coding principles — agents MUST follow these on every workflow]
 
 ## Architecture Patterns
 - [Pattern]: [How this project implements it]

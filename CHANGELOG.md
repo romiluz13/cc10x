@@ -1,5 +1,29 @@
 # Changelog
 
+## [6.0.21] - 2026-02-23
+
+### Added
+
+- **User Standards support** (`session-memory/SKILL.md` + README) (#13)
+  - Added `## User Standards` section to the `patterns.md` template — agents load patterns.md on every workflow, so any standards written there are automatically followed
+  - `## User Standards` entries are marked **non-negotiable** in the session-memory skill
+  - Setup wizard (Step 4) now asks for user standards and writes them to `.claude/cc10x/patterns.md` on install
+  - Closes #13
+
+### Fixed
+
+- **Multi-project setup docs** (README) (#12)
+  - Added "Multi-project note" in setup Step 2: global `~/.claude/CLAUDE.md` activates cc10x in all projects — no per-project reinstall needed
+  - Added Troubleshooting section explaining what to do when cc10x doesn't activate in a specific project and the correct plugin reference format
+  - Closes #12
+
+- **Linux EXDEV install error docs** (README) (#8)
+  - Added Troubleshooting section with `TMPDIR` workaround for cross-device link error on Ubuntu/Linux
+  - Added manual git clone fallback for when the installer fails
+  - Closes #8
+
+---
+
 ## [6.0.20] - 2026-02-23
 
 ### Fixed
