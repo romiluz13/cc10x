@@ -347,7 +347,7 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [planner_task_id] })
    - **Update memory** → Add to activeContext.md References section
    - Summarize findings before invoking planner
 4. **Create task hierarchy** (see Task-Based Orchestration above)
-5. **Start chain execution** (pass clarified requirements + research results in prompt)
+5. **Start chain execution** (pass clarified requirements + research results + file path in prompt if step 3 was executed)
 6. Update memory → Reference saved plan when task completed
 
 **THREE-PHASE for External Research (MANDATORY):**
