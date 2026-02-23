@@ -3,7 +3,6 @@ name: component-builder
 description: "Internal agent. Use cc10x-router for all development tasks."
 model: inherit
 color: green
-context: fork
 tools: Read, Edit, Write, Bash, Grep, Glob, Skill, LSP, AskUserQuestion, WebFetch, TaskUpdate
 skills: cc10x:session-memory, cc10x:test-driven-development, cc10x:code-generation, cc10x:verification-before-completion, cc10x:frontend-patterns, cc10x:architecture-patterns
 ---

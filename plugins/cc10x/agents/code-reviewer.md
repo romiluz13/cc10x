@@ -3,7 +3,6 @@ name: code-reviewer
 description: "Internal agent. Use cc10x-router for all development tasks."
 model: inherit
 color: blue
-context: fork
 tools: Read, Bash, Grep, Glob, Skill, LSP, AskUserQuestion, WebFetch, TaskUpdate
 skills: cc10x:code-review-patterns, cc10x:verification-before-completion, cc10x:frontend-patterns, cc10x:architecture-patterns
 ---
