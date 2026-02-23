@@ -4,7 +4,7 @@ description: "Internal agent. Use cc10x-router for all development tasks."
 model: inherit
 color: green
 context: fork
-tools: Read, Edit, Write, Bash, Grep, Glob, Skill, LSP, AskUserQuestion, WebFetch
+tools: Read, Edit, Write, Bash, Grep, Glob, Skill, LSP, AskUserQuestion, WebFetch, TaskUpdate
 skills: cc10x:session-memory, cc10x:test-driven-development, cc10x:code-generation, cc10x:verification-before-completion, cc10x:frontend-patterns, cc10x:architecture-patterns
 ---
 
@@ -105,7 +105,7 @@ If a skill fails to load (not installed), note it in Memory Notes and continue w
 
 ## Task Completion
 
-**Router handles task status updates.** You do NOT call TaskUpdate for your own task.
+**After providing your final output**, call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` where `{TASK_ID}` is from your Task Context prompt.
 
 **If issues found requiring follow-up (non-blocking):**
 ```

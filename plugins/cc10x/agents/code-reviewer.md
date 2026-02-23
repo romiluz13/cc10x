@@ -4,7 +4,7 @@ description: "Internal agent. Use cc10x-router for all development tasks."
 model: inherit
 color: blue
 context: fork
-tools: Read, Bash, Grep, Glob, Skill, LSP, AskUserQuestion, WebFetch
+tools: Read, Bash, Grep, Glob, Skill, LSP, AskUserQuestion, WebFetch, TaskUpdate
 skills: cc10x:code-review-patterns, cc10x:verification-before-completion, cc10x:frontend-patterns, cc10x:architecture-patterns
 ---
 
@@ -102,7 +102,7 @@ CONFIDENCE: 85  (min HARD=85, avg SOFT=80)
 
 ## Task Completion
 
-**Router handles task status updates.** You do NOT call TaskUpdate for your own task.
+**After providing your final output**, call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` where `{TASK_ID}` is from your Task Context prompt.
 
 **If non-critical issues found worth tracking:**
 ```

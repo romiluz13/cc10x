@@ -399,7 +399,7 @@ Execute the task and include ‘Task {TASK_ID}: COMPLETED’ in your output when
 ")
 ```
 
-**TASK ID is REQUIRED in prompt.** Router updates task status after agent returns (agents do NOT call TaskUpdate for their own task).
+**TASK ID is REQUIRED in prompt.** Agents call TaskUpdate(completed) for their own task after final output. Router verifies via TaskList().
 **SKILL_HINTS:** If router passes skills in SKILL_HINTS, agent MUST call `Skill(skill="{skill-name}")` after loading memory. This includes both cc10x skills (github-research) and complementary skills (react-best-practices, mongodb-agent-skills, etc.).
 
 **Post-Agent Validation (After agent completes):**
@@ -577,9 +577,10 @@ skills: cc10x:session-memory, cc10x:code-generation, cc10x:frontend-patterns
      ")
 
 3. After agent completes:
-   - Router updates task: TaskUpdate({ taskId: runnable_task_id, status: "completed" })
+   - Agent self-reports: TaskUpdate({ taskId, status: "completed" }) — already done by agent
    - Router validates output (see Post-Agent Validation)
-   - Router calls TaskList() to find next available tasks
+   - Router calls TaskList() to verify task is completed; if still in_progress, router calls TaskUpdate({ taskId: runnable_task_id, status: "completed" }) as fallback
+   - Router finds next available tasks from TaskList()
 
 4. Determine next:
    - Find tasks where ALL blockedBy tasks are "completed"
