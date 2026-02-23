@@ -172,6 +172,7 @@ grep -rn "console\.log" --include="*.ts" --include="*.tsx" src/
 | **Complexity** | Linear flow | Nested conditions |
 | **Duplication** | DRY where sensible | Copy-paste code |
 | **Error handling** | Graceful failures | Silent failures |
+| **Clarity** | Explicit, readable flow | Nested ternaries, dense one-liners |
 | **Testability** | Injectable dependencies | Global state |
 
 ## Type Design Red Flags (Typed Languages)

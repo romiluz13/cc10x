@@ -142,6 +142,15 @@ function calculateTotal(
 }
 ```
 
+### Code Clarity
+
+**Prefer explicit, readable code over compact one-liners:**
+
+- Avoid nested ternaries (`a ? b ? c : d : e`) — use `if/else` or `switch`
+- Don't sacrifice readability for fewer lines — 3 clear lines beats 1 clever line
+- Consolidate related logic, but don't merge unrelated concerns into one function
+- Remove comments that describe what the code obviously does — let clear naming speak
+
 ### Minimal Diffs Principle
 
 **Only change what's necessary.** When fixing a bug, fix the bug - don't refactor surrounding code. When adding a feature, add the feature - don't "improve" unrelated code. Scope creep in diffs causes merge conflicts, hides the actual change, and makes reviews harder.
