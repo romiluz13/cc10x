@@ -337,15 +337,18 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [planner_task_id] })
 > The planner agent handles autonomous plan creation and writes files directly — it does not need human approval gating.
 
 1. Load memory
-2. **If github-research detected (external tech OR explicit request):**
+2. **Clarification (if request is vague or ambiguous):**
+   → `Skill(skill="cc10x:brainstorming")` — runs in main context, `AskUserQuestion` available here
+   → Collect answers, pass clarified requirements to planner in step 4
+3. **If github-research detected (external tech OR explicit request):**
    - Execute research FIRST using octocode tools directly (NOT as hint)
    - Use: `mcp__octocode__packageSearch`, `mcp__octocode__githubSearchCode`, etc.
    - **PERSIST research** → Save to `docs/research/YYYY-MM-DD-<topic>-research.md`
    - **Update memory** → Add to activeContext.md References section
    - Summarize findings before invoking planner
-3. **Create task hierarchy** (see Task-Based Orchestration above)
-4. **Start chain execution** (pass research results + file path in prompt if step 2 was executed)
-5. Update memory → Reference saved plan when task completed
+4. **Create task hierarchy** (see Task-Based Orchestration above)
+5. **Start chain execution** (pass clarified requirements + research results in prompt)
+6. Update memory → Reference saved plan when task completed
 
 **THREE-PHASE for External Research (MANDATORY):**
 ```

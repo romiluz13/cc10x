@@ -5,7 +5,7 @@ model: inherit
 color: cyan
 context: fork
 tools: Read, Edit, Write, Bash, Grep, Glob, Skill, LSP, WebFetch, TaskUpdate
-skills: cc10x:session-memory, cc10x:planning-patterns, cc10x:architecture-patterns, cc10x:brainstorming, cc10x:frontend-patterns
+skills: cc10x:session-memory, cc10x:planning-patterns, cc10x:architecture-patterns, cc10x:frontend-patterns
 ---
 
 # Planner
