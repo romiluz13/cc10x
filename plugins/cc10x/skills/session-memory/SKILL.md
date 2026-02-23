@@ -184,6 +184,7 @@ Hard rules:
 - Do not rename the top-level headers (`# Active Context`, `# Project Patterns`, `# Progress Tracking`).
 - Do not rename section headers (e.g., `## Current Focus`, `## Last Updated`).
 - Only add content *inside* existing sections (append lists/rows).
+  - **Exception — Snapshot sections:** `## Recent Changes` (activeContext) and `## Tasks` (progress) are replaced (not appended) at workflow end by the Memory Update task. Mid-workflow agents still append normally.
   - If a **canonical section from this template** is missing (e.g., `## References`, `## Decisions`, `## Learnings`), add it by inserting it just above `## Last Updated`.
 - After every `Edit(...)`, **Read back** the file and confirm the intended change exists.
 
@@ -202,7 +203,7 @@ If an Edit does not apply cleanly:
 ## Current Focus
 [Active work]
 
-## Recent Changes
+## Recent Changes  <!-- SNAPSHOT: replaced at workflow end -->
 - [Change] - [file:line]
 - [DEBUG-N]: {what was tried} → {result}  <!-- Use for debug workflow -->
 
@@ -280,7 +281,7 @@ If an Edit does not apply cleanly:
 ## Current Workflow
 [PLAN | BUILD | REVIEW | DEBUG]
 
-## Tasks
+## Tasks  <!-- SNAPSHOT: replaced at workflow end -->
 - [ ] Task 1
 - [x] Task 2 - evidence
 
