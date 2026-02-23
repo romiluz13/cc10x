@@ -338,8 +338,9 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [planner_task_id] })
 
 1. Load memory
 2. **Clarification (if request is vague or ambiguous):**
-   → `Skill(skill="cc10x:brainstorming")` — runs in main context, `AskUserQuestion` available here
+   → `AskUserQuestion` directly in main context — ask scope, success criteria, constraints
    → Collect answers, pass clarified requirements to planner in step 4
+   → If deep design exploration needed: `Skill(skill="cc10x:brainstorming")` instead
 3. **If github-research detected (external tech OR explicit request):**
    - Execute research FIRST using octocode tools directly (NOT as hint)
    - Use: `mcp__octocode__packageSearch`, `mcp__octocode__githubSearchCode`, etc.
