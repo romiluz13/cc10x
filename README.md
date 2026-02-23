@@ -2,7 +2,7 @@
 
 ### The Intelligent Orchestrator for Claude Code
 
-**Current version:** 6.0.19
+**Current version:** 6.0.20
 
 **Recommended: Create `~/.claude/CLAUDE.md` (global) so the router is always active across all projects.**
 
@@ -135,8 +135,12 @@ IMPORTANT: NEVER use Edit, Write, or Bash (for code changes) without first invok
 "Bash(git status)",
 "Bash(git diff:*)",
 "Bash(git log:*)",
-"Bash(git branch:*)"
+"Bash(git branch:*)",
+"Edit(.claude/cc10x/*)",
+"Write(.claude/cc10x/*)"
 ```
+
+> **Why the Edit/Write permissions?** cc10x memory files (`activeContext.md`, `patterns.md`, `progress.md`) live in `.claude/cc10x/`. Without these lines, Claude Code will prompt you for permission on every memory write. Adding them pre-approves edits to that folder only.
 
 ### Step 4: Scan Installed Skills & Add to Table
 
@@ -417,6 +421,7 @@ I'll help you build a task tracker! Let me start...
 
 | Version | Highlights |
 |---------|------------|
+| **v6.0.20** | Agent self-report task completion; MCP docs; permissions fix for memory files |
 | **v6.0.19** | Babysitter-inspired: Multi-signal HARD/SOFT scoring, evidence arrays, decision checkpoints, completion guard |
 | **v6.0.0** | Orchestration hardening: Tasks contract correctness + Task-enforced gates + re-review loop |
 | **v5.25.1** | GSD-inspired enhancements (wiring verification, hypothesis criteria) |
@@ -501,6 +506,21 @@ plugins/cc10x/
 
 ---
 
+## Optional MCP Integrations
+
+cc10x works out of the box with no MCPs required. These are **optional** — they unlock specific features when installed.
+
+| MCP | Feature Unlocked | How to Install |
+|-----|-----------------|----------------|
+| **[octocode](https://github.com/nicepkg/octocode)** | GitHub research: find packages, search code across repos, read PR history. Triggered automatically when planner or bug-investigator needs external research. | Install via Claude Code MCP settings |
+| **[brightdata](https://github.com/nicepkg/mcp-brightdata)** | Web scraping for research tasks — used as fallback when web content is needed beyond GitHub. | Install via Claude Code MCP settings |
+
+**Without these MCPs:** cc10x still works fully. The `github-research` skill simply won't execute when triggered, and agents will note it in Memory Notes and continue.
+
+**With octocode installed:** When the router detects new/unfamiliar tech, 3+ failed debug attempts, or explicit research requests, it automatically calls octocode tools to search GitHub before invoking the planner or bug-investigator.
+
+---
+
 ## Contributing
 
 - Star the repository
@@ -516,6 +536,6 @@ MIT License
 ---
 
 <p align="center">
-  <strong>cc10x v6.0.19</strong><br>
+  <strong>cc10x v6.0.20</strong><br>
   <em>The Intelligent Orchestrator for Claude Code</em>
 </p>

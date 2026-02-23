@@ -1,5 +1,31 @@
 # Changelog
 
+## [6.0.20] - 2026-02-23
+
+### Fixed
+
+- **Agent self-report task completion** (all 6 agents + router SKILL.md)
+  - Added `TaskUpdate` to each agent's tool allowlist
+  - Agents now call `TaskUpdate(completed)` after their final output
+  - Router falls back via `TaskList()` if agent misses it — no regression
+  - Closes #14
+
+### Added
+
+- **Optional MCP documentation** (README)
+  - New "Optional MCP Integrations" section listing octocode and brightdata
+  - Explains what each MCP unlocks and that cc10x works without them
+  - Closes #9
+
+### Fixed
+
+- **Memory file permission prompts** (README Step 3)
+  - Added `Edit(.claude/cc10x/*)` and `Write(.claude/cc10x/*)` to settings.json template
+  - Pre-approves edits to memory files, eliminating repeated permission prompts
+  - Closes #7
+
+---
+
 ## [6.0.19] - 2026-02-15
 
 ### Added

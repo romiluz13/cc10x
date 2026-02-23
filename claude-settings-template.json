@@ -8,7 +8,9 @@
       "Bash(git diff:*)",
       "Bash(git log:*)",
       "Bash(git blame:*)",
-      "Bash(git ls-files:*)"
+      "Bash(git ls-files:*)",
+      "Edit(.claude/cc10x/*)",
+      "Write(.claude/cc10x/*)"
     ]
   }
 }
