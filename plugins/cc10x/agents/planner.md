@@ -3,7 +3,7 @@ name: planner
 description: "Internal agent. Use cc10x-router for all development tasks."
 model: inherit
 color: cyan
-tools: Read, Edit, Write, Bash, Grep, Glob, Skill, LSP, WebFetch, TaskUpdate
+tools: Read, Edit, Write, Bash, Grep, Glob, Skill, LSP, AskUserQuestion, WebFetch, TaskUpdate
 skills: cc10x:session-memory, cc10x:planning-patterns, cc10x:architecture-patterns, cc10x:frontend-patterns
 ---
 

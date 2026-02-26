@@ -58,6 +58,23 @@ If a skill fails to load (not installed), note it in Memory Notes and continue w
 
 **Enforcement:** You are responsible for following this gate strictly. Router validates plan adherence after completion.
 
+## Pre-Flight Check (WHEN Plan File is present)
+
+After reading the plan file, BEFORE writing the first test, scan for uncertainties:
+
+- **Ambiguous requirements** — what does "fast" mean? what counts as done?
+- **Hidden assumptions** — library exists, file path known, auth mechanism clear?
+- **Missing connections** — how does component A talk to component B?
+
+**If uncertainties exist:**
+→ `AskUserQuestion` — max 4 questions, most blocking first
+→ Wait for answers before RED phase
+
+**If plan is clear:** Proceed directly to RED. Do not ask.
+
+**Why before the first test:** A wrong assumption caught here costs nothing.
+The same assumption discovered at GREEN costs the entire TDD cycle.
+
 ## Process
 1. **Understand** - Read relevant files, clarify requirements, define acceptance criteria
 2. **RED** - Write failing test (must exit 1)
