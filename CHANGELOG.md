@@ -1,5 +1,20 @@
 # Changelog
 
+## [6.0.22] - 2026-02-26
+
+### Changed
+
+- **Router trimmed: removed 45 lines of documentation overhead** (`cc10x-router/SKILL.md`)
+  - Deleted `## Skill Loading Hierarchy` section (19 lines) — architecture explainer for humans, not operational for the router; all SKILL_HINTS behavior is already covered by the detection table and Agent Invocation template
+  - Compressed `## Task Dependency Safety` from 13 lines to 2 — the cycle-detection procedure was instructions for a problem the system itself says cannot happen; kept the forward-only rule
+  - Compressed `### TODO Task Handling` from 21 lines to 4 — removed the "why" paragraph and verbose numbered steps; behavior is preserved
+
+### Added
+
+- **Pre-spawn announcement** (`cc10x-router/SKILL.md`) — 1-line instruction in Execution Loop Step 2: before spawning any agent, write 1 sentence on what it will do and why it matters now. Improves user visibility and catches misrouting early.
+
+---
+
 ## [6.0.21] - 2026-02-23
 
 ### Added

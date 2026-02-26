@@ -132,17 +132,7 @@ Task lists can be shared across sessions via `CLAUDE_CODE_TASK_LIST_ID`. Treat T
 
 ## Task Dependency Safety
 
-**All `addBlockedBy` calls MUST follow these rules:**
-1. Dependencies flow FORWARD only (downstream blocked by upstream)
-2. NEVER block an upstream task by a downstream task
-3. If unsure, list current dependencies before adding new ones
-
-**If you suspect a cycle:**
-1. Run `TaskList()` to see all task dependencies
-2. Trace the dependency chain
-3. If cycle detected → Skip the dependency, log warning, continue
-
-**Current design guarantees no cycles:** All workflows are DAGs with forward-only dependencies.
+All `addBlockedBy` calls are forward-only: downstream tasks blocked by upstream, never reverse. All workflows are DAGs — no cycles possible.
 
 ---
 
@@ -521,26 +511,6 @@ WHEN any CC10X REM-FIX task COMPLETES:
 **Detection runs BEFORE agent invocation. Pass detected skills in SKILL_HINTS.**
 **Also check CLAUDE.md Complementary Skills table and include matching skills in SKILL_HINTS.**
 
-## Skill Loading Hierarchy (DEFINITIVE)
-
-**Two mechanisms exist:**
-
-### 1. Agent Frontmatter `skills:` (PRELOAD - Automatic)
-```yaml
-skills: cc10x:session-memory, cc10x:code-generation, cc10x:frontend-patterns
-```
-- Load AUTOMATICALLY when agent starts
-- Full skill content injected into agent context
-- Agent does NOT need to call `Skill()` for these
-- **This is the PRIMARY mechanism for all CC10x internal skills**
-
-### 2. Router's SKILL_HINTS (Conditional - On Demand)
-- Router passes SKILL_HINTS for skills not loaded via agent frontmatter
-- **Source 1:** Router detection table — `cc10x:github-research` when research triggers fire
-- **Source 2:** CLAUDE.md Complementary Skills table — domain skills matching task signals
-- Agent calls `Skill(skill="{name}")` for each skill in SKILL_HINTS after memory load
-- If a skill fails to load (not installed), agent notes it in Memory Notes and continues
-
 ## Gates (Must Pass)
 
 1. **MEMORY_LOADED** - Before routing
@@ -568,6 +538,7 @@ skills: cc10x:session-memory, cc10x:code-generation, cc10x:frontend-patterns
 
 2. Start agent(s):
    - TaskUpdate({ taskId: runnable_task_id, status: "in_progress" })
+   - Announce in 1 sentence what this agent will do and why it matters now.
    - Otherwise, if multiple agent tasks are ready (e.g., code-reviewer + silent-failure-hunter):
      → Invoke BOTH in same message (parallel execution)
    - Pass task ID in prompt:
@@ -639,25 +610,10 @@ Memory persistence is enforced via the "CC10X Memory Update" task in the task hi
 
 ### TODO Task Handling (After Workflow Completes)
 
-After all workflow tasks complete, check for `CC10X TODO:` tasks created by agents:
-
-```
-1. TaskList() → Find tasks with subject starting "CC10X TODO:"
-
-2. If TODO tasks exist:
-   → List them: "Agents identified these items for follow-up:"
-     - [task subject] - [first line of description]
-   → Ask user: "Address now (start new workflow) / Keep for later / Delete"
-
-3. User chooses:
-   - "Address now" → Start new BUILD/DEBUG workflow for the TODO
-   - "Keep" → Leave tasks pending (will appear next session)
-   - "Delete" → TaskUpdate({ taskId, status: "deleted" }) for each
-
-4. Continue to MEMORY_UPDATED gate
-```
-
-**Why TODO tasks are separate:** They are non-blocking discoveries made during agent work. They don't auto-execute because they lack proper context/dependencies. User decides priority.
+`TaskList()` → find tasks with subject starting `"CC10X TODO:"` → present to user:
+- **Address now** → start new BUILD/DEBUG workflow
+- **Keep for later** → leave pending (persists to next session)
+- **Delete** → `TaskUpdate({ taskId, status: "deleted" })`
 
 ## Results Collection (Parallel Agents)
 
