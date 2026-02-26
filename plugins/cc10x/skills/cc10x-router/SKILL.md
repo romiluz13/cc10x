@@ -615,6 +615,8 @@ Memory persistence is enforced via the "CC10X Memory Update" task in the task hi
 - **Keep for later** → leave pending (persists to next session)
 - **Delete** → `TaskUpdate({ taskId, status: "deleted" })`
 
+Then continue to MEMORY_UPDATED gate.
+
 ## Results Collection (Parallel Agents)
 
 **Task system handles coordination. The main assistant (running this router) handles results.**
