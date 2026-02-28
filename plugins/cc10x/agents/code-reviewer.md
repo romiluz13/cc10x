@@ -167,8 +167,8 @@ CONFIDENCE: [80-100]
 CRITICAL_ISSUES: [count from CRITICAL_COUNT above]
 HIGH_ISSUES: [count from HIGH_COUNT above]
 BLOCKING: [true if CRITICAL_ISSUES > 0]
-REQUIRES_REMEDIATION: [true if STATUS=CHANGES_REQUESTED or CRITICAL_ISSUES > 0]
-REMEDIATION_REASON: null | "Fix critical issues: {summary of CRITICAL list}"
+REQUIRES_REMEDIATION: [true if STATUS=CHANGES_REQUESTED or CRITICAL_ISSUES > 0 or HIGH_ISSUES > 0]
+REMEDIATION_REASON: null | "Fix critical issues: {summary of CRITICAL list}" | "Fix high-severity issues: {summary of HIGH list}"
 MEMORY_NOTES:
   learnings: ["Code quality insights"]
   patterns: ["Conventions or anti-patterns found"]

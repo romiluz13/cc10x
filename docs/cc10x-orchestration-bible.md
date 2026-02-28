@@ -1,6 +1,6 @@
 # CC10x Orchestration Bible (Plugin-Only Source of Truth)
 
-> **Last synced with agents/skills:** 2026-02-05 (post-SKILL_HINTS fix) | **Status:** IN SYNC
+> **Last synced with agents/skills:** 2026-02-28 (soft-gate for HIGH issues) | **Status:** IN SYNC
 
 > This document is derived **only** from `plugins/cc10x/` (agents + skills).
 > Ignore all other docs. Do not trust external narratives.
@@ -440,10 +440,15 @@ Circuit Breaker (BEFORE creating any REM-FIX):
   - Abort
 
 Validation Rules:
-1. If contract.BLOCKING == true OR contract.REQUIRES_REMEDIATION == true:
-   → Create REM-FIX task using contract.REMEDIATION_REASON
-   → Block downstream tasks via TaskUpdate({ addBlockedBy })
-   → STOP
+1a. If contract.BLOCKING == true:
+    → Create REM-FIX task using contract.REMEDIATION_REASON
+    → Block downstream tasks via TaskUpdate({ addBlockedBy })
+    → STOP
+
+1b. If contract.REQUIRES_REMEDIATION == true AND contract.BLOCKING == false:
+    → AskUserQuestion: "Found significant issues (non-critical). Fix before continuing?"
+      - Fix now (Recommended) → Circuit Breaker check → Create REM-FIX, block downstream, STOP
+      - Proceed anyway → Record decision in activeContext.md ## Decisions, continue chain
 
 2. If contract.CRITICAL_ISSUES > 0 AND parallel phase:
    → Conflict check: reviewer APPROVE vs hunter CRITICAL

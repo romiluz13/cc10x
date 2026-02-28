@@ -451,25 +451,10 @@ If count ≥ 3 → AskUserQuestion:
     → STOP. Do not invoke next agent until remediation completes.
 
 1b. If contract.REQUIRES_REMEDIATION == true AND contract.BLOCKING == false:
-    → AskUserQuestion({
-        question: "Found {HIGH_ISSUES} significant issues (non-critical). Fix before continuing?",
-        options: [
-          { label: "Fix now (Recommended)", description: "Create REM-FIX task and fix before continuing" },
-          { label: "Proceed anyway", description: "Note issues in memory and continue the workflow chain" }
-        ]
-      })
-    → If "Fix now":
-        [Run Circuit Breaker check: count existing REM-FIX tasks ≥ 3 → see Circuit Breaker above]
-        → TaskCreate({
-            subject: "CC10X REM-FIX: {agent_name}",
-            description: contract.REMEDIATION_REASON,
-            activeForm: "Fixing {agent_name} issues"
-          })
-        → Block all downstream tasks via TaskUpdate({ addBlockedBy: [remediation_task_id] })
-        → STOP
-    → If "Proceed anyway":
-        → Record decision: Edit activeContext.md "## Decisions": "{agent}: HIGH issues acknowledged, skipped by user"
-        → Continue to next agent
+    → AskUserQuestion: "{contract.REMEDIATION_REASON} — fix before continuing?"
+      Options: "Fix now (Recommended)" | "Proceed anyway"
+    → "Fix now" → Circuit Breaker check, then apply rule 1a above
+    → "Proceed" → Edit activeContext.md ## Decisions: "{agent}: HIGH issues skipped by user", continue
 
 2. If contract.CRITICAL_ISSUES > 0 AND parallel phase (reviewer + hunter):
    → Conflict check: If code-reviewer STATUS=APPROVE AND silent-failure-hunter CRITICAL_ISSUES > 0:

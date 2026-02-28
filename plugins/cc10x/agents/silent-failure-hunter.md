@@ -156,12 +156,12 @@ STATUS: CLEAN | ISSUES_FOUND
 CRITICAL_ISSUES: [count from CRITICAL_COUNT above]
 HIGH_ISSUES: [count of HIGH items]
 BLOCKING: [true if CRITICAL_ISSUES > 0]
-REQUIRES_REMEDIATION: [true if CRITICAL_ISSUES > 0]
-REMEDIATION_REASON: null | "Fix silent failures: {summary of CRITICAL list}"
+REQUIRES_REMEDIATION: [true if CRITICAL_ISSUES > 0 or HIGH_ISSUES > 0]
+REMEDIATION_REASON: null | "Fix silent failures: {summary of CRITICAL list}" | "Fix high-severity failures: {summary of HIGH list}"
 MEMORY_NOTES:
   learnings: ["Error handling insights"]
   patterns: ["Silent failure patterns found"]
   verification: ["Hunt: {CRITICAL_ISSUES} critical, {HIGH_ISSUES} high"]
 ```
-**CONTRACT RULE:** STATUS=CLEAN requires CRITICAL_ISSUES=0
+**CONTRACT RULE:** STATUS=CLEAN requires CRITICAL_ISSUES=0 and HIGH_ISSUES=0
 ```

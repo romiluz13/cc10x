@@ -1,5 +1,32 @@
 # Changelog
 
+## [6.0.26] - 2026-02-28
+
+### Fixed
+
+- **Soft gate for HIGH/non-critical issues** (`cc10x-router/SKILL.md`, `code-reviewer.md`, `silent-failure-hunter.md`, `docs/cc10x-orchestration-bible.md`)
+  - Router previously ignored HIGH severity issues (BLOCKING=false, REQUIRES_REMEDIATION=false) and proceeded silently
+  - User had to manually interrupt and say "go fix those first" — poor UX at the review gate
+  - Root cause: `REQUIRES_REMEDIATION` was only set to `true` when `CRITICAL_ISSUES > 0`, so HIGH issues fell through to Rule 4 ("proceed to next agent") with zero user interaction
+  - Both agents already output `HIGH_ISSUES` in their Router Contract — the field existed but was unconnected to any decision rule
+  - Fix: agents now set `REQUIRES_REMEDIATION=true` when `HIGH_ISSUES > 0`; router Rule 1 split into 1a (hard stop for CRITICAL) and 1b (AskUserQuestion soft gate for HIGH)
+  - Rule 1b is compact (4 lines): reads `contract.REMEDIATION_REASON` pre-crafted by the agent, no duplication in router
+
+### Changed
+
+- `code-reviewer.md` — `REQUIRES_REMEDIATION` now includes `HIGH_ISSUES > 0`; `REMEDIATION_REASON` covers HIGH case
+- `silent-failure-hunter.md` — same; `CONTRACT RULE` updated: `STATUS=CLEAN requires CRITICAL_ISSUES=0 and HIGH_ISSUES=0`
+- `cc10x-router/SKILL.md` — Rule 1 → 1a/1b split; 1b is a 4-line soft gate (no router bloat)
+- `docs/cc10x-orchestration-bible.md` — synced to match new rules; last-synced date updated
+
+### Notes
+
+- CRITICAL path (Rule 1a) is byte-for-byte identical to old Rule 1 — no behavior change for critical issues
+- HIGH issues now surface as: "Fix high-severity issues: {agent's summary} — fix before continuing?"
+- "Proceed anyway" records the decision in `activeContext.md ## Decisions` for audit trail
+
+---
+
 ## [6.0.25] - 2026-02-28
 
 ### Fixed
