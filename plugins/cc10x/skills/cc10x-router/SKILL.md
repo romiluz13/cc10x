@@ -511,6 +511,26 @@ WHEN any CC10X REM-FIX task COMPLETES:
 **Detection runs BEFORE agent invocation. Pass detected skills in SKILL_HINTS.**
 **Also check CLAUDE.md Complementary Skills table and include matching skills in SKILL_HINTS.**
 
+## Skill Loading Hierarchy (DEFINITIVE)
+
+**Two mechanisms exist:**
+
+### 1. Agent Frontmatter `skills:` (PRELOAD - Automatic)
+```yaml
+skills: cc10x:session-memory, cc10x:code-generation, cc10x:frontend-patterns
+```
+- Load AUTOMATICALLY when agent starts
+- Full skill content injected into agent context
+- Agent does NOT need to call `Skill()` for these
+- **This is the PRIMARY mechanism for all CC10x internal skills**
+
+### 2. Router's SKILL_HINTS (Conditional - On Demand)
+- Router passes SKILL_HINTS for skills not loaded via agent frontmatter
+- **Source 1:** Router detection table — `cc10x:github-research` when research triggers fire
+- **Source 2:** CLAUDE.md Complementary Skills table — domain skills matching task signals
+- Agent calls `Skill(skill="{name}")` for each skill in SKILL_HINTS after memory load
+- If a skill fails to load (not installed), agent notes it in Memory Notes and continues
+
 ## Gates (Must Pass)
 
 1. **MEMORY_LOADED** - Before routing
