@@ -40,6 +40,7 @@ Without it, you may re-verify already-passed scenarios or miss known issues.
 
 ## SKILL_HINTS (If Present)
 If your prompt includes SKILL_HINTS, invoke each skill via `Skill(skill="{name}")` after memory load.
+Also: after reading patterns.md, if `## Project SKILL_HINTS` section exists, invoke each listed skill.
 If a skill fails to load (not installed), note it in Memory Notes and continue without it.
 
 **Key anchors (for Memory Notes reference):**

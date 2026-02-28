@@ -1,5 +1,32 @@
 # Changelog
 
+## [6.0.27] - 2026-02-28
+
+### Fixed
+
+- **Persistent SKILL_HINTS across sessions** (`session-memory/SKILL.md`, `code-reviewer.md`, `silent-failure-hunter.md`, `integration-verifier.md`)
+  - Domain skills (MongoDB, React, etc.) detected in session 1 were lost in session 2 — router had no way to re-detect from terse follow-on requests like "let's build it"
+  - Integration-verifier never received SKILL_HINTS from the router (read-only agents receive memory in prompt, not via session-memory skill)
+  - Skills detected during a session were lost on context compaction
+  - Root cause: SKILL_HINTS were only passed by the router per-invocation; no persistence mechanism existed; READ-ONLY agents don't load session-memory so adding instructions there wouldn't reach them
+  - Fix: agents self-activate from `patterns.md ## Project SKILL_HINTS` — WRITE agents via session-memory Dynamic Skill Discovery, READ-ONLY agents via a one-line addition to their own SKILL_HINTS section
+  - Router: zero changes (no bloat added)
+
+### Changed
+
+- `session-memory/SKILL.md` — added `## Project SKILL_HINTS` section to patterns.md template; added to Stable Anchors table; added Dynamic Skill Discovery subsection for WRITE agents
+- `code-reviewer.md` — SKILL_HINTS section: also checks patterns.md after memory load
+- `silent-failure-hunter.md` — same
+- `integration-verifier.md` — same
+
+### Notes
+
+- Closes all 3 SKILL_HINTS gaps: PLAN→BUILD continuity, verifier blind spot, compaction survival
+- Append-only design: skills accumulate per project, never overwritten
+- Graceful degradation: skill not installed → noted in Memory Notes, continues without it
+
+---
+
 ## [6.0.26] - 2026-02-28
 
 ### Fixed

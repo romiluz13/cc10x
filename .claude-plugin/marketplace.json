@@ -6,14 +6,14 @@
     "url": "https://github.com/romiluz13"
   },
   "metadata": {
-    "description": "cc10x v6.0.26 - The Intelligent Orchestrator for Claude Code",
-    "version": "6.0.26"
+    "description": "cc10x v6.0.27 - The Intelligent Orchestrator for Claude Code",
+    "version": "6.0.27"
   },
   "plugins": [
     {
       "name": "cc10x",
       "description": "Orchestrated development workflow with specialized subagents and composable skills. Features smart routing via cc10x-router, TDD-first building, multi-dimensional code review, evidence-based debugging, pre-implementation checklists, self-critique gates, and 7-layer memory architecture.",
-      "version": "6.0.26",
+      "version": "6.0.27",
       "author": {
         "name": "Rom Iluz",
         "email": "rom@iluz.net",
