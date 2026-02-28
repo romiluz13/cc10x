@@ -104,7 +104,7 @@ CONFIDENCE: 85  (min HARD=85, avg SOFT=80)
 
 **After providing your final output**, call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` where `{TASK_ID}` is from your Task Context prompt.
 
-**If non-critical issues found worth tracking:**
+**If non-critical, non-HIGH issues found worth tracking (MEDIUM/MINOR only):**
 ```
 TaskCreate({
   subject: "CC10X TODO: {issue_summary}",

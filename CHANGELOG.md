@@ -1,5 +1,55 @@
 # Changelog
 
+## [6.0.28] - 2026-02-28
+
+### Fixed
+
+- **Regression: HIGH issues creating TODO tasks** (`silent-failure-hunter.md`, `code-reviewer.md`)
+  - 6.0.26 added REQUIRES_REMEDIATION for HIGH issues, routing them to rule 1b (soft gate)
+  - Both agents still had `**If HIGH or MEDIUM issues found**` guard for TODO task creation — HIGH now has a remediation path via rule 1b, so TODO creation is redundant and creates noise
+  - Fix: guard now reads `**If MEDIUM issues found**` (hunter) and `**If non-critical, non-HIGH issues**` (reviewer); HIGH issues go through the soft gate only
+
+- **Parallel gate asks user twice** (`cc10x-router/SKILL.md`, rule 1b)
+  - When both parallel agents (code-reviewer + silent-failure-hunter) each have REQUIRES_REMEDIATION=true, rule 1b fired once per agent — two separate AskUserQuestion prompts with incomplete info each time
+  - Fix: rule 1b now checks if sibling contract also has REQUIRES_REMEDIATION=true and merges both REMEDIATION_REASONs into one consolidated AskUserQuestion
+
+- **REM-FIX tasks have no agent mapping** (`cc10x-router/SKILL.md`, chain loop step 2)
+  - CC10X REM-FIX task subjects had no rule mapping them to an agent; the loop template `cc10x:{agent}` had no agent to fill in
+  - Fix: step 2 now explicitly maps REM-FIX tasks to cc10x:component-builder (BUILD/REVIEW) or cc10x:bug-investigator (DEBUG)
+
+- **Re-Review Loop can be skipped** (`cc10x-router/SKILL.md`, chain loop step 3)
+  - After a REM-FIX task completes, the verifier can become unblocked in TaskList() before the router inserts re-review blockers
+  - Fix: step 3 now requires executing the Remediation Re-Review Loop BEFORE finding next runnable tasks when a REM-FIX task completes
+
+- **Circuit Breaker counts cross-workflow REM-FIX tasks** (`cc10x-router/SKILL.md`, Circuit Breaker)
+  - Tasks from prior sessions inflated the REM-FIX count and could trip the breaker early
+  - Fix: count is now scoped to the current workflow (since the current CC10X BUILD/DEBUG/REVIEW: parent task)
+
+- **REM-EVIDENCE has no actionable retry procedure** (`cc10x-router/SKILL.md`, REM-EVIDENCE)
+  - Description said "Re-run agent or manually verify" — no deterministic first step
+  - Fix: description now says to re-invoke the same agent once; if still missing, AskUserQuestion
+
+### Changed
+
+- `silent-failure-hunter.md` — TODO gate changed from HIGH+MEDIUM to MEDIUM only
+- `code-reviewer.md` — TODO gate changed from non-critical to non-critical/non-HIGH (MEDIUM/MINOR only)
+- `cc10x-router/SKILL.md`:
+  - Rule 1b: parallel merge for double-REQUIRES_REMEDIATION; "Fix now" path covers `each affected agent`; Decisions log uses `{agent(s)}`
+  - Chain loop step 2: explicit REM-FIX→agent mapping bullet
+  - Chain loop step 3: ordering note — Remediation Re-Review Loop fires BEFORE next TaskList()
+  - Circuit Breaker: scoped to current workflow parent task
+  - Post-Agent Validation evidence: added HIGH_ISSUES and REQUIRES_REMEDIATION fields
+  - Memory Update descriptions (BUILD/DEBUG/REVIEW): added READ-ONLY-only collection rule, Learnings dedup, and Completed rolling window (10 entries)
+  - REM-EVIDENCE description: deterministic re-invoke instruction
+
+### Notes
+
+- All changes are surgical: no existing logic removed, only targeted additions and guard narrowing
+- The Re-Review Loop section itself (lines 483-501) is untouched — only an ordering note is added
+- `integration-verifier.md` and `planner.md` unchanged (binary PASS/FAIL; planner never hard-blocks by design)
+
+---
+
 ## [6.0.27] - 2026-02-28
 
 ### Fixed

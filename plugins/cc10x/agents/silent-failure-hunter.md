@@ -88,7 +88,7 @@ If a skill fails to load (not installed), note it in Memory Notes and continue w
 
 **After providing your final output**, call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` where `{TASK_ID}` is from your Task Context prompt.
 
-**If HIGH or MEDIUM issues found (not critical, non-blocking):**
+**If MEDIUM issues found (not critical, non-blocking, no remediation path):**
 ```
 TaskCreate({
   subject: "CC10X TODO: {issue_summary}",
