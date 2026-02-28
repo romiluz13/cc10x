@@ -1,5 +1,114 @@
 # Changelog
 
+## [6.0.30] - 2026-02-28
+
+### Summary
+
+Targeted fixes release. **28 changes** to `cc10x-router/SKILL.md` only — no agent files touched. All from an external audit validated against actual 6.0.29 source (1 false claim identified and rejected). Built using cc10x on cc10x (dogfood session). 2 REM-FIX cycles caught and fixed operator precedence + null guard issues introduced by the initial build pass.
+
+### Fixed
+
+- **Re-Review Cycle Cap used `status=completed` — same cross-session contamination as old Circuit Breaker** (`cc10x-router/SKILL.md`, Re-Review Loop step 0)
+  - Same root cause fixed in Circuit Breaker for v6.0.29 was missed in the Cycle Cap
+  - Fix: Changed `status=completed` to `status IN [pending, in_progress]` — consistent with Circuit Breaker pattern
+
+- **Rule 0 vs Rule 0c conflict when NEEDS_EXTERNAL_RESEARCH=true AND TDD evidence missing simultaneously** (`cc10x-router/SKILL.md`, Rule 0 table)
+  - Rule 0 would override STATUS to BLOCKED (no TDD evidence) before Rule 0c could execute research
+  - Fix: Added `AND contract.NEEDS_EXTERNAL_RESEARCH != true` skip condition to bug-investigator row with correct parenthesization: `(TDD_RED_EXIT≠1 OR TDD_GREEN_EXIT≠0 OR VARIANTS_COVERED<1) AND contract.NEEDS_EXTERNAL_RESEARCH != true`
+
+- **Planner clarifications from PLAN workflow not injected into BUILD** (`cc10x-router/SKILL.md`, BUILD step 3)
+  - PLAN step 5a collected user answers and persisted to `## Decisions`, but BUILD step 3 never re-read them
+  - Fix: BUILD step 3 now checks `## Decisions` for `"Planner clarification ["` entries as pre-answered requirements before AskUserQuestion
+
+- **Re-Review Loop spawns silent-failure-hunter in DEBUG workflows** (`cc10x-router/SKILL.md`, Re-Review Loop step 2)
+  - DEBUG chain has no hunter — spawning one after REM-FIX in DEBUG pollutes the workflow
+  - Fix: Step 2 now checks if parent task contains `"CC10X DEBUG:"` and skips hunter creation + adjusts verifier blocking
+
+- **REM-EVIDENCE tasks had no agent routing in Chain Execution Loop** (`cc10x-router/SKILL.md`, step 2)
+  - `CC10X REM-FIX:` tasks had explicit agent routing but `CC10X REM-EVIDENCE:` tasks had none
+  - Fix: Added routing bullet — extracts agent name from subject suffix and re-invokes that agent
+
+- **Re-Review Loop step 6 was dead code** (`cc10x-router/SKILL.md`, Re-Review Loop step 6)
+  - Rule 1a already blocks all downstream tasks when creating REM-FIX. Step 6 duplicated this.
+  - Fix: Removed step 6, folded into step 5 note
+
+- **memory_task_id stored in `## Learnings` — subject to eviction at >20 entries** (`cc10x-router/SKILL.md`)
+  - `[cc10x-internal]` entry would eventually be evicted by the Learnings freshness rule
+  - Fix: Moved storage to `## References` (never pruned); updated resume path to read from References
+
+- **REVIEW Memory Update description missing `## Recent Changes: REPLACE` instruction** (`cc10x-router/SKILL.md`, REVIEW workflow tasks)
+  - BUILD and DEBUG had this freshness line; REVIEW did not
+  - Fix: Added `activeContext.md ## Recent Changes: REPLACE` to REVIEW Memory Update description
+
+- **`Proceed anyway` on HIGH issues created no follow-up tracking** (`cc10x-router/SKILL.md`, rule 1b)
+  - Issues skipped via "Proceed anyway" were only recorded in `## Decisions` — no actionable task created
+  - Fix: Added `TaskCreate({ subject: "CC10X TODO: HIGH issues skipped..." })` to the Proceed branch
+
+- **Rule numbering gaps (2a, 2e) had no explanation** (`cc10x-router/SKILL.md`)
+  - Rules jumped: 2 → 2b → 2c → 2f → 2d. Added inline comments explaining 2a is covered by 1b and 2e was moved to rule 0c
+
+- **Step 3a instruction was self-referential** (`cc10x-router/SKILL.md`, Chain Execution Loop)
+  - "Immediately after creating the Memory Update task AND after running step 3a..." — circular reference
+  - Fix: Rephrased to "At this point, ensure memory_task_id is defined"
+
+- **Workflow-Final Memory section listed 3 READ-ONLY agents regardless of workflow** (`cc10x-router/SKILL.md`)
+  - In DEBUG, silent-failure-hunter was never invoked — memory note search would find nothing
+  - Fix: Added "DEBUG workflow note: silent-failure-hunter Memory Notes will not exist — skip"
+
+- **Rule 2 Cases C and D were pure re-dispatch with no net logic** (`cc10x-router/SKILL.md`)
+  - Cases C/D just said "already handled by rule 1b" — created false impression of broader coverage
+  - Fix: Simplified rule 2 header to "Only applies when reviewer APPROVE AND hunter found issues (Cases A and B only)" — removed Cases C and D
+
+- **REM-FIX task subjects were opaque** (`cc10x-router/SKILL.md`, rule 1a)
+  - `"CC10X REM-FIX: code-reviewer"` — agent name only, no info about what needs fixing
+  - Fix: Subject now includes first 60 chars of REMEDIATION_REASON with null guard: `{REMEDIATION_REASON ?? 'see agent output'}`
+
+- **Gate 10 (pkill) ran silently** (`cc10x-router/SKILL.md`, Gates)
+  - Test watcher processes killed with no announcement
+  - Fix: Announce "Cleaning up orphaned test processes..." and log result before/after kill
+
+- **BUILD Plan-First Gate fired on every new session regardless of request size** (`cc10x-router/SKILL.md`, BUILD step 2)
+  - Trivial requests got the same planning prompt as complex architectural work
+  - Fix: Added heuristic — requests under 20 words with no cross-layer/security keywords auto-select "Build directly"
+
+- **Mandatory BUILD clarification interrupted explicit requests** (`cc10x-router/SKILL.md`, BUILD step 3)
+  - "DO NOT SKIP → AskUserQuestion" fired even when file, function, change, and acceptance criteria all specified
+  - Fix: Reordered step 3 — Pre-answers check runs first (reads `## Decisions` for planner clarifications), then ambiguity check gates the AskUserQuestion
+
+- **TODO task handling created N separate questions** (`cc10x-router/SKILL.md`, TODO Task Handling)
+  - Multiple TODO tasks = multiple interruptions at workflow end
+  - Fix: Batched into one AskUserQuestion: "N TODO items noted — Address all now / Keep all / Review individually"
+
+- **Circuit Breaker and Cycle Cap presented identical question text** (`cc10x-router/SKILL.md`)
+  - Both showed generic messages — no context about which guard fired
+  - Fix: Differentiated — CB: "Too many active fix attempts stacking up"; CC: "Multiple active fix cycles unresolved"
+
+- **REM-EVIDENCE tasks were visible in TaskList but marked as if user-actionable** (`cc10x-router/SKILL.md`)
+  - Developers seeing `CC10X REM-EVIDENCE: code-reviewer...` didn't know it's router-internal
+  - Fix: Added `[router-internal]` prefix to subject — `"CC10X REM-EVIDENCE: [router-internal] {agent}..."`
+
+- **REM-FIX/TODO task subjects silently produced "null" when REMEDIATION_REASON absent** (`cc10x-router/SKILL.md`, rules 1a/1b/2d)
+  - String interpolation `{first N chars of contract.REMEDIATION_REASON}` with no null guard
+  - Fix: Added `?? 'see agent output'` guards at rules 1a and 1b; `?? 'see verifier output'` at rule 2d Options B and C
+
+- **C-3 fast-path "skip AskUserQuestion" could skip Pre-answers lookup** (`cc10x-router/SKILL.md`, BUILD step 3)
+  - "Proceed directly to step 4" short-circuited the Pre-answers check (core C-3 intent)
+  - Fix: Reworded and reordered — Pre-answers now runs first, ambiguity check only gates AskUserQuestion
+
+### Changed
+
+- `plugins/cc10x/skills/cc10x-router/SKILL.md` — 28 surgical changes (20 planned + 8 from 2 REM-FIX cycles)
+- No agent files changed
+
+### Notes
+
+- External audit had 1 false claim (H-7: github-research in agent frontmatter — never existed there)
+- 6 deferred TODO tasks for v6.0.31: ROOT_CAUSE null guards (×3), rule 1b AskUserQuestion guard, C-3 "cover all gaps" wording, rule 2f research loop cap
+- Built dogfood-style: cc10x planned, built, reviewed, and verified this release using itself
+- 2 REM-FIX cycles caught operator precedence bug in C-1 (AND-before-OR in CONTRACT RULE) and incomplete null guard sweep (rule 2d missed)
+
+---
+
 ## [6.0.29] - 2026-02-28
 
 ### Summary
