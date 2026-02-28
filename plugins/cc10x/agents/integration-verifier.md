@@ -4,7 +4,7 @@ description: "Internal agent. Use cc10x-router for all development tasks."
 model: inherit
 color: yellow
 tools: Read, Bash, Grep, Glob, Skill, LSP, AskUserQuestion, WebFetch, TaskUpdate
-skills: cc10x:architecture-patterns, cc10x:debugging-patterns, cc10x:verification-before-completion, cc10x:frontend-patterns
+skills: cc10x:architecture-patterns, cc10x:verification-before-completion, cc10x:frontend-patterns
 ---
 
 # Integration Verifier (E2E)
@@ -145,6 +145,7 @@ EVIDENCE:
 - Get user approval before proceeding
 
 **Decision:** [Option chosen]
+**For Router Contract:** Set CHOSEN_OPTION to A, B, or C matching your Decision above.
 **Rationale:** [Why this choice]
 
 ### Findings
@@ -175,10 +176,11 @@ BLOCKERS: [count from BLOCKERS_COUNT]
 BLOCKING: [true if STATUS=FAIL]
 REQUIRES_REMEDIATION: [true if BLOCKERS > 0]
 REMEDIATION_REASON: null | "Fix E2E failures: {summary of BLOCKERS list}"
+CHOSEN_OPTION: A | B | C  # A=create fix task (default), B=recommend branch revert, C=document known limitation and continue
 MEMORY_NOTES:
   learnings: ["Integration insights"]
   patterns: ["Edge cases discovered"]
   verification: ["E2E: {SCENARIOS_PASSED}/{SCENARIOS_TOTAL} passed"]
 ```
-**CONTRACT RULE:** STATUS=PASS requires BLOCKERS=0 and SCENARIOS_PASSED=SCENARIOS_TOTAL
+**CONTRACT RULE:** STATUS=PASS requires BLOCKERS=0 and SCENARIOS_PASSED=SCENARIOS_TOTAL. STATUS=FAIL requires CHOSEN_OPTION to be set (A, B, or C).
 ```

@@ -117,6 +117,11 @@ TaskList()  # Check for pending/in-progress workflow tasks
 - Resume from task state (use `TaskGet({ taskId })` for the task you plan to resume)
 - Skip workflow selection - continue execution from where it stopped
 - Check `blockedBy` to determine which agent to run next
+- **Reconstruct memory_task_id (exact taskId preferred over subject search):**
+  1. Read(file_path=".claude/cc10x/activeContext.md") → look for `[cc10x-internal] memory_task_id:` line in ## Learnings
+  2. If found: extract the taskId value directly (collision-safe, even in shared TaskLists)
+  3. If NOT found: `TaskList()` → filter subject starts with "CC10X Memory Update:" AND status IN [pending, in_progress] → use first match (fallback)
+  4. Assign to `memory_task_id` before invoking any agent (step 3a requires this)
 
 **Safety rule (avoid cross-project collisions):**
 - If you find tasks that do NOT clearly belong to CC10x, do not resume them.
@@ -179,7 +184,7 @@ TaskUpdate({ taskId: verifier_task_id, addBlockedBy: [reviewer_task_id, hunter_t
 # 3. Memory Update task (blocked by final agent - TASK-ENFORCED)
 TaskCreate({
   subject: "CC10X Memory Update: Persist workflow learnings",
-  description: "REQUIRED: Collect Memory Notes from agent outputs and persist to memory files.\n\n**Instructions:**\n1. Find all '### Memory Notes' sections from completed agents\n2. Persist learnings to .claude/cc10x/activeContext.md ## Learnings\n3. Persist patterns to .claude/cc10x/patterns.md ## Common Gotchas\n4. Persist verification to .claude/cc10x/progress.md ## Verification\n\n**Pattern:**\nRead(file_path=\".claude/cc10x/activeContext.md\")\nEdit(old_string=\"## Learnings\", new_string=\"## Learnings\\n- [from agent]: {insight}\")\nRead(file_path=\".claude/cc10x/activeContext.md\")  # Verify\n\nRepeat for patterns.md and progress.md.\n\n**Freshness (prevent bloat):**\n- activeContext.md ## Recent Changes: REPLACE existing entries with only this workflow's changes.\n- progress.md ## Tasks: REPLACE existing entries with only this workflow's task items.\n- patterns.md: Before adding to ## Common Gotchas, scan for an existing entry about the same file or error. If found, update it in-place instead of adding a duplicate.\n- Collect Memory Notes from READ-ONLY agents only (code-reviewer, silent-failure-hunter, integration-verifier) — WRITE agents (component-builder, bug-investigator, planner) already wrote memory directly; skip their Memory Notes to avoid duplicates.\n- activeContext.md ## Learnings: before appending, check for same topic/file; update in-place if found; if count > 20, promote oldest entries to patterns.md ## Common Gotchas.\n- progress.md ## Completed: keep only the 10 most recent entries.",
+  description: "REQUIRED: Collect Memory Notes from agent outputs and persist to memory files.\n\n**Instructions:**\n1. Read Memory Notes from THIS task's description — they were captured between '---' separator lines by the router immediately after each agent completed (compaction-safe). Do NOT search conversation history.\n2. Persist learnings to .claude/cc10x/activeContext.md ## Learnings\n3. Persist patterns to .claude/cc10x/patterns.md ## Common Gotchas\n4. Persist verification to .claude/cc10x/progress.md ## Verification\n\n**Pattern:**\nRead(file_path=\".claude/cc10x/activeContext.md\")\nEdit(old_string=\"## Learnings\", new_string=\"## Learnings\\n- [from agent]: {insight}\")\nRead(file_path=\".claude/cc10x/activeContext.md\")  # Verify\n\nRepeat for patterns.md and progress.md.\n\n**Freshness (prevent bloat):**\n- activeContext.md ## Recent Changes: REPLACE existing entries with only this workflow's changes.\n- progress.md ## Tasks: REPLACE existing entries with only this workflow's task items.\n- patterns.md: Before adding to ## Common Gotchas, scan for an existing entry about the same file or error. If found, update it in-place instead of adding a duplicate.\n- Collect Memory Notes from READ-ONLY agents only (code-reviewer, silent-failure-hunter, integration-verifier) — WRITE agents (component-builder, bug-investigator, planner) already wrote memory directly; skip their Memory Notes to avoid duplicates.\n- activeContext.md ## Learnings: before appending, check for same topic/file; update in-place if found; if count > 20, promote oldest entries to patterns.md ## Common Gotchas.\n- progress.md ## Completed: keep only the 10 most recent entries.",
   activeForm: "Persisting workflow learnings"
 })
 # Returns memory_task_id
@@ -264,7 +269,10 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [planner_task_id] })
 
 **Default: FULL.** Use QUICK only if ALL 5 conditions are met:
 1. Single-unit change (one file, one function)
-2. No security implications
+2. No security implications — verified by BOTH:
+   (a) Request text doesn't contain: auth, crypto, security, payment, password, secret, token, permission, role, jwt, oauth, session
+   (b) `Bash(command="git diff --name-only HEAD 2>/dev/null || echo NO_GIT")` output doesn't match paths: auth/, security/, crypto/, payment/, token/, permission/, secrets/, passwords/, roles/
+   If NO_GIT (non-git project): condition 2 FAILS by default — cannot verify security scope → use FULL depth
 3. No cross-layer dependencies (e.g., API + DB + UI)
 4. No open `CC10X REM-FIX` tasks in current workflow
 5. Requirements are explicit and unambiguous
@@ -275,7 +283,11 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [planner_task_id] })
 | **QUICK** | component-builder → integration-verifier | ALL 5 conditions above met |
 
 **QUICK still requires:** Router Contract validation + verifier + memory update.
-**Blocking signal during QUICK** (verifier FAIL, test failure, lint error) → **escalate to FULL** immediately.
+**Blocking signal during QUICK** (verifier FAIL, test failure, lint error):
+→ AskUserQuestion: "Quick verification failed ({reason}). Escalating to full review adds code-reviewer + silent-failure-hunter before final verification. Continue?"
+  Options: "Run full review chain (Recommended)" | "Abort — I'll investigate manually"
+→ If "Run full review chain": Invoke code-reviewer + silent-failure-hunter in parallel (same as standard BUILD), then re-invoke integration-verifier
+→ If "Abort": Record in activeContext.md ## Decisions: "QUICK escalation declined by user", stop workflow
 
 ### DEBUG
 1. Load memory → Check patterns.md Common Gotchas
@@ -289,11 +301,26 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [planner_task_id] })
    - External service error (API timeout, auth failure, third-party), OR
    - **3+ local debugging attempts failed**
 
-   **Debug Attempt Counting:**
-   - Format in activeContext.md Recent Changes: `[DEBUG-N]: {what was tried} → {result}`
+   **Debug Attempt Counting (workflow-scoped):**
+   - At the START of each new DEBUG workflow: write the RESET marker using an explicit Edit call:
+     ```
+     Edit(file_path=".claude/cc10x/activeContext.md",
+          old_string="## Recent Changes",
+          new_string="## Recent Changes\n[DEBUG-RESET: wf:{parent_task_id}]")
+     Read(file_path=".claude/cc10x/activeContext.md")  # VERIFY marker written
+     # If marker NOT found in Read output: STOP — retry Edit before proceeding to any DEBUG-N entries
+     ```
+   - Format each attempt — anchor on the DEBUG-RESET marker (NOT on ## Recent Changes):
+     ```
+     Edit(file_path=".claude/cc10x/activeContext.md",
+          old_string="[DEBUG-RESET: wf:{parent_task_id}]",
+          new_string="[DEBUG-RESET: wf:{parent_task_id}]\n[DEBUG-N]: {what was tried} → {result}")
+     ```
+     This places DEBUG-N entries AFTER the marker in file order.
    - Example: `[DEBUG-1]: Added null check → still failing (TypeError persists)`
-   - Count lines matching `[DEBUG-N]:` pattern
-   - If count ≥ 3 AND all show failure → trigger external research
+   - Count ONLY `[DEBUG-N]:` lines that appear AFTER the most recent `[DEBUG-RESET:...]` marker
+   - If scoped count ≥ 3 AND all show failure → trigger external research
+   - Rationale: Prevents stale debug entries from previous sessions (different bug) from triggering research on fresh workflows
 
    **What counts as an attempt:**
    - A hypothesis tested with code change or command
@@ -301,8 +328,12 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [planner_task_id] })
    - Each attempt must have a concrete action + observed result
 
    **If ANY trigger met:**
-   - Execute research FIRST using octocode tools directly
-   - Search for error patterns, PRs with similar issues
+   → AskUserQuestion: "Debugging has stalled ({trigger reason}). Research similar issues on GitHub? This makes external API calls and saves findings to docs/research/."
+     Options: "Research GitHub (Recommended)" | "Keep debugging locally" | "Abort workflow — I'll fix manually"
+   → If "Research GitHub": Execute THREE-PHASE research (octocode tools → persist → pass to agent)
+   → If "Keep debugging locally": Reset DEBUG counter (add [DEBUG-RESET] marker), re-invoke bug-investigator with hint "Try a different hypothesis"
+   → If "Abort": Record in activeContext.md ## Decisions: "Research declined by user", stop workflow
+   - Search for error patterns, PRs with similar issues (if Research GitHub chosen)
    - **PERSIST research** → Save to `docs/research/YYYY-MM-DD-<error-topic>-research.md`
    - **Update memory** → Add to activeContext.md References section
 4. **Create task hierarchy** (see Task-Based Orchestration above)
@@ -338,6 +369,13 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [planner_task_id] })
    - Summarize findings before invoking planner
 4. **Create task hierarchy** (see Task-Based Orchestration above)
 5. **Start chain execution** (pass clarified requirements + research results + file path in prompt if step 3 was executed)
+5a. **After planner task completes — collect user input if needed:**
+    → Check planner output for "**Your Input Needed:**" section
+    → If section exists and has bullet points:
+      → AskUserQuestion: "Before BUILD starts, planner flagged these assumptions that need your input:\n{extracted bullet points}\nProvide answers (or confirm the defaults)."
+      → Collect answers → Persist to activeContext.md ## Decisions with Edit: "- Planner clarification [{date}]: {Q} → {A}"
+      → Include answers summary in BUILD context: When invoking component-builder, add "## Planner Clarifications\n{Q+A pairs}" to prompt
+    → If section empty or absent: Proceed directly to step 6 (Memory Update)
 6. Update memory → Reference saved plan when task completed
 
 **THREE-PHASE for External Research (MANDATORY):**
@@ -430,15 +468,42 @@ CONTRACT FIELDS:
 
 VALIDATION RULES:
 
+**0. CONTRACT RULE Enforcement (RUNS FIRST — auto-override STATUS if violated):**
+
+Before applying rules 1a/1b/2, validate each agent's self-reported STATUS against its CONTRACT RULE:
+
+| Agent | CONTRACT RULE violation → Override |
+|-------|-------------------------------------|
+| component-builder | STATUS=PASS but TDD_RED_EXIT≠1 OR TDD_GREEN_EXIT≠0 → STATUS=FAIL, BLOCKING=true, REMEDIATION_REASON="CONTRACT RULE violated: TDD evidence missing" |
+| bug-investigator | STATUS=FIXED but TDD_RED_EXIT≠1 OR TDD_GREEN_EXIT≠0 OR VARIANTS_COVERED<1 → STATUS=BLOCKED, BLOCKING=true |
+| code-reviewer | STATUS=APPROVE but CRITICAL_ISSUES>0 OR CONFIDENCE<80 → STATUS=CHANGES_REQUESTED, REQUIRES_REMEDIATION=true; BLOCKING=true only if CRITICAL_ISSUES>0 |
+| integration-verifier | STATUS=PASS but SCENARIOS_PASSED≠SCENARIOS_TOTAL → STATUS=FAIL, BLOCKING=true |
+| planner | STATUS=PLAN_CREATED but PLAN_FILE is null/empty OR CONFIDENCE<50 → STATUS=NEEDS_CLARIFICATION |
+
+**If override applied:** Log in output: "⚠️ CONTRACT RULE override: {agent} self-reported {original} but rule violated (TDD_RED_EXIT={X}/TDD_GREEN_EXIT={Y}/etc.). Overriding STATUS to {new_status}."
+
+Proceed with rules 1a/1b/2 using the OVERRIDDEN values.
+
 **Circuit Breaker (BEFORE creating any REM-FIX):**
-Before creating a new REM-FIX task, count existing REM-FIX tasks in this workflow (tasks whose subject contains "CC10X REM-FIX:" created since the current "CC10X BUILD/DEBUG/REVIEW:" parent task).
+Before creating a new REM-FIX task, count ACTIVE REM-FIX tasks: `TaskList()` → filter by (subject contains "CC10X REM-FIX:") AND (status IN [pending, in_progress]). Do NOT count completed REM-FIX tasks — they are resolved and irrelevant.
 If count ≥ 3 → AskUserQuestion:
 - **Research best practices (Recommended)** → Skill(skill="cc10x:github-research"), persist, retry
 - **Fix locally** → Create another REM-FIX task
 - **Skip** → Proceed despite errors (not recommended)
 - **Abort** → Stop workflow, manual fix
 
-1a. If contract.BLOCKING == true:
+0c. If contract.NEEDS_EXTERNAL_RESEARCH == true (bug-investigator only):
+    **Runs BEFORE rule 1a — do NOT evaluate rules 1a/1b/2 when this fires.**
+    → Execute THREE-PHASE research immediately using contract.RESEARCH_REASON as query:
+      PHASE 1: Search using octocode tools (mcp__octocode__githubSearchCode, etc.)
+      PHASE 2: PERSIST → Bash(command="mkdir -p docs/research")
+               Write(file_path="docs/research/YYYY-MM-DD-{topic}-research.md", content="[findings]")
+               Edit(activeContext.md ## References, add "- Research: docs/research/...")
+      PHASE 3: Re-invoke cc10x:bug-investigator with same prompt + "## External Research Findings\nSaved to: {research_file}\n{key_findings}"
+    → Do NOT create REM-FIX task — research IS the response
+    → STOP after PHASE 3 — do not evaluate rules 1a/1b/2 for this contract
+
+1a. If contract.BLOCKING == true AND contract.STATUS NOT IN ["NEEDS_CLARIFICATION", "INVESTIGATING", "BLOCKED"] AND contract.NEEDS_EXTERNAL_RESEARCH != true:
     → TaskCreate({
         subject: "CC10X REM-FIX: {agent_name}",
         description: contract.REMEDIATION_REASON,
@@ -451,19 +516,67 @@ If count ≥ 3 → AskUserQuestion:
     → STOP. Do not invoke next agent until remediation completes.
 
 1b. If contract.REQUIRES_REMEDIATION == true AND contract.BLOCKING == false:
-    → If parallel phase AND sibling contract also has REQUIRES_REMEDIATION=true:
-        Merge both REMEDIATION_REASONs into one AskUserQuestion before acting
-    → AskUserQuestion: "{combined or single REMEDIATION_REASON} — fix before continuing?"
+    **ALWAYS AskUserQuestion — unconditionally, whether serial or parallel phase.**
+    → Gather context first:
+      - If parallel phase AND sibling agent also has REQUIRES_REMEDIATION=true: merge both REMEDIATION_REASONs into one combined message
+      - Otherwise (serial phase or sibling has no issues): use this agent's REMEDIATION_REASON alone
+    → AskUserQuestion: "{merged or single REMEDIATION_REASON} — fix before continuing?"
       Options: "Fix now (Recommended)" | "Proceed anyway"
     → "Fix now" → Circuit Breaker check, then apply rule 1a for each affected agent
     → "Proceed" → Edit activeContext.md ## Decisions: "{agent(s)}: HIGH issues skipped by user", continue
 
-2. If contract.CRITICAL_ISSUES > 0 AND parallel phase (reviewer + hunter):
-   → Conflict check: If code-reviewer STATUS=APPROVE AND silent-failure-hunter CRITICAL_ISSUES > 0:
-     AskUserQuestion: "Reviewer approved, but Hunter found {N} critical issues. Investigate or Skip?"
-     - If "Investigate" → Create REM-FIX for hunter issues
-     - If "Skip" → Proceed (record decision in memory)
-   → If no conflict and CRITICAL_ISSUES > 0: treat as blocking (rule 1)
+2. If (contract.CRITICAL_ISSUES > 0 OR contract.HIGH_ISSUES > 0) AND parallel phase (reviewer + hunter):
+   → **Conflict check** — compare reviewer and hunter verdicts:
+   **Case A:** code-reviewer STATUS=APPROVE AND silent-failure-hunter CRITICAL_ISSUES > 0:
+     AskUserQuestion: "Reviewer approved, but Hunter found {N} critical silent failures. Investigate or skip?"
+     - "Investigate" → Create REM-FIX for hunter CRITICAL issues (apply rule 1a)
+     - "Skip" → Record decision in memory, proceed to verifier
+   **Case B:** code-reviewer STATUS=APPROVE AND silent-failure-hunter HIGH_ISSUES > 0 (CRITICAL=0):
+     AskUserQuestion: "Reviewer approved, but Hunter found {N} high-severity error handling gaps. Fix before continuing?"
+     - "Fix" → Apply rule 1a for hunter HIGH issues (non-blocking REM-FIX)
+     - "Proceed anyway" → Record in memory: "Hunter HIGH issues skipped by user", proceed
+   **Case C:** Both reviewer AND hunter have REQUIRES_REMEDIATION=true → already merged by rule 1b above
+   **Case D:** No approval conflict (both agree issues exist) → rules 1a/1b already handled this
+
+2b. If contract.STATUS == "NEEDS_CLARIFICATION" (planner agent):
+    → Extract "**Your Input Needed:**" bullet points from planner output
+    → AskUserQuestion: "Planner needs clarification before the plan can be completed:\n{extracted items}\nPlease answer to unblock planning."
+    → Collect user answers → Persist to activeContext.md ## Decisions: "Plan clarification: {Q} → {A}"
+    → Re-invoke planner with prompt: "{original prompt}\n\n## User Clarifications\n{answers}"
+    → Do NOT proceed to BUILD until planner returns STATUS=PLAN_CREATED
+
+2c. If contract.STATUS == "INVESTIGATING" (bug-investigator):
+    → Treat as BLOCKING=true (investigation incomplete — no fix applied yet)
+    → Announce to user: "Bug investigator is still investigating (no fix applied yet). Continuing investigation..."
+    → TaskCreate({ subject: "CC10X bug-investigator: Continue investigation", description: "Previous attempt: STATUS=INVESTIGATING. ROOT_CAUSE hint: {contract.ROOT_CAUSE}. Continue from this hypothesis." })
+    → Block downstream tasks on this new investigation task
+    → **INVESTIGATING loop cap (before re-invoking):**
+      `TaskList()` → count tasks where subject contains "CC10X bug-investigator: Continue investigation" AND status IN [pending, in_progress, completed]
+      If count >= 3: AskUserQuestion (same 4 options as Circuit Breaker) — do NOT re-invoke automatically
+      If count < 3: proceed with re-invocation below
+    → Re-invoke bug-investigator with previous context included in prompt
+
+2f. If contract.STATUS == "BLOCKED" (bug-investigator terminal stuck state):
+    → Investigation is permanently stuck — cannot proceed without external help or user decision
+    → AskUserQuestion: "Bug investigation is completely stuck (BLOCKED). ROOT_CAUSE hint: {contract.ROOT_CAUSE}. How to proceed?"
+      Options: "Research externally (Recommended)" | "Create manual fix task" | "Abort workflow"
+    → "Research externally": Execute THREE-PHASE research (same as rule 0c), re-invoke bug-investigator
+    → "Create manual fix task": Proceed as rule 1a (create REM-FIX task)
+    → "Abort": Record in activeContext.md ## Decisions: "Investigation aborted (BLOCKED): {ROOT_CAUSE}", stop workflow
+
+2d. If integration-verifier STATUS=FAIL AND contract.CHOSEN_OPTION is set:
+    → If CHOSEN_OPTION == "A": Create REM-FIX task (existing behavior — unchanged)
+    → If CHOSEN_OPTION == "B":
+        AskUserQuestion: "Verifier recommends REVERTING the branch — fundamental design issue found: {REMEDIATION_REASON}. How to proceed?"
+        Options: "Revert branch (Recommended)" | "Create fix task instead"
+        - "Revert": Suggest git revert steps, stop workflow (record in memory)
+        - "Create fix task": Proceed as CHOSEN_OPTION=A
+    → If CHOSEN_OPTION == "C":
+        AskUserQuestion: "Verifier wants to proceed with this known limitation: {REMEDIATION_REASON}. Accept and continue?"
+        Options: "Accept limitation (document it)" | "Fix before proceeding"
+        - "Accept": Record in activeContext.md ## Decisions, proceed to Memory Update
+        - "Fix": Proceed as CHOSEN_OPTION=A
+    → If CHOSEN_OPTION not set (legacy behavior): Proceed as CHOSEN_OPTION=A
 
 3. Collect contract.MEMORY_NOTES for workflow-final persistence
 
@@ -489,6 +602,16 @@ If count ≥ 3 → AskUserQuestion:
 ```
 WHEN any CC10X REM-FIX task COMPLETES:
   │
+  ├─→ 0. **Cycle Cap Check (RUNS FIRST):**
+  │      Count completed "CC10X REM-FIX:" tasks: TaskList() → filter subject contains "CC10X REM-FIX:" AND status=completed
+  │      If count ≥ 2:
+  │        → AskUserQuestion: "This is remediation cycle #{count+1}. Issues persist after {count} previous fixes. How to proceed?"
+  │          - "Create another fix task" → Continue with steps 1-5 below
+  │          - "Research patterns (Recommended)" → Execute cc10x:github-research THREE-PHASE, pass findings to REM-FIX task
+  │          - "Accept known issues" → Record in activeContext.md ## Decisions, proceed directly to verifier/memory-update
+  │          - "Abort workflow" → Stop; user resolves manually
+  │      If count < 2: Continue to step 1 below
+  │
   ├─→ 1. TaskCreate({ subject: "CC10X code-reviewer: Re-review after remediation" })
   │      → Returns re_reviewer_id
   │
@@ -502,7 +625,13 @@ WHEN any CC10X REM-FIX task COMPLETES:
   ├─→ 4. Block verifier on re-reviews:
   │      TaskUpdate({ taskId: verifier_task_id, addBlockedBy: [re_reviewer_id, re_hunter_id] })
   │
-  └─→ 5. Resume chain execution (re-reviews run before verifier)
+  ├─→ 5. Resume chain execution (re-reviews run before verifier)
+  │
+  └─→ 6. **If re-review creates new REM-FIX-N:**
+         After re-reviewer/re-hunter complete and create a new REM-FIX task (REM-FIX-N):
+         → Find verifier task: TaskList() → find task where subject contains "integration-verifier"
+         → TaskUpdate({ taskId: verifier_task_id, addBlockedBy: [REM-FIX-N_task_id] })
+         This ensures verifier (and therefore Memory Update) cannot complete while REM-FIX-N is pending.
 ```
 
 **Why:** Code changes must be re-reviewed before shipping (orchestration integrity).
@@ -580,6 +709,23 @@ skills: cc10x:session-memory, cc10x:code-generation, cc10x:frontend-patterns
    - Router calls TaskList() to verify task is completed; if still in_progress, router calls TaskUpdate({ taskId: runnable_task_id, status: "completed" }) as fallback
    - If completed task subject starts with "CC10X REM-FIX:", execute Remediation Re-Review Loop (see below) BEFORE finding next runnable tasks.
    - Router finds next available tasks from TaskList()
+
+3a. **Immediately preserve Memory Notes (prevents compaction loss):**
+    After any READ-ONLY agent completes (code-reviewer, silent-failure-hunter, integration-verifier):
+    → Locate "### Memory Notes (For Workflow-Final Persistence)" section in agent's output (this message)
+    → If found, extract the full section content
+    → TaskGet({ taskId: memory_task_id })  # Retrieve Memory Update task's current description
+    → TaskUpdate({
+        taskId: memory_task_id,
+        description: current_description + "\n\n---\n### Captured from {agent_name} ({timestamp}):\n" + extracted_memory_notes
+      })
+    → This stores Memory Notes in the task filesystem (survives context compaction)
+    → Memory Update task executes by reading its OWN description — not conversation history
+    → **Persist memory_task_id subject for reconstruction:**
+      Immediately after creating the Memory Update task AND after running step 3a:
+      If `memory_task_id` is undefined (compaction recovery): `TaskList()` → find task where subject starts with "CC10X Memory Update:" AND status IN [pending, in_progress] → assign its taskId to `memory_task_id`
+    → **Store taskId durably (survives compaction):**
+      `Edit(file_path=".claude/cc10x/activeContext.md", old_string="## Learnings", new_string="## Learnings\n- [cc10x-internal] memory_task_id: {memory_task_id} wf:{parent_task_id}")`
 
 4. Determine next:
    - Find tasks where ALL blockedBy tasks are "completed"

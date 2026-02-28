@@ -38,6 +38,11 @@ CC10x memory is a **small, stable, permission-free Markdown database** used for:
 5. **Tasks (Execution State)**: Claude Code Tasks
    - Great for orchestration, but not guaranteed to be the only durable source.
    - Mirror key task subjects/status into `progress.md` for backup/resume.
+   - **Task ID Warning:** Task IDs may not persist across session restarts unless `CLAUDE_CODE_TASK_LIST_ID` is configured. NEVER store task IDs as durable references in memory files. Store phase names and status instead.
+   - **Hydration Pattern (recommended for resume):**
+     - Session start: Read progress.md → create fresh tasks for each pending item → set dependencies
+     - Session end: Sync completed status back to progress.md via Memory Update task
+     - This makes workflows restartable without relying on old task IDs
 
 ### Promotion Ladder (“Rises To”)
 

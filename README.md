@@ -2,7 +2,7 @@
 
 ### The Intelligent Orchestrator for Claude Code
 
-**Current version:** 6.0.28
+**Current version:** 6.0.29
 
 **Recommended: Create `~/.claude/CLAUDE.md` (global) so the router is always active across all projects.**
 

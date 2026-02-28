@@ -1,5 +1,135 @@
 # Changelog
 
+## [6.0.29] - 2026-02-28
+
+### Summary
+
+Major orchestration hardening release. **33 surgical changes** across `cc10x-router`, `bug-investigator`, `planner`, `integration-verifier`, and `session-memory`. Fixes every Critical and High issue identified in a comprehensive multi-agent audit run against the system itself (dogfooding). No behavior changes for workflows that work correctly — only incorrect edge cases are fixed.
+
+### Fixed
+
+- **HIGH issues never asked user before proceeding** (`cc10x-router/SKILL.md`, rule 1b)
+  - Rule 1b previously treated "if parallel phase AND sibling also REQUIRES_REMEDIATION" as a precondition for AskUserQuestion, not a context-gathering step
+  - In serial workflows (REVIEW, single agent), HIGH issues silently fell through to the next agent without asking
+  - Fix: Rule 1b now says **"ALWAYS AskUserQuestion — unconditionally, whether serial or parallel phase"**
+
+- **Silent-failure-hunter HIGH conflicts ignored in parallel phase** (`cc10x-router/SKILL.md`, rule 2)
+  - Parallel conflict check only fired when `CRITICAL_ISSUES > 0` — hunter HIGH_ISSUES=5 + reviewer APPROVE = no check, no question, proceed
+  - Added **Case B**: explicit path for reviewer APPROVE + hunter HIGH_ISSUES > 0 (no CRITICAL)
+  - Condition widened from `CRITICAL_ISSUES > 0` to `(CRITICAL_ISSUES > 0 OR HIGH_ISSUES > 0)`
+
+- **Agents could self-report STATUS=PASS/APPROVE while violating their own CONTRACT RULE** (`cc10x-router/SKILL.md`, rule 0)
+  - Router only checked `BLOCKING` and `REQUIRES_REMEDIATION` — never verified TDD evidence, scenarios count, or confidence thresholds
+  - Added **rule 0: CONTRACT RULE Enforcement** — runs first, auto-overrides STATUS if agent violated its own contract rule (e.g., STATUS=PASS with TDD_RED_EXIT=null)
+
+- **Circuit breaker counted cross-session completed REM-FIX tasks** (`cc10x-router/SKILL.md`, Circuit Breaker)
+  - Count was unbounded: prior session REM-FIX tasks (including completed) could trip the breaker on first new fix
+  - Fix: count now filters `status IN [pending, in_progress]` only — completed tasks are resolved and ignored
+
+- **Remediation re-review loop had no cycle cap and could deadlock** (`cc10x-router/SKILL.md`, Re-Review Loop)
+  - No cap: 3+ re-review cycles could run indefinitely
+  - Deadlock: when re-review creates REM-FIX-N, verifier was NOT blocked on REM-FIX-N — Memory Update could run before all fixes complete
+  - Added **step 0**: cycle cap — after 2 completed REM-FIX tasks, AskUserQuestion before creating another
+  - Added **step 6**: when re-review creates new REM-FIX-N, verifier gets `addBlockedBy: [REM-FIX-N]`
+
+- **QUICK→FULL escalation was silent** (`cc10x-router/SKILL.md`, QUICK mode)
+  - User chose QUICK (fast path), verifier failed, router silently escalated to full 4-agent chain
+  - Fix: AskUserQuestion before escalating: "Quick verification failed. Run full review chain or abort?"
+
+- **QUICK mode security condition was keyword-only** (`cc10x-router/SKILL.md`, QUICK condition 2)
+  - "No security implications" was determined from request text alone — a fix to `auth.ts` described as "minor" would pass
+  - Fix: condition 2 now ALSO runs `git diff --name-only HEAD` and fails if changed files match security paths (`auth/`, `crypto/`, `payment/`, etc.)
+  - Non-git projects fail condition 2 by default (cannot verify scope)
+
+- **Memory Notes from READ-ONLY agents lost on context compaction** (`cc10x-router/SKILL.md`, step 3a)
+  - Memory Notes were only in conversation history — context compaction could erase them before Memory Update task ran
+  - Fix: after each READ-ONLY agent completes, router immediately calls `TaskGet → TaskUpdate` to store Memory Notes inside the Memory Update task description (filesystem-backed, survives compaction)
+  - Memory Update task now reads its own description instead of conversation history
+
+- **NEEDS_CLARIFICATION (planner) and INVESTIGATING (bug-investigator) routed to wrong agent** (`cc10x-router/SKILL.md`, rules 1a/2b/2c)
+  - Both statuses set `BLOCKING=true`, which triggered rule 1a (create REM-FIX → component-builder) before specialized handlers could fire
+  - Fix: rule 1a guard now excludes `NEEDS_CLARIFICATION`, `INVESTIGATING`, and `BLOCKED` via NOT IN list
+  - Added rule 2b: NEEDS_CLARIFICATION → AskUserQuestion → re-invoke planner with user answers
+  - Added rule 2c: INVESTIGATING → create "Continue investigation" task with context from ROOT_CAUSE hint
+  - Added rule 2f: BLOCKED (terminal stuck state) → AskUserQuestion with research/fix/abort options
+
+- **Integration verifier rollback options never reached router** (`integration-verifier.md`, `cc10x-router/SKILL.md`)
+  - Verifier chose Option A/B/C internally but Router Contract had no field — router always created REM-FIX (Option A)
+  - Added `CHOSEN_OPTION: A | B | C` to verifier Router Contract
+  - Added rule 2d: router reads CHOSEN_OPTION and presents B/C to user before defaulting to A
+
+- **bug-investigator.md called github-research as a Skill() — contradicting router ownership** (`bug-investigator.md`, `planner.md`)
+  - Router clearly states "github-research is router-executed directly — never passed as SKILL_HINTS"
+  - Both agents had `Skill(skill="cc10x:github-research")` calls contradicting this
+  - Fix: both agents now say "Do NOT call github-research — research is router-managed"
+  - Added NEEDS_EXTERNAL_RESEARCH escape hatch: agent signals need via contract field, router handles
+
+- **NEEDS_EXTERNAL_RESEARCH contract field had no router handler** (`cc10x-router/SKILL.md`, rule 0c)
+  - Field was documented in bug-investigator but silently discarded by router — escape hatch non-functional
+  - Added **rule 0c**: pre-1a preamble check — if `NEEDS_EXTERNAL_RESEARCH=true`, execute THREE-PHASE research and re-invoke bug-investigator. Includes explicit STOP to prevent rules 1a/1b/2 from also firing
+
+- **DEBUG-RESET marker insertion was prose-only — subsequent Debug-N edits silently failed** (`cc10x-router/SKILL.md`, DEBUG counting)
+  - "Prepend [DEBUG-RESET: wf:{id}] to ## Recent Changes" was prose, not a concrete Edit call
+  - DEBUG-N entries anchor on the marker text — if marker not written, Edits fail silently, 3-attempt research trigger permanently disabled
+  - Fix: explicit `Edit(old_string="## Recent Changes", new_string="## Recent Changes\n[DEBUG-RESET: wf:{id}]")` + mandatory Read-verify before any DEBUG-N edits
+
+- **DEBUG-N edit anchor placed entries before the marker, making counter read 0** (`cc10x-router/SKILL.md`)
+  - Both marker insertion and DEBUG-N entries used `## Recent Changes` as anchor — new entries landed BEFORE the marker in file order
+  - Counter instruction "count entries AFTER the marker" always read zero — 3-attempt research trigger never fired
+  - Fix: DEBUG-N entries now anchor on the marker text itself, placing them after it
+
+- **External research auto-executed without user approval** (`cc10x-router/SKILL.md`, DEBUG step 3)
+  - After 3+ failed debug attempts, router auto-called GitHub API and wrote to docs/research/ without asking
+  - Fix: AskUserQuestion first: "Research GitHub? (External API calls)" with options: Research / Keep debugging locally / Abort
+
+- **Planner "Your Input Needed" section was never actioned** (`cc10x-router/SKILL.md`, PLAN step 5a)
+  - Planner outputs critical assumptions needing validation — but PLAN workflow completed without collecting user answers
+  - BUILD started on unvalidated assumptions
+  - Added **step 5a**: after planner completes, check for "Your Input Needed" section → AskUserQuestion → persist answers to memory → include in BUILD context
+
+- **memory_task_id lost on context compaction with no recovery path** (`cc10x-router/SKILL.md`, step 3a + resume path)
+  - Local variable undefined after compaction — step 3a (Memory Notes capture) silently failed
+  - Resume path had no memory_task_id reconstruction step
+  - Fix: store raw taskId in `## Learnings` as `[cc10x-internal] memory_task_id: {id} wf:{id}` at creation
+  - Resume path now reads taskId from Learnings first (exact lookup, collision-safe), falls back to TaskList subject search
+
+- **INVESTIGATING loop cap counted all historical completions — false triggers in long-lived projects**
+  - Loop cap for "Continue investigation" tasks counted `status IN [pending, in_progress, completed]` — 3+ historical successful debugs = always-on cap on new workflows
+  - Fix: excluded `completed` from status filter
+
+- **integration-verifier preloaded debugging-patterns (mismatched skill)** (`integration-verifier.md`)
+  - Verification agent was loading investigation-phase skill with no applicable patterns
+  - Removed `cc10x:debugging-patterns` from frontmatter — verification-before-completion covers the role
+
+- **bug-investigator missing code-generation skill** (`bug-investigator.md`)
+  - Agent writes regression tests and fixes but didn't load Universal Questions, minimal-diff, or edge-case patterns
+  - Added `cc10x:code-generation` to frontmatter skills
+
+- **Planner NEEDS_CLARIFICATION had no router signal** (`planner.md`)
+  - `BLOCKING: false` and `REQUIRES_REMEDIATION: false` always — router proceeded even when planner signaled ambiguity
+  - Fix: `BLOCKING: true` and `REQUIRES_REMEDIATION: true` when `STATUS=NEEDS_CLARIFICATION`
+
+- **Task IDs stored as durable references — fragile across session restarts** (`session-memory/SKILL.md`)
+  - Session-memory docs warned against this but provided no concrete Hydration Pattern
+  - Added explicit **Hydration Pattern** guidance: read progress.md → recreate tasks → sync back
+
+### Changed
+
+- `cc10x-router/SKILL.md` — 33 surgical additions/modifications to validation rules, DEBUG counting, QUICK mode, Memory Notes flow, and PLAN workflow
+- `bug-investigator.md` — github-research ownership clarified; `code-generation` added to frontmatter; NEEDS_EXTERNAL_RESEARCH escape hatch documented
+- `planner.md` — github-research ownership clarified; NEEDS_CLARIFICATION contract now correctly signals BLOCKING=true
+- `integration-verifier.md` — `debugging-patterns` removed from frontmatter; `CHOSEN_OPTION` added to Router Contract
+- `session-memory/SKILL.md` — Hydration Pattern added to Task surface description
+
+### Notes
+
+- Discovered via comprehensive multi-agent audit using cc10x to audit cc10x (dogfood session)
+- 5 deferred TODO edge cases: [cc10x-internal] eviction exclusion, rule 2f research loop cap, INVESTIGATING loop historical count, planner re-invocation max iterations
+- All changes validated by cc10x code-reviewer + silent-failure-hunter + integration-verifier
+- The 6.0.28 manifests were not bumped in the 6.0.28 commit — 6.0.29 manifests cover both
+
+---
+
 ## [6.0.28] - 2026-02-28
 
 ### Fixed

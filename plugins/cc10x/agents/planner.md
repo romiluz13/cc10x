@@ -47,8 +47,9 @@ If a skill fails to load (not installed), note it in Memory Notes and continue w
 
 ## Conditional Research
 
-- New/unfamiliar tech → `Skill(skill="cc10x:github-research")`
-- Complex integration patterns → `Skill(skill="cc10x:github-research")`
+Research is executed by the **router** before this agent is invoked (THREE-PHASE process in PLAN workflow).
+**If your prompt includes a "Research File:" reference**: Read that file and incorporate findings into the plan's technical approach and risk sections.
+**Do NOT call** `Skill(skill="cc10x:github-research")` — research is router-managed to ensure proper persistence and memory indexing.
 
 ## Process
 1. **Understand** - User need, user flows, integrations
@@ -192,13 +193,13 @@ CONFIDENCE: [0-100 from Confidence Score above]
 PLAN_FILE: "[path to saved plan, e.g., docs/plans/2026-02-05-feature-plan.md]"
 PHASES: [count of phases in plan]
 RISKS_IDENTIFIED: [count of risks identified]
-BLOCKING: false
-REQUIRES_REMEDIATION: false
-REMEDIATION_REASON: null
+BLOCKING: [false normally; true if STATUS=NEEDS_CLARIFICATION to halt workflow until clarified]
+REQUIRES_REMEDIATION: [false if PLAN_CREATED; true if NEEDS_CLARIFICATION]
+REMEDIATION_REASON: null | "Clarification required before plan can proceed: {summary of Your Input Needed items}"
 MEMORY_NOTES:
   learnings: ["Planning approach and key insights"]
   patterns: ["Architectural decisions made"]
   verification: ["Plan: {PLAN_FILE} with {CONFIDENCE}/100 confidence"]
 ```
-**CONTRACT RULE:** STATUS=PLAN_CREATED requires PLAN_FILE is valid path and CONFIDENCE>=50
+**CONTRACT RULE:** STATUS=PLAN_CREATED requires PLAN_FILE is valid path and CONFIDENCE>=50. STATUS=NEEDS_CLARIFICATION requires BLOCKING=true and REMEDIATION_REASON summarizing the open questions.
 ```
