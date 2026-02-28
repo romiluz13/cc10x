@@ -1,5 +1,24 @@
 # Changelog
 
+## [6.0.25] - 2026-02-28
+
+### Fixed
+
+- **github-research double-trigger: removed from SKILL_HINTS table** (`cc10x-router/SKILL.md`)
+  - Detection table listed `cc10x:github-research` as a SKILL_HINTS candidate for `planner` and `bug-investigator`
+  - But PLAN/DEBUG workflows execute github-research directly via THREE-PHASE process ("NOT as a hint")
+  - Contradiction: same skill simultaneously marked "pass as SKILL_HINTS" and "execute directly, NOT a hint"
+  - In practice: router ran research AND passed github-research in SKILL_HINTS → planner could trigger the skill's user confirmation gate a second time
+  - Fixed: deleted the 7-line SKILL_HINTS table (only contained github-research rows) and replaced with one note: `cc10x:github-research is router-executed directly — never passed as SKILL_HINTS`
+
+### Notes
+
+- 7 lines deleted, 1 line added — net -6 lines
+- No behavior change for CLAUDE.md complementary skills (unaffected path)
+- Router still detects github-research triggers via PLAN/DEBUG workflow sections (unchanged)
+
+---
+
 ## [6.0.24] - 2026-02-28
 
 ### Fixed

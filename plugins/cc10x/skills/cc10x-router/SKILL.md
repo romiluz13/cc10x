@@ -438,18 +438,38 @@ If count ≥ 3 → AskUserQuestion:
 - **Skip** → Proceed despite errors (not recommended)
 - **Abort** → Stop workflow, manual fix
 
-1. If contract.BLOCKING == true OR contract.REQUIRES_REMEDIATION == true:
-   → TaskCreate({
-       subject: "CC10X REM-FIX: {agent_name}",
-       description: contract.REMEDIATION_REASON,
-       activeForm: "Fixing {agent_name} issues"
-     })
-   → Task-enforced gate:
-     - Find downstream workflow tasks via TaskList() (subjects prefixed with `CC10X `)
-     - For every downstream task not completed:
-       TaskUpdate({ taskId: downstream_task_id, addBlockedBy: [remediation_task_id] })
-   → STOP. Do not invoke next agent until remediation completes.
-   → User can bypass (record decision in memory).
+1a. If contract.BLOCKING == true:
+    → TaskCreate({
+        subject: "CC10X REM-FIX: {agent_name}",
+        description: contract.REMEDIATION_REASON,
+        activeForm: "Fixing {agent_name} issues"
+      })
+    → Task-enforced gate:
+      - Find downstream workflow tasks via TaskList() (subjects prefixed with `CC10X `)
+      - For every downstream task not completed:
+        TaskUpdate({ taskId: downstream_task_id, addBlockedBy: [remediation_task_id] })
+    → STOP. Do not invoke next agent until remediation completes.
+
+1b. If contract.REQUIRES_REMEDIATION == true AND contract.BLOCKING == false:
+    → AskUserQuestion({
+        question: "Found {HIGH_ISSUES} significant issues (non-critical). Fix before continuing?",
+        options: [
+          { label: "Fix now (Recommended)", description: "Create REM-FIX task and fix before continuing" },
+          { label: "Proceed anyway", description: "Note issues in memory and continue the workflow chain" }
+        ]
+      })
+    → If "Fix now":
+        [Run Circuit Breaker check: count existing REM-FIX tasks ≥ 3 → see Circuit Breaker above]
+        → TaskCreate({
+            subject: "CC10X REM-FIX: {agent_name}",
+            description: contract.REMEDIATION_REASON,
+            activeForm: "Fixing {agent_name} issues"
+          })
+        → Block all downstream tasks via TaskUpdate({ addBlockedBy: [remediation_task_id] })
+        → STOP
+    → If "Proceed anyway":
+        → Record decision: Edit activeContext.md "## Decisions": "{agent}: HIGH issues acknowledged, skipped by user"
+        → Continue to next agent
 
 2. If contract.CRITICAL_ISSUES > 0 AND parallel phase (reviewer + hunter):
    → Conflict check: If code-reviewer STATUS=APPROVE AND silent-failure-hunter CRITICAL_ISSUES > 0:
@@ -500,13 +520,7 @@ WHEN any CC10X REM-FIX task COMPLETES:
 
 **How it works:** Task() is synchronous - router waits for agent to complete and receives its output before proceeding to next agent.
 
-**Skill triggers for agents (DETECT AND PASS AS SKILL_HINTS):**
-
-| Detected Pattern | Skill | Agents |
-|------------------|-------|--------|
-| External: new tech (post-2024), unfamiliar library, complex integration (auth, payments) | cc10x:github-research | planner, bug-investigator |
-| Debug exhausted: 3+ local attempts failed, external service error | cc10x:github-research | bug-investigator |
-| User explicitly requests: "research", "github", "octocode", "find on github", "how do others", "best practices" | cc10x:github-research | planner, bug-investigator |
+**Note: cc10x:github-research is router-executed directly (THREE-PHASE process in PLAN/DEBUG) — never passed as SKILL_HINTS.**
 
 **Detection runs BEFORE agent invocation. Pass detected skills in SKILL_HINTS.**
 **Also check CLAUDE.md Complementary Skills table and include matching skills in SKILL_HINTS.**
