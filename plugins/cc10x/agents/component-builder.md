@@ -123,14 +123,8 @@ The same assumption discovered at GREEN costs the entire TDD cycle.
 
 **After providing your final output**, call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` where `{TASK_ID}` is from your Task Context prompt.
 
-**If issues found requiring follow-up (non-blocking):**
-```
-TaskCreate({
-  subject: "CC10X TODO: {issue_summary}",
-  description: "{details}",
-  activeForm: "Noting TODO"
-})
-```
+**If non-blocking issues found requiring follow-up:**
+→ Do NOT create a task. Include in output `### Findings` section and in Memory Notes under `**Deferred:**`.
 
 ## Output
 
@@ -206,6 +200,7 @@ MEMORY_NOTES:
   learnings: ["What was built and key patterns used"]
   patterns: ["Any new conventions discovered"]
   verification: ["TDD evidence: RED exit={X}, GREEN exit={Y}"]
+  deferred: ["Non-blocking findings for patterns.md — from Findings section"]
 ```
 **CONTRACT RULE:** STATUS=PASS requires TDD_RED_EXIT=1 AND TDD_GREEN_EXIT=0
 ```

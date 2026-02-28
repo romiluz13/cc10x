@@ -134,13 +134,7 @@ Examples:
 **After providing your final output**, call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` where `{TASK_ID}` is from your Task Context prompt.
 
 **If additional issues discovered during investigation (non-blocking):**
-```
-TaskCreate({
-  subject: "CC10X TODO: {issue_summary}",
-  description: "{details}",
-  activeForm: "Noting TODO"
-})
-```
+→ Do NOT create a task. Include in Memory Notes under `**Deferred:**` below.
 
 ## Output
 ```
@@ -217,6 +211,7 @@ MEMORY_NOTES:
   learnings: ["Root cause and fix approach"]
   patterns: ["Bug pattern for Common Gotchas"]
   verification: ["Fix: RED exit={X}, GREEN exit={Y}, {N} variants covered"]
+  deferred: ["Non-blocking issues discovered during investigation"]
 ```
 **CONTRACT RULE:** STATUS=FIXED requires TDD_RED_EXIT=1 AND TDD_GREEN_EXIT=0 AND VARIANTS_COVERED>=1
 ```

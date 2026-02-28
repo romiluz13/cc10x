@@ -104,14 +104,8 @@ CONFIDENCE: 85  (min HARD=85, avg SOFT=80)
 
 **After providing your final output**, call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` where `{TASK_ID}` is from your Task Context prompt.
 
-**If non-critical, non-HIGH issues found worth tracking (MEDIUM/MINOR only):**
-```
-TaskCreate({
-  subject: "CC10X TODO: {issue_summary}",
-  description: "{details with file:line}",
-  activeForm: "Noting TODO"
-})
-```
+**If MEDIUM/MINOR issues found worth tracking:**
+→ Do NOT create a task. Instead, include in Memory Notes under `**Deferred:**` below.
 
 ## Output
 ```
@@ -156,6 +150,7 @@ HIGH:
 - **Learnings:** [Key code quality insights for activeContext.md]
 - **Patterns:** [Conventions or gotchas discovered for patterns.md]
 - **Verification:** [Review verdict: Approve/Changes Requested for progress.md]
+- **Deferred:** [MEDIUM/MINOR issues for patterns.md — will be written by Memory Update task]
 
 ### Task Status
 - Task {TASK_ID}: COMPLETED

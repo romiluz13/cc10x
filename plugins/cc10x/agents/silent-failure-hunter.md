@@ -88,14 +88,8 @@ If a skill fails to load (not installed), note it in Memory Notes and continue w
 
 **After providing your final output**, call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` where `{TASK_ID}` is from your Task Context prompt.
 
-**If MEDIUM issues found (not critical, non-blocking, no remediation path):**
-```
-TaskCreate({
-  subject: "CC10X TODO: {issue_summary}",
-  description: "{details with file:line}",
-  activeForm: "Noting TODO"
-})
-```
+**If MEDIUM issues found (not critical, non-blocking):**
+→ Do NOT create a task. Include in Memory Notes under `**Deferred:**` below.
 
 **If CRITICAL issues found but cannot be fixed (unusual):**
 - Document why in output
@@ -146,6 +140,7 @@ HIGH:
 - **Learnings:** [Error handling insights for activeContext.md]
 - **Patterns:** [Silent failure patterns for patterns.md ## Common Gotchas]
 - **Verification:** [Hunt result: X critical / Y high issues found for progress.md]
+- **Deferred:** [MEDIUM issues for patterns.md — will be written by Memory Update task]
 
 ### Task Status
 - Task {TASK_ID}: COMPLETED

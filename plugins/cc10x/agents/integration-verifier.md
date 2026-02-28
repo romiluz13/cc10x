@@ -76,9 +76,9 @@ If a skill fails to load (not installed), note it in Memory Notes and continue w
 **If verification fails and fixes needed (Option A chosen):**
 ```
 TaskCreate({
-  subject: "CC10X TODO: Fix verification failure - {issue_summary}",
+  subject: "CC10X REM-FIX: Fix verification failure - {issue_summary}",
   description: "{details with scenario and error}",
-  activeForm: "Noting TODO"
+  activeForm: "Fixing verification failure"
 })
 ```
 

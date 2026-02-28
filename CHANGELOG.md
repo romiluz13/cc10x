@@ -1,5 +1,49 @@
 # Changelog
 
+## [6.0.31] - 2026-02-28
+
+### Summary
+
+Task hygiene release. **Principle: tasks are execution artifacts, not parking lots.** Three design fixes across `cc10x-router/SKILL.md` + 5 agent files. Also cleaned up 5 lingering TODO tasks from prior sessions.
+
+### Fixed
+
+- **Re-review task subjects were identical across cycles — looked like a bug** (`cc10x-router/SKILL.md`, Re-Review Loop steps 1-2)
+  - Every REM-FIX cycle created identical `"CC10X code-reviewer: Re-review after remediation"` tasks, which looked like infinite looping
+  - Fix: Steps 1-2 now extract `completed_remfix_title` from the completed REM-FIX subject and include it: `"CC10X code-reviewer: Re-review — {completed_remfix_title}"`
+
+- **Agents created CC10X TODO tasks for non-blocking findings — tasks hung indefinitely** (all 5 agents)
+  - TODO tasks had no owner, no timeline, no next action — just accumulated and polluted TaskList
+  - Fix: All agents now write MEDIUM/deferred findings to Memory Notes `**Deferred:**` section instead of calling `TaskCreate`
+  - Memory Update task (BUILD/DEBUG/REVIEW) writes `[Deferred]:` entries to `patterns.md ## Common Gotchas` automatically
+  - No TODO tasks ever created by agents again
+
+- **TODO Task Handling asked user what to do with TODO tasks — enabling infinite accumulation** (`cc10x-router/SKILL.md`)
+  - "Keep for later" option let TODO tasks persist across sessions forever
+  - Fix: Replaced "TODO Task Handling" section with "Deferred Findings Cleanup" — auto-writes any remaining `CC10X TODO:` tasks to `patterns.md` then deletes them. No user prompt.
+
+- **Rule 1b "Proceed anyway" created a CC10X TODO task for skipped HIGH issues** (`cc10x-router/SKILL.md`, rule 1b)
+  - We added this in v6.0.30, but it was the wrong mechanism
+  - Fix: Now writes `[Skipped HIGH — {agent}]: ...` directly to `patterns.md ## Common Gotchas` via Edit. No task created.
+
+### Changed
+
+- `cc10x-router/SKILL.md` — Re-Review Loop (steps 1-2), Deferred Findings Cleanup (replaces TODO Task Handling), rule 1b, all 3 Memory Update task descriptions (BUILD/DEBUG/REVIEW)
+- `code-reviewer.md` — CC10X TODO TaskCreate removed; `**Deferred:**` added to Memory Notes template
+- `silent-failure-hunter.md` — same
+- `component-builder.md` — same (non-blocking findings go to Findings section + Memory Notes)
+- `bug-investigator.md` — same
+- `integration-verifier.md` — verification-failure task changed from `CC10X TODO: Fix verification failure` to `CC10X REM-FIX: Fix verification failure` (it's an actual fix task that should trigger the Re-Review Loop)
+
+### Notes
+
+- 5 existing TODO tasks from prior sessions (#14, #15, #31, #32, #33) were written to patterns.md and deleted as part of this release
+- Verifier found 7/7 scenarios PASS — source and 6.0.31 cache identical, all v6.0.30 changes intact
+- Hunter found 3 MEDIUM issues — they were placed in `**Deferred:**` Memory Notes (demonstrating the new system immediately, no TODO tasks created)
+- Small deferred items for future cleanup: re-review subject double-agent-name cosmetic issue, `[Deferred]:` label standardization, patterns.md Common Gotchas pruning rule
+
+---
+
 ## [6.0.30] - 2026-02-28
 
 ### Summary
