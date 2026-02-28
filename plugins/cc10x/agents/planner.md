@@ -166,7 +166,7 @@ Phase 2: API Layer
 ### Recommended Skills for BUILD (SKILL_HINTS for Router)
 If task involves technologies with complementary skills (from CLAUDE.md), list them so router passes as SKILL_HINTS:
 - React/Next.js → `react-best-practices`
-- MongoDB → `mongodb-agent-skills:mongodb-schema-design`
+- MongoDB → all matching `mongodb-agent-skills:*` from CLAUDE.md (e.g., schema-design, query-optimize, ai, transactions)
 - [Match from CLAUDE.md Complementary Skills table]
 Note: CC10x internal skills (frontend-patterns, architecture-patterns, etc.) load via agent frontmatter — do not list here.
 

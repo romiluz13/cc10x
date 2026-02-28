@@ -121,7 +121,9 @@ TaskList()  # Check for pending/in-progress workflow tasks
 
 **Most skills load automatically via agent frontmatter** - no router detection needed.
 
-**Only github-research uses SKILL_HINTS mechanism:**
+**SKILL_HINTS has two sources:**
+
+**Source 1 — `cc10x:github-research` (conditional trigger):**
 
 | Trigger | Skill | Agents |
 |---------|-------|--------|
@@ -131,7 +133,11 @@ TaskList()  # Check for pending/in-progress workflow tasks
 
 **Flow:** Router detects trigger → passes `github-research` in SKILL_HINTS → Agent calls `Skill(skill="cc10x:github-research")`
 
-**All other skills** (frontend-patterns, architecture-patterns, brainstorming, etc.) are hardcoded in agent frontmatter and load automatically when the agent starts.
+**Source 2 — CLAUDE.md Complementary Skills (domain skills, user-configured):**
+Router reads the user's CLAUDE.md Complementary Skills table, matches signals in the request, and passes matching skills to ALL agents via SKILL_HINTS. Agents call `Skill(skill="{name}")` after memory load.
+Examples: `react-best-practices` (React/Next.js tasks), `mongodb-agent-skills:*` (MongoDB tasks).
+
+**All CC10x internal skills** (frontend-patterns, architecture-patterns, brainstorming, etc.) are hardcoded in agent frontmatter and load automatically when the agent starts.
 
 ### Phase 5: Workflow-Specific Execution
 

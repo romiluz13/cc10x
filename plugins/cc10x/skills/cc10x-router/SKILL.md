@@ -567,7 +567,7 @@ skills: cc10x:session-memory, cc10x:code-generation, cc10x:frontend-patterns
        User request: {request}
        Requirements: {requirements}
        Memory: {activeContext}
-       SKILL_HINTS: {detected skills}
+       SKILL_HINTS (INVOKE via Skill() - not optional): {detected skills}
      ")
 
 3. After agent completes:

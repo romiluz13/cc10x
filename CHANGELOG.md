@@ -1,5 +1,53 @@
 # Changelog
 
+## [6.0.24] - 2026-02-28
+
+### Fixed
+
+- **SKILL_HINTS: three latent issues remaining after 6.0.23** (`cc10x-router/SKILL.md`, `planner.md`, `docs/cc10x-orchestration-logic-analysis.md`)
+
+  - **Chain Execution Loop: abbreviated SKILL_HINTS format** (`cc10x-router/SKILL.md`)
+    - The operational loop template had `SKILL_HINTS: {detected skills}` — no invoke instruction
+    - Full Agent Invocation template correctly had `## SKILL_HINTS (INVOKE via Skill() - not optional)`
+    - Two inconsistent formats in the same file created ambiguity about whether skills must be invoked
+    - Fixed: Loop template now reads `SKILL_HINTS (INVOKE via Skill() - not optional): {detected skills}` — consistent with full template
+
+  - **Planner "Recommended Skills for BUILD" hardcoded one MongoDB skill** (`planner.md`)
+    - Example read `MongoDB → mongodb-agent-skills:mongodb-schema-design` — implied only one skill needed
+    - Fixed: Now reads `MongoDB → all matching mongodb-agent-skills:* from CLAUDE.md` — points to full set
+
+  - **Analysis doc contradicted the router** (`docs/cc10x-orchestration-logic-analysis.md`)
+    - Phase 4 said "Only github-research uses SKILL_HINTS mechanism" — stale since 6.0.18 added Source 2
+    - Maintainers reading this doc would assume CLAUDE.md complementary skills don't exist
+    - Fixed: Phase 4 now documents both sources — github-research (Source 1) and CLAUDE.md Complementary Skills (Source 2)
+
+### Notes
+
+- ADJACENT risk — no router decision tree, task protocol, agent chain, or memory anchor changes
+- 3 files changed, 10 insertions(+), 4 deletions(-)
+- All three issues were documentation/template precision bugs, not logic changes
+
+---
+
+## [6.0.23] - 2026-02-28
+
+### Fixed
+
+- **Restored `## Skill Loading Hierarchy` section deleted in 6.0.22** (`cc10x-router/SKILL.md`)
+  - Section documented the two-source SKILL_HINTS bridge — the ONLY place that explicitly listed:
+    - Source 1: Router detection table → `cc10x:github-research`
+    - Source 2: CLAUDE.md Complementary Skills table → domain skills (react-best-practices, mongodb-agent-skills, etc.)
+  - Without it, Source 2 survived only as a one-line footnote buried after the github-research table — too weak for reliable detection
+  - Result: complementary skills were silently dropped from SKILL_HINTS on most workflows
+  - All other 6.0.22 changes preserved (Task Dependency Safety compression, TODO compression, pre-spawn announcement)
+
+### Notes
+
+- Net: 663→685 lines (+20, surgical restore of the deleted block only)
+- Root cause identified via diff analysis of 6.0.22 commit `de535bf`
+
+---
+
 ## [6.0.22] - 2026-02-26
 
 ### Changed
