@@ -224,7 +224,7 @@ TaskCreate({ subject: "CC10X code-reviewer: Review {target}", description: "Comp
 # Memory Update task (blocked by final agent - TASK-ENFORCED)
 TaskCreate({
   subject: "CC10X Memory Update: Persist review learnings",
-  description: "REQUIRED: Collect Memory Notes from code-reviewer output and persist to memory files.\n\nFocus on:\n- Patterns discovered for patterns.md\n- Review verdict for progress.md\n- **Deferred:** entries from Memory Notes → Write each to patterns.md ## Common Gotchas as \"[Deferred]: {entry}\"\n\n**Use Read-Edit-Read pattern for each file.**\n\n**Freshness (prevent bloat):**\n- activeContext.md ## Recent Changes: REPLACE existing entries with only this workflow's changes.\n- progress.md ## Tasks: REPLACE existing entries with only this workflow's task items.\n- patterns.md: Before adding to ## Common Gotchas, scan for an existing entry about the same file or error. If found, update it in-place instead of adding a duplicate.\n- activeContext.md ## Learnings: before appending, check for same topic/file; update in-place if found; if count > 20, promote oldest entries to patterns.md ## Common Gotchas.\n- progress.md ## Completed: keep only the 10 most recent entries.",
+  description: "REQUIRED: Collect Memory Notes from code-reviewer output and persist to memory files.\n\nFocus on:\n- Patterns discovered for patterns.md\n- Review verdict for progress.md\n- **Deferred:** entries from Memory Notes → Write each to patterns.md ## Common Gotchas as \"[Deferred]: {entry}\"\n\n**Use Read-Edit-Read pattern for each file.**\n\n**Freshness (prevent bloat):**\n- progress.md ## Tasks: REPLACE existing entries with only this workflow's task items.\n- patterns.md: Before adding to ## Common Gotchas, scan for an existing entry about the same file or error. If found, update it in-place instead of adding a duplicate.\n- activeContext.md ## Learnings: before appending, check for same topic/file; update in-place if found; if count > 20, promote oldest entries to patterns.md ## Common Gotchas.\n- progress.md ## Completed: keep only the 10 most recent entries.",
   activeForm: "Persisting review learnings"
 })
 # Returns memory_task_id
@@ -385,7 +385,7 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [planner_task_id] })
 
 **THREE-PHASE for External Research (MANDATORY):**
 ```
-If SKILL_HINTS includes github-research:
+If router detected github-research signal (external tech, explicit request, or 3+ failed debug attempts):
   → PHASE 1: Execute research using octocode tools
   → PHASE 2: PERSIST research (prevents context loss):
       Bash(command="mkdir -p docs/research")
@@ -509,7 +509,7 @@ If count ≥ 3 → AskUserQuestion: "Too many active fix attempts are stacking u
     → Do NOT create REM-FIX task — research IS the response
     → STOP after PHASE 3 — do not evaluate rules 1a/1b/2 for this contract
 
-1a. If contract.BLOCKING == true AND contract.STATUS NOT IN ["NEEDS_CLARIFICATION", "INVESTIGATING", "BLOCKED"] AND contract.NEEDS_EXTERNAL_RESEARCH != true:
+1a. If contract.BLOCKING == true AND contract.STATUS NOT IN ["NEEDS_CLARIFICATION", "INVESTIGATING", "BLOCKED"] AND contract.NEEDS_EXTERNAL_RESEARCH != true AND NOT (contract.STATUS == "FAIL" AND contract.CHOSEN_OPTION IN ["B","C"]):
     → TaskCreate({
         subject: "CC10X REM-FIX: {agent_name} — {first 60 chars of (contract.REMEDIATION_REASON ?? 'see agent output')}",
         description: contract.REMEDIATION_REASON ?? "REMEDIATION_REASON null — re-check agent Router Contract output.",
@@ -610,9 +610,9 @@ If count ≥ 3 → AskUserQuestion: "Too many active fix attempts are stacking u
 WHEN any CC10X REM-FIX task COMPLETES:
   │
   ├─→ 0. **Cycle Cap Check (RUNS FIRST):**
-  │      Count active "CC10X REM-FIX:" tasks: TaskList() → filter subject contains "CC10X REM-FIX:" AND status IN [pending, in_progress]
+  │      Count completed "CC10X REM-FIX:" tasks in this workflow: TaskList() → filter subject contains "CC10X REM-FIX:" AND status = "completed"
   │      If count ≥ 2:
-  │        → AskUserQuestion: "Multiple active fix cycles are unresolved ({count} CC10X REM-FIX tasks still active). The same issues keep recurring. How to proceed?"
+  │        → AskUserQuestion: "This workflow has already completed {count} fix cycles. The same issues keep recurring. How to proceed?"
   │          - "Create another fix task" → Continue with steps 1-5 below
   │          - "Research patterns (Recommended)" → Execute cc10x:github-research THREE-PHASE, pass findings to REM-FIX task
   │          - "Accept known issues" → Record in activeContext.md ## Decisions, proceed directly to verifier/memory-update
@@ -664,8 +664,7 @@ skills: cc10x:session-memory, cc10x:code-generation, cc10x:frontend-patterns
 
 ### 2. Router's SKILL_HINTS (Conditional - On Demand)
 - Router passes SKILL_HINTS for skills not loaded via agent frontmatter
-- **Source 1:** Router detection table — `cc10x:github-research` when research triggers fire
-- **Source 2:** CLAUDE.md Complementary Skills table — domain skills matching task signals
+- **Source 1 (domain skills only):** CLAUDE.md Complementary Skills table — domain skills matching task signals (e.g., `mongodb-agent-skills:*`, `react-best-practices`)
 - Agent calls `Skill(skill="{name}")` for each skill in SKILL_HINTS after memory load
 - If a skill fails to load (not installed), agent notes it in Memory Notes and continues
 
@@ -770,7 +769,7 @@ Task(subagent_type="cc10x:silent-failure-hunter", prompt="Your task ID: {hunter_
 Memory persistence is enforced via the "CC10X Memory Update" task in the task hierarchy.
 
 **When you see this task become available:**
-1. Review agent outputs for `### Memory Notes` sections
+1. Read Memory Notes from this task's own description — step 3a captured them here after each agent completed (compaction-safe). Do NOT scan conversation history.
 2. Follow the task description to persist learnings
 3. Use Read-Edit-Read pattern for each memory file
 4. Mark task completed

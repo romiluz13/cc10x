@@ -56,15 +56,15 @@ An **agent** is a Markdown file with YAML frontmatter that defines an isolated s
 name: agent-name          # Identifier
 tools: Read, Edit, Bash   # Actual tool allowlist (enforced at runtime)
 skills: skill-a, skill-b  # Skills to preload (full content injected at startup)
-context: fork             # Run in isolated subprocess (cannot see parent conversation)
 model: inherit            # Model to use
 ```
 
 **Key facts:**
 - `tools:` is the **actual runtime allowlist**. Agent can ONLY use tools listed here.
 - `skills:` preloads full skill content into the agent's system prompt at startup. Agent does NOT need to call `Skill()` for preloaded skills.
-- `context: fork` means the agent runs in a fresh context. It cannot see the parent conversation, CLAUDE.md, or other agents' outputs.
 - Agent outputs are returned to the caller (router) as a single result.
+
+Agents spawned via Task() run in isolated context windows by default — they cannot see the parent conversation, CLAUDE.md, or other agents' outputs. No frontmatter configuration is required for isolation.
 
 ### Skills vs Agents — The Distinction
 
@@ -73,7 +73,7 @@ model: inherit            # Model to use
 | **Nature** | Instructions (text) | Execution unit (subprocess) |
 | **Runs as** | Context injected into an agent | Isolated process with own context window |
 | **Can use tools?** | No — instructs the hosting agent to use tools | Yes — has its own `tools:` allowlist |
-| **Can see parent context?** | Only if loaded into parent; forked agents cannot see parent | No (`context: fork`) |
+| **Can see parent context?** | Only if loaded into parent; forked agents cannot see parent | No (isolated by default) |
 | **Loaded via** | Agent frontmatter `skills:` (automatic) or `Skill()` call (on-demand) | `Task(subagent_type="...")` |
 | **Frontmatter tool field** | `allowed-tools` (permission hint, NOT enforcement) | `tools` (actual allowlist, enforced) |
 
@@ -208,11 +208,12 @@ flowchart TD
 CC10x orchestration relies on Claude Code Tasks. Keep every example aligned with the tool schema:
 
 - `TaskCreate({ subject, description, activeForm })`
-- `TaskUpdate({ taskId, status, addBlockedBy, addBlocks })` where `status ∈ pending|in_progress|completed|deleted`
+- `TaskUpdate({ taskId, status, description, subject, activeForm, owner, addBlockedBy, addBlocks })` where `status ∈ pending|in_progress|completed|deleted`
 - `TaskList()`, `TaskGet({ taskId })`
 
 **Do not rely on non-standard fields (e.g., `metadata`) unless verified in the runtime.**
 If extra context is needed (plan file, repo scope, agent name), put it in `subject` / `description` so it is always available via `TaskList` / `TaskGet`.
+`description` field is supported and used by the router's step 3a to capture Memory Notes (compaction-safe).
 
 ---
 

@@ -38,7 +38,7 @@ CC10x memory is a **small, stable, permission-free Markdown database** used for:
 5. **Tasks (Execution State)**: Claude Code Tasks
    - Great for orchestration, but not guaranteed to be the only durable source.
    - Mirror key task subjects/status into `progress.md` for backup/resume.
-   - **Task ID Warning:** Task IDs may not persist across session restarts unless `CLAUDE_CODE_TASK_LIST_ID` is configured. NEVER store task IDs as durable references in memory files. Store phase names and status instead.
+   - **Task ID Warning:** Task IDs may not persist across session restarts unless `CLAUDE_CODE_TASK_LIST_ID` is configured. NEVER store task IDs as durable references in memory files. Store phase names and status instead. Exception: the router may store `[cc10x-internal] memory_task_id` in `## References` for compaction safety. This ID is scoped to the current workflow (wf:{parent_task_id}) and cleaned up by the Memory Update task upon completion.
    - **Hydration Pattern (recommended for resume):**
      - Session start: Read progress.md → create fresh tasks for each pending item → set dependencies
      - Session end: Sync completed status back to progress.md via Memory Update task
@@ -542,7 +542,11 @@ If an agent cannot safely update memory (e.g., no `Edit` tool available):
 ### Dynamic Skill Discovery (WRITE agents only)
 After Memory First read, check patterns.md `## Project SKILL_HINTS`:
 - **Invoke found skills:** `Skill(skill="[each listed entry]")` — skip gracefully if not installed.
-- **Persist new tech:** If task involves domain tech not yet listed, append: `Edit(old_string="## Project SKILL_HINTS", new_string="## Project SKILL_HINTS\n- cc10x:[skill]  <!-- [tech signal] -->\n")`
+- **Persist new tech:** If task involves domain tech not yet listed, append:
+  ```
+  Edit(old_string="## Project SKILL_HINTS", new_string="## Project SKILL_HINTS\n- [full-skill-id]  <!-- [tech signal] -->\n")
+  ```
+  Use the EXACT skill ID as-is — e.g., `mongodb-agent-skills:mongodb-schema-design`, `cc10x:github-research`, `react-best-practices`. Do NOT add or change namespaces.
 
 ## Red Flags - STOP IMMEDIATELY
 

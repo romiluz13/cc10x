@@ -207,6 +207,8 @@ VARIANTS_COVERED: [count of variant cases in regression test]
 BLOCKING: [true if STATUS != FIXED]
 REQUIRES_REMEDIATION: [true if TDD evidence missing or VARIANTS_COVERED=0]
 REMEDIATION_REASON: null | "Add regression test (RED→GREEN) + variant coverage"
+NEEDS_EXTERNAL_RESEARCH: [true if local investigation exhausted and external patterns needed, else false]
+RESEARCH_REASON: null | "[specific error/pattern to search for on GitHub]"
 MEMORY_NOTES:
   learnings: ["Root cause and fix approach"]
   patterns: ["Bug pattern for Common Gotchas"]
@@ -214,4 +216,5 @@ MEMORY_NOTES:
   deferred: ["Non-blocking issues discovered during investigation"]
 ```
 **CONTRACT RULE:** STATUS=FIXED requires TDD_RED_EXIT=1 AND TDD_GREEN_EXIT=0 AND VARIANTS_COVERED>=1
+**CONTRACT RULE:** If NEEDS_EXTERNAL_RESEARCH=true: RESEARCH_REASON must be non-null
 ```

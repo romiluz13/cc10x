@@ -1,5 +1,21 @@
 # Changelog
 
+## [6.0.32] - 2026-02-28
+
+### Fixed
+- C-1: Rule 1a now excludes integration-verifier FAIL with CHOSEN_OPTION B/C — options now reachable via rule 2d
+- C-2: Added NEEDS_EXTERNAL_RESEARCH and RESEARCH_REASON fields to bug-investigator Router Contract YAML schema
+- C-3: Cycle Cap now counts completed REM-FIX tasks (not active) — correctly detects recurring fix loops
+- H-1: session-memory Dynamic Skill Discovery template uses [full-skill-id] — prevents cross-namespace corruption
+- H-2: Unified github-research routing (removed from SKILL_HINTS Source 1 — router-executed only)
+- H-3: Workflow-Final Memory Persistence section now reads from task description (step 3a), not conversation history
+- L-2: Removed spurious "Recent Changes: REPLACE" from REVIEW Memory Update (REVIEW makes no code changes)
+
+### Documentation
+- M-1: Documented memory_task_id exception to session-memory NEVER policy
+- M-2: Removed context:fork from Bible agent frontmatter examples (never valid for agents)
+- M-3: Added description field to Bible's TaskUpdate field list
+
 ## [6.0.31] - 2026-02-28
 
 ### Summary
