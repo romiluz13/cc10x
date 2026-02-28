@@ -73,15 +73,6 @@ If a skill fails to load (not installed), note it in Memory Notes and continue w
 
 **After providing your final output**, call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` where `{TASK_ID}` is from your Task Context prompt.
 
-**If verification fails and fixes needed (Option A chosen):**
-```
-TaskCreate({
-  subject: "CC10X REM-FIX: Fix verification failure - {issue_summary}",
-  description: "{details with scenario and error}",
-  activeForm: "Fixing verification failure"
-})
-```
-
 ## Output
 ```
 ## Verification: [PASS/FAIL]
@@ -129,10 +120,9 @@ EVIDENCE:
 
 **When verification fails, choose ONE:**
 
-**Option A: Create Fix Task**
+**Option A (default): Set `CHOSEN_OPTION: A` in your Router Contract**
 - Blockers are fixable without architectural changes
-- Create fix task with TaskCreate()
-- Link to this verification task
+- Set `CHOSEN_OPTION: A` in your Router Contract — the router's rule 1a will automatically create the REM-FIX task from your REMEDIATION_REASON. Do NOT create fix tasks manually.
 
 **Option B: Revert Branch (if using feature branch)**
 - Verification reveals fundamental design issue

@@ -1,5 +1,18 @@
 # Changelog
 
+## [6.0.33] - 2026-03-01
+
+### Fixed (Critical)
+- F1: Re-Review Loop now spawns a NEW integration-verifier task after each REM-FIX — completed tasks cannot be re-activated via addBlockedBy; Memory Update also blocked on new re-verifier
+- F2: Removed duplicate REM-FIX TaskCreate from integration-verifier.md — router rule 1a is sole authority for REM-FIX creation
+
+### Fixed (Medium/Low)
+- F3: Added research loop cap (count >= 2) to rule 0c re-invocation — prevents infinite external research loops
+- F5: memory_task_id fallback now uses wf: scope from activeContext.md ## References when available
+- F7: Removed github-research from SKILL_HINTS prose note at line 439 (H-2 residual)
+- F8: Added REM-EVIDENCE loop cap (count >= 1) — enforces "re-invoke once" description
+- F4: Added timeout 60s guidance for test execution in component-builder
+
 ## [6.0.32] - 2026-02-28
 
 ### Fixed

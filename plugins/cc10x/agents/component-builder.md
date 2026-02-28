@@ -27,9 +27,10 @@ skills: cc10x:session-memory, cc10x:test-driven-development, cc10x:code-generati
    - Jest: `CI=true npx jest` or `npx jest --watchAll=false`
    - npm scripts: `CI=true npm test` or `npm test -- --run`
 2. **Prefer CI=true prefix** for all test commands: `CI=true npm test`
-3. **After TDD cycle complete**, verify no orphaned processes:
+3. **Timeout guard (belt-and-suspenders):** If uncertain whether CI=true is respected, prefix with `timeout 60s`: `timeout 60s npx vitest run`. This ensures the Bash tool never hangs indefinitely if watch mode is accidentally entered.
+4. **After TDD cycle complete**, verify no orphaned processes:
    `pgrep -f "vitest|jest" || echo "Clean"`
-4. **Kill if found**: `pkill -f "vitest" 2>/dev/null || true`
+5. **Kill if found**: `pkill -f "vitest" 2>/dev/null || true`
 
 ## Memory First
 ```
