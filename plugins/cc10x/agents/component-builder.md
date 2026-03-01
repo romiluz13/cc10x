@@ -127,6 +127,8 @@ The same assumption discovered at GREEN costs the entire TDD cycle.
 **If non-blocking issues found requiring follow-up:**
 → Do NOT create a task. Include in output `### Findings` section and in Memory Notes under `**Deferred:**`.
 
+**Optional coverage gate:** If `coverage-thresholds.json` exists in the project root, run coverage (`CI=true npm test -- --run --coverage` or equivalent) and compare output against thresholds. If any threshold is not met: STATUS=FAIL, REMEDIATION_REASON="Coverage below thresholds in coverage-thresholds.json". Skip this check if the file does not exist.
+
 ## Output
 
 **CRITICAL: Cannot mark task complete without exit code evidence for BOTH red and green phases.**

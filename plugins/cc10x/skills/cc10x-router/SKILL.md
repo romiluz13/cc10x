@@ -284,7 +284,6 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [planner_task_id] })
 2. No security implications — verified by BOTH:
    (a) Request text doesn't contain: auth, crypto, security, payment, password, secret, token, permission, role, jwt, oauth, session
    (b) `git diff --name-only HEAD` output doesn't match paths: auth/, security/, crypto/, payment/, token/, permission/, secrets/, passwords/, roles/
-   (Note: NO_GIT case already handled by the pre-check above — if we reach condition 2, we are in a git repo)
 3. No cross-layer dependencies (e.g., API + DB + UI)
 4. No open `CC10X REM-FIX` tasks in current workflow
 5. Requirements are explicit and unambiguous
@@ -303,11 +302,7 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [planner_task_id] })
 
 ### DEBUG
 1. Load memory → Check patterns.md Common Gotchas
-2. **CLARIFY (REQUIRED)**: Use AskUserQuestion if ANY ambiguity:
-   - What error message/behavior?
-   - Expected vs actual?
-   - When did it start?
-   - Which component/file affected?
+2. **CLARIFY (REQUIRED)**: AskUserQuestion if ANY ambiguity (error message, expected vs actual, when it started, affected component/file)
 3. **Check for research trigger (Pre-investigation):**
    - User explicitly requested research ("research", "github", "octocode"), OR
    - External service error (API timeout, auth failure, third-party)
@@ -358,18 +353,7 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [planner_task_id] })
     → If section empty or absent: Proceed directly to step 6
 6. Update memory → Reference saved plan when task completed
 
-**THREE-PHASE for External Research (MANDATORY):**
-```
-If router detected github-research signal (external tech, explicit request, or 3+ failed debug attempts):
-  → PHASE 1: Execute research using octocode tools
-  → PHASE 2: PERSIST research (prevents context loss):
-      Bash(command="mkdir -p docs/research")
-      Write(file_path="docs/research/YYYY-MM-DD-<topic>-research.md", content="[research summary]")
-      Edit(file_path=".claude/cc10x/activeContext.md", ...)  # Add to References section
-  → PHASE 3: Task(cc10x:planner, prompt="...Research findings: {results}...\nResearch saved to: docs/research/YYYY-MM-DD-<topic>-research.md")
-```
-Research is a PREREQUISITE, not a hint. Planner cannot skip it.
-**Research without persistence is LOST after context compaction.**
+**THREE-PHASE for External Research:** Same as rule 0c pattern (PHASE 1: octocode tools → PHASE 2: persist to `docs/research/` + update activeContext.md References → PHASE 3: invoke planner with research file path). Research is a PREREQUISITE — persistence prevents compaction loss.
 
 ## Agent Invocation
 
@@ -480,7 +464,6 @@ If count ≥ 3 → AskUserQuestion: "Too many active fix attempts are stacking u
 - **Skip** → Proceed despite errors (not recommended)
 - **Abort** → Stop workflow, manual fix
 
-# (rule 2e was moved here as rule 0c — runs BEFORE rule 1a, not after rule 2)
 0c. If contract.NEEDS_EXTERNAL_RESEARCH == true (bug-investigator only):
     **Runs BEFORE rule 1a — do NOT evaluate rules 1a/1b/2 when this fires.**
     → Execute THREE-PHASE research immediately using contract.RESEARCH_REASON as query:
@@ -546,8 +529,6 @@ If count ≥ 3 → AskUserQuestion: "Too many active fix attempts are stacking u
      AskUserQuestion: "Reviewer approved, but Hunter found {N} high-severity error handling gaps. Fix before continuing?"
      - "Fix" → Apply rule 1a for hunter HIGH issues (non-blocking REM-FIX)
      - "Proceed anyway" → Record in memory: "Hunter HIGH issues skipped by user", proceed
-
-# (rule 2a not needed — single-agent non-blocking cases are handled by rule 1b above)
 
 2b. If contract.STATUS == "NEEDS_CLARIFICATION" (planner agent):
     → Extract "**Your Input Needed:**" bullet points from planner output
@@ -648,15 +629,6 @@ WHEN any CC10X REM-FIX task COMPLETES:
          Note: If re-reviews produce a new REM-FIX-N, rule 1a automatically blocks all downstream tasks — no additional blocking needed here.
 ```
 
-**Why:** Code changes must be re-reviewed before shipping (orchestration integrity).
-
-**How it works:** Task() is synchronous - router waits for agent to complete and receives its output before proceeding to next agent.
-
-**Note: cc10x:github-research is router-executed directly (THREE-PHASE process in PLAN/DEBUG) — never passed as SKILL_HINTS.**
-
-**Detection runs BEFORE agent invocation. Pass detected skills in SKILL_HINTS.**
-**Also check CLAUDE.md Complementary Skills table and include matching skills in SKILL_HINTS.**
-
 ## Skill Loading
 
 **1. Frontmatter `skills:` (PRELOAD):** Loaded automatically at agent start. Agent does NOT call `Skill()` for these.
@@ -679,8 +651,6 @@ WHEN any CC10X REM-FIX task COMPLETES:
 10. **TEST_PROCESSES_CLEANED** - Before running: announce "Cleaning up orphaned test processes..." then run: `pkill -f "vitest|jest|mocha" 2>/dev/null || true` and log result: "Killed: [process names found]" or "None found"
 
 ## Chain Execution Loop (Task-Based)
-
-**NEVER stop after one agent.** The workflow is NOT complete until ALL tasks are completed.
 
 ### Execution Loop
 
@@ -725,8 +695,6 @@ WHEN any CC10X REM-FIX task COMPLETES:
         taskId: memory_task_id,
         description: current_description + "\n\n---\n### Captured from {agent_name} ({timestamp}):\n" + extracted_memory_notes
       })
-    → This stores Memory Notes in the task filesystem (survives context compaction)
-    → Memory Update task executes by reading its OWN description — not conversation history
     → **Persist memory_task_id subject for reconstruction:**
       At this point, ensure memory_task_id is defined:
       If `memory_task_id` is undefined (compaction recovery): `TaskList()` → find task where subject starts with "CC10X Memory Update:" AND status IN [pending, in_progress] → assign its taskId to `memory_task_id`
@@ -750,13 +718,10 @@ WHEN any CC10X REM-FIX task COMPLETES:
 
 ### Workflow-Final Memory Persistence (Task-Enforced)
 
-Memory persistence is enforced via the "CC10X Memory Update" task in the task hierarchy.
-
-**When you see this task become available:**
-1. Read Memory Notes from this task's own description — step 3a captured them here after each agent completed (compaction-safe). Do NOT scan conversation history.
-2. Follow the task description to persist learnings
-3. Use Read-Edit-Read pattern for each memory file
-4. Mark task completed
+**When Memory Update task becomes available:**
+1. Read Memory Notes from this task's own description (step 3a captured them — compaction-safe). Do NOT scan conversation history.
+2. Persist learnings using Read-Edit-Read pattern per task description
+3. Mark task completed
 
 **Note:** In DEBUG workflows, silent-failure-hunter is not in the chain — its Memory Notes will not exist. Skip it when collecting notes.
 
@@ -774,15 +739,9 @@ Memory persistence is enforced via the "CC10X Memory Update" task in the task hi
 
 **Step 3:** Continue to MEMORY_UPDATED gate.
 
-**Note:** The Memory Update task handles `**Deferred:**` entries from agent Memory Notes automatically. This cleanup only handles any legacy `CC10X TODO:` tasks that still exist.
-
 ## Results Collection (Parallel Agents)
 
-**Task system handles coordination. The main assistant (running this router) handles results.**
-
-When parallel agents complete (code-reviewer + silent-failure-hunter), their outputs must be passed to the next agent.
-
-### Pattern: Collect and Pass Findings
+### Pattern: Collect and Pass Findings to Verifier
 
 ```
 # After both parallel agents complete:
