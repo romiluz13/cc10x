@@ -321,46 +321,24 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [planner_task_id] })
    - Expected vs actual?
    - When did it start?
    - Which component/file affected?
-3. **Check for research trigger:**
+3. **Check for research trigger (Pre-investigation):**
    - User explicitly requested research ("research", "github", "octocode"), OR
-   - External service error (API timeout, auth failure, third-party), OR
-   - **3+ local debugging attempts failed**
+   - External service error (API timeout, auth failure, third-party)
 
-   **Debug Attempt Counting (workflow-scoped):**
-   - At the START of each new DEBUG workflow: write the RESET marker using an explicit Edit call:
+   **If ANY trigger met:**
+   → AskUserQuestion: "Before debugging, should we research similar issues on GitHub? This makes external API calls and saves findings to docs/research/."
+     Options: "Research GitHub (Recommended)" | "Skip research" | "Abort workflow"
+   → If "Research GitHub": Execute THREE-PHASE research (octocode tools → persist → pass to agent)
+   → If "Abort": Record in activeContext.md ## Decisions: "Research declined", stop workflow
+
+   **Debug Workflow Scoping:**
+   - At the START of each new DEBUG workflow, write a RESET marker using an explicit Edit call so the bug-investigator knows where to begin counting attempts:
      ```
      Edit(file_path=".claude/cc10x/activeContext.md",
           old_string="## Recent Changes",
           new_string="## Recent Changes\n[DEBUG-RESET: wf:{parent_task_id}]")
      Read(file_path=".claude/cc10x/activeContext.md")  # VERIFY marker written
-     # If marker NOT found in Read output: STOP — retry Edit before proceeding to any DEBUG-N entries
      ```
-   - Format each attempt — anchor on the DEBUG-RESET marker (NOT on ## Recent Changes):
-     ```
-     Edit(file_path=".claude/cc10x/activeContext.md",
-          old_string="[DEBUG-RESET: wf:{parent_task_id}]",
-          new_string="[DEBUG-RESET: wf:{parent_task_id}]\n[DEBUG-N]: {what was tried} → {result}")
-     ```
-     This places DEBUG-N entries AFTER the marker in file order.
-   - Example: `[DEBUG-1]: Added null check → still failing (TypeError persists)`
-   - Count ONLY `[DEBUG-N]:` lines that appear AFTER the most recent `[DEBUG-RESET:...]` marker
-   - If scoped count ≥ 3 AND all show failure → trigger external research
-   - Rationale: Prevents stale debug entries from previous sessions (different bug) from triggering research on fresh workflows
-
-   **What counts as an attempt:**
-   - A hypothesis tested with code change or command
-   - NOT: reading files, thinking, planning
-   - Each attempt must have a concrete action + observed result
-
-   **If ANY trigger met:**
-   → AskUserQuestion: "Debugging has stalled ({trigger reason}). Research similar issues on GitHub? This makes external API calls and saves findings to docs/research/."
-     Options: "Research GitHub (Recommended)" | "Keep debugging locally" | "Abort workflow — I'll fix manually"
-   → If "Research GitHub": Execute THREE-PHASE research (octocode tools → persist → pass to agent)
-   → If "Keep debugging locally": Reset DEBUG counter (add [DEBUG-RESET] marker), re-invoke bug-investigator with hint "Try a different hypothesis"
-   → If "Abort": Record in activeContext.md ## Decisions: "Research declined by user", stop workflow
-   - Search for error patterns, PRs with similar issues (if Research GitHub chosen)
-   - **PERSIST research** → Save to `docs/research/YYYY-MM-DD-<error-topic>-research.md`
-   - **Update memory** → Add to activeContext.md References section
 4. **Create task hierarchy** (see Task-Based Orchestration above)
 5. **Start chain execution** (pass research file path if step 3 was executed)
 6. Update memory → Add to Common Gotchas when all tasks completed
@@ -542,7 +520,14 @@ If count ≥ 3 → AskUserQuestion: "Too many active fix attempts are stacking u
     → Do NOT create REM-FIX task — research IS the response
     → STOP after PHASE 3 — do not evaluate rules 1a/1b/2 for this contract
 
-1a. If contract.BLOCKING == true AND contract.STATUS NOT IN ["NEEDS_CLARIFICATION", "INVESTIGATING", "BLOCKED"] AND contract.NEEDS_EXTERNAL_RESEARCH != true AND NOT (contract.STATUS == "FAIL" AND contract.CHOSEN_OPTION IN ["B","C"]):
+0b. If contract.STATUS == "SELF_REMEDIATED":
+    → The agent has autonomously created a REM-FIX task and blocked itself (or downstream tasks).
+    → Acknowledge the self-healing action: log "Agent {agent} has self-remediated via TaskCreate."
+    → Do NOT create a duplicate REM-FIX task.
+    → DO NOT force the agent's task to "completed" in the fallback check. Wait for the fix task to execute natively.
+    → STOP evaluating rules 1a/1b/2 for this agent's contract.
+
+1a. If contract.BLOCKING == true AND contract.STATUS NOT IN ["NEEDS_CLARIFICATION", "INVESTIGATING", "BLOCKED", "SELF_REMEDIATED"] AND contract.NEEDS_EXTERNAL_RESEARCH != true AND NOT (contract.STATUS == "FAIL" AND contract.CHOSEN_OPTION IN ["B","C"]):
     **Parallel blocking merge (pre-check — BUILD only, runs before TaskCreate):**
     → If currently processing parallel review phase (code-reviewer ∥ silent-failure-hunter outputs in same response):
       → Check sibling agent's Router Contract in this same response — does sibling ALSO have BLOCKING=true?
@@ -598,10 +583,6 @@ If count ≥ 3 → AskUserQuestion: "Too many active fix attempts are stacking u
     → Announce to user: "Bug investigator is still investigating (no fix applied yet). Continuing investigation..."
     → TaskCreate({ subject: "CC10X bug-investigator: Continue investigation", description: "Previous attempt: STATUS=INVESTIGATING. ROOT_CAUSE hint: {contract.ROOT_CAUSE}. Continue from this hypothesis." })
     → Block downstream tasks on this new investigation task
-    → **INVESTIGATING loop cap (before re-invoking):**
-      `TaskList()` → count tasks where subject contains "CC10X bug-investigator: Continue investigation" AND status IN [pending, in_progress, completed]
-      If count >= 3: AskUserQuestion (same 4 options as Circuit Breaker) — do NOT re-invoke automatically
-      If count < 3: proceed with re-invocation below
     → Re-invoke bug-investigator with previous context included in prompt
 
 2f. If contract.STATUS == "BLOCKED" (bug-investigator terminal stuck state):

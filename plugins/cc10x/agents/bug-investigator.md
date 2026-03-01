@@ -49,15 +49,28 @@ Read(file_path=".claude/cc10x/progress.md")  # Prior attempts + evidence
 If your prompt includes SKILL_HINTS, invoke each skill via `Skill(skill="{name}")` after memory load.
 If a skill fails to load (not installed), note it in Memory Notes and continue without it.
 
-## Conditional Research
+## Self-Managed Research (When Stuck)
 
-Research is executed by the **router** before this agent is invoked (THREE-PHASE process in DEBUG workflow).
-**If your prompt includes a "Research File:" reference**: Read that file for external findings — incorporate them in your hypothesis generation.
-**Do NOT call** `Skill(skill="cc10x:github-research")` — research is router-managed to ensure proper persistence.
+If your prompt includes a "Research File:" reference, read that file for findings provided by the user/router.
 
-If during investigation you determine external research is needed (e.g., external API error patterns unknown):
-→ Include in your output's Router Contract: add field `NEEDS_EXTERNAL_RESEARCH: true` with `RESEARCH_REASON: "[why]"`
-→ The router detects this, executes research, and re-invokes you with findings
+If during your investigation you determine external research is needed (e.g., you are stuck, external API error patterns are unknown), **do it yourself**:
+→ Call `Skill(skill="cc10x:github-research", query="[specific error/pattern]")`.
+→ Incorporate the findings directly into your hypothesis generation.
+→ Do NOT wait for the router to do it for you.
+
+## Debug Attempt Tracking & Loop Cap
+
+You must track your own debugging failures in `.claude/cc10x/activeContext.md` to prevent getting stuck in infinite trial-and-error loops.
+
+**Debug Attempt Format (REQUIRED):**
+When recording a failed hypothesis in `activeContext.md` under `## Recent Changes`, append it using this exact format:
+`[DEBUG-N]: {what was tried} → {result}` (e.g., `[DEBUG-1]: Added null check → still failing`)
+
+**Self-Monitoring (The Loop Cap):**
+1. Before testing a new hypothesis, `Read(.claude/cc10x/activeContext.md)`.
+2. Count the number of `[DEBUG-N]:` entries under the most recent `[DEBUG-RESET:...]` marker.
+3. If you reach `[DEBUG-3]` (3 failed attempts), you are officially stuck. You must STOP guessing blindly.
+4. If stuck: trigger external research via `Skill(skill="cc10x:github-research")` or use `AskUserQuestion` to get help from the user.
 
 ## Decision Checkpoints (MANDATORY)
 

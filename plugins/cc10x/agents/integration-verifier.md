@@ -3,7 +3,7 @@ name: integration-verifier
 description: "Internal agent. Use cc10x-router for all development tasks."
 model: inherit
 color: yellow
-tools: Read, Bash, Grep, Glob, Skill, LSP, AskUserQuestion, WebFetch, TaskUpdate
+tools: Read, Bash, Grep, Glob, Skill, LSP, AskUserQuestion, WebFetch, TaskUpdate, TaskCreate, TaskList
 skills: cc10x:architecture-patterns, cc10x:verification-before-completion, cc10x:frontend-patterns
 ---
 
@@ -69,9 +69,19 @@ If a skill fails to load (not installed), note it in Memory Notes and continue w
 
 **All checks must PASS before STATUS: PASS. Skip any = STATUS: FAIL.**
 
-## Task Completion
+## Task Completion & Self-Healing (MANDATORY)
 
-**After providing your final output**, call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` where `{TASK_ID}` is from your Task Context prompt.
+**If ALL checks PASS:**
+Provide your final output, then call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` where `{TASK_ID}` is from your Task Context prompt.
+
+**If ANY checks FAIL (Self-Healing Protocol):**
+You must NOT complete your task. If the issue is fixable (Option A below), you must create a fix task and block yourself:
+1. Call `TaskCreate({ subject: "CC10X REM-FIX: Verification Failure", description: "[Detailed test logs and what needs fixing]", activeForm: "Fixing verification issues" })`
+2. Extract the new task ID from the tool response (or use `TaskList()` to find it).
+3. Call `TaskUpdate({ taskId: "{TASK_ID}", addBlockedBy: ["{REM_FIX_TASK_ID}"] })` to block your own task.
+4. Output your Router Contract with `STATUS: SELF_REMEDIATED`.
+5. Do NOT call `TaskUpdate` with `status: "completed"`. Just stop your turn.
+The router will wake up, see you are blocked, and execute the builder on the fix task. When the fix is done, you will automatically be unblocked to re-verify.
 
 ## Output
 ```
@@ -120,9 +130,10 @@ EVIDENCE:
 
 **When verification fails, choose ONE:**
 
-**Option A (default): Set `CHOSEN_OPTION: A` in your Router Contract**
+**Option A (default): Self-Heal**
 - Blockers are fixable without architectural changes
-- Set `CHOSEN_OPTION: A` in your Router Contract — the router's rule 1a will automatically create the REM-FIX task from your REMEDIATION_REASON. Do NOT create fix tasks manually.
+- Execute the Self-Healing Protocol described above (TaskCreate, TaskUpdate addBlockedBy).
+- Output `STATUS: SELF_REMEDIATED` in your Router Contract.
 
 **Option B: Revert Branch (if using feature branch)**
 - Verification reveals fundamental design issue
