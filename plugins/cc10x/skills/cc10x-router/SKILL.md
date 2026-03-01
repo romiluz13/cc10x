@@ -296,8 +296,8 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [planner_task_id] })
 1. Single-unit change (one file, one function)
 2. No security implications — verified by BOTH:
    (a) Request text doesn't contain: auth, crypto, security, payment, password, secret, token, permission, role, jwt, oauth, session
-   (b) `Bash(command="git diff --name-only HEAD 2>/dev/null || echo NO_GIT")` output doesn't match paths: auth/, security/, crypto/, payment/, token/, permission/, secrets/, passwords/, roles/
-   If NO_GIT (non-git project): condition 2 FAILS by default — cannot verify security scope → use FULL depth
+   (b) `git diff --name-only HEAD` output doesn't match paths: auth/, security/, crypto/, payment/, token/, permission/, secrets/, passwords/, roles/
+   (Note: NO_GIT case already handled by the pre-check above — if we reach condition 2, we are in a git repo)
 3. No cross-layer dependencies (e.g., API + DB + UI)
 4. No open `CC10X REM-FIX` tasks in current workflow
 5. Requirements are explicit and unambiguous
