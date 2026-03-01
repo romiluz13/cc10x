@@ -1,5 +1,43 @@
 # Changelog
 
+## [7.0.2] - 2026-03-01
+
+### Fixed — Internal audit: 17 cross-file consistency fixes
+
+Comprehensive internal audit of the entire cc10x orchestration system. Found and fixed 17 issues across 10 files (4 bugs, 6 contradictions, 5 gaps + 2 from deep cross-file validation).
+
+**Bugs (4):**
+- `silent-failure-hunter.md`: Added missing `TaskCreate, TaskList` to tools — agent couldn't create self-healing tasks
+- `integration-verifier.md`: Shell Safety section referenced `Write/Edit` tools the READ-ONLY agent doesn't have — changed to "Report in output only"
+- `bug-investigator.md`: `Skill()` call used `query=` parameter instead of correct `args=`
+- `code-generation/SKILL.md`: Examples used `grep`/`ls`/`cat` bash commands instead of dedicated `Grep`/`Glob`/`Read` tools
+
+**Contradictions (6):**
+- 3 READ-ONLY agents: Added `mkdir -p .claude/cc10x` before memory reads — prevents failure on fresh projects
+- `code-reviewer.md`: Added `SELF_REMEDIATED` to Router Contract STATUS enum — was handled by router but missing from agent's declared values
+- `session-memory/SKILL.md`: Updated READ-ONLY agent description to match reality (agents read files directly, not "receive summary in prompt")
+- `bug-investigator.md`: DEBUG-RESET variable changed from `{TASK_ID}` to `{PARENT_WORKFLOW_ID}` to match router
+- `cc10x-router/SKILL.md`: Merged three rules all labeled `2d` into structured single rule with CHOSEN_OPTION sub-cases A/B/C + added `2e` and `2f-ii`
+- `cc10x-orchestration-bible.md`: DEBUG-RESET authorship corrected from "router writes" to "bug-investigator writes"
+
+**Gaps (5):**
+- `bug-investigator.md`: Added Test Process Discipline section (orphan process cleanup for vitest/jest)
+- `code-reviewer.md` + `integration-verifier.md`: Documented `addBlockedBy` on in_progress task behavior
+- `component-builder.md` + `bug-investigator.md`: Added non-npm TDD escape clause for pure HTML/CSS/JS projects
+- `session-memory/SKILL.md`: Added `Skill Hints` key to Memory Notes template for cross-workflow persistence
+- `brainstorming/SKILL.md`: Added `2>/dev/null` error handling for empty/new projects
+
+**Deep audit fixes (2):**
+- `bug-investigator.md`: Added non-npm TDD exception to CONTRACT RULE (component-builder had it, bug-investigator didn't)
+- `cc10x-router/SKILL.md`: Fixed comment variable name `{task_id}` → `{parent_task_id}` at DEBUG-RESET note
+
+### Validation
+- Source ↔ v7.0.1 cache: 19/19 files MATCH
+- Smoke test: 42/42 PASS
+- Deep cross-file audit: 10/10 categories PASS (tool declarations, STATUS values, skill refs, memory protocol, chains, bible, variables, TDD, session-memory, brainstorming)
+
+---
+
 ## [7.0.1] - 2026-03-01
 
 ### Fixed — Architectural correction: shadow orchestration removed

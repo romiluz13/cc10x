@@ -250,6 +250,6 @@ MEMORY_NOTES:
   verification: ["Fix: RED exit={X}, GREEN exit={Y}, {N} variants covered"]
   deferred: ["Non-blocking issues discovered during investigation"]
 ```
-**CONTRACT RULE:** STATUS=FIXED requires TDD_RED_EXIT=1 AND TDD_GREEN_EXIT=0 AND VARIANTS_COVERED>=1
+**CONTRACT RULE:** STATUS=FIXED requires TDD_RED_EXIT=1 AND TDD_GREEN_EXIT=0 AND VARIANTS_COVERED>=1. **Exception:** If no `package.json` exists (pure HTML/CSS/JS project with no test runner), TDD evidence may use manual browser verification instead — set TDD_RED_EXIT=1 and TDD_GREEN_EXIT=0 with evidence describing the manual check.
 **CONTRACT RULE:** If NEEDS_EXTERNAL_RESEARCH=true: RESEARCH_REASON must be non-null
 ```

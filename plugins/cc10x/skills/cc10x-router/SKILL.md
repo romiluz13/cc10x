@@ -319,7 +319,7 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [planner_task_id] })
    → If "Abort": Record in activeContext.md ## Decisions: "Research declined", stop workflow
 
    **Debug Workflow Scoping:**
-   - Note: bug-investigator writes its own `[DEBUG-RESET: wf:{task_id}]` marker at startup — see agent file.
+   - Note: bug-investigator writes its own `[DEBUG-RESET: wf:{parent_task_id}]` marker at startup — see agent file.
 4. **Create task hierarchy** (see Task-Based Orchestration above)
 5. **Start chain execution** (pass research file path if step 3 was executed)
 6. Update memory → Add to Common Gotchas when all tasks completed
