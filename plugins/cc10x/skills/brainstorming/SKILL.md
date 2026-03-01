@@ -351,12 +351,11 @@ If concerns found, revise the design file before presenting. This is a self-revi
 
 ## After Brainstorming
 
-**Ask the user:**
+**Announce to the user:**
 
-> "Design captured. What's next?"
-> A. Create implementation plan (use planning-patterns skill)
-> B. Start building (use build workflow)
-> C. Review and refine further
+> "Design saved to `{design_file_path}`. Memory updated with design reference."
+
+The router handles workflow transitions — do not prompt the user for next steps. The router will proceed to research and/or planning automatically.
 
 ## Final Check
 

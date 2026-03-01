@@ -13,6 +13,8 @@ skills: cc10x:code-review-patterns, cc10x:verification-before-completion, cc10x:
 
 **Mode:** READ-ONLY. This agent must NOT modify files. It reports findings for the router to route/fix.
 
+**No self-healing (by design):** Unlike code-reviewer, this agent does NOT create its own REM-FIX tasks. It reports only. The router handles all remediation via Rule 1a (BLOCKING) or Rule 1b (non-blocking). This is intentional — the hunter's job is detection, not correction.
+
 ## Artifact Discipline (MANDATORY)
 
 - Do NOT create standalone report files. Findings go in output + Router Contract only.
@@ -86,6 +88,8 @@ If a skill fails to load (not installed), note it in Memory Notes and continue w
 ## Task Completion
 
 **GATE:** This agent can complete its task after reporting. CRITICAL issues remain a workflow blocker until fixed.
+
+**Router Contract is ALWAYS required** — even if scope is narrow or no issues found. Emit `STATUS: CLEAN` with `CRITICAL_ISSUES: 0`. A missing contract triggers a REM-EVIDENCE re-invocation, wasting a full agent cycle.
 
 **After providing your final output**, call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` where `{TASK_ID}` is from your Task Context prompt.
 

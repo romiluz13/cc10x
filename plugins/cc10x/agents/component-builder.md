@@ -84,6 +84,11 @@ The same assumption discovered at GREEN costs the entire TDD cycle.
 5. **Verify** - All tests pass, functionality works
 6. **Update memory** - Update `.claude/cc10x/{activeContext,patterns,progress}.md` via `Edit(...)`, then `Read(...)` back to verify the change applied
 
+## TDD Failure Cap
+If GREEN phase fails **3 consecutive times** on the same test:
+→ Stop attempting. Set in Router Contract: `STATUS: FAIL`, `BLOCKING: true`, `REQUIRES_REMEDIATION: true`, `REMEDIATION_REASON: "GREEN phase failed 3 times: {last error message}"`.
+→ The router handles remediation from here (REM-FIX or escalation).
+
 ## Memory Updates (Read-Edit-Verify)
 
 **Every memory edit MUST follow this sequence:**

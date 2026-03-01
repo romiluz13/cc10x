@@ -1,5 +1,32 @@
 # Changelog
 
+## [7.2.0] - 2026-03-01
+
+### Hardened — Full SDLC audit fixes (13 changes, 6 files)
+
+Applies all Tier 3 audit findings + legacy cleanup + disconnect fixes from the comprehensive 47-finding SDLC audit. All changes reviewed and approved by code-reviewer (90% confidence, 0 CRITICAL).
+
+**Router hardening (8 changes):**
+- **G3**: Added "brainstorm, brainstorming, explore" keywords to PLAN Decision Tree — prevents misrouting to BUILD
+- **H1**: SELF_REMEDIATED agents now properly mark their original task as completed — fixes stuck task state
+- **H4**: Re-Review Loop now correctly skips hunter for DEBUG/REVIEW and verifier for REVIEW — matches actual Agent Chains
+- **H5**: REM-FIX routing by originating agent (not workflow) — bug-investigator fixes route back to bug-investigator
+- **H6**: Plan file existence validation with Read() + AskUserQuestion fallback — prevents downstream crash on missing plan
+- **H11**: QUICK-to-FULL escalation now creates explicit TaskCreate tasks — replaces vague instructions
+- **D1+D2**: Design file pipeline — brainstorming saves design file, router extracts from References, forwards to planner
+
+**Agent hardening (3 changes):**
+- **H8**: TDD Failure Cap in component-builder — 3 consecutive GREEN failures escalate to STATUS: FAIL + REM-FIX
+- **H9**: Documented "No self-healing (by design)" in silent-failure-hunter — clarifies intentional design vs missing feature
+
+**Legacy cleanup (3 changes):**
+- **L1**: Removed brainstorming's "What's next? A/B/C" prompt that conflicted with router flow control
+- **L2**: Replaced code-generation's legacy "Use brainstorming skill" with AskUserQuestion guidance
+- **L3**: Removed temporal "now" from bug-investigator's legacy research guard
+
+**Known issue discovered and documented:**
+- Context compaction can lose sub-agent output before router processes it. Recovery pattern: resume sub-agent with `agentId` to re-emit findings. See `docs/known-flaws.md`.
+
 ## [7.1.0] - 2026-03-01
 
 ### Added — Parallel research agent architecture

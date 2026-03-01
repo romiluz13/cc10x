@@ -135,6 +135,15 @@ Router treats it as a generic failure, creates REM-FIX. Builder tries
 to fix a problem the investigator hasn't diagnosed yet. Wrong fix.
 **Safe to remove:** Only if bug-investigator is guaranteed to always
 return FIXED or BLOCKED in one pass (not currently guaranteed).
+**Loop cap:** See INV-028.
+
+### INV-028: Rule 2c — INVESTIGATING loop cap (v7.1.1+)
+**Covers:** Contract validation rule 2c — Investigation Loop Cap
+**Enforces:** After 2+ completed "Continue investigation" tasks, router asks user
+whether to try once more, force BLOCKED, or abort. Prevents infinite re-invocation.
+**Fails silently if removed:** Bug-investigator returning INVESTIGATING indefinitely
+re-invokes forever. Token budget exhausted. No termination condition.
+**Safe to remove:** Never while INVESTIGATING is a valid bug-investigator status.
 
 ### INV-013: Rule 2f — BLOCKED terminal state handler
 **Covers:** Contract validation rule 2f
@@ -328,5 +337,5 @@ If no: it's probably prose — compress it.
 
 ---
 
-*Last updated: v6.0.38 — 2026-03-01*
-*Router version at last audit: 6.0.38 (802 lines)*
+*Last updated: v7.1.1 — 2026-03-01*
+*Router version at last audit: 7.1.1 (~800 lines)*

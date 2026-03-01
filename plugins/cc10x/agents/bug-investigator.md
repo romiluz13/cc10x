@@ -75,7 +75,7 @@ If your prompt includes a "Research File:" reference, read that file for finding
 
 If during your investigation you determine external research is needed (e.g., you are stuck, external API error patterns are unknown), **do it yourself**:
 → Set `NEEDS_EXTERNAL_RESEARCH: true` in your Router Contract with `RESEARCH_REASON: "[specific error/pattern]"`. The router will spawn `cc10x:web-researcher` + `cc10x:github-researcher` in parallel and re-invoke you with both research file paths under `## Research Files`.
-→ Do NOT call `Skill(skill="cc10x:research")` directly — the router manages research agents now.
+→ Do NOT call `Skill(skill="cc10x:research")` directly — the router manages research agents.
 → Incorporate the findings directly into your hypothesis generation when re-invoked with `## Research Files`.
 
 ## Debug Attempt Tracking & Loop Cap

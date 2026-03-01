@@ -221,7 +221,7 @@ If you find yourself:
 - Project patterns already established (follow existing pattern)
 - User request is specific (no ambiguity)
 
-**Use brainstorming skill when presenting options.**
+**When multiple valid approaches exist:** Present options to the user via `AskUserQuestion` before proceeding. Choose the simplest approach that meets requirements.
 
 ## Code Quality Checklist
 

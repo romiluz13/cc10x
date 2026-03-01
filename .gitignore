@@ -180,6 +180,7 @@ cc10x_V2-main/
 !docs/cc10x-orchestration-bible.md
 !docs/cc10x-orchestration-logic-analysis.md
 !docs/router-invariants.md
+!docs/known-flaws.md
 
 # Production code (DO NOT IGNORE)
 !plugins/
