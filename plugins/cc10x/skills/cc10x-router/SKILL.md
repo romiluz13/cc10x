@@ -76,23 +76,13 @@ After loading memory files, ensure ALL required sections exist.
 
 **Auto-heal pattern:**
 ```
-# If any section missing in activeContext.md, insert before ## Last Updated:
-# Example: "## References" is missing
+# If any section missing, insert before ## Last Updated. Example:
 Edit(file_path=".claude/cc10x/activeContext.md",
      old_string="## Last Updated",
      new_string="## References\n- Plan: N/A\n- Design: N/A\n- Research: N/A\n\n## Last Updated")
-
-# Example: progress.md missing "## Verification"
-Edit(file_path=".claude/cc10x/progress.md",
-     old_string="## Last Updated",
-     new_string="## Verification\n- [None yet]\n\n## Last Updated")
-
 # VERIFY after each heal
 Read(file_path=".claude/cc10x/activeContext.md")
 ```
-
-This is idempotent: runs once per project (subsequent sessions find sections present).
-**Why:** Old projects may lack these sections, causing Edit failures.
 
 **UPDATE (Checkpoint + Final):**
 - Avoid memory edits during parallel phases.
@@ -258,10 +248,7 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [planner_task_id] })
 ## Workflow Execution
 
 ### BUILD
-> **CRITICAL - DO NOT ENTER PLAN MODE:**
-> **NEVER call `EnterPlanMode` during the BUILD workflow.**
-> The "Plan-First Gate" below asks the user whether to plan first — it does NOT mean enter Claude Code's interactive plan mode.
-> All work here is autonomous execution. Use `AskUserQuestion` for user decisions, never `EnterPlanMode`.
+> **NEVER call `EnterPlanMode`.** Use `AskUserQuestion` for user decisions.
 
 1. Load memory → Check if already done in progress.md
 2. **Plan-First Gate** (STATE-BASED, not phrase-based):
@@ -354,11 +341,7 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [planner_task_id] })
 5. Update memory when task completed
 
 ### PLAN
-> **CRITICAL - DO NOT ENTER PLAN MODE:**
-> **NEVER call `EnterPlanMode` during the PLAN workflow.**
-> The PLAN workflow means "invoke the planner agent to autonomously write a plan file."
-> It does NOT mean "enter Claude Code's interactive plan mode."
-> The planner agent handles autonomous plan creation and writes files directly — it does not need human approval gating.
+> **NEVER call `EnterPlanMode`.** Invoke the planner agent — it writes plan files directly.
 
 1. Load memory
 2. **Clarification (if request is vague or ambiguous):**
@@ -677,24 +660,13 @@ WHEN any CC10X REM-FIX task COMPLETES:
 **Detection runs BEFORE agent invocation. Pass detected skills in SKILL_HINTS.**
 **Also check CLAUDE.md Complementary Skills table and include matching skills in SKILL_HINTS.**
 
-## Skill Loading Hierarchy (DEFINITIVE)
+## Skill Loading
 
-**Two mechanisms exist:**
+**1. Frontmatter `skills:` (PRELOAD):** Loaded automatically at agent start. Agent does NOT call `Skill()` for these.
 
-### 1. Agent Frontmatter `skills:` (PRELOAD - Automatic)
-```yaml
-skills: cc10x:session-memory, cc10x:code-generation, cc10x:frontend-patterns
-```
-- Load AUTOMATICALLY when agent starts
-- Full skill content injected into agent context
-- Agent does NOT need to call `Skill()` for these
-- **This is the PRIMARY mechanism for all CC10x internal skills**
+**2. SKILL_HINTS (Conditional):** Router passes domain skills from CLAUDE.md Complementary Skills table (e.g., `mongodb-agent-skills:*`, `react-best-practices`). Agent calls `Skill(skill="{name}")` after memory load. If not installed, agent notes in Memory Notes and continues.
 
-### 2. Router's SKILL_HINTS (Conditional - On Demand)
-- Router passes SKILL_HINTS for skills not loaded via agent frontmatter
-- **Source 1 (domain skills only):** CLAUDE.md Complementary Skills table — domain skills matching task signals (e.g., `mongodb-agent-skills:*`, `react-best-practices`)
-- Agent calls `Skill(skill="{name}")` for each skill in SKILL_HINTS after memory load
-- If a skill fails to load (not installed), agent notes it in Memory Notes and continues
+**Note:** `cc10x:github-research` is router-executed directly (THREE-PHASE) — never passed as SKILL_HINTS.
 
 ## Gates (Must Pass)
 
@@ -741,7 +713,7 @@ skills: cc10x:session-memory, cc10x:code-generation, cc10x:frontend-patterns
 3. After agent completes:
    - Agent self-reports: TaskUpdate({ taskId, status: "completed" }) — already done by agent
    - Router validates output (see Post-Agent Validation)
-   - Router calls TaskList() to verify task is completed; if still in_progress, router calls TaskUpdate({ taskId: runnable_task_id, status: "completed" }) as fallback
+   - Router calls TaskList() to verify task is completed; if still in_progress, call TaskGet({ taskId: runnable_task_id }) and check blockedBy — if blockedBy is non-empty the agent intentionally blocked itself (self-healing), do NOT force to completed; if blockedBy is empty, router calls TaskUpdate({ taskId: runnable_task_id, status: "completed" }) as fallback
    - If completed task subject starts with "CC10X REM-FIX:", execute Remediation Re-Review Loop (see below) BEFORE finding next runnable tasks.
    - Router finds next available tasks from TaskList()
 
@@ -773,25 +745,9 @@ skills: cc10x:session-memory, cc10x:code-generation, cc10x:frontend-patterns
    - All tasks have status="completed" (INCLUDING the Memory Update task)
    - OR critical error detected (create error task, halt)
 
-**CRITICAL:** The workflow is NOT complete until the "CC10X Memory Update" task is completed.
-This ensures Memory Notes from READ-ONLY agents are persisted even if context compacted.
 ```
 
-### Parallel Execution
-
-When multiple tasks become unblocked simultaneously (e.g., code-reviewer AND silent-failure-hunter after component-builder completes):
-
-```
-# Both ready after builder completes
-TaskUpdate({ taskId: reviewer_id, status: "in_progress" })
-TaskUpdate({ taskId: hunter_id, status: "in_progress" })
-
-# Invoke BOTH in same message = parallel execution
-Task(subagent_type="cc10x:code-reviewer", prompt="Your task ID: {reviewer_id}...")
-Task(subagent_type="cc10x:silent-failure-hunter", prompt="Your task ID: {hunter_id}...")
-```
-
-**CRITICAL:** Both Task calls in same message = both complete before you continue.
+**Parallel execution:** When multiple tasks are ready simultaneously, invoke ALL Task() calls in the same message — both complete before you continue.
 
 ### Workflow-Final Memory Persistence (Task-Enforced)
 
@@ -803,17 +759,7 @@ Memory persistence is enforced via the "CC10X Memory Update" task in the task hi
 3. Use Read-Edit-Read pattern for each memory file
 4. Mark task completed
 
-**Why task-enforced:**
-- Tasks survive context compaction
-- Tasks are visible in TaskList() - can't be forgotten
-- Task description contains explicit instructions
-- Workflow isn't complete until Memory Update task is done
-
-**Why this design:**
-- READ-ONLY agents (code-reviewer, silent-failure-hunter, integration-verifier) cannot persist memory themselves
-- **DEBUG workflow note:** silent-failure-hunter is not part of the DEBUG chain — its Memory Notes will not exist. Skip it when collecting notes for DEBUG workflows.
-- You (main assistant) collect their Memory Notes and persist at workflow-final
-- This avoids parallel edit conflicts and ensures nothing is lost
+**Note:** In DEBUG workflows, silent-failure-hunter is not in the chain — its Memory Notes will not exist. Skip it when collecting notes.
 
 ### Deferred Findings Cleanup (After Workflow Completes)
 
@@ -868,12 +814,3 @@ When parallel agents complete (code-reviewer + silent-failure-hunter), their out
    Any CRITICAL issues should block PASS verdict.
    ")
 ```
-
-### Why Both Task System AND Results Passing
-
-| Aspect | Tasks Handle | Router Handles |
-|--------|--------------|----------------|
-| Completion status | Automatic | - |
-| Dependency unblocking | Automatic | - |
-| Agent findings/output | NOT shared | Pass in prompt |
-| Conflict resolution | - | Include both findings |

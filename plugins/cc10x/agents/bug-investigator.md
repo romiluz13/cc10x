@@ -55,6 +55,7 @@ If your prompt includes a "Research File:" reference, read that file for finding
 
 If during your investigation you determine external research is needed (e.g., you are stuck, external API error patterns are unknown), **do it yourself**:
 → Call `Skill(skill="cc10x:github-research", query="[specific error/pattern]")`.
+→ After the skill returns: `Bash(command="mkdir -p docs/research")` then `Write(file_path="docs/research/YYYY-MM-DD-{topic}-research.md", content="[findings]")`. Then `Edit(.claude/cc10x/activeContext.md)` to add `- Research: docs/research/{filename}` under `## References`. This ensures findings survive context compaction.
 → Incorporate the findings directly into your hypothesis generation.
 → Do NOT wait for the router to do it for you.
 
@@ -71,6 +72,7 @@ When recording a failed hypothesis in `activeContext.md` under `## Recent Change
 2. Count the number of `[DEBUG-N]:` entries under the most recent `[DEBUG-RESET:...]` marker.
 3. If you reach `[DEBUG-3]` (3 failed attempts), you are officially stuck. You must STOP guessing blindly.
 4. If stuck: trigger external research via `Skill(skill="cc10x:github-research")` or use `AskUserQuestion` to get help from the user.
+5. If you have ALREADY triggered research this workflow (check activeContext.md ## References for a `docs/research/` entry) AND you are still stuck after incorporating findings: return `STATUS: BLOCKED` — do NOT return `INVESTIGATING`. This terminates the loop and escalates to the user via the router's rule 2f.
 
 ## Decision Checkpoints (MANDATORY)
 
