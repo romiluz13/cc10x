@@ -346,7 +346,7 @@ Skills are **loaded automatically by agents**. You never invoke them directly.
 | **architecture-patterns** | ALL agents | System & API design |
 | **frontend-patterns** | ALL agents | UX, accessibility |
 | **brainstorming** | planner | Idea exploration |
-| **github-research** | planner, bug-investigator (conditional) | External package research |
+| **research** | planner, bug-investigator (via github-researcher agent) | Synthesis-only: guides agents on how to interpret research results; GitHub execution is handled by the `github-researcher` agent |
 | **cc10x-router** | ENTRY POINT | Routes to correct workflow |
 
 ---
@@ -546,7 +546,7 @@ cc10x works out of the box with no MCPs required. These are **optional** — the
 | **[octocode](https://github.com/nicepkg/octocode)** | GitHub research: find packages, search code across repos, read PR history. Triggered automatically when planner or bug-investigator needs external research. | Install via Claude Code MCP settings |
 | **[brightdata](https://github.com/nicepkg/mcp-brightdata)** | Web scraping for research tasks — used as fallback when web content is needed beyond GitHub. | Install via Claude Code MCP settings |
 
-**Without these MCPs:** cc10x still works fully. The `github-research` skill simply won't execute when triggered, and agents will note it in Memory Notes and continue.
+**Without these MCPs:** cc10x still works fully. The `github-researcher` agent simply won't execute GitHub searches when triggered, and agents will note it in Memory Notes and continue.
 
 **With octocode installed:** When the router detects new/unfamiliar tech, 3+ failed debug attempts, or explicit research requests, it automatically calls octocode tools to search GitHub before invoking the planner or bug-investigator.
 
