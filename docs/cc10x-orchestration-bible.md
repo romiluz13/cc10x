@@ -240,7 +240,9 @@ flowchart LR
 `code-reviewer` only
 
 ### PLAN Chain
-`planner` only
+`planner` → (step 5b) plan-review-gate skill (3 adversarial reviewers: Feasibility, Completeness, Scope — all must PASS; skip for trivial plans)
+
+**Note:** plan-review-gate runs as a `Skill()` call, not as a chain agent. BUILD/DEBUG/REVIEW chains are unaffected.
 
 ---
 
@@ -416,7 +418,7 @@ MEMORY_NOTES:
 | Agent | STATUS Values | BLOCKING when | Key Contract Fields |
 |-------|---------------|---------------|---------------------|
 | component-builder | PASS, FAIL | TDD evidence missing | TDD_RED_EXIT, TDD_GREEN_EXIT |
-| code-reviewer | APPROVE, CHANGES_REQUESTED | CRITICAL_ISSUES > 0 | CONFIDENCE, CRITICAL_ISSUES |
+| code-reviewer | APPROVE, CHANGES_REQUESTED | CRITICAL_ISSUES > 0 | CONFIDENCE, CRITICAL_ISSUES, EVIDENCE_ITEMS (≥1 required for APPROVE) |
 | silent-failure-hunter | CLEAN, ISSUES_FOUND | CRITICAL_ISSUES > 0 | CRITICAL_ISSUES |
 | integration-verifier | PASS, FAIL | BLOCKERS > 0 | SCENARIOS_PASSED, BLOCKERS |
 | bug-investigator | FIXED, INVESTIGATING, BLOCKED | STATUS != FIXED | ROOT_CAUSE, VARIANTS_COVERED |
@@ -447,7 +449,7 @@ Validation Rules:
 Router independently validates self-reported STATUS against objective contract fields:
 - component-builder: TDD_RED_EXIT≠1 OR TDD_GREEN_EXIT≠0 → override to STATUS=FAIL
 - bug-investigator: STATUS=FIXED but TDD evidence missing AND NEEDS_EXTERNAL_RESEARCH!=true → override to STATUS=FAIL (not BLOCKED — BLOCKED is reserved for genuine stuck state; FAIL triggers REM-FIX via rule 1a)
-- code-reviewer: CRITICAL_ISSUES>0 OR CONFIDENCE<80 → override to STATUS=CHANGES_REQUESTED
+- code-reviewer: CRITICAL_ISSUES>0 OR CONFIDENCE<80 OR EVIDENCE_ITEMS<1 → override to STATUS=CHANGES_REQUESTED (EVIDENCE_ITEMS: cited file:line proof required for APPROVE)
 - integration-verifier: SCENARIOS_PASSED≠SCENARIOS_TOTAL → override to STATUS=FAIL
 - planner: PLAN_FILE null/empty OR CONFIDENCE<50 → override to STATUS=NEEDS_CLARIFICATION
 
@@ -694,6 +696,19 @@ Router writes a `[DEBUG-RESET: wf:{parent_task_id}]` marker to `## Recent Change
 ## Deferred Findings Pattern (v6.0.31+)
 
 Agents write non-blocking discoveries to Memory Notes under `**Deferred:**` instead of creating tasks. The Memory Update task writes them to `patterns.md ## Common Gotchas` as `[Deferred vX.Y.Z]: {entry}`. Tasks are execution state — not a knowledge parking lot.
+
+---
+
+## Standalone Skills (Not in Agent Chains)
+
+These skills are invoked via `Skill()` and do NOT participate in BUILD/DEBUG/REVIEW/PLAN agent chains.
+
+| Skill | Trigger | What It Does |
+|-------|---------|-------------|
+| `cc10x:plan-review-gate` | Called from router PLAN step 5b after planner | 3 adversarial reviewers (Feasibility, Completeness, Scope) in parallel; all must PASS; max 3 iterations then ESCALATION AskUserQuestion |
+| `cc10x:self-reflect` | User-invoked (`/self-reflect`) | Mines session context for learnings, presents candidates, writes approved insights to patterns.md using Read-Edit-Verify |
+
+**Safety note:** These skills run in the main assistant context. If they fail, the failure is visible to the user immediately. They cannot silently corrupt BUILD/DEBUG/REVIEW chains.
 
 ---
 

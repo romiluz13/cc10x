@@ -67,6 +67,20 @@ git ls-files --others --exclude-standard      # NEW untracked files
    - Weak or missing type annotations
 6. **Output Memory Notes** — Include learnings in output (router persists)
 
+## Review Checklist (Inline Rubric)
+
+| Category | Check | Severity |
+|----------|-------|----------|
+| Correctness | Logic does what it claims; edge cases handled | CRITICAL |
+| Security | No injection, auth gaps, hardcoded secrets, or XSS vectors | CRITICAL |
+| Error Handling | Errors caught, surfaced, not swallowed silently | HIGH |
+| Types | No `any`; types match runtime behavior | HIGH |
+| Testing | Tests verify behavior (not just presence); cover error paths | HIGH |
+| Duplication | No copy-paste; DRY principle followed | MEDIUM |
+| Naming | Intent clear from names; no misleading abstractions | MEDIUM |
+
+**Rule:** CRITICAL failures → CHANGES_REQUESTED regardless of other dimensions.
+
 ## Confidence Scoring
 | Score | Meaning | Action |
 |-------|---------|--------|
@@ -174,13 +188,16 @@ STATUS: APPROVE | CHANGES_REQUESTED
 CONFIDENCE: [80-100]
 CRITICAL_ISSUES: [count from CRITICAL_COUNT above]
 HIGH_ISSUES: [count from HIGH_COUNT above]
+EVIDENCE_ITEMS: [count of EVIDENCE entries — required ≥1 for STATUS=APPROVE]
 BLOCKING: [true if CRITICAL_ISSUES > 0]
 REQUIRES_REMEDIATION: [true if STATUS=CHANGES_REQUESTED or CRITICAL_ISSUES > 0 or HIGH_ISSUES > 0]
 REMEDIATION_REASON: null | "Fix critical issues: {summary of CRITICAL list}" | "Fix high-severity issues: {summary of HIGH list}"
+EVIDENCE:
+  - "[file:line] — [what was checked and found clean / what was found and why it passes]"
 MEMORY_NOTES:
   learnings: ["Code quality insights"]
   patterns: ["Conventions or anti-patterns found"]
   verification: ["Review: {STATUS} with {CONFIDENCE}% confidence"]
 ```
-**CONTRACT RULE:** STATUS=APPROVE requires CRITICAL_ISSUES=0 and CONFIDENCE>=80
+**CONTRACT RULE:** STATUS=APPROVE requires CRITICAL_ISSUES=0 and CONFIDENCE>=80 and EVIDENCE_ITEMS≥1 (at least one cited file:line for the approval verdict)
 ```

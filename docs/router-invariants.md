@@ -266,6 +266,19 @@ Memory trimming never fires. See INV-020.
 **Safe to remove:** Never while bug-investigator needs PARENT_WORKFLOW_ID
 for DEBUG-RESET scoping.
 
+### INV-026: plan-review-gate in PLAN workflow step 5b (v6.0.38+)
+**Covers:** Router PLAN section step 5b — `Skill(skill="cc10x:plan-review-gate")` call
+**Enforces:** After planner completes, plan is adversarially reviewed (Feasibility, Completeness, Scope) before user sees it. Gate iterates up to 3 rounds; escalates to user on failure.
+**Fails silently if removed:** Planner output goes directly to user with no adversarial review. Fabricated file paths, missing requirements, and scope creep pass undetected.
+**Safe to remove:** Only if plan-review-gate skill is also deleted. Never remove in isolation — the skill file and the router call must stay in sync.
+**Fragility note:** Skip condition "(skip if plan is trivial — single file, <3 changes)" is evaluated from user request text alone (plan not yet written). Edge case: complex plans phrased simply may bypass gate. Tracked as Deferred v6.0.38-M.
+
+### INV-027: EVIDENCE_ITEMS enforcement in code-reviewer CONTRACT RULE (v6.0.38+)
+**Covers:** Router CONTRACT RULE table entry for code-reviewer
+**Enforces:** STATUS=APPROVE requires EVIDENCE_ITEMS≥1 (at least one cited file:line for the approval verdict). Router overrides APPROVE→CHANGES_REQUESTED if EVIDENCE_ITEMS<1.
+**Fails silently if removed:** Code-reviewer can APPROVE without citing any evidence. Review quality degrades silently — no concrete proof an actual review happened.
+**Safe to remove:** Never while EVIDENCE_ITEMS field is in code-reviewer's Router Contract. The agent rule and the router enforcement must stay in sync.
+
 ### INV-025: NEVER call EnterPlanMode
 **Covers:** Planner agent frontmatter warning + router PLAN workflow
 **Enforces:** No agent or router workflow calls EnterPlanMode.

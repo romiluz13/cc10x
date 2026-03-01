@@ -339,6 +339,39 @@ Read(file_path=".claude/cc10x/activeContext.md")
 
 **This is non-negotiable.** Memory is the single source of truth.
 
+## Post-Design Review Gate (Optional — Recommended for Complex Designs)
+
+After saving the design, you MAY spawn 2 parallel reviewers before presenting to the user. Skip for simple/trivial designs.
+
+**When to run:** Design touches 3+ components OR has security implications OR user explicitly wants review.
+
+**Before spawning:** Assign the exact file path from the `Write()` call in "Step 1: Save Design File" above:
+```
+# design_path = "<the exact path you passed to Write() in Step 1, e.g. docs/plans/2026-03-01-my-feature-design.md>"
+```
+Substitute `{design_path}` in the Task() prompts below with this value before spawning.
+
+**Spawn in parallel:**
+```
+Task(subagent_type="general-purpose", prompt="
+You are the ARCHITECTURE REVIEWER for a design document.
+READ: {design_path}
+Check: Does this design follow existing codebase patterns? Are dependencies sound (no cycles)? Are integration points clean? Are abstractions appropriate?
+Output: APPROVED or NEEDS_REVISION with cited findings (file:line where possible). List blockers only — no suggestions.
+")
+
+Task(subagent_type="general-purpose", prompt="
+You are the SECURITY REVIEWER for a design document.
+READ: {design_path}
+Check: Auth/authz at every entry point? No userId trust boundary violations? Input validation defined? No secrets in design? Rate limiting considered?
+Output: APPROVED or NEEDS_REVISION with cited findings. List blockers only — no suggestions.
+")
+```
+
+**Collect results:**
+- Both APPROVED → Proceed to "After Brainstorming" below
+- Any NEEDS_REVISION → Present blockers to user with design update options: "Revise design" | "Proceed anyway (document risk)" | "Cancel"
+
 ## After Brainstorming
 
 **Ask the user:**

@@ -1,5 +1,48 @@
 # Changelog
 
+## [7.0.0] - 2026-03-01
+
+### Added — Metaswarm Integration (5 new capabilities)
+
+Five high-value patterns extracted from metaswarm and integrated natively into cc10x.
+
+**1. Plan Review Gate (`plugins/cc10x/skills/plan-review-gate/SKILL.md`)**
+- New standalone skill: 3 adversarial reviewers (Feasibility, Completeness, Scope) run in parallel after planner
+- All 3 must PASS before plan reaches user; max 3 iterations then ESCALATION (Override/Revise/Simplify/Cancel)
+- Router step 5b: gate reads the actual plan and decides trivial/non-trivial itself
+
+**2. Adversarial Evidence Requirements (`plugins/cc10x/agents/code-reviewer.md`)**
+- `APPROVE` now requires `EVIDENCE_ITEMS≥1` — at least one cited `file:line` in the Router Contract
+- New `EVIDENCE:` block in Router Contract YAML; router CONTRACT RULE enforces `OR EVIDENCE_ITEMS<1`
+
+**3. Self-Reflect Skill (`plugins/cc10x/skills/self-reflect/SKILL.md`)**
+- New standalone skill: mines session context for learnings → patterns.md (Phase A–F, 4-filter quality gate)
+
+**4. Inline Rubric Criteria**
+- `code-reviewer`: `## Review Checklist` table (7 categories with severity tiers)
+- `integration-verifier`: Coverage gate WARNING row (0 tests found = WARNING, not FAIL)
+
+**5. Post-Design Review Gate (`plugins/cc10x/skills/brainstorming/SKILL.md`)**
+- Optional Architecture+Security parallel review after design doc is saved
+
+### Changed (v7.0.0 — closes all 4 v6.0.38 deferred MEDIUM items)
+
+- Router step 5b: trivial-plan skip removed from router; gate decides by reading actual plan (M-1)
+- self-reflect Phase E: Write() fallback if patterns.md missing on fresh projects (M-2)
+- brainstorming: explicit `# design_path = ...` code-style assignment before Task() spawns (M-3)
+- Router ESCALATION: "Remaining Blocking Issues" section passed verbatim to planner on Revise/Simplify (M-4)
+
+### Docs
+- Bible: PLAN Chain (step 5b), code-reviewer EVIDENCE_ITEMS, new Standalone Skills section
+- router-invariants.md: INV-026 (plan-review-gate), INV-027 (EVIDENCE_ITEMS enforcement)
+- cc10x-orchestration-safety: plan-review-gate + self-reflect noted as approved exceptions
+
+### Notes
+- BUILD/DEBUG/REVIEW chains unchanged — new skills are standalone (not in agent chains)
+- 13/13 v7.0.0 checks PASS; all 27 v6.0.38 regression checks intact
+
+---
+
 ## [6.0.37] - 2026-03-01
 
 ### Changed (Architectural — Agent Decentralization)

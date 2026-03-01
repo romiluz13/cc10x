@@ -67,6 +67,8 @@ If a skill fails to load (not installed), note it in Memory Notes and continue w
 | Build succeeds | `npm run build` exit 0 in THIS message — **skip if no `package.json` exists** (pure HTML/CSS/JS project with no build step) | Report as FAIL |
 | Goal-backward check | TRUTHS + ARTIFACTS + WIRING all verified | Report as FAIL |
 
+| Coverage gate | `grep -rE "(test|spec|it|describe)\(" <test-files> \| wc -l` → if 0 tests found for changed files: WARNING (not FAIL unless project has coverage config) | Report as WARNING |
+
 **All checks must PASS before STATUS: PASS. Skip any = STATUS: FAIL.**
 
 ## Task Completion & Self-Healing (MANDATORY)

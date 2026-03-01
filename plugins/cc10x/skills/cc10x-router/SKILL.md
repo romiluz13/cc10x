@@ -355,7 +355,14 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [planner_task_id] })
       → AskUserQuestion: "Before BUILD starts, planner flagged these assumptions that need your input:\n{extracted bullet points}\nProvide answers (or confirm the defaults)."
       → Collect answers → Persist to activeContext.md ## Decisions with Edit: "- Planner clarification [{date}]: {Q} → {A}"
       → Include answers summary in BUILD context: When invoking component-builder, add "## Planner Clarifications\n{Q+A pairs}" to prompt
-    → If section empty or absent: Proceed directly to step 6 (Memory Update)
+    → If section empty or absent: Proceed directly to step 5b
+5b. **Plan Review Gate** (gate decides internally whether to skip — do NOT pre-filter here):
+    → `Skill(skill="cc10x:plan-review-gate")` — pass plan file path and user request
+    → Gate reads the plan and decides trivial/non-trivial itself; iterates internally (max 3 rounds); presents gated plan or escalation to user
+    → If gate output contains 'ESCALATION REQUIRED': AskUserQuestion with options: "Override (proceed with known risks)" | "Revise (re-invoke planner with feedback)" | "Simplify (re-invoke planner, reduce scope)" | "Cancel (stop workflow)"
+      → Override → continue to step 6
+      → Revise or Simplify → re-invoke planner; include the full "Remaining Blocking Issues" section from the gate escalation output verbatim in the planner prompt
+      → Cancel → stop, record in activeContext.md ## Decisions
 6. Update memory → Reference saved plan when task completed
 
 **THREE-PHASE for External Research (MANDATORY):**
@@ -463,11 +470,11 @@ Before applying rules 1a/1b/2, validate each agent's self-reported STATUS agains
 |-------|-------------------------------------|
 | component-builder | STATUS=PASS but TDD_RED_EXIT≠1 OR TDD_GREEN_EXIT≠0 → STATUS=FAIL, BLOCKING=true, REMEDIATION_REASON="CONTRACT RULE violated: TDD evidence missing" |
 | bug-investigator | STATUS=FIXED but (TDD_RED_EXIT≠1 OR TDD_GREEN_EXIT≠0 OR VARIANTS_COVERED<1) AND contract.NEEDS_EXTERNAL_RESEARCH != true → STATUS=FAIL, BLOCKING=true, REQUIRES_REMEDIATION=true, REMEDIATION_REASON="CONTRACT RULE violated: TDD evidence missing — add regression test (RED→GREEN) + variant coverage" |
-| code-reviewer | STATUS=APPROVE but CRITICAL_ISSUES>0 OR CONFIDENCE<80 → STATUS=CHANGES_REQUESTED, REQUIRES_REMEDIATION=true; BLOCKING=true only if CRITICAL_ISSUES>0 |
+| code-reviewer | STATUS=APPROVE but CRITICAL_ISSUES>0 OR CONFIDENCE<80 OR EVIDENCE_ITEMS<1 → STATUS=CHANGES_REQUESTED, REQUIRES_REMEDIATION=true; BLOCKING=true only if CRITICAL_ISSUES>0 |
 | integration-verifier | STATUS=PASS but SCENARIOS_PASSED≠SCENARIOS_TOTAL → STATUS=FAIL, BLOCKING=true |
 | planner | STATUS=PLAN_CREATED but PLAN_FILE is null/empty OR CONFIDENCE<50 → STATUS=NEEDS_CLARIFICATION |
 
-**If override applied:** Log in output: "⚠️ CONTRACT RULE override: {agent} self-reported {original} but rule violated (TDD_RED_EXIT={X}/TDD_GREEN_EXIT={Y}/etc.). Overriding STATUS to {new_status}."
+**If override applied:** Log in output: "⚠️ CONTRACT RULE override: {agent} self-reported {original} but rule violated (TDD_RED_EXIT={X}/TDD_GREEN_EXIT={Y}/EVIDENCE_ITEMS={X}/etc.). Overriding STATUS to {new_status}."
 
 Proceed with rules 1a/1b/2 using the OVERRIDDEN values.
 
