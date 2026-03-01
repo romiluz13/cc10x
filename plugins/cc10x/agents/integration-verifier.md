@@ -64,7 +64,7 @@ If a skill fails to load (not installed), note it in Memory Notes and continue w
 | All scenarios executed | Count EVIDENCE entries = SCENARIOS_TOTAL | Run missing scenarios |
 | No test processes orphaned | `pgrep -f "vitest\|jest" \|\| echo "Clean"` | Kill and re-verify |
 | Changed files have no stubs | `grep -rE "TODO\|FIXME\|not implemented" <changed-files>` | Report as FAIL |
-| Build succeeds | `npm run build` exit 0 in THIS message | Report as FAIL |
+| Build succeeds | `npm run build` exit 0 in THIS message — **skip if no `package.json` exists** (pure HTML/CSS/JS project with no build step) | Report as FAIL |
 | Goal-backward check | TRUTHS + ARTIFACTS + WIRING all verified | Report as FAIL |
 
 **All checks must PASS before STATUS: PASS. Skip any = STATUS: FAIL.**

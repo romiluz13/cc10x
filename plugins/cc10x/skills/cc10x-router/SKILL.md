@@ -188,7 +188,7 @@ TaskUpdate({ taskId: verifier_task_id, addBlockedBy: [reviewer_task_id, hunter_t
 # Replace {parent_task_id} below with workflow_task_id (returned by the parent BUILD task created in step 1)
 TaskCreate({
   subject: "CC10X Memory Update: Persist workflow learnings",
-  description: "REQUIRED: Collect Memory Notes from agent outputs and persist to memory files.\n\n**Instructions:**\n1. Read Memory Notes from THIS task's description — they were captured between '---' separator lines by the router immediately after each agent completed (compaction-safe). Do NOT search conversation history.\n2. Persist learnings to .claude/cc10x/activeContext.md ## Learnings\n3. Persist patterns to .claude/cc10x/patterns.md ## Common Gotchas\n4. For **Deferred:** entries in agent Memory Notes: Write each to patterns.md ## Common Gotchas as \"[Deferred]: {entry}\"\n5. Persist verification to .claude/cc10x/progress.md ## Verification\n\n**Pattern:**\nRead(file_path=\".claude/cc10x/activeContext.md\")\nEdit(old_string=\"## Learnings\", new_string=\"## Learnings\\n- [from agent]: {insight}\")\nRead(file_path=\".claude/cc10x/activeContext.md\")  # Verify\n\nRepeat for patterns.md and progress.md.\n\n**Freshness (prevent bloat):**\n- activeContext.md ## Recent Changes: REPLACE existing entries with only this workflow's changes.\n- progress.md ## Tasks: REPLACE existing entries with only this workflow's task items.\n- patterns.md: Before adding to ## Common Gotchas, scan for an existing entry about the same file or error. If found, update it in-place instead of adding a duplicate.\n- Collect Memory Notes from READ-ONLY agents only (code-reviewer, silent-failure-hunter, integration-verifier) — WRITE agents (component-builder, bug-investigator, planner) already wrote memory directly; skip their Memory Notes to avoid duplicates.\n- activeContext.md ## Learnings: before appending, check for same topic/file; update in-place if found; if count > 20, promote oldest entries to patterns.md ## Common Gotchas.\n- progress.md ## Completed: keep only the 10 most recent entries.\n[workflow-scope: wf:{parent_task_id}] — used by compaction-recovery scoped search",
+  description: "REQUIRED: Collect Memory Notes from agent outputs and persist to memory files.\n\n**Instructions:**\n1. Read Memory Notes from THIS task's description — they were captured between '---' separator lines by the router immediately after each agent completed (compaction-safe). Do NOT search conversation history.\n2. Persist learnings to .claude/cc10x/activeContext.md ## Learnings\n3. Persist patterns to .claude/cc10x/patterns.md ## Common Gotchas\n4. For **Deferred:** entries in agent Memory Notes: Write each to patterns.md ## Common Gotchas as \"[Deferred]: {entry}\"\n5. Persist verification to .claude/cc10x/progress.md ## Verification\n\n**Pattern:**\nRead(file_path=\".claude/cc10x/activeContext.md\")\nEdit(old_string=\"## Learnings\", new_string=\"## Learnings\\n- [from agent]: {insight}\")\nRead(file_path=\".claude/cc10x/activeContext.md\")  # Verify\n\nRepeat for patterns.md and progress.md.\n\n**Freshness (prevent bloat):**\n- activeContext.md ## Recent Changes: Find `[BUILD-START: wf:{parent_task_id}]` in ## Recent Changes (extract parent_task_id from `[workflow-scope: wf:{parent_task_id}]` at end of this description). Replace FROM that marker onward with this workflow's final summary. Preserve all entries BEFORE that marker.\n- progress.md ## Tasks: REPLACE existing entries with only this workflow's task items.\n- patterns.md: Before adding to ## Common Gotchas, scan for an existing entry about the same file or error. If found, update it in-place instead of adding a duplicate.\n- Collect Memory Notes from READ-ONLY agents only (code-reviewer, silent-failure-hunter, integration-verifier) — WRITE agents (component-builder, bug-investigator, planner) already wrote memory directly; skip their Memory Notes to avoid duplicates.\n- activeContext.md ## Learnings: before appending, check for same topic/file; update in-place if found; if count > 20, promote oldest entries to patterns.md ## Common Gotchas.\n- progress.md ## Completed: keep only the 10 most recent entries.\n[workflow-scope: wf:{parent_task_id}] — used by compaction-recovery scoped search",
   activeForm: "Persisting workflow learnings"
 })
 # Returns memory_task_id
@@ -212,7 +212,7 @@ TaskUpdate({ taskId: verifier_task_id, addBlockedBy: [reviewer_task_id] })
 # Replace {parent_task_id} below with workflow_task_id (returned by the parent DEBUG task created above)
 TaskCreate({
   subject: "CC10X Memory Update: Persist debug learnings",
-  description: "REQUIRED: Collect Memory Notes from agent outputs and persist to memory files.\n\nFocus on:\n- Root cause for patterns.md ## Common Gotchas\n- Debug attempt history for activeContext.md\n- Verification evidence for progress.md\n- **Deferred:** entries from Memory Notes → Write each to patterns.md ## Common Gotchas as \"[Deferred]: {entry}\"\n\n**Use Read-Edit-Read pattern for each file.**\n\n**Freshness (prevent bloat):**\n- activeContext.md ## Recent Changes: REPLACE existing entries with only this workflow's changes.\n- progress.md ## Tasks: REPLACE existing entries with only this workflow's task items.\n- patterns.md: Before adding to ## Common Gotchas, scan for an existing entry about the same file or error. If found, update it in-place instead of adding a duplicate.\n- Collect Memory Notes from READ-ONLY agents only (code-reviewer, integration-verifier) — WRITE agents (bug-investigator) already wrote memory directly; skip their Memory Notes to avoid duplicates.\n- activeContext.md ## Learnings: before appending, check for same topic/file; update in-place if found; if count > 20, promote oldest entries to patterns.md ## Common Gotchas.\n- progress.md ## Completed: keep only the 10 most recent entries.\n[workflow-scope: wf:{parent_task_id}] — used by compaction-recovery scoped search",
+  description: "REQUIRED: Collect Memory Notes from agent outputs and persist to memory files.\n\nFocus on:\n- Root cause for patterns.md ## Common Gotchas\n- Debug attempt history for activeContext.md\n- Verification evidence for progress.md\n- **Deferred:** entries from Memory Notes → Write each to patterns.md ## Common Gotchas as \"[Deferred]: {entry}\"\n\n**Use Read-Edit-Read pattern for each file.**\n\n**Freshness (prevent bloat):**\n- activeContext.md ## Recent Changes: Find `[DEBUG-RESET: wf:{parent_task_id}]` in ## Recent Changes (extract parent_task_id from `[workflow-scope: wf:{parent_task_id}]` at end of this description). Replace FROM that marker onward with this workflow's final summary. Preserve all entries BEFORE that marker.\n- progress.md ## Tasks: REPLACE existing entries with only this workflow's task items.\n- patterns.md: Before adding to ## Common Gotchas, scan for an existing entry about the same file or error. If found, update it in-place instead of adding a duplicate.\n- Collect Memory Notes from READ-ONLY agents only (code-reviewer, integration-verifier) — WRITE agents (bug-investigator) already wrote memory directly; skip their Memory Notes to avoid duplicates.\n- activeContext.md ## Learnings: before appending, check for same topic/file; update in-place if found; if count > 20, promote oldest entries to patterns.md ## Common Gotchas.\n- progress.md ## Completed: keep only the 10 most recent entries.\n[workflow-scope: wf:{parent_task_id}] — used by compaction-recovery scoped search",
   activeForm: "Persisting debug learnings"
 })
 # Returns memory_task_id
@@ -273,11 +273,24 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [planner_task_id] })
    - **Ambiguity check:** If the request explicitly states (a) the file/component to change, (b) the function/behavior to change, (c) what the change is, AND (d) acceptance criteria or expected outcome — AND pre-answers cover all gaps — skip the AskUserQuestion below. If ANY element is missing, vague, or contradictory → continue to AskUserQuestion.
    - **Then:** Use AskUserQuestion for any remaining unanswered requirements.
    - Pass all answers (pre-populated + new) to component-builder in prompt under `## Pre-Answered Requirements`.
+   - **Persist answers (compaction-safe):** For each NEW Q&A gathered from AskUserQuestion in this step (skip pre-populated answers already in Decisions from Planner clarification): Edit activeContext.md ## Decisions appending `- Build clarification [{current_date}]: {question} → {answer}`. Read-back verify after each append.
 4. **Create task hierarchy** (see Task-Based Orchestration above)
+4a. **Write BUILD-START marker** (immediately after task hierarchy created — before any agent runs):
+    ```
+    Edit(file_path=".claude/cc10x/activeContext.md",
+         old_string="## Recent Changes",
+         new_string="## Recent Changes\n[BUILD-START: wf:{workflow_task_id}]")
+    Read(file_path=".claude/cc10x/activeContext.md")  # VERIFY marker written
+    # If marker NOT found in Read output: STOP — retry Edit before proceeding to step 5
+    ```
 5. **Start chain execution** (see Chain Execution Loop below)
 6. Update memory when all tasks completed
 
 ### Execution Depth Selector (BUILD only)
+
+**Pre-check (runs FIRST — before evaluating any condition):**
+`Bash(command="git diff --name-only HEAD 2>/dev/null || echo NO_GIT")`
+→ If output is `NO_GIT`: **use FULL depth immediately. Stop here. Do NOT evaluate conditions 1-5.** Cannot verify security scope without git history.
 
 **Default: FULL.** Use QUICK only if ALL 5 conditions are met:
 1. Single-unit change (one file, one function)
@@ -467,7 +480,7 @@ If NOT found → Agent output is non-compliant.
     If count < 1: Create REM-EVIDENCE task:
   TaskCreate({
     subject: "CC10X REM-EVIDENCE: [router-internal] {agent} missing Router Contract",
-    description: "Agent output lacks Router Contract section. Re-invoke the same agent once with the same prompt. If Router Contract still missing after retry, AskUserQuestion to decide next action.",
+    description: "Agent output lacks '### Router Contract (MACHINE-READABLE)' section. Re-invoke the same agent once with a modified prompt: append the following note to the original prompt: 'NOTE: Your previous output succeeded but lacked the ### Router Contract (MACHINE-READABLE) section. Your work is already saved to memory. Please re-output ONLY the Router Contract YAML block — do NOT redo investigation/build/review from scratch.' If Router Contract still missing after retry, AskUserQuestion to decide next action.",
     activeForm: "Collecting agent contract"
   })
   Block downstream tasks and STOP.
@@ -494,7 +507,7 @@ Before applying rules 1a/1b/2, validate each agent's self-reported STATUS agains
 | Agent | CONTRACT RULE violation → Override |
 |-------|-------------------------------------|
 | component-builder | STATUS=PASS but TDD_RED_EXIT≠1 OR TDD_GREEN_EXIT≠0 → STATUS=FAIL, BLOCKING=true, REMEDIATION_REASON="CONTRACT RULE violated: TDD evidence missing" |
-| bug-investigator | STATUS=FIXED but (TDD_RED_EXIT≠1 OR TDD_GREEN_EXIT≠0 OR VARIANTS_COVERED<1) AND contract.NEEDS_EXTERNAL_RESEARCH != true → STATUS=BLOCKED, BLOCKING=true |
+| bug-investigator | STATUS=FIXED but (TDD_RED_EXIT≠1 OR TDD_GREEN_EXIT≠0 OR VARIANTS_COVERED<1) AND contract.NEEDS_EXTERNAL_RESEARCH != true → STATUS=FAIL, BLOCKING=true, REQUIRES_REMEDIATION=true, REMEDIATION_REASON="CONTRACT RULE violated: TDD evidence missing — add regression test (RED→GREEN) + variant coverage" |
 | code-reviewer | STATUS=APPROVE but CRITICAL_ISSUES>0 OR CONFIDENCE<80 → STATUS=CHANGES_REQUESTED, REQUIRES_REMEDIATION=true; BLOCKING=true only if CRITICAL_ISSUES>0 |
 | integration-verifier | STATUS=PASS but SCENARIOS_PASSED≠SCENARIOS_TOTAL → STATUS=FAIL, BLOCKING=true |
 | planner | STATUS=PLAN_CREATED but PLAN_FILE is null/empty OR CONFIDENCE<50 → STATUS=NEEDS_CLARIFICATION |
@@ -530,9 +543,17 @@ If count ≥ 3 → AskUserQuestion: "Too many active fix attempts are stacking u
     → STOP after PHASE 3 — do not evaluate rules 1a/1b/2 for this contract
 
 1a. If contract.BLOCKING == true AND contract.STATUS NOT IN ["NEEDS_CLARIFICATION", "INVESTIGATING", "BLOCKED"] AND contract.NEEDS_EXTERNAL_RESEARCH != true AND NOT (contract.STATUS == "FAIL" AND contract.CHOSEN_OPTION IN ["B","C"]):
+    **Parallel blocking merge (pre-check — BUILD only, runs before TaskCreate):**
+    → If currently processing parallel review phase (code-reviewer ∥ silent-failure-hunter outputs in same response):
+      → Check sibling agent's Router Contract in this same response — does sibling ALSO have BLOCKING=true?
+      → If YES (both agents blocking):
+          merged_subject = "CC10X REM-FIX: code-reviewer + silent-failure-hunter — multiple blocking issues"
+          merged_description = "**code-reviewer issues:**\n" + reviewer_contract.REMEDIATION_REASON + "\n\n**silent-failure-hunter issues:**\n" + hunter_contract.REMEDIATION_REASON
+      → If NO (only this agent blocking): use this agent's data alone (existing behavior)
+    → If NOT parallel phase: use this agent's data alone (existing behavior)
     → TaskCreate({
-        subject: "CC10X REM-FIX: {agent_name} — {first 60 chars of (contract.REMEDIATION_REASON ?? 'see agent output')}",
-        description: contract.REMEDIATION_REASON ?? "REMEDIATION_REASON null — re-check agent Router Contract output.",
+        subject: merged_subject ?? "CC10X REM-FIX: {agent_name} — {first 60 chars of (contract.REMEDIATION_REASON ?? 'see agent output')}",
+        description: merged_description ?? (contract.REMEDIATION_REASON ?? "REMEDIATION_REASON null — re-check agent Router Contract output."),
         activeForm: "Fixing {agent_name} issues"
       })
     → Task-enforced gate:
@@ -723,7 +744,7 @@ skills: cc10x:session-memory, cc10x:code-generation, cc10x:frontend-patterns
    - TaskUpdate({ taskId: runnable_task_id, status: "in_progress" })
    - Announce in 1 sentence what this agent will do and why it matters now.
    - For tasks with subject "CC10X REM-FIX:": invoke cc10x:component-builder (BUILD/REVIEW) or cc10x:bug-investigator (DEBUG).
-   - For tasks with subject "CC10X REM-EVIDENCE:": re-invoke the original agent (extract agent name from the subject suffix — e.g., "CC10X REM-EVIDENCE: code-reviewer missing Router Contract" → invoke cc10x:code-reviewer).
+   - For tasks with subject "CC10X REM-EVIDENCE:": re-invoke the original agent (extract agent name from the subject suffix — e.g., "CC10X REM-EVIDENCE: code-reviewer missing Router Contract" → invoke cc10x:code-reviewer). When re-invoking, append to the original prompt: "NOTE: Your previous output succeeded but lacked the '### Router Contract (MACHINE-READABLE)' section. Your work is already saved to memory. Please re-output ONLY the Router Contract YAML block — do NOT redo investigation/build/review from scratch."
    - For tasks with subject starting "CC10X integration-verifier:": invoke cc10x:integration-verifier (covers both original verify tasks and Re-verify tasks from Re-Review Loop).
    - Otherwise, if multiple agent tasks are ready (e.g., code-reviewer + silent-failure-hunter):
      → Invoke BOTH in same message (parallel execution)

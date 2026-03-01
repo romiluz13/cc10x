@@ -1,6 +1,6 @@
 # CC10x Orchestration Bible (Plugin-Only Source of Truth)
 
-> **Last synced with agents/skills:** 2026-03-01 (v6.0.33 — Re-Review Loop, contract rules, loop caps, Deferred pattern) | **Status:** IN SYNC
+> **Last synced with agents/skills:** 2026-03-01 (v6.0.35 — bug-investigator TDD override fix, parallel REM-FIX merge, REM-EVIDENCE hint, BUILD clarifications persist, workflow boundary markers, NO_GIT pre-check, HTML build skip, main-context constraint, concurrent session warning) | **Status:** IN SYNC
 
 > This document is derived **only** from `plugins/cc10x/` (agents + skills).
 > Ignore all other docs. Do not trust external narratives.
@@ -446,7 +446,7 @@ Validation Rules:
 **0. CONTRACT RULE Enforcement (RUNS FIRST — auto-override STATUS):**
 Router independently validates self-reported STATUS against objective contract fields:
 - component-builder: TDD_RED_EXIT≠1 OR TDD_GREEN_EXIT≠0 → override to STATUS=FAIL
-- bug-investigator: STATUS=FIXED but TDD evidence missing AND NEEDS_EXTERNAL_RESEARCH!=true → override to STATUS=BLOCKED
+- bug-investigator: STATUS=FIXED but TDD evidence missing AND NEEDS_EXTERNAL_RESEARCH!=true → override to STATUS=FAIL (not BLOCKED — BLOCKED is reserved for genuine stuck state; FAIL triggers REM-FIX via rule 1a)
 - code-reviewer: CRITICAL_ISSUES>0 OR CONFIDENCE<80 → override to STATUS=CHANGES_REQUESTED
 - integration-verifier: SCENARIOS_PASSED≠SCENARIOS_TOTAL → override to STATUS=FAIL
 - planner: PLAN_FILE null/empty OR CONFIDENCE<50 → override to STATUS=NEEDS_CLARIFICATION
@@ -617,6 +617,18 @@ IMPORTANT:
 - **No architecture/plan/design before flows are mapped.**
 - **Never try to reactivate a completed task via addBlockedBy.** That is a no-op. Spawn a NEW task.
 - **Never create CC10X TODO: tasks.** Non-blocking discoveries go in Memory Notes under `**Deferred:**`.
+- **cc10x-router MUST run in the main Claude Code session context.** The `Task(subagent_type="cc10x:agent")` mechanism only works at the top level. Invoking cc10x from inside a sub-agent or team member agent silently collapses orchestration to inline execution — no real agent spawning, no task tracking, no parallel agents.
+
+---
+
+## Concurrent Session Warning
+
+`.claude/cc10x/` memory files are single-tenant. Running multiple cc10x sessions concurrently in the **same repository directory** causes:
+- Silent data corruption (progress.md pre-populated with wrong data)
+- Memory files overwritten mid-workflow by sibling sessions
+- No error — failures are invisible
+
+**One cc10x session per repository at a time.** If you need parallel workflows, use separate repository clones.
 
 ---
 
