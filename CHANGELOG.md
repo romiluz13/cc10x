@@ -1,5 +1,37 @@
 # Changelog
 
+## [7.0.1] - 2026-03-01
+
+### Fixed — Architectural correction: shadow orchestration removed
+
+Fixes a fundamental violation of cc10x's orchestration model introduced in v7.0.0: two new skills were spawning `Task()` subagents outside the router's control plane. In Claude Code, only the main session (router) can spawn subagents — sub-agents cannot spawn sub-agents (platform-level nesting guard, v2.1.41).
+
+**plan-review-gate — rewritten as inline review (no subagents):**
+- Removed all `Task()` spawning from the skill
+- The 3 adversarial checks (Feasibility, Completeness, Scope) now run inline in the calling agent's context using Read/Grep/Glob
+- `allowed-tools` updated: `Task` removed
+- Feasibility check uses actual file system verification (Glob/Grep on referenced paths)
+- GATE_PASS / GATE_FAIL output format replaces the parallel-agents workflow
+- Planner agent now calls `Skill(skill="cc10x:plan-review-gate")` after saving the plan — gate runs inside planner's context, planner returns PLAN_CREATED only after GATE_PASS
+- Router step 5b removed entirely — planner owns the gate; router stays lean (802 lines)
+
+**brainstorming Post-Design Gate — Task() spawns removed:**
+- Replaced two `Task(subagent_type="general-purpose", ...)` blocks with 3-line advisory guidance
+- Renamed section to "Pre-Handoff Design Check (Optional)" — self-review, no agents
+
+**self-reflect skill — deleted:**
+- Removed `plugins/cc10x/skills/self-reflect/` from source and cache
+- Memory Update task + manual patterns.md editing covers the use case
+- No user-visible regression (Memory Update is fully automatic per workflow)
+
+### Notes
+- BUILD/DEBUG/REVIEW chains: unchanged
+- planner.md: +14 lines (Plan Review Gate section)
+- cc10x-router/SKILL.md: -7 lines (step 5b removed); now 802 lines
+- plan-review-gate/SKILL.md: fully rewritten (inline review, no subagents)
+
+---
+
 ## [7.0.0] - 2026-03-01
 
 ### Added — Metaswarm Integration (5 new capabilities)

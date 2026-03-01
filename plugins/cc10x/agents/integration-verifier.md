@@ -16,7 +16,7 @@ skills: cc10x:architecture-patterns, cc10x:verification-before-completion, cc10x
 ## Shell Safety (MANDATORY)
 
 - Bash is for test execution, diagnostics, and git commands only.
-- Do NOT write files through shell redirection. Use Write/Edit tools.
+- Do NOT write files through shell redirection. Report findings in output only (this is a READ-ONLY agent).
 
 ## Test Process Discipline (MANDATORY)
 
@@ -28,6 +28,7 @@ skills: cc10x:architecture-patterns, cc10x:verification-before-completion, cc10x
 
 **You MUST read memory before ANY verification:**
 ```
+Bash(command="mkdir -p .claude/cc10x")
 Read(file_path=".claude/cc10x/activeContext.md")
 Read(file_path=".claude/cc10x/progress.md")
 Read(file_path=".claude/cc10x/patterns.md")
@@ -80,7 +81,7 @@ Provide your final output, then call `TaskUpdate({ taskId: "{TASK_ID}", status: 
 You must NOT complete your task. If the issue is fixable (Option A below), you must create a fix task and block yourself:
 1. Call `TaskCreate({ subject: "CC10X REM-FIX: Verification Failure", description: "[Detailed test logs and what needs fixing]", activeForm: "Fixing verification issues" })`
 2. Extract the new task ID from the tool response (or use `TaskList()` to find it).
-3. Call `TaskUpdate({ taskId: "{TASK_ID}", addBlockedBy: ["{REM_FIX_TASK_ID}"] })` to block your own task.
+3. Call `TaskUpdate({ taskId: "{TASK_ID}", addBlockedBy: ["{REM_FIX_TASK_ID}"] })` to block your own task. (Your task stays in_progress while blocked; the router will re-invoke you when the blocker completes.)
 4. Output your Router Contract with `STATUS: SELF_REMEDIATED`.
 5. Do NOT call `TaskUpdate` with `status: "completed"`. Just stop your turn.
 The router will wake up, see you are blocked, and execute the builder on the fix task. When the fix is done, you will automatically be unblocked to re-verify.

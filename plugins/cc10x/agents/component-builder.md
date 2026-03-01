@@ -203,5 +203,5 @@ MEMORY_NOTES:
   verification: ["TDD evidence: RED exit={X}, GREEN exit={Y}"]
   deferred: ["Non-blocking findings for patterns.md — from Findings section"]
 ```
-**CONTRACT RULE:** STATUS=PASS requires TDD_RED_EXIT=1 AND TDD_GREEN_EXIT=0
+**CONTRACT RULE:** STATUS=PASS requires TDD_RED_EXIT=1 AND TDD_GREEN_EXIT=0. **Exception:** If no `package.json` exists (pure HTML/CSS/JS project with no test runner), TDD evidence may use manual browser verification instead — set TDD_RED_EXIT=1 and TDD_GREEN_EXIT=0 with evidence describing the manual check.
 ```

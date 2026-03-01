@@ -45,6 +45,13 @@ Read(file_path=".claude/cc10x/patterns.md")  # Check Common Gotchas!
 Read(file_path=".claude/cc10x/progress.md")  # Prior attempts + evidence
 ```
 
+## Test Process Discipline (CRITICAL)
+
+- Always use run mode: `CI=true npm test`, `npx vitest run`
+- After TDD cycle complete, verify no orphaned processes:
+  `pgrep -f "vitest|jest" || echo "Clean"`
+- Kill if found: `pkill -f "vitest" 2>/dev/null || true`
+
 ## DEBUG-RESET Marker (MANDATORY — Write Before Any Investigation)
 
 **After Memory First, before any investigation step, write your own scope marker:**
@@ -54,7 +61,7 @@ Edit(file_path=".claude/cc10x/activeContext.md",
      new_string="## Recent Changes\n[DEBUG-RESET: wf:{PARENT_WORKFLOW_ID}]")
 Read(file_path=".claude/cc10x/activeContext.md")  # VERIFY marker written
 ```
-Replace `{TASK_ID}` with the **Parent Workflow ID** from your `## Task Context` prompt — NOT your own Task ID. The parent workflow ID is the `CC10X DEBUG:` task that started this investigation. This ensures the anchor matches what the Memory Update task expects.
+Replace `{PARENT_WORKFLOW_ID}` with the **Parent Workflow ID** from your `## Task Context` prompt — NOT your own Task ID. The parent workflow ID is the `CC10X DEBUG:` task that started this investigation. This ensures the anchor matches what the Memory Update task expects.
 
 **Why:** The Memory Update task uses `[DEBUG-RESET: wf:{TASK_ID}]` as an anchor to trim Recent Changes to this workflow only. Without this marker, memory accumulates across workflows.
 
@@ -67,7 +74,7 @@ If a skill fails to load (not installed), note it in Memory Notes and continue w
 If your prompt includes a "Research File:" reference, read that file for findings provided by the user/router.
 
 If during your investigation you determine external research is needed (e.g., you are stuck, external API error patterns are unknown), **do it yourself**:
-→ Call `Skill(skill="cc10x:github-research", query="[specific error/pattern]")`.
+→ Call `Skill(skill="cc10x:github-research", args="[specific error/pattern]")`.
 → After the skill returns: `Bash(command="mkdir -p docs/research")` then `Write(file_path="docs/research/YYYY-MM-DD-{topic}-research.md", content="[findings]")`. Then `Edit(.claude/cc10x/activeContext.md)` to add `- Research: docs/research/{filename}` under `## References`. This ensures findings survive context compaction.
 → Incorporate the findings directly into your hypothesis generation.
 → Do NOT wait for the router to do it for you.

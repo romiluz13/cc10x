@@ -97,15 +97,15 @@ lspFindReferences(lineHint=N) → see all usages
 
 ### 1. Study Project Patterns First
 
-```bash
+```
 # Find similar implementations
-grep -r "similar_pattern" --include="*.ts" src/ | head -10
+Grep(pattern="similar_pattern", glob="*.ts", path="src/")
 
 # Check file structure
-ls -la src/components/ # or relevant directory
+Glob(pattern="src/components/*")
 
 # Read existing similar code
-cat src/path/to/similar/file.ts
+Read(file_path="src/path/to/similar/file.ts")
 ```
 
 **Match:**

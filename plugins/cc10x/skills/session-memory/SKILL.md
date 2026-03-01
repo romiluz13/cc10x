@@ -144,11 +144,11 @@ Without memory persistence:
 ### Read
 - **Router (always):** loads all 3 files before workflow selection and before resuming Tasks.
 - **WRITE agents** (component-builder, bug-investigator, planner): load memory files at task start via this skill.
-- **READ-ONLY agents** (code-reviewer, silent-failure-hunter, integration-verifier): receive memory summary in prompt, do NOT load this skill.
+- **READ-ONLY agents** (code-reviewer, silent-failure-hunter, integration-verifier): read memory files directly at task start via their own Memory First section. They do NOT have Edit tool — they output `### Memory Notes` for the router to persist.
 
 ### Write
 - **WRITE agents:** update memory directly at task end using `Edit(...)` + `Read(...)` verify pattern.
-- **READ-ONLY agents:** output `### Memory Notes (For Workflow-Final Persistence)` section. The task-enforced "CC10X Memory Update" task ensures these are persisted.
+- **READ-ONLY agents:** output `### Memory Notes (For Workflow-Final Persistence)` section. The task-enforced "CC10X Memory Update" task ensures these are persisted. Include `**Skill Hints:**` if new tech signals discovered (e.g., "cc10x:frontend-patterns — detected React") so Memory Update can append to patterns.md `## Project SKILL_HINTS`.
 
 ### Concurrency Rule (Parallel Phases)
 

@@ -61,10 +61,11 @@ Read(file_path="SPEC.md")  # or spec.md if that doesn't exist
 3. Identify relevant patterns
 
 ```
-# Check recent context (permission-free)
-Bash(command="git log --oneline -10")
-Bash(command="ls -la src/")  # or relevant directory
+# Check recent context (permission-free) — skip if commands fail (new/empty project)
+Bash(command="git log --oneline -10 2>/dev/null || echo 'No git history'")
+Bash(command="ls src/ 2>/dev/null || ls . 2>/dev/null || echo 'Empty project'")
 ```
+**If project is empty/new:** Skip project scan, start from user's description.
 
 ### Phase 2: Explore the Idea (One Question at a Time)
 
@@ -339,38 +340,14 @@ Read(file_path=".claude/cc10x/activeContext.md")
 
 **This is non-negotiable.** Memory is the single source of truth.
 
-## Post-Design Review Gate (Optional — Recommended for Complex Designs)
+## Pre-Handoff Design Check (Optional)
 
-After saving the design, you MAY spawn 2 parallel reviewers before presenting to the user. Skip for simple/trivial designs.
+Before presenting the saved design to the user, consider reviewing it for:
 
-**When to run:** Design touches 3+ components OR has security implications OR user explicitly wants review.
+- **Architecture:** Does this follow existing codebase patterns? Are dependencies sound? Are integration points clean?
+- **Security:** Auth/authz at every entry point? Input validation defined? No secrets in design?
 
-**Before spawning:** Assign the exact file path from the `Write()` call in "Step 1: Save Design File" above:
-```
-# design_path = "<the exact path you passed to Write() in Step 1, e.g. docs/plans/2026-03-01-my-feature-design.md>"
-```
-Substitute `{design_path}` in the Task() prompts below with this value before spawning.
-
-**Spawn in parallel:**
-```
-Task(subagent_type="general-purpose", prompt="
-You are the ARCHITECTURE REVIEWER for a design document.
-READ: {design_path}
-Check: Does this design follow existing codebase patterns? Are dependencies sound (no cycles)? Are integration points clean? Are abstractions appropriate?
-Output: APPROVED or NEEDS_REVISION with cited findings (file:line where possible). List blockers only — no suggestions.
-")
-
-Task(subagent_type="general-purpose", prompt="
-You are the SECURITY REVIEWER for a design document.
-READ: {design_path}
-Check: Auth/authz at every entry point? No userId trust boundary violations? Input validation defined? No secrets in design? Rate limiting considered?
-Output: APPROVED or NEEDS_REVISION with cited findings. List blockers only — no suggestions.
-")
-```
-
-**Collect results:**
-- Both APPROVED → Proceed to "After Brainstorming" below
-- Any NEEDS_REVISION → Present blockers to user with design update options: "Revise design" | "Proceed anyway (document risk)" | "Cancel"
+If concerns found, revise the design file before presenting. This is a self-review — no agents spawned.
 
 ## After Brainstorming
 

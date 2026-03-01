@@ -103,6 +103,22 @@ Edit(file_path=".claude/cc10x/activeContext.md",
 Read(file_path=".claude/cc10x/activeContext.md")
 ```
 
+## Plan Review Gate (REQUIRED — after Two-Step Save)
+
+After saving the plan and updating memory, invoke the review gate:
+
+```
+Skill(skill="cc10x:plan-review-gate")
+```
+
+The gate runs inline in your context (no subagents). Provide it the saved plan file path and the user's original request. It performs 3 sequential checks using your Read/Grep/Glob tools.
+
+**If GATE_PASS:** Proceed to output. Set `STATUS: PLAN_CREATED` in Router Contract.
+
+**If GATE_FAIL:** Revise the plan (edit the saved plan file), re-run the gate. Max 3 iterations. If still failing after 3: use `AskUserQuestion` to present blocking issues to the user (see gate escalation output for options).
+
+**Skip condition:** If plan is trivial (single-file fix, copy edit, <3 changes) — the gate will skip itself automatically.
+
 ## Confidence Score (REQUIRED)
 
 **Rate plan's likelihood of one-pass success:**

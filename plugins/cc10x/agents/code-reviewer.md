@@ -17,6 +17,7 @@ skills: cc10x:code-review-patterns, cc10x:verification-before-completion, cc10x:
 
 **You MUST read memory before ANY analysis:**
 ```
+Bash(command="mkdir -p .claude/cc10x")
 Read(file_path=".claude/cc10x/activeContext.md")
 Read(file_path=".claude/cc10x/patterns.md")
 Read(file_path=".claude/cc10x/progress.md")
@@ -124,7 +125,7 @@ You must NOT complete your task. You must create a fix task and block yourself:
 1. Call `TaskCreate({ subject: "CC10X REM-FIX: Code Review Failure", description: "[Detailed review findings and required fixes]", activeForm: "Fixing review issues" })`
 2. Extract the new task ID from the tool response (or use `TaskList()` to find it).
 3. Use `TaskList()` to find the downstream `integration-verifier` task ID (the subject will contain "integration-verifier").
-4. Call `TaskUpdate({ taskId: "{TASK_ID}", addBlockedBy: ["{REM_FIX_TASK_ID}"] })` to block your own task.
+4. Call `TaskUpdate({ taskId: "{TASK_ID}", addBlockedBy: ["{REM_FIX_TASK_ID}"] })` to block your own task. (Your task stays in_progress while blocked; the router will re-invoke you when the blocker completes.)
 5. Call `TaskUpdate({ taskId: "{VERIFIER_TASK_ID}", addBlockedBy: ["{REM_FIX_TASK_ID}"] })` to block the downstream verifier task, preventing it from running before the fix is complete.
 6. Output your Router Contract with `STATUS: SELF_REMEDIATED`.
 7. Do NOT call `TaskUpdate` with `status: "completed"`. Just stop your turn.
@@ -184,7 +185,7 @@ HIGH:
 
 ### Router Contract (MACHINE-READABLE)
 ```yaml
-STATUS: APPROVE | CHANGES_REQUESTED
+STATUS: APPROVE | CHANGES_REQUESTED | SELF_REMEDIATED
 CONFIDENCE: [80-100]
 CRITICAL_ISSUES: [count from CRITICAL_COUNT above]
 HIGH_ISSUES: [count from HIGH_COUNT above]

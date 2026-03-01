@@ -355,14 +355,7 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [planner_task_id] })
       → AskUserQuestion: "Before BUILD starts, planner flagged these assumptions that need your input:\n{extracted bullet points}\nProvide answers (or confirm the defaults)."
       → Collect answers → Persist to activeContext.md ## Decisions with Edit: "- Planner clarification [{date}]: {Q} → {A}"
       → Include answers summary in BUILD context: When invoking component-builder, add "## Planner Clarifications\n{Q+A pairs}" to prompt
-    → If section empty or absent: Proceed directly to step 5b
-5b. **Plan Review Gate** (gate decides internally whether to skip — do NOT pre-filter here):
-    → `Skill(skill="cc10x:plan-review-gate")` — pass plan file path and user request
-    → Gate reads the plan and decides trivial/non-trivial itself; iterates internally (max 3 rounds); presents gated plan or escalation to user
-    → If gate output contains 'ESCALATION REQUIRED': AskUserQuestion with options: "Override (proceed with known risks)" | "Revise (re-invoke planner with feedback)" | "Simplify (re-invoke planner, reduce scope)" | "Cancel (stop workflow)"
-      → Override → continue to step 6
-      → Revise or Simplify → re-invoke planner; include the full "Remaining Blocking Issues" section from the gate escalation output verbatim in the planner prompt
-      → Cancel → stop, record in activeContext.md ## Decisions
+    → If section empty or absent: Proceed directly to step 6
 6. Update memory → Reference saved plan when task completed
 
 **THREE-PHASE for External Research (MANDATORY):**
@@ -577,9 +570,21 @@ If count ≥ 3 → AskUserQuestion: "Too many active fix attempts are stacking u
     → "Create manual fix task": Proceed as rule 1a (create REM-FIX task)
     → "Abort": Record in activeContext.md ## Decisions: "Investigation aborted (BLOCKED): {ROOT_CAUSE}", stop workflow
 
-2d. If integration-verifier STATUS=REVERT_RECOMMENDED: Log decision, suggest git revert steps, stop workflow (record in memory). Note: user already confirmed revert in-agent.
-2d. If integration-verifier STATUS=LIMITATION_ACCEPTED: Record acceptance in activeContext.md ## Decisions, proceed to Memory Update. Note: user already accepted in-agent.
-2d. If integration-verifier STATUS=FAIL AND contract.CHOSEN_OPTION=="A" (or not set): Create REM-FIX task (existing behavior). Note: B/C decisions are handled inline by the verifier — see agent file.
+2d. If integration-verifier STATUS=FAIL AND contract.CHOSEN_OPTION is set:
+    → If CHOSEN_OPTION == "A": Create REM-FIX task (existing behavior — unchanged)
+    → If CHOSEN_OPTION == "B":
+        AskUserQuestion: "Verifier recommends REVERTING the branch — fundamental design issue found: {REMEDIATION_REASON ?? 'see verifier output'}. How to proceed?"
+        Options: "Revert branch (Recommended)" | "Create fix task instead"
+        - "Revert": Suggest git revert steps, stop workflow (record in memory)
+        - "Create fix task": Proceed as CHOSEN_OPTION=A
+    → If CHOSEN_OPTION == "C":
+        AskUserQuestion: "Verifier wants to proceed with this known limitation: {REMEDIATION_REASON ?? 'see verifier output'}. Accept and continue?"
+        Options: "Accept limitation (document it)" | "Fix before proceeding"
+        - "Accept": Record in activeContext.md ## Decisions, proceed to Memory Update
+        - "Fix": Proceed as CHOSEN_OPTION=A
+    → If CHOSEN_OPTION not set (legacy behavior): Proceed as CHOSEN_OPTION=A
+2e. If integration-verifier STATUS=REVERT_RECOMMENDED: Log decision, suggest git revert steps, stop workflow (record in memory). Note: user already confirmed revert in-agent via inline AskUserQuestion.
+2f-ii. If integration-verifier STATUS=LIMITATION_ACCEPTED: Record acceptance in activeContext.md ## Decisions, proceed to Memory Update. Note: user already accepted in-agent via inline AskUserQuestion.
 
 3. Collect contract.MEMORY_NOTES for workflow-final persistence
 
