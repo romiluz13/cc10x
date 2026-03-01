@@ -315,7 +315,7 @@ MEMORY (.claude/cc10x/)
 
 ---
 
-## The 6 Agents
+## The 8 Agents
 
 | Agent | Purpose | Key Behavior |
 |-------|---------|--------------|
@@ -325,6 +325,8 @@ MEMORY (.claude/cc10x/)
 | **silent-failure-hunter** | Finds error gaps | Zero tolerance for empty catch blocks |
 | **integration-verifier** | E2E validation | Exit codes: PASS/FAIL with evidence |
 | **planner** | Creates plans | Saves to `docs/plans/` + updates memory |
+| **web-researcher** | Fetches web data via Bright Data + WebSearch | Saves findings to file |
+| **github-researcher** | Searches GitHub repos + packages via Octocode MCP | Saves findings to file |
 
 ---
 
@@ -514,7 +516,9 @@ plugins/cc10x/
 │   ├── code-reviewer.md
 │   ├── integration-verifier.md
 │   ├── planner.md
-│   └── silent-failure-hunter.md
+│   ├── silent-failure-hunter.md
+│   ├── web-researcher.md
+│   └── github-researcher.md
 │
 └── skills/
     ├── cc10x-router/SKILL.md
@@ -527,7 +531,7 @@ plugins/cc10x/
     ├── brainstorming/SKILL.md
     ├── architecture-patterns/SKILL.md
     ├── frontend-patterns/SKILL.md
-    ├── github-research/SKILL.md
+    ├── research/SKILL.md
     └── verification-before-completion/SKILL.md
 ```
 
@@ -613,6 +617,6 @@ MIT License
 ---
 
 <p align="center">
-  <strong>cc10x v6.0.21</strong><br>
+  <strong>cc10x v7.1.0</strong><br>
   <em>The Intelligent Orchestrator for Claude Code</em>
 </p>
