@@ -684,6 +684,7 @@ WHEN any CC10X REM-FIX task COMPLETES:
    - For tasks with subject "CC10X REM-EVIDENCE:": re-invoke the original agent (extract agent name from the subject suffix — e.g., "CC10X REM-EVIDENCE: code-reviewer missing Router Contract" → invoke cc10x:code-reviewer). When re-invoking, append to the original prompt: "NOTE: Your previous output succeeded but lacked the '### Router Contract (MACHINE-READABLE)' section. Your work is already saved to memory. Please re-output ONLY the Router Contract YAML block — do NOT redo investigation/build/review from scratch."
    - For tasks with subject starting "CC10X integration-verifier:": invoke cc10x:integration-verifier (covers both original verify tasks and Re-verify tasks from Re-Review Loop).
    - Otherwise, if multiple agent tasks are ready (e.g., code-reviewer + silent-failure-hunter):
+     → Call TaskUpdate({ status: "in_progress" }) for EACH ready task before any Task() call
      → Invoke BOTH in same message (parallel execution)
    - Pass task ID in prompt:
      Task(subagent_type="cc10x:{agent}", prompt="
