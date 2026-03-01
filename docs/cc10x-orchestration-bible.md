@@ -1,6 +1,6 @@
 # CC10x Orchestration Bible (Plugin-Only Source of Truth)
 
-> **Last synced with agents/skills:** 2026-02-28 (soft-gate for HIGH issues) | **Status:** IN SYNC
+> **Last synced with agents/skills:** 2026-03-01 (v6.0.33 — Re-Review Loop, contract rules, loop caps, Deferred pattern) | **Status:** IN SYNC
 
 > This document is derived **only** from `plugins/cc10x/` (agents + skills).
 > Ignore all other docs. Do not trust external narratives.
@@ -92,11 +92,10 @@ Agents spawned via Task() run in isolated context windows by default — they ca
 - `session-memory` — Memory protocol (WRITE agents only)
 - `code-generation` — Code writing patterns (component-builder)
 - `test-driven-development` — TDD protocol (component-builder, bug-investigator)
-- `debugging-patterns` — Debug methodology (bug-investigator, integration-verifier)
+- `debugging-patterns` — Debug methodology (bug-investigator only — removed from integration-verifier in v6.0.29)
 - `code-review-patterns` — Review methodology (code-reviewer, silent-failure-hunter)
 - `verification-before-completion` — Verification gates (4 agents)
 - `planning-patterns` — Plan writing (planner)
-- `brainstorming` — Idea exploration (planner)
 - `architecture-patterns` — Architecture design (5 agents)
 - `frontend-patterns` — Frontend patterns (all 6 agents)
 - `github-research` — External research (conditional via SKILL_HINTS)
@@ -198,10 +197,10 @@ flowchart TD
 1. `TaskList()` → find tasks with `status=pending` and no blockers.
 2. `TaskUpdate({ taskId, status: "in_progress" })`
 3. Run agent(s). If more than one is ready, **invoke in the same message** (parallel).
-4. After agent returns, router calls `TaskUpdate({ taskId, status: "completed" })`.
+4. Agent self-reports: calls `TaskUpdate({ taskId, status: "completed" })` in its final output. Router validates via `TaskList()` and calls `TaskUpdate` as fallback if status is still `in_progress`.
 5. Repeat until **ALL** agent tasks are completed.
 
-**Note:** Agents do NOT call TaskUpdate for their own task. Router owns task status transitions (Task() return is the deterministic handoff point).
+**Note (v6.0.29+):** Agents DO call TaskUpdate for their own task (self-completion). Router applies a fallback if the agent missed it. Both are defense-in-depth — not a contradiction. `Task()` return is the deterministic handoff point for the router to validate.
 
 ### Tasks Tool Contract (Keep Examples Exact)
 
@@ -349,22 +348,23 @@ All CC10x internal skills listed below load automatically via agent frontmatter.
 | component-builder | session-memory, test-driven-development, code-generation, verification-before-completion, frontend-patterns, architecture-patterns |
 | code-reviewer | code-review-patterns, verification-before-completion, frontend-patterns, architecture-patterns |
 | silent-failure-hunter | code-review-patterns, verification-before-completion, frontend-patterns, architecture-patterns |
-| integration-verifier | architecture-patterns, debugging-patterns, verification-before-completion, frontend-patterns |
-| bug-investigator | session-memory, debugging-patterns, test-driven-development, verification-before-completion, architecture-patterns, frontend-patterns |
-| planner | session-memory, planning-patterns, architecture-patterns, brainstorming, frontend-patterns |
+| integration-verifier | architecture-patterns, verification-before-completion, frontend-patterns |
+| bug-investigator | session-memory, debugging-patterns, test-driven-development, code-generation, verification-before-completion, architecture-patterns, frontend-patterns |
+| planner | session-memory, planning-patterns, architecture-patterns, frontend-patterns |
 
 ### Mechanism 2: Conditional `Skill()` Call (Router SKILL_HINTS)
 
 Router passes SKILL_HINTS in agent prompt. Agent invokes via `Skill(skill="{name}")`.
 
-**Sources for SKILL_HINTS:**
-1. **Router detection table** - github-research triggers (explicit request, post-2024 tech, 3+ debug failures)
-2. **CLAUDE.md Complementary Skills table** - user-configured domain skills (react-best-practices, mongodb-agent-skills, etc.)
+**Sources for SKILL_HINTS (domain skills only):**
+1. **CLAUDE.md Complementary Skills table** — user-configured domain skills (react-best-practices, mongodb-agent-skills, etc.)
+
+**Note:** `cc10x:github-research` is NOT passed as SKILL_HINTS. It is router-executed directly via the THREE-PHASE process in PLAN/DEBUG workflows.
 
 **Critical flow:**
 - Router runs in main Claude context → can see CLAUDE.md
-- Subagents are forked → cannot see CLAUDE.md
-- Router bridges the gap: reads CLAUDE.md → passes to agents via SKILL_HINTS
+- Subagents run in isolated context → cannot see CLAUDE.md
+- Router bridges the gap: reads CLAUDE.md → passes matching domain skills to agents via SKILL_HINTS
 
 **All 6 agents have `## SKILL_HINTS (If Present)` section** instructing them to invoke skills after memory load.
 
@@ -441,22 +441,47 @@ Circuit Breaker (BEFORE creating any REM-FIX):
   - Abort
 
 Validation Rules:
-1a. If contract.BLOCKING == true:
+
+**0. CONTRACT RULE Enforcement (RUNS FIRST — auto-override STATUS):**
+Router independently validates self-reported STATUS against objective contract fields:
+- component-builder: TDD_RED_EXIT≠1 OR TDD_GREEN_EXIT≠0 → override to STATUS=FAIL
+- bug-investigator: STATUS=FIXED but TDD evidence missing AND NEEDS_EXTERNAL_RESEARCH!=true → override to STATUS=BLOCKED
+- code-reviewer: CRITICAL_ISSUES>0 OR CONFIDENCE<80 → override to STATUS=CHANGES_REQUESTED
+- integration-verifier: SCENARIOS_PASSED≠SCENARIOS_TOTAL → override to STATUS=FAIL
+- planner: PLAN_FILE null/empty OR CONFIDENCE<50 → override to STATUS=NEEDS_CLARIFICATION
+
+**0c. NEEDS_EXTERNAL_RESEARCH (bug-investigator only, runs BEFORE 1a):**
+If contract.NEEDS_EXTERNAL_RESEARCH == true: execute THREE-PHASE research, re-invoke bug-investigator with findings. Do NOT create REM-FIX. STOP (do not evaluate 1a/1b/2).
+
+**1a. If contract.BLOCKING == true AND STATUS NOT IN ["NEEDS_CLARIFICATION","INVESTIGATING","BLOCKED"] AND NEEDS_EXTERNAL_RESEARCH != true AND NOT (STATUS=="FAIL" AND CHOSEN_OPTION IN ["B","C"]):**
     → Create REM-FIX task using contract.REMEDIATION_REASON
     → Block downstream tasks via TaskUpdate({ addBlockedBy })
     → STOP
 
-1b. If contract.REQUIRES_REMEDIATION == true AND contract.BLOCKING == false:
+**1b. If contract.REQUIRES_REMEDIATION == true AND contract.BLOCKING == false:**
     → AskUserQuestion: "Found significant issues (non-critical). Fix before continuing?"
       - Fix now (Recommended) → Circuit Breaker check → Create REM-FIX, block downstream, STOP
-      - Proceed anyway → Record decision in activeContext.md ## Decisions, continue chain
+      - Proceed anyway → Record in Decisions, append to patterns.md, continue chain
 
-2. If contract.CRITICAL_ISSUES > 0 AND parallel phase:
-   → Conflict check: reviewer APPROVE vs hunter CRITICAL
-   → AskUserQuestion to resolve if conflict
-   → Otherwise treat as blocking
+**2. Parallel phase conflict (code-reviewer APPROVE + silent-failure-hunter issues):**
+- Case A: hunter CRITICAL_ISSUES > 0 → AskUserQuestion: investigate or skip?
+- Case B: hunter HIGH_ISSUES > 0 (no CRITICAL) → AskUserQuestion: fix or proceed?
 
-3. Collect contract.MEMORY_NOTES for workflow-final persistence
+**2b. contract.STATUS == "NEEDS_CLARIFICATION" (planner):**
+    → Extract "Your Input Needed:" bullet points → AskUserQuestion → re-invoke planner with answers
+
+**2c. contract.STATUS == "INVESTIGATING" (bug-investigator — investigation in progress):**
+    → Create new "Continue investigation" task with loop cap (max 3 re-invocations)
+
+**2d. integration-verifier STATUS=FAIL with CHOSEN_OPTION set:**
+    → A: Create REM-FIX (default)
+    → B: AskUserQuestion "Revert branch?" — fundamental design flaw
+    → C: AskUserQuestion "Accept known limitation?" — proceed with documentation
+
+**2f. contract.STATUS == "BLOCKED" (bug-investigator — permanently stuck):**
+    → AskUserQuestion: Research externally | Create manual fix task | Abort
+
+3. Collect contract.MEMORY_NOTES for workflow-final persistence (step 3a)
 
 4. If none of above triggered → Proceed to next agent
 
@@ -475,9 +500,11 @@ Step 3: Output Validation Evidence
 |------|---------------|------------|---------|---------------|
 | Workflow | `CC10X BUILD:` / `DEBUG:` / etc. | Router | Parent workflow task | N/A |
 | Agent | `CC10X {agent}:` | Router | Agent work item | Yes |
-| Evidence-only | `CC10X REM-EVIDENCE:` | Router | Re-run commands for missing evidence | Yes |
-| Code changes | `CC10X REM-FIX:` | Router | Fix issues found by reviewer/hunter | Yes (triggers re-review) |
-| Follow-up | `CC10X TODO:` | Agents | Non-blocking discoveries for user action | **No** (user decides) |
+| Evidence-only | `CC10X REM-EVIDENCE:` | Router | Re-invoke agent that produced no Router Contract | Yes (1 retry, then AskUserQuestion) |
+| Code changes | `CC10X REM-FIX:` | Router | Fix issues found by reviewer/hunter | Yes (triggers re-review loop) |
+| Re-verify | `CC10X integration-verifier: Re-verify —` | Router (Re-Review Loop) | New verification after REM-FIX | Yes |
+
+**Note (v6.0.31+):** `CC10X TODO:` tasks are abolished. Non-blocking agent discoveries go into Memory Notes under `**Deferred:**` — the Memory Update task writes them to patterns.md automatically. Tasks are execution artifacts, not parking lots.
 
 ### Remediation Re-Review Loop (BUILD - Non-Negotiable)
 
@@ -496,19 +523,31 @@ flowchart TD
     C --> H
 ```
 
-**Implementation:**
-1. After `CC10X REM-FIX:` task completes, create two re-review tasks:
-   - `CC10X code-reviewer: Re-review after remediation`
-   - `CC10X silent-failure-hunter: Re-hunt after remediation`
+**Implementation (v6.0.33+):**
 
-2. Block `integration-verifier` on BOTH re-review tasks:
+Step 0: **Cycle Cap check** — count completed REM-FIX tasks. If ≥ 2: AskUserQuestion (create another / research / accept / abort).
+
+Step 1-2: Create named re-review tasks (subject includes the REM-FIX title):
+   - `CC10X code-reviewer: Re-review — {completed_remfix_title}`
+   - `CC10X silent-failure-hunter: Re-hunt — {completed_remfix_title}` (skip in DEBUG — no hunter in that chain)
+
+Step 3: **Spawn a NEW re-verifier task** (critical — do NOT reactivate the old completed verifier):
    ```
-   TaskUpdate({ taskId: verifier_task_id, addBlockedBy: [re_reviewer_id, re_hunter_id] })
+   TaskCreate({ subject: "CC10X integration-verifier: Re-verify — {completed_remfix_title}", ... })
+   ```
+   **Why new task:** `addBlockedBy` on a completed task is a no-op. The completed task will not revert to pending. Spawning a new task is the only correct approach.
+
+Step 4: Block new re-verifier on re-reviews:
+   ```
+   TaskUpdate({ taskId: re_verifier_id, addBlockedBy: [re_reviewer_id, re_hunter_id] })
    ```
 
-3. Only proceed to `integration-verifier` after re-review tasks complete.
+Step 4b: Block Memory Update on new re-verifier (additive, safe on pending tasks):
+   ```
+   TaskUpdate({ taskId: memory_task_id, addBlockedBy: [re_verifier_id] })
+   ```
 
-**Why this is non-negotiable:** Without re-review, code changes made during remediation ship without review - the heart of orchestration integrity is broken.
+**Why this is non-negotiable:** Without re-review, code changes made during remediation ship without verification. The Cycle Cap prevents infinite re-review loops.
 
 ---
 
@@ -547,7 +586,7 @@ IMPORTANT:
 ")
 ```
 
-**Task ID is required in prompt.** Router updates task status after agent returns (agents do NOT call TaskUpdate for their own task).
+**Task ID is required in prompt.** Agents self-complete by calling TaskUpdate(completed) in their final output. Router validates and applies fallback if needed.
 
 **Router Contract:** All agents must include `### Router Contract (MACHINE-READABLE)` with YAML block. Router uses contract for validation decisions.
 
@@ -575,6 +614,8 @@ IMPORTANT:
 - **Never claim completion without verification evidence.**
 - **No production code without failing test first (TDD).**
 - **No architecture/plan/design before flows are mapped.**
+- **Never try to reactivate a completed task via addBlockedBy.** That is a no-op. Spawn a NEW task.
+- **Never create CC10X TODO: tasks.** Non-blocking discoveries go in Memory Notes under `**Deferred:**`.
 
 ---
 
@@ -601,6 +642,45 @@ IMPORTANT:
 **Blocked Tasks:**
 - Task with non-empty `blockedBy` cannot become `in_progress`
 - When blocking task completes, blocked task automatically becomes available
+
+---
+
+## Compaction Safety (Memory Notes Persistence)
+
+Context compaction silently destroys in-flight agent Memory Notes. To survive:
+
+**Step 3a (router — after each READ-ONLY agent completes):**
+1. Extract agent's `### Memory Notes` section from its output
+2. Append to Memory Update task description via `TaskUpdate({ taskId: memory_task_id, description: current + extracted_notes })`
+3. Store `memory_task_id` durably: `Edit(activeContext.md ## References, "[cc10x-internal] memory_task_id: {id} wf:{parent_task_id}")`
+
+**Memory Update task executes by reading its own description** — not conversation history. This is why Memory Notes survive compaction.
+
+---
+
+## Key Loop Caps (Safety Mechanisms)
+
+| Cap | Location | Threshold | Purpose |
+|-----|----------|-----------|---------|
+| Circuit Breaker | Before REM-FIX creation | 3 active REM-FIX tasks | Detects pile-up of simultaneous fixes |
+| Cycle Cap | Start of Re-Review Loop | 2 completed REM-FIX tasks | Detects recurring fix loops |
+| INVESTIGATING cap | rule 2c | 3 re-invocations | Prevents infinite investigation |
+| NEEDS_EXTERNAL_RESEARCH cap | rule 0c | 2 research iterations | Limits external API calls |
+| REM-EVIDENCE cap | Before REM-EVIDENCE creation | 1 prior REM-EVIDENCE for same agent | Enforces "re-invoke once" |
+
+**Circuit Breaker counts ACTIVE tasks; Cycle Cap counts COMPLETED tasks.** These are semantically different and must not be confused.
+
+---
+
+## DEBUG-RESET (Workflow-Scoped Attempt Counting)
+
+Router writes a `[DEBUG-RESET: wf:{parent_task_id}]` marker to `## Recent Changes` at the start of each DEBUG workflow. Debug attempts (`[DEBUG-1]:`, `[DEBUG-2]:`, etc.) are anchored AFTER this marker. Only attempts after the most recent marker count toward the 3-attempt research trigger. This prevents stale attempts from prior sessions triggering research on a fresh workflow.
+
+---
+
+## Deferred Findings Pattern (v6.0.31+)
+
+Agents write non-blocking discoveries to Memory Notes under `**Deferred:**` instead of creating tasks. The Memory Update task writes them to `patterns.md ## Common Gotchas` as `[Deferred vX.Y.Z]: {entry}`. Tasks are execution state — not a knowledge parking lot.
 
 ---
 
