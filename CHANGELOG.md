@@ -1,5 +1,35 @@
 # Changelog
 
+## [7.1.0] - 2026-03-01
+
+### Added — Parallel research agent architecture
+
+Refactors inline THREE-PHASE research execution into a parallel agent architecture. The router now spawns two dedicated research agents simultaneously, replacing 5 verbose inline blocks with clean parallel invocations.
+
+**New agents (2):**
+- `web-researcher.md`: Executes web research via Bright Data + WebSearch in parallel. Returns Router Contract with `FILE_PATH` to saved findings. Always writes a file even on UNAVAILABLE — guarantees downstream agents always receive a valid path.
+- `github-researcher.md`: Executes GitHub/package research via Octocode MCP tools. Returns Router Contract with `FILE_PATH`. Same always-write contract.
+
+**Changed (5 files):**
+- `cc10x-router/SKILL.md`: All 5 THREE-PHASE research blocks replaced with parallel `Task(cc10x:web-researcher) ∥ Task(cc10x:github-researcher)` invocations. Router collects both `FILE_PATH` values and passes `## Research Files` to downstream agents. `RESEARCH_EXECUTED + RESEARCH_PERSISTED` gates merged into single `RESEARCH_COMPLETE` gate.
+- `research/SKILL.md`: Rewritten from 240-line THREE-PHASE executor to 91-line synthesis-guidance-only skill. Loaded via SKILL_HINTS by planner + bug-investigator when research files are passed.
+- `planner.md`: Updated research section — references web-researcher + github-researcher. Instructs agent not to spawn research itself.
+- `bug-investigator.md`: `NEEDS_EXTERNAL_RESEARCH` flag in Router Contract triggers router to spawn parallel researchers. Added `RESEARCH_REASON` field enforcement.
+- `cc10x-orchestration-bible.md`: Updated agent count (6 → 8). Added Research Architecture section with parallel flow diagram.
+
+**Fixed:**
+- Circuit Breaker "Research best practices" branch called `Skill(skill="cc10x:research")` directly — stale reference to old executor model. Replaced with parallel researcher spawn pattern.
+
+### Validation
+- Integration-verifier E2E: 13/13 PASS
+- THREE-PHASE blocks remaining: 0
+- New agents in source + cache: 2
+- research/SKILL.md: 91 lines (synthesis-only)
+- Source ↔ cache diff: clean
+- REM-FIX: 1 (Circuit Breaker stale Skill() call — fixed)
+
+---
+
 ## [7.0.2] - 2026-03-01
 
 ### Fixed — Internal audit: 17 cross-file consistency fixes

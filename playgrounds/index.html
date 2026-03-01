@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CC10x - AI Agent Orchestration</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary: #0a0f1a;
+      --bg-secondary: #111827;
+      --bg-tertiary: #1f2937;
+      --border: #374151;
+      --text-primary: #f9fafb;
+      --text-secondary: #9ca3af;
+      --text-muted: #6b7280;
+      --cyan: #22d3ee;
+      --green: #10b981;
+      --red: #ef4444;
+      --orange: #f59e0b;
+      --blue: #3b82f6;
+      --purple: #a855f7;
+      --pink: #ec4899;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+
+    /* Hero */
+    .hero {
+      text-align: center;
+      padding: 80px 40px;
+      background:
+        radial-gradient(ellipse at 50% 0%, rgba(34, 211, 238, 0.08) 0%, transparent 60%),
+        radial-gradient(ellipse at 0% 50%, rgba(168, 85, 247, 0.05) 0%, transparent 50%),
+        radial-gradient(ellipse at 100% 50%, rgba(16, 185, 129, 0.05) 0%, transparent 50%),
+        var(--bg-primary);
+    }
+
+    .logo {
+      font-size: 72px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--cyan) 0%, var(--green) 50%, var(--purple) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 16px;
+      letter-spacing: -2px;
+    }
+
+    .tagline {
+      font-size: 24px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .version {
+      display: inline-block;
+      background: linear-gradient(135deg, var(--cyan), var(--green));
+      color: var(--bg-primary);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-bottom: 40px;
+    }
+
+    .hero-desc {
+      max-width: 700px;
+      margin: 0 auto;
+      font-size: 16px;
+      line-height: 1.7;
+      color: var(--text-secondary);
+    }
+
+    /* Stats */
+    .stats {
+      display: flex;
+      justify-content: center;
+      gap: 60px;
+      margin-top: 48px;
+      padding-top: 48px;
+      border-top: 1px solid var(--border);
+    }
+
+    .stat {
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 48px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--cyan), var(--purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .stat-label {
+      font-size: 13px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-top: 4px;
+    }
+
+    /* Workflows Grid */
+    .workflows-section {
+      padding: 60px 40px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--text-muted);
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .workflows-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+    }
+
+    .workflow-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px;
+      transition: all 0.3s;
+      text-decoration: none;
+      display: block;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .workflow-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .workflow-card:hover {
+      transform: translateY(-4px);
+      border-color: var(--border);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .workflow-card:hover::before {
+      opacity: 1;
+    }
+
+    .workflow-card.build::before { background: linear-gradient(90deg, var(--green), var(--cyan)); }
+    .workflow-card.debug::before { background: linear-gradient(90deg, var(--red), var(--orange)); }
+    .workflow-card.review::before { background: linear-gradient(90deg, var(--blue), var(--cyan)); }
+    .workflow-card.plan::before { background: linear-gradient(90deg, var(--purple), var(--pink)); }
+
+    .workflow-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .workflow-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+    }
+
+    .workflow-card.build .workflow-icon { background: linear-gradient(135deg, var(--green), var(--cyan)); }
+    .workflow-card.debug .workflow-icon { background: linear-gradient(135deg, var(--red), var(--orange)); }
+    .workflow-card.review .workflow-icon { background: linear-gradient(135deg, var(--blue), var(--cyan)); }
+    .workflow-card.plan .workflow-icon { background: linear-gradient(135deg, var(--purple), var(--pink)); }
+
+    .workflow-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .workflow-subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .workflow-desc {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+
+    .workflow-features {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .feature-tag {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .workflow-card.build .feature-tag { border-color: rgba(34, 211, 238, 0.3); }
+    .workflow-card.debug .feature-tag { border-color: rgba(239, 68, 68, 0.3); }
+    .workflow-card.review .feature-tag { border-color: rgba(59, 130, 246, 0.3); }
+    .workflow-card.plan .feature-tag { border-color: rgba(168, 85, 247, 0.3); }
+
+    .workflow-chain {
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    .chain-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+
+    .chain-flow {
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+      font-size: 12px;
+      color: var(--text-secondary);
+      background: var(--bg-primary);
+      padding: 12px 16px;
+      border-radius: 8px;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+
+    .chain-flow .arrow {
+      color: var(--text-muted);
+      margin: 0 6px;
+    }
+
+    .chain-flow .parallel {
+      color: var(--purple);
+    }
+
+    /* Architecture Overview */
+    .architecture-section {
+      padding: 60px 40px;
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border);
+    }
+
+    .architecture-content {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .architecture-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-top: 40px;
+    }
+
+    .arch-card {
+      background: var(--bg-tertiary);
+      border-radius: 16px;
+      padding: 24px;
+      border: 1px solid var(--border);
+    }
+
+    .arch-card-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      margin-bottom: 16px;
+    }
+
+    .arch-card:nth-child(1) .arch-card-icon { background: linear-gradient(135deg, var(--cyan), var(--blue)); }
+    .arch-card:nth-child(2) .arch-card-icon { background: linear-gradient(135deg, var(--green), var(--cyan)); }
+    .arch-card:nth-child(3) .arch-card-icon { background: linear-gradient(135deg, var(--pink), var(--purple)); }
+
+    .arch-card-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .arch-card-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .arch-card-items {
+      margin-top: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .arch-card-item {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: 'SF Mono', Monaco, monospace;
+    }
+
+    /* Footer */
+    .footer {
+      padding: 40px;
+      text-align: center;
+      border-top: 1px solid var(--border);
+    }
+
+    .footer-text {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .footer-link {
+      color: var(--cyan);
+      text-decoration: none;
+    }
+
+    .footer-link:hover {
+      text-decoration: underline;
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .workflows-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .architecture-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .stats {
+        flex-wrap: wrap;
+        gap: 30px;
+      }
+
+      .logo {
+        font-size: 48px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="hero">
+    <div class="logo">CC10x</div>
+    <div class="tagline">AI Agent Orchestration for Claude Code</div>
+    <div class="version">v6.0.9</div>
+    <p class="hero-desc">
+      A sophisticated multi-agent system that orchestrates specialized AI agents through task-based workflows.
+      TDD-first development, evidence-based debugging, confidence-scored reviews, and architectural planning -
+      all with persistent memory across sessions.
+    </p>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-value">4</div>
+        <div class="stat-label">Workflows</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">6</div>
+        <div class="stat-label">Agents</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">12</div>
+        <div class="stat-label">Skills</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">3</div>
+        <div class="stat-label">Memory Files</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="workflows-section">
+    <div class="section-title">Explore Workflows</div>
+
+    <div class="workflows-grid">
+      <a href="cc10x-build-workflow.html" class="workflow-card build">
+        <div class="workflow-header">
+          <div class="workflow-icon">🔨</div>
+          <div>
+            <div class="workflow-title">BUILD</div>
+            <div class="workflow-subtitle">TDD-First Implementation</div>
+          </div>
+        </div>
+        <p class="workflow-desc">
+          Test-Driven Development workflow that enforces RED→GREEN→REFACTOR cycle.
+          Parallel code review catches issues before integration verification ensures everything works.
+        </p>
+        <div class="workflow-features">
+          <span class="feature-tag">TDD Cycle</span>
+          <span class="feature-tag">Parallel Review</span>
+          <span class="feature-tag">exit 0 Verification</span>
+          <span class="feature-tag">Memory Persistence</span>
+        </div>
+        <div class="workflow-chain">
+          <div class="chain-label">Agent Chain</div>
+          <div class="chain-flow">
+            router <span class="arrow">→</span> component-builder <span class="arrow">→</span>
+            <span class="parallel">[code-reviewer ∥ silent-failure-hunter]</span> <span class="arrow">→</span>
+            integration-verifier
+          </div>
+        </div>
+      </a>
+
+      <a href="cc10x-debug-workflow.html" class="workflow-card debug">
+        <div class="workflow-header">
+          <div class="workflow-icon">🐛</div>
+          <div>
+            <div class="workflow-title">DEBUG</div>
+            <div class="workflow-subtitle">Evidence-First Investigation</div>
+          </div>
+        </div>
+        <p class="workflow-desc">
+          LOG FIRST protocol ensures hypotheses are based on actual evidence, not assumptions.
+          Anti-hardcode gate prevents fixes that only work for one variant.
+        </p>
+        <div class="workflow-features">
+          <span class="feature-tag">LOG FIRST</span>
+          <span class="feature-tag">Anti-Hardcode</span>
+          <span class="feature-tag">Regression Test</span>
+          <span class="feature-tag">Common Gotchas</span>
+        </div>
+        <div class="workflow-chain">
+          <div class="chain-label">Agent Chain</div>
+          <div class="chain-flow">
+            router <span class="arrow">→</span> bug-investigator <span class="arrow">→</span>
+            code-reviewer <span class="arrow">→</span> integration-verifier
+          </div>
+        </div>
+      </a>
+
+      <a href="cc10x-review-workflow.html" class="workflow-card review">
+        <div class="workflow-header">
+          <div class="workflow-icon">🔍</div>
+          <div>
+            <div class="workflow-title">REVIEW</div>
+            <div class="workflow-subtitle">Multi-Dimensional Analysis</div>
+          </div>
+        </div>
+        <p class="workflow-desc">
+          Single-agent focused review across security, quality, performance, and accessibility dimensions.
+          Only reports issues with confidence ≥80% to reduce false positives.
+        </p>
+        <div class="workflow-features">
+          <span class="feature-tag">≥80% Confidence</span>
+          <span class="feature-tag">OWASP Top 10</span>
+          <span class="feature-tag">WCAG 2.1 AA</span>
+          <span class="feature-tag">READ-ONLY</span>
+        </div>
+        <div class="workflow-chain">
+          <div class="chain-label">Agent Chain</div>
+          <div class="chain-flow">
+            router <span class="arrow">→</span> code-reviewer <span class="arrow">→</span> Memory Update
+          </div>
+        </div>
+      </a>
+
+      <a href="cc10x-plan-workflow.html" class="workflow-card plan">
+        <div class="workflow-header">
+          <div class="workflow-icon">📋</div>
+          <div>
+            <div class="workflow-title">PLAN</div>
+            <div class="workflow-subtitle">Architecture & Roadmap</div>
+          </div>
+        </div>
+        <p class="workflow-desc">
+          Maps functionality flows BEFORE designing architecture. Creates phased implementation
+          roadmaps with risk assessment and confidence scoring.
+        </p>
+        <div class="workflow-features">
+          <span class="feature-tag">Flows First</span>
+          <span class="feature-tag">C4 Architecture</span>
+          <span class="feature-tag">Risk Assessment</span>
+          <span class="feature-tag">Roadmap</span>
+        </div>
+        <div class="workflow-chain">
+          <div class="chain-label">Agent Chain</div>
+          <div class="chain-flow">
+            router <span class="arrow">→</span> planner <span class="arrow">→</span> Memory Update
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <div class="architecture-section">
+    <div class="architecture-content">
+      <div class="section-title">Core Architecture</div>
+
+      <div class="architecture-grid">
+        <div class="arch-card">
+          <div class="arch-card-icon">🧠</div>
+          <div class="arch-card-title">Task Orchestration</div>
+          <div class="arch-card-desc">
+            All workflows use Claude Code's Task tools for dependency management and progress tracking.
+          </div>
+          <div class="arch-card-items">
+            <span class="arch-card-item">TaskCreate</span>
+            <span class="arch-card-item">TaskUpdate</span>
+            <span class="arch-card-item">TaskList</span>
+            <span class="arch-card-item">addBlockedBy</span>
+          </div>
+        </div>
+
+        <div class="arch-card">
+          <div class="arch-card-icon">🤖</div>
+          <div class="arch-card-title">Specialized Agents</div>
+          <div class="arch-card-desc">
+            6 agents with WRITE or READ-ONLY permissions, each loading skills via frontmatter.
+          </div>
+          <div class="arch-card-items">
+            <span class="arch-card-item">component-builder (WRITE)</span>
+            <span class="arch-card-item">code-reviewer (READ)</span>
+            <span class="arch-card-item">bug-investigator (WRITE)</span>
+            <span class="arch-card-item">planner (WRITE)</span>
+          </div>
+        </div>
+
+        <div class="arch-card">
+          <div class="arch-card-icon">💾</div>
+          <div class="arch-card-title">Session Memory</div>
+          <div class="arch-card-desc">
+            Persistent context across sessions. WRITE agents edit directly, READ agents output Memory Notes.
+          </div>
+          <div class="arch-card-items">
+            <span class="arch-card-item">activeContext.md</span>
+            <span class="arch-card-item">patterns.md</span>
+            <span class="arch-card-item">progress.md</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p class="footer-text">
+      CC10x Orchestration System &bull;
+      <a href="https://github.com/anthropics/claude-code" class="footer-link">Built for Claude Code</a>
+    </p>
+  </div>
+</body>
+</html>

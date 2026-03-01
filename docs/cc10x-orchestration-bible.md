@@ -18,7 +18,7 @@ This document defines the **non-negotiable** routing, tasking, agent chaining, a
 
 - **Router**: The execution engine defined by `plugins/cc10x/skills/cc10x-router/SKILL.md`.
 - **Workflow**: One of BUILD, DEBUG, REVIEW, PLAN.
-- **Agents**: `component-builder`, `bug-investigator`, `code-reviewer`, `silent-failure-hunter`, `integration-verifier`, `planner`.
+- **Agents**: `component-builder`, `bug-investigator`, `code-reviewer`, `silent-failure-hunter`, `integration-verifier`, `planner`, `web-researcher`, `github-researcher`.
 - **Skills**: Specialized rulebooks in `plugins/cc10x/skills/*/SKILL.md`.
 - **Memory**: `.claude/cc10x/{activeContext.md, patterns.md, progress.md}`.
 - **Router Contract**: Machine-readable YAML section in agent output for validation.
@@ -79,13 +79,15 @@ Agents spawned via Task() run in isolated context windows by default — they ca
 
 ### How CC10x Uses This Architecture
 
-**6 Agents (execution units):**
+**8 Agents (execution units):**
 - `component-builder` — Builds features (has Edit, Write, Bash)
 - `bug-investigator` — Debugs issues (has Edit, Write, Bash)
 - `planner` — Creates plans (has Edit, Write, Bash for plan files + memory only)
 - `code-reviewer` — Reviews code (READ-ONLY: no Edit, no Write)
 - `silent-failure-hunter` — Finds silent failures (READ-ONLY: no Edit, no Write)
 - `integration-verifier` — Verifies E2E (READ-ONLY: no Edit, no Write)
+- `web-researcher` — Executes web research (Bright Data + WebSearch); spawned by router in parallel
+- `github-researcher` — Executes GitHub research (Octocode MCP); spawned by router in parallel
 
 **12 Skills (instruction sets loaded into agents):**
 - `cc10x-router` — Orchestration engine (loaded by main Claude, not agents)
@@ -99,7 +101,22 @@ Agents spawned via Task() run in isolated context windows by default — they ca
 - `brainstorming` — Idea exploration (router PLAN workflow in main context — NOT planner frontmatter)
 - `architecture-patterns` — Architecture design (all 6 agents)
 - `frontend-patterns` — Frontend patterns (all 6 agents)
-- `github-research` — External research (router-executed via THREE-PHASE in PLAN/DEBUG — NOT passed as SKILL_HINTS)
+- `research` — Synthesis guidance (passed as SKILL_HINTS to planner/bug-investigator when parallel research files are available — NOT router-executed inline)
+
+### Research Architecture
+
+Research runs as parallel agents spawned directly by the router (same pattern as `code-reviewer ∥ silent-failure-hunter`):
+
+```
+Router detects research need
+  → Task(cc10x:web-researcher) [parallel]   → docs/research/{date}-{topic}-web.md
+  → Task(cc10x:github-researcher) [parallel] → docs/research/{date}-{topic}-github.md
+  Both complete → router collects both FILE_PATHs
+  → Router passes both paths to planner or bug-investigator
+```
+
+The `cc10x:research` skill provides synthesis guidance (loaded via SKILL_HINTS by planner/bug-investigator).
+The router never executes research inline.
 
 **Why this separation:**
 1. **Skills are reusable** — `architecture-patterns` loads into 5 different agents. One source of truth for architecture rules.
@@ -362,7 +379,7 @@ Router passes SKILL_HINTS in agent prompt. Agent invokes via `Skill(skill="{name
 **Sources for SKILL_HINTS (domain skills only):**
 1. **CLAUDE.md Complementary Skills table** — user-configured domain skills (react-best-practices, mongodb-agent-skills, etc.)
 
-**Note:** `cc10x:github-research` is NOT passed as SKILL_HINTS. It is router-executed directly via the THREE-PHASE process in PLAN/DEBUG workflows.
+**Note:** `cc10x:research` is NOT passed as SKILL_HINTS. It is router-executed directly via the THREE-PHASE process in PLAN/DEBUG workflows.
 
 **Critical flow:**
 - Router runs in main Claude context → can see CLAUDE.md

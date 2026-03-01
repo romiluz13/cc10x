@@ -546,7 +546,7 @@ After Memory First read, check patterns.md `## Project SKILL_HINTS`:
   ```
   Edit(old_string="## Project SKILL_HINTS", new_string="## Project SKILL_HINTS\n- [full-skill-id]  <!-- [tech signal] -->\n")
   ```
-  Use the EXACT skill ID as-is — e.g., `mongodb-agent-skills:mongodb-schema-design`, `cc10x:github-research`, `react-best-practices`. Do NOT add or change namespaces.
+  Use the EXACT skill ID as-is — e.g., `mongodb-agent-skills:mongodb-schema-design`, `cc10x:research`, `react-best-practices`. Do NOT add or change namespaces.
 
 ## Red Flags - STOP IMMEDIATELY
 

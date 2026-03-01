@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CC10x DEBUG Workflow</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary: #0a0f1a;
+      --bg-secondary: #111827;
+      --bg-tertiary: #1f2937;
+      --border: #374151;
+      --text-primary: #f9fafb;
+      --text-secondary: #9ca3af;
+      --text-muted: #6b7280;
+      --red: #ef4444;
+      --red-dim: #dc2626;
+      --orange: #f59e0b;
+      --yellow: #fbbf24;
+      --green: #10b981;
+      --cyan: #22d3ee;
+      --purple: #a855f7;
+      --pink: #ec4899;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 24px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .logo-text {
+      font-size: 28px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--red) 0%, var(--orange) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .workflow-badge {
+      background: linear-gradient(135deg, var(--red) 0%, var(--orange) 100%);
+      color: white;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 20px;
+      letter-spacing: 0.05em;
+    }
+
+    .header-subtitle {
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: var(--red);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--red-dim);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary.playing {
+      background: var(--green);
+    }
+
+    .btn-secondary {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: var(--border);
+    }
+
+    .main {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      min-height: calc(100vh - 85px);
+    }
+
+    .sidebar {
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border);
+      padding: 24px;
+      overflow-y: auto;
+    }
+
+    .section {
+      margin-bottom: 28px;
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* LOG FIRST Protocol */
+    .protocol-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .protocol-step {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      background: var(--bg-tertiary);
+      border-radius: 10px;
+      border: 2px solid transparent;
+      transition: all 0.3s;
+    }
+
+    .protocol-step.active {
+      border-color: var(--red);
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    .protocol-step.completed {
+      border-color: var(--green);
+      background: rgba(16, 185, 129, 0.1);
+    }
+
+    .protocol-step .number {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--bg-primary);
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .protocol-step.active .number {
+      background: var(--red);
+      border-color: var(--red);
+      color: white;
+      animation: pulse-red 1.5s infinite;
+    }
+
+    .protocol-step.completed .number {
+      background: var(--green);
+      border-color: var(--green);
+      color: white;
+    }
+
+    .protocol-step .content {
+      flex: 1;
+    }
+
+    .protocol-step .label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .protocol-step .desc {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    @keyframes pulse-red {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+      50% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+    }
+
+    /* Chain Preview */
+    .chain-preview {
+      background: var(--bg-primary);
+      border-radius: 12px;
+      padding: 16px;
+      border: 1px solid var(--border);
+    }
+
+    .chain-step {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-family: 'SF Mono', Monaco, monospace;
+    }
+
+    .chain-step.active {
+      color: var(--red);
+    }
+
+    .chain-step.completed {
+      color: var(--green);
+    }
+
+    .chain-step .icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+    }
+
+    .chain-step.active .icon {
+      background: var(--red);
+      border-color: var(--red);
+      color: white;
+    }
+
+    .chain-step.completed .icon {
+      background: var(--green);
+      border-color: var(--green);
+      color: white;
+    }
+
+    /* Anti-Hardcode Gate */
+    .variant-check {
+      background: var(--bg-primary);
+      border-radius: 12px;
+      padding: 16px;
+      border: 1px solid var(--border);
+    }
+
+    .variant-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--orange);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .variant-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .variant-tag {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 4px 8px;
+      font-size: 10px;
+      color: var(--text-secondary);
+      transition: all 0.3s;
+    }
+
+    .variant-tag.checked {
+      background: rgba(249, 115, 22, 0.15);
+      border-color: var(--orange);
+      color: var(--orange);
+    }
+
+    /* Canvas */
+    .canvas {
+      position: relative;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(239, 68, 68, 0.03) 0%, transparent 50%),
+        var(--bg-primary);
+    }
+
+    .canvas svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Info Panel */
+    .info-panel {
+      position: absolute;
+      bottom: 24px;
+      left: 24px;
+      right: 24px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px 24px;
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+    }
+
+    .info-step {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 200px;
+    }
+
+    .info-step-number {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--red) 0%, var(--orange) 100%);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 700;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .info-step-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .info-step-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .info-divider {
+      width: 1px;
+      height: 50px;
+      background: var(--border);
+    }
+
+    .info-content {
+      flex: 1;
+    }
+
+    .info-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+
+    .info-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .info-tags {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .info-tag {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 4px 8px;
+      font-size: 10px;
+      color: var(--text-secondary);
+    }
+
+    .info-tag.error {
+      background: rgba(239, 68, 68, 0.15);
+      border-color: var(--red);
+      color: var(--red);
+    }
+
+    /* Node Styles */
+    .node {
+      cursor: pointer;
+      transition: transform 0.2s, filter 0.2s;
+    }
+
+    .node:hover {
+      filter: brightness(1.1);
+    }
+
+    .node.highlighted {
+      filter: drop-shadow(0 0 20px var(--red));
+    }
+
+    .node.completed {
+      filter: drop-shadow(0 0 12px var(--green));
+    }
+
+    .node-title {
+      font-size: 13px;
+      font-weight: 600;
+      fill: var(--bg-primary);
+    }
+
+    .node-subtitle {
+      font-size: 9px;
+      fill: var(--bg-primary);
+      opacity: 0.7;
+    }
+
+    .node-badge {
+      font-size: 8px;
+      font-weight: 700;
+      fill: white;
+    }
+
+    /* Connection Styles */
+    .connection {
+      fill: none;
+      stroke-width: 2;
+      opacity: 0.4;
+      transition: all 0.3s;
+    }
+
+    .connection.active {
+      opacity: 1;
+      stroke-width: 3;
+      filter: drop-shadow(0 0 6px currentColor);
+    }
+
+    .connection.routes { stroke: var(--red); }
+    .connection.invokes { stroke: var(--orange); stroke-dasharray: 8, 4; }
+    .connection.memory { stroke: var(--pink); stroke-dasharray: 4, 4; }
+
+    /* Progress */
+    .progress {
+      position: absolute;
+      top: 24px;
+      left: 24px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .progress-bar {
+      width: 120px;
+      height: 6px;
+      background: var(--bg-tertiary);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--red), var(--orange));
+      border-radius: 3px;
+      transition: width 0.5s ease;
+    }
+
+    .progress-text {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .progress-text span {
+      color: var(--red);
+      font-weight: 600;
+    }
+
+    /* Legend */
+    .legend {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .legend-title {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .legend-items {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .legend-line {
+      width: 24px;
+      height: 3px;
+      border-radius: 2px;
+    }
+
+    /* Speed control */
+    .speed-control {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .speed-control label {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .speed-control input[type="range"] {
+      width: 100%;
+      height: 4px;
+      background: var(--bg-tertiary);
+      border-radius: 2px;
+      -webkit-appearance: none;
+    }
+
+    .speed-control input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      background: var(--red);
+      border-radius: 50%;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">
+      <div>
+        <div class="logo-text">CC10x</div>
+        <div class="header-subtitle">AI Agent Orchestration</div>
+      </div>
+      <div class="workflow-badge">DEBUG WORKFLOW</div>
+    </div>
+    <div class="controls">
+      <button class="btn btn-secondary" id="reset-btn">Reset</button>
+      <button class="btn btn-primary" id="play-btn">
+        <span id="play-icon">▶</span>
+        <span id="play-text">Play Animation</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="sidebar">
+      <div class="section">
+        <div class="section-title">LOG FIRST Protocol</div>
+        <div class="protocol-steps" id="protocol-steps">
+          <div class="protocol-step" data-phase="1">
+            <div class="number">1</div>
+            <div class="content">
+              <div class="label">GATHER LOGS</div>
+              <div class="desc">Capture all logs before any hypothesis</div>
+            </div>
+          </div>
+          <div class="protocol-step" data-phase="2">
+            <div class="number">2</div>
+            <div class="content">
+              <div class="label">REPRODUCE</div>
+              <div class="desc">Confirm the bug exists and is reproducible</div>
+            </div>
+          </div>
+          <div class="protocol-step" data-phase="3">
+            <div class="number">3</div>
+            <div class="content">
+              <div class="label">HYPOTHESIZE</div>
+              <div class="desc">Based on evidence only, not assumptions</div>
+            </div>
+          </div>
+          <div class="protocol-step" data-phase="4">
+            <div class="number">4</div>
+            <div class="content">
+              <div class="label">REGRESSION TEST</div>
+              <div class="desc">Write test FIRST (TDD for the fix)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Agent Chain</div>
+        <div class="chain-preview" id="chain-preview">
+          <div class="chain-step" data-step="0">
+            <span class="icon">1</span>
+            <span>router</span>
+          </div>
+          <div class="chain-step" data-step="1">
+            <span class="icon">2</span>
+            <span>bug-investigator</span>
+          </div>
+          <div class="chain-step" data-step="2">
+            <span class="icon">3</span>
+            <span>code-reviewer</span>
+          </div>
+          <div class="chain-step" data-step="3">
+            <span class="icon">4</span>
+            <span>integration-verifier</span>
+          </div>
+          <div class="chain-step" data-step="4">
+            <span class="icon">5</span>
+            <span>Memory Update</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Anti-Hardcode Gate</div>
+        <div class="variant-check">
+          <div class="variant-title">
+            <span>⚠</span> Variant Dimensions Check
+          </div>
+          <div class="variant-list" id="variant-list">
+            <div class="variant-tag" data-variant="locale">Locale</div>
+            <div class="variant-tag" data-variant="config">Config</div>
+            <div class="variant-tag" data-variant="roles">User Roles</div>
+            <div class="variant-tag" data-variant="platform">Platform</div>
+            <div class="variant-tag" data-variant="time">Time/Timezone</div>
+            <div class="variant-tag" data-variant="data">Data Shape</div>
+          </div>
+          <div style="margin-top: 12px; font-size: 10px; color: var(--text-muted);">
+            Regression test MUST cover non-default variant
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Animation Speed</div>
+        <div class="speed-control">
+          <label>Slow</label>
+          <input type="range" id="speed" min="0.5" max="3" step="0.5" value="1">
+          <label>Fast</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="canvas">
+      <svg id="canvas" viewBox="0 0 900 600">
+        <defs>
+          <marker id="arrow-red" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#ef4444"/>
+          </marker>
+          <marker id="arrow-orange" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#f59e0b"/>
+          </marker>
+          <marker id="arrow-pink" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#ec4899"/>
+          </marker>
+
+          <linearGradient id="grad-router" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#ef4444"/>
+            <stop offset="100%" style="stop-color:#f59e0b"/>
+          </linearGradient>
+          <linearGradient id="grad-debug" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#ef4444"/>
+            <stop offset="100%" style="stop-color:#dc2626"/>
+          </linearGradient>
+          <linearGradient id="grad-investigator" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#ef4444"/>
+            <stop offset="100%" style="stop-color:#f59e0b"/>
+          </linearGradient>
+          <linearGradient id="grad-reviewer" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#3b82f6"/>
+            <stop offset="100%" style="stop-color:#22d3ee"/>
+          </linearGradient>
+          <linearGradient id="grad-verifier" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#f59e0b"/>
+            <stop offset="100%" style="stop-color:#10b981"/>
+          </linearGradient>
+          <linearGradient id="grad-memory" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#ec4899"/>
+            <stop offset="100%" style="stop-color:#a855f7"/>
+          </linearGradient>
+        </defs>
+
+        <g id="connections"></g>
+        <g id="nodes"></g>
+      </svg>
+
+      <div class="progress">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+        </div>
+        <div class="progress-text">
+          Step <span id="current-step">0</span> of <span id="total-steps">8</span>
+        </div>
+      </div>
+
+      <div class="legend">
+        <div class="legend-title">Connection Types</div>
+        <div class="legend-items">
+          <div class="legend-item">
+            <div class="legend-line" style="background: #ef4444"></div>
+            <span>Routes</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-line" style="background: repeating-linear-gradient(90deg, #f59e0b 0, #f59e0b 8px, transparent 8px, transparent 12px)"></div>
+            <span>Invokes</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-line" style="background: repeating-linear-gradient(90deg, #ec4899 0, #ec4899 4px, transparent 4px, transparent 8px)"></div>
+            <span>Memory</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-panel" id="info-panel">
+        <div class="info-step">
+          <div class="info-step-number" id="info-number">0</div>
+          <div>
+            <div class="info-step-label">Current Step</div>
+            <div class="info-step-name" id="info-name">Ready to Start</div>
+          </div>
+        </div>
+        <div class="info-divider"></div>
+        <div class="info-content">
+          <div class="info-title" id="info-title">DEBUG Workflow</div>
+          <div class="info-desc" id="info-desc">
+            Evidence-first bug investigation. LOG FIRST protocol ensures hypotheses are based on actual logs, not assumptions. Click Play to watch the debug workflow.
+          </div>
+          <div class="info-tags" id="info-tags">
+            <span class="info-tag error">LOG FIRST</span>
+            <span class="info-tag">Anti-Hardcode</span>
+            <span class="info-tag">Regression Test</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const state = {
+      isPlaying: false,
+      currentStep: 0,
+      speed: 1,
+      visitedNodes: new Set(),
+      activeConnections: new Set()
+    };
+
+    const nodes = [
+      { id: 'router', label: 'CC10x Router', subtitle: 'Entry Point', x: 400, y: 40, w: 140, h: 50, gradient: 'grad-router' },
+      { id: 'debug', label: 'DEBUG', subtitle: 'Workflow Selected', x: 400, y: 130, w: 100, h: 40, gradient: 'grad-debug' },
+      { id: 'bug-investigator', label: 'bug-investigator', subtitle: 'LOG FIRST Protocol', x: 400, y: 220, w: 180, h: 55, gradient: 'grad-investigator', mode: 'WRITE' },
+      { id: 'code-reviewer', label: 'code-reviewer', subtitle: 'Validates Fix Quality', x: 400, y: 320, w: 160, h: 50, gradient: 'grad-reviewer', mode: 'READ' },
+      { id: 'integration-verifier', label: 'integration-verifier', subtitle: 'Regression Tests', x: 400, y: 410, w: 170, h: 50, gradient: 'grad-verifier', mode: 'READ' },
+      { id: 'memory-update', label: 'Memory Update', subtitle: 'Common Gotchas Added', x: 400, y: 500, w: 160, h: 50, gradient: 'grad-memory' }
+    ];
+
+    const connections = [
+      { from: 'router', to: 'debug', type: 'routes' },
+      { from: 'debug', to: 'bug-investigator', type: 'invokes' },
+      { from: 'bug-investigator', to: 'code-reviewer', type: 'invokes' },
+      { from: 'code-reviewer', to: 'integration-verifier', type: 'invokes' },
+      { from: 'integration-verifier', to: 'memory-update', type: 'invokes' }
+    ];
+
+    const steps = [
+      {
+        node: 'router',
+        title: 'Error Request Detected',
+        desc: 'Keywords detected: "error", "bug", "fix", "broken", "crash", "fail". ERROR signals ALWAYS win - even "fix the build" triggers DEBUG.',
+        phase: 0, chainStep: 0, variants: []
+      },
+      {
+        node: 'debug',
+        title: 'DEBUG Workflow Selected',
+        desc: 'Checking patterns.md for existing Common Gotchas. If similar bug was fixed before, that knowledge is loaded.',
+        phase: 0, chainStep: 0, variants: []
+      },
+      {
+        node: 'bug-investigator',
+        title: 'Phase 1: GATHER LOGS',
+        desc: 'Capture ALL relevant logs before forming any hypothesis. No guessing allowed - evidence first.',
+        phase: 1, chainStep: 1, variants: []
+      },
+      {
+        node: 'bug-investigator',
+        title: 'Phase 2: REPRODUCE',
+        desc: 'Confirm the bug is reproducible. Document exact steps and environment conditions.',
+        phase: 2, chainStep: 1, variants: []
+      },
+      {
+        node: 'bug-investigator',
+        title: 'Phase 3: HYPOTHESIZE',
+        desc: 'Form hypothesis based on log evidence. Identify variant dimensions that might affect the fix.',
+        phase: 3, chainStep: 1, variants: ['locale', 'config', 'roles']
+      },
+      {
+        node: 'bug-investigator',
+        title: 'Phase 4: REGRESSION TEST',
+        desc: 'Write failing test FIRST (TDD). Test must cover non-default variant to prevent hardcoding.',
+        phase: 4, chainStep: 1, variants: ['locale', 'config', 'roles', 'platform', 'data']
+      },
+      {
+        node: 'code-reviewer',
+        title: 'Fix Validation',
+        desc: 'code-reviewer validates the fix. Anti-hardcoding check ensures fix works across all variants.',
+        phase: 4, chainStep: 2, variants: ['locale', 'config', 'roles', 'platform', 'data', 'time']
+      },
+      {
+        node: 'integration-verifier',
+        title: 'Regression Verification',
+        desc: 'Runs all tests including new regression test. Confirms fix doesn\'t break other flows. exit 0 required.',
+        phase: 4, chainStep: 3, variants: ['locale', 'config', 'roles', 'platform', 'data', 'time']
+      },
+      {
+        node: 'memory-update',
+        title: 'Common Gotcha Added',
+        desc: 'If this was a common mistake, it\'s added to patterns.md ## Common Gotchas. Future agents will know to avoid it.',
+        phase: 4, chainStep: 4, variants: ['locale', 'config', 'roles', 'platform', 'data', 'time']
+      }
+    ];
+
+    const canvas = document.getElementById('canvas');
+    const nodesGroup = document.getElementById('nodes');
+    const connectionsGroup = document.getElementById('connections');
+    const playBtn = document.getElementById('play-btn');
+    const resetBtn = document.getElementById('reset-btn');
+    const speedInput = document.getElementById('speed');
+
+    function getNode(id) {
+      return nodes.find(n => n.id === id);
+    }
+
+    function drawConnection(conn) {
+      const from = getNode(conn.from);
+      const to = getNode(conn.to);
+
+      const x1 = from.x + from.w / 2;
+      const y1 = from.y + from.h;
+      const x2 = to.x + to.w / 2;
+      const y2 = to.y;
+
+      const midY = (y1 + y2) / 2;
+      const path = `M ${x1} ${y1} C ${x1} ${midY}, ${x2} ${midY}, ${x2} ${y2}`;
+
+      const markers = {
+        routes: 'arrow-red',
+        invokes: 'arrow-orange',
+        memory: 'arrow-pink'
+      };
+
+      const pathEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      pathEl.setAttribute('d', path);
+      pathEl.setAttribute('class', `connection ${conn.type}`);
+      pathEl.setAttribute('marker-end', `url(#${markers[conn.type]})`);
+      pathEl.setAttribute('data-from', conn.from);
+      pathEl.setAttribute('data-to', conn.to);
+
+      return pathEl;
+    }
+
+    function drawNode(node) {
+      const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      g.setAttribute('class', 'node');
+      g.setAttribute('data-id', node.id);
+
+      const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      rect.setAttribute('x', node.x);
+      rect.setAttribute('y', node.y);
+      rect.setAttribute('width', node.w);
+      rect.setAttribute('height', node.h);
+      rect.setAttribute('rx', 10);
+      rect.setAttribute('fill', `url(#${node.gradient})`);
+
+      const title = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      title.setAttribute('x', node.x + node.w / 2);
+      title.setAttribute('y', node.y + (node.h > 50 ? 22 : 18));
+      title.setAttribute('text-anchor', 'middle');
+      title.setAttribute('class', 'node-title');
+      title.textContent = node.label;
+
+      const subtitle = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      subtitle.setAttribute('x', node.x + node.w / 2);
+      subtitle.setAttribute('y', node.y + (node.h > 50 ? 38 : 32));
+      subtitle.setAttribute('text-anchor', 'middle');
+      subtitle.setAttribute('class', 'node-subtitle');
+      subtitle.textContent = node.subtitle;
+
+      g.appendChild(rect);
+      g.appendChild(title);
+      g.appendChild(subtitle);
+
+      if (node.mode) {
+        const badgeRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        const badgeX = node.x + node.w - 40;
+        const badgeY = node.y + 5;
+        badgeRect.setAttribute('x', badgeX);
+        badgeRect.setAttribute('y', badgeY);
+        badgeRect.setAttribute('width', 35);
+        badgeRect.setAttribute('height', 14);
+        badgeRect.setAttribute('rx', 4);
+        badgeRect.setAttribute('fill', node.mode === 'WRITE' ? '#065f46' : '#7c2d12');
+
+        const badgeText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        badgeText.setAttribute('x', badgeX + 17);
+        badgeText.setAttribute('y', badgeY + 10);
+        badgeText.setAttribute('text-anchor', 'middle');
+        badgeText.setAttribute('class', 'node-badge');
+        badgeText.textContent = node.mode;
+
+        g.appendChild(badgeRect);
+        g.appendChild(badgeText);
+      }
+
+      return g;
+    }
+
+    function render() {
+      connectionsGroup.innerHTML = '';
+      nodesGroup.innerHTML = '';
+
+      connections.forEach(conn => {
+        connectionsGroup.appendChild(drawConnection(conn));
+      });
+
+      nodes.forEach(node => {
+        nodesGroup.appendChild(drawNode(node));
+      });
+
+      updateVisuals();
+    }
+
+    function updateVisuals() {
+      document.querySelectorAll('.node').forEach(n => {
+        const id = n.getAttribute('data-id');
+        n.classList.remove('highlighted', 'completed');
+        if (state.visitedNodes.has(id)) {
+          n.classList.add('completed');
+        }
+      });
+
+      if (state.currentStep < steps.length) {
+        const currentNode = document.querySelector(`.node[data-id="${steps[state.currentStep].node}"]`);
+        if (currentNode) {
+          currentNode.classList.remove('completed');
+          currentNode.classList.add('highlighted');
+        }
+      }
+
+      document.querySelectorAll('.connection').forEach(c => {
+        c.classList.remove('active');
+        const from = c.getAttribute('data-from');
+        const to = c.getAttribute('data-to');
+        if (state.activeConnections.has(`${from}-${to}`)) {
+          c.classList.add('active');
+        }
+      });
+
+      // Update protocol steps
+      const step = steps[state.currentStep];
+      document.querySelectorAll('.protocol-step').forEach(p => {
+        const phase = parseInt(p.dataset.phase);
+        p.classList.remove('active', 'completed');
+        if (step && phase < step.phase) {
+          p.classList.add('completed');
+        } else if (step && phase === step.phase) {
+          p.classList.add('active');
+        }
+      });
+
+      // Update chain steps
+      document.querySelectorAll('.chain-step').forEach(s => {
+        const chainStep = parseInt(s.dataset.step);
+        s.classList.remove('active', 'completed');
+        if (step && chainStep < step.chainStep) {
+          s.classList.add('completed');
+        } else if (step && chainStep === step.chainStep) {
+          s.classList.add('active');
+        }
+      });
+
+      // Update variants
+      document.querySelectorAll('.variant-tag').forEach(v => v.classList.remove('checked'));
+      if (step && step.variants) {
+        step.variants.forEach(variant => {
+          const el = document.querySelector(`.variant-tag[data-variant="${variant}"]`);
+          if (el) el.classList.add('checked');
+        });
+      }
+
+      // Update progress
+      const progress = (state.currentStep / (steps.length - 1)) * 100;
+      document.getElementById('progress-fill').style.width = `${progress}%`;
+      document.getElementById('current-step').textContent = state.currentStep + 1;
+      document.getElementById('total-steps').textContent = steps.length;
+
+      // Update info panel
+      if (step) {
+        document.getElementById('info-number').textContent = state.currentStep + 1;
+        document.getElementById('info-name').textContent = step.node;
+        document.getElementById('info-title').textContent = step.title;
+        document.getElementById('info-desc').textContent = step.desc;
+
+        const tags = [];
+        if (step.phase > 0) tags.push(`LOG FIRST Phase ${step.phase}`);
+        if (step.variants.length) tags.push(`${step.variants.length} variants checked`);
+
+        const tagsEl = document.getElementById('info-tags');
+        tagsEl.innerHTML = tags.map(t => `<span class="info-tag">${t}</span>`).join('');
+      }
+    }
+
+    function advanceStep() {
+      if (!state.isPlaying || state.currentStep >= steps.length - 1) {
+        stopAnimation();
+        return;
+      }
+
+      const step = steps[state.currentStep];
+      state.visitedNodes.add(step.node);
+
+      const nodeConnections = connections.filter(c => c.from === step.node || c.to === step.node);
+      nodeConnections.forEach(c => {
+        state.activeConnections.add(`${c.from}-${c.to}`);
+      });
+
+      state.currentStep++;
+      updateVisuals();
+
+      setTimeout(advanceStep, 2000 / state.speed);
+    }
+
+    function startAnimation() {
+      state.isPlaying = true;
+      playBtn.classList.add('playing');
+      document.getElementById('play-icon').textContent = '⏸';
+      document.getElementById('play-text').textContent = 'Pause';
+      advanceStep();
+    }
+
+    function stopAnimation() {
+      state.isPlaying = false;
+      playBtn.classList.remove('playing');
+      document.getElementById('play-icon').textContent = '▶';
+      document.getElementById('play-text').textContent = 'Play Animation';
+    }
+
+    function resetAnimation() {
+      stopAnimation();
+      state.currentStep = 0;
+      state.visitedNodes.clear();
+      state.activeConnections.clear();
+      updateVisuals();
+    }
+
+    playBtn.addEventListener('click', () => {
+      if (state.isPlaying) {
+        stopAnimation();
+      } else {
+        if (state.currentStep >= steps.length - 1) {
+          resetAnimation();
+        }
+        startAnimation();
+      }
+    });
+
+    resetBtn.addEventListener('click', resetAnimation);
+    speedInput.addEventListener('input', (e) => {
+      state.speed = parseFloat(e.target.value);
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        playBtn.click();
+      } else if (e.code === 'KeyR') {
+        resetAnimation();
+      }
+    });
+
+    render();
+  </script>
+</body>
+</html>

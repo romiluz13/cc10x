@@ -1,0 +1,1710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CC10x Architecture Explorer</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      grid-template-rows: 1fr auto;
+      height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      background: #1e293b;
+      padding: 20px;
+      overflow-y: auto;
+      border-right: 1px solid #334155;
+    }
+
+    .logo {
+      font-size: 28px;
+      font-weight: 700;
+      color: #38bdf8;
+      margin-bottom: 4px;
+    }
+
+    .tagline {
+      font-size: 12px;
+      color: #64748b;
+      margin-bottom: 20px;
+    }
+
+    .version-badge {
+      display: inline-block;
+      background: #065f46;
+      color: #6ee7b7;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-left: 8px;
+    }
+
+    h3 {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #64748b;
+      margin-bottom: 12px;
+      margin-top: 20px;
+    }
+
+    h3:first-of-type { margin-top: 0; }
+
+    /* Workflow selector */
+    .workflow-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .workflow-btn {
+      padding: 12px 10px;
+      background: #334155;
+      border: 2px solid #475569;
+      border-radius: 8px;
+      color: #e2e8f0;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .workflow-btn:hover {
+      background: #475569;
+      border-color: #64748b;
+    }
+
+    .workflow-btn.active {
+      border-color: #38bdf8;
+      background: linear-gradient(135deg, #0c4a6e 0%, #1e293b 100%);
+    }
+
+    .workflow-btn .icon { font-size: 20px; }
+    .workflow-btn .label { font-weight: 600; }
+    .workflow-btn .desc { font-size: 10px; color: #94a3b8; }
+
+    /* Layers */
+    .checkbox-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .checkbox-item:hover {
+      background: #334155;
+    }
+
+    .checkbox-item input {
+      width: 14px;
+      height: 14px;
+      accent-color: #38bdf8;
+    }
+
+    .checkbox-item .color-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .checkbox-item label {
+      font-size: 12px;
+      cursor: pointer;
+      flex: 1;
+    }
+
+    .checkbox-item .badge {
+      font-size: 9px;
+      padding: 2px 5px;
+      border-radius: 3px;
+      font-weight: 600;
+    }
+
+    .badge-write { background: #065f46; color: #6ee7b7; }
+    .badge-readonly { background: #7c2d12; color: #fdba74; }
+
+    /* Agent chain preview */
+    .chain-preview {
+      background: #0f172a;
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 12px;
+      font-family: 'SF Mono', Monaco, monospace;
+      font-size: 10px;
+      line-height: 1.6;
+    }
+
+    .chain-preview .step {
+      color: #94a3b8;
+      padding: 2px 0;
+    }
+
+    .chain-preview .step.parallel {
+      color: #f59e0b;
+    }
+
+    .chain-preview .arrow {
+      color: #475569;
+      margin: 0 4px;
+    }
+
+    /* Comments */
+    .comments-section {
+      margin-top: 20px;
+    }
+
+    .comments-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+
+    .comment-item {
+      background: #334155;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 11px;
+    }
+
+    .comment-item .target {
+      font-weight: 600;
+      color: #38bdf8;
+      margin-bottom: 4px;
+    }
+
+    .comment-item .text {
+      color: #cbd5e1;
+      line-height: 1.4;
+    }
+
+    .comment-item .delete-btn {
+      float: right;
+      background: none;
+      border: none;
+      color: #ef4444;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .no-comments {
+      color: #64748b;
+      font-size: 11px;
+      font-style: italic;
+    }
+
+    /* Canvas */
+    .canvas-container {
+      position: relative;
+      overflow: hidden;
+      background: #0f172a;
+    }
+
+    .canvas-container svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Controls overlay */
+    .controls-overlay {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      display: flex;
+      gap: 8px;
+    }
+
+    .control-btn {
+      width: 36px;
+      height: 36px;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      color: #e2e8f0;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+
+    .control-btn:hover {
+      background: #334155;
+      border-color: #38bdf8;
+    }
+
+    .control-btn.playing {
+      background: #065f46;
+      border-color: #10b981;
+    }
+
+    /* Legend */
+    .legend {
+      position: absolute;
+      bottom: 16px;
+      left: 16px;
+      background: #1e293b;
+      padding: 12px 16px;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      font-size: 10px;
+    }
+
+    .legend-title {
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #94a3b8;
+    }
+
+    .legend-items {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .legend-line {
+      width: 20px;
+      height: 3px;
+      border-radius: 2px;
+    }
+
+    /* Flow status */
+    .flow-status {
+      position: absolute;
+      bottom: 16px;
+      right: 16px;
+      background: #1e293b;
+      padding: 12px 16px;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      font-size: 11px;
+      max-width: 320px;
+    }
+
+    .flow-status .step-name {
+      color: #38bdf8;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .flow-status .step-desc {
+      color: #94a3b8;
+      line-height: 1.4;
+    }
+
+    /* Prompt output */
+    .prompt-output {
+      grid-column: 1 / -1;
+      background: #1e293b;
+      border-top: 1px solid #334155;
+      padding: 16px 20px;
+    }
+
+    .prompt-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .prompt-header h3 {
+      margin: 0;
+    }
+
+    .copy-btn {
+      padding: 8px 16px;
+      background: #38bdf8;
+      border: none;
+      border-radius: 6px;
+      color: #0f172a;
+      font-weight: 600;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .copy-btn:hover {
+      background: #7dd3fc;
+    }
+
+    .copy-btn.copied {
+      background: #10b981;
+    }
+
+    .prompt-text {
+      font-family: 'SF Mono', Monaco, monospace;
+      font-size: 12px;
+      line-height: 1.5;
+      color: #cbd5e1;
+      white-space: pre-wrap;
+      max-height: 120px;
+      overflow-y: auto;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal {
+      background: #1e293b;
+      border-radius: 12px;
+      padding: 24px;
+      width: 500px;
+      max-width: 90vw;
+      max-height: 80vh;
+      overflow-y: auto;
+      border: 1px solid #334155;
+    }
+
+    .modal h4 {
+      font-size: 18px;
+      margin-bottom: 4px;
+      color: #f8fafc;
+    }
+
+    .modal .subtitle {
+      font-size: 12px;
+      color: #64748b;
+      margin-bottom: 8px;
+    }
+
+    .modal .type-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .type-badge.agent { background: #0ea5e9; color: #f0f9ff; }
+    .type-badge.skill { background: #f59e0b; color: #451a03; }
+    .type-badge.memory { background: #ec4899; color: #fdf2f8; }
+    .type-badge.router { background: #8b5cf6; color: #f5f3ff; }
+
+    .modal .prompt-content {
+      background: #0f172a;
+      border-radius: 8px;
+      padding: 16px;
+      font-family: 'SF Mono', Monaco, monospace;
+      font-size: 11px;
+      line-height: 1.6;
+      color: #94a3b8;
+      white-space: pre-wrap;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .modal textarea {
+      width: 100%;
+      height: 80px;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      padding: 12px;
+      color: #e2e8f0;
+      font-family: inherit;
+      font-size: 13px;
+      resize: vertical;
+      margin-bottom: 16px;
+    }
+
+    .modal textarea:focus {
+      outline: none;
+      border-color: #38bdf8;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .modal-btn {
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      border: none;
+      font-weight: 500;
+    }
+
+    .modal-btn.cancel {
+      background: #334155;
+      color: #e2e8f0;
+    }
+
+    .modal-btn.save {
+      background: #38bdf8;
+      color: #0f172a;
+      font-weight: 600;
+    }
+
+    /* Node styles */
+    .node {
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+
+    .node:hover rect {
+      stroke-width: 2.5;
+      stroke: #38bdf8;
+    }
+
+    .node.has-comment rect {
+      stroke-width: 2.5;
+      stroke: #f59e0b;
+    }
+
+    .node.highlighted rect {
+      stroke: #38bdf8 !important;
+      stroke-width: 3 !important;
+      filter: drop-shadow(0 0 12px rgba(56, 189, 248, 0.6));
+    }
+
+    .node.visited rect {
+      stroke: #10b981 !important;
+      stroke-width: 2 !important;
+    }
+
+    .node-title {
+      font-size: 11px;
+      font-weight: 600;
+      fill: #1e293b;
+    }
+
+    .node-subtitle {
+      font-size: 8px;
+      fill: #475569;
+    }
+
+    .node-badge {
+      font-size: 7px;
+      font-weight: 600;
+      fill: #fff;
+    }
+
+    /* Connection styles */
+    .connection {
+      fill: none;
+      stroke-width: 2;
+      transition: stroke-width 0.2s;
+    }
+
+    .connection.routes { stroke: #3b82f6; }
+    .connection.invokes { stroke: #10b981; stroke-dasharray: 6,3; }
+    .connection.memory { stroke: #ec4899; stroke-dasharray: 4,4; }
+    .connection.skill { stroke: #f59e0b; stroke-dasharray: 8,4; }
+    .connection.parallel { stroke: #8b5cf6; stroke-width: 3; }
+
+    .connection.active {
+      stroke-width: 3.5 !important;
+      filter: drop-shadow(0 0 6px currentColor);
+    }
+
+    /* Mode indicators */
+    .mode-indicator {
+      font-size: 7px;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="sidebar">
+      <div class="logo">CC10x <span class="version-badge">v6.0.9</span></div>
+      <div class="tagline">AI Agent Orchestration for Claude Code</div>
+
+      <h3>Workflow</h3>
+      <div class="workflow-buttons">
+        <button class="workflow-btn active" data-workflow="BUILD">
+          <span class="icon">🔨</span>
+          <span class="label">BUILD</span>
+          <span class="desc">TDD-First</span>
+        </button>
+        <button class="workflow-btn" data-workflow="DEBUG">
+          <span class="icon">🐛</span>
+          <span class="label">DEBUG</span>
+          <span class="desc">LOG FIRST</span>
+        </button>
+        <button class="workflow-btn" data-workflow="REVIEW">
+          <span class="icon">🔍</span>
+          <span class="label">REVIEW</span>
+          <span class="desc">≥80% Confidence</span>
+        </button>
+        <button class="workflow-btn" data-workflow="PLAN">
+          <span class="icon">📋</span>
+          <span class="label">PLAN</span>
+          <span class="desc">Architecture</span>
+        </button>
+      </div>
+
+      <div class="chain-preview" id="chain-preview">
+        <div class="step">router</div>
+        <div class="step"><span class="arrow">→</span> component-builder</div>
+        <div class="step parallel"><span class="arrow">→</span> [code-reviewer ∥ silent-failure-hunter]</div>
+        <div class="step"><span class="arrow">→</span> integration-verifier</div>
+        <div class="step"><span class="arrow">→</span> Memory Update (task-enforced)</div>
+      </div>
+
+      <h3>Layers</h3>
+      <div class="checkbox-group" id="layers">
+        <div class="checkbox-item">
+          <input type="checkbox" id="layer-router" checked>
+          <span class="color-dot" style="background: #8b5cf6"></span>
+          <label for="layer-router">Router</label>
+        </div>
+        <div class="checkbox-item">
+          <input type="checkbox" id="layer-workflows" checked>
+          <span class="color-dot" style="background: #a855f7"></span>
+          <label for="layer-workflows">Workflows</label>
+        </div>
+        <div class="checkbox-item">
+          <input type="checkbox" id="layer-agents" checked>
+          <span class="color-dot" style="background: #10b981"></span>
+          <label for="layer-agents">Agents</label>
+        </div>
+        <div class="checkbox-item">
+          <input type="checkbox" id="layer-skills" checked>
+          <span class="color-dot" style="background: #f59e0b"></span>
+          <label for="layer-skills">Skills</label>
+        </div>
+        <div class="checkbox-item">
+          <input type="checkbox" id="layer-memory" checked>
+          <span class="color-dot" style="background: #ec4899"></span>
+          <label for="layer-memory">Memory</label>
+        </div>
+      </div>
+
+      <h3>Agents (6)</h3>
+      <div class="checkbox-group" id="agent-filters">
+        <div class="checkbox-item">
+          <input type="checkbox" id="agent-cb" checked>
+          <label for="agent-cb">component-builder</label>
+          <span class="badge badge-write">WRITE</span>
+        </div>
+        <div class="checkbox-item">
+          <input type="checkbox" id="agent-cr" checked>
+          <label for="agent-cr">code-reviewer</label>
+          <span class="badge badge-readonly">READ</span>
+        </div>
+        <div class="checkbox-item">
+          <input type="checkbox" id="agent-sfh" checked>
+          <label for="agent-sfh">silent-failure-hunter</label>
+          <span class="badge badge-readonly">READ</span>
+        </div>
+        <div class="checkbox-item">
+          <input type="checkbox" id="agent-iv" checked>
+          <label for="agent-iv">integration-verifier</label>
+          <span class="badge badge-readonly">READ</span>
+        </div>
+        <div class="checkbox-item">
+          <input type="checkbox" id="agent-bi" checked>
+          <label for="agent-bi">bug-investigator</label>
+          <span class="badge badge-write">WRITE</span>
+        </div>
+        <div class="checkbox-item">
+          <input type="checkbox" id="agent-pl" checked>
+          <label for="agent-pl">planner</label>
+          <span class="badge badge-write">WRITE</span>
+        </div>
+      </div>
+
+      <div class="comments-section">
+        <h3>Comments (<span id="comment-count">0</span>)</h3>
+        <div class="comments-list" id="comments-list">
+          <div class="no-comments">Click any component to add feedback</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="canvas-container">
+      <svg id="canvas" viewBox="0 0 1100 750">
+        <defs>
+          <marker id="arrow-blue" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#3b82f6"/>
+          </marker>
+          <marker id="arrow-green" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#10b981"/>
+          </marker>
+          <marker id="arrow-orange" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#f59e0b"/>
+          </marker>
+          <marker id="arrow-purple" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#8b5cf6"/>
+          </marker>
+          <marker id="arrow-pink" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#ec4899"/>
+          </marker>
+        </defs>
+        <g id="connections-group"></g>
+        <g id="nodes-group"></g>
+      </svg>
+
+      <div class="controls-overlay">
+        <button class="control-btn" id="play-btn" title="Animate flow (Space)">▶</button>
+        <button class="control-btn" id="reset-btn" title="Reset (R)">↺</button>
+        <button class="control-btn" id="zoom-out" title="Zoom out">−</button>
+        <button class="control-btn" id="zoom-in" title="Zoom in">+</button>
+      </div>
+
+      <div class="legend">
+        <div class="legend-title">Connection Types</div>
+        <div class="legend-items">
+          <div class="legend-item">
+            <div class="legend-line" style="background: #3b82f6"></div>
+            <span>Routes</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-line" style="background: repeating-linear-gradient(90deg, #10b981 0, #10b981 6px, transparent 6px, transparent 9px)"></div>
+            <span>Invokes</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-line" style="background: repeating-linear-gradient(90deg, #f59e0b 0, #f59e0b 8px, transparent 8px, transparent 12px)"></div>
+            <span>Skill (frontmatter)</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-line" style="background: repeating-linear-gradient(90deg, #ec4899 0, #ec4899 4px, transparent 4px, transparent 8px)"></div>
+            <span>Memory I/O</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-line" style="background: #8b5cf6; height: 4px;"></div>
+            <span>Parallel</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flow-status" id="flow-status">
+        <div class="step-name">Select a workflow to animate</div>
+        <div class="step-desc">Click ▶ or press Space to watch requests flow through the CC10x system</div>
+      </div>
+    </div>
+
+    <div class="prompt-output">
+      <div class="prompt-header">
+        <h3>Generated Prompt</h3>
+        <button class="copy-btn" id="copy-btn">Copy Prompt</button>
+      </div>
+      <div class="prompt-text" id="prompt-text">Select components and add comments to generate a prompt for Claude...</div>
+    </div>
+  </div>
+
+  <!-- Info Modal -->
+  <div class="modal-overlay" id="info-modal">
+    <div class="modal">
+      <h4 id="modal-title">Component Name</h4>
+      <div class="subtitle" id="modal-subtitle">path/to/file.md</div>
+      <div class="type-badge" id="modal-type">Agent</div>
+      <div class="prompt-content" id="modal-prompt"></div>
+      <div class="modal-actions" style="margin-top: 16px;">
+        <button class="modal-btn cancel" id="info-close">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Comment Modal -->
+  <div class="modal-overlay" id="comment-modal">
+    <div class="modal">
+      <h4 id="comment-title">Add Feedback</h4>
+      <div class="subtitle" id="comment-subtitle">Component path</div>
+      <textarea id="comment-textarea" placeholder="Add your feedback or questions about this component..."></textarea>
+      <div class="modal-actions">
+        <button class="modal-btn cancel" id="comment-cancel">Cancel</button>
+        <button class="modal-btn save" id="comment-save">Add Comment</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =============================================
+    // STATE
+    // =============================================
+    const state = {
+      workflow: 'BUILD',
+      zoom: 1,
+      layers: {
+        router: true,
+        workflows: true,
+        agents: true,
+        skills: true,
+        memory: true
+      },
+      comments: [],
+      activeNode: null,
+      isPlaying: false,
+      flowStep: 0,
+      visitedNodes: new Set()
+    };
+
+    // =============================================
+    // DATA: NODES (from Bible)
+    // =============================================
+    const nodes = [
+      // Router (top)
+      { id: 'router', label: 'CC10x Router', subtitle: 'skills/cc10x-router/SKILL.md', x: 500, y: 25, w: 150, h: 50, layer: 'router', color: '#c4b5fd', type: 'router' },
+
+      // Workflows
+      { id: 'build', label: 'BUILD', subtitle: 'TDD-First Implementation', x: 150, y: 110, w: 120, h: 42, layer: 'workflows', color: '#bbf7d0' },
+      { id: 'debug', label: 'DEBUG', subtitle: 'Evidence-First Investigation', x: 320, y: 110, w: 120, h: 42, layer: 'workflows', color: '#fecaca' },
+      { id: 'review', label: 'REVIEW', subtitle: 'Code Audit (≥80%)', x: 490, y: 110, w: 120, h: 42, layer: 'workflows', color: '#bfdbfe' },
+      { id: 'plan', label: 'PLAN', subtitle: 'Architecture & Roadmap', x: 660, y: 110, w: 120, h: 42, layer: 'workflows', color: '#e9d5ff' },
+
+      // Agents (with mode indicators)
+      { id: 'component-builder', label: 'component-builder', subtitle: 'TDD: RED→GREEN→REFACTOR', x: 80, y: 210, w: 155, h: 50, layer: 'agents', color: '#bbf7d0', type: 'agent', mode: 'WRITE' },
+      { id: 'code-reviewer', label: 'code-reviewer', subtitle: 'Multi-Dimensional Review', x: 280, y: 210, w: 145, h: 50, layer: 'agents', color: '#bfdbfe', type: 'agent', mode: 'READ' },
+      { id: 'silent-failure-hunter', label: 'silent-failure-hunter', subtitle: 'Error Handling Audit', x: 470, y: 210, w: 160, h: 50, layer: 'agents', color: '#fecaca', type: 'agent', mode: 'READ' },
+      { id: 'integration-verifier', label: 'integration-verifier', subtitle: 'E2E Verification (exit 0)', x: 370, y: 300, w: 160, h: 50, layer: 'agents', color: '#fef08a', type: 'agent', mode: 'READ' },
+      { id: 'bug-investigator', label: 'bug-investigator', subtitle: 'Root Cause + Regression Test', x: 680, y: 210, w: 155, h: 50, layer: 'agents', color: '#fecaca', type: 'agent', mode: 'WRITE' },
+      { id: 'planner', label: 'planner', subtitle: 'Design & Planning', x: 880, y: 210, w: 130, h: 50, layer: 'agents', color: '#e9d5ff', type: 'agent', mode: 'WRITE' },
+
+      // Memory Update Task
+      { id: 'memory-update', label: 'Memory Update', subtitle: 'Task-Enforced Persistence', x: 370, y: 390, w: 160, h: 45, layer: 'agents', color: '#fbcfe8', type: 'task' },
+
+      // Skills - Row 1
+      { id: 'session-memory', label: 'session-memory', subtitle: 'Context Persistence', x: 50, y: 490, w: 130, h: 40, layer: 'skills', color: '#fed7aa', type: 'skill', mandatory: true },
+      { id: 'tdd', label: 'test-driven-dev', subtitle: 'RED→GREEN→REFACTOR', x: 200, y: 490, w: 125, h: 40, layer: 'skills', color: '#fed7aa', type: 'skill' },
+      { id: 'code-gen', label: 'code-generation', subtitle: 'Expert Mindset', x: 345, y: 490, w: 130, h: 40, layer: 'skills', color: '#fed7aa', type: 'skill' },
+      { id: 'code-review', label: 'code-review-patterns', subtitle: 'Security+Perf+Quality', x: 495, y: 490, w: 150, h: 40, layer: 'skills', color: '#fed7aa', type: 'skill' },
+      { id: 'debugging', label: 'debugging-patterns', subtitle: '4-Phase Investigation', x: 665, y: 490, w: 145, h: 40, layer: 'skills', color: '#fed7aa', type: 'skill' },
+
+      // Skills - Row 2
+      { id: 'verification', label: 'verification', subtitle: 'Evidence Required', x: 50, y: 545, w: 115, h: 40, layer: 'skills', color: '#fed7aa', type: 'skill' },
+      { id: 'frontend', label: 'frontend-patterns', subtitle: 'User Flow First', x: 185, y: 545, w: 130, h: 40, layer: 'skills', color: '#fed7aa', type: 'skill' },
+      { id: 'architecture', label: 'architecture-patterns', subtitle: 'C4 Views & Design', x: 335, y: 545, w: 150, h: 40, layer: 'skills', color: '#fed7aa', type: 'skill' },
+      { id: 'planning', label: 'planning-patterns', subtitle: 'Roadmap + Risk', x: 505, y: 545, w: 130, h: 40, layer: 'skills', color: '#fed7aa', type: 'skill' },
+      { id: 'brainstorming', label: 'brainstorming', subtitle: 'Ideation', x: 655, y: 545, w: 110, h: 40, layer: 'skills', color: '#fed7aa', type: 'skill' },
+      { id: 'github-research', label: 'github-research', subtitle: 'CONDITIONAL (external)', x: 785, y: 545, w: 140, h: 40, layer: 'skills', color: '#fda4af', type: 'skill', conditional: true },
+
+      // Memory Files
+      { id: 'activeContext', label: 'activeContext.md', subtitle: 'Working Memory', x: 200, y: 640, w: 140, h: 48, layer: 'memory', color: '#fbcfe8', type: 'memory' },
+      { id: 'patterns', label: 'patterns.md', subtitle: 'Reusable Patterns', x: 400, y: 640, w: 130, h: 48, layer: 'memory', color: '#fbcfe8', type: 'memory' },
+      { id: 'progress', label: 'progress.md', subtitle: 'Verification Evidence', x: 590, y: 640, w: 140, h: 48, layer: 'memory', color: '#fbcfe8', type: 'memory' },
+
+      // Memory Directory
+      { id: 'memory-dir', label: '.claude/cc10x/', subtitle: 'Permission-Free Storage', x: 400, y: 715, w: 150, h: 35, layer: 'memory', color: '#f9a8d4', type: 'memory' }
+    ];
+
+    // =============================================
+    // DATA: CONNECTIONS (from Bible)
+    // =============================================
+    const connections = [
+      // Router to Workflows
+      { from: 'router', to: 'build', type: 'routes', label: 'build/implement/create' },
+      { from: 'router', to: 'debug', type: 'routes', label: 'error/bug/fix/broken' },
+      { from: 'router', to: 'review', type: 'routes', label: 'review/audit/check' },
+      { from: 'router', to: 'plan', type: 'routes', label: 'plan/design/architect' },
+
+      // BUILD workflow chain (CORRECT per Bible)
+      { from: 'build', to: 'component-builder', type: 'invokes' },
+      { from: 'component-builder', to: 'code-reviewer', type: 'invokes' },
+      { from: 'component-builder', to: 'silent-failure-hunter', type: 'parallel' }, // PARALLEL
+      { from: 'code-reviewer', to: 'integration-verifier', type: 'invokes' },
+      { from: 'silent-failure-hunter', to: 'integration-verifier', type: 'invokes' },
+      { from: 'integration-verifier', to: 'memory-update', type: 'invokes' },
+
+      // DEBUG workflow chain
+      { from: 'debug', to: 'bug-investigator', type: 'invokes' },
+      { from: 'bug-investigator', to: 'code-reviewer', type: 'invokes' },
+
+      // REVIEW workflow
+      { from: 'review', to: 'code-reviewer', type: 'invokes' },
+
+      // PLAN workflow
+      { from: 'plan', to: 'planner', type: 'invokes' },
+
+      // Agent to Skills (frontmatter - per Bible)
+      // component-builder skills
+      { from: 'component-builder', to: 'session-memory', type: 'skill' },
+      { from: 'component-builder', to: 'tdd', type: 'skill' },
+      { from: 'component-builder', to: 'code-gen', type: 'skill' },
+      { from: 'component-builder', to: 'verification', type: 'skill' },
+
+      // code-reviewer skills
+      { from: 'code-reviewer', to: 'code-review', type: 'skill' },
+      { from: 'code-reviewer', to: 'verification', type: 'skill' },
+
+      // silent-failure-hunter skills
+      { from: 'silent-failure-hunter', to: 'code-review', type: 'skill' },
+
+      // integration-verifier skills
+      { from: 'integration-verifier', to: 'architecture', type: 'skill' },
+      { from: 'integration-verifier', to: 'debugging', type: 'skill' },
+
+      // bug-investigator skills
+      { from: 'bug-investigator', to: 'session-memory', type: 'skill' },
+      { from: 'bug-investigator', to: 'debugging', type: 'skill' },
+      { from: 'bug-investigator', to: 'tdd', type: 'skill' },
+
+      // planner skills
+      { from: 'planner', to: 'session-memory', type: 'skill' },
+      { from: 'planner', to: 'planning', type: 'skill' },
+      { from: 'planner', to: 'architecture', type: 'skill' },
+      { from: 'planner', to: 'brainstorming', type: 'skill' },
+
+      // Conditional github-research (only when triggered)
+      { from: 'bug-investigator', to: 'github-research', type: 'skill', conditional: true },
+      { from: 'planner', to: 'github-research', type: 'skill', conditional: true },
+
+      // Memory connections
+      { from: 'session-memory', to: 'activeContext', type: 'memory' },
+      { from: 'session-memory', to: 'patterns', type: 'memory' },
+      { from: 'session-memory', to: 'progress', type: 'memory' },
+      { from: 'activeContext', to: 'memory-dir', type: 'memory' },
+      { from: 'patterns', to: 'memory-dir', type: 'memory' },
+      { from: 'progress', to: 'memory-dir', type: 'memory' },
+
+      // Memory Update task connections
+      { from: 'memory-update', to: 'activeContext', type: 'memory' },
+      { from: 'memory-update', to: 'patterns', type: 'memory' },
+      { from: 'memory-update', to: 'progress', type: 'memory' }
+    ];
+
+    // =============================================
+    // FLOW DEFINITIONS (per workflow)
+    // =============================================
+    const flows = {
+      BUILD: {
+        name: 'BUILD',
+        steps: [
+          { node: 'router', desc: 'Request arrives. Detects keywords: build, implement, create, feature...' },
+          { node: 'build', desc: 'Router identifies BUILD workflow. Loading session memory...' },
+          { node: 'component-builder', desc: 'component-builder starts. Loads TDD & code-generation skills. Writes failing test FIRST (RED)...' },
+          { node: 'code-reviewer', desc: '[PARALLEL] code-reviewer + silent-failure-hunter run TOGETHER. Security, performance, quality audit...' },
+          { node: 'silent-failure-hunter', desc: '[PARALLEL] Scanning for empty catches, swallowed errors, log-only handlers...' },
+          { node: 'integration-verifier', desc: 'Waits for BOTH reviewers. Runs E2E tests. exit 0 required.' },
+          { node: 'memory-update', desc: 'Task-enforced Memory Update. Collects Memory Notes from READ-ONLY agents. Persists to .claude/cc10x/' },
+          { node: 'activeContext', desc: 'activeContext.md updated: Recent changes, learnings, decisions.' },
+          { node: 'progress', desc: 'progress.md updated: Verification evidence with exit codes. BUILD complete!' }
+        ]
+      },
+      DEBUG: {
+        name: 'DEBUG',
+        steps: [
+          { node: 'router', desc: 'Request arrives. Detects keywords: error, bug, fix, broken, debug...' },
+          { node: 'debug', desc: 'Router identifies DEBUG workflow. Checking patterns.md for Common Gotchas...' },
+          { node: 'bug-investigator', desc: 'bug-investigator starts LOG FIRST protocol: Capture logs → Reproduce → Hypothesis → Regression test FIRST' },
+          { node: 'code-reviewer', desc: 'code-reviewer validates the fix. Anti-hardcoding check: must work across variants.' },
+          { node: 'integration-verifier', desc: 'Runs regression tests. Confirms fix doesn\'t break other flows. exit 0 required.' },
+          { node: 'memory-update', desc: 'Task-enforced Memory Update persists debugging learnings.' },
+          { node: 'patterns', desc: 'patterns.md updated: If common gotcha, added to Common Gotchas section!' }
+        ]
+      },
+      REVIEW: {
+        name: 'REVIEW',
+        steps: [
+          { node: 'router', desc: 'Request arrives. Detects keywords: review, audit, check, analyze...' },
+          { node: 'review', desc: 'Router identifies REVIEW workflow. Single-agent process.' },
+          { node: 'code-reviewer', desc: 'code-reviewer performs multi-dimensional analysis. Security + Performance + Quality. Only reports ≥80% confidence issues.' },
+          { node: 'memory-update', desc: 'Task-enforced Memory Update records review findings.' },
+          { node: 'activeContext', desc: 'activeContext.md updated with review summary. REVIEW complete!' }
+        ]
+      },
+      PLAN: {
+        name: 'PLAN',
+        steps: [
+          { node: 'router', desc: 'Request arrives. Detects keywords: plan, design, architect, roadmap...' },
+          { node: 'plan', desc: 'Router identifies PLAN workflow. Checking for github-research triggers...' },
+          { node: 'planner', desc: 'planner maps flows → understands patterns → designs architecture → assesses risks → creates roadmap' },
+          { node: 'memory-update', desc: 'Plan saved to docs/plans/YYYY-MM-DD-feature-plan.md with confidence score.' },
+          { node: 'activeContext', desc: 'activeContext.md links to the new plan file. Ready for BUILD workflow!' }
+        ]
+      }
+    };
+
+    // =============================================
+    // NODE PROMPTS (click to view)
+    // =============================================
+    const nodePrompts = {
+      'router': {
+        type: 'router',
+        prompt: `# CC10x Router (THE ONLY ENTRY POINT)
+
+## Decision Tree (Priority Order)
+1. ERROR → DEBUG (error, bug, fix, broken, crash, fail)
+2. PLAN → PLAN (plan, design, architect, roadmap)
+3. REVIEW → REVIEW (review, audit, check, analyze)
+4. DEFAULT → BUILD
+
+## Conflict Resolution
+ERROR signals ALWAYS win. "fix the build" = DEBUG (not BUILD)
+
+## Gate Checklist
+✓ MEMORY_LOADED
+✓ TASKS_CHECKED (TaskList)
+✓ INTENT_CLARIFIED
+✓ TASKS_CREATED
+✓ ALL_TASKS_COMPLETED
+✓ MEMORY_UPDATED`
+      },
+      'component-builder': {
+        type: 'agent',
+        prompt: `# component-builder (WRITE Mode)
+
+## TDD Cycle (MANDATORY)
+### RED: Write failing test FIRST
+- Test must fail for the RIGHT reason
+- No implementation code yet
+
+### GREEN: Minimal code to pass
+- No extra features
+- No premature optimization
+
+### REFACTOR: Clean up
+- Extract patterns
+- Tests must still pass
+
+## Frontmatter Skills (auto-loaded)
+- session-memory
+- test-driven-development
+- code-generation
+- verification-before-completion
+- frontend-patterns
+- architecture-patterns
+
+## Memory: Direct Edit() access`
+      },
+      'code-reviewer': {
+        type: 'agent',
+        prompt: `# code-reviewer (READ-ONLY Mode)
+
+## Review Dimensions
+1. Security - OWASP Top 10
+2. Quality - Code smells, complexity
+3. Performance - O(n), memory, queries
+4. Accessibility - WCAG 2.1 AA
+
+## Confidence Scoring
+Only report issues with confidence ≥80%
+
+## Output Requirements
+- Critical Issues + Verdict
+- Memory Notes section (for persistence)
+
+## Frontmatter Skills
+- code-review-patterns
+- verification-before-completion
+- frontend-patterns
+- architecture-patterns
+
+## Memory: Via Memory Notes (task-enforced)`
+      },
+      'silent-failure-hunter': {
+        type: 'agent',
+        prompt: `# silent-failure-hunter (READ-ONLY Mode)
+
+## Purpose
+Find error handling gaps that silently fail
+
+## Hunt Targets
+- Empty catch blocks
+- Swallowed errors (catch without rethrow)
+- Log-only handlers (console.error without action)
+- Missing error boundaries
+- Unhandled promise rejections
+
+## Runs PARALLEL with code-reviewer
+
+## Output: Critical issues list + Memory Notes
+
+## Frontmatter Skills
+- code-review-patterns
+- verification-before-completion`
+      },
+      'integration-verifier': {
+        type: 'agent',
+        prompt: `# integration-verifier (READ-ONLY Mode)
+
+## Verification Protocol
+\`\`\`bash
+npm test        # exit 0 required
+npm run build   # exit 0 required
+npm run lint    # exit 0 required
+\`\`\`
+
+## Iron Law
+"exit 0 or it didn't happen"
+
+## Waits For
+- code-reviewer (BUILD, DEBUG)
+- silent-failure-hunter (BUILD only)
+
+## Output: Scenarios table + Verdict + Memory Notes`
+      },
+      'bug-investigator': {
+        type: 'agent',
+        prompt: `# bug-investigator (WRITE Mode)
+
+## LOG FIRST Protocol (MANDATORY)
+1. GATHER LOGS - Before any hypothesis
+2. REPRODUCE - Confirm the bug exists
+3. HYPOTHESIZE - Based on evidence only
+4. REGRESSION TEST - Write test FIRST
+
+## Anti-Hardcode Gate
+Before fix: identify variant dimensions
+- Locale, config, roles, platform, time, data shape
+- Regression test MUST cover non-default variant
+
+## Conditional Skill
+- github-research (if external service OR 3+ failed attempts)
+
+## Memory: Direct Edit() access`
+      },
+      'planner': {
+        type: 'agent',
+        prompt: `# planner (WRITE Mode)
+
+## Planning Process
+1. Requirements Analysis
+2. Architecture Design (C4 views)
+3. Risk Assessment
+4. Implementation Roadmap
+
+## Output
+docs/plans/YYYY-MM-DD-feature-plan.md
+
+## Conditional Skill
+- github-research (if post-2024 tech or unfamiliar integration)
+
+## Memory: Direct Edit() access
+
+## Iron Law
+"NO ARCHITECTURE DESIGN BEFORE FUNCTIONALITY FLOWS ARE MAPPED"`
+      },
+      'memory-update': {
+        type: 'task',
+        prompt: `# Memory Update (Task-Enforced)
+
+## Purpose
+Collect Memory Notes from READ-ONLY agents
+Persist to .claude/cc10x/ files
+
+## Why Task-Enforced?
+- Survives context compaction
+- Blocked by final agent in chain
+- Ensures persistence ALWAYS happens
+
+## Collects From
+- code-reviewer Memory Notes
+- silent-failure-hunter Memory Notes
+- integration-verifier Memory Notes
+
+## Persists To
+1. Learnings → activeContext.md ## Learnings
+2. Patterns/gotchas → patterns.md ## Common Gotchas
+3. Verification → progress.md ## Verification`
+      },
+      'session-memory': {
+        type: 'skill',
+        prompt: `# session-memory (MANDATORY for WRITE agents)
+
+## Iron Law
+"LOAD memory at START, UPDATE at END"
+
+## Load Protocol
+\`\`\`
+mkdir -p .claude/cc10x
+Read activeContext.md
+Read patterns.md
+Read progress.md
+\`\`\`
+
+## Update Protocol
+Edit (not Write!) for permission-free updates
+
+## Used By
+- component-builder (WRITE)
+- bug-investigator (WRITE)
+- planner (WRITE)`
+      },
+      'github-research': {
+        type: 'skill',
+        prompt: `# github-research (CONDITIONAL)
+
+## Trigger Conditions (ANY)
+- External service/API bugs
+- 3+ local debugging attempts failed
+- New/unfamiliar tech (post-2024)
+- Complex integration patterns
+- User explicitly requests research
+
+## Flow
+1. Execute research using octocode tools
+2. PERSIST to docs/research/YYYY-MM-DD-topic.md
+3. Update activeContext.md with reference
+4. If gotchas found → patterns.md
+
+## Iron Law
+"NO EXTERNAL RESEARCH WITHOUT CLEAR AI KNOWLEDGE GAP"`
+      },
+      'activeContext': {
+        type: 'memory',
+        prompt: `# activeContext.md
+
+## Sections
+- ## Current Focus
+- ## Recent Changes (includes [DEBUG-N]: format)
+- ## Next Steps
+- ## Decisions
+- ## Learnings
+- ## References (Plan, Design, Research links)
+- ## Blockers
+- ## Last Updated
+
+## Purpose
+What's happening NOW`
+      },
+      'patterns': {
+        type: 'memory',
+        prompt: `# patterns.md
+
+## Sections
+- ## Architecture Patterns
+- ## Code Conventions
+- ## File Structure
+- ## Testing Patterns
+- ## Common Gotchas (from debugging)
+- ## API Patterns
+- ## Error Handling
+- ## Dependencies
+
+## Purpose
+What we've LEARNED`
+      },
+      'progress': {
+        type: 'memory',
+        prompt: `# progress.md
+
+## Sections
+- ## Current Workflow (BUILD/DEBUG/REVIEW/PLAN)
+- ## Tasks (with checkboxes)
+- ## Completed (with evidence)
+- ## Verification (commands + exit codes)
+- ## Last Updated
+
+## Purpose
+What's DONE`
+      }
+    };
+
+    // =============================================
+    // CHAIN PREVIEWS
+    // =============================================
+    const chainPreviews = {
+      BUILD: `<div class="step">router</div>
+<div class="step"><span class="arrow">→</span> component-builder</div>
+<div class="step parallel"><span class="arrow">→</span> [code-reviewer ∥ silent-failure-hunter]</div>
+<div class="step"><span class="arrow">→</span> integration-verifier</div>
+<div class="step"><span class="arrow">→</span> Memory Update (task-enforced)</div>`,
+      DEBUG: `<div class="step">router</div>
+<div class="step"><span class="arrow">→</span> bug-investigator</div>
+<div class="step"><span class="arrow">→</span> code-reviewer</div>
+<div class="step"><span class="arrow">→</span> integration-verifier</div>
+<div class="step"><span class="arrow">→</span> Memory Update</div>`,
+      REVIEW: `<div class="step">router</div>
+<div class="step"><span class="arrow">→</span> code-reviewer</div>
+<div class="step"><span class="arrow">→</span> Memory Update</div>`,
+      PLAN: `<div class="step">router</div>
+<div class="step"><span class="arrow">→</span> planner</div>
+<div class="step"><span class="arrow">→</span> Memory Update</div>`
+    };
+
+    // =============================================
+    // DOM ELEMENTS
+    // =============================================
+    const canvas = document.getElementById('canvas');
+    const nodesGroup = document.getElementById('nodes-group');
+    const connectionsGroup = document.getElementById('connections-group');
+    const promptText = document.getElementById('prompt-text');
+    const commentsList = document.getElementById('comments-list');
+    const commentCount = document.getElementById('comment-count');
+    const flowStatus = document.getElementById('flow-status');
+    const chainPreview = document.getElementById('chain-preview');
+
+    // =============================================
+    // RENDER FUNCTIONS
+    // =============================================
+    function getNodeById(id) {
+      return nodes.find(n => n.id === id);
+    }
+
+    function drawConnection(conn) {
+      const fromNode = getNodeById(conn.from);
+      const toNode = getNodeById(conn.to);
+      if (!fromNode || !toNode) return null;
+      if (!state.layers[fromNode.layer] || !state.layers[toNode.layer]) return null;
+
+      const x1 = fromNode.x + fromNode.w / 2;
+      const y1 = fromNode.y + fromNode.h;
+      const x2 = toNode.x + toNode.w / 2;
+      const y2 = toNode.y;
+
+      const midY = (y1 + y2) / 2;
+      const path = `M ${x1} ${y1} C ${x1} ${midY}, ${x2} ${midY}, ${x2} ${y2}`;
+
+      const markers = {
+        routes: 'arrow-blue',
+        invokes: 'arrow-green',
+        memory: 'arrow-pink',
+        skill: 'arrow-orange',
+        parallel: 'arrow-purple'
+      };
+
+      const pathEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      pathEl.setAttribute('d', path);
+      pathEl.setAttribute('class', `connection ${conn.type}` + (conn.conditional ? ' conditional' : ''));
+      pathEl.setAttribute('marker-end', `url(#${markers[conn.type]})`);
+      pathEl.setAttribute('data-from', conn.from);
+      pathEl.setAttribute('data-to', conn.to);
+
+      if (conn.conditional) {
+        pathEl.style.opacity = '0.4';
+      }
+
+      return pathEl;
+    }
+
+    function drawNode(node) {
+      if (!state.layers[node.layer]) return null;
+
+      const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      g.setAttribute('class', 'node' + (state.comments.some(c => c.target === node.id) ? ' has-comment' : ''));
+      g.setAttribute('data-id', node.id);
+
+      const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      rect.setAttribute('x', node.x);
+      rect.setAttribute('y', node.y);
+      rect.setAttribute('width', node.w);
+      rect.setAttribute('height', node.h);
+      rect.setAttribute('rx', 6);
+      rect.setAttribute('fill', node.color);
+      rect.setAttribute('stroke', '#475569');
+      rect.setAttribute('stroke-width', 1);
+
+      const title = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      title.setAttribute('x', node.x + node.w / 2);
+      title.setAttribute('y', node.y + (node.h > 40 ? 18 : 14));
+      title.setAttribute('text-anchor', 'middle');
+      title.setAttribute('class', 'node-title');
+      title.textContent = node.label;
+
+      const subtitle = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      subtitle.setAttribute('x', node.x + node.w / 2);
+      subtitle.setAttribute('y', node.y + (node.h > 40 ? 32 : 26));
+      subtitle.setAttribute('text-anchor', 'middle');
+      subtitle.setAttribute('class', 'node-subtitle');
+      subtitle.textContent = node.subtitle;
+
+      g.appendChild(rect);
+      g.appendChild(title);
+      g.appendChild(subtitle);
+
+      // Mode badge for agents
+      if (node.mode) {
+        const badgeRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        const badgeX = node.x + node.w - 32;
+        const badgeY = node.y + 4;
+        badgeRect.setAttribute('x', badgeX);
+        badgeRect.setAttribute('y', badgeY);
+        badgeRect.setAttribute('width', 28);
+        badgeRect.setAttribute('height', 12);
+        badgeRect.setAttribute('rx', 3);
+        badgeRect.setAttribute('fill', node.mode === 'WRITE' ? '#065f46' : '#7c2d12');
+
+        const badgeText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        badgeText.setAttribute('x', badgeX + 14);
+        badgeText.setAttribute('y', badgeY + 9);
+        badgeText.setAttribute('text-anchor', 'middle');
+        badgeText.setAttribute('class', 'node-badge');
+        badgeText.textContent = node.mode;
+
+        g.appendChild(badgeRect);
+        g.appendChild(badgeText);
+      }
+
+      // Conditional badge
+      if (node.conditional) {
+        const condRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        condRect.setAttribute('x', node.x + 4);
+        condRect.setAttribute('y', node.y + 4);
+        condRect.setAttribute('width', 50);
+        condRect.setAttribute('height', 12);
+        condRect.setAttribute('rx', 3);
+        condRect.setAttribute('fill', '#dc2626');
+
+        const condText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        condText.setAttribute('x', node.x + 29);
+        condText.setAttribute('y', node.y + 13);
+        condText.setAttribute('text-anchor', 'middle');
+        condText.setAttribute('class', 'node-badge');
+        condText.textContent = 'IF NEEDED';
+
+        g.appendChild(condRect);
+        g.appendChild(condText);
+      }
+
+      // Mandatory badge
+      if (node.mandatory) {
+        const mandRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        mandRect.setAttribute('x', node.x + 4);
+        mandRect.setAttribute('y', node.y + 4);
+        mandRect.setAttribute('width', 55);
+        mandRect.setAttribute('height', 12);
+        mandRect.setAttribute('rx', 3);
+        mandRect.setAttribute('fill', '#0369a1');
+
+        const mandText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        mandText.setAttribute('x', node.x + 31);
+        mandText.setAttribute('y', node.y + 13);
+        mandText.setAttribute('text-anchor', 'middle');
+        mandText.setAttribute('class', 'node-badge');
+        mandText.textContent = 'MANDATORY';
+
+        g.appendChild(mandRect);
+        g.appendChild(mandText);
+      }
+
+      g.addEventListener('click', () => showNodeInfo(node));
+      g.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        openCommentModal(node);
+      });
+
+      return g;
+    }
+
+    function render() {
+      connectionsGroup.innerHTML = '';
+      nodesGroup.innerHTML = '';
+
+      connections.forEach(conn => {
+        const el = drawConnection(conn);
+        if (el) connectionsGroup.appendChild(el);
+      });
+
+      nodes.forEach(node => {
+        const el = drawNode(node);
+        if (el) nodesGroup.appendChild(el);
+      });
+
+      updatePrompt();
+      updateHighlights();
+    }
+
+    function updateHighlights() {
+      document.querySelectorAll('.node').forEach(n => {
+        const id = n.getAttribute('data-id');
+        n.classList.remove('highlighted', 'visited');
+        if (state.visitedNodes.has(id)) {
+          n.classList.add('visited');
+        }
+      });
+
+      const flow = flows[state.workflow];
+      if (flow && state.flowStep < flow.steps.length) {
+        const currentNode = document.querySelector(`.node[data-id="${flow.steps[state.flowStep].node}"]`);
+        if (currentNode) {
+          currentNode.classList.add('highlighted');
+        }
+      }
+    }
+
+    // =============================================
+    // MODAL FUNCTIONS
+    // =============================================
+    function showNodeInfo(node) {
+      const info = nodePrompts[node.id];
+      if (!info) return;
+
+      document.getElementById('modal-title').textContent = node.label;
+      document.getElementById('modal-subtitle').textContent = node.subtitle;
+      document.getElementById('modal-type').textContent = info.type.toUpperCase();
+      document.getElementById('modal-type').className = 'type-badge ' + info.type;
+      document.getElementById('modal-prompt').textContent = info.prompt;
+      document.getElementById('info-modal').classList.add('active');
+    }
+
+    function openCommentModal(node) {
+      state.activeNode = node;
+      document.getElementById('comment-title').textContent = `Feedback: ${node.label}`;
+      document.getElementById('comment-subtitle').textContent = node.subtitle;
+      document.getElementById('comment-textarea').value = '';
+      document.getElementById('comment-modal').classList.add('active');
+      document.getElementById('comment-textarea').focus();
+    }
+
+    function closeModals() {
+      document.getElementById('info-modal').classList.remove('active');
+      document.getElementById('comment-modal').classList.remove('active');
+      state.activeNode = null;
+    }
+
+    // =============================================
+    // COMMENTS
+    // =============================================
+    function renderComments() {
+      commentCount.textContent = state.comments.length;
+
+      if (state.comments.length === 0) {
+        commentsList.innerHTML = '<div class="no-comments">Click any component to add feedback</div>';
+        return;
+      }
+
+      commentsList.innerHTML = state.comments.map((c, i) => `
+        <div class="comment-item">
+          <button class="delete-btn" data-index="${i}">×</button>
+          <div class="target">${c.targetLabel}</div>
+          <div class="text">${c.text.substring(0, 100)}${c.text.length > 100 ? '...' : ''}</div>
+        </div>
+      `).join('');
+
+      commentsList.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.comments.splice(parseInt(btn.dataset.index), 1);
+          renderComments();
+          render();
+        });
+      });
+    }
+
+    function addComment() {
+      const text = document.getElementById('comment-textarea').value.trim();
+      if (text && state.activeNode) {
+        state.comments.push({
+          id: Date.now(),
+          target: state.activeNode.id,
+          targetLabel: state.activeNode.label,
+          targetFile: state.activeNode.subtitle,
+          text
+        });
+        renderComments();
+        render();
+      }
+      closeModals();
+    }
+
+    // =============================================
+    // PROMPT GENERATION
+    // =============================================
+    function updatePrompt() {
+      if (state.comments.length === 0) {
+        promptText.textContent = 'Select components and add comments to generate a prompt for Claude...';
+        return;
+      }
+
+      const visibleLayers = Object.entries(state.layers).filter(([, v]) => v).map(([k]) => k);
+
+      let prompt = `I'm reviewing the CC10x architecture (${state.workflow} workflow)`;
+      if (visibleLayers.length < 5) {
+        prompt += `, focusing on ${visibleLayers.join(', ')}`;
+      }
+      prompt += '.\n\n';
+      prompt += 'Feedback on specific components:\n\n';
+
+      state.comments.forEach(c => {
+        prompt += `**${c.targetLabel}** (${c.targetFile}):\n${c.text}\n\n`;
+      });
+
+      promptText.textContent = prompt.trim();
+    }
+
+    // =============================================
+    // FLOW ANIMATION
+    // =============================================
+    function startFlow() {
+      if (state.isPlaying) {
+        stopFlow();
+        return;
+      }
+
+      state.isPlaying = true;
+      state.flowStep = 0;
+      state.visitedNodes.clear();
+      document.getElementById('play-btn').classList.add('playing');
+      document.getElementById('play-btn').textContent = '⏸';
+      advanceFlow();
+    }
+
+    function stopFlow() {
+      state.isPlaying = false;
+      document.getElementById('play-btn').classList.remove('playing');
+      document.getElementById('play-btn').textContent = '▶';
+    }
+
+    function resetFlow() {
+      stopFlow();
+      state.flowStep = 0;
+      state.visitedNodes.clear();
+      updateFlowStatus();
+      render();
+    }
+
+    function advanceFlow() {
+      if (!state.isPlaying) return;
+
+      const flow = flows[state.workflow];
+      if (state.flowStep >= flow.steps.length) {
+        stopFlow();
+        return;
+      }
+
+      const step = flow.steps[state.flowStep];
+      state.visitedNodes.add(step.node);
+      updateFlowStatus();
+      render();
+
+      state.flowStep++;
+      setTimeout(advanceFlow, 2000);
+    }
+
+    function updateFlowStatus() {
+      const flow = flows[state.workflow];
+      if (!flow || state.flowStep >= flow.steps.length) {
+        flowStatus.innerHTML = `
+          <div class="step-name">${state.workflow} workflow complete</div>
+          <div class="step-desc">Press ▶ or Space to replay</div>
+        `;
+        return;
+      }
+
+      const step = flow.steps[state.flowStep];
+      flowStatus.innerHTML = `
+        <div class="step-name">${flow.name} → Step ${state.flowStep + 1}/${flow.steps.length}: ${step.node}</div>
+        <div class="step-desc">${step.desc}</div>
+      `;
+    }
+
+    // =============================================
+    // WORKFLOW SWITCHING
+    // =============================================
+    function setWorkflow(workflow) {
+      state.workflow = workflow;
+      resetFlow();
+
+      document.querySelectorAll('.workflow-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.workflow === workflow);
+      });
+
+      chainPreview.innerHTML = chainPreviews[workflow];
+      updateFlowStatus();
+    }
+
+    // =============================================
+    // EVENT LISTENERS
+    // =============================================
+    document.querySelectorAll('.workflow-btn').forEach(btn => {
+      btn.addEventListener('click', () => setWorkflow(btn.dataset.workflow));
+    });
+
+    document.querySelectorAll('#layers input').forEach(input => {
+      input.addEventListener('change', () => {
+        state.layers[input.id.replace('layer-', '')] = input.checked;
+        render();
+      });
+    });
+
+    document.getElementById('play-btn').addEventListener('click', startFlow);
+    document.getElementById('reset-btn').addEventListener('click', resetFlow);
+
+    document.getElementById('zoom-in').addEventListener('click', () => {
+      state.zoom = Math.min(2, state.zoom + 0.2);
+      canvas.style.transform = `scale(${state.zoom})`;
+    });
+
+    document.getElementById('zoom-out').addEventListener('click', () => {
+      state.zoom = Math.max(0.5, state.zoom - 0.2);
+      canvas.style.transform = `scale(${state.zoom})`;
+    });
+
+    document.getElementById('info-close').addEventListener('click', closeModals);
+    document.getElementById('comment-cancel').addEventListener('click', closeModals);
+    document.getElementById('comment-save').addEventListener('click', addComment);
+
+    document.querySelectorAll('.modal-overlay').forEach(modal => {
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModals();
+      });
+    });
+
+    document.getElementById('copy-btn').addEventListener('click', () => {
+      navigator.clipboard.writeText(promptText.textContent);
+      const btn = document.getElementById('copy-btn');
+      btn.textContent = 'Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = 'Copy Prompt';
+        btn.classList.remove('copied');
+      }, 1500);
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'TEXTAREA') return;
+      if (e.code === 'Space') {
+        e.preventDefault();
+        startFlow();
+      } else if (e.code === 'KeyR') {
+        resetFlow();
+      } else if (e.code === 'Escape') {
+        closeModals();
+      }
+    });
+
+    // =============================================
+    // INITIAL RENDER
+    // =============================================
+    render();
+    renderComments();
+    updateFlowStatus();
+  </script>
+</body>
+</html>

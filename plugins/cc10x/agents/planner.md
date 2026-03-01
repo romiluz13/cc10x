@@ -47,9 +47,9 @@ If a skill fails to load (not installed), note it in Memory Notes and continue w
 
 ## Conditional Research
 
-Research is executed by the **router** before this agent is invoked (THREE-PHASE process in PLAN workflow).
-**If your prompt includes a "Research File:" reference**: Read that file and incorporate findings into the plan's technical approach and risk sections.
-**Do NOT call** `Skill(skill="cc10x:github-research")` — research is router-managed to ensure proper persistence and memory indexing.
+Research is executed by `cc10x:web-researcher` + `cc10x:github-researcher` (in parallel) before this agent is invoked. The router spawns both, collects both FILE_PATHs, and passes them in this prompt.
+**If your prompt includes "## Research Files"**: Read both files and incorporate findings into the plan's technical approach and risk sections. The `cc10x:research` skill (loaded via SKILL_HINTS) provides synthesis guidance.
+**Do NOT spawn** research agents yourself — the router already ran them before invoking you.
 
 ## Process
 1. **Understand** - User need, user flows, integrations

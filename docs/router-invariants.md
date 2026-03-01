@@ -104,7 +104,7 @@ the THREE-PHASE research process runs BEFORE creating any REM-FIX.
 signals research needed, but router creates REM-FIX instead. Builder fixes
 what investigator couldn't fix without the external context. Fix is blind.
 **Safe to remove:** Only if bug-investigator handles all research internally
-(partially done in v6.0.36 — investigator calls github-research directly,
+(partially done in v6.0.36 — investigator calls research directly,
 but rule 0c handles the case where it signals via contract).
 
 ### INV-010: Rule 2 — parallel conflict check (Cases A and B)

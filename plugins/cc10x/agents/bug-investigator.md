@@ -74,10 +74,9 @@ If a skill fails to load (not installed), note it in Memory Notes and continue w
 If your prompt includes a "Research File:" reference, read that file for findings provided by the user/router.
 
 If during your investigation you determine external research is needed (e.g., you are stuck, external API error patterns are unknown), **do it yourself**:
-→ Call `Skill(skill="cc10x:github-research", args="[specific error/pattern]")`.
-→ After the skill returns: `Bash(command="mkdir -p docs/research")` then `Write(file_path="docs/research/YYYY-MM-DD-{topic}-research.md", content="[findings]")`. Then `Edit(.claude/cc10x/activeContext.md)` to add `- Research: docs/research/{filename}` under `## References`. This ensures findings survive context compaction.
-→ Incorporate the findings directly into your hypothesis generation.
-→ Do NOT wait for the router to do it for you.
+→ Set `NEEDS_EXTERNAL_RESEARCH: true` in your Router Contract with `RESEARCH_REASON: "[specific error/pattern]"`. The router will spawn `cc10x:web-researcher` + `cc10x:github-researcher` in parallel and re-invoke you with both research file paths under `## Research Files`.
+→ Do NOT call `Skill(skill="cc10x:research")` directly — the router manages research agents now.
+→ Incorporate the findings directly into your hypothesis generation when re-invoked with `## Research Files`.
 
 ## Debug Attempt Tracking & Loop Cap
 
@@ -91,7 +90,7 @@ When recording a failed hypothesis in `activeContext.md` under `## Recent Change
 1. Before testing a new hypothesis, `Read(.claude/cc10x/activeContext.md)`.
 2. Count the number of `[DEBUG-N]:` entries under the most recent `[DEBUG-RESET:...]` marker.
 3. If you reach `[DEBUG-3]` (3 failed attempts), you are officially stuck. You must STOP guessing blindly.
-4. If stuck: trigger external research via `Skill(skill="cc10x:github-research")` or use `AskUserQuestion` to get help from the user.
+4. If stuck: set `NEEDS_EXTERNAL_RESEARCH: true` in your Router Contract to signal the router to spawn parallel researchers, or use `AskUserQuestion` to get help from the user.
 5. If you have ALREADY triggered research this workflow (check activeContext.md ## References for a `docs/research/` entry) AND you are still stuck after incorporating findings: return `STATUS: BLOCKED` — do NOT return `INVESTIGATING`. This terminates the loop and escalates to the user via the router's rule 2f.
 
 ## Decision Checkpoints (MANDATORY)

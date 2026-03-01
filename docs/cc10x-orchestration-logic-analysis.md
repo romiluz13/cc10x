@@ -56,7 +56,7 @@
 | `architecture-patterns` | System design | ALL agents |
 | `brainstorming` | Ideas → designs | planner |
 | `frontend-patterns` | UI/UX patterns | ALL agents |
-| `github-research` | External research (conditional) | planner, bug-investigator |
+| `research` | External research (conditional) | planner, bug-investigator |
 | `test-driven-development` | TDD cycle | component-builder, bug-investigator |
 
 ### The 3 Memory Files
@@ -123,15 +123,15 @@ TaskList()  # Check for pending/in-progress workflow tasks
 
 **SKILL_HINTS has two sources:**
 
-**Source 1 — `cc10x:github-research` (conditional trigger):**
+**Source 1 — `cc10x:research` (conditional trigger):**
 
 | Trigger | Skill | Agents |
 |---------|-------|--------|
-| External: new tech (post-2024), unfamiliar library, complex integration | `cc10x:github-research` | planner, bug-investigator |
-| Debug exhausted: 3+ local attempts failed | `cc10x:github-research` | bug-investigator |
-| User explicit: "research", "github", "octocode" | `cc10x:github-research` | planner, bug-investigator |
+| External: new tech (post-2024), unfamiliar library, complex integration | `cc10x:research` | planner, bug-investigator |
+| Debug exhausted: 3+ local attempts failed | `cc10x:research` | bug-investigator |
+| User explicit: "research", "github", "octocode" | `cc10x:research` | planner, bug-investigator |
 
-**Flow:** Router detects trigger → passes `github-research` in SKILL_HINTS → Agent calls `Skill(skill="cc10x:github-research")`
+**Flow:** Router detects trigger → passes `research` in SKILL_HINTS → Agent calls `Skill(skill="cc10x:research")`
 
 **Source 2 — CLAUDE.md Complementary Skills (domain skills, user-configured):**
 Router reads the user's CLAUDE.md Complementary Skills table, matches signals in the request, and passes matching skills to ALL agents via SKILL_HINTS. Agents call `Skill(skill="{name}")` after memory load.
@@ -205,7 +205,7 @@ Chain: planner (single agent)
 
 **Steps:**
 1. Load memory
-2. **If github-research detected:**
+2. **If research detected:**
    - Execute research FIRST using octocode tools (NOT as hint)
    - **PERSIST research** → docs/research/YYYY-MM-DD-<topic>-research.md
    - **Update memory** → activeContext.md Research References table
@@ -315,7 +315,7 @@ Using specific tools to avoid permission prompts:
 - MEMORY_LOADED - Before routing
 - TASKS_CHECKED - Check TaskList() for active workflow
 - INTENT_CLARIFIED - User intent is unambiguous
-- RESEARCH_EXECUTED - Before planner (if github-research detected)
+- RESEARCH_EXECUTED - Before planner (if research detected)
 - RESEARCH_PERSISTED - Save + update memory
 - REQUIREMENTS_CLARIFIED - Before invoking agent (BUILD only)
 - TASKS_CREATED - Workflow task hierarchy created
@@ -343,7 +343,7 @@ Each skill has a single, memorable rule that cannot be violated:
 - frontend-patterns: "NO UI DESIGN BEFORE USER FLOW IS UNDERSTOOD"
 - brainstorming: "NO DESIGN WITHOUT UNDERSTANDING PURPOSE AND CONSTRAINTS"
 - verification-before-completion: "NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE"
-- github-research: "NO EXTERNAL RESEARCH WITHOUT CLEAR AI KNOWLEDGE GAP OR EXPLICIT USER REQUEST"
+- research: "NO EXTERNAL RESEARCH WITHOUT CLEAR AI KNOWLEDGE GAP OR EXPLICIT USER REQUEST"
 
 ### 6. Agent-Specific Gates (Beyond Router Gates)
 
@@ -371,7 +371,7 @@ Every agent/skill has a specific output format with sections:
 
 ### Which Skills Each Agent Uses
 
-All skills are loaded via agent frontmatter (automatic). Only `github-research` has conditional triggers.
+All skills are loaded via agent frontmatter (automatic). Only `research` has conditional triggers.
 
 | Agent | Mode | Frontmatter Skills | Conditional |
 |-------|------|-------------------|-------------|
@@ -379,12 +379,12 @@ All skills are loaded via agent frontmatter (automatic). Only `github-research` 
 | code-reviewer | READ-ONLY | code-review-patterns, verification-before-completion, frontend-patterns, architecture-patterns | — |
 | silent-failure-hunter | READ-ONLY | code-review-patterns, verification-before-completion, frontend-patterns, architecture-patterns | — |
 | integration-verifier | READ-ONLY | architecture-patterns, debugging-patterns, verification-before-completion, frontend-patterns | — |
-| bug-investigator | WRITE | session-memory, debugging-patterns, test-driven-development, verification-before-completion, architecture-patterns, frontend-patterns | github-research (external/exhausted) |
-| planner | WRITE | session-memory, planning-patterns, architecture-patterns, brainstorming, frontend-patterns | github-research (external tech) |
+| bug-investigator | WRITE | session-memory, debugging-patterns, test-driven-development, verification-before-completion, architecture-patterns, frontend-patterns | research (external/exhausted) |
+| planner | WRITE | session-memory, planning-patterns, architecture-patterns, brainstorming, frontend-patterns | research (external tech) |
 
 **Notes:**
 - READ-ONLY agents don't load session-memory. They output `### Memory Notes` section; persisted via task-enforced "CC10X Memory Update" task at workflow-final.
-- Only `github-research` uses conditional `Skill()` calls - all other skills load automatically via frontmatter.
+- Only `research` uses conditional `Skill()` calls - all other skills load automatically via frontmatter.
 
 ### Context Retrieval Pattern (Used by planner, bug-investigator)
 

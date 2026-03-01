@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CC10x PLAN Workflow</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary: #0a0f1a;
+      --bg-secondary: #111827;
+      --bg-tertiary: #1f2937;
+      --border: #374151;
+      --text-primary: #f9fafb;
+      --text-secondary: #9ca3af;
+      --text-muted: #6b7280;
+      --purple: #a855f7;
+      --purple-dim: #9333ea;
+      --violet: #8b5cf6;
+      --indigo: #6366f1;
+      --cyan: #22d3ee;
+      --green: #10b981;
+      --orange: #f59e0b;
+      --pink: #ec4899;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+
+    .header {
+      background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 24px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .logo-text {
+      font-size: 28px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--purple) 0%, var(--violet) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .workflow-badge {
+      background: linear-gradient(135deg, var(--purple) 0%, var(--violet) 100%);
+      color: white;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 20px;
+      letter-spacing: 0.05em;
+    }
+
+    .header-subtitle {
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: var(--purple);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--purple-dim);
+    }
+
+    .btn-primary.playing {
+      background: var(--green);
+    }
+
+    .btn-secondary {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+
+    .main {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      min-height: calc(100vh - 85px);
+    }
+
+    .sidebar {
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border);
+      padding: 24px;
+      overflow-y: auto;
+    }
+
+    .section {
+      margin-bottom: 28px;
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* Planning Phases */
+    .planning-phases {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .phase-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 16px;
+      background: var(--bg-tertiary);
+      border-radius: 12px;
+      border: 2px solid transparent;
+      transition: all 0.3s;
+    }
+
+    .phase-card.active {
+      border-color: var(--purple);
+      background: rgba(168, 85, 247, 0.1);
+    }
+
+    .phase-card.completed {
+      border-color: var(--green);
+      background: rgba(16, 185, 129, 0.1);
+    }
+
+    .phase-card .icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: var(--bg-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .phase-card.active .icon {
+      background: var(--purple);
+      animation: pulse-purple 1.5s infinite;
+    }
+
+    .phase-card.completed .icon {
+      background: var(--green);
+    }
+
+    .phase-card .content {
+      flex: 1;
+    }
+
+    .phase-card .name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .phase-card .desc {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    @keyframes pulse-purple {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.4); }
+      50% { box-shadow: 0 0 0 8px rgba(168, 85, 247, 0); }
+    }
+
+    /* Iron Law */
+    .iron-law {
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.1) 0%, rgba(99, 102, 241, 0.1) 100%);
+      border: 1px solid var(--purple);
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .iron-law-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--purple);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .iron-law-text {
+      font-size: 11px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      font-style: italic;
+    }
+
+    /* Chain Preview */
+    .chain-preview {
+      background: var(--bg-primary);
+      border-radius: 12px;
+      padding: 16px;
+      border: 1px solid var(--border);
+    }
+
+    .chain-step {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 0;
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-family: 'SF Mono', Monaco, monospace;
+    }
+
+    .chain-step.active {
+      color: var(--purple);
+    }
+
+    .chain-step.completed {
+      color: var(--green);
+    }
+
+    .chain-step .icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      background: var(--bg-tertiary);
+      border: 2px solid var(--border);
+    }
+
+    .chain-step.active .icon {
+      background: var(--purple);
+      border-color: var(--purple);
+      color: white;
+    }
+
+    .chain-step.completed .icon {
+      background: var(--green);
+      border-color: var(--green);
+      color: white;
+    }
+
+    /* Output Preview */
+    .output-preview {
+      background: var(--bg-primary);
+      border-radius: 12px;
+      padding: 16px;
+      border: 1px solid var(--border);
+    }
+
+    .output-preview-title {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .output-path {
+      font-family: 'SF Mono', Monaco, monospace;
+      font-size: 11px;
+      color: var(--purple);
+      background: var(--bg-tertiary);
+      padding: 8px 12px;
+      border-radius: 6px;
+      word-break: break-all;
+    }
+
+    /* Canvas */
+    .canvas {
+      position: relative;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(168, 85, 247, 0.03) 0%, transparent 50%),
+        var(--bg-primary);
+    }
+
+    .canvas svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Info Panel */
+    .info-panel {
+      position: absolute;
+      bottom: 24px;
+      left: 24px;
+      right: 24px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px 24px;
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+    }
+
+    .info-step {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 200px;
+    }
+
+    .info-step-number {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--purple) 0%, var(--violet) 100%);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 700;
+      color: white;
+    }
+
+    .info-step-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .info-step-name {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .info-divider {
+      width: 1px;
+      height: 50px;
+      background: var(--border);
+    }
+
+    .info-content {
+      flex: 1;
+    }
+
+    .info-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .info-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .info-tags {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .info-tag {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 4px 8px;
+      font-size: 10px;
+      color: var(--text-secondary);
+    }
+
+    /* Node Styles */
+    .node {
+      cursor: pointer;
+      transition: filter 0.2s;
+    }
+
+    .node:hover {
+      filter: brightness(1.1);
+    }
+
+    .node.highlighted {
+      filter: drop-shadow(0 0 20px var(--purple));
+    }
+
+    .node.completed {
+      filter: drop-shadow(0 0 12px var(--green));
+    }
+
+    .node-title {
+      font-size: 13px;
+      font-weight: 600;
+      fill: var(--bg-primary);
+    }
+
+    .node-subtitle {
+      font-size: 9px;
+      fill: var(--bg-primary);
+      opacity: 0.7;
+    }
+
+    .node-badge {
+      font-size: 8px;
+      font-weight: 700;
+      fill: white;
+    }
+
+    .connection {
+      fill: none;
+      stroke-width: 2;
+      opacity: 0.4;
+      transition: all 0.3s;
+    }
+
+    .connection.active {
+      opacity: 1;
+      stroke-width: 3;
+      filter: drop-shadow(0 0 6px currentColor);
+    }
+
+    .connection.routes { stroke: var(--purple); }
+    .connection.invokes { stroke: var(--violet); stroke-dasharray: 8, 4; }
+    .connection.memory { stroke: var(--pink); stroke-dasharray: 4, 4; }
+
+    .progress {
+      position: absolute;
+      top: 24px;
+      left: 24px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .progress-bar {
+      width: 120px;
+      height: 6px;
+      background: var(--bg-tertiary);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--purple), var(--violet));
+      border-radius: 3px;
+      transition: width 0.5s;
+    }
+
+    .progress-text {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .progress-text span {
+      color: var(--purple);
+      font-weight: 600;
+    }
+
+    .speed-control {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .speed-control label {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .speed-control input[type="range"] {
+      width: 100%;
+      height: 4px;
+      background: var(--bg-tertiary);
+      border-radius: 2px;
+      -webkit-appearance: none;
+    }
+
+    .speed-control input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      background: var(--purple);
+      border-radius: 50%;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">
+      <div>
+        <div class="logo-text">CC10x</div>
+        <div class="header-subtitle">AI Agent Orchestration</div>
+      </div>
+      <div class="workflow-badge">PLAN WORKFLOW</div>
+    </div>
+    <div class="controls">
+      <button class="btn btn-secondary" id="reset-btn">Reset</button>
+      <button class="btn btn-primary" id="play-btn">
+        <span id="play-icon">▶</span>
+        <span id="play-text">Play Animation</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="sidebar">
+      <div class="section">
+        <div class="section-title">Planning Process</div>
+        <div class="planning-phases" id="phases">
+          <div class="phase-card" data-phase="1">
+            <div class="icon">🎯</div>
+            <div class="content">
+              <div class="name">Map Flows First</div>
+              <div class="desc">Understand functionality before architecture</div>
+            </div>
+          </div>
+          <div class="phase-card" data-phase="2">
+            <div class="icon">🧩</div>
+            <div class="content">
+              <div class="name">Understand Patterns</div>
+              <div class="desc">Load existing patterns from memory</div>
+            </div>
+          </div>
+          <div class="phase-card" data-phase="3">
+            <div class="icon">📐</div>
+            <div class="content">
+              <div class="name">Architecture Design</div>
+              <div class="desc">C4 views, components, interfaces</div>
+            </div>
+          </div>
+          <div class="phase-card" data-phase="4">
+            <div class="icon">⚠️</div>
+            <div class="content">
+              <div class="name">Risk Assessment</div>
+              <div class="desc">Identify blockers and unknowns</div>
+            </div>
+          </div>
+          <div class="phase-card" data-phase="5">
+            <div class="icon">🗺️</div>
+            <div class="content">
+              <div class="name">Implementation Roadmap</div>
+              <div class="desc">Phased delivery with milestones</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Iron Law</div>
+        <div class="iron-law">
+          <div class="iron-law-title">
+            <span>⚖️</span> NON-NEGOTIABLE
+          </div>
+          <div class="iron-law-text">
+            "NO ARCHITECTURE DESIGN BEFORE FUNCTIONALITY FLOWS ARE MAPPED"
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Agent Chain</div>
+        <div class="chain-preview">
+          <div class="chain-step" data-step="0">
+            <span class="icon">1</span>
+            <span>router</span>
+          </div>
+          <div class="chain-step" data-step="1">
+            <span class="icon">2</span>
+            <span>planner</span>
+          </div>
+          <div class="chain-step" data-step="2">
+            <span class="icon">3</span>
+            <span>Memory Update</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Plan Output</div>
+        <div class="output-preview">
+          <div class="output-preview-title">Saved to:</div>
+          <div class="output-path" id="output-path">docs/plans/YYYY-MM-DD-feature-plan.md</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Animation Speed</div>
+        <div class="speed-control">
+          <label>Slow</label>
+          <input type="range" id="speed" min="0.5" max="3" step="0.5" value="1">
+          <label>Fast</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="canvas">
+      <svg id="canvas" viewBox="0 0 900 600">
+        <defs>
+          <marker id="arrow-purple" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#a855f7"/>
+          </marker>
+          <marker id="arrow-violet" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#8b5cf6"/>
+          </marker>
+          <marker id="arrow-pink" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#ec4899"/>
+          </marker>
+
+          <linearGradient id="grad-router" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#a855f7"/>
+            <stop offset="100%" style="stop-color:#8b5cf6"/>
+          </linearGradient>
+          <linearGradient id="grad-plan" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#a855f7"/>
+            <stop offset="100%" style="stop-color:#6366f1"/>
+          </linearGradient>
+          <linearGradient id="grad-planner" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#a855f7"/>
+            <stop offset="100%" style="stop-color:#8b5cf6"/>
+          </linearGradient>
+          <linearGradient id="grad-memory" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#ec4899"/>
+            <stop offset="100%" style="stop-color:#a855f7"/>
+          </linearGradient>
+        </defs>
+
+        <g id="connections"></g>
+        <g id="nodes"></g>
+      </svg>
+
+      <div class="progress">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+        </div>
+        <div class="progress-text">
+          Step <span id="current-step">0</span> of <span id="total-steps">7</span>
+        </div>
+      </div>
+
+      <div class="info-panel">
+        <div class="info-step">
+          <div class="info-step-number" id="info-number">0</div>
+          <div>
+            <div class="info-step-label">Current Step</div>
+            <div class="info-step-name" id="info-name">Ready to Start</div>
+          </div>
+        </div>
+        <div class="info-divider"></div>
+        <div class="info-content">
+          <div class="info-title" id="info-title">PLAN Workflow</div>
+          <div class="info-desc" id="info-desc">
+            Architecture and roadmap planning. Maps functionality flows FIRST, then designs. Single agent workflow that produces actionable implementation plans.
+          </div>
+          <div class="info-tags" id="info-tags">
+            <span class="info-tag">Flows First</span>
+            <span class="info-tag">C4 Architecture</span>
+            <span class="info-tag">Risk Assessment</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const state = {
+      isPlaying: false,
+      currentStep: 0,
+      speed: 1,
+      visitedNodes: new Set(),
+      activeConnections: new Set()
+    };
+
+    const nodes = [
+      { id: 'router', label: 'CC10x Router', subtitle: 'Entry Point', x: 400, y: 60, w: 140, h: 50, gradient: 'grad-router' },
+      { id: 'plan', label: 'PLAN', subtitle: 'Workflow Selected', x: 400, y: 160, w: 100, h: 40, gradient: 'grad-plan' },
+      { id: 'planner', label: 'planner', subtitle: 'Architecture & Roadmap', x: 400, y: 270, w: 160, h: 60, gradient: 'grad-planner', mode: 'WRITE' },
+      { id: 'memory-update', label: 'Memory Update', subtitle: 'Plan Linked in Context', x: 400, y: 400, w: 160, h: 50, gradient: 'grad-memory' }
+    ];
+
+    const connections = [
+      { from: 'router', to: 'plan', type: 'routes' },
+      { from: 'plan', to: 'planner', type: 'invokes' },
+      { from: 'planner', to: 'memory-update', type: 'invokes' }
+    ];
+
+    const steps = [
+      {
+        node: 'router',
+        title: 'Planning Request Detected',
+        desc: 'Keywords: "plan", "design", "architect", "roadmap", "strategy", "before we build". Checking for github-research triggers...',
+        chainStep: 0, phase: 0
+      },
+      {
+        node: 'plan',
+        title: 'PLAN Workflow Selected',
+        desc: 'Single-agent workflow. planner has WRITE access to create plan files. May trigger github-research for post-2024 tech.',
+        chainStep: 0, phase: 0
+      },
+      {
+        node: 'planner',
+        title: 'Phase 1: Map Flows First',
+        desc: 'Iron Law: NO architecture before flows. Understanding user journeys, data flows, integration points...',
+        chainStep: 1, phase: 1
+      },
+      {
+        node: 'planner',
+        title: 'Phase 2: Understand Patterns',
+        desc: 'Loading patterns.md for existing conventions. Checking architecture patterns, code conventions, API patterns...',
+        chainStep: 1, phase: 2
+      },
+      {
+        node: 'planner',
+        title: 'Phase 3: Architecture Design',
+        desc: 'Creating C4 model views: Context, Containers, Components. Defining interfaces and dependencies.',
+        chainStep: 1, phase: 3
+      },
+      {
+        node: 'planner',
+        title: 'Phase 4: Risk Assessment',
+        desc: 'Identifying technical risks, unknowns, dependencies on external systems. Confidence scoring.',
+        chainStep: 1, phase: 4
+      },
+      {
+        node: 'planner',
+        title: 'Phase 5: Implementation Roadmap',
+        desc: 'Creating phased delivery plan with milestones. Plan saved to docs/plans/YYYY-MM-DD-feature-plan.md',
+        chainStep: 1, phase: 5
+      },
+      {
+        node: 'memory-update',
+        title: 'Plan Complete',
+        desc: 'activeContext.md updated with plan reference. Ready for BUILD workflow to implement!',
+        chainStep: 2, phase: 5
+      }
+    ];
+
+    const canvas = document.getElementById('canvas');
+    const nodesGroup = document.getElementById('nodes');
+    const connectionsGroup = document.getElementById('connections');
+
+    function getNode(id) {
+      return nodes.find(n => n.id === id);
+    }
+
+    function drawConnection(conn) {
+      const from = getNode(conn.from);
+      const to = getNode(conn.to);
+      const x1 = from.x + from.w / 2;
+      const y1 = from.y + from.h;
+      const x2 = to.x + to.w / 2;
+      const y2 = to.y;
+      const midY = (y1 + y2) / 2;
+
+      const pathEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      pathEl.setAttribute('d', `M ${x1} ${y1} C ${x1} ${midY}, ${x2} ${midY}, ${x2} ${y2}`);
+      pathEl.setAttribute('class', `connection ${conn.type}`);
+      pathEl.setAttribute('marker-end', `url(#arrow-${conn.type === 'routes' ? 'purple' : conn.type === 'invokes' ? 'violet' : 'pink'})`);
+      pathEl.setAttribute('data-from', conn.from);
+      pathEl.setAttribute('data-to', conn.to);
+      return pathEl;
+    }
+
+    function drawNode(node) {
+      const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      g.setAttribute('class', 'node');
+      g.setAttribute('data-id', node.id);
+
+      const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      rect.setAttribute('x', node.x);
+      rect.setAttribute('y', node.y);
+      rect.setAttribute('width', node.w);
+      rect.setAttribute('height', node.h);
+      rect.setAttribute('rx', 10);
+      rect.setAttribute('fill', `url(#${node.gradient})`);
+
+      const title = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      title.setAttribute('x', node.x + node.w / 2);
+      title.setAttribute('y', node.y + (node.h > 50 ? 24 : 18));
+      title.setAttribute('text-anchor', 'middle');
+      title.setAttribute('class', 'node-title');
+      title.textContent = node.label;
+
+      const subtitle = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      subtitle.setAttribute('x', node.x + node.w / 2);
+      subtitle.setAttribute('y', node.y + (node.h > 50 ? 42 : 32));
+      subtitle.setAttribute('text-anchor', 'middle');
+      subtitle.setAttribute('class', 'node-subtitle');
+      subtitle.textContent = node.subtitle;
+
+      g.appendChild(rect);
+      g.appendChild(title);
+      g.appendChild(subtitle);
+
+      if (node.mode) {
+        const badgeRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        badgeRect.setAttribute('x', node.x + node.w - 42);
+        badgeRect.setAttribute('y', node.y + 5);
+        badgeRect.setAttribute('width', 37);
+        badgeRect.setAttribute('height', 14);
+        badgeRect.setAttribute('rx', 4);
+        badgeRect.setAttribute('fill', '#065f46');
+
+        const badgeText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        badgeText.setAttribute('x', node.x + node.w - 23);
+        badgeText.setAttribute('y', node.y + 15);
+        badgeText.setAttribute('text-anchor', 'middle');
+        badgeText.setAttribute('class', 'node-badge');
+        badgeText.textContent = 'WRITE';
+
+        g.appendChild(badgeRect);
+        g.appendChild(badgeText);
+      }
+
+      return g;
+    }
+
+    function render() {
+      connectionsGroup.innerHTML = '';
+      nodesGroup.innerHTML = '';
+      connections.forEach(c => connectionsGroup.appendChild(drawConnection(c)));
+      nodes.forEach(n => nodesGroup.appendChild(drawNode(n)));
+      updateVisuals();
+    }
+
+    function updateVisuals() {
+      document.querySelectorAll('.node').forEach(n => {
+        const id = n.getAttribute('data-id');
+        n.classList.remove('highlighted', 'completed');
+        if (state.visitedNodes.has(id)) n.classList.add('completed');
+      });
+
+      if (state.currentStep < steps.length) {
+        const curr = document.querySelector(`.node[data-id="${steps[state.currentStep].node}"]`);
+        if (curr) {
+          curr.classList.remove('completed');
+          curr.classList.add('highlighted');
+        }
+      }
+
+      document.querySelectorAll('.connection').forEach(c => {
+        c.classList.remove('active');
+        if (state.activeConnections.has(`${c.getAttribute('data-from')}-${c.getAttribute('data-to')}`)) {
+          c.classList.add('active');
+        }
+      });
+
+      const step = steps[state.currentStep];
+
+      // Update chain
+      document.querySelectorAll('.chain-step').forEach(s => {
+        const cs = parseInt(s.dataset.step);
+        s.classList.remove('active', 'completed');
+        if (step && cs < step.chainStep) s.classList.add('completed');
+        else if (step && cs === step.chainStep) s.classList.add('active');
+      });
+
+      // Update phases
+      document.querySelectorAll('.phase-card').forEach(p => {
+        const phase = parseInt(p.dataset.phase);
+        p.classList.remove('active', 'completed');
+        if (step && phase < step.phase) p.classList.add('completed');
+        else if (step && phase === step.phase) p.classList.add('active');
+      });
+
+      // Update progress
+      const progress = (state.currentStep / (steps.length - 1)) * 100;
+      document.getElementById('progress-fill').style.width = `${progress}%`;
+      document.getElementById('current-step').textContent = state.currentStep + 1;
+      document.getElementById('total-steps').textContent = steps.length;
+
+      // Update info
+      if (step) {
+        document.getElementById('info-number').textContent = state.currentStep + 1;
+        document.getElementById('info-name').textContent = step.node;
+        document.getElementById('info-title').textContent = step.title;
+        document.getElementById('info-desc').textContent = step.desc;
+      }
+
+      // Update output path
+      if (step && step.phase === 5) {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('output-path').textContent = `docs/plans/${today}-feature-plan.md`;
+      }
+    }
+
+    function advanceStep() {
+      if (!state.isPlaying || state.currentStep >= steps.length - 1) {
+        stopAnimation();
+        return;
+      }
+
+      const step = steps[state.currentStep];
+      state.visitedNodes.add(step.node);
+      connections.filter(c => c.from === step.node || c.to === step.node).forEach(c => {
+        state.activeConnections.add(`${c.from}-${c.to}`);
+      });
+
+      state.currentStep++;
+      updateVisuals();
+      setTimeout(advanceStep, 2000 / state.speed);
+    }
+
+    function startAnimation() {
+      state.isPlaying = true;
+      document.getElementById('play-btn').classList.add('playing');
+      document.getElementById('play-icon').textContent = '⏸';
+      document.getElementById('play-text').textContent = 'Pause';
+      advanceStep();
+    }
+
+    function stopAnimation() {
+      state.isPlaying = false;
+      document.getElementById('play-btn').classList.remove('playing');
+      document.getElementById('play-icon').textContent = '▶';
+      document.getElementById('play-text').textContent = 'Play Animation';
+    }
+
+    function resetAnimation() {
+      stopAnimation();
+      state.currentStep = 0;
+      state.visitedNodes.clear();
+      state.activeConnections.clear();
+      updateVisuals();
+    }
+
+    document.getElementById('play-btn').addEventListener('click', () => {
+      if (state.isPlaying) stopAnimation();
+      else {
+        if (state.currentStep >= steps.length - 1) resetAnimation();
+        startAnimation();
+      }
+    });
+
+    document.getElementById('reset-btn').addEventListener('click', resetAnimation);
+    document.getElementById('speed').addEventListener('input', e => state.speed = parseFloat(e.target.value));
+
+    document.addEventListener('keydown', e => {
+      if (e.code === 'Space') { e.preventDefault(); document.getElementById('play-btn').click(); }
+      else if (e.code === 'KeyR') resetAnimation();
+    });
+
+    render();
+  </script>
+</body>
+</html>

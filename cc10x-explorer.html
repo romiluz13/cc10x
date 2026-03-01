@@ -1,0 +1,1324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CC10x Architecture Explorer</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      grid-template-rows: 1fr auto;
+      height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      background: #1e293b;
+      padding: 20px;
+      overflow-y: auto;
+      border-right: 1px solid #334155;
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: 700;
+      color: #38bdf8;
+      margin-bottom: 4px;
+    }
+
+    .tagline {
+      font-size: 12px;
+      color: #64748b;
+      margin-bottom: 24px;
+    }
+
+    h3 {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #64748b;
+      margin-bottom: 12px;
+      margin-top: 24px;
+    }
+
+    h3:first-of-type { margin-top: 0; }
+
+    /* Presets */
+    .presets {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .preset-btn {
+      padding: 8px 12px;
+      background: #334155;
+      border: 1px solid #475569;
+      border-radius: 6px;
+      color: #e2e8f0;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .preset-btn:hover {
+      background: #475569;
+    }
+
+    .preset-btn.active {
+      background: #38bdf8;
+      border-color: #38bdf8;
+      color: #0f172a;
+    }
+
+    /* Checkboxes */
+    .checkbox-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .checkbox-item:hover {
+      background: #334155;
+    }
+
+    .checkbox-item input {
+      width: 16px;
+      height: 16px;
+      accent-color: #38bdf8;
+    }
+
+    .checkbox-item .color-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .checkbox-item label {
+      font-size: 13px;
+      cursor: pointer;
+      flex: 1;
+    }
+
+    /* Comments */
+    .comments-section {
+      margin-top: 24px;
+    }
+
+    .comments-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .comment-item {
+      background: #334155;
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 12px;
+    }
+
+    .comment-item .target {
+      font-weight: 600;
+      color: #38bdf8;
+      margin-bottom: 4px;
+    }
+
+    .comment-item .text {
+      color: #cbd5e1;
+      line-height: 1.4;
+    }
+
+    .comment-item .delete-btn {
+      float: right;
+      background: none;
+      border: none;
+      color: #ef4444;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .no-comments {
+      color: #64748b;
+      font-size: 12px;
+      font-style: italic;
+    }
+
+    /* Canvas */
+    .canvas-container {
+      position: relative;
+      overflow: hidden;
+      background: #0f172a;
+    }
+
+    .canvas-container svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Zoom controls */
+    .zoom-controls {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      gap: 4px;
+      background: #1e293b;
+      padding: 4px;
+      border-radius: 8px;
+      border: 1px solid #334155;
+    }
+
+    .zoom-btn {
+      width: 32px;
+      height: 32px;
+      background: #334155;
+      border: none;
+      border-radius: 4px;
+      color: #e2e8f0;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .zoom-btn:hover {
+      background: #475569;
+    }
+
+    /* Legend */
+    .legend {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      background: #1e293b;
+      padding: 12px 16px;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      font-size: 11px;
+    }
+
+    .legend-title {
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #94a3b8;
+    }
+
+    .legend-items {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .legend-line {
+      width: 24px;
+      height: 3px;
+      border-radius: 2px;
+    }
+
+    /* Prompt output */
+    .prompt-output {
+      grid-column: 1 / -1;
+      background: #1e293b;
+      border-top: 1px solid #334155;
+      padding: 16px 20px;
+    }
+
+    .prompt-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .prompt-header h3 {
+      margin: 0;
+    }
+
+    .copy-btn {
+      padding: 8px 16px;
+      background: #38bdf8;
+      border: none;
+      border-radius: 6px;
+      color: #0f172a;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .copy-btn:hover {
+      background: #7dd3fc;
+    }
+
+    .copy-btn.copied {
+      background: #10b981;
+    }
+
+    /* Flow Animation */
+    .flow-section {
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid #334155;
+    }
+
+    .flow-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .flow-btn {
+      padding: 10px 12px;
+      background: linear-gradient(135deg, #334155 0%, #1e293b 100%);
+      border: 1px solid #475569;
+      border-radius: 8px;
+      color: #e2e8f0;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-align: left;
+    }
+
+    .flow-btn:hover {
+      background: linear-gradient(135deg, #475569 0%, #334155 100%);
+      border-color: #38bdf8;
+    }
+
+    .flow-btn.active {
+      background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%);
+      border-color: #38bdf8;
+      color: #0f172a;
+    }
+
+    .flow-btn .icon {
+      font-size: 18px;
+    }
+
+    .flow-btn .label {
+      font-weight: 600;
+    }
+
+    .flow-btn .desc {
+      font-size: 11px;
+      opacity: 0.7;
+    }
+
+    .flow-status {
+      margin-top: 12px;
+      padding: 10px;
+      background: #0f172a;
+      border-radius: 6px;
+      font-size: 12px;
+      min-height: 60px;
+    }
+
+    .flow-status .current-step {
+      color: #38bdf8;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .flow-status .step-desc {
+      color: #94a3b8;
+      line-height: 1.4;
+    }
+
+    .flow-controls {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .flow-control-btn {
+      flex: 1;
+      padding: 8px;
+      background: #334155;
+      border: 1px solid #475569;
+      border-radius: 6px;
+      color: #e2e8f0;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .flow-control-btn:hover {
+      background: #475569;
+    }
+
+    .flow-control-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Animated elements */
+    .node.highlighted rect {
+      stroke: #38bdf8 !important;
+      stroke-width: 3 !important;
+      filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.5));
+    }
+
+    .node.visited rect {
+      stroke: #10b981 !important;
+      stroke-width: 2 !important;
+    }
+
+    .connection.active {
+      stroke-width: 3 !important;
+      filter: drop-shadow(0 0 4px currentColor);
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.2); opacity: 0.8; }
+    }
+
+    .flow-dot {
+      fill: #38bdf8;
+      filter: drop-shadow(0 0 6px #38bdf8);
+    }
+
+    .prompt-text {
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #cbd5e1;
+      white-space: pre-wrap;
+      max-height: 150px;
+      overflow-y: auto;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal {
+      background: #1e293b;
+      border-radius: 12px;
+      padding: 24px;
+      width: 400px;
+      max-width: 90vw;
+      border: 1px solid #334155;
+    }
+
+    .modal h4 {
+      font-size: 16px;
+      margin-bottom: 4px;
+    }
+
+    .modal .subtitle {
+      font-size: 12px;
+      color: #64748b;
+      margin-bottom: 16px;
+    }
+
+    .modal textarea {
+      width: 100%;
+      height: 100px;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 6px;
+      padding: 12px;
+      color: #e2e8f0;
+      font-family: inherit;
+      font-size: 14px;
+      resize: vertical;
+      margin-bottom: 16px;
+    }
+
+    .modal textarea:focus {
+      outline: none;
+      border-color: #38bdf8;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .modal-btn {
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      border: none;
+    }
+
+    .modal-btn.cancel {
+      background: #334155;
+      color: #e2e8f0;
+    }
+
+    .modal-btn.save {
+      background: #38bdf8;
+      color: #0f172a;
+      font-weight: 600;
+    }
+
+    /* Node styles */
+    .node {
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+
+    .node:hover rect {
+      stroke-width: 2;
+      stroke: #38bdf8;
+    }
+
+    .node.has-comment rect {
+      stroke-width: 2;
+      stroke: #f59e0b;
+    }
+
+    .node-title {
+      font-size: 12px;
+      font-weight: 600;
+      fill: #1e293b;
+    }
+
+    .node-subtitle {
+      font-size: 9px;
+      fill: #475569;
+    }
+
+    /* Connection styles */
+    .connection {
+      fill: none;
+      stroke-width: 2;
+    }
+
+    .connection.routes { stroke: #3b82f6; }
+    .connection.invokes { stroke: #10b981; stroke-dasharray: 6,3; }
+    .connection.memory { stroke: #f59e0b; stroke-dasharray: 4,4; }
+    .connection.skill { stroke: #a855f7; stroke-dasharray: 8,4; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="sidebar">
+      <div class="logo">CC10x</div>
+      <div class="tagline">AI Agent Orchestration for Claude Code</div>
+
+      <h3>View Presets</h3>
+      <div class="presets">
+        <button class="preset-btn active" data-preset="full">Full System</button>
+        <button class="preset-btn" data-preset="workflows">Workflows</button>
+        <button class="preset-btn" data-preset="agents">Agent Chain</button>
+        <button class="preset-btn" data-preset="skills">Skills Map</button>
+        <button class="preset-btn" data-preset="memory">Memory Flow</button>
+      </div>
+
+      <h3>Layers</h3>
+      <div class="checkbox-group" id="layers">
+        <div class="checkbox-item">
+          <input type="checkbox" id="layer-router" checked>
+          <span class="color-dot" style="background: #38bdf8"></span>
+          <label for="layer-router">Router</label>
+        </div>
+        <div class="checkbox-item">
+          <input type="checkbox" id="layer-workflows" checked>
+          <span class="color-dot" style="background: #a855f7"></span>
+          <label for="layer-workflows">Workflows</label>
+        </div>
+        <div class="checkbox-item">
+          <input type="checkbox" id="layer-agents" checked>
+          <span class="color-dot" style="background: #10b981"></span>
+          <label for="layer-agents">Agents</label>
+        </div>
+        <div class="checkbox-item">
+          <input type="checkbox" id="layer-skills" checked>
+          <span class="color-dot" style="background: #f59e0b"></span>
+          <label for="layer-skills">Skills</label>
+        </div>
+        <div class="checkbox-item">
+          <input type="checkbox" id="layer-memory" checked>
+          <span class="color-dot" style="background: #ec4899"></span>
+          <label for="layer-memory">Memory</label>
+        </div>
+      </div>
+
+      <h3>Connection Types</h3>
+      <div class="checkbox-group" id="connections">
+        <div class="checkbox-item">
+          <input type="checkbox" id="conn-routes" checked>
+          <span class="color-dot" style="background: #3b82f6"></span>
+          <label for="conn-routes">Routes To</label>
+        </div>
+        <div class="checkbox-item">
+          <input type="checkbox" id="conn-invokes" checked>
+          <span class="color-dot" style="background: #10b981"></span>
+          <label for="conn-invokes">Invokes</label>
+        </div>
+        <div class="checkbox-item">
+          <input type="checkbox" id="conn-memory" checked>
+          <span class="color-dot" style="background: #f59e0b"></span>
+          <label for="conn-memory">Memory I/O</label>
+        </div>
+        <div class="checkbox-item">
+          <input type="checkbox" id="conn-skill" checked>
+          <span class="color-dot" style="background: #a855f7"></span>
+          <label for="conn-skill">Uses Skill</label>
+        </div>
+      </div>
+
+      <div class="comments-section">
+        <h3>Comments (<span id="comment-count">0</span>)</h3>
+        <div class="comments-list" id="comments-list">
+          <div class="no-comments">Click any component to add feedback</div>
+        </div>
+      </div>
+
+      <div class="flow-section">
+        <h3>Animate Flow</h3>
+        <div class="flow-buttons">
+          <button class="flow-btn" data-flow="build">
+            <span class="icon">🔨</span>
+            <div>
+              <div class="label">BUILD Flow</div>
+              <div class="desc">Feature implementation chain</div>
+            </div>
+          </button>
+          <button class="flow-btn" data-flow="debug">
+            <span class="icon">🐛</span>
+            <div>
+              <div class="label">DEBUG Flow</div>
+              <div class="desc">Bug investigation chain</div>
+            </div>
+          </button>
+          <button class="flow-btn" data-flow="review">
+            <span class="icon">🔍</span>
+            <div>
+              <div class="label">REVIEW Flow</div>
+              <div class="desc">Code audit process</div>
+            </div>
+          </button>
+          <button class="flow-btn" data-flow="plan">
+            <span class="icon">📋</span>
+            <div>
+              <div class="label">PLAN Flow</div>
+              <div class="desc">Design & architecture</div>
+            </div>
+          </button>
+        </div>
+        <div class="flow-status" id="flow-status">
+          <div class="current-step">Select a flow to animate</div>
+          <div class="step-desc">Watch how requests move through the CC10x system</div>
+        </div>
+        <div class="flow-controls">
+          <button class="flow-control-btn" id="flow-prev" disabled>← Prev</button>
+          <button class="flow-control-btn" id="flow-play" disabled>▶ Play</button>
+          <button class="flow-control-btn" id="flow-next" disabled>Next →</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="canvas-container">
+      <svg id="canvas" viewBox="0 0 1000 700">
+        <defs>
+          <marker id="arrow-blue" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#3b82f6"/>
+          </marker>
+          <marker id="arrow-green" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#10b981"/>
+          </marker>
+          <marker id="arrow-orange" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#f59e0b"/>
+          </marker>
+          <marker id="arrow-purple" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#a855f7"/>
+          </marker>
+        </defs>
+        <g id="connections-group"></g>
+        <g id="nodes-group"></g>
+      </svg>
+
+      <div class="zoom-controls">
+        <button class="zoom-btn" id="zoom-out">−</button>
+        <button class="zoom-btn" id="zoom-reset">⟲</button>
+        <button class="zoom-btn" id="zoom-in">+</button>
+      </div>
+
+      <div class="legend">
+        <div class="legend-title">Connection Types</div>
+        <div class="legend-items">
+          <div class="legend-item">
+            <div class="legend-line" style="background: #3b82f6"></div>
+            <span>Routes</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-line" style="background: #10b981; background: repeating-linear-gradient(90deg, #10b981 0, #10b981 6px, transparent 6px, transparent 9px)"></div>
+            <span>Invokes</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-line" style="background: repeating-linear-gradient(90deg, #f59e0b 0, #f59e0b 4px, transparent 4px, transparent 8px)"></div>
+            <span>Memory</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-line" style="background: repeating-linear-gradient(90deg, #a855f7 0, #a855f7 8px, transparent 8px, transparent 12px)"></div>
+            <span>Skill</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="prompt-output">
+      <div class="prompt-header">
+        <h3>Generated Prompt</h3>
+        <button class="copy-btn" id="copy-btn">Copy Prompt</button>
+      </div>
+      <div class="prompt-text" id="prompt-text">Select components and add comments to generate a prompt for Claude...</div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal">
+    <div class="modal">
+      <h4 id="modal-title">Component Name</h4>
+      <div class="subtitle" id="modal-subtitle">path/to/file.md</div>
+      <textarea id="modal-textarea" placeholder="Add your feedback or questions about this component..."></textarea>
+      <div class="modal-actions">
+        <button class="modal-btn cancel" id="modal-cancel">Cancel</button>
+        <button class="modal-btn save" id="modal-save">Add Comment</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State
+    const state = {
+      zoom: 1,
+      panX: 0,
+      panY: 0,
+      layers: {
+        router: true,
+        workflows: true,
+        agents: true,
+        skills: true,
+        memory: true
+      },
+      connections: {
+        routes: true,
+        invokes: true,
+        memory: true,
+        skill: true
+      },
+      comments: [],
+      activeNode: null
+    };
+
+    // Nodes
+    const nodes = [
+      // Router (top)
+      { id: 'router', label: 'CC10x Router', subtitle: 'skills/cc10x-router/SKILL.md', x: 450, y: 30, w: 140, h: 45, layer: 'router', color: '#bae6fd' },
+
+      // Workflows
+      { id: 'build', label: 'BUILD', subtitle: 'Feature Implementation', x: 150, y: 120, w: 110, h: 40, layer: 'workflows', color: '#e9d5ff' },
+      { id: 'debug', label: 'DEBUG', subtitle: 'Bug Investigation', x: 300, y: 120, w: 110, h: 40, layer: 'workflows', color: '#e9d5ff' },
+      { id: 'review', label: 'REVIEW', subtitle: 'Code Audit', x: 450, y: 120, w: 110, h: 40, layer: 'workflows', color: '#e9d5ff' },
+      { id: 'plan', label: 'PLAN', subtitle: 'Design & Architecture', x: 600, y: 120, w: 110, h: 40, layer: 'workflows', color: '#e9d5ff' },
+
+      // Agents
+      { id: 'component-builder', label: 'Component Builder', subtitle: 'TDD-First Implementation', x: 80, y: 220, w: 140, h: 45, layer: 'agents', color: '#bbf7d0' },
+      { id: 'bug-investigator', label: 'Bug Investigator', subtitle: 'Root Cause Analysis', x: 250, y: 220, w: 140, h: 45, layer: 'agents', color: '#fecaca' },
+      { id: 'code-reviewer', label: 'Code Reviewer', subtitle: 'Multi-Dimensional Review', x: 420, y: 220, w: 140, h: 45, layer: 'agents', color: '#bfdbfe' },
+      { id: 'silent-failure-hunter', label: 'Silent Failure Hunter', subtitle: 'Error Handling Audit', x: 590, y: 220, w: 150, h: 45, layer: 'agents', color: '#fecaca' },
+      { id: 'planner', label: 'Planner', subtitle: 'Design & Planning', x: 770, y: 220, w: 120, h: 45, layer: 'agents', color: '#a5f3fc' },
+      { id: 'integration-verifier', label: 'Integration Verifier', subtitle: 'E2E Verification', x: 420, y: 300, w: 150, h: 45, layer: 'agents', color: '#fef08a' },
+
+      // Skills - Row 1
+      { id: 'tdd', label: 'TDD', subtitle: 'RED→GREEN→REFACTOR', x: 50, y: 400, w: 100, h: 40, layer: 'skills', color: '#fed7aa' },
+      { id: 'debugging', label: 'Debugging', subtitle: '4-Phase Investigation', x: 170, y: 400, w: 110, h: 40, layer: 'skills', color: '#fed7aa' },
+      { id: 'code-review', label: 'Code Review', subtitle: 'Security+Perf+Quality', x: 300, y: 400, w: 120, h: 40, layer: 'skills', color: '#fed7aa' },
+      { id: 'code-gen', label: 'Code Generation', subtitle: 'Expert Mindset', x: 440, y: 400, w: 130, h: 40, layer: 'skills', color: '#fed7aa' },
+      { id: 'architecture', label: 'Architecture', subtitle: 'C4 Views & Design', x: 590, y: 400, w: 120, h: 40, layer: 'skills', color: '#fed7aa' },
+      { id: 'planning', label: 'Planning', subtitle: 'Roadmap + Risk', x: 730, y: 400, w: 110, h: 40, layer: 'skills', color: '#fed7aa' },
+
+      // Skills - Row 2
+      { id: 'verification', label: 'Verification', subtitle: 'Evidence Required', x: 50, y: 460, w: 110, h: 40, layer: 'skills', color: '#fed7aa' },
+      { id: 'frontend', label: 'Frontend', subtitle: 'User Flow First', x: 180, y: 460, w: 100, h: 40, layer: 'skills', color: '#fed7aa' },
+      { id: 'github-research', label: 'GitHub Research', subtitle: 'External Patterns', x: 300, y: 460, w: 130, h: 40, layer: 'skills', color: '#fed7aa' },
+      { id: 'brainstorming', label: 'Brainstorming', subtitle: 'Ideation', x: 450, y: 460, w: 120, h: 40, layer: 'skills', color: '#fed7aa' },
+      { id: 'session-memory', label: 'Session Memory', subtitle: 'Context Persistence', x: 590, y: 460, w: 130, h: 40, layer: 'skills', color: '#fda4af' },
+
+      // Memory Files
+      { id: 'active-context', label: 'activeContext.md', subtitle: 'Working Memory', x: 200, y: 560, w: 140, h: 45, layer: 'memory', color: '#fbcfe8' },
+      { id: 'patterns', label: 'patterns.md', subtitle: 'Reusable Patterns', x: 400, y: 560, w: 130, h: 45, layer: 'memory', color: '#fbcfe8' },
+      { id: 'progress', label: 'progress.md', subtitle: 'Verification Evidence', x: 590, y: 560, w: 140, h: 45, layer: 'memory', color: '#fbcfe8' },
+
+      // Memory Directory
+      { id: 'memory-dir', label: '.claude/cc10x/', subtitle: 'Permission-Free Storage', x: 400, y: 640, w: 150, h: 40, layer: 'memory', color: '#f9a8d4' }
+    ];
+
+    // Connections
+    const connections = [
+      // Router to Workflows
+      { from: 'router', to: 'build', type: 'routes', label: 'build/implement' },
+      { from: 'router', to: 'debug', type: 'routes', label: 'bug/fix/error' },
+      { from: 'router', to: 'review', type: 'routes', label: 'review/audit' },
+      { from: 'router', to: 'plan', type: 'routes', label: 'plan/design' },
+
+      // BUILD workflow chain
+      { from: 'build', to: 'component-builder', type: 'invokes' },
+      { from: 'component-builder', to: 'code-reviewer', type: 'invokes' },
+      { from: 'component-builder', to: 'silent-failure-hunter', type: 'invokes' },
+      { from: 'code-reviewer', to: 'integration-verifier', type: 'invokes' },
+      { from: 'silent-failure-hunter', to: 'integration-verifier', type: 'invokes' },
+
+      // DEBUG workflow chain
+      { from: 'debug', to: 'bug-investigator', type: 'invokes' },
+      { from: 'bug-investigator', to: 'code-reviewer', type: 'invokes' },
+
+      // REVIEW workflow
+      { from: 'review', to: 'code-reviewer', type: 'invokes' },
+
+      // PLAN workflow
+      { from: 'plan', to: 'planner', type: 'invokes' },
+
+      // Agent to Skills
+      { from: 'component-builder', to: 'tdd', type: 'skill' },
+      { from: 'component-builder', to: 'code-gen', type: 'skill' },
+      { from: 'bug-investigator', to: 'debugging', type: 'skill' },
+      { from: 'code-reviewer', to: 'code-review', type: 'skill' },
+      { from: 'planner', to: 'planning', type: 'skill' },
+      { from: 'planner', to: 'architecture', type: 'skill' },
+      { from: 'integration-verifier', to: 'verification', type: 'skill' },
+
+      // Memory connections
+      { from: 'router', to: 'session-memory', type: 'skill' },
+      { from: 'session-memory', to: 'active-context', type: 'memory' },
+      { from: 'session-memory', to: 'patterns', type: 'memory' },
+      { from: 'session-memory', to: 'progress', type: 'memory' },
+      { from: 'active-context', to: 'memory-dir', type: 'memory' },
+      { from: 'patterns', to: 'memory-dir', type: 'memory' },
+      { from: 'progress', to: 'memory-dir', type: 'memory' }
+    ];
+
+    // Presets
+    const presets = {
+      full: { layers: { router: true, workflows: true, agents: true, skills: true, memory: true }, connections: { routes: true, invokes: true, memory: true, skill: true } },
+      workflows: { layers: { router: true, workflows: true, agents: false, skills: false, memory: false }, connections: { routes: true, invokes: false, memory: false, skill: false } },
+      agents: { layers: { router: true, workflows: true, agents: true, skills: false, memory: false }, connections: { routes: true, invokes: true, memory: false, skill: false } },
+      skills: { layers: { router: false, workflows: false, agents: true, skills: true, memory: false }, connections: { routes: false, invokes: false, memory: false, skill: true } },
+      memory: { layers: { router: true, workflows: false, agents: false, skills: true, memory: true }, connections: { routes: false, invokes: false, memory: true, skill: true } }
+    };
+
+    // DOM elements
+    const canvas = document.getElementById('canvas');
+    const nodesGroup = document.getElementById('nodes-group');
+    const connectionsGroup = document.getElementById('connections-group');
+    const modal = document.getElementById('modal');
+    const promptText = document.getElementById('prompt-text');
+    const commentsList = document.getElementById('comments-list');
+    const commentCount = document.getElementById('comment-count');
+
+    // Render functions
+    function getNodeById(id) {
+      return nodes.find(n => n.id === id);
+    }
+
+    function drawConnection(conn) {
+      if (!state.connections[conn.type]) return null;
+
+      const fromNode = getNodeById(conn.from);
+      const toNode = getNodeById(conn.to);
+
+      if (!fromNode || !toNode) return null;
+      if (!state.layers[fromNode.layer] || !state.layers[toNode.layer]) return null;
+
+      const x1 = fromNode.x + fromNode.w / 2;
+      const y1 = fromNode.y + fromNode.h;
+      const x2 = toNode.x + toNode.w / 2;
+      const y2 = toNode.y;
+
+      const midY = (y1 + y2) / 2;
+      const path = `M ${x1} ${y1} C ${x1} ${midY}, ${x2} ${midY}, ${x2} ${y2}`;
+
+      const markers = { routes: 'arrow-blue', invokes: 'arrow-green', memory: 'arrow-orange', skill: 'arrow-purple' };
+
+      const pathEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      pathEl.setAttribute('d', path);
+      pathEl.setAttribute('class', `connection ${conn.type}`);
+      pathEl.setAttribute('marker-end', `url(#${markers[conn.type]})`);
+
+      return pathEl;
+    }
+
+    function drawNode(node) {
+      if (!state.layers[node.layer]) return null;
+
+      const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      g.setAttribute('class', 'node' + (state.comments.some(c => c.target === node.id) ? ' has-comment' : ''));
+      g.setAttribute('data-id', node.id);
+
+      const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      rect.setAttribute('x', node.x);
+      rect.setAttribute('y', node.y);
+      rect.setAttribute('width', node.w);
+      rect.setAttribute('height', node.h);
+      rect.setAttribute('rx', 6);
+      rect.setAttribute('fill', node.color);
+      rect.setAttribute('stroke', '#475569');
+      rect.setAttribute('stroke-width', 1);
+
+      const title = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      title.setAttribute('x', node.x + node.w / 2);
+      title.setAttribute('y', node.y + (node.h > 40 ? 18 : 16));
+      title.setAttribute('text-anchor', 'middle');
+      title.setAttribute('class', 'node-title');
+      title.textContent = node.label;
+
+      const subtitle = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      subtitle.setAttribute('x', node.x + node.w / 2);
+      subtitle.setAttribute('y', node.y + (node.h > 40 ? 32 : 28));
+      subtitle.setAttribute('text-anchor', 'middle');
+      subtitle.setAttribute('class', 'node-subtitle');
+      subtitle.textContent = node.subtitle;
+
+      g.appendChild(rect);
+      g.appendChild(title);
+      g.appendChild(subtitle);
+
+      g.addEventListener('click', () => openModal(node));
+
+      return g;
+    }
+
+    function render() {
+      connectionsGroup.innerHTML = '';
+      nodesGroup.innerHTML = '';
+
+      connections.forEach(conn => {
+        const el = drawConnection(conn);
+        if (el) connectionsGroup.appendChild(el);
+      });
+
+      nodes.forEach(node => {
+        const el = drawNode(node);
+        if (el) nodesGroup.appendChild(el);
+      });
+
+      updatePrompt();
+    }
+
+    function updatePrompt() {
+      if (state.comments.length === 0) {
+        promptText.textContent = 'Select components and add comments to generate a prompt for Claude...';
+        return;
+      }
+
+      const visibleLayers = Object.entries(state.layers).filter(([, v]) => v).map(([k]) => k);
+
+      let prompt = `I'm reviewing the CC10x architecture`;
+      if (visibleLayers.length < 5) {
+        prompt += `, focusing on ${visibleLayers.join(', ')}`;
+      }
+      prompt += '.\n\n';
+
+      prompt += 'Feedback on specific components:\n\n';
+
+      state.comments.forEach(c => {
+        prompt += `**${c.targetLabel}** (${c.targetFile}):\n${c.text}\n\n`;
+      });
+
+      promptText.textContent = prompt.trim();
+    }
+
+    function renderComments() {
+      commentCount.textContent = state.comments.length;
+
+      if (state.comments.length === 0) {
+        commentsList.innerHTML = '<div class="no-comments">Click any component to add feedback</div>';
+        return;
+      }
+
+      commentsList.innerHTML = state.comments.map((c, i) => `
+        <div class="comment-item">
+          <button class="delete-btn" data-index="${i}">×</button>
+          <div class="target">${c.targetLabel}</div>
+          <div class="text">${c.text.substring(0, 80)}${c.text.length > 80 ? '...' : ''}</div>
+        </div>
+      `).join('');
+
+      commentsList.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.comments.splice(parseInt(btn.dataset.index), 1);
+          renderComments();
+          render();
+        });
+      });
+    }
+
+    // Modal
+    function openModal(node) {
+      state.activeNode = node;
+      document.getElementById('modal-title').textContent = node.label;
+      document.getElementById('modal-subtitle').textContent = node.subtitle;
+      document.getElementById('modal-textarea').value = '';
+      modal.classList.add('active');
+      document.getElementById('modal-textarea').focus();
+    }
+
+    function closeModal() {
+      modal.classList.remove('active');
+      state.activeNode = null;
+    }
+
+    document.getElementById('modal-cancel').addEventListener('click', closeModal);
+    document.getElementById('modal-save').addEventListener('click', () => {
+      const text = document.getElementById('modal-textarea').value.trim();
+      if (text && state.activeNode) {
+        state.comments.push({
+          id: Date.now(),
+          target: state.activeNode.id,
+          targetLabel: state.activeNode.label,
+          targetFile: state.activeNode.subtitle,
+          text
+        });
+        renderComments();
+        render();
+      }
+      closeModal();
+    });
+
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeModal();
+    });
+
+    // Presets
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        const preset = presets[btn.dataset.preset];
+        state.layers = { ...preset.layers };
+        state.connections = { ...preset.connections };
+
+        // Update checkboxes
+        Object.entries(state.layers).forEach(([k, v]) => {
+          document.getElementById(`layer-${k}`).checked = v;
+        });
+        Object.entries(state.connections).forEach(([k, v]) => {
+          document.getElementById(`conn-${k}`).checked = v;
+        });
+
+        render();
+      });
+    });
+
+    // Layer checkboxes
+    document.querySelectorAll('#layers input').forEach(input => {
+      input.addEventListener('change', () => {
+        state.layers[input.id.replace('layer-', '')] = input.checked;
+        render();
+      });
+    });
+
+    // Connection checkboxes
+    document.querySelectorAll('#connections input').forEach(input => {
+      input.addEventListener('change', () => {
+        state.connections[input.id.replace('conn-', '')] = input.checked;
+        render();
+      });
+    });
+
+    // Zoom
+    document.getElementById('zoom-in').addEventListener('click', () => {
+      state.zoom = Math.min(2, state.zoom + 0.2);
+      canvas.style.transform = `scale(${state.zoom})`;
+    });
+
+    document.getElementById('zoom-out').addEventListener('click', () => {
+      state.zoom = Math.max(0.5, state.zoom - 0.2);
+      canvas.style.transform = `scale(${state.zoom})`;
+    });
+
+    document.getElementById('zoom-reset').addEventListener('click', () => {
+      state.zoom = 1;
+      canvas.style.transform = 'scale(1)';
+    });
+
+    // Copy
+    document.getElementById('copy-btn').addEventListener('click', () => {
+      navigator.clipboard.writeText(promptText.textContent);
+      const btn = document.getElementById('copy-btn');
+      btn.textContent = 'Copied!';
+      btn.classList.add('copied');
+      setTimeout(() => {
+        btn.textContent = 'Copy Prompt';
+        btn.classList.remove('copied');
+      }, 1500);
+    });
+
+    // Flow Animation System
+    const flows = {
+      build: {
+        name: 'BUILD',
+        steps: [
+          { node: 'router', desc: 'Request arrives at router. Detects keywords: build, implement, create, feature...' },
+          { node: 'build', desc: 'Router identifies BUILD workflow. Creating task hierarchy...' },
+          { node: 'component-builder', desc: 'Component Builder starts. Loads TDD & Code Generation skills. Writes failing test first (RED)...' },
+          { node: 'code-reviewer', desc: 'Code Reviewer runs in PARALLEL with Silent Failure Hunter. Checking security, performance, quality...' },
+          { node: 'silent-failure-hunter', desc: 'Silent Failure Hunter (PARALLEL). Scanning for empty catches, swallowed errors, log-only handlers...' },
+          { node: 'integration-verifier', desc: 'Integration Verifier waits for both reviewers. Runs E2E tests, verifies all scenarios PASS...' },
+          { node: 'session-memory', desc: 'Session Memory skill updates memory files with results...' },
+          { node: 'active-context', desc: 'activeContext.md updated: Recent changes, learnings, next steps...' },
+          { node: 'progress', desc: 'progress.md updated: Verification evidence with exit codes. BUILD complete!' }
+        ]
+      },
+      debug: {
+        name: 'DEBUG',
+        steps: [
+          { node: 'router', desc: 'Request arrives at router. Detects keywords: bug, fix, error, broken, debug...' },
+          { node: 'debug', desc: 'Router identifies DEBUG workflow. Loading session memory for context...' },
+          { node: 'bug-investigator', desc: 'Bug Investigator starts 4-phase investigation: Capture logs → Reproduce → Hypothesis → Regression test FIRST...' },
+          { node: 'code-reviewer', desc: 'Code Reviewer validates the fix. Checking for anti-hardcoding (must work across variants)...' },
+          { node: 'integration-verifier', desc: 'Integration Verifier runs regression tests. Confirms fix doesn\'t break other flows...' },
+          { node: 'session-memory', desc: 'Session Memory updates files with debugging learnings...' },
+          { node: 'patterns', desc: 'patterns.md updated: If this was a common gotcha, it becomes a reusable pattern!' }
+        ]
+      },
+      review: {
+        name: 'REVIEW',
+        steps: [
+          { node: 'router', desc: 'Request arrives at router. Detects keywords: review, audit, check, analyze...' },
+          { node: 'review', desc: 'Router identifies REVIEW workflow. Single-agent process...' },
+          { node: 'code-reviewer', desc: 'Code Reviewer performs multi-dimensional analysis. Security + Performance + Quality. Only reports ≥80% confidence issues...' },
+          { node: 'session-memory', desc: 'Session Memory records review findings...' },
+          { node: 'active-context', desc: 'activeContext.md updated with review summary and recommendations. REVIEW complete!' }
+        ]
+      },
+      plan: {
+        name: 'PLAN',
+        steps: [
+          { node: 'router', desc: 'Request arrives at router. Detects keywords: plan, design, architect, roadmap...' },
+          { node: 'plan', desc: 'Router identifies PLAN workflow. Loading existing patterns and context...' },
+          { node: 'planner', desc: 'Planner maps flows → understands patterns → designs architecture → assesses risks → creates roadmap...' },
+          { node: 'session-memory', desc: 'Plan saved to docs/plans/YYYY-MM-DD-feature-plan.md with confidence score...' },
+          { node: 'active-context', desc: 'activeContext.md links to the new plan file. Ready for BUILD workflow!' }
+        ]
+      }
+    };
+
+    let currentFlow = null;
+    let currentStep = 0;
+    let isPlaying = false;
+    let playInterval = null;
+    let visitedNodes = new Set();
+
+    const flowStatus = document.getElementById('flow-status');
+    const flowPrev = document.getElementById('flow-prev');
+    const flowPlay = document.getElementById('flow-play');
+    const flowNext = document.getElementById('flow-next');
+
+    function resetFlowAnimation() {
+      visitedNodes.clear();
+      document.querySelectorAll('.node').forEach(n => {
+        n.classList.remove('highlighted', 'visited');
+      });
+      document.querySelectorAll('.connection').forEach(c => {
+        c.classList.remove('active');
+      });
+      // Remove any existing flow dots
+      document.querySelectorAll('.flow-dot').forEach(d => d.remove());
+    }
+
+    function highlightNode(nodeId) {
+      document.querySelectorAll('.node').forEach(n => {
+        n.classList.remove('highlighted');
+        if (visitedNodes.has(n.getAttribute('data-id'))) {
+          n.classList.add('visited');
+        }
+      });
+
+      const nodeEl = document.querySelector(`.node[data-id="${nodeId}"]`);
+      if (nodeEl) {
+        nodeEl.classList.add('highlighted');
+        visitedNodes.add(nodeId);
+      }
+    }
+
+    function updateFlowStatus(step) {
+      const flow = flows[currentFlow];
+      flowStatus.innerHTML = `
+        <div class="current-step">${flow.name} → Step ${currentStep + 1}/${flow.steps.length}: ${step.node}</div>
+        <div class="step-desc">${step.desc}</div>
+      `;
+    }
+
+    function goToStep(stepIndex) {
+      if (!currentFlow) return;
+
+      const flow = flows[currentFlow];
+      currentStep = Math.max(0, Math.min(stepIndex, flow.steps.length - 1));
+
+      // Reset and rebuild visited nodes up to current step
+      resetFlowAnimation();
+      for (let i = 0; i <= currentStep; i++) {
+        visitedNodes.add(flow.steps[i].node);
+      }
+
+      // Highlight current and mark visited
+      document.querySelectorAll('.node').forEach(n => {
+        const id = n.getAttribute('data-id');
+        if (id === flow.steps[currentStep].node) {
+          n.classList.add('highlighted');
+        } else if (visitedNodes.has(id)) {
+          n.classList.add('visited');
+        }
+      });
+
+      updateFlowStatus(flow.steps[currentStep]);
+      updateFlowControls();
+    }
+
+    function updateFlowControls() {
+      if (!currentFlow) {
+        flowPrev.disabled = true;
+        flowPlay.disabled = true;
+        flowNext.disabled = true;
+        return;
+      }
+
+      const flow = flows[currentFlow];
+      flowPrev.disabled = currentStep <= 0;
+      flowNext.disabled = currentStep >= flow.steps.length - 1;
+      flowPlay.disabled = false;
+      flowPlay.textContent = isPlaying ? '⏸ Pause' : '▶ Play';
+    }
+
+    function startFlow(flowName) {
+      // Stop any existing animation
+      stopPlaying();
+
+      // Reset state
+      currentFlow = flowName;
+      currentStep = 0;
+
+      // Activate proper preset to show relevant nodes
+      const preset = presets.agents;
+      state.layers = { ...preset.layers };
+      state.layers.memory = true;
+      state.layers.skills = true;
+      state.connections = { routes: true, invokes: true, memory: true, skill: true };
+
+      // Update checkboxes
+      Object.entries(state.layers).forEach(([k, v]) => {
+        document.getElementById(`layer-${k}`).checked = v;
+      });
+      Object.entries(state.connections).forEach(([k, v]) => {
+        document.getElementById(`conn-${k}`).checked = v;
+      });
+
+      // Update preset buttons
+      document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+
+      // Update flow buttons
+      document.querySelectorAll('.flow-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.flow === flowName);
+      });
+
+      render();
+      goToStep(0);
+    }
+
+    function stopPlaying() {
+      isPlaying = false;
+      if (playInterval) {
+        clearInterval(playInterval);
+        playInterval = null;
+      }
+      updateFlowControls();
+    }
+
+    function togglePlay() {
+      if (!currentFlow) return;
+
+      if (isPlaying) {
+        stopPlaying();
+      } else {
+        isPlaying = true;
+        updateFlowControls();
+
+        // If at end, restart
+        if (currentStep >= flows[currentFlow].steps.length - 1) {
+          goToStep(0);
+        }
+
+        playInterval = setInterval(() => {
+          const flow = flows[currentFlow];
+          if (currentStep < flow.steps.length - 1) {
+            goToStep(currentStep + 1);
+          } else {
+            stopPlaying();
+          }
+        }, 2000);
+      }
+    }
+
+    // Flow button listeners
+    document.querySelectorAll('.flow-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        startFlow(btn.dataset.flow);
+      });
+    });
+
+    flowPrev.addEventListener('click', () => goToStep(currentStep - 1));
+    flowNext.addEventListener('click', () => goToStep(currentStep + 1));
+    flowPlay.addEventListener('click', togglePlay);
+
+    // Initial render
+    render();
+    renderComments();
+  </script>
+</body>
+</html>

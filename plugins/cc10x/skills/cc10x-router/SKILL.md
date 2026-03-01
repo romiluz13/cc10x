@@ -308,10 +308,18 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [planner_task_id] })
    - External service error (API timeout, auth failure, third-party)
 
    **If ANY trigger met:**
-   → AskUserQuestion: "Before debugging, should we research similar issues on GitHub? This makes external API calls and saves findings to docs/research/."
-     Options: "Research GitHub (Recommended)" | "Skip research" | "Abort workflow"
-   → If "Research GitHub": Execute THREE-PHASE research (octocode tools → persist → pass to agent)
+   → AskUserQuestion: "Before debugging, should we research similar issues on the web and GitHub? This makes external API calls and saves findings to docs/research/."
+     Options: "Research web + GitHub (Recommended)" | "Skip research" | "Abort workflow"
+   → If "Skip research": proceed without research
    → If "Abort": Record in activeContext.md ## Decisions: "Research declined", stop workflow
+   → If "Research web + GitHub":
+     - `TaskCreate({ subject: "CC10X web-researcher: Research {error topic}", description: "Topic: {error topic}\nReason: Debug — external error\nFile: docs/research/{date}-{topic}-web.md", activeForm: "Researching web" })` → web_task_id
+     - `TaskCreate({ subject: "CC10X github-researcher: Research {error topic}", description: "Topic: {error topic}\nReason: Debug — external error\nFile: docs/research/{date}-{topic}-github.md", activeForm: "Researching GitHub" })` → github_task_id
+     - Mark both in_progress. Spawn BOTH in same message (parallel):
+       `Task(subagent_type="cc10x:web-researcher", ...)` ∥ `Task(subagent_type="cc10x:github-researcher", ...)`
+     - Collect: `web_file = web_contract.FILE_PATH`, `github_file = github_contract.FILE_PATH`
+     - Pass both to bug-investigator: `## Research Files\nWeb: {web_file}\nGitHub: {github_file}`
+     - Add SKILL_HINTS: `cc10x:research` (synthesis guidance)
 
    **Debug Workflow Scoping:**
    - Note: bug-investigator writes its own `[DEBUG-RESET: wf:{parent_task_id}]` marker at startup — see agent file.
@@ -336,14 +344,21 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [planner_task_id] })
 2. **Clarification (if request is vague or ambiguous):**
    → `Skill(skill="cc10x:brainstorming")` — runs in main context, `AskUserQuestion` available here
    → Collect answers, pass clarified requirements to planner in step 4
-3. **If github-research detected (external tech OR explicit request):**
-   - Execute research FIRST using octocode tools directly (NOT as hint)
-   - Use: `mcp__octocode__packageSearch`, `mcp__octocode__githubSearchCode`, etc.
-   - **PERSIST research** → Save to `docs/research/YYYY-MM-DD-<topic>-research.md`
-   - **Update memory** → Add to activeContext.md References section
-   - Summarize findings before invoking planner
+3. **If research detected (external tech OR explicit request):**
+   - AskUserQuestion: "Research web + GitHub before planning? Improves plan quality for external tech."
+     Options: "Yes, research (Recommended)" | "No, skip"
+   - If "No, skip": proceed to step 4
+   - If "Yes":
+     - `TaskCreate({ subject: "CC10X web-researcher: Research {topic}", description: "Topic: {topic}\nReason: {reason}\nFile: docs/research/{date}-{topic}-web.md", activeForm: "Researching web" })` → web_task_id
+     - `TaskCreate({ subject: "CC10X github-researcher: Research {topic}", description: "Topic: {topic}\nReason: {reason}\nFile: docs/research/{date}-{topic}-github.md", activeForm: "Researching GitHub" })` → github_task_id
+     - Mark both in_progress. Spawn BOTH in same message (parallel):
+       `Task(subagent_type="cc10x:web-researcher", prompt="Topic: {topic}\nReason: {reason}\nFile: docs/research/{date}-{topic}-web.md\nTask ID: {web_task_id}")`
+       `Task(subagent_type="cc10x:github-researcher", prompt="Topic: {topic}\nReason: {reason}\nFile: docs/research/{date}-{topic}-github.md\nTask ID: {github_task_id}")`
+     - Collect: `web_file = web_contract.FILE_PATH`, `github_file = github_contract.FILE_PATH`
 4. **Create task hierarchy** (see Task-Based Orchestration above)
-5. **Start chain execution** (pass clarified requirements + research results + file path in prompt if step 3 was executed)
+5. **Start chain execution** (pass clarified requirements + research files in prompt if step 3 was executed)
+   Add to planner prompt: `## Research Files\nWeb: {web_file}\nGitHub: {github_file}`
+   Add SKILL_HINTS: `cc10x:research` (synthesis guidance for reading the files)
 5a. **After planner task completes — collect user input if needed:**
     → Check planner output for "**Your Input Needed:**" section
     → If section exists and has bullet points:
@@ -353,7 +368,7 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [planner_task_id] })
     → If section empty or absent: Proceed directly to step 6
 6. Update memory → Reference saved plan when task completed
 
-**THREE-PHASE for External Research:** Same as rule 0c pattern (PHASE 1: octocode tools → PHASE 2: persist to `docs/research/` + update activeContext.md References → PHASE 3: invoke planner with research file path). Research is a PREREQUISITE — persistence prevents compaction loss.
+**Research prerequisite:** Each agent handles its own file persistence. Router collects both `FILE_PATH` values from Router Contracts and passes them to the planner prompt.
 
 ## Agent Invocation
 
@@ -395,7 +410,7 @@ Execute the task and include ‘Task {TASK_ID}: COMPLETED’ in your output when
 ```
 
 **TASK ID is REQUIRED in prompt.** Agents call TaskUpdate(completed) for their own task after final output. Router verifies via TaskList().
-**SKILL_HINTS:** If router passes skills in SKILL_HINTS, agent MUST call `Skill(skill="{skill-name}")` after loading memory. This includes complementary skills (react-best-practices, mongodb-agent-skills, etc.) — not github-research (router-executed directly via THREE-PHASE).
+**SKILL_HINTS:** If router passes skills in SKILL_HINTS, agent MUST call `Skill(skill="{skill-name}")` after loading memory. This includes complementary skills (react-best-practices, mongodb-agent-skills, etc.) and `cc10x:research` (when research files were passed in prompt).
 
 **Post-Agent Validation (After agent completes):**
 
@@ -459,27 +474,29 @@ Proceed with rules 1a/1b/2 using the OVERRIDDEN values.
 **Circuit Breaker (BEFORE creating any REM-FIX):**
 Before creating a new REM-FIX task, count ACTIVE REM-FIX tasks: `TaskList()` → filter by (subject contains "CC10X REM-FIX:") AND (status IN [pending, in_progress]). Do NOT count completed REM-FIX tasks — they are resolved and irrelevant.
 If count ≥ 3 → AskUserQuestion: "Too many active fix attempts are stacking up ({N} active CC10X REM-FIX tasks). This may indicate a deeper systemic issue. How to proceed?"
-- **Research best practices (Recommended)** → Skill(skill="cc10x:github-research"), persist, retry
+- **Research best practices (Recommended)** → Spawn parallel researchers (Topic: {issue pattern}, Reason: Circuit Breaker — 3+ REM-FIX tasks):
+  `Task(cc10x:web-researcher) ∥ Task(cc10x:github-researcher)` → collect both FILE_PATHs → pass both file paths to next REM-FIX task description + SKILL_HINTS: cc10x:research
 - **Fix locally** → Create another REM-FIX task
 - **Skip** → Proceed despite errors (not recommended)
 - **Abort** → Stop workflow, manual fix
 
 0c. If contract.NEEDS_EXTERNAL_RESEARCH == true (bug-investigator only):
     **Runs BEFORE rule 1a — do NOT evaluate rules 1a/1b/2 when this fires.**
-    → Execute THREE-PHASE research immediately using contract.RESEARCH_REASON as query:
-      PHASE 1: Search using octocode tools (mcp__octocode__githubSearchCode, etc.)
-      PHASE 2: PERSIST → Bash(command="mkdir -p docs/research")
-               Write(file_path="docs/research/YYYY-MM-DD-{topic}-research.md", content="[findings]")
-               Edit(activeContext.md ## References, add "- Research: docs/research/...")
-      **Research Loop Cap (BEFORE PHASE 3):**
-        Count external research iterations: Read(.claude/cc10x/activeContext.md) → count entries in ## References that match `docs/research/` (each represents one completed research cycle for this workflow)
-        If count >= 2: AskUserQuestion: "External research has been provided to bug-investigator {count} time(s) and it still reports NEEDS_EXTERNAL_RESEARCH. How to proceed?"
-          Options: "Try research once more" | "Create manual fix task (skip re-invoke)" | "Abort workflow" | "Research best practices (cc10x:github-research)"
-          → Do NOT proceed to PHASE 3. Handle chosen option, then STOP.
-        If count < 2: Proceed to PHASE 3 below.
-      PHASE 3: Re-invoke cc10x:bug-investigator with same prompt + "## External Research Findings\nSaved to: {research_file}\n{key_findings}"
+    **Research Loop Cap (BEFORE spawning agents):**
+      Count external research iterations: Read(.claude/cc10x/activeContext.md) → count entries in ## References that match `docs/research/` (each represents one completed research cycle for this workflow)
+      If count >= 2: AskUserQuestion: "External research has been provided to bug-investigator {count} time(s) and it still reports NEEDS_EXTERNAL_RESEARCH. How to proceed?"
+        Options: "Try research once more" | "Create manual fix task (skip re-invoke)" | "Abort workflow"
+        → Do NOT proceed. Handle chosen option, then STOP.
+      If count < 2: Proceed below.
+    → TaskCreate web-researcher + github-researcher tasks (with topic = contract.RESEARCH_REASON)
+    → Mark both in_progress. Spawn BOTH in same message (parallel):
+      `Task(subagent_type="cc10x:web-researcher", prompt="Topic: {contract.RESEARCH_REASON}\nReason: Bug investigation stuck — NEEDS_EXTERNAL_RESEARCH\nFile: docs/research/{date}-{topic}-web.md\nTask ID: {web_task_id}")`
+      `Task(subagent_type="cc10x:github-researcher", prompt="Topic: {contract.RESEARCH_REASON}\nReason: Bug investigation stuck — NEEDS_EXTERNAL_RESEARCH\nFile: docs/research/{date}-{topic}-github.md\nTask ID: {github_task_id}")`
+    → Collect: web_file = web_contract.FILE_PATH, github_file = github_contract.FILE_PATH
+    → Re-invoke cc10x:bug-investigator with same prompt + "## External Research Findings\nWeb: {web_file}\nGitHub: {github_file}"
+    → Add SKILL_HINTS: cc10x:research (synthesis guidance)
     → Do NOT create REM-FIX task — research IS the response
-    → STOP after PHASE 3 — do not evaluate rules 1a/1b/2 for this contract
+    → STOP after re-invoke — do not evaluate rules 1a/1b/2 for this contract
 
 0b. If contract.STATUS == "SELF_REMEDIATED":
     → The agent has autonomously created a REM-FIX task and blocked itself (or downstream tasks).
@@ -548,7 +565,8 @@ If count ≥ 3 → AskUserQuestion: "Too many active fix attempts are stacking u
     → Investigation is permanently stuck — cannot proceed without external help or user decision
     → AskUserQuestion: "Bug investigation is completely stuck (BLOCKED). ROOT_CAUSE hint: {contract.ROOT_CAUSE}. How to proceed?"
       Options: "Research externally (Recommended)" | "Create manual fix task" | "Abort workflow"
-    → "Research externally": Execute THREE-PHASE research (same as rule 0c), re-invoke bug-investigator
+    → "Research externally": Spawn parallel researchers (Topic: {contract.ROOT_CAUSE}, Reason: Bug BLOCKED — terminal stuck):
+      `Task(cc10x:web-researcher) ∥ Task(cc10x:github-researcher)` → collect both FILE_PATHs → re-invoke bug-investigator with `## Research Files\nWeb: {web_file}\nGitHub: {github_file}` + SKILL_HINTS: cc10x:research
     → "Create manual fix task": Proceed as rule 1a (create REM-FIX task)
     → "Abort": Record in activeContext.md ## Decisions: "Investigation aborted (BLOCKED): {ROOT_CAUSE}", stop workflow
 
@@ -597,7 +615,8 @@ WHEN any CC10X REM-FIX task COMPLETES:
   │      If count ≥ 2:
   │        → AskUserQuestion: "This workflow has already completed {count} fix cycles. The same issues keep recurring. How to proceed?"
   │          - "Create another fix task" → Continue with steps 1-5 below
-  │          - "Research patterns (Recommended)" → Execute cc10x:github-research THREE-PHASE, pass findings to REM-FIX task
+  │          - "Research patterns (Recommended)" → Spawn parallel researchers (Topic: {current issue pattern}, Reason: Multiple REM-FIX cycles failing):
+            `Task(cc10x:web-researcher) ∥ Task(cc10x:github-researcher)` → collect both FILE_PATHs → pass both file paths to next REM-FIX task description + SKILL_HINTS: cc10x:research
   │          - "Accept known issues" → Record in activeContext.md ## Decisions, proceed directly to verifier/memory-update
   │          - "Abort workflow" → Stop; user resolves manually
   │      If count < 2: Continue to step 1 below
@@ -635,20 +654,19 @@ WHEN any CC10X REM-FIX task COMPLETES:
 
 **2. SKILL_HINTS (Conditional):** Router passes domain skills from CLAUDE.md Complementary Skills table (e.g., `mongodb-agent-skills:*`, `react-best-practices`). Agent calls `Skill(skill="{name}")` after memory load. If not installed, agent notes in Memory Notes and continues.
 
-**Note:** `cc10x:github-research` is router-executed directly (THREE-PHASE) — never passed as SKILL_HINTS.
+**Note:** `cc10x:research` is passed as SKILL_HINTS to planner/bug-investigator when parallel research was executed. It provides synthesis guidance for reading two research files. The router never executes research inline — it spawns `cc10x:web-researcher` + `cc10x:github-researcher` in parallel (same pattern as `code-reviewer ∥ silent-failure-hunter`).
 
 ## Gates (Must Pass)
 
 1. **MEMORY_LOADED** - Before routing
 2. **TASKS_CHECKED** - Check TaskList() for active workflow
 3. **INTENT_CLARIFIED** - User intent is unambiguous (all workflows)
-4. **RESEARCH_EXECUTED** - Before planner (if github-research detected)
-5. **RESEARCH_PERSISTED** - Save to docs/research/ + update activeContext.md (if research was executed)
-6. **REQUIREMENTS_CLARIFIED** - Before invoking agent (BUILD only)
-7. **TASKS_CREATED** - Workflow task hierarchy created
-8. **ALL_TASKS_COMPLETED** - All workflow tasks (including Memory Update) status="completed"
-9. **MEMORY_UPDATED** - Before marking done
-10. **TEST_PROCESSES_CLEANED** - Before running: announce "Cleaning up orphaned test processes..." then run: `pkill -f "vitest|jest|mocha" 2>/dev/null || true` and log result: "Killed: [process names found]" or "None found"
+4. **RESEARCH_COMPLETE** - Before planner/bug-investigator (if research detected) — both parallel agents return FILE_PATH in their Router Contracts; router collects both
+5. **REQUIREMENTS_CLARIFIED** - Before invoking agent (BUILD only)
+6. **TASKS_CREATED** - Workflow task hierarchy created
+7. **ALL_TASKS_COMPLETED** - All workflow tasks (including Memory Update) status="completed"
+8. **MEMORY_UPDATED** - Before marking done
+9. **TEST_PROCESSES_CLEANED** - Before running: announce "Cleaning up orphaned test processes..." then run: `pkill -f "vitest|jest|mocha" 2>/dev/null || true` and log result: "Killed: [process names found]" or "None found"
 
 ## Chain Execution Loop (Task-Based)
 

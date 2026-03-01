@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CC10x BUILD Workflow</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary: #0a0f1a;
+      --bg-secondary: #111827;
+      --bg-tertiary: #1f2937;
+      --border: #374151;
+      --text-primary: #f9fafb;
+      --text-secondary: #9ca3af;
+      --text-muted: #6b7280;
+      --cyan: #22d3ee;
+      --cyan-dim: #0891b2;
+      --green: #10b981;
+      --green-dim: #059669;
+      --red: #ef4444;
+      --orange: #f59e0b;
+      --purple: #a855f7;
+      --pink: #ec4899;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 24px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .logo-text {
+      font-size: 28px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--cyan) 0%, var(--green) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .workflow-badge {
+      background: linear-gradient(135deg, var(--green) 0%, var(--cyan) 100%);
+      color: var(--bg-primary);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 20px;
+      letter-spacing: 0.05em;
+    }
+
+    .header-subtitle {
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: var(--cyan);
+      color: var(--bg-primary);
+    }
+
+    .btn-primary:hover {
+      background: var(--cyan-dim);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary.playing {
+      background: var(--green);
+    }
+
+    .btn-secondary {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: var(--border);
+    }
+
+    /* Main Layout */
+    .main {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      min-height: calc(100vh - 85px);
+    }
+
+    /* Sidebar */
+    .sidebar {
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border);
+      padding: 24px;
+      overflow-y: auto;
+    }
+
+    .section {
+      margin-bottom: 28px;
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* Chain Preview */
+    .chain-preview {
+      background: var(--bg-primary);
+      border-radius: 12px;
+      padding: 16px;
+      border: 1px solid var(--border);
+    }
+
+    .chain-step {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+    }
+
+    .chain-step.active {
+      color: var(--cyan);
+    }
+
+    .chain-step.completed {
+      color: var(--green);
+    }
+
+    .chain-step .icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .chain-step.active .icon {
+      background: var(--cyan);
+      border-color: var(--cyan);
+      color: var(--bg-primary);
+      animation: pulse 1.5s infinite;
+    }
+
+    .chain-step.completed .icon {
+      background: var(--green);
+      border-color: var(--green);
+      color: var(--bg-primary);
+    }
+
+    .chain-step.parallel {
+      color: var(--purple);
+    }
+
+    .chain-step.parallel .icon {
+      background: var(--purple);
+      border-color: var(--purple);
+      color: white;
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.4); }
+      50% { box-shadow: 0 0 0 8px rgba(34, 211, 238, 0); }
+    }
+
+    /* TDD Cycle */
+    .tdd-cycle {
+      display: flex;
+      gap: 8px;
+    }
+
+    .tdd-phase {
+      flex: 1;
+      padding: 12px 8px;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 11px;
+      font-weight: 600;
+      background: var(--bg-tertiary);
+      border: 2px solid transparent;
+      transition: all 0.3s;
+    }
+
+    .tdd-phase.red { border-color: var(--red); color: var(--red); }
+    .tdd-phase.green { border-color: var(--green); color: var(--green); }
+    .tdd-phase.refactor { border-color: var(--cyan); color: var(--cyan); }
+
+    .tdd-phase.active {
+      transform: scale(1.05);
+      box-shadow: 0 0 20px currentColor;
+    }
+
+    .tdd-phase .label {
+      display: block;
+      margin-top: 4px;
+      font-size: 9px;
+      opacity: 0.7;
+    }
+
+    /* Skills */
+    .skills-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .skill-tag {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 10px;
+      font-size: 10px;
+      color: var(--text-secondary);
+      transition: all 0.3s;
+    }
+
+    .skill-tag.active {
+      background: rgba(249, 115, 22, 0.15);
+      border-color: var(--orange);
+      color: var(--orange);
+    }
+
+    .skill-tag.mandatory {
+      position: relative;
+    }
+
+    .skill-tag.mandatory::before {
+      content: '';
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 6px;
+      height: 6px;
+      background: var(--cyan);
+      border-radius: 50%;
+    }
+
+    /* Memory */
+    .memory-files {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .memory-file {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: var(--bg-tertiary);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      font-size: 12px;
+      transition: all 0.3s;
+    }
+
+    .memory-file.active {
+      border-color: var(--pink);
+      background: rgba(236, 72, 153, 0.1);
+    }
+
+    .memory-file .icon {
+      font-size: 16px;
+    }
+
+    .memory-file .name {
+      color: var(--text-primary);
+      font-family: 'SF Mono', Monaco, monospace;
+    }
+
+    .memory-file .desc {
+      color: var(--text-muted);
+      font-size: 10px;
+    }
+
+    /* Canvas */
+    .canvas {
+      position: relative;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(34, 211, 238, 0.03) 0%, transparent 50%),
+        var(--bg-primary);
+    }
+
+    .canvas svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Info Panel */
+    .info-panel {
+      position: absolute;
+      bottom: 24px;
+      left: 24px;
+      right: 24px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px 24px;
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+    }
+
+    .info-step {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 200px;
+    }
+
+    .info-step-number {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--cyan) 0%, var(--green) 100%);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--bg-primary);
+      flex-shrink: 0;
+    }
+
+    .info-step-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .info-step-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .info-divider {
+      width: 1px;
+      height: 50px;
+      background: var(--border);
+    }
+
+    .info-content {
+      flex: 1;
+    }
+
+    .info-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+
+    .info-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .info-tags {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .info-tag {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 4px 8px;
+      font-size: 10px;
+      color: var(--text-secondary);
+    }
+
+    .info-tag.write {
+      background: rgba(16, 185, 129, 0.15);
+      border-color: var(--green);
+      color: var(--green);
+    }
+
+    .info-tag.read {
+      background: rgba(239, 68, 68, 0.15);
+      border-color: var(--red);
+      color: var(--red);
+    }
+
+    /* Node Styles */
+    .node {
+      cursor: pointer;
+      transition: transform 0.2s, filter 0.2s;
+    }
+
+    .node:hover {
+      filter: brightness(1.1);
+    }
+
+    .node.highlighted {
+      filter: drop-shadow(0 0 20px var(--cyan));
+    }
+
+    .node.completed {
+      filter: drop-shadow(0 0 12px var(--green));
+    }
+
+    .node-rect {
+      transition: all 0.3s;
+    }
+
+    .node-title {
+      font-size: 13px;
+      font-weight: 600;
+      fill: var(--bg-primary);
+    }
+
+    .node-subtitle {
+      font-size: 9px;
+      fill: var(--bg-primary);
+      opacity: 0.7;
+    }
+
+    .node-badge {
+      font-size: 8px;
+      font-weight: 700;
+      fill: white;
+    }
+
+    /* Connection Styles */
+    .connection {
+      fill: none;
+      stroke-width: 2;
+      opacity: 0.4;
+      transition: all 0.3s;
+    }
+
+    .connection.active {
+      opacity: 1;
+      stroke-width: 3;
+      filter: drop-shadow(0 0 6px currentColor);
+    }
+
+    .connection.routes { stroke: var(--cyan); }
+    .connection.invokes { stroke: var(--green); stroke-dasharray: 8, 4; }
+    .connection.parallel { stroke: var(--purple); stroke-width: 3; }
+    .connection.memory { stroke: var(--pink); stroke-dasharray: 4, 4; }
+    .connection.skill { stroke: var(--orange); stroke-dasharray: 6, 3; }
+
+    /* Legend */
+    .legend {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .legend-title {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .legend-items {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .legend-line {
+      width: 24px;
+      height: 3px;
+      border-radius: 2px;
+    }
+
+    /* Progress indicator */
+    .progress {
+      position: absolute;
+      top: 24px;
+      left: 24px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .progress-bar {
+      width: 120px;
+      height: 6px;
+      background: var(--bg-tertiary);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--cyan), var(--green));
+      border-radius: 3px;
+      transition: width 0.5s ease;
+    }
+
+    .progress-text {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .progress-text span {
+      color: var(--cyan);
+      font-weight: 600;
+    }
+
+    /* Speed control */
+    .speed-control {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .speed-control label {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .speed-control input[type="range"] {
+      width: 100%;
+      height: 4px;
+      background: var(--bg-tertiary);
+      border-radius: 2px;
+      -webkit-appearance: none;
+    }
+
+    .speed-control input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      background: var(--cyan);
+      border-radius: 50%;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">
+      <div>
+        <div class="logo-text">CC10x</div>
+        <div class="header-subtitle">AI Agent Orchestration</div>
+      </div>
+      <div class="workflow-badge">BUILD WORKFLOW</div>
+    </div>
+    <div class="controls">
+      <button class="btn btn-secondary" id="reset-btn">Reset</button>
+      <button class="btn btn-primary" id="play-btn">
+        <span id="play-icon">▶</span>
+        <span id="play-text">Play Animation</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="sidebar">
+      <div class="section">
+        <div class="section-title">Agent Chain</div>
+        <div class="chain-preview" id="chain-preview">
+          <div class="chain-step" data-step="0">
+            <span class="icon">1</span>
+            <span>router</span>
+          </div>
+          <div class="chain-step" data-step="1">
+            <span class="icon">2</span>
+            <span>component-builder</span>
+          </div>
+          <div class="chain-step parallel" data-step="2">
+            <span class="icon">∥</span>
+            <span>[code-reviewer ∥ silent-failure-hunter]</span>
+          </div>
+          <div class="chain-step" data-step="3">
+            <span class="icon">4</span>
+            <span>integration-verifier</span>
+          </div>
+          <div class="chain-step" data-step="4">
+            <span class="icon">5</span>
+            <span>Memory Update</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">TDD Cycle</div>
+        <div class="tdd-cycle">
+          <div class="tdd-phase red" id="tdd-red">
+            RED
+            <span class="label">Failing Test</span>
+          </div>
+          <div class="tdd-phase green" id="tdd-green">
+            GREEN
+            <span class="label">Make Pass</span>
+          </div>
+          <div class="tdd-phase refactor" id="tdd-refactor">
+            REFACTOR
+            <span class="label">Clean Up</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Loaded Skills</div>
+        <div class="skills-grid" id="skills-grid">
+          <div class="skill-tag mandatory" data-skill="session-memory">session-memory</div>
+          <div class="skill-tag" data-skill="tdd">test-driven-dev</div>
+          <div class="skill-tag" data-skill="code-gen">code-generation</div>
+          <div class="skill-tag" data-skill="verification">verification</div>
+          <div class="skill-tag" data-skill="code-review">code-review</div>
+          <div class="skill-tag" data-skill="architecture">architecture</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Memory Persistence</div>
+        <div class="memory-files" id="memory-files">
+          <div class="memory-file" data-file="activeContext">
+            <span class="icon">📝</span>
+            <div>
+              <div class="name">activeContext.md</div>
+              <div class="desc">Working memory</div>
+            </div>
+          </div>
+          <div class="memory-file" data-file="patterns">
+            <span class="icon">🧩</span>
+            <div>
+              <div class="name">patterns.md</div>
+              <div class="desc">Reusable patterns</div>
+            </div>
+          </div>
+          <div class="memory-file" data-file="progress">
+            <span class="icon">✓</span>
+            <div>
+              <div class="name">progress.md</div>
+              <div class="desc">Verification evidence</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Animation Speed</div>
+        <div class="speed-control">
+          <label>Slow</label>
+          <input type="range" id="speed" min="0.5" max="3" step="0.5" value="1">
+          <label>Fast</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="canvas">
+      <svg id="canvas" viewBox="0 0 900 600">
+        <defs>
+          <marker id="arrow-cyan" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#22d3ee"/>
+          </marker>
+          <marker id="arrow-green" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#10b981"/>
+          </marker>
+          <marker id="arrow-purple" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#a855f7"/>
+          </marker>
+          <marker id="arrow-pink" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#ec4899"/>
+          </marker>
+          <marker id="arrow-orange" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#f59e0b"/>
+          </marker>
+
+          <linearGradient id="grad-router" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#22d3ee"/>
+            <stop offset="100%" style="stop-color:#a855f7"/>
+          </linearGradient>
+          <linearGradient id="grad-builder" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#10b981"/>
+            <stop offset="100%" style="stop-color:#22d3ee"/>
+          </linearGradient>
+          <linearGradient id="grad-reviewer" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#3b82f6"/>
+            <stop offset="100%" style="stop-color:#22d3ee"/>
+          </linearGradient>
+          <linearGradient id="grad-hunter" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#ef4444"/>
+            <stop offset="100%" style="stop-color:#f59e0b"/>
+          </linearGradient>
+          <linearGradient id="grad-verifier" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#f59e0b"/>
+            <stop offset="100%" style="stop-color:#10b981"/>
+          </linearGradient>
+          <linearGradient id="grad-memory" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#ec4899"/>
+            <stop offset="100%" style="stop-color:#a855f7"/>
+          </linearGradient>
+        </defs>
+
+        <g id="connections"></g>
+        <g id="nodes"></g>
+      </svg>
+
+      <div class="progress">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+        </div>
+        <div class="progress-text">
+          Step <span id="current-step">0</span> of <span id="total-steps">9</span>
+        </div>
+      </div>
+
+      <div class="legend">
+        <div class="legend-title">Connection Types</div>
+        <div class="legend-items">
+          <div class="legend-item">
+            <div class="legend-line" style="background: #22d3ee"></div>
+            <span>Routes</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-line" style="background: repeating-linear-gradient(90deg, #10b981 0, #10b981 8px, transparent 8px, transparent 12px)"></div>
+            <span>Invokes</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-line" style="background: #a855f7; height: 4px"></div>
+            <span>Parallel</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-line" style="background: repeating-linear-gradient(90deg, #ec4899 0, #ec4899 4px, transparent 4px, transparent 8px)"></div>
+            <span>Memory</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-panel" id="info-panel">
+        <div class="info-step">
+          <div class="info-step-number" id="info-number">0</div>
+          <div>
+            <div class="info-step-label">Current Step</div>
+            <div class="info-step-name" id="info-name">Ready to Start</div>
+          </div>
+        </div>
+        <div class="info-divider"></div>
+        <div class="info-content">
+          <div class="info-title" id="info-title">BUILD Workflow</div>
+          <div class="info-desc" id="info-desc">
+            TDD-first implementation workflow. Click Play to watch how CC10x orchestrates agents to build features with automated testing, parallel code review, and memory persistence.
+          </div>
+          <div class="info-tags" id="info-tags">
+            <span class="info-tag">TDD-First</span>
+            <span class="info-tag">Parallel Review</span>
+            <span class="info-tag">Task-Enforced</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =============================================
+    // STATE
+    // =============================================
+    const state = {
+      isPlaying: false,
+      currentStep: 0,
+      speed: 1,
+      visitedNodes: new Set(),
+      activeConnections: new Set()
+    };
+
+    // =============================================
+    // DATA
+    // =============================================
+    const nodes = [
+      { id: 'router', label: 'CC10x Router', subtitle: 'Entry Point', x: 400, y: 40, w: 140, h: 50, gradient: 'grad-router' },
+      { id: 'build', label: 'BUILD', subtitle: 'Workflow Selected', x: 400, y: 130, w: 100, h: 40, gradient: 'grad-builder' },
+      { id: 'component-builder', label: 'component-builder', subtitle: 'TDD: RED→GREEN→REFACTOR', x: 400, y: 210, w: 180, h: 55, gradient: 'grad-builder', mode: 'WRITE' },
+      { id: 'code-reviewer', label: 'code-reviewer', subtitle: 'Security + Quality', x: 250, y: 310, w: 160, h: 50, gradient: 'grad-reviewer', mode: 'READ' },
+      { id: 'silent-failure-hunter', label: 'silent-failure-hunter', subtitle: 'Error Handling Audit', x: 530, y: 310, w: 175, h: 50, gradient: 'grad-hunter', mode: 'READ' },
+      { id: 'integration-verifier', label: 'integration-verifier', subtitle: 'E2E • exit 0 required', x: 400, y: 400, w: 170, h: 50, gradient: 'grad-verifier', mode: 'READ' },
+      { id: 'memory-update', label: 'Memory Update', subtitle: 'Task-Enforced Persistence', x: 400, y: 490, w: 160, h: 50, gradient: 'grad-memory' }
+    ];
+
+    const connections = [
+      { from: 'router', to: 'build', type: 'routes' },
+      { from: 'build', to: 'component-builder', type: 'invokes' },
+      { from: 'component-builder', to: 'code-reviewer', type: 'parallel' },
+      { from: 'component-builder', to: 'silent-failure-hunter', type: 'parallel' },
+      { from: 'code-reviewer', to: 'integration-verifier', type: 'invokes' },
+      { from: 'silent-failure-hunter', to: 'integration-verifier', type: 'invokes' },
+      { from: 'integration-verifier', to: 'memory-update', type: 'invokes' }
+    ];
+
+    const steps = [
+      {
+        node: 'router',
+        title: 'Request Arrives',
+        desc: 'User request detected. Router analyzes keywords: "build", "implement", "create", "feature". Memory is loaded from .claude/cc10x/',
+        skills: ['session-memory'],
+        memory: ['activeContext', 'patterns', 'progress'],
+        chainStep: 0
+      },
+      {
+        node: 'build',
+        title: 'BUILD Workflow Selected',
+        desc: 'Decision tree selects BUILD workflow. Tasks are created with proper dependencies. component-builder task is unblocked.',
+        skills: [],
+        memory: [],
+        chainStep: 0
+      },
+      {
+        node: 'component-builder',
+        title: 'component-builder Starts',
+        desc: 'TDD cycle begins. Agent loads 4 skills via frontmatter. Starting RED phase: write a failing test FIRST.',
+        skills: ['session-memory', 'tdd', 'code-gen', 'verification'],
+        memory: [],
+        tdd: 'red',
+        chainStep: 1
+      },
+      {
+        node: 'component-builder',
+        title: 'RED Phase Complete',
+        desc: 'Failing test written. Test fails for the RIGHT reason (exit 1). Moving to GREEN phase.',
+        skills: ['session-memory', 'tdd', 'code-gen', 'verification'],
+        memory: [],
+        tdd: 'green',
+        chainStep: 1
+      },
+      {
+        node: 'component-builder',
+        title: 'GREEN Phase Complete',
+        desc: 'Minimal implementation written. Test now passes (exit 0). Moving to REFACTOR phase.',
+        skills: ['session-memory', 'tdd', 'code-gen', 'verification'],
+        memory: [],
+        tdd: 'refactor',
+        chainStep: 1
+      },
+      {
+        node: 'code-reviewer',
+        title: 'PARALLEL: Review Phase',
+        desc: 'code-reviewer + silent-failure-hunter run TOGETHER in parallel. Both are READ-ONLY with Memory Notes output.',
+        skills: ['code-review', 'verification'],
+        memory: [],
+        parallel: 'silent-failure-hunter',
+        chainStep: 2
+      },
+      {
+        node: 'integration-verifier',
+        title: 'Integration Verification',
+        desc: 'Waits for BOTH reviewers. Runs npm test, npm build, npm lint. All must exit 0.',
+        skills: ['architecture'],
+        memory: [],
+        chainStep: 3
+      },
+      {
+        node: 'memory-update',
+        title: 'Memory Persistence',
+        desc: 'Task-enforced Memory Update. Collects Memory Notes from READ-ONLY agents. Persists learnings, patterns, and verification evidence.',
+        skills: [],
+        memory: ['activeContext', 'patterns', 'progress'],
+        chainStep: 4
+      },
+      {
+        node: 'memory-update',
+        title: 'BUILD Complete!',
+        desc: 'All tasks completed. Memory updated. Feature implemented with TDD, reviewed in parallel, verified, and persisted.',
+        skills: [],
+        memory: ['activeContext', 'patterns', 'progress'],
+        chainStep: 4
+      }
+    ];
+
+    // =============================================
+    // DOM
+    // =============================================
+    const canvas = document.getElementById('canvas');
+    const nodesGroup = document.getElementById('nodes');
+    const connectionsGroup = document.getElementById('connections');
+    const playBtn = document.getElementById('play-btn');
+    const resetBtn = document.getElementById('reset-btn');
+    const speedInput = document.getElementById('speed');
+
+    // =============================================
+    // RENDER
+    // =============================================
+    function getNode(id) {
+      return nodes.find(n => n.id === id);
+    }
+
+    function drawConnection(conn) {
+      const from = getNode(conn.from);
+      const to = getNode(conn.to);
+
+      const x1 = from.x + from.w / 2;
+      const y1 = from.y + from.h;
+      const x2 = to.x + to.w / 2;
+      const y2 = to.y;
+
+      const midY = (y1 + y2) / 2;
+      const path = `M ${x1} ${y1} C ${x1} ${midY}, ${x2} ${midY}, ${x2} ${y2}`;
+
+      const markers = {
+        routes: 'arrow-cyan',
+        invokes: 'arrow-green',
+        parallel: 'arrow-purple',
+        memory: 'arrow-pink'
+      };
+
+      const pathEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      pathEl.setAttribute('d', path);
+      pathEl.setAttribute('class', `connection ${conn.type}`);
+      pathEl.setAttribute('marker-end', `url(#${markers[conn.type]})`);
+      pathEl.setAttribute('data-from', conn.from);
+      pathEl.setAttribute('data-to', conn.to);
+
+      return pathEl;
+    }
+
+    function drawNode(node) {
+      const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      g.setAttribute('class', 'node');
+      g.setAttribute('data-id', node.id);
+
+      const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      rect.setAttribute('x', node.x);
+      rect.setAttribute('y', node.y);
+      rect.setAttribute('width', node.w);
+      rect.setAttribute('height', node.h);
+      rect.setAttribute('rx', 10);
+      rect.setAttribute('fill', `url(#${node.gradient})`);
+      rect.setAttribute('class', 'node-rect');
+
+      const title = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      title.setAttribute('x', node.x + node.w / 2);
+      title.setAttribute('y', node.y + (node.h > 50 ? 22 : 18));
+      title.setAttribute('text-anchor', 'middle');
+      title.setAttribute('class', 'node-title');
+      title.textContent = node.label;
+
+      const subtitle = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      subtitle.setAttribute('x', node.x + node.w / 2);
+      subtitle.setAttribute('y', node.y + (node.h > 50 ? 38 : 32));
+      subtitle.setAttribute('text-anchor', 'middle');
+      subtitle.setAttribute('class', 'node-subtitle');
+      subtitle.textContent = node.subtitle;
+
+      g.appendChild(rect);
+      g.appendChild(title);
+      g.appendChild(subtitle);
+
+      if (node.mode) {
+        const badgeRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        const badgeX = node.x + node.w - 40;
+        const badgeY = node.y + 5;
+        badgeRect.setAttribute('x', badgeX);
+        badgeRect.setAttribute('y', badgeY);
+        badgeRect.setAttribute('width', 35);
+        badgeRect.setAttribute('height', 14);
+        badgeRect.setAttribute('rx', 4);
+        badgeRect.setAttribute('fill', node.mode === 'WRITE' ? '#065f46' : '#7c2d12');
+
+        const badgeText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        badgeText.setAttribute('x', badgeX + 17);
+        badgeText.setAttribute('y', badgeY + 10);
+        badgeText.setAttribute('text-anchor', 'middle');
+        badgeText.setAttribute('class', 'node-badge');
+        badgeText.textContent = node.mode;
+
+        g.appendChild(badgeRect);
+        g.appendChild(badgeText);
+      }
+
+      return g;
+    }
+
+    function render() {
+      connectionsGroup.innerHTML = '';
+      nodesGroup.innerHTML = '';
+
+      connections.forEach(conn => {
+        connectionsGroup.appendChild(drawConnection(conn));
+      });
+
+      nodes.forEach(node => {
+        nodesGroup.appendChild(drawNode(node));
+      });
+
+      updateVisuals();
+    }
+
+    function updateVisuals() {
+      // Update nodes
+      document.querySelectorAll('.node').forEach(n => {
+        const id = n.getAttribute('data-id');
+        n.classList.remove('highlighted', 'completed');
+        if (state.visitedNodes.has(id)) {
+          n.classList.add('completed');
+        }
+      });
+
+      if (state.currentStep < steps.length) {
+        const currentNode = document.querySelector(`.node[data-id="${steps[state.currentStep].node}"]`);
+        if (currentNode) {
+          currentNode.classList.remove('completed');
+          currentNode.classList.add('highlighted');
+        }
+      }
+
+      // Update connections
+      document.querySelectorAll('.connection').forEach(c => {
+        c.classList.remove('active');
+        const from = c.getAttribute('data-from');
+        const to = c.getAttribute('data-to');
+        if (state.activeConnections.has(`${from}-${to}`)) {
+          c.classList.add('active');
+        }
+      });
+
+      // Update chain preview
+      document.querySelectorAll('.chain-step').forEach(s => {
+        const step = parseInt(s.dataset.step);
+        s.classList.remove('active', 'completed');
+        if (state.currentStep < steps.length) {
+          const chainStep = steps[state.currentStep].chainStep;
+          if (step < chainStep) {
+            s.classList.add('completed');
+          } else if (step === chainStep) {
+            s.classList.add('active');
+          }
+        }
+      });
+
+      // Update TDD phases
+      const step = steps[state.currentStep];
+      document.querySelectorAll('.tdd-phase').forEach(p => p.classList.remove('active'));
+      if (step && step.tdd) {
+        document.getElementById(`tdd-${step.tdd}`).classList.add('active');
+      }
+
+      // Update skills
+      document.querySelectorAll('.skill-tag').forEach(s => s.classList.remove('active'));
+      if (step && step.skills) {
+        step.skills.forEach(skill => {
+          const el = document.querySelector(`.skill-tag[data-skill="${skill}"]`);
+          if (el) el.classList.add('active');
+        });
+      }
+
+      // Update memory files
+      document.querySelectorAll('.memory-file').forEach(m => m.classList.remove('active'));
+      if (step && step.memory) {
+        step.memory.forEach(file => {
+          const el = document.querySelector(`.memory-file[data-file="${file}"]`);
+          if (el) el.classList.add('active');
+        });
+      }
+
+      // Update progress
+      const progress = (state.currentStep / (steps.length - 1)) * 100;
+      document.getElementById('progress-fill').style.width = `${progress}%`;
+      document.getElementById('current-step').textContent = state.currentStep + 1;
+      document.getElementById('total-steps').textContent = steps.length;
+
+      // Update info panel
+      if (step) {
+        document.getElementById('info-number').textContent = state.currentStep + 1;
+        document.getElementById('info-name').textContent = step.node;
+        document.getElementById('info-title').textContent = step.title;
+        document.getElementById('info-desc').textContent = step.desc;
+
+        const tags = [];
+        if (step.tdd) tags.push(`TDD: ${step.tdd.toUpperCase()}`);
+        if (step.parallel) tags.push('PARALLEL EXECUTION');
+        if (step.skills.length) tags.push(`${step.skills.length} skills loaded`);
+        if (step.memory.length) tags.push('Memory I/O');
+
+        const tagsEl = document.getElementById('info-tags');
+        tagsEl.innerHTML = tags.map(t => `<span class="info-tag">${t}</span>`).join('');
+      }
+    }
+
+    // =============================================
+    // ANIMATION
+    // =============================================
+    function advanceStep() {
+      if (!state.isPlaying || state.currentStep >= steps.length - 1) {
+        stopAnimation();
+        return;
+      }
+
+      const step = steps[state.currentStep];
+      state.visitedNodes.add(step.node);
+
+      // Activate connections
+      const nodeConnections = connections.filter(c => c.from === step.node || c.to === step.node);
+      nodeConnections.forEach(c => {
+        state.activeConnections.add(`${c.from}-${c.to}`);
+      });
+
+      state.currentStep++;
+      updateVisuals();
+
+      setTimeout(advanceStep, 2000 / state.speed);
+    }
+
+    function startAnimation() {
+      state.isPlaying = true;
+      playBtn.classList.add('playing');
+      document.getElementById('play-icon').textContent = '⏸';
+      document.getElementById('play-text').textContent = 'Pause';
+      advanceStep();
+    }
+
+    function stopAnimation() {
+      state.isPlaying = false;
+      playBtn.classList.remove('playing');
+      document.getElementById('play-icon').textContent = '▶';
+      document.getElementById('play-text').textContent = 'Play Animation';
+    }
+
+    function resetAnimation() {
+      stopAnimation();
+      state.currentStep = 0;
+      state.visitedNodes.clear();
+      state.activeConnections.clear();
+      updateVisuals();
+    }
+
+    // =============================================
+    // EVENT LISTENERS
+    // =============================================
+    playBtn.addEventListener('click', () => {
+      if (state.isPlaying) {
+        stopAnimation();
+      } else {
+        if (state.currentStep >= steps.length - 1) {
+          resetAnimation();
+        }
+        startAnimation();
+      }
+    });
+
+    resetBtn.addEventListener('click', resetAnimation);
+
+    speedInput.addEventListener('input', (e) => {
+      state.speed = parseFloat(e.target.value);
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        playBtn.click();
+      } else if (e.code === 'KeyR') {
+        resetAnimation();
+      }
+    });
+
+    // =============================================
+    // INIT
+    // =============================================
+    render();
+  </script>
+</body>
+</html>
