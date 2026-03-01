@@ -1,6 +1,6 @@
 # CC10x Orchestration Bible (Plugin-Only Source of Truth)
 
-> **Last synced with agents/skills:** 2026-03-01 (v6.0.35 — bug-investigator TDD override fix, parallel REM-FIX merge, REM-EVIDENCE hint, BUILD clarifications persist, workflow boundary markers, NO_GIT pre-check, HTML build skip, main-context constraint, concurrent session warning) | **Status:** IN SYNC
+> **Last synced with agents/skills:** 2026-03-01 (v6.0.38 — SELF_REMEDIATED protocol, REVERT_RECOMMENDED/LIMITATION_ACCEPTED inline, DEBUG-RESET→bug-investigator, Parent Workflow ID in invocation template, behavioral invariant registry) | **Status:** IN SYNC
 
 > This document is derived **only** from `plugins/cc10x/` (agents + skills).
 > Ignore all other docs. Do not trust external narratives.
