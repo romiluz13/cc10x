@@ -45,6 +45,19 @@ Read(file_path=".claude/cc10x/patterns.md")  # Check Common Gotchas!
 Read(file_path=".claude/cc10x/progress.md")  # Prior attempts + evidence
 ```
 
+## DEBUG-RESET Marker (MANDATORY — Write Before Any Investigation)
+
+**After Memory First, before any investigation step, write your own scope marker:**
+```
+Edit(file_path=".claude/cc10x/activeContext.md",
+     old_string="## Recent Changes",
+     new_string="## Recent Changes\n[DEBUG-RESET: wf:{PARENT_WORKFLOW_ID}]")
+Read(file_path=".claude/cc10x/activeContext.md")  # VERIFY marker written
+```
+Replace `{TASK_ID}` with the **Parent Workflow ID** from your `## Task Context` prompt — NOT your own Task ID. The parent workflow ID is the `CC10X DEBUG:` task that started this investigation. This ensures the anchor matches what the Memory Update task expects.
+
+**Why:** The Memory Update task uses `[DEBUG-RESET: wf:{TASK_ID}]` as an anchor to trim Recent Changes to this workflow only. Without this marker, memory accumulates across workflows.
+
 ## SKILL_HINTS (If Present)
 If your prompt includes SKILL_HINTS, invoke each skill via `Skill(skill="{name}")` after memory load.
 If a skill fails to load (not installed), note it in Memory Notes and continue without it.

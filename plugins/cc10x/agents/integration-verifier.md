@@ -128,25 +128,34 @@ EVIDENCE:
 
 ### Rollback Decision (IF FAIL)
 
-**When verification fails, choose ONE:**
+**When verification fails, choose ONE and act on it inline before returning:**
 
 **Option A (default): Self-Heal**
 - Blockers are fixable without architectural changes
 - Execute the Self-Healing Protocol described above (TaskCreate, TaskUpdate addBlockedBy).
 - Output `STATUS: SELF_REMEDIATED` in your Router Contract.
 
-**Option B: Revert Branch (if using feature branch)**
-- Verification reveals fundamental design issue
-- Run: `git log --oneline -10` to identify commits
-- Recommend: Revert commits, restart with revised plan
+**Option B: Revert Branch — ask user NOW before returning**
+- Verification reveals fundamental design issue (architectural mismatch, wrong abstraction, etc.)
+- You MUST ask the user inline before returning your Router Contract:
+  ```
+  AskUserQuestion: "Fundamental design issue found: {reason for failure}. How to proceed?"
+  Options: "Revert branch (Recommended)" | "Create fix task instead"
+  ```
+  - If "Revert branch": Record decision in Memory Notes under Learnings, output `STATUS: REVERT_RECOMMENDED` in Router Contract
+  - If "Create fix task instead": Proceed as Option A (Self-Healing Protocol above)
 
-**Option C: Document & Continue**
+**Option C: Document & Continue — ask user NOW before returning**
 - Acceptable to ship with known limitation
-- Document limitation in findings
-- Get user approval before proceeding
+- You MUST ask the user inline before returning your Router Contract:
+  ```
+  AskUserQuestion: "Known limitation found: {description of limitation}. Accept and continue?"
+  Options: "Accept limitation (document it)" | "Fix before proceeding"
+  ```
+  - If "Accept limitation": Record limitation in Memory Notes under Learnings, output `STATUS: LIMITATION_ACCEPTED` in Router Contract
+  - If "Fix before proceeding": Proceed as Option A (Self-Healing Protocol above)
 
 **Decision:** [Option chosen]
-**For Router Contract:** Set CHOSEN_OPTION to A, B, or C matching your Decision above.
 **Rationale:** [Why this choice]
 
 ### Findings
@@ -170,18 +179,18 @@ BLOCKERS:
 
 ### Router Contract (MACHINE-READABLE)
 ```yaml
-STATUS: PASS | FAIL
+STATUS: PASS | FAIL | SELF_REMEDIATED | REVERT_RECOMMENDED | LIMITATION_ACCEPTED
 SCENARIOS_TOTAL: [Y from X/Y]
 SCENARIOS_PASSED: [X from X/Y]
 BLOCKERS: [count from BLOCKERS_COUNT]
-BLOCKING: [true if STATUS=FAIL]
-REQUIRES_REMEDIATION: [true if BLOCKERS > 0]
+BLOCKING: [true if STATUS=FAIL or STATUS=REVERT_RECOMMENDED]
+REQUIRES_REMEDIATION: [true if BLOCKERS > 0 and STATUS not in REVERT_RECOMMENDED, LIMITATION_ACCEPTED]
 REMEDIATION_REASON: null | "Fix E2E failures: {summary of BLOCKERS list}"
-CHOSEN_OPTION: A | B | C  # A=create fix task (default), B=recommend branch revert, C=document known limitation and continue
+CHOSEN_OPTION: A | B | C  # A=create fix task (default), B=revert branch (user chose revert — see REVERT_RECOMMENDED), C=accept limitation (user chose accept — see LIMITATION_ACCEPTED)
 MEMORY_NOTES:
   learnings: ["Integration insights"]
   patterns: ["Edge cases discovered"]
   verification: ["E2E: {SCENARIOS_PASSED}/{SCENARIOS_TOTAL} passed"]
 ```
-**CONTRACT RULE:** STATUS=PASS requires BLOCKERS=0 and SCENARIOS_PASSED=SCENARIOS_TOTAL. STATUS=FAIL requires CHOSEN_OPTION to be set (A, B, or C).
+**CONTRACT RULE:** STATUS=PASS requires BLOCKERS=0 and SCENARIOS_PASSED=SCENARIOS_TOTAL. STATUS=FAIL requires CHOSEN_OPTION=A (self-heal via TaskCreate). STATUS=REVERT_RECOMMENDED means user confirmed revert via inline AskUserQuestion (Option B path). STATUS=LIMITATION_ACCEPTED means user accepted limitation via inline AskUserQuestion (Option C path).
 ```

@@ -319,13 +319,7 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [planner_task_id] })
    → If "Abort": Record in activeContext.md ## Decisions: "Research declined", stop workflow
 
    **Debug Workflow Scoping:**
-   - At the START of each new DEBUG workflow, write a RESET marker using an explicit Edit call so the bug-investigator knows where to begin counting attempts:
-     ```
-     Edit(file_path=".claude/cc10x/activeContext.md",
-          old_string="## Recent Changes",
-          new_string="## Recent Changes\n[DEBUG-RESET: wf:{parent_task_id}]")
-     Read(file_path=".claude/cc10x/activeContext.md")  # VERIFY marker written
-     ```
+   - Note: bug-investigator writes its own `[DEBUG-RESET: wf:{task_id}]` marker at startup — see agent file.
 4. **Create task hierarchy** (see Task-Based Orchestration above)
 5. **Start chain execution** (pass research file path if step 3 was executed)
 6. Update memory → Add to Common Gotchas when all tasks completed
@@ -510,7 +504,7 @@ If count ≥ 3 → AskUserQuestion: "Too many active fix attempts are stacking u
     → DO NOT force the agent's task to "completed" in the fallback check. Wait for the fix task to execute natively.
     → STOP evaluating rules 1a/1b/2 for this agent's contract.
 
-1a. If contract.BLOCKING == true AND contract.STATUS NOT IN ["NEEDS_CLARIFICATION", "INVESTIGATING", "BLOCKED", "SELF_REMEDIATED"] AND contract.NEEDS_EXTERNAL_RESEARCH != true AND NOT (contract.STATUS == "FAIL" AND contract.CHOSEN_OPTION IN ["B","C"]):
+1a. If contract.BLOCKING == true AND contract.STATUS NOT IN ["NEEDS_CLARIFICATION", "INVESTIGATING", "BLOCKED", "SELF_REMEDIATED", "REVERT_RECOMMENDED", "LIMITATION_ACCEPTED"] AND contract.NEEDS_EXTERNAL_RESEARCH != true:
     **Parallel blocking merge (pre-check — BUILD only, runs before TaskCreate):**
     → If currently processing parallel review phase (code-reviewer ∥ silent-failure-hunter outputs in same response):
       → Check sibling agent's Router Contract in this same response — does sibling ALSO have BLOCKING=true?
@@ -576,19 +570,9 @@ If count ≥ 3 → AskUserQuestion: "Too many active fix attempts are stacking u
     → "Create manual fix task": Proceed as rule 1a (create REM-FIX task)
     → "Abort": Record in activeContext.md ## Decisions: "Investigation aborted (BLOCKED): {ROOT_CAUSE}", stop workflow
 
-2d. If integration-verifier STATUS=FAIL AND contract.CHOSEN_OPTION is set:
-    → If CHOSEN_OPTION == "A": Create REM-FIX task (existing behavior — unchanged)
-    → If CHOSEN_OPTION == "B":
-        AskUserQuestion: "Verifier recommends REVERTING the branch — fundamental design issue found: {REMEDIATION_REASON ?? 'see verifier output'}. How to proceed?"
-        Options: "Revert branch (Recommended)" | "Create fix task instead"
-        - "Revert": Suggest git revert steps, stop workflow (record in memory)
-        - "Create fix task": Proceed as CHOSEN_OPTION=A
-    → If CHOSEN_OPTION == "C":
-        AskUserQuestion: "Verifier wants to proceed with this known limitation: {REMEDIATION_REASON ?? 'see verifier output'}. Accept and continue?"
-        Options: "Accept limitation (document it)" | "Fix before proceeding"
-        - "Accept": Record in activeContext.md ## Decisions, proceed to Memory Update
-        - "Fix": Proceed as CHOSEN_OPTION=A
-    → If CHOSEN_OPTION not set (legacy behavior): Proceed as CHOSEN_OPTION=A
+2d. If integration-verifier STATUS=REVERT_RECOMMENDED: Log decision, suggest git revert steps, stop workflow (record in memory). Note: user already confirmed revert in-agent.
+2d. If integration-verifier STATUS=LIMITATION_ACCEPTED: Record acceptance in activeContext.md ## Decisions, proceed to Memory Update. Note: user already accepted in-agent.
+2d. If integration-verifier STATUS=FAIL AND contract.CHOSEN_OPTION=="A" (or not set): Create REM-FIX task (existing behavior). Note: B/C decisions are handled inline by the verifier — see agent file.
 
 3. Collect contract.MEMORY_NOTES for workflow-final persistence
 
@@ -704,6 +688,7 @@ WHEN any CC10X REM-FIX task COMPLETES:
    - Pass task ID in prompt:
      Task(subagent_type="cc10x:{agent}", prompt="
        Your task ID: {taskId}
+       Parent Workflow ID: {parent_task_id}   (the CC10X DEBUG: parent task, not your own task ID)
        User request: {request}
        Requirements: {requirements}
        Memory: {activeContext}
