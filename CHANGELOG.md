@@ -1,5 +1,31 @@
 # Changelog
 
+## [6.0.37] - 2026-03-01
+
+### Changed (Architectural — Agent Decentralization)
+
+Router logic moved to the agents that own it. The router routes; agents act.
+
+**Move 1 — DEBUG-RESET marker → `bug-investigator`**
+- Router: 8-line "Debug Workflow Scoping" block → 1-line pointer
+- `bug-investigator`: new `## DEBUG-RESET Marker` section writes `[DEBUG-RESET: wf:{PARENT_WORKFLOW_ID}]` at startup (before any investigation), using the parent DEBUG workflow task ID passed by the router
+- Router agent invocation template: now passes `Parent Workflow ID: {parent_task_id}` to all agents
+
+**Move 2 — CHOSEN_OPTION B/C handling → `integration-verifier`**
+- `integration-verifier`: Options B (revert branch) and C (accept limitation) now use inline `AskUserQuestion` before returning — verifier owns the user interaction
+- New STATUS values: `REVERT_RECOMMENDED` (user confirmed revert) and `LIMITATION_ACCEPTED` (user accepted limitation)
+- Router rule 2d: 15 lines → 2-line handler for the two new STATUS values
+- Router rule 1a NOT IN list: updated to include `REVERT_RECOMMENDED` and `LIMITATION_ACCEPTED`
+- `integration-verifier` CONTRACT RULE: rewritten to accurately describe all STATUS values
+
+**Net result:** Router 816 → 801 lines (−15). Agents are more self-contained. Logic lives where it belongs.
+
+### Notes
+- v6.0.34–v6.0.36 were intermediate patch releases (correctness fixes + compression); v6.0.37 is the first architectural release
+- Move 3 (INVESTIGATING loop cap) was confirmed already removed in v6.0.30–v6.0.33
+
+---
+
 ## [6.0.33] - 2026-03-01
 
 ### Fixed (Critical)
