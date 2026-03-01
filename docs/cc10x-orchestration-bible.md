@@ -1,6 +1,6 @@
 # CC10x Orchestration Bible (Plugin-Only Source of Truth)
 
-> **Last synced with agents/skills:** 2026-03-01 (v6.0.38 — SELF_REMEDIATED protocol, REVERT_RECOMMENDED/LIMITATION_ACCEPTED inline, DEBUG-RESET→bug-investigator, Parent Workflow ID in invocation template, behavioral invariant registry) | **Status:** IN SYNC
+> **Last synced with agents/skills:** 2026-03-01 (v7.0.2 — plan-review-gate inline in planner, silent-failure-hunter CONTRACT RULE added, integration-verifier CONTRACT RULE corrected, 32 consistency fixes, all v6+v7 changes) | **Status:** IN SYNC
 
 > This document is derived **only** from `plugins/cc10x/` (agents + skills).
 > Ignore all other docs. Do not trust external narratives.
@@ -240,9 +240,9 @@ flowchart LR
 `code-reviewer` only
 
 ### PLAN Chain
-`planner` → (step 5b) plan-review-gate skill (3 adversarial reviewers: Feasibility, Completeness, Scope — all must PASS; skip for trivial plans)
+`planner` — runs plan-review-gate inline after saving plan (Skill() call inside planner; inline self-review: Feasibility, Completeness, Scope checks using planner's own tools)
 
-**Note:** plan-review-gate runs as a `Skill()` call, not as a chain agent. BUILD/DEBUG/REVIEW chains are unaffected.
+**Note:** plan-review-gate runs inside the planner agent's context — not a separate router step. BUILD/DEBUG/REVIEW chains are unaffected.
 
 ---
 
@@ -705,10 +705,9 @@ These skills are invoked via `Skill()` and do NOT participate in BUILD/DEBUG/REV
 
 | Skill | Trigger | What It Does |
 |-------|---------|-------------|
-| `cc10x:plan-review-gate` | Called from router PLAN step 5b after planner | 3 adversarial reviewers (Feasibility, Completeness, Scope) in parallel; all must PASS; max 3 iterations then ESCALATION AskUserQuestion |
-| `cc10x:self-reflect` | User-invoked (`/self-reflect`) | Mines session context for learnings, presents candidates, writes approved insights to patterns.md using Read-Edit-Verify |
+| `cc10x:plan-review-gate` | Called by planner agent after saving plan (`Skill()` inline in planner context) | Inline self-review: 3 sequential checks (Feasibility, Completeness, Scope) using planner's Read/Grep/Glob. GATE_PASS / GATE_FAIL output. Max 3 self-correction iterations then AskUserQuestion escalation. No subagents spawned. |
 
-**Safety note:** These skills run in the main assistant context. If they fail, the failure is visible to the user immediately. They cannot silently corrupt BUILD/DEBUG/REVIEW chains.
+**Safety note:** This skill runs inside the planner agent's context (no subagent spawning). It cannot silently corrupt BUILD/DEBUG/REVIEW chains.
 
 ---
 

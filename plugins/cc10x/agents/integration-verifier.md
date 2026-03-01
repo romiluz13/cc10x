@@ -195,5 +195,5 @@ MEMORY_NOTES:
   patterns: ["Edge cases discovered"]
   verification: ["E2E: {SCENARIOS_PASSED}/{SCENARIOS_TOTAL} passed"]
 ```
-**CONTRACT RULE:** STATUS=PASS requires BLOCKERS=0 and SCENARIOS_PASSED=SCENARIOS_TOTAL. STATUS=FAIL requires CHOSEN_OPTION=A (self-heal via TaskCreate). STATUS=REVERT_RECOMMENDED means user confirmed revert via inline AskUserQuestion (Option B path). STATUS=LIMITATION_ACCEPTED means user accepted limitation via inline AskUserQuestion (Option C path).
+**CONTRACT RULE:** STATUS=PASS requires BLOCKERS=0 and SCENARIOS_PASSED=SCENARIOS_TOTAL. STATUS=SELF_REMEDIATED means Option A was taken (self-heal via TaskCreate — agent created fix task and blocked downstream). STATUS=REVERT_RECOMMENDED means user confirmed revert via inline AskUserQuestion (Option B path). STATUS=LIMITATION_ACCEPTED means user accepted limitation via inline AskUserQuestion (Option C path).
 ```
