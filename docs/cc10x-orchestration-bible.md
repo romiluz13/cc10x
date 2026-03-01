@@ -96,9 +96,10 @@ Agents spawned via Task() run in isolated context windows by default — they ca
 - `code-review-patterns` — Review methodology (code-reviewer, silent-failure-hunter)
 - `verification-before-completion` — Verification gates (4 agents)
 - `planning-patterns` — Plan writing (planner)
-- `architecture-patterns` — Architecture design (5 agents)
+- `brainstorming` — Idea exploration (router PLAN workflow in main context — NOT planner frontmatter)
+- `architecture-patterns` — Architecture design (all 6 agents)
 - `frontend-patterns` — Frontend patterns (all 6 agents)
-- `github-research` — External research (conditional via SKILL_HINTS)
+- `github-research` — External research (router-executed via THREE-PHASE in PLAN/DEBUG — NOT passed as SKILL_HINTS)
 
 **Why this separation:**
 1. **Skills are reusable** — `architecture-patterns` loads into 5 different agents. One source of truth for architecture rules.
@@ -512,16 +513,16 @@ When any `CC10X REM-FIX:` task is created (code/test changes required), the foll
 
 ```mermaid
 flowchart TD
-    A[Remediation Task Created] --> B{Code changes?}
-    B -->|No: REM-EVIDENCE| C[Complete remediation]
-    B -->|Yes: REM-FIX| D[Complete remediation]
-    D --> E[Create re-review tasks]
-    E --> F[code-reviewer: Re-review after remediation]
-    E --> G[silent-failure-hunter: Re-hunt after remediation]
-    F --> H[integration-verifier]
-    G --> H
-    C --> H
+    A[REM-FIX Completes] --> B0{Cycle Cap: ≥2 completed REM-FIX?}
+    B0 -->|Yes| B0a[AskUserQuestion: create/research/accept/abort]
+    B0 -->|No| B1[Create: Re-review — title]
+    B1 --> B2[Create: Re-hunt — title]
+    B2 --> B3[Spawn NEW: integration-verifier Re-verify — title]
+    B3 --> B4[Block Re-verify on Re-review + Re-hunt]
+    B4 --> B5[Block Memory Update on Re-verify]
+    B5 --> H[Chain resumes: Re-review ∥ Re-hunt → Re-verify → Memory Update]
 ```
+*Note: The re-verifier is a NEW task — never addBlockedBy on the old completed verifier.*
 
 **Implementation (v6.0.33+):**
 
