@@ -12,6 +12,8 @@ Claiming work is complete without verification is dishonesty, not efficiency.
 
 **Core principle:** Evidence before claims, always.
 
+<!-- CC10X-M7: Overlap with integration-verifier is intentional (defense in depth). VBC is loaded by WRITE agents for self-verification before reporting done; integration-verifier is a separate router-spawned agent. Both check different moments in the workflow. -->
+
 **Violating the letter of this rule is violating the spirit of this rule.**
 
 ## The Iron Law

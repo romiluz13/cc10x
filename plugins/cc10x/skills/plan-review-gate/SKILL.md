@@ -61,6 +61,7 @@ Read the user's original request and compare against the plan:
    a. Present blocking issues clearly
    b. Revise the plan to address them
    c. Re-run checks (increment iteration counter)
+   <!-- CC10X-M9: iteration counter is in-context only — not persisted to memory. If compaction occurs mid-retry, counter resets to 0 and gate may retry more than 3 times. Acceptable for now (gate still converges). -->
 7. IF GATE_FAIL after 3 iterations → ESCALATION: AskUserQuestion
 ```
 

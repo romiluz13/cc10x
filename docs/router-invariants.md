@@ -377,5 +377,47 @@ If no: it's probably prose — compress it.
 **Fails silently if removed:** Escalated tasks stay "pending" during execution. If TaskList() is called before both complete, pending task appears re-invocable.
 **Safe to remove:** Only if Chain Execution Loop step 2 standard is also removed.
 
-*Last updated: v7.1.2 — 2026-03-02*
-*Router version at last audit: 7.1.2 (~850 lines)*
+### INV-035: Rule 2b — NEEDS_CLARIFICATION loop cap
+**Covers:** Contract validation rule 2b — NEEDS_CLARIFICATION loop
+**Enforces:** After 3+ completed planner tasks, ask user whether to retry, proceed with best available plan, or abort.
+**Fails silently if removed:** Planner stuck in NEEDS_CLARIFICATION loops indefinitely.
+**Safe to remove:** Only if planner is guaranteed to always resolve in ≤3 passes.
+
+### INV-036: Rule 0b/0c — Physical order matches documented evaluation sequence
+**Covers:** EVALUATION ORDER block — rule 0 → 0b → 0c sequence
+**Enforces:** File-physical order of 0b/0c matches documented evaluation order (0b before 0c).
+**Fails silently if removed:** Future readers interpret 0c as higher priority than 0b. Confusion in evaluating SELF_REMEDIATED vs NEEDS_EXTERNAL_RESEARCH.
+**Safe to remove:** Never — physical order is the execution order.
+
+### INV-037: Orphan check — blockedBy context display
+**Covers:** Check Active Workflow Tasks, orphan check
+**Enforces:** If orphaned in_progress task has non-empty blockedBy, user is informed it is a self-healing cycle (not a true orphan).
+**Fails silently if removed:** User is asked to "Resume/Complete/Delete" a task that is intentionally blocked. They may delete valid in-progress self-heal.
+**Safe to remove:** Only if SELF_REMEDIATED agents never stay in_progress.
+
+### INV-038: DEBUG serial verifier circuit breaker
+**Covers:** Contract validation rule 2d (DEBUG only)
+**Enforces:** After 2+ Re-verify completions in a DEBUG workflow, ask user to continue/escalate/abort.
+**Fails silently if removed:** Serial investigator ↔ verifier loop runs indefinitely, silently exhausting token budget.
+**Safe to remove:** Never while DEBUG verifier re-verification is a valid path.
+
+### INV-039: REVIEW scope persistence (CC10X-014)
+**Covers:** REVIEW workflow step 2
+**Enforces:** AskUserQuestion scope answers are persisted to ## Decisions before chain starts. Reviewer receives scope from Decisions (compaction-safe).
+**Fails silently if removed:** Context compaction between scope clarification and reviewer invocation loses the scope. Reviewer reviews everything or nothing.
+**Safe to remove:** Never while compaction during REVIEW is possible.
+
+### INV-040: REVIEW-to-BUILD transition gate (CC10X-015)
+**Covers:** REVIEW workflow step 6
+**Enforces:** When reviewer returns CHANGES_REQUESTED, user is offered a BUILD transition to act on findings.
+**Fails silently if removed:** Reviewer produces CHANGES_REQUESTED. User must manually re-invoke BUILD with no context. Findings may be lost after session.
+**Safe to remove:** Only if REVIEW is always followed immediately by a separate BUILD invocation.
+
+### INV-041: PLAN research paths persisted to memory (CC10X-022)
+**Covers:** PLAN workflow step 3
+**Enforces:** web_file and github_file from parallel research are written to activeContext.md ## References immediately after collection.
+**Fails silently if removed:** Research file paths only exist as in-context variables. Context compaction between PLAN step 3 and planner invocation loses the paths. Planner receives no research.
+**Safe to remove:** Never while PLAN research is a feature.
+
+*Last updated: v7.3.0 — 2026-03-02 (Tier 2 fixes: CC10X-010 through CC10X-024, CC10X-057/058)*
+*Router version at last audit: 7.3.0 (~875 lines)*

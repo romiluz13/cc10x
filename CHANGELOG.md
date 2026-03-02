@@ -1,5 +1,51 @@
 # Changelog
 
+## [7.4.0] - 2026-03-02
+
+### Fixed — 16 Tier 2 + 8 SDLC medium fixes (router 850→875, +25 net over two rounds)
+
+Dogfood-driven fixes from the 2026-03-02 real-app stress test and full system audit. All 24 open HIGH issues from the SSOT are now Fixed or Investigating.
+
+**Rule logic & evaluation order:**
+- **CC10X-010**: Rules 1b/2 `apply rule 1a` replaced with inline `TaskCreate` instructions — rule 1a's `BLOCKING=true` precondition was impossible to meet in those contexts
+- **CC10X-011**: Rule 0b/0c physical order now matches documented evaluation sequence (`0b → 0c`)
+
+**Template consolidation & systemic output fix:**
+- **CC10X-013**: Two divergent agent invocation templates unified — Chain Execution Loop now references the canonical Agent Invocation template; `Parent Workflow ID` added to canonical template
+- **CC10X-057 + CC10X-058**: "Output your analysis BEFORE calling TaskUpdate" added to canonical IMPORTANT block — systemic fix for 1-line output failure mode across all agents
+- **CC10X-012**: Integration-verifier Results Collection prompt now includes `Parent Workflow ID`, `Plan File`, `Memory Summary`, `SKILL_HINTS` — sub-agents don't inherit parent context
+
+**Loop caps & safety:**
+- **CC10X-017**: NEEDS_CLARIFICATION loop cap (≥3 planner completions) — last loop in the system without a cap
+- **CC10X-019**: Orphan detection now shows `blockedBy` context — self-healing tasks no longer appear as dead orphans on session resume
+- **CC10X-021**: DEBUG serial verifier circuit breaker (inline 2d-pre check) — fires after 2+ Re-verify completions in same DEBUG session
+- **CC10X-020**: Rule 2c re-invoke now passes explicit `Parent Workflow ID` to bug-investigator
+
+**REVIEW workflow:**
+- **CC10X-014**: REVIEW scope clarification persisted to `activeContext.md ## Decisions` (compaction-safe)
+- **CC10X-015**: REVIEW-to-BUILD transition gate added (step 6) — when reviewer finds `CHANGES_REQUESTED`, user offered guided BUILD path
+
+**PLAN workflow:**
+- **CC10X-022**: PLAN research paths (`web_file`, `github_file`) persisted to `## References` immediately after collection
+- **CC10X-023**: Brainstorming skill now emits a Router Contract (`STATUS: COMPLETE | INCOMPLETE`, `DESIGN_FILE`)
+- **CC10X-024**: PLAN step 2 now performs `Glob` existence check on design file before invoking planner
+
+**Bonus SDLC medium fixes (applied alongside Tier 2):**
+- Memory Update: WRITE agent `Deferred:` entries now collected (were silently dropped)
+- DEBUG clarify: skip heuristic for obvious errors (stack trace + file:line = no AskUserQuestion)
+- Research: timeout fallback if one parallel research agent fails
+- REVIEW: scope extraction variable `review_scope` passed to reviewer prompt
+- PLAN: `PLAN-START` marker added (mirrors `BUILD-START`/`DEBUG-RESET` for memory freshness)
+- Agent Invocation: Project Patterns prompt truncated to `## Common Gotchas` + `## User Standards` ≤2000 chars
+
+**Documentation:**
+- `router-invariants.md`: INV-035 through INV-041 (7 new invariants)
+- `cc10x-orchestration-bible.md`: v7.3.0 guarantees table extended
+- SSOT: 25 issues Fixed, 1 Investigating (CC10X-018 — AskUserQuestion warmup), 1 Partially Fixed (CC10X-006)
+
+**Investigating (no code change):**
+- **CC10X-018**: AskUserQuestion returns empty on first 1-3 calls in session — consistent with platform-level warm-up race condition; no reliable mitigation identified
+
 ## [7.3.0] - 2026-03-02
 
 ### Fixed — 10 Tier 1 runtime-confirmed failures (5 files, ~+15 router lines)

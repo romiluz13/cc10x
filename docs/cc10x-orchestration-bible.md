@@ -1,6 +1,6 @@
 # CC10x Orchestration Bible (Plugin-Only Source of Truth)
 
-> **Last synced with agents/skills:** 2026-03-02 (v7.1.2 — Tier 1 fixes: Memory Update inline guard, Rule 0b no forced completion, Rule 0c header name, REVIEW workflow guard, design file hard fail, GATE_PASSED enforcement, brainstorming absolute path, Your Input Needed MANDATORY, QUICK escalation in_progress, hunter 200-char gate) | **Status:** IN SYNC
+> **Last synced with agents/skills:** 2026-03-02 (v7.3.0 — Tier 2 fixes: canonical Agent Invocation template (Parent Workflow ID + output-before-TaskUpdate); Results Collection prompt (Plan File + Memory Summary + SKILL_HINTS); rule 0b/0c physical order corrected; orphan check blockedBy context; NEEDS_CLARIFICATION loop cap; DEBUG serial verifier circuit breaker; bug-investigator re-invoke with Parent Workflow ID; REVIEW scope persistence + BUILD transition gate; PLAN research paths persisted to memory + design file existence check; brainstorming Router Contract; rules 1b/2 apply-rule-1a replaced with inline TaskCreate; CC10X-018 Investigating) | **Status:** IN SYNC
 
 > This document is derived **only** from `plugins/cc10x/` (agents + skills).
 > Ignore all other docs. Do not trust external narratives.
@@ -728,7 +728,7 @@ These skills are invoked via `Skill()` and do NOT participate in BUILD/DEBUG/REV
 
 ---
 
-## Known Behavioral Guarantees (v7.1.2)
+## Known Behavioral Guarantees (v7.3.0)
 
 These behaviors are enforced by router rules and agent files as of 2026-03-02:
 
@@ -741,6 +741,20 @@ These behaviors are enforced by router rules and agent files as of 2026-03-02:
 | QUICK escalation conforms to Chain Execution Loop in_progress standard | QUICK block: TaskUpdate(in_progress) before parallel Task() calls | CC10X-056 |
 | Planner: design file missing → REQUIRES_REMEDIATION=true, STATUS=NEEDS_CLARIFICATION | planner Conditional Research design file guard | CC10X-007 |
 | Hunter: minimal output (<200 chars) escalates to AskUserQuestion, not REM-EVIDENCE | Post-Agent Validation pre-check + hunter OUTPUT BEFORE TASK UPDATE | CC10X-001 |
+| Single canonical Agent Invocation template — Chain Execution Loop references it | Agent Invocation section (canonical) + Chain Execution Loop step 2 reference | CC10X-013 |
+| All agents receive Parent Workflow ID, Plan File, Memory Summary, SKILL_HINTS | Canonical Agent Invocation template + Results Collection verifier prompt | CC10X-012/013 |
+| output-before-TaskUpdate enforced for ALL agents | IMPORTANT block in canonical Agent Invocation template | CC10X-057/058 |
+| REVIEW scope answers persisted to ## Decisions before chain starts | REVIEW workflow step 2 scope persistence | CC10X-014 |
+| REVIEW-to-BUILD transition offered when CHANGES_REQUESTED | REVIEW workflow step 6 transition gate | CC10X-015 |
+| PLAN research file paths persisted to ## References after parallel research | PLAN workflow step 3 research persistence | CC10X-022 |
+| Design file existence verified before planner invoked | PLAN workflow step 2 Glob check | CC10X-024 |
+| NEEDS_CLARIFICATION loop cap: ≥3 planner completions → ask user | Rule 2b loop cap | CC10X-017 |
+| Orphan check distinguishes self-healing blocked tasks from true orphans | Orphan check blockedBy display | CC10X-019 |
+| DEBUG serial verifier loop detected after 2+ Re-verify completions | Rule 2d serial loop check | CC10X-021 |
+| Bug-investigator re-invoke includes Parent Workflow ID + Task ID | Rule 2c re-invoke explicit prompt | CC10X-020 |
+| Brainstorming reports Router Contract with DESIGN_FILE path | Brainstorming Router Contract | CC10X-023 |
+| Rules 1b/2 use inline TaskCreate instead of impossible "apply rule 1a" | Rules 1b, 2A, 2B inline TaskCreate text | CC10X-010 |
+| Rule 0b appears before 0c — matches documented evaluation order | Physical order 0b→0c in router file | CC10X-011 |
 
 ---
 

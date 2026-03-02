@@ -46,6 +46,7 @@ CC10x memory is a **small, stable, permission-free Markdown database** used for:
 
 ### Promotion Ladder (“Rises To”)
 
+<!-- CC10X-M8: This ladder is aspirational guidance. Actual promotion is manual — agents must explicitly follow the Read-Edit-Verify pattern. No automated promotion mechanism exists yet. -->
 Information “graduates” to more durable layers:
 - **One-off observation** → `activeContext.md` (Learnings / Recent Changes)
 - **Repeated or reusable** → `patterns.md` (Pattern / Gotcha)

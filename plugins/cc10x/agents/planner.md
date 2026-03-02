@@ -140,6 +140,7 @@ The gate runs inline in your context (no subagents). Provide it the saved plan f
 - Test commands specific? (+20)
 - Risk mitigations defined? (+20)
 - File paths exact? (+15)
+<!-- CC10X-M16: These factors are guidance only. Router CONTRACT RULE enforces CONFIDENCE<50 → NEEDS_CLARIFICATION. Scores 50-89 are self-assessed — not mechanically validated. -->
 
 ## Checkpoint Triggers in Plan Output
 

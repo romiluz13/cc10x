@@ -307,6 +307,7 @@ Bash(command="mkdir -p {PROJECT_DIR}/docs/plans")
 # Then save design using Write tool (permission-free)
 # IMPORTANT: Use absolute path. Relative paths save to workspace root, not project dir.
 Write(file_path="{PROJECT_DIR}/docs/plans/YYYY-MM-DD-<feature>-design.md", content="[full design content from template above]")
+# Naming convention: always use -design.md suffix (brainstorming output) vs -plan.md suffix (planner output) — prevents collision in docs/plans/
 
 # Do NOT auto-commit — let the user decide when to commit
 ```
@@ -374,3 +375,13 @@ Before completing brainstorming:
 - [ ] Multiple approaches explored
 - [ ] Design validated incrementally
 - [ ] Document saved
+
+## Router Contract (MACHINE-READABLE)
+```yaml
+STATUS: COMPLETE | INCOMPLETE
+DESIGN_FILE: "[absolute path or null]"
+BLOCKING: [true if INCOMPLETE, false if COMPLETE]
+REQUIRES_REMEDIATION: [true if DESIGN_FILE is null]
+REMEDIATION_REASON: null | "Design file save failed — path: {expected_path}"
+```
+**CONTRACT RULE:** STATUS=COMPLETE requires DESIGN_FILE is non-null and file exists at that path.
