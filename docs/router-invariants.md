@@ -337,5 +337,45 @@ If no: it's probably prose — compress it.
 
 ---
 
-*Last updated: v7.1.1 — 2026-03-01*
-*Router version at last audit: 7.1.1 (~800 lines)*
+---
+
+## Tier 1 Fix Invariants (v7.1.2 — 2026-03-02)
+
+### INV-029: Rule 0b — no forced completion on SELF_REMEDIATED (CC10X-003)
+**Covers:** Rule 0b — removal of TaskUpdate(completed)
+**Enforces:** SELF_REMEDIATED tasks stay blocked by their own REM-FIX task. The Remediation Re-Review Loop (step 1) creates a fresh re_reviewer task. Forcing completed here would cancel the re-review.
+**Fails silently if removed:** code-reviewer creates REM-FIX, blocks itself. Rule 0b marks it completed — canceling the block. Re-review never happens. Remediation ships unchecked.
+**Safe to remove:** Never while SELF_REMEDIATED protocol + Remediation Re-Review Loop coexist.
+
+### INV-030: Rule 0c research section name (CC10X-004)
+**Covers:** Rule 0c re-invoke prompt — "## Research Files" header
+**Enforces:** Bug-investigator receives research findings under the correct header name.
+**Fails silently if removed/renamed:** Bug-investigator looks for "## Research Files" but receives "## External Research Findings". Research is silently ignored. Investigation cycle wasted.
+**Safe to remove:** Only if bug-investigator header expectation changes simultaneously.
+
+### INV-031: Memory Update inline guard (CC10X-002)
+**Covers:** Chain Execution Loop step 2 — Memory Update guard
+**Enforces:** Memory Update tasks are ALWAYS executed inline by the router. Sub-agents don't inherit conversation context — they read stale memory and write stale content back.
+**Fails silently if removed:** Router dispatches Memory Update as a Task() sub-agent. Sub-agent reads stale files, writes stale content. Next session runs on incorrect state.
+**Safe to remove:** Never. Memory Update requires conversation context that sub-agents cannot inherit.
+
+### INV-032: silent-failure-hunter output length gate (CC10X-001)
+**Covers:** Post-Agent Validation — pre-check for hunter output < 200 chars
+**Enforces:** When hunter emits only a task completion line (1-line output failure mode), escalate to AskUserQuestion immediately instead of creating REM-EVIDENCE task.
+**Fails silently if removed:** REM-EVIDENCE is created. Re-invoke returns identical 1-line output (2/3 failure rate confirmed). Code review has no silent-failure signal. Silent failures ship.
+**Safe to remove:** Only if root cause (TaskUpdate as last tool call) is verifiably fixed in the agent.
+
+### INV-033: GATE_PASSED contract enforcement for planner (CC10X-009)
+**Covers:** CONTRACT RULE table — planner row, GATE_PASSED field
+**Enforces:** plan-review-gate must be invoked before STATUS=PLAN_CREATED is accepted. GATE_PASSED=false blocks the plan.
+**Fails silently if removed:** Planner skips adversarial review (confirmed runtime OBS-2). Feasibility issues, scope creep, missing requirements ship unchecked into BUILD.
+**Safe to remove:** Only if plan-review-gate is directly router-enforced via a separate step (not agent-delegated).
+
+### INV-034: QUICK escalation in_progress marks (CC10X-056)
+**Covers:** QUICK escalation block — TaskUpdate(in_progress) before parallel Task() calls
+**Enforces:** Matches Chain Execution Loop standard (step 2 — "Call TaskUpdate in_progress for EACH ready task before any Task() call").
+**Fails silently if removed:** Escalated tasks stay "pending" during execution. If TaskList() is called before both complete, pending task appears re-invocable.
+**Safe to remove:** Only if Chain Execution Loop step 2 standard is also removed.
+
+*Last updated: v7.1.2 — 2026-03-02*
+*Router version at last audit: 7.1.2 (~850 lines)*

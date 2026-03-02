@@ -1,6 +1,6 @@
 # CC10x Orchestration Bible (Plugin-Only Source of Truth)
 
-> **Last synced with agents/skills:** 2026-03-01 (v7.0.2 — plan-review-gate inline in planner, silent-failure-hunter CONTRACT RULE added, integration-verifier CONTRACT RULE corrected, 32 consistency fixes, all v6+v7 changes) | **Status:** IN SYNC
+> **Last synced with agents/skills:** 2026-03-02 (v7.1.2 — Tier 1 fixes: Memory Update inline guard, Rule 0b no forced completion, Rule 0c header name, REVIEW workflow guard, design file hard fail, GATE_PASSED enforcement, brainstorming absolute path, Your Input Needed MANDATORY, QUICK escalation in_progress, hunter 200-char gate) | **Status:** IN SYNC
 
 > This document is derived **only** from `plugins/cc10x/` (agents + skills).
 > Ignore all other docs. Do not trust external narratives.
@@ -725,6 +725,22 @@ These skills are invoked via `Skill()` and do NOT participate in BUILD/DEBUG/REV
 | `cc10x:plan-review-gate` | Called by planner agent after saving plan (`Skill()` inline in planner context) | Inline self-review: 3 sequential checks (Feasibility, Completeness, Scope) using planner's Read/Grep/Glob. GATE_PASS / GATE_FAIL output. Max 3 self-correction iterations then AskUserQuestion escalation. No subagents spawned. |
 
 **Safety note:** This skill runs inside the planner agent's context (no subagent spawning). It cannot silently corrupt BUILD/DEBUG/REVIEW chains.
+
+---
+
+## Known Behavioral Guarantees (v7.1.2)
+
+These behaviors are enforced by router rules and agent files as of 2026-03-02:
+
+| Guarantee | Enforced By | Issue Fixed |
+|-----------|-------------|-------------|
+| Memory Update is ALWAYS executed inline by the router — NEVER as a Task() sub-agent | Chain Execution Loop step 2 guard + task description markers | CC10X-002 |
+| REVIEW workflow: code-reviewer is advisory-only — CHANGES_REQUESTED, never SELF_REMEDIATED or REM-FIX creation | code-reviewer REVIEW WORKFLOW GUARD | CC10X-005 |
+| Planner: plan-review-gate is mandatory — GATE_PASSED=true required for PLAN_CREATED | planner CONTRACT RULE (router table) + planner Router Contract GATE_PASSED field | CC10X-009 |
+| Rule 0b: SELF_REMEDIATED tasks stay blocked — never force-completed | Rule 0b no longer calls TaskUpdate(completed) | CC10X-003 |
+| QUICK escalation conforms to Chain Execution Loop in_progress standard | QUICK block: TaskUpdate(in_progress) before parallel Task() calls | CC10X-056 |
+| Planner: design file missing → REQUIRES_REMEDIATION=true, STATUS=NEEDS_CLARIFICATION | planner Conditional Research design file guard | CC10X-007 |
+| Hunter: minimal output (<200 chars) escalates to AskUserQuestion, not REM-EVIDENCE | Post-Agent Validation pre-check + hunter OUTPUT BEFORE TASK UPDATE | CC10X-001 |
 
 ---
 

@@ -1,7 +1,7 @@
 ---
 name: brainstorming
 description: "Internal skill. Use cc10x-router for all development tasks."
-allowed-tools: Read, Grep, Glob, AskUserQuestion
+allowed-tools: Read, Grep, Glob, AskUserQuestion, Write, Edit, Bash
 ---
 
 # Brainstorming Ideas Into Designs
@@ -297,11 +297,16 @@ For UI features, include ASCII mockup in the design:
 ### Step 1: Save Design File (Use Write tool - NO PERMISSION NEEDED)
 
 ```
-# First create directory
-Bash(command="mkdir -p docs/plans")
+# Resolve absolute project directory FIRST (prevents wrong-CWD save — CC10X-006)
+Bash(command="pwd")  # Store output as PROJECT_DIR
+# Example: if pwd = /workspace/github-horoscope, use that as prefix
+
+# Create directory using absolute path
+Bash(command="mkdir -p {PROJECT_DIR}/docs/plans")
 
 # Then save design using Write tool (permission-free)
-Write(file_path="docs/plans/YYYY-MM-DD-<feature>-design.md", content="[full design content from template above]")
+# IMPORTANT: Use absolute path. Relative paths save to workspace root, not project dir.
+Write(file_path="{PROJECT_DIR}/docs/plans/YYYY-MM-DD-<feature>-design.md", content="[full design content from template above]")
 
 # Do NOT auto-commit — let the user decide when to commit
 ```
@@ -320,7 +325,7 @@ Read(file_path=".claude/cc10x/activeContext.md")
 # Add design to References
 Edit(file_path=".claude/cc10x/activeContext.md",
      old_string="## References",
-     new_string="## References\n- Design: `docs/plans/YYYY-MM-DD-<feature>-design.md`")
+     new_string="## References\n- Design: `{PROJECT_DIR}/docs/plans/YYYY-MM-DD-<feature>-design.md`")
 
 # Index the design creation in Recent Changes
 Edit(file_path=".claude/cc10x/activeContext.md",

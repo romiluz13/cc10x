@@ -1,5 +1,34 @@
 # Changelog
 
+## [7.3.0] - 2026-03-02
+
+### Fixed — 10 Tier 1 runtime-confirmed failures (5 files, ~+15 router lines)
+
+Fixes all 10 Tier 1 issues from the 2026-03-02 full audit + 4-workflow real-app stress test (github-horoscope). Confirmed via dogfooding: 3 BUILD workflows, 2 PLAN workflows, ~8 workflow runs total. Source-cache sync verified for all modified file pairs. Router 835 → 850 lines.
+
+**CRITICAL fixes (runtime-confirmed, 2+ sessions):**
+- **CC10X-001**: `silent-failure-hunter` — added `OUTPUT BEFORE TASK UPDATE` mandate + 200-char self-check before `TaskUpdate`. Router adds `<200 chars → AskUserQuestion` escalation (skips broken REM-EVIDENCE path). Previously: 3/4 sessions returned `"Task N: COMPLETED"` (22 chars) with REM-EVIDENCE failing to recover.
+- **CC10X-002**: Memory Update task — router Chain Execution Loop now executes Memory Update **inline** (never spawns Task()). Sub-agents don't inherit conversation context — previously router spawned a `planner` agent which wrote stale content to all 3 memory files.
+
+**HIGH fixes (router logic):**
+- **CC10X-003**: Rule 0b — removed `TaskUpdate({ status: "completed" })` for SELF_REMEDIATED agents. This was canceling the agent's own self-imposed block, preventing re-review after REM-FIX completion. Added explanation comment.
+- **CC10X-004**: Rule 0c — renamed `## External Research Findings` → `## Research Files` in re-invoke prompt. Bug-investigator expected `## Research Files`; mismatch caused research to be silently ignored on stuck re-invoke.
+- **CC10X-008**: PLAN step 5a — added `MANDATORY` label + dual-source check (planner output text AND `USER_INPUT_NEEDED` contract field as compaction-safe fallback). Previously the gate was conditional and skipped.
+- **CC10X-056**: QUICK escalation — added `TaskUpdate(in_progress)` for both escalated tasks before parallel `Task()` calls. Matches Chain Execution Loop step 2 standard.
+
+**HIGH fixes (agent files):**
+- **CC10X-005**: `code-reviewer` — added REVIEW WORKFLOW GUARD before Self-Healing Protocol. REVIEW context → `CHANGES_REQUESTED` (advisory, no REM-FIX). Previously: reviewer created REM-FIX and invoked component-builder in advisory/read-only workflows.
+- **CC10X-007**: `planner` — design file guard: `Read` failure → `REQUIRES_REMEDIATION: true` + `STATUS=NEEDS_CLARIFICATION`. Previously: planner silently invented new schemas when design file was missing.
+- **CC10X-009**: `planner` — added `GATE_PASSED` field to Router Contract + `USER_INPUT_NEEDED` list. Router CONTRACT RULE now enforces `GATE_PASSED=true` for `STATUS=PLAN_CREATED`. Previously: plan-review-gate was never invoked (confirmed 3 sessions).
+
+**HIGH fix (partial — brainstorming skill):**
+- **CC10X-006 + CC10X-016**: `brainstorming` — added `Write, Edit, Bash` to `allowed-tools`. Added `pwd` + absolute path guidance for design file saves. Prevents permission prompts and wrong-CWD saves. Router PROJECT_DIR resolution deferred to Tier 2.
+
+**Documentation:**
+- `router-invariants.md`: Added INV-029 through INV-034 (6 invariants for all Tier 1 router changes)
+- `cc10x-orchestration-bible.md`: Added "Known Behavioral Guarantees" table (v7.1.2, 2026-03-02)
+- `ssot.md`: 10 issues marked Fixed
+
 ## [7.2.0] - 2026-03-01
 
 ### Hardened — Full SDLC audit fixes (13 changes, 6 files)

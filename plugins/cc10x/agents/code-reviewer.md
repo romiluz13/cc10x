@@ -121,6 +121,18 @@ CONFIDENCE: 85  (min HARD=85, avg SOFT=80)
 Provide your final output, then call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` where `{TASK_ID}` is from your Task Context prompt.
 
 **If CRITICAL issues (Confidence ≥ 80) are found (Self-Healing Protocol):**
+
+**REVIEW WORKFLOW GUARD:** First, check your parent workflow:
+→ Use `TaskList()` to find your parent workflow task (subject contains "CC10X REVIEW:")
+→ If parent workflow IS a REVIEW workflow (subject starts "CC10X REVIEW:"):
+  - Do NOT create a REM-FIX task. Do NOT block yourself.
+  - Output your Router Contract with `STATUS: CHANGES_REQUESTED`, `BLOCKING: false`, `REQUIRES_REMEDIATION: true`
+  - Include your findings in REMEDIATION_REASON — the user and router will decide whether to start a BUILD workflow.
+  - Call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` and stop.
+  - **Why:** REVIEW is advisory/read-only. Unsolicited code changes violate user intent.
+→ If parent workflow is NOT a REVIEW workflow: proceed with Self-Healing Protocol below.
+
+**Self-Healing Protocol (BUILD/DEBUG workflows only):**
 You must NOT complete your task. You must create a fix task and block yourself:
 1. Call `TaskCreate({ subject: "CC10X REM-FIX: Code Review Failure", description: "[Detailed review findings and required fixes]", activeForm: "Fixing review issues" })`
 2. Extract the new task ID from the tool response (or use `TaskList()` to find it).

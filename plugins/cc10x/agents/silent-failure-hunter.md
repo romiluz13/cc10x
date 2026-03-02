@@ -91,7 +91,16 @@ If a skill fails to load (not installed), note it in Memory Notes and continue w
 
 **Router Contract is ALWAYS required** — even if scope is narrow or no issues found. Emit `STATUS: CLEAN` with `CRITICAL_ISSUES: 0`. A missing contract triggers a REM-EVIDENCE re-invocation, wasting a full agent cycle.
 
-**After providing your final output**, call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` where `{TASK_ID}` is from your Task Context prompt.
+**OUTPUT BEFORE TASK UPDATE (MANDATORY):**
+Your analysis text MUST be emitted in this same response BEFORE the `TaskUpdate` call.
+- Minimum: 200 characters of substantive analysis text (not just "Task N: COMPLETED")
+- If analysis is complete but output is short: still emit the full Router Contract YAML block AND at least one sentence summarizing what was found/confirmed
+- Do NOT emit TaskUpdate as your only or last tool call — analysis text must precede it
+
+**Self-check before calling TaskUpdate:**
+Count characters in your output text above the Router Contract section. If < 200 chars: add a 1-paragraph summary of what was scanned and what verdict was reached. Then call TaskUpdate.
+
+**After providing your final output** (minimum 200 chars of analysis + full Router Contract), call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` where `{TASK_ID}` is from your Task Context prompt.
 
 **If MEDIUM issues found (not critical, non-blocking):**
 → Do NOT create a task. Include in Memory Notes under `**Deferred:**` below.

@@ -51,6 +51,10 @@ Research is executed by `cc10x:web-researcher` + `cc10x:github-researcher` (in p
 **If your prompt includes "## Research Files"**: Read both files and incorporate findings into the plan's technical approach and risk sections. The `cc10x:research` skill (loaded via SKILL_HINTS) provides synthesis guidance.
 **Do NOT spawn** research agents yourself — the router already ran them before invoking you.
 
+**If your prompt includes "## Design File"**: Read the design file at the provided path BEFORE beginning plan creation.
+→ If Read succeeds: Incorporate design decisions, constraints, and data models into your plan. The design is user-approved — do NOT invent alternative schemas or approaches not present in the design.
+→ If Read fails (file not found): You MUST emit `REQUIRES_REMEDIATION: true` in your Router Contract with `REMEDIATION_REASON: "Design file not found at {path}. Cannot create plan without user-approved design."` — do NOT silently proceed with an invented design. Set STATUS=NEEDS_CLARIFICATION.
+
 ## Process
 1. **Understand** - User need, user flows, integrations
 2. **Context Retrieval (Before Designing)**
@@ -212,10 +216,12 @@ RISKS_IDENTIFIED: [count of risks identified]
 BLOCKING: [false normally; true if STATUS=NEEDS_CLARIFICATION to halt workflow until clarified]
 REQUIRES_REMEDIATION: [false if PLAN_CREATED; true if NEEDS_CLARIFICATION]
 REMEDIATION_REASON: null | "Clarification required before plan can proceed: {summary of Your Input Needed items}"
+GATE_PASSED: [true if plan-review-gate returned GATE_PASS; false if gate failed or was skipped (non-trivial plan)]
+USER_INPUT_NEEDED: ["Q1 text", "Q2 text"] | []  # Compaction-safe list of open questions (same as Your Input Needed bullets)
 MEMORY_NOTES:
   learnings: ["Planning approach and key insights"]
   patterns: ["Architectural decisions made"]
   verification: ["Plan: {PLAN_FILE} with {CONFIDENCE}/100 confidence"]
 ```
-**CONTRACT RULE:** STATUS=PLAN_CREATED requires PLAN_FILE is valid path and CONFIDENCE>=50. STATUS=NEEDS_CLARIFICATION requires BLOCKING=true and REMEDIATION_REASON summarizing the open questions.
+**CONTRACT RULE:** STATUS=PLAN_CREATED requires PLAN_FILE is valid path AND CONFIDENCE>=50 AND GATE_PASSED=true. STATUS=NEEDS_CLARIFICATION requires BLOCKING=true and REMEDIATION_REASON summarizing the open questions. If gate was skipped (trivial plan), set GATE_PASSED=true.
 ```
