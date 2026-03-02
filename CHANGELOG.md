@@ -1,5 +1,11 @@
 # Changelog
 
+## [7.4.1] - 2026-03-02
+
+### Fixed — Parent workflow tasks left as stale pending after workflow completion
+
+- **CC10X-059**: Memory Update inline guard now also marks the parent workflow task (`CC10X BUILD:`, `CC10X PLAN:`, `CC10X DEBUG:`, `CC10X REVIEW:`) as completed after persisting memory. Parent task ID is extracted from the `[workflow-scope: wf:{N}]` annotation already embedded in every Memory Update task description. +1 line in router, source+cache synced.
+
 ## [7.4.0] - 2026-03-02
 
 ### Fixed — 16 Tier 2 + 8 SDLC medium fixes (router 850→875, +25 net over two rounds)

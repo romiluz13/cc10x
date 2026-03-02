@@ -760,6 +760,7 @@ WHEN any CC10X REM-FIX task COMPLETES:
      → Execute INLINE (Read + Edit calls in main context). NEVER spawn Task() — sub-agents read stale memory.
      → Follow task description instructions directly (Read Memory Notes from description, persist to .claude/cc10x/*.md).
      → Mark task completed inline: TaskUpdate({ taskId, status: "completed" }).
+     → Mark parent workflow task completed: extract parent_task_id from `[workflow-scope: wf:{N}]` at end of task description. If found: TaskUpdate({ taskId: parent_task_id, status: "completed" }).
      → Continue to next runnable task. Do NOT proceed to agent routing logic below.
    - For tasks with subject "CC10X REM-FIX:": Route by originating agent, not workflow:
      - If REM-FIX originated from bug-investigator contract → invoke cc10x:bug-investigator
