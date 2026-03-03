@@ -1,5 +1,24 @@
 # Changelog
 
+## [7.8.0] - 2026-03-03
+
+### Fixed — OBS-1, OBS-9, OBS-15, OBS-16, DEBUG-RESET (5 systemic issues)
+
+- **OBS-16 (REM-EVIDENCE kill phrases)**: Two router locations contained phrases that caused agents to prematurely conclude their job was done (`"succeeded"`, `"Output ONLY"`, `"Re-read the files you analyzed"`, `"Do NOT call TaskUpdate until AFTER"`). All replaced with neutral `"REQUIRED: Include a ### Router Contract (MACHINE-READABLE) YAML block in your response"` framing. Applies to both the `TaskCreate` description template and the chain execution re-invoke prompt.
+
+- **DEBUG-RESET marker ownership**: Moved from `bug-investigator.md` (unreliable — LLMs skip unnumbered `##` sections before numbered `## Process`) to router step 4a. Pattern now mirrors `BUILD-START` and `PLAN-START` (both already router-written). Router writes `[DEBUG-RESET: wf:{workflow_task_id}]` with Read-back verify + STOP guard. Net −13 lines from `bug-investigator.md`.
+
+- **OBS-9 (TEST_PROCESSES_CLEANED orphan gate)**: Gate 9 was defined in the Gates section but never called in the Chain Execution Loop. Added single `Bash(command="pkill -f 'vitest|jest|mocha' 2>/dev/null || true")` line in step 3, conditioned on `"CC10X component-builder:"` subject. Runs after builder, before reviewers see test state.
+
+- **OBS-1 (Pre-AskUserQuestion context gap)**: `⚠️` AskUserQuestion calls fired immediately after batches of tool calls with no preceding text — UI rendered the question before the user had context. Added general `Pre-AskUserQuestion output rule` at the top of Router Contract Validation: one sentence summarizing the finding is required before any `⚠️` gate.
+
+- **OBS-15 (code-reviewer token exhaustion)**: `code-reviewer` unconditionally loaded 4 skills (~28–36K tokens) plus unbounded `git diff HEAD` (up to 60K) before producing any output. Two fixes: (1) **Output skeleton first** — step 0 immediately outputs a one-liner before any tool calls, ensuring partial output even if token budget runs low. (2) **Conditional `frontend-patterns`** — removed from frontmatter (was always loaded); now loads only when `git diff HEAD --name-only` contains `.tsx, .jsx, .vue, .css, .scss, .html`. Saves up to 583 lines / 36% of skill token budget on pure backend reviews.
+
+### Changed
+- `cc10x-router/SKILL.md`: 834 → 844 lines (+10 net across 6 edits)
+- `bug-investigator.md`: removed DEBUG-RESET section (−13 lines)
+- `code-reviewer.md`: output skeleton + conditional frontend skill (+4 net lines)
+
 ## [7.7.0] - 2026-03-03
 
 ### Fixed — OBS-1, OBS-15, OBS-16, Fix C (external stress test findings)

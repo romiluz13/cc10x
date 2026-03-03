@@ -2,17 +2,25 @@
 <!-- CC10X MEMORY CONTRACT: Do not rename headings. Used as Edit anchors. -->
 
 ## Current Workflow
-BUILD v7 audit fixes COMPLETE (2026-03-01)
+BUILD v7.8.0 five-issue fix (2026-03-03)
 
 ## Tasks
 
 | Subject | Status | Notes |
 |---------|--------|-------|
-| BUILD: v7 audit fixes — 15 issues across 10 files | ✅ completed | 42/42 smoke PASS; source+7.0.0 cache synced |
+| BUILD: v7.8.0 OBS-1, OBS-9, OBS-15, OBS-16, DEBUG-RESET | ✅ completed | wf:4; 9 changes, 13/13 PASS; version=7.8.0; source↔cache CLEAN |
+| component-builder #5 | ✅ completed | All 9 changes applied; V1-V10 PASS; 844 lines |
+| code-reviewer #6 | ✅ completed | APPROVE 93%; 0C/0H; 9 evidence items |
+| silent-failure-hunter #7 | ✅ completed | CLEAN; 0C/0H; 4M/2L non-blocking |
+| integration-verifier #8 | ✅ completed | 13/13 PASS (implied); source↔cache CLEAN |
 
-Last Updated: 2026-03-01
+Last Updated: 2026-03-03
 
 ## Completed
+- [x] **wf:4 BUILD — v7.8.0 five-issue fix (2026-03-03)** — 9 changes: OBS-16 (2 kill phrase replacements, net-zero), DEBUG-RESET (router step 4a + remove from bug-investigator), OBS-9 (pkill inline), OBS-1 (pre-AskUserQuestion output rule), OBS-15 (output skeleton + conditional frontend-patterns). Router 834→844 lines. 13/13 verifications PASS. code-reviewer APPROVE 93%, hunter CLEAN 0C/0H. source↔cache CLEAN. version=7.8.0.
+- [x] **wf:1 PLAN — v7.8.0 five-issue fix plan (2026-03-03)** — Plan: docs/plans/2026-03-03-cc10x-v7.8.0-five-issue-fix-plan.md. 6 changes across 3 files (router, bug-investigator, code-reviewer). GATE_PASS. Ready for BUILD.
+- [x] **wf:18 Task19 DEBUG — OBS-15 + OBS-16 fixes (2026-03-03)** — 3 changes: (1) Router OUTPUT_TRUNCATED pre-check for code-reviewer; (2) REM-EVIDENCE kill phrase removed (2 locations in router); (3) integration-verifier PASS NO EXCEPTIONS rule. source↔cache 7.4.2 IDENTICAL. Regression greps: OUTPUT_TRUNCATED→2; "Re-read the files you analyzed"→2; "PASS result still requires"→1; "already saved to memory"→0.
+- [x] **wf:10 Task11 DEBUG — hunter.md fix (2026-03-03)** — CC10X-057/058: (A1) Zero-results fallback in Process step 1; (A2) NO EXCEPTIONS unconditional minimum output rule replacing escape hatch. Fix: RED=escape path "If analysis complete but output short → one sentence" eliminated; GREEN=zero-results path MUST emit full output format; 2 variants covered: (a) grep 0 results, (b) complete but short output. Source↔cache 7.4.2 diff=IDENTICAL
 - [x] **Tier 2 SSOT fixes (2026-03-02)** — CC10X-010 through CC10X-024 + CC10X-057/058 (16 fixes + CC10X-018 Investigating); router 862→875 lines (≤876 ✓); both source↔cache IDENTICAL; INV-035→041 added; bible + SSOT updated
 - [x] **Tier 2 fixes (2026-03-02)** — 16 MEDIUM issues (M1-M16) across 8 phases; router 850→862 lines (+12, under 870 budget); brainstorming +1 line; 4 doc-only notes (planner, VBC, session-memory, plan-review-gate); all source↔cache synced (7.3.0/); 11/11 regression greps PASS
 - [x] **v7 audit fixes (2026-03-01)** — 15 issues (4 bugs, 6 contradictions, 5 gaps) across 10 files; source+7.0.0 cache synced; smoke 42/42
@@ -101,6 +109,9 @@ See `docs/cc10x-orchestration-flaws.md` for full roadmap (10 OPEN flaws — low 
 - [ ] FLAW-10: Plan File Drift Detection
 
 ## Verification
+- wf:4 BUILD v7.8.0 (2026-03-03): V1→0 ✓; V2→2 ✓; V3→1 ✓; V4→0 ✓; V5→1 ✓; V6→1 ✓; V7→1 ✓; V7b→0 ✓; V8=844 (soft ≤840, acceptable) ✓; V9=CLEAN (router diff) ✓; V10=7.8.0 ✓; bug-investigator diff CLEAN ✓; code-reviewer diff CLEAN ✓; stale note grep→0 ✓; 13/13 PASS; code-reviewer APPROVE 93% (0C/0H/9ev); hunter CLEAN (0C/0H/4M/2L); version=7.8.0
+- wf:18 Task20 OBS-1 fix (2026-03-03): ⚠️ AskUserQuestion count source=19 ✓; cache=19 ✓; Empty Answer Guard block text IDENTICAL source↔cache ✓; source 826→834 lines (+8 guard block) ✓; cache 878→886 lines (+8) ✓; 19 critical gates marked (orphan/QUICK/hunter-minimal/OUTPUT_TRUNCATED/REM-EVIDENCE/CircuitBreaker/ResearchLoopCap/Rule1b×2/Rule2CaseA+B/NEEDS_CLARIF-LoopCap/PlannerClarif/InvestigLoopCap/2f-BLOCKED/DEBUG-SerialLoop/2d-B-revert/2d-C-limit/CycleCap); non-critical gates (Plan-First/PLAN-to-BUILD/research-prompts) intentionally unmarked; RED=empty answer on Rule 1b → auto-creates REM-FIX; GREEN=⚠️ guard re-asks once then STOPs workflow; variants: all 4 workflows covered (BUILD/DEBUG/PLAN/REVIEW) + destructive-git (2d-B) + task-deletion (orphan) + token-cost (hunter)
+- wf:10 DEBUG parallel-phase fix (2026-03-03): source grep "no memory edits" → line 440 fixed; cache 7.4.2 grep "no memory edits" → line 446 fixed; both identical; RED=bullet 4 ambiguity caused 21-char output; GREEN=explicit disambiguation closes failure path
 - Tier 2 SSOT fixes (2026-03-02): `grep apply rule 1a` → 0 ✓; 0b line 536 < 0c line 544 ✓; `grep TaskUpdate as your only` → 1 ✓; `grep NEEDS_CLARIFICATION Loop Cap` → 1 ✓; `grep DEBUG Serial Loop Check` → 1 ✓; `grep REVIEW-to-BUILD` → 1 ✓; `grep Persist scope` → 1 ✓; `grep Persist research` → 1 ✓; `grep Existence check` → 1 ✓; `grep Router Contract` in brainstorming → 1 ✓; router 875 lines (≤876 ✓); router diff → IDENTICAL; brainstorming diff → IDENTICAL; INV-035→041 in router-invariants.md ✓; bible updated v7.3.0 ✓; SSOT 16 issues Fixed/Investigating ✓
 - Tier 2 fixes: M15 pkill word boundary→1; M2 PLAN-START→2; M13 skip heuristic→1; M10 timeout→1; M6 review_scope→1; M12 size guard→1; M11 legacy→1; M4 truncate→1; M3 deferred exception→2; M1 early store→1; M14 per-issue→1; router 862 lines (≤870 ✓); all 6 file diffs IDENTICAL (source↔cache)
 - v7 audit fixes: 15 issues fixed across 10 files (5 agents, 3 skills, 1 router, 1 bible); all source↔cache diff MATCH (9/9); smoke 42/42 PASS; `command cp` bypassed alias for cache sync

@@ -4,7 +4,7 @@ description: "Internal agent. Use cc10x-router for all development tasks."
 model: inherit
 color: blue
 tools: Read, Bash, Grep, Glob, Skill, LSP, AskUserQuestion, WebFetch, TaskUpdate, TaskCreate, TaskList
-skills: cc10x:code-review-patterns, cc10x:verification-before-completion, cc10x:frontend-patterns, cc10x:architecture-patterns
+skills: cc10x:code-review-patterns, cc10x:verification-before-completion, cc10x:architecture-patterns
 ---
 
 # Code Reviewer (Confidence ≥80)
@@ -33,6 +33,8 @@ If your prompt includes SKILL_HINTS, invoke each skill via `Skill(skill="{name}"
 Also: after reading patterns.md, if `## Project SKILL_HINTS` section exists, invoke each listed skill.
 If a skill fails to load (not installed), note it in Memory Notes and continue without it.
 
+**Conditional skill (frontend only):** Run `git diff HEAD --name-only` (fast). If output contains any `.tsx, .jsx, .vue, .css, .scss, .html` → `Skill(skill="cc10x:frontend-patterns")`. Skip for backend-only changes.
+
 **Key anchors (for Memory Notes reference):**
 - activeContext.md: `## Learnings`, `## Recent Changes`
 - patterns.md: `## Common Gotchas`
@@ -47,6 +49,9 @@ git ls-files --others --exclude-standard      # NEW untracked files
 ```
 
 ## Process
+0. **Output skeleton (FIRST — before any tool calls):** Immediately output:
+   `"Starting code review. Changed files: [list from prompt context]. Checking: security, patterns, TDD compliance, architecture."`
+   This ensures visible progress and partial output even if token budget runs low later.
 1. **Git context** — `git log --oneline -10 -- <file>`, `git blame <file>`
 2. **Verify functionality** — Does it work? Run tests if available
 3. **Pass 1: Security** — Auth, input validation, secrets, injection, OWASP quick checks

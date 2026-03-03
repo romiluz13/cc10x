@@ -333,9 +333,15 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [planner_task_id] })
      - Pass both to bug-investigator: `## Research Files\nWeb: {web_file}\nGitHub: {github_file}`
      - Add SKILL_HINTS: `cc10x:research` (synthesis guidance)
 
-   **Debug Workflow Scoping:**
-   - Note: bug-investigator writes its own `[DEBUG-RESET: wf:{parent_task_id}]` marker at startup — see agent file.
 4. **Create task hierarchy** (see Task-Based Orchestration above)
+4a. **Write DEBUG-RESET marker** (immediately after task hierarchy created — before bug-investigator runs):
+    ```
+    Edit(file_path=".claude/cc10x/activeContext.md",
+         old_string="## Recent Changes",
+         new_string="## Recent Changes\n[DEBUG-RESET: wf:{workflow_task_id}]")
+    Read(file_path=".claude/cc10x/activeContext.md")  # VERIFY marker written
+    # If marker NOT found in Read output: STOP — retry Edit before invoking bug-investigator
+    ```
 5. **Start chain execution** (pass research file path if step 3 was executed)
 6. Update memory → Add to Common Gotchas when all tasks completed
 
@@ -458,6 +464,9 @@ When agent returns, verify output quality before proceeding.
 
 ### Router Contract Validation (PRIMARY - Use This First)
 
+**Pre-AskUserQuestion output rule (ALL ⚠️ gates):**
+Before invoking any ⚠️ AskUserQuestion, output one sentence summarizing the finding. Examples: "Review found 2 HIGH issues that need your input." / "Verdict conflict: reviewer approved but hunter found critical failures." / "Investigation stuck — external research needed." This ensures UI renders context before the question appears.
+
 **Empty Answer Guard (CRITICAL GATES ONLY):**
 Gates marked ⚠️ below are CRITICAL — auto-defaulting on empty answer is dangerous (creates tasks, triggers destructive git ops, or modifies workflow state irreversibly).
 If AskUserQuestion returns empty AND the gate is marked ⚠️:
@@ -493,7 +502,7 @@ If NOT found → Agent output is non-compliant.
     If count < 1: Create REM-EVIDENCE task:
   TaskCreate({
     subject: "CC10X REM-EVIDENCE: [router-internal] {agent} missing Router Contract",
-    description: "Agent output lacks '### Router Contract (MACHINE-READABLE)' section. Re-invoke the same agent once with a modified prompt: append the following note to the original prompt: 'NOTE: Your previous output succeeded but the ### Router Contract (MACHINE-READABLE) section was missing. Re-read the files you analyzed. Output ONLY the Router Contract YAML block. Do NOT call TaskUpdate until AFTER you have output the YAML block.' If Router Contract still missing after retry, AskUserQuestion to decide next action.",
+    description: "Agent output is missing the required '### Router Contract (MACHINE-READABLE)' section. Re-invoke the same agent once with a modified prompt: append this note to the original prompt: 'REQUIRED: Include a ### Router Contract (MACHINE-READABLE) YAML block in your response. Write your full analysis output, then include the Router Contract YAML block. Call TaskUpdate only after the YAML block is present in your output.' If Router Contract still missing after retry, AskUserQuestion to decide next action.",
     activeForm: "Collecting agent contract"
   })
   Block downstream tasks and STOP.
@@ -779,7 +788,7 @@ WHEN any CC10X REM-FIX task COMPLETES:
    - For tasks with subject "CC10X REM-FIX:": Route by originating agent, not workflow:
      - If REM-FIX originated from bug-investigator contract → invoke cc10x:bug-investigator
      - If REM-FIX originated from code-reviewer, silent-failure-hunter, or integration-verifier contract → invoke cc10x:component-builder (all workflows)
-   - For tasks with subject "CC10X REM-EVIDENCE:": re-invoke the original agent (extract agent name from the subject suffix — e.g., "CC10X REM-EVIDENCE: code-reviewer missing Router Contract" → invoke cc10x:code-reviewer). When re-invoking, append to the original prompt: "NOTE: Your previous output succeeded but the ### Router Contract (MACHINE-READABLE) section was missing. Re-read the files you analyzed. Output ONLY the Router Contract YAML block. Do NOT call TaskUpdate until AFTER you have output the YAML block."
+   - For tasks with subject "CC10X REM-EVIDENCE:": re-invoke the original agent (extract agent name from the subject suffix — e.g., "CC10X REM-EVIDENCE: code-reviewer missing Router Contract" → invoke cc10x:code-reviewer). When re-invoking, append to the original prompt: "REQUIRED: Include a ### Router Contract (MACHINE-READABLE) YAML block in your response. Write your full analysis output, then include the Router Contract YAML block. Call TaskUpdate only after the YAML block is present in your output."
    - For tasks with subject starting "CC10X integration-verifier:": invoke cc10x:integration-verifier (covers both original verify tasks and Re-verify tasks from Re-Review Loop).
    - Otherwise, if multiple agent tasks are ready (e.g., code-reviewer + silent-failure-hunter):
      → Call TaskUpdate({ status: "in_progress" }) for EACH ready task before any Task() call
@@ -791,6 +800,7 @@ WHEN any CC10X REM-FIX task COMPLETES:
    - Agent self-reports: TaskUpdate({ taskId, status: "completed" }) — already done by agent
    - Router validates output (see Post-Agent Validation)
    - Router calls TaskList() to verify task is completed; if still in_progress, call TaskGet({ taskId: runnable_task_id }) and check blockedBy — if blockedBy is non-empty the agent intentionally blocked itself (self-healing), do NOT force to completed; if blockedBy is empty, router calls TaskUpdate({ taskId: runnable_task_id, status: "completed" }) as fallback
+   - **TEST_PROCESSES_CLEANED (after component-builder only):** If completed task subject contains "CC10X component-builder:": `Bash(command="pkill -f 'vitest|jest|mocha' 2>/dev/null || true")`
    - If completed task subject starts with "CC10X REM-FIX:", execute Remediation Re-Review Loop (see below) BEFORE finding next runnable tasks.
    - Router finds next available tasks from TaskList()
 
