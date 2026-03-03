@@ -26,10 +26,11 @@ ORCHESTRATION_INVESTIGATION.md
 # ========================================
 
 # Runtime directories (user-specific context)
-.claude/
-!.claude/memory/
-!.claude/memory/CONSTITUTION.md
-!.claude/context.json
+# Use glob-level ignore so sub-directories can be un-ignored
+.claude/*
+!.claude/cc10x
+.claude/cc10x/*
+!.claude/cc10x/*.md
 
 # Dependency directories
 node_modules/

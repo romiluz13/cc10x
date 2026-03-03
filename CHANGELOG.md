@@ -1,5 +1,18 @@
 # Changelog
 
+## [7.4.2] - 2026-03-02
+
+### Fixed — 3 UX/DX improvements
+
+**Memory files now git-tracked:**
+- `.claude/cc10x/` un-ignored in `.gitignore` using glob-level pattern. Memory files (`activeContext.md`, `patterns.md`, `progress.md`) are now tracked and push to GitHub. Works locally today; now also works across machines and teams.
+
+**Routing transparency:**
+- Router announces its decision before executing any workflow: `→ {WORKFLOW} workflow (signals: {matched keywords})`. One line, zero bloat. Makes the black-box routing legible to users.
+
+**CC10X-018 root cause confirmed — platform issue:**
+- Investigated via Claude Code docs. AskUserQuestion empty on first 1-3 calls is a Claude Code platform-level warm-up race condition, not a cc10x bug. No reliable mitigation exists from inside cc10x. Reported pattern for Anthropic to fix. Retry guard remains the only defensive option.
+
 ## [7.4.1] - 2026-03-02
 
 ### Fixed — Parent workflow tasks left as stale pending after workflow completion

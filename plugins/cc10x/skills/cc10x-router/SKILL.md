@@ -27,6 +27,8 @@ description: |
 
 **Conflict Resolution:** ERROR signals always win. "fix the build" = DEBUG (not BUILD).
 
+**Announce routing:** Before executing any workflow, output one line: `→ {WORKFLOW} workflow (signals: {matched keywords})`
+
 ## Agent Chains
 
 | Workflow | Agents |
