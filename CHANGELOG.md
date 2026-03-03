@@ -1,5 +1,18 @@
 # Changelog
 
+## [7.7.0] - 2026-03-03
+
+### Fixed — OBS-1, OBS-15, OBS-16, Fix C (external stress test findings)
+
+- **OBS-1**: Empty AskUserQuestion answer on critical blocking gates — router previously auto-defaulted to recommended option silently (including REM-FIX creation, revert operations, task deletion). Fix: `Empty Answer Guard (CRITICAL GATES ONLY)` block added with 19 `⚠️`-marked critical AskUserQuestion calls. Empty answer on ⚠️-gate re-asks once, then pauses workflow. Non-critical gates (Plan-First, PLAN-to-BUILD, research prompts) retain auto-default behavior.
+- **OBS-15**: `code-reviewer` produces 0 text output despite 20–26 tool calls and 64–77K tokens (output truncation / token budget exhaustion). New `OUTPUT_TRUNCATED` pre-check: if reviewer output < 500 chars AND ≥ 10 tool calls → `AskUserQuestion` (Re-invoke / Skip / Abort). Does NOT create REM-EVIDENCE (truncation recurs on retry; needs user decision).
+- **OBS-16**: REM-EVIDENCE prompt phrase "Your work is already saved to memory" caused agent to call TaskUpdate immediately with no output. Phrase removed from both router locations: `TaskCreate` description template and chain execution re-invoke prompt. Replaced with explicit: "Re-read the files you analyzed. Output ONLY the Router Contract YAML block. Do NOT call TaskUpdate until AFTER you output the YAML block."
+- **Fix C**: `integration-verifier.md` — PASS result requires full Router Contract YAML. Added unconditional "NO EXCEPTIONS" rule: `"Task N: COMPLETED" alone is NEVER sufficient even when all scenarios pass.` *Confirmed working live in dogfood session: verifier produced full Router Contract output for the first time.*
+
+### Dogfooding catches during this session
+- OBS-16 nuance: ANY "work complete/done/succeeded" phrasing triggers premature TaskUpdate — not just the specific "already saved to memory" phrase. REM-EVIDENCE prompts must frame work as incomplete, not complete.
+- `bash grep` silently returns empty output for emoji/unicode patterns in zsh environment — use Python subprocess for reliable unicode grep.
+
 ## [7.6.0] - 2026-03-03
 
 ### Fixed — CC10X-057/058 minimal output bug (two-fix solution)
