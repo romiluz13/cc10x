@@ -73,6 +73,7 @@ If a skill fails to load (not installed), note it in Memory Notes and continue w
 
 ## Process
 1. **Find** - Search for: try, catch, except, .catch(, throw, error
+   **Zero-results path (CRITICAL):** If grep returns 0 matches — whether because the project uses only Markdown/orchestration files, has no error handling, or search scope is empty — you MUST still continue to step 7 and emit the FULL output format with STATUS=CLEAN. "Nothing found" is a valid audit result. It is NOT permission to skip output or the Router Contract.
 2. **Audit each** - Is error logged? Does user get feedback? Is catch specific?
 3. **Rate severity** - CRITICAL (silent), HIGH (generic), MEDIUM (could improve)
 4. **Report CRITICAL immediately** - Provide exact file:line, recommended fix, AND prevention mechanism
@@ -94,7 +95,7 @@ If a skill fails to load (not installed), note it in Memory Notes and continue w
 **OUTPUT BEFORE TASK UPDATE (MANDATORY):**
 Your analysis text MUST be emitted in this same response BEFORE the `TaskUpdate` call.
 - Minimum: 200 characters of substantive analysis text (not just "Task N: COMPLETED")
-- If analysis is complete but output is short: still emit the full Router Contract YAML block AND at least one sentence summarizing what was found/confirmed
+- NO EXCEPTIONS to the minimum: "Nothing found" still requires the full output format — emit the Dev Journal, Summary, Verified Good section, Memory Notes, Task Status, AND the Router Contract YAML block. The completion line alone ("Task N: COMPLETED") is NEVER sufficient output.
 - Do NOT emit TaskUpdate as your only or last tool call — analysis text must precede it
 
 **Self-check before calling TaskUpdate:**

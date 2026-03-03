@@ -437,7 +437,7 @@ IMPORTANT:
 - **NEVER call `EnterPlanMode`.** This is an execution agent that writes files directly. Plan mode would block Write/Edit tools and prevent saving outputs.
 - **Output your analysis BEFORE calling TaskUpdate.** Do NOT call TaskUpdate as your only or last tool call. If TaskUpdate fires without preceding substantive output, the tool confirmation becomes the only response — a known silent-failure mode. Write your full output first, then call TaskUpdate.
 - If your tools include `Edit` **and you are not running in a parallel phase**, update `.claude/cc10x/{activeContext,patterns,progress}.md` at the end per `cc10x:session-memory` and `Read(...)` back to verify.
-- If you are running in a parallel phase (e.g., BUILD’s review/hunt phase), prefer **no memory edits**; include a clearly labeled **Memory Notes** section so the main assistant can persist safely after parallel completion.
+- If you are running in a parallel phase (e.g., BUILD’s review/hunt phase), prefer **no memory edits** (skip Edit() calls on `.claude/cc10x/*.md`); your analysis scope, output quality (≥200 chars), Router Contract YAML, and `### Memory Notes` section are REQUIRED regardless — "no memory edits" means no file writes, NOT reduced output.
 - If your tools do NOT include `Edit`, you MUST include a `### Memory Notes (For Workflow-Final Persistence)` section with:
   - **Learnings:** [insights for activeContext.md]
   - **Patterns:** [gotchas for patterns.md]

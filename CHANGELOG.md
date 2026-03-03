@@ -1,5 +1,16 @@
 # Changelog
 
+## [7.6.0] - 2026-03-03
+
+### Fixed — CC10X-057/058 minimal output bug (two-fix solution)
+
+- **Fix A — `silent-failure-hunter.md`**: Added explicit "Zero-results path (CRITICAL)" at Process step 1 — when grep finds no code patterns (e.g., Markdown-only projects), agent must still emit full output with STATUS=CLEAN. Replaced escape hatch ("If analysis complete but output is short: emit one sentence") with unconditional "NO EXCEPTIONS" rule: `"Task N: COMPLETED" alone is NEVER sufficient output.`
+- **Fix B — `cc10x-router/SKILL.md`**: Disambiguated IMPORTANT block bullet 4 — `"no memory edits"` now explicitly means "skip Edit() calls on `.claude/cc10x/*.md`" — not reduced analysis scope. Analysis quality (≥200 chars), Router Contract YAML, and Memory Notes section are REQUIRED regardless of parallel phase status.
+
+### Investigation notes
+
+Parallel hunt (3 theories) confirmed two root causes: (1) hunter greps for code patterns (`try/catch/throw`) in Markdown orchestration projects → 0 results → "nothing to report" → 21-char output. (2) IMPORTANT block `"prefer no memory edits"` in parallel phase misread as "minimize everything" by agents with Edit tool — bullet 5's MUST clause (Memory Notes) only applies to agents without Edit, leaving Edit-having agents with no hard output requirement in parallel phases. Fix A closes Theory 1+3. Fix B closes Theory 2.
+
 ## [7.5.0] - 2026-03-03
 
 ### Fixed — 15 post-audit fixes (B3, B4, B5, D1, D2, D4, P1–P3, P7–P10, R1, R2)
