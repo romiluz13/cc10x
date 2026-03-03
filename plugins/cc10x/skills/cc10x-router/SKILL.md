@@ -403,6 +403,13 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [planner_task_id] })
       → Include answers summary in BUILD context: When invoking component-builder, add "## Planner Clarifications\n{Q+A pairs}" to prompt
     → If both sources empty or absent: Proceed directly to step 7
 7. Update memory → Reference saved plan when task completed
+7b. **Plan file existence check (after CONTRACT RULE passes):**
+    If STATUS == PLAN_CREATED:
+      Glob(pattern="{contract.PLAN_FILE}")
+      If 0 matches:
+        → Override STATUS to NEEDS_CLARIFICATION
+        → AskUserQuestion: "Planner reported PLAN_CREATED but the plan file was not found on disk at {contract.PLAN_FILE}. The Write() call may have failed silently. How to proceed?"
+          Options: "Re-run planner (Recommended)" | "Write plan content manually" | "Abort workflow"
 8. **PLAN-to-BUILD Transition Gate** (after memory update completes):
    → AskUserQuestion: "Plan saved: {plan_file}. Ready to start building?"
      Options: "Start BUILD (Recommended)" | "I'll review the plan first" | "Done for now"
@@ -764,7 +771,7 @@ WHEN any CC10X REM-FIX task COMPLETES:
 6. **TASKS_CREATED** - Workflow task hierarchy created
 7. **ALL_TASKS_COMPLETED** - All workflow tasks (including Memory Update) status="completed"
 8. **MEMORY_UPDATED** - Before marking done
-9. **TEST_PROCESSES_CLEANED** - Before running: announce "Cleaning up orphaned test processes..." then run: `pkill -f "vitest|jest|mocha" 2>/dev/null || true` and log result: "Killed: [process names found]" or "None found"
+9. **TEST_PROCESSES_CLEANED** - Before running: announce "Cleaning up orphaned test processes..." then run: `pids=$(pgrep -f 'vitest|jest|mocha' 2>/dev/null); if [ -n "$pids" ]; then pkill -f 'vitest|jest|mocha' 2>/dev/null; echo "Killed: $(ps -p $pids -o comm= 2>/dev/null | tr '\n' ',' | sed 's/,$//')"; else echo 'None found'; fi` and log result: "Killed: [names]" or "None found"
 
 ## Chain Execution Loop (Task-Based)
 
@@ -800,7 +807,10 @@ WHEN any CC10X REM-FIX task COMPLETES:
    - Agent self-reports: TaskUpdate({ taskId, status: "completed" }) — already done by agent
    - Router validates output (see Post-Agent Validation)
    - Router calls TaskList() to verify task is completed; if still in_progress, call TaskGet({ taskId: runnable_task_id }) and check blockedBy — if blockedBy is non-empty the agent intentionally blocked itself (self-healing), do NOT force to completed; if blockedBy is empty, router calls TaskUpdate({ taskId: runnable_task_id, status: "completed" }) as fallback
-   - **TEST_PROCESSES_CLEANED (after component-builder only):** If completed task subject contains "CC10X component-builder:": `Bash(command="pkill -f 'vitest|jest|mocha' 2>/dev/null || true")`
+   - **TEST_PROCESSES_CLEANED (after component-builder only):** If completed task subject contains "CC10X component-builder:":
+     Announce: "Cleaning up orphaned test processes..."
+     `Bash(command="pids=$(pgrep -f 'vitest|jest|mocha' 2>/dev/null); if [ -n \"$pids\" ]; then pkill -f 'vitest|jest|mocha' 2>/dev/null; echo \"Killed: $(ps -p $pids -o comm= 2>/dev/null | tr '\n' ',' | sed 's/,$//')\"; else echo 'None found'; fi")`
+     Log result to output.
    - If completed task subject starts with "CC10X REM-FIX:", execute Remediation Re-Review Loop (see below) BEFORE finding next runnable tasks.
    - Router finds next available tasks from TaskList()
 
@@ -842,3 +852,15 @@ WHEN any CC10X REM-FIX task COMPLETES:
 # After both parallel agents complete: TaskList() → verify both "completed"
 # Collect REVIEWER_FINDINGS (Critical Issues + Verdict) and HUNTER_FINDINGS (Router Handoff section preferred)
 # Pass both under "## Previous Agent Findings" in integration-verifier prompt (see integration-verifier.md ## Context from Previous Agents for template)
+
+## Release Checklist
+
+**When bumping version — update ALL THREE files:**
+
+| File | Location | Fields to update |
+|------|----------|-----------------|
+| Source plugin.json | `plugins/cc10x/.claude-plugin/plugin.json` | `version` |
+| Cache plugin.json | `~/.claude/plugins/cache/cc10x/cc10x/{folder}/plugin.json` | `version` (note: cache folder name stays at old version; only the field changes) |
+| Marketplace | `~/.claude/plugins/marketplaces/cc10x/.claude-plugin/marketplace.json` | `metadata.version`, `plugins[0].version`, `metadata.description` (inline version string) |
+
+**Also update:** `README.md` (version in prose), `CHANGELOG.md` (new section header).

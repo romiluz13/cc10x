@@ -22,6 +22,7 @@ Run these verifications using Read/Grep/Glob:
 
 | Criterion | How to verify | Blocking if |
 |-----------|--------------|-------------|
+| Plan file exists on disk | `Glob(pattern="{plan_file_path}")` where plan_file_path is the path from the calling agent's context | Returns 0 matches |
 | File paths exist | `Glob(pattern="{path}")` for every referenced file | Any path returns 0 matches and doesn't exist |
 | Dependency ordering | Read plan phases — do later phases depend on earlier ones only? | Circular or forward-reference dependencies |
 | Technical approach matches codebase | Read 1-2 existing files in the affected area | Proposed patterns/libs differ from what codebase actually uses |

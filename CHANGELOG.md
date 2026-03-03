@@ -1,5 +1,23 @@
 # Changelog
 
+## [7.9.0] - 2026-03-03
+
+### Fixed — 4 dogfooding-discovered systemic issues
+
+- **integration-verifier Router Contract ordering**: Template had `### Task Status` / `Task N: COMPLETED` appearing BEFORE `### Router Contract (MACHINE-READABLE)`. LLM treated "COMPLETED" as work-completion signal and called `TaskUpdate` before ever outputting the YAML block — causing systematic REM-EVIDENCE loops. Fixed: Router Contract section now appears before Task Status in the output template. Added explicit CRITICAL guard: "Do NOT call TaskUpdate until the Router Contract section has been fully output."
+
+- **Planner file-on-disk verification (3-layer fix)**: A planner could report `STATUS: PLAN_CREATED` with `GATE_PASSED: true` while the plan file didn't exist on disk (Write() failed silently at token budget limit). Fixed at all 3 layers: (1) `planner.md` — Glob() check after Write(), retry + NEEDS_CLARIFICATION if missing; (2) `plan-review-gate/SKILL.md` — "Plan file exists on disk" added as first Check 1 Feasibility criterion; (3) `cc10x-router/SKILL.md` — new step 7b runs Glob() on `contract.PLAN_FILE` before the PLAN-to-BUILD gate.
+
+- **Gate 9 definition-implementation split**: Gate 9 spec required announce + log `"Killed: [names]"` / `"None found"`, but Chain Execution Loop step 3 only ran a silent `pkill ... || true`. Fixed: both spec and implementation now use a pgrep-based command that announces cleanup and logs result. Spec and implementation are now in sync.
+
+- **Release checklist permanence**: Version bump checklist only existed in ephemeral session memory — invisible after compaction, not version-controlled. Fixed: `## Release Checklist` section added at end of router documenting all 3 required files (source plugin.json, cache plugin.json, marketplace.json) permanently.
+
+### Changed
+- `cc10x-router/SKILL.md`: +Gate 9 logging fix, +step 7b Glob check, +Release Checklist section
+- `agents/integration-verifier.md`: Router Contract now before Task Status
+- `agents/planner.md`: +post-Write Glob verification
+- `skills/plan-review-gate/SKILL.md`: +plan file existence as first feasibility check
+
 ## [7.8.0] - 2026-03-03
 
 ### Fixed — OBS-1, OBS-9, OBS-15, OBS-16, DEBUG-RESET (5 systemic issues)

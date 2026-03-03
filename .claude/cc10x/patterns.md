@@ -30,7 +30,7 @@
 - Binary-verdict gates (PASS/FAIL) need explicit fallback: always add "treat output without PASS/FAIL as FAIL" rule
 - Router CONTRACT RULE table must include ALL fields mentioned in agent CONTRACT RULE — missing fields are silently unenforced
 - {placeholder} in Task() prompts: use explicit assignment syntax immediately before code block, not prose 'set X = ...' instruction
-- Version bump checklist: source .claude-plugin/plugin.json + cache plugin.json — both must be updated
+- Version bump checklist: (1) source `.claude-plugin/plugin.json` (2) cache `plugin.json` (3) `~/.claude/plugins/marketplaces/cc10x/.claude-plugin/marketplace.json` (metadata.version + plugins[0].version + description string) — all 3 must be updated
 - [v6.0.38 smoke gotcha] grep -c zero-match pipe failure: use direct assignment COUNT=$(grep -c ... || echo "0") for absence checks
 - [v6.0.38 cache gotcha] plugin.json: source at .claude-plugin/plugin.json; cache at root plugin.json — structural difference, not a sync error
 - [Closed v7.0.0]: 4 v6.0.38-M deferreds resolved — router pre-skip delegated to gate, self-reflect Write() fallback, brainstorming explicit design_path assignment, escalation verbatim feedback

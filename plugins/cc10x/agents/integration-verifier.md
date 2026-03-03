@@ -110,6 +110,9 @@ You must NOT complete your task. If the issue is fixable (Option A below), you m
 The router will wake up, see you are blocked, and execute the builder on the fix task. When the fix is done, you will automatically be unblocked to re-verify.
 
 ## Output
+
+CRITICAL: Output the `### Router Contract (MACHINE-READABLE)` YAML block BEFORE calling `TaskUpdate`. Do NOT call TaskUpdate until the Router Contract section has been fully output in this message.
+
 ```
 ## Verification: [PASS/FAIL]
 
@@ -199,10 +202,6 @@ BLOCKERS:
 - **Patterns:** [Edge cases discovered for patterns.md ## Common Gotchas]
 - **Verification:** [Scenario results for progress.md ## Verification]
 
-### Task Status
-- Task {TASK_ID}: COMPLETED
-- Follow-up tasks created: [list if any, or "None"]
-
 ### Router Contract (MACHINE-READABLE)
 ```yaml
 STATUS: PASS | FAIL | SELF_REMEDIATED | REVERT_RECOMMENDED | LIMITATION_ACCEPTED
@@ -219,4 +218,8 @@ MEMORY_NOTES:
   verification: ["E2E: {SCENARIOS_PASSED}/{SCENARIOS_TOTAL} passed"]
 ```
 **CONTRACT RULE:** STATUS=PASS requires BLOCKERS=0 and SCENARIOS_PASSED=SCENARIOS_TOTAL. STATUS=SELF_REMEDIATED means Option A was taken (self-heal via TaskCreate — agent created fix task and blocked downstream). STATUS=REVERT_RECOMMENDED means user confirmed revert via inline AskUserQuestion (Option B path). STATUS=LIMITATION_ACCEPTED means user accepted limitation via inline AskUserQuestion (Option C path).
+
+### Task Status
+- Task {TASK_ID}: COMPLETED
+- Follow-up tasks created: [list if any, or "None"]
 ```

@@ -90,6 +90,11 @@ Research is executed by `cc10x:web-researcher` + `cc10x:github-researcher` (in p
 Bash(command="mkdir -p docs/plans")
 Write(file_path="docs/plans/YYYY-MM-DD-<feature>-plan.md", content="...")
 
+# Verify plan file was actually created on disk
+Glob(pattern="docs/plans/YYYY-MM-DD-<feature>-plan.md")
+# If 0 matches: Log "⚠️ Plan file write failed — file not found at {plan_file_path}. Retrying Write()..." and retry once.
+# If still 0 matches after retry: Set STATUS=NEEDS_CLARIFICATION, REMEDIATION_REASON="Write() failed to create plan file at {plan_file_path} — disk write error or path issue."
+
 # 2. Update memory using stable anchors
 Read(file_path=".claude/cc10x/activeContext.md")
 
