@@ -18,27 +18,16 @@ description: |
 
 ## Decision Tree (FOLLOW IN ORDER)
 
-| Priority | Signal | Keywords | Workflow |
-|----------|--------|----------|----------|
-| 1 | ERROR | error, bug, fix, broken, crash, fail, debug, troubleshoot, issue, problem, doesn't work | **DEBUG** |
-| 2 | PLAN | plan, design, architect, roadmap, strategy, spec, brainstorm, brainstorming, explore, "before we build", "how should we" | **PLAN** |
-| 3 | REVIEW | review, audit, check, analyze, assess, "what do you think", "is this good" | **REVIEW** |
-| 4 | DEFAULT | Everything else | **BUILD** |
+| Priority | Signal | Keywords | Workflow | Agent Chain |
+|----------|--------|----------|----------|-------------|
+| 1 | ERROR | error, bug, fix, broken, crash, fail, debug, troubleshoot, issue, problem, doesn't work | **DEBUG** | bug-investigator → code-reviewer → integration-verifier |
+| 2 | PLAN | plan, design, architect, roadmap, strategy, spec, brainstorm, brainstorming, explore, "before we build", "how should we" | **PLAN** | planner |
+| 3 | REVIEW | review, audit, check, analyze, assess, "what do you think", "is this good" | **REVIEW** | code-reviewer |
+| 4 | DEFAULT | Everything else | **BUILD** | component-builder → **[code-reviewer ∥ silent-failure-hunter]** → integration-verifier |
 
-**Conflict Resolution:** ERROR signals always win. "fix the build" = DEBUG (not BUILD).
+**∥ = PARALLEL.** Conflict Resolution: ERROR signals always win. "fix the build" = DEBUG (not BUILD).
 
 **Announce routing:** Before executing any workflow, output one line: `→ {WORKFLOW} workflow (signals: {matched keywords})`
-
-## Agent Chains
-
-| Workflow | Agents |
-|----------|--------|
-| BUILD | component-builder → **[code-reviewer ∥ silent-failure-hunter]** → integration-verifier |
-| DEBUG | bug-investigator → code-reviewer → integration-verifier |
-| REVIEW | code-reviewer |
-| PLAN | planner |
-
-**∥ = PARALLEL** - code-reviewer and silent-failure-hunter - run simultaneously
 
 ## Memory (PERMISSION-FREE)
 
@@ -213,7 +202,7 @@ TaskUpdate({ taskId: verifier_task_id, addBlockedBy: [reviewer_task_id] })
 # Replace {parent_task_id} below with workflow_task_id (returned by the parent DEBUG task created above)
 TaskCreate({
   subject: "CC10X Memory Update: Persist debug learnings",
-  description: "**ROUTER: Execute inline — NEVER spawn Task() for this task.**\n\nREQUIRED: Collect Memory Notes from agent outputs and persist to memory files.\n\nFocus on:\n- Root cause for patterns.md ## Common Gotchas\n- Debug attempt history for activeContext.md\n- Verification evidence for progress.md\n- **Deferred:** entries from Memory Notes → Write each to patterns.md ## Common Gotchas as \"[Deferred]: {entry}\"\n\n**Use Read-Edit-Read pattern for each file.**\n\n**Freshness (prevent bloat):**\n- activeContext.md ## Recent Changes: Find `[DEBUG-RESET: wf:{parent_task_id}]` in ## Recent Changes (extract parent_task_id from `[workflow-scope: wf:{parent_task_id}]` at end of this description). Replace FROM that marker onward with this workflow's final summary. Preserve all entries BEFORE that marker.\n- progress.md ## Tasks: REPLACE existing entries with only this workflow's task items.\n- patterns.md: Before adding to ## Common Gotchas, scan for an existing entry about the same file or error. If found, update it in-place instead of adding a duplicate.\n- Collect Memory Notes from READ-ONLY agents only (code-reviewer, integration-verifier) — WRITE agents (bug-investigator) already wrote memory directly; skip their Memory Notes to avoid duplicates. Exception: check WRITE agent output for **Deferred:** entries — these are NOT written by the agent and must be collected here.\n- activeContext.md ## Learnings: before appending, check for same topic/file; update in-place if found; if count > 20, promote oldest entries to patterns.md ## Common Gotchas.\n- progress.md ## Completed: keep only the 10 most recent entries.\n[workflow-scope: wf:{parent_task_id}] — used by compaction-recovery scoped search",
+  description: "**ROUTER: Execute inline — NEVER spawn Task() for this task.**\n\nREQUIRED: Collect Memory Notes from agent outputs and persist to memory files.\n\nFocus on:\n- Root cause for patterns.md ## Common Gotchas\n- Debug attempt history for activeContext.md\n- Verification evidence for progress.md\n- **Deferred:** entries from Memory Notes → Write each to patterns.md ## Common Gotchas as \"[Deferred]: {entry}\"\n\n**Use Read-Edit-Read pattern for each file.**\n\n**Freshness (prevent bloat):**\n- activeContext.md ## Recent Changes: Find `[DEBUG-RESET: wf:{parent_task_id}]` in ## Recent Changes (extract parent_task_id from `[workflow-scope: wf:{parent_task_id}]` at end of this description). Replace FROM that marker onward with this workflow's final summary. Preserve all entries BEFORE that marker. (Fallback: if not found, preserve all ## Recent Changes — do not trim.)\n- progress.md ## Tasks: REPLACE existing entries with only this workflow's task items.\n- patterns.md: Before adding to ## Common Gotchas, scan for an existing entry about the same file or error. If found, update it in-place instead of adding a duplicate.\n- Collect Memory Notes from READ-ONLY agents only (code-reviewer, integration-verifier) — WRITE agents (bug-investigator) already wrote memory directly; skip their Memory Notes to avoid duplicates. Exception: check WRITE agent output for **Deferred:** entries — these are NOT written by the agent and must be collected here.\n- activeContext.md ## Learnings: before appending, check for same topic/file; update in-place if found; if count > 20, promote oldest entries to patterns.md ## Common Gotchas.\n- progress.md ## Completed: keep only the 10 most recent entries.\n[workflow-scope: wf:{parent_task_id}] — used by compaction-recovery scoped search",
   activeForm: "Persisting debug learnings"
 })
 # Returns memory_task_id
@@ -249,7 +238,7 @@ TaskCreate({ subject: "CC10X planner: Create plan for {feature}", description: "
 # Replace {parent_task_id} below with workflow_task_id (returned by the parent PLAN task created above)
 TaskCreate({
   subject: "CC10X Memory Update: Index plan in memory",
-  description: "**ROUTER: Execute inline — NEVER spawn Task() for this task.**\n\nREQUIRED: Update memory files with plan reference.\n\nFocus on:\n- Add plan file to activeContext.md ## References\n- Update progress.md with plan status\n\n**Use Read-Edit-Read pattern for each file.**\n\n**Freshness (prevent bloat):**\n- progress.md ## Tasks: REPLACE existing entries with only this workflow's task items.\n[workflow-scope: wf:{parent_task_id}] — used by compaction-recovery scoped search",
+  description: "**ROUTER: Execute inline — NEVER spawn Task() for this task.**\n\nREQUIRED: Update memory files with plan reference and planner learnings.\n\nFocus on:\n- Add plan file to activeContext.md ## References\n- Persist planner Learnings to activeContext.md ## Learnings\n- Persist planner Patterns to patterns.md ## Common Gotchas\n- **Deferred:** entries from planner Memory Notes → Write each to patterns.md ## Common Gotchas as \"[Deferred]: {entry}\"\n- Update progress.md with plan status\n\n**Use Read-Edit-Read pattern for each file.**\n\n**Freshness (prevent bloat):**\n- activeContext.md ## Recent Changes: Find `[PLAN-START: wf:{parent_task_id}]` in ## Recent Changes (extract parent_task_id from `[workflow-scope: wf:{parent_task_id}]` at end of this description). Replace FROM that marker onward with this workflow's final summary. Preserve all entries BEFORE that marker. (Fallback: if not found, preserve all ## Recent Changes — do not trim.)\n- progress.md ## Tasks: REPLACE existing entries with only this workflow's task items.\n- patterns.md: Before adding to ## Common Gotchas, scan for an existing entry about the same file or error. If found, update it in-place instead of adding a duplicate.\n- activeContext.md ## Learnings: before appending, check for same topic/file; update in-place if found; if count > 20, promote oldest entries to patterns.md ## Common Gotchas.\n- progress.md ## Completed: keep only the 10 most recent entries.\n[workflow-scope: wf:{parent_task_id}] — used by compaction-recovery scoped search",
   activeForm: "Indexing plan in memory"
 })
 # Returns memory_task_id
@@ -267,7 +256,7 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [planner_task_id] })
    - **Trivial request heuristic** (auto-select "Build directly" — skip AskUserQuestion): If request is under 20 words AND contains none of: API, database, db, schema, migration, component, multiple files, refactor, auth, security, crypto, payment, password — select "Build directly" automatically and log: "Plan-First Gate: trivial request detected, skipping plan prompt."
    - Otherwise → AskUserQuestion: "Plan first (Recommended) / Build directly"
 3. **Clarify requirements** (DO NOT SKIP):
-   - **Pre-answers (always run first):** Read activeContext.md `## Decisions` — look for entries starting with `"Planner clarification ["`. If found, treat those Q→A pairs as pre-answered (do NOT re-ask them).
+   - **Pre-answers (always run first):** Read activeContext.md `## Decisions` — look for entries starting with `"Planner clarification ["` OR `"Build clarification ["`. If found, treat those Q→A pairs as pre-answered (do NOT re-ask them).
    - **Ambiguity check:** If the request explicitly states (a) the file/component to change, (b) the function/behavior to change, (c) what the change is, AND (d) acceptance criteria or expected outcome — AND pre-answers cover all gaps — skip the AskUserQuestion below. If ANY element is missing, vague, or contradictory → continue to AskUserQuestion.
    - **Then:** Use AskUserQuestion for any remaining unanswered requirements.
    - Pass all answers (pre-populated + new) to component-builder in prompt under `## Pre-Answered Requirements`.
@@ -340,6 +329,7 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [planner_task_id] })
        `Task(subagent_type="cc10x:web-researcher", ...)` ∥ `Task(subagent_type="cc10x:github-researcher", ...)`
      - **Timeout fallback:** If either agent returns no FILE_PATH or fails, use only the successful agent's file (or skip research and proceed with empty context if both fail).
      - Collect: `web_file = web_contract.FILE_PATH`, `github_file = github_contract.FILE_PATH`
+     - **Persist research (compaction-safe):** Edit(activeContext.md ## References, "- Research (web): {web_file}\n- Research (github): {github_file}") → Read(activeContext.md) to verify
      - Pass both to bug-investigator: `## Research Files\nWeb: {web_file}\nGitHub: {github_file}`
      - Add SKILL_HINTS: `cc10x:research` (synthesis guidance)
 
@@ -366,14 +356,17 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [planner_task_id] })
 > **NEVER call `EnterPlanMode`.** Invoke the planner agent — it writes plan files directly.
 
 1. Load memory
-2. **Clarification (if request is vague or ambiguous):**
+2. **Design file extraction (ALWAYS — regardless of request clarity):**
+   → `Read(.claude/cc10x/activeContext.md)` → find `- Design:` in `## References` → store as `design_file` (or null if not found / "N/A")
+   → If `design_file` is not null/N/A: `Glob(pattern="{design_file}")` → if 0 matches: AskUserQuestion: "Design file not found at {design_file}. Re-run brainstorming | Provide path manually | Proceed without design"
+3. **Clarification (if request is vague or ambiguous):**
    → `Skill(skill="cc10x:brainstorming")` — runs in main context, `AskUserQuestion` available here
-   → Collect clarified requirements, pass to planner in step 5
-   → Extract design file: `Read(.claude/cc10x/activeContext.md)` → find `- Design:` in `## References` → store as `design_file` → **Existence check:** `Glob(pattern="{design_file}")` → if 0 matches: AskUserQuestion: "Design file not found at {design_file}. Re-run brainstorming | Provide path manually | Proceed without design"
-3. **If research detected (external tech OR explicit request):**
+   → Collect clarified requirements, pass to planner in step 6
+4. **If research detected (external tech OR explicit request):**
    - AskUserQuestion: "Research web + GitHub before planning? Improves plan quality for external tech."
-     Options: "Yes, research (Recommended)" | "No, skip"
-   - If "No, skip": proceed to step 4
+     Options: "Yes, research (Recommended)" | "No, skip" | "Abort workflow"
+   - If "No, skip": proceed to step 5
+   - If "Abort workflow": Record in activeContext.md ## Decisions: "Research declined, workflow aborted [{date}]", stop workflow
    - If "Yes":
      - `TaskCreate({ subject: "CC10X web-researcher: Research {topic}", description: "Topic: {topic}\nReason: {reason}\nFile: docs/research/{date}-{topic}-web.md", activeForm: "Researching web" })` → web_task_id
      - `TaskCreate({ subject: "CC10X github-researcher: Research {topic}", description: "Topic: {topic}\nReason: {reason}\nFile: docs/research/{date}-{topic}-github.md", activeForm: "Researching GitHub" })` → github_task_id
@@ -381,29 +374,30 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [planner_task_id] })
        `Task(subagent_type="cc10x:web-researcher", prompt="Topic: {topic}\nReason: {reason}\nFile: docs/research/{date}-{topic}-web.md\nTask ID: {web_task_id}")`
        `Task(subagent_type="cc10x:github-researcher", prompt="Topic: {topic}\nReason: {reason}\nFile: docs/research/{date}-{topic}-github.md\nTask ID: {github_task_id}")`
      - Collect: `web_file = web_contract.FILE_PATH`, `github_file = github_contract.FILE_PATH`
+     - **Timeout fallback:** If either agent returns no FILE_PATH or fails, use only the successful agent's file (or skip research and proceed with empty context if both fail). Do NOT pass null/empty paths to planner.
      - **Persist research (compaction-safe):** Edit(activeContext.md ## References, "- Research (web): {web_file}\n- Research (github): {github_file}") → Read(activeContext.md) to verify
-4. **Create task hierarchy** (see Task-Based Orchestration above)
-4b. **Write PLAN-START marker** (immediately after task hierarchy created — before any agent runs):
+5. **Create task hierarchy** (see Task-Based Orchestration above)
+5b. **Write PLAN-START marker** (immediately after task hierarchy created — before any agent runs):
     ```
     Edit(file_path=".claude/cc10x/activeContext.md",
          old_string="## Recent Changes",
          new_string="## Recent Changes\n[PLAN-START: wf:{workflow_task_id}]")
     Read(file_path=".claude/cc10x/activeContext.md")  # VERIFY marker written
     ```
-5. **Start chain execution** (pass clarified requirements + research files + design file in prompt)
-   If research ran (step 3): Add to planner prompt: `## Research Files\nWeb: {web_file}\nGitHub: {github_file}`
-   If research ran (step 3): Add SKILL_HINTS: `cc10x:research` (synthesis guidance for reading the files)
-   If brainstorming ran (step 2): Add to planner prompt: `## Design File\n{design_file}`
-5a. **After planner task completes — Your Input Needed gate (MANDATORY if items exist):**
+6. **Start chain execution** (pass clarified requirements + research files + design file in prompt)
+   If research ran (step 4): Add to planner prompt: `## Research Files\nWeb: {web_file}\nGitHub: {github_file}`
+   If research ran (step 4): Add SKILL_HINTS: `cc10x:research` (synthesis guidance for reading the files)
+   If design_file found (step 2): Add to planner prompt: `## Design File\n{design_file}`
+6a. **After planner task completes — Your Input Needed gate (MANDATORY if items exist):**
     → Scan planner output text for "**Your Input Needed:**" section header
     → Also check planner Router Contract for `USER_INPUT_NEEDED:` field (compaction-safe fallback)
     → If EITHER source has content (non-empty bullet points or non-empty USER_INPUT_NEEDED list):
       → AskUserQuestion is MANDATORY: "Before BUILD starts, planner flagged these assumptions that need your input:\n{extracted bullet points}\nProvide answers (or confirm the defaults)."
       → Collect answers → Persist to activeContext.md ## Decisions with Edit: "- Planner clarification [{date}]: {Q} → {A}"
       → Include answers summary in BUILD context: When invoking component-builder, add "## Planner Clarifications\n{Q+A pairs}" to prompt
-    → If both sources empty or absent: Proceed directly to step 6
-6. Update memory → Reference saved plan when task completed
-7. **PLAN-to-BUILD Transition Gate** (after memory update completes):
+    → If both sources empty or absent: Proceed directly to step 7
+7. Update memory → Reference saved plan when task completed
+8. **PLAN-to-BUILD Transition Gate** (after memory update completes):
    → AskUserQuestion: "Plan saved: {plan_file}. Ready to start building?"
      Options: "Start BUILD (Recommended)" | "I'll review the plan first" | "Done for now"
    → "Start BUILD": Execute BUILD workflow from step 1. Plan-First Gate (step 2) will skip automatically because plan is now in ## References (per C1 fix).
@@ -530,7 +524,9 @@ Proceed with rules 1a/1b/2 using the OVERRIDDEN values.
 Before creating a new REM-FIX task, count ACTIVE REM-FIX tasks: `TaskList()` → filter by (subject contains "CC10X REM-FIX:") AND (status IN [pending, in_progress]). Do NOT count completed REM-FIX tasks — they are resolved and irrelevant.
 If count ≥ 3 → AskUserQuestion: "Too many active fix attempts are stacking up ({N} active CC10X REM-FIX tasks). This may indicate a deeper systemic issue. How to proceed?"
 - **Research best practices (Recommended)** → Spawn parallel researchers (Topic: {issue pattern}, Reason: Circuit Breaker — 3+ REM-FIX tasks):
-  `Task(cc10x:web-researcher) ∥ Task(cc10x:github-researcher)` → collect both FILE_PATHs → pass both file paths to next REM-FIX task description + SKILL_HINTS: cc10x:research
+  TaskCreate({ subject: "CC10X web-researcher: Research {issue pattern}", description: "Topic: {issue pattern}\nReason: Circuit Breaker — 3+ REM-FIX tasks\nFile: docs/research/{date}-{topic}-web.md", activeForm: "Researching web" }) → cb_web_task_id
+  TaskCreate({ subject: "CC10X github-researcher: Research {issue pattern}", description: "Topic: {issue pattern}\nReason: Circuit Breaker — 3+ REM-FIX tasks\nFile: docs/research/{date}-{topic}-github.md", activeForm: "Researching GitHub" }) → cb_github_task_id
+  Mark both in_progress. `Task(cc10x:web-researcher, prompt="Topic: {issue pattern}\nReason: Circuit Breaker\nFile: docs/research/{date}-{topic}-web.md\nTask ID: {cb_web_task_id}")` ∥ `Task(cc10x:github-researcher, prompt="Topic: {issue pattern}\nReason: Circuit Breaker\nFile: docs/research/{date}-{topic}-github.md\nTask ID: {cb_github_task_id}")` → collect both FILE_PATHs → pass both file paths to next REM-FIX task description + SKILL_HINTS: cc10x:research
 - **Fix locally** → Create another REM-FIX task
 - **Skip** → Proceed despite errors (not recommended)
 - **Abort** → Stop workflow, manual fix
@@ -546,7 +542,7 @@ If count ≥ 3 → AskUserQuestion: "Too many active fix attempts are stacking u
 0c. If contract.NEEDS_EXTERNAL_RESEARCH == true (bug-investigator only):
     **Runs BEFORE rule 1a — do NOT evaluate rules 1a/1b/2 when this fires.**
     **Research Loop Cap (BEFORE spawning agents):**
-      Count external research iterations: Read(.claude/cc10x/activeContext.md) → count entries in ## References that match `docs/research/` (each represents one completed research cycle for this workflow)
+      Count external research iterations: Read(.claude/cc10x/activeContext.md) → find the `[DEBUG-RESET: wf:{parent_task_id}]` marker in ## Recent Changes → count entries in ## References that match `docs/research/` AND were added after that marker (scoped to current workflow). If no marker found: count = 0 (fresh workflow, never triggered).
       If count >= 2: AskUserQuestion: "External research has been provided to bug-investigator {count} time(s) and it still reports NEEDS_EXTERNAL_RESEARCH. How to proceed?"
         Options: "Try research once more" | "Create manual fix task (skip re-invoke)" | "Abort workflow"
         → Do NOT proceed. Handle chosen option, then STOP.
@@ -588,7 +584,12 @@ If count ≥ 3 → AskUserQuestion: "Too many active fix attempts are stacking u
       - Otherwise (serial phase or sibling has no issues): use this agent's REMEDIATION_REASON alone
     → AskUserQuestion: "{merged or single REMEDIATION_REASON} — fix before continuing?"
       Options: "Fix now (Recommended)" | "Proceed anyway"
-    → "Fix now" → Circuit Breaker check, then create REM-FIX task: TaskCreate({subject: "CC10X REM-FIX: {agent} — {REMEDIATION_REASON[:60]}", description: REMEDIATION_REASON}) → block downstream tasks → STOP
+    → "Fix now" →
+        **REVIEW workflow check:** If parent workflow task subject starts with "CC10X REVIEW:":
+          → Do NOT create REM-FIX. Instead: AskUserQuestion: "Start a BUILD workflow to apply fixes? Options: 'Start BUILD' | 'Done for now'"
+          → If "Start BUILD": Execute BUILD workflow with reviewer findings as context. STOP.
+          → If "Done for now": Record in activeContext.md ## Decisions: "REVIEW complete, fixes deferred [{date}]". STOP.
+        Otherwise (BUILD/DEBUG): Circuit Breaker check, then create REM-FIX task: TaskCreate({subject: "CC10X REM-FIX: {agent} — {REMEDIATION_REASON[:60]}", description: REMEDIATION_REASON}) → block downstream tasks → STOP
     → "Proceed" → Edit activeContext.md ## Decisions: "{agent(s)}: HIGH issues skipped by user", continue
                → Edit patterns.md ## Common Gotchas: append "[Skipped HIGH — {agent}]: {first 80 chars of (REMEDIATION_REASON ?? 'see agent output')}"
 
@@ -605,7 +606,7 @@ If count ≥ 3 → AskUserQuestion: "Too many active fix attempts are stacking u
 
 2b. If contract.STATUS == "NEEDS_CLARIFICATION" (planner agent):
     **NEEDS_CLARIFICATION Loop Cap (BEFORE re-invoking):**
-      Count: TaskList() → filter subject contains "CC10X planner: Create plan" AND status = "completed"
+      Count: TaskList() → filter (subject contains "CC10X planner: Create plan" OR subject contains "CC10X planner: Re-plan after clarification") AND status = "completed"
       If count >= 3: AskUserQuestion: "Planner has been re-invoked {count} times and still returns NEEDS_CLARIFICATION. How to proceed?"
         Options: "Try once more" | "Proceed with best available plan" | "Abort workflow"
         → Handle chosen option, then STOP.
@@ -613,7 +614,9 @@ If count ≥ 3 → AskUserQuestion: "Too many active fix attempts are stacking u
     → Extract "**Your Input Needed:**" bullet points from planner output
     → AskUserQuestion: "Planner needs clarification before the plan can be completed:\n{extracted items}\nPlease answer to unblock planning."
     → Collect user answers → Persist to activeContext.md ## Decisions: "Plan clarification: {Q} → {A}"
-    → Re-invoke planner with prompt: "{original prompt}\n\n## User Clarifications\n{answers}"
+    → TaskCreate({ subject: "CC10X planner: Re-plan after clarification (attempt {count+1})", description: "Re-planning after NEEDS_CLARIFICATION. User answers: {answers}", activeForm: "Re-planning" }) → planner_retry_id
+    → Block downstream tasks on planner_retry_id
+    → Task(subagent_type="cc10x:planner", prompt: "Parent Workflow ID: {parent_task_id}\nTask ID: {planner_retry_id}\n{original prompt}\n\n## User Clarifications\n{answers}")
     → Do NOT proceed to BUILD until planner returns STATUS=PLAN_CREATED
 
 2c. If contract.STATUS == "INVESTIGATING" (bug-investigator):
@@ -688,7 +691,9 @@ WHEN any CC10X REM-FIX task COMPLETES:
   │        → AskUserQuestion: "This workflow has completed {count} fix cycles. How to proceed?"
   │          - "Create another fix task" → Continue with steps 1-5 below
   │          - "Research patterns (Recommended)" → Spawn parallel researchers (Topic: {current issue pattern}, Reason: Multiple REM-FIX cycles failing):
-            `Task(cc10x:web-researcher) ∥ Task(cc10x:github-researcher)` → collect both FILE_PATHs → pass both file paths to next REM-FIX task description + SKILL_HINTS: cc10x:research
+            TaskCreate({ subject: "CC10X web-researcher: Research {current issue pattern}", description: "Topic: {current issue pattern}\nReason: Multiple REM-FIX cycles failing\nFile: docs/research/{date}-{topic}-web.md", activeForm: "Researching web" }) → rrr_web_task_id
+            TaskCreate({ subject: "CC10X github-researcher: Research {current issue pattern}", description: "Topic: {current issue pattern}\nReason: Multiple REM-FIX cycles failing\nFile: docs/research/{date}-{topic}-github.md", activeForm: "Researching GitHub" }) → rrr_github_task_id
+            Mark both in_progress. `Task(cc10x:web-researcher, prompt="Topic: {current issue pattern}\nReason: Multiple REM-FIX cycles\nFile: docs/research/{date}-{topic}-web.md\nTask ID: {rrr_web_task_id}")` ∥ `Task(cc10x:github-researcher, prompt="Topic: {current issue pattern}\nReason: Multiple REM-FIX cycles\nFile: docs/research/{date}-{topic}-github.md\nTask ID: {rrr_github_task_id}")` → collect both FILE_PATHs → pass both file paths to next REM-FIX task description + SKILL_HINTS: cc10x:research
   │          - "Accept known issues" → Record in activeContext.md ## Decisions, proceed directly to verifier/memory-update
   │          - "Abort workflow" → Stop; user resolves manually
   │      If count < 2: Continue to step 1 below
@@ -725,14 +730,6 @@ WHEN any CC10X REM-FIX task COMPLETES:
          Note: For REVIEW workflows, chain completes after re-reviewer → Memory Update (no hunter or verifier).
 ```
 
-## Skill Loading
-
-**1. Frontmatter `skills:` (PRELOAD):** Loaded automatically at agent start. Agent does NOT call `Skill()` for these.
-
-**2. SKILL_HINTS (Conditional):** Router passes domain skills from CLAUDE.md Complementary Skills table (e.g., `mongodb-agent-skills:*`, `react-best-practices`). Agent calls `Skill(skill="{name}")` after memory load. If not installed, agent notes in Memory Notes and continues.
-
-**Note:** `cc10x:research` is passed as SKILL_HINTS to planner/bug-investigator when parallel research was executed. It provides synthesis guidance for reading two research files. The router never executes research inline — it spawns `cc10x:web-researcher` + `cc10x:github-researcher` in parallel (same pattern as `code-reviewer ∥ silent-failure-hunter`).
-
 ## Gates (Must Pass)
 
 1. **MEMORY_LOADED** - Before routing
@@ -743,7 +740,7 @@ WHEN any CC10X REM-FIX task COMPLETES:
 6. **TASKS_CREATED** - Workflow task hierarchy created
 7. **ALL_TASKS_COMPLETED** - All workflow tasks (including Memory Update) status="completed"
 8. **MEMORY_UPDATED** - Before marking done
-9. **TEST_PROCESSES_CLEANED** - Before running: announce "Cleaning up orphaned test processes..." then run: `pkill -f "\bvitest\b|\bjest\b|\bmocha\b" 2>/dev/null || true` and log result: "Killed: [process names found]" or "None found"
+9. **TEST_PROCESSES_CLEANED** - Before running: announce "Cleaning up orphaned test processes..." then run: `pkill -f "vitest|jest|mocha" 2>/dev/null || true` and log result: "Killed: [process names found]" or "None found"
 
 ## Chain Execution Loop (Task-Based)
 
@@ -794,8 +791,10 @@ WHEN any CC10X REM-FIX task COMPLETES:
     → **Persist memory_task_id subject for reconstruction:**
       At this point, ensure memory_task_id is defined:
       If `memory_task_id` is undefined (compaction recovery): `TaskList()` → find task where subject starts with "CC10X Memory Update:" AND status IN [pending, in_progress] → assign its taskId to `memory_task_id`
-    → **Store taskId durably (survives compaction):**
-      `Edit(file_path=".claude/cc10x/activeContext.md", old_string="## References", new_string="## References\n- [cc10x-internal] memory_task_id: {memory_task_id} wf:{parent_task_id}")`
+    → **Store taskId durably (idempotent — skip if already present):**
+      Read(activeContext.md) → if "[cc10x-internal] memory_task_id:" NOT found in ## References:
+        `Edit(file_path=".claude/cc10x/activeContext.md", old_string="## References", new_string="## References\n- [cc10x-internal] memory_task_id: {memory_task_id} wf:{parent_task_id}")`
+      # (If already present, skip — value is the same)
 
 4. Determine next:
    - Find tasks where ALL blockedBy tasks are "completed"
@@ -811,68 +810,10 @@ WHEN any CC10X REM-FIX task COMPLETES:
 ```
 
 **Parallel execution:** When multiple tasks are ready simultaneously, invoke ALL Task() calls in the same message — both complete before you continue.
-
-### Workflow-Final Memory Persistence (Task-Enforced)
-
-**When Memory Update task becomes available:**
-1. Read Memory Notes from this task's own description (step 3a captured them — compaction-safe). Do NOT scan conversation history.
-2. Persist learnings using Read-Edit-Read pattern per task description
-3. Mark task completed
-
-**Note:** In DEBUG workflows, silent-failure-hunter is not in the chain — its Memory Notes will not exist. Skip it when collecting notes.
-
-### Deferred Findings Cleanup (After Workflow Completes)
-
-**Tasks are execution artifacts, not parking lots.** Deferred findings go to patterns.md, not tasks.
-
-**Step 1:** Collect `**Deferred:**` entries from Memory Notes (already captured in Memory Update task description).
-
-**Step 2:** If any `CC10X TODO:` tasks exist in TaskList (legacy or from rule 1b):
-   → For each: Write description to `patterns.md ## Common Gotchas` as:
-     `Edit(old_string="## Common Gotchas", new_string="## Common Gotchas\n- [Deferred v{version}]: {task description}")`
-   → Then: `TaskUpdate({ taskId, status: "deleted" })`
-   → No user prompt. Findings are preserved in memory. Tasks are cleaned up.
-
-**Step 3:** Continue to MEMORY_UPDATED gate.
+# Memory Update task: execute inline (READ + EDIT calls in main context — see task description for full instructions including Deferred cleanup).
 
 ## Results Collection (Parallel Agents)
 
-### Pattern: Collect and Pass Findings to Verifier
-
-```
-# After both parallel agents complete:
-1. TaskList()  # Verify both show "completed"
-
-2. Collect outputs from this response:
-   REVIEWER_FINDINGS = {code-reviewer's Critical Issues + Verdict}
-   HUNTER_FINDINGS = {silent-failure-hunter's Router Handoff section (preferred), else Critical section}
-
-3. Pass to integration-verifier:
-   Task(subagent_type="cc10x:integration-verifier", prompt="
-   ## Task Context
-   - **Task ID:** {verifier_task_id}
-   - **Parent Workflow ID:** {parent_task_id}
-   - **Plan File:** {planFile or 'None'}
-
-   ## Memory Summary
-   {brief summary from activeContext.md}
-
-   ## SKILL_HINTS (INVOKE via Skill() - not optional)
-   {detected skills from patterns.md ## Project SKILL_HINTS}
-
-   ## Previous Agent Findings (REVIEW BEFORE VERIFYING)
-
-   ### Code Reviewer
-   **Verdict:** {Approve/Changes Requested}
-   **Critical Issues:**
-   {REVIEWER_FINDINGS}
-
-   ### Silent Failure Hunter
-   **Critical Issues:**
-   {HUNTER_FINDINGS}
-
-   ---
-   Verify the implementation. Consider ALL findings above.
-   Any CRITICAL issues should block PASS verdict.
-   ")
-```
+# After both parallel agents complete: TaskList() → verify both "completed"
+# Collect REVIEWER_FINDINGS (Critical Issues + Verdict) and HUNTER_FINDINGS (Router Handoff section preferred)
+# Pass both under "## Previous Agent Findings" in integration-verifier prompt (see integration-verifier.md ## Context from Previous Agents for template)

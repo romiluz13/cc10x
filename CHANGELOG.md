@@ -1,5 +1,30 @@
 # Changelog
 
+## [7.5.0] - 2026-03-03
+
+### Fixed — 15 post-audit fixes (B3, B4, B5, D1, D2, D4, P1–P3, P7–P10, R1, R2)
+
+- **B3**: Gate 9 pkill uses simple patterns (`vitest|jest|mocha`) instead of `\b` word boundaries (macOS compatibility)
+- **B4**: BUILD pre-answers now checks both `"Planner clarification ["` and `"Build clarification ["` prefixes (resume correctness)
+- **B5**: Step 3a memory_task_id write is now idempotent — skip if already present in ## References (prevents 3x duplicates in BUILD)
+- **D1**: Rule 0c research loop cap scoped to current workflow using `[DEBUG-RESET: wf:{id}]` marker (no longer fires from prior sessions)
+- **D2**: DEBUG Memory Update fallback when `[DEBUG-RESET:]` marker is absent — preserve all Recent Changes (no crash)
+- **D4**: bug-investigator.md "Research File:" updated to "## Research Files" (plural, matching router two-file format)
+- **P1**: Design file extraction is now unconditional in PLAN workflow (no longer gated on vague/ambiguous requests)
+- **P2**: PLAN Memory Update task description expanded to match BUILD quality (Learnings, Deferred, freshness cleanup)
+- **P3**: NEEDS_CLARIFICATION loop cap re-invocation creates trackable TaskCreate entries ("Re-plan after clarification") and cap filter updated
+- **P7**: PLAN research step 4 adds timeout/failure fallback for null FILE_PATH
+- **P8**: PLAN research AskUserQuestion adds "Abort workflow" option (matches DEBUG parity)
+- **P9**: DEBUG research files persisted to activeContext.md ## References (compaction-safe, matching PLAN)
+- **P10**: Circuit Breaker and Remediation Re-Review researcher spawns now include TaskCreate + Task IDs
+- **R1**: Rule 1b creates advisory prompt (not REM-FIX) when in REVIEW workflow — offers "Start BUILD" or "Done for now"
+- **R2**: code-reviewer "What's Next" text now accurate for REVIEW context (no verifier in REVIEW chain)
+
+### Changed
+- Router trimmed from 878 → 819 lines (C1/C3/C4/C5/C6 removed; C2 excluded — runtime prompt)
+- Results Collection section moved to integration-verifier.md ## Context from Previous Agents
+- Agent Chains merged into Decision Tree table (new "Agent Chain" column)
+
 ## [7.4.2] - 2026-03-02
 
 ### Fixed — 3 UX/DX improvements

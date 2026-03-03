@@ -71,7 +71,7 @@ If a skill fails to load (not installed), note it in Memory Notes and continue w
 
 ## Self-Managed Research (When Stuck)
 
-If your prompt includes a "Research File:" reference, read that file for findings provided by the user/router.
+If your prompt includes a "## Research Files" section, read each listed file (Web + GitHub) for findings provided by the router.
 
 If during your investigation you determine external research is needed (e.g., you are stuck, external API error patterns are unknown), **do it yourself**:
 → Set `NEEDS_EXTERNAL_RESEARCH: true` in your Router Contract with `RESEARCH_REASON: "[specific error/pattern]"`. The router will spawn `cc10x:web-researcher` + `cc10x:github-researcher` in parallel and re-invoke you with both research file paths under `## Research Files`.

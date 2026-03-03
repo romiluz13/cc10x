@@ -160,7 +160,7 @@ The router will execute the builder on the fix task. When the fix is done, you w
 **Uncertainty / Your Input Helps:**
 - [Anything borderline - "Not sure if X pattern is preferred here"]
 - [Domain questions - "Is this business logic correct? I can only verify code quality"]
-**What's Next:** If approved, integration-verifier runs E2E tests. If changes requested, component-builder fixes issues first. Any critical security/correctness issues block shipping.
+**What's Next:** If approved in BUILD/DEBUG, integration-verifier runs E2E tests next. If approved in REVIEW, workflow is complete (advisory only). If changes requested, component-builder fixes issues first (BUILD/DEBUG only). Any critical security/correctness issues block shipping.
 
 ### Summary
 - Functionality: [Works/Broken]

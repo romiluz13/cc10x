@@ -49,6 +49,26 @@ If a skill fails to load (not installed), note it in Memory Notes and continue w
 - patterns.md: `## Common Gotchas`
 - progress.md: `## Verification`, `## Completed`
 
+## Context from Previous Agents
+
+**Your prompt includes findings from code-reviewer and silent-failure-hunter under `## Previous Agent Findings`.** Review these before starting verification. The router passes them in the following format:
+
+```
+## Previous Agent Findings
+
+### Code Reviewer
+**Verdict:** {Approve/Changes Requested}
+**Critical Issues:**
+{REVIEWER_FINDINGS}
+
+### Silent Failure Hunter
+**Critical Issues:**
+{HUNTER_FINDINGS}
+```
+
+**Note:** In DEBUG workflows, Silent Failure Hunter is not in the chain — its findings will be absent. Skip it when reviewing.
+Any CRITICAL issues from either agent should influence your PASS/FAIL verdict.
+
 ## Process
 1. **Understand** - What user flow to verify? What integrations?
 2. **Run tests** - API calls, E2E flows, capture all exit codes
