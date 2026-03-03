@@ -108,7 +108,7 @@ git ls-files --others --exclude-standard      # NEW untracked files
 **CONFIDENCE calculation:** `min(HARD scores)` capped by `avg(SOFT scores) - 10`.
 A single HARD:0 = CONFIDENCE:0 regardless of other dimensions.
 
-**In Router Handoff, show the breakdown:**
+**In Summary section, include the signal breakdown:**
 ```
 SIGNAL_SCORES:
   security: [HARD] 100
@@ -118,7 +118,7 @@ SIGNAL_SCORES:
 CONFIDENCE: 85  (min HARD=85, avg SOFT=80)
 ```
 
-**Why this matters:** Router can create targeted REM-FIX tasks ("Fix performance" not "Fix something"). Signals survive in Memory Notes for pattern tracking.
+**Why this matters:** Router reads heading (`## Review: Approve/Changes Requested`) + counts `### Critical Issues` entries for blocking decisions. Signal scores survive in Memory Notes for pattern tracking.
 
 ## Task Completion & Self-Healing (MANDATORY)
 
@@ -131,8 +131,8 @@ Provide your final output, then call `TaskUpdate({ taskId: "{TASK_ID}", status: 
 → Use `TaskList()` to find your parent workflow task (subject contains "CC10X REVIEW:")
 → If parent workflow IS a REVIEW workflow (subject starts "CC10X REVIEW:"):
   - Do NOT create a REM-FIX task. Do NOT block yourself.
-  - Output your Router Contract with `STATUS: CHANGES_REQUESTED`, `BLOCKING: false`, `REQUIRES_REMEDIATION: true`
-  - Include your findings in REMEDIATION_REASON — the user and router will decide whether to start a BUILD workflow.
+  - Emit `## Review: Changes Requested` as your heading and include your findings under `### Critical Issues` and `### Findings`.
+  - The router reads the heading and critical issues section — no Router Contract YAML needed.
   - Call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` and stop.
   - **Why:** REVIEW is advisory/read-only. Unsolicited code changes violate user intent.
 → If parent workflow is NOT a REVIEW workflow: proceed with Self-Healing Protocol below.
@@ -144,8 +144,7 @@ You must NOT complete your task. You must create a fix task and block yourself:
 3. Use `TaskList()` to find the downstream `integration-verifier` task ID (the subject will contain "integration-verifier").
 4. Call `TaskUpdate({ taskId: "{TASK_ID}", addBlockedBy: ["{REM_FIX_TASK_ID}"] })` to block your own task. (Your task stays in_progress while blocked; the router will re-invoke you when the blocker completes.)
 5. Call `TaskUpdate({ taskId: "{VERIFIER_TASK_ID}", addBlockedBy: ["{REM_FIX_TASK_ID}"] })` to block the downstream verifier task, preventing it from running before the fix is complete.
-6. Output your Router Contract with `STATUS: SELF_REMEDIATED`.
-7. Do NOT call `TaskUpdate` with `status: "completed"`. Just stop your turn.
+6. Do NOT call `TaskUpdate` with `status: "completed"`. Just stop your turn.
 The router will execute the builder on the fix task. When the fix is done, you will automatically be unblocked to re-review.
 
 **If HIGH/MEDIUM/MINOR issues found worth tracking (but no CRITICAL ones):**
@@ -155,67 +154,29 @@ The router will execute the builder on the fix task. When the fix is done, you w
 ```
 ## Review: [Approve/Changes Requested]
 
-### Dev Journal (User Transparency)
-**What I Reviewed:** [Narrative - files checked, focus areas, review approach]
-**Key Judgments Made:**
-- [Judgment + reasoning - "Approved X because...", "Flagged Y because..."]
-**Trade-offs I Noticed:**
-- [Acceptable compromises vs things needing fix]
-- [Technical debt accepted vs blocked]
-**Uncertainty / Your Input Helps:**
-- [Anything borderline - "Not sure if X pattern is preferred here"]
-- [Domain questions - "Is this business logic correct? I can only verify code quality"]
-**What's Next:** If approved in BUILD/DEBUG, integration-verifier runs E2E tests next. If approved in REVIEW, workflow is complete (advisory only). If changes requested, component-builder fixes issues first (BUILD/DEBUG only). Any critical security/correctness issues block shipping.
-
 ### Summary
 - Functionality: [Works/Broken]
 - Verdict: [Approve / Changes Requested]
+- CONFIDENCE: [0-100]
+- SIGNAL_SCORES: security [HARD N], correctness [HARD N], performance [SOFT N], maintainability [SOFT N]
 
 ### Critical Issues (≥80 confidence)
 - [95] [issue] - file:line → Fix: [action]
 
-### Important Issues (≥80 confidence)
-- [85] [issue] - file:line → Fix: [action]
-
 ### Findings
+- [Important Issues (≥80 confidence): list here with severity]
 - [any additional observations]
-
-### Router Handoff (Stable Extraction)
-STATUS: [Approve/Changes Requested]
-CONFIDENCE: [0-100]
-CRITICAL_COUNT: [N]
-CRITICAL:
-- [file:line] - [issue] → [fix]
-HIGH_COUNT: [N]
-HIGH:
-- [file:line] - [issue] → [fix]
+- [Evidence items: file:line — what was checked/found]
 
 ### Memory Notes (For Workflow-Final Persistence)
 - **Learnings:** [Key code quality insights for activeContext.md]
 - **Patterns:** [Conventions or gotchas discovered for patterns.md]
-- **Verification:** [Review verdict: Approve/Changes Requested for progress.md]
+- **Verification:** [Review verdict: Approve/Changes Requested with N% confidence for progress.md]
 - **Deferred:** [MEDIUM/MINOR issues for patterns.md — will be written by Memory Update task]
 
 ### Task Status
 - Task {TASK_ID}: COMPLETED
 - Follow-up tasks created: [list if any, or "None"]
+```
 
-### Router Contract (MACHINE-READABLE)
-```yaml
-STATUS: APPROVE | CHANGES_REQUESTED | SELF_REMEDIATED
-CONFIDENCE: [80-100]
-CRITICAL_ISSUES: [count from CRITICAL_COUNT above]
-HIGH_ISSUES: [count from HIGH_COUNT above]
-EVIDENCE_ITEMS: [count of EVIDENCE entries — required ≥1 for STATUS=APPROVE]
-BLOCKING: [true if CRITICAL_ISSUES > 0]
-REQUIRES_REMEDIATION: [true if STATUS=CHANGES_REQUESTED or CRITICAL_ISSUES > 0 or HIGH_ISSUES > 0]
-REMEDIATION_REASON: null | "Fix critical issues: {summary of CRITICAL list}" | "Fix high-severity issues: {summary of HIGH list}"
-EVIDENCE:
-  - "[file:line] — [what was checked and found clean / what was found and why it passes]"
-MEMORY_NOTES:
-  learnings: ["Code quality insights"]
-  patterns: ["Conventions or anti-patterns found"]
-  verification: ["Review: {STATUS} with {CONFIDENCE}% confidence"]
-```
-**CONTRACT RULE:** STATUS=APPROVE requires CRITICAL_ISSUES=0 and CONFIDENCE>=80 and EVIDENCE_ITEMS≥1 (at least one cited file:line for the approval verdict)
-```
+**CONTRACT:** The heading `## Review: Approve` or `## Review: Changes Requested` IS the machine-readable signal. Router reads this line + counts `### Critical Issues` entries. No YAML needed.

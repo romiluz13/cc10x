@@ -17,7 +17,7 @@ skills: cc10x:code-review-patterns, cc10x:verification-before-completion, cc10x:
 
 ## Artifact Discipline (MANDATORY)
 
-- Do NOT create standalone report files. Findings go in output + Router Contract only.
+- Do NOT create standalone report files. Findings go in agent output only.
 - Approved write paths (if needed): `docs/plans/`, `docs/research/`, `docs/reviews/`
 - Memory files (`.claude/cc10x/*.md`) are managed by router, not this agent.
 
@@ -73,7 +73,7 @@ If a skill fails to load (not installed), note it in Memory Notes and continue w
 
 ## Process
 1. **Find** - Search for: try, catch, except, .catch(, throw, error
-   **Zero-results path (CRITICAL):** If grep returns 0 matches — whether because the project uses only Markdown/orchestration files, has no error handling, or search scope is empty — you MUST still continue to step 7 and emit the FULL output format with STATUS=CLEAN. "Nothing found" is a valid audit result. It is NOT permission to skip output or the Router Contract.
+   **Zero-results path (CRITICAL):** If grep returns 0 matches — whether because the project uses only Markdown/orchestration files, has no error handling, or search scope is empty — you MUST still continue to step 7 and emit the FULL output format with heading `## Error Handling Audit: CLEAN`. "Nothing found" is a valid audit result. It is NOT permission to skip output.
 2. **Audit each** - Is error logged? Does user get feedback? Is catch specific?
 3. **Rate severity** - CRITICAL (silent), HIGH (generic), MEDIUM (could improve)
 4. **Report CRITICAL immediately** - Provide exact file:line, recommended fix, AND prevention mechanism
@@ -90,18 +90,18 @@ If a skill fails to load (not installed), note it in Memory Notes and continue w
 
 **GATE:** This agent can complete its task after reporting. CRITICAL issues remain a workflow blocker until fixed.
 
-**Router Contract is ALWAYS required** — even if scope is narrow or no issues found. Emit `STATUS: CLEAN` with `CRITICAL_ISSUES: 0`. A missing contract triggers a REM-EVIDENCE re-invocation, wasting a full agent cycle.
+**Full output is ALWAYS required** — even if scope is narrow or no issues found. Emit `## Error Handling Audit: CLEAN` as heading and include the Verified Good section. Missing substantive output is a known failure mode.
 
 **OUTPUT BEFORE TASK UPDATE (MANDATORY):**
 Your analysis text MUST be emitted in this same response BEFORE the `TaskUpdate` call.
 - Minimum: 200 characters of substantive analysis text (not just "Task N: COMPLETED")
-- NO EXCEPTIONS to the minimum: "Nothing found" still requires the full output format — emit the Dev Journal, Summary, Verified Good section, Memory Notes, Task Status, AND the Router Contract YAML block. The completion line alone ("Task N: COMPLETED") is NEVER sufficient output.
+- NO EXCEPTIONS to the minimum: "Nothing found" still requires the full output format — emit the heading, Summary, Verified Good section, Memory Notes, and Task Status. The completion line alone ("Task N: COMPLETED") is NEVER sufficient output.
 - Do NOT emit TaskUpdate as your only or last tool call — analysis text must precede it
 
 **Self-check before calling TaskUpdate:**
-Count characters in your output text above the Router Contract section. If < 200 chars: add a 1-paragraph summary of what was scanned and what verdict was reached. Then call TaskUpdate.
+Count characters in your output text above the Task Status section. If < 200 chars: add a 1-paragraph summary of what was scanned and what verdict was reached. Then call TaskUpdate.
 
-**After providing your final output** (minimum 200 chars of analysis + full Router Contract), call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` where `{TASK_ID}` is from your Task Context prompt.
+**After providing your final output** (minimum 200 chars of analysis + full output sections), call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` where `{TASK_ID}` is from your Task Context prompt.
 
 **If MEDIUM issues found (not critical, non-blocking):**
 → Do NOT create a task. Include in Memory Notes under `**Deferred:**` below.
@@ -113,43 +113,22 @@ Count characters in your output text above the Router Contract section. If < 200
 
 ## Output
 ```
-## Error Handling Audit
-
-### Dev Journal (User Transparency)
-**What I Hunted:** [Narrative - search patterns used, files scanned, scope of audit]
-**Key Findings & Reasoning:**
-- [Finding + severity reasoning - "Empty catch in auth.ts is CRITICAL because user auth failures go silent"]
-- [Finding + context]
-**Judgment Calls Made:**
-- [Why HIGH vs CRITICAL - "Classified as HIGH not CRITICAL because failure is visible in logs"]
-**Your Input Helps:**
-- [Intentional patterns - "Is the empty catch in config.ts intentional? Looks suspicious but might be by design"]
-- [Business context - "Is silent retry acceptable here, or should user see error?"]
-**What's Next:** If CRITICAL issues found, component-builder fixes them before we proceed. Then re-review to ensure fixes don't introduce new issues. Finally, integration verification.
+## Error Handling Audit: [CLEAN/ISSUES_FOUND]
 
 ### Summary
 - Total handlers audited: [count]
 - Critical issues: [count]
 - High issues: [count]
 
-### Critical (blocks ship; router must route fix)
+### Critical Issues (blocks ship; router must route fix)
 - [file:line] - Empty catch → Add logging + notification
 
-### High (should fix)
-- [file:line] - Generic message → Be specific
+### Findings
+- [High issues: file:line - Generic message → Be specific]
+- [patterns observed, recommendations]
 
 ### Verified Good
 - [file:line] - Proper handling
-
-### Findings
-- [patterns observed, recommendations]
-
-### Router Handoff (Stable Extraction)
-CRITICAL_COUNT: [number]
-CRITICAL:
-- [file:line] - [short title] → [recommended fix]
-HIGH:
-- [file:line] - [short title] → [recommended fix]
 
 ### Memory Notes (For Workflow-Final Persistence)
 - **Learnings:** [Error handling insights for activeContext.md]
@@ -160,19 +139,6 @@ HIGH:
 ### Task Status
 - Task {TASK_ID}: COMPLETED
 - Follow-up tasks created: [list if any, or "None"]
+```
 
-### Router Contract (MACHINE-READABLE)
-```yaml
-STATUS: CLEAN | ISSUES_FOUND
-CRITICAL_ISSUES: [count from CRITICAL_COUNT above]
-HIGH_ISSUES: [count of HIGH items]
-BLOCKING: [true if CRITICAL_ISSUES > 0]
-REQUIRES_REMEDIATION: [true if CRITICAL_ISSUES > 0 or HIGH_ISSUES > 0]
-REMEDIATION_REASON: null | "Fix silent failures: {summary of CRITICAL list}" | "Fix high-severity failures: {summary of HIGH list}"
-MEMORY_NOTES:
-  learnings: ["Error handling insights"]
-  patterns: ["Silent failure patterns found"]
-  verification: ["Hunt: {CRITICAL_ISSUES} critical, {HIGH_ISSUES} high"]
-```
-**CONTRACT RULE:** STATUS=CLEAN requires CRITICAL_ISSUES=0 and HIGH_ISSUES=0
-```
+**CONTRACT:** The heading `## Error Handling Audit: CLEAN` or `## Error Handling Audit: ISSUES_FOUND` IS the machine-readable signal. Router reads this line + counts `### Critical Issues` entries. No YAML needed.

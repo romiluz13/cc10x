@@ -1,5 +1,36 @@
 # Changelog
 
+## [8.0.0] - 2026-03-04
+
+### Radical Simplification — Remove Router Contract YAML from read-only agents
+
+**Root cause:** The `### Router Contract (MACHINE-READABLE)` YAML block was introduced in v6 to give the router a machine-parseable signal. It immediately became the #1 source of failures: it lived at the END of every agent output, agents used 40-60K tokens before reaching it, and the last section was always the first to be truncated. Every subsequent "fix" added more compensation logic (REM-EVIDENCE loops, output-length pre-checks, Router Handoff stable extraction), making the system progressively more brittle.
+
+**The insight:** Every agent already outputs a structured heading on the FIRST LINE (`## Review: Approve`, `## Error Handling Audit: CLEAN`, `## Verification: PASS`) that carries the same information as the YAML. These headings survive any truncation. The YAML added nothing except complexity and failure modes.
+
+### Removed (~280 lines)
+- `### Router Contract (MACHINE-READABLE)` YAML from `code-reviewer.md`, `silent-failure-hunter.md`, `integration-verifier.md`
+- `### Router Handoff (Stable Extraction)` from `code-reviewer.md`, `integration-verifier.md`
+- `### Dev Journal (User Transparency)` from `code-reviewer.md`, `silent-failure-hunter.md`, `integration-verifier.md`
+- `REM-EVIDENCE` task creation + retry loop from router (~40 lines)
+- Router Contract validation block (Steps 1-2, ~200 lines) — replaced by 30-line text extraction
+- Pre-checks for output truncation (OBS-15) and silent-failure-hunter minimal output gates
+- `HIGH_ISSUES` / `EVIDENCE_ITEMS` / `CONFIDENCE<80` / `SCENARIOS_PASSED≠SCENARIOS_TOTAL` checks (all YAML-only fields)
+
+### Added
+- **Text-Based Verdict Extraction** (30 lines) — extracts STATUS from heading (first 5 lines), counts `### Critical Issues` bullets, detects `SELF_REMEDIATED` from task state
+- **JUST_GO session mode** — reads `AUTO_PROCEED: true` from `activeContext.md ## Session Settings`; auto-defaults all non-REVERT gates without prompting
+- **Empty Answer Guard simplification** — only REVERT gates stop on empty answer; all others auto-proceed with recommended default
+- **`## Error Handling Audit: CLEAN/ISSUES_FOUND` heading** to silent-failure-hunter (was missing the status suffix)
+- **`**CONTRACT:**` note** at bottom of each read-only agent template documenting the text-based contract
+
+### Changed
+- `cc10x-router/SKILL.md`: 866 → ~700 lines; replaced YAML validation with text extraction; rule 1b auto-defaults to "Fix now"; rule 2d simplified
+- `agents/code-reviewer.md`: 183 lines → 183 lines (net flat; sections restructured)
+- `agents/silent-failure-hunter.md`: 179 → 145 lines
+- `agents/integration-verifier.md`: 226 → 190 lines
+- Smoke test updated: read-only agents now checked for `CONTRACT` note instead of `Router Contract` YAML
+
 ## [7.9.0] - 2026-03-03
 
 ### Fixed — 4 dogfooding-discovered systemic issues

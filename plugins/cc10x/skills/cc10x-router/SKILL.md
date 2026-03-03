@@ -293,7 +293,7 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [planner_task_id] })
 | **FULL** | component-builder → [code-reviewer ∥ silent-failure-hunter] → integration-verifier | Default for all BUILD |
 | **QUICK** | component-builder → integration-verifier | ALL 5 conditions above met |
 
-**QUICK still requires:** Router Contract validation + verifier + memory update.
+**QUICK still requires:** Text-based verdict extraction + verifier + memory update.
 **Blocking signal during QUICK** (verifier FAIL, test failure, lint error):
 → ⚠️ AskUserQuestion: "Quick verification failed ({reason}). Escalating to full review adds code-reviewer + silent-failure-hunter before final verification. Continue?"
   Options: "Run full review chain (Recommended)" | "Abort — I'll investigate manually"
@@ -417,7 +417,7 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [planner_task_id] })
    → "I'll review the plan first": Stop. User will re-invoke when ready.
    → "Done for now": Record in activeContext.md ## Decisions: "Plan complete, BUILD deferred by user [{date}]", stop.
 
-**Research prerequisite:** Each agent handles its own file persistence. Router collects both `FILE_PATH` values from Router Contracts and passes them to the planner prompt.
+**Research prerequisite:** Each agent handles its own file persistence. Router collects both `FILE_PATH` values from agent output and passes them to the planner prompt.
 
 ## Agent Invocation
 
@@ -450,7 +450,7 @@ IMPORTANT:
 - **NEVER call `EnterPlanMode`.** This is an execution agent that writes files directly. Plan mode would block Write/Edit tools and prevent saving outputs.
 - **Output your analysis BEFORE calling TaskUpdate.** Do NOT call TaskUpdate as your only or last tool call. If TaskUpdate fires without preceding substantive output, the tool confirmation becomes the only response — a known silent-failure mode. Write your full output first, then call TaskUpdate.
 - If your tools include `Edit` **and you are not running in a parallel phase**, update `.claude/cc10x/{activeContext,patterns,progress}.md` at the end per `cc10x:session-memory` and `Read(...)` back to verify.
-- If you are running in a parallel phase (e.g., BUILD’s review/hunt phase), prefer **no memory edits** (skip Edit() calls on `.claude/cc10x/*.md`); your analysis scope, output quality (≥200 chars), Router Contract YAML, and `### Memory Notes` section are REQUIRED regardless — "no memory edits" means no file writes, NOT reduced output.
+- If you are running in a parallel phase (e.g., BUILD’s review/hunt phase), prefer **no memory edits** (skip Edit() calls on `.claude/cc10x/*.md`); your analysis scope, output quality (≥200 chars), and `### Memory Notes` section are REQUIRED regardless — "no memory edits" means no file writes, NOT reduced output.
 - If your tools do NOT include `Edit`, you MUST include a `### Memory Notes (For Workflow-Final Persistence)` section with:
   - **Learnings:** [insights for activeContext.md]
   - **Patterns:** [gotchas for patterns.md]
@@ -469,64 +469,71 @@ When agent returns, verify output quality before proceeding.
 
 ---
 
-### Router Contract Validation (PRIMARY - Use This First)
+### Text-Based Verdict Extraction (replaces Router Contract YAML)
 
 **Pre-AskUserQuestion output rule (ALL ⚠️ gates):**
-Before invoking any ⚠️ AskUserQuestion, output one sentence summarizing the finding. Examples: "Review found 2 HIGH issues that need your input." / "Verdict conflict: reviewer approved but hunter found critical failures." / "Investigation stuck — external research needed." This ensures UI renders context before the question appears.
+Before invoking any ⚠️ AskUserQuestion, output one sentence summarizing the finding. Examples: "Review found critical issues that need fixing." / "Verdict conflict: reviewer approved but hunter found critical failures." / "Investigation stuck — external research needed." This ensures UI renders context before the question appears.
 
-**Empty Answer Guard (CRITICAL GATES ONLY):**
-Gates marked ⚠️ below are CRITICAL — auto-defaulting on empty answer is dangerous (creates tasks, triggers destructive git ops, or modifies workflow state irreversibly).
-If AskUserQuestion returns empty AND the gate is marked ⚠️:
-→ Output: "⚠️ Critical decision requires your input. Please answer the question above."
-→ Re-ask the SAME AskUserQuestion once. If still empty: Output "Workflow paused — re-invoke to answer critical gate." STOP workflow.
-→ Do NOT proceed with any default assumption.
-Non-critical gates (Plan-First, PLAN-to-BUILD, research prompts, design file missing): auto-default to recommended is acceptable — all are recoverable.
+**Empty Answer Guard:**
+If AskUserQuestion returns empty:
+→ For ⚠️ REVERT gates only: Output "⚠️ Revert decision requires your input. Please answer the question above." Re-ask once. If still empty: STOP workflow.
+→ For ALL other gates: Auto-default to the recommended option and log: "Empty answer — auto-proceeding with recommended default."
+→ This allows batch/automated workflows to proceed without deadlock.
 
-**Step 1: Check for Router Contract**
+**JUST_GO Session Mode (check once, at memory load):**
+After loading memory: Read `## Session Settings` from activeContext.md.
+If line `AUTO_PROCEED: true` exists: Set session flag `JUST_GO=true`.
+While `JUST_GO=true`: All AskUserQuestion gates auto-default to recommended option without prompting (except ⚠️ REVERT gates). Log: "JUST_GO: auto-proceeding with [{option}] for {gate}."
+
+**Step 1: Extract STATUS from agent output heading (first 5 lines of output)**
+
+After agent completes, scan first 5 lines for these heading patterns:
+
+| Agent | Heading → STATUS | BLOCKING default |
+|-------|-----------------|-----------------|
+| code-reviewer | `## Review: Approve` → APPROVE | false |
+| code-reviewer | `## Review: Changes Requested` → CHANGES_REQUESTED | false (upgraded if Critical Issues found) |
+| silent-failure-hunter | `## Error Handling Audit: CLEAN` or `## Error Handling Audit: Clean` → CLEAN | false |
+| silent-failure-hunter | `## Error Handling Audit: ISSUES_FOUND` or `## Error Handling Audit: Issues Found` → ISSUES_FOUND | false (upgraded if Critical Issues found) |
+| integration-verifier | `## Verification: PASS` or `## Verification: Pass` → PASS | false |
+| integration-verifier | `## Verification: FAIL` or `## Verification: Fail` → FAIL | true |
+
+**Step 2: Extract BLOCKING/CRITICAL from `### Critical Issues` section**
+
+Scan agent output for `### Critical Issues` section:
+- If section found AND has at least one non-empty bullet (`- ` prefix): CRITICAL_ISSUES = count of bullet items
+- If CRITICAL_ISSUES > 0: BLOCKING=true, REQUIRES_REMEDIATION=true
+- Extract first bullet text → REMEDIATION_REASON (first 100 chars)
+- If STATUS=CHANGES_REQUESTED and CRITICAL_ISSUES=0: REQUIRES_REMEDIATION=true, BLOCKING=false (HIGH issues present)
+- If STATUS=ISSUES_FOUND and CRITICAL_ISSUES=0: REQUIRES_REMEDIATION=true, BLOCKING=false (HIGH issues present)
+
+**Step 3: Fallback if heading not found**
+
+If no heading pattern matched:
+- If output >= 500 chars: Scan full output for keywords: "APPROVE" | "CHANGES_REQUESTED" | "CLEAN" | "ISSUES_FOUND" | "PASS" | "FAIL" — use first match as STATUS
+- If output < 200 chars: Log "Agent {agent} returned minimal output ({N} chars). Proceeding with safe default." Set STATUS=APPROVE/CLEAN/PASS. Continue workflow (recoverable state).
+- If output 200–499 chars and no heading: Treat as STATUS=APPROVE/CLEAN/PASS (safe default). Log reason.
+
+**Step 4: Detect SELF_REMEDIATED (task-state-based)**
+
+After Steps 1-3: Call `TaskList()` → check if agent's task still has status="in_progress".
+If still in_progress: Call `TaskGet({ taskId: agent_task_id })` → if blockedBy is non-empty:
+  → STATUS=SELF_REMEDIATED → apply rule 0b
+  (Task state is the definitive signal — agent created REM-FIX and blocked itself)
+
+**Step 5: Output Validation Evidence**
 ```
-**Pre-check for silent-failure-hunter output length:**
-If agent name is "silent-failure-hunter" AND total agent output < 200 chars:
-→ Skip REM-EVIDENCE loop (2/3 failure rate confirmed). Escalate directly:
-  ⚠️ AskUserQuestion: "Silent-failure-hunter returned minimal output ({N} chars). This is a known failure mode. Options: 'Re-invoke hunter once more' | 'Skip hunter, proceed with reviewer verdict only' | 'Abort workflow'"
-→ Handle chosen option. STOP. Do NOT create REM-EVIDENCE task for this failure mode.
-**Pre-check for code-reviewer output truncation (OUTPUT_TRUNCATED):**
-If agent name is "code-reviewer" AND total agent output < 500 chars AND agent ran >= 10 tool calls:
-→ This is the OUTPUT_TRUNCATED failure mode (OBS-15) — agent did real work but text was suppressed.
-→ Do NOT create REM-EVIDENCE (same truncation will recur on retry).
-  ⚠️ AskUserQuestion: "Code reviewer ran {N} tool calls but produced {M} chars of output (possible output truncation). How to proceed?"
-  Options: "Re-invoke code reviewer (may fix if temporary)" | "Skip reviewer — use hunter verdict only (if available)" | "Abort workflow"
-→ Handle chosen option. STOP.
-If agent output >= 200 chars: Continue to Router Contract check below.
-Look for "### Router Contract (MACHINE-READABLE)" section in agent output.
-If found → Use contract-based validation below.
-If NOT found → Agent output is non-compliant.
-  **REM-EVIDENCE Loop Cap (before creating task):**
-    # Substitute {agent} with the actual agent name from the failed output (e.g., "code-reviewer", "silent-failure-hunter", "integration-verifier")
-    Count: TaskList() → filter subject contains "CC10X REM-EVIDENCE:" AND subject contains "{agent}" AND status IN [pending, in_progress, completed]
-    If count >= 1: ⚠️ AskUserQuestion: "Agent {agent} has already been re-invoked once via REM-EVIDENCE and still has not produced a Router Contract. How to proceed?"
-      Options: "Retry once more" | "Skip agent, proceed without its review" | "Abort workflow"
-      → Handle chosen option, then STOP. Do NOT create another REM-EVIDENCE task.
-    If count < 1: Create REM-EVIDENCE task:
-  TaskCreate({
-    subject: "CC10X REM-EVIDENCE: [router-internal] {agent} missing Router Contract",
-    description: "Agent output is missing the required '### Router Contract (MACHINE-READABLE)' section. Re-invoke the same agent once with a modified prompt: append this note to the original prompt: 'REQUIRED: Include a ### Router Contract (MACHINE-READABLE) YAML block in your response. Write your full analysis output, then include the Router Contract YAML block. Call TaskUpdate only after the YAML block is present in your output.' If Router Contract still missing after retry, AskUserQuestion to decide next action.",
-    activeForm: "Collecting agent contract"
-  })
-  Block downstream tasks and STOP.
+### Agent Validation: {agent_name}
+- Status extracted from: heading | fallback scan | minimal output default
+- STATUS: {extracted_STATUS}
+- BLOCKING: {computed_BLOCKING}
+- CRITICAL_ISSUES: {computed_CRITICAL_ISSUES}
+- REQUIRES_REMEDIATION: {computed_REQUIRES_REMEDIATION}
+- Proceeding: [Yes/No + reason]
 ```
 
-**Step 2: Parse and Validate Contract**
+**Step 6: Apply validation rules using extracted values**
 ```
-Parse the YAML block inside Router Contract section.
-
-CONTRACT FIELDS:
-- STATUS: Agent's self-reported status (PASS/FAIL/APPROVE/etc)
-- BLOCKING: true/false - whether workflow should stop
-- REQUIRES_REMEDIATION: true/false - whether REM-FIX task needed
-- REMEDIATION_REASON: Exact text for remediation task description
-- CRITICAL_ISSUES: Count of blocking issues (if applicable)
-- MEMORY_NOTES: Structured notes for workflow-final persistence
-
 VALIDATION RULES:
 
 **EVALUATION ORDER (FIRST MATCH WINS):**
@@ -536,18 +543,18 @@ Note: Rule 0 is a pre-processing override (always runs, does not short-circuit).
 
 **0. CONTRACT RULE Enforcement (RUNS FIRST — auto-override STATUS if violated):**
 
-Before applying rules 1a/1b/2, validate each agent's self-reported STATUS against its CONTRACT RULE:
+Before applying rules 1a/1b/2, validate each agent's extracted STATUS:
 
 | Agent | CONTRACT RULE violation → Override |
 |-------|-------------------------------------|
 | component-builder | STATUS=PASS but TDD_RED_EXIT≠1 OR TDD_GREEN_EXIT≠0 → STATUS=FAIL, BLOCKING=true, REMEDIATION_REASON="CONTRACT RULE violated: TDD evidence missing" |
 | bug-investigator | STATUS=FIXED but (TDD_RED_EXIT≠1 OR TDD_GREEN_EXIT≠0 OR VARIANTS_COVERED<1) AND contract.NEEDS_EXTERNAL_RESEARCH != true → STATUS=FAIL, BLOCKING=true, REQUIRES_REMEDIATION=true, REMEDIATION_REASON="CONTRACT RULE violated: TDD evidence missing — add regression test (RED→GREEN) + variant coverage" |
-| code-reviewer | STATUS=APPROVE but CRITICAL_ISSUES>0 OR CONFIDENCE<80 OR EVIDENCE_ITEMS<1 → STATUS=CHANGES_REQUESTED, REQUIRES_REMEDIATION=true; BLOCKING=true only if CRITICAL_ISSUES>0 |
-| silent-failure-hunter | STATUS=CLEAN but CRITICAL_ISSUES>0 OR HIGH_ISSUES>0 → STATUS=ISSUES_FOUND, BLOCKING=true, REQUIRES_REMEDIATION=true |
-| integration-verifier | STATUS=PASS but SCENARIOS_PASSED≠SCENARIOS_TOTAL → STATUS=FAIL, BLOCKING=true |
+| code-reviewer | STATUS=APPROVE but CRITICAL_ISSUES>0 (from text extraction) → STATUS=CHANGES_REQUESTED, BLOCKING=true, REQUIRES_REMEDIATION=true |
+| silent-failure-hunter | STATUS=CLEAN but CRITICAL_ISSUES>0 (from text extraction) → STATUS=ISSUES_FOUND, BLOCKING=true, REQUIRES_REMEDIATION=true |
+| integration-verifier | STATUS=PASS but CRITICAL_ISSUES>0 (from text extraction — mapped from blockers section) → STATUS=FAIL, BLOCKING=true |
 | planner | STATUS=PLAN_CREATED but PLAN_FILE is null/empty OR CONFIDENCE<50 OR GATE_PASSED!=true → STATUS=NEEDS_CLARIFICATION, BLOCKING=true, REQUIRES_REMEDIATION=true, REMEDIATION_REASON="CONTRACT RULE violated: {missing field}" |
 
-**If override applied:** Log in output: "⚠️ CONTRACT RULE override: {agent} self-reported {original} but rule violated (TDD_RED_EXIT={X}/TDD_GREEN_EXIT={Y}/EVIDENCE_ITEMS={X}/etc.). Overriding STATUS to {new_status}."
+**If override applied:** Log in output: "⚠️ CONTRACT RULE override: {agent} self-reported {original} but rule violated (CRITICAL_ISSUES={N} found in heading/output). Overriding STATUS to {new_status}."
 
 Proceed with rules 1a/1b/2 using the OVERRIDDEN values.
 
@@ -591,15 +598,15 @@ If count ≥ 3 → ⚠️ AskUserQuestion: "Too many active fix attempts are sta
 1a. If contract.BLOCKING == true AND contract.STATUS NOT IN ["NEEDS_CLARIFICATION", "INVESTIGATING", "BLOCKED", "SELF_REMEDIATED", "REVERT_RECOMMENDED", "LIMITATION_ACCEPTED"] AND contract.NEEDS_EXTERNAL_RESEARCH != true:
     **Parallel blocking merge (pre-check — BUILD only, runs before TaskCreate):**
     → If currently processing parallel review phase (code-reviewer ∥ silent-failure-hunter outputs in same response):
-      → Check sibling agent's Router Contract in this same response — does sibling ALSO have BLOCKING=true?
+      → Check sibling agent's extracted verdict in this same response — does sibling ALSO have BLOCKING=true?
       → If YES (both agents blocking):
           merged_subject = "CC10X REM-FIX: code-reviewer + silent-failure-hunter — multiple blocking issues"
-          merged_description = "**code-reviewer issues:**\n" + reviewer_contract.REMEDIATION_REASON + "\n\n**silent-failure-hunter issues:**\n" + hunter_contract.REMEDIATION_REASON
+          merged_description = "**code-reviewer issues:**\n" + reviewer_REMEDIATION_REASON + "\n\n**silent-failure-hunter issues:**\n" + hunter_REMEDIATION_REASON
       → If NO (only this agent blocking): use this agent's data alone (existing behavior)
     → If NOT parallel phase: use this agent's data alone (existing behavior)
     → TaskCreate({
-        subject: merged_subject ?? "CC10X REM-FIX: {agent_name} — {first 60 chars of (contract.REMEDIATION_REASON ?? 'see agent output')}",  # Truncate to keep subject scannable; full reason in description
-        description: merged_description ?? (contract.REMEDIATION_REASON ?? "REMEDIATION_REASON null — re-check agent Router Contract output."),
+        subject: merged_subject ?? "CC10X REM-FIX: {agent_name} — {first 60 chars of (REMEDIATION_REASON ?? 'see agent output')}",  # Truncate to keep subject scannable; full reason in description
+        description: merged_description ?? (REMEDIATION_REASON ?? "Issues found — see agent Critical Issues section."),
         activeForm: "Fixing {agent_name} issues"
       })
     → Task-enforced gate:
@@ -608,21 +615,17 @@ If count ≥ 3 → ⚠️ AskUserQuestion: "Too many active fix attempts are sta
         TaskUpdate({ taskId: downstream_task_id, addBlockedBy: [remediation_task_id] })
     → STOP. Do not invoke next agent until remediation completes.
 
-1b. If contract.REQUIRES_REMEDIATION == true AND contract.BLOCKING == false:
-    **ALWAYS AskUserQuestion — unconditionally, whether serial or parallel phase.**
-    → Gather context first:
-      - If parallel phase AND sibling agent also has REQUIRES_REMEDIATION=true: merge both REMEDIATION_REASONs into one combined message
-      - Otherwise (serial phase or sibling has no issues): use this agent's REMEDIATION_REASON alone
-    → ⚠️ AskUserQuestion: "{merged or single REMEDIATION_REASON} — fix before continuing?"
-      Options: "Fix now (Recommended)" | "Proceed anyway"
-    → "Fix now" →
-        **REVIEW workflow check:** If parent workflow task subject starts with "CC10X REVIEW:":
-          → Do NOT create REM-FIX. Instead: ⚠️ AskUserQuestion: "Start a BUILD workflow to apply fixes? Options: 'Start BUILD' | 'Done for now'"
-          → If "Start BUILD": Execute BUILD workflow with reviewer findings as context. STOP.
-          → If "Done for now": Record in activeContext.md ## Decisions: "REVIEW complete, fixes deferred [{date}]". STOP.
-        Otherwise (BUILD/DEBUG): Circuit Breaker check, then create REM-FIX task: TaskCreate({subject: "CC10X REM-FIX: {agent} — {REMEDIATION_REASON[:60]}", description: REMEDIATION_REASON}) → block downstream tasks → STOP
-    → "Proceed" → Edit activeContext.md ## Decisions: "{agent(s)}: HIGH issues skipped by user", continue
-               → Edit patterns.md ## Common Gotchas: append "[Skipped HIGH — {agent}]: {first 80 chars of (REMEDIATION_REASON ?? 'see agent output')}"
+1b. If REQUIRES_REMEDIATION == true AND BLOCKING == false:
+    → Auto-default to "Fix now" (no AskUserQuestion needed — JUST_GO compatible).
+    → Log: "Rule 1b: non-blocking issues found — auto-proceeding with fix."
+    → Gather context:
+      - If parallel phase AND sibling agent also has REQUIRES_REMEDIATION=true: merge both REMEDIATION_REASONs into one combined description
+      - Otherwise: use this agent's REMEDIATION_REASON alone
+    → **REVIEW workflow check:** If parent workflow task subject starts with "CC10X REVIEW:":
+        → Do NOT create REM-FIX. Instead: AskUserQuestion: "Start a BUILD workflow to apply fixes? Options: 'Start BUILD' | 'Done for now'"
+        → If "Start BUILD": Execute BUILD workflow with reviewer findings as context. STOP.
+        → If "Done for now": Record in activeContext.md ## Decisions: "REVIEW complete, fixes deferred [{date}]". STOP.
+    → Otherwise (BUILD/DEBUG): Circuit Breaker check, then create REM-FIX task: TaskCreate({subject: "CC10X REM-FIX: {agent} — {REMEDIATION_REASON[:60]}", description: REMEDIATION_REASON ?? "HIGH issues found — see agent output"}) → block downstream tasks → STOP
 
 2. **Only applies when:** code-reviewer STATUS=APPROVE AND silent-failure-hunter found issues (parallel phase, Cases A and B only). All other reviewer+hunter combinations are handled by rules 1a/1b before reaching rule 2.
    → **Conflict check** — compare reviewer and hunter verdicts:
@@ -630,9 +633,9 @@ If count ≥ 3 → ⚠️ AskUserQuestion: "Too many active fix attempts are sta
      ⚠️ AskUserQuestion: "Reviewer approved, but Hunter found {N} critical silent failures. Investigate or skip?"
      - "Investigate" → Create REM-FIX: TaskCreate({subject: "CC10X REM-FIX: silent-failure-hunter — {REMEDIATION_REASON[:60]}", description: REMEDIATION_REASON}) → block downstream tasks → STOP
      - "Skip" → Record decision in memory, proceed to verifier
-   **Case B:** code-reviewer STATUS=APPROVE AND silent-failure-hunter HIGH_ISSUES > 0 (CRITICAL=0):
-     ⚠️ AskUserQuestion: "Reviewer approved, but Hunter found {N} high-severity error handling gaps. Fix before continuing?"
-     - "Fix" → Create REM-FIX: TaskCreate({subject: "CC10X REM-FIX: silent-failure-hunter — {REMEDIATION_REASON[:60]}", description: REMEDIATION_REASON}) → block downstream tasks → STOP
+   **Case B:** code-reviewer STATUS=APPROVE AND silent-failure-hunter STATUS=ISSUES_FOUND AND CRITICAL_ISSUES=0 (high issues only):
+     ⚠️ AskUserQuestion: "Reviewer approved, but Hunter found high-severity error handling gaps. Fix before continuing?"
+     - "Fix" → Create REM-FIX: TaskCreate({subject: "CC10X REM-FIX: silent-failure-hunter — {REMEDIATION_REASON[:60]}", description: REMEDIATION_REASON ?? "HIGH silent failure issues found — see hunter output"}) → block downstream tasks → STOP
      - "Proceed anyway" → Record in memory: "Hunter HIGH issues skipped by user", proceed
 
 2b. If contract.STATUS == "NEEDS_CLARIFICATION" (planner agent):
@@ -674,38 +677,19 @@ If count ≥ 3 → ⚠️ AskUserQuestion: "Too many active fix attempts are sta
     → "Create manual fix task": Proceed as rule 1a (create REM-FIX task)
     → "Abort": Record in activeContext.md ## Decisions: "Investigation aborted (BLOCKED): {ROOT_CAUSE}", stop workflow
 
-2d. If integration-verifier STATUS=FAIL AND contract.CHOSEN_OPTION is set:
+2d. If integration-verifier STATUS=FAIL:
     **DEBUG Serial Loop Check (pre-condition, DEBUG only):** If parent workflow subject contains "CC10X DEBUG:": count completed "CC10X integration-verifier: Re-verify" tasks. If count >= 2: ⚠️ AskUserQuestion "Re-verify ran {count}x — deeper issue? Continue / Escalate / Abort" → handle, STOP.
-    → If CHOSEN_OPTION == "A": Create REM-FIX task (existing behavior — unchanged)
-    → If CHOSEN_OPTION == "B":
-        ⚠️ AskUserQuestion: "Verifier recommends REVERTING the branch — fundamental design issue found: {REMEDIATION_REASON ?? 'see verifier output'}. How to proceed?"
+    → Create REM-FIX task (self-heal by default). Note: verifier asked user inline via AskUserQuestion before emitting FAIL — if user chose "Accept limitation" the verifier emits PASS instead; if user chose "Revert", verifier emits FAIL and router creates REM-FIX (user can abandon it and revert manually after recording the decision in memory).
+    → ⚠️ REVERT gate: If verifier output contains text "REVERT" or "revert branch":
+        ⚠️ AskUserQuestion: "Verifier output suggests reverting the branch. How to proceed?"
         Options: "Revert branch (Recommended)" | "Create fix task instead"
         - "Revert": Suggest git revert steps, stop workflow (record in memory)
-        - "Create fix task": Proceed as CHOSEN_OPTION=A
-    → If CHOSEN_OPTION == "C":
-        ⚠️ AskUserQuestion: "Verifier wants to proceed with this known limitation: {REMEDIATION_REASON ?? 'see verifier output'}. Accept and continue?"
-        Options: "Accept limitation (document it)" | "Fix before proceeding"
-        - "Accept": Record in activeContext.md ## Decisions, proceed to Memory Update
-        - "Fix": Proceed as CHOSEN_OPTION=A
-    → If CHOSEN_OPTION not set (legacy: pre-v6.0.37 verifiers that didn't set CHOSEN_OPTION): Proceed as CHOSEN_OPTION=A
-2e. If integration-verifier STATUS=REVERT_RECOMMENDED: Log decision, suggest git revert steps, stop workflow (record in memory). Note: user already confirmed revert in-agent via inline AskUserQuestion.
-2f-ii. If integration-verifier STATUS=LIMITATION_ACCEPTED: Record acceptance in activeContext.md ## Decisions, proceed to Memory Update. Note: user already accepted in-agent via inline AskUserQuestion.
+        - "Create fix task": Create REM-FIX task normally
+    → Otherwise: Create REM-FIX task: TaskCreate({subject: "CC10X REM-FIX: integration-verifier — {REMEDIATION_REASON[:60]}", description: REMEDIATION_REASON ?? "Verification failed — see verifier output"}) → block downstream tasks → STOP
 
-3. Collect contract.MEMORY_NOTES for workflow-final persistence
+3. Collect Memory Notes from agent output (### Memory Notes section) for workflow-final persistence
 
 4. If none of above triggered → Proceed to next agent
-```
-
-**Step 3: Output Validation Evidence**
-```
-### Agent Validation: {agent_name}
-- Router Contract: Found
-- STATUS: {contract.STATUS}
-- BLOCKING: {contract.BLOCKING}
-- CRITICAL_ISSUES: {contract.CRITICAL_ISSUES}
-- HIGH_ISSUES: {contract.HIGH_ISSUES}
-- REQUIRES_REMEDIATION: {contract.REQUIRES_REMEDIATION}
-- Proceeding: [Yes/No + reason]
 ```
 
 ---
@@ -735,7 +719,7 @@ WHEN any CC10X REM-FIX task COMPLETES:
   │      → Returns re_reviewer_id
   │
   ├─→ 2. **Skip in DEBUG or REVIEW workflows:** If the parent workflow task subject contains "CC10X DEBUG:" or "CC10X REVIEW:" → SKIP step 2 entirely (no hunter in these chains).
-  │      Otherwise: TaskCreate({ subject: "CC10X silent-failure-hunter: Re-hunt — {completed_remfix_title}", description: "Re-hunt for silent failures after REM-FIX. Router Contract REQUIRED even if no issues found (STATUS=CLEAN)." })
+  │      Otherwise: TaskCreate({ subject: "CC10X silent-failure-hunter: Re-hunt — {completed_remfix_title}", description: "Re-hunt for silent failures after REM-FIX. Full output required even if no issues found (emit heading: Error Handling Audit: CLEAN)." })
   │      → Returns re_hunter_id (or null if DEBUG/REVIEW)
   │
   ├─→ 3. **Skip in REVIEW workflows:** If the parent workflow task subject contains "CC10X REVIEW:" → SKIP step 3 entirely (no verifier in REVIEW chain). Proceed directly to step 4 with re_verifier_id = null.
@@ -766,7 +750,7 @@ WHEN any CC10X REM-FIX task COMPLETES:
 1. **MEMORY_LOADED** - Before routing
 2. **TASKS_CHECKED** - Check TaskList() for active workflow
 3. **INTENT_CLARIFIED** - User intent is unambiguous (all workflows)
-4. **RESEARCH_COMPLETE** - Before planner/bug-investigator (if research detected) — both parallel agents return FILE_PATH in their Router Contracts; router collects both
+4. **RESEARCH_COMPLETE** - Before planner/bug-investigator (if research detected) — both parallel agents return FILE_PATH in their output; router collects both
 5. **REQUIREMENTS_CLARIFIED** - Before invoking agent (BUILD only)
 6. **TASKS_CREATED** - Workflow task hierarchy created
 7. **ALL_TASKS_COMPLETED** - All workflow tasks (including Memory Update) status="completed"
@@ -795,7 +779,6 @@ WHEN any CC10X REM-FIX task COMPLETES:
    - For tasks with subject "CC10X REM-FIX:": Route by originating agent, not workflow:
      - If REM-FIX originated from bug-investigator contract → invoke cc10x:bug-investigator
      - If REM-FIX originated from code-reviewer, silent-failure-hunter, or integration-verifier contract → invoke cc10x:component-builder (all workflows)
-   - For tasks with subject "CC10X REM-EVIDENCE:": re-invoke the original agent (extract agent name from the subject suffix — e.g., "CC10X REM-EVIDENCE: code-reviewer missing Router Contract" → invoke cc10x:code-reviewer). When re-invoking, append to the original prompt: "REQUIRED: Include a ### Router Contract (MACHINE-READABLE) YAML block in your response. Write your full analysis output, then include the Router Contract YAML block. Call TaskUpdate only after the YAML block is present in your output."
    - For tasks with subject starting "CC10X integration-verifier:": invoke cc10x:integration-verifier (covers both original verify tasks and Re-verify tasks from Re-Review Loop).
    - Otherwise, if multiple agent tasks are ready (e.g., code-reviewer + silent-failure-hunter):
      → Call TaskUpdate({ status: "in_progress" }) for EACH ready task before any Task() call
@@ -850,7 +833,8 @@ WHEN any CC10X REM-FIX task COMPLETES:
 ## Results Collection (Parallel Agents)
 
 # After both parallel agents complete: TaskList() → verify both "completed"
-# Collect REVIEWER_FINDINGS (Critical Issues + Verdict) and HUNTER_FINDINGS (Router Handoff section preferred)
+# Collect REVIEWER_FINDINGS from code-reviewer output: extract heading verdict + Critical Issues section
+# Collect HUNTER_FINDINGS from silent-failure-hunter output: extract heading verdict + Critical Issues section
 # Pass both under "## Previous Agent Findings" in integration-verifier prompt (see integration-verifier.md ## Context from Previous Agents for template)
 
 ## Release Checklist

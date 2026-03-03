@@ -78,7 +78,7 @@ Any CRITICAL issues from either agent should influence your PASS/FAIL verdict.
 
 ## Pre-Completion Checklist (BEFORE Claiming PASS)
 
-**Run through ALL before writing Router Contract:**
+**Run through ALL before calling TaskUpdate:**
 
 | Check | How to Verify | Fail Action |
 |-------|---------------|-------------|
@@ -95,7 +95,7 @@ Any CRITICAL issues from either agent should influence your PASS/FAIL verdict.
 ## Task Completion & Self-Healing (MANDATORY)
 
 **PASS result still requires full output — NO EXCEPTIONS:**
-A PASS result still requires the full Router Contract YAML block. "Task N: COMPLETED" alone is NEVER sufficient — even when all scenarios pass. Always emit the complete output format before calling TaskUpdate.
+A PASS result still requires the full output format. "Task N: COMPLETED" alone is NEVER sufficient — even when all scenarios pass. Always emit the complete output (heading, Summary, Scenarios, Memory Notes) before calling TaskUpdate.
 
 **If ALL checks PASS:**
 Provide your final output, then call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` where `{TASK_ID}` is from your Task Context prompt.
@@ -105,30 +105,15 @@ You must NOT complete your task. If the issue is fixable (Option A below), you m
 1. Call `TaskCreate({ subject: "CC10X REM-FIX: Verification Failure", description: "[Detailed test logs and what needs fixing]", activeForm: "Fixing verification issues" })`
 2. Extract the new task ID from the tool response (or use `TaskList()` to find it).
 3. Call `TaskUpdate({ taskId: "{TASK_ID}", addBlockedBy: ["{REM_FIX_TASK_ID}"] })` to block your own task. (Your task stays in_progress while blocked; the router will re-invoke you when the blocker completes.)
-4. Output your Router Contract with `STATUS: SELF_REMEDIATED`.
-5. Do NOT call `TaskUpdate` with `status: "completed"`. Just stop your turn.
+4. Do NOT call `TaskUpdate` with `status: "completed"`. Just stop your turn.
 The router will wake up, see you are blocked, and execute the builder on the fix task. When the fix is done, you will automatically be unblocked to re-verify.
 
 ## Output
 
-CRITICAL: Output the `### Router Contract (MACHINE-READABLE)` YAML block BEFORE calling `TaskUpdate`. Do NOT call TaskUpdate until the Router Contract section has been fully output in this message.
+CRITICAL: Output your full analysis BEFORE calling `TaskUpdate`. Do NOT call TaskUpdate until your findings and Memory Notes sections have been fully output in this message.
 
 ```
 ## Verification: [PASS/FAIL]
-
-### Dev Journal (User Transparency)
-**What I Verified:** [Narrative - E2E scenarios tested, integration points checked, test approach]
-**Key Observations:**
-- [What worked well - "Auth flow completes in <50ms"]
-- [What behaved unexpectedly - "Retry logic triggered 3 times before success"]
-**Confidence Assessment:**
-- [Why we can/can't ship - "All critical paths pass, edge cases handled"]
-- [Risk level - "Low risk: all scenarios green" or "Medium risk: X scenario flaky"]
-**Your Input Helps:**
-- [Environment questions - "Tested against mock API - should I test against staging?"]
-- [Coverage gaps - "Didn't test X scenario - is it important for this release?"]
-- [Ship decision - "One flaky test - acceptable to ship or must fix?"]
-**What's Next:** If PASS, memory update then workflow complete - ready for user to merge/deploy. If FAIL, fix task created then re-verification.
 
 ### Summary
 - Overall: [PASS/FAIL]
@@ -162,26 +147,26 @@ EVIDENCE:
 **Option A (default): Self-Heal**
 - Blockers are fixable without architectural changes
 - Execute the Self-Healing Protocol described above (TaskCreate, TaskUpdate addBlockedBy).
-- Output `STATUS: SELF_REMEDIATED` in your Router Contract.
+- Do not call TaskUpdate completed — just stop your turn. The blocked task state signals to the router that you self-healed.
 
 **Option B: Revert Branch — ask user NOW before returning**
 - Verification reveals fundamental design issue (architectural mismatch, wrong abstraction, etc.)
-- You MUST ask the user inline before returning your Router Contract:
+- You MUST ask the user inline before stopping your turn:
   ```
   AskUserQuestion: "Fundamental design issue found: {reason for failure}. How to proceed?"
   Options: "Revert branch (Recommended)" | "Create fix task instead"
   ```
-  - If "Revert branch": Record decision in Memory Notes under Learnings, output `STATUS: REVERT_RECOMMENDED` in Router Contract
+  - If "Revert branch": Record decision in Memory Notes under Learnings, emit `## Verification: FAIL` heading, stop your turn (do not call TaskUpdate completed — the router will see you as blocked)
   - If "Create fix task instead": Proceed as Option A (Self-Healing Protocol above)
 
 **Option C: Document & Continue — ask user NOW before returning**
 - Acceptable to ship with known limitation
-- You MUST ask the user inline before returning your Router Contract:
+- You MUST ask the user inline:
   ```
   AskUserQuestion: "Known limitation found: {description of limitation}. Accept and continue?"
   Options: "Accept limitation (document it)" | "Fix before proceeding"
   ```
-  - If "Accept limitation": Record limitation in Memory Notes under Learnings, output `STATUS: LIMITATION_ACCEPTED` in Router Contract
+  - If "Accept limitation": Record limitation in Memory Notes under Learnings, emit `## Verification: PASS` heading, call TaskUpdate completed and stop
   - If "Fix before proceeding": Proceed as Option A (Self-Healing Protocol above)
 
 **Decision:** [Option chosen]
@@ -190,36 +175,14 @@ EVIDENCE:
 ### Findings
 - [observations about integration quality]
 
-### Router Handoff (Stable Extraction)
-STATUS: [PASS/FAIL]
-SCENARIOS_PASSED: [X/Y]
-BLOCKERS_COUNT: [N]
-BLOCKERS:
-- [scenario] - [error] → [recommended action]
-
 ### Memory Notes (For Workflow-Final Persistence)
 - **Learnings:** [Integration insights for activeContext.md]
 - **Patterns:** [Edge cases discovered for patterns.md ## Common Gotchas]
-- **Verification:** [Scenario results for progress.md ## Verification]
-
-### Router Contract (MACHINE-READABLE)
-```yaml
-STATUS: PASS | FAIL | SELF_REMEDIATED | REVERT_RECOMMENDED | LIMITATION_ACCEPTED
-SCENARIOS_TOTAL: [Y from X/Y]
-SCENARIOS_PASSED: [X from X/Y]
-BLOCKERS: [count from BLOCKERS_COUNT]
-BLOCKING: [true if STATUS=FAIL or STATUS=REVERT_RECOMMENDED]
-REQUIRES_REMEDIATION: [true if BLOCKERS > 0 and STATUS not in REVERT_RECOMMENDED, LIMITATION_ACCEPTED]
-REMEDIATION_REASON: null | "Fix E2E failures: {summary of BLOCKERS list}"
-CHOSEN_OPTION: A | B | C  # A=create fix task (default), B=revert branch (user chose revert — see REVERT_RECOMMENDED), C=accept limitation (user chose accept — see LIMITATION_ACCEPTED)
-MEMORY_NOTES:
-  learnings: ["Integration insights"]
-  patterns: ["Edge cases discovered"]
-  verification: ["E2E: {SCENARIOS_PASSED}/{SCENARIOS_TOTAL} passed"]
-```
-**CONTRACT RULE:** STATUS=PASS requires BLOCKERS=0 and SCENARIOS_PASSED=SCENARIOS_TOTAL. STATUS=SELF_REMEDIATED means Option A was taken (self-heal via TaskCreate — agent created fix task and blocked downstream). STATUS=REVERT_RECOMMENDED means user confirmed revert via inline AskUserQuestion (Option B path). STATUS=LIMITATION_ACCEPTED means user accepted limitation via inline AskUserQuestion (Option C path).
+- **Verification:** [Scenario results: X/Y passed for progress.md ## Verification]
 
 ### Task Status
 - Task {TASK_ID}: COMPLETED
 - Follow-up tasks created: [list if any, or "None"]
 ```
+
+**CONTRACT:** The heading `## Verification: PASS` or `## Verification: FAIL` IS the machine-readable signal. Router reads this line + counts `### Critical Issues` (mapped to Blockers) for blocking decisions. No YAML needed.

@@ -2,7 +2,7 @@
 
 ### The Intelligent Orchestrator for Claude Code
 
-**Current version:** 7.9.0
+**Current version:** 8.0.0
 
 **Recommended: Create `~/.claude/CLAUDE.md` (global) so the router is always active across all projects.**
 
@@ -449,6 +449,9 @@ I'll help you build a task tracker! Let me start...
 
 | Version | Highlights |
 |---------|------------|
+| **v8.0.0** | Radical simplification — remove Router Contract YAML from read-only agents; text-based verdict extraction; JUST_GO session mode; ~280 lines removed |
+| **v7.9.0** | OBS-2/3/4/6/7/8/10/11/12/13/14 batch fix — self-healing verifier, explicit DEBUG-RESET marker, conditional frontend-patterns load |
+| **v7.8.0** | OBS-1/9/15/16/DEBUG-RESET — 5-issue fix, 13/13 smoke test pass |
 | **v6.0.21** | User standards support; multi-project docs; Linux install troubleshooting |
 | **v6.0.20** | Agent self-report task completion; MCP docs; permissions fix for memory files |
 | **v6.0.19** | Babysitter-inspired: Multi-signal HARD/SOFT scoring, evidence arrays, decision checkpoints, completion guard |
@@ -467,6 +470,9 @@ I'll help you build a task tracker! Let me start...
 <details>
 <summary>Full version history</summary>
 
+- **v8.0.0** - Radical Simplification: Removed Router Contract YAML from code-reviewer, silent-failure-hunter, integration-verifier. Replaced ~200-line YAML validation block in router with 30-line text extraction (reads heading from first 5 lines). Added JUST_GO session mode (AUTO_PROCEED flag). Simplified Empty Answer Guard — only ⚠️ REVERT gates block; all others auto-default. Removed REM-EVIDENCE retry loop (root cause of 6/6 stress test failures). Net: ~280 lines removed, 0 new complexity.
+- **v7.9.0** - OBS-2/3/4/6/7/8/10/11/12/13/14 batch fix: self-healing integration-verifier (creates REM-FIX + blocks own task), explicit DEBUG-RESET marker written by router, conditional frontend-patterns load (.tsx/.jsx/.vue/.css/.scss/.html only)
+- **v7.8.0** - OBS-1/9/15/16/DEBUG-RESET 5-issue fix, 13/13 smoke test pass
 - **v6.0.19** - Babysitter-inspired enhancements: Multi-signal HARD/SOFT scoring (per-dimension review), evidence array protocol (structured proof), decision checkpoints (mandatory pause points), completion guard (final gate before Router Contract)
 - **v6.0.0** - Orchestration hardening:
   - Tasks contract correctness (no undocumented TaskCreate fields; canonical TaskUpdate object form)
@@ -617,6 +623,6 @@ MIT License
 ---
 
 <p align="center">
-  <strong>cc10x v7.1.0</strong><br>
+  <strong>cc10x v8.0.0</strong><br>
   <em>The Intelligent Orchestrator for Claude Code</em>
 </p>
