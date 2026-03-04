@@ -253,12 +253,10 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [planner_task_id] })
 1. Load memory → Check if already done in progress.md
 2. **Plan-First Gate** (STATE-BASED, not phrase-based):
    - Skip ONLY if: plan in `## References` ≠ "N/A"
-   - **Trivial request heuristic** (auto-select "Build directly" — skip AskUserQuestion): If request is under 20 words AND contains none of: API, database, db, schema, migration, component, multiple files, refactor, auth, security, crypto, payment, password — select "Build directly" automatically and log: "Plan-First Gate: trivial request detected, skipping plan prompt."
-   - Otherwise → AskUserQuestion: "Plan first (Recommended) / Build directly"
+   - AskUserQuestion: "Plan first (Recommended) / Build directly"
 3. **Clarify requirements** (DO NOT SKIP):
    - **Pre-answers (always run first):** Read activeContext.md `## Decisions` — look for entries starting with `"Planner clarification ["` OR `"Build clarification ["`. If found, treat those Q→A pairs as pre-answered (do NOT re-ask them).
-   - **Ambiguity check:** If the request explicitly states (a) the file/component to change, (b) the function/behavior to change, (c) what the change is, AND (d) acceptance criteria or expected outcome — AND pre-answers cover all gaps — skip the AskUserQuestion below. If ANY element is missing, vague, or contradictory → continue to AskUserQuestion.
-   - **Then:** Use AskUserQuestion for any remaining unanswered requirements.
+   - Use AskUserQuestion for any unanswered requirements.
    - Pass all answers (pre-populated + new) to component-builder in prompt under `## Pre-Answered Requirements`.
    - **Persist answers (compaction-safe):** For each NEW Q&A gathered from AskUserQuestion in this step (skip pre-populated answers already in Decisions from Planner clarification): Edit activeContext.md ## Decisions appending `- Build clarification [{current_date}]: {question} → {answer}`. Read-back verify after each append.
 4. **Create task hierarchy** (see Task-Based Orchestration above)
@@ -312,7 +310,6 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [planner_task_id] })
 ### DEBUG
 1. Load memory → Check patterns.md Common Gotchas
 2. **CLARIFY (REQUIRED)**: AskUserQuestion if ANY ambiguity (error message, expected vs actual, when it started, affected component/file)
-   **Skip heuristic:** If user message contains (a) explicit stack trace OR `file:line` reference AND (b) clear expected vs actual — skip AskUserQuestion. Log: "DEBUG clarify: obvious error detected, skipping clarification."
 3. **Check for research trigger (Pre-investigation):**
    - User explicitly requested research ("research", "github", "octocode"), OR
    - External service error (API timeout, auth failure, third-party)
@@ -364,9 +361,8 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [planner_task_id] })
 1. Load memory
 2. **Design file extraction (ALWAYS — regardless of request clarity):**
    → `Read(.claude/cc10x/activeContext.md)` → find `- Design:` in `## References` → store as `design_file` (or null if not found / "N/A")
-   → **Stale design check (v8.0.1):** If `design_file` is not null/N/A: extract date prefix from path (format `YYYY-MM-DD`). If date ≠ today's date → set `design_file = N/A`, log: "Design reference from prior session ({date}) cleared — use brainstorming to create a fresh design for this workflow."
-   → If `design_file` is not null/N/A (after stale check): `Glob(pattern="{design_file}")` → if 0 matches: AskUserQuestion: "Design file not found at {design_file}. Re-run brainstorming | Provide path manually | Proceed without design"
-3. **Clarification (if request is vague or ambiguous):**
+   → **Design relevance:** If `design_file` is not null/N/A: `Glob(pattern="{design_file}")` → if 0 matches: AskUserQuestion: "Design file not found at {design_file}. Re-run brainstorming | Provide path manually | Proceed without design" → If found: pass to planner; planner assesses relevance based on filename (feature-name mismatch → planner notes it and proceeds without design constraint).
+3. **Brainstorming (ALWAYS — explore idea before planning):**
    → `Skill(skill="cc10x:brainstorming")` — runs in main context, `AskUserQuestion` available here
    → Collect clarified requirements, pass to planner in step 6
 4. **If research detected (external tech OR explicit request):**
@@ -412,12 +408,7 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [planner_task_id] })
         → Override STATUS to NEEDS_CLARIFICATION
         → AskUserQuestion: "Planner reported PLAN_CREATED but the plan file was not found on disk at {contract.PLAN_FILE}. The Write() call may have failed silently. How to proceed?"
           Options: "Re-run planner (Recommended)" | "Write plan content manually" | "Abort workflow"
-8. **PLAN-to-BUILD Transition Gate** (after memory update completes):
-   → AskUserQuestion: "Plan saved: {plan_file}. Ready to start building?"
-     Options: "Start BUILD (Recommended)" | "I'll review the plan first" | "Done for now"
-   → "Start BUILD": Execute BUILD workflow from step 1. Plan-First Gate (step 2) will skip automatically because plan is now in ## References (per C1 fix).
-   → "I'll review the plan first": Stop. User will re-invoke when ready.
-   → "Done for now": Record in activeContext.md ## Decisions: "Plan complete, BUILD deferred by user [{date}]", stop.
+8. **Announce completion:** Output "Plan saved to `{plan_file}`. Start BUILD when you're ready." and stop. Memory already has the plan reference — Plan-First Gate will auto-skip on next BUILD.
 
 **Research prerequisite:** Each agent handles its own file persistence. Router collects both `FILE_PATH` values from agent output and passes them to the planner prompt.
 
@@ -450,7 +441,8 @@ Task(subagent_type="cc10x:component-builder", prompt="
 ---
 IMPORTANT:
 - **NEVER call `EnterPlanMode`.** This is an execution agent that writes files directly. Plan mode would block Write/Edit tools and prevent saving outputs.
-- **Output your analysis BEFORE calling TaskUpdate.** Do NOT call TaskUpdate as your only or last tool call. If TaskUpdate fires without preceding substantive output, the tool confirmation becomes the only response — a known silent-failure mode. Write your full output first, then call TaskUpdate.
+- **WRITE agents (builder, investigator, planner):** call `TaskUpdate(status: completed)` AFTER outputting full analysis. Do NOT call TaskUpdate as your only or last tool call — substantive output must precede it.
+- **READ-ONLY agents (reviewer, hunter, verifier):** do NOT call `TaskUpdate(status: completed)`. Just stop after your report. The router handles task completion via fallback.
 - If your tools include `Edit` **and you are not running in a parallel phase**, update `.claude/cc10x/{activeContext,patterns,progress}.md` at the end per `cc10x:session-memory` and `Read(...)` back to verify.
 - If you are running in a parallel phase (e.g., BUILD’s review/hunt phase), prefer **no memory edits** (skip Edit() calls on `.claude/cc10x/*.md`); your analysis scope, output quality (≥200 chars), and `### Memory Notes` section are REQUIRED regardless — "no memory edits" means no file writes, NOT reduced output.
 - If your tools do NOT include `Edit`, you MUST include a `### Memory Notes (For Workflow-Final Persistence)` section with:
@@ -829,7 +821,7 @@ WHEN any CC10X REM-FIX task COMPLETES:
      All fields required: Task ID, Parent Workflow ID, Plan File, User Request, Memory Summary, Project Patterns, SKILL_HINTS.
 
 3. After agent completes:
-   - Agent self-reports: TaskUpdate({ taskId, status: "completed" }) — already done by agent
+   - WRITE agents self-report: TaskUpdate({ taskId, status: "completed" }) — already done by agent. READ-ONLY agents (reviewer, hunter, verifier) do NOT call this — router fallback handles it.
    - Router validates output (see Post-Agent Validation)
    - Router calls TaskList() to verify task is completed; if still in_progress, call TaskGet({ taskId: runnable_task_id }) and check blockedBy — if blockedBy is non-empty the agent intentionally blocked itself (self-healing), do NOT force to completed; if blockedBy is empty, router calls TaskUpdate({ taskId: runnable_task_id, status: "completed" }) as fallback
    - **TEST_PROCESSES_CLEANED (after component-builder only):** If completed task subject contains "CC10X component-builder:":
