@@ -513,7 +513,9 @@ Scan agent output for `### Critical Issues` section:
 **Step 3: Fallback if heading not found**
 
 If no heading pattern matched:
-- If output >= 500 chars: Scan full output for keywords: "APPROVE" | "CHANGES_REQUESTED" | "CLEAN" | "ISSUES_FOUND" | "PASS" | "FAIL" — use first match as STATUS
+- If output >= 500 chars:
+  1. First: scan for anchored line `^STATUS:\s*(PASS|FAIL|FIXED|INVESTIGATING|BLOCKED|PLAN_CREATED|NEEDS_CLARIFICATION)` — use this if found (YAML write-agent contract; anchored parse prevents false keyword match in prose)
+  2. If not found: scan full output for keywords: "APPROVE" | "CHANGES_REQUESTED" | "CLEAN" | "ISSUES_FOUND" | "PASS" | "FAIL" — use first match as STATUS
 - If output < 200 chars: **INLINE VERIFICATION REQUIRED** — do NOT blindly default to APPROVE/CLEAN/PASS:
   → Log: "Agent {agent} returned minimal output ({N} chars). Running inline verification..."
   → For **integration-verifier**: Run tests inline:
@@ -526,7 +528,7 @@ If no heading pattern matched:
     If only noise patterns → STATUS=APPROVE/CLEAN, log: "Inline scan: no blocking issues."
     If no changes found (`git diff` empty = NO_GIT) → STATUS=APPROVE/CLEAN (cannot scan, safe default).
   → Set BLOCKING per normal STATUS rules. Output inline findings under "### Inline Verification".
-- If output 200–499 chars and no heading: Scan full output for STATUS keywords (same as >= 500 chars path).
+- If output 200–499 chars and no heading: Apply same two-step parse as >= 500 chars (anchored `^STATUS:` first, then keyword scan).
 
 **Step 4: Detect SELF_REMEDIATED (task-state-based)**
 
