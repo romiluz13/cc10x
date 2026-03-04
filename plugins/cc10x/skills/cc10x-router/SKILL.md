@@ -537,14 +537,11 @@ If still in_progress: Call `TaskGet({ taskId: agent_task_id })` → if blockedBy
 ```
 VALIDATION RULES:
 
-**EVALUATION ORDER (FIRST MATCH WINS):**
-Evaluate rules in this exact order. Stop after the FIRST rule that triggers.
-0 (CONTRACT RULE) → 0b (SELF_REMEDIATED) → 0c (NEEDS_EXTERNAL_RESEARCH) → 1a (BLOCKING) → 1b (NON-BLOCKING REMEDIATION) → 2/2b/2c/2d/2f (STATUS-specific) → 3 (MEMORY_NOTES) → 4 (proceed)
-Note: Rule 0 is a pre-processing override (always runs, does not short-circuit). Rules 3 and 4 always run after the triggered rule completes (they are collectors, not gates). First-match-wins applies to rules 0b through 2f.
+---
+**PRE-PROCESSING (ALWAYS RUNS FIRST — does NOT short-circuit. Apply to every agent output before the routing matrix below):**
 
-**0. CONTRACT RULE Enforcement (RUNS FIRST — auto-override STATUS if violated):**
-
-Before applying rules 1a/1b/2, validate each agent's extracted STATUS:
+**Rule 0: CONTRACT RULE Enforcement:**
+Before applying any conditional rules, validate each agent's extracted STATUS:
 
 | Agent | CONTRACT RULE violation → Override |
 |-------|-------------------------------------|
@@ -555,9 +552,8 @@ Before applying rules 1a/1b/2, validate each agent's extracted STATUS:
 | integration-verifier | STATUS=PASS but CRITICAL_ISSUES>0 (from text extraction — mapped from blockers section) → STATUS=FAIL, BLOCKING=true |
 | planner | STATUS=PLAN_CREATED but PLAN_FILE is null/empty OR CONFIDENCE<50 OR GATE_PASSED!=true → STATUS=NEEDS_CLARIFICATION, BLOCKING=true, REQUIRES_REMEDIATION=true, REMEDIATION_REASON="CONTRACT RULE violated: {missing field}" |
 
-**If override applied:** Log in output: "⚠️ CONTRACT RULE override: {agent} self-reported {original} but rule violated (CRITICAL_ISSUES={N} found in heading/output). Overriding STATUS to {new_status}."
-
-Proceed with rules 1a/1b/2 using the OVERRIDDEN values.
+**If override applied:** Log: "⚠️ CONTRACT RULE override: {agent} self-reported {original} but rule violated (CRITICAL_ISSUES={N} found in heading/output). Overriding STATUS to {new_status}."
+Proceed with conditional routing below using the OVERRIDDEN values.
 
 **Circuit Breaker (BEFORE creating any REM-FIX):**
 Before creating a new REM-FIX task, count ALL REM-FIX tasks in this workflow: `TaskList()` → filter by (subject contains "CC10X REM-FIX:") AND (description contains "wf:{parent_task_id}"). Count ALL statuses — cumulative count across the workflow lifecycle matters, not just currently active tasks.
@@ -570,127 +566,143 @@ If count ≥ 3 → ⚠️ AskUserQuestion: "This workflow has already created {N
 - **Skip** → Proceed despite errors (not recommended)
 - **Abort** → Stop workflow, manual fix
 
-0b. If contract.STATUS == "SELF_REMEDIATED":
-    → The agent has autonomously created a REM-FIX task and blocked itself (or downstream tasks).
-    → Acknowledge the self-healing action: log "Agent {agent} has self-remediated via TaskCreate."
-    → Do NOT create a duplicate REM-FIX task.
-    → Do NOT mark the original task as completed — the REM-FIX task it created has blocked it.
-      The Remediation Re-Review Loop (step 1) will create a fresh re_reviewer task to re-invoke this agent after the fix. Forcing completed here would cancel the re-review.
-    → STOP evaluating rules 1a/1b/2 for this agent's contract.
+---
+**Conditional Routing Matrix (evaluate top-to-bottom — FIRST MATCH WINS; applies to rules 0b through 2f):**
+Note: Rules 3 and 4 always run after the triggered rule completes (they are collectors, not gates).
 
-0c. If contract.NEEDS_EXTERNAL_RESEARCH == true (bug-investigator only):
-    **Runs BEFORE rule 1a — do NOT evaluate rules 1a/1b/2 when this fires.**
-    **Research Loop Cap (BEFORE spawning agents):**
-      Count external research iterations: Read(.claude/cc10x/activeContext.md) → find the `[DEBUG-RESET: wf:{parent_task_id}]` marker in ## Recent Changes → count entries in ## References that match `docs/research/` AND were added after that marker (scoped to current workflow). If no marker found: count = 0 (fresh workflow, never triggered).
-      If count >= 2: ⚠️ AskUserQuestion: "External research has been provided to bug-investigator {count} time(s) and it still reports NEEDS_EXTERNAL_RESEARCH. How to proceed?"
-        Options: "Try research once more" | "Create manual fix task (skip re-invoke)" | "Abort workflow"
-        → Do NOT proceed. Handle chosen option, then STOP.
-      If count < 2: Proceed below.
-    → TaskCreate web-researcher + github-researcher tasks (with topic = contract.RESEARCH_REASON)
-    → Mark both in_progress. Spawn BOTH in same message (parallel):
-      `Task(subagent_type="cc10x:web-researcher", prompt="Topic: {contract.RESEARCH_REASON}\nReason: Bug investigation stuck — NEEDS_EXTERNAL_RESEARCH\nFile: docs/research/{date}-{topic}-web.md\nTask ID: {web_task_id}")`
-      `Task(subagent_type="cc10x:github-researcher", prompt="Topic: {contract.RESEARCH_REASON}\nReason: Bug investigation stuck — NEEDS_EXTERNAL_RESEARCH\nFile: docs/research/{date}-{topic}-github.md\nTask ID: {github_task_id}")`
-    → Collect: web_file = web_contract.FILE_PATH, github_file = github_contract.FILE_PATH
-    → Re-invoke cc10x:bug-investigator with same prompt + "## Research Files\nWeb: {web_file}\nGitHub: {github_file}"
-    → Add SKILL_HINTS: cc10x:research (synthesis guidance)
-    → Do NOT create REM-FIX task — research IS the response
-    → STOP after re-invoke — do not evaluate rules 1a/1b/2 for this contract
+| Priority | Condition | Action | Next State |
+|----------|-----------|--------|------------|
+| **0b** | STATUS == SELF_REMEDIATED | Log "Agent {agent} has self-remediated via TaskCreate." Do NOT create duplicate REM-FIX. Do NOT force-complete task (re-review loop handles it). | STOP |
+| **0c** | NEEDS_EXTERNAL_RESEARCH == true (bug-investigator only) | **[Research Loop Cap first — see Detailed Logic: Rule 0c]** Spawn parallel web+github researchers. Re-invoke bug-investigator with research files + SKILL_HINTS: cc10x:research. Do NOT create REM-FIX. | STOP |
+| **1a** | BLOCKING == true AND STATUS ∉ [NEEDS_CLARIFICATION, INVESTIGATING, BLOCKED, SELF_REMEDIATED, REVERT_RECOMMENDED, LIMITATION_ACCEPTED] AND NEEDS_EXTERNAL_RESEARCH ≠ true | **[Circuit Breaker first — see above]** **[Parallel blocking merge if BUILD parallel phase — see Detailed Logic: Rule 1a]** TaskCreate REM-FIX. Block all incomplete downstream CC10X tasks via TaskUpdate addBlockedBy. | STOP |
+| **1b** | REQUIRES_REMEDIATION == true AND BLOCKING == false | Log "Rule 1b: non-blocking issues found." If REVIEW workflow: AskUserQuestion "Start BUILD / Done for now." Otherwise: **[Circuit Breaker first — see above]** TaskCreate REM-FIX. Block downstream tasks. | STOP |
+| **2** | code-reviewer STATUS=APPROVE AND silent-failure-hunter found issues (parallel phase only) | **[Conflict check — Cases A/B in Detailed Logic: Rule 2]** AskUserQuestion: investigate or skip/proceed. | STOP |
+| **2b** | STATUS == NEEDS_CLARIFICATION (planner) | **[NEEDS_CLARIFICATION Loop Cap first — see Detailed Logic: Rule 2b]** AskUserQuestion with extracted "Your Input Needed" items. Collect answers → persist to ## Decisions. TaskCreate Re-plan. Block downstream. Re-invoke planner. | STOP |
+| **2c** | STATUS == INVESTIGATING (bug-investigator) | **[Investigation Loop Cap first — see Detailed Logic: Rule 2c]** TaskCreate Continue Investigation. Block downstream. Re-invoke bug-investigator with ROOT_CAUSE hint. | STOP |
+| **2f** | STATUS == BLOCKED (bug-investigator terminal stuck) | AskUserQuestion: "Research externally (Recommended) / Create manual fix task / Abort." Handle choice per Detailed Logic: Rule 2f. | STOP |
+| **2d** | integration-verifier STATUS == FAIL | **[DEBUG serial loop check if DEBUG workflow — see Detailed Logic: Rule 2d]** **[REVERT gate first — see Detailed Logic: Rule 2d]** Otherwise: TaskCreate REM-FIX. Block downstream tasks. | STOP |
+| **3** | (Always — runs after triggered rule completes) | Collect Memory Notes from agent output (### Memory Notes section) for workflow-final persistence. | Continue |
+| **4** | None of above triggered | Proceed to next agent. | Continue |
 
-1a. If contract.BLOCKING == true AND contract.STATUS NOT IN ["NEEDS_CLARIFICATION", "INVESTIGATING", "BLOCKED", "SELF_REMEDIATED", "REVERT_RECOMMENDED", "LIMITATION_ACCEPTED"] AND contract.NEEDS_EXTERNAL_RESEARCH != true:
-    **Parallel blocking merge (pre-check — BUILD only, runs before TaskCreate):**
-    → If currently processing parallel review phase (code-reviewer ∥ silent-failure-hunter outputs in same response):
-      → Check sibling agent's extracted verdict in this same response — does sibling ALSO have BLOCKING=true?
-      → If YES (both agents blocking):
-          merged_subject = "CC10X REM-FIX: code-reviewer + silent-failure-hunter — multiple blocking issues"
-          merged_description = "**code-reviewer issues:**\n" + reviewer_REMEDIATION_REASON + "\n\n**silent-failure-hunter issues:**\n" + hunter_REMEDIATION_REASON
-      → If NO (only this agent blocking): use this agent's data alone (existing behavior)
-    → If NOT parallel phase: use this agent's data alone (existing behavior)
-    → TaskCreate({
-        subject: merged_subject ?? "CC10X REM-FIX: {agent_name} — {first 60 chars of (REMEDIATION_REASON ?? 'see agent output')}",  # Truncate to keep subject scannable; full reason in description
-        description: merged_description ?? (REMEDIATION_REASON ?? "Issues found — see agent Critical Issues section."),
-        activeForm: "Fixing {agent_name} issues"
-      })
-    → Task-enforced gate:
-      - Find downstream workflow tasks via TaskList() (subjects prefixed with `CC10X `)
-      - For every downstream task not completed:
-        TaskUpdate({ taskId: downstream_task_id, addBlockedBy: [remediation_task_id] })
-    → STOP. Do not invoke next agent until remediation completes.
+---
+**Detailed Logic (required reading for rows marked [see Detailed Logic: Rule X]):**
 
-1b. If REQUIRES_REMEDIATION == true AND BLOCKING == false:
-    → Auto-default to "Fix now" (no AskUserQuestion needed — JUST_GO compatible).
-    → Log: "Rule 1b: non-blocking issues found — auto-proceeding with fix."
-    → Gather context:
-      - If parallel phase AND sibling agent also has REQUIRES_REMEDIATION=true: merge both REMEDIATION_REASONs into one combined description
-      - Otherwise: use this agent's REMEDIATION_REASON alone
-    → **REVIEW workflow check:** If parent workflow task subject starts with "CC10X REVIEW:":
-        → Do NOT create REM-FIX. Instead: AskUserQuestion: "Start a BUILD workflow to apply fixes? Options: 'Start BUILD' | 'Done for now'"
-        → If "Start BUILD": Execute BUILD workflow with reviewer findings as context. STOP.
-        → If "Done for now": Record in activeContext.md ## Decisions: "REVIEW complete, fixes deferred [{date}]". STOP.
-    → Otherwise (BUILD/DEBUG): Circuit Breaker check, then create REM-FIX task: TaskCreate({subject: "CC10X REM-FIX: {agent} — {REMEDIATION_REASON[:60]}", description: REMEDIATION_REASON ?? "HIGH issues found — see agent output"}) → block downstream tasks → STOP
+### Rule 0b — SELF_REMEDIATED
+→ The agent has autonomously created a REM-FIX task and blocked itself (or downstream tasks).
+→ Acknowledge the self-healing action: log "Agent {agent} has self-remediated via TaskCreate."
+→ Do NOT create a duplicate REM-FIX task.
+→ Do NOT mark the original task as completed — the REM-FIX task it created has blocked it.
+  The Remediation Re-Review Loop (step 1) will create a fresh re_reviewer task to re-invoke this agent after the fix. Forcing completed here would cancel the re-review.
+→ STOP evaluating rules 1a/1b/2 for this agent's contract.
 
-2. **Only applies when:** code-reviewer STATUS=APPROVE AND silent-failure-hunter found issues (parallel phase, Cases A and B only). All other reviewer+hunter combinations are handled by rules 1a/1b before reaching rule 2.
-   → **Conflict check** — compare reviewer and hunter verdicts:
-   **Case A:** code-reviewer STATUS=APPROVE AND silent-failure-hunter CRITICAL_ISSUES > 0:
-     ⚠️ AskUserQuestion: "Reviewer approved, but Hunter found {N} critical silent failures. Investigate or skip?"
-     - "Investigate" → Create REM-FIX: TaskCreate({subject: "CC10X REM-FIX: silent-failure-hunter — {REMEDIATION_REASON[:60]}", description: REMEDIATION_REASON}) → block downstream tasks → STOP
-     - "Skip" → Record decision in memory, proceed to verifier
-   **Case B:** code-reviewer STATUS=APPROVE AND silent-failure-hunter STATUS=ISSUES_FOUND AND CRITICAL_ISSUES=0 (high issues only):
-     ⚠️ AskUserQuestion: "Reviewer approved, but Hunter found high-severity error handling gaps. Fix before continuing?"
-     - "Fix" → Create REM-FIX: TaskCreate({subject: "CC10X REM-FIX: silent-failure-hunter — {REMEDIATION_REASON[:60]}", description: REMEDIATION_REASON ?? "HIGH silent failure issues found — see hunter output"}) → block downstream tasks → STOP
-     - "Proceed anyway" → Record in memory: "Hunter HIGH issues skipped by user", proceed
+### Rule 0c — NEEDS_EXTERNAL_RESEARCH (bug-investigator only)
+Runs BEFORE rule 1a — do NOT evaluate rules 1a/1b/2 when this fires.
+**Research Loop Cap (BEFORE spawning agents):**
+  Count external research iterations: Read(.claude/cc10x/activeContext.md) → find the `[DEBUG-RESET: wf:{parent_task_id}]` marker in ## Recent Changes → count entries in ## References that match `docs/research/` AND were added after that marker (scoped to current workflow). If no marker found: count = 0 (fresh workflow, never triggered).
+  If count >= 2: ⚠️ AskUserQuestion: "External research has been provided to bug-investigator {count} time(s) and it still reports NEEDS_EXTERNAL_RESEARCH. How to proceed?"
+    Options: "Try research once more" | "Create manual fix task (skip re-invoke)" | "Abort workflow"
+    → Do NOT proceed. Handle chosen option, then STOP.
+  If count < 2: Proceed below.
+→ TaskCreate web-researcher + github-researcher tasks (with topic = contract.RESEARCH_REASON)
+→ Mark both in_progress. Spawn BOTH in same message (parallel):
+  `Task(subagent_type="cc10x:web-researcher", prompt="Topic: {contract.RESEARCH_REASON}\nReason: Bug investigation stuck — NEEDS_EXTERNAL_RESEARCH\nFile: docs/research/{date}-{topic}-web.md\nTask ID: {web_task_id}")`
+  `Task(subagent_type="cc10x:github-researcher", prompt="Topic: {contract.RESEARCH_REASON}\nReason: Bug investigation stuck — NEEDS_EXTERNAL_RESEARCH\nFile: docs/research/{date}-{topic}-github.md\nTask ID: {github_task_id}")`
+→ Collect: web_file = web_contract.FILE_PATH, github_file = github_contract.FILE_PATH
+→ Re-invoke cc10x:bug-investigator with same prompt + "## Research Files\nWeb: {web_file}\nGitHub: {github_file}"
+→ Add SKILL_HINTS: cc10x:research (synthesis guidance)
+→ Do NOT create REM-FIX task — research IS the response
+→ STOP after re-invoke — do not evaluate rules 1a/1b/2 for this contract
 
-2b. If contract.STATUS == "NEEDS_CLARIFICATION" (planner agent):
-    **NEEDS_CLARIFICATION Loop Cap (BEFORE re-invoking):**
-      Count: TaskList() → filter (subject contains "CC10X planner: Create plan" OR subject contains "CC10X planner: Re-plan after clarification") AND status = "completed"
-      If count >= 3: ⚠️ AskUserQuestion: "Planner has been re-invoked {count} times and still returns NEEDS_CLARIFICATION. How to proceed?"
-        Options: "Try once more" | "Proceed with best available plan" | "Abort workflow"
-        → Handle chosen option, then STOP.
-      If count < 3: Continue below.
-    → Extract "**Your Input Needed:**" bullet points from planner output
-    → ⚠️ AskUserQuestion: "Planner needs clarification before the plan can be completed:\n{extracted items}\nPlease answer to unblock planning."
-    → Collect user answers → Persist to activeContext.md ## Decisions: "Plan clarification: {Q} → {A}"
-    → TaskCreate({ subject: "CC10X planner: Re-plan after clarification (attempt {count+1})", description: "Re-planning after NEEDS_CLARIFICATION. User answers: {answers}", activeForm: "Re-planning" }) → planner_retry_id
-    → Block downstream tasks on planner_retry_id
-    → Task(subagent_type="cc10x:planner", prompt: "Parent Workflow ID: {parent_task_id}\nTask ID: {planner_retry_id}\n{original prompt}\n\n## User Clarifications\n{answers}")
-    → Do NOT proceed to BUILD until planner returns STATUS=PLAN_CREATED
+### Rule 1a — BLOCKING: Parallel Blocking Merge (BUILD only, pre-check before TaskCreate)
+→ If currently processing parallel review phase (code-reviewer ∥ silent-failure-hunter outputs in same response):
+  → Check sibling agent's extracted verdict in this same response — does sibling ALSO have BLOCKING=true?
+  → If YES (both agents blocking):
+      merged_subject = "CC10X REM-FIX: code-reviewer + silent-failure-hunter — multiple blocking issues"
+      merged_description = "**code-reviewer issues:**\n" + reviewer_REMEDIATION_REASON + "\n\n**silent-failure-hunter issues:**\n" + hunter_REMEDIATION_REASON
+  → If NO (only this agent blocking): use this agent's data alone (existing behavior)
+  → If NOT parallel phase: use this agent's data alone (existing behavior)
+→ TaskCreate({
+    subject: merged_subject ?? "CC10X REM-FIX: {agent_name} — {first 60 chars of (REMEDIATION_REASON ?? 'see agent output')}",
+    description: merged_description ?? (REMEDIATION_REASON ?? "Issues found — see agent Critical Issues section."),
+    activeForm: "Fixing {agent_name} issues"
+  })
+→ Task-enforced gate:
+  - Find downstream workflow tasks via TaskList() (subjects prefixed with `CC10X `)
+  - For every downstream task not completed:
+    TaskUpdate({ taskId: downstream_task_id, addBlockedBy: [remediation_task_id] })
+→ STOP. Do not invoke next agent until remediation completes.
 
-2c. If contract.STATUS == "INVESTIGATING" (bug-investigator):
-    → Treat as BLOCKING=true (investigation incomplete — no fix applied yet)
-    → **Investigation Loop Cap (BEFORE re-invoke):**
-      Count: TaskList() → filter subject contains "CC10X bug-investigator: Continue investigation" AND status = "completed"
-      If count >= 2: ⚠️ AskUserQuestion: "Bug investigator has completed {count} investigation cycles without resolving. How to proceed?"
-        Options: "Try once more" | "Force BLOCKED status" | "Abort workflow"
-        → "Try once more": Continue below (one more re-invoke only)
-        → "Force BLOCKED": Set contract.STATUS = "BLOCKED", evaluate rule 2f instead. STOP.
-        → "Abort": Record in activeContext.md ## Decisions: "Investigation aborted after {count} cycles", stop workflow
-      If count < 2: Continue below.
-    → Announce to user: "Bug investigator is still investigating (no fix applied yet). Continuing investigation..."
-    → TaskCreate({ subject: "CC10X bug-investigator: Continue investigation", description: "Previous attempt: STATUS=INVESTIGATING. ROOT_CAUSE hint: {contract.ROOT_CAUSE}. Continue from this hypothesis." })
-    → Block downstream tasks on this new investigation task
-    → Re-invoke bug-investigator with prompt: "Parent Workflow ID: {parent_task_id}\nTask ID: {new_task_id}\nPrevious STATUS=INVESTIGATING — ROOT_CAUSE hint: {contract.ROOT_CAUSE}\n{original_prompt}"
+### Rule 1b — NON-BLOCKING REMEDIATION
+→ Auto-default to "Fix now" (no AskUserQuestion needed — JUST_GO compatible).
+→ Log: "Rule 1b: non-blocking issues found — auto-proceeding with fix."
+→ Gather context:
+  - If parallel phase AND sibling agent also has REQUIRES_REMEDIATION=true: merge both REMEDIATION_REASONs into one combined description
+  - Otherwise: use this agent's REMEDIATION_REASON alone
+→ **REVIEW workflow check:** If parent workflow task subject starts with "CC10X REVIEW:":
+    → Do NOT create REM-FIX. Instead: AskUserQuestion: "Start a BUILD workflow to apply fixes? Options: 'Start BUILD' | 'Done for now'"
+    → If "Start BUILD": Execute BUILD workflow with reviewer findings as context. STOP.
+    → If "Done for now": Record in activeContext.md ## Decisions: "REVIEW complete, fixes deferred [{date}]". STOP.
+→ Otherwise (BUILD/DEBUG): Circuit Breaker check, then create REM-FIX task: TaskCreate({subject: "CC10X REM-FIX: {agent} — {REMEDIATION_REASON[:60]}", description: REMEDIATION_REASON ?? "HIGH issues found — see agent output"}) → block downstream tasks → STOP
 
-2f. If contract.STATUS == "BLOCKED" (bug-investigator terminal stuck state):
-    → Investigation is permanently stuck — cannot proceed without external help or user decision
-    → ⚠️ AskUserQuestion: "Bug investigation is completely stuck (BLOCKED). ROOT_CAUSE hint: {contract.ROOT_CAUSE}. How to proceed?"
-      Options: "Research externally (Recommended)" | "Create manual fix task" | "Abort workflow"
-    → "Research externally": Spawn parallel researchers (Topic: {contract.ROOT_CAUSE}, Reason: Bug BLOCKED — terminal stuck):
-      `Task(cc10x:web-researcher) ∥ Task(cc10x:github-researcher)` → collect both FILE_PATHs → re-invoke bug-investigator with `## Research Files\nWeb: {web_file}\nGitHub: {github_file}` + SKILL_HINTS: cc10x:research
-    → "Create manual fix task": Proceed as rule 1a (create REM-FIX task)
-    → "Abort": Record in activeContext.md ## Decisions: "Investigation aborted (BLOCKED): {ROOT_CAUSE}", stop workflow
+### Rule 2 — Conflict Check (parallel phase: reviewer APPROVE + hunter found issues)
+Only applies when: code-reviewer STATUS=APPROVE AND silent-failure-hunter found issues (parallel phase, Cases A and B only). All other reviewer+hunter combinations are handled by rules 1a/1b before reaching rule 2.
+**Case A:** code-reviewer STATUS=APPROVE AND silent-failure-hunter CRITICAL_ISSUES > 0:
+  ⚠️ AskUserQuestion: "Reviewer approved, but Hunter found {N} critical silent failures. Investigate or skip?"
+  - "Investigate" → Create REM-FIX: TaskCreate({subject: "CC10X REM-FIX: silent-failure-hunter — {REMEDIATION_REASON[:60]}", description: REMEDIATION_REASON}) → block downstream tasks → STOP
+  - "Skip" → Record decision in memory, proceed to verifier
+**Case B:** code-reviewer STATUS=APPROVE AND silent-failure-hunter STATUS=ISSUES_FOUND AND CRITICAL_ISSUES=0 (high issues only):
+  ⚠️ AskUserQuestion: "Reviewer approved, but Hunter found high-severity error handling gaps. Fix before continuing?"
+  - "Fix" → Create REM-FIX: TaskCreate({subject: "CC10X REM-FIX: silent-failure-hunter — {REMEDIATION_REASON[:60]}", description: REMEDIATION_REASON ?? "HIGH silent failure issues found — see hunter output"}) → block downstream tasks → STOP
+  - "Proceed anyway" → Record in memory: "Hunter HIGH issues skipped by user", proceed
 
-2d. If integration-verifier STATUS=FAIL:
-    **DEBUG Serial Loop Check (pre-condition, DEBUG only):** If parent workflow subject contains "CC10X DEBUG:": count completed "CC10X integration-verifier: Re-verify" tasks. If count >= 2: ⚠️ AskUserQuestion "Re-verify ran {count}x — deeper issue? Continue / Escalate / Abort" → handle, STOP.
-    → Create REM-FIX task (self-heal by default). Note: verifier asked user inline via AskUserQuestion before emitting FAIL — if user chose "Accept limitation" the verifier emits PASS instead; if user chose "Revert", verifier emits FAIL and router creates REM-FIX (user can abandon it and revert manually after recording the decision in memory).
-    → ⚠️ REVERT gate: If verifier output contains text "REVERT" or "revert branch":
-        ⚠️ AskUserQuestion: "Verifier output suggests reverting the branch. How to proceed?"
-        Options: "Revert branch (Recommended)" | "Create fix task instead"
-        - "Revert": Suggest git revert steps, stop workflow (record in memory)
-        - "Create fix task": Create REM-FIX task normally
-    → Otherwise: Create REM-FIX task: TaskCreate({subject: "CC10X REM-FIX: integration-verifier — {REMEDIATION_REASON[:60]}", description: REMEDIATION_REASON ?? "Verification failed — see verifier output"}) → block downstream tasks → STOP
+### Rule 2b — NEEDS_CLARIFICATION (planner)
+**NEEDS_CLARIFICATION Loop Cap (BEFORE re-invoking):**
+  Count: TaskList() → filter (subject contains "CC10X planner: Create plan" OR subject contains "CC10X planner: Re-plan after clarification") AND status = "completed"
+  If count >= 3: ⚠️ AskUserQuestion: "Planner has been re-invoked {count} times and still returns NEEDS_CLARIFICATION. How to proceed?"
+    Options: "Try once more" | "Proceed with best available plan" | "Abort workflow"
+    → Handle chosen option, then STOP.
+  If count < 3: Continue below.
+→ Extract "**Your Input Needed:**" bullet points from planner output
+→ ⚠️ AskUserQuestion: "Planner needs clarification before the plan can be completed:\n{extracted items}\nPlease answer to unblock planning."
+→ Collect user answers → Persist to activeContext.md ## Decisions: "Plan clarification: {Q} → {A}"
+→ TaskCreate({ subject: "CC10X planner: Re-plan after clarification (attempt {count+1})", description: "Re-planning after NEEDS_CLARIFICATION. User answers: {answers}", activeForm: "Re-planning" }) → planner_retry_id
+→ Block downstream tasks on planner_retry_id
+→ Task(subagent_type="cc10x:planner", prompt: "Parent Workflow ID: {parent_task_id}\nTask ID: {planner_retry_id}\n{original prompt}\n\n## User Clarifications\n{answers}")
+→ Do NOT proceed to BUILD until planner returns STATUS=PLAN_CREATED
 
-3. Collect Memory Notes from agent output (### Memory Notes section) for workflow-final persistence
+### Rule 2c — INVESTIGATING (bug-investigator)
+Treat as BLOCKING=true (investigation incomplete — no fix applied yet)
+**Investigation Loop Cap (BEFORE re-invoke):**
+  Count: TaskList() → filter subject contains "CC10X bug-investigator: Continue investigation" AND status = "completed"
+  If count >= 2: ⚠️ AskUserQuestion: "Bug investigator has completed {count} investigation cycles without resolving. How to proceed?"
+    Options: "Try once more" | "Force BLOCKED status" | "Abort workflow"
+    → "Try once more": Continue below (one more re-invoke only)
+    → "Force BLOCKED": Set contract.STATUS = "BLOCKED", evaluate rule 2f instead. STOP.
+    → "Abort": Record in activeContext.md ## Decisions: "Investigation aborted after {count} cycles", stop workflow
+  If count < 2: Continue below.
+→ Announce to user: "Bug investigator is still investigating (no fix applied yet). Continuing investigation..."
+→ TaskCreate({ subject: "CC10X bug-investigator: Continue investigation", description: "Previous attempt: STATUS=INVESTIGATING. ROOT_CAUSE hint: {contract.ROOT_CAUSE}. Continue from this hypothesis." })
+→ Block downstream tasks on this new investigation task
+→ Re-invoke bug-investigator with prompt: "Parent Workflow ID: {parent_task_id}\nTask ID: {new_task_id}\nPrevious STATUS=INVESTIGATING — ROOT_CAUSE hint: {contract.ROOT_CAUSE}\n{original_prompt}"
 
-4. If none of above triggered → Proceed to next agent
+### Rule 2f — BLOCKED (bug-investigator terminal stuck state)
+→ Investigation is permanently stuck — cannot proceed without external help or user decision
+→ ⚠️ AskUserQuestion: "Bug investigation is completely stuck (BLOCKED). ROOT_CAUSE hint: {contract.ROOT_CAUSE}. How to proceed?"
+  Options: "Research externally (Recommended)" | "Create manual fix task" | "Abort workflow"
+→ "Research externally": Spawn parallel researchers (Topic: {contract.ROOT_CAUSE}, Reason: Bug BLOCKED — terminal stuck):
+  `Task(cc10x:web-researcher) ∥ Task(cc10x:github-researcher)` → collect both FILE_PATHs → re-invoke bug-investigator with `## Research Files\nWeb: {web_file}\nGitHub: {github_file}` + SKILL_HINTS: cc10x:research
+→ "Create manual fix task": Proceed as rule 1a (create REM-FIX task)
+→ "Abort": Record in activeContext.md ## Decisions: "Investigation aborted (BLOCKED): {ROOT_CAUSE}", stop workflow
+
+### Rule 2d — integration-verifier FAIL
+**DEBUG Serial Loop Check (pre-condition, DEBUG only):** If parent workflow subject contains "CC10X DEBUG:": count completed "CC10X integration-verifier: Re-verify" tasks. If count >= 2: ⚠️ AskUserQuestion "Re-verify ran {count}x — deeper issue? Continue / Escalate / Abort" → handle, STOP.
+→ Create REM-FIX task (self-heal by default). Note: verifier asked user inline via AskUserQuestion before emitting FAIL — if user chose "Accept limitation" the verifier emits PASS instead; if user chose "Revert", verifier emits FAIL and router creates REM-FIX (user can abandon it and revert manually after recording the decision in memory).
+→ ⚠️ REVERT gate: If verifier output contains text "REVERT" or "revert branch":
+    ⚠️ AskUserQuestion: "Verifier output suggests reverting the branch. How to proceed?"
+    Options: "Revert branch (Recommended)" | "Create fix task instead"
+    - "Revert": Suggest git revert steps, stop workflow (record in memory)
+    - "Create fix task": Create REM-FIX task normally
+→ Otherwise: Create REM-FIX task: TaskCreate({subject: "CC10X REM-FIX: integration-verifier — {REMEDIATION_REASON[:60]}", description: REMEDIATION_REASON ?? "Verification failed — see verifier output"}) → block downstream tasks → STOP
 ```
 
 ---

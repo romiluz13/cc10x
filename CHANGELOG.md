@@ -1,5 +1,16 @@
 # Changelog
 
+## [8.0.3] - 2026-03-04
+
+### Step 6 Hybrid Routing Matrix — readability refactor + ~30 line trim
+
+**1 structural change** based on external AI audit + parallel strict/open-minded agent analysis.
+
+#### Changed
+- **Step 6 hybrid table (router)**: Replaced 158-line pure-narrative validation rules section with a hybrid structure: PRE-PROCESSING block (Rule 0 + Circuit Breaker) → 11-row Conditional Routing Matrix → Detailed Logic prose under `###` headers. All logic preserved verbatim. Satisfies 4 strict-agent requirements: PRE-PROCESSING labeled as "ALWAYS RUNS FIRST", Circuit Breaker explicitly called out in rule 1a and 1b Action cells, Rule 2 (Conflict check) is a distinct table row, REVERT gate called out in rule 2d Action cell. Estimated savings: ~30 lines. Readability: routing decisions now scannable in seconds via the matrix.
+
+---
+
 ## [8.0.2] - 2026-03-04
 
 ### Re-Review Loop guard, duplicate verifier fix, Circuit Breaker cumulative count
