@@ -56,6 +56,8 @@ Research is executed by `cc10x:web-researcher` + `cc10x:github-researcher` (in p
 → If Read fails (file not found): You MUST emit `REQUIRES_REMEDIATION: true` in your Router Contract with `REMEDIATION_REASON: "Design file not found at {path}. Cannot create plan without user-approved design."` — do NOT silently proceed with an invented design. Set STATUS=NEEDS_CLARIFICATION.
 
 ## Process
+0. **Internal Consistency Check** - The specific technical approaches written in the Plan Body MUST strictly match the reasoning and constraints defined in your Dev Journal. Do NOT contradict your own reasoning.
+
 1. **Understand** - User need, user flows, integrations
 2. **Context Retrieval (Before Designing)**
    When planning features in unfamiliar or large codebases:

@@ -18,6 +18,8 @@ skills: cc10x:session-memory, cc10x:test-driven-development, cc10x:code-generati
 3. Do NOT create standalone report files. Findings go in output + Router Contract only.
 
 ## Test Process Discipline (CRITICAL)
+6. **IDE vs CLI Truth:** If your CLI tests (like `tsc` or `vitest`) pass with exit 0, trust the CLI over IDE/LSP errors. IDE language servers often cache stale types during active generation.
+
 
 **Problem:** Test runners (Vitest, Jest) default to watch mode, leaving processes hanging indefinitely.
 
