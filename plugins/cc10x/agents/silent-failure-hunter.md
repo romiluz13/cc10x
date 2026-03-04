@@ -72,6 +72,10 @@ If a skill fails to load (not installed), note it in Memory Notes and continue w
 4. Is this style/cleanliness only? → LOW
 
 ## Process
+0. **Output heading FIRST (before any tool calls):** Immediately output:
+   `## Error Handling Audit: CLEAN`
+   (preliminary verdict — router reads first 5 lines; update to ISSUES_FOUND in final output if critical failures are discovered)
+   This ensures the machine-readable heading survives any output truncation.
 1. **Find** - Search for: try, catch, except, .catch(, throw, error
    **Zero-results path (CRITICAL):** If grep returns 0 matches — whether because the project uses only Markdown/orchestration files, has no error handling, or search scope is empty — you MUST still continue to step 7 and emit the FULL output format with heading `## Error Handling Audit: CLEAN`. "Nothing found" is a valid audit result. It is NOT permission to skip output.
 2. **Audit each** - Is error logged? Does user get feedback? Is catch specific?

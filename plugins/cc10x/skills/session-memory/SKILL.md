@@ -230,6 +230,9 @@ If an Edit does not apply cleanly:
 ## Blockers
 - [None]
 
+## Session Settings
+# AUTO_PROCEED: false  (set to true to enable JUST_GO mode — auto-defaults all non-REVERT gates)
+
 ## Last Updated
 [timestamp]
 ```

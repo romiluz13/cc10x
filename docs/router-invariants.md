@@ -86,15 +86,21 @@ loops, wrong workflow branches. Every special status becomes a REM-FIX.
 **Safe to remove per entry:** Each entry can be removed only if its named
 handler (2b, 2c, 2d, 2f, 0b) is also removed. They are paired.
 
-### INV-008: Rule 1b — unconditional AskUserQuestion for HIGH issues
+### INV-008: Rule 1b — auto-default "Fix now" for HIGH issues (v8.0.0)
 **Covers:** Contract validation rule 1b
-**Enforces:** When REQUIRES_REMEDIATION=true and BLOCKING=false, the user
-is ALWAYS asked whether to fix HIGH issues before continuing.
-**Fails silently if removed:** HIGH issues from code-reviewer or
-silent-failure-hunter are silently ignored. Workflow continues with
-known quality problems. User never gets to decide.
-**Safe to remove:** Never. This is the original feature request (v6.0.26)
-that started all of v6.0.x.
+**Enforces:** When REQUIRES_REMEDIATION=true and BLOCKING=false, router
+auto-defaults to "Fix now" without asking user (JUST_GO compatible). In
+REVIEW workflows, AskUserQuestion is used to offer a BUILD transition
+instead of creating a REM-FIX.
+**Changed in v8.0.0:** Previously (v6.0.26–v7.9.0), an explicit
+AskUserQuestion was issued for HIGH issues. Removed because: (a) users
+almost always chose "Fix now", (b) it was a deadlock source in batch
+workflows, (c) JUST_GO mode needed a clean non-blocking path.
+**Fails silently if removed:** No meaningful failure — logic is equivalent
+to always choosing "Fix now." Impact: REVIEW workflow wouldn't offer BUILD
+transition on HIGH issues.
+**Safe to remove:** Only if REVIEW-to-BUILD transition gate (INV-040) is
+also removed. Both are paired for the REVIEW case.
 
 ### INV-009: Rule 0c — NEEDS_EXTERNAL_RESEARCH pre-check
 **Covers:** Contract validation rule 0c
@@ -154,15 +160,24 @@ Router creates a REM-FIX task for a problem that has no known fix.
 Builder spins indefinitely. Infinite REM-FIX loop until Circuit Breaker fires.
 **Safe to remove:** Never while BLOCKED is a valid bug-investigator status.
 
-### INV-014: Rule 2d — REVERT_RECOMMENDED and LIMITATION_ACCEPTED handlers
+### INV-014: Rule 2d — REVERT gate via text-scan (v8.0.0)
 **Covers:** Contract validation rule 2d
-**Enforces:** When integration-verifier's inline AskUserQuestion results in
-a revert decision or accepted limitation, router routes correctly:
-REVERT_RECOMMENDED → stop workflow; LIMITATION_ACCEPTED → proceed to Memory Update.
-**Fails silently if removed:** These statuses fall through to rule 1a.
-A user-confirmed revert becomes a REM-FIX task. A user-accepted limitation
-creates a spurious fix task. User's inline decision is ignored.
-**Safe to remove:** Never while integration-verifier emits these statuses.
+**Enforces:** When integration-verifier output contains "REVERT" or
+"revert branch" (text-scan), router presents ⚠️ REVERT AskUserQuestion
+before creating any REM-FIX. This is the only mandatory blocking gate
+in the Empty Answer Guard system (all others auto-default).
+**Changed in v8.0.0:** Previously, integration-verifier emitted
+REVERT_RECOMMENDED and LIMITATION_ACCEPTED via Router Contract YAML.
+With YAML removed from read-only agents, REVERT is now detected by
+text-scan in rule 2d. LIMITATION_ACCEPTED no longer has a mechanism —
+verifier emits PASS directly after user accepts limitation inline.
+**Fails silently if removed:** Verifier output contains "REVERT" signal.
+Router creates a REM-FIX instead of offering the revert path. User's
+intent to revert is silently converted to a fix attempt. Code may be
+un-reverted by the fix.
+**Safe to remove:** Never while integration-verifier can signal REVERT.
+**Note:** `REVERT_RECOMMENDED` and `LIMITATION_ACCEPTED` remain in rule 1a
+NOT IN exclusion list as dead-safe entries (harmless since never emitted).
 
 ### INV-015: Rule 0b — SELF_REMEDIATED handler
 **Covers:** Contract validation rule 0b
@@ -359,11 +374,20 @@ If no: it's probably prose — compress it.
 **Fails silently if removed:** Router dispatches Memory Update as a Task() sub-agent. Sub-agent reads stale files, writes stale content. Next session runs on incorrect state.
 **Safe to remove:** Never. Memory Update requires conversation context that sub-agents cannot inherit.
 
-### INV-032: silent-failure-hunter output length gate (CC10X-001)
-**Covers:** Post-Agent Validation — pre-check for hunter output < 200 chars
-**Enforces:** When hunter emits only a task completion line (1-line output failure mode), escalate to AskUserQuestion immediately instead of creating REM-EVIDENCE task.
-**Fails silently if removed:** REM-EVIDENCE is created. Re-invoke returns identical 1-line output (2/3 failure rate confirmed). Code review has no silent-failure signal. Silent failures ship.
-**Safe to remove:** Only if root cause (TaskUpdate as last tool call) is verifiably fixed in the agent.
+### INV-032: minimal output safe-default (CC10X-061, v8.0.0 — replaces REM-EVIDENCE)
+**Covers:** Text-Based Verdict Extraction Step 3 fallback
+**Enforces:** When any READ-ONLY agent emits < 200 chars (minimal output
+failure mode), router sets STATUS to safe default (APPROVE/CLEAN/PASS)
+and continues workflow. No AskUserQuestion, no REM-EVIDENCE task.
+**Changed in v8.0.0:** Previously, hunter minimal output escalated to
+AskUserQuestion. REM-EVIDENCE task was created if output had no contract.
+Both mechanisms are fully removed. Safe-default covers all minimal-output
+cases for all read-only agents (not just hunter).
+**Fails silently if removed:** With no fallback: router tries to extract
+heading from minimal output, finds nothing, halts or creates spurious
+REM-FIX. The safe-default is the graceful recovery path.
+**Safe to remove:** Only if all three READ-ONLY agents are proven to never
+emit < 200 chars (not guaranteed by output-before-TaskUpdate alone).
 
 ### INV-033: GATE_PASSED contract enforcement for planner (CC10X-009)
 **Covers:** CONTRACT RULE table — planner row, GATE_PASSED field
@@ -419,5 +443,57 @@ If no: it's probably prose — compress it.
 **Fails silently if removed:** Research file paths only exist as in-context variables. Context compaction between PLAN step 3 and planner invocation loses the paths. Planner receives no research.
 **Safe to remove:** Never while PLAN research is a feature.
 
-*Last updated: v7.3.0 — 2026-03-02 (Tier 2 fixes: CC10X-010 through CC10X-024, CC10X-057/058)*
-*Router version at last audit: 7.3.0 (~875 lines)*
+---
+
+## v8.0.0 Invariants (Radical Simplification — 2026-03-04)
+
+### INV-042: Text-Based Verdict Extraction — heading IS the READ-ONLY contract (CC10X-060)
+**Covers:** Text-Based Verdict Extraction Steps 1-4 (router)
+**Enforces:** For code-reviewer, silent-failure-hunter, and integration-verifier:
+the structured heading in the first 5 lines of output IS the Router Contract.
+No YAML block required. Router scans heading → STATUS; `### Critical Issues`
+bullets → BLOCKING/REQUIRES_REMEDIATION; fallback → safe default.
+**Fails silently if removed:** Router has no signal from read-only agents.
+All verdicts become undefined. Workflow cannot proceed after any read-only
+agent runs. Every BUILD/DEBUG/REVIEW halts after reviewer.
+**Safe to remove:** Only if a replacement contract mechanism is introduced
+simultaneously for all three read-only agents.
+
+### INV-043: Step 3 — ordered fallback: keyword scan then safe-default (CC10X-061)
+**Covers:** Text-Based Verdict Extraction Step 3
+**Enforces:** If heading pattern not matched:
+  - output ≥ 500 chars → keyword scan (APPROVE/CLEAN/PASS/FAIL/etc.) → first match
+  - output 200–499 chars → safe default (APPROVE/CLEAN/PASS)
+  - output < 200 chars → safe default with log
+**Fails silently if removed:** No heading + no fallback = STATUS undefined.
+Router cannot evaluate rules 1a/1b/2. Workflow breaks after any agent
+that emits output without the exact heading format.
+**Safe to remove:** Never. Heading parsing can fail for many legitimate
+reasons (agent reformatted output, tool truncation, model variation).
+
+### INV-044: Empty Answer Guard — REVERT gate is the ONLY blocking gate (CC10X-065)
+**Covers:** Empty Answer Guard block (router)
+**Enforces:** When AskUserQuestion returns empty:
+  - ⚠️ REVERT gates only: re-ask once, then STOP workflow.
+  - All other gates: auto-default to recommended option and log.
+**Fails silently if removed:** Non-REVERT gates with empty answers halt
+the workflow indefinitely. Batch/automated runs deadlock on any
+AskUserQuestion that isn't explicitly answered.
+**Safe to remove:** Only the non-REVERT auto-default can be removed if
+batch workflows are no longer supported. REVERT blocking behavior must
+never be removed (irreversible action requires confirmation).
+
+### INV-045: JUST_GO session mode — AUTO_PROCEED in activeContext.md (CC10X-064)
+**Covers:** JUST_GO session mode block (router memory load)
+**Enforces:** If `AUTO_PROCEED: true` is present in `## Session Settings`
+of `activeContext.md`, all AskUserQuestion gates auto-default to
+recommended option without prompting (except ⚠️ REVERT gates).
+**Fails silently if removed:** JUST_GO flag is set but router still asks
+every question. Stress tests and batch workflows deadlock as before.
+**Safe to remove:** Only if Empty Answer Guard (INV-044) covers all cases.
+In practice: keep — it's the deliberate opt-in for automated workflows.
+**Load sequence:** Checked once at memory load time. Session flag is
+set in router memory context. Does not require file re-read during workflow.
+
+*Last updated: v8.0.0 — 2026-03-04 (Radical Simplification: Router Contract YAML removed from read-only agents; text-based verdict extraction; INV-008/014/032 updated; INV-042–045 added)*
+*Router version at last audit: 8.0.0 (~620 lines)*

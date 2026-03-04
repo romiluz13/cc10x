@@ -70,6 +70,10 @@ If a skill fails to load (not installed), note it in Memory Notes and continue w
 Any CRITICAL issues from either agent should influence your PASS/FAIL verdict.
 
 ## Process
+0. **Output heading FIRST (before any tool calls):** Immediately output:
+   `## Verification: PASS`
+   (preliminary verdict — router reads first 5 lines; update to FAIL in final output if any check fails)
+   This ensures the machine-readable heading survives any output truncation. **DO NOT include Router Contract YAML** — this is a READ-ONLY agent; the heading IS the contract.
 1. **Understand** - What user flow to verify? What integrations?
 2. **Run tests** - API calls, E2E flows, capture all exit codes
 3. **Check patterns** - Retry logic, error handling, timeouts
@@ -118,7 +122,10 @@ CRITICAL: Output your full analysis BEFORE calling `TaskUpdate`. Do NOT call Tas
 ### Summary
 - Overall: [PASS/FAIL]
 - Scenarios Passed: X/Y
-- Blockers: [if any]
+
+### Critical Issues (blocks ship; router counts these for BLOCKING decision)
+- [blocker description — what failed and why it blocks]
+(Omit section entirely if no blockers — do NOT include empty bullets)
 
 ### Scenarios
 | Scenario | Result | Evidence |
@@ -185,4 +192,4 @@ EVIDENCE:
 - Follow-up tasks created: [list if any, or "None"]
 ```
 
-**CONTRACT:** The heading `## Verification: PASS` or `## Verification: FAIL` IS the machine-readable signal. Router reads this line + counts `### Critical Issues` (mapped to Blockers) for blocking decisions. No YAML needed.
+**CONTRACT:** The heading `## Verification: PASS` or `## Verification: FAIL` IS the machine-readable signal. Router reads this line + counts `### Critical Issues` entries for BLOCKING decisions. **DO NOT include Router Contract YAML** — this is a READ-ONLY agent. The heading IS the contract.

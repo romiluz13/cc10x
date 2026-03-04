@@ -163,7 +163,8 @@ Phase 2: API Layer
 
 ## Task Completion
 
-**After providing your final output**, call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` where `{TASK_ID}` is from your Task Context prompt.
+**After providing your final output**, you MUST call the `TaskUpdate` **tool** directly: `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` where `{TASK_ID}` is from your Task Context prompt.
+**CRITICAL:** Writing "Task N: COMPLETED" in text output is NOT sufficient — the TaskUpdate tool call must execute. The router checks task status via TaskList() and requires the tool to fire, not just text.
 
 ## Output
 ```

@@ -364,7 +364,8 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [planner_task_id] })
 1. Load memory
 2. **Design file extraction (ALWAYS — regardless of request clarity):**
    → `Read(.claude/cc10x/activeContext.md)` → find `- Design:` in `## References` → store as `design_file` (or null if not found / "N/A")
-   → If `design_file` is not null/N/A: `Glob(pattern="{design_file}")` → if 0 matches: AskUserQuestion: "Design file not found at {design_file}. Re-run brainstorming | Provide path manually | Proceed without design"
+   → **Stale design check (v8.0.1):** If `design_file` is not null/N/A: extract date prefix from path (format `YYYY-MM-DD`). If date ≠ today's date → set `design_file = N/A`, log: "Design reference from prior session ({date}) cleared — use brainstorming to create a fresh design for this workflow."
+   → If `design_file` is not null/N/A (after stale check): `Glob(pattern="{design_file}")` → if 0 matches: AskUserQuestion: "Design file not found at {design_file}. Re-run brainstorming | Provide path manually | Proceed without design"
 3. **Clarification (if request is vague or ambiguous):**
    → `Skill(skill="cc10x:brainstorming")` — runs in main context, `AskUserQuestion` available here
    → Collect clarified requirements, pass to planner in step 6
@@ -538,8 +539,8 @@ VALIDATION RULES:
 
 **EVALUATION ORDER (FIRST MATCH WINS):**
 Evaluate rules in this exact order. Stop after the FIRST rule that triggers.
-0 (CONTRACT RULE) → 0b (SELF_REMEDIATED) → 0c (NEEDS_EXTERNAL_RESEARCH) → 1a (BLOCKING) → 1b (NON-BLOCKING REMEDIATION) → 2/2b/2c/2d/2e/2f/2f-ii (STATUS-specific) → 3 (MEMORY_NOTES) → 4 (proceed)
-Note: Rule 0 is a pre-processing override (always runs, does not short-circuit). Rules 3 and 4 always run after the triggered rule completes (they are collectors, not gates). First-match-wins applies to rules 0b through 2f-ii.
+0 (CONTRACT RULE) → 0b (SELF_REMEDIATED) → 0c (NEEDS_EXTERNAL_RESEARCH) → 1a (BLOCKING) → 1b (NON-BLOCKING REMEDIATION) → 2/2b/2c/2d/2f (STATUS-specific) → 3 (MEMORY_NOTES) → 4 (proceed)
+Note: Rule 0 is a pre-processing override (always runs, does not short-circuit). Rules 3 and 4 always run after the triggered rule completes (they are collectors, not gates). First-match-wins applies to rules 0b through 2f.
 
 **0. CONTRACT RULE Enforcement (RUNS FIRST — auto-override STATUS if violated):**
 
@@ -794,6 +795,11 @@ WHEN any CC10X REM-FIX task COMPLETES:
      Announce: "Cleaning up orphaned test processes..."
      `Bash(command="pids=$(pgrep -f 'vitest|jest|mocha' 2>/dev/null); if [ -n \"$pids\" ]; then pkill -f 'vitest|jest|mocha' 2>/dev/null; echo \"Killed: $(ps -p $pids -o comm= 2>/dev/null | tr '\n' ',' | sed 's/,$//')\"; else echo 'None found'; fi")`
      Log result to output.
+   - **Restore workflow marker (WRITE agents overwrite ## Recent Changes — v8.0.1):**
+     If completed task subject contains "CC10X component-builder:":
+       → Re-write BUILD-START marker: `Edit(file_path=".claude/cc10x/activeContext.md", old_string="## Recent Changes", new_string="## Recent Changes\n[BUILD-START: wf:{workflow_task_id}]")` → `Read(".claude/cc10x/activeContext.md")` to verify. If `[BUILD-START: wf:{workflow_task_id}]` not present in output: retry Edit once.
+     If completed task subject contains "CC10X bug-investigator:":
+       → Re-write DEBUG-RESET marker: `Edit(file_path=".claude/cc10x/activeContext.md", old_string="## Recent Changes", new_string="## Recent Changes\n[DEBUG-RESET: wf:{workflow_task_id}]")` → `Read(".claude/cc10x/activeContext.md")` to verify. If `[DEBUG-RESET: wf:{workflow_task_id}]` not present in output: retry Edit once.
    - If completed task subject starts with "CC10X REM-FIX:", execute Remediation Re-Review Loop (see below) BEFORE finding next runnable tasks.
    - Router finds next available tasks from TaskList()
 

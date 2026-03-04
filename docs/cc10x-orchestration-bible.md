@@ -1,6 +1,6 @@
 # CC10x Orchestration Bible (Plugin-Only Source of Truth)
 
-> **Last synced with agents/skills:** 2026-03-02 (v7.3.0 — Tier 2 fixes: canonical Agent Invocation template (Parent Workflow ID + output-before-TaskUpdate); Results Collection prompt (Plan File + Memory Summary + SKILL_HINTS); rule 0b/0c physical order corrected; orphan check blockedBy context; NEEDS_CLARIFICATION loop cap; DEBUG serial verifier circuit breaker; bug-investigator re-invoke with Parent Workflow ID; REVIEW scope persistence + BUILD transition gate; PLAN research paths persisted to memory + design file existence check; brainstorming Router Contract; rules 1b/2 apply-rule-1a replaced with inline TaskCreate; CC10X-018 Investigating) | **Status:** IN SYNC
+> **Last synced with agents/skills:** 2026-03-04 (v8.0.0 — Radical Simplification: removed Router Contract YAML from read-only agents (code-reviewer, silent-failure-hunter, integration-verifier); text-based verdict extraction via agent heading; JUST_GO session mode; Empty Answer Guard simplified to REVERT-only blocking; REM-EVIDENCE loop eliminated; ~280 lines removed) | **Status:** IN SYNC
 
 > This document is derived **only** from `plugins/cc10x/` (agents + skills).
 > Ignore all other docs. Do not trust external narratives.
@@ -21,8 +21,8 @@ This document defines the **non-negotiable** routing, tasking, agent chaining, a
 - **Agents**: `component-builder`, `bug-investigator`, `code-reviewer`, `silent-failure-hunter`, `integration-verifier`, `planner`, `web-researcher`, `github-researcher`.
 - **Skills**: Specialized rulebooks in `plugins/cc10x/skills/*/SKILL.md`.
 - **Memory**: `.claude/cc10x/{activeContext.md, patterns.md, progress.md}`.
-- **Router Contract**: Machine-readable YAML section in agent output for validation.
-- **Dev Journal**: User transparency section in agent output (narrative of what was done).
+- **Router Contract**: Machine-readable output signal used by the router for validation. **Two-track since v8.0.0:** WRITE agents (component-builder, bug-investigator, planner) still emit `### Router Contract (MACHINE-READABLE)` YAML blocks. READ-ONLY agents (code-reviewer, silent-failure-hunter, integration-verifier) use text-based heading extraction — the heading (`## Review: Approve/Changes Requested`, `## Error Handling Audit: CLEAN/ISSUES_FOUND`, `## Verification: PASS/FAIL`) IS the contract.
+- **Dev Journal**: User transparency section in WRITE agent output only (narrative of what was done). Removed from READ-ONLY agents in v8.0.0 to reduce token pressure.
 
 ---
 
@@ -394,9 +394,9 @@ Router passes SKILL_HINTS in agent prompt. Agent invokes via `Skill(skill="{name
 
 ## Agent Output Requirements (Validation Gate)
 
-### Standard Agent Output Format (All Agents)
+### WRITE Agent Output Format (component-builder, bug-investigator, planner)
 
-All agents must output these sections:
+WRITE agents output these sections (unchanged since v6.0.0):
 
 ```markdown
 ## {Action}: {summary}
@@ -409,16 +409,15 @@ All agents must output these sections:
 **What's Next:** [What user should expect from next phase]
 
 ### {Agent-Specific Results}
-[TDD Evidence, Review Findings, Hunt Results, etc.]
+[TDD Evidence, Fix Evidence, Plan Phases, etc.]
 
 ### Task Status
 - Task {TASK_ID}: COMPLETED
 
 ### Router Contract (MACHINE-READABLE)
 ```yaml
-STATUS: [PASS|FAIL|APPROVE|CHANGES_REQUESTED|CLEAN|ISSUES_FOUND|FIXED|PLAN_CREATED]
+STATUS: [PASS|FAIL|FIXED|INVESTIGATING|BLOCKED|PLAN_CREATED|NEEDS_CLARIFICATION]
 CONFIDENCE: [0-100]
-CRITICAL_ISSUES: [count]
 BLOCKING: [true|false]
 REQUIRES_REMEDIATION: [true|false]
 REMEDIATION_REASON: [null or exact text for REM-FIX task]
@@ -430,89 +429,114 @@ MEMORY_NOTES:
 **CONTRACT RULE:** [Agent-specific validation criteria]
 ```
 
+### READ-ONLY Agent Output Format (code-reviewer, silent-failure-hunter, integration-verifier)
+
+Since v8.0.0, READ-ONLY agents use a 6-section text-based format. **The heading IS the contract** — it appears on line 1 and survives any output truncation.
+
+```markdown
+## {Status Heading}     ← THIS IS THE CONTRACT. Router reads this line first.
+<!-- code-reviewer:         ## Review: Approve  OR  ## Review: Changes Requested -->
+<!-- silent-failure-hunter: ## Error Handling Audit: CLEAN  OR  ## Error Handling Audit: ISSUES_FOUND -->
+<!-- integration-verifier:  ## Verification: PASS  OR  ## Verification: FAIL -->
+
+### Summary
+[Verdict summary, confidence, signal scores]
+
+### Critical Issues     ← Router counts bullets here for BLOCKING signal
+[Each bullet = 1 CRITICAL_ISSUE; non-empty section triggers BLOCKING=true]
+
+### Findings
+[Important issues + evidence items with file:line citations]
+
+### Memory Notes (For Workflow-Final Persistence)
+- **Learnings:** [for activeContext.md]
+- **Patterns:** [for patterns.md]
+- **Verification:** [for progress.md]
+
+### Task Status
+- Task {TASK_ID}: COMPLETED
+```
+
+Each READ-ONLY agent file ends with a `**CONTRACT:**` note confirming the heading is the machine-readable signal.
+
 ### Router Contract by Agent
 
-| Agent | STATUS Values | BLOCKING when | Key Contract Fields |
-|-------|---------------|---------------|---------------------|
-| component-builder | PASS, FAIL | TDD evidence missing | TDD_RED_EXIT, TDD_GREEN_EXIT |
-| code-reviewer | APPROVE, CHANGES_REQUESTED | CRITICAL_ISSUES > 0 | CONFIDENCE, CRITICAL_ISSUES, EVIDENCE_ITEMS (≥1 required for APPROVE) |
-| silent-failure-hunter | CLEAN, ISSUES_FOUND | CRITICAL_ISSUES > 0 | CRITICAL_ISSUES |
-| integration-verifier | PASS, FAIL | BLOCKERS > 0 | SCENARIOS_PASSED, BLOCKERS |
-| bug-investigator | FIXED, INVESTIGATING, BLOCKED | STATUS != FIXED | ROOT_CAUSE, VARIANTS_COVERED |
-| planner | PLAN_CREATED, NEEDS_CLARIFICATION | Never | PLAN_FILE, PHASES, CONFIDENCE |
+| Agent | Contract Type | STATUS Values | BLOCKING when | Key Fields |
+|-------|--------------|---------------|---------------|-----------|
+| component-builder | YAML | PASS, FAIL | TDD evidence missing | TDD_RED_EXIT, TDD_GREEN_EXIT |
+| bug-investigator | YAML | FIXED, INVESTIGATING, BLOCKED | STATUS != FIXED | ROOT_CAUSE, VARIANTS_COVERED |
+| planner | YAML | PLAN_CREATED, NEEDS_CLARIFICATION | Never | PLAN_FILE, CONFIDENCE, GATE_PASSED |
+| code-reviewer | Text heading | APPROVE, CHANGES_REQUESTED | CRITICAL_ISSUES > 0 | Heading + `### Critical Issues` count |
+| silent-failure-hunter | Text heading | CLEAN, ISSUES_FOUND | CRITICAL_ISSUES > 0 | Heading + `### Critical Issues` count |
+| integration-verifier | Text heading | PASS, FAIL | STATUS=FAIL (always) | Heading |
 
-### Post-Agent Validation Logic (Router Contract-Based)
+### Post-Agent Validation Logic (Text Extraction + YAML for WRITE agents)
 
-Router validates agent output using the Router Contract:
+Router validates agent output using a two-track mechanism:
 
+**For READ-ONLY agents (text extraction):**
 ```
-Step 1: Check for Router Contract
-- Look for "### Router Contract (MACHINE-READABLE)" section
-- If NOT found → Create REM-EVIDENCE task, block downstream, STOP
+Step 1: Scan first 5 lines for heading pattern → extract STATUS
+Step 2: Scan ### Critical Issues section → count bullets → extract BLOCKING/CRITICAL_ISSUES
+Step 3: Fallback if heading not found:
+  - output >= 500 chars: keyword scan for APPROVE|CHANGES_REQUESTED|CLEAN|ISSUES_FOUND|PASS|FAIL
+  - output < 200 chars: safe default (APPROVE/CLEAN/PASS), continue workflow
+Step 4: Detect SELF_REMEDIATED via task state (TaskGet → blockedBy non-empty)
+Step 5: Output Validation Evidence (STATUS, BLOCKING, CRITICAL_ISSUES, source)
+```
 
-Step 2: Parse and Validate Contract
-- Parse YAML block
+**JUST_GO Session Mode:** If `AUTO_PROCEED: true` in `activeContext.md ## Session Settings`, all non-REVERT AskUserQuestion gates auto-default to recommended option.
+
+**Empty Answer Guard:** For ⚠️ REVERT gates only — block and re-ask once. For all other gates — auto-default to recommended option.
+
+**For WRITE agents (YAML contract, unchanged):**
+```
+Step 1: Parse ### Router Contract YAML block
+Step 2: Validate fields per CONTRACT RULE table
+```
 
 Circuit Breaker (BEFORE creating any REM-FIX):
-- If 3+ REM-FIX tasks already exist → AskUserQuestion:
-  - Research best practices (Recommended)
-  - Fix locally
-  - Skip (not recommended)
-  - Abort
+- If 3+ active REM-FIX tasks → AskUserQuestion: Research best practices | Fix locally | Skip | Abort
 
-Validation Rules:
+Validation Rules (apply to both tracks using extracted/parsed STATUS):
 
 **0. CONTRACT RULE Enforcement (RUNS FIRST — auto-override STATUS):**
-Router independently validates self-reported STATUS against objective contract fields:
-- component-builder: TDD_RED_EXIT≠1 OR TDD_GREEN_EXIT≠0 → override to STATUS=FAIL
-- bug-investigator: STATUS=FIXED but TDD evidence missing AND NEEDS_EXTERNAL_RESEARCH!=true → override to STATUS=FAIL (not BLOCKED — BLOCKED is reserved for genuine stuck state; FAIL triggers REM-FIX via rule 1a)
-- code-reviewer: CRITICAL_ISSUES>0 OR CONFIDENCE<80 OR EVIDENCE_ITEMS<1 → override to STATUS=CHANGES_REQUESTED (EVIDENCE_ITEMS: cited file:line proof required for APPROVE)
-- integration-verifier: SCENARIOS_PASSED≠SCENARIOS_TOTAL → override to STATUS=FAIL
-- planner: PLAN_FILE null/empty OR CONFIDENCE<50 → override to STATUS=NEEDS_CLARIFICATION
+- component-builder: TDD_RED_EXIT≠1 OR TDD_GREEN_EXIT≠0 → override STATUS=FAIL
+- bug-investigator: STATUS=FIXED but TDD evidence missing AND NEEDS_EXTERNAL_RESEARCH!=true → override STATUS=FAIL
+- code-reviewer: CRITICAL_ISSUES>0 → override STATUS=CHANGES_REQUESTED
+- silent-failure-hunter: CRITICAL_ISSUES>0 → override STATUS=ISSUES_FOUND
+- integration-verifier: CRITICAL_ISSUES>0 → override STATUS=FAIL
+- planner: PLAN_FILE null/empty OR CONFIDENCE<50 OR GATE_PASSED!=true → override STATUS=NEEDS_CLARIFICATION
 
 **0c. NEEDS_EXTERNAL_RESEARCH (bug-investigator only, runs BEFORE 1a):**
-If contract.NEEDS_EXTERNAL_RESEARCH == true: execute THREE-PHASE research, re-invoke bug-investigator with findings. Do NOT create REM-FIX. STOP (do not evaluate 1a/1b/2).
+If contract.NEEDS_EXTERNAL_RESEARCH == true: execute research, re-invoke bug-investigator. Do NOT create REM-FIX. STOP.
 
-**1a. If contract.BLOCKING == true AND STATUS NOT IN ["NEEDS_CLARIFICATION","INVESTIGATING","BLOCKED"] AND NEEDS_EXTERNAL_RESEARCH != true AND NOT (STATUS=="FAIL" AND CHOSEN_OPTION IN ["B","C"]):**
-    → Create REM-FIX task using contract.REMEDIATION_REASON
-    → Block downstream tasks via TaskUpdate({ addBlockedBy })
-    → STOP
+**1a. If BLOCKING == true AND STATUS NOT IN ["NEEDS_CLARIFICATION","INVESTIGATING","BLOCKED","SELF_REMEDIATED"] AND NEEDS_EXTERNAL_RESEARCH != true:**
+    → Create REM-FIX task → block downstream tasks → STOP
 
-**1b. If contract.REQUIRES_REMEDIATION == true AND contract.BLOCKING == false:**
-    → AskUserQuestion: "Found significant issues (non-critical). Fix before continuing?"
-      - Fix now (Recommended) → Circuit Breaker check → Create REM-FIX, block downstream, STOP
-      - Proceed anyway → Record in Decisions, append to patterns.md, continue chain
+**1b. If REQUIRES_REMEDIATION == true AND BLOCKING == false:**
+    → Auto-default to "Fix now" (no AskUserQuestion — JUST_GO compatible)
+    → REVIEW workflow check: if parent workflow is REVIEW, AskUserQuestion to start BUILD instead
+    → Otherwise: Circuit Breaker check → Create REM-FIX, block downstream, STOP
 
 **2. Parallel phase conflict (code-reviewer APPROVE + silent-failure-hunter issues):**
-- Case A: hunter CRITICAL_ISSUES > 0 → AskUserQuestion: investigate or skip?
-- Case B: hunter HIGH_ISSUES > 0 (no CRITICAL) → AskUserQuestion: fix or proceed?
+- Case A: hunter CRITICAL_ISSUES > 0 → ⚠️ AskUserQuestion: investigate or skip?
+- Case B: hunter STATUS=ISSUES_FOUND + CRITICAL_ISSUES=0 → ⚠️ AskUserQuestion: fix or proceed?
 
-**2b. contract.STATUS == "NEEDS_CLARIFICATION" (planner):**
-    → Extract "Your Input Needed:" bullet points → AskUserQuestion → re-invoke planner with answers
+**2b.** STATUS == "NEEDS_CLARIFICATION" (planner): extract bullet points → AskUserQuestion → re-invoke planner
 
-**2c. contract.STATUS == "INVESTIGATING" (bug-investigator — investigation in progress):**
-    → Create new "Continue investigation" task with loop cap (max 3 re-invocations)
+**2c.** STATUS == "INVESTIGATING" (bug-investigator): re-invoke with loop cap (max 2 continue tasks)
 
-**2d. integration-verifier STATUS=FAIL with CHOSEN_OPTION set:**
-    → A: Create REM-FIX (default)
-    → B: AskUserQuestion "Revert branch?" — fundamental design flaw
-    → C: AskUserQuestion "Accept known limitation?" — proceed with documentation
+**2d.** integration-verifier STATUS=FAIL:
+    → DEBUG serial loop check (pre-condition)
+    → ⚠️ REVERT gate: if verifier output contains "REVERT" → AskUserQuestion: Revert | Create fix task
+    → Otherwise: Create REM-FIX task
 
-**2f. contract.STATUS == "BLOCKED" (bug-investigator — permanently stuck):**
-    → AskUserQuestion: Research externally | Create manual fix task | Abort
+**2f.** STATUS == "BLOCKED" (bug-investigator): ⚠️ AskUserQuestion: Research externally | Manual fix | Abort
 
-3. Collect contract.MEMORY_NOTES for workflow-final persistence (step 3a)
+3. Collect Memory Notes from agent output (### Memory Notes section) for step 3a persistence
 
-4. If none of above triggered → Proceed to next agent
-
-Step 3: Output Validation Evidence
-### Agent Validation: {agent_name}
-- Router Contract: Found
-- STATUS: {contract.STATUS}
-- BLOCKING: {contract.BLOCKING}
-- CRITICAL_ISSUES: {contract.CRITICAL_ISSUES}
-- Proceeding: [Yes/No + reason]
-```
+4. If none triggered → Proceed to next agent
 
 ### Task Types and Prefixes
 
@@ -520,7 +544,6 @@ Step 3: Output Validation Evidence
 |------|---------------|------------|---------|---------------|
 | Workflow | `CC10X BUILD:` / `DEBUG:` / etc. | Router | Parent workflow task | N/A |
 | Agent | `CC10X {agent}:` | Router | Agent work item | Yes |
-| Evidence-only | `CC10X REM-EVIDENCE:` | Router | Re-invoke agent that produced no Router Contract | Yes (1 retry, then AskUserQuestion) |
 | Code changes | `CC10X REM-FIX:` | Router | Fix issues found by reviewer/hunter | Yes (triggers re-review loop) |
 | Re-verify | `CC10X integration-verifier: Re-verify —` | Router (Re-Review Loop) | New verification after REM-FIX | Yes |
 
@@ -599,18 +622,17 @@ Task(subagent_type="cc10x:component-builder", prompt="
 
 ---
 IMPORTANT:
-- Include Dev Journal section for user transparency
-- Include Router Contract section (YAML) for validation
-- WRITE agents: Update memory using Edit() at task end
-- READ-ONLY agents: Include Memory Notes in Router Contract
+- **WRITE agents** (component-builder, bug-investigator, planner): Include `### Dev Journal` + `### Router Contract (MACHINE-READABLE)` YAML. Update memory using Edit() at task end.
+- **READ-ONLY agents** (code-reviewer, silent-failure-hunter, integration-verifier): Output heading as contract (e.g., `## Review: Approve`). Include `### Memory Notes` in final output. No Dev Journal, no YAML required.
+- All agents: Output analysis BEFORE calling TaskUpdate — never call TaskUpdate as the only/last action.
 ")
 ```
 
 **Task ID is required in prompt.** Agents self-complete by calling TaskUpdate(completed) in their final output. Router validates and applies fallback if needed.
 
-**Router Contract:** All agents must include `### Router Contract (MACHINE-READABLE)` with YAML block. Router uses contract for validation decisions.
+**Router Contract (two-track model, v8.0.0+):** WRITE agents (component-builder, bug-investigator, planner) include `### Router Contract (MACHINE-READABLE)` YAML block. READ-ONLY agents (code-reviewer, silent-failure-hunter, integration-verifier) emit a structured heading as their contract (`## Review: Approve/Changes Requested`, `## Error Handling Audit: CLEAN/ISSUES_FOUND`, `## Verification: PASS/FAIL`) — no YAML required.
 
-**Dev Journal:** All agents must include `### Dev Journal (User Transparency)` with narrative of what was done, decisions made, and where user input helps.
+**Dev Journal:** WRITE agents include `### Dev Journal (User Transparency)`. READ-ONLY agents do not emit Dev Journal (removed in v8.0.0 to reduce token pressure and eliminate truncation risk).
 
 ---
 
@@ -698,7 +720,6 @@ Context compaction silently destroys in-flight agent Memory Notes. To survive:
 | Cycle Cap | Start of Re-Review Loop | 2 completed REM-FIX tasks | Detects recurring fix loops |
 | INVESTIGATING cap | rule 2c | 3 re-invocations | Prevents infinite investigation |
 | NEEDS_EXTERNAL_RESEARCH cap | rule 0c | 2 research iterations | Limits external API calls |
-| REM-EVIDENCE cap | Before REM-EVIDENCE creation | 1 prior REM-EVIDENCE for same agent | Enforces "re-invoke once" |
 
 **Circuit Breaker counts ACTIVE tasks; Cycle Cap counts COMPLETED tasks.** These are semantically different and must not be confused.
 
@@ -728,9 +749,9 @@ These skills are invoked via `Skill()` and do NOT participate in BUILD/DEBUG/REV
 
 ---
 
-## Known Behavioral Guarantees (v7.3.0)
+## Known Behavioral Guarantees (v8.0.0)
 
-These behaviors are enforced by router rules and agent files as of 2026-03-02:
+These behaviors are enforced by router rules and agent files as of 2026-03-04:
 
 | Guarantee | Enforced By | Issue Fixed |
 |-----------|-------------|-------------|
@@ -740,7 +761,13 @@ These behaviors are enforced by router rules and agent files as of 2026-03-02:
 | Rule 0b: SELF_REMEDIATED tasks stay blocked — never force-completed | Rule 0b no longer calls TaskUpdate(completed) | CC10X-003 |
 | QUICK escalation conforms to Chain Execution Loop in_progress standard | QUICK block: TaskUpdate(in_progress) before parallel Task() calls | CC10X-056 |
 | Planner: design file missing → REQUIRES_REMEDIATION=true, STATUS=NEEDS_CLARIFICATION | planner Conditional Research design file guard | CC10X-007 |
-| Hunter: minimal output (<200 chars) escalates to AskUserQuestion, not REM-EVIDENCE | Post-Agent Validation pre-check + hunter OUTPUT BEFORE TASK UPDATE | CC10X-001 |
+| READ-ONLY agent contract is the output heading (first 5 lines) — no YAML required | Text-Based Verdict Extraction Steps 1-4 (v8.0.0) | CC10X-060 |
+| Minimal agent output (<200 chars) → safe default APPROVE/CLEAN/PASS, never blocks | Text extraction Step 3 fallback — no REM-EVIDENCE task created | CC10X-061 |
+| Rule 1b auto-defaults to "Fix now" — no AskUserQuestion, JUST_GO compatible | Rule 1b (v8.0.0): auto-default + log | CC10X-062 |
+| REVERT gate triggered by text-scan for "REVERT" in verifier output | Rule 2d text scan (v8.0.0) — not a Router Contract field | CC10X-063 |
+| JUST_GO session mode: AUTO_PROCEED=true auto-defaults all non-REVERT gates | JUST_GO block in router memory load | CC10X-064 |
+| Empty Answer Guard: only ⚠️ REVERT gates block on empty; all others auto-default | Empty Answer Guard block (v8.0.0) | CC10X-065 |
+| REM-EVIDENCE mechanism fully removed — short output handled by safe-default fallback | Text extraction Step 3 replaces REM-EVIDENCE | CC10X-066 |
 | Single canonical Agent Invocation template — Chain Execution Loop references it | Agent Invocation section (canonical) + Chain Execution Loop step 2 reference | CC10X-013 |
 | All agents receive Parent Workflow ID, Plan File, Memory Summary, SKILL_HINTS | Canonical Agent Invocation template + Results Collection verifier prompt | CC10X-012/013 |
 | output-before-TaskUpdate enforced for ALL agents | IMPORTANT block in canonical Agent Invocation template | CC10X-057/058 |

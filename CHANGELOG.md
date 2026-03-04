@@ -1,5 +1,23 @@
 # Changelog
 
+## [8.0.1] - 2026-03-04
+
+### Stress-test fixes — heading-first, marker restoration, stale design guard, Critical Issues section
+
+**10 targeted fixes** from two stress test runs on v8.0.0.
+
+#### Fixed
+- **Heading-first output** (`code-reviewer`, `silent-failure-hunter`, `integration-verifier`): Agents now output the machine-readable verdict heading (`## Review: Approve`, `## Error Handling Audit: CLEAN`, `## Verification: PASS`) as the very first text, before any tool calls. Eliminates "Task N: COMPLETED" as the only output when truncation happens — router can extract STATUS from first 5 lines regardless of subsequent truncation.
+- **BUILD-START/DEBUG-RESET marker restoration** (router Chain Execution Loop): After `component-builder` or `bug-investigator` completes, router immediately re-writes `[BUILD-START: wf:N]` or `[DEBUG-RESET: wf:N]` into `## Recent Changes`. Fixes regression where WRITE agents overwrote the marker, breaking Memory Update freshness trimming.
+- **Stale design reference guard** (router PLAN step 2): Design file path contains a `YYYY-MM-DD` prefix. If that date ≠ today → set `design_file = N/A` and log "Design reference from prior session cleared". Prevents prior-session design from polluting a new PLAN workflow.
+- **`### Critical Issues` section** added to `integration-verifier.md` Output template: Router's text extraction scans for this section to determine `BLOCKING`. Old template used `Blockers:` inline in Summary — invisible to router Step 2. New section is machine-readable.
+- **Integration-verifier YAML guard**: Added explicit "DO NOT include Router Contract YAML" to both Process step 0 and CONTRACT note. Verifier was still emitting YAML despite being a READ-ONLY agent (template bottom had no explicit prohibition).
+- **Planner TaskUpdate tool-call guard** (`planner.md`): Strengthened from "call TaskUpdate" to "you MUST call the TaskUpdate **tool** directly — writing 'Task N: COMPLETED' in text is NOT sufficient."
+- **JUST_GO `## Session Settings` template** (`session-memory/SKILL.md`): Added `## Session Settings` section with `# AUTO_PROCEED: false` to the `activeContext.md` template. Section was documented in router but absent from the template — new memory files couldn't use JUST_GO without manual edit.
+- **Stale evaluation order labels** (router): Removed `2e` and `2f-ii` from EVALUATION ORDER list and note. Rules `2e` and `2f-ii` were removed in an earlier version but labels lingered in the evaluation order text.
+
+---
+
 ## [8.0.0] - 2026-03-04
 
 ### Radical Simplification — Remove Router Contract YAML from read-only agents

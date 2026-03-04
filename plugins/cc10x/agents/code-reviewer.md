@@ -49,9 +49,10 @@ git ls-files --others --exclude-standard      # NEW untracked files
 ```
 
 ## Process
-0. **Output skeleton (FIRST — before any tool calls):** Immediately output:
-   `"Starting code review. Changed files: [list from prompt context]. Checking: security, patterns, TDD compliance, architecture."`
-   This ensures visible progress and partial output even if token budget runs low later.
+0. **Output verdict heading FIRST (before any tool calls):** Immediately output:
+   `## Review: Approve`
+   (preliminary verdict — router reads first 5 lines; revise to "Changes Requested" in final output if CRITICAL issues are found)
+   This ensures the machine-readable heading survives any output truncation. Rule 0 (CONTRACT RULE) overrides to CHANGES_REQUESTED if Critical Issues are found.
 1. **Git context** — `git log --oneline -10 -- <file>`, `git blame <file>`
 2. **Verify functionality** — Does it work? Run tests if available
 3. **Pass 1: Security** — Auth, input validation, secrets, injection, OWASP quick checks
