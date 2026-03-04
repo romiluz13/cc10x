@@ -587,8 +587,7 @@ Note: Rules 3 and 4 always run after the triggered rule completes (they are coll
 |----------|-----------|--------|------------|
 | **0b** | STATUS == SELF_REMEDIATED | Log "Agent {agent} has self-remediated via TaskCreate." Do NOT create duplicate REM-FIX. Do NOT force-complete task (re-review loop handles it). | STOP |
 | **0c** | NEEDS_EXTERNAL_RESEARCH == true (bug-investigator only) | **[Research Loop Cap first — see Detailed Logic: Rule 0c]** Spawn parallel web+github researchers. Re-invoke bug-investigator with research files + SKILL_HINTS: cc10x:research. Do NOT create REM-FIX. | STOP |
-| **1a** | BLOCKING == true AND STATUS ∉ [NEEDS_CLARIFICATION, INVESTIGATING, BLOCKED, SELF_REMEDIATED, REVERT_RECOMMENDED, LIMITATION_ACCEPTED] AND NEEDS_EXTERNAL_RESEARCH ≠ true AND parent workflow is NOT a REVIEW workflow (subject does NOT start with "CC10X REVIEW:") | **[Circuit Breaker first — see above]** **[Parallel blocking merge if BUILD parallel phase — see Detailed Logic: Rule 1a]** TaskCreate REM-FIX. Block all incomplete downstream CC10X tasks via TaskUpdate addBlockedBy. | STOP |
-| | *(If REVIEW workflow AND BLOCKING == true: fall through to Rule 1b which has REVIEW handling — presents "Start BUILD / Done for now" choice)* | | |
+| **1a** | BLOCKING == true AND STATUS ∉ [NEEDS_CLARIFICATION, INVESTIGATING, BLOCKED, SELF_REMEDIATED, REVERT_RECOMMENDED, LIMITATION_ACCEPTED] AND NEEDS_EXTERNAL_RESEARCH ≠ true | **If REVIEW workflow** (parent task subject starts with "CC10X REVIEW:"): AskUserQuestion "Reviewer found critical issues. Start BUILD to fix (Recommended) \| Done for now". If "Start BUILD": execute BUILD workflow with reviewer findings as context. If "Done for now": record in activeContext.md ## Decisions, STOP. **Otherwise (BUILD/DEBUG):** **[Circuit Breaker first — see above]** **[Parallel blocking merge if BUILD parallel phase — see Detailed Logic: Rule 1a]** TaskCreate REM-FIX. Block all incomplete downstream CC10X tasks via TaskUpdate addBlockedBy. | STOP |
 | **1b** | REQUIRES_REMEDIATION == true AND BLOCKING == false | Log "Rule 1b: non-blocking issues found." If REVIEW workflow: AskUserQuestion "Start BUILD / Done for now." Otherwise: **[Circuit Breaker first — see above]** TaskCreate REM-FIX. Block downstream tasks. | STOP |
 | **2** | code-reviewer STATUS=APPROVE AND silent-failure-hunter found issues (parallel phase only) | **[Conflict check — Cases A/B in Detailed Logic: Rule 2]** AskUserQuestion: investigate or skip/proceed. | STOP |
 | **2b** | STATUS == NEEDS_CLARIFICATION (planner) | **[NEEDS_CLARIFICATION Loop Cap first — see Detailed Logic: Rule 2b]** AskUserQuestion with extracted "Your Input Needed" items. Collect answers → persist to ## Decisions. TaskCreate Re-plan. Block downstream. Re-invoke planner. | STOP |
@@ -728,12 +727,12 @@ Treat as BLOCKING=true (investigation incomplete — no fix applied yet)
 WHEN any CC10X REM-FIX task COMPLETES:
   │
   ├─→ PRE-CHECK: **Original Reviewer Guard (runs before everything else):**
-  │      TaskList() → find task where (subject starts with "CC10X code-reviewer:") AND (status = "pending")
-  │      If found (original code-reviewer has NOT yet run):
+  │      TaskList() → find task where (subject starts with "CC10X code-reviewer:") AND (status IN ["pending", "in_progress"])
+  │      If found (original code-reviewer is still active — pending or self-healed in_progress):
   │        → SKIP the entire Re-Review Loop (steps 0-5). Do nothing.
-  │        → Log: "Re-Review Loop skipped — original code-reviewer has not yet run (pending). Normal execution loop will invoke it."
-  │        → The execution loop will run the original reviewer once its blockers clear.
-  │      If NOT found (original code-reviewer IS completed OR in_progress/self-healed): Continue to Step 0 below.
+  │        → Log: "Re-Review Loop skipped — original code-reviewer is still active ({status}). Execution loop will re-invoke it directly when blockers clear."
+  │        → The execution loop (Step 1) picks up in_progress tasks with cleared blockers and re-invokes them.
+  │      If NOT found (original code-reviewer IS completed): Continue to Step 0 below.
   │
   ├─→ 0. **Cycle Cap Check (RUNS FIRST):**
   │      Count completed "CC10X REM-FIX:" tasks in this workflow: TaskList() → filter subject contains "CC10X REM-FIX:" AND status = "completed"
@@ -809,8 +808,9 @@ WHEN any CC10X REM-FIX task COMPLETES:
 ```
 1. Find runnable tasks:
    TaskList() → Find tasks where:
-   - status = "pending"
+   - status IN ["pending", "in_progress"]
    - blockedBy is empty OR all blockedBy tasks are "completed"
+   Note: in_progress tasks with cleared blockers are self-healed agents waiting to be re-invoked (e.g., code-reviewer that blocked itself pending a REM-FIX). Re-invoking them directly avoids creating zombie tasks.
 
 2. Start agent(s):
    - TaskUpdate({ taskId: runnable_task_id, status: "in_progress" })
@@ -850,7 +850,7 @@ WHEN any CC10X REM-FIX task COMPLETES:
    - Router finds next available tasks from TaskList()
 
 3a. **Immediately preserve Memory Notes (prevents compaction loss):**
-    After any READ-ONLY agent completes (code-reviewer, silent-failure-hunter, integration-verifier):
+    After ANY agent completes:
     → Locate "### Memory Notes (For Workflow-Final Persistence)" section in agent's output (this message)
     → If found, extract the full section content
     → TaskGet({ taskId: memory_task_id })  # Retrieve Memory Update task's current description
