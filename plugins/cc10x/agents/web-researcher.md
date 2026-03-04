@@ -3,7 +3,7 @@ name: web-researcher
 description: "Internal agent. Use cc10x-router for all development tasks."
 model: inherit
 color: blue
-tools: Read, Write, Edit, Bash, WebFetch, WebSearch, AskUserQuestion, TaskUpdate
+tools: Read, Write, Edit, Bash, WebFetch, WebSearch, TaskUpdate
 ---
 
 # Web Researcher

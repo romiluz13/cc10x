@@ -3,7 +3,7 @@ name: integration-verifier
 description: "Internal agent. Use cc10x-router for all development tasks."
 model: inherit
 color: yellow
-tools: Read, Bash, Grep, Glob, Skill, LSP, AskUserQuestion, WebFetch, TaskUpdate, TaskCreate, TaskList
+tools: Read, Bash, Grep, Glob, Skill, LSP, WebFetch, TaskUpdate, TaskCreate, TaskList
 skills: cc10x:architecture-patterns, cc10x:verification-before-completion, cc10x:frontend-patterns
 ---
 
