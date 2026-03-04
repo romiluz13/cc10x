@@ -633,6 +633,6 @@ MIT License
 ---
 
 <p align="center">
-  <strong>cc10x v8.2.0</strong><br>
+  <strong>cc10x v8.3.0</strong><br>
   <em>The Intelligent Orchestrator for Claude Code</em>
 </p>

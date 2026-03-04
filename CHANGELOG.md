@@ -1,5 +1,18 @@
 # Changelog
 
+## [8.3.0] - 2026-03-04
+
+### Root cause fixes: PLAN-START marker displacement, OBS-15 minimal output, inline verification fallback
+
+**3 root-cause fixes** that have persisted through every stress test v3–v6.
+
+#### Fixed
+- **Issue #4 — PLAN-START marker displacement** (router Chain Execution Loop): After `CC10X planner:` task completes, router now re-writes `[PLAN-START: wf:{N}]` marker to top of `## Recent Changes`. The planner's Two-Step Save writes entries above the router-written marker, displacing it and breaking freshness trimming. Router already had identical restoration for `component-builder` (BUILD-START) and `bug-investigator` (DEBUG-RESET). Planner restoration was simply missing.
+- **OBS-15 — Minimal output: SINGLE FINAL RESPONSE RULE** (code-reviewer, silent-failure-hunter, integration-verifier): Root cause identified — `Task()` returns only the agent's LAST response turn, not intermediate messages. Agents were writing analysis in intermediate turns, then outputting only minimal text (`"Task N: COMPLETED."`) in their final turn — the router received only that. Fix: all 3 agents now have explicit instruction to batch all tool calls first (zero text output during tool turns), then produce ONE FINAL RESPONSE containing heading + full analysis + Memory Notes + Task Status + TaskUpdate call.
+- **OBS-15 — Minimal output: Inline verification fallback** (router Step 3): Replaced blind `APPROVE/CLEAN/PASS` safe-default with `INLINE VERIFICATION REQUIRED`. For integration-verifier: runs `npx vitest run` (fallback: `npm test`) inline via Bash and checks exit code. For code-reviewer/hunter: runs `git diff HEAD --name-only` + empty-catch grep on changed files. Actual quality gate instead of silent bypass — was effectively letting all bad code through whenever agents returned minimal output (which is 100% of the time in current stress tests).
+
+---
+
 ## [8.2.0] - 2026-03-04
 
 ### Design File Amnesia fix, JUST_GO Phase 2 labels, TaskUpdate CRITICAL wording, phantom contract removal, README troubleshooting, escape hatch removal from all 6 agent templates
