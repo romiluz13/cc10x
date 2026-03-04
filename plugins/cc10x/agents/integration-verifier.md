@@ -93,6 +93,7 @@ Any CRITICAL issues from either agent should influence your PASS/FAIL verdict.
 | Goal-backward check | TRUTHS + ARTIFACTS + WIRING all verified | Report as FAIL |
 
 | Coverage gate | `grep -rE "(test|spec|it|describe)\(" <test-files> \| wc -l` → if 0 tests found for changed files: WARNING (not FAIL unless project has coverage config) | Report as WARNING |
+| TDD cross-check | If component-builder or bug-investigator claims are in Previous Agent Findings or prompt context (TDD_RED_EXIT, TDD_GREEN_EXIT), independently run the test suite for changed files and compare actual exit codes against builder claims. Mismatch = FAIL. | Report as FAIL with `TDD_CROSS_CHECK_MISMATCH: builder claimed GREEN_EXIT=0 but tests exit {actual}` |
 
 **All checks must PASS before STATUS: PASS. Skip any = STATUS: FAIL.**
 
@@ -144,8 +145,13 @@ EVIDENCE:
     - "[test name] → exit [code]: [result]"
   edge_cases:
     - "[case name]: [command] → exit [code]: [result]"
+  tdd_cross_check:
+    - "builder_claimed: GREEN_EXIT={value} RED_EXIT={value}"
+    - "actual_test_run: [command] → exit [code]"
+    - "verdict: [MATCH | MISMATCH]"
 ```
 **Rule:** SCENARIOS_PASSED count MUST equal number of entries in `EVIDENCE.scenarios` with exit 0. Mismatch = INVALID.
+**TDD Rule:** If builder TDD claims exist in context, `tdd_cross_check` section is REQUIRED. Omit only if no builder claims found.
 
 ### Rollback Decision (IF FAIL)
 

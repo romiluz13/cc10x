@@ -547,7 +547,7 @@ Before applying any conditional rules, validate each agent's extracted STATUS:
 |-------|-------------------------------------|
 | component-builder | STATUS=PASS but TDD_RED_EXIT≠1 OR TDD_GREEN_EXIT≠0 → STATUS=FAIL, BLOCKING=true, REMEDIATION_REASON="CONTRACT RULE violated: TDD evidence missing" |
 | bug-investigator | STATUS=FIXED but (TDD_RED_EXIT≠1 OR TDD_GREEN_EXIT≠0 OR VARIANTS_COVERED<1) AND contract.NEEDS_EXTERNAL_RESEARCH != true → STATUS=FAIL, BLOCKING=true, REQUIRES_REMEDIATION=true, REMEDIATION_REASON="CONTRACT RULE violated: TDD evidence missing — add regression test (RED→GREEN) + variant coverage" |
-| code-reviewer | STATUS=APPROVE but CRITICAL_ISSUES>0 (from text extraction) → STATUS=CHANGES_REQUESTED, BLOCKING=true, REQUIRES_REMEDIATION=true |
+| code-reviewer | STATUS=APPROVE but CRITICAL_ISSUES>0 (from text extraction) → STATUS=CHANGES_REQUESTED, BLOCKING=true, REQUIRES_REMEDIATION=true | STATUS=APPROVE but PLAN_ADHERENCE=deviated (from text extraction) → STATUS=CHANGES_REQUESTED, BLOCKING=false, REQUIRES_REMEDIATION=true, REMEDIATION_REASON="Plan adherence deviation: {PLAN_ADHERENCE_NOTES}" |
 | silent-failure-hunter | STATUS=CLEAN but CRITICAL_ISSUES>0 (from text extraction) → STATUS=ISSUES_FOUND, BLOCKING=true, REQUIRES_REMEDIATION=true |
 | integration-verifier | STATUS=PASS but CRITICAL_ISSUES>0 (from text extraction — mapped from blockers section) → STATUS=FAIL, BLOCKING=true |
 | planner | STATUS=PLAN_CREATED but PLAN_FILE is null/empty OR CONFIDENCE<50 OR GATE_PASSED!=true → STATUS=NEEDS_CLARIFICATION, BLOCKING=true, REQUIRES_REMEDIATION=true, REMEDIATION_REASON="CONTRACT RULE violated: {missing field}" |
@@ -786,6 +786,7 @@ WHEN any CC10X REM-FIX task COMPLETES:
 7. **ALL_TASKS_COMPLETED** - All workflow tasks (including Memory Update) status="completed"
 8. **MEMORY_UPDATED** - Before marking done
 9. **TEST_PROCESSES_CLEANED** - Before running: announce "Cleaning up orphaned test processes..." then run: `pids=$(pgrep -f 'vitest|jest|mocha' 2>/dev/null); if [ -n "$pids" ]; then pkill -f 'vitest|jest|mocha' 2>/dev/null; echo "Killed: $(ps -p $pids -o comm= 2>/dev/null | tr '\n' ',' | sed 's/,$//')"; else echo 'None found'; fi` and log result: "Killed: [names]" or "None found"
+10. **TELEMETRY_LOGGED** - After ALL_TASKS_COMPLETED, append workflow telemetry (see Workflow Telemetry below)
 
 ## Chain Execution Loop (Task-Based)
 
@@ -871,6 +872,38 @@ WHEN any CC10X REM-FIX task COMPLETES:
 # Collect REVIEWER_FINDINGS from code-reviewer output: extract heading verdict + Critical Issues section
 # Collect HUNTER_FINDINGS from silent-failure-hunter output: extract heading verdict + Critical Issues section
 # Pass both under "## Previous Agent Findings" in integration-verifier prompt (see integration-verifier.md ## Context from Previous Agents for template)
+
+## Workflow Telemetry
+
+**Purpose:** Lightweight append-only logging of workflow outcomes. Identifies systemic agent weaknesses and guides prompt tuning. No behavioral change — purely observational.
+
+**File:** `.claude/cc10x/telemetry.jsonl` (append-only, one JSON line per event)
+
+**When to log:** After gate 7 (ALL_TASKS_COMPLETED) passes and Memory Update is done, before marking the workflow as finished.
+
+**Workflow completion event:**
+```
+Bash(command="echo '{\"timestamp\":\"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'\",\"event\":\"workflow_complete\",\"workflow\":\"{WORKFLOW_TYPE}\",\"workflow_id\":\"{parent_task_id}\",\"agents_invoked\":{count},\"rem_fix_cycles\":{count},\"contract_violations\":[{list_of_strings}],\"plan_adherence\":\"{full|partial|deviated|n/a}\"}' >> .claude/cc10x/telemetry.jsonl")
+```
+
+**Fields:**
+| Field | Source | Description |
+|-------|--------|-------------|
+| `timestamp` | System clock (UTC) | When workflow completed |
+| `event` | `"workflow_complete"` | Event type |
+| `workflow` | Router workflow type | BUILD, DEBUG, REVIEW, PLAN |
+| `workflow_id` | Parent task ID | Links to TaskList |
+| `agents_invoked` | Count of agent Task() calls | Total agents invoked in this workflow |
+| `rem_fix_cycles` | Count of completed REM-FIX tasks | How many fix cycles occurred |
+| `contract_violations` | List from Rule 0 overrides | Which CONTRACT RULE overrides were triggered |
+| `plan_adherence` | code-reviewer PLAN_ADHERENCE field | `full`, `partial`, `deviated`, or `n/a` |
+
+**REM-FIX event (logged when REM-FIX task is created):**
+```
+Bash(command="echo '{\"timestamp\":\"'$(date -u +%Y-%m-%dT%H:%M:%SZ)'\",\"event\":\"rem_fix\",\"workflow_id\":\"{parent_task_id}\",\"agent\":\"{originating_agent}\",\"reason\":\"{REMEDIATION_REASON[:120]}\"}' >> .claude/cc10x/telemetry.jsonl")
+```
+
+**Telemetry is optional and non-blocking.** If the append fails (permissions, disk), log a warning and proceed. Never block a workflow on telemetry.
 
 ## Release Checklist
 

@@ -55,24 +55,30 @@ git ls-files --others --exclude-standard      # NEW untracked files
    This ensures the machine-readable heading survives any output truncation. Rule 0 (CONTRACT RULE) overrides to CHANGES_REQUESTED if Critical Issues are found.
 1. **Git context** — `git log --oneline -10 -- <file>`, `git blame <file>`
 2. **Verify functionality** — Does it work? Run tests if available
-3. **Pass 1: Security** — Auth, input validation, secrets, injection, OWASP quick checks
+3. **Plan compliance check** — If a Plan File was provided in your prompt context:
+   - Read the plan file
+   - Verify each plan requirement is addressed in the implementation
+   - Check for scope additions not in the plan (scope creep)
+   - Rate adherence: `full` (all requirements met, no extras), `partial` (most met, minor gaps or additions), `deviated` (missing requirements or significant unplanned changes)
+   - If no Plan File was provided, set PLAN_ADHERENCE to `n/a`
+4. **Pass 1: Security** — Auth, input validation, secrets, injection, OWASP quick checks
    - Authentication/authorization gaps
    - Unsanitized user input
    - Hardcoded secrets or credentials
    - SQL/NoSQL injection vectors
    - XSS/CSRF vulnerabilities
-4. **Pass 2: Performance** — N+1 queries, hot loops, memory leaks, cache opportunities
+5. **Pass 2: Performance** — N+1 queries, hot loops, memory leaks, cache opportunities
    - Database query patterns (N+1, missing indexes)
    - Unbounded loops or recursion
    - Memory allocation in hot paths
    - Missing caching opportunities
-5. **Pass 3: Quality** — Complexity, naming, error handling, duplication, types
+6. **Pass 3: Quality** — Complexity, naming, error handling, duplication, types
    - Cyclomatic complexity > 10
    - Unclear naming or misleading abstractions
    - Missing or generic error handling
    - Code duplication (DRY violations)
    - Weak or missing type annotations
-6. **Output Memory Notes** — Include learnings in output (router persists)
+7. **Output Memory Notes** — Include learnings in output (router persists)
 
 ## Review Checklist (Inline Rubric)
 
@@ -160,6 +166,8 @@ The router will execute the builder on the fix task. When the fix is done, you w
 - Verdict: [Approve / Changes Requested]
 - CONFIDENCE: [0-100]
 - SIGNAL_SCORES: security [HARD N], correctness [HARD N], performance [SOFT N], maintainability [SOFT N]
+- PLAN_ADHERENCE: [full | partial | deviated | n/a]
+- PLAN_ADHERENCE_NOTES: [specific deviations or "all plan requirements addressed" or "no plan file provided"]
 
 ### Critical Issues (≥80 confidence)
 - [95] [issue] - file:line → Fix: [action]
