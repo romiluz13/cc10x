@@ -560,8 +560,8 @@ Before applying rules 1a/1b/2, validate each agent's extracted STATUS:
 Proceed with rules 1a/1b/2 using the OVERRIDDEN values.
 
 **Circuit Breaker (BEFORE creating any REM-FIX):**
-Before creating a new REM-FIX task, count ACTIVE REM-FIX tasks: `TaskList()` → filter by (subject contains "CC10X REM-FIX:") AND (status IN [pending, in_progress]). Do NOT count completed REM-FIX tasks — they are resolved and irrelevant.
-If count ≥ 3 → ⚠️ AskUserQuestion: "Too many active fix attempts are stacking up ({N} active CC10X REM-FIX tasks). This may indicate a deeper systemic issue. How to proceed?"
+Before creating a new REM-FIX task, count ALL REM-FIX tasks in this workflow: `TaskList()` → filter by (subject contains "CC10X REM-FIX:") AND (description contains "wf:{parent_task_id}"). Count ALL statuses — cumulative count across the workflow lifecycle matters, not just currently active tasks.
+If count ≥ 3 → ⚠️ AskUserQuestion: "This workflow has already created {N} fix attempts. This may indicate a deeper systemic issue. How to proceed?"
 - **Research best practices (Recommended)** → Spawn parallel researchers (Topic: {issue pattern}, Reason: Circuit Breaker — 3+ REM-FIX tasks):
   TaskCreate({ subject: "CC10X web-researcher: Research {issue pattern}", description: "Topic: {issue pattern}\nReason: Circuit Breaker — 3+ REM-FIX tasks\nFile: docs/research/{date}-{topic}-web.md", activeForm: "Researching web" }) → cb_web_task_id
   TaskCreate({ subject: "CC10X github-researcher: Research {issue pattern}", description: "Topic: {issue pattern}\nReason: Circuit Breaker — 3+ REM-FIX tasks\nFile: docs/research/{date}-{topic}-github.md", activeForm: "Researching GitHub" }) → cb_github_task_id
@@ -700,6 +700,14 @@ If count ≥ 3 → ⚠️ AskUserQuestion: "Too many active fix attempts are sta
 ```
 WHEN any CC10X REM-FIX task COMPLETES:
   │
+  ├─→ PRE-CHECK: **Original Reviewer Guard (runs before everything else):**
+  │      TaskList() → find task where (subject starts with "CC10X code-reviewer:") AND (status ≠ "completed")
+  │      If found (original code-reviewer has NOT yet run):
+  │        → SKIP the entire Re-Review Loop (steps 0-5). Do nothing.
+  │        → Log: "Re-Review Loop skipped — original code-reviewer has not yet run. Normal execution loop will invoke it."
+  │        → The execution loop will run the original reviewer once its blockers clear.
+  │      If NOT found (original code-reviewer IS completed): Continue to Step 0 below.
+  │
   ├─→ 0. **Cycle Cap Check (RUNS FIRST):**
   │      Count completed "CC10X REM-FIX:" tasks in this workflow: TaskList() → filter subject contains "CC10X REM-FIX:" AND status = "completed"
   │      Note: count ≥ 2 is a coarse heuristic — cross-issue false triggers possible. Per-issue accuracy: filter subject also contains the same agent/issue token.
@@ -724,15 +732,24 @@ WHEN any CC10X REM-FIX task COMPLETES:
   │      → Returns re_hunter_id (or null if DEBUG/REVIEW)
   │
   ├─→ 3. **Skip in REVIEW workflows:** If the parent workflow task subject contains "CC10X REVIEW:" → SKIP step 3 entirely (no verifier in REVIEW chain). Proceed directly to step 4 with re_verifier_id = null.
-  │      Otherwise, spawn new re-verifier task (do NOT reactivate the already-completed verifier):
-  │      If DEBUG or re_hunter_id is null:
-  │        TaskCreate({ subject: "CC10X integration-verifier: Re-verify — {completed_remfix_title}", description: "Re-verify after REM-FIX fix. Re-reviewer findings will be in context.", activeForm: "Re-verifying after fix" })
-  │        → Returns re_verifier_id
-  │        TaskUpdate({ taskId: re_verifier_id, addBlockedBy: [re_reviewer_id] })
-  │      Otherwise:
-  │        TaskCreate({ subject: "CC10X integration-verifier: Re-verify — {completed_remfix_title}", description: "Re-verify after REM-FIX fix. Re-reviewer and re-hunter findings will be in context.", activeForm: "Re-verifying after fix" })
-  │        → Returns re_verifier_id
-  │        TaskUpdate({ taskId: re_verifier_id, addBlockedBy: [re_reviewer_id, re_hunter_id] })
+  │      Otherwise, find or create re-verifier task:
+  │      **Pending verifier check (run FIRST):** TaskList() → find task where (subject starts with "CC10X integration-verifier:") AND (status = "pending")
+  │      If found (original verifier is pending — unblocked by REM-FIX completion):
+  │        → re_verifier_id = original_verifier_id (reuse it — do NOT create duplicate)
+  │        → If DEBUG or re_hunter_id is null:
+  │            TaskUpdate({ taskId: re_verifier_id, addBlockedBy: [re_reviewer_id] })
+  │          Otherwise:
+  │            TaskUpdate({ taskId: re_verifier_id, addBlockedBy: [re_reviewer_id, re_hunter_id] })
+  │        → Log: "Re-verifier reused — original integration-verifier {re_verifier_id} is pending. Adding re-reviewer as blocker."
+  │      If NOT found (no pending verifier — original already completed or never existed):
+  │        If DEBUG or re_hunter_id is null:
+  │          TaskCreate({ subject: "CC10X integration-verifier: Re-verify — {completed_remfix_title}", description: "Re-verify after REM-FIX fix. Re-reviewer findings will be in context.", activeForm: "Re-verifying after fix" })
+  │          → Returns re_verifier_id
+  │          TaskUpdate({ taskId: re_verifier_id, addBlockedBy: [re_reviewer_id] })
+  │        Otherwise:
+  │          TaskCreate({ subject: "CC10X integration-verifier: Re-verify — {completed_remfix_title}", description: "Re-verify after REM-FIX fix. Re-reviewer and re-hunter findings will be in context.", activeForm: "Re-verifying after fix" })
+  │          → Returns re_verifier_id
+  │          TaskUpdate({ taskId: re_verifier_id, addBlockedBy: [re_reviewer_id, re_hunter_id] })
   │
   ├─→ 4. Block Memory Update:
   │      If re_verifier_id is not null:

@@ -1,5 +1,18 @@
 # Changelog
 
+## [8.0.2] - 2026-03-04
+
+### Re-Review Loop guard, duplicate verifier fix, Circuit Breaker cumulative count
+
+**3 orchestration fixes** identified via external AI audit and confirmed by parallel sub-agent analysis.
+
+#### Fixed
+- **Re-Review Loop — Original Reviewer Guard** (router Re-Review Loop): Added PRE-CHECK before Step 0. When a REM-FIX completes, the loop now checks whether the original `CC10X code-reviewer:` task has already run (status = "completed"). If not yet completed, the entire Re-Review Loop is skipped — the normal execution loop will invoke the reviewer once its blockers clear. Prevents premature re-reviewer spawn in QUICK mode builds and component-builder self-remediation scenarios where the original reviewer was never run.
+- **Duplicate integration-verifier race condition** (router Re-Review Loop Step 3): Before creating a new `re_verifier` task, Step 3 now checks if an existing `CC10X integration-verifier:` task is still `pending` (unblocked by REM-FIX completion). If found, reuses it and adds the re-reviewer as a blocker — eliminating the race where both the original unblocked verifier and a newly-created re_verifier ran in parallel.
+- **Circuit Breaker — cumulative count** (router Rule 1a): Changed from counting only `status IN [pending, in_progress]` REM-FIX tasks (which never exceeded 1 due to sequential execution) to counting ALL REM-FIX tasks in the current workflow scoped by `wf:{parent_task_id}`. Breaker now fires at 3 total fix attempts across the workflow lifecycle, regardless of whether prior fixes have already completed.
+
+---
+
 ## [8.0.1] - 2026-03-04
 
 ### Stress-test fixes — heading-first, marker restoration, stale design guard, Critical Issues section
