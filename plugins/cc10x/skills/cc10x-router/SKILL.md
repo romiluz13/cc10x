@@ -85,23 +85,6 @@ Memory update rules (do not improvise):
 2. Immediately `Read(...)` the edited file and confirm the expected text exists.
 3. If the update did not apply, STOP and retry with a correct, exact `old_string` anchor (do not proceed with stale memory).
 
-## Pending Question Resume (CHECK BEFORE EVERYTHING ELSE)
-
-**After loading memory files, immediately check activeContext.md ## Session Settings for a line starting with `PENDING_QUESTION:`.**
-
-If found:
-1. Parse the line: `PENDING_QUESTION: {question_text} | OPTIONS: {opt1} | {opt2} | ... | DEFAULT: {default_opt}`
-2. Read the user's CURRENT message as the answer.
-3. Match user's message against the options (case-insensitive, partial match OK — "p" matches "Plan first", "1" matches first option, etc.).
-4. If match found: use matched option as the answer.
-5. If no match: use DEFAULT option and log: "No match — using default [{default_opt}]."
-6. Clear PENDING_QUESTION: `Edit(activeContext.md, old_string="PENDING_QUESTION: ...", new_string="")` → Read back to verify.
-7. **Continue the workflow using the extracted answer.** The question text tells you exactly which gate it was — re-enter the workflow at that gate with the answer already known (skip the AskUserQuestion call for that gate, use the extracted answer directly).
-
-**This is the workaround for Claude Code bug #29674 (AskUserQuestion fails in Skill invocation context).**
-
----
-
 ## Check Active Workflow Tasks
 
 **After loading memory, check for active tasks:**
@@ -486,27 +469,10 @@ When agent returns, verify output quality before proceeding.
 Before invoking any ⚠️ AskUserQuestion, output one sentence summarizing the finding. Examples: "Review found critical issues that need fixing." / "Verdict conflict: reviewer approved but hunter found critical failures." / "Investigation stuck — external research needed." This ensures UI renders context before the question appears.
 
 **Empty Answer Guard:**
-If AskUserQuestion returns empty AND JUST_GO is false:
-→ **Save state + output plain-text question + STOP** (workaround for Claude Code bug #29674):
-  1. Save question to memory:
-     `Edit(activeContext.md, old_string="## Session Settings", new_string="## Session Settings\nPENDING_QUESTION: {question_text} | OPTIONS: {opt1} | {opt2} | ... | DEFAULT: {recommended_option}")`
-     Read back to verify the line was written.
-  2. Output formatted plain-text question block:
-     ```
-     ---
-     📋 **Your input needed before I continue:**
-
-     **{question_text}**
-     1. {opt1} ← recommended
-     2. {opt2}
-     (add more options as needed)
-
-     _Just reply with the number or option text. I'll resume from here._
-     ---
-     ```
-  3. STOP this turn. Do NOT auto-proceed. Do NOT continue the workflow.
-→ For ⚠️ REVERT gates only: same as above but mark as `PENDING_QUESTION_REVERT:` instead. If PENDING_QUESTION_REVERT persists unanswered twice: STOP workflow entirely.
-→ If JUST_GO is true: Auto-default to the recommended option and log: "JUST_GO: auto-proceeding with [{option}] for {gate}." (batch/automated mode — skip the plain-text question).
+If AskUserQuestion returns empty:
+→ For ⚠️ REVERT gates only: Output "⚠️ Revert decision requires your input. Please answer the question above." Re-ask once. If still empty: STOP workflow.
+→ For ALL other gates: Auto-default to the recommended option and log: "Empty answer — auto-proceeding with recommended default."
+→ This allows batch/automated workflows to proceed without deadlock.
 
 **JUST_GO Session Mode (check once, at memory load):**
 After loading memory: Read `## Session Settings` from activeContext.md.
