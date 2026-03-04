@@ -141,8 +141,8 @@ Count characters in your output text above the Task Status section. If < 200 cha
 - **Deferred:** [MEDIUM issues for patterns.md — will be written by Memory Update task]
 
 ### Task Status
-- Task {TASK_ID}: COMPLETED
 - Follow-up tasks created: [list if any, or "None"]
+- **CRITICAL:** Now execute the `TaskUpdate` tool to mark `{TASK_ID}` as completed. Do not just write completed.
 ```
 
 **CONTRACT:** The heading `## Error Handling Audit: CLEAN` or `## Error Handling Audit: ISSUES_FOUND` IS the machine-readable signal. Router reads this line + counts `### Critical Issues` entries. No YAML needed.

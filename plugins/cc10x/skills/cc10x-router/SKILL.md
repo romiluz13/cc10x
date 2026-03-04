@@ -392,9 +392,10 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [planner_task_id] })
     Read(file_path=".claude/cc10x/activeContext.md")  # VERIFY marker written
     ```
 6. **Start chain execution** (pass clarified requirements + research files + design file in prompt)
+   → Re-read `.claude/cc10x/activeContext.md` → find `- Design:` in `## References` → update design_file with fresh value (post-brainstorming). If null/N/A: proceed without design context.
    If research ran (step 4): Add to planner prompt: `## Research Files\nWeb: {web_file}\nGitHub: {github_file}`
    If research ran (step 4): Add SKILL_HINTS: `cc10x:research` (synthesis guidance for reading the files)
-   If design_file found (step 2): Add to planner prompt: `## Design File\n{design_file}`
+   If design_file found (step 2 or refreshed above): Add to planner prompt: `## Design File\n{design_file}`
 6a. **After planner task completes — Your Input Needed gate (MANDATORY if items exist):**
     → Scan planner output text for "**Your Input Needed:**" section header
     → Also check planner Router Contract for `USER_INPUT_NEEDED:` field (compaction-safe fallback)

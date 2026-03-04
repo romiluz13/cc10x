@@ -1,5 +1,22 @@
 # Changelog
 
+## [8.2.0] - 2026-03-04
+
+### Design File Amnesia fix, JUST_GO Phase 2 labels, TaskUpdate CRITICAL wording, phantom contract removal, README troubleshooting, escape hatch removal from all 6 agent templates
+
+**11 changes** across router, brainstorming skill, 6 agent files, and README.
+
+#### Fixed
+- **R1 — Design File Amnesia** (router PLAN step 6): PLAN step 2 captured `design_file` before brainstorming ran. Brainstorming writes fresh design path to memory at step 3. Step 6 now re-reads `activeContext.md ## References` post-brainstorming to get the updated `design_file` value. Eliminates null design path passed to planner when brainstorming creates a new design file.
+- **R2 — JUST_GO Phase 2 collision** (brainstorming/SKILL.md): Phase 2 AskUserQuestion options had no `(Recommended)` label — JUST_GO auto-default found nothing → undefined. Added `(Recommended)` to one option per each of the 4 Phase 2 questions.
+- **R3 — TaskUpdate escape hatch (component-builder)**: Added CRITICAL warning at Task Completion section: writing "Task {TASK_ID}: COMPLETED" in text output is NOT sufficient — TaskUpdate tool must execute.
+- **R4 — Phantom Router Contract** (brainstorming/SKILL.md): brainstorming runs as `Skill()` (inline), not `Task()` (subprocess). Router Contract YAML was never parsed by Text-Based Verdict Extraction. Removed misleading STATUS/DESIGN_FILE/BLOCKING YAML block.
+- **R5 — README troubleshooting section**: Added `### "Unknown skill cc10x:cc10x-router"` section with `/plugins enable cc10x` recovery instructions.
+- **Escape hatch removal — all 6 agent templates**: Removed `- Task {TASK_ID}: COMPLETED` bare text line from `### Task Status` output template in all 6 agent files (bug-investigator, code-reviewer, component-builder, integration-verifier, planner, silent-failure-hunter). Replaced with explicit CRITICAL tool invocation reminder.
+- **Task Completion strengthening** (bug-investigator, code-reviewer): Added explicit CRITICAL wording in `## Task Completion` — tool call required, text output alone is NOT sufficient.
+
+---
+
 ## [8.0.3] - 2026-03-04
 
 ### Step 6 Hybrid Routing Matrix — readability refactor + ~30 line trim

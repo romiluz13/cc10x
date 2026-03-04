@@ -2,7 +2,7 @@
 
 ### The Intelligent Orchestrator for Claude Code
 
-**Current version:** 8.0.3
+**Current version:** 8.1.0
 
 **Recommended: Create `~/.claude/CLAUDE.md` (global) so the router is always active across all projects.**
 
@@ -608,6 +608,16 @@ Then follow Step 2 in the setup guide above to add the cc10x entry to `~/.claude
 
 ---
 
+### "Unknown skill cc10x:cc10x-router"
+
+The cc10x plugin is disabled. Run:
+```
+/plugins enable cc10x
+```
+Then retry your command.
+
+---
+
 ## Contributing
 
 - Star the repository
@@ -623,6 +633,6 @@ MIT License
 ---
 
 <p align="center">
-  <strong>cc10x v8.0.0</strong><br>
+  <strong>cc10x v8.2.0</strong><br>
   <em>The Intelligent Orchestrator for Claude Code</em>
 </p>

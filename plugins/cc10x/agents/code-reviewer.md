@@ -125,6 +125,7 @@ CONFIDENCE: 85  (min HARD=85, avg SOFT=80)
 
 **If NO CRITICAL issues (Confidence ≥ 80) are found:**
 Provide your final output, then call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` where `{TASK_ID}` is from your Task Context prompt.
+**CRITICAL: You MUST call the TaskUpdate tool directly. Writing "Task {TASK_ID}: COMPLETED" in your text output is NOT sufficient — the tool must execute.**
 
 **If CRITICAL issues (Confidence ≥ 80) are found (Self-Healing Protocol):**
 
@@ -176,8 +177,8 @@ The router will execute the builder on the fix task. When the fix is done, you w
 - **Deferred:** [MEDIUM/MINOR issues for patterns.md — will be written by Memory Update task]
 
 ### Task Status
-- Task {TASK_ID}: COMPLETED
 - Follow-up tasks created: [list if any, or "None"]
+- **CRITICAL:** Now execute the `TaskUpdate` tool to mark `{TASK_ID}` as completed. Do not just write completed.
 ```
 
 **CONTRACT:** The heading `## Review: Approve` or `## Review: Changes Requested` IS the machine-readable signal. Router reads this line + counts `### Critical Issues` entries. No YAML needed.

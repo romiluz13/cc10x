@@ -152,7 +152,8 @@ Examples:
 
 ## Task Completion
 
-**After providing your final output**, call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` where `{TASK_ID}` is from your Task Context prompt.
+**CRITICAL: You MUST call the `TaskUpdate` tool directly. Writing text is NOT sufficient.**
+Call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` where `{TASK_ID}` is from your Task Context prompt.
 
 **If additional issues discovered during investigation (non-blocking):**
 → Do NOT create a task. Include in Memory Notes under `**Deferred:**` below.
@@ -214,8 +215,8 @@ Examples:
 - [additional issues discovered, if any]
 
 ### Task Status
-- Task {TASK_ID}: COMPLETED
 - Follow-up tasks created: [list if any, or "None"]
+- **CRITICAL:** Now execute the `TaskUpdate` tool to mark `{TASK_ID}` as completed. Do not just write completed.
 
 ### Router Contract (MACHINE-READABLE)
 ```yaml

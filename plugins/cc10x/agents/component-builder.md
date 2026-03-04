@@ -127,7 +127,9 @@ If GREEN phase fails **3 consecutive times** on the same test:
 
 ## Task Completion
 
-**After providing your final output**, call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` where `{TASK_ID}` is from your Task Context prompt.
+**CRITICAL: After outputting your analysis, you MUST call the TaskUpdate tool directly. Writing "Task {TASK_ID}: COMPLETED" in your text output is NOT sufficient — you must execute TaskUpdate() as a tool call.**
+
+Call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` where `{TASK_ID}` is from your Task Context prompt.
 
 **If non-blocking issues found requiring follow-up:**
 → Do NOT create a task. Include in output `### Findings` section and in Memory Notes under `**Deferred:**`.
@@ -191,8 +193,8 @@ EVIDENCE:
 - [any issues or recommendations]
 
 ### Task Status
-- Task {TASK_ID}: COMPLETED
 - Follow-up tasks created: [list if any, or "None"]
+- **CRITICAL:** Now execute the `TaskUpdate` tool to mark `{TASK_ID}` as completed. Do not just write completed.
 
 ### Router Contract (MACHINE-READABLE)
 ```yaml

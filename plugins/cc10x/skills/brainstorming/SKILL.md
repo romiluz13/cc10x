@@ -77,12 +77,19 @@ Bash(command="ls src/ 2>/dev/null || ls . 2>/dev/null || echo 'Empty project'")
 > "What problem does this solve for users?"
 
 Options format:
-> A. [Specific use case 1]
-> B. [Specific use case 2]
-> C. Something else (please describe)
+> A. Feature (Recommended)
+> B. Bug fix
+> C. Refactor
+> D. Something else (please describe)
 
 **Question 2: Users**
 > "Who will use this feature?"
+
+Options format:
+> A. Developers (Recommended)
+> B. End users
+> C. Admins
+> D. Internal team
 
 **Question 3: Success Criteria**
 > "How will we know this works well?"
@@ -91,8 +98,20 @@ Options format:
 > "What limitations or requirements exist?"
 > (Performance, security, compatibility, timeline)
 
+Options format:
+> A. No constraints (Recommended)
+> B. Performance
+> C. Security
+> D. Time / deadline
+
 **Question 5: Scope**
 > "What's explicitly OUT of scope for this?"
+
+Options format:
+> A. Single module (Recommended)
+> B. Single file
+> C. Full feature
+> D. Cross-cutting concern
 
 ### Phase 3: Explore Approaches
 
@@ -375,13 +394,3 @@ Before completing brainstorming:
 - [ ] Multiple approaches explored
 - [ ] Design validated incrementally
 - [ ] Document saved
-
-## Router Contract (MACHINE-READABLE)
-```yaml
-STATUS: COMPLETE | INCOMPLETE
-DESIGN_FILE: "[absolute path or null]"
-BLOCKING: [true if INCOMPLETE, false if COMPLETE]
-REQUIRES_REMEDIATION: [true if DESIGN_FILE is null]
-REMEDIATION_REASON: null | "Design file save failed — path: {expected_path}"
-```
-**CONTRACT RULE:** STATUS=COMPLETE requires DESIGN_FILE is non-null and file exists at that path.

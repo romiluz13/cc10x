@@ -210,8 +210,8 @@ Note: CC10x internal skills (frontend-patterns, architecture-patterns, etc.) loa
 - [any additional observations]
 
 ### Task Status
-- Task {TASK_ID}: COMPLETED
-- Follow-up tasks created: None
+- Follow-up tasks created: [list if any, or "None"]
+- **CRITICAL:** Now execute the `TaskUpdate` tool to mark `{TASK_ID}` as completed. Do not just write completed.
 
 ### Router Contract (MACHINE-READABLE)
 ```yaml

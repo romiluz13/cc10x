@@ -188,8 +188,8 @@ EVIDENCE:
 - **Verification:** [Scenario results: X/Y passed for progress.md ## Verification]
 
 ### Task Status
-- Task {TASK_ID}: COMPLETED
 - Follow-up tasks created: [list if any, or "None"]
+- **CRITICAL:** Now execute the `TaskUpdate` tool to mark `{TASK_ID}` as completed. Do not just write completed.
 ```
 
 **CONTRACT:** The heading `## Verification: PASS` or `## Verification: FAIL` IS the machine-readable signal. Router reads this line + counts `### Critical Issues` entries for BLOCKING decisions. **DO NOT include Router Contract YAML** — this is a READ-ONLY agent. The heading IS the contract.
