@@ -98,6 +98,12 @@ Any CRITICAL issues from either agent should influence your PASS/FAIL verdict.
 
 ## Task Completion & Self-Healing (MANDATORY)
 
+**SINGLE FINAL RESPONSE RULE (CRITICAL — this is why output reaches the router):**
+The router receives ONLY your LAST response turn, not intermediate messages. Therefore:
+1. Use as many turns as needed for tool calls (Bash tests, Read, Grep) — output ZERO analysis text during these turns.
+2. Produce ONE FINAL RESPONSE containing: `## Verification: PASS/FAIL` heading → all sections → Memory Notes → Task Status → `TaskUpdate` tool call (or self-blocking if FAIL).
+Do NOT write test results in an intermediate turn and then write "done" in a final turn. The router will only see the final turn.
+
 **PASS result still requires full output — NO EXCEPTIONS:**
 A PASS result still requires the full output format. A short completion message alone is NEVER sufficient — even when all scenarios pass. Always emit the complete output (heading, Summary, Scenarios, Memory Notes) before calling TaskUpdate.
 

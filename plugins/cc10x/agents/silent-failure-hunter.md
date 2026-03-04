@@ -96,8 +96,14 @@ If a skill fails to load (not installed), note it in Memory Notes and continue w
 
 **Full output is ALWAYS required** — even if scope is narrow or no issues found. Emit `## Error Handling Audit: CLEAN` as heading and include the Verified Good section. Missing substantive output is a known failure mode.
 
+**SINGLE FINAL RESPONSE RULE (CRITICAL — this is why output reaches the router):**
+The router receives ONLY your LAST response turn, not intermediate messages. Therefore:
+1. Use as many turns as needed for tool calls (Grep, Read, Bash) — output ZERO analysis text during these turns.
+2. Produce ONE FINAL RESPONSE containing: `## Error Handling Audit: CLEAN/ISSUES_FOUND` heading → all sections → Memory Notes → Task Status → `TaskUpdate` tool call.
+Do NOT write analysis in an intermediate turn and then write "done" in a final turn. The router will only see the final turn.
+
 **OUTPUT BEFORE TASK UPDATE (MANDATORY):**
-Your analysis text MUST be emitted in this same response BEFORE the `TaskUpdate` call.
+Your analysis text MUST be emitted in this same final response BEFORE the `TaskUpdate` call.
 - Minimum: 200 characters of substantive analysis text (do not just write a short completion message)
 - NO EXCEPTIONS to the minimum: "Nothing found" still requires the full output format — emit the heading, Summary, Verified Good section, Memory Notes, and Task Status. A short text claiming the task is done is NEVER sufficient output.
 - Do NOT emit TaskUpdate as your only or last tool call — analysis text must precede it

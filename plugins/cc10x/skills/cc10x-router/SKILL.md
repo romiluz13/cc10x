@@ -513,8 +513,19 @@ Scan agent output for `### Critical Issues` section:
 
 If no heading pattern matched:
 - If output >= 500 chars: Scan full output for keywords: "APPROVE" | "CHANGES_REQUESTED" | "CLEAN" | "ISSUES_FOUND" | "PASS" | "FAIL" — use first match as STATUS
-- If output < 200 chars: Log "Agent {agent} returned minimal output ({N} chars). Proceeding with safe default." Set STATUS=APPROVE/CLEAN/PASS. Continue workflow (recoverable state).
-- If output 200–499 chars and no heading: Treat as STATUS=APPROVE/CLEAN/PASS (safe default). Log reason.
+- If output < 200 chars: **INLINE VERIFICATION REQUIRED** — do NOT blindly default to APPROVE/CLEAN/PASS:
+  → Log: "Agent {agent} returned minimal output ({N} chars). Running inline verification..."
+  → For **integration-verifier**: Run tests inline:
+    `Bash(command="npx vitest run --reporter=verbose 2>&1 | tail -30")` (fallback: `npm test 2>&1 | tail -20`). If exit=0 AND output contains passing tests → STATUS=PASS (log: "Inline test run: PASS"). If exit≠0 → STATUS=FAIL, BLOCKING=true, REMEDIATION_REASON="Inline test run failed — see output."
+  → For **code-reviewer** or **silent-failure-hunter**: Run inline scan on changed files:
+    `Bash(command="git diff HEAD --name-only 2>/dev/null | head -20")` → get changed files.
+    `Grep(pattern="catch\\s*[({][^)]*[)}]\\s*\\{\\s*\\}", files)` → empty catch scan.
+    `Grep(pattern="console\\.log|TODO|FIXME|debugger", files)` → noise scan (LOW only, not blocking).
+    If empty catch found → STATUS=ISSUES_FOUND/CHANGES_REQUESTED, CRITICAL_ISSUES=1, BLOCKING=true.
+    If only noise patterns → STATUS=APPROVE/CLEAN, log: "Inline scan: no blocking issues."
+    If no changes found (`git diff` empty = NO_GIT) → STATUS=APPROVE/CLEAN (cannot scan, safe default).
+  → Set BLOCKING per normal STATUS rules. Output inline findings under "### Inline Verification".
+- If output 200–499 chars and no heading: Scan full output for STATUS keywords (same as >= 500 chars path).
 
 **Step 4: Detect SELF_REMEDIATED (task-state-based)**
 
@@ -830,6 +841,8 @@ WHEN any CC10X REM-FIX task COMPLETES:
        → Re-write BUILD-START marker: `Edit(file_path=".claude/cc10x/activeContext.md", old_string="## Recent Changes", new_string="## Recent Changes\n[BUILD-START: wf:{workflow_task_id}]")` → `Read(".claude/cc10x/activeContext.md")` to verify. If `[BUILD-START: wf:{workflow_task_id}]` not present in output: retry Edit once.
      If completed task subject contains "CC10X bug-investigator:":
        → Re-write DEBUG-RESET marker: `Edit(file_path=".claude/cc10x/activeContext.md", old_string="## Recent Changes", new_string="## Recent Changes\n[DEBUG-RESET: wf:{workflow_task_id}]")` → `Read(".claude/cc10x/activeContext.md")` to verify. If `[DEBUG-RESET: wf:{workflow_task_id}]` not present in output: retry Edit once.
+     If completed task subject contains "CC10X planner:":
+       → Re-write PLAN-START marker: `Edit(file_path=".claude/cc10x/activeContext.md", old_string="## Recent Changes", new_string="## Recent Changes\n[PLAN-START: wf:{workflow_task_id}]")` → `Read(".claude/cc10x/activeContext.md")` to verify. If `[PLAN-START: wf:{workflow_task_id}]` not present in output: retry Edit once.
    - If completed task subject starts with "CC10X REM-FIX:", execute Remediation Re-Review Loop (see below) BEFORE finding next runnable tasks.
    - Router finds next available tasks from TaskList()
 

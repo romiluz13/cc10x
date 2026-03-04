@@ -123,8 +123,14 @@ CONFIDENCE: 85  (min HARD=85, avg SOFT=80)
 
 ## Task Completion & Self-Healing (MANDATORY)
 
+**SINGLE FINAL RESPONSE RULE (CRITICAL — this is why output reaches the router):**
+The router receives ONLY your LAST response turn, not intermediate messages. Therefore:
+1. Use as many turns as needed for tool calls (Read, Grep, Bash) — output ZERO analysis text during these turns.
+2. Produce ONE FINAL RESPONSE containing: `## Review: Approve/Changes Requested` heading → all sections → Memory Notes → Task Status → `TaskUpdate` tool call.
+Do NOT write analysis in an intermediate turn and then write "done" in a final turn. The router will only see the final turn.
+
 **If NO CRITICAL issues (Confidence ≥ 80) are found:**
-Provide your final output, then call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` where `{TASK_ID}` is from your Task Context prompt.
+Provide your final output (see SINGLE FINAL RESPONSE RULE above), then call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` where `{TASK_ID}` is from your Task Context prompt.
 **CRITICAL: You MUST call the TaskUpdate tool directly. Writing a text message claiming completion is NOT sufficient — the tool must execute.**
 
 **If CRITICAL issues (Confidence ≥ 80) are found (Self-Healing Protocol):**
