@@ -102,7 +102,7 @@ If GREEN phase fails **3 consecutive times** on the same test:
 `## Common Gotchas`, `## Completed`, `## Verification`
 
 **Update targets after implementation:**
-- `activeContext.md`: add a Recent Changes entry + update Next Steps
+- `activeContext.md`: update `## Next Steps` ONLY. Do NOT update `## Recent Changes` — the router manages workflow markers and summaries there.
 - `progress.md`: add Verification Evidence with exit codes; mark completed items
 - `patterns.md`: only if you discovered a reusable convention/gotcha worth keeping
 
@@ -127,7 +127,7 @@ If GREEN phase fails **3 consecutive times** on the same test:
 
 ## Task Completion
 
-**CRITICAL: After outputting your analysis, you MUST call the TaskUpdate tool directly. Writing "Task {TASK_ID}: COMPLETED" in your text output is NOT sufficient — you must execute TaskUpdate() as a tool call.**
+**CRITICAL: After outputting your analysis, you MUST call the TaskUpdate tool directly. Writing a text message claiming completion is NOT sufficient — you must execute TaskUpdate() as a tool call.**
 
 Call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` where `{TASK_ID}` is from your Task Context prompt.
 

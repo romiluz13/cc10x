@@ -98,8 +98,8 @@ If a skill fails to load (not installed), note it in Memory Notes and continue w
 
 **OUTPUT BEFORE TASK UPDATE (MANDATORY):**
 Your analysis text MUST be emitted in this same response BEFORE the `TaskUpdate` call.
-- Minimum: 200 characters of substantive analysis text (not just "Task N: COMPLETED")
-- NO EXCEPTIONS to the minimum: "Nothing found" still requires the full output format — emit the heading, Summary, Verified Good section, Memory Notes, and Task Status. The completion line alone ("Task N: COMPLETED") is NEVER sufficient output.
+- Minimum: 200 characters of substantive analysis text (do not just write a short completion message)
+- NO EXCEPTIONS to the minimum: "Nothing found" still requires the full output format — emit the heading, Summary, Verified Good section, Memory Notes, and Task Status. A short text claiming the task is done is NEVER sufficient output.
 - Do NOT emit TaskUpdate as your only or last tool call — analysis text must precede it
 
 **Self-check before calling TaskUpdate:**

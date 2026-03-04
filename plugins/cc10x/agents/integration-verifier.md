@@ -99,7 +99,7 @@ Any CRITICAL issues from either agent should influence your PASS/FAIL verdict.
 ## Task Completion & Self-Healing (MANDATORY)
 
 **PASS result still requires full output — NO EXCEPTIONS:**
-A PASS result still requires the full output format. "Task N: COMPLETED" alone is NEVER sufficient — even when all scenarios pass. Always emit the complete output (heading, Summary, Scenarios, Memory Notes) before calling TaskUpdate.
+A PASS result still requires the full output format. A short completion message alone is NEVER sufficient — even when all scenarios pass. Always emit the complete output (heading, Summary, Scenarios, Memory Notes) before calling TaskUpdate.
 
 **If ALL checks PASS:**
 Provide your final output, then call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` where `{TASK_ID}` is from your Task Context prompt.

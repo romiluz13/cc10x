@@ -125,7 +125,7 @@ CONFIDENCE: 85  (min HARD=85, avg SOFT=80)
 
 **If NO CRITICAL issues (Confidence ≥ 80) are found:**
 Provide your final output, then call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` where `{TASK_ID}` is from your Task Context prompt.
-**CRITICAL: You MUST call the TaskUpdate tool directly. Writing "Task {TASK_ID}: COMPLETED" in your text output is NOT sufficient — the tool must execute.**
+**CRITICAL: You MUST call the TaskUpdate tool directly. Writing a text message claiming completion is NOT sufficient — the tool must execute.**
 
 **If CRITICAL issues (Confidence ≥ 80) are found (Self-Healing Protocol):**
 
