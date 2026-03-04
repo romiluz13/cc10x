@@ -70,10 +70,11 @@ If a skill fails to load (not installed), note it in Memory Notes and continue w
 Any CRITICAL issues from either agent should influence your PASS/FAIL verdict.
 
 ## Process
-0. **Output heading FIRST (before any tool calls):** Immediately output:
+0. **Output contract envelope + verdict heading FIRST (before any analysis text):** As the very first lines of your SINGLE FINAL RESPONSE, output:
+   `CONTRACT {"s":"PASS","b":false,"cr":0}`
    `## Verification: PASS`
-   (preliminary verdict — router reads first 5 lines; update to FAIL in final output if any check fails)
-   This ensures the machine-readable heading survives any output truncation. **DO NOT include Router Contract YAML** — this is a READ-ONLY agent; the heading IS the contract.
+   (both are preliminary. Revise BOTH in final output if any check fails: envelope → `CONTRACT {"s":"FAIL","b":true,"cr":N}`, heading → `## Verification: FAIL`)
+   The envelope at line 1 is the primary machine-readable signal; the heading is the fallback. **DO NOT add separate Router Contract YAML blocks** — the one-line envelope IS the contract.
 1. **Understand** - What user flow to verify? What integrations?
 2. **Run tests** - API calls, E2E flows, capture all exit codes
 3. **Check patterns** - Retry logic, error handling, timeouts
@@ -82,7 +83,7 @@ Any CRITICAL issues from either agent should influence your PASS/FAIL verdict.
 
 ## Pre-Completion Checklist (BEFORE Claiming PASS)
 
-**Run through ALL before calling TaskUpdate:**
+**Run through ALL before stopping:**
 
 | Check | How to Verify | Fail Action |
 |-------|---------------|-------------|
@@ -101,14 +102,14 @@ Any CRITICAL issues from either agent should influence your PASS/FAIL verdict.
 **SINGLE FINAL RESPONSE RULE (CRITICAL — this is why output reaches the router):**
 The router receives ONLY your LAST response turn, not intermediate messages. Therefore:
 1. Use as many turns as needed for tool calls (Bash tests, Read, Grep) — output ZERO analysis text during these turns.
-2. Produce ONE FINAL RESPONSE containing: `## Verification: PASS/FAIL` heading → all sections → Memory Notes → Task Status → `TaskUpdate` tool call (or self-blocking if FAIL).
+2. Produce ONE FINAL RESPONSE containing: `## Verification: PASS/FAIL` heading → all sections → Memory Notes → Task Status. Stop your turn — the router handles task completion (or reads your blocked state if self-healing).
 Do NOT write test results in an intermediate turn and then write "done" in a final turn. The router will only see the final turn.
 
 **PASS result still requires full output — NO EXCEPTIONS:**
 A PASS result still requires the full output format. A short completion message alone is NEVER sufficient — even when all scenarios pass. Always emit the complete output (heading, Summary, Scenarios, Memory Notes) before calling TaskUpdate.
 
 **If ALL checks PASS:**
-Provide your final output, then call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` where `{TASK_ID}` is from your Task Context prompt.
+Provide your final output, then **stop your turn**. The router marks your task completed automatically via fallback — do NOT call TaskUpdate(status: completed).
 
 **If ANY checks FAIL (Self-Healing Protocol):**
 You must NOT complete your task. If the issue is fixable (Option A below), you must create a fix task and block yourself:
@@ -120,9 +121,10 @@ The router will wake up, see you are blocked, and execute the builder on the fix
 
 ## Output
 
-CRITICAL: Output your full analysis BEFORE calling `TaskUpdate`. Do NOT call TaskUpdate until your findings and Memory Notes sections have been fully output in this message.
+CRITICAL: Output your full analysis BEFORE stopping your turn. Do NOT stop until findings and Memory Notes are fully output in this message.
 
 ```
+CONTRACT {"s":"PASS","b":false,"cr":0}
 ## Verification: [PASS/FAIL]
 
 ### Summary
@@ -179,7 +181,7 @@ EVIDENCE:
   AskUserQuestion: "Known limitation found: {description of limitation}. Accept and continue?"
   Options: "Accept limitation (document it)" | "Fix before proceeding"
   ```
-  - If "Accept limitation": Record limitation in Memory Notes under Learnings, emit `## Verification: PASS` heading, call TaskUpdate completed and stop
+  - If "Accept limitation": Record limitation in Memory Notes under Learnings, emit `## Verification: PASS` heading, stop your turn (router handles task completion)
   - If "Fix before proceeding": Proceed as Option A (Self-Healing Protocol above)
 
 **Decision:** [Option chosen]
@@ -195,7 +197,7 @@ EVIDENCE:
 
 ### Task Status
 - Follow-up tasks created: [list if any, or "None"]
-- **CRITICAL:** Now execute the `TaskUpdate` tool to mark `{TASK_ID}` as completed. Do not just write completed.
+- (Task completion is handled by the router. Only use TaskUpdate for addBlockedBy when self-healing — never for status: completed.)
 ```
 
-**CONTRACT:** The heading `## Verification: PASS` or `## Verification: FAIL` IS the machine-readable signal. Router reads this line + counts `### Critical Issues` entries for BLOCKING decisions. **DO NOT include Router Contract YAML** — this is a READ-ONLY agent. The heading IS the contract.
+**CONTRACT:** Line 1 `CONTRACT {json}` is the primary machine-readable signal (s=STATUS, b=BLOCKING, cr=CRITICAL_ISSUES). Line 2 heading is the fallback if envelope absent. Router reads envelope first; falls back to heading scan if malformed. **DO NOT add separate Router Contract YAML blocks** — the one-line envelope IS the contract.

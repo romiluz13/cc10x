@@ -49,10 +49,11 @@ git ls-files --others --exclude-standard      # NEW untracked files
 ```
 
 ## Process
-0. **Output verdict heading FIRST (before any tool calls):** Immediately output:
+0. **Output contract envelope + verdict heading FIRST (before any analysis text):** As the very first lines of your SINGLE FINAL RESPONSE, output:
+   `CONTRACT {"s":"APPROVE","b":false,"cr":0}`
    `## Review: Approve`
-   (preliminary verdict — router reads first 5 lines; revise to "Changes Requested" in final output if CRITICAL issues are found)
-   This ensures the machine-readable heading survives any output truncation. Rule 0 (CONTRACT RULE) overrides to CHANGES_REQUESTED if Critical Issues are found.
+   (both are preliminary. Revise BOTH in final output if CRITICAL issues found: envelope → `CONTRACT {"s":"CHANGES_REQUESTED","b":true,"cr":N}`, heading → `## Review: Changes Requested`)
+   The envelope at line 1 is the primary machine-readable signal; the heading is the fallback. Rule 0 (CONTRACT RULE) still applies.
 1. **Git context** — `git log --oneline -10 -- <file>`, `git blame <file>`
 2. **Verify functionality** — Does it work? Run tests if available
 3. **Pass 1: Security** — Auth, input validation, secrets, injection, OWASP quick checks
@@ -126,12 +127,11 @@ CONFIDENCE: 85  (min HARD=85, avg SOFT=80)
 **SINGLE FINAL RESPONSE RULE (CRITICAL — this is why output reaches the router):**
 The router receives ONLY your LAST response turn, not intermediate messages. Therefore:
 1. Use as many turns as needed for tool calls (Read, Grep, Bash) — output ZERO analysis text during these turns.
-2. Produce ONE FINAL RESPONSE containing: `## Review: Approve/Changes Requested` heading → all sections → Memory Notes → Task Status → `TaskUpdate` tool call.
+2. Produce ONE FINAL RESPONSE containing: `## Review: Approve/Changes Requested` heading → all sections → Memory Notes → Task Status. **Stop your turn — the router handles task completion automatically.**
 Do NOT write analysis in an intermediate turn and then write "done" in a final turn. The router will only see the final turn.
 
 **If NO CRITICAL issues (Confidence ≥ 80) are found:**
-Provide your final output (see SINGLE FINAL RESPONSE RULE above), then call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` where `{TASK_ID}` is from your Task Context prompt.
-**CRITICAL: You MUST call the TaskUpdate tool directly. Writing a text message claiming completion is NOT sufficient — the tool must execute.**
+Provide your final output (see SINGLE FINAL RESPONSE RULE above), then **stop your turn**. The router marks your task completed via fallback — do NOT call TaskUpdate(status: completed).
 
 **If CRITICAL issues (Confidence ≥ 80) are found (Self-Healing Protocol):**
 
@@ -141,7 +141,7 @@ Provide your final output (see SINGLE FINAL RESPONSE RULE above), then call `Tas
   - Do NOT create a REM-FIX task. Do NOT block yourself.
   - Emit `## Review: Changes Requested` as your heading and include your findings under `### Critical Issues` and `### Findings`.
   - The router reads the heading and critical issues section — no Router Contract YAML needed.
-  - Call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` and stop.
+  - Stop your turn — the router handles task completion.
   - **Why:** REVIEW is advisory/read-only. Unsolicited code changes violate user intent.
 → If parent workflow is NOT a REVIEW workflow: proceed with Self-Healing Protocol below.
 
@@ -160,6 +160,7 @@ The router will execute the builder on the fix task. When the fix is done, you w
 
 ## Output
 ```
+CONTRACT {"s":"APPROVE","b":false,"cr":0}
 ## Review: [Approve/Changes Requested]
 
 ### Summary
@@ -184,7 +185,7 @@ The router will execute the builder on the fix task. When the fix is done, you w
 
 ### Task Status
 - Follow-up tasks created: [list if any, or "None"]
-- **CRITICAL:** Now execute the `TaskUpdate` tool to mark `{TASK_ID}` as completed. Do not just write completed.
+- (Task completion is handled by the router — do NOT call TaskUpdate(status: completed). If self-healing, list the REM-FIX task ID you created.)
 ```
 
-**CONTRACT:** The heading `## Review: Approve` or `## Review: Changes Requested` IS the machine-readable signal. Router reads this line + counts `### Critical Issues` entries. No YAML needed.
+**CONTRACT:** Line 1 `CONTRACT {json}` is the primary machine-readable signal (s=STATUS, b=BLOCKING, cr=CRITICAL_ISSUES). Line 2 heading `## Review: Approve/Changes Requested` is the fallback if envelope absent. Router reads envelope first; falls back to heading scan if malformed.

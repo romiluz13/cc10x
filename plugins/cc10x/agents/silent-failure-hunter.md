@@ -3,7 +3,7 @@ name: silent-failure-hunter
 description: "Internal agent. Use cc10x-router for all development tasks."
 model: inherit
 color: red
-tools: Read, Bash, Grep, Glob, Skill, LSP, AskUserQuestion, WebFetch, TaskUpdate, TaskCreate, TaskList
+tools: Read, Bash, Grep, Glob, Skill, LSP, AskUserQuestion, WebFetch, TaskCreate, TaskList
 skills: cc10x:code-review-patterns, cc10x:verification-before-completion, cc10x:frontend-patterns, cc10x:architecture-patterns
 ---
 
@@ -72,10 +72,11 @@ If a skill fails to load (not installed), note it in Memory Notes and continue w
 4. Is this style/cleanliness only? → LOW
 
 ## Process
-0. **Output heading FIRST (before any tool calls):** Immediately output:
+0. **Output contract envelope + verdict heading FIRST (before any analysis text):** As the very first lines of your SINGLE FINAL RESPONSE, output:
+   `CONTRACT {"s":"CLEAN","b":false,"cr":0}`
    `## Error Handling Audit: CLEAN`
-   (preliminary verdict — router reads first 5 lines; update to ISSUES_FOUND in final output if critical failures are discovered)
-   This ensures the machine-readable heading survives any output truncation.
+   (both are preliminary. Revise BOTH in final output if critical failures found: envelope → `CONTRACT {"s":"ISSUES_FOUND","b":true,"cr":N}`, heading → `## Error Handling Audit: ISSUES_FOUND`)
+   The envelope at line 1 is the primary machine-readable signal; the heading is the fallback.
 1. **Find** - Search for: try, catch, except, .catch(, throw, error
    **Zero-results path (CRITICAL):** If grep returns 0 matches — whether because the project uses only Markdown/orchestration files, has no error handling, or search scope is empty — you MUST still continue to step 7 and emit the FULL output format with heading `## Error Handling Audit: CLEAN`. "Nothing found" is a valid audit result. It is NOT permission to skip output.
 2. **Audit each** - Is error logged? Does user get feedback? Is catch specific?
@@ -99,19 +100,16 @@ If a skill fails to load (not installed), note it in Memory Notes and continue w
 **SINGLE FINAL RESPONSE RULE (CRITICAL — this is why output reaches the router):**
 The router receives ONLY your LAST response turn, not intermediate messages. Therefore:
 1. Use as many turns as needed for tool calls (Grep, Read, Bash) — output ZERO analysis text during these turns.
-2. Produce ONE FINAL RESPONSE containing: `## Error Handling Audit: CLEAN/ISSUES_FOUND` heading → all sections → Memory Notes → Task Status → `TaskUpdate` tool call.
+2. Produce ONE FINAL RESPONSE containing: `## Error Handling Audit: CLEAN/ISSUES_FOUND` heading → all sections → Memory Notes → Task Status. **Stop your turn — the router handles task completion automatically.**
 Do NOT write analysis in an intermediate turn and then write "done" in a final turn. The router will only see the final turn.
 
-**OUTPUT BEFORE TASK UPDATE (MANDATORY):**
-Your analysis text MUST be emitted in this same final response BEFORE the `TaskUpdate` call.
-- Minimum: 200 characters of substantive analysis text (do not just write a short completion message)
-- NO EXCEPTIONS to the minimum: "Nothing found" still requires the full output format — emit the heading, Summary, Verified Good section, Memory Notes, and Task Status. A short text claiming the task is done is NEVER sufficient output.
-- Do NOT emit TaskUpdate as your only or last tool call — analysis text must precede it
+**OUTPUT QUALITY GATE (MANDATORY):**
+Your analysis text MUST be substantive — minimum 200 characters.
+- NO EXCEPTIONS: "Nothing found" still requires the full output format — emit the heading, Summary, Verified Good section, Memory Notes, and Task Status. A short text is NEVER sufficient.
+- Do NOT stop after a short summary — write the full output format first.
 
-**Self-check before calling TaskUpdate:**
-Count characters in your output text above the Task Status section. If < 200 chars: add a 1-paragraph summary of what was scanned and what verdict was reached. Then call TaskUpdate.
-
-**After providing your final output** (minimum 200 chars of analysis + full output sections), call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` where `{TASK_ID}` is from your Task Context prompt.
+**Self-check before stopping:**
+Count characters in your output text above the Task Status section. If < 200 chars: add a 1-paragraph summary of what was scanned and what verdict was reached. Then stop — the router handles task completion automatically. Do NOT call TaskUpdate(status: completed) — this agent does not have that tool.
 
 **If MEDIUM issues found (not critical, non-blocking):**
 → Do NOT create a task. Include in Memory Notes under `**Deferred:**` below.
@@ -123,6 +121,7 @@ Count characters in your output text above the Task Status section. If < 200 cha
 
 ## Output
 ```
+CONTRACT {"s":"CLEAN","b":false,"cr":0}
 ## Error Handling Audit: [CLEAN/ISSUES_FOUND]
 
 ### Summary
@@ -148,7 +147,7 @@ Count characters in your output text above the Task Status section. If < 200 cha
 
 ### Task Status
 - Follow-up tasks created: [list if any, or "None"]
-- **CRITICAL:** Now execute the `TaskUpdate` tool to mark `{TASK_ID}` as completed. Do not just write completed.
+- (Task completion is handled by the router. This agent does not call TaskUpdate(status: completed).)
 ```
 
-**CONTRACT:** The heading `## Error Handling Audit: CLEAN` or `## Error Handling Audit: ISSUES_FOUND` IS the machine-readable signal. Router reads this line + counts `### Critical Issues` entries. No YAML needed.
+**CONTRACT:** Line 1 `CONTRACT {json}` is the primary machine-readable signal (s=STATUS, b=BLOCKING, cr=CRITICAL_ISSUES). Line 2 heading is the fallback if envelope absent. Router reads envelope first; falls back to heading scan if malformed.

@@ -463,7 +463,7 @@ When agent returns, verify output quality before proceeding.
 
 ---
 
-### Text-Based Verdict Extraction (replaces Router Contract YAML)
+### Verdict Extraction (envelope-first, text fallback)
 
 **Pre-AskUserQuestion output rule (ALL ⚠️ gates):**
 Before invoking any ⚠️ AskUserQuestion, output one sentence summarizing the finding. Examples: "Review found critical issues that need fixing." / "Verdict conflict: reviewer approved but hunter found critical failures." / "Investigation stuck — external research needed." This ensures UI renders context before the question appears.
@@ -478,6 +478,15 @@ If AskUserQuestion returns empty:
 After loading memory: Read `## Session Settings` from activeContext.md.
 If line `AUTO_PROCEED: true` exists: Set session flag `JUST_GO=true`.
 While `JUST_GO=true`: All AskUserQuestion gates auto-default to recommended option without prompting (except ⚠️ REVERT gates). Log: "JUST_GO: auto-proceeding with [{option}] for {gate}."
+
+**Step 0: Try contract envelope (line 1 — primary fast path)**
+
+Check if the first line of agent output matches `CONTRACT {`:
+- If YES: parse JSON fields — `s`→STATUS, `b`→BLOCKING, `cr`→CRITICAL_ISSUES
+  - Map `s` values: `"APPROVE"`→APPROVE, `"CHANGES_REQUESTED"`→CHANGES_REQUESTED, `"CLEAN"`→CLEAN, `"ISSUES_FOUND"`→ISSUES_FOUND, `"PASS"`→PASS, `"FAIL"`→FAIL
+  - If all fields parsed and `s` is recognized: set STATUS/BLOCKING/CRITICAL_ISSUES from envelope, **skip Step 1**. Continue at Step 2 (still scan `### Critical Issues` for REMEDIATION_REASON and CONTRACT RULE validation).
+  - If envelope malformed or `s` unrecognized: fall through to Step 1.
+- If NO envelope on line 1: fall through to Step 1.
 
 **Step 1: Extract STATUS from agent output heading (first 5 lines of output)**
 
