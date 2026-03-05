@@ -365,6 +365,7 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [planner_task_id] })
 3. **Brainstorming (ALWAYS — explore idea before planning):**
    → `Skill(skill="cc10x:brainstorming")` — runs in main context, `AskUserQuestion` available here
    → Collect clarified requirements, pass to planner in step 6
+   → **AFTER brainstorming returns: continue to step 4. Design file ≠ plan file. Do NOT jump to BUILD — planner (step 6) has not run yet.**
 4. **If research detected (external tech OR explicit request):**
    - AskUserQuestion: "Research web + GitHub before planning? Improves plan quality for external tech."
      Options: "Yes, research (Recommended)" | "No, skip" | "Abort workflow"
