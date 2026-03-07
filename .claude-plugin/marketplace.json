@@ -6,14 +6,14 @@
     "url": "https://github.com/romiluz13"
   },
   "metadata": {
-    "description": "cc10x v8.0.3 - The Intelligent Orchestrator for Claude Code",
-    "version": "8.0.3"
+    "description": "cc10x v9.1.0 - Router-owned Claude Code plugin with intent-first planning, BDD-style evidence, proof-of-work workflow artifacts, plugin-native hooks, and optional MCP-accelerated research",
+    "version": "9.1.0"
   },
   "plugins": [
     {
       "name": "cc10x",
-      "description": "Orchestrated development workflow with specialized subagents and composable skills. Features smart routing via cc10x-router, TDD-first building, multi-dimensional code review, evidence-based debugging, pre-implementation checklists, self-critique gates, and 7-layer memory architecture.",
-      "version": "8.0.3",
+      "description": "Router-owned Claude Code plugin with specialized subagents, composable skills, intent-first planning, TDD-first building, adversarial review, BDD-style verification, proof-of-work workflow artifacts, plugin-native hooks, and optional Bright Data/Octocode research acceleration.",
+      "version": "9.1.0",
       "author": {
         "name": "Rom Iluz",
         "email": "rom@iluz.net",
@@ -26,11 +26,14 @@
         "workflow-routing",
         "code-review",
         "tdd",
+        "bdd",
+        "intent-first-planning",
         "debugging",
         "planning",
-        "memory-persistence",
-        "session-memory",
         "verification",
+        "proof-of-work",
+        "hooks",
+        "mcp",
         "lean-skills",
         "claude-code"
       ],

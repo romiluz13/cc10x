@@ -10,6 +10,7 @@ ROUTER = PLUGIN_ROOT / "skills" / "cc10x-router" / "SKILL.md"
 README = ROOT / "README.md"
 CHANGELOG = ROOT / "CHANGELOG.md"
 PLUGIN_JSON = PLUGIN_ROOT / ".claude-plugin" / "plugin.json"
+MARKETPLACE_JSON = ROOT / ".claude-plugin" / "marketplace.json"
 HOOKS_JSON = PLUGIN_ROOT / "hooks" / "hooks.json"
 MCP_JSON = PLUGIN_ROOT / ".mcp.json"
 INVARIANTS = ROOT / "docs" / "router-invariants.md"
@@ -31,6 +32,9 @@ def main() -> int:
     plugin = json.loads(read(PLUGIN_JSON))
     hooks = json.loads(read(HOOKS_JSON))
     mcp = json.loads(read(MCP_JSON))
+    marketplace = (
+        json.loads(read(MARKETPLACE_JSON)) if MARKETPLACE_JSON.exists() else {}
+    )
     router = read(ROUTER)
     readme = read(README)
     changelog = read(CHANGELOG)
@@ -43,6 +47,25 @@ def main() -> int:
         )
     if f"## [{version}]" not in changelog:
         errors.append(f"CHANGELOG.md missing release section for {version}")
+    if MARKETPLACE_JSON.exists():
+        marketplace_version = ((marketplace.get("metadata") or {}).get("version")) or ""
+        if marketplace_version != version:
+            errors.append(
+                f"marketplace.json metadata.version ({marketplace_version}) does not match plugin.json ({version})"
+            )
+        plugins = marketplace.get("plugins") or []
+        if not plugins:
+            errors.append("marketplace.json has no plugins entries")
+        else:
+            plugin_entry = plugins[0]
+            if plugin_entry.get("version") != version:
+                errors.append(
+                    f"marketplace.json plugin entry version ({plugin_entry.get('version')}) does not match plugin.json ({version})"
+                )
+            if plugin_entry.get("source") != "./plugins/cc10x":
+                errors.append(
+                    f"marketplace.json plugin source changed unexpectedly ({plugin_entry.get('source')})"
+                )
 
     hook_commands = json.dumps(hooks)
     for script in (
