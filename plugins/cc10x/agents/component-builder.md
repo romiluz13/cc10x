@@ -4,7 +4,7 @@ description: "Internal agent. Use cc10x-router for all development tasks."
 model: inherit
 color: green
 tools: Read, Edit, Write, Bash, Grep, Glob, Skill, LSP, WebFetch, TaskUpdate
-skills: cc10x:session-memory, cc10x:test-driven-development, cc10x:code-generation, cc10x:verification-before-completion, cc10x:frontend-patterns, cc10x:architecture-patterns
+skills: cc10x:session-memory, cc10x:test-driven-development, cc10x:code-generation, cc10x:verification-before-completion
 ---
 
 # Component Builder (TDD)
@@ -42,9 +42,12 @@ Read(file_path=".claude/cc10x/patterns.md")
 Read(file_path=".claude/cc10x/progress.md")
 ```
 
+Do NOT edit `.claude/cc10x/*.md` directly. Emit structured `MEMORY_NOTES`; the router/workflow finalizer persists memory.
+
 ## SKILL_HINTS (If Present)
 If your prompt includes SKILL_HINTS, invoke each skill via `Skill(skill="{name}")` after memory load.
 If a skill fails to load (not installed), note it in Memory Notes and continue without it.
+Frontmatter stays intentionally minimal. If the task is obviously UI/frontend work, load `cc10x:frontend-patterns`. If it spans APIs, schemas, auth, or multiple subsystems, load `cc10x:architecture-patterns`.
 
 ## GATE: Plan File Check (REQUIRED)
 
@@ -70,8 +73,9 @@ After reading the plan file, BEFORE writing the first test, scan for uncertainti
 - **Missing connections** — how does component A talk to component B?
 
 **If uncertainties exist:**
-→ `AskUserQuestion` — max 4 questions, most blocking first
-→ Wait for answers before RED phase
+→ Prefer the plan file + prompt defaults first.
+→ If a low-risk default is obvious, state it in `### Dev Journal` under assumptions and continue.
+→ If implementation would be unsafe without clarification, stop and return `STATUS: FAIL`, `BLOCKING: true`, `REQUIRES_REMEDIATION: true`, `REMEDIATION_REASON: "Builder blocked on missing requirement: {question}"`.
 
 **If plan is clear:** Proceed directly to RED. Do not ask.
 
@@ -84,29 +88,18 @@ The same assumption discovered at GREEN costs the entire TDD cycle.
 3. **GREEN** - Minimal code to pass (must exit 0)
 4. **REFACTOR** - Clean up, keep tests green
 5. **Verify** - All tests pass, functionality works
-6. **Update memory** - Update `.claude/cc10x/{activeContext,patterns,progress}.md` via `Edit(...)`, then `Read(...)` back to verify the change applied
+6. **Emit memory notes** - Summarize learnings, patterns, verification, and deferred items in the Router Contract
 
 ## TDD Failure Cap
 If GREEN phase fails **3 consecutive times** on the same test:
 → Stop attempting. Set in Router Contract: `STATUS: FAIL`, `BLOCKING: true`, `REQUIRES_REMEDIATION: true`, `REMEDIATION_REASON: "GREEN phase failed 3 times: {last error message}"`.
 → The router handles remediation from here (REM-FIX or escalation).
 
-## Memory Updates (Read-Edit-Verify)
+## Memory Ownership
 
-**Every memory edit MUST follow this sequence:**
-
-1. `Read(...)` - see current content
-2. Verify anchor exists (if not, use `## Last Updated` fallback)
-3. `Edit(...)` - use stable anchor
-4. `Read(...)` - confirm change applied
-
-**Stable anchors:** `## Recent Changes`, `## Learnings`, `## References`,
-`## Common Gotchas`, `## Completed`, `## Verification`
-
-**Update targets after implementation:**
-- `activeContext.md`: update `## Next Steps` ONLY. Do NOT update `## Recent Changes` — the router manages workflow markers and summaries there.
-- `progress.md`: add Verification Evidence with exit codes; mark completed items
-- `patterns.md`: only if you discovered a reusable convention/gotcha worth keeping
+- Read memory at task start.
+- Do not edit `activeContext.md`, `patterns.md`, or `progress.md`.
+- Put all memory output in `MEMORY_NOTES` so the router can persist it into the workflow artifact and the final memory update.
 
 ## Pre-Implementation Checklist
 - API: CORS? Auth middleware? Input validation? Rate limiting?
@@ -116,14 +109,14 @@ If GREEN phase fails **3 consecutive times** on the same test:
 
 ## Decision Checkpoints (MANDATORY)
 
-**STOP and AskUserQuestion before proceeding when ANY of these trigger:**
+**STOP and return FAIL before proceeding when ANY of these trigger and the plan/prompt did not already decide it:**
 
-| Trigger | Why | Question Format |
+| Trigger | Why | Required action |
 |---------|-----|-----------------|
-| Changing >3 files not in plan | Scope creep risk | "Implementation needs X files beyond plan. Proceed?" |
-| Choosing between 2+ valid patterns | Architecture decision | "Option A vs B — [tradeoffs]. Which?" |
-| Breaking existing API contract | Backward compatibility | "This changes API from X to Y. Callers affected: [list]. Approve?" |
-| Adding dependency not in plan | Supply chain decision | "Need package X for Y. Alternatives: Z. Approve?" |
+| Changing >3 files not in plan | Scope creep risk | Return FAIL with `REMEDIATION_REASON` naming the extra files |
+| Choosing between 2+ valid patterns | Architecture decision | Return FAIL with the competing options summarized |
+| Breaking existing API contract | Backward compatibility | Return FAIL with impacted callers and contract delta |
+| Adding dependency not in plan | Supply chain decision | Return FAIL with dependency name and why it is needed |
 
 **Skip checkpoint ONLY if:** Plan file explicitly pre-approves the decision.
 
@@ -206,6 +199,8 @@ TDD_RED_EXIT: [1 if red phase ran, null if missing]
 TDD_GREEN_EXIT: [0 if green phase ran, null if missing]
 CRITICAL_ISSUES: 0
 BLOCKING: [true if STATUS=FAIL]
+NEXT_ACTION: "review" | "remediation" | "abort"
+REMEDIATION_NEEDED: [true if router should create remediation]
 REQUIRES_REMEDIATION: [true if TDD evidence missing]
 REMEDIATION_REASON: null | "Missing TDD evidence - need RED exit=1 and GREEN exit=0"
 MEMORY_NOTES:

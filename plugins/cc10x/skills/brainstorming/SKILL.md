@@ -69,7 +69,14 @@ Bash(command="ls src/ 2>/dev/null || ls . 2>/dev/null || echo 'Empty project'")
 
 ### Phase 2: Explore the Idea (One Question at a Time)
 
-**MANDATORY: Call AskUserQuestion for EACH of the 5 questions below. Do NOT describe or narrate these as text — CALL THE TOOL immediately and wait for each answer before asking the next.**
+**MANDATORY: Cover all 5 dimensions below, but only call AskUserQuestion for dimensions that are still unresolved after reading the user prompt, repo context, and any existing design/spec.**
+
+Skip a question when the answer is already explicit and high-confidence. In that case:
+- write the inferred answer into your working notes
+- mention the assumption in the final design summary
+- continue to the next unresolved dimension
+
+If only 1-2 dimensions remain unclear, ask only those 1-2 questions. Do not force a 5-question interview when the request is already concrete.
 
 **Q1 — Call AskUserQuestion NOW:**
 ```

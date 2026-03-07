@@ -1,0 +1,5 @@
+{
+  "protectedWrites": "audit",
+  "memoryWrites": "audit",
+  "taskMetadata": "audit"
+}

@@ -1,6 +1,6 @@
 # CC10x Orchestration Bible (Plugin-Only Source of Truth)
 
-> **Last synced with agents/skills:** 2026-03-04 (v8.0.0 — Radical Simplification: removed Router Contract YAML from read-only agents (code-reviewer, silent-failure-hunter, integration-verifier); text-based verdict extraction via agent heading; JUST_GO session mode; Empty Answer Guard simplified to REVERT-only blocking; REM-EVIDENCE loop eliminated; ~280 lines removed) | **Status:** IN SYNC
+> **Last reviewed against live plugin files:** 2026-03-07 (plugin-native hooks packaging, optional MCP acceleration, router-owned orchestration) | **Status:** PARTIALLY IN SYNC — packaging/runtime sections updated, full invariant resync still pending
 
 > This document is derived **only** from `plugins/cc10x/` (agents + skills).
 > Ignore all other docs. Do not trust external narratives.
@@ -21,7 +21,7 @@ This document defines the **non-negotiable** routing, tasking, agent chaining, a
 - **Agents**: `component-builder`, `bug-investigator`, `code-reviewer`, `silent-failure-hunter`, `integration-verifier`, `planner`, `web-researcher`, `github-researcher`.
 - **Skills**: Specialized rulebooks in `plugins/cc10x/skills/*/SKILL.md`.
 - **Memory**: `.claude/cc10x/{activeContext.md, patterns.md, progress.md}`.
-- **Router Contract**: Machine-readable output signal used by the router for validation. **Two-track since v8.0.0:** WRITE agents (component-builder, bug-investigator, planner) still emit `### Router Contract (MACHINE-READABLE)` YAML blocks. READ-ONLY agents (code-reviewer, silent-failure-hunter, integration-verifier) use text-based heading extraction — the heading (`## Review: Approve/Changes Requested`, `## Error Handling Audit: CLEAN/ISSUES_FOUND`, `## Verification: PASS/FAIL`) IS the contract.
+- **Router Contract**: Machine-readable output signal used by the router for validation. WRITE agents emit YAML. READ-ONLY agents emit an envelope-first contract on line 1 and a stable heading fallback on line 2.
 - **Dev Journal**: User transparency section in WRITE agent output only (narrative of what was done). Removed from READ-ONLY agents in v8.0.0 to reduce token pressure.
 
 ---
@@ -44,12 +44,13 @@ allowed-tools: Read, Grep # Tools that skip permission prompts when skill is act
 
 **Key facts:**
 - `allowed-tools` is **NOT runtime enforcement**. It defines which tools skip permission prompts. The agent's `tools:` field controls actual tool availability.
-- Skills are loaded as text context — injected into the agent's system prompt.
+- Skills are loaded as text context.
+- Large preloaded skills increase startup context and contradiction risk.
 - Skills cannot call tools themselves. They instruct the hosting agent to call tools.
 
 ### What is an Agent?
 
-An **agent** is a Markdown file with YAML frontmatter that defines an isolated subprocess. When invoked via `Task(subagent_type="...")`, Claude Code spawns a new process with its own context window, tools, and instructions.
+An **agent** is a Markdown file with YAML frontmatter that defines an isolated subprocess. When invoked via the subagent/task mechanism, Claude Code spawns a new process with its own context window, tools, and instructions.
 
 **Agent frontmatter fields:**
 ```yaml
@@ -61,8 +62,9 @@ model: inherit            # Model to use
 
 **Key facts:**
 - `tools:` is the **actual runtime allowlist**. Agent can ONLY use tools listed here.
-- `skills:` preloads full skill content into the agent's system prompt at startup. Agent does NOT need to call `Skill()` for preloaded skills.
+- `skills:` preloads full skill content into the agent's startup context. Keep this list minimal.
 - Agent outputs are returned to the caller (router) as a single result.
+- Plain subagents do not provide team-style orchestration for free. CC10X implements that layer itself using tasks, workflow metadata, and router rules.
 
 Agents spawned via Task() run in isolated context windows by default — they cannot see the parent conversation, CLAUDE.md, or other agents' outputs. No frontmatter configuration is required for isolation.
 
@@ -89,7 +91,7 @@ Agents spawned via Task() run in isolated context windows by default — they ca
 - `web-researcher` — Executes web research (Bright Data + WebSearch); spawned by router in parallel
 - `github-researcher` — Executes GitHub research (Octocode MCP); spawned by router in parallel
 
-**12 Skills (instruction sets loaded into agents):**
+**12 Skills (instruction sets referenced by agents/router):**
 - `cc10x-router` — Orchestration engine (loaded by main Claude, not agents)
 - `session-memory` — Memory protocol (WRITE agents only)
 - `code-generation` — Code writing patterns (component-builder)
@@ -99,8 +101,8 @@ Agents spawned via Task() run in isolated context windows by default — they ca
 - `verification-before-completion` — Verification gates (4 agents)
 - `planning-patterns` — Plan writing (planner)
 - `brainstorming` — Idea exploration (router PLAN workflow in main context — NOT planner frontmatter)
-- `architecture-patterns` — Architecture design (all 6 agents)
-- `frontend-patterns` — Frontend patterns (all 6 agents)
+- `architecture-patterns` — Architecture guidance (loaded conditionally via SKILL_HINTS)
+- `frontend-patterns` — Frontend guidance (loaded conditionally via SKILL_HINTS)
 - `research` — Synthesis guidance (passed as SKILL_HINTS to planner/bug-investigator when parallel research files are available — NOT router-executed inline)
 
 ### Research Architecture
@@ -119,10 +121,36 @@ The `cc10x:research` skill provides synthesis guidance (loaded via SKILL_HINTS b
 The router never executes research inline.
 
 **Why this separation:**
-1. **Skills are reusable** — `architecture-patterns` loads into 5 different agents. One source of truth for architecture rules.
-2. **Agents are isolated** — code-reviewer cannot accidentally edit files because its `tools:` field excludes Edit/Write. This is enforced by Claude Code, not by English instruction.
-3. **Skills compose** — An agent's behavior is the combination of its base instructions + all preloaded skills. Adding a skill to an agent's frontmatter changes its behavior without modifying the agent file.
-4. **SKILL_HINTS bridge the gap** — Forked agents cannot see CLAUDE.md. The router (running in main context) reads CLAUDE.md, detects matching complementary skills, and passes them via SKILL_HINTS in the agent's prompt. The agent then calls `Skill()` on demand.
+1. **Agents are isolated** — code-reviewer cannot accidentally edit files because its `tools:` field excludes Edit/Write. This is enforced by Claude Code, not by English instruction.
+2. **CC10X owns workflow coordination** — workflow metadata, resume logic, remediation loops, and memory conventions are custom CC10X behavior layered above Claude Code primitives.
+3. **Minimal preload beats maximal preload** — only core workflow skills should live in agent frontmatter; everything else should load on demand.
+4. **SKILL_HINTS bridge the gap** — Forked agents cannot see CLAUDE.md. The router reads approved project hints and passes only relevant skills into the agent prompt.
+
+### Official Platform vs CC10X Layer
+
+| Layer | Owned By | Examples |
+|-------|----------|----------|
+| Claude Code platform | Anthropic | subagents, tool allowlists, hooks, settings, `Skill()` loading |
+| CC10X orchestration | This plugin | BUILD/DEBUG/REVIEW/PLAN, `wf:` metadata, REM-FIX loops, `.claude/cc10x/*.md`, `memory_task_id` transient hint |
+
+### Hook-Owned Invariants (Recommended)
+
+Prompt text is not the strongest enforcement layer. These rules should move to hooks or harness code when possible:
+- reject Memory Update if anything tries to spawn it as a subagent
+- validate required `wf/kind/origin/phase/plan/scope/reason` metadata on CC10X task creation
+- clean orphaned test processes after write-agent completion
+- enforce read-only agents not writing outside approved paths
+- optionally reject malformed read-only contract envelopes before router fallback logic
+
+### Plugin Packaging Rules
+
+For marketplace/plugin installs, shipped runtime behavior must live inside the plugin bundle:
+- plugin manifest: `.claude-plugin/plugin.json`
+- plugin hooks: `hooks/hooks.json`
+- plugin hook scripts: `scripts/*` referenced via `${CLAUDE_PLUGIN_ROOT}`
+- optional plugin MCP acceleration: `.mcp.json`
+
+Repo-local `.claude/settings.json` is not part of the shipped plugin contract.
 
 ### External Skill Conflict Risk (Design Decision)
 
@@ -359,36 +387,37 @@ Mandatory steps:
 
 ## Skill Loading Hierarchy (Definitive)
 
-### Mechanism 1: Agent Frontmatter `skills:` (PRIMARY - Automatic)
+### Mechanism 1: Agent Frontmatter `skills:` (Minimal Automatic Set)
 
-All CC10x internal skills listed below load automatically via agent frontmatter. No `Skill()` calls needed for these. (Conditional skills use Mechanism 2 below.)
+Only core workflow skills should preload automatically. Keep frontmatter short because preloaded skill text is injected into agent startup context.
 
 | Agent | Frontmatter Skills |
 |-------|-------------------|
-| component-builder | session-memory, test-driven-development, code-generation, verification-before-completion, frontend-patterns, architecture-patterns |
-| code-reviewer | code-review-patterns, verification-before-completion, frontend-patterns, architecture-patterns |
-| silent-failure-hunter | code-review-patterns, verification-before-completion, frontend-patterns, architecture-patterns |
-| integration-verifier | architecture-patterns, verification-before-completion, frontend-patterns |
-| bug-investigator | session-memory, debugging-patterns, test-driven-development, code-generation, verification-before-completion, architecture-patterns, frontend-patterns |
-| planner | session-memory, planning-patterns, architecture-patterns, frontend-patterns |
+| component-builder | session-memory, test-driven-development, code-generation, verification-before-completion |
+| code-reviewer | code-review-patterns, verification-before-completion |
+| silent-failure-hunter | code-review-patterns |
+| integration-verifier | verification-before-completion |
+| bug-investigator | session-memory, debugging-patterns, test-driven-development, verification-before-completion |
+| planner | session-memory, planning-patterns |
 
 ### Mechanism 2: Conditional `Skill()` Call (Router SKILL_HINTS)
 
 Router passes SKILL_HINTS in agent prompt. Agent invokes via `Skill(skill="{name}")`.
 
-**Sources for SKILL_HINTS (domain skills only):**
-1. **CLAUDE.md Complementary Skills table** — user-configured domain skills (react-best-practices, mongodb-agent-skills, etc.)
-
-**Note:** `cc10x:research` is NOT passed as SKILL_HINTS. It is router-executed directly via the THREE-PHASE process in PLAN/DEBUG workflows.
+**Sources for SKILL_HINTS:**
+1. Approved project/domain skills from `CLAUDE.md` or `patterns.md`
+2. `cc10x:frontend-patterns` when the task is UI/frontend-heavy
+3. `cc10x:architecture-patterns` when the task spans APIs, schemas, auth, integration boundaries, or multiple subsystems
+4. `cc10x:research` when planner or investigator has research files to synthesize
 
 **Critical flow:**
-- Router runs in main Claude context → can see CLAUDE.md
-- Subagents run in isolated context → cannot see CLAUDE.md
-- Router bridges the gap: reads CLAUDE.md → passes matching domain skills to agents via SKILL_HINTS
+- Router runs in main Claude context → can see project hints
+- Subagents run in isolated context → cannot see those hints directly
+- Router bridges the gap by passing only relevant skills to agents via SKILL_HINTS
 
 **All 6 agents have `## SKILL_HINTS (If Present)` section** instructing them to invoke skills after memory load.
 
-**Why conditional:** Not always needed; avoids context bloat when irrelevant.
+**Why conditional:** Not always needed; avoids startup context bloat and reduces contradictory instructions.
 
 ---
 
@@ -431,234 +460,165 @@ MEMORY_NOTES:
 
 ### READ-ONLY Agent Output Format (code-reviewer, silent-failure-hunter, integration-verifier)
 
-Since v8.0.0, READ-ONLY agents use a 6-section text-based format. **The heading IS the contract** — it appears on line 1 and survives any output truncation.
+READ-ONLY agents use an envelope-first contract. The router parses line 1 first, then falls back to the stable heading on line 2 if the envelope is missing or malformed.
 
 ```markdown
-## {Status Heading}     ← THIS IS THE CONTRACT. Router reads this line first.
+CONTRACT {"s":"APPROVE|CHANGES_REQUESTED|CLEAN|ISSUES_FOUND|PASS|FAIL","b":true|false,"cr":0}
+## {Status Heading}
 <!-- code-reviewer:         ## Review: Approve  OR  ## Review: Changes Requested -->
 <!-- silent-failure-hunter: ## Error Handling Audit: CLEAN  OR  ## Error Handling Audit: ISSUES_FOUND -->
 <!-- integration-verifier:  ## Verification: PASS  OR  ## Verification: FAIL -->
 
 ### Summary
-[Verdict summary, confidence, signal scores]
+[Verdict summary]
 
-### Critical Issues     ← Router counts bullets here for BLOCKING signal
-[Each bullet = 1 CRITICAL_ISSUE; non-empty section triggers BLOCKING=true]
+### Critical Issues
+[Each bullet increments `cr` when the envelope is rebuilt by the router]
 
 ### Findings
-[Important issues + evidence items with file:line citations]
+[Evidence with file:line citations]
 
 ### Memory Notes (For Workflow-Final Persistence)
-- **Learnings:** [for activeContext.md]
-- **Patterns:** [for patterns.md]
-- **Verification:** [for progress.md]
-
-### Task Status
-- Task {TASK_ID}: COMPLETED
+- **Learnings:** [...]
+- **Patterns:** [...]
+- **Verification:** [...]
 ```
-
-Each READ-ONLY agent file ends with a `**CONTRACT:**` note confirming the heading is the machine-readable signal.
 
 ### Router Contract by Agent
 
 | Agent | Contract Type | STATUS Values | BLOCKING when | Key Fields |
 |-------|--------------|---------------|---------------|-----------|
-| component-builder | YAML | PASS, FAIL | TDD evidence missing | TDD_RED_EXIT, TDD_GREEN_EXIT |
-| bug-investigator | YAML | FIXED, INVESTIGATING, BLOCKED | STATUS != FIXED | ROOT_CAUSE, VARIANTS_COVERED |
-| planner | YAML | PLAN_CREATED, NEEDS_CLARIFICATION | Never | PLAN_FILE, CONFIDENCE, GATE_PASSED |
-| code-reviewer | Text heading | APPROVE, CHANGES_REQUESTED | CRITICAL_ISSUES > 0 | Heading + `### Critical Issues` count |
-| silent-failure-hunter | Text heading | CLEAN, ISSUES_FOUND | CRITICAL_ISSUES > 0 | Heading + `### Critical Issues` count |
-| integration-verifier | Text heading | PASS, FAIL | STATUS=FAIL (always) | Heading |
+| component-builder | YAML | PASS, FAIL | Contract says so | TDD_RED_EXIT, TDD_GREEN_EXIT, REMEDIATION_REASON |
+| bug-investigator | YAML | FIXED, INVESTIGATING, BLOCKED | STATUS != FIXED | ROOT_CAUSE, NEEDS_EXTERNAL_RESEARCH |
+| planner | YAML | PLAN_CREATED, NEEDS_CLARIFICATION | Router decides from status | PLAN_FILE, CONFIDENCE, GATE_PASSED, USER_INPUT_NEEDED |
+| code-reviewer | Envelope + heading fallback | APPROVE, CHANGES_REQUESTED | `b=true` or `cr>0` | `s`, `b`, `cr` |
+| silent-failure-hunter | Envelope + heading fallback | CLEAN, ISSUES_FOUND | `b=true` or `cr>0` | `s`, `b`, `cr` |
+| integration-verifier | Envelope + heading fallback | PASS, FAIL | `s=FAIL` | `s`, `b`, `cr` |
 
-### Post-Agent Validation Logic (Text Extraction + YAML for WRITE agents)
+### Post-Agent Validation Logic
 
-Router validates agent output using a two-track mechanism:
+Router validation is two-track:
 
-**For READ-ONLY agents (text extraction):**
-```
-Step 1: Scan first 5 lines for heading pattern → extract STATUS
-Step 2: Scan ### Critical Issues section → count bullets → extract BLOCKING/CRITICAL_ISSUES
-Step 3: Fallback if heading not found:
-  - output >= 500 chars: keyword scan for APPROVE|CHANGES_REQUESTED|CLEAN|ISSUES_FOUND|PASS|FAIL
-  - output < 200 chars: safe default (APPROVE/CLEAN/PASS), continue workflow
-Step 4: Detect SELF_REMEDIATED via task state (TaskGet → blockedBy non-empty)
-Step 5: Output Validation Evidence (STATUS, BLOCKING, CRITICAL_ISSUES, source)
-```
+**WRITE agents (YAML)**
+1. Parse `### Router Contract (MACHINE-READABLE)`.
+2. Validate required fields for the agent.
+3. Apply contract-rule overrides if the output contradicts required evidence.
 
-**JUST_GO Session Mode:** If `AUTO_PROCEED: true` in `activeContext.md ## Session Settings`, all non-REVERT AskUserQuestion gates auto-default to recommended option.
+**READ-ONLY agents (envelope-first)**
+1. Parse line 1 `CONTRACT {json}`.
+2. If envelope parsing fails, parse the stable heading on line 2.
+3. Count bullets in `### Critical Issues` to confirm or override `cr`.
+4. Use task state to detect self-remediation or downstream blocking.
 
-**Empty Answer Guard:** For ⚠️ REVERT gates only — block and re-ask once. For all other gates — auto-default to recommended option.
+JUST_GO:
+- If `AUTO_PROCEED: true` in `activeContext.md ## Session Settings`, auto-default all non-REVERT user gates to the recommended option and log the choice.
 
-**For WRITE agents (YAML contract, unchanged):**
-```
-Step 1: Parse ### Router Contract YAML block
-Step 2: Validate fields per CONTRACT RULE table
-```
+Validation rules:
+- `component-builder`: missing RED/GREEN evidence forces `STATUS=FAIL`.
+- `bug-investigator`: `STATUS=FIXED` without real fix evidence forces `STATUS=FAIL` unless `NEEDS_EXTERNAL_RESEARCH=true`.
+- `code-reviewer` and `silent-failure-hunter`: any critical issue forces the blocking status.
+- `integration-verifier`: any critical issue or failed scenario forces `STATUS=FAIL`.
+- `planner`: missing `PLAN_FILE`, low confidence, or failed inline gate forces `STATUS=NEEDS_CLARIFICATION`.
 
-Circuit Breaker (BEFORE creating any REM-FIX):
-- If 3+ active REM-FIX tasks → AskUserQuestion: Research best practices | Fix locally | Skip | Abort
+### Task Metadata Contract
 
-Validation Rules (apply to both tracks using extracted/parsed STATUS):
+Every CC10X task description starts with normalized metadata:
 
-**0. CONTRACT RULE Enforcement (RUNS FIRST — auto-override STATUS):**
-- component-builder: TDD_RED_EXIT≠1 OR TDD_GREEN_EXIT≠0 → override STATUS=FAIL
-- bug-investigator: STATUS=FIXED but TDD evidence missing AND NEEDS_EXTERNAL_RESEARCH!=true → override STATUS=FAIL
-- code-reviewer: CRITICAL_ISSUES>0 → override STATUS=CHANGES_REQUESTED
-- silent-failure-hunter: CRITICAL_ISSUES>0 → override STATUS=ISSUES_FOUND
-- integration-verifier: CRITICAL_ISSUES>0 → override STATUS=FAIL
-- planner: PLAN_FILE null/empty OR CONFIDENCE<50 OR GATE_PASSED!=true → override STATUS=NEEDS_CLARIFICATION
-
-**0c. NEEDS_EXTERNAL_RESEARCH (bug-investigator only, runs BEFORE 1a):**
-If contract.NEEDS_EXTERNAL_RESEARCH == true: execute research, re-invoke bug-investigator. Do NOT create REM-FIX. STOP.
-
-**1a. If BLOCKING == true AND STATUS NOT IN ["NEEDS_CLARIFICATION","INVESTIGATING","BLOCKED","SELF_REMEDIATED"] AND NEEDS_EXTERNAL_RESEARCH != true:**
-    → Create REM-FIX task → block downstream tasks → STOP
-
-**1b. If REQUIRES_REMEDIATION == true AND BLOCKING == false:**
-    → Auto-default to "Fix now" (no AskUserQuestion — JUST_GO compatible)
-    → REVIEW workflow check: if parent workflow is REVIEW, AskUserQuestion to start BUILD instead
-    → Otherwise: Circuit Breaker check → Create REM-FIX, block downstream, STOP
-
-**2. Parallel phase conflict (code-reviewer APPROVE + silent-failure-hunter issues):**
-- Case A: hunter CRITICAL_ISSUES > 0 → ⚠️ AskUserQuestion: investigate or skip?
-- Case B: hunter STATUS=ISSUES_FOUND + CRITICAL_ISSUES=0 → ⚠️ AskUserQuestion: fix or proceed?
-
-**2b.** STATUS == "NEEDS_CLARIFICATION" (planner): extract bullet points → AskUserQuestion → re-invoke planner
-
-**2c.** STATUS == "INVESTIGATING" (bug-investigator): re-invoke with loop cap (max 2 continue tasks)
-
-**2d.** integration-verifier STATUS=FAIL:
-    → DEBUG serial loop check (pre-condition)
-    → ⚠️ REVERT gate: if verifier output contains "REVERT" → AskUserQuestion: Revert | Create fix task
-    → Otherwise: Create REM-FIX task
-
-**2f.** STATUS == "BLOCKED" (bug-investigator): ⚠️ AskUserQuestion: Research externally | Manual fix | Abort
-
-3. Collect Memory Notes from agent output (### Memory Notes section) for step 3a persistence
-
-4. If none triggered → Proceed to next agent
-
-### Task Types and Prefixes
-
-| Type | Subject Prefix | Created By | Purpose | Auto-Execute? |
-|------|---------------|------------|---------|---------------|
-| Workflow | `CC10X BUILD:` / `DEBUG:` / etc. | Router | Parent workflow task | N/A |
-| Agent | `CC10X {agent}:` | Router | Agent work item | Yes |
-| Code changes | `CC10X REM-FIX:` | Router | Fix issues found by reviewer/hunter | Yes (triggers re-review loop) |
-| Re-verify | `CC10X integration-verifier: Re-verify —` | Router (Re-Review Loop) | New verification after REM-FIX | Yes |
-
-**Note (v6.0.31+):** `CC10X TODO:` tasks are abolished. Non-blocking agent discoveries go into Memory Notes under `**Deferred:**` — the Memory Update task writes them to patterns.md automatically. Tasks are execution artifacts, not parking lots.
-
-### Remediation Re-Review Loop (BUILD - Non-Negotiable)
-
-When any `CC10X REM-FIX:` task is created (code/test changes required), the following re-review loop is **mandatory**:
-
-```mermaid
-flowchart TD
-    A[REM-FIX Completes] --> B0{Cycle Cap: ≥2 completed REM-FIX?}
-    B0 -->|Yes| B0a[AskUserQuestion: create/research/accept/abort]
-    B0 -->|No| B1[Create: Re-review — title]
-    B1 --> B2[Create: Re-hunt — title]
-    B2 --> B3[Spawn NEW: integration-verifier Re-verify — title]
-    B3 --> B4[Block Re-verify on Re-review + Re-hunt]
-    B4 --> B5[Block Memory Update on Re-verify]
-    B5 --> H[Chain resumes: Re-review ∥ Re-hunt → Re-verify → Memory Update]
-```
-*Note: The re-verifier is a NEW task — never addBlockedBy on the old completed verifier.*
-
-**Implementation (v6.0.33+):**
-
-Step 0: **Cycle Cap check** — count completed REM-FIX tasks. If ≥ 2: AskUserQuestion (create another / research / accept / abort).
-
-Step 1-2: Create named re-review tasks (subject includes the REM-FIX title):
-   - `CC10X code-reviewer: Re-review — {completed_remfix_title}`
-   - `CC10X silent-failure-hunter: Re-hunt — {completed_remfix_title}` (skip in DEBUG — no hunter in that chain)
-
-Step 3: **Spawn a NEW re-verifier task** (critical — do NOT reactivate the old completed verifier):
-   ```
-   TaskCreate({ subject: "CC10X integration-verifier: Re-verify — {completed_remfix_title}", ... })
-   ```
-   **Why new task:** `addBlockedBy` on a completed task is a no-op. The completed task will not revert to pending. Spawning a new task is the only correct approach.
-
-Step 4: Block new re-verifier on re-reviews:
-   ```
-   TaskUpdate({ taskId: re_verifier_id, addBlockedBy: [re_reviewer_id, re_hunter_id] })
-   ```
-
-Step 4b: Block Memory Update on new re-verifier (additive, safe on pending tasks):
-   ```
-   TaskUpdate({ taskId: memory_task_id, addBlockedBy: [re_verifier_id] })
-   ```
-
-**Why this is non-negotiable:** Without re-review, code changes made during remediation ship without verification. The Cycle Cap prevents infinite re-review loops.
-
----
-
-## Agent Invocation Template (Required)
-
-The router must pass task ID and context to each agent:
-
-```
-Task(subagent_type="cc10x:component-builder", prompt="
-## Task Context
-- Task ID: {taskId}
-- Plan File: {planFile or 'None'}
-
-## User Request
-{request}
-
-## Requirements
-{AskUserQuestion results or 'See plan file'}
-
-## Memory Summary
-{activeContext summary}
-
-## Project Patterns
-{patterns summary}
-
-## SKILL_HINTS (conditional skills if triggered)
-{detected skills from router detection table + CLAUDE.md, otherwise "None"}
-**If skills listed:** Call `Skill(skill="{skill-name}")` after memory load. If unavailable, note in Memory Notes and continue.
-
----
-IMPORTANT:
-- **WRITE agents** (component-builder, bug-investigator, planner): Include `### Dev Journal` + `### Router Contract (MACHINE-READABLE)` YAML. Update memory using Edit() at task end.
-- **READ-ONLY agents** (code-reviewer, silent-failure-hunter, integration-verifier): Output heading as contract (e.g., `## Review: Approve`). Include `### Memory Notes` in final output. No Dev Journal, no YAML required.
-- All agents: Output analysis BEFORE calling TaskUpdate — never call TaskUpdate as the only/last action.
-")
+```text
+wf:{workflow_task_id}
+kind:{workflow|agent|remfix|memory|reverify|research}
+origin:{router|component-builder|bug-investigator|code-reviewer|silent-failure-hunter|integration-verifier|planner}
+phase:{...}
+plan:{path|N/A}
+scope:{ALL_ISSUES|CRITICAL_ONLY|N/A}
+reason:{short reason or N/A}
 ```
 
-**Task ID is required in prompt.** Agents self-complete by calling TaskUpdate(completed) in their final output. Router validates and applies fallback if needed.
+Rules:
+- `wf:` is mandatory on every task.
+- `kind:` is the primary routing key for resume, counting, and task execution.
+- `origin:` and `scope:` are mandatory on every `kind:remfix` task.
+- `plan:` is required on workflow, agent, and memory tasks.
+- The router never infers behavior from loose prose when metadata can answer it.
 
-**Router Contract (two-track model, v8.0.0+):** WRITE agents (component-builder, bug-investigator, planner) include `### Router Contract (MACHINE-READABLE)` YAML block. READ-ONLY agents (code-reviewer, silent-failure-hunter, integration-verifier) emit a structured heading as their contract (`## Review: Approve/Changes Requested`, `## Error Handling Audit: CLEAN/ISSUES_FOUND`, `## Verification: PASS/FAIL`) — no YAML required.
+### Task Types
 
-**Dev Journal:** WRITE agents include `### Dev Journal (User Transparency)`. READ-ONLY agents do not emit Dev Journal (removed in v8.0.0 to reduce token pressure and eliminate truncation risk).
+| Type | Subject Prefix | Required Metadata | Purpose |
+|------|---------------|-------------------|---------|
+| Workflow | `CC10X BUILD:` / `DEBUG:` / `REVIEW:` / `PLAN:` | `wf`, `kind:workflow`, `origin:router`, `phase`, `plan` | Parent workflow state |
+| Agent | `CC10X {agent}:` | `wf`, `kind:agent`, `origin:router`, `phase`, `plan` | Agent work item |
+| Remediation | `CC10X REM-FIX:` | `wf`, `kind:remfix`, `origin`, `phase`, `plan`, `scope`, `reason` | Deterministic self-healing |
+| Re-verify | `CC10X integration-verifier: Re-verify —` | `wf`, `kind:reverify`, `origin:router`, `phase:re-verify`, `plan` | Post-remediation verification |
+| Memory | `CC10X Memory Update:` | `wf`, `kind:memory`, `origin:router`, `phase:memory-finalize`, `plan` | Inline persistence only |
+| Research | `CC10X Research:` | `wf`, `kind:research`, `origin:router`, `phase:research`, `reason` | External research loop |
 
----
+`CC10X TODO:` tasks are abolished. Non-blocking discoveries belong in `### Memory Notes` under `**Deferred:**`.
 
-## Critical Gating Checklist
+### Hydration And Resume
+
+Task lists are treated as potentially long-lived/shared. Resume is workflow-scoped:
+
+1. Read memory files.
+2. `TaskList()` and identify active parent workflow tasks.
+3. Extract `wf:` from the chosen parent task.
+4. Read only tasks whose descriptions contain that `wf:`.
+5. Reconstruct runnable tasks from `kind`, `status`, and `blockedBy`.
+6. Reconstruct the memory task from the unique pending/in-progress `kind:memory` task in the same workflow.
+
+`[cc10x-internal] memory_task_id` in `activeContext.md ## References` is only a transient hint. It may be written during workflow execution for compaction safety, but it must never be treated as durable truth and must be removed by the Memory Update task when that workflow completes.
+
+### Remediation Re-Review Loop
+
+When a `kind:remfix` task completes:
+
+1. Count completed `kind:remfix` tasks in the same `wf:`. If the cycle cap is reached, ask the user before creating another remediation loop.
+2. Create a `kind:agent` re-review task.
+3. In BUILD, create a `kind:agent` re-hunt task.
+4. Reuse the pending verifier in the same workflow if one exists; otherwise create a new `kind:reverify` task.
+5. Block verifier execution on re-review and re-hunt.
+6. Re-block the `kind:memory` task on the verifier so persistence happens last.
+
+Routing for remediation tasks is metadata-driven:
+- `origin:bug-investigator` → bug-investigator executes the REM-FIX.
+- `origin:code-reviewer|silent-failure-hunter|integration-verifier` → component-builder executes the REM-FIX.
+
+### Agent Invocation Template
+
+The router passes:
+- `Task ID`
+- `Parent Workflow ID`
+- `Plan File`
+- `User Request`
+- `Memory Summary`
+- `Project Patterns`
+- `SKILL_HINTS`
+
+Rules:
+- WRITE agents emit `### Dev Journal` and YAML router contract.
+- READ-ONLY agents emit line-1 envelope, line-2 heading fallback, and `### Memory Notes`.
+- Agents must never tell the user they are complete without either calling their valid task tool or letting the router complete them via fallback.
+- Router-owned user interaction stays in the router. Agents surface clarification through structured output, not direct user questioning, unless they actually have that capability.
+
+### Critical Gating Checklist
 
 1. MEMORY_LOADED
-2. TASKS_CHECKED (TaskList)
-3. INTENT_CLARIFIED
-4. RESEARCH_EXECUTED (if triggered)
-5. RESEARCH_PERSISTED (if triggered)
-6. REQUIREMENTS_CLARIFIED (BUILD only)
-7. TASKS_CREATED
-8. ALL_TASKS_COMPLETED
-9. MEMORY_UPDATED
+2. TASKS_CHECKED
+3. WORKFLOW_SCOPED
+4. TASKS_CREATED_OR_HYDRATED
+5. RESEARCH_EXECUTED_AND_PERSISTED (if triggered)
+6. AGENT_OUTPUT_VALIDATED
+7. ALL_TASKS_COMPLETED_IN_WF
+8. MEMORY_UPDATED_INLINE
 
----
+### Non-Optional Behaviors (Hard Rules)
 
-## Non-Optional Behaviors (Hard Rules)
-
-- **Never stop after one agent.** Complete the workflow chain.
-- **Never claim completion without verification evidence.**
-- **No production code without failing test first (TDD).**
-- **No architecture/plan/design before flows are mapped.**
-- **Never try to reactivate a completed task via addBlockedBy.** That is a no-op. Spawn a NEW task.
-- **Never create CC10X TODO: tasks.** Non-blocking discoveries go in Memory Notes under `**Deferred:**`.
-- **cc10x-router MUST run in the main Claude Code session context.** The `Task(subagent_type="cc10x:agent")` mechanism only works at the top level. Invoking cc10x from inside a sub-agent or team member agent silently collapses orchestration to inline execution — no real agent spawning, no task tracking, no parallel agents.
+- Never stop after one agent if the workflow still has runnable tasks.
+- Never use unscoped task lookup in critical paths.
+- Never treat stored task IDs as durable identity across workflows.
+- Never try to reactivate a completed task with `addBlockedBy`; create a new runnable task if needed.
+- Never spawn Memory Update as a sub-agent; it executes inline in the router.
+- Never create `CC10X TODO:` tasks.
+- `cc10x-router` must run in the main Claude Code session context.
 
 ---
 
@@ -701,14 +661,14 @@ IMPORTANT:
 
 ## Compaction Safety (Memory Notes Persistence)
 
-Context compaction silently destroys in-flight agent Memory Notes. To survive:
+Context compaction can destroy in-flight agent notes. CC10X survives this by persisting notes into the workflow-scoped memory task as soon as each agent returns:
 
-**Step 3a (router — after each READ-ONLY agent completes):**
-1. Extract agent's `### Memory Notes` section from its output
-2. Append to Memory Update task description via `TaskUpdate({ taskId: memory_task_id, description: current + extracted_notes })`
-3. Store `memory_task_id` durably: `Edit(activeContext.md ## References, "[cc10x-internal] memory_task_id: {id} wf:{parent_task_id}")`
+1. Extract `### Memory Notes` from the agent output.
+2. Append them to the `kind:memory` task description for the same `wf:`.
+3. Optionally write `[cc10x-internal] memory_task_id: {id} wf:{workflow_task_id}` to `activeContext.md ## References` as a transient hint.
+4. When the Memory Update task executes inline, it reads only its own description payload, persists the notes to `.claude/cc10x/*.md`, and removes the matching transient `memory_task_id` line.
 
-**Memory Update task executes by reading its own description** — not conversation history. This is why Memory Notes survive compaction.
+This is why Memory Notes survive compaction and cross-turn truncation.
 
 ---
 
@@ -739,49 +699,32 @@ Agents write non-blocking discoveries to Memory Notes under `**Deferred:**` inst
 
 ## Standalone Skills (Not in Agent Chains)
 
-These skills are invoked via `Skill()` and do NOT participate in BUILD/DEBUG/REVIEW/PLAN agent chains.
+These skills run inline inside an agent context and do not own orchestration state transitions.
 
 | Skill | Trigger | What It Does |
 |-------|---------|-------------|
-| `cc10x:plan-review-gate` | Called by planner agent after saving plan (`Skill()` inline in planner context) | Inline self-review: 3 sequential checks (Feasibility, Completeness, Scope) using planner's Read/Grep/Glob. GATE_PASS / GATE_FAIL output. Max 3 self-correction iterations then AskUserQuestion escalation. No subagents spawned. |
+| `cc10x:plan-review-gate` | Called by planner after saving a plan | Runs inline feasibility/completeness/scope checks and returns `GATE_PASS` or blocking issues. It does not question the user directly and does not create tasks. |
 
-**Safety note:** This skill runs inside the planner agent's context (no subagent spawning). It cannot silently corrupt BUILD/DEBUG/REVIEW chains.
+**Safety note:** Inline skills provide reference logic only. Router-owned workflow and task transitions remain in the router.
 
 ---
 
-## Known Behavioral Guarantees (v8.0.0)
+## Known Behavioral Guarantees (v9 alignment)
 
-These behaviors are enforced by router rules and agent files as of 2026-03-04:
+These are the current guarantees enforced by the live router/agent files:
 
-| Guarantee | Enforced By | Issue Fixed |
-|-----------|-------------|-------------|
-| Memory Update is ALWAYS executed inline by the router — NEVER as a Task() sub-agent | Chain Execution Loop step 2 guard + task description markers | CC10X-002 |
-| REVIEW workflow: code-reviewer is advisory-only — CHANGES_REQUESTED, never SELF_REMEDIATED or REM-FIX creation | code-reviewer REVIEW WORKFLOW GUARD | CC10X-005 |
-| Planner: plan-review-gate is mandatory — GATE_PASSED=true required for PLAN_CREATED | planner CONTRACT RULE (router table) + planner Router Contract GATE_PASSED field | CC10X-009 |
-| Rule 0b: SELF_REMEDIATED tasks stay blocked — never force-completed | Rule 0b no longer calls TaskUpdate(completed) | CC10X-003 |
-| QUICK escalation conforms to Chain Execution Loop in_progress standard | QUICK block: TaskUpdate(in_progress) before parallel Task() calls | CC10X-056 |
-| Planner: design file missing → REQUIRES_REMEDIATION=true, STATUS=NEEDS_CLARIFICATION | planner Conditional Research design file guard | CC10X-007 |
-| READ-ONLY agent contract is the output heading (first 5 lines) — no YAML required | Text-Based Verdict Extraction Steps 1-4 (v8.0.0) | CC10X-060 |
-| Minimal agent output (<200 chars) → safe default APPROVE/CLEAN/PASS, never blocks | Text extraction Step 3 fallback — no REM-EVIDENCE task created | CC10X-061 |
-| Rule 1b auto-defaults to "Fix now" — no AskUserQuestion, JUST_GO compatible | Rule 1b (v8.0.0): auto-default + log | CC10X-062 |
-| REVERT gate triggered by text-scan for "REVERT" in verifier output | Rule 2d text scan (v8.0.0) — not a Router Contract field | CC10X-063 |
-| JUST_GO session mode: AUTO_PROCEED=true auto-defaults all non-REVERT gates | JUST_GO block in router memory load | CC10X-064 |
-| Empty Answer Guard: only ⚠️ REVERT gates block on empty; all others auto-default | Empty Answer Guard block (v8.0.0) | CC10X-065 |
-| REM-EVIDENCE mechanism fully removed — short output handled by safe-default fallback | Text extraction Step 3 replaces REM-EVIDENCE | CC10X-066 |
-| Single canonical Agent Invocation template — Chain Execution Loop references it | Agent Invocation section (canonical) + Chain Execution Loop step 2 reference | CC10X-013 |
-| All agents receive Parent Workflow ID, Plan File, Memory Summary, SKILL_HINTS | Canonical Agent Invocation template + Results Collection verifier prompt | CC10X-012/013 |
-| output-before-TaskUpdate enforced for ALL agents | IMPORTANT block in canonical Agent Invocation template | CC10X-057/058 |
-| REVIEW scope answers persisted to ## Decisions before chain starts | REVIEW workflow step 2 scope persistence | CC10X-014 |
-| REVIEW-to-BUILD transition offered when CHANGES_REQUESTED | REVIEW workflow step 6 transition gate | CC10X-015 |
-| PLAN research file paths persisted to ## References after parallel research | PLAN workflow step 3 research persistence | CC10X-022 |
-| Design file existence verified before planner invoked | PLAN workflow step 2 Glob check | CC10X-024 |
-| NEEDS_CLARIFICATION loop cap: ≥3 planner completions → ask user | Rule 2b loop cap | CC10X-017 |
-| Orphan check distinguishes self-healing blocked tasks from true orphans | Orphan check blockedBy display | CC10X-019 |
-| DEBUG serial verifier loop detected after 2+ Re-verify completions | Rule 2d serial loop check | CC10X-021 |
-| Bug-investigator re-invoke includes Parent Workflow ID + Task ID | Rule 2c re-invoke explicit prompt | CC10X-020 |
-| Brainstorming reports Router Contract with DESIGN_FILE path | Brainstorming Router Contract | CC10X-023 |
-| Rules 1b/2 use inline TaskCreate instead of impossible "apply rule 1a" | Rules 1b, 2A, 2B inline TaskCreate text | CC10X-010 |
-| Rule 0b appears before 0c — matches documented evaluation order | Physical order 0b→0c in router file | CC10X-011 |
+| Guarantee | Enforced By |
+|-----------|-------------|
+| Memory Update always runs inline in the router | Router chain execution loop + `kind:memory` |
+| Resume is workflow-scoped, not task-ID-scoped | Router hydration rules using `wf:` + `kind:` |
+| `memory_task_id` is a transient optimization only | Router hydration rules + session-memory skill |
+| Every remediation task carries explicit `wf`, `kind:remfix`, `origin`, `scope`, and `reason` metadata | Router task schema + reviewer/verifier self-healing templates |
+| Re-review routing is based on `origin:` metadata, not subject prose | Router remediation routing |
+| Planner and builder-side inline skills no longer tell the model to use impossible task/question tools | Planner, planning-patterns, plan-review-gate, code-generation |
+| READ-ONLY agents use envelope-first contracts with heading fallback | code-reviewer, silent-failure-hunter, integration-verifier, router validation |
+| Router-owned user questioning is separate from agent clarification output | Router rules + agent prompt cleanup |
+| `AUTO_PROCEED` depends on `## Session Settings` and that section is required in memory templates | Router template validation + session-memory template |
+| Non-blocking discoveries belong in memory, not TODO tasks | Router hard rules + deferred findings pattern |
 
 ---
 

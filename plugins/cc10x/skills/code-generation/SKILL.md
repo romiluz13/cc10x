@@ -221,7 +221,7 @@ If you find yourself:
 - Project patterns already established (follow existing pattern)
 - User request is specific (no ambiguity)
 
-**When multiple valid approaches exist:** Present options to the user via `AskUserQuestion` before proceeding. Choose the simplest approach that meets requirements.
+**When multiple valid approaches exist:** Prefer the simplest option that matches project patterns. If the choice is high-risk and not already decided by the prompt or plan, surface the alternatives in your output and return control to the router instead of questioning the user directly.
 
 ## Code Quality Checklist
 

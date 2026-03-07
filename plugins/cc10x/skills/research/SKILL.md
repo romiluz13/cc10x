@@ -1,7 +1,7 @@
 ---
 name: research
 description: "Internal skill. Synthesis guidance loaded via SKILL_HINTS by planner and bug-investigator when research files are available."
-allowed-tools: Read, Write, Edit, Bash
+allowed-tools: Read
 ---
 
 # Research Synthesis Guidance
@@ -11,22 +11,24 @@ allowed-tools: Read, Write, Edit, Bash
 This skill is loaded via SKILL_HINTS by `cc10x:planner` and `cc10x:bug-investigator` when the router passes research files in the prompt. It provides instructions for synthesizing web and GitHub research findings.
 
 **This skill does NOT execute research.** Research execution is done by:
-- `cc10x:web-researcher` — runs Bright Data + WebSearch (spawned by router)
-- `cc10x:github-researcher` — runs Octocode MCP tools (spawned by router, in parallel)
+- `cc10x:web-researcher` — prefers Bright Data, falls back to WebSearch/WebFetch
+- `cc10x:github-researcher` — prefers Octocode MCP, falls back to package/docs/GitHub web research
 
 ## Synthesis Goal
 
-After the router passes both research file paths in your prompt, read those files and produce a synthesis that:
+After the router passes research file paths in your prompt, read the available files and produce a synthesis that:
 1. Answers the knowledge gap (the `Reason` field from your prompt)
 2. Identifies the top 2-3 actionable patterns
 3. Lists gotchas with solutions
 4. Provides specific references for debugging
+5. Reflects evidence quality honestly
 
 ## What Makes Good Synthesis
 
 **Include:**
 - Cross-source confirmation (when web + GitHub agree on a pattern, it's reliable)
 - Conflict resolution (when sources disagree, prefer GitHub real code over docs)
+- Confidence calibration from the router-provided `## Research Quality` block
 - Gotchas the user probably hasn't considered
 - Specific code snippets only when they materially change the recommendation
 
@@ -38,6 +40,11 @@ After the router passes both research file paths in your prompt, read those file
 ## Synthesis Format
 
 ```markdown
+## Evidence Quality
+- Web: [high / medium / low / none]
+- GitHub: [high / medium / low / none]
+- Overall confidence: [high / medium / low]
+
 ## Web Findings
 [3-5 bullets from web research. Focus on patterns and gotchas.]
 
@@ -73,19 +80,20 @@ If GitHub researcher returned `[GitHub phase unavailable]`:
 - Use web findings only for synthesis
 
 If BOTH unavailable:
-- Write: "Research unavailable — all sources down. Proceeding with AI knowledge only."
-- Return STATUS=PARTIAL in Router Contract
+- State clearly: "Research unavailable — all sources down. Proceeding with AI knowledge only."
+- Lower confidence and rely on repo-local evidence first.
 
-## Memory Update After Synthesis
+Quality weighting:
+- `high`: multiple concrete sources or code-backed findings
+- `medium`: one strong source or partial cross-confirmation
+- `low`: indirect, sparse, or web-only/package-only signals
+- `none`: no usable external findings
 
-After writing the merged file:
+## Memory Output
 
-```
-Read(file_path=".claude/cc10x/activeContext.md")
-Edit(file_path=".claude/cc10x/activeContext.md",
-     old_string="## References",
-     new_string="## References\n- Research: `{merged_file}` → {1-line insight}")
-Read(file_path=".claude/cc10x/activeContext.md")  # VERIFY
-```
+Do not edit `.claude/cc10x/*.md` directly from this skill or from the host agent.
 
-Extract gotchas to patterns.md only if research found novel gotchas (not obvious ones).
+Instead, surface the most durable takeaway through the host agent's `MEMORY_NOTES`, for example:
+- one research-backed gotcha worth preserving
+- one reference path worth indexing
+- one confidence caveat if research quality was degraded

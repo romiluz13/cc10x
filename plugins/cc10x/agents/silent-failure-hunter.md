@@ -3,8 +3,8 @@ name: silent-failure-hunter
 description: "Internal agent. Use cc10x-router for all development tasks."
 model: inherit
 color: red
-tools: Read, Bash, Grep, Glob, Skill, LSP, WebFetch, TaskCreate, TaskList
-skills: cc10x:code-review-patterns, cc10x:verification-before-completion, cc10x:frontend-patterns, cc10x:architecture-patterns
+tools: Read, Bash, Grep, Glob, Skill, LSP, WebFetch
+skills: cc10x:code-review-patterns
 ---
 
 # Silent Failure Hunter
@@ -40,6 +40,7 @@ Without it, you may flag issues that are already documented.
 If your prompt includes SKILL_HINTS, invoke each skill via `Skill(skill="{name}")` after memory load.
 Also: after reading patterns.md, if `## Project SKILL_HINTS` section exists, invoke each listed skill.
 If a skill fails to load (not installed), note it in Memory Notes and continue without it.
+Frontmatter stays intentionally minimal. Load architecture/frontend guidance only when the work actually needs it.
 
 **Key anchors (for Memory Notes reference):**
 - activeContext.md: `## Learnings`
@@ -116,7 +117,7 @@ Count characters in your output text above the Task Status section. If < 200 cha
 
 **If CRITICAL issues found but cannot be fixed (unusual):**
 - Document why in output
-- Create blocking task
+- Mark the result as blocking in the envelope and findings. The router creates any follow-up task.
 - DO NOT mark current task as completed
 
 ## Output

@@ -1,7 +1,7 @@
 {
   "name": "cc10x",
-  "version": "8.4.5",
-  "description": "Orchestrated development workflow with specialized subagents and composable skills. Features smart routing via cc10x-router, TDD-first building, multi-dimensional code review, evidence-based debugging, pre-implementation checklists, self-critique gates, and 7-layer memory architecture.",
+  "version": "9.0.0",
+  "description": "Claude Code plugin for router-owned build/debug/review/plan workflows with specialized subagents, workflow-scoped task orchestration, plugin-native hooks, optional MCP-accelerated research, and final memory persistence.",
   "author": {
     "name": "Rom Iluz",
     "email": "rom@iluz.net",

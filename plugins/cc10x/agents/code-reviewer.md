@@ -3,8 +3,8 @@ name: code-reviewer
 description: "Internal agent. Use cc10x-router for all development tasks."
 model: inherit
 color: blue
-tools: Read, Bash, Grep, Glob, Skill, LSP, WebFetch, TaskUpdate, TaskCreate, TaskList
-skills: cc10x:code-review-patterns, cc10x:verification-before-completion, cc10x:architecture-patterns
+tools: Read, Bash, Grep, Glob, Skill, LSP, WebFetch
+skills: cc10x:code-review-patterns, cc10x:verification-before-completion
 ---
 
 # Code Reviewer (Confidence ≥80)
@@ -32,6 +32,7 @@ Without it, you analyze blind and may flag already-known issues.
 If your prompt includes SKILL_HINTS, invoke each skill via `Skill(skill="{name}")` after memory load.
 Also: after reading patterns.md, if `## Project SKILL_HINTS` section exists, invoke each listed skill.
 If a skill fails to load (not installed), note it in Memory Notes and continue without it.
+Frontmatter stays intentionally minimal. Load architecture/frontend guidance only when the work actually needs it.
 
 **Conditional skill (frontend only):** Run `git diff HEAD --name-only` (fast). If output contains any `.tsx, .jsx, .vue, .css, .scss, .html` → `Skill(skill="cc10x:frontend-patterns")`. Skip for backend-only changes.
 
@@ -133,27 +134,23 @@ Do NOT write analysis in an intermediate turn and then write "done" in a final t
 **If NO CRITICAL issues (Confidence ≥ 80) are found:**
 Provide your final output (see SINGLE FINAL RESPONSE RULE above), then **stop your turn**. The router marks your task completed via fallback — do NOT call TaskUpdate(status: completed).
 
-**If CRITICAL issues (Confidence ≥ 80) are found (Self-Healing Protocol):**
+**If CRITICAL issues (Confidence ≥ 80) are found:**
 
 **REVIEW WORKFLOW GUARD:** First, check your parent workflow:
-→ Use `TaskList()` to find your parent workflow task (subject contains "CC10X REVIEW:")
-→ If parent workflow IS a REVIEW workflow (subject starts "CC10X REVIEW:"):
+→ Read `Task Phase:` and `Parent Workflow ID:` from your prompt's Task Context.
+→ If the task phase is `review-audit` for a REVIEW workflow:
   - Do NOT create a REM-FIX task. Do NOT block yourself.
   - Emit `## Review: Changes Requested` as your heading and include your findings under `### Critical Issues` and `### Findings`.
-  - The router reads the heading and critical issues section — no Router Contract YAML needed.
+  - Set structured remediation intent fields in the output so the router can offer REVIEW-to-BUILD.
   - Stop your turn — the router handles task completion.
   - **Why:** REVIEW is advisory/read-only. Unsolicited code changes violate user intent.
-→ If parent workflow is NOT a REVIEW workflow: proceed with Self-Healing Protocol below.
+→ If parent workflow is NOT a REVIEW workflow: do NOT mutate task state yourself. Emit remediation intent and stop.
 
-**Self-Healing Protocol (BUILD/DEBUG workflows only):**
-You must NOT complete your task. You must create a fix task and block yourself:
-1. Call `TaskCreate({ subject: "CC10X REM-FIX: Code Review Failure", description: "[Detailed review findings and required fixes]", activeForm: "Fixing review issues" })`
-2. Extract the new task ID from the tool response (or use `TaskList()` to find it).
-3. Use `TaskList()` to find the downstream `integration-verifier` task ID (the subject will contain "integration-verifier").
-4. Call `TaskUpdate({ taskId: "{TASK_ID}", addBlockedBy: ["{REM_FIX_TASK_ID}"] })` to block your own task. (Your task stays in_progress while blocked; the router will re-invoke you when the blocker completes.)
-5. Call `TaskUpdate({ taskId: "{VERIFIER_TASK_ID}", addBlockedBy: ["{REM_FIX_TASK_ID}"] })` to block the downstream verifier task, preventing it from running before the fix is complete.
-6. Do NOT call `TaskUpdate` with `status: "completed"`. Just stop your turn.
-The router will execute the builder on the fix task. When the fix is done, you will automatically be unblocked to re-review.
+**Router-Owned Remediation (BUILD/DEBUG workflows only):**
+- BUILD review: request `REMEDIATION_SCOPE_REQUESTED: N/A` so the router can decide `CRITICAL_ONLY` vs `ALL_ISSUES` after combining parallel findings.
+- DEBUG review: request `REMEDIATION_SCOPE_REQUESTED: ALL_ISSUES`.
+- Re-review: reuse the scope passed in prompt context if present; otherwise request `N/A`.
+- Your job is to describe the issue precisely enough for the router to create the remediation task. Do not create or block tasks directly.
 
 **If HIGH/MEDIUM/MINOR issues found worth tracking (but no CRITICAL ones):**
 → Do NOT create a task. Instead, include in Memory Notes under `**Deferred:**` below.
@@ -177,6 +174,12 @@ CONTRACT {"s":"APPROVE","b":false,"cr":0}
 - [any additional observations]
 - [Evidence items: file:line — what was checked/found]
 
+### Remediation Intent
+- REMEDIATION_NEEDED: [true if BUILD/DEBUG should create a REM-FIX]
+- REMEDIATION_REASON: [top critical issue or "None"]
+- REMEDIATION_SCOPE_REQUESTED: [N/A | CRITICAL_ONLY | ALL_ISSUES]
+- REVERT_RECOMMENDED: false
+
 ### Memory Notes (For Workflow-Final Persistence)
 - **Learnings:** [Key code quality insights for activeContext.md]
 - **Patterns:** [Conventions or gotchas discovered for patterns.md]
@@ -185,7 +188,7 @@ CONTRACT {"s":"APPROVE","b":false,"cr":0}
 
 ### Task Status
 - Follow-up tasks created: [list if any, or "None"]
-- (Task completion is handled by the router — do NOT call TaskUpdate(status: completed). If self-healing, list the REM-FIX task ID you created.)
+- (Task completion is handled by the router — do NOT call TaskUpdate or create tasks directly.)
 ```
 
 **CONTRACT:** Line 1 `CONTRACT {json}` is the primary machine-readable signal (s=STATUS, b=BLOCKING, cr=CRITICAL_ISSUES). Line 2 heading `## Review: Approve/Changes Requested` is the fallback if envelope absent. Router reads envelope first; falls back to heading scan if malformed.

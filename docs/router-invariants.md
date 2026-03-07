@@ -1,5 +1,15 @@
 # CC10x Router Behavioral Invariant Registry
 
+> **Status note:** This registry is still anchored in the pre-plugin-native refactor audits (`v8.5.0` baseline plus later additions). Treat it as a safety reference, not as a fully resynced source of truth for the current live router until a fresh invariant audit is completed.
+
+## 2026-03-07 Audit Snapshot
+
+Current live audit against `plugins/cc10x/skills/cc10x-router/SKILL.md` and the live agents:
+- Preserved: compaction-safe memory capture, transient `memory_task_id`, workflow-scoped hydration, read-only fallback completion, re-review/re-verify loop, research round caps, REVERT gate, REVIEW-to-BUILD transition.
+- Restored in this pass: BUILD scope-decision resume for mixed CRITICAL + HIGH findings and scope-aware re-hunt behavior.
+- Plugin-native packaging now carries the shipped runtime hooks and optional MCP acceleration; repo-local `.claude/settings.json` is no longer part of the product contract.
+- Still pending: a full invariant-by-invariant renumbering/resync so every current router section maps cleanly to a live invariant entry.
+
 **Purpose:** Maps every load-bearing section of `cc10x-router/SKILL.md` to the failure mode it prevents.
 
 **Rule for editors:** Before removing ANY text from the router, find its invariant entry.
@@ -495,5 +505,29 @@ In practice: keep — it's the deliberate opt-in for automated workflows.
 **Load sequence:** Checked once at memory load time. Session flag is
 set in router memory context. Does not require file re-read during workflow.
 
+---
+
+## v8.5.0 Invariants (2026-03-05)
+
+### INV-046: 3-GATE READ-ONLY task completion — mandatory first step (Fix 1)
+**Covers:** Chain Execution Loop step 3 — 3-GATE section
+**Enforces:** For every READ-ONLY agent (code-reviewer, silent-failure-hunter, integration-verifier), router MUST call TaskUpdate(completed) BEFORE extracting verdict, if task is still in_progress AND blockedBy is empty. This is the FIRST action in step 3, not a buried fallback.
+**Fails silently if removed:** READ-ONLY agents never self-complete. Router reads verdict, applies rules, advances workflow — but task stays in_progress. TaskList() shows agents stuck. Memory Update task stays blocked (depends on verifier completion). Workflow silently hangs.
+**Safe to remove:** Never. READ-ONLY agents are contractually prohibited from calling TaskUpdate themselves.
+**Preserves:** INV-005 (blockedBy exclusion) — gate checks blockedBy before forcing completion; self-healed agents are never force-completed.
+
+### INV-047: Rule 1a-SCOPE — scope selection before REM-FIX when CRITICAL+HIGH coexist (Fix 2b)
+**Covers:** Routing matrix Rule 1a-SCOPE + Scope Decision Resume section + Detailed Logic: Rule 1a-SCOPE
+**Enforces:** When a BUILD agent finds CRITICAL issues AND HIGH issues in the same output, router pauses before creating REM-FIX. Outputs a plain-text scope question (no AskUserQuestion — broken in this context). Writes `[SCOPE-DECISION-PENDING]` marker to memory. Next turn: Scope Decision Resume reads user reply and creates appropriately-scoped REM-FIX.
+**Fails silently if removed:** Router creates REM-FIX scoped only to CRITICAL issues. Builder fixes CRITICAL. Re-hunt verifies CRITICAL is fixed → CLEAN. The 5 HIGH issues from the original hunt are silently discarded, never addressed.
+**Safe to remove:** Only if re-hunt is always forced to ALL_ISSUES scope regardless of user preference (i.e., Fix 2a is applied instead).
+
+### INV-048: Re-hunt REHUNT_SCOPE from REM-FIX description (Fix 2b)
+**Covers:** Re-Review Loop step 2 — re-hunt task description construction
+**Enforces:** When creating the re-hunt task, router reads `REHUNT_SCOPE:` from the completed REM-FIX task description. ALL_ISSUES → re-hunt task says "FULL re-audit of ALL issue categories". CRITICAL_ONLY → re-hunt task says "verify CRITICAL fix only". Default (no marker) → ALL_ISSUES.
+**Fails silently if removed (or if description is generic):** Re-hunt receives "Re-hunt for silent failures after REM-FIX" — interprets as "verify CRITICAL only" — silently ignores HIGH issues that remain after the CRITICAL fix. HIGH issues never get re-checked. Code ships with known HIGH gaps.
+**Safe to remove:** Never while scope-aware REM-FIX creation (INV-047) is in place. Both invariants are paired.
+
 *Last updated: v8.0.0 — 2026-03-04 (Radical Simplification: Router Contract YAML removed from read-only agents; text-based verdict extraction; INV-008/014/032 updated; INV-042–045 added)*
-*Router version at last audit: 8.0.0 (~620 lines)*
+*Last updated: v8.5.0 — 2026-03-05 (Fix 1: 3-GATE READ-ONLY completion; Fix 2b: scope selection + REHUNT_SCOPE; INV-046–048 added)*
+*Router version at last audit: 8.5.0*

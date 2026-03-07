@@ -35,10 +35,13 @@ CC10x memory is a **small, stable, permission-free Markdown database** used for:
    - What’s done/remaining + verification evidence (commands + exit codes)
 4. **Artifact Memory (Durable)**: `docs/plans/*`, `docs/research/*`
    - The details. Memory files are the index.
-5. **Tasks (Execution State)**: Claude Code Tasks
+5. **Workflow Artifacts (Durable Execution State)**: `.claude/cc10x/workflows/{wf}.json`
+   - Canonical workflow state: task ids, phase status, structured agent results, pending gates
+   - Used for resume, verifier handoff, and memory finalization
+6. **Tasks (Execution State)**: Claude Code Tasks
    - Great for orchestration, but not guaranteed to be the only durable source.
-   - Mirror key task subjects/status into `progress.md` for backup/resume.
-   - **Task ID Warning:** Task IDs may not persist across session restarts unless `CLAUDE_CODE_TASK_LIST_ID` is configured. NEVER store task IDs as durable references in memory files. Store phase names and status instead. Exception: the router may store `[cc10x-internal] memory_task_id` in `## References` for compaction safety. This ID is scoped to the current workflow (wf:{parent_task_id}) and cleaned up by the Memory Update task upon completion.
+   - Tasks remain runtime coordination only; the workflow artifact is the durable orchestration truth.
+  - **Task ID Warning:** Task IDs may not persist across session restarts unless `CLAUDE_CODE_TASK_LIST_ID` is configured. NEVER use stored task IDs as the primary source of truth on resume. Store workflow scope + phase + status in task descriptions, then hydrate from `TaskList()` / `TaskGet()`. Exception: the router may store `[cc10x-internal] memory_task_id` in `## References` as a transient hint for the active workflow only. Memory Update must remove it when the workflow completes.
    - **Hydration Pattern (recommended for resume):**
      - Session start: Read progress.md → create fresh tasks for each pending item → set dependencies
      - Session end: Sync completed status back to progress.md via Memory Update task
@@ -148,14 +151,16 @@ Without memory persistence:
 - **READ-ONLY agents** (code-reviewer, silent-failure-hunter, integration-verifier): read memory files directly at task start via their own Memory First section. They do NOT have Edit tool — they output `### Memory Notes` for the router to persist.
 
 ### Write
-- **WRITE agents:** update memory directly at task end using `Edit(...)` + `Read(...)` verify pattern.
-- **READ-ONLY agents:** output `### Memory Notes (For Workflow-Final Persistence)` section. The task-enforced "CC10X Memory Update" task ensures these are persisted. Include `**Skill Hints:**` if new tech signals discovered (e.g., "cc10x:frontend-patterns — detected React") so Memory Update can append to patterns.md `## Project SKILL_HINTS`.
+- **Router/workflow finalizer:** the ONLY writer of `.claude/cc10x/{activeContext,patterns,progress}.md`.
+- **WRITE agents:** do NOT edit memory markdown files directly. Emit structured `MEMORY_NOTES` in the final Router Contract.
+- **READ-ONLY agents:** output `### Memory Notes (For Workflow-Final Persistence)` section. Router persists them into the workflow artifact immediately; Memory Update writes the markdown files at workflow finalization.
+- **Router-owned cleanup:** when Memory Update finishes, remove the matching `[cc10x-internal] memory_task_id` line for that workflow from `activeContext.md ## References`. Do not leave stale task IDs behind.
 
 ### Concurrency Rule (Parallel Phases)
 
 BUILD runs `code-reviewer ∥ silent-failure-hunter` in parallel. To avoid conflicting edits:
-- Prefer **no memory edits during parallel phases**.
-- If you must persist something mid-parallel, only the main assistant should do it, and only after both parallel tasks complete.
+- Agents do not edit memory markdown during parallel phases.
+- Router persists structured notes into the workflow artifact mid-phase and writes markdown only in Memory Update.
 
 ## Pre-Compaction Memory Safety
 
@@ -226,6 +231,7 @@ If an Edit does not apply cleanly:
 - Plan: `docs/plans/...` (or N/A)
 - Design: `docs/plans/...` (or N/A)
 - Research: `docs/research/...` → [insight]
+- [cc10x-internal] memory_task_id: [task id] wf:[workflow id]  <!-- transient only; Memory Update removes this line -->
 
 ## Blockers
 - [None]

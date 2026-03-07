@@ -1,0 +1,42 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/cc10x_pretooluse_guard.py\"",
+            "timeout": 10,
+            "statusMessage": "CC10X protected-write guard"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/cc10x_sessionstart_context.py\"",
+            "timeout": 10,
+            "statusMessage": "CC10X workflow resume context"
+          }
+        ]
+      }
+    ],
+    "TaskCompleted": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/cc10x_task_completed_guard.py\"",
+            "timeout": 10,
+            "statusMessage": "CC10X task metadata guard"
+          }
+        ]
+      }
+    ]
+  }
+}

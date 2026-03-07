@@ -1,7 +1,7 @@
 ---
 name: planning-patterns
 description: "Internal skill. Use cc10x-router for all development tasks."
-allowed-tools: Read, Grep, Glob, AskUserQuestion, LSP
+allowed-tools: Read, Grep, Glob, LSP
 ---
 
 # Writing Plans
@@ -406,64 +406,16 @@ Read(file_path=".claude/cc10x/progress.md")
 
 **This is non-negotiable.** Memory is the single source of truth.
 
-## Task-Based Execution Tracking
+## Router-Owned Task Tracking
 
-After saving plan, create execution tasks for tracking progress:
+The planner does **not** create execution tasks. Its job is to create the plan artifact and emit a router contract.
 
-### Step 1: Create Parent Task
-```
-TaskCreate({
-  subject: "CC10X Execute Plan: {feature}",
-  description: "Plan file: docs/plans/YYYY-MM-DD-{feature}-plan.md\n\n{brief_plan_summary}",
-  activeForm: "Executing {feature} plan"
-})
-# Returns parent_task_id
-```
+After planning:
+- Save the plan file.
+- Update memory with the plan reference.
+- Let the router create workflow and execution tasks from the approved plan.
 
-### Step 2: Create Phase Tasks with Dependencies
-```
-# For each phase in plan:
-TaskCreate({
-  subject: "CC10X Phase 1: {phase_title}",
-  description: "**Plan:** docs/plans/YYYY-MM-DD-{feature}-plan.md\n**Section:** Phase 1\n**Exit Criteria:** {demonstrable_milestone}\n\n{phase_details}",
-  activeForm: "Working on {phase_title}"
-})
-# Returns phase_1_id
-
-TaskCreate({
-  subject: "CC10X Phase 2: {phase_title}",
-  description: "**Plan:** docs/plans/YYYY-MM-DD-{feature}-plan.md\n**Section:** Phase 2\n**Exit Criteria:** {demonstrable_milestone}\n\n{phase_details}",
-  activeForm: "Working on {phase_title}"
-})
-TaskUpdate({ taskId: phase_2_id, addBlockedBy: [phase_1_id] })
-
-# Continue for all phases...
-```
-
-### Step 3: Store Task IDs in Memory
-
-Update `.claude/cc10x/progress.md` with task *subjects* (and optionally task IDs for the current session).
-Do not rely on task IDs for long-term continuity unless you deliberately share the task list across sessions.
-
-Use Edit + Read-back verify:
-
-```
-Read(file_path=".claude/cc10x/progress.md")
-
-Edit(file_path=".claude/cc10x/progress.md",
-     old_string="## Tasks",
-     new_string="## Tasks
-
-- CC10X Execute Plan: {feature} (blocked by: -)
-- CC10X Phase 1: {title} (blocked by: -)
-- CC10X Phase 2: {title} (blocked by: CC10X Phase 1: {title})
-")
-
-# VERIFY (do not skip)
-Read(file_path=".claude/cc10x/progress.md")
-```
-
-**WHY:** Tasks help orchestration (dependencies + parallelism) and survive context compactions. For cross-session continuity, the plan file + CC10x memory files are the durable source of truth. If you intentionally share a task list across sessions (official Claude Code supports this), subjects/namespacing keep scope safe.
+Do not instruct the planner to call `TaskCreate` or `TaskUpdate` for phase tracking.
 
 ## Plan-Task Linkage (Context Preservation)
 

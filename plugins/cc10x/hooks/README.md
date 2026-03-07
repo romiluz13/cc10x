@@ -1,17 +1,32 @@
 # cc10x Hooks
 
-Optional deterministic quality gates. These complement cc10x's agent-based
-review with shell-level enforcement. They run at commit time, independent
-of any LLM.
+This directory now serves two different purposes:
 
-## Install
+1. **Plugin runtime hooks** via `hooks.json`
+   - `PreToolUse`
+   - `SessionStart`
+   - `TaskCompleted`
+2. **Optional git pre-commit helper** via `pre-commit`
+
+## Plugin Runtime Hooks
+
+When CC10X is installed as a Claude Code plugin, Claude Code reads `hooks/hooks.json`
+from the plugin bundle and runs the referenced scripts from `${CLAUDE_PLUGIN_ROOT}/scripts`.
+
+The shipped runtime hooks are intentionally minimal and audit-first:
+- protect direct memory markdown writes
+- inject workflow resume context
+- validate CC10X task metadata on completion
+
+## Optional Git Pre-Commit Hook
+
+This is separate from Claude Code plugin hooks. Install it only if you want
+git commits blocked when tests fail:
 
 ```bash
 cp plugins/cc10x/hooks/pre-commit .git/hooks/pre-commit
 chmod +x .git/hooks/pre-commit
 ```
 
-## What it does
-
-Blocks `git commit` if your test suite fails. No test runner configured?
-Hook exits 0 (passes through). No surprises.
+It blocks `git commit` if your test suite fails. No test runner configured?
+Hook exits 0 and passes through.

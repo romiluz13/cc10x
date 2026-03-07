@@ -156,7 +156,7 @@ npx eslint . --ext .ts,.tsx        # Lint check
 
 ### Frontend Browser Errors
 ```
-1. Request clean console: AskUserQuestion → "F12 → Console → Clear → reproduce → Copy all"
+1. Request clean console logs through the parent router/user turn if needed: "F12 → Console → Clear → reproduce → Copy all"
 2. Analyze grouped messages for repetition patterns
 3. Check for hidden CORS errors (enable "Show CORS errors in console")
 4. If insufficient: request user add console.log at suspected locations

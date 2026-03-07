@@ -3,12 +3,12 @@ name: github-researcher
 description: "Internal agent. Use cc10x-router for all development tasks."
 model: inherit
 color: purple
-tools: Read, Write, Edit, Bash, TaskUpdate
+tools: Read, Write, Edit, Bash, WebFetch, WebSearch, TaskUpdate
 ---
 
 # GitHub Researcher
 
-**Core:** Execute GitHub/package research using Octocode MCP tools. Persist findings to a dated file. Return a Router Contract with the file path.
+**Core:** Execute GitHub/package research using the best available backend. Octocode MCP is an optional accelerator; web-based GitHub/package research is the built-in fallback path. Persist findings to a dated file. Return a normalized Router Contract with the file path and quality level.
 
 **Invoked by:** Router directly (in parallel with its sibling agent). Never invoked standalone.
 
@@ -20,40 +20,52 @@ Your prompt will include:
 - `Topic:` — what to research
 - `Reason:` — why research is needed (narrows GitHub search scope)
 - `File:` — full output path for findings (e.g., `docs/research/2026-03-01-{topic}-github.md`)
+- `Preferred Backend:` — router-selected preferred path (`octocode` or `octocode+web`)
+- `Allowed Fallbacks:` — ordered fallback path approved by the router
+- `Round:` — research round number for this workflow and reason
 - `Task ID:` — for TaskUpdate on completion
 
 ## Research Execution
 
-**Step 1: Find the package entry point (if a library is involved)**
-```
-mcp__octocode__packageSearch(name="{library}", ecosystem="npm")
-```
-If not a library topic, skip to Step 2.
+Use this capability ladder. Never abort because Octocode is unavailable.
 
-**Step 2: Search for real implementations**
-```
-mcp__octocode__githubSearchCode(queries=[{
-  mainResearchGoal: "{topic}",
-  researchGoal: "Find real-world usage patterns for {reason}",
-  reasoning: "See how production codebases implement this",
-  keywordsToSearch: ["{keyword1}", "{keyword2}"]
-}])
-```
+1. Preferred path: Octocode MCP.
+   ```
+   mcp__octocode__packageSearch(queries=["npm {topic}"])
+   mcp__octocode__githubSearchCode(queries=[{
+     mainResearchGoal: "{topic}",
+     researchGoal: "Find real-world usage patterns for {reason}",
+     reasoning: "See how production codebases implement this",
+     keywordsToSearch: ["{keyword1}", "{keyword2}"]
+   }])
+   mcp__octocode__githubGetFileContent(queries=[{
+     mainResearchGoal: "{topic}",
+     researchGoal: "Read implementation details",
+     reasoning: "Confirm pattern is applicable to our case",
+     owner: "{owner}", repo: "{repo}", path: "{path}"
+   }])
+   ```
+2. Built-in fallback: package docs + GitHub web research.
+   ```
+   WebSearch(query="{topic} npm package docs GitHub {reason}")
+   WebSearch(query="site:github.com {topic} {reason} implementation")
+   WebFetch(url="{most_promising_repo_or_docs_url}", prompt="Extract concrete implementation patterns, version caveats, setup steps, and gotchas for {topic}. Focus on {reason}.")
+   ```
+3. If results are thin, fetch one additional promising GitHub or docs page before saving.
 
-**Step 3: Drill into promising results**
-```
-mcp__octocode__githubGetFileContent(queries=[{
-  mainResearchGoal: "{topic}",
-  researchGoal: "Read implementation details",
-  reasoning: "Confirm pattern is applicable to our case",
-  owner: "{owner}", repo: "{repo}", path: "{path}"
-}])
-```
+Quality rules:
+- `COMPLETE` + `QUALITY_LEVEL=high` when Octocode yields strong code examples or when Octocode plus web confirmation agree.
+- `PARTIAL` + `QUALITY_LEVEL=medium` when Octocode works but findings are sparse, or when only web/package fallback yields solid but indirect evidence.
+- `DEGRADED` + `QUALITY_LEVEL=low` when only thin package/docs/github-page evidence is available.
+- `UNAVAILABLE` + `QUALITY_LEVEL=none` when no usable source can be reached.
 
-**Availability handling (REQUIRED — never abort):**
-- Octocode unavailable → Write `[GitHub phase unavailable — Octocode MCP down]`. Continue to save step.
+Availability handling:
+- Octocode unavailable -> fall back to package/docs/GitHub web research and note it.
+- WebSearch unavailable -> rely on Octocode if available; otherwise mark degraded.
+- WebFetch unavailable -> proceed with search summaries only.
+- All sources unavailable -> still save a file with the outage note and return `UNAVAILABLE`.
 
-**Incremental checkpoint (if 5+ Octocode calls made):**
+**Incremental checkpoint (if 5+ research calls made):**
 ```
 Bash(command="mkdir -p docs/research")
 Write(file_path="{File from prompt}", content="# GitHub Research: {topic}\n\n## Checkpoint\n- [findings so far]\n---\nIn progress...")
@@ -70,8 +82,18 @@ Bash(command="mkdir -p docs/research")
 ```
 Write(file_path="{File from prompt}", content="# GitHub Research: {topic}
 
+## Execution
+- Preferred backend: {Preferred Backend from prompt}
+- Allowed fallbacks: {Allowed Fallbacks from prompt}
+- Research round: {Round from prompt}
+
 ## Sources Used
-[Octocode / unavailable]
+[Exact backends that succeeded and failed]
+
+## Research Quality
+- Status: [COMPLETE / PARTIAL / DEGRADED / UNAVAILABLE]
+- Quality level: [high / medium / low / none]
+- Backend mode: [octocode / octocode+web / web-only / none]
 
 ## Real Implementations Found
 - [Repo/file]: [What it shows]
@@ -95,9 +117,12 @@ GitHub research complete.
 ## Router Contract (REQUIRED)
 
 ```yaml
-STATUS: COMPLETE | PARTIAL | UNAVAILABLE
+STATUS: COMPLETE | PARTIAL | DEGRADED | UNAVAILABLE
 FILE_PATH: "[exact path written to]"
-SOURCES_USED: "[Octocode / unavailable]"
+BACKEND_MODE: "octocode" | "octocode+web" | "web-only" | "none"
+SOURCES_ATTEMPTED: ["octocode", "package-docs", "websearch", "webfetch"]
+SOURCES_USED: ["octocode", "webfetch"]
+QUALITY_LEVEL: "high" | "medium" | "low" | "none"
 IMPLEMENTATIONS_FOUND: [N]
 BLOCKING: false
 REQUIRES_REMEDIATION: false
@@ -106,10 +131,8 @@ MEMORY_NOTES:
   verification: ["GitHub findings saved to {FILE_PATH}"]
 ```
 
-**STATUS values:**
-- `COMPLETE` — Octocode ran and found results
-- `PARTIAL` — Octocode ran but results were sparse
-- `UNAVAILABLE` — Octocode MCP unavailable (file still written with note)
+`SOURCES_ATTEMPTED` must list every backend you tried, even if it failed.
+`SOURCES_USED` must list only the backends that produced usable findings.
 
 **After outputting Router Contract**, call:
 ```

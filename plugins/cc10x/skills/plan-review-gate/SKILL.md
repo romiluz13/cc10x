@@ -1,7 +1,7 @@
 ---
 name: plan-review-gate
 description: "Inline adversarial plan review — 3 sequential checks (Feasibility, Completeness, Scope & Alignment) performed by the calling LLM in its own context. No subagents spawned. Call after saving a plan. Returns GATE_PASS or GATE_FAIL with blocking issues."
-allowed-tools: Read, Bash, Grep, Glob, AskUserQuestion
+allowed-tools: Read, Bash, Grep, Glob
 ---
 
 # Plan Review Gate
@@ -63,7 +63,7 @@ Read the user's original request and compare against the plan:
    b. Revise the plan to address them
    c. Re-run checks (increment iteration counter)
    <!-- CC10X-M9: iteration counter is in-context only — not persisted to memory. If compaction occurs mid-retry, counter resets to 0 and gate may retry more than 3 times. Acceptable for now (gate still converges). -->
-7. IF GATE_FAIL after 3 iterations → ESCALATION: AskUserQuestion
+7. IF GATE_FAIL after 3 iterations → ESCALATION: emit a blocking review result and stop
 ```
 
 ## Output Format
@@ -104,7 +104,7 @@ Read the user's original request and compare against the plan:
 [List by check with evidence]
 ```
 
-→ Use `AskUserQuestion` with options: "Override (proceed with known risks)" | "Revise manually" | "Simplify scope" | "Cancel"
+→ Do NOT question the user from this skill. Return the blocking issues clearly so the planner can emit `STATUS: NEEDS_CLARIFICATION` and let the router handle user interaction.
 
 ## Anti-Patterns
 

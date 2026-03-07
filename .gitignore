@@ -147,6 +147,7 @@ push_v3.1.py
 *.py
 !plugins/cc10x/hooks/*.sh
 !plugins/cc10x/scripts/*.sh
+!plugins/cc10x/scripts/*.py
 
 # ========================================
 # BACKUP & ARCHIVE FILES
