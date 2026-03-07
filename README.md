@@ -11,8 +11,27 @@
 </p>
 
 <p align="center">
-  <em>One Claude Code plugin that routes development work through explicit workflows, specialist subagents, durable workflow state, and minimal hook enforcement.</em>
+  <em>Orchestrated skills, specialist subagents, durable workflow state, and evidence-first execution for Claude Code.</em>
 </p>
+
+---
+
+## Why cc10x
+
+cc10x is what Claude Code should feel like for serious software work:
+
+- one router entry point
+- explicit workflows instead of ad-hoc prompting
+- specialist agents instead of one overloaded assistant
+- memory and workflow artifacts that survive long sessions
+- evidence before advancement: LOG FIRST, RED → GREEN → REFACTOR, expected vs actual verification
+
+If the short pitch matters:
+
+```text
+You provide intent. cc10x routes the workflow, loads the right context,
+invokes the right specialists, and refuses to advance on weak evidence.
+```
 
 ---
 
@@ -34,6 +53,19 @@ cc10x = router + workflow artifacts + specialist agents + minimal hooks
 ```
 
 It is not a scheduler, background service, or external platform. It is a Claude Code plugin that makes the core engineering loop more reliable inside normal Claude Code sessions.
+
+## What You Get
+
+With cc10x installed, Claude Code gains:
+
+- `PLAN` with intent-first planning, constraints, scenarios, and defaults
+- `BUILD` with TDD-first implementation and post-build review/verification
+- `DEBUG` with log-first investigation, regression proof, and research fallback
+- `REVIEW` with adversarial review and confidence-based findings
+- `VERIFY` with BDD-style scenario evidence and fail-closed advancement rules
+- `RESEARCH` with optional Octocode/Bright Data acceleration and graceful fallback
+
+This is still one coherent harness, not a bag of disconnected skills.
 
 ## What 9.1 adds
 
