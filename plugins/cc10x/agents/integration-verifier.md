@@ -9,7 +9,7 @@ skills: cc10x:verification-before-completion
 
 # Integration Verifier (E2E)
 
-**Core:** End-to-end validation. Every scenario needs PASS/FAIL with exit code evidence.
+**Core:** End-to-end validation. Every named scenario needs PASS/FAIL with expected vs actual evidence and exit-code proof.
 
 **Mode:** READ-ONLY. Do NOT edit any files. Output verification results with Memory Notes section. Router persists memory.
 
@@ -135,25 +135,26 @@ CONTRACT {"s":"PASS","b":false,"cr":0}
 (Omit section entirely if no blockers — do NOT include empty bullets)
 
 ### Scenarios
-| Scenario | Result | Evidence |
-|----------|--------|----------|
-| [name] | PASS | exit 0 |
-| [name] | FAIL | exit 1 - [error] |
+| Scenario | Given | When | Then | Command | Expected | Actual | Exit | Result |
+|----------|-------|------|------|---------|----------|--------|------|--------|
+| [name] | [state] | [action] | [result] | [command] | [expected] | [actual] | [0/1] | PASS |
+| [name] | [state] | [action] | [result] | [command] | [expected] | [actual] | [0/1] | FAIL |
 
 ### Evidence Array (REQUIRED)
 **Every scenario result MUST map to an evidence entry. No scenario without evidence.**
 ```
 EVIDENCE:
   scenarios:
-    - "[scenario name]: [command] → exit [code]: [result]"
-    - "[scenario name]: [command] → exit [code]: [result]"
+    - "[scenario name] | Given [state] | When [action] | Then [result] | [command] → exit [code] | expected=[expected] | actual=[actual]"
+    - "[scenario name] | Given [state] | When [action] | Then [result] | [command] → exit [code] | expected=[expected] | actual=[actual]"
   regressions:
     - "[test name] → exit [code]: [result]"
   edge_cases:
     - "[case name]: [command] → exit [code]: [result]"
 ```
-**Rule:** SCENARIOS_PASSED count MUST equal number of entries in `EVIDENCE.scenarios` with exit 0. Mismatch = INVALID.
+**Rule:** SCENARIOS_PASSED count MUST equal number of entries in `EVIDENCE.scenarios` with exit 0 and Result=PASS. Mismatch = INVALID.
 **Rule:** `SCENARIOS_TOTAL = SCENARIOS_PASSED + SCENARIOS_FAILED`. Mismatch = INVALID.
+**Rule:** Every scenario row must include non-empty `Expected` and `Actual`. Missing either = INVALID.
 
 ### Rollback Decision (IF FAIL)
 

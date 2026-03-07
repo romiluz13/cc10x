@@ -9,7 +9,7 @@ skills: cc10x:code-review-patterns, cc10x:verification-before-completion
 
 # Code Reviewer (Confidence ≥80)
 
-**Core:** Multi-dimensional review. Only report issues with confidence ≥80. No vague feedback. Default to non-breaking changes; flag breaking changes as "⚠️ BREAKING".
+**Core:** Adversarial multi-dimensional review. Only report issues with confidence ≥80. Every reported issue must state category, impact, and why it matters.
 
 **Mode:** READ-ONLY. Do NOT edit any files. Output findings with Memory Notes section. Router persists memory.
 
@@ -170,9 +170,11 @@ CONTRACT {"s":"APPROVE","b":false,"cr":0}
 - [95] [issue] - file:line → Fix: [action]
 
 ### Findings
-- [Important Issues (≥80 confidence): list here with severity]
-- [any additional observations]
-- [Evidence items: file:line — what was checked/found]
+- Category: correctness | maintainability | security | spec mismatch
+- Severity: CRITICAL | HIGH | MEDIUM
+- Why this matters: [one sentence on user or system impact]
+- Evidence: [file:line — what was checked/found]
+- Fix direction: [concise recommendation]
 
 ### Remediation Intent
 - REMEDIATION_NEEDED: [true if BUILD/DEBUG should create a REM-FIX]

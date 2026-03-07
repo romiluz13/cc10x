@@ -80,6 +80,7 @@ Artifact schema must include:
 - `plan_file`
 - `design_file`
 - `research_files`
+- `intent`
 - `capabilities`
 - `research_rounds`
 - `research_backend_history`
@@ -87,8 +88,12 @@ Artifact schema must include:
 - `task_ids`
 - `phase_status`
 - `results`
+- `evidence`
+- `quality`
 - `memory_notes`
 - `pending_gate`
+- `status_history`
+- `remediation_history`
 - `created_at`
 - `updated_at`
 
@@ -105,6 +110,53 @@ Rules:
   - `websearch_available`
   - `webfetch_available`
 - `results.research` must be structured as `web`, `github`, and `synthesis`.
+- `intent` stores the durable spec header for the workflow:
+  - `goal`
+  - `non_goals`
+  - `constraints`
+  - `acceptance_criteria`
+  - `open_decisions`
+- `evidence` stores proof-of-work grouped by agent:
+  - `builder`
+  - `investigator`
+  - `reviewer`
+  - `hunter`
+  - `verifier`
+- `quality` stores convergence state:
+  - `confidence`
+  - `evidence_complete`
+  - `scenario_coverage`
+  - `research_quality`
+  - `convergence_state`
+- `status_history` and `remediation_history` are append-only summaries of major router decisions.
+
+Workflow event log:
+- For every workflow, keep a lightweight append-only companion file:
+
+```text
+.claude/cc10x/workflows/{wf}.events.jsonl
+```
+
+- Append event objects with at least:
+  - `ts`
+  - `wf`
+  - `event`
+  - `phase`
+  - `task_id`
+  - `agent`
+  - `decision`
+  - `reason`
+- Event types:
+  - `workflow_started`
+  - `agent_started`
+  - `agent_completed`
+  - `contract_parsed`
+  - `remediation_created`
+  - `scope_decision_requested`
+  - `scope_decision_resolved`
+  - `memory_finalized`
+  - `workflow_completed`
+  - `workflow_failed`
 
 Hook policy:
 - CC10X plugin hooks live in the plugin bundle under `hooks/hooks.json` and should stay minimal:
@@ -193,8 +245,9 @@ Before creating a new workflow:
 
 1. Read `- Plan:` from `activeContext.md ## References`.
 2. If plan path is not `N/A`, `Read(...)` the plan file before creating tasks.
-3. If plan path is `N/A` and the request is not obviously trivial:
-   - Ask: `Plan first (Recommended)` or `Build directly`.
+3. If plan path is `N/A`, use an adaptive gate:
+   - obviously trivial, low-risk work -> continue directly to BUILD
+   - complex, ambiguous, multi-step, or cross-cutting work -> ask: `Plan first (Recommended)` or `Build directly`
    - `Plan first` -> switch to PLAN workflow.
    - `Build directly` -> continue without a plan.
 4. If the referenced plan file is missing:
@@ -224,6 +277,7 @@ Before creating a new workflow:
 2. Restore mandatory brainstorming:
    - If no valid design file exists, run `Skill(skill="cc10x:brainstorming")` in the main context before planner.
    - Brainstorming may ask the user questions and may save a `*-design.md` file. After it completes, re-read `activeContext.md ## References` and refresh the design path.
+   - Brainstorming should ask only unresolved, high-impact questions and stop as soon as the intent contract is complete.
 3. Optional research before planning:
    - Ask whether to run web + GitHub research for external/unfamiliar technology when it would materially improve the plan.
 4. Planner receives `## Research Files` only when research files actually exist.
@@ -246,13 +300,17 @@ Immediately after `TaskCreate()` returns `workflow_task_id`:
 
 ```text
 TaskGet({ taskId: workflow_task_id })
-TaskUpdate({
+  TaskUpdate({
   taskId: workflow_task_id,
   description: replace leading "wf:PENDING_SELF" with "wf:{workflow_task_id}"
-})
+  })
 Write(
   file_path=".claude/cc10x/workflows/{workflow_task_id}.json",
-  content="{\"workflow_id\":\"{workflow_task_id}\",\"workflow_type\":\"{WORKFLOW}\",\"user_request\":\"{request}\",\"plan_file\":null,\"design_file\":null,\"research_files\":[],\"capabilities\":{\"brightdata_available\":\"unknown\",\"octocode_available\":\"unknown\",\"websearch_available\":\"unknown\",\"webfetch_available\":\"unknown\"},\"research_rounds\":[],\"research_backend_history\":[],\"research_quality\":{\"web\":\"none\",\"github\":\"none\",\"overall\":\"none\"},\"task_ids\":{},\"phase_status\":{},\"results\":{\"research\":{\"web\":null,\"github\":null,\"synthesis\":null}},\"memory_notes\":[],\"pending_gate\":null,\"created_at\":\"{iso_timestamp}\",\"updated_at\":\"{iso_timestamp}\"}"
+  content="{\"workflow_id\":\"{workflow_task_id}\",\"workflow_type\":\"{WORKFLOW}\",\"user_request\":\"{request}\",\"plan_file\":null,\"design_file\":null,\"research_files\":[],\"intent\":{\"goal\":null,\"non_goals\":[],\"constraints\":[],\"acceptance_criteria\":[],\"open_decisions\":[]},\"capabilities\":{\"brightdata_available\":\"unknown\",\"octocode_available\":\"unknown\",\"websearch_available\":\"unknown\",\"webfetch_available\":\"unknown\"},\"research_rounds\":[],\"research_backend_history\":[],\"research_quality\":{\"web\":\"none\",\"github\":\"none\",\"overall\":\"none\"},\"task_ids\":{},\"phase_status\":{},\"results\":{\"builder\":null,\"investigator\":null,\"reviewer\":null,\"hunter\":null,\"verifier\":null,\"planner\":null,\"research\":{\"web\":null,\"github\":null,\"synthesis\":null}},\"evidence\":{\"builder\":[],\"investigator\":[],\"reviewer\":[],\"hunter\":[],\"verifier\":[]},\"quality\":{\"confidence\":null,\"evidence_complete\":false,\"scenario_coverage\":0,\"research_quality\":\"none\",\"convergence_state\":\"pending\"},\"memory_notes\":[],\"pending_gate\":null,\"status_history\":[{\"event\":\"workflow_started\",\"ts\":\"{iso_timestamp}\",\"phase\":\"{build|debug|review|plan}\"}],\"remediation_history\":[],\"created_at\":\"{iso_timestamp}\",\"updated_at\":\"{iso_timestamp}\"}"
+)
+Write(
+  file_path=".claude/cc10x/workflows/{workflow_task_id}.events.jsonl",
+  content="{\"ts\":\"{iso_timestamp}\",\"wf\":\"{workflow_task_id}\",\"event\":\"workflow_started\",\"phase\":\"{build|debug|review|plan}\",\"task_id\":\"{workflow_task_id}\",\"agent\":\"router\",\"decision\":\"start\",\"reason\":\"User request\"}\n"
 )
 ```
 
@@ -444,6 +502,7 @@ Research tasks are siblings, never blockers on the workflow parent. The follow-u
 
 Optional sections:
 - `## Pre-Answered Requirements` for BUILD when router already gathered decisions.
+- `## Intent Contract` when a plan or design already defined goal, constraints, acceptance criteria, and named scenarios.
 - `## Research Files` only when at least one research file exists.
 - `## Research Quality` only when at least one research result exists.
 - `## Design File` only for planner.
@@ -499,6 +558,7 @@ Verdict extraction:
    - `SCENARIOS_PASSED`
    - `SCENARIOS_FAILED`
    - Fail validation if those counts do not reconcile with the evidence array.
+   - Fail validation if any scenario omits explicit `Expected` or `Actual` evidence.
 
 Read-only structured intent fields:
 - `REMEDIATION_NEEDED: true|false`
@@ -518,11 +578,11 @@ Expected fields:
 
 | Agent | Required fields |
 |-------|-----------------|
-| component-builder | `STATUS`, `CONFIDENCE`, `TDD_RED_EXIT`, `TDD_GREEN_EXIT`, `BLOCKING`, `NEXT_ACTION`, `REMEDIATION_NEEDED`, `REQUIRES_REMEDIATION`, `REMEDIATION_REASON`, `MEMORY_NOTES` |
-| bug-investigator | `STATUS`, `CONFIDENCE`, `ROOT_CAUSE`, `TDD_RED_EXIT`, `TDD_GREEN_EXIT`, `VARIANTS_COVERED`, `BLOCKING`, `NEXT_ACTION`, `REMEDIATION_NEEDED`, `REQUIRES_REMEDIATION`, `REMEDIATION_REASON`, `NEEDS_EXTERNAL_RESEARCH`, `RESEARCH_REASON`, `MEMORY_NOTES` |
-| planner | `STATUS`, `CONFIDENCE`, `PLAN_FILE`, `PHASES`, `RISKS_IDENTIFIED`, `BLOCKING`, `NEXT_ACTION`, `REMEDIATION_NEEDED`, `REQUIRES_REMEDIATION`, `REMEDIATION_REASON`, `GATE_PASSED`, `USER_INPUT_NEEDED`, `MEMORY_NOTES` |
-| web-researcher | `STATUS`, `FILE_PATH`, `BACKEND_MODE`, `SOURCES_ATTEMPTED`, `SOURCES_USED`, `QUALITY_LEVEL`, `KEY_FINDINGS_COUNT`, `MEMORY_NOTES` |
-| github-researcher | `STATUS`, `FILE_PATH`, `BACKEND_MODE`, `SOURCES_ATTEMPTED`, `SOURCES_USED`, `QUALITY_LEVEL`, `IMPLEMENTATIONS_FOUND`, `MEMORY_NOTES` |
+| component-builder | `STATUS`, `CONFIDENCE`, `TDD_RED_EXIT`, `TDD_GREEN_EXIT`, `SCENARIOS`, `ASSUMPTIONS`, `DECISIONS`, `BLOCKING`, `NEXT_ACTION`, `REMEDIATION_NEEDED`, `REQUIRES_REMEDIATION`, `REMEDIATION_REASON`, `MEMORY_NOTES` |
+| bug-investigator | `STATUS`, `CONFIDENCE`, `ROOT_CAUSE`, `TDD_RED_EXIT`, `TDD_GREEN_EXIT`, `VARIANTS_COVERED`, `SCENARIOS`, `ASSUMPTIONS`, `DECISIONS`, `BLOCKING`, `NEXT_ACTION`, `REMEDIATION_NEEDED`, `REQUIRES_REMEDIATION`, `REMEDIATION_REASON`, `NEEDS_EXTERNAL_RESEARCH`, `RESEARCH_REASON`, `MEMORY_NOTES` |
+| planner | `STATUS`, `CONFIDENCE`, `PLAN_FILE`, `PHASES`, `RISKS_IDENTIFIED`, `SCENARIOS`, `ASSUMPTIONS`, `DECISIONS`, `RECOMMENDED_DEFAULTS`, `BLOCKING`, `NEXT_ACTION`, `REMEDIATION_NEEDED`, `REQUIRES_REMEDIATION`, `REMEDIATION_REASON`, `GATE_PASSED`, `USER_INPUT_NEEDED`, `MEMORY_NOTES` |
+| web-researcher | `STATUS`, `FILE_PATH`, `BACKEND_MODE`, `SOURCES_ATTEMPTED`, `SOURCES_USED`, `QUALITY_LEVEL`, `KEY_FINDINGS_COUNT`, `WHAT_CHANGED_RECOMMENDATION`, `MEMORY_NOTES` |
+| github-researcher | `STATUS`, `FILE_PATH`, `BACKEND_MODE`, `SOURCES_ATTEMPTED`, `SOURCES_USED`, `QUALITY_LEVEL`, `IMPLEMENTATIONS_FOUND`, `WHAT_CHANGED_RECOMMENDATION`, `MEMORY_NOTES` |
 
 If the YAML block is missing or malformed:
 - Treat the task as invalid output.
@@ -533,12 +593,16 @@ If the YAML block is missing or malformed:
 
 | Agent | Override |
 |-------|----------|
-| component-builder | `STATUS=PASS` requires `TDD_RED_EXIT=1` and `TDD_GREEN_EXIT=0` |
-| bug-investigator | `STATUS=FIXED` requires `TDD_RED_EXIT=1`, `TDD_GREEN_EXIT=0`, and `VARIANTS_COVERED>=1` unless it explicitly set `NEEDS_EXTERNAL_RESEARCH=true` |
+| component-builder | `STATUS=PASS` requires `TDD_RED_EXIT=1`, `TDD_GREEN_EXIT=0`, and a non-empty `SCENARIOS` array with at least one passing scenario |
+| bug-investigator | `STATUS=FIXED` requires `TDD_RED_EXIT=1`, `TDD_GREEN_EXIT=0`, `VARIANTS_COVERED>=1`, and a non-empty `SCENARIOS` array unless it explicitly set `NEEDS_EXTERNAL_RESEARCH=true` |
 | code-reviewer | `APPROVE` + critical issues becomes `CHANGES_REQUESTED` |
 | silent-failure-hunter | `CLEAN` + critical issues becomes `ISSUES_FOUND` |
-| integration-verifier | `PASS` + critical issues becomes `FAIL` |
-| planner | `PLAN_CREATED` requires non-empty `PLAN_FILE`, `CONFIDENCE>=50`, and `GATE_PASSED=true` |
+| integration-verifier | `PASS` + critical issues becomes `FAIL`; scenario totals must reconcile with the scenario table and evidence array |
+| planner | `PLAN_CREATED` requires non-empty `PLAN_FILE`, `CONFIDENCE>=50`, `GATE_PASSED=true`, and a non-empty `SCENARIOS` array |
+
+Convergence rule:
+- If evidence is incomplete, contradictory, or missing for a required pass path, do not advance the workflow.
+- Set the workflow artifact `quality.convergence_state` to `needs_iteration` and stop on the appropriate remediation or clarification gate instead of treating the task as good enough.
 
 ## 9. Remediation And Workflow Rules
 
@@ -621,6 +685,7 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [replan_task_id] })
 
 When planner returns `STATUS=PLAN_CREATED`:
 - Verify `PLAN_FILE` exists with `Glob(...)`.
+- Extract the intent/spec header from the saved plan and persist it into workflow artifact `intent`.
 - Update the parent workflow task `plan:` line to the saved plan path.
 - Update the pending memory task `plan:` line to the same saved plan path so resume and finalization stay scoped to the real artifact.
 
@@ -680,6 +745,7 @@ Research persistence:
    - `research_backend_history`
    - `research_quality`
    - `research_rounds`
+   - `results.research.synthesis`
 4. Index research file paths in `activeContext.md ## References` during memory finalization, not before.
 5. Partial success is valid:
    - If one file exists and the other is unavailable, proceed with the successful file.
@@ -750,6 +816,7 @@ TaskCreate({
 3. If the runnable task kind is memory:
    - execute inline in the main context
    - persist workflow artifact results + Memory Notes from the task description
+   - append `memory_finalized` to `.claude/cc10x/workflows/{wf}.events.jsonl`
    - clean up the matching [cc10x-internal] memory_task_id entry
    - mark the memory task completed
    - mark the parent workflow task completed
@@ -779,12 +846,16 @@ TaskCreate({
    - READ-ONLY agents: extract `### Memory Notes (For Workflow-Final Persistence)` and append to the memory task description.
    - WRITE agents: do not expect `### Memory Notes`; use `MEMORY_NOTES` from YAML. Append only deferred or supplemental memory payload needed by the memory task.
 5. Update `.claude/cc10x/workflows/{workflow_task_id}.json` with:
+   - intent contract fields from planner output when available
    - task ids
    - phase status
    - structured agent results
+   - scenario evidence grouped by agent
    - plan/design/research file paths
    - capabilities and chosen research backend path when applicable
    - research quality and round metadata when applicable
+   - quality/convergence state
+   - status_history and remediation_history entries when decisions change workflow state
    - pending gate if waiting on user input
 6. Persist `[cc10x-internal] memory_task_id: {memory_task_id} wf:{workflow_task_id}` only if it matches the active workflow.
 

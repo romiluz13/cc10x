@@ -83,7 +83,7 @@ After reading the plan file, BEFORE writing the first test, scan for uncertainti
 The same assumption discovered at GREEN costs the entire TDD cycle.
 
 ## Process
-1. **Understand** - Read relevant files, clarify requirements, define acceptance criteria
+1. **Understand** - Read relevant files, define acceptance criteria, and name at least one success scenario tied to the plan or prompt
 2. **RED** - Write failing test (must exit 1)
 3. **GREEN** - Minimal code to pass (must exit 0)
 4. **REFACTOR** - Clean up, keep tests green
@@ -131,6 +131,24 @@ Call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` where `{TASK_ID}
 
 **Optional coverage gate:** If `coverage-thresholds.json` exists in the project root, run coverage (`CI=true npm test -- --run --coverage` or equivalent) and compare output against thresholds. If any threshold is not met: STATUS=FAIL, REMEDIATION_REASON="Coverage below thresholds in coverage-thresholds.json". Skip this check if the file does not exist.
 
+## Scenario Contract (REQUIRED)
+
+For every completed BUILD, include at least one named scenario using this shape:
+
+```yaml
+- name: "scenario name"
+  given: "starting state"
+  when: "user or system action"
+  then: "expected outcome"
+  command: "exact verification command"
+  expected: "what should happen"
+  actual: "what actually happened"
+  exit_code: 0
+  status: PASS
+```
+
+The scenario must map back to the plan or prompt intent. STATUS=PASS without a passing scenario is invalid.
+
 ## Output
 
 **CRITICAL: Cannot mark task complete without exit code evidence for BOTH red and green phases.**
@@ -138,18 +156,13 @@ Call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` where `{TASK_ID}
 ```
 ## Built: [feature]
 
-### Dev Journal (User Transparency)
-**What I Built:** [Narrative of implementation journey - what was read, understood, built]
-**Key Decisions Made:**
-- [Decision + WHY - e.g., "Used singleton pattern because X already uses it"]
-- [Decision + WHY]
-**Alternatives Considered:**
-- [What was considered but rejected + reason]
-**Assumptions I Made:** [List assumptions - user can correct if wrong]
-**Where Your Input Helps:**
-- [Flag any uncertain decisions - "Not sure if X should use Y or Z - went with Y"]
-- [Flag any scope questions - "Interpreted 'fast' as <100ms - correct?"]
-**What's Next:** Code reviewer + silent-failure-hunter run in parallel. They'll check for security issues, error handling gaps, and code quality. If critical issues found, we'll fix before final verification.
+### Implementation Notes
+- Decisions:
+  - [Decision + why]
+- Assumptions:
+  - [Assumption that could affect correctness]
+- Deferred Findings:
+  - [Non-blocking follow-up or "None"]
 
 ### TDD Evidence (REQUIRED)
 **RED Phase:**
@@ -174,15 +187,16 @@ EVIDENCE:
 
 **GATE: If either exit code is missing above, task is NOT complete.**
 
+### Scenario Evidence (REQUIRED)
+| Scenario | Given | When | Then | Command | Expected | Actual | Exit |
+|----------|-------|------|------|---------|----------|--------|------|
+| [name] | [state] | [action] | [result] | [command] | [expected] | [actual] | [0/1] |
+
+**Confidence**: [High/Medium/Low - based on assumption certainty]
+
 ### Changes Made
 - Files: [created/modified]
 - Tests: [added]
-
-### Assumptions
-- [List assumptions made during implementation]
-- [If wrong, impact: {consequence}]
-
-**Confidence**: [High/Medium/Low - based on assumption certainty]
 
 ### Findings
 - [any issues or recommendations]
@@ -197,6 +211,18 @@ STATUS: PASS | FAIL
 CONFIDENCE: [0-100]
 TDD_RED_EXIT: [1 if red phase ran, null if missing]
 TDD_GREEN_EXIT: [0 if green phase ran, null if missing]
+SCENARIOS:
+  - name: "[scenario name]"
+    given: "[state]"
+    when: "[action]"
+    then: "[result]"
+    command: "[exact command]"
+    expected: "[expected result]"
+    actual: "[actual result]"
+    exit_code: 0
+    status: PASS
+ASSUMPTIONS: ["assumption 1", "assumption 2"]
+DECISIONS: ["decision 1", "decision 2"]
 CRITICAL_ISSUES: 0
 BLOCKING: [true if STATUS=FAIL]
 NEXT_ACTION: "review" | "remediation" | "abort"
@@ -209,5 +235,5 @@ MEMORY_NOTES:
   verification: ["TDD evidence: RED exit={X}, GREEN exit={Y}"]
   deferred: ["Non-blocking findings for patterns.md — from Findings section"]
 ```
-**CONTRACT RULE:** STATUS=PASS requires TDD_RED_EXIT=1 AND TDD_GREEN_EXIT=0. **Exception:** If no `package.json` exists (pure HTML/CSS/JS project with no test runner), TDD evidence may use manual browser verification instead — set TDD_RED_EXIT=1 and TDD_GREEN_EXIT=0 with evidence describing the manual check.
+**CONTRACT RULE:** STATUS=PASS requires TDD_RED_EXIT=1, TDD_GREEN_EXIT=0, and at least one passing scenario in `SCENARIOS`. **Exception:** If no `package.json` exists (pure HTML/CSS/JS project with no test runner), TDD evidence may use manual browser verification instead — set TDD_RED_EXIT=1 and TDD_GREEN_EXIT=0 with evidence describing the manual check.
 ```

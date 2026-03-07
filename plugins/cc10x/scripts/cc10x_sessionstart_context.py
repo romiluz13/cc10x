@@ -1,21 +1,17 @@
 #!/usr/bin/env python3
-import json
-
-from cc10x_hooklib import load_input, session_context, workflows_dir
+from cc10x_hooklib import (
+    latest_workflow_payload,
+    load_input,
+    log_event,
+    session_context,
+)
 
 
 def main() -> int:
     data = load_input()
     source = data.get("source", "startup")
-    workflow_files = sorted(
-        workflows_dir().glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True
-    )
-    if not workflow_files:
-        return 0
-
-    try:
-        payload = json.loads(workflow_files[0].read_text(encoding="utf-8"))
-    except Exception:
+    payload = latest_workflow_payload()
+    if not payload:
         return 0
 
     pending = payload.get("pending_gate") or "none"
@@ -32,6 +28,18 @@ def main() -> int:
         f"plan={payload.get('plan_file') or 'N/A'} design={payload.get('design_file') or 'N/A'} "
         f"research_quality={overall_quality} pending_gate={pending} "
         f"incomplete_phases={', '.join(incomplete) if incomplete else 'none'}."
+    )
+    log_event(
+        "plugin_sessionstart_context",
+        {
+            "wf": payload.get("workflow_id"),
+            "phase": ",".join(incomplete) if incomplete else "none",
+            "task_id": None,
+            "agent": "router",
+            "event": "session_context",
+            "decision": "inject",
+            "reason": source,
+        },
     )
     session_context(message)
     return 0

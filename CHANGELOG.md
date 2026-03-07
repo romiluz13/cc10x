@@ -1,5 +1,24 @@
 # Changelog
 
+## [9.1.0] - 2026-03-07
+
+### Publication polish: intent contracts, BDD evidence, proof-of-work artifacts, harness audit
+
+#### Changed
+- Upgraded PLAN output to require a compact intent/spec header with goal, non-goals, constraints, acceptance criteria, named scenarios, open decisions, and recommended defaults before implementation phases.
+- Standardized BDD-style scenario evidence across `component-builder`, `bug-investigator`, and `integration-verifier` so workflows can reconcile named scenarios with command-level proof.
+- Expanded workflow artifacts to describe intent, evidence, quality/convergence state, remediation history, and append-only workflow events.
+- Tightened planner, builder, investigator, verifier, reviewer, and research prompts to reduce low-signal narrative and increase structured evidence, decisions, assumptions, and confidence calibration.
+- Standardized hook log fields (`wf`, `phase`, `task_id`, `agent`, `event`, `decision`, `reason`) so stress-test diagnostics no longer depend on rereading full chats.
+
+#### Added
+- `plugins/cc10x/scripts/cc10x_harness_audit.py` — internal publication-safety audit for manifest/docs version drift, hook/MCP references, router section coverage, metadata field consistency, and router-consumed agent contract fields.
+- Router guidance for append-only workflow event logs under `.claude/cc10x/workflows/{wf}.events.jsonl`.
+
+#### Fixed
+- Adaptive PLAN gating is now explicit: trivial work may build directly, while complex or ambiguous work must pass through intent/spec planning.
+- Research synthesis and degraded-confidence handling are now consistent across planner, investigator, and the research agents.
+
 ## [9.0.0] - 2026-03-07
 
 ### Plugin-native packaging + workflow-scoped research/runtime alignment

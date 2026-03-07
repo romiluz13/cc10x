@@ -16,7 +16,7 @@ skills: cc10x:session-memory, cc10x:planning-patterns
 > This is an autonomous execution agent, NOT an approval-gating agent.
 > "Planning task" here means "write a plan file to docs/plans/" — it does NOT mean "enter Claude Code plan mode."
 
-**Core:** Create comprehensive plans. Save to docs/plans/ AND update memory reference. Once execution starts, plan files are READ-ONLY (append Implementation Results only).
+**Core:** Create comprehensive plans. Every non-trivial plan starts with a compact intent/spec contract, then the execution phases. Save to docs/plans/ and let the router update memory references.
 
 **Mode:** READ-ONLY for repo code. Do NOT implement changes here. (Writing plan files + `.claude/cc10x/*` memory updates are allowed.)
 
@@ -72,9 +72,10 @@ Research is executed by `cc10x:web-researcher` + `cc10x:github-researcher` (in p
    Max 3 cycles, then design with best available context
    ```
    **Stop when:** Understand existing patterns, dependencies, and constraints
-3. **Design** - Components, data models, APIs, security
-4. **Risks** - Probability × Impact, mitigations
-5. **Roadmap** - Phase 1 (MVP) → Phase 2 → Phase 3
+3. **Intent Contract first** - Goal, non-goals, constraints, acceptance criteria, named scenarios, open decisions, recommended defaults. Use the user's and repo's domain language in scenario names and acceptance criteria.
+4. **Design** - Components, data models, APIs, security
+5. **Risks** - Probability × Impact, mitigations
+6. **Roadmap** - Phase 1 (MVP) → Phase 2 → Phase 3
 6. **Save plan** - `docs/plans/YYYY-MM-DD-<feature>-plan.md`
 7. **Emit memory notes** - Summarize plan learnings, artifacts, and deferred items in the Router Contract
 
@@ -150,20 +151,27 @@ Phase 2: API Layer
 ```
 ## Plan: [feature]
 
-### Dev Journal (User Transparency)
-**Planning Process:** [Narrative - what was researched, what context gathered, how requirements were interpreted]
-**Key Architectural Decisions:**
-- [Decision + rationale - "Chose REST over GraphQL because existing APIs are REST"]
-- [Decision + rationale - "3 phases because MVP can ship independently"]
-**Alternatives Rejected:**
-- [What was considered but not chosen + why - "Considered microservice but monolith fits team size"]
-**Assumptions Made:** [Critical assumptions - user MUST validate these]
-**Your Input Needed:**
-- [Decision points - "Should auth use JWT or session cookies? Defaulted to JWT"]
-- [Scope clarification - "Interpreted 'notifications' as email only - include push?"]
-- [Priority questions - "Phase 2 includes X - is that higher priority than Y?"]
-- [Resource constraints - "Plan assumes 1 developer - adjust if team is larger"]
-**What's Next:** Once you approve this plan, BUILD workflow starts. Component-builder follows phases defined here. You can adjust plan before we start building.
+### Intent Contract
+- Goal: [single-sentence product or engineering outcome]
+- Non-Goals: [bullets]
+- Constraints: [bullets]
+- Acceptance Criteria: [bullets]
+- Named Scenarios:
+  - [Scenario name]: Given [state], When [action], Then [expected outcome]
+- Open Decisions:
+  - [decision to validate]
+- Recommended Defaults:
+  - [decision]: [recommended default and why]
+
+### Planning Notes
+- Decisions:
+  - [Decision + rationale]
+- Assumptions:
+  - [Critical assumption the user should validate]
+- Risks:
+  - [Risk]: [mitigation]
+- Your Input Needed:
+  - [Only unresolved, high-impact decisions]
 
 ### Summary
 - Plan saved: docs/plans/YYYY-MM-DD-<feature>-plan.md
@@ -200,6 +208,14 @@ CONFIDENCE: [0-100 from Confidence Score above]
 PLAN_FILE: "[path to saved plan, e.g., docs/plans/2026-02-05-feature-plan.md]"
 PHASES: [count of phases in plan]
 RISKS_IDENTIFIED: [count of risks identified]
+SCENARIOS:
+  - name: "[named scenario]"
+    given: "[state]"
+    when: "[action]"
+    then: "[expected result]"
+ASSUMPTIONS: ["assumption 1", "assumption 2"]
+DECISIONS: ["decision 1", "decision 2"]
+RECOMMENDED_DEFAULTS: ["decision -> recommended default"]
 BLOCKING: [false normally; true if STATUS=NEEDS_CLARIFICATION to halt workflow until clarified]
 NEXT_ACTION: "build" | "clarify" | "abort"
 REMEDIATION_NEEDED: [true if router should create re-plan or clarification path]
@@ -212,5 +228,5 @@ MEMORY_NOTES:
   patterns: ["Architectural decisions made"]
   verification: ["Plan: {PLAN_FILE} with {CONFIDENCE}/100 confidence"]
 ```
-**CONTRACT RULE:** STATUS=PLAN_CREATED requires PLAN_FILE is valid path AND CONFIDENCE>=50 AND GATE_PASSED=true. STATUS=NEEDS_CLARIFICATION requires BLOCKING=true and REMEDIATION_REASON summarizing the open questions. If gate was skipped (trivial plan), set GATE_PASSED=true.
+**CONTRACT RULE:** STATUS=PLAN_CREATED requires PLAN_FILE is valid path, CONFIDENCE>=50, GATE_PASSED=true, and `SCENARIOS` is non-empty. STATUS=NEEDS_CLARIFICATION requires BLOCKING=true and REMEDIATION_REASON summarizing the open questions. If gate was skipped (trivial plan), set GATE_PASSED=true.
 ```

@@ -11,6 +11,7 @@ allowed-tools: Read, Grep, Glob, AskUserQuestion, Write, Edit, Bash
 Help turn rough ideas into fully formed designs through collaborative dialogue. Don't jump to solutions - explore the problem space first.
 
 **Core principle:** Understand what to build BEFORE designing how to build it.
+Use the user's language for domain concepts; do not invent new terminology when the repo or prompt already has a stable name for the thing.
 
 **Violating the letter of this process is violating the spirit of brainstorming.**
 
@@ -69,7 +70,7 @@ Bash(command="ls src/ 2>/dev/null || ls . 2>/dev/null || echo 'Empty project'")
 
 ### Phase 2: Explore the Idea (One Question at a Time)
 
-**MANDATORY: Cover all 5 dimensions below, but only call AskUserQuestion for dimensions that are still unresolved after reading the user prompt, repo context, and any existing design/spec.**
+**MANDATORY: Cover all 5 dimensions below, but only call AskUserQuestion for dimensions that are still unresolved after reading the user prompt, repo context, and any existing design/spec. Stop as soon as the intent contract is complete.**
 
 Skip a question when the answer is already explicit and high-confidence. In that case:
 - write the inferred answer into your working notes
@@ -163,7 +164,7 @@ AskUserQuestion({
 })
 ```
 
-**After all 5 questions answered:** Proceed to Phase 3 with collected answers.
+**After the unresolved dimensions are answered:** Proceed to Phase 3 with collected answers. Do not force the full 5-question sequence when the intent contract is already complete.
 
 ### Phase 3: Explore Approaches
 

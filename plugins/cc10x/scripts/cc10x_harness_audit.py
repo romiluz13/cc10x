@@ -1,0 +1,153 @@
+#!/usr/bin/env python3
+import json
+import sys
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[3]
+PLUGIN_ROOT = Path(__file__).resolve().parents[1]
+ROUTER = PLUGIN_ROOT / "skills" / "cc10x-router" / "SKILL.md"
+README = ROOT / "README.md"
+CHANGELOG = ROOT / "CHANGELOG.md"
+PLUGIN_JSON = PLUGIN_ROOT / ".claude-plugin" / "plugin.json"
+HOOKS_JSON = PLUGIN_ROOT / "hooks" / "hooks.json"
+MCP_JSON = PLUGIN_ROOT / ".mcp.json"
+INVARIANTS = ROOT / "docs" / "router-invariants.md"
+
+
+def read(path: Path) -> str:
+    return path.read_text(encoding="utf-8")
+
+
+def fail(errors: list[str]) -> int:
+    for error in errors:
+        print(f"FAIL: {error}", file=sys.stderr)
+    return 1
+
+
+def main() -> int:
+    errors: list[str] = []
+
+    plugin = json.loads(read(PLUGIN_JSON))
+    hooks = json.loads(read(HOOKS_JSON))
+    mcp = json.loads(read(MCP_JSON))
+    router = read(ROUTER)
+    readme = read(README)
+    changelog = read(CHANGELOG)
+    invariants = read(INVARIANTS)
+
+    version = plugin.get("version")
+    if f"**Current version:** {version}" not in readme:
+        errors.append(
+            f"README.md current version does not match plugin.json ({version})"
+        )
+    if f"## [{version}]" not in changelog:
+        errors.append(f"CHANGELOG.md missing release section for {version}")
+
+    hook_commands = json.dumps(hooks)
+    for script in (
+        "cc10x_pretooluse_guard.py",
+        "cc10x_sessionstart_context.py",
+        "cc10x_task_completed_guard.py",
+    ):
+        if script not in hook_commands:
+            errors.append(f"hooks.json does not reference {script}")
+        if not (PLUGIN_ROOT / "scripts" / script).exists():
+            errors.append(f"missing plugin hook script {script}")
+
+    mcp_names = sorted((mcp.get("mcpServers") or {}).keys())
+    for required in ("brightdata", "octocode"):
+        if required not in mcp_names:
+            errors.append(f"plugin .mcp.json missing server '{required}'")
+        if required not in router:
+            errors.append(f"router no longer mentions MCP server '{required}'")
+
+    required_router_headings = [
+        "## 1. Intent Routing",
+        "## 2a. Workflow Artifact And Hook Policy",
+        "## 3. Task Metadata Contract",
+        "Scope-decision resume:",
+        "## 8. Post-Agent Validation",
+        "## 10. Research Orchestration",
+        "## 12. Chain Execution Loop",
+        "## 13. Memory Finalization",
+    ]
+    for heading in required_router_headings:
+        if heading not in router:
+            errors.append(f"router missing required heading/text: {heading}")
+
+    required_task_metadata = (
+        "wf:",
+        "kind:",
+        "origin:",
+        "phase:",
+        "plan:",
+        "scope:",
+        "reason:",
+    )
+    for field in required_task_metadata:
+        if field not in router:
+            errors.append(f"router missing task metadata contract field {field}")
+
+    if "Task Metadata Contract" not in invariants and "Status note:" not in invariants:
+        errors.append(
+            "router-invariants.md appears malformed or missing the current audit banner"
+        )
+
+    expected_router_fields = {
+        "component-builder": [
+            "SCENARIOS:",
+            "ASSUMPTIONS:",
+            "DECISIONS:",
+            "MEMORY_NOTES:",
+            "NEXT_ACTION:",
+        ],
+        "bug-investigator": [
+            "SCENARIOS:",
+            "ASSUMPTIONS:",
+            "DECISIONS:",
+            "MEMORY_NOTES:",
+            "NEXT_ACTION:",
+        ],
+        "planner": [
+            "SCENARIOS:",
+            "ASSUMPTIONS:",
+            "DECISIONS:",
+            "MEMORY_NOTES:",
+            "NEXT_ACTION:",
+        ],
+        "integration-verifier": [
+            "SCENARIOS_TOTAL",
+            "SCENARIOS_PASSED",
+            "SCENARIOS_FAILED",
+            "REMEDIATION_NEEDED:",
+            "REVERT_RECOMMENDED:",
+        ],
+        "code-reviewer": [
+            "REMEDIATION_NEEDED:",
+            "REMEDIATION_REASON:",
+            "REMEDIATION_SCOPE_REQUESTED:",
+            "REVERT_RECOMMENDED:",
+        ],
+    }
+
+    for agent_name, fields in expected_router_fields.items():
+        agent_path = PLUGIN_ROOT / "agents" / f"{agent_name}.md"
+        text = read(agent_path)
+        for field in fields:
+            if field not in text:
+                errors.append(
+                    f"{agent_name}.md missing expected contract field '{field}'"
+                )
+
+    if errors:
+        return fail(errors)
+
+    print("cc10x_harness_audit: OK")
+    print(f"version={version}")
+    print(f"mcp_servers={','.join(mcp_names)}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

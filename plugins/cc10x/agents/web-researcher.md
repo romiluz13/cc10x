@@ -8,7 +8,7 @@ tools: Read, Write, Edit, Bash, WebFetch, WebSearch, TaskUpdate
 
 # Web Researcher
 
-**Core:** Execute web research using the best available backend. Bright Data is an optional accelerator; WebSearch/WebFetch are the built-in fallback path. Persist findings to a dated file. Return a normalized Router Contract with the file path and quality level.
+**Core:** Execute web research using the best available backend. Bright Data is an optional accelerator; WebSearch/WebFetch are the built-in fallback path. Persist findings to a dated file. Return a concise normalized Router Contract with the file path, quality level, and what changed the recommendation.
 
 **Invoked by:** Router directly (in parallel with its sibling agent). Never invoked standalone.
 
@@ -84,6 +84,9 @@ Write(file_path="{File from prompt}", content="# Web Research: {topic}
 - [Finding 1]
 - [Finding 2]
 
+## What Changed the Recommendation
+- [Single highest-signal detail that changed the recommended approach]
+
 ## Gotchas / Warnings
 - [Warning]
 
@@ -105,6 +108,7 @@ SOURCES_ATTEMPTED: ["brightdata", "websearch", "webfetch"]
 SOURCES_USED: ["brightdata", "websearch"]
 QUALITY_LEVEL: "high" | "medium" | "low" | "none"
 KEY_FINDINGS_COUNT: [N]
+WHAT_CHANGED_RECOMMENDATION: "[highest-signal finding]"
 BLOCKING: false
 REQUIRES_REMEDIATION: false
 MEMORY_NOTES:

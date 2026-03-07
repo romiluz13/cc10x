@@ -2,12 +2,12 @@
 
 ### The Intelligent Orchestrator for Claude Code
 
-**Current version:** 9.0.0
+**Current version:** 9.1.0
 
 **Recommended: Create `~/.claude/CLAUDE.md` (global) so the router is always active across all projects.**
 
 <p align="center">
-  <strong>1 Router</strong> &nbsp;•&nbsp; <strong>8 Agents</strong> &nbsp;•&nbsp; <strong>12 Skills</strong> &nbsp;•&nbsp; <strong>4 Workflows</strong>
+  <strong>1 Router</strong> &nbsp;•&nbsp; <strong>8 Agents</strong> &nbsp;•&nbsp; <strong>13 Skills</strong> &nbsp;•&nbsp; <strong>4 Workflows</strong>
 </p>
 
 <p align="center">
@@ -28,6 +28,15 @@ Most Claude Code plugins are **bloated and over-engineered**:
 ```
 
 **cc10x is different.** One intelligent router detects your intent and automatically orchestrates the right agents with the right skills. You just work.
+
+## What 9.1 adds
+
+- **Intent-first planning** for complex work, with explicit goal, constraints, scenarios, and defaults
+- **BDD-style evidence** across BUILD, DEBUG, and VERIFY using named scenarios with expected vs actual proof
+- **DDD-style domain language preservation** so plans and scenarios use the product's real terms instead of invented abstractions
+- **Proof-of-work workflow artifacts** under `.claude/cc10x/workflows/`
+- **Plugin-native hooks and optional MCP** aligned with Claude Code plugin conventions
+- **Built-in harness audit** for manifest/docs/router drift
 
 ---
 

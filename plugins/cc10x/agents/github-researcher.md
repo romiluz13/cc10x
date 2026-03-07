@@ -8,7 +8,7 @@ tools: Read, Write, Edit, Bash, WebFetch, WebSearch, TaskUpdate
 
 # GitHub Researcher
 
-**Core:** Execute GitHub/package research using the best available backend. Octocode MCP is an optional accelerator; web-based GitHub/package research is the built-in fallback path. Persist findings to a dated file. Return a normalized Router Contract with the file path and quality level.
+**Core:** Execute GitHub/package research using the best available backend. Octocode MCP is an optional accelerator; web-based GitHub/package research is the built-in fallback path. Persist findings to a dated file. Return a concise normalized Router Contract with the file path, quality level, and what changed the recommendation.
 
 **Invoked by:** Router directly (in parallel with its sibling agent). Never invoked standalone.
 
@@ -106,6 +106,9 @@ Write(file_path="{File from prompt}", content="# GitHub Research: {topic}
 ## Gotchas from Real Code
 - [Gotcha]
 
+## What Changed the Recommendation
+- [Single highest-signal code or docs finding that changed the recommendation]
+
 ## References
 - [repo URL]
 
@@ -124,6 +127,7 @@ SOURCES_ATTEMPTED: ["octocode", "package-docs", "websearch", "webfetch"]
 SOURCES_USED: ["octocode", "webfetch"]
 QUALITY_LEVEL: "high" | "medium" | "low" | "none"
 IMPLEMENTATIONS_FOUND: [N]
+WHAT_CHANGED_RECOMMENDATION: "[highest-signal finding]"
 BLOCKING: false
 REQUIRES_REMEDIATION: false
 MEMORY_NOTES:

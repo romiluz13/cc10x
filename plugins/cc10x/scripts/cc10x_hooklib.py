@@ -73,6 +73,30 @@ def log_event(name: str, payload: Dict[str, Any]) -> None:
         fh.write(json.dumps(event, ensure_ascii=True) + "\n")
 
 
+def latest_workflow_payload() -> Dict[str, Any]:
+    files = sorted(
+        workflows_dir().glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True
+    )
+    if not files:
+        return {}
+    try:
+        return json.loads(files[0].read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def parse_metadata(description: str) -> Dict[str, str]:
+    values: Dict[str, str] = {}
+    for line in description.splitlines():
+        if ":" not in line:
+            continue
+        key, value = line.split(":", 1)
+        key = key.strip()
+        if key in {"wf", "kind", "origin", "phase", "plan", "scope", "reason"}:
+            values[key] = value.strip()
+    return values
+
+
 def json_print(payload: Dict[str, Any]) -> None:
     print(json.dumps(payload, ensure_ascii=True))
 

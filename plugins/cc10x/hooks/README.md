@@ -18,6 +18,20 @@ The shipped runtime hooks are intentionally minimal and audit-first:
 - inject workflow resume context
 - validate CC10X task metadata on completion
 
+## Internal Publication Audit
+
+The plugin also ships an internal drift check:
+
+```bash
+python3 plugins/cc10x/scripts/cc10x_harness_audit.py
+```
+
+It validates the publication-critical contract:
+- plugin manifest version matches `README.md` and `CHANGELOG.md`
+- plugin hooks and MCP names referenced by docs/router actually exist
+- key router headings still exist for invariant coverage
+- router-consumed task metadata and agent contract fields are still present
+
 ## Optional Git Pre-Commit Hook
 
 This is separate from Claude Code plugin hooks. Install it only if you want

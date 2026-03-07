@@ -143,6 +143,26 @@ Examples:
 - Consistent format enables reliable counting
 - Captures both action AND result for context
 
+## Scenario Contract (REQUIRED)
+
+For every completed fix, include:
+- one regression scenario that failed before the fix and passes after it
+- one relevant non-default or variant scenario when variants apply
+
+Use this shape:
+
+```yaml
+- name: "scenario name"
+  given: "starting state"
+  when: "action or trigger"
+  then: "expected outcome"
+  command: "exact verification command"
+  expected: "what should happen"
+  actual: "what happened after the fix"
+  exit_code: 0
+  status: PASS
+```
+
 ## Task Completion
 
 **CRITICAL: You MUST call the `TaskUpdate` tool directly. Writing text is NOT sufficient.**
@@ -155,20 +175,19 @@ Call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` where `{TASK_ID}
 ```
 ## Bug Fixed: [issue]
 
-### Dev Journal (User Transparency)
-**Investigation Path:** [Narrative of debugging journey - "Started with logs, traced to X, found root cause in Y"]
-**Root Cause Analysis:**
-- [Why this bug occurred - "Race condition between A and B"]
-- [Why it wasn't caught earlier - "No test for concurrent access"]
-**Fix Strategy & Reasoning:**
-- [Why this approach - "Chose mutex over queue because simpler and fits existing pattern"]
-- [What was considered but rejected - "Could have used debounce but that changes UX"]
-**Assumptions Made:** [List assumptions user can validate]
-**Your Input Helps:**
-- [Scope questions - "Fix covers scenario X - are there other entry points I should check?"]
-- [Priority calls - "Found related issue Y - fix now or separate ticket?"]
-- [Business context - "Is the 100ms delay acceptable, or should it be configurable?"]
-**What's Next:** Code reviewer verifies fix quality and looks for regression risks. Then integration verification confirms bug is truly fixed E2E.
+### Root Cause Record
+- Symptom: [what was visible]
+- Root cause: [why it actually happened]
+- Affected variants: [list]
+- Regression proof: [what now proves the bug is fixed]
+
+### Investigation Notes
+- Decisions:
+  - [Decision + why]
+- Assumptions:
+  - [Assumption that affects the fix]
+- Research quality impact:
+  - [How degraded or partial research changed confidence, or "Not applicable"]
 
 ### Summary
 - Root cause: [what failed]
@@ -190,6 +209,11 @@ Call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` where `{TASK_ID}
 - Variant dimensions considered: [list]
 - Regression cases added: [baseline + non-default case(s)]
 - Hardcoding check: [explicitly state "no hardcoding" OR explain any unavoidable constants]
+
+### Scenario Evidence (REQUIRED)
+| Scenario | Given | When | Then | Command | Expected | Actual | Exit |
+|----------|-------|------|------|---------|----------|--------|------|
+| [name] | [state] | [action] | [result] | [command] | [expected] | [actual] | [0/1] |
 
 ### Assumptions
 - [Assumptions about root cause]
@@ -219,6 +243,18 @@ ROOT_CAUSE: "[one-line summary of root cause]"
 TDD_RED_EXIT: [1 if regression test failed before fix, null if missing]
 TDD_GREEN_EXIT: [0 if regression test passed after fix, null if missing]
 VARIANTS_COVERED: [count of variant cases in regression test]
+SCENARIOS:
+  - name: "[scenario name]"
+    given: "[state]"
+    when: "[action]"
+    then: "[result]"
+    command: "[exact command]"
+    expected: "[expected result]"
+    actual: "[actual result]"
+    exit_code: 0
+    status: PASS
+ASSUMPTIONS: ["assumption 1", "assumption 2"]
+DECISIONS: ["decision 1", "decision 2"]
 BLOCKING: [true if STATUS != FIXED]
 NEXT_ACTION: "review" | "research" | "investigate" | "abort"
 REMEDIATION_NEEDED: [true if router should create remediation instead of continuing]
@@ -232,6 +268,6 @@ MEMORY_NOTES:
   verification: ["Fix: RED exit={X}, GREEN exit={Y}, {N} variants covered"]
   deferred: ["Non-blocking issues discovered during investigation"]
 ```
-**CONTRACT RULE:** STATUS=FIXED requires TDD_RED_EXIT=1 AND TDD_GREEN_EXIT=0 AND VARIANTS_COVERED>=1. **Exception:** If no `package.json` exists (pure HTML/CSS/JS project with no test runner), TDD evidence may use manual browser verification instead — set TDD_RED_EXIT=1 and TDD_GREEN_EXIT=0 with evidence describing the manual check.
+**CONTRACT RULE:** STATUS=FIXED requires TDD_RED_EXIT=1, TDD_GREEN_EXIT=0, VARIANTS_COVERED>=1, and a non-empty `SCENARIOS` array. **Exception:** If no `package.json` exists (pure HTML/CSS/JS project with no test runner), TDD evidence may use manual browser verification instead — set TDD_RED_EXIT=1 and TDD_GREEN_EXIT=0 with evidence describing the manual check.
 **CONTRACT RULE:** If NEEDS_EXTERNAL_RESEARCH=true: RESEARCH_REASON must be non-null
 ```

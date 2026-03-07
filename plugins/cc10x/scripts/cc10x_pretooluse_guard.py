@@ -1,7 +1,14 @@
 #!/usr/bin/env python3
 from pathlib import Path
 
-from cc10x_hooklib import load_input, load_mode, log_event, pretool_deny, project_dir
+from cc10x_hooklib import (
+    latest_workflow_payload,
+    load_input,
+    load_mode,
+    log_event,
+    pretool_deny,
+    project_dir,
+)
 
 
 PROTECTED_MEMORY_FILES = ("activeContext.md", "patterns.md", "progress.md")
@@ -29,12 +36,24 @@ def main() -> int:
     if not violations:
         return 0
 
+    workflow = latest_workflow_payload()
+
     log_event(
         "plugin_pretooluse_guard",
         {
+            "wf": workflow.get("workflow_id"),
+            "phase": workflow.get("pending_gate") or "unknown",
+            "task_id": None,
+            "agent": "router",
             "tool_name": data.get("tool_name"),
             "path": str(path),
-            "violations": violations,
+            "event": "pretool_guard",
+            "decision": (
+                "deny"
+                if "memory-write" in violations and mode.get("memoryWrites") == "block"
+                else "audit"
+            ),
+            "reason": ",".join(violations),
         },
     )
 

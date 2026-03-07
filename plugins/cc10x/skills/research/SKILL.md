@@ -22,6 +22,7 @@ After the router passes research file paths in your prompt, read the available f
 3. Lists gotchas with solutions
 4. Provides specific references for debugging
 5. Reflects evidence quality honestly
+6. States the single finding that most changed the recommendation
 
 ## What Makes Good Synthesis
 
@@ -56,6 +57,8 @@ After the router passes research file paths in your prompt, read the available f
 **Knowledge Gap answered:** [One sentence: what we now know that we didn't before]
 
 **Recommended approach:** [1-3 sentences: what to do]
+
+**What changed the recommendation most:** [single sentence]
 
 **Top patterns to apply:**
 1. [Specific, actionable pattern]

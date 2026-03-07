@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import sys
 
-from cc10x_hooklib import load_input, load_mode, log_event
+from cc10x_hooklib import load_input, load_mode, log_event, parse_metadata
 
 
 REQUIRED_METADATA = ("wf:", "kind:", "origin:", "phase:", "plan:", "scope:", "reason:")
@@ -12,6 +12,7 @@ def main() -> int:
     subject = data.get("task_subject", "")
     description = data.get("task_description") or ""
     mode = load_mode()
+    metadata = parse_metadata(description)
 
     if not subject.startswith("CC10X "):
         return 0
@@ -22,7 +23,16 @@ def main() -> int:
 
     log_event(
         "plugin_task_completed_missing_metadata",
-        {"task_id": data.get("task_id"), "task_subject": subject, "missing": missing},
+        {
+            "wf": metadata.get("wf"),
+            "phase": metadata.get("phase"),
+            "task_id": data.get("task_id"),
+            "agent": metadata.get("origin"),
+            "event": "task_completed_guard",
+            "decision": "block" if mode.get("taskMetadata") == "block" else "audit",
+            "reason": ",".join(missing),
+            "task_subject": subject,
+        },
     )
     if mode.get("taskMetadata") == "block":
         sys.stderr.write(
