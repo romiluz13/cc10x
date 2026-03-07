@@ -17,7 +17,7 @@ It is:
 - one router skill
 - a small set of specialized agents
 - a small set of plugin hooks
-- optional MCP acceleration
+- optional user-configured MCP acceleration
 - workflow artifacts under `.claude/cc10x/workflows/`
 
 The system is still mostly **English orchestration**, but it is no longer prompt-only. The current design mixes:

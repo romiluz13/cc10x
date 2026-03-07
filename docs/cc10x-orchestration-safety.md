@@ -76,6 +76,7 @@ If the change touches plugin metadata or docs, also verify:
 - `.claude-plugin/marketplace.json`
 - `README.md`
 - `CHANGELOG.md`
+- optional MCP instructions still clearly state the expected Claude Code server names: `brightdata`, `octocode`
 
 ## When A Change Is Unsafe
 

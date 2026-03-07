@@ -1,5 +1,14 @@
 # Changelog
 
+## [9.1.1] - 2026-03-07
+
+### MCP startup warning fix
+
+#### Fixed
+- Removed shipped plugin MCP config from `plugins/cc10x/.mcp.json` so CC10X no longer triggers startup warnings when Bright Data or Octocode environment variables are not configured.
+- Changed CC10X MCP support from plugin-bundled config to **optional user-configured Claude Code MCP servers**. The recommended server names remain `brightdata` and `octocode`.
+- Updated router/docs/audit language so MCP acceleration is documented as user-configured and fallback-safe instead of plugin-shipped.
+
 ## [9.1.0] - 2026-03-07
 
 ### Publication polish: intent contracts, BDD evidence, proof-of-work artifacts, harness audit

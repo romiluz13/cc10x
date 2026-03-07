@@ -1,6 +1,6 @@
 # CC10x Orchestration Bible (Plugin-Only Source of Truth)
 
-> **Last reviewed against live plugin files:** 2026-03-07 (`v9.1.0` product line plus post-release stability hardening: plugin-native hooks packaging, optional MCP acceleration, router-owned orchestration, intent-first planning, BDD-style evidence, workflow replay fixtures) | **Status:** IN SYNC WITH CURRENT MAIN
+> **Last reviewed against live plugin files:** 2026-03-07 (`v9.1.1` product line: plugin-native hooks packaging, user-configured optional MCP acceleration, router-owned orchestration, intent-first planning, BDD-style evidence, workflow replay fixtures) | **Status:** IN SYNC WITH CURRENT MAIN
 
 > This document is derived **only** from `plugins/cc10x/` (agents + skills).
 > Ignore all other docs. Do not trust external narratives.
@@ -149,7 +149,7 @@ For marketplace/plugin installs, shipped runtime behavior must live inside the p
 - plugin manifest: `.claude-plugin/plugin.json`
 - plugin hooks: `hooks/hooks.json`
 - plugin hook scripts: `scripts/*` referenced via `${CLAUDE_PLUGIN_ROOT}`
-- optional plugin MCP acceleration: `.mcp.json`
+- optional user-configured MCP acceleration via Claude Code MCP settings
 
 Repo-local `.claude/settings.json` is not part of the shipped plugin contract.
 

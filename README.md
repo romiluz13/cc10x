@@ -2,7 +2,7 @@
 
 ### The Intelligent Orchestrator for Claude Code
 
-**Current version:** 9.1.0
+**Current version:** 9.1.1
 
 **Recommended: Create `~/.claude/CLAUDE.md` (global) so the router is always active across all projects.**
 
@@ -35,7 +35,7 @@ Most Claude Code plugins are **bloated and over-engineered**:
 - **BDD-style evidence** across BUILD, DEBUG, and VERIFY using named scenarios with expected vs actual proof
 - **DDD-style domain language preservation** so plans and scenarios use the product's real terms instead of invented abstractions
 - **Proof-of-work workflow artifacts** under `.claude/cc10x/workflows/`
-- **Plugin-native hooks and optional MCP** aligned with Claude Code plugin conventions
+- **Plugin-native hooks and optional user-configured MCP** aligned with Claude Code plugin conventions
 - **Built-in harness audit** for manifest/docs/router drift
 
 ---
@@ -458,6 +458,7 @@ I'll help you build a task tracker! Let me start...
 
 | Version | Highlights |
 |---------|------------|
+| **v9.1.1** | Removed shipped MCP config to avoid startup warnings; MCP research remains optional via user-configured Claude Code MCP servers named `brightdata` and `octocode` |
 | **v9.1.0** | Publication polish: intent-first planning, BDD-style scenario evidence, DDD-style domain language preservation, proof-of-work workflow artifacts, built-in harness drift audit |
 | **v9.0.0** | Plugin-native packaging: bundled Claude Code hooks, optional plugin MCP acceleration, router-owned research quality model, workflow artifacts as durable truth |
 | **v8.5.0** | Fix 1: READ-ONLY task completion as explicit mandatory gate (3-GATE). Fix 2b: CRITICAL+HIGH scope question via text (Rule 1a-SCOPE + Scope Decision Resume + scope-aware re-hunt) |
@@ -557,14 +558,16 @@ plugins/cc10x/
 
 ## Optional MCP Integrations
 
-cc10x works out of the box with no MCPs required. These are **optional** — they unlock specific features when installed.
+cc10x works out of the box with no MCPs required. These are **optional** — they unlock specific features when installed in your own Claude Code MCP settings.
 
 | MCP | Feature Unlocked | How to Install |
 |-----|-----------------|----------------|
-| **[octocode](https://github.com/nicepkg/octocode)** | GitHub research: find packages, search code across repos, read PR history. Triggered automatically when planner or bug-investigator needs external research. | Install via Claude Code MCP settings |
-| **[brightdata](https://github.com/nicepkg/mcp-brightdata)** | Web scraping for research tasks — used as fallback when web content is needed beyond GitHub. | Install via Claude Code MCP settings |
+| **[octocode](https://github.com/nicepkg/octocode)** | GitHub research: find packages, search code across repos, read PR history. Triggered automatically when planner or bug-investigator needs external research. | Install via Claude Code MCP settings using the server name `octocode` |
+| **[brightdata](https://github.com/nicepkg/mcp-brightdata)** | Web scraping for research tasks — used as fallback when web content is needed beyond GitHub. | Install via Claude Code MCP settings using the server name `brightdata` |
 
-**Without these MCPs:** cc10x still works fully. The `github-researcher` agent simply won't execute GitHub searches when triggered, and agents will note it in Memory Notes and continue.
+**Important:** CC10X no longer ships MCP server config inside the plugin. This avoids startup warnings for users who do not have Bright Data or Octocode credentials configured.
+
+**Without these MCPs:** cc10x still works fully. The research agents degrade to built-in Claude Code tools and note the lower-confidence path in their outputs.
 
 **With octocode installed:** When the router detects new/unfamiliar tech, 3+ failed debug attempts, or explicit research requests, it automatically calls octocode tools to search GitHub before invoking the planner or bug-investigator.
 

@@ -103,7 +103,7 @@ Rules:
 - Resume uses task metadata first, then workflow artifact, then memory markdown.
 - Verifier handoff and memory finalization read structured data from the workflow artifact, not transient conversation recovery.
 - Bright Data MCP and Octocode MCP are optional accelerators. Base CC10X installs must continue to work with built-in Claude Code tools only.
-- When optional plugin MCP servers are configured, use the server names `brightdata` and `octocode` so the research agents can auto-detect them without prompt edits.
+- When optional user-configured Claude Code MCP servers are available, use the server names `brightdata` and `octocode` so the research agents can auto-detect them without prompt edits.
 - `capabilities` records the session-level research backend availability model:
   - `brightdata_available`
   - `octocode_available`
@@ -166,7 +166,7 @@ Hook policy:
   - `TaskCompleted` for task metadata checks
 - Default mode is audit-only. Do not rely on hooks as the only source of truth; the router still owns orchestration decisions.
 - Repo-local `.claude/settings.json` is not part of the shipped CC10X product.
-- Optional accelerator MCPs are shipped through the plugin `.mcp.json`; missing credentials or unavailable servers must degrade to built-in research paths rather than break the workflow.
+- Optional accelerator MCPs are user-configured in Claude Code. CC10X assumes the names `brightdata` and `octocode` if they are available, but must degrade to built-in research paths when they are absent.
 
 ## 3. Task Metadata Contract
 

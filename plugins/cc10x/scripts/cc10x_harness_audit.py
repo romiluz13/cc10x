@@ -12,7 +12,6 @@ CHANGELOG = ROOT / "CHANGELOG.md"
 PLUGIN_JSON = PLUGIN_ROOT / ".claude-plugin" / "plugin.json"
 MARKETPLACE_JSON = ROOT / ".claude-plugin" / "marketplace.json"
 HOOKS_JSON = PLUGIN_ROOT / "hooks" / "hooks.json"
-MCP_JSON = PLUGIN_ROOT / ".mcp.json"
 INVARIANTS = ROOT / "docs" / "router-invariants.md"
 REPLAY_CHECK = PLUGIN_ROOT / "scripts" / "cc10x_workflow_replay_check.py"
 FIXTURES_DIR = PLUGIN_ROOT / "tests" / "fixtures"
@@ -45,7 +44,6 @@ def main() -> int:
 
     plugin = json.loads(read(PLUGIN_JSON))
     hooks = json.loads(read(HOOKS_JSON))
-    mcp = json.loads(read(MCP_JSON))
     marketplace = (
         json.loads(read(MARKETPLACE_JSON)) if MARKETPLACE_JSON.exists() else {}
     )
@@ -102,12 +100,13 @@ def main() -> int:
             if not (FIXTURES_DIR / fixture).exists():
                 errors.append(f"missing replay fixture {fixture}")
 
-    mcp_names = sorted((mcp.get("mcpServers") or {}).keys())
     for required in ("brightdata", "octocode"):
-        if required not in mcp_names:
-            errors.append(f"plugin .mcp.json missing server '{required}'")
         if required not in router:
             errors.append(f"router no longer mentions MCP server '{required}'")
+        if required not in readme:
+            errors.append(
+                f"README no longer documents optional MCP server '{required}'"
+            )
 
     required_router_headings = [
         "## 1. Intent Routing",
@@ -194,7 +193,7 @@ def main() -> int:
 
     print("cc10x_harness_audit: OK")
     print(f"version={version}")
-    print(f"mcp_servers={','.join(mcp_names)}")
+    print("mcp_servers=user-configured:brightdata,octocode")
     return 0
 
 
