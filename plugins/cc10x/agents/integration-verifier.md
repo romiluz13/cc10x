@@ -155,6 +155,7 @@ EVIDENCE:
 **Rule:** SCENARIOS_PASSED count MUST equal number of entries in `EVIDENCE.scenarios` with exit 0 and Result=PASS. Mismatch = INVALID.
 **Rule:** `SCENARIOS_TOTAL = SCENARIOS_PASSED + SCENARIOS_FAILED`. Mismatch = INVALID.
 **Rule:** Every scenario row must include non-empty `Expected` and `Actual`. Missing either = INVALID.
+**Rule:** Every counted scenario must map to exactly one concrete row in `EVIDENCE.scenarios`. Missing evidence = INVALID.
 
 ### Rollback Decision (IF FAIL)
 

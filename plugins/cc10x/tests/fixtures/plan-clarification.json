@@ -1,0 +1,30 @@
+{
+  "id": "plan-clarification",
+  "workflow_type": "PLAN",
+  "starting_artifact": {
+    "workflow_id": "wf-plan-clarification",
+    "workflow_type": "PLAN",
+    "task_ids": {},
+    "results": {},
+    "intent": {"goal": "Plan notifications system"},
+    "evidence": {},
+    "quality": {"convergence_state": "pending"},
+    "status_history": [],
+    "remediation_history": []
+  },
+  "relevant_tasks": {},
+  "agent_outputs": {
+    "planner_contract": {
+      "STATUS": "NEEDS_CLARIFICATION",
+      "BLOCKING": true,
+      "REMEDIATION_REASON": "Need delivery-channel priority and retention constraints"
+    }
+  },
+  "expected": {
+    "next_action": "ask_user",
+    "pending_gate": "clarification",
+    "artifact_delta": {
+      "quality": {"convergence_state": "needs_iteration"}
+    }
+  }
+}

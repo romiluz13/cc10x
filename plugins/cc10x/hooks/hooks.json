@@ -26,6 +26,19 @@
         ]
       }
     ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/cc10x_posttooluse_artifact_guard.py\"",
+            "timeout": 10,
+            "statusMessage": "CC10X workflow artifact audit"
+          }
+        ]
+      }
+    ],
     "TaskCompleted": [
       {
         "hooks": [

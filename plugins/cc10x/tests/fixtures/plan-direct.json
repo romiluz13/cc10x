@@ -1,0 +1,22 @@
+{
+  "id": "plan-direct",
+  "workflow_type": "PLAN",
+  "starting_artifact": {
+    "workflow_id": "wf-plan-direct",
+    "workflow_type": "PLAN",
+    "task_ids": {},
+    "results": {},
+    "intent": {"goal": "Rename a README heading"},
+    "evidence": {},
+    "quality": {"convergence_state": "pending"},
+    "status_history": [],
+    "remediation_history": []
+  },
+  "relevant_tasks": {},
+  "agent_outputs": {},
+  "expected": {
+    "next_action": "build_direct",
+    "pending_gate": null,
+    "artifact_delta": {}
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "id": "build-happy-path",
+  "workflow_type": "BUILD",
+  "starting_artifact": {
+    "workflow_id": "wf-build-happy",
+    "workflow_type": "BUILD",
+    "task_ids": {},
+    "results": {},
+    "intent": {"goal": "Build user profile page"},
+    "evidence": {},
+    "quality": {"convergence_state": "pending"},
+    "status_history": [],
+    "remediation_history": []
+  },
+  "relevant_tasks": {},
+  "agent_outputs": {
+    "builder_contract": {
+      "STATUS": "PASS",
+      "TDD_RED_EXIT": 1,
+      "TDD_GREEN_EXIT": 0,
+      "SCENARIOS": [
+        {
+          "name": "Profile page renders",
+          "given": "an authenticated user",
+          "when": "they open /profile",
+          "then": "their profile fields appear",
+          "command": "npm test -- profile",
+          "expected": "profile fields rendered",
+          "actual": "profile fields rendered",
+          "exit_code": 0,
+          "status": "PASS"
+        }
+      ]
+    },
+    "verifier_contract": {
+      "SCENARIOS_TOTAL": 1,
+      "SCENARIOS_PASSED": 1,
+      "SCENARIOS_FAILED": 0,
+      "SCENARIO_ROWS": [
+        {
+          "name": "Profile page renders",
+          "given": "an authenticated user",
+          "when": "they open /profile",
+          "then": "their profile fields appear",
+          "command": "npm test -- profile",
+          "expected": "profile fields rendered",
+          "actual": "profile fields rendered",
+          "exit_code": 0,
+          "status": "PASS"
+        }
+      ],
+      "EVIDENCE": {
+        "scenarios": [
+          "Profile page renders | Given authenticated user | When open /profile | Then fields appear | npm test -- profile -> exit 0 | expected=profile fields rendered | actual=profile fields rendered"
+        ]
+      }
+    }
+  },
+  "expected": {
+    "next_action": "memory_finalize",
+    "artifact_delta": {
+      "quality": {"convergence_state": "stable"}
+    }
+  }
+}

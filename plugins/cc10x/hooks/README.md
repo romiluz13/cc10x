@@ -5,6 +5,7 @@ This directory now serves two different purposes:
 1. **Plugin runtime hooks** via `hooks.json`
    - `PreToolUse`
    - `SessionStart`
+   - `PostToolUse`
    - `TaskCompleted`
 2. **Optional git pre-commit helper** via `pre-commit`
 
@@ -16,6 +17,7 @@ from the plugin bundle and runs the referenced scripts from `${CLAUDE_PLUGIN_ROO
 The shipped runtime hooks are intentionally minimal and audit-first:
 - protect direct memory markdown writes
 - inject workflow resume context
+- audit workflow artifact integrity after writes
 - validate CC10X task metadata on completion
 
 ## Internal Publication Audit
@@ -28,7 +30,9 @@ python3 plugins/cc10x/scripts/cc10x_harness_audit.py
 
 It validates the publication-critical contract:
 - plugin manifest version matches `README.md` and `CHANGELOG.md`
+- marketplace metadata matches the shipped plugin version
 - plugin hooks and MCP names referenced by docs/router actually exist
+- workflow replay fixtures and checker are present
 - key router headings still exist for invariant coverage
 - router-consumed task metadata and agent contract fields are still present
 

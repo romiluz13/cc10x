@@ -1,6 +1,6 @@
 # CC10x Orchestration Bible (Plugin-Only Source of Truth)
 
-> **Last reviewed against live plugin files:** 2026-03-07 (`v9.1.0`: plugin-native hooks packaging, optional MCP acceleration, router-owned orchestration, intent-first planning, BDD-style evidence) | **Status:** IN SYNC FOR 9.1.0 PRODUCT SURFACE — invariant registry still needs a full renumber/resync pass
+> **Last reviewed against live plugin files:** 2026-03-07 (`v9.1.0` product line plus post-release stability hardening: plugin-native hooks packaging, optional MCP acceleration, router-owned orchestration, intent-first planning, BDD-style evidence, workflow replay fixtures) | **Status:** IN SYNC WITH CURRENT MAIN
 
 > This document is derived **only** from `plugins/cc10x/` (agents + skills).
 > Ignore all other docs. Do not trust external narratives.
@@ -138,6 +138,7 @@ The router never executes research inline.
 Prompt text is not the strongest enforcement layer. These rules should move to hooks or harness code when possible:
 - reject Memory Update if anything tries to spawn it as a subagent
 - validate required `wf/kind/origin/phase/plan/scope/reason` metadata on CC10X task creation
+- audit workflow artifact integrity after router-owned writes
 - clean orphaned test processes after write-agent completion
 - enforce read-only agents not writing outside approved paths
 - optionally reject malformed read-only contract envelopes before router fallback logic
@@ -151,6 +152,19 @@ For marketplace/plugin installs, shipped runtime behavior must live inside the p
 - optional plugin MCP acceleration: `.mcp.json`
 
 Repo-local `.claude/settings.json` is not part of the shipped plugin contract.
+
+### Stability Harness (Current State)
+
+The current main branch includes two non-runtime but load-bearing safety tools:
+- `plugins/cc10x/scripts/cc10x_harness_audit.py`
+  - validates manifest/docs/marketplace drift
+  - validates shipped hooks and MCP references
+  - validates router-consumed agent contract fields
+- `plugins/cc10x/scripts/cc10x_workflow_replay_check.py`
+  - validates deterministic workflow-routing and contract scenarios from fixtures
+  - covers PLAN / BUILD / DEBUG / REVIEW / VERIFY regression paths without a live Claude session
+
+These are part of the maintenance contract even though they are not invoked by the router at runtime.
 
 ### External Skill Conflict Risk (Design Decision)
 

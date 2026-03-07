@@ -1,0 +1,42 @@
+{
+  "id": "plan-full",
+  "workflow_type": "PLAN",
+  "starting_artifact": {
+    "workflow_id": "wf-plan-full",
+    "workflow_type": "PLAN",
+    "task_ids": {},
+    "results": {},
+    "intent": {"goal": "Implement authentication flow"},
+    "evidence": {},
+    "quality": {"convergence_state": "pending"},
+    "status_history": [],
+    "remediation_history": []
+  },
+  "relevant_tasks": {},
+  "agent_outputs": {
+    "planner_contract": {
+      "STATUS": "PLAN_CREATED",
+      "PLAN_FILE": "docs/plans/2026-03-07-auth-plan.md",
+      "GATE_PASSED": true,
+      "SCENARIOS": [
+        {
+          "name": "Happy-path sign in",
+          "given": "a registered user",
+          "when": "they submit valid credentials",
+          "then": "they reach the dashboard",
+          "command": "plan",
+          "expected": "dashboard access",
+          "actual": "dashboard access",
+          "exit_code": 0,
+          "status": "PASS"
+        }
+      ]
+    }
+  },
+  "expected": {
+    "next_action": "create_build_workflow",
+    "artifact_delta": {
+      "plan_file": "docs/plans/2026-03-07-auth-plan.md"
+    }
+  }
+}

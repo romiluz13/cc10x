@@ -1,0 +1,30 @@
+{
+  "id": "review-advisory",
+  "workflow_type": "REVIEW",
+  "starting_artifact": {
+    "workflow_id": "wf-review-advisory",
+    "workflow_type": "REVIEW",
+    "task_ids": {},
+    "results": {},
+    "intent": {"goal": "Review account deletion flow"},
+    "evidence": {},
+    "quality": {"convergence_state": "pending"},
+    "status_history": [],
+    "remediation_history": []
+  },
+  "relevant_tasks": {},
+  "agent_outputs": {
+    "reviewer_contract": {
+      "heading": "## Review: Changes Requested",
+      "REMEDIATION_NEEDED": true,
+      "REMEDIATION_REASON": "Deletion flow lacks confirmation and audit trail"
+    }
+  },
+  "expected": {
+    "next_action": "offer_build_transition",
+    "code_mutation": false,
+    "artifact_delta": {
+      "quality": {"convergence_state": "needs_iteration"}
+    }
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "id": "verify-fail-closed",
+  "workflow_type": "BUILD",
+  "starting_artifact": {
+    "workflow_id": "wf-verify-fail-closed",
+    "workflow_type": "BUILD",
+    "task_ids": {},
+    "results": {},
+    "intent": {"goal": "Build invoicing workflow"},
+    "evidence": {},
+    "quality": {"convergence_state": "pending"},
+    "status_history": [],
+    "remediation_history": []
+  },
+  "relevant_tasks": {},
+  "agent_outputs": {
+    "verifier_contract": {
+      "SCENARIOS_TOTAL": 2,
+      "SCENARIOS_PASSED": 2,
+      "SCENARIOS_FAILED": 0,
+      "SCENARIO_ROWS": [
+        {
+          "name": "Invoice creation",
+          "given": "a billable order",
+          "when": "the invoice job runs",
+          "then": "an invoice is created",
+          "command": "npm test -- invoice-create",
+          "expected": "invoice record created",
+          "actual": "invoice record created",
+          "exit_code": 0,
+          "status": "PASS"
+        },
+        {
+          "name": "Invoice retry",
+          "given": "a transient API failure",
+          "when": "the retry job runs",
+          "then": "the invoice succeeds on retry",
+          "command": "npm test -- invoice-retry",
+          "expected": "",
+          "actual": "invoice retry still failed",
+          "exit_code": 1,
+          "status": "FAIL"
+        }
+      ],
+      "EVIDENCE": {
+        "scenarios": [
+          "Invoice creation | Given billable order | When invoice job runs | Then invoice is created | npm test -- invoice-create -> exit 0 | expected=invoice record created | actual=invoice record created"
+        ]
+      }
+    }
+  },
+  "expected": {
+    "next_action": "stop_invalid_output",
+    "artifact_delta": {
+      "quality": {"convergence_state": "needs_iteration"}
+    }
+  }
+}

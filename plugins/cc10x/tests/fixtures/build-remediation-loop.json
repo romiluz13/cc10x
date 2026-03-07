@@ -1,0 +1,33 @@
+{
+  "id": "build-remediation-loop",
+  "workflow_type": "BUILD",
+  "starting_artifact": {
+    "workflow_id": "wf-build-remfix",
+    "workflow_type": "BUILD",
+    "task_ids": {},
+    "results": {},
+    "intent": {"goal": "Build team settings page"},
+    "evidence": {},
+    "quality": {"convergence_state": "needs_iteration"},
+    "status_history": [],
+    "remediation_history": []
+  },
+  "relevant_tasks": {
+    "completed_remfix": {
+      "wf": "wf-build-remfix",
+      "kind": "remfix",
+      "origin": "code-reviewer",
+      "phase": "build-review",
+      "scope": "ALL_ISSUES",
+      "reason": "Fix critical and high review findings"
+    }
+  },
+  "agent_outputs": {},
+  "expected": {
+    "next_action": "spawn_recheck_tasks",
+    "follow_up_tasks": ["re-review", "re-hunt", "re-verify"],
+    "artifact_delta": {
+      "quality": {"convergence_state": "pending"}
+    }
+  }
+}

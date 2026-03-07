@@ -14,6 +14,20 @@ MARKETPLACE_JSON = ROOT / ".claude-plugin" / "marketplace.json"
 HOOKS_JSON = PLUGIN_ROOT / "hooks" / "hooks.json"
 MCP_JSON = PLUGIN_ROOT / ".mcp.json"
 INVARIANTS = ROOT / "docs" / "router-invariants.md"
+REPLAY_CHECK = PLUGIN_ROOT / "scripts" / "cc10x_workflow_replay_check.py"
+FIXTURES_DIR = PLUGIN_ROOT / "tests" / "fixtures"
+REQUIRED_FIXTURES = (
+    "plan-direct.json",
+    "plan-full.json",
+    "plan-clarification.json",
+    "build-happy-path.json",
+    "build-scope-gate.json",
+    "build-remediation-loop.json",
+    "debug-fixed.json",
+    "debug-research.json",
+    "review-advisory.json",
+    "verify-fail-closed.json",
+)
 
 
 def read(path: Path) -> str:
@@ -70,6 +84,7 @@ def main() -> int:
     hook_commands = json.dumps(hooks)
     for script in (
         "cc10x_pretooluse_guard.py",
+        "cc10x_posttooluse_artifact_guard.py",
         "cc10x_sessionstart_context.py",
         "cc10x_task_completed_guard.py",
     ):
@@ -77,6 +92,15 @@ def main() -> int:
             errors.append(f"hooks.json does not reference {script}")
         if not (PLUGIN_ROOT / "scripts" / script).exists():
             errors.append(f"missing plugin hook script {script}")
+
+    if not REPLAY_CHECK.exists():
+        errors.append("missing workflow replay checker script")
+    if not FIXTURES_DIR.exists():
+        errors.append("missing workflow replay fixtures directory")
+    else:
+        for fixture in REQUIRED_FIXTURES:
+            if not (FIXTURES_DIR / fixture).exists():
+                errors.append(f"missing replay fixture {fixture}")
 
     mcp_names = sorted((mcp.get("mcpServers") or {}).keys())
     for required in ("brightdata", "octocode"):
@@ -94,6 +118,8 @@ def main() -> int:
         "## 10. Research Orchestration",
         "## 12. Chain Execution Loop",
         "## 13. Memory Finalization",
+        ".events.jsonl",
+        "Convergence rule:",
     ]
     for heading in required_router_headings:
         if heading not in router:

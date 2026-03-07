@@ -1,0 +1,54 @@
+{
+  "id": "debug-fixed",
+  "workflow_type": "DEBUG",
+  "starting_artifact": {
+    "workflow_id": "wf-debug-fixed",
+    "workflow_type": "DEBUG",
+    "task_ids": {},
+    "results": {},
+    "intent": {"goal": "Fix CSV export bug"},
+    "evidence": {},
+    "quality": {"convergence_state": "pending"},
+    "status_history": [],
+    "remediation_history": []
+  },
+  "relevant_tasks": {},
+  "agent_outputs": {
+    "investigator_contract": {
+      "STATUS": "FIXED",
+      "TDD_RED_EXIT": 1,
+      "TDD_GREEN_EXIT": 0,
+      "VARIANTS_COVERED": 2,
+      "SCENARIOS": [
+        {
+          "name": "Regression: CSV export with defaults",
+          "given": "the default export options",
+          "when": "the user exports CSV",
+          "then": "a valid CSV file downloads",
+          "command": "npm test -- csv-default",
+          "expected": "CSV download succeeds",
+          "actual": "CSV download succeeds",
+          "exit_code": 0,
+          "status": "PASS"
+        },
+        {
+          "name": "Variant: CSV export with custom delimiter",
+          "given": "a custom delimiter",
+          "when": "the user exports CSV",
+          "then": "the delimiter is preserved",
+          "command": "npm test -- csv-delimiter",
+          "expected": "delimiter preserved",
+          "actual": "delimiter preserved",
+          "exit_code": 0,
+          "status": "PASS"
+        }
+      ]
+    }
+  },
+  "expected": {
+    "next_action": "debug_review",
+    "artifact_delta": {
+      "quality": {"convergence_state": "pending"}
+    }
+  }
+}

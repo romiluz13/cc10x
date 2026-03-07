@@ -1,0 +1,35 @@
+{
+  "id": "debug-research",
+  "workflow_type": "DEBUG",
+  "starting_artifact": {
+    "workflow_id": "wf-debug-research",
+    "workflow_type": "DEBUG",
+    "task_ids": {},
+    "results": {},
+    "intent": {"goal": "Fix OAuth callback failure"},
+    "evidence": {},
+    "quality": {"convergence_state": "pending"},
+    "status_history": [],
+    "remediation_history": []
+  },
+  "relevant_tasks": {},
+  "agent_outputs": {
+    "investigator_contract": {
+      "STATUS": "BLOCKED",
+      "NEEDS_EXTERNAL_RESEARCH": true,
+      "RESEARCH_REASON": "Need provider-specific callback handling pattern"
+    },
+    "research_results": {
+      "web_status": "PARTIAL",
+      "github_status": "DEGRADED",
+      "overall_quality": "medium"
+    }
+  },
+  "expected": {
+    "next_action": "reinvoke_investigator",
+    "artifact_delta": {
+      "research_quality": {"overall": "medium"},
+      "quality": {"convergence_state": "needs_iteration"}
+    }
+  }
+}

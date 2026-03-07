@@ -1,0 +1,29 @@
+{
+  "id": "build-scope-gate",
+  "workflow_type": "BUILD",
+  "starting_artifact": {
+    "workflow_id": "wf-build-scope",
+    "workflow_type": "BUILD",
+    "task_ids": {},
+    "results": {},
+    "intent": {"goal": "Build checkout flow"},
+    "evidence": {},
+    "quality": {"convergence_state": "pending"},
+    "status_history": [],
+    "remediation_history": []
+  },
+  "relevant_tasks": {},
+  "agent_outputs": {
+    "parallel_findings": {
+      "critical_issues": 1,
+      "high_issues": 3
+    }
+  },
+  "expected": {
+    "next_action": "pause_for_scope_decision",
+    "pending_gate": "scope_decision",
+    "artifact_delta": {
+      "quality": {"convergence_state": "needs_iteration"}
+    }
+  }
+}

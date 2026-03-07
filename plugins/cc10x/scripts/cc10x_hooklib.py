@@ -4,7 +4,7 @@ import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Tuple
 
 
 def project_dir() -> Path:
@@ -74,15 +74,43 @@ def log_event(name: str, payload: Dict[str, Any]) -> None:
 
 
 def latest_workflow_payload() -> Dict[str, Any]:
+    payload, _, _ = read_latest_workflow_state()
+    return payload
+
+
+def latest_workflow_file() -> Path | None:
     files = sorted(
         workflows_dir().glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True
     )
     if not files:
-        return {}
+        return None
+    return files[0]
+
+
+def read_latest_workflow_state() -> Tuple[Dict[str, Any], Path | None, str | None]:
+    latest = latest_workflow_file()
+    if latest is None:
+        return {}, None, None
     try:
-        return json.loads(files[0].read_text(encoding="utf-8"))
-    except Exception:
-        return {}
+        return json.loads(latest.read_text(encoding="utf-8")), latest, None
+    except Exception as exc:
+        return {}, latest, exc.__class__.__name__
+
+
+def workflow_event_log_exists(payload: Dict[str, Any], artifact_path: Path) -> bool:
+    workflow_id = payload.get("workflow_id")
+    if not workflow_id:
+        workflow_id = artifact_path.stem
+    event_log = workflows_dir() / f"{workflow_id}.events.jsonl"
+    return event_log.exists()
+
+
+def workflow_artifact_is_fresh(path: Path, max_age_seconds: int = 60) -> bool:
+    try:
+        age = datetime.now(timezone.utc).timestamp() - path.stat().st_mtime
+    except FileNotFoundError:
+        return False
+    return age <= max_age_seconds
 
 
 def parse_metadata(description: str) -> Dict[str, str]:

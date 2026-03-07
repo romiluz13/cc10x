@@ -1,535 +1,118 @@
 # CC10x Router Behavioral Invariant Registry
 
-> **Status note:** Product version is now `v9.1.0`. This registry is still structurally anchored in the older `v8.5.0` invariant numbering plus later additions, but the 2026-03-07 release audit confirmed the current live router/product surface before publication. Treat it as a safety reference that is current at the banner level, while a full renumber/resync of every invariant body remains future cleanup.
+> **Status note:** Current product line is `v9.1.0`. This registry is fully aligned to the live router structure in `plugins/cc10x/skills/cc10x-router/SKILL.md` as of 2026-03-07.
 
-## 2026-03-07 Audit Snapshot
+## Purpose
 
-Current live audit against `plugins/cc10x/skills/cc10x-router/SKILL.md` and the live agents:
-- Release line validated: `v9.1.0` across plugin manifest, README, CHANGELOG, plugin hooks/MCP packaging, and publication audit script.
-- Preserved: compaction-safe memory capture, transient `memory_task_id`, workflow-scoped hydration, read-only fallback completion, re-review/re-verify loop, research round caps, REVERT gate, REVIEW-to-BUILD transition.
-- Restored in this pass: BUILD scope-decision resume for mixed CRITICAL + HIGH findings and scope-aware re-hunt behavior.
-- Plugin-native packaging now carries the shipped runtime hooks and optional MCP acceleration; repo-local `.claude/settings.json` is no longer part of the product contract.
-- Still pending: a full invariant-by-invariant renumbering/resync so every current router section maps cleanly to a live invariant entry.
+This file maps each load-bearing router behavior to the failure it prevents.
+If a router section changes, the matching invariant must be updated in the same change.
 
-**Purpose:** Maps every load-bearing section of `cc10x-router/SKILL.md` to the failure mode it prevents.
+## Audit Snapshot
 
-**Rule for editors:** Before removing ANY text from the router, find its invariant entry.
-Confirm its coverage exists elsewhere. Update the entry to point to the new location.
-No entry = load-bearing = do not remove.
+Validated against the live plugin surface:
+- workflow artifacts under `.claude/cc10x/workflows/{wf}.json`
+- workflow event logs under `.claude/cc10x/workflows/{wf}.events.jsonl`
+- plugin hooks in `plugins/cc10x/hooks/hooks.json`
+- router-owned remediation creation
+- fail-closed scenario evidence rules for BUILD / DEBUG / VERIFY
+- memory finalization and transient `memory_task_id`
 
-**Rule for PR reviews:** Any PR removing router lines must reference the invariant IDs
-for each removed section and state where coverage now lives.
+## Current Invariants
 
----
-
-## Core Orchestration
-
-### INV-001: Memory Notes compaction safety
-**Covers:** Chain Execution Loop step 3a
-**Enforces:** After each READ-ONLY agent completes, Memory Notes are immediately
-written into the Memory Update task description (filesystem-backed).
-**Fails silently if removed:** Memory Notes exist only in conversation history.
-After context compaction, the Memory Update task finds nothing to persist.
-Every learning from code-reviewer, silent-failure-hunter, integration-verifier
-is permanently lost. Memory system accumulates nothing over time.
-**Safe to remove:** Never. Unless Memory Update reads from another compaction-safe
-source that isn't conversation history.
-
-### INV-002: memory_task_id durability
-**Covers:** Step 3a → `Edit(activeContext.md ## References, [cc10x-internal] memory_task_id)`
-**Enforces:** After context compaction, the router can reconstruct `memory_task_id`
-from `activeContext.md ## References` rather than losing it.
-**Fails silently if removed:** After compaction, `memory_task_id` is undefined.
-Step 3a calls `TaskUpdate({ taskId: undefined })` silently failing. Memory Notes
-are never captured into the task description. Compaction kills all Memory Notes.
-**Safe to remove:** Never. This is the compaction recovery anchor for step 3a.
-
-### INV-003: Parallel execution — dual TaskUpdate before invocation
-**Covers:** Chain Execution Loop step 2, parallel case bullet
-**Enforces:** Both parallel agents (code-reviewer + silent-failure-hunter)
-must be set to `in_progress` BEFORE either Task() call fires.
-**Fails silently if removed:** One task remains "pending" during execution.
-If TaskList() is called before both complete, the pending agent appears
-available and may be double-invoked.
-**Safe to remove:** Never. Required for accurate task state tracking.
-
-### INV-004: Circuit Breaker active-only count
-**Covers:** Router Contract Validation → Circuit Breaker
-**Enforces:** Counts only ACTIVE (pending/in_progress) REM-FIX tasks, not completed ones.
-**Fails silently if removed:** If counting all REM-FIX tasks (including completed),
-prior sessions' completed fixes inflate the count. First REM-FIX of a clean
-new workflow immediately trips the breaker. Users get blocked on every fix cycle.
-**Safe to remove:** Never. The "active only" filter is what makes the breaker
-session-safe.
-
-### INV-005: Step 3 fallback blockedBy exclusion
-**Covers:** Chain Execution Loop step 3, fallback completion check
-**Enforces:** Router checks `blockedBy` before force-completing a task. If
-`blockedBy` is non-empty, the agent intentionally blocked itself (self-healing
-SELF_REMEDIATED protocol) — do NOT force to completed.
-**Fails silently if removed:** When integration-verifier or code-reviewer
-self-heals (creates REM-FIX, blocks itself), the router's fallback immediately
-force-completes the blocked task. Self-healing protocol is silently destroyed.
-REM-FIX runs but the verifier never re-runs. Broken code ships.
-**Safe to remove:** Never while SELF_REMEDIATED protocol exists.
-
----
-
-## Contract Validation Rules
-
-### INV-006: Rule 0 — CONTRACT RULE enforcement table
-**Covers:** Contract validation rule 0 (runs before rules 1a/1b/2)
-**Enforces:** If agent self-reports STATUS=PASS but TDD evidence is missing
-(or CONFIDENCE below threshold), router overrides the status to FAIL/BLOCKED.
-**Fails silently if removed:** Agents that skip TDD can self-report PASS and
-the workflow proceeds as if tests were run. No tests = no regression protection.
-**Safe to remove:** Only if all agents can be trusted never to emit false STATUS.
-In practice: never remove.
-
-### INV-007: Rule 1a NOT IN exclusion list
-**Covers:** Rule 1a condition: `AND contract.STATUS NOT IN [...]`
-**Enforces:** Statuses that have their own handlers (INVESTIGATING, BLOCKED,
-SELF_REMEDIATED, REVERT_RECOMMENDED, LIMITATION_ACCEPTED, NEEDS_CLARIFICATION)
-do NOT trigger a generic REM-FIX task creation.
-**Fails silently if removed:** An investigator returning INVESTIGATING creates
-a spurious REM-FIX task AND continues investigating. Double-handling, infinite
-loops, wrong workflow branches. Every special status becomes a REM-FIX.
-**Safe to remove per entry:** Each entry can be removed only if its named
-handler (2b, 2c, 2d, 2f, 0b) is also removed. They are paired.
-
-### INV-008: Rule 1b — auto-default "Fix now" for HIGH issues (v8.0.0)
-**Covers:** Contract validation rule 1b
-**Enforces:** When REQUIRES_REMEDIATION=true and BLOCKING=false, router
-auto-defaults to "Fix now" without asking user (JUST_GO compatible). In
-REVIEW workflows, AskUserQuestion is used to offer a BUILD transition
-instead of creating a REM-FIX.
-**Changed in v8.0.0:** Previously (v6.0.26–v7.9.0), an explicit
-AskUserQuestion was issued for HIGH issues. Removed because: (a) users
-almost always chose "Fix now", (b) it was a deadlock source in batch
-workflows, (c) JUST_GO mode needed a clean non-blocking path.
-**Fails silently if removed:** No meaningful failure — logic is equivalent
-to always choosing "Fix now." Impact: REVIEW workflow wouldn't offer BUILD
-transition on HIGH issues.
-**Safe to remove:** Only if REVIEW-to-BUILD transition gate (INV-040) is
-also removed. Both are paired for the REVIEW case.
-
-### INV-009: Rule 0c — NEEDS_EXTERNAL_RESEARCH pre-check
-**Covers:** Contract validation rule 0c
-**Enforces:** When bug-investigator signals it needs external research,
-the THREE-PHASE research process runs BEFORE creating any REM-FIX.
-**Fails silently if removed:** Bug-investigator exhausts local attempts,
-signals research needed, but router creates REM-FIX instead. Builder fixes
-what investigator couldn't fix without the external context. Fix is blind.
-**Safe to remove:** Only if bug-investigator handles all research internally
-(partially done in v6.0.36 — investigator calls research directly,
-but rule 0c handles the case where it signals via contract).
-
-### INV-010: Rule 2 — parallel conflict check (Cases A and B)
-**Covers:** Contract validation rule 2, Cases A and B
-**Enforces:** When code-reviewer APPROVES but silent-failure-hunter found
-CRITICAL or HIGH issues, user is asked to resolve the conflict before verifier runs.
-**Fails silently if removed:** Reviewer approves, hunter finds critical gaps,
-verifier runs on approved code. Hunter's findings are silently discarded.
-Silent failures ship.
-**Safe to remove:** Never while both parallel agents run in BUILD workflow.
-
-### INV-011: Rule 2b — NEEDS_CLARIFICATION handler for planner
-**Covers:** Contract validation rule 2b
-**Enforces:** When planner returns NEEDS_CLARIFICATION, router collects
-user answers before proceeding to BUILD.
-**Fails silently if removed:** Planner signals its plan has unresolved
-assumptions. Workflow proceeds to BUILD anyway. Builder works from
-an incomplete plan. Wrong thing gets built.
-**Safe to remove:** Only if planner is guaranteed to never emit
-STATUS=NEEDS_CLARIFICATION.
-
-### INV-012: Rule 2c — INVESTIGATING handler for bug-investigator
-**Covers:** Contract validation rule 2c
-**Enforces:** When bug-investigator returns INVESTIGATING (still working,
-no fix yet), router creates a continuation task and re-invokes.
-**Fails silently if removed:** Investigator returns INVESTIGATING.
-Router treats it as a generic failure, creates REM-FIX. Builder tries
-to fix a problem the investigator hasn't diagnosed yet. Wrong fix.
-**Safe to remove:** Only if bug-investigator is guaranteed to always
-return FIXED or BLOCKED in one pass (not currently guaranteed).
-**Loop cap:** See INV-028.
-
-### INV-028: Rule 2c — INVESTIGATING loop cap (v7.1.1+)
-**Covers:** Contract validation rule 2c — Investigation Loop Cap
-**Enforces:** After 2+ completed "Continue investigation" tasks, router asks user
-whether to try once more, force BLOCKED, or abort. Prevents infinite re-invocation.
-**Fails silently if removed:** Bug-investigator returning INVESTIGATING indefinitely
-re-invokes forever. Token budget exhausted. No termination condition.
-**Safe to remove:** Never while INVESTIGATING is a valid bug-investigator status.
-
-### INV-013: Rule 2f — BLOCKED terminal state handler
-**Covers:** Contract validation rule 2f
-**Enforces:** When bug-investigator is permanently stuck (BLOCKED),
-user is asked: research / manual fix / abort.
-**Fails silently if removed:** BLOCKED status falls through to rule 1a.
-Router creates a REM-FIX task for a problem that has no known fix.
-Builder spins indefinitely. Infinite REM-FIX loop until Circuit Breaker fires.
-**Safe to remove:** Never while BLOCKED is a valid bug-investigator status.
-
-### INV-014: Rule 2d — REVERT gate via text-scan (v8.0.0)
-**Covers:** Contract validation rule 2d
-**Enforces:** When integration-verifier output contains "REVERT" or
-"revert branch" (text-scan), router presents ⚠️ REVERT AskUserQuestion
-before creating any REM-FIX. This is the only mandatory blocking gate
-in the Empty Answer Guard system (all others auto-default).
-**Changed in v8.0.0:** Previously, integration-verifier emitted
-REVERT_RECOMMENDED and LIMITATION_ACCEPTED via Router Contract YAML.
-With YAML removed from read-only agents, REVERT is now detected by
-text-scan in rule 2d. LIMITATION_ACCEPTED no longer has a mechanism —
-verifier emits PASS directly after user accepts limitation inline.
-**Fails silently if removed:** Verifier output contains "REVERT" signal.
-Router creates a REM-FIX instead of offering the revert path. User's
-intent to revert is silently converted to a fix attempt. Code may be
-un-reverted by the fix.
-**Safe to remove:** Never while integration-verifier can signal REVERT.
-**Note:** `REVERT_RECOMMENDED` and `LIMITATION_ACCEPTED` remain in rule 1a
-NOT IN exclusion list as dead-safe entries (harmless since never emitted).
-
-### INV-015: Rule 0b — SELF_REMEDIATED handler
-**Covers:** Contract validation rule 0b
-**Enforces:** When an agent self-heals (creates its own REM-FIX, blocks itself),
-router acknowledges without creating a DUPLICATE REM-FIX.
-**Fails silently if removed:** SELF_REMEDIATED falls through to rule 1a.
-Router creates a second REM-FIX task for a problem the agent already
-created a REM-FIX for. Two fix tasks, double work, possible conflicts.
-**Safe to remove:** Only if SELF_REMEDIATED protocol is removed from all agents.
-
----
-
-## Remediation Re-Review Loop
-
-### INV-016: Re-Review Loop — spawns NEW verifier task (not reactivates old)
-**Covers:** Re-Review Loop steps 1-3
-**Enforces:** After REM-FIX completes, Re-Review Loop creates NEW
-code-reviewer, silent-failure-hunter, AND integration-verifier tasks.
-**Fails silently if removed:** After a fix, the original completed verifier
-task is never re-run. Fixed code ships without re-verification.
-Broken code that passed the original build before the fix is never checked.
-**Safe to remove:** Never. Code changes from REM-FIX must be re-verified.
-Note: addBlockedBy on a completed task is a no-op — must spawn NEW tasks.
-
-### INV-017: Cycle Cap — AskUserQuestion after 2+ REM-FIX cycles
-**Covers:** Re-Review Loop step 0
-**Enforces:** After 2+ completed REM-FIX cycles, asks user whether to
-continue, research patterns, accept issues, or abort.
-**Fails silently if removed:** Infinite remediation loop. Fix introduces
-new bug → re-review finds it → new REM-FIX → fix introduces new bug → ...
-No termination condition except Circuit Breaker (which only fires at 3 active).
-**Safe to remove:** Never while REM-FIX tasks can trigger re-review loops.
-
-### INV-018: Cycle Cap — completed count (not active)
-**Covers:** Re-Review Loop step 0 filter condition
-**Enforces:** Cycle Cap counts COMPLETED REM-FIX tasks (not active ones).
-**Fails silently if removed (if switched to active count):** Cap fires only
-when 2+ REM-FIX tasks are simultaneously active — extremely rare. In normal
-flow, one REM-FIX runs at a time. Cap effectively never fires. Infinite loops
-are not prevented.
-**Note:** Circuit Breaker uses ACTIVE count (pile-up prevention).
-Cycle Cap uses COMPLETED count (loop detection). These are different. Do not merge.
-
-### INV-019: Re-Review Loop — DEBUG workflow skips silent-failure-hunter
-**Covers:** Re-Review Loop step 2 conditional
-**Enforces:** In DEBUG workflows, silent-failure-hunter is not in the original
-chain and is not created in re-reviews.
-**Fails silently if removed:** After a REM-FIX in a DEBUG workflow, a
-silent-failure-hunter task is created and must complete before the verifier
-can run. Hunter runs on a codebase it has no context for. Adds latency.
-Task hierarchy becomes inconsistent with original workflow definition.
-**Safe to remove:** Never while DEBUG chain excludes silent-failure-hunter.
-
----
-
-## Memory System
-
-### INV-020: DEBUG-RESET marker uses Parent Workflow ID (not agent's own task ID)
-**Covers:** bug-investigator.md ## DEBUG-RESET Marker section
-**Enforces:** The DEBUG-RESET marker uses the PARENT DEBUG workflow task ID
-(passed by router as "Parent Workflow ID"), not the investigator's own task ID.
-**Fails silently if removed (or if using wrong ID):** Marker is written as
-`[DEBUG-RESET: wf:{investigator_task_id}]`. Memory Update task anchors on
-`[DEBUG-RESET: wf:{parent_task_id}]`. IDs never match. Recent Changes is
-never trimmed. Memory bloats silently across all future DEBUG sessions.
-**Safe to change:** Only if Memory Update task is updated to anchor on the
-investigator's own task ID consistently.
-
-### INV-021: Memory files Auto-Heal pattern
-**Covers:** Memory section Auto-Heal pattern (cc10x-router/SKILL.md)
-**Enforces:** If required sections are missing from memory files, the router
-inserts them before any workflow runs.
-**Fails silently if removed:** Old projects without required sections cause
-Edit anchors to fail silently throughout the workflow. Memory updates appear
-to succeed but actually do nothing. Learnings are lost. Decisions not recorded.
-**Safe to remove:** Never for projects that may have been created before
-required sections were added to templates. Idempotent — no cost to keep.
-
-### INV-022: Memory Update task — READ-ONLY agents only
-**Covers:** Memory Update task descriptions (BUILD/DEBUG/REVIEW)
-**Enforces:** Memory Update collects notes from READ-ONLY agents only.
-WRITE agents (component-builder, bug-investigator, planner) already wrote
-memory directly — skipping their Memory Notes avoids duplicate entries.
-**Fails silently if removed:** Memory Update also processes Memory Notes
-from WRITE agents. Every entry appears twice in memory. Patterns file
-becomes polluted with duplicates. Memory degrades over time.
-**Safe to remove:** Only if WRITE agents stop writing memory directly.
-
----
-
-## Agent Isolation Invariants
-
-### INV-023: Task ID in every agent prompt
-**Covers:** Agent Invocation template — Task ID field
-**Enforces:** Every agent knows its own task ID and calls
-`TaskUpdate({ taskId, status: "completed" })` at the end.
-**Fails silently if removed:** Agents cannot mark their own tasks complete.
-Router calls `TaskList()` and sees all tasks still `in_progress`. Fallback
-tries to force-complete but finds blockedBy (self-healing agents) and skips.
-Workflow never advances. Permanent hang.
+### INV-001: Workflow artifact creation is immediate and durable
+**Covers:** Router `## 2a. Workflow Artifact And Hook Policy`, `## 6. Workflow Task Graphs`
+**Enforces:** Every workflow gets a JSON artifact and append-only event log as soon as the parent workflow task id is known.
+**If removed:** Resume, verifier handoff, research quality tracking, and hook-based context injection become conversation-dependent and non-durable.
 **Safe to remove:** Never.
 
-### INV-024: Parent Workflow ID in every agent prompt
-**Covers:** Agent Invocation template — Parent Workflow ID field
-**Enforces:** Agents know the parent workflow task ID for scoping markers
-(primarily used by bug-investigator for DEBUG-RESET anchor).
-**Fails silently if removed:** bug-investigator has no Parent Workflow ID.
-DEBUG-RESET marker uses fallback (own task ID). Anchor mismatch.
-Memory trimming never fires. See INV-020.
-**Safe to remove:** Never while bug-investigator needs PARENT_WORKFLOW_ID
-for DEBUG-RESET scoping.
+### INV-002: Parent workflow task uses two-step backfill
+**Covers:** Router `## 3. Task Metadata Contract`, `## 6. Workflow Task Graphs`
+**Enforces:** Parent workflow tasks may start with `wf:PENDING_SELF`, but the router must immediately rewrite the full metadata block with the real `wf:{task_id}` before child task creation.
+**If removed:** Child tasks can be created under ambiguous scope and hydration can attach to the wrong workflow.
+**Safe to remove:** Never.
 
-### INV-026: plan-review-gate in PLAN workflow step 5b (v6.0.38+)
-**Covers:** Router PLAN section step 5b — `Skill(skill="cc10x:plan-review-gate")` call
-**Enforces:** After planner completes, plan is adversarially reviewed (Feasibility, Completeness, Scope) before user sees it. Gate iterates up to 3 rounds; escalates to user on failure.
-**Fails silently if removed:** Planner output goes directly to user with no adversarial review. Fabricated file paths, missing requirements, and scope creep pass undetected.
-**Safe to remove:** Only if plan-review-gate skill is also deleted. Never remove in isolation — the skill file and the router call must stay in sync.
-**Fragility note:** Skip condition "(skip if plan is trivial — single file, <3 changes)" is evaluated from user request text alone (plan not yet written). Edge case: complex plans phrased simply may bypass gate. Tracked as Deferred v6.0.38-M.
+### INV-003: Every CC10X child task is workflow-scoped
+**Covers:** Router `## 3. Task Metadata Contract`
+**Enforces:** Child tasks must carry `wf`, `kind`, `origin`, `phase`, `plan`, `scope`, and `reason`.
+**If removed:** Resume, remediation counting, and re-review routing degrade into subject parsing and shared-task-list collisions.
+**Safe to remove:** Never.
 
-### INV-027: EVIDENCE_ITEMS enforcement in code-reviewer CONTRACT RULE (v6.0.38+)
-**Covers:** Router CONTRACT RULE table entry for code-reviewer
-**Enforces:** STATUS=APPROVE requires EVIDENCE_ITEMS≥1 (at least one cited file:line for the approval verdict). Router overrides APPROVE→CHANGES_REQUESTED if EVIDENCE_ITEMS<1.
-**Fails silently if removed:** Code-reviewer can APPROVE without citing any evidence. Review quality degrades silently — no concrete proof an actual review happened.
-**Safe to remove:** Never while EVIDENCE_ITEMS field is in code-reviewer's Router Contract. The agent rule and the router enforcement must stay in sync.
+### INV-004: Router is the only orchestration owner
+**Covers:** Router `## 7. Dispatcher And Agent Prompt Contract`, `## 9. Remediation And Workflow Rules`, `## 11. Re-Review Loop`
+**Enforces:** Workers emit contracts and remediation intent; the router creates, blocks, resumes, and completes orchestration tasks.
+**If removed:** Reviewer/verifier drift back into mutating orchestration state and task ownership becomes ambiguous again.
+**Safe to remove:** Never.
 
-### INV-025: NEVER call EnterPlanMode
-**Covers:** Planner agent frontmatter warning + router PLAN workflow
-**Enforces:** No agent or router workflow calls EnterPlanMode.
-**Fails visibly if removed:** EnterPlanMode blocks Write/Edit tools in the
-invoked agent context. Plan files can never be saved. Builder can never
-write code. Router hangs waiting for agent to complete.
-**Safe to remove:** Never. This is a hard platform constraint.
+### INV-005: Scope decision is a first-class BUILD pause
+**Covers:** Router `## 8. Post-Agent Validation`, `## 9. Remediation And Workflow Rules`
+**Enforces:** Mixed CRITICAL + HIGH findings in BUILD pause for explicit scope selection before remediation is created.
+**If removed:** HIGH issues are silently dropped when CRITICAL-only fixes are chosen by default.
+**Safe to remove:** Only if re-hunt is forced to `ALL_ISSUES` in every BUILD remediation path.
 
----
+### INV-006: Remediation loops are workflow-scoped and bounded
+**Covers:** Router `## 9. Remediation And Workflow Rules`, `## 11. Re-Review Loop`
+**Enforces:** `kind:remfix` counting, re-review task creation, and cycle limits all use the current `wf` scope.
+**If removed:** Remediation loops can count unrelated tasks, overrun, or deadlock in shared task lists.
+**Safe to remove:** Never.
 
-## Verification Conditions
+### INV-007: Research quality is durable, not conversational
+**Covers:** Router `## 10. Research Orchestration`, `## Research Quality`, `## Research Files`
+**Enforces:** Research backend choice, quality level, and file paths are written into workflow artifacts and passed forward explicitly.
+**If removed:** Planner/debugger decisions begin depending on transient research prose and old memory references.
+**Safe to remove:** Never.
 
-### INV-026: Integration-verifier ALL checks must pass before STATUS: PASS
-**Covers:** integration-verifier.md verification checklist
-**Enforces:** Verifier cannot emit STATUS: PASS unless every check has passed.
-Skipping any check = STATUS: FAIL.
-**Fails silently if removed:** Verifier cherry-picks which checks to run.
-Broken tests, missing builds, or failing linters are silently ignored.
-Code ships with known failures.
-**Safe to remove:** Never. This is the final quality gate.
+### INV-008: Read-only outputs fail closed
+**Covers:** Router `## 8. Post-Agent Validation`
+**Enforces:** Read-only agent outputs must produce a valid contract signal, and verifier scenario totals must reconcile with evidence.
+**If removed:** APPROVE / CLEAN / PASS can slip through with malformed evidence or incomplete verification.
+**Safe to remove:** Never.
 
-### INV-027: TDD evidence required for component-builder STATUS: PASS
-**Covers:** component-builder.md CONTRACT RULE + router rule 0
-**Enforces:** Builder must provide TDD_RED_EXIT=1 AND TDD_GREEN_EXIT=0
-before STATUS=PASS is accepted by the router. Rule 0 overrides if missing.
-**Fails silently if removed:** Builder can claim PASS without running tests.
-No regression protection. Changes ship without test coverage.
-**Safe to remove:** Never. TDD is the fundamental quality guarantee.
+### INV-009: Write-agent contracts fail closed
+**Covers:** Router `## 8. Post-Agent Validation`
+**Enforces:** BUILD / DEBUG / PLAN outputs must contain the expected YAML contract fields and satisfy pass rules before the workflow advances.
+**If removed:** Builder, investigator, or planner can self-report success without enough proof.
+**Safe to remove:** Never.
 
----
+### INV-010: Scenario evidence gates BUILD, DEBUG, and VERIFY
+**Covers:** Router `## 8. Post-Agent Validation`
+**Enforces:**
+- BUILD requires at least one passing named scenario with concrete command/expected/actual proof
+- DEBUG requires regression plus variant evidence when a fix is claimed
+- VERIFY requires scenario totals to match evidence rows
+**If removed:** CC10X stops behaving like a BDD-style evidence system and reverts to narrative confidence.
+**Safe to remove:** Never.
 
-## How to Use This Document
+### INV-011: Convergence state blocks “good enough” progression
+**Covers:** Router `## 8. Post-Agent Validation`, `## 12. Chain Execution Loop`
+**Enforces:** Incomplete or contradictory evidence sets `quality.convergence_state=needs_iteration` and stops workflow advancement.
+**If removed:** The system starts silently tolerating partial proof and ambiguous completion.
+**Safe to remove:** Never.
 
-**When editing the router:**
-1. Find all INV entries that reference the lines you're changing
-2. For each entry: confirm the invariant is still covered after your change
-3. If you're moving logic: update "Covered by" to point to new location
-4. If you're removing logic: prove failure mode no longer applies
+### INV-012: Memory finalization is router-owned and compaction-safe
+**Covers:** Router `## 12. Chain Execution Loop`, `## 13. Memory Finalization`
+**Enforces:** Read-only Memory Notes are copied into the memory task immediately; final persistence happens inline through the Memory Update task; transient `memory_task_id` is removed on completion.
+**If removed:** Memory becomes conversation-dependent or leaks stale workflow pointers across sessions.
+**Safe to remove:** Never.
 
-**When this document becomes stale:**
-The router changed but this document wasn't updated. That's a bug.
-Fix: update the relevant INV entries before merging.
+### INV-013: Plugin hooks are guardrails, not orchestration
+**Covers:** Router `## 2a. Workflow Artifact And Hook Policy`, plugin hooks
+**Enforces:** Hooks remain minimal and audit-first:
+- `PreToolUse` protects memory writes
+- `SessionStart` injects workflow context
+- `PostToolUse` audits workflow artifact integrity
+- `TaskCompleted` checks task metadata
+**If removed:** Either runtime safety degrades, or hooks sprawl into a second orchestration system.
+**Safe to remove:** Only if an equivalent plugin-native guardrail replaces the specific hook behavior.
 
-**When adding new logic to the router:**
-Ask: does this prevent a new failure mode? If yes: add an INV entry.
-If no: it's probably prose — compress it.
+### INV-014: Workflow replay fixtures are part of the safety contract
+**Covers:** `plugins/cc10x/scripts/cc10x_workflow_replay_check.py`, `plugins/cc10x/tests/fixtures/`
+**Enforces:** PLAN / BUILD / DEBUG / REVIEW / VERIFY decision paths are regression-checked without relying on a live Claude session.
+**If removed:** Future router/prompt edits can regress core orchestration behavior without a deterministic detection path.
+**Safe to remove:** Never.
 
----
+## Legacy Appendix
 
----
-
-## Tier 1 Fix Invariants (v7.1.2 — 2026-03-02)
-
-### INV-029: Rule 0b — no forced completion on SELF_REMEDIATED (CC10X-003)
-**Covers:** Rule 0b — removal of TaskUpdate(completed)
-**Enforces:** SELF_REMEDIATED tasks stay blocked by their own REM-FIX task. The Remediation Re-Review Loop (step 1) creates a fresh re_reviewer task. Forcing completed here would cancel the re-review.
-**Fails silently if removed:** code-reviewer creates REM-FIX, blocks itself. Rule 0b marks it completed — canceling the block. Re-review never happens. Remediation ships unchecked.
-**Safe to remove:** Never while SELF_REMEDIATED protocol + Remediation Re-Review Loop coexist.
-
-### INV-030: Rule 0c research section name (CC10X-004)
-**Covers:** Rule 0c re-invoke prompt — "## Research Files" header
-**Enforces:** Bug-investigator receives research findings under the correct header name.
-**Fails silently if removed/renamed:** Bug-investigator looks for "## Research Files" but receives "## External Research Findings". Research is silently ignored. Investigation cycle wasted.
-**Safe to remove:** Only if bug-investigator header expectation changes simultaneously.
-
-### INV-031: Memory Update inline guard (CC10X-002)
-**Covers:** Chain Execution Loop step 2 — Memory Update guard
-**Enforces:** Memory Update tasks are ALWAYS executed inline by the router. Sub-agents don't inherit conversation context — they read stale memory and write stale content back.
-**Fails silently if removed:** Router dispatches Memory Update as a Task() sub-agent. Sub-agent reads stale files, writes stale content. Next session runs on incorrect state.
-**Safe to remove:** Never. Memory Update requires conversation context that sub-agents cannot inherit.
-
-### INV-032: minimal output safe-default (CC10X-061, v8.0.0 — replaces REM-EVIDENCE)
-**Covers:** Text-Based Verdict Extraction Step 3 fallback
-**Enforces:** When any READ-ONLY agent emits < 200 chars (minimal output
-failure mode), router sets STATUS to safe default (APPROVE/CLEAN/PASS)
-and continues workflow. No AskUserQuestion, no REM-EVIDENCE task.
-**Changed in v8.0.0:** Previously, hunter minimal output escalated to
-AskUserQuestion. REM-EVIDENCE task was created if output had no contract.
-Both mechanisms are fully removed. Safe-default covers all minimal-output
-cases for all read-only agents (not just hunter).
-**Fails silently if removed:** With no fallback: router tries to extract
-heading from minimal output, finds nothing, halts or creates spurious
-REM-FIX. The safe-default is the graceful recovery path.
-**Safe to remove:** Only if all three READ-ONLY agents are proven to never
-emit < 200 chars (not guaranteed by output-before-TaskUpdate alone).
-
-### INV-033: GATE_PASSED contract enforcement for planner (CC10X-009)
-**Covers:** CONTRACT RULE table — planner row, GATE_PASSED field
-**Enforces:** plan-review-gate must be invoked before STATUS=PLAN_CREATED is accepted. GATE_PASSED=false blocks the plan.
-**Fails silently if removed:** Planner skips adversarial review (confirmed runtime OBS-2). Feasibility issues, scope creep, missing requirements ship unchecked into BUILD.
-**Safe to remove:** Only if plan-review-gate is directly router-enforced via a separate step (not agent-delegated).
-
-### INV-034: QUICK escalation in_progress marks (CC10X-056)
-**Covers:** QUICK escalation block — TaskUpdate(in_progress) before parallel Task() calls
-**Enforces:** Matches Chain Execution Loop standard (step 2 — "Call TaskUpdate in_progress for EACH ready task before any Task() call").
-**Fails silently if removed:** Escalated tasks stay "pending" during execution. If TaskList() is called before both complete, pending task appears re-invocable.
-**Safe to remove:** Only if Chain Execution Loop step 2 standard is also removed.
-
-### INV-035: Rule 2b — NEEDS_CLARIFICATION loop cap
-**Covers:** Contract validation rule 2b — NEEDS_CLARIFICATION loop
-**Enforces:** After 3+ completed planner tasks, ask user whether to retry, proceed with best available plan, or abort.
-**Fails silently if removed:** Planner stuck in NEEDS_CLARIFICATION loops indefinitely.
-**Safe to remove:** Only if planner is guaranteed to always resolve in ≤3 passes.
-
-### INV-036: Rule 0b/0c — Physical order matches documented evaluation sequence
-**Covers:** EVALUATION ORDER block — rule 0 → 0b → 0c sequence
-**Enforces:** File-physical order of 0b/0c matches documented evaluation order (0b before 0c).
-**Fails silently if removed:** Future readers interpret 0c as higher priority than 0b. Confusion in evaluating SELF_REMEDIATED vs NEEDS_EXTERNAL_RESEARCH.
-**Safe to remove:** Never — physical order is the execution order.
-
-### INV-037: Orphan check — blockedBy context display
-**Covers:** Check Active Workflow Tasks, orphan check
-**Enforces:** If orphaned in_progress task has non-empty blockedBy, user is informed it is a self-healing cycle (not a true orphan).
-**Fails silently if removed:** User is asked to "Resume/Complete/Delete" a task that is intentionally blocked. They may delete valid in-progress self-heal.
-**Safe to remove:** Only if SELF_REMEDIATED agents never stay in_progress.
-
-### INV-038: DEBUG serial verifier circuit breaker
-**Covers:** Contract validation rule 2d (DEBUG only)
-**Enforces:** After 2+ Re-verify completions in a DEBUG workflow, ask user to continue/escalate/abort.
-**Fails silently if removed:** Serial investigator ↔ verifier loop runs indefinitely, silently exhausting token budget.
-**Safe to remove:** Never while DEBUG verifier re-verification is a valid path.
-
-### INV-039: REVIEW scope persistence (CC10X-014)
-**Covers:** REVIEW workflow step 2
-**Enforces:** AskUserQuestion scope answers are persisted to ## Decisions before chain starts. Reviewer receives scope from Decisions (compaction-safe).
-**Fails silently if removed:** Context compaction between scope clarification and reviewer invocation loses the scope. Reviewer reviews everything or nothing.
-**Safe to remove:** Never while compaction during REVIEW is possible.
-
-### INV-040: REVIEW-to-BUILD transition gate (CC10X-015)
-**Covers:** REVIEW workflow step 6
-**Enforces:** When reviewer returns CHANGES_REQUESTED, user is offered a BUILD transition to act on findings.
-**Fails silently if removed:** Reviewer produces CHANGES_REQUESTED. User must manually re-invoke BUILD with no context. Findings may be lost after session.
-**Safe to remove:** Only if REVIEW is always followed immediately by a separate BUILD invocation.
-
-### INV-041: PLAN research paths persisted to memory (CC10X-022)
-**Covers:** PLAN workflow step 3
-**Enforces:** web_file and github_file from parallel research are written to activeContext.md ## References immediately after collection.
-**Fails silently if removed:** Research file paths only exist as in-context variables. Context compaction between PLAN step 3 and planner invocation loses the paths. Planner receives no research.
-**Safe to remove:** Never while PLAN research is a feature.
-
----
-
-## v8.0.0 Invariants (Radical Simplification — 2026-03-04)
-
-### INV-042: Text-Based Verdict Extraction — heading IS the READ-ONLY contract (CC10X-060)
-**Covers:** Text-Based Verdict Extraction Steps 1-4 (router)
-**Enforces:** For code-reviewer, silent-failure-hunter, and integration-verifier:
-the structured heading in the first 5 lines of output IS the Router Contract.
-No YAML block required. Router scans heading → STATUS; `### Critical Issues`
-bullets → BLOCKING/REQUIRES_REMEDIATION; fallback → safe default.
-**Fails silently if removed:** Router has no signal from read-only agents.
-All verdicts become undefined. Workflow cannot proceed after any read-only
-agent runs. Every BUILD/DEBUG/REVIEW halts after reviewer.
-**Safe to remove:** Only if a replacement contract mechanism is introduced
-simultaneously for all three read-only agents.
-
-### INV-043: Step 3 — ordered fallback: keyword scan then safe-default (CC10X-061)
-**Covers:** Text-Based Verdict Extraction Step 3
-**Enforces:** If heading pattern not matched:
-  - output ≥ 500 chars → keyword scan (APPROVE/CLEAN/PASS/FAIL/etc.) → first match
-  - output 200–499 chars → safe default (APPROVE/CLEAN/PASS)
-  - output < 200 chars → safe default with log
-**Fails silently if removed:** No heading + no fallback = STATUS undefined.
-Router cannot evaluate rules 1a/1b/2. Workflow breaks after any agent
-that emits output without the exact heading format.
-**Safe to remove:** Never. Heading parsing can fail for many legitimate
-reasons (agent reformatted output, tool truncation, model variation).
-
-### INV-044: Empty Answer Guard — REVERT gate is the ONLY blocking gate (CC10X-065)
-**Covers:** Empty Answer Guard block (router)
-**Enforces:** When AskUserQuestion returns empty:
-  - ⚠️ REVERT gates only: re-ask once, then STOP workflow.
-  - All other gates: auto-default to recommended option and log.
-**Fails silently if removed:** Non-REVERT gates with empty answers halt
-the workflow indefinitely. Batch/automated runs deadlock on any
-AskUserQuestion that isn't explicitly answered.
-**Safe to remove:** Only the non-REVERT auto-default can be removed if
-batch workflows are no longer supported. REVERT blocking behavior must
-never be removed (irreversible action requires confirmation).
-
-### INV-045: JUST_GO session mode — AUTO_PROCEED in activeContext.md (CC10X-064)
-**Covers:** JUST_GO session mode block (router memory load)
-**Enforces:** If `AUTO_PROCEED: true` is present in `## Session Settings`
-of `activeContext.md`, all AskUserQuestion gates auto-default to
-recommended option without prompting (except ⚠️ REVERT gates).
-**Fails silently if removed:** JUST_GO flag is set but router still asks
-every question. Stress tests and batch workflows deadlock as before.
-**Safe to remove:** Only if Empty Answer Guard (INV-044) covers all cases.
-In practice: keep — it's the deliberate opt-in for automated workflows.
-**Load sequence:** Checked once at memory load time. Session flag is
-set in router memory context. Does not require file re-read during workflow.
-
----
-
-## v8.5.0 Invariants (2026-03-05)
-
-### INV-046: 3-GATE READ-ONLY task completion — mandatory first step (Fix 1)
-**Covers:** Chain Execution Loop step 3 — 3-GATE section
-**Enforces:** For every READ-ONLY agent (code-reviewer, silent-failure-hunter, integration-verifier), router MUST call TaskUpdate(completed) BEFORE extracting verdict, if task is still in_progress AND blockedBy is empty. This is the FIRST action in step 3, not a buried fallback.
-**Fails silently if removed:** READ-ONLY agents never self-complete. Router reads verdict, applies rules, advances workflow — but task stays in_progress. TaskList() shows agents stuck. Memory Update task stays blocked (depends on verifier completion). Workflow silently hangs.
-**Safe to remove:** Never. READ-ONLY agents are contractually prohibited from calling TaskUpdate themselves.
-**Preserves:** INV-005 (blockedBy exclusion) — gate checks blockedBy before forcing completion; self-healed agents are never force-completed.
-
-### INV-047: Rule 1a-SCOPE — scope selection before REM-FIX when CRITICAL+HIGH coexist (Fix 2b)
-**Covers:** Routing matrix Rule 1a-SCOPE + Scope Decision Resume section + Detailed Logic: Rule 1a-SCOPE
-**Enforces:** When a BUILD agent finds CRITICAL issues AND HIGH issues in the same output, router pauses before creating REM-FIX. Outputs a plain-text scope question (no AskUserQuestion — broken in this context). Writes `[SCOPE-DECISION-PENDING]` marker to memory. Next turn: Scope Decision Resume reads user reply and creates appropriately-scoped REM-FIX.
-**Fails silently if removed:** Router creates REM-FIX scoped only to CRITICAL issues. Builder fixes CRITICAL. Re-hunt verifies CRITICAL is fixed → CLEAN. The 5 HIGH issues from the original hunt are silently discarded, never addressed.
-**Safe to remove:** Only if re-hunt is always forced to ALL_ISSUES scope regardless of user preference (i.e., Fix 2a is applied instead).
-
-### INV-048: Re-hunt REHUNT_SCOPE from REM-FIX description (Fix 2b)
-**Covers:** Re-Review Loop step 2 — re-hunt task description construction
-**Enforces:** When creating the re-hunt task, router reads `REHUNT_SCOPE:` from the completed REM-FIX task description. ALL_ISSUES → re-hunt task says "FULL re-audit of ALL issue categories". CRITICAL_ONLY → re-hunt task says "verify CRITICAL fix only". Default (no marker) → ALL_ISSUES.
-**Fails silently if removed (or if description is generic):** Re-hunt receives "Re-hunt for silent failures after REM-FIX" — interprets as "verify CRITICAL only" — silently ignores HIGH issues that remain after the CRITICAL fix. HIGH issues never get re-checked. Code ships with known HIGH gaps.
-**Safe to remove:** Never while scope-aware REM-FIX creation (INV-047) is in place. Both invariants are paired.
-
-*Last updated: v8.0.0 — 2026-03-04 (Radical Simplification: Router Contract YAML removed from read-only agents; text-based verdict extraction; INV-008/014/032 updated; INV-042–045 added)*
-*Last updated: v8.5.0 — 2026-03-05 (Fix 1: 3-GATE READ-ONLY completion; Fix 2b: scope selection + REHUNT_SCOPE; INV-046–048 added)*
-*Release audit banner refreshed for v9.1.0 — 2026-03-07 (plugin-native packaging, intent-first planning, BDD-style evidence, publication drift audit)*
-*Legacy router version at last full invariant-by-invariant audit: 8.5.0*
+Pre-`v9.x` invariants were reorganized rather than preserved one-for-one. Historical context remains in git history. The current source of truth is this live registry plus:
+- `plugins/cc10x/skills/cc10x-router/SKILL.md`
+- `plugins/cc10x/scripts/cc10x_harness_audit.py`
+- `plugins/cc10x/scripts/cc10x_workflow_replay_check.py`

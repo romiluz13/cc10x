@@ -192,6 +192,8 @@ EVIDENCE:
 |----------|-------|------|------|---------|----------|--------|------|
 | [name] | [state] | [action] | [result] | [command] | [expected] | [actual] | [0/1] |
 
+**Rule:** At least one scenario row must be a PASS with non-empty `name`, `command`, `expected`, `actual`, and `exit`.
+
 **Confidence**: [High/Medium/Low - based on assumption certainty]
 
 ### Changes Made
@@ -235,5 +237,5 @@ MEMORY_NOTES:
   verification: ["TDD evidence: RED exit={X}, GREEN exit={Y}"]
   deferred: ["Non-blocking findings for patterns.md — from Findings section"]
 ```
-**CONTRACT RULE:** STATUS=PASS requires TDD_RED_EXIT=1, TDD_GREEN_EXIT=0, and at least one passing scenario in `SCENARIOS`. **Exception:** If no `package.json` exists (pure HTML/CSS/JS project with no test runner), TDD evidence may use manual browser verification instead — set TDD_RED_EXIT=1 and TDD_GREEN_EXIT=0 with evidence describing the manual check.
+**CONTRACT RULE:** STATUS=PASS requires TDD_RED_EXIT=1, TDD_GREEN_EXIT=0, and at least one passing scenario in `SCENARIOS`. That passing scenario must include non-empty `name`, `command`, `expected`, `actual`, and `exit_code`. **Exception:** If no `package.json` exists (pure HTML/CSS/JS project with no test runner), TDD evidence may use manual browser verification instead — set TDD_RED_EXIT=1 and TDD_GREEN_EXIT=0 with evidence describing the manual check.
 ```

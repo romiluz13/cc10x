@@ -162,6 +162,7 @@ Hook policy:
 - CC10X plugin hooks live in the plugin bundle under `hooks/hooks.json` and should stay minimal:
   - `PreToolUse` for protected writes
   - `SessionStart` for resume context
+  - `PostToolUse` for workflow artifact integrity audit
   - `TaskCompleted` for task metadata checks
 - Default mode is audit-only. Do not rely on hooks as the only source of truth; the router still owns orchestration decisions.
 - Repo-local `.claude/settings.json` is not part of the shipped CC10X product.
@@ -300,10 +301,14 @@ Immediately after `TaskCreate()` returns `workflow_task_id`:
 
 ```text
 TaskGet({ taskId: workflow_task_id })
-  TaskUpdate({
+  Copy the returned parent description and replace ONLY the first metadata line:
+  "wf:PENDING_SELF"
+  with:
+  "wf:{workflow_task_id}"
+TaskUpdate({
   taskId: workflow_task_id,
-  description: replace leading "wf:PENDING_SELF" with "wf:{workflow_task_id}"
-  })
+  description: "wf:{workflow_task_id}\nkind:workflow\norigin:router\nphase:{build|debug|review|plan}\nplan:{plan_file or 'N/A'}\nscope:N/A\nreason:User request\n\nUser request: {request}\nChain: {chain description}"
+})
 Write(
   file_path=".claude/cc10x/workflows/{workflow_task_id}.json",
   content="{\"workflow_id\":\"{workflow_task_id}\",\"workflow_type\":\"{WORKFLOW}\",\"user_request\":\"{request}\",\"plan_file\":null,\"design_file\":null,\"research_files\":[],\"intent\":{\"goal\":null,\"non_goals\":[],\"constraints\":[],\"acceptance_criteria\":[],\"open_decisions\":[]},\"capabilities\":{\"brightdata_available\":\"unknown\",\"octocode_available\":\"unknown\",\"websearch_available\":\"unknown\",\"webfetch_available\":\"unknown\"},\"research_rounds\":[],\"research_backend_history\":[],\"research_quality\":{\"web\":\"none\",\"github\":\"none\",\"overall\":\"none\"},\"task_ids\":{},\"phase_status\":{},\"results\":{\"builder\":null,\"investigator\":null,\"reviewer\":null,\"hunter\":null,\"verifier\":null,\"planner\":null,\"research\":{\"web\":null,\"github\":null,\"synthesis\":null}},\"evidence\":{\"builder\":[],\"investigator\":[],\"reviewer\":[],\"hunter\":[],\"verifier\":[]},\"quality\":{\"confidence\":null,\"evidence_complete\":false,\"scenario_coverage\":0,\"research_quality\":\"none\",\"convergence_state\":\"pending\"},\"memory_notes\":[],\"pending_gate\":null,\"status_history\":[{\"event\":\"workflow_started\",\"ts\":\"{iso_timestamp}\",\"phase\":\"{build|debug|review|plan}\"}],\"remediation_history\":[],\"created_at\":\"{iso_timestamp}\",\"updated_at\":\"{iso_timestamp}\"}"
@@ -593,11 +598,11 @@ If the YAML block is missing or malformed:
 
 | Agent | Override |
 |-------|----------|
-| component-builder | `STATUS=PASS` requires `TDD_RED_EXIT=1`, `TDD_GREEN_EXIT=0`, and a non-empty `SCENARIOS` array with at least one passing scenario |
-| bug-investigator | `STATUS=FIXED` requires `TDD_RED_EXIT=1`, `TDD_GREEN_EXIT=0`, `VARIANTS_COVERED>=1`, and a non-empty `SCENARIOS` array unless it explicitly set `NEEDS_EXTERNAL_RESEARCH=true` |
+| component-builder | `STATUS=PASS` requires `TDD_RED_EXIT=1`, `TDD_GREEN_EXIT=0`, and a non-empty `SCENARIOS` array with at least one passing scenario. That passing scenario must include non-empty `name`, `command`, `expected`, `actual`, and `exit_code`. |
+| bug-investigator | `STATUS=FIXED` requires `TDD_RED_EXIT=1`, `TDD_GREEN_EXIT=0`, `VARIANTS_COVERED>=1`, and a non-empty `SCENARIOS` array unless it explicitly set `NEEDS_EXTERNAL_RESEARCH=true`. At least one scenario name must start with `Regression:` and one with `Variant:`. Both required scenarios must include non-empty `command`, `expected`, `actual`, and `exit_code`. |
 | code-reviewer | `APPROVE` + critical issues becomes `CHANGES_REQUESTED` |
 | silent-failure-hunter | `CLEAN` + critical issues becomes `ISSUES_FOUND` |
-| integration-verifier | `PASS` + critical issues becomes `FAIL`; scenario totals must reconcile with the scenario table and evidence array |
+| integration-verifier | `PASS` + critical issues becomes `FAIL`; scenario totals must reconcile with the scenario table and evidence array; every counted scenario must map to a concrete evidence row; every scenario row must contain non-empty `Expected` and `Actual` values |
 | planner | `PLAN_CREATED` requires non-empty `PLAN_FILE`, `CONFIDENCE>=50`, `GATE_PASSED=true`, and a non-empty `SCENARIOS` array |
 
 Convergence rule:

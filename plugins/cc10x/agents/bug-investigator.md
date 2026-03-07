@@ -213,7 +213,10 @@ Call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` where `{TASK_ID}
 ### Scenario Evidence (REQUIRED)
 | Scenario | Given | When | Then | Command | Expected | Actual | Exit |
 |----------|-------|------|------|---------|----------|--------|------|
-| [name] | [state] | [action] | [result] | [command] | [expected] | [actual] | [0/1] |
+| Regression: [name] | [state] | [action] | [result] | [command] | [expected] | [actual] | [0/1] |
+| Variant: [name] | [state] | [action] | [result] | [command] | [expected] | [actual] | [0/1] |
+
+**Rule:** For `STATUS=FIXED`, include at least one `Regression:` scenario and one `Variant:` scenario. Both must have non-empty `command`, `expected`, `actual`, and `exit`.
 
 ### Assumptions
 - [Assumptions about root cause]
@@ -268,6 +271,6 @@ MEMORY_NOTES:
   verification: ["Fix: RED exit={X}, GREEN exit={Y}, {N} variants covered"]
   deferred: ["Non-blocking issues discovered during investigation"]
 ```
-**CONTRACT RULE:** STATUS=FIXED requires TDD_RED_EXIT=1, TDD_GREEN_EXIT=0, VARIANTS_COVERED>=1, and a non-empty `SCENARIOS` array. **Exception:** If no `package.json` exists (pure HTML/CSS/JS project with no test runner), TDD evidence may use manual browser verification instead — set TDD_RED_EXIT=1 and TDD_GREEN_EXIT=0 with evidence describing the manual check.
+**CONTRACT RULE:** STATUS=FIXED requires TDD_RED_EXIT=1, TDD_GREEN_EXIT=0, VARIANTS_COVERED>=1, a `Regression:` scenario, and a `Variant:` scenario. Both required scenarios must include non-empty `command`, `expected`, `actual`, and `exit_code`. **Exception:** If no `package.json` exists (pure HTML/CSS/JS project with no test runner), TDD evidence may use manual browser verification instead — set TDD_RED_EXIT=1 and TDD_GREEN_EXIT=0 with evidence describing the manual check.
 **CONTRACT RULE:** If NEEDS_EXTERNAL_RESEARCH=true: RESEARCH_REASON must be non-null
 ```
