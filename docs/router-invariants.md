@@ -1,10 +1,11 @@
 # CC10x Router Behavioral Invariant Registry
 
-> **Status note:** This registry is still anchored in the pre-plugin-native refactor audits (`v8.5.0` baseline plus later additions). Treat it as a safety reference, not as a fully resynced source of truth for the current live router until a fresh invariant audit is completed.
+> **Status note:** Product version is now `v9.1.0`. This registry is still structurally anchored in the older `v8.5.0` invariant numbering plus later additions, but the 2026-03-07 release audit confirmed the current live router/product surface before publication. Treat it as a safety reference that is current at the banner level, while a full renumber/resync of every invariant body remains future cleanup.
 
 ## 2026-03-07 Audit Snapshot
 
 Current live audit against `plugins/cc10x/skills/cc10x-router/SKILL.md` and the live agents:
+- Release line validated: `v9.1.0` across plugin manifest, README, CHANGELOG, plugin hooks/MCP packaging, and publication audit script.
 - Preserved: compaction-safe memory capture, transient `memory_task_id`, workflow-scoped hydration, read-only fallback completion, re-review/re-verify loop, research round caps, REVERT gate, REVIEW-to-BUILD transition.
 - Restored in this pass: BUILD scope-decision resume for mixed CRITICAL + HIGH findings and scope-aware re-hunt behavior.
 - Plugin-native packaging now carries the shipped runtime hooks and optional MCP acceleration; repo-local `.claude/settings.json` is no longer part of the product contract.
@@ -530,4 +531,5 @@ set in router memory context. Does not require file re-read during workflow.
 
 *Last updated: v8.0.0 — 2026-03-04 (Radical Simplification: Router Contract YAML removed from read-only agents; text-based verdict extraction; INV-008/014/032 updated; INV-042–045 added)*
 *Last updated: v8.5.0 — 2026-03-05 (Fix 1: 3-GATE READ-ONLY completion; Fix 2b: scope selection + REHUNT_SCOPE; INV-046–048 added)*
-*Router version at last audit: 8.5.0*
+*Release audit banner refreshed for v9.1.0 — 2026-03-07 (plugin-native packaging, intent-first planning, BDD-style evidence, publication drift audit)*
+*Legacy router version at last full invariant-by-invariant audit: 8.5.0*

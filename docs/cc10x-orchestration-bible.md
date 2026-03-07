@@ -1,6 +1,6 @@
 # CC10x Orchestration Bible (Plugin-Only Source of Truth)
 
-> **Last reviewed against live plugin files:** 2026-03-07 (plugin-native hooks packaging, optional MCP acceleration, router-owned orchestration) | **Status:** PARTIALLY IN SYNC — packaging/runtime sections updated, full invariant resync still pending
+> **Last reviewed against live plugin files:** 2026-03-07 (`v9.1.0`: plugin-native hooks packaging, optional MCP acceleration, router-owned orchestration, intent-first planning, BDD-style evidence) | **Status:** IN SYNC FOR 9.1.0 PRODUCT SURFACE — invariant registry still needs a full renumber/resync pass
 
 > This document is derived **only** from `plugins/cc10x/` (agents + skills).
 > Ignore all other docs. Do not trust external narratives.
