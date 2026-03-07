@@ -1,6 +1,6 @@
 # cc10x
 
-### The Intelligent Orchestrator for Claude Code
+### Router-Owned Claude Code Harness
 
 **Current version:** 9.1.1
 
@@ -11,23 +11,29 @@
 </p>
 
 <p align="center">
-  <em>Stop picking skills manually. Let the system work for you.</em>
+  <em>One Claude Code plugin that routes development work through explicit workflows, specialist subagents, durable workflow state, and minimal hook enforcement.</em>
 </p>
 
 ---
 
-## The Problem With Other Plugins
+## What cc10x Is
 
-Most Claude Code plugins are **bloated and over-engineered**:
+cc10x is a **developer-focused Claude Code harness** packaged as a marketplace plugin.
 
+It is designed for one specific job:
+- route `PLAN`, `BUILD`, `DEBUG`, `REVIEW`, and `RESEARCH` work through a consistent workflow
+- keep orchestration ownership in one place: `cc10x-router`
+- use specialist subagents for execution, review, verification, and research
+- persist enough state to resume safely after long sessions or compaction
+- stay aligned with official Claude Code plugin conventions: `skills`, `subagents`, `hooks`, and optional user-configured MCP
+
+If you want a short mental model:
+
+```text
+cc10x = router + workflow artifacts + specialist agents + minimal hooks
 ```
-❌ 50+ skills you'll never use
-❌ 30+ agents with overlapping responsibilities
-❌ No guidance on WHEN to use WHAT
-❌ You end up using nothing because it's overwhelming
-```
 
-**cc10x is different.** One intelligent router detects your intent and automatically orchestrates the right agents with the right skills. You just work.
+It is not a scheduler, background service, or external platform. It is a Claude Code plugin that makes the core engineering loop more reliable inside normal Claude Code sessions.
 
 ## What 9.1 adds
 
@@ -37,6 +43,98 @@ Most Claude Code plugins are **bloated and over-engineered**:
 - **Proof-of-work workflow artifacts** under `.claude/cc10x/workflows/`
 - **Plugin-native hooks and optional user-configured MCP** aligned with Claude Code plugin conventions
 - **Built-in harness audit** for manifest/docs/router drift
+
+---
+
+## Runtime Model
+
+### 1. Router owns orchestration
+
+`cc10x-router` is the only orchestration authority.
+
+It decides:
+- which workflow to run
+- which subagent to invoke next
+- when to pause for clarification or scope decisions
+- when remediation is required
+- when a workflow is allowed to advance
+- when memory and workflow artifacts are finalized
+
+Agents do not own workflow state. They return structured results. The router interprets them.
+
+### 2. Agents are narrow specialists
+
+The shipped subagents are intentionally specialized:
+- `planner`
+- `component-builder`
+- `bug-investigator`
+- `code-reviewer`
+- `silent-failure-hunter`
+- `integration-verifier`
+- `web-researcher`
+- `github-researcher`
+
+Each agent is optimized for one role. This keeps prompts sharper and makes workflow behavior easier to reason about.
+
+### 3. Skills are reusable local instructions
+
+Skills are the reusable instruction layer that agents and the router depend on.
+
+They provide:
+- planning patterns
+- TDD rules
+- debugging patterns
+- review rules
+- research synthesis
+- memory handling
+- verification-before-completion discipline
+
+### 4. Workflow artifacts are the durable truth
+
+cc10x writes proof-of-work workflow state under:
+
+```text
+.claude/cc10x/workflows/{wf}.json
+.claude/cc10x/workflows/{wf}.events.jsonl
+```
+
+These artifacts track:
+- workflow type and task ids
+- intent/spec context
+- agent results
+- evidence and quality state
+- remediation history
+- lifecycle events
+
+This is what makes resume, review, and debugging more reliable than relying on chat context alone.
+
+### 5. Hooks are guardrails, not a second orchestrator
+
+cc10x ships a minimal Claude Code-native hook set:
+- `PreToolUse`
+- `SessionStart`
+- `PostToolUse`
+- `TaskCompleted`
+
+Hooks do not replace the router. They provide lightweight enforcement and diagnostics:
+- protected file and workflow write checks
+- resume context hydration
+- workflow artifact integrity audit
+- task metadata validation
+
+This follows the official Claude Code pattern: hooks are small guardrails around tool use, not a parallel control plane.
+
+### 6. MCP is optional acceleration only
+
+cc10x does **not** ship MCP server config inside the plugin.
+
+If the user already has Claude Code MCP servers named:
+- `octocode`
+- `brightdata`
+
+then research gets better automatically.
+
+If not, the plugin still works. Research falls back to built-in Claude Code tools and records degraded confidence where appropriate.
 
 ---
 
@@ -65,11 +163,11 @@ Most Claude Code plugins are **bloated and over-engineered**:
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
-**You say what you want. cc10x figures out the rest.**
+**You provide the development intent. cc10x selects the workflow, runs the right specialists, and enforces evidence before advancement.**
 
 ---
 
-## 👤 FOR HUMANS: Read This
+## Installation
 
 ### Step 1: Install Plugin
 
@@ -91,7 +189,9 @@ Done!
 
 ---
 
-## 🤖 FOR CLAUDE CODE: Execute This
+## Claude Setup Instructions
+
+This section is written for Claude Code to follow when the user says "set up cc10x for me".
 
 **When user says "set up cc10x", "install cc10x", or similar:**
 
@@ -222,43 +322,6 @@ react-best-practices/SKILL.md
 
 ---
 
-## What Makes cc10x Different
-
-<table>
-<tr>
-<td width="50%">
-
-### Without cc10x
-
-```
-❌ Claude guesses at bugs
-❌ Skips tests ("I'll add later")
-❌ Claims "it should work"
-❌ Forgets context on compaction
-❌ Picks random skills
-❌ No verification evidence
-```
-
-</td>
-<td width="50%">
-
-### With cc10x
-
-```
-✓ LOG FIRST - evidence before fixes
-✓ TDD enforced - RED-GREEN-REFACTOR
-✓ Exit code 0 or it didn't happen
-✓ Memory persists across sessions
-✓ Router picks the right workflow
-✓ Confidence scoring (≥80% only)
-```
-
-</td>
-</tr>
-</table>
-
----
-
 ## Quick Start Examples
 
 ### Build Something
@@ -320,6 +383,10 @@ MEMORY (.claude/cc10x/)
 ├── activeContext.md  ◄── Current focus, decisions, learnings
 ├── patterns.md       ◄── Project conventions, common gotchas
 └── progress.md       ◄── Completed work, remaining tasks
+
+WORKFLOW STATE (.claude/cc10x/workflows/)
+├── {wf}.json         ◄── Durable workflow artifact
+└── {wf}.events.jsonl ◄── Append-only workflow event log
 ```
 
 ---
@@ -339,7 +406,7 @@ MEMORY (.claude/cc10x/)
 
 ---
 
-## The 12 Skills
+## The 13 Skills
 
 Skills are **loaded automatically by agents**. You never invoke them directly.
 
@@ -355,6 +422,7 @@ Skills are **loaded automatically by agents**. You never invoke them directly.
 | **architecture-patterns** | ALL agents | System & API design |
 | **frontend-patterns** | ALL agents | UX, accessibility |
 | **brainstorming** | planner | Idea exploration |
+| **plan-review-gate** | planner | Final plan sanity gate before handoff |
 | **research** | planner, bug-investigator (via github-researcher agent) | Synthesis-only: guides agents on how to interpret research results; GitHub execution is handled by the `github-researcher` agent |
 | **cc10x-router** | ENTRY POINT | Routes to correct workflow |
 
@@ -404,6 +472,22 @@ cc10x uses Claude Code's Tasks system for workflow coordination:
 - **Parallel execution**: reviewer + hunter run simultaneously
 - **Resume capability**: TaskList() checks for active workflows
 - **Automatic handoff**: Each agent updates status when done
+- **Router-owned advancement**: only the router decides whether a workflow can continue
+
+---
+
+## Hooks
+
+The plugin ships four Claude Code-native hooks:
+
+| Hook | Purpose |
+|------|---------|
+| `PreToolUse` | Guard protected files and workflow-owned writes |
+| `SessionStart` | Rehydrate workflow context after restart or compaction |
+| `PostToolUse` | Audit workflow artifact integrity after writes |
+| `TaskCompleted` | Validate CC10X task metadata before task completion |
+
+These hooks are intentionally minimal. They improve reliability without turning the plugin into a second runtime.
 
 ---
 
@@ -529,6 +613,20 @@ I'll help you build a task tracker! Let me start...
 
 ```
 plugins/cc10x/
+├── .claude-plugin/
+│   └── plugin.json
+├── hooks/
+│   └── hooks.json
+├── scripts/
+│   ├── cc10x_harness_audit.py
+│   ├── cc10x_hooklib.py
+│   ├── cc10x_posttooluse_artifact_guard.py
+│   ├── cc10x_pretooluse_guard.py
+│   ├── cc10x_sessionstart_context.py
+│   ├── cc10x_task_completed_guard.py
+│   └── cc10x_workflow_replay_check.py
+├── tests/
+│   └── fixtures/
 ├── agents/
 │   ├── component-builder.md
 │   ├── bug-investigator.md
@@ -553,6 +651,17 @@ plugins/cc10x/
     ├── research/SKILL.md
     └── verification-before-completion/SKILL.md
 ```
+
+Additional developer docs live under:
+
+```text
+docs/cc10x-orchestration-bible.md
+docs/cc10x-orchestration-logic-analysis.md
+docs/cc10x-orchestration-safety.md
+docs/router-invariants.md
+```
+
+If you need to understand or evolve the harness, start there after reading `cc10x-router`.
 
 ---
 
