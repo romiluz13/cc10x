@@ -1,7 +1,7 @@
 {
   "name": "cc10x",
-  "version": "9.1.1",
-  "description": "Claude Code plugin for router-owned build/debug/review/plan workflows with specialized subagents, strict scenario evidence, proof-of-work workflow artifacts, plugin-native hooks, optional user-configured MCP-accelerated research, and final memory persistence.",
+  "version": "10.1.0",
+  "description": "Claude Code plugin for competition-grade build/debug/review/plan workflows with decision-grade planning, adversarial plan gates, proof-oriented phase execution, stable workflow identities, versioned v10 state, advisory internal skills, plugin-native hooks, optional user-configured MCP-accelerated research, and fail-closed memory persistence.",
   "author": {
     "name": "Rom Iluz",
     "email": "rom@iluz.net",

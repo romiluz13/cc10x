@@ -12,7 +12,7 @@ User interfaces exist to help users accomplish tasks. Every UI decision should m
 
 **Core principle:** Design for user success, not aesthetic preference.
 
-**Violating the letter of this process is violating the spirit of frontend design.**
+This skill is advisory in v10. Explicit user instructions, `CLAUDE.md`, repo standards, and approved plans override any suggestion here.
 
 ## Focus Areas (Reference Pattern)
 
@@ -29,6 +29,16 @@ User interfaces exist to help users accomplish tasks. Every UI decision should m
 3. **Performance budgets** - aim for sub-3s load times
 4. **Semantic HTML** and proper ARIA attributes
 5. **Type safety** with TypeScript when applicable
+
+## Advisory Guardrails
+
+Use this skill to add:
+- accessibility checks
+- responsive/layout verification
+- performance and loading-state checks
+- optional style ideas when the user explicitly wants them
+
+Do not use this skill to override an explicit visual direction, component contract, or workflow that the user already approved.
 
 ## Component Output Checklist
 

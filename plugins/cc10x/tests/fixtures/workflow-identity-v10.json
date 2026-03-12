@@ -1,9 +1,9 @@
 {
-  "id": "build-scope-gate",
+  "id": "workflow-identity-v10",
   "workflow_type": "BUILD",
   "starting_artifact": {
-    "workflow_uuid": "wf-20260312T161700Z-build-scope",
-    "workflow_id": "wf-20260312T161700Z-build-scope",
+    "workflow_uuid": "wf-20260312T162700Z-a1b2c3d4",
+    "workflow_id": "wf-20260312T162700Z-a1b2c3d4",
     "workflow_type": "BUILD",
     "state_root": ".claude/cc10x/v10",
     "plan_mode": "execution_plan",
@@ -13,24 +13,20 @@
     "phase_cursor": "phase-1",
     "task_ids": {},
     "results": {},
-    "intent": {"goal": "Build checkout flow"},
+    "intent": {"goal": "Implement global search"},
     "evidence": {},
     "quality": {"convergence_state": "pending"},
     "status_history": [],
     "remediation_history": []
   },
-  "relevant_tasks": {},
-  "agent_outputs": {
-    "parallel_findings": {
-      "critical_issues": 1,
-      "high_issues": 3
-    }
+  "relevant_tasks": {
+    "previous_session_ids": [
+      "wf-20260311T221100Z-a1b2c3d4",
+      "wf-20260312T101500Z-deadbeef"
+    ]
   },
+  "agent_outputs": {},
   "expected": {
-    "next_action": "pause_for_scope_decision",
-    "pending_gate": "scope_decision",
-    "artifact_delta": {
-      "quality": {"convergence_state": "needs_iteration"}
-    }
+    "collides_with_previous_session": false
   }
 }

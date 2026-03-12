@@ -15,15 +15,24 @@ HOOKS_JSON = PLUGIN_ROOT / "hooks" / "hooks.json"
 INVARIANTS = ROOT / "docs" / "router-invariants.md"
 REPLAY_CHECK = PLUGIN_ROOT / "scripts" / "cc10x_workflow_replay_check.py"
 FIXTURES_DIR = PLUGIN_ROOT / "tests" / "fixtures"
+FIRST_PLACE_STRATEGY = (
+    ROOT / "docs" / "benchmarks" / "2026-03-12-first-place-strategy.md"
+)
 REQUIRED_FIXTURES = (
     "plan-direct.json",
+    "plan-decision-rfc.json",
     "plan-full.json",
     "plan-clarification.json",
     "build-happy-path.json",
+    "build-checkpoint-decision.json",
+    "build-phase-blocked.json",
     "build-scope-gate.json",
     "build-remediation-loop.json",
     "debug-fixed.json",
     "debug-research.json",
+    "skill-precedence.json",
+    "workflow-identity-v10.json",
+    "memory-sync-blocking.json",
     "review-advisory.json",
     "verify-fail-closed.json",
 )
@@ -99,6 +108,8 @@ def main() -> int:
         for fixture in REQUIRED_FIXTURES:
             if not (FIXTURES_DIR / fixture).exists():
                 errors.append(f"missing replay fixture {fixture}")
+    if not FIRST_PLACE_STRATEGY.exists():
+        errors.append("missing first-place strategy document")
 
     for required in ("brightdata", "octocode"):
         if required not in router:
@@ -117,7 +128,16 @@ def main() -> int:
         "## 10. Research Orchestration",
         "## 12. Chain Execution Loop",
         "## 13. Memory Finalization",
-        ".events.jsonl",
+        ".claude/cc10x/v10/workflows",
+        "workflow_uuid",
+        "phase_cursor",
+        "plan_mode",
+        "verification_rigor",
+        "proof_status",
+        "traceability",
+        "plan_trust_gate",
+        "phase_exit_gate",
+        "skill_precedence_gate",
         "Convergence rule:",
     ]
     for heading in required_router_headings:
@@ -144,27 +164,46 @@ def main() -> int:
 
     expected_router_fields = {
         "component-builder": [
+            "PHASE_ID:",
+            "PHASE_STATUS:",
+            "PHASE_EXIT_READY:",
+            "CHECKPOINT_TYPE:",
+            "PROOF_STATUS:",
+            "INPUTS:",
+            "EXPECTED_ARTIFACTS:",
             "SCENARIOS:",
             "ASSUMPTIONS:",
             "DECISIONS:",
+            "BLOCKED_ITEMS:",
+            "SKIPPED_ITEMS:",
             "MEMORY_NOTES:",
             "NEXT_ACTION:",
         ],
         "bug-investigator": [
+            "VERIFICATION_RIGOR:",
             "SCENARIOS:",
             "ASSUMPTIONS:",
             "DECISIONS:",
+            "BLAST_RADIUS_SCAN:",
             "MEMORY_NOTES:",
             "NEXT_ACTION:",
         ],
         "planner": [
+            "PLAN_MODE:",
+            "VERIFICATION_RIGOR:",
             "SCENARIOS:",
             "ASSUMPTIONS:",
             "DECISIONS:",
+            "OPEN_DECISIONS:",
+            "DIFFERENCES_FROM_AGREEMENT:",
+            "ALTERNATIVES:",
+            "DRAWBACKS:",
+            "PROVABLE_PROPERTIES:",
             "MEMORY_NOTES:",
             "NEXT_ACTION:",
         ],
         "integration-verifier": [
+            "Proof Status:",
             "SCENARIOS_TOTAL",
             "SCENARIOS_PASSED",
             "SCENARIOS_FAILED",

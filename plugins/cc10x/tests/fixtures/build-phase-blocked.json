@@ -1,0 +1,60 @@
+{
+  "id": "build-phase-blocked",
+  "workflow_type": "BUILD",
+  "starting_artifact": {
+    "workflow_uuid": "wf-20260312T162500Z-build-phase-blocked",
+    "workflow_id": "wf-20260312T162500Z-build-phase-blocked",
+    "workflow_type": "BUILD",
+    "state_root": ".claude/cc10x/v10",
+    "plan_mode": "execution_plan",
+    "verification_rigor": "critical_path",
+    "proof_status": "gaps_found",
+    "traceability": {"requirements": [], "phases": [], "verification": [], "remediation": []},
+    "phase_cursor": "phase-2",
+    "task_ids": {},
+    "results": {},
+    "intent": {"goal": "Build billing settings wizard"},
+    "evidence": {},
+    "quality": {"convergence_state": "needs_iteration"},
+    "status_history": [],
+    "remediation_history": []
+  },
+  "relevant_tasks": {},
+  "agent_outputs": {
+    "builder_contract": {
+      "STATUS": "FAIL",
+      "PHASE_ID": "phase-2",
+      "PHASE_STATUS": "blocked",
+      "PHASE_EXIT_READY": false,
+      "CHECKPOINT_TYPE": "human_verify",
+      "PROOF_STATUS": "human_needed",
+      "INPUTS": ["current wizard draft", "rounding policy"],
+      "EXPECTED_ARTIFACTS": ["billing settings step"],
+      "TDD_RED_EXIT": 1,
+      "TDD_GREEN_EXIT": 0,
+      "BLOCKED_ITEMS": ["Awaiting confirmed currency rounding rule"],
+      "SKIPPED_ITEMS": [],
+      "SCOPE_INCREASES": [],
+      "SCENARIOS": [
+        {
+          "name": "Billing settings saves draft",
+          "given": "an authenticated finance admin",
+          "when": "they save the current wizard step",
+          "then": "their partial settings persist",
+          "command": "npm test -- billing-settings-draft",
+          "expected": "draft persists",
+          "actual": "draft persists",
+          "exit_code": 0,
+          "status": "PASS"
+        }
+      ]
+    }
+  },
+  "expected": {
+    "next_action": "stop_for_blocked_phase",
+    "artifact_delta": {
+      "pending_gate": "phase_blocked",
+      "quality": {"convergence_state": "needs_iteration"}
+    }
+  }
+}

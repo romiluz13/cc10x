@@ -132,6 +132,11 @@ demo-app/
 
 # Internal documentation (development-only)
 docs/
+!docs/benchmarks/
+docs/benchmarks/*
+!docs/benchmarks/2026-03-12-first-place-strategy.md
+!docs/benchmarks/2026-03-12-prompt-engineering-round-2-head-to-head.md
+!docs/benchmarks/2026-03-12-session-learnings.md
 
 # Testing and audit files (development-only)
 *TESTING*.md
@@ -207,9 +212,13 @@ cc10x_V2-main/
 # Reference repos (not committed)
 .reference/
 ref/
+ref-(dont-read-unless-specificly-mentioned)/
 audit/
 docs/viral-reddit-post.md
 FINAL_ORCHESTRATION_UNDERSTANDING.md
+
+# Python cache
+plugins/cc10x/scripts/__pycache__/
 
 # ========================================
 # LIVE CODING PREP (NEVER COMMIT)

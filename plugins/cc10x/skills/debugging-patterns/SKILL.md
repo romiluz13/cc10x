@@ -12,7 +12,7 @@ Random fixes waste time and create new bugs. Quick patches mask underlying issue
 
 **Core principle:** ALWAYS find root cause before attempting fixes. Symptom fixes are failure.
 
-**Violating the letter of this process is violating the spirit of debugging.**
+This skill is advisory in v10. It should deepen investigation quality, not authorize local-only patches that ignore nearby duplicate root causes.
 
 ## The Iron Law
 
@@ -30,7 +30,7 @@ For rapid debugging, use this concise flow:
 1. Capture error message and stack trace
 2. Identify reproduction steps
 3. Isolate the failure location
-4. Implement minimal fix
+4. Implement minimal general fix
 5. Verify solution works
 ```
 
@@ -50,6 +50,7 @@ For rapid debugging, use this concise flow:
 5. Find original trigger - Where did problem actually start?
 ```
 **Never fix solely where errors appear—trace to the original trigger.**
+After root cause is identified, scan for the same signature nearby before declaring success.
 
 ## LSP-Powered Root Cause Tracing
 

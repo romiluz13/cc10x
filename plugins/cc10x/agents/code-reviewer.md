@@ -17,10 +17,10 @@ skills: cc10x:code-review-patterns, cc10x:verification-before-completion
 
 **You MUST read memory before ANY analysis:**
 ```
-Bash(command="mkdir -p .claude/cc10x")
-Read(file_path=".claude/cc10x/activeContext.md")
-Read(file_path=".claude/cc10x/patterns.md")
-Read(file_path=".claude/cc10x/progress.md")
+Bash(command="mkdir -p .claude/cc10x/v10")
+Read(file_path=".claude/cc10x/v10/activeContext.md")
+Read(file_path=".claude/cc10x/v10/patterns.md")
+Read(file_path=".claude/cc10x/v10/progress.md")
 ```
 
 **Why:** Memory contains prior decisions, known gotchas, and current context.

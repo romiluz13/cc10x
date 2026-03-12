@@ -1,0 +1,34 @@
+{
+  "id": "skill-precedence",
+  "workflow_type": "BUILD",
+  "starting_artifact": {
+    "workflow_uuid": "wf-20260312T162600Z-skill-precedence",
+    "workflow_id": "wf-20260312T162600Z-skill-precedence",
+    "workflow_type": "BUILD",
+    "state_root": ".claude/cc10x/v10",
+    "plan_mode": "execution_plan",
+    "verification_rigor": "standard",
+    "proof_status": "gaps_found",
+    "traceability": {"requirements": [], "phases": [], "verification": [], "remediation": []},
+    "phase_cursor": "phase-1",
+    "task_ids": {},
+    "results": {},
+    "intent": {"goal": "Refresh dashboard UI without changing typography"},
+    "evidence": {},
+    "quality": {"convergence_state": "pending"},
+    "status_history": [],
+    "remediation_history": []
+  },
+  "relevant_tasks": {
+    "precedence_inputs": {
+      "user_prompt": "Keep the existing serif typography and remove all motion.",
+      "project_claude_md": "Typography is locked to Fraunces + Source Sans. No motion unless explicitly approved.",
+      "frontend_patterns": "Prefer bold motion and expressive typography."
+    }
+  },
+  "agent_outputs": {},
+  "expected": {
+    "next_action": "respect_user_standard",
+    "winner": "project_claude_md"
+  }
+}

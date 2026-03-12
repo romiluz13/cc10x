@@ -12,7 +12,7 @@ description: |
 
 # cc10x Router
 
-**Runtime contract only.** When loaded: route intent, hydrate workflow state, write workflow artifacts, execute the task graph, validate agent output, finalize memory.
+**Runtime contract only.** v10 restores trust-first orchestration: route intent, hydrate workflow state, write workflow artifacts, execute the task graph, validate agent output, and fail closed on ambiguity, skipped work, or missing persistence.
 
 ## 1. Intent Routing
 
@@ -36,10 +36,10 @@ Rules:
 Always run this before routing or resuming:
 
 ```text
-1. Bash("mkdir -p .claude/cc10x")
-2. Read(".claude/cc10x/activeContext.md")
-3. Read(".claude/cc10x/patterns.md")
-4. Read(".claude/cc10x/progress.md")
+1. Bash("mkdir -p .claude/cc10x/v10")
+2. Read(".claude/cc10x/v10/activeContext.md")
+3. Read(".claude/cc10x/v10/patterns.md")
+4. Read(".claude/cc10x/v10/progress.md")
 ```
 
 Do not parallelize step 1 with reads.
@@ -65,23 +65,32 @@ JUST_GO:
 - If `AUTO_PROCEED: true`, set `JUST_GO=true`.
 - While `JUST_GO=true`, auto-default all non-REVERT AskUserQuestion gates to the recommended option and log the choice in `## Decisions`.
 
+v10 trust rule:
+- `JUST_GO` never overrides explicit user/project standards, open plan decisions, or failure-stop gates.
+- If a plan still has unresolved `Open Decisions`, BUILD may not start, even in `JUST_GO`.
+
 ## 2a. Workflow Artifact And Hook Policy
 
 CC10X durable orchestration state lives in:
 
 ```text
-.claude/cc10x/workflows/{wf}.json
+.claude/cc10x/v10/workflows/{workflow_uuid}.json
 ```
 
 Artifact schema must include:
+ - `workflow_uuid`
 - `workflow_id`
 - `workflow_type`
+- `state_root`
 - `user_request`
 - `plan_file`
 - `design_file`
 - `research_files`
+- `approved_decisions`
 - `intent`
 - `capabilities`
+- `phase_cursor`
+- `normalized_phases`
 - `research_rounds`
 - `research_backend_history`
 - `research_quality`
@@ -99,9 +108,20 @@ Artifact schema must include:
 
 Rules:
 - Router creates the workflows directory before the first workflow artifact write.
-- Router writes or updates the artifact after workflow creation, every agent completion, every remediation decision, and memory finalization.
+- Router writes or updates the artifact after workflow creation, every agent completion, every remediation decision, every clarification answer, every phase completion, every blocking stop, and memory finalization.
 - Resume uses task metadata first, then workflow artifact, then memory markdown.
 - Verifier handoff and memory finalization read structured data from the workflow artifact, not transient conversation recovery.
+- The workflow UUID is generated independently of Claude task ids and is the canonical workflow identifier everywhere in v10.
+- `workflow_id` remains as a compatibility alias and must equal `workflow_uuid` in new artifacts.
+- `state_root` must equal `.claude/cc10x/v10`.
+- `phase_cursor` points at the only BUILD phase that may run next.
+- `normalized_phases` stores planner-approved executable phases with:
+  - `phase_id`
+  - `title`
+  - `objective`
+  - `files`
+  - `checks`
+  - `exit_criteria`
 - Bright Data MCP and Octocode MCP are optional accelerators. Base CC10X installs must continue to work with built-in Claude Code tools only.
 - When optional user-configured Claude Code MCP servers are available, use the server names `brightdata` and `octocode` so the research agents can auto-detect them without prompt edits.
 - `capabilities` records the session-level research backend availability model:
@@ -116,6 +136,7 @@ Rules:
   - `constraints`
   - `acceptance_criteria`
   - `open_decisions`
+- `approved_decisions` stores decisions explicitly approved by the user or already fixed in the saved plan.
 - `evidence` stores proof-of-work grouped by agent:
   - `builder`
   - `investigator`
@@ -128,13 +149,23 @@ Rules:
   - `scenario_coverage`
   - `research_quality`
   - `convergence_state`
+- `pending_gate` is required whenever BUILD/PLAN/DEBUG is waiting on user clarification, scope selection, or persistence repair.
 - `status_history` and `remediation_history` are append-only summaries of major router decisions.
+
+v10 router gates:
+- `plan_trust_gate`
+- `phase_exit_gate`
+- `failure_stop_gate`
+- `memory_sync_gate`
+- `skill_precedence_gate`
+
+These are router-owned checks, not advisory hints.
 
 Workflow event log:
 - For every workflow, keep a lightweight append-only companion file:
 
 ```text
-.claude/cc10x/workflows/{wf}.events.jsonl
+.claude/cc10x/v10/workflows/{workflow_uuid}.events.jsonl
 ```
 
 - Append event objects with at least:
@@ -173,7 +204,7 @@ Hook policy:
 Every CC10X task description starts with normalized metadata lines:
 
 ```text
-wf:{workflow_task_id}
+wf:{workflow_uuid}
 kind:{workflow|agent|remfix|memory|reverify|research}
 origin:{router|component-builder|bug-investigator|code-reviewer|silent-failure-hunter|integration-verifier|planner}
 phase:{build|build-implement|build-review|build-hunt|build-verify|debug|debug-investigate|debug-review|debug-verify|review|review-audit|plan|plan-create|memory-finalize|re-review|re-hunt|re-verify|re-plan|research-web|research-github}
@@ -184,7 +215,7 @@ reason:{short reason or N/A}
 
 Rules:
 - `wf:` is mandatory on every child task.
-- Parent workflow tasks may be created with `wf:PENDING_SELF` and must be backfilled immediately after `TaskCreate()` returns the parent task id.
+- Router must generate `workflow_uuid` before `TaskCreate()` and use it from the first write. `wf:PENDING_SELF` is retired in v10.
 - `kind:` is mandatory and drives resume, routing, and counting logic.
 - `origin:` is mandatory on every `kind:remfix` task.
 - `plan:` is required on workflow, agent, reverify, and memory tasks.
@@ -203,19 +234,20 @@ Hydration rules:
 - Find active parent workflow tasks by subject prefix `CC10X BUILD:`, `CC10X DEBUG:`, `CC10X REVIEW:`, `CC10X PLAN:`.
 - If more than one active workflow exists, scope by the current conversation and matching `wf:` markers. Do not resume a workflow you cannot scope confidently.
 - Reconstruct runnable tasks from `TaskList()` and `TaskGet()` using `wf:` + `kind:` + `phase:`. Do not rely on stored task IDs for correctness.
+- Read and write only the v10 namespace. Ignore legacy `.claude/cc10x/*.md` and `.claude/cc10x/workflows/*` state during hydration.
 - `[cc10x-internal] memory_task_id` in `activeContext.md` is only a transient optimization. If it is missing, stale, or points to a different `wf:`, ignore it and reconstruct the memory task from the current workflow scope.
 - Never use an unscoped fallback like "first pending Memory Update task".
 
 Resume algorithm:
 1. Identify the active parent workflow.
-2. Extract its workflow id from the parent task id or the `wf:` line.
+2. Extract `workflow_uuid` from the `wf:` line.
 3. Read all CC10X tasks whose descriptions contain that `wf:`.
 4. Derive runnable tasks from `status` and `blockedBy`.
 5. Reconstruct the memory task as the unique pending/in_progress `kind:memory` task in the same `wf:`.
 
 Scope-decision resume:
 - Before normal routing, check `activeContext.md ## Decisions` for a live marker:
-  - `[SCOPE-DECISION-PENDING: wf:{workflow_task_id} reason:{...}]`
+  - `[SCOPE-DECISION-PENDING: wf:{workflow_uuid} reason:{...}]`
 - If present, treat the current user reply as the answer to that pending BUILD scope gate:
   - `critical only` -> create the pending REM-FIX with `scope:CRITICAL_ONLY`
   - `all issues` -> create the pending REM-FIX with `scope:ALL_ISSUES`
@@ -240,28 +272,52 @@ Before creating a new workflow:
 - Read `activeContext.md ## References` to discover `Plan`, `Design`, and prior `Research` files.
 - Read `activeContext.md ## Decisions` for prior planner/build clarifications.
 - Read `progress.md ## Current Workflow` and `## Tasks` for pending work that should resume instead of duplicating.
-- Read the latest `.claude/cc10x/workflows/*.json` artifact if one exists for the current conversation.
+- Read the latest `.claude/cc10x/v10/workflows/*.json` artifact if one exists for the current conversation.
+
+Router-owned interface fields:
+- `plan_mode`: `direct` | `execution_plan` | `decision_rfc`
+- `verification_rigor`: `standard` | `critical_path`
+- `checkpoint_type`: `none` | `human_verify` | `decision` | `human_action`
+- `proof_status`: `passed` | `gaps_found` | `human_needed`
 
 ### BUILD preparation
 
 1. Read `- Plan:` from `activeContext.md ## References`.
 2. If plan path is not `N/A`, `Read(...)` the plan file before creating tasks.
-3. If plan path is `N/A`, use an adaptive gate:
+3. Run `plan_trust_gate` before BUILD:
+   - `Open Decisions` must be empty or explicitly marked approved.
+   - `Differences from agreement` must be present, even if empty.
+   - `plan_mode` must be explicit when a plan artifact exists.
+   - `verification_rigor` must be explicit when a plan artifact exists.
+   - If either condition fails, ask for clarification and do not start BUILD.
+4. If plan path is `N/A`, use an adaptive gate:
    - obviously trivial, low-risk work -> continue directly to BUILD
    - complex, ambiguous, multi-step, or cross-cutting work -> ask: `Plan first (Recommended)` or `Build directly`
    - `Plan first` -> switch to PLAN workflow.
    - `Build directly` -> continue without a plan.
-4. If the referenced plan file is missing:
+5. If the referenced plan file is missing:
    - Ask: `Build without plan` or `Re-plan first (Recommended)`.
    - `Build without plan` -> continue with `plan:N/A`
    - `Re-plan first` -> switch to PLAN workflow
-5. Clarify missing requirements before builder only when the plan and memory do not already answer them.
-6. Persist pre-answered clarifications in `activeContext.md ## Decisions` using `Build clarification [{topic}]: {answer}`.
+6. Normalize planner phases into executable `normalized_phases` and initialize `phase_cursor` to the first incomplete phase.
+7. Persist the approved `plan_mode` and `verification_rigor` from the planner contract into the workflow artifact.
+8. Every normalized phase must carry:
+   - `objective`
+   - `inputs`
+   - `files/surfaces`
+   - `expected_artifacts`
+   - `required_checks`
+   - `checkpoint_type`
+   - `exit_criteria`
+9. Initialize workflow `proof_status` to `gaps_found` until the current phase is independently verified.
+10. Clarify missing requirements before builder only when the plan and memory do not already answer them.
+11. Persist pre-answered clarifications in `activeContext.md ## Decisions` using `Build clarification [{topic}]: {answer}`.
+12. Builder may execute only the phase at `phase_cursor`.
 
 ### DEBUG preparation
 
 1. If the user explicitly asks for research or the bug clearly depends on external post-2024 behavior, allow a research round before the first investigator run.
-2. Immediately write `[DEBUG-RESET: wf:{workflow_task_id}]` once the workflow id exists.
+2. Immediately write `[DEBUG-RESET: wf:{workflow_uuid}]` once the workflow id exists.
 3. Preserve failed attempt counting semantics: the investigator counts `[DEBUG-N]:` entries after the most recent reset marker.
 
 ### REVIEW preparation
@@ -282,78 +338,93 @@ Before creating a new workflow:
 3. Optional research before planning:
    - Ask whether to run web + GitHub research for external/unfamiliar technology when it would materially improve the plan.
 4. Planner receives `## Research Files` only when research files actually exist.
+5. Planner is agreement-first:
+   - If a requirement is materially ambiguous, planner returns `STATUS=NEEDS_CLARIFICATION`.
+   - Planner never treats its own defaults as approved implementation.
+6. Planner must choose one `plan_mode`:
+   - `direct` for trivial low-risk work
+   - `execution_plan` for standard implementation work
+   - `decision_rfc` for architecture or multi-option work
+7. Planner must choose one `verification_rigor`:
+   - `standard` by default
+   - `critical_path` for security, money, state-machine, concurrency, or irreversible-migration work
 
 ## 6. Workflow Task Graphs
 
-### Parent workflow creation (two-step backfill)
+### Parent workflow creation
 
 Use this pattern for every new workflow:
+
+1. Generate a stable workflow UUID before `TaskCreate()`:
+
+```text
+workflow_uuid = "wf-" + UTC timestamp + "-" + 8 hex chars
+```
+
+2. Create the parent workflow task with that UUID from the first write:
 
 ```text
 TaskCreate({
   subject: "CC10X {WORKFLOW}: {summary}",
-  description: "wf:PENDING_SELF\nkind:workflow\norigin:router\nphase:{build|debug|review|plan}\nplan:{plan_file or 'N/A'}\nscope:N/A\nreason:User request\n\nUser request: {request}\nChain: {chain description}",
+  description: "wf:{workflow_uuid}\nkind:workflow\norigin:router\nphase:{build|debug|review|plan}\nplan:{plan_file or 'N/A'}\nscope:N/A\nreason:User request\n\nUser request: {request}\nChain: {chain description}",
   activeForm: "{workflow active form}"
 })
 ```
 
-Immediately after `TaskCreate()` returns `workflow_task_id`:
+3. Immediately write the v10 artifact and event log:
 
 ```text
-TaskGet({ taskId: workflow_task_id })
-  Copy the returned parent description and replace ONLY the first metadata line:
-  "wf:PENDING_SELF"
-  with:
-  "wf:{workflow_task_id}"
-TaskUpdate({
-  taskId: workflow_task_id,
-  description: "wf:{workflow_task_id}\nkind:workflow\norigin:router\nphase:{build|debug|review|plan}\nplan:{plan_file or 'N/A'}\nscope:N/A\nreason:User request\n\nUser request: {request}\nChain: {chain description}"
-})
 Write(
-  file_path=".claude/cc10x/workflows/{workflow_task_id}.json",
-  content="{\"workflow_id\":\"{workflow_task_id}\",\"workflow_type\":\"{WORKFLOW}\",\"user_request\":\"{request}\",\"plan_file\":null,\"design_file\":null,\"research_files\":[],\"intent\":{\"goal\":null,\"non_goals\":[],\"constraints\":[],\"acceptance_criteria\":[],\"open_decisions\":[]},\"capabilities\":{\"brightdata_available\":\"unknown\",\"octocode_available\":\"unknown\",\"websearch_available\":\"unknown\",\"webfetch_available\":\"unknown\"},\"research_rounds\":[],\"research_backend_history\":[],\"research_quality\":{\"web\":\"none\",\"github\":\"none\",\"overall\":\"none\"},\"task_ids\":{},\"phase_status\":{},\"results\":{\"builder\":null,\"investigator\":null,\"reviewer\":null,\"hunter\":null,\"verifier\":null,\"planner\":null,\"research\":{\"web\":null,\"github\":null,\"synthesis\":null}},\"evidence\":{\"builder\":[],\"investigator\":[],\"reviewer\":[],\"hunter\":[],\"verifier\":[]},\"quality\":{\"confidence\":null,\"evidence_complete\":false,\"scenario_coverage\":0,\"research_quality\":\"none\",\"convergence_state\":\"pending\"},\"memory_notes\":[],\"pending_gate\":null,\"status_history\":[{\"event\":\"workflow_started\",\"ts\":\"{iso_timestamp}\",\"phase\":\"{build|debug|review|plan}\"}],\"remediation_history\":[],\"created_at\":\"{iso_timestamp}\",\"updated_at\":\"{iso_timestamp}\"}"
+  file_path=".claude/cc10x/v10/workflows/{workflow_uuid}.json",
+  content="{\"workflow_uuid\":\"{workflow_uuid}\",\"workflow_id\":\"{workflow_uuid}\",\"workflow_type\":\"{WORKFLOW}\",\"state_root\":\".claude/cc10x/v10\",\"user_request\":\"{request}\",\"plan_file\":null,\"design_file\":null,\"research_files\":[],\"approved_decisions\":[],\"plan_mode\":null,\"verification_rigor\":\"standard\",\"proof_status\":\"gaps_found\",\"traceability\":{\"requirements\":[],\"phases\":[],\"verification\":[],\"remediation\":[]},\"intent\":{\"goal\":null,\"non_goals\":[],\"constraints\":[],\"acceptance_criteria\":[],\"open_decisions\":[]},\"normalized_phases\":[],\"phase_cursor\":null,\"capabilities\":{\"brightdata_available\":\"unknown\",\"octocode_available\":\"unknown\",\"websearch_available\":\"unknown\",\"webfetch_available\":\"unknown\"},\"research_rounds\":[],\"research_backend_history\":[],\"research_quality\":{\"web\":\"none\",\"github\":\"none\",\"overall\":\"none\"},\"task_ids\":{},\"phase_status\":{},\"results\":{\"builder\":null,\"investigator\":null,\"reviewer\":null,\"hunter\":null,\"verifier\":null,\"planner\":null,\"research\":{\"web\":null,\"github\":null,\"synthesis\":null}},\"evidence\":{\"builder\":[],\"investigator\":[],\"reviewer\":[],\"hunter\":[],\"verifier\":[]},\"quality\":{\"confidence\":null,\"evidence_complete\":false,\"scenario_coverage\":0,\"research_quality\":\"none\",\"convergence_state\":\"pending\"},\"memory_notes\":[],\"pending_gate\":null,\"status_history\":[{\"event\":\"workflow_started\",\"ts\":\"{iso_timestamp}\",\"phase\":\"{build|debug|review|plan}\"}],\"remediation_history\":[],\"created_at\":\"{iso_timestamp}\",\"updated_at\":\"{iso_timestamp}\"}"
 )
 Write(
-  file_path=".claude/cc10x/workflows/{workflow_task_id}.events.jsonl",
-  content="{\"ts\":\"{iso_timestamp}\",\"wf\":\"{workflow_task_id}\",\"event\":\"workflow_started\",\"phase\":\"{build|debug|review|plan}\",\"task_id\":\"{workflow_task_id}\",\"agent\":\"router\",\"decision\":\"start\",\"reason\":\"User request\"}\n"
+  file_path=".claude/cc10x/v10/workflows/{workflow_uuid}.events.jsonl",
+  content="{\"ts\":\"{iso_timestamp}\",\"wf\":\"{workflow_uuid}\",\"event\":\"workflow_started\",\"phase\":\"{build|debug|review|plan}\",\"task_id\":\"{parent_task_id}\",\"agent\":\"router\",\"decision\":\"start\",\"reason\":\"User request\"}\n"
 )
 ```
 
-Only create child tasks after the parent description has been backfilled.
+Only create child tasks after the v10 artifact exists.
 
 ### BUILD task graph
 
+BUILD is sequential in v10:
+- one approved executable phase at a time
+- one builder run for the current phase only
+- review, hunt, and verify validate that phase before `phase_cursor` advances
+- if phase exit evidence is incomplete, record `partial` or `blocked`, persist state, and stop
+
 ```text
 TaskCreate({
-  subject: "CC10X component-builder: Implement {feature}",
-  description: "wf:{workflow_task_id}\nkind:agent\norigin:router\nphase:build-implement\nplan:{plan_file or 'N/A'}\nscope:N/A\nreason:Primary implementation\n\nBuild the feature per the request and plan.",
+  subject: "CC10X component-builder: Execute phase {phase_id}",
+  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:build-implement\nplan:{plan_file or 'N/A'}\nscope:N/A\nreason:Execute approved phase\n\nExecute ONLY the phase at phase_cursor. Recover objective, inputs, expected artifacts, required checks, checkpoint type, and exit criteria from the approved phase. Stop if blocked, partial, or proof remains incomplete.",
   activeForm: "Building components"
 }) -> builder_task_id
 
 TaskCreate({
   subject: "CC10X code-reviewer: Review implementation",
-  description: "wf:{workflow_task_id}\nkind:agent\norigin:router\nphase:build-review\nplan:{plan_file or 'N/A'}\nscope:N/A\nreason:Review implementation quality\n\nReview code quality, security, and correctness.",
+  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:build-review\nplan:{plan_file or 'N/A'}\nscope:N/A\nreason:Review current phase quality\n\nReview only the files and scope of the current phase.",
   activeForm: "Reviewing code"
 }) -> reviewer_task_id
 TaskUpdate({ taskId: reviewer_task_id, addBlockedBy: [builder_task_id] })
 
 TaskCreate({
   subject: "CC10X silent-failure-hunter: Hunt edge cases",
-  description: "wf:{workflow_task_id}\nkind:agent\norigin:router\nphase:build-hunt\nplan:{plan_file or 'N/A'}\nscope:N/A\nreason:Audit silent failures\n\nFind silent failures and edge cases.",
+  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:build-hunt\nplan:{plan_file or 'N/A'}\nscope:N/A\nreason:Audit current phase blast radius\n\nFind silent failures and edge cases adjacent to the current phase.",
   activeForm: "Hunting failures"
 }) -> hunter_task_id
 TaskUpdate({ taskId: hunter_task_id, addBlockedBy: [builder_task_id] })
 
 TaskCreate({
   subject: "CC10X integration-verifier: Verify integration",
-  description: "wf:{workflow_task_id}\nkind:agent\norigin:router\nphase:build-verify\nplan:{plan_file or 'N/A'}\nscope:N/A\nreason:Final verification\n\nRun tests and verify end-to-end behavior.",
+  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:build-verify\nplan:{plan_file or 'N/A'}\nscope:N/A\nreason:Phase exit verification\n\nRun required checks for the current phase and report whether truths, artifacts, wiring, and phase exit criteria are all satisfied.",
   activeForm: "Verifying integration"
 }) -> verifier_task_id
 TaskUpdate({ taskId: verifier_task_id, addBlockedBy: [reviewer_task_id, hunter_task_id] })
 
 TaskCreate({
   subject: "CC10X Memory Update: Persist workflow learnings",
-  description: "wf:{workflow_task_id}\nkind:memory\norigin:router\nphase:memory-finalize\nplan:{plan_file or 'N/A'}\nscope:N/A\nreason:Persist captured Memory Notes\n\nROUTER ONLY: execute inline. Read the workflow artifact and THIS task description payload, persist to .claude/cc10x/*.md, then remove the matching [cc10x-internal] memory_task_id line from activeContext.md ## References. Never spawn Task() for this task.",
+  description: "wf:{workflow_uuid}\nkind:memory\norigin:router\nphase:memory-finalize\nplan:{plan_file or 'N/A'}\nscope:N/A\nreason:Persist captured Memory Notes\n\nROUTER ONLY: execute inline. Read the workflow artifact and THIS task description payload, persist to .claude/cc10x/v10/*.md, then remove the matching [cc10x-internal] memory_task_id line from activeContext.md ## References. Never spawn Task() for this task.",
   activeForm: "Persisting workflow learnings"
 }) -> memory_task_id
 TaskUpdate({ taskId: memory_task_id, addBlockedBy: [verifier_task_id] })
@@ -364,27 +435,27 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [verifier_task_id] })
 ```text
 TaskCreate({
   subject: "CC10X bug-investigator: Investigate {error}",
-  description: "wf:{workflow_task_id}\nkind:agent\norigin:router\nphase:debug-investigate\nplan:N/A\nscope:N/A\nreason:Find root cause\n\nFind the root cause and apply the fix.",
+  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:debug-investigate\nplan:N/A\nscope:N/A\nreason:Find root cause\n\nFind the root cause and apply the fix.",
   activeForm: "Investigating bug"
 }) -> investigator_task_id
 
 TaskCreate({
   subject: "CC10X code-reviewer: Review fix",
-  description: "wf:{workflow_task_id}\nkind:agent\norigin:router\nphase:debug-review\nplan:N/A\nscope:N/A\nreason:Review the fix\n\nReview the debug fix quality.",
+  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:debug-review\nplan:N/A\nscope:N/A\nreason:Review the fix\n\nReview the debug fix quality.",
   activeForm: "Reviewing fix"
 }) -> reviewer_task_id
 TaskUpdate({ taskId: reviewer_task_id, addBlockedBy: [investigator_task_id] })
 
 TaskCreate({
   subject: "CC10X integration-verifier: Verify fix",
-  description: "wf:{workflow_task_id}\nkind:agent\norigin:router\nphase:debug-verify\nplan:N/A\nscope:N/A\nreason:Verify the fix\n\nVerify the fix works end-to-end.",
+  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:debug-verify\nplan:N/A\nscope:N/A\nreason:Verify the fix\n\nVerify the fix works end-to-end.",
   activeForm: "Verifying fix"
 }) -> verifier_task_id
 TaskUpdate({ taskId: verifier_task_id, addBlockedBy: [reviewer_task_id] })
 
 TaskCreate({
   subject: "CC10X Memory Update: Persist debug learnings",
-  description: "wf:{workflow_task_id}\nkind:memory\norigin:router\nphase:memory-finalize\nplan:N/A\nscope:N/A\nreason:Persist captured Memory Notes\n\nROUTER ONLY: execute inline. Read the workflow artifact and THIS task description payload, persist to .claude/cc10x/*.md, then remove the matching [cc10x-internal] memory_task_id line from activeContext.md ## References. Never spawn Task() for this task.",
+  description: "wf:{workflow_uuid}\nkind:memory\norigin:router\nphase:memory-finalize\nplan:N/A\nscope:N/A\nreason:Persist captured Memory Notes\n\nROUTER ONLY: execute inline. Read the workflow artifact and THIS task description payload, persist to .claude/cc10x/v10/*.md, then remove the matching [cc10x-internal] memory_task_id line from activeContext.md ## References. Never spawn Task() for this task.",
   activeForm: "Persisting debug learnings"
 }) -> memory_task_id
 TaskUpdate({ taskId: memory_task_id, addBlockedBy: [verifier_task_id] })
@@ -395,13 +466,13 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [verifier_task_id] })
 ```text
 TaskCreate({
   subject: "CC10X code-reviewer: Review {target}",
-  description: "wf:{workflow_task_id}\nkind:agent\norigin:router\nphase:review-audit\nplan:N/A\nscope:N/A\nreason:Advisory review\n\nRun a scoped code review.",
+  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:review-audit\nplan:N/A\nscope:N/A\nreason:Advisory review\n\nRun a scoped code review.",
   activeForm: "Reviewing code"
 }) -> reviewer_task_id
 
 TaskCreate({
   subject: "CC10X Memory Update: Persist review learnings",
-  description: "wf:{workflow_task_id}\nkind:memory\norigin:router\nphase:memory-finalize\nplan:N/A\nscope:N/A\nreason:Persist captured Memory Notes\n\nROUTER ONLY: execute inline. Read the workflow artifact and THIS task description payload, persist to .claude/cc10x/*.md, then remove the matching [cc10x-internal] memory_task_id line from activeContext.md ## References. Never spawn Task() for this task.",
+  description: "wf:{workflow_uuid}\nkind:memory\norigin:router\nphase:memory-finalize\nplan:N/A\nscope:N/A\nreason:Persist captured Memory Notes\n\nROUTER ONLY: execute inline. Read the workflow artifact and THIS task description payload, persist to .claude/cc10x/v10/*.md, then remove the matching [cc10x-internal] memory_task_id line from activeContext.md ## References. Never spawn Task() for this task.",
   activeForm: "Persisting review learnings"
 }) -> memory_task_id
 TaskUpdate({ taskId: memory_task_id, addBlockedBy: [reviewer_task_id] })
@@ -412,13 +483,13 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [reviewer_task_id] })
 ```text
 TaskCreate({
   subject: "CC10X planner: Create plan for {feature}",
-  description: "wf:{workflow_task_id}\nkind:agent\norigin:router\nphase:plan-create\nplan:N/A\nscope:N/A\nreason:Create implementation plan\n\nCreate a comprehensive implementation plan.",
+  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:plan-create\nplan:N/A\nscope:N/A\nreason:Create implementation plan\n\nChoose the correct plan mode (`direct`, `execution_plan`, or `decision_rfc`) and verification rigor (`standard` or `critical_path`). Create the corresponding planning artifact.",
   activeForm: "Creating plan"
 }) -> planner_task_id
 
 TaskCreate({
   subject: "CC10X Memory Update: Index plan in memory",
-  description: "wf:{workflow_task_id}\nkind:memory\norigin:router\nphase:memory-finalize\nplan:N/A\nscope:N/A\nreason:Persist captured Memory Notes\n\nROUTER ONLY: execute inline. Read the workflow artifact and THIS task description payload, persist to .claude/cc10x/*.md, then remove the matching [cc10x-internal] memory_task_id line from activeContext.md ## References. Never spawn Task() for this task.",
+  description: "wf:{workflow_uuid}\nkind:memory\norigin:router\nphase:memory-finalize\nplan:N/A\nscope:N/A\nreason:Persist captured Memory Notes\n\nROUTER ONLY: execute inline. Read the workflow artifact and THIS task description payload, persist to .claude/cc10x/v10/*.md, then remove the matching [cc10x-internal] memory_task_id line from activeContext.md ## References. Never spawn Task() for this task.",
   activeForm: "Indexing plan in memory"
 }) -> memory_task_id
 TaskUpdate({ taskId: memory_task_id, addBlockedBy: [planner_task_id] })
@@ -442,13 +513,13 @@ Before creating them:
 ```text
 TaskCreate({
   subject: "CC10X web-researcher: Research {topic}",
-  description: "wf:{workflow_task_id}\nkind:research\norigin:router\nphase:research-web\nplan:{plan_file or 'N/A'}\nscope:N/A\nreason:{research_reason}\n\nTopic: {topic}\nReason: {research_reason}\nFile: docs/research/{date}-{slug}-web.md\nPreferred Backend: {brightdata+websearch or websearch+webfetch}\nAllowed Fallbacks: websearch -> webfetch\nRound: {round_number}",
+  description: "wf:{workflow_uuid}\nkind:research\norigin:router\nphase:research-web\nplan:{plan_file or 'N/A'}\nscope:N/A\nreason:{research_reason}\n\nTopic: {topic}\nReason: {research_reason}\nFile: docs/research/{date}-{slug}-web.md\nPreferred Backend: {brightdata+websearch or websearch+webfetch}\nAllowed Fallbacks: websearch -> webfetch\nRound: {round_number}",
   activeForm: "Researching web"
 }) -> web_task_id
 
 TaskCreate({
   subject: "CC10X github-researcher: Research {topic}",
-  description: "wf:{workflow_task_id}\nkind:research\norigin:router\nphase:research-github\nplan:{plan_file or 'N/A'}\nscope:N/A\nreason:{research_reason}\n\nTopic: {topic}\nReason: {research_reason}\nFile: docs/research/{date}-{slug}-github.md\nPreferred Backend: {octocode or web-only}\nAllowed Fallbacks: package-docs -> websearch -> webfetch\nRound: {round_number}",
+  description: "wf:{workflow_uuid}\nkind:research\norigin:router\nphase:research-github\nplan:{plan_file or 'N/A'}\nscope:N/A\nreason:{research_reason}\n\nTopic: {topic}\nReason: {research_reason}\nFile: docs/research/{date}-{slug}-github.md\nPreferred Backend: {octocode or web-only}\nAllowed Fallbacks: package-docs -> websearch -> webfetch\nRound: {round_number}",
   activeForm: "Researching GitHub"
 }) -> github_task_id
 ```
@@ -457,9 +528,9 @@ Research tasks are siblings, never blockers on the workflow parent. The follow-u
 
 ### Marker rules
 
-- BUILD writes `[BUILD-START: wf:{workflow_task_id}]`
-- DEBUG writes `[DEBUG-RESET: wf:{workflow_task_id}]`
-- PLAN writes `[PLAN-START: wf:{workflow_task_id}]`
+- BUILD writes `[BUILD-START: wf:{workflow_uuid}]`
+- DEBUG writes `[DEBUG-RESET: wf:{workflow_uuid}]`
+- PLAN writes `[PLAN-START: wf:{workflow_uuid}]`
 
 ## 7. Dispatcher And Agent Prompt Contract
 
@@ -483,11 +554,11 @@ Research tasks are siblings, never blockers on the workflow parent. The follow-u
 ```text
 ## Task Context
 - Task ID: {task_id}
-- Parent Workflow ID: {workflow_task_id}
+- Parent Workflow ID: {workflow_uuid}
 - Task Phase: {phase}
 - Plan File: {plan_file or 'None'}
-- Workflow Scope: wf:{workflow_task_id}
-- Workflow Artifact: .claude/cc10x/workflows/{workflow_task_id}.json
+- Workflow Scope: wf:{workflow_uuid}
+- Workflow Artifact: .claude/cc10x/v10/workflows/{workflow_uuid}.json
 
 ## User Request
 {request}
@@ -515,10 +586,19 @@ Optional sections:
 
 ### Deterministic skill hints
 
-- Include `cc10x:frontend-patterns` when the request, changed files, plan, or design clearly targets UI/frontend work.
-- Include `cc10x:architecture-patterns` for multi-component, API, schema, auth, or integration-heavy work.
+- Router is the only authority allowed to load internal CC10X skills.
+- Agents may not self-activate `frontend-patterns`, `architecture-patterns`, or `debugging-patterns`.
+- Include `cc10x:frontend-patterns` only when the request, changed files, plan, or design clearly targets UI/frontend work.
+- Include `cc10x:architecture-patterns` only for multi-component, API, schema, auth, or integration-heavy work.
 - Include `cc10x:research` only when planner or investigator receives `## Research Files`.
 - Include project/domain skills only from `patterns.md ## Project SKILL_HINTS`.
+- Skill precedence is strict:
+  1. explicit user prompt
+  2. project `CLAUDE.md` / repo standards / user standards
+  3. approved plan and design docs
+  4. domain-specific external skills
+  5. internal CC10X skills
+  6. model heuristics
 
 ### Previous Agent Findings handoff
 
@@ -583,9 +663,9 @@ Expected fields:
 
 | Agent | Required fields |
 |-------|-----------------|
-| component-builder | `STATUS`, `CONFIDENCE`, `TDD_RED_EXIT`, `TDD_GREEN_EXIT`, `SCENARIOS`, `ASSUMPTIONS`, `DECISIONS`, `BLOCKING`, `NEXT_ACTION`, `REMEDIATION_NEEDED`, `REQUIRES_REMEDIATION`, `REMEDIATION_REASON`, `MEMORY_NOTES` |
-| bug-investigator | `STATUS`, `CONFIDENCE`, `ROOT_CAUSE`, `TDD_RED_EXIT`, `TDD_GREEN_EXIT`, `VARIANTS_COVERED`, `SCENARIOS`, `ASSUMPTIONS`, `DECISIONS`, `BLOCKING`, `NEXT_ACTION`, `REMEDIATION_NEEDED`, `REQUIRES_REMEDIATION`, `REMEDIATION_REASON`, `NEEDS_EXTERNAL_RESEARCH`, `RESEARCH_REASON`, `MEMORY_NOTES` |
-| planner | `STATUS`, `CONFIDENCE`, `PLAN_FILE`, `PHASES`, `RISKS_IDENTIFIED`, `SCENARIOS`, `ASSUMPTIONS`, `DECISIONS`, `RECOMMENDED_DEFAULTS`, `BLOCKING`, `NEXT_ACTION`, `REMEDIATION_NEEDED`, `REQUIRES_REMEDIATION`, `REMEDIATION_REASON`, `GATE_PASSED`, `USER_INPUT_NEEDED`, `MEMORY_NOTES` |
+| component-builder | `STATUS`, `CONFIDENCE`, `PHASE_ID`, `PHASE_STATUS`, `PHASE_EXIT_READY`, `CHECKPOINT_TYPE`, `PROOF_STATUS`, `INPUTS`, `EXPECTED_ARTIFACTS`, `TDD_RED_EXIT`, `TDD_GREEN_EXIT`, `SCENARIOS`, `ASSUMPTIONS`, `DECISIONS`, `BLOCKED_ITEMS`, `SKIPPED_ITEMS`, `SCOPE_INCREASES`, `BLOCKING`, `NEXT_ACTION`, `REMEDIATION_NEEDED`, `REQUIRES_REMEDIATION`, `REMEDIATION_REASON`, `MEMORY_NOTES` |
+| bug-investigator | `STATUS`, `VERIFICATION_RIGOR`, `CONFIDENCE`, `ROOT_CAUSE`, `TDD_RED_EXIT`, `TDD_GREEN_EXIT`, `VARIANTS_COVERED`, `BLAST_RADIUS_SCAN`, `SCENARIOS`, `ASSUMPTIONS`, `DECISIONS`, `BLOCKING`, `NEXT_ACTION`, `REMEDIATION_NEEDED`, `REQUIRES_REMEDIATION`, `REMEDIATION_REASON`, `NEEDS_EXTERNAL_RESEARCH`, `RESEARCH_REASON`, `MEMORY_NOTES` |
+| planner | `STATUS`, `PLAN_MODE`, `VERIFICATION_RIGOR`, `CONFIDENCE`, `PLAN_FILE`, `PHASES`, `RISKS_IDENTIFIED`, `SCENARIOS`, `ASSUMPTIONS`, `DECISIONS`, `OPEN_DECISIONS`, `DIFFERENCES_FROM_AGREEMENT`, `RECOMMENDED_DEFAULTS`, `ALTERNATIVES`, `DRAWBACKS`, `PROVABLE_PROPERTIES`, `BLOCKING`, `NEXT_ACTION`, `REMEDIATION_NEEDED`, `REQUIRES_REMEDIATION`, `REMEDIATION_REASON`, `GATE_PASSED`, `USER_INPUT_NEEDED`, `MEMORY_NOTES` |
 | web-researcher | `STATUS`, `FILE_PATH`, `BACKEND_MODE`, `SOURCES_ATTEMPTED`, `SOURCES_USED`, `QUALITY_LEVEL`, `KEY_FINDINGS_COUNT`, `WHAT_CHANGED_RECOMMENDATION`, `MEMORY_NOTES` |
 | github-researcher | `STATUS`, `FILE_PATH`, `BACKEND_MODE`, `SOURCES_ATTEMPTED`, `SOURCES_USED`, `QUALITY_LEVEL`, `IMPLEMENTATIONS_FOUND`, `WHAT_CHANGED_RECOMMENDATION`, `MEMORY_NOTES` |
 
@@ -598,12 +678,12 @@ If the YAML block is missing or malformed:
 
 | Agent | Override |
 |-------|----------|
-| component-builder | `STATUS=PASS` requires `TDD_RED_EXIT=1`, `TDD_GREEN_EXIT=0`, and a non-empty `SCENARIOS` array with at least one passing scenario. That passing scenario must include non-empty `name`, `command`, `expected`, `actual`, and `exit_code`. |
-| bug-investigator | `STATUS=FIXED` requires `TDD_RED_EXIT=1`, `TDD_GREEN_EXIT=0`, `VARIANTS_COVERED>=1`, and a non-empty `SCENARIOS` array unless it explicitly set `NEEDS_EXTERNAL_RESEARCH=true`. At least one scenario name must start with `Regression:` and one with `Variant:`. Both required scenarios must include non-empty `command`, `expected`, `actual`, and `exit_code`. |
+| component-builder | `STATUS=PASS` requires `TDD_RED_EXIT=1`, `TDD_GREEN_EXIT=0`, `PHASE_STATUS=completed`, `PHASE_EXIT_READY=true`, `PROOF_STATUS=passed`, empty `BLOCKED_ITEMS`, and a non-empty `SCENARIOS` array with at least one passing scenario. That passing scenario must include non-empty `name`, `command`, `expected`, `actual`, and `exit_code`. |
+| bug-investigator | `STATUS=FIXED` requires `VERIFICATION_RIGOR` to be explicit, `TDD_RED_EXIT=1`, `TDD_GREEN_EXIT=0`, `VARIANTS_COVERED>=1`, a non-empty `BLAST_RADIUS_SCAN`, and a non-empty `SCENARIOS` array unless it explicitly set `NEEDS_EXTERNAL_RESEARCH=true`. At least one scenario name must start with `Regression:` and one with `Variant:`. Both required scenarios must include non-empty `command`, `expected`, `actual`, and `exit_code`. |
 | code-reviewer | `APPROVE` + critical issues becomes `CHANGES_REQUESTED` |
 | silent-failure-hunter | `CLEAN` + critical issues becomes `ISSUES_FOUND` |
 | integration-verifier | `PASS` + critical issues becomes `FAIL`; scenario totals must reconcile with the scenario table and evidence array; every counted scenario must map to a concrete evidence row; every scenario row must contain non-empty `Expected` and `Actual` values |
-| planner | `PLAN_CREATED` requires non-empty `PLAN_FILE`, `CONFIDENCE>=50`, `GATE_PASSED=true`, and a non-empty `SCENARIOS` array |
+| planner | `PLAN_CREATED` or `DECISION_RFC_CREATED` requires non-empty `PLAN_FILE`, explicit `PLAN_MODE`, explicit `VERIFICATION_RIGOR`, `CONFIDENCE>=50`, `GATE_PASSED=true`, a non-empty `SCENARIOS` array, `OPEN_DECISIONS=[]`, and `DIFFERENCES_FROM_AGREEMENT` explicitly present. `PLAN_MODE=decision_rfc` also requires non-empty `ALTERNATIVES` and `DRAWBACKS`; `VERIFICATION_RIGOR=critical_path` requires non-empty `PROVABLE_PROPERTIES`. |
 
 Convergence rule:
 - If evidence is incomplete, contradictory, or missing for a required pass path, do not advance the workflow.
@@ -821,7 +901,7 @@ TaskCreate({
 3. If the runnable task kind is memory:
    - execute inline in the main context
    - persist workflow artifact results + Memory Notes from the task description
-   - append `memory_finalized` to `.claude/cc10x/workflows/{wf}.events.jsonl`
+   - append `memory_finalized` to `.claude/cc10x/v10/workflows/{wf}.events.jsonl`
    - clean up the matching [cc10x-internal] memory_task_id entry
    - mark the memory task completed
    - mark the parent workflow task completed
@@ -835,6 +915,8 @@ TaskCreate({
    - capture memory payload
    - persist task-state side effects
    - apply workflow rules
+   - for BUILD, run `phase_exit_gate`; if the current phase is not complete, persist `phase_status={partial|blocked}` and stop
+   - never advance to the next phase or workflow step on apology prose alone
 7. Repeat until all tasks in the active `wf:` are completed.
 ```
 
@@ -850,10 +932,11 @@ TaskCreate({
 4. Capture memory:
    - READ-ONLY agents: extract `### Memory Notes (For Workflow-Final Persistence)` and append to the memory task description.
    - WRITE agents: do not expect `### Memory Notes`; use `MEMORY_NOTES` from YAML. Append only deferred or supplemental memory payload needed by the memory task.
-5. Update `.claude/cc10x/workflows/{workflow_task_id}.json` with:
+5. Update `.claude/cc10x/v10/workflows/{workflow_uuid}.json` with:
    - intent contract fields from planner output when available
    - task ids
    - phase status
+   - phase cursor changes only after `phase_exit_gate` passes
    - structured agent results
    - scenario evidence grouped by agent
    - plan/design/research file paths
@@ -862,7 +945,7 @@ TaskCreate({
    - quality/convergence state
    - status_history and remediation_history entries when decisions change workflow state
    - pending gate if waiting on user input
-6. Persist `[cc10x-internal] memory_task_id: {memory_task_id} wf:{workflow_task_id}` only if it matches the active workflow.
+6. Persist `[cc10x-internal] memory_task_id: {memory_task_id} wf:{workflow_uuid}` only if it matches the active workflow.
 
 ### Verifier findings handoff
 
@@ -885,6 +968,7 @@ The memory task:
 - Replaces `progress.md ## Tasks` with the active workflow snapshot.
 - Keeps only the most recent 10 items in `progress.md ## Completed`.
 - Removes the matching `[cc10x-internal] memory_task_id` line from `activeContext.md ## References`.
+- If any artifact or memory write fails, stop immediately. Never advance the workflow after a failed persistence write.
 
 For PLAN:
 - Ensure `- Plan: {plan_file}` remains correct in `activeContext.md ## References`.

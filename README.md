@@ -2,7 +2,7 @@
 
 ### Router-Owned Claude Code Harness
 
-**Current version:** 9.1.1
+**Current version:** 10.1.0
 
 **Recommended: Create `~/.claude/CLAUDE.md` (global) so the router is always active across all projects.**
 
@@ -67,14 +67,14 @@ With cc10x installed, Claude Code gains:
 
 This is still one coherent harness, not a bag of disconnected skills.
 
-## What 9.1 adds
+## What 10.1 adds
 
-- **Intent-first planning** for complex work, with explicit goal, constraints, scenarios, and defaults
-- **BDD-style evidence** across BUILD, DEBUG, and VERIFY using named scenarios with expected vs actual proof
-- **DDD-style domain language preservation** so plans and scenarios use the product's real terms instead of invented abstractions
-- **Proof-of-work workflow artifacts** under `.claude/cc10x/workflows/`
-- **Plugin-native hooks and optional user-configured MCP** aligned with Claude Code plugin conventions
-- **Built-in harness audit** for manifest/docs/router drift
+- **Decision-grade planning** with `direct`, `execution_plan`, and `decision_rfc` modes chosen by the router
+- **Adversarial spec gates** that block BUILD on failed feasibility, completeness, or alignment review
+- **Proof-oriented BUILD** with explicit checkpoint types, expected artifacts, proof states, and no auto-advance on partial evidence
+- **Harsher VERIFY** that checks truths, artifacts, and wiring before any pass verdict
+- **Stable workflow UUIDs** and **versioned v10 state** under `.claude/cc10x/v10/`
+- **Advisory internal skills** where explicit user/project standards always outrank CC10X pattern skills
 
 ---
 
@@ -126,8 +126,8 @@ They provide:
 cc10x writes proof-of-work workflow state under:
 
 ```text
-.claude/cc10x/workflows/{wf}.json
-.claude/cc10x/workflows/{wf}.events.jsonl
+.claude/cc10x/v10/workflows/{wf}.json
+.claude/cc10x/v10/workflows/{wf}.events.jsonl
 ```
 
 These artifacts track:
@@ -574,6 +574,8 @@ I'll help you build a task tracker! Let me start...
 
 | Version | Highlights |
 |---------|------------|
+| **v10.1.0** | Competition-grade release: decision-grade planning, adversarial plan gates, proof-oriented BUILD, harsher VERIFY, and benchmark-backed prompt/harness hardening |
+| **v10.0.0** | Trust-first recovery: agreement-first planning, phase-gated BUILD, stable workflow UUIDs, versioned v10 state, advisory internal skills |
 | **v9.1.1** | Removed shipped MCP config to avoid startup warnings; MCP research remains optional via user-configured Claude Code MCP servers named `brightdata` and `octocode` |
 | **v9.1.0** | Publication polish: intent-first planning, BDD-style scenario evidence, DDD-style domain language preservation, proof-of-work workflow artifacts, built-in harness drift audit |
 | **v9.0.0** | Plugin-native packaging: bundled Claude Code hooks, optional plugin MCP acceleration, router-owned research quality model, workflow artifacts as durable truth |

@@ -12,8 +12,11 @@ from cc10x_hooklib import (
 
 
 REQUIRED_WORKFLOW_KEYS = (
+    "workflow_uuid",
     "workflow_id",
     "workflow_type",
+    "state_root",
+    "phase_cursor",
     "task_ids",
     "results",
     "intent",
@@ -60,7 +63,11 @@ def main() -> int:
     log_event(
         "plugin_posttooluse_artifact_guard",
         {
-            "wf": payload.get("workflow_id") if payload else None,
+            "wf": (
+                (payload.get("workflow_uuid") or payload.get("workflow_id"))
+                if payload
+                else None
+            ),
             "phase": (payload or {}).get("pending_gate") or "unknown",
             "task_id": None,
             "agent": "router",

@@ -1,0 +1,60 @@
+{
+  "id": "build-checkpoint-decision",
+  "workflow_type": "BUILD",
+  "starting_artifact": {
+    "workflow_uuid": "wf-20260312T163100Z-build-checkpoint-decision",
+    "workflow_id": "wf-20260312T163100Z-build-checkpoint-decision",
+    "workflow_type": "BUILD",
+    "state_root": ".claude/cc10x/v10",
+    "plan_mode": "execution_plan",
+    "verification_rigor": "critical_path",
+    "proof_status": "gaps_found",
+    "traceability": {"requirements": [], "phases": [], "verification": [], "remediation": []},
+    "phase_cursor": "phase-2",
+    "task_ids": {},
+    "results": {},
+    "intent": {"goal": "Migrate billing provider routing"},
+    "evidence": {},
+    "quality": {"convergence_state": "needs_iteration"},
+    "status_history": [],
+    "remediation_history": []
+  },
+  "relevant_tasks": {},
+  "agent_outputs": {
+    "builder_contract": {
+      "STATUS": "FAIL",
+      "PHASE_ID": "phase-2",
+      "PHASE_STATUS": "blocked",
+      "PHASE_EXIT_READY": false,
+      "CHECKPOINT_TYPE": "decision",
+      "PROOF_STATUS": "human_needed",
+      "INPUTS": ["provider routing matrix", "rollout policy"],
+      "EXPECTED_ARTIFACTS": ["billing provider switch logic"],
+      "TDD_RED_EXIT": 1,
+      "TDD_GREEN_EXIT": 0,
+      "BLOCKED_ITEMS": ["Need explicit approval for Stripe-only rollout vs dual-write migration"],
+      "SKIPPED_ITEMS": [],
+      "SCOPE_INCREASES": [],
+      "SCENARIOS": [
+        {
+          "name": "Existing billing provider remains stable",
+          "given": "the current provider configuration",
+          "when": "the compatibility suite runs",
+          "then": "current billing flows remain intact",
+          "command": "npm test -- billing-provider-compat",
+          "expected": "compatibility suite passes",
+          "actual": "compatibility suite passes",
+          "exit_code": 0,
+          "status": "PASS"
+        }
+      ]
+    }
+  },
+  "expected": {
+    "next_action": "pause_for_checkpoint_decision",
+    "pending_gate": "checkpoint_decision",
+    "artifact_delta": {
+      "quality": {"convergence_state": "needs_iteration"}
+    }
+  }
+}

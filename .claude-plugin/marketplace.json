@@ -6,14 +6,14 @@
     "url": "https://github.com/romiluz13"
   },
   "metadata": {
-    "description": "cc10x v9.1.1 - Router-owned Claude Code plugin with intent-first planning, BDD-style evidence, proof-of-work workflow artifacts, plugin-native hooks, and optional user-configured MCP-accelerated research",
-    "version": "9.1.1"
+    "description": "cc10x v10.1.0 - Competition-grade Claude Code plugin with decision-grade planning, adversarial plan gates, proof-oriented BUILD, stable workflow UUIDs, versioned v10 state, advisory internal skills, and fail-closed memory persistence",
+    "version": "10.1.0"
   },
   "plugins": [
     {
       "name": "cc10x",
-      "description": "Router-owned Claude Code plugin with specialized subagents, composable skills, intent-first planning, TDD-first building, adversarial review, BDD-style verification, proof-of-work workflow artifacts, plugin-native hooks, and optional user-configured Bright Data/Octocode research acceleration.",
-      "version": "9.1.1",
+      "description": "Trust-first Claude Code plugin with specialized subagents, composable skills, agreement-first planning, TDD-first phase execution, adversarial review, BDD-style verification, proof-of-work workflow artifacts, plugin-native hooks, and optional user-configured Bright Data/Octocode research acceleration.",
+      "version": "10.1.0",
       "author": {
         "name": "Rom Iluz",
         "email": "rom@iluz.net",

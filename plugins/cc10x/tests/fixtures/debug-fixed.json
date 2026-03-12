@@ -2,8 +2,15 @@
   "id": "debug-fixed",
   "workflow_type": "DEBUG",
   "starting_artifact": {
-    "workflow_id": "wf-debug-fixed",
+    "workflow_uuid": "wf-20260312T161800Z-debug-fixed",
+    "workflow_id": "wf-20260312T161800Z-debug-fixed",
     "workflow_type": "DEBUG",
+    "state_root": ".claude/cc10x/v10",
+    "plan_mode": "execution_plan",
+    "verification_rigor": "standard",
+    "proof_status": "gaps_found",
+    "traceability": {"requirements": [], "phases": [], "verification": [], "remediation": []},
+    "phase_cursor": "debug-investigate",
     "task_ids": {},
     "results": {},
     "intent": {"goal": "Fix CSV export bug"},
@@ -16,9 +23,15 @@
   "agent_outputs": {
     "investigator_contract": {
       "STATUS": "FIXED",
+      "VERIFICATION_RIGOR": "standard",
       "TDD_RED_EXIT": 1,
       "TDD_GREEN_EXIT": 0,
       "VARIANTS_COVERED": 2,
+      "BLAST_RADIUS_SCAN": {
+        "same_file": "Found two sibling CSV delimiter branches and updated both.",
+        "adjacent_scan": ["src/export/csv.ts", "src/export/csvOptions.ts"],
+        "result": "fixed_all_safe_duplicates"
+      },
       "SCENARIOS": [
         {
           "name": "Regression: CSV export with defaults",

@@ -2,8 +2,15 @@
   "id": "debug-research",
   "workflow_type": "DEBUG",
   "starting_artifact": {
-    "workflow_id": "wf-debug-research",
+    "workflow_uuid": "wf-20260312T161900Z-debug-research",
+    "workflow_id": "wf-20260312T161900Z-debug-research",
     "workflow_type": "DEBUG",
+    "state_root": ".claude/cc10x/v10",
+    "plan_mode": "execution_plan",
+    "verification_rigor": "critical_path",
+    "proof_status": "gaps_found",
+    "traceability": {"requirements": [], "phases": [], "verification": [], "remediation": []},
+    "phase_cursor": "debug-investigate",
     "task_ids": {},
     "results": {},
     "intent": {"goal": "Fix OAuth callback failure"},
@@ -16,6 +23,7 @@
   "agent_outputs": {
     "investigator_contract": {
       "STATUS": "BLOCKED",
+      "VERIFICATION_RIGOR": "critical_path",
       "NEEDS_EXTERNAL_RESEARCH": true,
       "RESEARCH_REASON": "Need provider-specific callback handling pattern"
     },

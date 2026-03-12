@@ -12,6 +12,8 @@ Architecture exists to support functionality. Every architectural decision shoul
 
 **Core principle:** Design architecture FROM functionality, not TO functionality.
 
+This skill is advisory in v10. It frames decisions and tradeoffs; it does not outrank explicit user requirements, repo standards, or an approved plan/design doc.
+
 ## Focus Areas (Reference Pattern)
 
 - **RESTful API design** with proper versioning and error handling

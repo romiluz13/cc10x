@@ -6,6 +6,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Tuple
 
+STATE_VERSION = "v10"
+
 
 def project_dir() -> Path:
     value = os.environ.get("CLAUDE_PROJECT_DIR")
@@ -25,14 +27,20 @@ def plugin_config_dir() -> Path:
     return plugin_root() / "config"
 
 
+def state_root() -> Path:
+    path = project_dir() / ".claude" / "cc10x" / STATE_VERSION
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
 def workflows_dir() -> Path:
-    path = project_dir() / ".claude" / "cc10x" / "workflows"
+    path = state_root() / "workflows"
     path.mkdir(parents=True, exist_ok=True)
     return path
 
 
 def logs_dir() -> Path:
-    path = project_dir() / ".claude" / "cc10x"
+    path = state_root()
     path.mkdir(parents=True, exist_ok=True)
     return path
 
@@ -68,7 +76,7 @@ def now_iso() -> str:
 
 def log_event(name: str, payload: Dict[str, Any]) -> None:
     path = logs_dir() / "cc10x-hook-events.log"
-    event = {"ts": now_iso(), "event": name, **payload}
+    event = {"ts": now_iso(), "event": name, "state_version": STATE_VERSION, **payload}
     with path.open("a", encoding="utf-8") as fh:
         fh.write(json.dumps(event, ensure_ascii=True) + "\n")
 
@@ -98,10 +106,10 @@ def read_latest_workflow_state() -> Tuple[Dict[str, Any], Path | None, str | Non
 
 
 def workflow_event_log_exists(payload: Dict[str, Any], artifact_path: Path) -> bool:
-    workflow_id = payload.get("workflow_id")
-    if not workflow_id:
-        workflow_id = artifact_path.stem
-    event_log = workflows_dir() / f"{workflow_id}.events.jsonl"
+    workflow_uuid = payload.get("workflow_uuid") or payload.get("workflow_id")
+    if not workflow_uuid:
+        workflow_uuid = artifact_path.stem
+    event_log = workflows_dir() / f"{workflow_uuid}.events.jsonl"
     return event_log.exists()
 
 

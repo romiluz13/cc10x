@@ -11,20 +11,33 @@ FIXTURES_DIR = PLUGIN_ROOT / "tests" / "fixtures"
 
 REQUIRED_FIXTURES = (
     "plan-direct.json",
+    "plan-decision-rfc.json",
     "plan-full.json",
     "plan-clarification.json",
     "build-happy-path.json",
+    "build-checkpoint-decision.json",
+    "build-phase-blocked.json",
     "build-scope-gate.json",
     "build-remediation-loop.json",
     "debug-fixed.json",
     "debug-research.json",
+    "skill-precedence.json",
+    "workflow-identity-v10.json",
+    "memory-sync-blocking.json",
     "review-advisory.json",
     "verify-fail-closed.json",
 )
 
 REQUIRED_ARTIFACT_KEYS = (
+    "workflow_uuid",
     "workflow_id",
     "workflow_type",
+    "state_root",
+    "plan_mode",
+    "verification_rigor",
+    "proof_status",
+    "traceability",
+    "phase_cursor",
     "task_ids",
     "results",
     "intent",
@@ -67,6 +80,14 @@ def validate_artifact_shape(fixture: dict[str, Any]) -> None:
     artifact = fixture["starting_artifact"]
     missing = [key for key in REQUIRED_ARTIFACT_KEYS if key not in artifact]
     require(not missing, f"{fixture['id']}: artifact missing keys {missing}")
+    require(
+        artifact["workflow_uuid"] == artifact["workflow_id"],
+        f"{fixture['id']}: workflow_uuid and workflow_id must match in v10 fixtures",
+    )
+    require(
+        artifact["state_root"] == ".claude/cc10x/v10",
+        f"{fixture['id']}: state_root must point to v10 namespace",
+    )
 
 
 def validate_scenarios(
@@ -132,8 +153,22 @@ def validate_verifier_contract(
 
 def validate_builder_contract(fixture_id: str, contract: dict[str, Any]) -> None:
     require(contract["STATUS"] == "PASS", f"{fixture_id}: builder must pass")
+    require(
+        contract["PHASE_STATUS"] == "completed", f"{fixture_id}: phase must complete"
+    )
+    require(contract["PHASE_EXIT_READY"] is True, f"{fixture_id}: phase exit must pass")
+    require(
+        contract["CHECKPOINT_TYPE"] == "none",
+        f"{fixture_id}: checkpoint type must be none",
+    )
+    require(
+        contract["PROOF_STATUS"] == "passed", f"{fixture_id}: proof status must pass"
+    )
     require(contract["TDD_RED_EXIT"] == 1, f"{fixture_id}: missing RED evidence")
     require(contract["TDD_GREEN_EXIT"] == 0, f"{fixture_id}: missing GREEN evidence")
+    require(
+        not contract.get("BLOCKED_ITEMS"), f"{fixture_id}: blocked items must be empty"
+    )
     validate_scenarios(fixture_id, contract["SCENARIOS"], require_pass=True)
 
 
@@ -153,6 +188,10 @@ def validate_investigator_contract(
     require(
         contract["VARIANTS_COVERED"] >= 1,
         f"{fixture_id}: variant coverage must be at least 1",
+    )
+    require(
+        bool(contract.get("BLAST_RADIUS_SCAN")),
+        f"{fixture_id}: blast radius scan is required",
     )
     scenarios = contract["SCENARIOS"]
     validate_scenarios(fixture_id, scenarios, require_pass=True)
@@ -188,6 +227,39 @@ def check_plan_direct(fixture: dict[str, Any]) -> None:
         "plan-direct: wrong workflow type",
     )
     require(expected["pending_gate"] is None, "plan-direct: should not pause")
+    require(
+        fixture["starting_artifact"]["plan_mode"] == "direct",
+        "plan-direct: artifact should record direct mode",
+    )
+
+
+def check_plan_decision_rfc(fixture: dict[str, Any]) -> None:
+    planner = fixture["agent_outputs"]["planner_contract"]
+    require(
+        planner["STATUS"] == "DECISION_RFC_CREATED",
+        "plan-decision-rfc: planner should create decision RFC",
+    )
+    require(
+        planner["PLAN_MODE"] == "decision_rfc",
+        "plan-decision-rfc: plan mode must be decision_rfc",
+    )
+    require(
+        planner["VERIFICATION_RIGOR"] == "critical_path",
+        "plan-decision-rfc: verification rigor must be critical_path",
+    )
+    require(
+        len(planner["ALTERNATIVES"]) >= 2,
+        "plan-decision-rfc: expected at least two alternatives",
+    )
+    require(
+        bool(planner["DRAWBACKS"]),
+        "plan-decision-rfc: expected explicit drawbacks",
+    )
+    require(
+        bool(planner["PROVABLE_PROPERTIES"]),
+        "plan-decision-rfc: expected provable properties",
+    )
+    validate_scenarios("plan-decision-rfc", planner["SCENARIOS"], require_pass=False)
 
 
 def check_plan_full(fixture: dict[str, Any]) -> None:
@@ -196,7 +268,20 @@ def check_plan_full(fixture: dict[str, Any]) -> None:
         planner["STATUS"] == "PLAN_CREATED", "plan-full: planner should create plan"
     )
     require(planner["PLAN_FILE"], "plan-full: missing plan file")
+    require(
+        planner["PLAN_MODE"] == "execution_plan",
+        "plan-full: planner should use execution_plan mode",
+    )
+    require(
+        planner["VERIFICATION_RIGOR"] == "standard",
+        "plan-full: planner should use standard rigor",
+    )
     require(planner["GATE_PASSED"] is True, "plan-full: gate must pass")
+    require(planner["OPEN_DECISIONS"] == [], "plan-full: open decisions must be empty")
+    require(
+        "DIFFERENCES_FROM_AGREEMENT" in planner,
+        "plan-full: differences from agreement must be explicit",
+    )
     validate_scenarios("plan-full", planner["SCENARIOS"], require_pass=False)
     require(
         fixture["expected"]["artifact_delta"]["plan_file"] == planner["PLAN_FILE"],
@@ -235,6 +320,48 @@ def check_build_happy_path(fixture: dict[str, Any]) -> None:
         fixture["expected"]["artifact_delta"]["quality"]["convergence_state"]
         == "stable",
         "build-happy-path: wrong convergence state",
+    )
+    require(
+        fixture["expected"]["artifact_delta"]["phase_cursor"] == "phase-2",
+        "build-happy-path: phase cursor should advance after successful phase exit",
+    )
+
+
+def check_build_checkpoint_decision(fixture: dict[str, Any]) -> None:
+    builder = fixture["agent_outputs"]["builder_contract"]
+    require(
+        builder["CHECKPOINT_TYPE"] == "decision",
+        "build-checkpoint-decision: expected decision checkpoint",
+    )
+    require(
+        builder["PROOF_STATUS"] == "human_needed",
+        "build-checkpoint-decision: proof should require human decision",
+    )
+    require(
+        builder["STATUS"] == "FAIL",
+        "build-checkpoint-decision: builder must fail closed",
+    )
+    require(
+        fixture["expected"]["pending_gate"] == "checkpoint_decision",
+        "build-checkpoint-decision: pending gate should be checkpoint_decision",
+    )
+
+
+def check_build_phase_blocked(fixture: dict[str, Any]) -> None:
+    builder = fixture["agent_outputs"]["builder_contract"]
+    require(
+        builder["STATUS"] == "FAIL", "build-phase-blocked: builder must fail closed"
+    )
+    require(
+        builder["PHASE_STATUS"] == "blocked", "build-phase-blocked: phase must block"
+    )
+    require(
+        fixture["expected"]["next_action"] == "stop_for_blocked_phase",
+        "build-phase-blocked: wrong next action",
+    )
+    require(
+        fixture["expected"]["artifact_delta"]["pending_gate"] == "phase_blocked",
+        "build-phase-blocked: pending gate must record blocked phase",
     )
 
 
@@ -308,6 +435,43 @@ def check_review_advisory(fixture: dict[str, Any]) -> None:
     )
 
 
+def check_skill_precedence(fixture: dict[str, Any]) -> None:
+    expected = fixture["expected"]
+    require(
+        expected["next_action"] == "respect_user_standard",
+        "skill-precedence: wrong next action",
+    )
+    require(
+        expected["winner"] == "project_claude_md",
+        "skill-precedence: project standards must win",
+    )
+
+
+def check_workflow_identity_v10(fixture: dict[str, Any]) -> None:
+    artifact = fixture["starting_artifact"]
+    expected = fixture["expected"]
+    require(
+        artifact["workflow_uuid"].startswith("wf-20260312T"),
+        "workflow-identity-v10: expected time-ordered workflow uuid",
+    )
+    require(
+        expected["collides_with_previous_session"] is False,
+        "workflow-identity-v10: ids must not collide across sessions",
+    )
+
+
+def check_memory_sync_blocking(fixture: dict[str, Any]) -> None:
+    expected = fixture["expected"]
+    require(
+        expected["next_action"] == "stop_after_memory_sync",
+        "memory-sync-blocking: wrong next action",
+    )
+    require(
+        expected["artifact_delta"]["memory_sync"]["blocking_exit_persisted"] is True,
+        "memory-sync-blocking: blocking exit must persist memory sync",
+    )
+
+
 def check_verify_fail_closed(fixture: dict[str, Any]) -> None:
     validate_verifier_contract(
         "verify-fail-closed",
@@ -327,13 +491,19 @@ def check_verify_fail_closed(fixture: dict[str, Any]) -> None:
 
 CHECKS = {
     "plan-direct.json": check_plan_direct,
+    "plan-decision-rfc.json": check_plan_decision_rfc,
     "plan-full.json": check_plan_full,
     "plan-clarification.json": check_plan_clarification,
     "build-happy-path.json": check_build_happy_path,
+    "build-checkpoint-decision.json": check_build_checkpoint_decision,
+    "build-phase-blocked.json": check_build_phase_blocked,
     "build-scope-gate.json": check_build_scope_gate,
     "build-remediation-loop.json": check_build_remediation_loop,
     "debug-fixed.json": check_debug_fixed,
     "debug-research.json": check_debug_research,
+    "skill-precedence.json": check_skill_precedence,
+    "workflow-identity-v10.json": check_workflow_identity_v10,
+    "memory-sync-blocking.json": check_memory_sync_blocking,
     "review-advisory.json": check_review_advisory,
     "verify-fail-closed.json": check_verify_fail_closed,
 }

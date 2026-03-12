@@ -2,8 +2,15 @@
   "id": "build-happy-path",
   "workflow_type": "BUILD",
   "starting_artifact": {
-    "workflow_id": "wf-build-happy",
+    "workflow_uuid": "wf-20260312T161500Z-build-happy",
+    "workflow_id": "wf-20260312T161500Z-build-happy",
     "workflow_type": "BUILD",
+    "state_root": ".claude/cc10x/v10",
+    "plan_mode": "execution_plan",
+    "verification_rigor": "standard",
+    "proof_status": "gaps_found",
+    "traceability": {"requirements": [], "phases": [], "verification": [], "remediation": []},
+    "phase_cursor": "phase-1",
     "task_ids": {},
     "results": {},
     "intent": {"goal": "Build user profile page"},
@@ -16,8 +23,18 @@
   "agent_outputs": {
     "builder_contract": {
       "STATUS": "PASS",
+      "PHASE_ID": "phase-1",
+      "PHASE_STATUS": "completed",
+      "PHASE_EXIT_READY": true,
+      "CHECKPOINT_TYPE": "none",
+      "PROOF_STATUS": "passed",
+      "INPUTS": ["authenticated session"],
+      "EXPECTED_ARTIFACTS": ["profile page route", "profile tests"],
       "TDD_RED_EXIT": 1,
       "TDD_GREEN_EXIT": 0,
+      "BLOCKED_ITEMS": [],
+      "SKIPPED_ITEMS": [],
+      "SCOPE_INCREASES": [],
       "SCENARIOS": [
         {
           "name": "Profile page renders",
@@ -59,6 +76,7 @@
   "expected": {
     "next_action": "memory_finalize",
     "artifact_delta": {
+      "phase_cursor": "phase-2",
       "quality": {"convergence_state": "stable"}
     }
   }

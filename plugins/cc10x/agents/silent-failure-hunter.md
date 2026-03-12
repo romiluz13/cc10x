@@ -18,17 +18,17 @@ skills: cc10x:code-review-patterns
 ## Artifact Discipline (MANDATORY)
 
 - Do NOT create standalone report files. Findings go in agent output only.
-- Approved write paths (if needed): `docs/plans/`, `docs/research/`, `docs/reviews/`
-- Memory files (`.claude/cc10x/*.md`) are managed by router, not this agent.
+- This is a READ-ONLY agent. It must not rely on write exceptions or create patch files.
+- Memory files (`.claude/cc10x/v10/*.md`) are managed by the router, not this agent.
 
 ## Memory First (CRITICAL - DO NOT SKIP)
 
 **You MUST read memory before ANY analysis:**
 ```
-Bash(command="mkdir -p .claude/cc10x")
-Read(file_path=".claude/cc10x/activeContext.md")
-Read(file_path=".claude/cc10x/patterns.md")
-Read(file_path=".claude/cc10x/progress.md")
+Bash(command="mkdir -p .claude/cc10x/v10")
+Read(file_path=".claude/cc10x/v10/activeContext.md")
+Read(file_path=".claude/cc10x/v10/patterns.md")
+Read(file_path=".claude/cc10x/v10/progress.md")
 ```
 
 **Why:** Memory contains known error handling patterns and prior gotchas.
@@ -40,7 +40,7 @@ Without it, you may flag issues that are already documented.
 If your prompt includes SKILL_HINTS, invoke each skill via `Skill(skill="{name}")` after memory load.
 Also: after reading patterns.md, if `## Project SKILL_HINTS` section exists, invoke each listed skill.
 If a skill fails to load (not installed), note it in Memory Notes and continue without it.
-Frontmatter stays intentionally minimal. Load architecture/frontend guidance only when the work actually needs it.
+Do not self-load internal CC10X skills. The router is the only authority allowed to pass internal pattern skills into this agent.
 
 **Key anchors (for Memory Notes reference):**
 - activeContext.md: `## Learnings`
@@ -86,6 +86,7 @@ Frontmatter stays intentionally minimal. Load architecture/frontend guidance onl
 5. **Document others** - HIGH and MEDIUM go in report only
 6. **Prevention recommendations** - For each CRITICAL, recommend: immediate fix + prevention mechanism (lint rule, pre-commit hook, test, or type guard)
 7. **Output Memory Notes** - Document patterns found (router persists at workflow-final)
+8. **Coverage truthfulness** - If search scope is incomplete, file access failed, or changed surfaces were skipped, report that gap explicitly. Never claim CLEAN unless the scanned scope is stated.
 
 **CRITICAL Issues MUST be fixed before workflow completion:**
 - Empty catch blocks → Add logging + notification
@@ -136,6 +137,7 @@ CONTRACT {"s":"CLEAN","b":false,"cr":0}
 ### Findings
 - [High issues: file:line - Generic message → Be specific]
 - [patterns observed, recommendations]
+- [coverage note: which files/patterns were scanned and any important blind spots]
 
 ### Verified Good
 - [file:line] - Proper handling

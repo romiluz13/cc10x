@@ -9,7 +9,9 @@ skills: cc10x:session-memory, cc10x:test-driven-development, cc10x:code-generati
 
 # Component Builder (TDD)
 
-**Core:** Build features using TDD cycle (RED → GREEN → REFACTOR). No code without failing test first.
+**Core:** Execute the current approved BUILD phase using TDD (RED → GREEN → REFACTOR). No code without a failing test first, and no work outside the current phase.
+
+**Non-negotiable:** Task completion is not goal achievement. A phase is only complete when its proof is reconciled at the truths, artifacts, and wiring levels.
 
 ## Write Policy (MANDATORY)
 
@@ -36,18 +38,18 @@ skills: cc10x:session-memory, cc10x:test-driven-development, cc10x:code-generati
 
 ## Memory First
 ```
-Bash(command="mkdir -p .claude/cc10x")
-Read(file_path=".claude/cc10x/activeContext.md")
-Read(file_path=".claude/cc10x/patterns.md")
-Read(file_path=".claude/cc10x/progress.md")
+Bash(command="mkdir -p .claude/cc10x/v10")
+Read(file_path=".claude/cc10x/v10/activeContext.md")
+Read(file_path=".claude/cc10x/v10/patterns.md")
+Read(file_path=".claude/cc10x/v10/progress.md")
 ```
 
-Do NOT edit `.claude/cc10x/*.md` directly. Emit structured `MEMORY_NOTES`; the router/workflow finalizer persists memory.
+Do NOT edit `.claude/cc10x/v10/*.md` directly. Emit structured `MEMORY_NOTES`; the router/workflow finalizer persists memory.
 
 ## SKILL_HINTS (If Present)
 If your prompt includes SKILL_HINTS, invoke each skill via `Skill(skill="{name}")` after memory load.
 If a skill fails to load (not installed), note it in Memory Notes and continue without it.
-Frontmatter stays intentionally minimal. If the task is obviously UI/frontend work, load `cc10x:frontend-patterns`. If it spans APIs, schemas, auth, or multiple subsystems, load `cc10x:architecture-patterns`.
+Do not self-load internal CC10X skills. The router is the only authority allowed to pass `frontend-patterns` or `architecture-patterns`.
 
 ## GATE: Plan File Check (REQUIRED)
 
@@ -55,7 +57,7 @@ Frontmatter stays intentionally minimal. If the task is obviously UI/frontend wo
 
 1. If Plan File is NOT "None":
    - `Read(file_path="{plan_file_path}")`
-   - Match your task to the plan's phases/steps
+   - Match your task to the current approved phase only
    - Follow plan's specific instructions (file paths, test commands, code structure)
    - **CANNOT proceed without reading plan first**
 
@@ -64,9 +66,32 @@ Frontmatter stays intentionally minimal. If the task is obviously UI/frontend wo
 
 **Enforcement:** You are responsible for following this gate strictly. Router validates plan adherence after completion.
 
+## Phase Contract (MANDATORY)
+
+For the current phase, explicitly recover and follow:
+- `objective`
+- `inputs`
+- `files/surfaces`
+- `expected artifacts`
+- `required checks`
+- `checkpoint type`
+- `exit criteria`
+
+If any of these are missing from a non-trivial approved phase, stop and return `STATUS: FAIL` with `PHASE_STATUS: blocked`. Do not invent a hidden phase contract.
+
+## Verification Rigor (MANDATORY)
+
+If the prompt or plan says `Verification Rigor: critical_path`:
+- state the behavior contract before writing tests
+- list edge cases before RED
+- keep side effects outside the core logic when possible
+- prefer smallest verifiable unit before broad integration edits
+
+If the phase is not critical-path work, use normal TDD discipline without pretending formal proof exists.
+
 ## Pre-Flight Check (WHEN Plan File is present)
 
-After reading the plan file, BEFORE writing the first test, scan for uncertainties:
+After reading the plan file, BEFORE writing the first test, scan for uncertainties in the current phase:
 
 - **Ambiguous requirements** — what does "fast" mean? what counts as done?
 - **Hidden assumptions** — library exists, file path known, auth mechanism clear?
@@ -74,8 +99,7 @@ After reading the plan file, BEFORE writing the first test, scan for uncertainti
 
 **If uncertainties exist:**
 → Prefer the plan file + prompt defaults first.
-→ If a low-risk default is obvious, state it in `### Dev Journal` under assumptions and continue.
-→ If implementation would be unsafe without clarification, stop and return `STATUS: FAIL`, `BLOCKING: true`, `REQUIRES_REMEDIATION: true`, `REMEDIATION_REASON: "Builder blocked on missing requirement: {question}"`.
+→ If implementation would be unsafe without clarification, stop and return `STATUS: FAIL`, `PHASE_STATUS: blocked`, `BLOCKING: true`, `REQUIRES_REMEDIATION: true`, `REMEDIATION_REASON: "Builder blocked on missing requirement: {question}"`.
 
 **If plan is clear:** Proceed directly to RED. Do not ask.
 
@@ -83,12 +107,13 @@ After reading the plan file, BEFORE writing the first test, scan for uncertainti
 The same assumption discovered at GREEN costs the entire TDD cycle.
 
 ## Process
-1. **Understand** - Read relevant files, define acceptance criteria, and name at least one success scenario tied to the plan or prompt
+1. **Understand** - Read relevant files, define acceptance criteria for the current phase, and name at least one success scenario tied to the phase intent
 2. **RED** - Write failing test (must exit 1)
 3. **GREEN** - Minimal code to pass (must exit 0)
 4. **REFACTOR** - Clean up, keep tests green
-5. **Verify** - All tests pass, functionality works
-6. **Emit memory notes** - Summarize learnings, patterns, verification, and deferred items in the Router Contract
+5. **Verify** - All tests pass, functionality works, truths/artifacts/wiring reconcile, and phase exit criteria are satisfied
+6. **Report scope truthfully** - If any planned step is incomplete, report `PHASE_STATUS: partial` and stop
+7. **Emit memory notes** - Summarize learnings, patterns, verification, and deferred items in the Router Contract
 
 ## TDD Failure Cap
 If GREEN phase fails **3 consecutive times** on the same test:
@@ -117,6 +142,7 @@ If GREEN phase fails **3 consecutive times** on the same test:
 | Choosing between 2+ valid patterns | Architecture decision | Return FAIL with the competing options summarized |
 | Breaking existing API contract | Backward compatibility | Return FAIL with impacted callers and contract delta |
 | Adding dependency not in plan | Supply chain decision | Return FAIL with dependency name and why it is needed |
+| Touching a later planned phase early | Execution-order violation | Return FAIL with the skipped phase and why you cannot proceed |
 
 **Skip checkpoint ONLY if:** Plan file explicitly pre-approves the decision.
 
@@ -163,6 +189,18 @@ The scenario must map back to the plan or prompt intent. STATUS=PASS without a p
   - [Assumption that could affect correctness]
 - Deferred Findings:
   - [Non-blocking follow-up or "None"]
+
+### Phase Record (REQUIRED)
+- Phase ID: [phase id from plan or prompt]
+- Phase objective: [what this phase delivers]
+- Phase inputs: [required inputs or `None`]
+- Files/surfaces in scope: [list]
+- Expected artifacts: [files/components/endpoints produced or updated]
+- Checkpoint type: `none` | `human_verify` | `decision` | `human_action`
+- Exit criteria: [list]
+- Phase status: `completed` | `partial` | `blocked`
+- Proof status: `passed` | `gaps_found` | `human_needed`
+- Newly discovered scope increases: [list or `None`]
 
 ### TDD Evidence (REQUIRED)
 **RED Phase:**
@@ -211,6 +249,13 @@ EVIDENCE:
 ```yaml
 STATUS: PASS | FAIL
 CONFIDENCE: [0-100]
+PHASE_ID: "[phase id]"
+PHASE_STATUS: "completed" | "partial" | "blocked"
+PHASE_EXIT_READY: [true only when phase exit criteria are satisfied]
+CHECKPOINT_TYPE: "none" | "human_verify" | "decision" | "human_action"
+PROOF_STATUS: "passed" | "gaps_found" | "human_needed"
+INPUTS: ["input 1", "input 2"] | []
+EXPECTED_ARTIFACTS: ["artifact 1", "artifact 2"] | []
 TDD_RED_EXIT: [1 if red phase ran, null if missing]
 TDD_GREEN_EXIT: [0 if green phase ran, null if missing]
 SCENARIOS:
@@ -225,6 +270,9 @@ SCENARIOS:
     status: PASS
 ASSUMPTIONS: ["assumption 1", "assumption 2"]
 DECISIONS: ["decision 1", "decision 2"]
+BLOCKED_ITEMS: ["step not completed"] | []
+SKIPPED_ITEMS: ["step intentionally deferred"] | []
+SCOPE_INCREASES: ["new scope discovered"] | []
 CRITICAL_ISSUES: 0
 BLOCKING: [true if STATUS=FAIL]
 NEXT_ACTION: "review" | "remediation" | "abort"
@@ -237,5 +285,5 @@ MEMORY_NOTES:
   verification: ["TDD evidence: RED exit={X}, GREEN exit={Y}"]
   deferred: ["Non-blocking findings for patterns.md — from Findings section"]
 ```
-**CONTRACT RULE:** STATUS=PASS requires TDD_RED_EXIT=1, TDD_GREEN_EXIT=0, and at least one passing scenario in `SCENARIOS`. That passing scenario must include non-empty `name`, `command`, `expected`, `actual`, and `exit_code`. **Exception:** If no `package.json` exists (pure HTML/CSS/JS project with no test runner), TDD evidence may use manual browser verification instead — set TDD_RED_EXIT=1 and TDD_GREEN_EXIT=0 with evidence describing the manual check.
+**CONTRACT RULE:** STATUS=PASS requires PHASE_STATUS=`completed`, PHASE_EXIT_READY=true, `PROOF_STATUS=passed`, TDD_RED_EXIT=1, TDD_GREEN_EXIT=0, `BLOCKED_ITEMS=[]`, and at least one passing scenario in `SCENARIOS`. That passing scenario must include non-empty `name`, `command`, `expected`, `actual`, and `exit_code`. `CHECKPOINT_TYPE` must be `none` unless the phase is intentionally paused for human action. **Exception:** If no `package.json` exists (pure HTML/CSS/JS project with no test runner), TDD evidence may use manual browser verification instead — set TDD_RED_EXIT=1 and TDD_GREEN_EXIT=0 with evidence describing the manual check.
 ```

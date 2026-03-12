@@ -1,5 +1,40 @@
 # Changelog
 
+## [10.1.0] - 2026-03-13
+
+### Competition-grade planning, proof-oriented execution, and prompt/harness hardening
+
+#### Changed
+- Upgraded CC10X from the trust-first v10 recovery baseline to a competition-grade contract: router-owned `plan_mode`, `verification_rigor`, stricter checkpoint/proof fields, and stronger traceability between requirements, phases, verification, and remediation.
+- Rewrote the core prompt stack around sharper contracts: decision-grade planning, adversarial plan gates, proof-oriented BUILD, blast-radius debugging, harsher verification, and clearer reviewer independence.
+- Tightened internal skill posture so orchestration contracts remain authoritative while pattern skills stay advisory and support explicit user/project precedence.
+- Hardened state/memory instructions and hook helpers around the versioned v10 namespace and stable workflow UUID model.
+
+#### Added
+- Competition benchmark scripts for reference scoring and head-to-head audit support: `cc10x_reference_benchmark.py` and `cc10x_worldclass_benchmark.py`.
+- Additional replay fixtures covering `decision_rfc`, phase-blocked BUILD, decision checkpoints, workflow identity, skill precedence, and blocking-exit memory sync.
+- Strategy and benchmark notes capturing the first-place release line and the prompt-engineering comparison for the highest-leverage instruction surfaces.
+
+#### Fixed
+- Release hygiene now excludes local reference clones and Python cache directories from accidental publication while allowing the selected benchmark strategy/docs required by the release audit.
+- README, marketplace metadata, plugin manifest, and changelog are aligned on `10.1.0`.
+
+## [10.0.0] - 2026-03-12
+
+### Trust-first recovery release
+
+#### Changed
+- Reframed CC10X around a trust-first v10 contract: agreement-first planning, sequential phase-gated BUILD, fail-stop progression, explicit instruction precedence, stable workflow UUIDs, and fail-closed memory persistence.
+- Moved durable workflow state and hook logging to the versioned namespace `.claude/cc10x/v10/`.
+- Upgraded router, planner, component-builder, and bug-investigator contracts to require explicit phase/open-decision/blast-radius reporting instead of relying on implied success.
+- Recast `frontend-patterns`, `debugging-patterns`, and `architecture-patterns` as advisory layers that cannot outrank explicit user or project standards.
+
+#### Added
+- Replay fixtures for phase-blocked BUILD, skill precedence, v10 workflow identity, and blocking-exit memory sync.
+
+#### Fixed
+- Hook guards and session context now resolve the latest workflow from the v10 namespace and prefer stable workflow UUIDs over session-local task ids.
+
 ## [9.1.1] - 2026-03-07
 
 ### MCP startup warning fix

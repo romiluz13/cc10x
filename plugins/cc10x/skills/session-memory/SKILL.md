@@ -26,16 +26,16 @@ CC10x memory is a **small, stable, permission-free Markdown database** used for:
 
 ### Memory Surfaces (Types)
 
-1. **Index / Working Memory**: `.claude/cc10x/activeContext.md`
+1. **Index / Working Memory**: `.claude/cc10x/v10/activeContext.md`
    - “What matters right now”: focus, next steps, active decisions, learnings
    - Links to durable artifacts (plans/research)
-2. **Long-Term Project Memory**: `.claude/cc10x/patterns.md`
+2. **Long-Term Project Memory**: `.claude/cc10x/v10/patterns.md`
    - Conventions, architecture decisions, common gotchas, reusable solutions
-3. **Progress + Evidence Memory**: `.claude/cc10x/progress.md`
+3. **Progress + Evidence Memory**: `.claude/cc10x/v10/progress.md`
    - What’s done/remaining + verification evidence (commands + exit codes)
 4. **Artifact Memory (Durable)**: `docs/plans/*`, `docs/research/*`
    - The details. Memory files are the index.
-5. **Workflow Artifacts (Durable Execution State)**: `.claude/cc10x/workflows/{wf}.json`
+5. **Workflow Artifacts (Durable Execution State)**: `.claude/cc10x/v10/workflows/{wf}.json`
    - Canonical workflow state: task ids, phase status, structured agent results, pending gates
    - Used for resume, verifier handoff, and memory finalization
 6. **Tasks (Execution State)**: Claude Code Tasks
@@ -72,8 +72,8 @@ Information “graduates” to more durable layers:
 
 | Operation | Tool | Permission |
 |-----------|------|------------|
-| Create memory directory | `Bash(command="mkdir -p .claude/cc10x")` | FREE |
-| **Read memory files** | `Read(file_path=".claude/cc10x/activeContext.md")` | **FREE** |
+| Create memory directory | `Bash(command="mkdir -p .claude/cc10x/v10")` | FREE |
+| **Read memory files** | `Read(file_path=".claude/cc10x/v10/activeContext.md")` | **FREE** |
 | **Create NEW memory file** | `Write(file_path="...", content="...")` | **FREE** (file doesn't exist) |
 | **Update EXISTING memory** | `Edit(file_path="...", old_string="...", new_string="...")` | **FREE** |
 | Save plan/design files | `Write(file_path="docs/plans/...", content="...")` | FREE |
@@ -95,11 +95,11 @@ Information “graduates” to more durable layers:
 
 ```
 # WRONG (asks permission - compound Bash command)
-mkdir -p .claude/cc10x && cat .claude/cc10x/activeContext.md
+mkdir -p .claude/cc10x/v10 && cat .claude/cc10x/v10/activeContext.md
 
 # RIGHT (permission-free - separate tools)
-Bash(command="mkdir -p .claude/cc10x")
-Read(file_path=".claude/cc10x/activeContext.md")
+Bash(command="mkdir -p .claude/cc10x/v10")
+Read(file_path=".claude/cc10x/v10/activeContext.md")
 ```
 
 **NEVER use heredoc writes** (`cat > file << 'EOF'`) - they ASK PERMISSION.
@@ -107,15 +107,15 @@ Read(file_path=".claude/cc10x/activeContext.md")
 
 ```
 # WRONG (asks permission - heredoc)
-cat > .claude/cc10x/activeContext.md << 'EOF'
+cat > .claude/cc10x/v10/activeContext.md << 'EOF'
 content here
 EOF
 
 # RIGHT for NEW files (permission-free)
-Write(file_path=".claude/cc10x/activeContext.md", content="content here")
+Write(file_path=".claude/cc10x/v10/activeContext.md", content="content here")
 
 # RIGHT for EXISTING files (permission-free)
-Edit(file_path=".claude/cc10x/activeContext.md",
+Edit(file_path=".claude/cc10x/v10/activeContext.md",
      old_string="# Active Context",
      new_string="# Active Context\n\n[new content]")
 ```
@@ -151,7 +151,7 @@ Without memory persistence:
 - **READ-ONLY agents** (code-reviewer, silent-failure-hunter, integration-verifier): read memory files directly at task start via their own Memory First section. They do NOT have Edit tool — they output `### Memory Notes` for the router to persist.
 
 ### Write
-- **Router/workflow finalizer:** the ONLY writer of `.claude/cc10x/{activeContext,patterns,progress}.md`.
+- **Router/workflow finalizer:** the ONLY writer of `.claude/cc10x/v10/{activeContext,patterns,progress}.md`.
 - **WRITE agents:** do NOT edit memory markdown files directly. Emit structured `MEMORY_NOTES` in the final Router Contract.
 - **READ-ONLY agents:** output `### Memory Notes (For Workflow-Final Persistence)` section. Router persists them into the workflow artifact immediately; Memory Update writes the markdown files at workflow finalization.
 - **Router-owned cleanup:** when Memory Update finishes, remove the matching `[cc10x-internal] memory_task_id` line for that workflow from `activeContext.md ## References`. Do not leave stale task IDs behind.
@@ -172,10 +172,10 @@ BUILD runs `code-reviewer ∥ silent-failure-hunter` in parallel. To avoid confl
 
 **Checkpoint Pattern:**
 ```
-Edit(file_path=".claude/cc10x/activeContext.md",
+Edit(file_path=".claude/cc10x/v10/activeContext.md",
      old_string="## Current Focus",
      new_string="## Current Focus\n\n[Updated focus + key decisions]")
-Read(file_path=".claude/cc10x/activeContext.md")  # Verify
+Read(file_path=".claude/cc10x/v10/activeContext.md")  # Verify
 ```
 
 **Rule:** When in doubt, update memory NOW. Better duplicate entries than lost context.
@@ -344,7 +344,7 @@ Every memory edit MUST follow this exact sequence:
 
 ### Step 1: READ
 ```
-Read(file_path=".claude/cc10x/activeContext.md")
+Read(file_path=".claude/cc10x/v10/activeContext.md")
 ```
 
 ### Step 2: VERIFY ANCHOR
@@ -355,14 +355,14 @@ Read(file_path=".claude/cc10x/activeContext.md")
 
 ### Step 3: EDIT
 ```
-Edit(file_path=".claude/cc10x/activeContext.md",
+Edit(file_path=".claude/cc10x/v10/activeContext.md",
      old_string="## Recent Changes",
      new_string="## Recent Changes\n- [New entry]\n")
 ```
 
 ### Step 4: VERIFY
 ```
-Read(file_path=".claude/cc10x/activeContext.md")
+Read(file_path=".claude/cc10x/v10/activeContext.md")
 # Confirm your change appears. If not → STOP and retry.
 ```
 
@@ -450,12 +450,12 @@ Prior research on topic      → activeContext.md (References) → docs/research
 
 ```
 # Step 1: Create directory (single Bash command - permission-free)
-Bash(command="mkdir -p .claude/cc10x")
+Bash(command="mkdir -p .claude/cc10x/v10")
 
 # Step 2: Load ALL 3 memory files using Read tool (permission-free)
-Read(file_path=".claude/cc10x/activeContext.md")
-Read(file_path=".claude/cc10x/patterns.md")
-Read(file_path=".claude/cc10x/progress.md")
+Read(file_path=".claude/cc10x/v10/activeContext.md")
+Read(file_path=".claude/cc10x/v10/patterns.md")
+Read(file_path=".claude/cc10x/v10/progress.md")
 
 # Step 3: Git Context - Understand project state (RECOMMENDED)
 Bash(command="git status")                 # Current working state
@@ -466,7 +466,7 @@ Bash(command="git log --oneline -10")      # Recent commits
 **NEVER use this (asks permission):**
 ```bash
 # WRONG - compound command asks permission
-mkdir -p .claude/cc10x && cat .claude/cc10x/activeContext.md
+mkdir -p .claude/cc10x/v10 && cat .claude/cc10x/v10/activeContext.md
 ```
 
 **If file doesn't exist:** Read tool returns an error - that's fine, means starting fresh.
@@ -477,29 +477,29 @@ mkdir -p .claude/cc10x && cat .claude/cc10x/activeContext.md
 
 ```
 # First, read existing content
-Read(file_path=".claude/cc10x/activeContext.md")
+Read(file_path=".claude/cc10x/v10/activeContext.md")
 
 # Prefer small, targeted edits. Avoid rewriting whole files.
 
 # Example A: Add a bullet to Recent Changes (prepend)
-Edit(file_path=".claude/cc10x/activeContext.md",
+Edit(file_path=".claude/cc10x/v10/activeContext.md",
      old_string="## Recent Changes",
      new_string="## Recent Changes\n- [YYYY-MM-DD] [What changed] - [file:line]\n")
 
 # Example B: Add a decision (stable anchor)
-Edit(file_path=".claude/cc10x/activeContext.md",
+Edit(file_path=".claude/cc10x/v10/activeContext.md",
      old_string="## Decisions",
      new_string="## Decisions\n- [Decision]: [Choice] - [Why]")
 
 # Example C: Add verification evidence to progress.md (stable anchor)
-Read(file_path=".claude/cc10x/progress.md")
-Edit(file_path=".claude/cc10x/progress.md",
+Read(file_path=".claude/cc10x/v10/progress.md")
+Edit(file_path=".claude/cc10x/v10/progress.md",
      old_string="## Verification",
      new_string="## Verification\n- `[cmd]` → exit 0 (X/X)")
 
 # VERIFY (do not skip)
-Read(file_path=".claude/cc10x/activeContext.md")
-Read(file_path=".claude/cc10x/progress.md")
+Read(file_path=".claude/cc10x/v10/activeContext.md")
+Read(file_path=".claude/cc10x/v10/progress.md")
 ```
 
 **WHY Edit not Write?** Write asks "Do you want to overwrite?" for existing files. Edit is always permission-free.
@@ -510,10 +510,10 @@ Read(file_path=".claude/cc10x/progress.md")
 
 ```
 # Read existing content
-Read(file_path=".claude/cc10x/patterns.md")
+Read(file_path=".claude/cc10x/v10/patterns.md")
 
 # Append under an existing section header (preferred: stable anchor)
-Edit(file_path=".claude/cc10x/patterns.md",
+Edit(file_path=".claude/cc10x/v10/patterns.md",
      old_string="## Common Gotchas",
      new_string="## Common Gotchas\n- [Gotcha]: [Solution / how to avoid]\n")
 ```
@@ -522,15 +522,15 @@ Edit(file_path=".claude/cc10x/patterns.md",
 
 ```
 # Read progress.md, then record completion with evidence
-Read(file_path=".claude/cc10x/progress.md")
+Read(file_path=".claude/cc10x/v10/progress.md")
 
 # Option A (preferred): append a completed line under "## Completed"
-Edit(file_path=".claude/cc10x/progress.md",
+Edit(file_path=".claude/cc10x/v10/progress.md",
      old_string="## Completed",
      new_string="## Completed\n- [x] [What was completed] - [evidence: command → exit 0]\n")
 
 # Option B: flip an existing checkbox if one exists (more brittle)
-Edit(file_path=".claude/cc10x/progress.md",
+Edit(file_path=".claude/cc10x/v10/progress.md",
      old_string="- [ ] [Task being completed]",
      new_string="- [x] [Task being completed] - [verification evidence]")
 ```
@@ -545,7 +545,7 @@ Edit(file_path=".claude/cc10x/progress.md",
 
 If an agent cannot safely update memory (e.g., no `Edit` tool available):
 - Include "memory-worthy" notes in the agent output (decisions, learnings, verification evidence).
-- The main assistant (router) must persist those notes into `.claude/cc10x/*.md` using `Edit(...)` + Read-back verification.
+- The main assistant (router) must persist those notes into `.claude/cc10x/v10/*.md` using `Edit(...)` + Read-back verification.
 
 **Failure to update memory = incomplete work.**
 

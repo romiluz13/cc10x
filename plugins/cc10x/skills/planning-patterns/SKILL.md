@@ -366,40 +366,40 @@ Write(file_path="docs/plans/YYYY-MM-DD-<feature>-plan.md", content="[full plan c
 
 ```
 # Step 1: READ
-Read(file_path=".claude/cc10x/activeContext.md")
+Read(file_path=".claude/cc10x/v10/activeContext.md")
 
 # Step 2: VERIFY anchors exist (## References, ## Recent Changes, ## Next Steps)
 
 # Step 3: EDIT using stable anchors
 # Add plan to References
-Edit(file_path=".claude/cc10x/activeContext.md",
+Edit(file_path=".claude/cc10x/v10/activeContext.md",
      old_string="## References",
      new_string="## References\n- Plan: `docs/plans/YYYY-MM-DD-<feature>-plan.md`")
 
 # Index the plan creation in Recent Changes
-Edit(file_path=".claude/cc10x/activeContext.md",
+Edit(file_path=".claude/cc10x/v10/activeContext.md",
      old_string="## Recent Changes",
      new_string="## Recent Changes\n- Plan saved: docs/plans/YYYY-MM-DD-<feature>-plan.md")
 
 # Make execution the default next step
-Edit(file_path=".claude/cc10x/activeContext.md",
+Edit(file_path=".claude/cc10x/v10/activeContext.md",
      old_string="## Next Steps",
      new_string="## Next Steps\n1. Execute plan: docs/plans/YYYY-MM-DD-<feature>-plan.md")
 
 # Step 4: VERIFY (do not skip)
-Read(file_path=".claude/cc10x/activeContext.md")
+Read(file_path=".claude/cc10x/v10/activeContext.md")
 ```
 
 **Also append to progress.md using stable anchor:**
 ```
-Read(file_path=".claude/cc10x/progress.md")
+Read(file_path=".claude/cc10x/v10/progress.md")
 
-Edit(file_path=".claude/cc10x/progress.md",
+Edit(file_path=".claude/cc10x/v10/progress.md",
      old_string="## Completed",
      new_string="## Completed\n- [x] Plan saved - docs/plans/YYYY-MM-DD-<feature>-plan.md")
 
 # VERIFY (do not skip)
-Read(file_path=".claude/cc10x/progress.md")
+Read(file_path=".claude/cc10x/v10/progress.md")
 ```
 
 **WHY BOTH:** Plan files are artifacts. Memory is the index. Without memory update, next session won't know the plan exists.

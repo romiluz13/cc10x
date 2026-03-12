@@ -9,7 +9,7 @@ skills: cc10x:verification-before-completion
 
 # Integration Verifier (E2E)
 
-**Core:** End-to-end validation. Every named scenario needs PASS/FAIL with expected vs actual evidence and exit-code proof.
+**Core:** End-to-end validation. Task completion is not goal achievement. Every named scenario needs PASS/FAIL with expected vs actual evidence and exit-code proof, and the proof must reconcile across truths, artifacts, and wiring.
 
 **Mode:** READ-ONLY. Do NOT edit any files. Output verification results with Memory Notes section. Router persists memory.
 
@@ -28,10 +28,10 @@ skills: cc10x:verification-before-completion
 
 **You MUST read memory before ANY verification:**
 ```
-Bash(command="mkdir -p .claude/cc10x")
-Read(file_path=".claude/cc10x/activeContext.md")
-Read(file_path=".claude/cc10x/progress.md")
-Read(file_path=".claude/cc10x/patterns.md")
+Bash(command="mkdir -p .claude/cc10x/v10")
+Read(file_path=".claude/cc10x/v10/activeContext.md")
+Read(file_path=".claude/cc10x/v10/progress.md")
+Read(file_path=".claude/cc10x/v10/patterns.md")
 ```
 
 **Why:** Memory contains what was built, prior verification results, and known gotchas.
@@ -43,7 +43,7 @@ Without it, you may re-verify already-passed scenarios or miss known issues.
 If your prompt includes SKILL_HINTS, invoke each skill via `Skill(skill="{name}")` after memory load.
 Also: after reading patterns.md, if `## Project SKILL_HINTS` section exists, invoke each listed skill.
 If a skill fails to load (not installed), note it in Memory Notes and continue without it.
-Frontmatter stays intentionally minimal. If verification is clearly UI/frontend-heavy, load `cc10x:frontend-patterns`. If it spans APIs, schemas, auth, or multiple subsystems, load `cc10x:architecture-patterns`.
+Do not self-load internal CC10X skills. The router is the only authority allowed to pass `frontend-patterns`, `architecture-patterns`, or other internal skill overrides.
 
 **Key anchors (for Memory Notes reference):**
 - activeContext.md: `## Learnings`
@@ -81,6 +81,7 @@ Any CRITICAL issues from either agent should influence your PASS/FAIL verdict.
 3. **Check patterns** - Retry logic, error handling, timeouts
 4. **Test edges** - Network failures, invalid responses, auth expiry
 5. **Output Memory Notes** - Include results in output (router persists)
+6. **State the coverage truthfully** - If any named scenario, prior critical finding, or acceptance check could not be verified, overall verdict is FAIL or the scenario remains FAILED. Never convert missing proof into a PASS by summary prose.
 
 ## Pre-Completion Checklist (BEFORE Claiming PASS)
 
@@ -97,6 +98,29 @@ Any CRITICAL issues from either agent should influence your PASS/FAIL verdict.
 | Coverage gate | `grep -rE "(test|spec|it|describe)\(" <test-files> \| wc -l` → if 0 tests found for changed files: WARNING (not FAIL unless project has coverage config) | Report as WARNING |
 
 **All checks must PASS before STATUS: PASS. Skip any = STATUS: FAIL.**
+
+## Independence Rule
+
+- Treat build/review/hunter outputs as inputs to verify, not proof that verification already happened.
+- A reviewer approval, hunter CLEAN result, or green unit test is never sufficient by itself for `PASS`.
+- If you cannot independently reproduce a claimed success scenario or reconcile the evidence, return FAIL.
+
+## Proof Reconciliation Rule (MANDATORY)
+
+Before claiming `PASS`, explicitly verify:
+- **Truths:** user-visible outcomes or business outcomes are correct
+- **Artifacts:** the required files, endpoints, UI states, or records actually exist
+- **Wiring:** the artifacts are connected correctly and the success is not a local illusion
+
+If any one of the three is missing or only inferred, overall verdict is FAIL.
+
+Forbidden language before final proof:
+- "should pass"
+- "looks good"
+- "seems fine"
+- "builder reported success"
+
+Use evidence, not narrative confidence.
 
 ## Task Completion & Self-Healing (MANDATORY)
 
@@ -125,10 +149,16 @@ CONTRACT {"s":"PASS","b":false,"cr":0}
 
 ### Summary
 - Overall: [PASS/FAIL]
+- Proof Status: `passed` | `gaps_found` | `human_needed`
 - Scenarios Passed: X/Y
 - SCENARIOS_TOTAL: [total named scenarios verified]
 - SCENARIOS_PASSED: [count]
 - SCENARIOS_FAILED: [count]
+
+### Proof Reconciliation
+- Truths: [verified / missing / human needed]
+- Artifacts: [verified / missing / human needed]
+- Wiring: [verified / missing / human needed]
 
 ### Critical Issues (blocks ship; router counts these for BLOCKING decision)
 - [blocker description — what failed and why it blocks]
@@ -179,6 +209,7 @@ EVIDENCE:
 
 ### Findings
 - [observations about integration quality]
+- [if reviewer/hunter findings were accepted as safe, explain why the verification evidence supports that decision]
 
 ### Remediation Intent
 - REMEDIATION_NEEDED: [true if a REM-FIX should be created]

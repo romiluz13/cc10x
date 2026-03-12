@@ -2,8 +2,15 @@
   "id": "build-remediation-loop",
   "workflow_type": "BUILD",
   "starting_artifact": {
-    "workflow_id": "wf-build-remfix",
+    "workflow_uuid": "wf-20260312T161600Z-build-remfix",
+    "workflow_id": "wf-20260312T161600Z-build-remfix",
     "workflow_type": "BUILD",
+    "state_root": ".claude/cc10x/v10",
+    "plan_mode": "execution_plan",
+    "verification_rigor": "standard",
+    "proof_status": "gaps_found",
+    "traceability": {"requirements": [], "phases": [], "verification": [], "remediation": []},
+    "phase_cursor": "phase-2",
     "task_ids": {},
     "results": {},
     "intent": {"goal": "Build team settings page"},
@@ -14,7 +21,7 @@
   },
   "relevant_tasks": {
     "completed_remfix": {
-      "wf": "wf-build-remfix",
+      "wf": "wf-20260312T161600Z-build-remfix",
       "kind": "remfix",
       "origin": "code-reviewer",
       "phase": "build-review",

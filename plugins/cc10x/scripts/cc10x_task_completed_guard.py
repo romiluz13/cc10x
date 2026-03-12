@@ -4,7 +4,15 @@ import sys
 from cc10x_hooklib import load_input, load_mode, log_event, parse_metadata
 
 
-REQUIRED_METADATA = ("wf:", "kind:", "origin:", "phase:", "plan:", "scope:", "reason:")
+REQUIRED_METADATA = (
+    "wf:",
+    "kind:",
+    "origin:",
+    "phase:",
+    "plan:",
+    "scope:",
+    "reason:",
+)
 
 
 def main() -> int:

@@ -390,28 +390,28 @@ Write(file_path="{PROJECT_DIR}/docs/plans/YYYY-MM-DD-<feature>-design.md", conte
 
 ```
 # Step 1: READ
-Read(file_path=".claude/cc10x/activeContext.md")
+Read(file_path=".claude/cc10x/v10/activeContext.md")
 
 # Step 2: VERIFY anchors exist (## References, ## Recent Changes, ## Next Steps)
 
 # Step 3: EDIT using stable anchors
 # Add design to References
-Edit(file_path=".claude/cc10x/activeContext.md",
+Edit(file_path=".claude/cc10x/v10/activeContext.md",
      old_string="## References",
      new_string="## References\n- Design: `{PROJECT_DIR}/docs/plans/YYYY-MM-DD-<feature>-design.md`")
 
 # Index the design creation in Recent Changes
-Edit(file_path=".claude/cc10x/activeContext.md",
+Edit(file_path=".claude/cc10x/v10/activeContext.md",
      old_string="## Recent Changes",
      new_string="## Recent Changes\n- Design saved: docs/plans/YYYY-MM-DD-<feature>-design.md")
 
 # Make the next step explicit
-Edit(file_path=".claude/cc10x/activeContext.md",
+Edit(file_path=".claude/cc10x/v10/activeContext.md",
      old_string="## Next Steps",
      new_string="## Next Steps\n1. [BRAINSTORM-DONE] Planner agent pending — design at docs/plans/YYYY-MM-DD-<feature>-design.md")
 
 # Step 4: VERIFY (do not skip)
-Read(file_path=".claude/cc10x/activeContext.md")
+Read(file_path=".claude/cc10x/v10/activeContext.md")
 ```
 
 **WHY BOTH:** Design files are artifacts. Memory is the index. Without memory update, next session won't know the design exists.

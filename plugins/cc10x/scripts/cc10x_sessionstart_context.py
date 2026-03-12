@@ -22,17 +22,19 @@ def main() -> int:
         if status not in {"completed", "skipped"}
     ]
     overall_quality = (payload.get("research_quality") or {}).get("overall", "none")
+    workflow_uuid = payload.get("workflow_uuid") or payload.get("workflow_id")
     message = (
-        f"CC10X plugin workflow context ({source}): "
-        f"wf={payload.get('workflow_id')} type={payload.get('workflow_type')} "
+        f"CC10X v10 workflow context ({source}): "
+        f"wf={workflow_uuid} type={payload.get('workflow_type')} "
         f"plan={payload.get('plan_file') or 'N/A'} design={payload.get('design_file') or 'N/A'} "
+        f"phase_cursor={payload.get('phase_cursor') or 'none'} "
         f"research_quality={overall_quality} pending_gate={pending} "
         f"incomplete_phases={', '.join(incomplete) if incomplete else 'none'}."
     )
     log_event(
         "plugin_sessionstart_context",
         {
-            "wf": payload.get("workflow_id"),
+            "wf": workflow_uuid,
             "phase": ",".join(incomplete) if incomplete else "none",
             "task_id": None,
             "agent": "router",

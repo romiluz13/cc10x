@@ -1,6 +1,6 @@
 # CC10x Router Behavioral Invariant Registry
 
-> **Status note:** Current product line is `v9.1.1`. This registry is fully aligned to the live router structure in `plugins/cc10x/skills/cc10x-router/SKILL.md` as of 2026-03-07.
+> **Status note:** Current product line is `v10.0.0`. This registry is aligned to the live router structure in `plugins/cc10x/skills/cc10x-router/SKILL.md` as of 2026-03-12.
 
 ## Purpose
 
@@ -10,25 +10,51 @@ If a router section changes, the matching invariant must be updated in the same 
 ## Audit Snapshot
 
 Validated against the live plugin surface:
-- workflow artifacts under `.claude/cc10x/workflows/{wf}.json`
-- workflow event logs under `.claude/cc10x/workflows/{wf}.events.jsonl`
+- workflow artifacts under `.claude/cc10x/v10/workflows/{wf}.json`
+- workflow event logs under `.claude/cc10x/v10/workflows/{wf}.events.jsonl`
 - plugin hooks in `plugins/cc10x/hooks/hooks.json`
 - router-owned remediation creation
 - fail-closed scenario evidence rules for BUILD / DEBUG / VERIFY
 - memory finalization and transient `memory_task_id`
+- v10-only agent memory reads under `.claude/cc10x/v10/*.md`
+- verifier independence from builder/reviewer/hunter verdicts
 
 ## Current Invariants
 
+### INV-021: Router owns plan mode selection semantics
+**Covers:** Router `## 5. Workflow Preparation`, planner contract, replay fixtures
+**Enforces:** Every planning artifact declares exactly one `plan_mode` and the router treats `direct`, `execution_plan`, and `decision_rfc` as different safety levels.
+**If removed:** Architecture work can regress into weak direct plans and broad work can bypass the stronger decision-grade contract.
+**Safe to remove:** Never.
+
+### INV-022: Spec gate is a blocking trust boundary
+**Covers:** Router `## 5. Workflow Preparation`, `plan-review-gate`, `## 8. Post-Agent Validation`
+**Enforces:** Planner artifacts must survive feasibility, completeness, and alignment review before BUILD may start.
+**If removed:** Planner defaults and hidden assumptions can leak straight into execution again.
+**Safe to remove:** Never.
+
+### INV-023: Proof status gates phase completion
+**Covers:** Router `## 5. Workflow Preparation`, `## 8. Post-Agent Validation`, BUILD/VERIFY prompts
+**Enforces:** `proof_status` remains `gaps_found` until truths, artifacts, and wiring are reconciled; BUILD does not advance on narrative confidence alone.
+**If removed:** CC10X can report completed work that never proved the actual user outcome.
+**Safe to remove:** Never.
+
+### INV-024: Traceability is durable across planning, execution, and remediation
+**Covers:** Router artifact schema, replay fixtures, memory finalization
+**Enforces:** Requirements, phases, verification, and remediation keep an explicit link chain in the workflow artifact.
+**If removed:** The system becomes harder to audit, harder to resume safely, and easier to bluff with prose.
+**Safe to remove:** Never.
+
 ### INV-001: Workflow artifact creation is immediate and durable
 **Covers:** Router `## 2a. Workflow Artifact And Hook Policy`, `## 6. Workflow Task Graphs`
-**Enforces:** Every workflow gets a JSON artifact and append-only event log as soon as the parent workflow task id is known.
+**Enforces:** Every workflow gets a JSON artifact and append-only event log under the v10 namespace as soon as the workflow UUID is known.
 **If removed:** Resume, verifier handoff, research quality tracking, and hook-based context injection become conversation-dependent and non-durable.
 **Safe to remove:** Never.
 
-### INV-002: Parent workflow task uses two-step backfill
+### INV-002: Workflow identity is stable and task-id independent
 **Covers:** Router `## 3. Task Metadata Contract`, `## 6. Workflow Task Graphs`
-**Enforces:** Parent workflow tasks may start with `wf:PENDING_SELF`, but the router must immediately rewrite the full metadata block with the real `wf:{task_id}` before child task creation.
-**If removed:** Child tasks can be created under ambiguous scope and hydration can attach to the wrong workflow.
+**Enforces:** Router generates a stable workflow UUID before task creation and uses that UUID across artifacts, event logs, task metadata, resume, and hook context.
+**If removed:** Child tasks can collide across sessions and hydration can attach to the wrong workflow.
 **Safe to remove:** Never.
 
 ### INV-003: Every CC10X child task is workflow-scoped
@@ -86,6 +112,42 @@ Validated against the live plugin surface:
 **Covers:** Router `## 8. Post-Agent Validation`, `## 12. Chain Execution Loop`
 **Enforces:** Incomplete or contradictory evidence sets `quality.convergence_state=needs_iteration` and stops workflow advancement.
 **If removed:** The system starts silently tolerating partial proof and ambiguous completion.
+**Safe to remove:** Never.
+
+### INV-015: Open decisions block BUILD
+**Covers:** Router `## 5. Workflow Preparation`, `## 8. Post-Agent Validation`
+**Enforces:** Plans with unresolved open decisions or missing `Differences From Agreement` cannot transition into BUILD.
+**If removed:** Planner defaults begin masquerading as approved requirements again.
+**Safe to remove:** Never.
+
+### INV-016: Phase exit is the only way BUILD advances
+**Covers:** Router `## 6. Workflow Task Graphs`, `## 8. Post-Agent Validation`, `## 12. Chain Execution Loop`
+**Enforces:** BUILD advances `phase_cursor` only after RED, GREEN, and phase-exit evidence are complete with no unresolved blocked items.
+**If removed:** BUILD can skip steps, reorder work, or continue after partial execution.
+**Safe to remove:** Never.
+
+### INV-017: Internal skills are advisory
+**Covers:** Router `## 7. Dispatcher And Agent Prompt Contract`, internal skills
+**Enforces:** Explicit user instructions, `CLAUDE.md`, repo standards, and approved plans outrank CC10X internal skills.
+**If removed:** `frontend-patterns` / `architecture-patterns` / `debugging-patterns` can silently compete with user intent again.
+**Safe to remove:** Never.
+
+### INV-018: Agents use only the v10 state namespace
+**Covers:** Router `## 2. Memory Load And Template Validation`, agent memory-read sections
+**Enforces:** BUILD / DEBUG / REVIEW / VERIFY agents read from `.claude/cc10x/v10/*.md` only and never mix legacy memory paths into active orchestration.
+**If removed:** Agents can read stale state, leak legacy decisions into live workflows, or disagree about the active workflow memory surface.
+**Safe to remove:** Never.
+
+### INV-019: Verification is independent of upstream approval
+**Covers:** Router `## 8. Post-Agent Validation`, verifier contract, BUILD chain
+**Enforces:** Reviewer approval, hunter CLEAN, or builder success are inputs to verification, not substitutes for independent scenario proof.
+**If removed:** The workflow can regress into self-certified completion where one agent's confidence is mistaken for verification.
+**Safe to remove:** Never.
+
+### INV-020: Silent-failure analysis must state scan coverage truthfully
+**Covers:** Router `## 8. Post-Agent Validation`, hunter contract
+**Enforces:** The silent-failure hunter must describe scanned scope and blind spots before a CLEAN result is accepted.
+**If removed:** CLEAN verdicts can hide incomplete search coverage and create false confidence in error-handling quality.
 **Safe to remove:** Never.
 
 ### INV-012: Memory finalization is router-owned and compaction-safe

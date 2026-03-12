@@ -7,7 +7,7 @@ from cc10x_hooklib import (
     load_mode,
     log_event,
     pretool_deny,
-    project_dir,
+    state_root,
 )
 
 
@@ -22,13 +22,10 @@ def main() -> int:
     if not file_path:
         return 0
 
-    root = project_dir().resolve()
     path = Path(file_path).resolve()
     violations = []
 
-    protected_memory = {
-        root / ".claude" / "cc10x" / name for name in PROTECTED_MEMORY_FILES
-    }
+    protected_memory = {state_root() / name for name in PROTECTED_MEMORY_FILES}
 
     if path in protected_memory:
         violations.append("memory-write")
@@ -41,7 +38,7 @@ def main() -> int:
     log_event(
         "plugin_pretooluse_guard",
         {
-            "wf": workflow.get("workflow_id"),
+            "wf": workflow.get("workflow_uuid") or workflow.get("workflow_id"),
             "phase": workflow.get("pending_gate") or "unknown",
             "task_id": None,
             "agent": "router",
@@ -60,7 +57,7 @@ def main() -> int:
     should_block = "memory-write" in violations and mode.get("memoryWrites") == "block"
     if should_block:
         pretool_deny(
-            "CC10X plugin hook blocked a direct memory markdown write. Use the router-owned memory finalization path."
+            "CC10X plugin hook blocked a direct v10 memory markdown write. Use the router-owned memory finalization path."
         )
     return 0
 
