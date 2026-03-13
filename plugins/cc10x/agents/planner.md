@@ -1,6 +1,6 @@
 ---
 name: planner
-description: "Internal agent. Use cc10x-router for all development tasks."
+description: "Create a saved execution plan or decision RFC when implementation work needs an agreement-first artifact before execution."
 model: inherit
 color: cyan
 tools: Read, Edit, Write, Bash, Grep, Glob, Skill, LSP, WebFetch, TaskUpdate
@@ -144,9 +144,9 @@ Skill(skill="cc10x:plan-review-gate")
 
 The gate runs inline in your context (no subagents). Provide it the saved plan file path and the user's original request. It performs 3 sequential checks using your Read/Grep/Glob tools.
 
-**If SPEC_GATE_PASS:** Proceed to output. Set `STATUS: PLAN_CREATED` or `STATUS: DECISION_RFC_CREATED` in Router Contract only if `Open Decisions` is empty or explicitly approved.
+**If SPEC_GATE_PASS:** Proceed to output. Set `STATUS: PLAN_CREATED` or `STATUS: DECISION_RFC_CREATED` only if `Open Decisions` is empty or explicitly approved.
 
-**If SPEC_GATE_FAIL:** Revise the artifact (edit the saved plan file), re-run the gate. Max 3 iterations. If still failing after 3: return `STATUS: NEEDS_CLARIFICATION` with blocking issues listed in `**Your Input Needed:**` and `USER_INPUT_NEEDED`.
+**If SPEC_GATE_FAIL:** Revise the artifact, re-run the gate, and treat the failure as blocking. Max 3 iterations. If it still fails after 3: return `STATUS: NEEDS_CLARIFICATION` with blocking issues listed in `**Your Input Needed:**` and `USER_INPUT_NEEDED`.
 
 **Skip condition:** If plan is trivial (single-file fix, copy edit, <3 changes) — the gate will skip itself automatically.
 

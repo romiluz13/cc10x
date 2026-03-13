@@ -1,6 +1,6 @@
 ---
 name: verification-before-completion
-description: "Internal skill. Use cc10x-router for all development tasks."
+description: "Use when about to claim work is complete, fixed, or passing, or before commit, PR, or task completion when fresh verification evidence is required."
 allowed-tools: Read, Grep, Glob, Bash, LSP
 ---
 
@@ -117,13 +117,7 @@ If you find yourself:
 
 ## Why This Matters
 
-From real failure patterns:
-
-- Your user said "I don't believe you" - trust broken
-- Undefined functions shipped - would crash in production
-- Missing requirements shipped - incomplete features
-- Time wasted on false completion → redirect → rework
-- Violates: "Honesty is a core value. If you lie, you'll be replaced."
+False completion destroys trust, ships broken code, and creates rework. Verification exists to stop that.
 
 ## When To Apply
 

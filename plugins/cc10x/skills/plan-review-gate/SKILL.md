@@ -1,13 +1,13 @@
 name: plan-review-gate
-description: "Inline adversarial spec gate — 3 blocking checks (Feasibility, Completeness, Alignment) performed by the calling LLM in its own context. No subagents spawned. Call after saving a plan or decision RFC. Returns SPEC_GATE_PASS or SPEC_GATE_FAIL with blocking issues."
+description: "Use after saving a non-trivial plan or decision RFC when feasibility, completeness, and alignment must block execution unless they pass."
 allowed-tools: Read, Bash, Grep, Glob
 ---
 
 # Spec Review Gate
 
-**Core principle:** No execution plan or decision RFC reaches the user without surviving 3 adversarial checks.
+**Core principle:** No execution plan or decision RFC reaches the user without surviving 3 blocking checks.
 
-**How it works:** This skill runs inline in the calling agent's context (no subagents). The calling LLM reads the saved artifact and checks it against 3 criteria using its Read/Grep/Glob tools. Same LLM, same context: the value is structured adversarial framing and fail-closed blocking, not fake reviewer independence.
+**How it works:** This skill runs inline in the calling agent's context (no subagents). The calling LLM reads the saved artifact and checks it against 3 criteria using its Read/Grep/Glob tools. The value is fail-closed blocking and adversarial framing, not fake reviewer independence.
 
 **Important limit:** This gate is stronger wording plus hard blocking, not true reviewer isolation. If the system later supports an actually separate reviewer, that should sit above this gate rather than being faked here.
 
@@ -44,7 +44,7 @@ Read the user's original request and compare against the plan:
 | Decision-grade content present when needed | A `decision_rfc` is missing alternatives, drawbacks, or references |
 | Critical-path spec present when needed | A `critical_path` artifact is missing behavior contract, edge-case catalog, provable properties, purity boundary, or verification strategy |
 
-### Check 3: Scope & Alignment — Is it right-sized?
+### Check 3: Scope & Alignment — Is it right-sized and faithful?
 
 | Criterion | Blocking if |
 |-----------|-------------|
@@ -120,4 +120,4 @@ Read the user's original request and compare against the plan:
 | Skipping file path verification | Fabricated paths are the #1 plan failure mode |
 | Treating SPEC_GATE_FAIL as advisory | The gate must block PLAN_CREATED / DECISION_RFC_CREATED |
 | Skipping for "simple" plans | Read the skip criteria — only truly trivial plans qualify |
-| Accepting SPEC_GATE_PASS without evidence | Each check needs a cited finding, not just "looks fine" |
+| Accepting SPEC_GATE_PASS without evidence | Each check needs cited proof, not "looks fine" or "seems reasonable" |

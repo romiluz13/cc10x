@@ -2,7 +2,7 @@
 
 ### Router-Owned Claude Code Harness
 
-**Current version:** 10.1.0
+**Current version:** 10.1.1
 
 **Recommended: Create `~/.claude/CLAUDE.md` (global) so the router is always active across all projects.**
 
@@ -574,6 +574,7 @@ I'll help you build a task tracker! Let me start...
 
 | Version | Highlights |
 |---------|------------|
+| **v10.1.1** | Prompt-only hardening: sharper anti-false-completion wording, better trigger/description hygiene, reduced prompt dilution, no orchestration/runtime changes |
 | **v10.1.0** | Competition-grade release: decision-grade planning, adversarial plan gates, proof-oriented BUILD, harsher VERIFY, and benchmark-backed prompt/harness hardening |
 | **v10.0.0** | Trust-first recovery: agreement-first planning, phase-gated BUILD, stable workflow UUIDs, versioned v10 state, advisory internal skills |
 | **v9.1.1** | Removed shipped MCP config to avoid startup warnings; MCP research remains optional via user-configured Claude Code MCP servers named `brightdata` and `octocode` |

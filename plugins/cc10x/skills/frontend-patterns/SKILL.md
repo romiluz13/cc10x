@@ -1,6 +1,6 @@
 ---
 name: frontend-patterns
-description: "Internal skill. Use cc10x-router for all development tasks."
+description: "Use when implementing or reviewing frontend UI work that needs accessibility, responsive layout, loading and error states, or performance guardrails under an approved visual direction."
 allowed-tools: Read, Grep, Glob, LSP
 ---
 
@@ -12,7 +12,7 @@ User interfaces exist to help users accomplish tasks. Every UI decision should m
 
 **Core principle:** Design for user success, not aesthetic preference.
 
-This skill is advisory in v10. Explicit user instructions, `CLAUDE.md`, repo standards, and approved plans override any suggestion here.
+This skill is advisory in v10. Explicit user instructions, `CLAUDE.md`, repo standards, and approved plans override every suggestion here.
 
 ## Focus Areas (Reference Pattern)
 
@@ -38,7 +38,7 @@ Use this skill to add:
 - performance and loading-state checks
 - optional style ideas when the user explicitly wants them
 
-Do not use this skill to override an explicit visual direction, component contract, or workflow that the user already approved.
+Do not use this skill to override an explicit visual direction, component contract, or approved workflow.
 
 ## Component Output Checklist
 

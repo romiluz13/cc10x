@@ -1,5 +1,18 @@
 # Changelog
 
+## [10.1.1] - 2026-03-13
+
+### Prompt-only hardening and metadata hygiene
+
+#### Changed
+- Tightened core prompt wording in `verification-before-completion`, `plan-review-gate`, `planner`, `component-builder`, `integration-verifier`, and `bug-investigator` without changing router behavior, task graphs, gates, or state semantics.
+- Rewrote selected skill and agent descriptions to describe trigger conditions only, not workflow summaries, reducing the risk that metadata shortcuts the real prompt body.
+- Sharpened anti-false-completion and anti-rationalization language so success claims require local fresh evidence and partial progress is not narrated as completion.
+- Clarified advisory-skill posture in `frontend-patterns` and `debugging-patterns` so they support the router contract without sounding authoritative.
+
+#### Fixed
+- Version metadata and release notes are aligned on `10.1.1`.
+
 ## [10.1.0] - 2026-03-13
 
 ### Competition-grade planning, proof-oriented execution, and prompt/harness hardening

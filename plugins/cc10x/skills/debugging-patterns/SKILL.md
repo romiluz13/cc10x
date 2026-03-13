@@ -1,6 +1,6 @@
 ---
 name: debugging-patterns
-description: "Internal skill. Use cc10x-router for all development tasks."
+description: "Use when diagnosing bugs, flaky tests, runtime/build failures, or repeated failed fixes where root cause and nearby duplicate patterns must be found before changing code."
 allowed-tools: Read, Grep, Glob, Bash, LSP
 ---
 
@@ -12,7 +12,7 @@ Random fixes waste time and create new bugs. Quick patches mask underlying issue
 
 **Core principle:** ALWAYS find root cause before attempting fixes. Symptom fixes are failure.
 
-This skill is advisory in v10. It should deepen investigation quality, not authorize local-only patches that ignore nearby duplicate root causes.
+This skill is advisory in v10. It deepens investigation quality. It does not authorize local-only patches, guesswork, or "fix the line that crashed" thinking.
 
 ## The Iron Law
 

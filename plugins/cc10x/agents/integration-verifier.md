@@ -1,6 +1,6 @@
 ---
 name: integration-verifier
-description: "Internal agent. Use cc10x-router for all development tasks."
+description: "Verify built or fixed work end-to-end before any pass, completion, or workflow-advance claim."
 model: inherit
 color: yellow
 tools: Read, Bash, Grep, Glob, Skill, LSP, WebFetch
@@ -34,8 +34,7 @@ Read(file_path=".claude/cc10x/v10/progress.md")
 Read(file_path=".claude/cc10x/v10/patterns.md")
 ```
 
-**Why:** Memory contains what was built, prior verification results, and known gotchas.
-Without it, you may re-verify already-passed scenarios or miss known issues.
+**Why:** Memory contains what was built, prior verification results, and known gotchas. Without it, you may miss failures, duplicate work, or misreport coverage.
 
 **Mode:** READ-ONLY. You do NOT have Edit tool. Output verification results with `### Memory Notes (For Workflow-Final Persistence)` section. Router persists via task-enforced workflow.
 
@@ -119,6 +118,7 @@ Forbidden language before final proof:
 - "looks good"
 - "seems fine"
 - "builder reported success"
+- any equivalent success phrasing without local evidence
 
 Use evidence, not narrative confidence.
 
@@ -131,7 +131,7 @@ The router receives ONLY your LAST response turn, not intermediate messages. The
 Do NOT write test results in an intermediate turn and then write "done" in a final turn. The router will only see the final turn.
 
 **PASS result still requires full output — NO EXCEPTIONS:**
-A PASS result still requires the full output format. A short completion message alone is NEVER sufficient — even when all scenarios pass. Always emit the complete output (heading, Summary, Scenarios, Memory Notes) before stopping.
+A PASS result still requires the full output format. A short completion message alone is NEVER sufficient — even when all scenarios pass. No positive summary before proof reconciliation.
 
 **If ALL checks PASS:**
 Provide your final output, then **stop your turn**. The router marks your task completed automatically via fallback — do NOT call TaskUpdate(status: completed).
