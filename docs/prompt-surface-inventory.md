@@ -1,0 +1,107 @@
+# CC10X Prompt Surface Inventory
+
+## Purpose
+
+This inventory defines which prompt surfaces are allowed to affect trust-critical behavior and what kind of edits are safe on each.
+
+## Tier 1: Trust-Critical Prompt Contracts
+
+### planner
+- Path: `plugins/cc10x/agents/planner.md`
+- Role: agreement-first planning artifact creation
+- Allowed edits: wording clarity, contract wording, examples, output guidance, context-loading guidance
+- Forbidden edits: anything that changes routing, approval semantics, plan-mode meaning, or build-start conditions
+- Comparison references: `metaswarm` plan review, `get-shit-done` planning/execution contract
+- Review requirement: audit + replay + manual semantic review
+
+### component-builder
+- Path: `plugins/cc10x/agents/component-builder.md`
+- Role: current approved phase execution
+- Allowed edits: TDD wording, anti-scope-creep wording, evidence phrasing, context-curation wording
+- Forbidden edits: new checkpoints, altered phase-order semantics, changed remediation ownership
+- Comparison references: `get-shit-done` executor, `superpowers` execution discipline
+- Review requirement: audit + replay + manual semantic review
+
+### integration-verifier
+- Path: `plugins/cc10x/agents/integration-verifier.md`
+- Role: fail-closed independent end-to-end verification
+- Allowed edits: evidence wording, auditor tone, truths/artifacts/wiring exposition, output clarity
+- Forbidden edits: accepting upstream approval as proof, weakening fail-closed logic, changing remediation flow
+- Comparison references: `get-shit-done` verifier, `superpowers` verification-before-completion
+- Review requirement: audit + replay + manual semantic review
+
+### plan-review-gate
+- Path: `plugins/cc10x/skills/plan-review-gate/SKILL.md`
+- Role: fail-closed plan review boundary
+- Allowed edits: adversarial tone, wording clarity, evidence expectations
+- Forbidden edits: implying non-blocking review, fake reviewer isolation, or advisory-only output
+- Comparison references: `metaswarm` plan-review-gate and adversarial rubric
+- Review requirement: audit + replay + manual semantic review
+
+### verification-before-completion
+- Path: `plugins/cc10x/skills/verification-before-completion/SKILL.md`
+- Role: fresh-evidence honesty layer before completion claims
+- Allowed edits: compactness, anti-rationalization wording, example cleanup
+- Forbidden edits: relaxing fresh-evidence requirement or reducing scope to only tests/build
+- Comparison references: `superpowers` verification-before-completion, `get-shit-done` goal-backward verification
+- Review requirement: audit + replay + manual semantic review
+
+## Tier 2: Strong Supporting Contracts
+
+### bug-investigator
+- Path: `plugins/cc10x/agents/bug-investigator.md`
+- Role: evidence-first debugging with variant and blast-radius coverage
+- Allowed edits: hypothesis wording, anti-hardcode wording, anti-loop wording, context-curation wording
+- Forbidden edits: changing research escalation policy or fix/report ownership
+- Comparison references: `get-shit-done` debugger, `superpowers` systematic-debugging
+- Review requirement: audit + targeted semantic review
+
+### code-reviewer
+- Path: `plugins/cc10x/agents/code-reviewer.md`
+- Role: adversarial code review with remediation intent
+- Allowed edits: rubric clarity, evidence language, confidence wording
+- Forbidden edits: self-healing ownership changes or authority drift against router
+- Comparison references: `superpowers` review skills, `metaswarm` auditor tone
+- Review requirement: audit + targeted semantic review
+
+### silent-failure-hunter
+- Path: `plugins/cc10x/agents/silent-failure-hunter.md`
+- Role: scan for silent-failure patterns and report truthful coverage
+- Allowed edits: scan-language clarity, severity wording, output clarity
+- Forbidden edits: self-healing behavior or weakening coverage-truth requirements
+- Comparison references: internal benchmark notes, error-handling competitors where applicable
+- Review requirement: audit + targeted semantic review
+
+## Tier 3: Advisory Skill Metadata
+
+### frontend-patterns
+- Path: `plugins/cc10x/skills/frontend-patterns/SKILL.md`
+- Role: advisory frontend guardrails
+- Allowed edits: trigger accuracy, brevity, advisory clarifications
+- Forbidden edits: authority drift that competes with user/project standards
+- Comparison references: `superpowers` writing-skills description hygiene
+- Review requirement: audit only unless authority wording changes
+
+### debugging-patterns
+- Path: `plugins/cc10x/skills/debugging-patterns/SKILL.md`
+- Role: advisory root-cause debugging reference
+- Allowed edits: trigger accuracy, brevity, root-cause emphasis
+- Forbidden edits: language that authorizes shallow/local-only fixes
+- Comparison references: `superpowers` writing-skills description hygiene
+- Review requirement: audit only unless authority wording changes
+
+### architecture-patterns
+- Path: `plugins/cc10x/skills/architecture-patterns/SKILL.md`
+- Role: advisory architecture lens
+- Allowed edits: trigger accuracy, advisory framing
+- Forbidden edits: language that sounds like router-owned policy
+- Comparison references: internal benchmark notes
+- Review requirement: audit only unless authority wording changes
+
+## Review Classification
+
+Every prompt change must be classified before merge:
+- `metadata_only`
+- `wording_only_low_risk`
+- `wording_only_trust_sensitive`
+- `orchestration_sensitive` → not eligible for prompt-only release

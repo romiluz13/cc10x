@@ -21,6 +21,12 @@ Validated against the live plugin surface:
 
 ## Current Invariants
 
+### INV-025: Latency telemetry is informational only
+**Covers:** Router workflow artifact schema, workflow event log, latency audit tooling
+**Enforces:** Timing fields, loop counters, and verifier workload breakdowns may inform optimization work, but they may not change routing, approval, remediation, or phase-advance decisions by themselves.
+**If removed:** Performance instrumentation can quietly become a second decision system and weaken trust gates under the banner of speed.
+**Safe to remove:** Never.
+
 ### INV-021: Router owns plan mode selection semantics
 **Covers:** Router `## 5. Workflow Preparation`, planner contract, replay fixtures
 **Enforces:** Every planning artifact declares exactly one `plan_mode` and the router treats `direct`, `execution_plan`, and `decision_rfc` as different safety levels.

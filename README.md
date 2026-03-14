@@ -2,7 +2,7 @@
 
 ### Router-Owned Claude Code Harness
 
-**Current version:** 10.1.1
+**Current version:** 10.1.2
 
 **Recommended: Create `~/.claude/CLAUDE.md` (global) so the router is always active across all projects.**
 
@@ -11,14 +11,16 @@
 </p>
 
 <p align="center">
-  <em>Orchestrated skills, specialist subagents, durable workflow state, and evidence-first execution for Claude Code.</em>
+  <em>An opinionated Claude Code harness for developers who want routing, state, and verification to behave like engineering infrastructure.</em>
 </p>
 
 ---
 
 ## Why cc10x
 
-cc10x is what Claude Code should feel like for serious software work:
+cc10x is for developers who like Claude Code, but do not want to babysit it.
+
+It makes the coding loop behave more like a disciplined engineering system:
 
 - one router entry point
 - explicit workflows instead of ad-hoc prompting
@@ -26,11 +28,11 @@ cc10x is what Claude Code should feel like for serious software work:
 - memory and workflow artifacts that survive long sessions
 - evidence before advancement: LOG FIRST, RED → GREEN → REFACTOR, expected vs actual verification
 
-If the short pitch matters:
+The point is not "more AI". The point is tighter execution:
 
 ```text
-You provide intent. cc10x routes the workflow, loads the right context,
-invokes the right specialists, and refuses to advance on weak evidence.
+You describe the job. cc10x decides the workflow, loads the right context,
+brings in narrow specialists, and blocks weak "done" states.
 ```
 
 ---
@@ -39,40 +41,43 @@ invokes the right specialists, and refuses to advance on weak evidence.
 
 cc10x is a **developer-focused Claude Code harness** packaged as a marketplace plugin.
 
-It is designed for one specific job:
-- route `PLAN`, `BUILD`, `DEBUG`, `REVIEW`, and `RESEARCH` work through a consistent workflow
-- keep orchestration ownership in one place: `cc10x-router`
-- use specialist subagents for execution, review, verification, and research
-- persist enough state to resume safely after long sessions or compaction
-- stay aligned with official Claude Code plugin conventions: `skills`, `subagents`, `hooks`, and optional user-configured MCP
+Its job is straightforward:
+- take `PLAN`, `BUILD`, `DEBUG`, `REVIEW`, and `RESEARCH` requests and route them through a known execution model
+- keep orchestration in one place: `cc10x-router`
+- split execution across specialist subagents instead of a single general prompt
+- persist enough workflow state to survive long sessions, compaction, and handoffs
+- stay native to Claude Code primitives: `skills`, `subagents`, `hooks`, and optional user-configured MCP
 
-If you want a short mental model:
+Short mental model:
 
 ```text
-cc10x = router + workflow artifacts + specialist agents + minimal hooks
+cc10x = a thin orchestration layer on top of Claude Code
+      + durable workflow state
+      + specialist agents
+      + guardrails that fail closed
 ```
 
-It is not a scheduler, background service, or external platform. It is a Claude Code plugin that makes the core engineering loop more reliable inside normal Claude Code sessions.
+It is not a hosted product, background daemon, or parallel control plane. It is a Claude Code plugin that makes normal coding sessions more deterministic.
 
 ## What You Get
 
-With cc10x installed, Claude Code gains:
+With cc10x installed, Claude Code stops behaving like a single assistant session and starts behaving like a routed workflow:
 
-- `PLAN` with intent-first planning, constraints, scenarios, and defaults
-- `BUILD` with TDD-first implementation and post-build review/verification
-- `DEBUG` with log-first investigation, regression proof, and research fallback
-- `REVIEW` with adversarial review and confidence-based findings
-- `VERIFY` with BDD-style scenario evidence and fail-closed advancement rules
-- `RESEARCH` with optional Octocode/Bright Data acceleration and graceful fallback
+- `PLAN` that resolves intent, constraints, scenarios, and default decisions before code starts
+- `BUILD` that pushes implementation through RED → GREEN → REFACTOR, then review, then verification
+- `DEBUG` that starts from logs and observed behavior instead of guess-and-patch loops
+- `REVIEW` that is adversarial by design and reports only confidence-backed findings
+- `VERIFY` that checks scenarios, artifacts, and wiring before anything is treated as complete
+- `RESEARCH` that can use Octocode/Bright Data when present, but does not collapse if they are absent
 
-This is still one coherent harness, not a bag of disconnected skills.
+This is one execution model, not a stack of unrelated prompts.
 
 ## What 10.1 adds
 
-- **Decision-grade planning** with `direct`, `execution_plan`, and `decision_rfc` modes chosen by the router
-- **Adversarial spec gates** that block BUILD on failed feasibility, completeness, or alignment review
+- **Decision-grade planning** with `direct`, `execution_plan`, and `decision_rfc` modes selected by the router
+- **Adversarial spec gates** that stop BUILD when feasibility, completeness, or alignment is weak
 - **Proof-oriented BUILD** with explicit checkpoint types, expected artifacts, proof states, and no auto-advance on partial evidence
-- **Harsher VERIFY** that checks truths, artifacts, and wiring before any pass verdict
+- **Stricter VERIFY** that checks truths, artifacts, and wiring before any pass verdict
 - **Stable workflow UUIDs** and **versioned v10 state** under `.claude/cc10x/v10/`
 - **Advisory internal skills** where explicit user/project standards always outrank CC10X pattern skills
 
@@ -195,7 +200,7 @@ If not, the plugin still works. Research falls back to built-in Claude Code tool
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
-**You provide the development intent. cc10x selects the workflow, runs the right specialists, and enforces evidence before advancement.**
+**You describe the work. cc10x routes it, brings in the right specialists, and keeps the bar for "done" higher than a convincing paragraph.**
 
 ---
 
@@ -347,10 +352,10 @@ react-best-practices/SKILL.md
 
 | Intent | Trigger Words | What Happens |
 |--------|---------------|--------------|
-| **BUILD** | build, implement, create, make, write, add | TDD cycle → Code review → Silent failure hunt → Integration verify |
-| **DEBUG** | debug, fix, error, bug, broken, troubleshoot | Log-first investigation → Review fix → Verify works |
-| **REVIEW** | review, audit, check, analyze, assess | Multi-dimensional review with 80%+ confidence scoring |
-| **PLAN** | plan, design, architect, roadmap, strategy | Comprehensive planning with external research |
+| **BUILD** | build, implement, create, make, write, add | Clarify scope → TDD implementation → adversarial review → integration verification |
+| **DEBUG** | debug, fix, error, bug, broken, troubleshoot | Reproduce from evidence → isolate cause → validate fix → prove no regression |
+| **REVIEW** | review, audit, check, analyze, assess | High-signal review with confidence thresholds and file:line citations |
+| **PLAN** | plan, design, architect, roadmap, strategy | Turn rough intent into an execution-ready plan with explicit decisions |
 
 ---
 
@@ -361,11 +366,11 @@ react-best-practices/SKILL.md
 "build a user authentication system"
 
 → Router detects BUILD intent
-→ Clarifies requirements FIRST (won't skip this)
-→ component-builder with TDD
-→ code-reviewer + silent-failure-hunter (parallel)
-→ integration-verifier
-→ Memory updated
+→ Stops to resolve missing requirements first
+→ component-builder drives RED → GREEN → REFACTOR
+→ code-reviewer + silent-failure-hunter run in parallel
+→ integration-verifier checks wiring, artifacts, and behavior
+→ Workflow state and memory are updated
 ```
 
 ### Fix a Bug
@@ -373,11 +378,11 @@ react-best-practices/SKILL.md
 "debug the payment processing error"
 
 → Router detects DEBUG intent
-→ Checks memory for Common Gotchas
-→ bug-investigator with LOG FIRST
-→ code-reviewer validates fix
-→ integration-verifier confirms
-→ Added to Common Gotchas
+→ Loads prior failures and project memory
+→ bug-investigator starts from logs and observed behavior
+→ code-reviewer checks the fix path
+→ integration-verifier confirms the bug is actually closed
+→ Useful findings go back into memory
 ```
 
 ### Review Code
@@ -385,9 +390,9 @@ react-best-practices/SKILL.md
 "review this PR for security issues"
 
 → Router detects REVIEW intent
-→ code-reviewer with git context
-→ Only reports issues with ≥80% confidence
-→ File:line citations for every finding
+→ code-reviewer uses repo and git context
+→ Reports findings only when confidence clears the bar
+→ Every finding includes file:line evidence
 ```
 
 ---

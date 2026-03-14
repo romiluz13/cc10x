@@ -1,0 +1,67 @@
+{
+  "id": "latency-telemetry",
+  "workflow_type": "BUILD",
+  "starting_artifact": {
+    "workflow_uuid": "wf-20260314T120000Z-latency-proof",
+    "workflow_id": "wf-20260314T120000Z-latency-proof",
+    "workflow_type": "BUILD",
+    "state_root": ".claude/cc10x/v10",
+    "plan_mode": "execution_plan",
+    "verification_rigor": "critical_path",
+    "proof_status": "gaps_found",
+    "traceability": {"requirements": [], "phases": [], "verification": [], "remediation": []},
+    "phase_cursor": "phase-1",
+    "task_ids": {},
+    "results": {},
+    "intent": {"goal": "Measure verifier latency safely"},
+    "evidence": {},
+    "telemetry": {
+      "task_metrics_available": "true",
+      "workflow_wall_clock_seconds": 1980,
+      "agent_wall_clock_seconds": {
+        "builder": 420,
+        "investigator": 0,
+        "reviewer": 180,
+        "hunter": 180,
+        "verifier": 1200,
+        "planner": 0
+      },
+      "loop_counts": {
+        "re_review": 1,
+        "re_hunt": 1,
+        "re_verify": 1
+      },
+      "verifier": {
+        "phase_exit_proof_runs": 1,
+        "extended_audit_runs": 1,
+        "workload_seconds": {
+          "tests": 600,
+          "build": 180,
+          "scan": 240,
+          "reconcile": 90,
+          "reasoning": 90
+        }
+      }
+    },
+    "quality": {"convergence_state": "pending"},
+    "status_history": [],
+    "remediation_history": []
+  },
+  "relevant_tasks": {},
+  "agent_outputs": {},
+  "expected": {
+    "next_action": "report_latency_breakdown",
+    "artifact_delta": {
+      "telemetry": {
+        "loop_counts": {
+          "re_verify": 1
+        },
+        "verifier": {
+          "workload_seconds": {
+            "tests": 600
+          }
+        }
+      }
+    }
+  }
+}

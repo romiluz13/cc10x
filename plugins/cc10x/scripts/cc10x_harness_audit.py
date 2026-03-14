@@ -13,10 +13,19 @@ PLUGIN_JSON = PLUGIN_ROOT / ".claude-plugin" / "plugin.json"
 MARKETPLACE_JSON = ROOT / ".claude-plugin" / "marketplace.json"
 HOOKS_JSON = PLUGIN_ROOT / "hooks" / "hooks.json"
 INVARIANTS = ROOT / "docs" / "router-invariants.md"
+PROMPT_INVARIANTS = ROOT / "docs" / "prompt-invariants.md"
+PROMPT_SURFACE_INVENTORY = ROOT / "docs" / "prompt-surface-inventory.md"
+PROMPT_CHANGE_CHECKLIST = ROOT / "docs" / "prompt-change-checklist.md"
+VERIFIER_LATENCY_MODEL = ROOT / "docs" / "verifier-latency-model.md"
+LATENCY_REDUCTION_NOTE = ROOT / "docs" / "latency-reduction-note.md"
 REPLAY_CHECK = PLUGIN_ROOT / "scripts" / "cc10x_workflow_replay_check.py"
+LATENCY_AUDIT = PLUGIN_ROOT / "scripts" / "cc10x_latency_audit.py"
 FIXTURES_DIR = PLUGIN_ROOT / "tests" / "fixtures"
 FIRST_PLACE_STRATEGY = (
     ROOT / "docs" / "benchmarks" / "2026-03-12-first-place-strategy.md"
+)
+PROMPT_STEAL_NOTE = (
+    ROOT / "docs" / "benchmarks" / "2026-03-14-prompt-steal-hardening.md"
 )
 REQUIRED_FIXTURES = (
     "plan-direct.json",
@@ -35,6 +44,7 @@ REQUIRED_FIXTURES = (
     "memory-sync-blocking.json",
     "review-advisory.json",
     "verify-fail-closed.json",
+    "latency-telemetry.json",
 )
 
 
@@ -60,6 +70,11 @@ def main() -> int:
     readme = read(README)
     changelog = read(CHANGELOG)
     invariants = read(INVARIANTS)
+    prompt_invariants = read(PROMPT_INVARIANTS)
+    prompt_surface_inventory = read(PROMPT_SURFACE_INVENTORY)
+    prompt_change_checklist = read(PROMPT_CHANGE_CHECKLIST)
+    verifier_latency_model = read(VERIFIER_LATENCY_MODEL)
+    latency_reduction_note = read(LATENCY_REDUCTION_NOTE)
 
     version = plugin.get("version")
     if f"**Current version:** {version}" not in readme:
@@ -110,6 +125,20 @@ def main() -> int:
                 errors.append(f"missing replay fixture {fixture}")
     if not FIRST_PLACE_STRATEGY.exists():
         errors.append("missing first-place strategy document")
+    if not PROMPT_INVARIANTS.exists():
+        errors.append("missing prompt invariant registry")
+    if not PROMPT_SURFACE_INVENTORY.exists():
+        errors.append("missing prompt surface inventory")
+    if not PROMPT_CHANGE_CHECKLIST.exists():
+        errors.append("missing prompt change checklist")
+    if not PROMPT_STEAL_NOTE.exists():
+        errors.append("missing latest prompt benchmark note")
+    if not VERIFIER_LATENCY_MODEL.exists():
+        errors.append("missing verifier latency model")
+    if not LATENCY_REDUCTION_NOTE.exists():
+        errors.append("missing latency reduction note")
+    if not LATENCY_AUDIT.exists():
+        errors.append("missing latency audit script")
 
     for required in ("brightdata", "octocode"):
         if required not in router:
@@ -135,6 +164,10 @@ def main() -> int:
         "verification_rigor",
         "proof_status",
         "traceability",
+        "telemetry",
+        "task_metrics_available",
+        "phase_exit_proof_runs",
+        "extended_audit_runs",
         "plan_trust_gate",
         "phase_exit_gate",
         "skill_precedence_gate",
@@ -161,6 +194,16 @@ def main() -> int:
         errors.append(
             "router-invariants.md appears malformed or missing the current audit banner"
         )
+    if "Prompt Behavioral Invariant Registry" not in prompt_invariants:
+        errors.append("prompt-invariants.md appears malformed")
+    if "Prompt Surface Inventory" not in prompt_surface_inventory:
+        errors.append("prompt-surface-inventory.md appears malformed")
+    if "Prompt Change Checklist" not in prompt_change_checklist:
+        errors.append("prompt-change-checklist.md appears malformed")
+    if "Verifier Latency Model" not in verifier_latency_model:
+        errors.append("verifier-latency-model.md appears malformed")
+    if "Latency Reduction Note" not in latency_reduction_note:
+        errors.append("latency-reduction-note.md appears malformed")
 
     expected_router_fields = {
         "component-builder": [
@@ -226,6 +269,100 @@ def main() -> int:
                 errors.append(
                     f"{agent_name}.md missing expected contract field '{field}'"
                 )
+
+    prompt_phrase_guards = {
+        "planner": [
+            "Open decisions belong in the plan, not in hidden assumptions",
+            "recommended defaults stay unapproved",
+            "Differences From Agreement",
+        ],
+        "component-builder": [
+            "Task completion is not goal achievement",
+            "Treat the approved phase as the contract",
+            "Do not improvise outside it",
+        ],
+        "integration-verifier": [
+            "Task completion is not goal achievement",
+            "Do NOT trust prior summaries, status text, or builder confidence claims",
+            "**Truths:** what must be TRUE",
+            "**Artifacts:** what must EXIST",
+            "**Wiring:** what must be WIRED",
+            "## Verification Scope Classification (MANDATORY)",
+            "### Timing & Workload",
+        ],
+        "plan-review-gate": [
+            'No leniency. "Close enough" is FAIL.',
+            'There is no "APPROVED WITH COMMENTS"',
+            "This gate is an auditor, not a collaborator",
+        ],
+    }
+    for stem, phrases in prompt_phrase_guards.items():
+        path = (
+            PLUGIN_ROOT / "agents" / f"{stem}.md"
+            if (PLUGIN_ROOT / "agents" / f"{stem}.md").exists()
+            else PLUGIN_ROOT / "skills" / stem / "SKILL.md"
+        )
+        text = read(path)
+        for phrase in phrases:
+            if phrase not in text:
+                errors.append(f"{path.name} missing prompt safety phrase '{phrase}'")
+
+    verification_skill = read(
+        PLUGIN_ROOT / "skills" / "verification-before-completion" / "SKILL.md"
+    )
+    for phrase in (
+        "NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE",
+        "Skip any step = lying, not verifying",
+        "**Truths:** What must be TRUE?",
+        "**Artifacts:** What must EXIST?",
+        "**Wiring:** What must be WIRED?",
+        "## Phase-Exit Proof vs Extended Audit",
+    ):
+        if phrase not in verification_skill:
+            errors.append(
+                "verification-before-completion missing prompt safety phrase "
+                f"'{phrase}'"
+            )
+
+    description_hygiene = {
+        PLUGIN_ROOT
+        / "skills"
+        / "frontend-patterns"
+        / "SKILL.md": (
+            'description: "Use when',
+            "workflow",
+        ),
+        PLUGIN_ROOT
+        / "skills"
+        / "debugging-patterns"
+        / "SKILL.md": (
+            'description: "Use when',
+            "workflow",
+        ),
+        PLUGIN_ROOT
+        / "skills"
+        / "verification-before-completion"
+        / "SKILL.md": (
+            'description: "Use when',
+            "workflow",
+        ),
+        PLUGIN_ROOT
+        / "skills"
+        / "plan-review-gate"
+        / "SKILL.md": (
+            'description: "Use after',
+            "workflow",
+        ),
+    }
+    for path, (required_prefix, banned_word) in description_hygiene.items():
+        text = read(path)
+        if required_prefix not in text:
+            errors.append(
+                f"{path.name} description no longer matches trigger-style format"
+            )
+        first_lines = "\n".join(text.splitlines()[:6]).lower()
+        if banned_word in first_lines:
+            errors.append(f"{path.name} description appears to summarize workflow")
 
     if errors:
         return fail(errors)

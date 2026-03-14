@@ -98,6 +98,7 @@ Artifact schema must include:
 - `phase_status`
 - `results`
 - `evidence`
+- `telemetry`
 - `quality`
 - `memory_notes`
 - `pending_gate`
@@ -149,6 +150,33 @@ Rules:
   - `scenario_coverage`
   - `research_quality`
   - `convergence_state`
+- `telemetry` is informational only and must never drive routing decisions:
+  - `task_metrics_available`
+  - `workflow_wall_clock_seconds`
+  - `agent_wall_clock_seconds`
+  - `loop_counts`
+  - `verifier`
+- `telemetry.agent_wall_clock_seconds` stores per-agent wall-clock timings when task metrics or explicit telemetry are available:
+  - `builder`
+  - `investigator`
+  - `reviewer`
+  - `hunter`
+  - `verifier`
+  - `planner`
+- `telemetry.loop_counts` stores:
+  - `re_review`
+  - `re_hunt`
+  - `re_verify`
+- `telemetry.verifier` stores:
+  - `phase_exit_proof_runs`
+  - `extended_audit_runs`
+  - `workload_seconds`
+- `telemetry.verifier.workload_seconds` stores:
+  - `tests`
+  - `build`
+  - `scan`
+  - `reconcile`
+  - `reasoning`
 - `pending_gate` is required whenever BUILD/PLAN/DEBUG is waiting on user clarification, scope selection, or persistence repair.
 - `status_history` and `remediation_history` are append-only summaries of major router decisions.
 
@@ -177,6 +205,10 @@ Workflow event log:
   - `agent`
   - `decision`
   - `reason`
+- Optionally append:
+  - `duration_seconds`
+  - `work_category`
+  - `details`
 - Event types:
   - `workflow_started`
   - `agent_started`
@@ -376,7 +408,7 @@ TaskCreate({
 ```text
 Write(
   file_path=".claude/cc10x/v10/workflows/{workflow_uuid}.json",
-  content="{\"workflow_uuid\":\"{workflow_uuid}\",\"workflow_id\":\"{workflow_uuid}\",\"workflow_type\":\"{WORKFLOW}\",\"state_root\":\".claude/cc10x/v10\",\"user_request\":\"{request}\",\"plan_file\":null,\"design_file\":null,\"research_files\":[],\"approved_decisions\":[],\"plan_mode\":null,\"verification_rigor\":\"standard\",\"proof_status\":\"gaps_found\",\"traceability\":{\"requirements\":[],\"phases\":[],\"verification\":[],\"remediation\":[]},\"intent\":{\"goal\":null,\"non_goals\":[],\"constraints\":[],\"acceptance_criteria\":[],\"open_decisions\":[]},\"normalized_phases\":[],\"phase_cursor\":null,\"capabilities\":{\"brightdata_available\":\"unknown\",\"octocode_available\":\"unknown\",\"websearch_available\":\"unknown\",\"webfetch_available\":\"unknown\"},\"research_rounds\":[],\"research_backend_history\":[],\"research_quality\":{\"web\":\"none\",\"github\":\"none\",\"overall\":\"none\"},\"task_ids\":{},\"phase_status\":{},\"results\":{\"builder\":null,\"investigator\":null,\"reviewer\":null,\"hunter\":null,\"verifier\":null,\"planner\":null,\"research\":{\"web\":null,\"github\":null,\"synthesis\":null}},\"evidence\":{\"builder\":[],\"investigator\":[],\"reviewer\":[],\"hunter\":[],\"verifier\":[]},\"quality\":{\"confidence\":null,\"evidence_complete\":false,\"scenario_coverage\":0,\"research_quality\":\"none\",\"convergence_state\":\"pending\"},\"memory_notes\":[],\"pending_gate\":null,\"status_history\":[{\"event\":\"workflow_started\",\"ts\":\"{iso_timestamp}\",\"phase\":\"{build|debug|review|plan}\"}],\"remediation_history\":[],\"created_at\":\"{iso_timestamp}\",\"updated_at\":\"{iso_timestamp}\"}"
+  content="{\"workflow_uuid\":\"{workflow_uuid}\",\"workflow_id\":\"{workflow_uuid}\",\"workflow_type\":\"{WORKFLOW}\",\"state_root\":\".claude/cc10x/v10\",\"user_request\":\"{request}\",\"plan_file\":null,\"design_file\":null,\"research_files\":[],\"approved_decisions\":[],\"plan_mode\":null,\"verification_rigor\":\"standard\",\"proof_status\":\"gaps_found\",\"traceability\":{\"requirements\":[],\"phases\":[],\"verification\":[],\"remediation\":[]},\"intent\":{\"goal\":null,\"non_goals\":[],\"constraints\":[],\"acceptance_criteria\":[],\"open_decisions\":[]},\"normalized_phases\":[],\"phase_cursor\":null,\"capabilities\":{\"brightdata_available\":\"unknown\",\"octocode_available\":\"unknown\",\"websearch_available\":\"unknown\",\"webfetch_available\":\"unknown\"},\"research_rounds\":[],\"research_backend_history\":[],\"research_quality\":{\"web\":\"none\",\"github\":\"none\",\"overall\":\"none\"},\"task_ids\":{},\"phase_status\":{},\"results\":{\"builder\":null,\"investigator\":null,\"reviewer\":null,\"hunter\":null,\"verifier\":null,\"planner\":null,\"research\":{\"web\":null,\"github\":null,\"synthesis\":null}},\"evidence\":{\"builder\":[],\"investigator\":[],\"reviewer\":[],\"hunter\":[],\"verifier\":[]},\"telemetry\":{\"task_metrics_available\":\"unknown\",\"workflow_wall_clock_seconds\":0,\"agent_wall_clock_seconds\":{\"builder\":0,\"investigator\":0,\"reviewer\":0,\"hunter\":0,\"verifier\":0,\"planner\":0},\"loop_counts\":{\"re_review\":0,\"re_hunt\":0,\"re_verify\":0},\"verifier\":{\"phase_exit_proof_runs\":0,\"extended_audit_runs\":0,\"workload_seconds\":{\"tests\":0,\"build\":0,\"scan\":0,\"reconcile\":0,\"reasoning\":0}}},\"quality\":{\"confidence\":null,\"evidence_complete\":false,\"scenario_coverage\":0,\"research_quality\":\"none\",\"convergence_state\":\"pending\"},\"memory_notes\":[],\"pending_gate\":null,\"status_history\":[{\"event\":\"workflow_started\",\"ts\":\"{iso_timestamp}\",\"phase\":\"{build|debug|review|plan}\"}],\"remediation_history\":[],\"created_at\":\"{iso_timestamp}\",\"updated_at\":\"{iso_timestamp}\"}"
 )
 Write(
   file_path=".claude/cc10x/v10/workflows/{workflow_uuid}.events.jsonl",
@@ -618,6 +650,19 @@ When invoking `integration-verifier`, pass:
 ```
 
 DEBUG skips hunter findings.
+
+### Task metrics and timing telemetry
+
+- Timing telemetry is measurement only. It must never bypass gates, phase exit, or remediation rules.
+- After `TaskGet()` / `TaskList()`, if Claude Code exposes task duration metrics, persist them into:
+  - `telemetry.workflow_wall_clock_seconds`
+  - `telemetry.agent_wall_clock_seconds.{agent}`
+- If task metrics are unavailable, keep `task_metrics_available="unknown"` and continue. Missing telemetry is never a reason to advance or block a workflow.
+- When `integration-verifier` reports a `### Timing & Workload` section, persist:
+  - `telemetry.verifier.phase_exit_proof_runs`
+  - `telemetry.verifier.extended_audit_runs`
+  - `telemetry.verifier.workload_seconds`
+- Use telemetry to explain latency. Do not use it to auto-reduce verification scope.
 
 ## 8. Post-Agent Validation
 
@@ -890,6 +935,10 @@ TaskCreate({
 
 5. Block verifier on re-review and re-hunt as applicable.
 6. Re-block the memory task on the verifier for BUILD/DEBUG or on the re-reviewer for REVIEW.
+7. Increment telemetry loop counters whenever the follow-up tasks are created:
+   - `telemetry.loop_counts.re_review += 1`
+   - `telemetry.loop_counts.re_hunt += 1` in BUILD
+   - `telemetry.loop_counts.re_verify += 1`
 
 ## 12. Chain Execution Loop
 
@@ -942,6 +991,10 @@ TaskCreate({
    - plan/design/research file paths
    - capabilities and chosen research backend path when applicable
    - research quality and round metadata when applicable
+   - telemetry:
+     - task metrics duration when available
+     - loop counters
+     - verifier workload classification when present
    - quality/convergence state
    - status_history and remediation_history entries when decisions change workflow state
    - pending gate if waiting on user input

@@ -26,6 +26,7 @@ REQUIRED_FIXTURES = (
     "memory-sync-blocking.json",
     "review-advisory.json",
     "verify-fail-closed.json",
+    "latency-telemetry.json",
 )
 
 REQUIRED_ARTIFACT_KEYS = (
@@ -217,6 +218,34 @@ def validate_fixture_common(fixture: dict[str, Any]) -> None:
     ):
         require(key in fixture, f"{fixture.get('id', '<unknown>')}: missing {key}")
     validate_artifact_shape(fixture)
+
+
+def validate_latency_telemetry(
+    fixture_id: str, telemetry: dict[str, Any], *, require_verifier_detail: bool = False
+) -> None:
+    require(
+        "agent_wall_clock_seconds" in telemetry,
+        f"{fixture_id}: missing agent_wall_clock_seconds",
+    )
+    require("loop_counts" in telemetry, f"{fixture_id}: missing loop_counts")
+    require("verifier" in telemetry, f"{fixture_id}: missing verifier telemetry")
+    agent_wall = telemetry["agent_wall_clock_seconds"]
+    for key in ("builder", "reviewer", "hunter", "verifier"):
+        require(key in agent_wall, f"{fixture_id}: missing agent timing for {key}")
+    loop_counts = telemetry["loop_counts"]
+    for key in ("re_review", "re_hunt", "re_verify"):
+        require(key in loop_counts, f"{fixture_id}: missing loop counter {key}")
+    verifier = telemetry["verifier"]
+    for key in ("phase_exit_proof_runs", "extended_audit_runs", "workload_seconds"):
+        require(key in verifier, f"{fixture_id}: missing verifier telemetry {key}")
+    workload = verifier["workload_seconds"]
+    for key in ("tests", "build", "scan", "reconcile", "reasoning"):
+        require(key in workload, f"{fixture_id}: missing verifier workload {key}")
+    if require_verifier_detail:
+        require(
+            verifier["phase_exit_proof_runs"] >= 1,
+            f"{fixture_id}: phase_exit_proof_runs must be recorded",
+        )
 
 
 def check_plan_direct(fixture: dict[str, Any]) -> None:
@@ -489,6 +518,22 @@ def check_verify_fail_closed(fixture: dict[str, Any]) -> None:
     )
 
 
+def check_latency_telemetry(fixture: dict[str, Any]) -> None:
+    telemetry = fixture["starting_artifact"]["telemetry"]
+    validate_latency_telemetry(
+        "latency-telemetry", telemetry, require_verifier_detail=True
+    )
+    expected = fixture["expected"]["artifact_delta"]["telemetry"]
+    require(
+        expected["loop_counts"]["re_verify"] == 1,
+        "latency-telemetry: expected one re-verify loop",
+    )
+    require(
+        expected["verifier"]["workload_seconds"]["tests"] == 600,
+        "latency-telemetry: expected tests workload seconds",
+    )
+
+
 CHECKS = {
     "plan-direct.json": check_plan_direct,
     "plan-decision-rfc.json": check_plan_decision_rfc,
@@ -506,6 +551,7 @@ CHECKS = {
     "memory-sync-blocking.json": check_memory_sync_blocking,
     "review-advisory.json": check_review_advisory,
     "verify-fail-closed.json": check_verify_fail_closed,
+    "latency-telemetry.json": check_latency_telemetry,
 }
 
 

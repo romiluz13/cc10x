@@ -258,6 +258,22 @@ A component can:
 - Have tests ✓
 - But NOT be wired to the system ✗
 
+## Phase-Exit Proof vs Extended Audit
+
+Use this distinction when verification gets expensive:
+
+- **Phase-exit proof** is the non-negotiable minimum:
+  - truths
+  - artifacts
+  - wiring
+  - fresh scenario evidence
+- **Extended audit** is additional confidence work:
+  - broader scans
+  - extra pattern sweeps
+  - deeper blast-radius checks
+
+Never skip phase-exit proof. If extended audit is not run, say so explicitly instead of implying it happened.
+
 Goal-backward asks: "Does the GOAL work?" not "Did the TASK complete?"
 
 ### Quick Check Template

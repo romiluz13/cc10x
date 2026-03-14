@@ -1,5 +1,22 @@
 # Changelog
 
+## [10.1.2] - 2026-03-14
+
+### Trust-preserving latency instrumentation
+
+#### Changed
+- Added non-decision latency telemetry to the workflow artifact and router guidance so BUILD, review, hunt, verify, and re-verify costs can be measured without changing phase order or proof gating.
+- Extended `integration-verifier` and `verification-before-completion` with explicit `phase_exit_proof` vs `extended_audit` classification so verifier cost can be explained before any future optimization.
+
+#### Added
+- `cc10x_latency_audit.py` for summarizing workflow latency telemetry from fixtures or runtime workflow artifacts.
+- Safety docs for verifier latency work, including the verifier latency model and the latency reduction note.
+- Replay coverage for telemetry shape via `latency-telemetry.json`.
+
+#### Fixed
+- Release hygiene now ships the prompt-safety and latency-safety docs required by the harness audit, so a fresh clone remains self-consistent.
+- README, marketplace metadata, plugin manifest, and changelog are aligned on `10.1.2`.
+
 ## [10.1.1] - 2026-03-13
 
 ### Prompt-only hardening and metadata hygiene
