@@ -1,6 +1,6 @@
 ---
 name: frontend-patterns
-description: "Use when implementing or reviewing frontend UI work that needs accessibility, responsive layout, loading and error states, or performance guardrails under an approved visual direction."
+description: "Use when frontend UI work needs accessibility, responsive layout, loading and error states, or performance guardrails under an approved visual direction."
 allowed-tools: Read, Grep, Glob, LSP
 ---
 

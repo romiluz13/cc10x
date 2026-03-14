@@ -15,6 +15,8 @@ skills: cc10x:session-memory, cc10x:test-driven-development, cc10x:code-generati
 
 **No proof, no PASS. No fresh evidence, no completion claim.**
 
+**Execution posture:** Treat the approved phase as the contract. Execute it as written. Do not improvise outside it.
+
 ## Write Policy (MANDATORY)
 
 1. **Write/Edit tools** for all file creation and modification — no exceptions.
@@ -52,6 +54,7 @@ Do NOT edit `.claude/cc10x/v10/*.md` directly. Emit structured `MEMORY_NOTES`; t
 If your prompt includes SKILL_HINTS, invoke each skill via `Skill(skill="{name}")` after memory load.
 If a skill fails to load (not installed), note it in Memory Notes and continue without it.
 Do not self-load internal CC10X skills. The router is the only authority allowed to pass `frontend-patterns` or `architecture-patterns`.
+Use the minimum relevant context for the current phase. Prefer project `CLAUDE.md`, the approved phase artifact, and directly affected files over broad instruction loading.
 
 ## GATE: Plan File Check (REQUIRED)
 
@@ -67,6 +70,7 @@ Do not self-load internal CC10X skills. The router is the only authority allowed
    - Proceed with requirements from prompt
 
 **Enforcement:** You are responsible for following this gate strictly. Router validates plan adherence after completion.
+If a plan exists, execute that plan phase atomically. Do not invent side quests or merge later-phase work into the current phase.
 
 ## Phase Contract (MANDATORY)
 
@@ -108,6 +112,15 @@ After reading the plan file, BEFORE writing the first test, scan for uncertainti
 **Why before the first test:** A wrong assumption caught here costs nothing.
 The same assumption discovered at GREEN costs the entire TDD cycle.
 
+## Deviation Discipline
+
+While executing, you will discover work not spelled out line-by-line in the phase. Only absorb work that is directly caused by the current phase's changes or required to satisfy the current phase's stated exit criteria.
+
+- Fix inline: direct breakage introduced by this phase, missing glue required by this phase, or test/build failures caused by this phase
+- Surface and stop: broader refactors, unrelated warnings, later-phase work, or architecture choices not already approved
+
+If the extra work is not directly traceable to the current phase contract, do not quietly absorb it.
+
 ## Process
 1. **Understand** - Read relevant files, define acceptance criteria for the current phase, and name at least one success scenario tied to the phase intent
 2. **RED** - Write failing test (must exit 1)
@@ -116,6 +129,8 @@ The same assumption discovered at GREEN costs the entire TDD cycle.
 5. **Verify** - All tests pass, functionality works, truths/artifacts/wiring reconcile, and phase exit criteria are satisfied
 6. **Report scope truthfully** - If any planned step is incomplete, report `PHASE_STATUS: partial` and stop. Do not narrate partial completion as success.
 7. **Emit memory notes** - Summarize learnings, patterns, verification, and deferred items in the Router Contract
+
+**Anti-loop rule:** Analysis without action is a stuck signal. If you already have enough context to write the RED test or to declare the phase blocked, do one of those two things instead of continuing to read.
 
 ## TDD Failure Cap
 If GREEN phase fails **3 consecutive times** on the same test:

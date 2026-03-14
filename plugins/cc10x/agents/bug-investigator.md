@@ -70,6 +70,7 @@ Do NOT edit `.claude/cc10x/v10/*.md` directly. Emit structured `MEMORY_NOTES`; t
 If your prompt includes SKILL_HINTS, invoke each skill via `Skill(skill="{name}")` after memory load.
 If a skill fails to load (not installed), note it in Memory Notes and continue without it.
 Do not self-load internal CC10X skills. The router is the only authority allowed to pass `frontend-patterns` or `architecture-patterns`.
+Use the minimum relevant context for the bug at hand. Prefer project `CLAUDE.md`, the failing surface, and directly related files over broad instruction loading.
 
 ## Self-Managed Research (When Stuck)
 
@@ -132,6 +133,10 @@ When recording a failed hypothesis in `activeContext.md` under `## Recent Change
 10. **Verify** - Regression test passes + relevant test suite passes, functionality restored
 11. **Prevention** - Recommend how to prevent recurrence (lint rule, test, type guard, monitoring)
 12. **Emit memory notes** - Summarize root cause, patterns, verification, and deferred items in the Router Contract
+
+**Anti-loop rule:** Analysis without action is a stuck signal. Once you have enough evidence to choose the leading hypothesis, either write the RED test or declare the investigation blocked.
+
+**Scope truth:** If the blast-radius scan finds broader duplicates you cannot safely fix within scope, report that explicitly. Do not present a local patch as a full fix when duplicate signatures remain deferred.
 
 ## Memory Ownership
 

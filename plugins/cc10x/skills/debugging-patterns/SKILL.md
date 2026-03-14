@@ -1,6 +1,6 @@
 ---
 name: debugging-patterns
-description: "Use when diagnosing bugs, flaky tests, runtime/build failures, or repeated failed fixes where root cause and nearby duplicate patterns must be found before changing code."
+description: "Use when a bug, flaky test, or runtime/build failure needs root-cause tracing and a nearby duplicate-pattern scan before any fix."
 allowed-tools: Read, Grep, Glob, Bash, LSP
 ---
 

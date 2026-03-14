@@ -1,15 +1,15 @@
 name: plan-review-gate
-description: "Use after saving a non-trivial plan or decision RFC when feasibility, completeness, and alignment must block execution unless they pass."
+description: "Use after saving a non-trivial plan or decision RFC when a fail-closed feasibility, completeness, and alignment review must block execution."
 allowed-tools: Read, Bash, Grep, Glob
 ---
 
 # Spec Review Gate
 
-**Core principle:** No execution plan or decision RFC reaches the user without surviving 3 blocking checks.
+**Core principle:** No execution plan or decision RFC reaches the user without surviving adversarial scrutiny. No leniency. "Close enough" is FAIL.
 
-**How it works:** This skill runs inline in the calling agent's context (no subagents). The calling LLM reads the saved artifact and checks it against 3 criteria using its Read/Grep/Glob tools. The value is fail-closed blocking and adversarial framing, not fake reviewer independence.
+**How it works:** This skill runs inline in the calling agent's context (no subagents). The calling LLM acts as an independent auditor, reads the saved artifact, and checks it against 3 criteria using Read/Grep/Glob. The value is fail-closed blocking and adversarial framing, not fake reviewer independence.
 
-**Important limit:** This gate is stronger wording plus hard blocking, not true reviewer isolation. If the system later supports an actually separate reviewer, that should sit above this gate rather than being faked here.
+**Important limit:** This gate is stronger wording plus hard blocking, not true reviewer isolation. Keep the auditor posture, but do not pretend fresh runtime separation exists when it does not.
 
 ## When to Skip
 
@@ -65,6 +65,7 @@ Read the user's original request and compare against the plan:
 5. Collect findings:
    - Zero BLOCKING issues across all 3 checks → SPEC_GATE_PASS
    - Any BLOCKING issue → SPEC_GATE_FAIL with specifics
+   - There is no "APPROVED WITH COMMENTS"
 6. IF SPEC_GATE_FAIL and iteration < 3:
    a. Present blocking issues clearly
    b. Revise the plan to address them
@@ -111,7 +112,7 @@ Read the user's original request and compare against the plan:
 [List by check with evidence]
 ```
 
-→ Do NOT question the user from this skill. Return the blocking issues clearly so the planner can emit `STATUS: NEEDS_CLARIFICATION` and let the router handle user interaction.
+→ Do NOT question the user from this skill. Return blocking issues only. No suggestions, no softening, no collaborative rewrite advice. The planner decides how to revise or escalate.
 
 ## Anti-Patterns
 
@@ -121,3 +122,4 @@ Read the user's original request and compare against the plan:
 | Treating SPEC_GATE_FAIL as advisory | The gate must block PLAN_CREATED / DECISION_RFC_CREATED |
 | Skipping for "simple" plans | Read the skip criteria — only truly trivial plans qualify |
 | Accepting SPEC_GATE_PASS without evidence | Each check needs cited proof, not "looks fine" or "seems reasonable" |
+| Reporting suggestions instead of verdicts | This gate is an auditor, not a collaborator |

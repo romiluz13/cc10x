@@ -1,6 +1,6 @@
 ---
 name: verification-before-completion
-description: "Use when about to claim work is complete, fixed, or passing, or before commit, PR, or task completion when fresh verification evidence is required."
+description: "Use when about to claim work is complete, fixed, or passing, or before commit, PR, or task completion, and fresh verification evidence must exist first."
 allowed-tools: Read, Grep, Glob, Bash, LSP
 ---
 
@@ -117,7 +117,7 @@ If you find yourself:
 
 ## Why This Matters
 
-False completion destroys trust, ships broken code, and creates rework. Verification exists to stop that.
+False completion destroys trust, ships broken code, and creates rework. Verification exists to stop that. No fresh evidence, no completion claim.
 
 ## When To Apply
 
@@ -247,9 +247,9 @@ EVIDENCE:
 After standard verification passes, apply this additional check:
 
 ### Three Questions
-1. **Truths:** What must be OBSERVABLE? (user-facing behaviors)
-2. **Artifacts:** What must EXIST? (files, endpoints, tests)
-3. **Wiring:** What must be CONNECTED? (component → API → database)
+1. **Truths:** What must be TRUE? (observable user or business outcomes)
+2. **Artifacts:** What must EXIST? (files, endpoints, tests, records)
+3. **Wiring:** What must be WIRED? (component → API → database)
 
 ### Why This Catches Stubs
 A component can:

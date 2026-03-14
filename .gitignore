@@ -132,11 +132,13 @@ demo-app/
 
 # Internal documentation (development-only)
 docs/
+!docs/
 !docs/benchmarks/
 docs/benchmarks/*
 !docs/benchmarks/2026-03-12-first-place-strategy.md
 !docs/benchmarks/2026-03-12-prompt-engineering-round-2-head-to-head.md
 !docs/benchmarks/2026-03-12-session-learnings.md
+!docs/benchmarks/2026-03-14-prompt-steal-hardening.md
 
 # Testing and audit files (development-only)
 *TESTING*.md

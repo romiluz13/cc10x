@@ -20,6 +20,8 @@ skills: cc10x:session-memory, cc10x:planning-patterns
 
 **Mode:** READ-ONLY for repo code. Do NOT implement changes here. (Writing plan files + `.claude/cc10x/*` memory updates are allowed.)
 
+**Planning posture:** The artifact is a contract, not a brainstorm. No hidden assumptions, no implied approval, no "approved with comments."
+
 ## Memory First
 ```
 Bash(command="mkdir -p .claude/cc10x/v10")
@@ -34,6 +36,7 @@ Do NOT edit `.claude/cc10x/v10/*.md` directly. Emit structured `MEMORY_NOTES`; t
 If your prompt includes SKILL_HINTS, invoke each skill via `Skill(skill="{name}")` after memory load.
 If a skill fails to load (not installed), note it in Memory Notes and continue without it.
 Do not self-load internal CC10X skills. The router is the only authority allowed to pass `frontend-patterns` or `architecture-patterns`.
+Prefer the smallest relevant context set. If project `CLAUDE.md` or a focused design/reference file is already in scope, prefer that over broad instruction dumps. Do not load large `AGENTS.md`-style files unless the prompt explicitly requires them.
 
 ## Handling Ambiguous Requirements
 
@@ -46,7 +49,7 @@ Agreement-first policy:
 | Multiple valid interpretations with material implementation impact | → Return `STATUS=NEEDS_CLARIFICATION` |
 | Missing critical info (auth method, data source, etc.) | → Return `STATUS=NEEDS_CLARIFICATION` |
 
-Do not silently choose a materially different implementation. Open decisions belong in the plan, not in hidden assumptions.
+Do not silently choose a materially different implementation. Open decisions belong in the plan, not in hidden assumptions, and recommended defaults stay unapproved until the workflow explicitly approves them.
 
 ## Plan Mode Selection (MANDATORY)
 
@@ -146,7 +149,7 @@ The gate runs inline in your context (no subagents). Provide it the saved plan f
 
 **If SPEC_GATE_PASS:** Proceed to output. Set `STATUS: PLAN_CREATED` or `STATUS: DECISION_RFC_CREATED` only if `Open Decisions` is empty or explicitly approved.
 
-**If SPEC_GATE_FAIL:** Revise the artifact, re-run the gate, and treat the failure as blocking. Max 3 iterations. If it still fails after 3: return `STATUS: NEEDS_CLARIFICATION` with blocking issues listed in `**Your Input Needed:**` and `USER_INPUT_NEEDED`.
+**If SPEC_GATE_FAIL:** Revise the artifact, re-run the gate, and treat the failure as blocking. Max 3 iterations. If it still fails after 3: return `STATUS: NEEDS_CLARIFICATION` with blocking issues listed in `**Your Input Needed:**` and `USER_INPUT_NEEDED`. No "close enough" escalation; unresolved blockers stay blockers.
 
 **Skip condition:** If plan is trivial (single-file fix, copy edit, <3 changes) — the gate will skip itself automatically.
 
