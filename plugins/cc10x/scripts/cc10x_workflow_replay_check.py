@@ -8,12 +8,16 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[3]
 PLUGIN_ROOT = Path(__file__).resolve().parents[1]
 FIXTURES_DIR = PLUGIN_ROOT / "tests" / "fixtures"
+PLANNER_PROMPT = PLUGIN_ROOT / "agents" / "planner.md"
+PLAN_REVIEW_GATE = PLUGIN_ROOT / "skills" / "plan-review-gate" / "SKILL.md"
 
 REQUIRED_FIXTURES = (
     "plan-direct.json",
     "plan-decision-rfc.json",
     "plan-full.json",
     "plan-clarification.json",
+    "plan-repo-alignment.json",
+    "plan-code-contradiction.json",
     "build-happy-path.json",
     "build-checkpoint-decision.json",
     "build-phase-blocked.json",
@@ -70,6 +74,12 @@ def load_fixture(name: str) -> dict[str, Any]:
     if not path.exists():
         fail(f"missing fixture: {name}")
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def load_text(path: Path) -> str:
+    if not path.exists():
+        fail(f"missing file: {path}")
+    return path.read_text(encoding="utf-8")
 
 
 def require(condition: bool, message: str) -> None:
@@ -335,6 +345,74 @@ def check_plan_clarification(fixture: dict[str, Any]) -> None:
     )
 
 
+def check_plan_repo_alignment(fixture: dict[str, Any]) -> None:
+    planner = fixture["agent_outputs"]["planner_contract"]
+    require(
+        planner["STATUS"] == "PLAN_CREATED",
+        "plan-repo-alignment: planner should create plan",
+    )
+    require(
+        planner["PLAN_MODE"] == "execution_plan",
+        "plan-repo-alignment: plan mode must be execution_plan",
+    )
+    require(
+        planner["GATE_PASSED"] is True,
+        "plan-repo-alignment: gate must pass",
+    )
+    require(
+        bool(planner["ASSUMPTIONS"]),
+        "plan-repo-alignment: assumptions must be explicit",
+    )
+    planner_text = load_text(PLANNER_PROMPT)
+    gate_text = load_text(PLAN_REVIEW_GATE)
+    for marker in fixture["expected"]["planner_markers"]:
+        require(
+            marker in planner_text,
+            f"plan-repo-alignment: planner marker missing '{marker}'",
+        )
+    for marker in fixture["expected"]["gate_markers"]:
+        require(
+            marker in gate_text,
+            f"plan-repo-alignment: gate marker missing '{marker}'",
+        )
+
+
+def check_plan_code_contradiction(fixture: dict[str, Any]) -> None:
+    planner = fixture["agent_outputs"]["planner_contract"]
+    require(
+        planner["STATUS"] == "NEEDS_CLARIFICATION",
+        "plan-code-contradiction: planner must block on contradiction",
+    )
+    require(
+        planner["BLOCKING"] is True,
+        "plan-code-contradiction: contradiction must block",
+    )
+    require(
+        bool(planner["REMEDIATION_REASON"]),
+        "plan-code-contradiction: missing remediation reason",
+    )
+    require(
+        fixture["expected"]["next_action"] == "ask_user",
+        "plan-code-contradiction: wrong next action",
+    )
+    require(
+        fixture["expected"]["pending_gate"] == "clarification",
+        "plan-code-contradiction: wrong pending gate",
+    )
+    planner_text = load_text(PLANNER_PROMPT)
+    gate_text = load_text(PLAN_REVIEW_GATE)
+    for marker in fixture["expected"]["planner_markers"]:
+        require(
+            marker in planner_text,
+            f"plan-code-contradiction: planner marker missing '{marker}'",
+        )
+    for marker in fixture["expected"]["gate_markers"]:
+        require(
+            marker in gate_text,
+            f"plan-code-contradiction: gate marker missing '{marker}'",
+        )
+
+
 def check_build_happy_path(fixture: dict[str, Any]) -> None:
     validate_builder_contract(
         "build-happy-path", fixture["agent_outputs"]["builder_contract"]
@@ -539,6 +617,8 @@ CHECKS = {
     "plan-decision-rfc.json": check_plan_decision_rfc,
     "plan-full.json": check_plan_full,
     "plan-clarification.json": check_plan_clarification,
+    "plan-repo-alignment.json": check_plan_repo_alignment,
+    "plan-code-contradiction.json": check_plan_code_contradiction,
     "build-happy-path.json": check_build_happy_path,
     "build-checkpoint-decision.json": check_build_checkpoint_decision,
     "build-phase-blocked.json": check_build_phase_blocked,

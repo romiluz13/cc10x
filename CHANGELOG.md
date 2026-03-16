@@ -1,5 +1,22 @@
 # Changelog
 
+## [10.1.3] - 2026-03-16
+
+### Planning recovery: code-grounded plans and repo-aware plan review
+
+#### Changed
+- Reworked `planner` so non-trivial plans must compare the proposed approach against the real codebase before finalization, with explicit `Codebase Reality Check`, `Plan-vs-Code Gaps`, `Assumption Ledger`, and `Phase Dependency Map` sections.
+- Tightened `plan-review-gate` so it fails repo-wrong plans, not just structurally weak ones, including missing touched surfaces, hidden architecture contradictions, and wrong execution order.
+- Updated prompt-safety docs so planning now has an explicit prompt invariant around repo-grounded alignment, not only open-decision honesty.
+
+#### Added
+- Planning-specific replay fixtures for repo-alignment preservation and contradiction-driven clarification.
+- A planning recovery benchmark note documenting what was borrowed from `v7`, `metaswarm`, and `get-shit-done`.
+
+#### Fixed
+- Release hygiene now tracks the planning recovery benchmark note required by the harness audit.
+- README, marketplace metadata, plugin manifest, and changelog are aligned on `10.1.3`.
+
 ## [10.1.2] - 2026-03-14
 
 ### Trust-preserving latency instrumentation

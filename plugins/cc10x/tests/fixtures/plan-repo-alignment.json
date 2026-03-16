@@ -1,0 +1,73 @@
+{
+  "id": "plan-repo-alignment",
+  "workflow_type": "PLAN",
+  "starting_artifact": {
+    "workflow_uuid": "wf-20260316T101500Z-plan-repo-alignment",
+    "workflow_id": "wf-20260316T101500Z-plan-repo-alignment",
+    "workflow_type": "PLAN",
+    "state_root": ".claude/cc10x/v10",
+    "plan_mode": "execution_plan",
+    "verification_rigor": "standard",
+    "proof_status": "gaps_found",
+    "traceability": {"requirements": [], "phases": [], "verification": [], "remediation": []},
+    "phase_cursor": null,
+    "task_ids": {},
+    "results": {},
+    "intent": {"goal": "Plan a billing dashboard enhancement against an existing repo"},
+    "evidence": {},
+    "quality": {"convergence_state": "pending"},
+    "status_history": [],
+    "remediation_history": []
+  },
+  "relevant_tasks": {},
+  "agent_outputs": {
+    "planner_contract": {
+      "STATUS": "PLAN_CREATED",
+      "PLAN_MODE": "execution_plan",
+      "VERIFICATION_RIGOR": "standard",
+      "PLAN_FILE": "docs/plans/2026-03-16-billing-dashboard-plan.md",
+      "GATE_PASSED": true,
+      "OPEN_DECISIONS": [],
+      "DIFFERENCES_FROM_AGREEMENT": [],
+      "ALTERNATIVES": [],
+      "DRAWBACKS": [],
+      "PROVABLE_PROPERTIES": [],
+      "ASSUMPTIONS": [
+        "Existing billing summaries are rendered in a shared dashboard shell already present in the repo"
+      ],
+      "DECISIONS": [
+        "Reuse the current dashboard shell instead of introducing a new route family"
+      ],
+      "SCENARIOS": [
+        {
+          "name": "Plan is grounded in current billing surfaces",
+          "given": "existing billing widgets and layout code",
+          "when": "the plan is finalized",
+          "then": "the plan names real surfaces, gaps, and execution order",
+          "command": "plan",
+          "expected": "repo-grounded execution plan",
+          "actual": "repo-grounded execution plan",
+          "exit_code": 0,
+          "status": "PASS"
+        }
+      ]
+    }
+  },
+  "expected": {
+    "next_action": "create_build_workflow",
+    "planner_markers": [
+      "Codebase Reality Check",
+      "Plan-vs-Code Gaps",
+      "Assumption Ledger",
+      "Phase Dependency Map"
+    ],
+    "gate_markers": [
+      "Codebase reality check is present",
+      "missing touched surfaces or integration points",
+      "invented or unverified file/module assumptions"
+    ],
+    "artifact_delta": {
+      "plan_file": "docs/plans/2026-03-16-billing-dashboard-plan.md"
+    }
+  }
+}

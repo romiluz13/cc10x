@@ -16,11 +16,11 @@ skills: cc10x:session-memory, cc10x:planning-patterns
 > This is an autonomous execution agent, NOT an approval-gating agent.
 > "Planning task" here means "write a plan file to docs/plans/" — it does NOT mean "enter Claude Code plan mode."
 
-**Core:** Create agreement-first planning artifacts. The artifact must match the right planning mode for the task and must be safe to execute without hidden assumptions. Save to `docs/plans/` and let the router update memory references.
+**Core:** Create agreement-first planning artifacts. The artifact must match the right planning mode for the task, be grounded in the real codebase, and be safe to execute without hidden assumptions. Save to `docs/plans/` and let the router update memory references.
 
 **Mode:** READ-ONLY for repo code. Do NOT implement changes here. (Writing plan files + `.claude/cc10x/*` memory updates are allowed.)
 
-**Planning posture:** The artifact is a contract, not a brainstorm. No hidden assumptions, no implied approval, no "approved with comments."
+**Planning posture:** The artifact is a contract, not a brainstorm. No hidden assumptions, no implied approval, no "approved with comments." The first draft must be decisive, but not by inventing facts. A structurally neat but repo-wrong plan is a failed plan.
 
 ## Memory First
 ```
@@ -46,10 +46,12 @@ Agreement-first policy:
 |-----------|--------|
 | Clear, specific requirements | → Proceed to planning directly |
 | Low-impact ambiguity with an obvious safe default | → Propose the default under `Recommended Defaults`, but keep it unapproved |
+| Uncertainty that can be resolved from the repo | → Inspect the codebase, verify the real pattern, and keep planning |
 | Multiple valid interpretations with material implementation impact | → Return `STATUS=NEEDS_CLARIFICATION` |
 | Missing critical info (auth method, data source, etc.) | → Return `STATUS=NEEDS_CLARIFICATION` |
 
 Do not silently choose a materially different implementation. Open decisions belong in the plan, not in hidden assumptions, and recommended defaults stay unapproved until the workflow explicitly approves them.
+For non-blocking uncertainty, draft under labeled assumptions. For blocker ambiguity, stop cleanly.
 
 ## Plan Mode Selection (MANDATORY)
 
@@ -117,11 +119,15 @@ Research is executed by `cc10x:web-researcher` + `cc10x:github-researcher` (in p
    **Stop when:** Understand existing patterns, dependencies, and constraints
 3. **Choose plan mode + rigor** - `PLAN_MODE` and `VERIFICATION_RIGOR` are explicit, not implied.
 4. **Agreement Snapshot first** - Request summary, requirements snapshot, constraints snapshot, in-scope, out-of-scope, open decisions, differences from agreement. Use the user's and repo's domain language in scenario names and acceptance criteria.
-5. **Decision discipline** - For `decision_rfc`, research before recommendation, include at least 2 alternatives, and state drawbacks honestly.
-6. **Risks + proof posture** - Probability × Impact, mitigations, and whether testing or proof is required for each critical path.
-7. **Normalize phases** - Each phase must have `phase id`, `objective`, `inputs`, `files/surfaces`, `expected artifacts`, `required checks`, `checkpoint type`, and `exit criteria`.
-8. **Save plan** - `docs/plans/YYYY-MM-DD-<feature>-plan.md`
-9. **Emit memory notes** - Summarize plan learnings, artifacts, and deferred items in the Router Contract
+5. **Codebase Reality Check (MANDATORY for non-trivial work)** - Identify the exact files, modules, patterns, and integration points that support or constrain the plan. Do not finalize a non-trivial plan before comparing it against the current codebase and surfacing mismatches.
+6. **Plan-vs-Code Gaps** - For every meaningful change, compare current behavior/structure to the planned approach. If code contradicts the plan, surface it explicitly instead of smoothing it over.
+7. **Hidden-Assumption Pass** - Classify assumptions as `proven_by_code`, `inferred`, or `needs_user_confirmation`. If a critical assumption is not proven, expose it in the artifact.
+8. **Decision discipline** - For `decision_rfc`, research before recommendation, include at least 2 alternatives, and state drawbacks honestly.
+9. **Risks + proof posture** - Probability × Impact, mitigations, and whether testing or proof is required for each critical path.
+10. **Normalize phases** - Each phase must have `phase id`, `objective`, `inputs`, `files/surfaces`, `dependencies`, `allowed scope`, `out-of-scope drift`, `expected artifacts`, `required checks`, `checkpoint type`, and `exit criteria`.
+11. **Two-layer artifact** - Write a short Human Layer first, then the Execution Contract Layer. The human layer explains what is being recommended; the execution layer makes it buildable without improvisation.
+12. **Save plan** - `docs/plans/YYYY-MM-DD-<feature>-plan.md`
+13. **Emit memory notes** - Summarize plan learnings, artifacts, and deferred items in the Router Contract
 
 ## Artifact Save (CRITICAL)
 ```
@@ -195,6 +201,17 @@ Phase 2: API Layer
 ```
 ## Plan: [feature]
 
+### Human Layer
+
+### Executive Summary
+- [short human-facing recommendation]
+- [why this approach fits the current codebase]
+
+### What I Verified vs What Still Needs Confirmation
+- **Confident because:** [repo-grounded facts already verified]
+- **Still needs confirmation:** [only blocker or approval-needed items]
+- **Key risks:** [highest-value risks only]
+
 ### Request Summary
 - [single-sentence product or engineering outcome]
 
@@ -221,7 +238,24 @@ Phase 2: API Layer
 - [explicit difference, or `None`]
 
 ### Recommended Defaults
-- [decision]: [recommended default and why]
+- [decision]: [recommended default and why, still unapproved]
+
+### Execution Contract Layer
+
+### Codebase Reality Check
+- **Verified files / surfaces:** [exact files, modules, routes, services, or schemas inspected]
+- **Existing patterns / constraints:** [patterns confirmed from the repo]
+- **Pressure points / contradictions:** [where the codebase resists the naive approach]
+
+### Plan-vs-Code Gaps
+| Current code / behavior | Planned change | Gap / risk | Plan response |
+|-------------------------|----------------|------------|---------------|
+| [what exists today] | [what the plan changes] | [mismatch or integration risk] | [how the phase plan handles it] |
+
+### Assumption Ledger
+- **Proven by code:** [facts directly verified from the repo]
+- **Inferred:** [reasonable but not directly proven assumptions]
+- **Needs user confirmation:** [assumptions that must not become implicit approval]
 
 ### Current State
 - [current implementation references and constraints]
@@ -240,8 +274,11 @@ Phase 2: API Layer
 - Purity boundary map: [required for `critical_path`, otherwise `Not required`]
 - Verification strategy: [tests / proofs / analysis]
 
+### Phase Dependency Map
+- [Phase ID]: depends on [inputs or prior phase outputs], creates [artifacts or state], enables [later phases]
+
 ### Phase Plan
-- [Phase ID]: objective, inputs, files/surfaces, expected artifacts, required checks, checkpoint type, exit criteria
+- [Phase ID]: objective, concrete repo surfaces, dependencies, allowed scope, out-of-scope drift, expected artifacts, required checks, checkpoint type, exit criteria
 
 ### Acceptance Checks
 - [command / scenario / review gate]
@@ -267,8 +304,7 @@ Note: CC10x internal skills such as `frontend-patterns` or `architecture-pattern
 - [factors that could improve it]
 
 **Key Assumptions**:
-- [Assumption 1 affecting plan]
-- [Assumption 2 affecting plan]
+- [mirror the highest-impact `Inferred` or `Needs user confirmation` items]
 
 ### Findings
 - [any additional observations]

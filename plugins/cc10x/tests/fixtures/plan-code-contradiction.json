@@ -1,0 +1,52 @@
+{
+  "id": "plan-code-contradiction",
+  "workflow_type": "PLAN",
+  "starting_artifact": {
+    "workflow_uuid": "wf-20260316T102000Z-plan-code-contradiction",
+    "workflow_id": "wf-20260316T102000Z-plan-code-contradiction",
+    "workflow_type": "PLAN",
+    "state_root": ".claude/cc10x/v10",
+    "plan_mode": "execution_plan",
+    "verification_rigor": "standard",
+    "proof_status": "gaps_found",
+    "traceability": {"requirements": [], "phases": [], "verification": [], "remediation": []},
+    "phase_cursor": null,
+    "task_ids": {},
+    "results": {},
+    "intent": {"goal": "Plan a search rewrite where the existing architecture contradicts the naive approach"},
+    "evidence": {},
+    "quality": {"convergence_state": "pending"},
+    "status_history": [],
+    "remediation_history": []
+  },
+  "relevant_tasks": {},
+  "agent_outputs": {
+    "planner_contract": {
+      "STATUS": "NEEDS_CLARIFICATION",
+      "PLAN_MODE": "execution_plan",
+      "VERIFICATION_RIGOR": "standard",
+      "BLOCKING": true,
+      "REMEDIATION_REASON": "Existing repo wiring contradicts the proposed rewrite boundary; user approval is required before planning can finalize.",
+      "USER_INPUT_NEEDED": [
+        "Should the plan preserve the existing shared search service boundary or replace it with a new cross-app abstraction?"
+      ]
+    }
+  },
+  "expected": {
+    "next_action": "ask_user",
+    "pending_gate": "clarification",
+    "planner_markers": [
+      "Do not finalize a non-trivial plan before comparing it against the current codebase",
+      "Codebase Reality Check",
+      "Assumption Ledger"
+    ],
+    "gate_markers": [
+      "A structurally neat but repo-wrong plan is FAIL.",
+      "wrong execution order or missing prerequisites",
+      "contradictions with existing architecture/patterns"
+    ],
+    "artifact_delta": {
+      "quality": {"convergence_state": "needs_iteration"}
+    }
+  }
+}

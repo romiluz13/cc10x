@@ -1,6 +1,6 @@
 # CC10X Prompt Behavioral Invariant Registry
 
-> **Status note:** This registry is aligned to the live prompt stack in `plugins/cc10x/agents/` and `plugins/cc10x/skills/` as of 2026-03-14.
+> **Status note:** This registry is aligned to the live prompt stack in `plugins/cc10x/agents/` and `plugins/cc10x/skills/` as of 2026-03-16.
 
 ## Purpose
 
@@ -82,6 +82,14 @@ Validated against the live prompt surface:
 **Wording drift that breaks it:** Removing truths/artifacts/wiring or collapsing them into generic “tests passed.”
 **Safe to weaken:** Never.
 **Safe to strengthen:** Yes.
+
+### PINV-009: Non-trivial plans must be grounded in repo reality
+**Covers:** `plugins/cc10x/agents/planner.md`, `plugins/cc10x/skills/plan-review-gate/SKILL.md`
+**Enforces:** Non-trivial plans expose a codebase reality check, plan-vs-code gaps, an assumption ledger, and phase dependencies before they can pass review.
+**Failure prevented:** Plans that look rigorous on paper but ignore the actual codebase and force the user into repeated “compare it to the code again” loops.
+**Wording drift that breaks it:** Removing explicit repo-comparison language, hiding contradictions behind summary prose, or collapsing assumptions back into confident narrative text.
+**Safe to weaken:** Never.
+**Safe to strengthen:** Yes, if it remains inside planning artifacts and review wording only.
 
 ## Change Policy
 

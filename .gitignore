@@ -139,6 +139,7 @@ docs/benchmarks/*
 !docs/benchmarks/2026-03-12-prompt-engineering-round-2-head-to-head.md
 !docs/benchmarks/2026-03-12-session-learnings.md
 !docs/benchmarks/2026-03-14-prompt-steal-hardening.md
+!docs/benchmarks/2026-03-16-planning-recovery.md
 !docs/prompt-change-checklist.md
 !docs/prompt-invariants.md
 !docs/prompt-surface-inventory.md

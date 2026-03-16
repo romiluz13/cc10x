@@ -2,7 +2,7 @@
 
 ### Router-Owned Claude Code Harness
 
-**Current version:** 10.1.2
+**Current version:** 10.1.3
 
 **Recommended: Create `~/.claude/CLAUDE.md` (global) so the router is always active across all projects.**
 
@@ -579,6 +579,8 @@ I'll help you build a task tracker! Let me start...
 
 | Version | Highlights |
 |---------|------------|
+| **v10.1.3** | Planning recovery: code-grounded plans, explicit plan-vs-code gap surfacing, stronger repo-aware plan review, and planning-specific replay coverage |
+| **v10.1.2** | Trust-preserving latency instrumentation: verifier workload telemetry, phase-exit vs extended-audit classification, no proof-gating change |
 | **v10.1.1** | Prompt-only hardening: sharper anti-false-completion wording, better trigger/description hygiene, reduced prompt dilution, no orchestration/runtime changes |
 | **v10.1.0** | Competition-grade release: decision-grade planning, adversarial plan gates, proof-oriented BUILD, harsher VERIFY, and benchmark-backed prompt/harness hardening |
 | **v10.0.0** | Trust-first recovery: agreement-first planning, phase-gated BUILD, stable workflow UUIDs, versioned v10 state, advisory internal skills |

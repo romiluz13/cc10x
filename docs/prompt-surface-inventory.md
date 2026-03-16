@@ -9,9 +9,9 @@ This inventory defines which prompt surfaces are allowed to affect trust-critica
 ### planner
 - Path: `plugins/cc10x/agents/planner.md`
 - Role: agreement-first planning artifact creation
-- Allowed edits: wording clarity, contract wording, examples, output guidance, context-loading guidance
+- Allowed edits: wording clarity, contract wording, output sections, codebase-reality checks, examples, context-loading guidance
 - Forbidden edits: anything that changes routing, approval semantics, plan-mode meaning, or build-start conditions
-- Comparison references: `metaswarm` plan review, `get-shit-done` planning/execution contract
+- Comparison references: `metaswarm` plan review, `get-shit-done` planning/execution contract, `cc10x-v7` planner usability
 - Review requirement: audit + replay + manual semantic review
 
 ### component-builder

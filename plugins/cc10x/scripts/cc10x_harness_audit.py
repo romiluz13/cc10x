@@ -27,11 +27,16 @@ FIRST_PLACE_STRATEGY = (
 PROMPT_STEAL_NOTE = (
     ROOT / "docs" / "benchmarks" / "2026-03-14-prompt-steal-hardening.md"
 )
+PLANNING_RECOVERY_NOTE = (
+    ROOT / "docs" / "benchmarks" / "2026-03-16-planning-recovery.md"
+)
 REQUIRED_FIXTURES = (
     "plan-direct.json",
     "plan-decision-rfc.json",
     "plan-full.json",
     "plan-clarification.json",
+    "plan-repo-alignment.json",
+    "plan-code-contradiction.json",
     "build-happy-path.json",
     "build-checkpoint-decision.json",
     "build-phase-blocked.json",
@@ -133,6 +138,8 @@ def main() -> int:
         errors.append("missing prompt change checklist")
     if not PROMPT_STEAL_NOTE.exists():
         errors.append("missing latest prompt benchmark note")
+    if not PLANNING_RECOVERY_NOTE.exists():
+        errors.append("missing planning recovery benchmark note")
     if not VERIFIER_LATENCY_MODEL.exists():
         errors.append("missing verifier latency model")
     if not LATENCY_REDUCTION_NOTE.exists():
@@ -272,6 +279,12 @@ def main() -> int:
 
     prompt_phrase_guards = {
         "planner": [
+            "The first draft must be decisive, but not by inventing facts",
+            "Do not finalize a non-trivial plan before comparing it against the current codebase",
+            "Codebase Reality Check",
+            "Plan-vs-Code Gaps",
+            "Assumption Ledger",
+            "Phase Dependency Map",
             "Open decisions belong in the plan, not in hidden assumptions",
             "recommended defaults stay unapproved",
             "Differences From Agreement",
@@ -293,6 +306,9 @@ def main() -> int:
         "plan-review-gate": [
             'No leniency. "Close enough" is FAIL.',
             'There is no "APPROVED WITH COMMENTS"',
+            "A structurally neat but repo-wrong plan is FAIL.",
+            "invented or unverified file/module assumptions",
+            "missing touched surfaces or integration points",
             "This gate is an auditor, not a collaborator",
         ],
     }
