@@ -290,6 +290,15 @@ You MUST complete each phase before proceeding to the next.
    - Keep tracing up until you find the source
    - Fix at source, not at symptom
 
+6. **Trace configuration to its consumer (third-party SDKs, env, import time)**
+
+   **BEFORE proposing replacements, migrations, or large refactors:**
+
+   - **Option Zero:** Can this be fixed with **only** a configuration or environment change? State and test that hypothesis *before* you propose code rewrites. Many integration bugs are wiring problems, not architecture problems.
+   - When an env var is validated in application config but **never passed into** library constructors, ask **who reads it?** Third-party SDKs often read `process.env` (or language equivalents) at **module import / load time**—not through your app's DI or config objects. The fix may be setting or correcting env, not changing application code.
+   - **Before** proposing to replace a third-party SDK, spend a short cycle on **how** it is configured: package README, official docs, or the installed source under `node_modules` (or vendor path). The failure may be a wrong endpoint or flag, not a need for a different library.
+   - When code comments describe **import-time** behavior or env-var dependencies, treat them as **investigation breadcrumbs**, not decoration—follow them to the real consumer.
+
 ### Phase 2: Pattern Analysis
 
 **Find the pattern before fixing:**
@@ -486,6 +495,7 @@ If you catch yourself thinking:
 - "Pattern says X but I'll adapt it differently"
 - "Here are the main problems: [lists fixes without investigation]"
 - Proposing solutions before tracing data flow
+- Proposing SDK replacement or a large migration before ruling out a **config-only** fix (Option Zero) and tracing **who** reads env / config at import time
 - **"One more fix attempt" (when already tried 2+)**
 - **Each fix reveals new problem in different place**
 
