@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 import json
 import os
+import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, List, Tuple
 
 STATE_VERSION = "v10"
 
@@ -158,3 +159,36 @@ def session_context(message: str) -> None:
             }
         }
     )
+
+
+def parse_markdown_sections(text: str) -> Dict[str, str]:
+    """Split markdown on ``## `` lines into {section_name: content_below}."""
+    sections: Dict[str, str] = {}
+    current: str | None = None
+    lines: List[str] = []
+    for raw_line in text.splitlines():
+        if raw_line.startswith("## "):
+            if current is not None:
+                sections[current] = "\n".join(lines)
+            current = raw_line[3:].strip()
+            lines = []
+        else:
+            lines.append(raw_line)
+    if current is not None:
+        sections[current] = "\n".join(lines)
+    return sections
+
+
+def extract_bullets(section_content: str) -> List[str]:
+    """Return all ``- `` prefixed lines from a section body."""
+    return [
+        line for line in section_content.splitlines() if line.lstrip().startswith("- ")
+    ]
+
+
+def normalize_bullet(line: str) -> str:
+    """Strip ``- `` prefix, collapse whitespace, and lowercase for dedup."""
+    text = line.lstrip()
+    if text.startswith("- "):
+        text = text[2:]
+    return re.sub(r"\s+", " ", text).strip().lower()
