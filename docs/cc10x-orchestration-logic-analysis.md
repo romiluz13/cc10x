@@ -1,6 +1,6 @@
 # CC10x Orchestration Logic Analysis
 
-> **Last synced with live router/agents:** 2026-03-07
+> **Last synced with live router/agents:** 2026-03-21
 > **Status:** IN SYNC WITH CURRENT MAIN
 > **Relationship to Bible:** The bible is the canonical specification. This document explains the practical mechanics and why the system is shaped this way.
 

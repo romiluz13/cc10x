@@ -21,7 +21,7 @@ Route using the first matching signal:
 | Priority | Signal | Keywords | Workflow | Chain |
 |----------|--------|----------|----------|-------|
 | 1 | ERROR | error, bug, fix, broken, crash, fail, debug, troubleshoot, issue | DEBUG | bug-investigator -> code-reviewer -> integration-verifier |
-| 2 | PLAN | plan, design, architect, roadmap, strategy, spec, brainstorm | PLAN | brainstorming -> planner |
+| 2 | PLAN | plan, design, architect, roadmap, strategy, spec, brainstorm | PLAN | brainstorming -> planner -> bounded fresh review loop |
 | 3 | REVIEW | review, audit, analyze, assess, "is this good" | REVIEW | code-reviewer |
 | 4 | DEFAULT | Everything else | BUILD | component-builder -> [code-reviewer || silent-failure-hunter] -> integration-verifier |
 
@@ -100,6 +100,9 @@ Artifact schema must include:
 - `evidence`
 - `telemetry`
 - `quality`
+- `planning_review_runs`
+- `planning_review_findings`
+- `planning_review_status`
 - `memory_notes`
 - `pending_gate`
 - `status_history`
@@ -150,6 +153,10 @@ Rules:
   - `scenario_coverage`
   - `research_quality`
   - `convergence_state`
+- PLAN-local fresh review tracking stores:
+  - `planning_review_runs`
+  - `planning_review_findings`
+  - `planning_review_status`
 - `telemetry` is informational only and must never drive routing decisions:
   - `task_metrics_available`
   - `workflow_wall_clock_seconds`
@@ -239,7 +246,7 @@ Every CC10X task description starts with normalized metadata lines:
 wf:{workflow_uuid}
 kind:{workflow|agent|remfix|memory|reverify|research}
 origin:{router|component-builder|bug-investigator|code-reviewer|silent-failure-hunter|integration-verifier|planner}
-phase:{build|build-implement|build-review|build-hunt|build-verify|debug|debug-investigate|debug-review|debug-verify|review|review-audit|plan|plan-create|memory-finalize|re-review|re-hunt|re-verify|re-plan|research-web|research-github}
+phase:{build|build-implement|build-review|build-hunt|build-verify|debug|debug-investigate|debug-review|debug-verify|review|review-audit|plan|plan-create|plan-review-gap|memory-finalize|re-review|re-hunt|re-verify|re-plan|research-web|research-github}
 plan:{path|N/A}
 scope:{ALL_ISSUES|CRITICAL_ONLY|N/A}
 reason:{short reason or N/A}
@@ -380,6 +387,12 @@ Router-owned interface fields:
 7. Planner must choose one `verification_rigor`:
    - `standard` by default
    - `critical_path` for security, money, state-machine, concurrency, or irreversible-migration work
+8. PLAN fresh-review loop:
+   - Non-trivial plans get one fresh `plan-gap-reviewer` pass after planner success.
+   - If blocking findings are returned, the router creates one `re-plan` task and then one final fresh-review pass.
+   - Maximum fresh-review passes: 2.
+   - Planner remains the only plan writer.
+   - The existing inline `plan-review-gate` inside planner remains the final fail-closed boundary on each planner pass.
 
 ## 6. Workflow Task Graphs
 
@@ -408,7 +421,7 @@ TaskCreate({
 ```text
 Write(
   file_path=".claude/cc10x/v10/workflows/{workflow_uuid}.json",
-  content="{\"workflow_uuid\":\"{workflow_uuid}\",\"workflow_id\":\"{workflow_uuid}\",\"workflow_type\":\"{WORKFLOW}\",\"state_root\":\".claude/cc10x/v10\",\"user_request\":\"{request}\",\"plan_file\":null,\"design_file\":null,\"research_files\":[],\"approved_decisions\":[],\"plan_mode\":null,\"verification_rigor\":\"standard\",\"proof_status\":\"gaps_found\",\"traceability\":{\"requirements\":[],\"phases\":[],\"verification\":[],\"remediation\":[]},\"intent\":{\"goal\":null,\"non_goals\":[],\"constraints\":[],\"acceptance_criteria\":[],\"open_decisions\":[]},\"normalized_phases\":[],\"phase_cursor\":null,\"capabilities\":{\"brightdata_available\":\"unknown\",\"octocode_available\":\"unknown\",\"websearch_available\":\"unknown\",\"webfetch_available\":\"unknown\"},\"research_rounds\":[],\"research_backend_history\":[],\"research_quality\":{\"web\":\"none\",\"github\":\"none\",\"overall\":\"none\"},\"task_ids\":{},\"phase_status\":{},\"results\":{\"builder\":null,\"investigator\":null,\"reviewer\":null,\"hunter\":null,\"verifier\":null,\"planner\":null,\"research\":{\"web\":null,\"github\":null,\"synthesis\":null}},\"evidence\":{\"builder\":[],\"investigator\":[],\"reviewer\":[],\"hunter\":[],\"verifier\":[]},\"telemetry\":{\"task_metrics_available\":\"unknown\",\"workflow_wall_clock_seconds\":0,\"agent_wall_clock_seconds\":{\"builder\":0,\"investigator\":0,\"reviewer\":0,\"hunter\":0,\"verifier\":0,\"planner\":0},\"loop_counts\":{\"re_review\":0,\"re_hunt\":0,\"re_verify\":0},\"verifier\":{\"phase_exit_proof_runs\":0,\"extended_audit_runs\":0,\"workload_seconds\":{\"tests\":0,\"build\":0,\"scan\":0,\"reconcile\":0,\"reasoning\":0}}},\"quality\":{\"confidence\":null,\"evidence_complete\":false,\"scenario_coverage\":0,\"research_quality\":\"none\",\"convergence_state\":\"pending\"},\"memory_notes\":[],\"pending_gate\":null,\"status_history\":[{\"event\":\"workflow_started\",\"ts\":\"{iso_timestamp}\",\"phase\":\"{build|debug|review|plan}\"}],\"remediation_history\":[],\"created_at\":\"{iso_timestamp}\",\"updated_at\":\"{iso_timestamp}\"}"
+  content="{\"workflow_uuid\":\"{workflow_uuid}\",\"workflow_id\":\"{workflow_uuid}\",\"workflow_type\":\"{WORKFLOW}\",\"state_root\":\".claude/cc10x/v10\",\"user_request\":\"{request}\",\"plan_file\":null,\"design_file\":null,\"research_files\":[],\"approved_decisions\":[],\"plan_mode\":null,\"verification_rigor\":\"standard\",\"proof_status\":\"gaps_found\",\"traceability\":{\"requirements\":[],\"phases\":[],\"verification\":[],\"remediation\":[]},\"intent\":{\"goal\":null,\"non_goals\":[],\"constraints\":[],\"acceptance_criteria\":[],\"open_decisions\":[]},\"normalized_phases\":[],\"phase_cursor\":null,\"capabilities\":{\"brightdata_available\":\"unknown\",\"octocode_available\":\"unknown\",\"websearch_available\":\"unknown\",\"webfetch_available\":\"unknown\"},\"research_rounds\":[],\"research_backend_history\":[],\"research_quality\":{\"web\":\"none\",\"github\":\"none\",\"overall\":\"none\"},\"task_ids\":{},\"phase_status\":{},\"results\":{\"builder\":null,\"investigator\":null,\"reviewer\":null,\"hunter\":null,\"verifier\":null,\"planner\":null,\"planning_reviewer\":null,\"research\":{\"web\":null,\"github\":null,\"synthesis\":null}},\"evidence\":{\"builder\":[],\"investigator\":[],\"reviewer\":[],\"hunter\":[],\"verifier\":[],\"planning_reviewer\":[]},\"telemetry\":{\"task_metrics_available\":\"unknown\",\"workflow_wall_clock_seconds\":0,\"agent_wall_clock_seconds\":{\"builder\":0,\"investigator\":0,\"reviewer\":0,\"hunter\":0,\"verifier\":0,\"planner\":0},\"loop_counts\":{\"re_review\":0,\"re_hunt\":0,\"re_verify\":0},\"verifier\":{\"phase_exit_proof_runs\":0,\"extended_audit_runs\":0,\"workload_seconds\":{\"tests\":0,\"build\":0,\"scan\":0,\"reconcile\":0,\"reasoning\":0}}},\"quality\":{\"confidence\":null,\"evidence_complete\":false,\"scenario_coverage\":0,\"research_quality\":\"none\",\"convergence_state\":\"pending\"},\"planning_review_runs\":0,\"planning_review_findings\":[],\"planning_review_status\":\"not_started\",\"memory_notes\":[],\"pending_gate\":null,\"status_history\":[{\"event\":\"workflow_started\",\"ts\":\"{iso_timestamp}\",\"phase\":\"{build|debug|review|plan}\"}],\"remediation_history\":[],\"created_at\":\"{iso_timestamp}\",\"updated_at\":\"{iso_timestamp}\"}"
 )
 Write(
   file_path=".claude/cc10x/v10/workflows/{workflow_uuid}.events.jsonl",
@@ -576,6 +589,7 @@ Research tasks are siblings, never blockers on the workflow parent. The follow-u
 | `build-hunt`, `re-hunt` | `cc10x:silent-failure-hunter` |
 | `build-verify`, `debug-verify`, `re-verify` | `cc10x:integration-verifier` |
 | `plan-create`, `re-plan` | `cc10x:planner` |
+| `plan-review-gap` | `cc10x:plan-gap-reviewer` |
 | `research-web` | `cc10x:web-researcher` |
 | `research-github` | `cc10x:github-researcher` |
 | `kind:remfix` + `origin:bug-investigator` | `cc10x:bug-investigator` |
@@ -614,6 +628,8 @@ Optional sections:
 - `## Research Files` only when at least one research file exists.
 - `## Research Quality` only when at least one research result exists.
 - `## Design File` only for planner.
+- `## Planning Review Findings` only for `re-plan`.
+- `## Repo Context Pack` only for `plan-gap-reviewer`.
 - `## Previous Agent Findings` only for integration-verifier and only after review/hunt phases.
 
 ### Deterministic skill hints
@@ -675,6 +691,7 @@ Fallback heading on line 2:
 - `## Review: Approve|Changes Requested`
 - `## Error Handling Audit: CLEAN|ISSUES_FOUND`
 - `## Verification: PASS|FAIL`
+- `## Planning Review: Pass|Findings`
 
 Verdict extraction:
 1. Try the envelope on line 1.
@@ -695,6 +712,10 @@ Read-only structured intent fields:
 - `REMEDIATION_REASON: ...`
 - `REMEDIATION_SCOPE_REQUESTED: N/A|CRITICAL_ONLY|ALL_ISSUES`
 - `REVERT_RECOMMENDED: true|false`
+- `PLANNING_REVIEW_STATUS: PASS|FINDINGS`
+- `BLOCKING_FINDINGS_COUNT: [number]`
+- `REPLAN_NEEDED: true|false`
+- `REPLAN_REASON: ...`
 
 Compatibility rule:
 - Accept legacy self-healed blocked task behavior during migration.
@@ -729,6 +750,7 @@ If the YAML block is missing or malformed:
 | silent-failure-hunter | `CLEAN` + critical issues becomes `ISSUES_FOUND` |
 | integration-verifier | `PASS` + critical issues becomes `FAIL`; scenario totals must reconcile with the scenario table and evidence array; every counted scenario must map to a concrete evidence row; every scenario row must contain non-empty `Expected` and `Actual` values |
 | planner | `PLAN_CREATED` or `DECISION_RFC_CREATED` requires non-empty `PLAN_FILE`, explicit `PLAN_MODE`, explicit `VERIFICATION_RIGOR`, `CONFIDENCE>=50`, `GATE_PASSED=true`, a non-empty `SCENARIOS` array, `OPEN_DECISIONS=[]`, and `DIFFERENCES_FROM_AGREEMENT` explicitly present. `PLAN_MODE=decision_rfc` also requires non-empty `ALTERNATIVES` and `DRAWBACKS`; `VERIFICATION_RIGOR=critical_path` requires non-empty `PROVABLE_PROPERTIES`. |
+| plan-gap-reviewer | `PASS` requires `BLOCKING_FINDINGS_COUNT=0` and `REPLAN_NEEDED=false`; `FINDINGS` requires explicit finding buckets and a non-empty `REPLAN_REASON` when blocking findings exist. |
 
 Convergence rule:
 - If evidence is incomplete, contradictory, or missing for a required pass path, do not advance the workflow.
@@ -813,11 +835,57 @@ TaskCreate({
 TaskUpdate({ taskId: memory_task_id, addBlockedBy: [replan_task_id] })
 ```
 
-When planner returns `STATUS=PLAN_CREATED`:
+When planner returns `STATUS=PLAN_CREATED` or `STATUS=DECISION_RFC_CREATED`:
 - Verify `PLAN_FILE` exists with `Glob(...)`.
 - Extract the intent/spec header from the saved plan and persist it into workflow artifact `intent`.
 - Update the parent workflow task `plan:` line to the saved plan path.
 - Update the pending memory task `plan:` line to the same saved plan path so resume and finalization stay scoped to the real artifact.
+- Persist planner fresh-review fields when present:
+  - `planning_review_runs`
+  - `planning_review_status`
+- If `PLAN_MODE=direct`, allow PLAN to continue to memory finalization without a fresh-review subagent.
+- Otherwise create a fresh review task unless `planning_review_runs >= 2`:
+
+```text
+TaskCreate({
+  subject: "CC10X plan-gap-reviewer: Fresh review of saved plan",
+  description: "wf:{workflow_task_id}\nkind:agent\norigin:router\nphase:plan-review-gap\nplan:{plan_file}\nscope:N/A\nreason:Fresh anti-anchoring review of saved plan\n\nReview the saved plan with fresh context only. Do not rewrite it. Return repo mismatches, missing surfaces, execution-order issues, hidden assumptions, under-scoped integrations, and open decisions presented as settled.\n\n## Original User Request\n{request}\n\n## Approved Context Files\n- Design file: {design_file or 'None'}\n- Research files: {research file list or 'None'}",
+  activeForm: "Fresh-reviewing plan"
+}) -> planning_review_task_id
+TaskUpdate({ taskId: memory_task_id, addBlockedBy: [planning_review_task_id] })
+```
+
+- Immediately persist:
+  - `planning_review_status=pending_review`
+- `planning_review_runs` counts only completed fresh-review passes with valid contract output. Invalid or malformed reviewer output must fail closed without consuming one of the two allowed passes.
+
+When `plan-gap-reviewer` returns `PASS`:
+- Increment `planning_review_runs += 1`
+- Set `planning_review_status=passed`
+- Persist findings summary into `results.planning_reviewer`
+- Continue to memory finalization
+
+When `plan-gap-reviewer` returns `FINDINGS`:
+- Increment `planning_review_runs += 1`
+- Persist findings into:
+  - `planning_review_findings`
+  - `planning_review_status=findings_received`
+  - `results.planning_reviewer`
+- If `planning_review_runs < 2`, create a `re-plan` task:
+
+```text
+TaskCreate({
+  subject: "CC10X planner: Revise plan after fresh review",
+  description: "wf:{workflow_task_id}\nkind:agent\norigin:router\nphase:re-plan\nplan:{plan_file}\nscope:N/A\nreason:{REPLAN_REASON}\n\nRevise the existing saved plan using the fresh planning review findings.\n\n## Planning Review Findings\n{structured findings summary}",
+  activeForm: "Revising plan"
+}) -> replan_task_id
+TaskUpdate({ taskId: memory_task_id, addBlockedBy: [replan_task_id] })
+```
+
+- If `planning_review_runs >= 2`, stop with clarification:
+  - set `pending_gate=clarification`
+  - ask the user for a decision on the unresolved plan contradiction
+  - do not create more fresh-review or re-plan tasks
 
 ### Investigator continuation
 

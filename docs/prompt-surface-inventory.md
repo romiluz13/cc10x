@@ -48,6 +48,14 @@ This inventory defines which prompt surfaces are allowed to affect trust-critica
 
 ## Tier 2: Strong Supporting Contracts
 
+### plan-gap-reviewer
+- Path: `plugins/cc10x/agents/plan-gap-reviewer.md`
+- Role: fresh, read-only challenge pass for saved plans
+- Allowed edits: reviewer wording, finding categories, evidence language, anti-anchoring rules
+- Forbidden edits: granting write authority, workflow ownership, or user-question authority
+- Comparison references: `metaswarm` adversarial planning, Claude Code subagent best practices
+- Review requirement: audit + targeted semantic review
+
 ### bug-investigator
 - Path: `plugins/cc10x/agents/bug-investigator.md`
 - Role: evidence-first debugging with variant and blast-radius coverage

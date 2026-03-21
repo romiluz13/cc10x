@@ -1,0 +1,48 @@
+{
+  "id": "plan-fresh-review-exhausted",
+  "workflow_type": "PLAN",
+  "starting_artifact": {
+    "workflow_uuid": "wf-20260321T091000Z-plan-fresh-review-exhausted",
+    "workflow_id": "wf-20260321T091000Z-plan-fresh-review-exhausted",
+    "workflow_type": "PLAN",
+    "state_root": ".claude/cc10x/v10",
+    "plan_mode": "execution_plan",
+    "verification_rigor": "standard",
+    "proof_status": "gaps_found",
+    "traceability": {"requirements": [], "phases": [], "verification": [], "remediation": []},
+    "phase_cursor": null,
+    "task_ids": {},
+    "results": {},
+    "intent": {"goal": "Plan a complex shared search rewrite"},
+    "evidence": {},
+    "quality": {"convergence_state": "pending"},
+    "status_history": [],
+    "remediation_history": []
+  },
+  "relevant_tasks": {},
+  "agent_outputs": {
+    "plan_gap_review_contract": {
+      "STATUS": "FINDINGS",
+      "BLOCKING_FINDINGS_COUNT": 1,
+      "REPLAN_NEEDED": true,
+      "REPLAN_REASON": "Even after revision, the plan still conflicts with the current shared search boundary.",
+      "FINDING_BUCKETS": {
+        "repo_mismatches": 1,
+        "missing_surfaces": 0,
+        "execution_order_issues": 0,
+        "hidden_assumptions": 0,
+        "under_scoped_integrations": 0,
+        "open_decisions_presented_as_settled": 0
+      }
+    }
+  },
+  "expected": {
+    "next_action": "ask_user",
+    "pending_gate": "clarification",
+    "artifact_delta": {
+      "planning_review_status": "needs_clarification",
+      "planning_review_runs": 2,
+      "quality": {"convergence_state": "needs_iteration"}
+    }
+  }
+}

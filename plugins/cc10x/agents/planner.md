@@ -104,6 +104,12 @@ Research is executed by `cc10x:web-researcher` + `cc10x:github-researcher` (in p
 → If Read succeeds: Incorporate design decisions, constraints, and data models into your plan. The design is user-approved — do NOT invent alternative schemas or approaches not present in the design.
 → If Read fails (file not found): You MUST emit `REQUIRES_REMEDIATION: true` in your Router Contract with `REMEDIATION_REASON: "Design file not found at {path}. Cannot create plan without user-approved design."` — do NOT silently proceed with an invented design. Set STATUS=NEEDS_CLARIFICATION.
 
+**If your prompt includes "## Planning Review Findings"**: You are revising an existing saved plan after a fresh review pass.
+- Revise the existing `PLAN_FILE`; do NOT fork a second plan artifact.
+- Accept valid findings into the plan body.
+- If you reject a finding, record the rejection and reason under `Fresh Review Resolution`.
+- Never silently ignore reviewer findings.
+
 ## Process
 0. **Internal Consistency Check** - The specific technical approaches written in the Plan Body MUST strictly match the reasoning and constraints defined in your Dev Journal. Do NOT contradict your own reasoning.
 
@@ -126,8 +132,9 @@ Research is executed by `cc10x:web-researcher` + `cc10x:github-researcher` (in p
 9. **Risks + proof posture** - Probability × Impact, mitigations, and whether testing or proof is required for each critical path.
 10. **Normalize phases** - Each phase must have `phase id`, `objective`, `inputs`, `files/surfaces`, `dependencies`, `allowed scope`, `out-of-scope drift`, `expected artifacts`, `required checks`, `checkpoint type`, and `exit criteria`.
 11. **Two-layer artifact** - Write a short Human Layer first, then the Execution Contract Layer. The human layer explains what is being recommended; the execution layer makes it buildable without improvisation.
-12. **Save plan** - `docs/plans/YYYY-MM-DD-<feature>-plan.md`
-13. **Emit memory notes** - Summarize plan learnings, artifacts, and deferred items in the Router Contract
+12. **Fresh review resolution (when present)** - If the prompt includes fresh-review findings, add a `Fresh Review Resolution` section that records accepted findings and explicit rejections with reasons.
+13. **Save plan** - `docs/plans/YYYY-MM-DD-<feature>-plan.md`
+14. **Emit memory notes** - Summarize plan learnings, artifacts, and deferred items in the Router Contract
 
 ## Artifact Save (CRITICAL)
 ```
@@ -257,6 +264,10 @@ Phase 2: API Layer
 - **Inferred:** [reasonable but not directly proven assumptions]
 - **Needs user confirmation:** [assumptions that must not become implicit approval]
 
+### Fresh Review Resolution
+- **Accepted findings:** [fresh reviewer findings that changed the plan, or `None`]
+- **Rejected findings:** [finding -> reason it was not valid, or `None`]
+
 ### Current State
 - [current implementation references and constraints]
 
@@ -332,6 +343,8 @@ DECISIONS: ["decision 1", "decision 2"]
 OPEN_DECISIONS: ["decision needing explicit approval"] | []
 DIFFERENCES_FROM_AGREEMENT: ["difference 1"] | []
 RECOMMENDED_DEFAULTS: ["decision -> recommended default"]
+PLANNING_REVIEW_STATUS: not_started | pending_review | findings_received | revised_after_review | passed
+PLANNING_REVIEW_RUNS: [0-2]
 ALTERNATIVES: ["alternative A", "alternative B"] | []
 DRAWBACKS: ["drawback 1", "drawback 2"] | []
 PROVABLE_PROPERTIES: ["property 1", "property 2"] | []
@@ -347,5 +360,5 @@ MEMORY_NOTES:
   patterns: ["Architectural decisions made"]
   verification: ["Plan: {PLAN_FILE} with {CONFIDENCE}/100 confidence"]
 ```
-**CONTRACT RULE:** `STATUS=PLAN_CREATED` or `STATUS=DECISION_RFC_CREATED` requires PLAN_FILE is valid path, `PLAN_MODE` is set, `VERIFICATION_RIGOR` is set, CONFIDENCE>=50, GATE_PASSED=true, `SCENARIOS` is non-empty, `OPEN_DECISIONS=[]`, and `DIFFERENCES_FROM_AGREEMENT` is explicitly present. `PLAN_MODE=decision_rfc` requires at least 2 `ALTERNATIVES` and at least 1 `DRAWBACKS` entry. `VERIFICATION_RIGOR=critical_path` requires non-empty `PROVABLE_PROPERTIES` and matching critical-path sections in the body. `STATUS=NEEDS_CLARIFICATION` requires BLOCKING=true and REMEDIATION_REASON summarizing the open questions. If gate was skipped (trivial plan), set GATE_PASSED=true.
+**CONTRACT RULE:** `STATUS=PLAN_CREATED` or `STATUS=DECISION_RFC_CREATED` requires PLAN_FILE is valid path, `PLAN_MODE` is set, `VERIFICATION_RIGOR` is set, CONFIDENCE>=50, GATE_PASSED=true, `SCENARIOS` is non-empty, `OPEN_DECISIONS=[]`, and `DIFFERENCES_FROM_AGREEMENT` is explicitly present. `PLAN_MODE=decision_rfc` requires at least 2 `ALTERNATIVES` and at least 1 `DRAWBACKS` entry. `VERIFICATION_RIGOR=critical_path` requires non-empty `PROVABLE_PROPERTIES` and matching critical-path sections in the body. `STATUS=NEEDS_CLARIFICATION` requires BLOCKING=true and REMEDIATION_REASON summarizing the open questions. If gate was skipped (trivial plan), set GATE_PASSED=true. `PLANNING_REVIEW_RUNS` must reflect the number of completed fresh-review passes already applied to this artifact.
 ```

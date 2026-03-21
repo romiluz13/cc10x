@@ -1,6 +1,6 @@
 # CC10x Router Behavioral Invariant Registry
 
-> **Status note:** Current product line is `v10.0.0`. This registry is aligned to the live router structure in `plugins/cc10x/skills/cc10x-router/SKILL.md` as of 2026-03-12.
+> **Status note:** Current product line is `v10.1.4`. This registry is aligned to the live router structure in `plugins/cc10x/skills/cc10x-router/SKILL.md` as of 2026-03-21.
 
 ## Purpose
 
@@ -14,6 +14,7 @@ Validated against the live plugin surface:
 - workflow event logs under `.claude/cc10x/v10/workflows/{wf}.events.jsonl`
 - plugin hooks in `plugins/cc10x/hooks/hooks.json`
 - router-owned remediation creation
+- bounded fresh planning review via `plan-gap-reviewer`
 - fail-closed scenario evidence rules for BUILD / DEBUG / VERIFY
 - memory finalization and transient `memory_task_id`
 - v10-only agent memory reads under `.claude/cc10x/v10/*.md`
@@ -37,6 +38,12 @@ Validated against the live plugin surface:
 **Covers:** Router `## 5. Workflow Preparation`, `plan-review-gate`, `## 8. Post-Agent Validation`
 **Enforces:** Planner artifacts must survive feasibility, completeness, and alignment review before BUILD may start.
 **If removed:** Planner defaults and hidden assumptions can leak straight into execution again.
+**Safe to remove:** Never.
+
+### INV-026: Fresh planning review is bounded and planner-owned
+**Covers:** Router `## 5. Workflow Preparation`, `## 9. Remediation And Workflow Rules`, planner, `plan-gap-reviewer`
+**Enforces:** Fresh plan review may challenge a saved plan, but the planner remains the only writer, the router remains the only orchestration owner, and the loop is capped at two reviewer passes.
+**If removed:** PLAN can drift into recursive subagent coordination, ambiguous plan ownership, or open-ended token-heavy refinement loops.
 **Safe to remove:** Never.
 
 ### INV-023: Proof status gates phase completion

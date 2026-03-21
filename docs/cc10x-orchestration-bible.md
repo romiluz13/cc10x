@@ -1,6 +1,6 @@
 # CC10x Orchestration Bible (Plugin-Only Source of Truth)
 
-> **Last reviewed against live plugin files:** 2026-03-07 (`v9.1.1` product line: plugin-native hooks packaging, user-configured optional MCP acceleration, router-owned orchestration, intent-first planning, BDD-style evidence, workflow replay fixtures) | **Status:** IN SYNC WITH CURRENT MAIN
+> **Last reviewed against live plugin files:** 2026-03-21 (`v10.1.4` product line: planner-owned fresh review loop, prompt safety system, latency-safe verifier telemetry, router-owned orchestration, versioned v10 state, workflow replay fixtures) | **Status:** IN SYNC WITH CURRENT MAIN
 
 > This document is derived **only** from `plugins/cc10x/` (agents + skills).
 > Ignore all other docs. Do not trust external narratives.
@@ -18,7 +18,7 @@ This document defines the **non-negotiable** routing, tasking, agent chaining, a
 
 - **Router**: The execution engine defined by `plugins/cc10x/skills/cc10x-router/SKILL.md`.
 - **Workflow**: One of BUILD, DEBUG, REVIEW, PLAN.
-- **Agents**: `component-builder`, `bug-investigator`, `code-reviewer`, `silent-failure-hunter`, `integration-verifier`, `planner`, `web-researcher`, `github-researcher`.
+- **Agents**: `component-builder`, `bug-investigator`, `code-reviewer`, `silent-failure-hunter`, `integration-verifier`, `planner`, `plan-gap-reviewer`, `web-researcher`, `github-researcher`.
 - **Skills**: Specialized rulebooks in `plugins/cc10x/skills/*/SKILL.md`.
 - **Memory**: `.claude/cc10x/{activeContext.md, patterns.md, progress.md}`.
 - **Router Contract**: Machine-readable output signal used by the router for validation. WRITE agents emit YAML. READ-ONLY agents emit an envelope-first contract on line 1 and a stable heading fallback on line 2.
@@ -81,10 +81,11 @@ Agents spawned via Task() run in isolated context windows by default — they ca
 
 ### How CC10x Uses This Architecture
 
-**8 Agents (execution units):**
+**9 Agents (execution units):**
 - `component-builder` — Builds features (has Edit, Write, Bash)
 - `bug-investigator` — Debugs issues (has Edit, Write, Bash)
 - `planner` — Creates plans (has Edit, Write, Bash for plan files + memory only)
+- `plan-gap-reviewer` — Fresh read-only plan challenge pass (no Edit, no Write)
 - `code-reviewer` — Reviews code (READ-ONLY: no Edit, no Write)
 - `silent-failure-hunter` — Finds silent failures (READ-ONLY: no Edit, no Write)
 - `integration-verifier` — Verifies E2E (READ-ONLY: no Edit, no Write)
@@ -299,9 +300,11 @@ flowchart LR
 `code-reviewer` only
 
 ### PLAN Chain
-`planner` — runs plan-review-gate inline after saving plan (Skill() call inside planner; inline self-review: Feasibility, Completeness, Scope checks using planner's own tools)
+`planner` → `plan-gap-reviewer` (bounded fresh-review loop, router-owned) → `planner` revision if needed → `planner` runs `plan-review-gate` inline before returning a final plan
 
-**Note:** plan-review-gate runs inside the planner agent's context — not a separate router step. BUILD/DEBUG/REVIEW chains are unaffected.
+**Notes:**
+- `plan-gap-reviewer` is a fresh read-only subagent. It never owns orchestration, memory, or plan approval.
+- `plan-review-gate` still runs inside the planner agent's context — not a separate router step. BUILD/DEBUG/REVIEW chains are unaffected.
 
 ---
 

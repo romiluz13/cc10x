@@ -2,12 +2,12 @@
 
 ### Router-Owned Claude Code Harness
 
-**Current version:** 10.1.3
+**Current version:** 10.1.4
 
 **Recommended: Create `~/.claude/CLAUDE.md` (global) so the router is always active across all projects.**
 
 <p align="center">
-  <strong>1 Router</strong> &nbsp;•&nbsp; <strong>8 Agents</strong> &nbsp;•&nbsp; <strong>13 Skills</strong> &nbsp;•&nbsp; <strong>4 Workflows</strong>
+  <strong>1 Router</strong> &nbsp;•&nbsp; <strong>9 Agents</strong> &nbsp;•&nbsp; <strong>13 Skills</strong> &nbsp;•&nbsp; <strong>4 Workflows</strong>
 </p>
 
 <p align="center">
@@ -75,6 +75,7 @@ This is one execution model, not a stack of unrelated prompts.
 ## What 10.1 adds
 
 - **Decision-grade planning** with `direct`, `execution_plan`, and `decision_rfc` modes selected by the router
+- **Fresh planning review loop** with a bounded read-only `plan-gap-reviewer` pass before final plan acceptance
 - **Adversarial spec gates** that stop BUILD when feasibility, completeness, or alignment is weak
 - **Proof-oriented BUILD** with explicit checkpoint types, expected artifacts, proof states, and no auto-advance on partial evidence
 - **Stricter VERIFY** that checks truths, artifacts, and wiring before any pass verdict
@@ -103,6 +104,7 @@ Agents do not own workflow state. They return structured results. The router int
 
 The shipped subagents are intentionally specialized:
 - `planner`
+- `plan-gap-reviewer`
 - `component-builder`
 - `bug-investigator`
 - `code-reviewer`
@@ -428,7 +430,7 @@ WORKFLOW STATE (.claude/cc10x/workflows/)
 
 ---
 
-## The 8 Agents
+## The 9 Agents
 
 | Agent | Purpose | Key Behavior |
 |-------|---------|--------------|
@@ -438,6 +440,7 @@ WORKFLOW STATE (.claude/cc10x/workflows/)
 | **silent-failure-hunter** | Finds error gaps | Zero tolerance for empty catch blocks |
 | **integration-verifier** | E2E validation | Exit codes: PASS/FAIL with evidence |
 | **planner** | Creates plans | Saves to `docs/plans/` + updates memory |
+| **plan-gap-reviewer** | Fresh plan challenge pass | Read-only anti-anchoring review before final plan handoff |
 | **web-researcher** | Fetches web data via Bright Data + WebSearch | Saves findings to file |
 | **github-researcher** | Searches GitHub repos + packages via Octocode MCP | Saves findings to file |
 
@@ -579,6 +582,7 @@ I'll help you build a task tracker! Let me start...
 
 | Version | Highlights |
 |---------|------------|
+| **v10.1.4** | Fresh planning review cleanup: raw user request passed to `plan-gap-reviewer`, lighter read-only reviewer contract, bounded pass counting fixed, docs/version surfaces refreshed |
 | **v10.1.3** | Planning recovery: code-grounded plans, explicit plan-vs-code gap surfacing, stronger repo-aware plan review, and planning-specific replay coverage |
 | **v10.1.2** | Trust-preserving latency instrumentation: verifier workload telemetry, phase-exit vs extended-audit classification, no proof-gating change |
 | **v10.1.1** | Prompt-only hardening: sharper anti-false-completion wording, better trigger/description hygiene, reduced prompt dilution, no orchestration/runtime changes |

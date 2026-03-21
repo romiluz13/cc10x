@@ -1,6 +1,6 @@
 # CC10X Prompt Behavioral Invariant Registry
 
-> **Status note:** This registry is aligned to the live prompt stack in `plugins/cc10x/agents/` and `plugins/cc10x/skills/` as of 2026-03-16.
+> **Status note:** This registry is aligned to the live prompt stack in `plugins/cc10x/agents/` and `plugins/cc10x/skills/` as of 2026-03-21.
 
 ## Purpose
 
@@ -13,6 +13,7 @@ This registry complements, but does not replace, [router-invariants.md](/Users/r
 
 Validated against the live prompt surface:
 - planner, component-builder, integration-verifier
+- plan-gap-reviewer
 - plan-review-gate, verification-before-completion
 - bug-investigator, code-reviewer, silent-failure-hunter
 - advisory skill descriptions for frontend/debugging patterns
@@ -90,6 +91,14 @@ Validated against the live prompt surface:
 **Wording drift that breaks it:** Removing explicit repo-comparison language, hiding contradictions behind summary prose, or collapsing assumptions back into confident narrative text.
 **Safe to weaken:** Never.
 **Safe to strengthen:** Yes, if it remains inside planning artifacts and review wording only.
+
+### PINV-010: Fresh planning review stays reviewer-only
+**Covers:** `plugins/cc10x/agents/plan-gap-reviewer.md`, `plugins/cc10x/agents/planner.md`
+**Enforces:** The fresh planning reviewer can challenge the plan, but it cannot rewrite the plan, own memory, ask the user questions, or take over workflow decisions from the planner/router.
+**Failure prevented:** Subagent freshness turning into orchestration drift or multi-owner plan artifacts.
+**Wording drift that breaks it:** Allowing the reviewer to rewrite the plan directly, to own approval language, or to depend on broad session history instead of curated evidence.
+**Safe to weaken:** Never.
+**Safe to strengthen:** Yes.
 
 ## Change Policy
 

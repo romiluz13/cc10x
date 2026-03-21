@@ -1,0 +1,46 @@
+{
+  "id": "plan-fresh-review-pass",
+  "workflow_type": "PLAN",
+  "starting_artifact": {
+    "workflow_uuid": "wf-20260321T090000Z-plan-fresh-review-pass",
+    "workflow_id": "wf-20260321T090000Z-plan-fresh-review-pass",
+    "workflow_type": "PLAN",
+    "state_root": ".claude/cc10x/v10",
+    "plan_mode": "execution_plan",
+    "verification_rigor": "standard",
+    "proof_status": "gaps_found",
+    "traceability": {"requirements": [], "phases": [], "verification": [], "remediation": []},
+    "phase_cursor": null,
+    "task_ids": {},
+    "results": {},
+    "intent": {"goal": "Plan an account settings enhancement"},
+    "evidence": {},
+    "quality": {"convergence_state": "pending"},
+    "status_history": [],
+    "remediation_history": []
+  },
+  "relevant_tasks": {},
+  "agent_outputs": {
+    "plan_gap_review_contract": {
+      "STATUS": "PASS",
+      "BLOCKING_FINDINGS_COUNT": 0,
+      "REPLAN_NEEDED": false,
+      "REPLAN_REASON": "None",
+      "FINDING_BUCKETS": {
+        "repo_mismatches": 0,
+        "missing_surfaces": 0,
+        "execution_order_issues": 0,
+        "hidden_assumptions": 0,
+        "under_scoped_integrations": 0,
+        "open_decisions_presented_as_settled": 0
+      }
+    }
+  },
+  "expected": {
+    "next_action": "memory_finalize",
+    "artifact_delta": {
+      "planning_review_status": "passed",
+      "planning_review_runs": 1
+    }
+  }
+}

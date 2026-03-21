@@ -18,6 +18,9 @@ REQUIRED_FIXTURES = (
     "plan-clarification.json",
     "plan-repo-alignment.json",
     "plan-code-contradiction.json",
+    "plan-fresh-review-pass.json",
+    "plan-fresh-review-findings.json",
+    "plan-fresh-review-exhausted.json",
     "build-happy-path.json",
     "build-checkpoint-decision.json",
     "build-phase-blocked.json",
@@ -413,6 +416,93 @@ def check_plan_code_contradiction(fixture: dict[str, Any]) -> None:
         )
 
 
+def check_plan_fresh_review_pass(fixture: dict[str, Any]) -> None:
+    review = fixture["agent_outputs"]["plan_gap_review_contract"]
+    require(
+        review["STATUS"] == "PASS",
+        "plan-fresh-review-pass: reviewer should pass",
+    )
+    require(
+        review["BLOCKING_FINDINGS_COUNT"] == 0,
+        "plan-fresh-review-pass: blocking findings must be zero",
+    )
+    require(
+        review["REPLAN_NEEDED"] is False,
+        "plan-fresh-review-pass: pass should not require replan",
+    )
+    require(
+        fixture["expected"]["next_action"] == "memory_finalize",
+        "plan-fresh-review-pass: wrong next action",
+    )
+    artifact_delta = fixture["expected"]["artifact_delta"]
+    require(
+        artifact_delta["planning_review_status"] == "passed",
+        "plan-fresh-review-pass: wrong planning review status",
+    )
+    require(
+        artifact_delta["planning_review_runs"] == 1,
+        "plan-fresh-review-pass: wrong review run count",
+    )
+
+
+def check_plan_fresh_review_findings(fixture: dict[str, Any]) -> None:
+    review = fixture["agent_outputs"]["plan_gap_review_contract"]
+    require(
+        review["STATUS"] == "FINDINGS",
+        "plan-fresh-review-findings: reviewer should return findings",
+    )
+    require(
+        review["BLOCKING_FINDINGS_COUNT"] >= 1,
+        "plan-fresh-review-findings: expected blocking findings",
+    )
+    require(
+        review["REPLAN_NEEDED"] is True,
+        "plan-fresh-review-findings: findings should request replan",
+    )
+    require(
+        fixture["expected"]["next_action"] == "create_replan_task",
+        "plan-fresh-review-findings: wrong next action",
+    )
+    artifact_delta = fixture["expected"]["artifact_delta"]
+    require(
+        artifact_delta["planning_review_status"] == "findings_received",
+        "plan-fresh-review-findings: wrong planning review status",
+    )
+    require(
+        artifact_delta["planning_review_runs"] == 1,
+        "plan-fresh-review-findings: wrong review run count",
+    )
+
+
+def check_plan_fresh_review_exhausted(fixture: dict[str, Any]) -> None:
+    review = fixture["agent_outputs"]["plan_gap_review_contract"]
+    require(
+        review["STATUS"] == "FINDINGS",
+        "plan-fresh-review-exhausted: reviewer should still find issues",
+    )
+    require(
+        review["BLOCKING_FINDINGS_COUNT"] >= 1,
+        "plan-fresh-review-exhausted: expected blocking findings",
+    )
+    require(
+        fixture["expected"]["next_action"] == "ask_user",
+        "plan-fresh-review-exhausted: wrong next action",
+    )
+    require(
+        fixture["expected"]["pending_gate"] == "clarification",
+        "plan-fresh-review-exhausted: wrong pending gate",
+    )
+    artifact_delta = fixture["expected"]["artifact_delta"]
+    require(
+        artifact_delta["planning_review_status"] == "needs_clarification",
+        "plan-fresh-review-exhausted: wrong planning review status",
+    )
+    require(
+        artifact_delta["planning_review_runs"] == 2,
+        "plan-fresh-review-exhausted: wrong review run count",
+    )
+
+
 def check_build_happy_path(fixture: dict[str, Any]) -> None:
     validate_builder_contract(
         "build-happy-path", fixture["agent_outputs"]["builder_contract"]
@@ -619,6 +709,9 @@ CHECKS = {
     "plan-clarification.json": check_plan_clarification,
     "plan-repo-alignment.json": check_plan_repo_alignment,
     "plan-code-contradiction.json": check_plan_code_contradiction,
+    "plan-fresh-review-pass.json": check_plan_fresh_review_pass,
+    "plan-fresh-review-findings.json": check_plan_fresh_review_findings,
+    "plan-fresh-review-exhausted.json": check_plan_fresh_review_exhausted,
     "build-happy-path.json": check_build_happy_path,
     "build-checkpoint-decision.json": check_build_checkpoint_decision,
     "build-phase-blocked.json": check_build_phase_blocked,

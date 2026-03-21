@@ -1,5 +1,17 @@
 # Changelog
 
+## [10.1.4] - 2026-03-21
+
+### Fresh planning review cleanup and Claude Code subagent alignment
+
+#### Changed
+- Tightened `plan-gap-reviewer` so it now runs as a lighter, truly read-only planning reviewer: pinned to `gpt-5.4-mini`, trimmed to local inspection tools, and instructed to review against the original user request instead of planner-authored summaries.
+- Refined the PLAN fresh-review loop so the router passes only the saved plan, the raw user request, and approved design/research context into the reviewer, preserving anti-anchoring behavior while keeping planner ownership and the inline `plan-review-gate` intact.
+- Clarified fresh-review accounting so `planning_review_runs` increments only after a valid reviewer contract is returned, preventing malformed reviewer output from consuming one of the bounded passes.
+
+#### Fixed
+- Public and internal docs now match the shipped planning-review loop, including agent counts, router/prompt invariant banners, and `10.1.4` version metadata.
+
 ## [10.1.3] - 2026-03-16
 
 ### Planning recovery: code-grounded plans and repo-aware plan review
