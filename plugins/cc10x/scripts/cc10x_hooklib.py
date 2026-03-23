@@ -75,10 +75,18 @@ def now_iso() -> str:
 
 
 def log_event(name: str, payload: Dict[str, Any]) -> None:
-    path = logs_dir() / "cc10x-hook-events.log"
-    event = {"ts": now_iso(), "event": name, "state_version": STATE_VERSION, **payload}
-    with path.open("a", encoding="utf-8") as fh:
-        fh.write(json.dumps(event, ensure_ascii=True) + "\n")
+    try:
+        path = logs_dir() / "cc10x-hook-events.log"
+        event = {
+            "ts": now_iso(),
+            "event": name,
+            "state_version": STATE_VERSION,
+            **payload,
+        }
+        with path.open("a", encoding="utf-8") as fh:
+            fh.write(json.dumps(event, ensure_ascii=True) + "\n")
+    except Exception:
+        pass  # never fail the hook
 
 
 def latest_workflow_payload() -> Dict[str, Any]:

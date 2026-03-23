@@ -1,29 +1,28 @@
 #!/usr/bin/env python3
 import json
-import os
 from datetime import datetime, timezone
-from pathlib import Path
 
-from cc10x_hooklib import latest_workflow_payload, load_input, log_event
+from cc10x_hooklib import (
+    latest_workflow_payload,
+    load_input,
+    load_mode,
+    log_event,
+    workflows_dir,
+)
 
 
 def main() -> int:
     data = load_input()
     trigger = data.get("trigger", "auto")
     summary = data.get("compact_summary", "") or ""
+    mode = load_mode()
 
     payload = latest_workflow_payload()
     if not payload:
         return 0
 
     wf = payload.get("workflow_uuid") or payload.get("workflow_id")
-    state_root = payload.get("state_root", ".claude/cc10x/v10")
-    events_path = (
-        Path(os.environ.get("CLAUDE_PROJECT_DIR", "."))
-        / state_root
-        / "workflows"
-        / f"{wf}.events.jsonl"
-    )
+    events_path = workflows_dir() / f"{wf}.events.jsonl"
 
     event = {
         "ts": datetime.now(timezone.utc).isoformat(),
@@ -48,6 +47,7 @@ def main() -> int:
             "wf": wf,
             "trigger": trigger,
             "summary_len": len(summary),
+            "mode": mode.get("postcompactAudit", "audit"),
             "task_id": None,
             "agent": "hook",
             "event": "compact_occurred",

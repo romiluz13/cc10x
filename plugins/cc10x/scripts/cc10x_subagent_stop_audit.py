@@ -12,6 +12,15 @@ def main() -> int:
     message = data.get("last_assistant_message", "") or ""
     contract_found = "CONTRACT {" in message
 
+    # Only audit cc10x agents to suppress noise from unrelated subagents
+    is_cc10x_agent = (
+        agent_type.startswith("cc10x:")
+        or "CC10X" in message
+        or "Router Contract" in message
+    )
+    if not is_cc10x_agent:
+        return 0
+
     log_event(
         "plugin_subagent_stop_audit",
         {
