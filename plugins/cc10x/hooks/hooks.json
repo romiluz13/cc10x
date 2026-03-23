@@ -50,6 +50,30 @@
           }
         ]
       }
+    ],
+    "PostCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/cc10x_postcompact_context.py\"",
+            "timeout": 10,
+            "statusMessage": "CC10X compaction event capture"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/cc10x_subagent_stop_audit.py\"",
+            "timeout": 10,
+            "statusMessage": "CC10X subagent contract audit"
+          }
+        ]
+      }
     ]
   }
 }
