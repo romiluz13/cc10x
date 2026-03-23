@@ -6,6 +6,9 @@ def main() -> int:
     data = load_input()
     mode = load_mode()
     agent_type = data.get("agent_type", "") or ""
+    agent_id = data.get("agent_id", "") or ""
+    agent_transcript_path = data.get("agent_transcript_path", "") or ""
+    stop_hook_active = data.get("stop_hook_active", False)
     message = data.get("last_assistant_message", "") or ""
     contract_found = "CONTRACT {" in message
 
@@ -13,6 +16,9 @@ def main() -> int:
         "plugin_subagent_stop_audit",
         {
             "agent_type": agent_type,
+            "agent_id": agent_id,
+            "agent_transcript_path": agent_transcript_path,
+            "stop_hook_active": stop_hook_active,
             "contract_found": contract_found,
             "message_len": len(message),
             "mode": mode.get("subagentStopAudit", "audit"),
