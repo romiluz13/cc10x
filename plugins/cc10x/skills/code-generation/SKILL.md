@@ -2,6 +2,7 @@
 name: code-generation
 description: "Internal skill. Use cc10x-router for all development tasks."
 allowed-tools: Read, Grep, Glob, Write, Edit, LSP
+user-invocable: false
 ---
 
 # Code Generation

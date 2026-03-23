@@ -2,6 +2,7 @@
 name: brainstorming
 description: "Internal skill. Use cc10x-router for all development tasks."
 allowed-tools: Read, Grep, Glob, AskUserQuestion, Write, Edit, Bash
+user-invocable: false
 ---
 
 # Brainstorming Ideas Into Designs

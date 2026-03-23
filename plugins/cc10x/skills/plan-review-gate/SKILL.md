@@ -1,6 +1,8 @@
+---
 name: plan-review-gate
 description: "Use after saving a non-trivial plan or decision RFC when a fail-closed feasibility, completeness, and alignment review must block execution."
 allowed-tools: Read, Bash, Grep, Glob
+user-invocable: false
 ---
 
 # Spec Review Gate

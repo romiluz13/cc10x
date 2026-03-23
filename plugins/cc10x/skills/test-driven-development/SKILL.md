@@ -2,6 +2,7 @@
 name: test-driven-development
 description: "Internal skill. Use cc10x-router for all development tasks."
 allowed-tools: Read, Grep, Glob, Bash, Write, Edit
+user-invocable: false
 ---
 
 # Test-Driven Development (TDD)
