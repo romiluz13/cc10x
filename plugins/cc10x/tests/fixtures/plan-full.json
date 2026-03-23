@@ -48,9 +48,11 @@
     }
   },
   "expected": {
-    "next_action": "create_build_workflow",
+    "next_action": "create_plan_review_task",
     "artifact_delta": {
-      "plan_file": "docs/plans/2026-03-07-auth-plan.md"
+      "plan_file": "docs/plans/2026-03-07-auth-plan.md",
+      "planning_review_status": "pending_review",
+      "planning_review_runs": 0
     }
   }
 }

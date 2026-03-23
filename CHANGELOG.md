@@ -1,5 +1,17 @@
 # Changelog
 
+## [10.1.10] - 2026-03-23
+
+### Always-on fresh planning review loop
+
+#### Changed
+- Removed the remaining `PLAN_MODE=direct` bypass so every saved PLAN artifact now enters the router-owned `plan-gap-reviewer` task loop before final handoff.
+- Updated the router prompt scaffold and replay coverage so `direct`, `execution_plan`, and `decision_rfc` all queue the same bounded fresh-review task flow.
+- Refreshed version metadata so plugin manifest, marketplace metadata, README, and changelog are aligned again after the later `10.1.5`-`10.1.9` push drift.
+
+#### Fixed
+- Replaced the stale `Repo Context Pack` scaffold reference for `plan-gap-reviewer` with the actual `Original User Request` and `Approved Context Files` sections used by the live router contract.
+
 ## [10.1.4] - 2026-03-21
 
 ### Fresh planning review cleanup and Claude Code subagent alignment

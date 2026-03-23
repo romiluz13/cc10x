@@ -48,9 +48,11 @@
     }
   },
   "expected": {
-    "next_action": "await_rfc_approval",
+    "next_action": "create_plan_review_task",
     "artifact_delta": {
-      "plan_file": "docs/plans/2026-03-12-auth-rfc.md"
+      "plan_file": "docs/plans/2026-03-12-auth-rfc.md",
+      "planning_review_status": "pending_review",
+      "planning_review_runs": 0
     }
   }
 }

@@ -6,14 +6,14 @@
     "url": "https://github.com/romiluz13"
   },
   "metadata": {
-    "description": "cc10x v10.1.4 - Competition-grade Claude Code plugin with code-grounded planning, a bounded fresh planning review loop, sharper prompt contracts, adversarial plan gates, proof-oriented BUILD, stable workflow UUIDs, versioned v10 state, advisory internal skills, fail-closed memory persistence, and latency-safe verifier telemetry",
-    "version": "10.1.4"
+    "description": "cc10x v10.1.10 - Competition-grade Claude Code plugin with code-grounded planning, an always-on fresh planning review loop, sharper prompt contracts, adversarial plan gates, proof-oriented BUILD, stable workflow UUIDs, versioned v10 state, advisory internal skills, fail-closed memory persistence, and latency-safe verifier telemetry",
+    "version": "10.1.10"
   },
   "plugins": [
     {
       "name": "cc10x",
       "description": "Trust-first Claude Code plugin with specialized subagents, composable skills, agreement-first planning, TDD-first phase execution, adversarial review, BDD-style verification, proof-of-work workflow artifacts, plugin-native hooks, and optional user-configured Bright Data/Octocode research acceleration.",
-      "version": "10.1.4",
+      "version": "10.1.10",
       "author": {
         "name": "Rom Iluz",
         "email": "rom@iluz.net",

@@ -22,8 +22,11 @@
   "relevant_tasks": {},
   "agent_outputs": {},
   "expected": {
-    "next_action": "build_direct",
+    "next_action": "create_plan_review_task",
     "pending_gate": null,
-    "artifact_delta": {}
+    "artifact_delta": {
+      "planning_review_status": "pending_review",
+      "planning_review_runs": 0
+    }
   }
 }

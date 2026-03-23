@@ -42,7 +42,7 @@ Validated against the live plugin surface:
 
 ### INV-026: Fresh planning review is bounded and planner-owned
 **Covers:** Router `## 5. Workflow Preparation`, `## 9. Remediation And Workflow Rules`, planner, `plan-gap-reviewer`
-**Enforces:** Fresh plan review may challenge a saved plan, but the planner remains the only writer, the router remains the only orchestration owner, and the loop is capped at two reviewer passes.
+**Enforces:** Every saved plan artifact receives a bounded fresh-review pass, while the planner remains the only writer, the router remains the only orchestration owner, and the loop is capped at two reviewer passes.
 **If removed:** PLAN can drift into recursive subagent coordination, ambiguous plan ownership, or open-ended token-heavy refinement loops.
 **Safe to remove:** Never.
 

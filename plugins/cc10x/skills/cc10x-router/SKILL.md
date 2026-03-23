@@ -390,7 +390,7 @@ Router-owned interface fields:
    - `standard` by default
    - `critical_path` for security, money, state-machine, concurrency, or irreversible-migration work
 8. PLAN fresh-review loop:
-   - Non-trivial plans get one fresh `plan-gap-reviewer` pass after planner success.
+   - Every saved plan artifact gets one fresh `plan-gap-reviewer` pass after planner success, including `direct`, `execution_plan`, and `decision_rfc`.
    - If blocking findings are returned, the router creates one `re-plan` task and then one final fresh-review pass.
    - Maximum fresh-review passes: 2.
    - Planner remains the only plan writer.
@@ -631,7 +631,8 @@ Optional sections:
 - `## Research Quality` only when at least one research result exists.
 - `## Design File` only for planner.
 - `## Planning Review Findings` only for `re-plan`.
-- `## Repo Context Pack` only for `plan-gap-reviewer`.
+- `## Original User Request` only for `plan-gap-reviewer`.
+- `## Approved Context Files` only for `plan-gap-reviewer`.
 - `## Previous Agent Findings` only for integration-verifier and only after review/hunt phases.
 
 ### Deterministic skill hints
@@ -845,8 +846,7 @@ When planner returns `STATUS=PLAN_CREATED` or `STATUS=DECISION_RFC_CREATED`:
 - Persist planner fresh-review fields when present:
   - `planning_review_runs`
   - `planning_review_status`
-- If `PLAN_MODE=direct`, allow PLAN to continue to memory finalization without a fresh-review subagent.
-- Otherwise create a fresh review task unless `planning_review_runs >= 2`:
+- Create a fresh review task unless `planning_review_runs >= 2`:
 
 ```text
 TaskCreate({

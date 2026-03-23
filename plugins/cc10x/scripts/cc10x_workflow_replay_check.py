@@ -263,7 +263,10 @@ def validate_latency_telemetry(
 
 def check_plan_direct(fixture: dict[str, Any]) -> None:
     expected = fixture["expected"]
-    require(expected["next_action"] == "build_direct", "plan-direct: wrong next action")
+    require(
+        expected["next_action"] == "create_plan_review_task",
+        "plan-direct: wrong next action",
+    )
     require(
         fixture["starting_artifact"]["workflow_type"] == "PLAN",
         "plan-direct: wrong workflow type",
@@ -272,6 +275,14 @@ def check_plan_direct(fixture: dict[str, Any]) -> None:
     require(
         fixture["starting_artifact"]["plan_mode"] == "direct",
         "plan-direct: artifact should record direct mode",
+    )
+    require(
+        expected["artifact_delta"]["planning_review_status"] == "pending_review",
+        "plan-direct: fresh review should be pending",
+    )
+    require(
+        expected["artifact_delta"]["planning_review_runs"] == 0,
+        "plan-direct: review count should not increment before reviewer output",
     )
 
 
@@ -302,6 +313,19 @@ def check_plan_decision_rfc(fixture: dict[str, Any]) -> None:
         "plan-decision-rfc: expected provable properties",
     )
     validate_scenarios("plan-decision-rfc", planner["SCENARIOS"], require_pass=False)
+    require(
+        fixture["expected"]["next_action"] == "create_plan_review_task",
+        "plan-decision-rfc: should queue fresh review before final handoff",
+    )
+    require(
+        fixture["expected"]["artifact_delta"]["planning_review_status"]
+        == "pending_review",
+        "plan-decision-rfc: fresh review should be pending",
+    )
+    require(
+        fixture["expected"]["artifact_delta"]["planning_review_runs"] == 0,
+        "plan-decision-rfc: review count should not increment before reviewer output",
+    )
 
 
 def check_plan_full(fixture: dict[str, Any]) -> None:
@@ -326,8 +350,21 @@ def check_plan_full(fixture: dict[str, Any]) -> None:
     )
     validate_scenarios("plan-full", planner["SCENARIOS"], require_pass=False)
     require(
+        fixture["expected"]["next_action"] == "create_plan_review_task",
+        "plan-full: should queue fresh review before final handoff",
+    )
+    require(
         fixture["expected"]["artifact_delta"]["plan_file"] == planner["PLAN_FILE"],
         "plan-full: expected plan_file delta mismatch",
+    )
+    require(
+        fixture["expected"]["artifact_delta"]["planning_review_status"]
+        == "pending_review",
+        "plan-full: fresh review should be pending",
+    )
+    require(
+        fixture["expected"]["artifact_delta"]["planning_review_runs"] == 0,
+        "plan-full: review count should not increment before reviewer output",
     )
 
 
