@@ -2,5 +2,7 @@
   "artifactIntegrity": "audit",
   "protectedWrites": "audit",
   "memoryWrites": "audit",
-  "taskMetadata": "audit"
+  "taskMetadata": "audit",
+  "postcompactAudit": "audit",
+  "subagentStopAudit": "audit"
 }
