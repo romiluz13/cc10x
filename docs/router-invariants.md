@@ -1,6 +1,6 @@
 # CC10x Router Behavioral Invariant Registry
 
-> **Status note:** Current product line is `v10.1.4`. This registry is aligned to the live router structure in `plugins/cc10x/skills/cc10x-router/SKILL.md` as of 2026-03-21.
+> **Status note:** Current product line is `v10.1.11`. This registry is aligned to the live router structure in `plugins/cc10x/skills/cc10x-router/SKILL.md` as of 2026-03-26.
 
 ## Purpose
 
@@ -42,8 +42,8 @@ Validated against the live plugin surface:
 
 ### INV-026: Fresh planning review is bounded and planner-owned
 **Covers:** Router `## 5. Workflow Preparation`, `## 9. Remediation And Workflow Rules`, planner, `plan-gap-reviewer`
-**Enforces:** Every saved plan artifact receives a bounded fresh-review pass, while the planner remains the only writer, the router remains the only orchestration owner, and the loop is capped at two reviewer passes.
-**If removed:** PLAN can drift into recursive subagent coordination, ambiguous plan ownership, or open-ended token-heavy refinement loops.
+**Enforces:** Every PLAN workflow pre-creates a DAG-visible bounded review chain (`plan-create -> plan-review-gap-1 -> re-plan -> plan-review-gap-2 -> memory-finalize`), while the planner remains the only writer, the router remains the only orchestration owner, and the loop is capped at two reviewer passes.
+**If removed:** PLAN can drift into hidden dynamic orchestration, ambiguous plan ownership, or open-ended token-heavy refinement loops that are not auditable from the task graph.
 **Safe to remove:** Never.
 
 ### INV-023: Proof status gates phase completion

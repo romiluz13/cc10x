@@ -1,5 +1,18 @@
 # Changelog
 
+## [10.1.11] - 2026-03-26
+
+### DAG-visible PLAN review loop
+
+#### Changed
+- Refactored PLAN so the bounded fresh-context review loop is visible in the task DAG from the beginning: `planner:create -> plan-gap-reviewer pass 1 -> planner:replan -> plan-gap-reviewer pass 2 -> memory-finalize`.
+- Updated router docs, invariants, and replay fixtures so unused PLAN nodes are pruned explicitly instead of being created dynamically later.
+- Restored `plan-gap-reviewer` to the intended lightweight `gpt-5.4-mini` model while keeping the agent read-only and anti-anchored.
+
+#### Fixed
+- Clarification routing text now matches the shipped DAG-visible PLAN behavior instead of describing the older dynamic `re-plan` path.
+- Version metadata and release notes are aligned on `10.1.11`.
+
 ## [10.1.10] - 2026-03-23
 
 ### Always-on fresh planning review loop

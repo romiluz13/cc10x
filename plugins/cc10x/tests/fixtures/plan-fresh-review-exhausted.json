@@ -19,7 +19,33 @@
     "status_history": [],
     "remediation_history": []
   },
-  "relevant_tasks": {},
+  "relevant_tasks": {
+    "planner_create": {
+      "phase": "plan-create",
+      "status": "completed",
+      "blockedBy": []
+    },
+    "planning_review_pass1": {
+      "phase": "plan-review-gap-1",
+      "status": "completed",
+      "blockedBy": ["planner_create"]
+    },
+    "planner_replan": {
+      "phase": "re-plan",
+      "status": "completed",
+      "blockedBy": ["planning_review_pass1"]
+    },
+    "planning_review_pass2": {
+      "phase": "plan-review-gap-2",
+      "status": "completed",
+      "blockedBy": ["planner_replan"]
+    },
+    "memory_finalize": {
+      "phase": "memory-finalize",
+      "status": "pending",
+      "blockedBy": ["planner_create", "planning_review_pass1", "planner_replan", "planning_review_pass2"]
+    }
+  },
   "agent_outputs": {
     "plan_gap_review_contract": {
       "STATUS": "FINDINGS",

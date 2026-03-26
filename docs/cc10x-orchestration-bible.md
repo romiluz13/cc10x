@@ -250,8 +250,12 @@ flowchart TD
 
 **PLAN**
 - Parent: `CC10X PLAN: {feature_summary}`
-- Agent: `planner`
-- `Memory Update` (blocked by planner) ← TASK-ENFORCED
+- Agents:
+  - `planner:create`
+  - `plan-gap-reviewer` pass 1 (blocked by planner:create)
+  - `planner:replan` (blocked by pass 1)
+  - `plan-gap-reviewer` pass 2 (blocked by planner:replan)
+  - `Memory Update` (blocked by all PLAN chain tasks) ← TASK-ENFORCED
 
 ### Task Execution Loop (Required)
 
@@ -300,7 +304,12 @@ flowchart LR
 `code-reviewer` only
 
 ### PLAN Chain
-`planner` → `plan-gap-reviewer` (bounded fresh-review loop, router-owned) → `planner` revision if needed → `planner` runs `plan-review-gate` inline before returning a final plan
+`planner:create` → `plan-gap-reviewer` pass 1 → `planner:replan` if needed → `plan-gap-reviewer` pass 2 if needed
+
+The planner runs `plan-review-gate` inline before each saved-plan handoff. The router pre-creates the full bounded chain at PLAN start, then prunes unused nodes:
+- if pass 1 returns `PASS`, `planner:replan` and pass 2 are marked `deleted`
+- if pass 1 returns `FINDINGS`, the pre-created `planner:replan` node becomes active
+- if pass 2 returns `FINDINGS`, PLAN stops on clarification and memory remains blocked
 
 **Notes:**
 - `plan-gap-reviewer` is a fresh read-only subagent. It never owns orchestration, memory, or plan approval.

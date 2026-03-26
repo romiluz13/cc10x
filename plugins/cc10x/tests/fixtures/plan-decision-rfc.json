@@ -19,7 +19,33 @@
     "status_history": [],
     "remediation_history": []
   },
-  "relevant_tasks": {},
+  "relevant_tasks": {
+    "planner_create": {
+      "phase": "plan-create",
+      "status": "completed",
+      "blockedBy": []
+    },
+    "planning_review_pass1": {
+      "phase": "plan-review-gap-1",
+      "status": "pending",
+      "blockedBy": ["planner_create"]
+    },
+    "planner_replan": {
+      "phase": "re-plan",
+      "status": "pending",
+      "blockedBy": ["planning_review_pass1"]
+    },
+    "planning_review_pass2": {
+      "phase": "plan-review-gap-2",
+      "status": "pending",
+      "blockedBy": ["planner_replan"]
+    },
+    "memory_finalize": {
+      "phase": "memory-finalize",
+      "status": "pending",
+      "blockedBy": ["planner_create", "planning_review_pass1", "planner_replan", "planning_review_pass2"]
+    }
+  },
   "agent_outputs": {
     "planner_contract": {
       "STATUS": "DECISION_RFC_CREATED",
@@ -48,7 +74,7 @@
     }
   },
   "expected": {
-    "next_action": "create_plan_review_task",
+    "next_action": "run_plan_review_pass1",
     "artifact_delta": {
       "plan_file": "docs/plans/2026-03-12-auth-rfc.md",
       "planning_review_status": "pending_review",

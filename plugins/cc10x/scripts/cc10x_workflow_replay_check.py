@@ -261,10 +261,102 @@ def validate_latency_telemetry(
         )
 
 
+def validate_plan_dag(
+    fixture_id: str,
+    relevant_tasks: dict[str, Any],
+    *,
+    planner_status: str,
+    pass1_status: str,
+    replan_status: str,
+    pass2_status: str,
+    memory_status: str,
+) -> None:
+    expected_keys = (
+        "planner_create",
+        "planning_review_pass1",
+        "planner_replan",
+        "planning_review_pass2",
+        "memory_finalize",
+    )
+    missing = [key for key in expected_keys if key not in relevant_tasks]
+    require(not missing, f"{fixture_id}: missing PLAN DAG tasks {missing}")
+
+    planner = relevant_tasks["planner_create"]
+    pass1 = relevant_tasks["planning_review_pass1"]
+    replan = relevant_tasks["planner_replan"]
+    pass2 = relevant_tasks["planning_review_pass2"]
+    memory = relevant_tasks["memory_finalize"]
+
+    require(
+        planner["phase"] == "plan-create",
+        f"{fixture_id}: planner_create must use phase plan-create",
+    )
+    require(
+        pass1["phase"] == "plan-review-gap-1",
+        f"{fixture_id}: planning_review_pass1 must use phase plan-review-gap-1",
+    )
+    require(
+        replan["phase"] == "re-plan",
+        f"{fixture_id}: planner_replan must use phase re-plan",
+    )
+    require(
+        pass2["phase"] == "plan-review-gap-2",
+        f"{fixture_id}: planning_review_pass2 must use phase plan-review-gap-2",
+    )
+    require(
+        memory["phase"] == "memory-finalize",
+        f"{fixture_id}: memory_finalize must use phase memory-finalize",
+    )
+
+    require(
+        planner["status"] == planner_status,
+        f"{fixture_id}: planner_create wrong status",
+    )
+    require(
+        pass1["status"] == pass1_status,
+        f"{fixture_id}: planning_review_pass1 wrong status",
+    )
+    require(
+        replan["status"] == replan_status,
+        f"{fixture_id}: planner_replan wrong status",
+    )
+    require(
+        pass2["status"] == pass2_status,
+        f"{fixture_id}: planning_review_pass2 wrong status",
+    )
+    require(
+        memory["status"] == memory_status,
+        f"{fixture_id}: memory_finalize wrong status",
+    )
+
+    require(
+        pass1["blockedBy"] == ["planner_create"],
+        f"{fixture_id}: pass1 must be blocked by planner_create",
+    )
+    require(
+        replan["blockedBy"] == ["planning_review_pass1"],
+        f"{fixture_id}: planner_replan must be blocked by pass1",
+    )
+    require(
+        pass2["blockedBy"] == ["planner_replan"],
+        f"{fixture_id}: pass2 must be blocked by planner_replan",
+    )
+    require(
+        memory["blockedBy"]
+        == [
+            "planner_create",
+            "planning_review_pass1",
+            "planner_replan",
+            "planning_review_pass2",
+        ],
+        f"{fixture_id}: memory_finalize must be blocked by the full PLAN chain",
+    )
+
+
 def check_plan_direct(fixture: dict[str, Any]) -> None:
     expected = fixture["expected"]
     require(
-        expected["next_action"] == "create_plan_review_task",
+        expected["next_action"] == "run_plan_review_pass1",
         "plan-direct: wrong next action",
     )
     require(
@@ -283,6 +375,15 @@ def check_plan_direct(fixture: dict[str, Any]) -> None:
     require(
         expected["artifact_delta"]["planning_review_runs"] == 0,
         "plan-direct: review count should not increment before reviewer output",
+    )
+    validate_plan_dag(
+        "plan-direct",
+        fixture["relevant_tasks"],
+        planner_status="completed",
+        pass1_status="pending",
+        replan_status="pending",
+        pass2_status="pending",
+        memory_status="pending",
     )
 
 
@@ -314,7 +415,7 @@ def check_plan_decision_rfc(fixture: dict[str, Any]) -> None:
     )
     validate_scenarios("plan-decision-rfc", planner["SCENARIOS"], require_pass=False)
     require(
-        fixture["expected"]["next_action"] == "create_plan_review_task",
+        fixture["expected"]["next_action"] == "run_plan_review_pass1",
         "plan-decision-rfc: should queue fresh review before final handoff",
     )
     require(
@@ -325,6 +426,15 @@ def check_plan_decision_rfc(fixture: dict[str, Any]) -> None:
     require(
         fixture["expected"]["artifact_delta"]["planning_review_runs"] == 0,
         "plan-decision-rfc: review count should not increment before reviewer output",
+    )
+    validate_plan_dag(
+        "plan-decision-rfc",
+        fixture["relevant_tasks"],
+        planner_status="completed",
+        pass1_status="pending",
+        replan_status="pending",
+        pass2_status="pending",
+        memory_status="pending",
     )
 
 
@@ -350,7 +460,7 @@ def check_plan_full(fixture: dict[str, Any]) -> None:
     )
     validate_scenarios("plan-full", planner["SCENARIOS"], require_pass=False)
     require(
-        fixture["expected"]["next_action"] == "create_plan_review_task",
+        fixture["expected"]["next_action"] == "run_plan_review_pass1",
         "plan-full: should queue fresh review before final handoff",
     )
     require(
@@ -365,6 +475,15 @@ def check_plan_full(fixture: dict[str, Any]) -> None:
     require(
         fixture["expected"]["artifact_delta"]["planning_review_runs"] == 0,
         "plan-full: review count should not increment before reviewer output",
+    )
+    validate_plan_dag(
+        "plan-full",
+        fixture["relevant_tasks"],
+        planner_status="completed",
+        pass1_status="pending",
+        replan_status="pending",
+        pass2_status="pending",
+        memory_status="pending",
     )
 
 
@@ -382,6 +501,15 @@ def check_plan_clarification(fixture: dict[str, Any]) -> None:
     require(
         fixture["expected"]["pending_gate"] == "clarification",
         "plan-clarification: wrong pending gate",
+    )
+    validate_plan_dag(
+        "plan-clarification",
+        fixture["relevant_tasks"],
+        planner_status="completed",
+        pass1_status="deleted",
+        replan_status="deleted",
+        pass2_status="deleted",
+        memory_status="pending",
     )
 
 
@@ -480,6 +608,15 @@ def check_plan_fresh_review_pass(fixture: dict[str, Any]) -> None:
         artifact_delta["planning_review_runs"] == 1,
         "plan-fresh-review-pass: wrong review run count",
     )
+    validate_plan_dag(
+        "plan-fresh-review-pass",
+        fixture["relevant_tasks"],
+        planner_status="completed",
+        pass1_status="completed",
+        replan_status="deleted",
+        pass2_status="deleted",
+        memory_status="pending",
+    )
 
 
 def check_plan_fresh_review_findings(fixture: dict[str, Any]) -> None:
@@ -497,7 +634,7 @@ def check_plan_fresh_review_findings(fixture: dict[str, Any]) -> None:
         "plan-fresh-review-findings: findings should request replan",
     )
     require(
-        fixture["expected"]["next_action"] == "create_replan_task",
+        fixture["expected"]["next_action"] == "run_planner_replan",
         "plan-fresh-review-findings: wrong next action",
     )
     artifact_delta = fixture["expected"]["artifact_delta"]
@@ -508,6 +645,15 @@ def check_plan_fresh_review_findings(fixture: dict[str, Any]) -> None:
     require(
         artifact_delta["planning_review_runs"] == 1,
         "plan-fresh-review-findings: wrong review run count",
+    )
+    validate_plan_dag(
+        "plan-fresh-review-findings",
+        fixture["relevant_tasks"],
+        planner_status="completed",
+        pass1_status="completed",
+        replan_status="pending",
+        pass2_status="pending",
+        memory_status="pending",
     )
 
 
@@ -537,6 +683,15 @@ def check_plan_fresh_review_exhausted(fixture: dict[str, Any]) -> None:
     require(
         artifact_delta["planning_review_runs"] == 2,
         "plan-fresh-review-exhausted: wrong review run count",
+    )
+    validate_plan_dag(
+        "plan-fresh-review-exhausted",
+        fixture["relevant_tasks"],
+        planner_status="completed",
+        pass1_status="completed",
+        replan_status="completed",
+        pass2_status="completed",
+        memory_status="pending",
     )
 
 
