@@ -224,6 +224,18 @@ Before choosing a pattern, classify the dependency:
 
 The category determines the pattern. In-process needs nothing. True external needs mocks. The middle two need ports and adapters.
 
+**Implementation ordering — build from leaves inward:**
+```
+Level 0 (no deps):      [Pure utils] [Config]
+        ↓
+Level 1 (Level 0 only): [Repositories] [External clients]
+        ↓
+Level 2 (Level 0-1):    [Services]
+        ↓
+Level 3 (Level 0-2):    [Controllers] [API routes]
+```
+Level 0 components are testable immediately. Each subsequent level depends only on predecessors. This ordering eliminates mock-heavy tests in early phases and matches the planner's DAG constraint (phases depend only on predecessors, never on future phases).
+
 ## Observability Design
 
 **For each component, define:**

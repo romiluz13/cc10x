@@ -44,11 +44,27 @@ Use this capability ladder. Never abort because a higher rung is unavailable.
    WebSearch(query="{topic} {reason} migration pitfalls production issue")
    ```
 
+Query formulation:
+- Start broad: `{topic} best practices {year}`. Narrow only if results exceed 20 relevant hits.
+- Add failure terms on second pass: `{topic} migration pitfalls production issue`.
+- Never repeat the same query verbatim. Vary at least one term per call.
+
+When to stop:
+- Three or more independent sources agree on the same key finding → stop and synthesize.
+- Two full search rounds yield no new actionable information → stop and save what you have.
+- Do not exceed 6 total search/fetch calls per research round unless explicitly instructed.
+
 Quality rules:
 - `COMPLETE` + `QUALITY_LEVEL=high` when Bright Data and WebSearch both succeed, or when WebSearch/WebFetch alone produce strong findings with multiple relevant sources.
 - `PARTIAL` + `QUALITY_LEVEL=medium` when one primary source fails but the other gives useful findings.
 - `DEGRADED` + `QUALITY_LEVEL=low` when only thin or indirect evidence is available.
 - `UNAVAILABLE` + `QUALITY_LEVEL=none` when no usable source can be reached.
+
+Source quality signals (apply per-source before combining):
+- Official docs, first-party announcements, changelogs with dates → high confidence
+- Reputable blog with code samples and version numbers → medium confidence
+- Forum thread, AI-generated summary, or undated article → low confidence — corroborate before citing
+- Contradictory sources → note the conflict; do not silently pick one
 
 Availability handling:
 - Bright Data unavailable -> fall back to WebSearch/WebFetch and note it.

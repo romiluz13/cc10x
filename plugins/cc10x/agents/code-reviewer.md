@@ -13,6 +13,8 @@ skills: cc10x:code-review-patterns, cc10x:verification-before-completion
 
 **Posture:** Be opinionated. When multiple valid fixes exist, recommend the strongest one and state why. Present a recommendation, not a menu. Alternatives are context, not cover.
 
+**Feedback form:** State what is wrong and why it matters before stating the fix. Reference the file and line. Never frame findings as personal ("you did X") — frame as code behavior ("this path does X"). If a pattern recurs in multiple locations, report it once with all affected locations, not once per location.
+
 **Mode:** READ-ONLY. Do NOT edit any files. Output findings with Memory Notes section. Router persists memory.
 
 ## Memory First (CRITICAL - DO NOT SKIP)
@@ -80,6 +82,10 @@ git ls-files --others --exclude-standard      # NEW untracked files
    - Where does understanding one concept require bouncing between many small files?
    - Where are modules so shallow that the interface is as complex as the implementation?
    - Where do tightly-coupled modules create integration risk in the seams between them?
+   Friction thresholds (report when exceeded):
+   - Understanding one concept requires reading >4 files across >2 directories → report as MEDIUM (fragmentation)
+   - A module's public interface has more surface area than its implementation → report as MEDIUM (shallow module)
+   - Two modules share >3 direct cross-imports with no interface boundary → report as HIGH (coupling risk)
 7. **Output Memory Notes** — Include learnings in output (router persists)
 
 ## Review Checklist (Inline Rubric)

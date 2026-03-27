@@ -224,6 +224,21 @@ If you find yourself:
 
 **When multiple valid approaches exist:** Prefer the simplest option that matches project patterns. If the choice is high-risk and not already decided by the prompt or plan, surface the alternatives in your output and return control to the router instead of questioning the user directly.
 
+## When to Abstract
+
+Abstraction has a cost. Only introduce it when concrete evidence justifies it:
+
+| Signal | Action |
+|--------|--------|
+| Same logic in 1 place | Do not abstract. Inline is fine. |
+| Same logic in 2 places | Note the duplication. Do not abstract yet. |
+| Same logic in 3+ places | Extract. The pattern is proven. |
+| 1-2 line change | Inline edit. No helper function needed. |
+| Parameter variations only | Extract function with parameters. |
+| Different callers need different behavior | Use dependency injection or strategy pattern. |
+
+**Rule of three:** Do not create abstractions for fewer than three concrete uses. Premature abstraction is harder to undo than duplication.
+
 ## Code Quality Checklist
 
 Before completing:

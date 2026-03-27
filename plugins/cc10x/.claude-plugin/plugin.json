@@ -1,7 +1,7 @@
 {
   "name": "cc10x",
-  "version": "10.1.12",
-  "description": "Claude Code plugin for competition-grade build/debug/review/plan workflows with skills-repo-informed prompt engineering uplift, deep-module dependency taxonomy, vertical-slice TDD enforcement, durable-decisions planning, HITL/AFK phase classification, opinionated review posture, structured scope assessment, domain-context injection, and latency-safe verifier telemetry.",
+  "version": "10.1.13",
+  "description": "Claude Code plugin for competition-grade build/debug/review/plan workflows with ruflo-informed research quality heuristics, multi-language silent-failure detection, friction-scan thresholds, rollback decision trees, plan completeness gates, behavioral TDD focus, partial-phase review scoping, abstraction thresholds, split-brain contradiction handling, and evidence-before-reporting hard rules.",
   "author": {
     "name": "Rom Iluz",
     "email": "rom@iluz.net",

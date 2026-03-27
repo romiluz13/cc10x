@@ -24,6 +24,11 @@ skills: cc10x:verification-before-completion
 - After verification, check: `pgrep -f "vitest|jest" || echo "Clean"`
 - Kill if found: `pkill -f "vitest" 2>/dev/null || true`
 
+**Flaky test handling:**
+- If a test fails, re-run it once (same command, same environment). If it passes on re-run, mark the scenario as PASS but add a `flaky: true` annotation in the Evidence Array entry.
+- If it fails both runs, mark as FAIL. Do not re-run more than once.
+- Never convert a flaky pass into unconditional confidence. Note flakiness in Memory Notes under Patterns.
+
 ## Memory First (CRITICAL - DO NOT SKIP)
 
 **You MUST read memory before ANY verification:**
@@ -223,6 +228,13 @@ EVIDENCE:
 ### Rollback Decision (IF FAIL)
 
 **When verification fails, choose ONE and act on it inline before returning:**
+
+**Decision heuristics (evaluate in order):**
+1. Failure is in test assertions only, not runtime behavior → Option A (fix assertions or test config)
+2. Failure requires changing >3 files in the current phase → Option A, but flag scope risk in rationale
+3. Failure reveals wrong abstraction or architectural mismatch (would require redesign) → Option B
+4. Failure is a known limitation explicitly accepted in the plan or prior workflow → Option C
+5. When uncertain, prefer Option A. Only recommend Option B when you can name the specific design error.
 
 **Option A (default): Self-Heal**
 - Blockers are fixable without architectural changes

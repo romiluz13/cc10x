@@ -276,8 +276,8 @@ Hydration rules:
 - If more than one active workflow exists, scope by the current conversation and matching `wf:` markers. Do not resume a workflow you cannot scope confidently.
 - Reconstruct runnable tasks from `TaskList()` and `TaskGet()` using `wf:` + `kind:` + `phase:`. Do not rely on stored task IDs for correctness.
 - Read and write only the v10 namespace. Ignore legacy `.claude/cc10x/*.md` and `.claude/cc10x/workflows/*` state during hydration.
-- `[cc10x-internal] memory_task_id` in `activeContext.md` is only a transient optimization. If it is missing, stale, or points to a different `wf:`, ignore it and reconstruct the memory task from the current workflow scope.
-- Never use an unscoped fallback like "first pending Memory Update task".
+- `[cc10x-internal] memory_task_id` in `activeContext.md` is only a transient optimization. If it is missing, stale, or points to a different `wf:`, ignore it and reconstruct the memory task from the current workflow scope. [EASY TO MISS: stale memory_task_id is the #1 cause of cross-workflow pollution]
+- Never use an unscoped fallback like "first pending Memory Update task". [EASY TO MISS: unscoped lookups silently pick up orphan tasks from prior workflows]
 
 Resume algorithm:
 1. Identify the active parent workflow.
@@ -333,7 +333,9 @@ Router-owned interface fields:
    - If either condition fails, ask for clarification and do not start BUILD.
 4. If plan path is `N/A`, assess scope before dispatch:
    - **Trivial** (single concern, one file group, one failure mode) → continue directly to BUILD.
+     Heuristic signals: touches 1-2 files, single logical change, one testable outcome, no cross-module wiring.
    - **Non-trivial** (spans multiple independent file groups, has separable concerns, or involves distinct failure modes) → ask: `Plan first (Recommended)` or `Build directly`.
+     Heuristic signals: touches 3+ files across different directories, multiple independent concerns that could fail separately, changes to both interface and implementation, or new cross-module dependencies.
    - `Plan first` -> switch to PLAN workflow.
    - `Build directly` -> continue without a plan.
 5. If the referenced plan file is missing:
@@ -387,8 +389,8 @@ Router-owned interface fields:
    - `execution_plan` for standard implementation work
    - `decision_rfc` for architecture or multi-option work
 7. Planner must choose one `verification_rigor`:
-   - `standard` by default
-   - `critical_path` for security, money, state-machine, concurrency, or irreversible-migration work
+   - `standard` by default (covers most work; keeps verification proportional to risk)
+   - `critical_path` for security, money, state-machine, concurrency, or irreversible-migration work (failure in these domains is irreversible or high-blast-radius; justifies extended scenario coverage)
 8. PLAN fresh-review loop:
    - Every PLAN workflow pre-creates a bounded review DAG: `plan-create -> plan-review-gap-1 -> re-plan -> plan-review-gap-2 -> memory-finalize`.
    - Every saved plan artifact enters that DAG, including `direct`, `execution_plan`, and `decision_rfc`.
@@ -1055,10 +1057,17 @@ TaskCreate({
    - apply workflow rules
    - for BUILD, run `phase_exit_gate`; if the current phase is not complete, persist `phase_status={partial|blocked}` and stop
    - never advance to the next phase or workflow step on apology prose alone
+   - if two agents in the same phase return contradictory verdicts (e.g., reviewer approves but verifier fails on the same evidence), treat the stricter verdict as authoritative and do not average or reconcile the signals. Log the contradiction in `status_history`.
 7. Repeat until all tasks in the active `wf:` are completed.
 ```
 
 ### After every agent completion
+
+Pre-check before processing agent output:
+- Did the agent address the assigned scope (not a subset or superset)?
+- Did tests, builds, or checks referenced in the contract actually run (not merely described)?
+- Is follow-up work needed that the agent did not self-remediate?
+If any answer is "no" or "unknown", treat as incomplete and apply the fallback validation path below.
 
 1. `TaskGet({ taskId })` or `TaskList()` to verify final task state.
 2. WRITE agents:
@@ -1129,3 +1138,5 @@ For DEBUG:
 - Never spawn Memory Update as a sub-agent.
 - Never create `CC10X TODO:` tasks. Non-blocking discoveries go into `**Deferred:**` memory notes.
 - Never let REVIEW create implementation tasks without an explicit router/user transition into BUILD.
+- Never report a workflow outcome (pass, fixed, complete) to the user without first confirming the verification evidence that supports that claim. "I believe it works" is not evidence.
+- Never let a remediation loop run more than 3 cycles without a human checkpoint. Drift accumulates silently in long chains.

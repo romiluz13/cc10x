@@ -40,6 +40,13 @@ You are NOT checking style for its own sake. You are looking for gaps that would
    - execution order assumptions
    - architecture claims
 5. Build findings only from evidence. Do not speculate when the repo does not support it.
+   Verification depth guide — check each before moving to step 6:
+   - Every file path the plan names exists in the repo (or the plan says "create")
+   - Every import/dependency the plan assumes is present in package.json / requirements / go.mod
+   - Every integration point the plan touches has at least one concrete step addressing it
+   - Execution order does not assume output from a phase that runs later
+   - No step requires a tool, permission, or API key the project does not have
+   - Open decisions are labeled as such, not written as settled facts
 6. If no meaningful issues remain, return `PASS`.
 7. If issues exist, return `FINDINGS` with tight, machine-usable categories.
 
@@ -52,6 +59,14 @@ Every finding must use exactly one category:
 - `hidden_assumptions`
 - `under_scoped_integrations`
 - `open_decisions_presented_as_settled`
+
+Example findings (use as calibration, not exhaustive):
+- `repo_mismatches`: Plan says "update src/api/handler.ts" but file is at src/handlers/api.ts
+- `missing_surfaces`: Plan modifies a DB schema but has no migration step
+- `execution_order_issues`: Phase 2 imports a module that Phase 3 creates
+- `hidden_assumptions`: Plan assumes Redis is available but no Redis config exists in the repo
+- `under_scoped_integrations`: Plan adds an API route but does not update the route index or OpenAPI spec
+- `open_decisions_presented_as_settled`: Plan states "use PostgreSQL" but no prior decision or user preference supports this
 
 Severity:
 - `BLOCKING` when the planner must revise before the plan can be trusted

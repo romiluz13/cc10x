@@ -165,7 +165,31 @@ Before writing a plan:
 - [ ] Existing code patterns understood
 - [ ] Context References section prepared with file:line references
 
+## Plan Completeness Gate
+
+Before saving, verify every phase passes:
+
+| Criterion | Test |
+|-----------|------|
+| **Definition of done** | Exit criteria are demonstrable and testable (not "Foundation complete") |
+| **Measurable deliverables** | Each task names exact files to create/modify with file:line |
+| **Realistic estimates** | No task exceeds 5 minutes; no phase exceeds 1 hour |
+| **Dependencies explicit** | Phase N references only predecessors, never future phases |
+| **Risk mitigation present** | Every risk with Score > 8 has a mitigation row |
+| **Testable at each phase** | Each phase exit criteria can be verified by running a command |
+
+A plan missing any row is incomplete. Revise before saving.
+
 ## Risk Assessment Table
+
+Classify each risk into one of four dimensions before scoring:
+
+| Dimension | What to assess |
+|-----------|---------------|
+| **Technical** | Complexity beyond team experience, unknown libraries, integration unknowns |
+| **Timeline** | Estimation uncertainty, resource availability, external dependency delivery dates |
+| **Quality** | Testing gaps, regression surface area, manual-only verification steps |
+| **Security** | Vulnerability exposure, auth surface, data sensitivity, compliance requirements |
 
 For each identified risk:
 
@@ -280,6 +304,7 @@ If you find yourself:
 | "File paths are discoverable" | Write the exact path. |
 | "Commits are implied" | Write when to commit. |
 | "They can figure out edge cases" | List every edge case. |
+| "Plan isn't perfect yet" | Good plan now beats perfect plan never. Ship it, iterate in execution. |
 
 ## Output Format
 

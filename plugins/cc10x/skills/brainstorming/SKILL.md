@@ -197,19 +197,19 @@ Which direction feels right?
 
 **Once approach chosen, present design in sections (200-300 words each):**
 
-1. **Architecture Overview** - High-level structure
+1. **Architecture Overview** - High-level structure (establishes shared mental model before details)
    > "Does this architecture make sense so far?"
 
-2. **Components** - Key pieces
+2. **Components** - Key pieces (names the parts referenced in all later discussion)
    > "Do these components cover what you need?"
 
-3. **Data Flow** - How data moves
+3. **Data Flow** - How data moves (validates components actually connect — catches orphaned pieces)
    > "Does this data flow work for your use case?"
 
-4. **Error Handling** - What can go wrong
+4. **Error Handling** - What can go wrong (only meaningful after happy path is agreed)
    > "Are these error cases covered?"
 
-5. **Testing Strategy** - How to verify
+5. **Testing Strategy** - How to verify (depends on all prior sections being stable)
    > "Does this testing approach give you confidence?"
 
 **After each section, ask if it looks right before continuing.**

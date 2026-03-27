@@ -31,6 +31,7 @@ After the router passes research file paths in your prompt, read the available f
 - Cross-source confirmation (when web + GitHub agree on a pattern, it's reliable)
 - Conflict resolution (when sources disagree, prefer GitHub real code over docs)
 - Confidence calibration from the router-provided `## Research Quality` block
+- Source conflict resolution: high-confidence sources (cross-confirmed, code-backed) override low-confidence (single blog, no code). Partial matches (one strong source only) require adaptation — state the adaptation rationale explicitly.
 - Gotchas the user probably hasn't considered
 - Specific code snippets only when they materially change the recommendation
 

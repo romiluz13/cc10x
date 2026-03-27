@@ -206,6 +206,19 @@ grep -rn "console\.log" --include="*.ts" --include="*.tsx" src/
 | Retry exhaustion without notice | Fails silently after N attempts |
 | Fallback chains without explanation | Masks root cause with alternatives |
 
+**Wrong/Right — Silent optional chaining:**
+```typescript
+// WRONG: silently swallows null user
+const name = user?.profile?.name ?? 'Unknown';
+
+// RIGHT: log the gap, then degrade
+const name = user?.profile?.name;
+if (!name) {
+  logger.warn('user profile missing name', { userId: user?.id });
+}
+return name ?? 'Unknown';
+```
+
 ## Clarity Over Brevity
 
 - Nested ternary `a ? b ? c : d : e` → Use if/else or switch
@@ -408,6 +421,19 @@ After requesting changes:
 4. **Approve or request more changes** - Repeat if needed
 
 **Never approve without verifying fixes work.**
+
+## Partial Phase Reviews
+
+When reviewing code from a single phase of a multi-phase plan:
+
+| Scope question | Rule |
+|----------------|------|
+| Review only this phase's changes? | YES — do not expand scope to future phases |
+| Flag problems in untouched code discovered during review? | Note for follow-up; do not block this phase |
+| Verify phase exit criteria? | YES — the plan defines exit criteria per phase; verify those, not the final product |
+| Review integration points with future phases? | Flag interface concerns only — do not require future-phase implementation |
+
+**Key principle:** A partial-phase review succeeds when the phase exit criteria are met and no regressions exist. "Incomplete feature" is not a valid rejection reason if the plan has more phases.
 
 ## Final Check
 

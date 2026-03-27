@@ -72,6 +72,20 @@ catch (e) {
 }
 ```
 
+### Language-Specific Red Flags
+
+| Language | Pattern | Problem |
+|----------|---------|---------|
+| Python | `except Exception: pass` or bare `except:` | Swallows all errors including KeyboardInterrupt |
+| Python | `logging.exception()` in a bare except | Logs but never re-raises; caller assumes success |
+| Go | `_ = riskyCall()` | Discarded error; caller cannot distinguish success from failure |
+| Go | `if err != nil { return nil }` | Error swallowed; upstream receives zero-value as valid |
+| Java | `catch (Exception e) { e.printStackTrace(); }` | Log-only; no re-throw or user notification |
+| Rust | `.unwrap()` in non-test code | Panics on error instead of propagating |
+| Shell | Missing `set -e` or unchecked `$?` | Script continues after command failure |
+
+Adapt the audit grep patterns to the project's primary language. If the project uses none of the above, apply the JS/TS patterns from the Red Flags table.
+
 ## Severity Rubric (MANDATORY Classification)
 
 | Severity | Definition | Examples | Blocks Ship? |
@@ -95,6 +109,7 @@ catch (e) {
    The envelope at line 1 is the primary machine-readable signal; the heading is the fallback.
 1. **Find** - Search for: try, catch, except, .catch(, throw, error
    **Zero-results path (CRITICAL):** If grep returns 0 matches — whether because the project uses only Markdown/orchestration files, has no error handling, or search scope is empty — you MUST still continue to step 7 and emit the FULL output format with heading `## Error Handling Audit: CLEAN`. "Nothing found" is a valid audit result. It is NOT permission to skip output.
+   **Scoping heuristic:** Start with files changed in the current workflow (`git diff --name-only HEAD~5` or the router-provided changed-file list). Audit those first. Expand to their direct importers only if critical patterns are found. Do not scan the entire repo unless the prompt explicitly requests a full audit.
 2. **Audit each** - Is error logged? Does user get feedback? Is catch specific?
 3. **Rate severity** - CRITICAL (silent), HIGH (generic), MEDIUM (could improve)
 4. **Report CRITICAL immediately** - Provide exact file:line, recommended fix, AND prevention mechanism

@@ -499,6 +499,28 @@ If tests are hard to write, the interface needs work:
 
 3. **Small surface area** — fewer methods = fewer tests needed, fewer params = simpler setup
 
+### Behavioral Focus
+
+Test how objects collaborate, not what they contain. If a test inspects `.state`, `.length`, or private fields, it is testing structure — and will break when internals change without behavior changing.
+
+| Test target | Correct | Wrong |
+|-------------|---------|-------|
+| Function output | `expect(calculate(input)).toBe(result)` | `expect(calculator.internalCache).toContain(...)` |
+| Component behavior | `expect(screen.getByText('Saved')).toBeTruthy()` | `expect(component.state.saved).toBe(true)` |
+| Service interaction | `expect(response.status).toBe(201)` | `expect(service.callCount).toBe(1)` |
+
+This is already implied by the "Testing implementation" smell in the Test Smells table. Make it the default lens: every assertion should answer "what did the user/caller observe?" not "what happened inside?"
+
+### Test Contracts Across Agents
+
+When CC10x routes work across multiple agents (planner writes test specs, builder implements, reviewer verifies), the test file IS the contract:
+
+- **Planner** defines expected behavior as test names and assertions in the plan
+- **Builder** writes tests first, implements to green — the test file proves the contract is met
+- **Reviewer** re-runs the same tests — pass means contract fulfilled, fail means contract broken
+
+Do not duplicate the contract in prose. If the test file expresses the requirement, the test file is the requirement.
+
 ## Output Format
 
 ```markdown

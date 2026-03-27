@@ -53,6 +53,21 @@ Use this capability ladder. Never abort because Octocode is unavailable.
    ```
 3. If results are thin, fetch one additional promising GitHub or docs page before saving.
 
+Search strategy:
+- Start with packageSearch for known package names (fastest signal).
+- Use githubSearchCode only after packageSearch confirms the repo exists.
+- When searching code, use 1-2 high-signal keywords. Avoid keyword-stuffing.
+- If Octocode returns >50 results, narrow with owner/repo or path filters.
+
+Repo quality signals (apply before citing as evidence):
+- Last commit within 12 months, >100 stars, active issue tracker → high confidence
+- Maintained fork or archived-but-canonical repo → medium confidence — note the caveat
+- Unmaintained, <20 stars, no recent activity → low confidence — corroborate before citing
+
+Version matching:
+- Always check the repo's default branch tag or package version against the project's dependency version.
+- If versions diverge by a major version, note the mismatch in Gotchas.
+
 Quality rules:
 - `COMPLETE` + `QUALITY_LEVEL=high` when Octocode yields strong code examples or when Octocode plus web confirmation agree.
 - `PARTIAL` + `QUALITY_LEVEL=medium` when Octocode works but findings are sparse, or when only web/package fallback yields solid but indirect evidence.

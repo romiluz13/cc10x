@@ -1,5 +1,28 @@
 # Changelog
 
+## [10.1.13] - 2026-03-27
+
+### Ruflo harmony integration — prompt engineering from ruvnet/claude-flow
+
+#### Changed
+- **Web Researcher:** Source quality tiers (high/medium/low confidence signals). Query formulation heuristics with "when to stop" signal (3 sources agree or 6-call cap).
+- **GitHub Researcher:** Search strategy ladder (packageSearch first). Repo quality signals (stars, activity, maintenance). Version matching guidance.
+- **Silent Failure Hunter:** Multi-language red flags table (Python, Go, Java, Rust, Shell). Scoping heuristic (changed files first, expand only if critical).
+- **Code Reviewer:** Friction scan thresholds (>4 files = fragmentation, >3 cross-imports = coupling risk). Feedback form directive (code behavior framing, deduplicate recurring findings).
+- **Integration Verifier:** Rollback decision heuristics (5 ordered rules for choosing Option A/B/C). Flaky test handling (re-run once, annotate flaky, never claim unconditional confidence).
+- **Plan Gap Reviewer:** Verification depth guide (6-point checklist before PASS). Concrete mismatch examples for all 6 finding buckets.
+- **Research Skill:** Source conflict resolution with confidence-based override rules.
+- **Planning Patterns:** 4-dimensional risk classification (Technical/Timeline/Quality/Security). Plan Completeness Gate (6-criterion table). Anti-perfectionism rationalization row.
+- **TDD:** Behavioral Focus section (test collaboration not state) with wrong/right table. Test Contracts Across Agents (test file IS the planner-builder-reviewer contract).
+- **Code Review Patterns:** Wrong/Right silent optional chaining example. Partial Phase Reviews table (4 scope rules for multi-phase builds).
+- **Code Generation:** When to Abstract decision table (Rule of Three). Abstraction cost signals.
+- **Architecture Patterns:** Implementation ordering DAG (Level 0→3 with ASCII visual).
+- **Brainstorming:** Inline WHY rationale for design section ordering.
+- **Router:** Scope assessment heuristic signals (1-2 files = trivial, 3+ files = non-trivial). Agent completion pre-check (scope, tests, follow-up). Split-brain contradiction handling (stricter verdict wins). "EASY TO MISS" annotations on memory_task_id pitfalls. Verification rigor inline rationale. Two new hard rules: evidence-before-reporting and anti-drift remediation checkpoint.
+
+#### Unchanged
+- Zero YAML contract fields modified. Zero state machine transitions. Zero workflow graphs. Zero hook definitions. All existing hard rules preserved. No numbered step reordering. No frontmatter changes.
+
 ## [10.1.12] - 2026-03-27
 
 ### Prompt engineering uplift from mattpocock/skills
