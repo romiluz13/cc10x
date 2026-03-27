@@ -1,7 +1,7 @@
 ---
 name: plan-gap-reviewer
 description: "Fresh read-only review of a saved plan when the router needs an anti-anchoring codebase check before plan finalization."
-model: gpt-5.4-mini
+model: inherit
 color: teal
 tools: Read, Grep, Glob, LSP
 ---
