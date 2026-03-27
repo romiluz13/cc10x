@@ -1,5 +1,26 @@
 # Changelog
 
+## [10.1.14] - 2026-03-27
+
+### Multi-repo harmony integration — 29 patterns from 11 reference repos
+
+396 patterns extracted from anthropics-skills, ralph-claude-code, babysitter, claude-code-harness, everything-claude-code, superpowers, wshobson-agents, get-shit-done, system-prompts, and symphony. 3-phase harmony pipeline (DNA fingerprint → layer mappers → cross-layer dedup) yielded 29 certified NATIVE patterns at 7.3% acceptance rate.
+
+#### Changed
+- **Router:** Stale training data `[EASY TO MISS]` annotation. Completion proof strengthening with anti-assertion examples. Parallel agent write-dependency isolation rule. Subagent context isolation (no conversation inheritance). Analysis paralysis guard on trivial scope. Context fidelity for verbatim user decisions. Professional objectivity hard rule.
+- **Integration Verifier:** Claim extraction from prior agents (MANDATORY). Test tampering detection (.skip/.only in test diffs). Verification run cap (15-command limit). Environment escape hatch (ENVIRONMENT vs code failures). Extended rationalization prevention (3 new forbidden phrases).
+- **Code Reviewer:** Security stop protocol (cross-pass escalation to CRITICAL). Red flags self-check (step 6.5 before verdict). Forbidden responses list (verdict-softener ban). Scope guard (10-file read cap).
+- **Silent Failure Hunter:** Adversarial posture directive ("assume errors are present").
+- **Component Builder:** Build/lint loop cap (3-strike rule for recurring lint/type errors).
+- **Planning Patterns:** "Plans are prompts" principle. Scope decomposition trigger (3+ files or >1 sentence = split). Cross-phase data contracts in completeness gate. Exit criteria by example.
+- **Code Generation:** Anti-overfit row in When to Abstract. Magic numbers red flag. Partial understanding rationalization row.
+- **TDD:** Near-miss negative tests table (boundary, wrong type, missing field, expired state). Pre-run anti-pattern check (4-point gate before test suite).
+- **Code Review Patterns:** Sloppy pattern scan table (5 low-effort issue patterns).
+- **Brainstorming:** Dream extraction questioning (optional Q6). Out-of-scope discovery (Q7). Questioning anti-patterns (leading, compound, vague acceptance).
+
+#### Unchanged
+- Zero YAML contract fields modified. Zero state machine transitions. Zero workflow graphs. Zero hook definitions. Zero new agents or skills. All existing hard rules preserved. No numbered step reordering. No frontmatter changes.
+
 ## [10.1.13] - 2026-03-27
 
 ### Ruflo harmony integration — prompt engineering from ruvnet/claude-flow

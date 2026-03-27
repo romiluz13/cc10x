@@ -11,6 +11,8 @@ user-invocable: false
 
 Write comprehensive implementation plans assuming the engineer has zero context for the codebase and questionable taste. Document everything they need to know: which files to touch for each task, code, testing, docs they might need to check, how to test it. Give them the whole plan as bite-sized tasks. DRY. YAGNI. TDD. Frequent commits.
 
+**Plans are prompts.** The plan will be consumed by an AI agent with zero prior context. Write it as you would write a prompt: specific, complete, unambiguous. If a different agent could misinterpret a step, the step is underspecified.
+
 Assume they are a skilled developer, but know almost nothing about the toolset or problem domain. Assume they don't know good test design very well.
 
 **Core principle:** Plans must be executable without asking questions.
@@ -40,6 +42,8 @@ NO VAGUE STEPS - EVERY STEP IS A SPECIFIC ACTION
 - "Test it" (which tests? how?)
 
 Treat plan phases as a directed acyclic graph — each phase may only depend on predecessors, never on future phases. The plan-review-gate enforces this ordering.
+
+**Decomposition trigger:** If a step touches 3+ files or takes more than one sentence to describe, split it. If a phase has >5 tasks, consider splitting the phase. Individual steps target 2-5 minutes; task clusters (a full RED-GREEN-REFACTOR cycle) up to 15 minutes.
 
 ## Plan Document Header
 
@@ -177,8 +181,11 @@ Before saving, verify every phase passes:
 | **Dependencies explicit** | Phase N references only predecessors, never future phases |
 | **Risk mitigation present** | Every risk with Score > 8 has a mitigation row |
 | **Testable at each phase** | Each phase exit criteria can be verified by running a command |
+| **Cross-phase contracts** | Phase N exit criteria include the exact data shape, API contract, or file structure that Phase N+1 expects |
 
 A plan missing any row is incomplete. Revise before saving.
+
+**Exit criteria by example:** Do not write "Phase 1 complete when auth works." Write "Phase 1 complete when `curl -X POST /api/auth/login -d '{"email":"test@test.com","password":"pass"}' returns 200 with `{token: string}`." Concrete input/output examples prevent misinterpretation.
 
 ## Risk Assessment Table
 

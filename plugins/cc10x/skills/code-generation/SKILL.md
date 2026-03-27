@@ -194,6 +194,7 @@ If you find yourself:
 - Not handling edge cases ("happy path only")
 - Creating abstractions for one use case
 - Adding configuration options not requested
+- Using magic numbers or hardcoded thresholds instead of named constants or derived formulas
 - Writing comments instead of clear code
 - Multiple valid approaches exist but not presenting options
 
@@ -209,6 +210,7 @@ If you find yourself:
 | "I'll add docs later" | Code should be self-documenting. Write clear code now. |
 | "It's just a quick prototype" | Prototypes become production. Write it right. |
 | "I know a better way" | The codebase has patterns. Follow them. |
+| "I understand enough to start" | Partial understanding produces wrong code. Read the full spec, pattern, or reference before writing. |
 
 ## When to Present Multiple Options
 
@@ -230,6 +232,7 @@ Abstraction has a cost. Only introduce it when concrete evidence justifies it:
 
 | Signal | Action |
 |--------|--------|
+| Pattern seen in 1 example only | Do not extract. This is overfitting to a single case. |
 | Same logic in 1 place | Do not abstract. Inline is fine. |
 | Same logic in 2 places | Note the duplication. Do not abstract yet. |
 | Same logic in 3+ places | Extract. The pattern is proven. |

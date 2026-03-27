@@ -148,6 +148,11 @@ If GREEN phase fails **3 consecutive times** on the same test:
 → Stop attempting. Set in Router Contract: `STATUS: FAIL`, `BLOCKING: true`, `REQUIRES_REMEDIATION: true`, `REMEDIATION_REASON: "GREEN phase failed 3 times: {last error message}"`.
 → The router handles remediation from here (REM-FIX or escalation).
 
+## Build/Lint Loop Cap
+If the same linter, type-checker, or build error recurs after **3 fix attempts** (same error code, same file):
+→ Stop attempting. Set in Router Contract: `STATUS: FAIL`, `BLOCKING: true`, `REQUIRES_REMEDIATION: true`, `REMEDIATION_REASON: "Build/lint loop on {error_code} in {file} after 3 attempts"`.
+→ Do not treat lint/format auto-fix cycles as exempt from loop limits.
+
 ## Memory Ownership
 
 - Read memory at task start.

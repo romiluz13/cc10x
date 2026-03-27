@@ -298,6 +298,7 @@ Scope-decision resume:
   - create the scoped REM-FIX
   - block downstream re-review / re-hunt / verifier tasks as normal
   - stop after task creation so the next turn resumes from task state, not from repeated prose parsing
+  - [EASY TO MISS: When persisting user decisions, use the user's exact words. Paraphrasing introduces drift that compounds across resume cycles.]
 
 Safety rules:
 - If a task list is shared across sessions, always scope by `wf:` before resuming.
@@ -334,6 +335,7 @@ Router-owned interface fields:
 4. If plan path is `N/A`, assess scope before dispatch:
    - **Trivial** (single concern, one file group, one failure mode) → continue directly to BUILD.
      Heuristic signals: touches 1-2 files, single logical change, one testable outcome, no cross-module wiring.
+     [EASY TO MISS: When the task is clearly trivial, do not ask clarifying questions or suggest planning. Execute directly. Analysis paralysis on trivial work is a net negative.]
    - **Non-trivial** (spans multiple independent file groups, has separable concerns, or involves distinct failure modes) → ask: `Plan first (Recommended)` or `Build directly`.
      Heuristic signals: touches 3+ files across different directories, multiple independent concerns that could fail separately, changes to both interface and implementation, or new cross-module dependencies.
    - `Plan first` -> switch to PLAN workflow.
@@ -939,6 +941,7 @@ Research runs only when triggered by:
 - Bug investigation suspects a dependency version regression or behavioral change.
 - Two or more remediation cycles on the same issue without convergence.
 - PLAN workflow where the planner needs to choose between approaches with external precedent.
+- [EASY TO MISS: LLM training data may be stale. When a dependency, API, or framework version post-dates the model cutoff, treat pre-training knowledge as unreliable and require research evidence before planning or building.]
 
 Loop caps:
 - Count research rounds by `wf:` + `reason:` using `kind:research` tasks.
@@ -1138,5 +1141,8 @@ For DEBUG:
 - Never spawn Memory Update as a sub-agent.
 - Never create `CC10X TODO:` tasks. Non-blocking discoveries go into `**Deferred:**` memory notes.
 - Never let REVIEW create implementation tasks without an explicit router/user transition into BUILD.
-- Never report a workflow outcome (pass, fixed, complete) to the user without first confirming the verification evidence that supports that claim. "I believe it works" is not evidence.
+- Never report a workflow outcome (pass, fixed, complete) to the user without first confirming the verification evidence that supports that claim. "I believe it works" is not evidence. [EASY TO MISS: "I ran the tests and they passed" without showing command output, exit codes, or scenario evidence is also not evidence. Require concrete proof artifacts, not agent assertions.]
 - Never let a remediation loop run more than 3 cycles without a human checkpoint. Drift accumulates silently in long chains.
+- Only parallelize agents whose file-write surfaces do not overlap. Reviewer and hunter are read-only and safe to parallelize. Two write agents on overlapping files must be serialized. [EASY TO MISS: Each parallel agent must have a distinct phase value and unique task description. Identical prompts cause agents to duplicate work or silently clobber each other's output.]
+- Agents must never inherit raw conversation context. They receive only the structured scaffold from the dispatcher. Leaking conversation history into agent prompts causes scope pollution and non-reproducible behavior.
+- Maintain professional objectivity in all routing decisions. Do not rationalize a failing workflow as "close enough" or downgrade critical findings to avoid remediation. The router exists to enforce quality, not to please.

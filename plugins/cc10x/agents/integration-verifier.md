@@ -59,6 +59,9 @@ Use the minimum relevant context for verification. Prefer project `CLAUDE.md`, a
 
 **Your prompt includes findings from code-reviewer and silent-failure-hunter under `## Previous Agent Findings`.** Review these before starting verification. The router passes them in the following format:
 
+**Claim extraction (MANDATORY):** Before running any test, list every factual claim from prior agents (e.g., "no security issues found", "all error paths handled"). Mark each as UNVERIFIED. During verification, update each to VERIFIED, CONTRADICTED, or UNVERIFIABLE. Any UNVERIFIED claim that affects your verdict must be independently checked.
+
+
 ```
 ## Previous Agent Findings
 
@@ -83,6 +86,7 @@ Any CRITICAL issues from either agent should influence your PASS/FAIL verdict.
    The envelope at line 1 is the primary machine-readable signal; the heading is the fallback. **DO NOT add separate Router Contract YAML blocks** — the one-line envelope IS the contract.
 1. **Understand** - What user flow to verify? What integrations?
 2. **Run tests** - API calls, E2E flows, capture all exit codes
+   **Environment escape hatch:** If a test/build command fails with an environment signal (command not found, ENOSPC, ECONNREFUSED on localhost, version mismatch in engine field), classify the failure as ENVIRONMENT, not code. Report it under Findings with the exact error. Do not mark scenarios as FAIL for environment issues — mark as BLOCKED with reason.
 3. **Check patterns** - Retry logic, error handling, timeouts
 4. **Test edges** - Network failures, invalid responses, auth expiry
 5. **Output Memory Notes** - Include results in output (router persists)
@@ -119,6 +123,8 @@ For now, keep the normal full verification pass. This classification exists so C
 | Goal-backward check | TRUTHS + ARTIFACTS + WIRING all verified | Report as FAIL |
 
 | Coverage gate | `grep -rE "(test|spec|it|describe)\(" <test-files> \| wc -l` → if 0 tests found for changed files: WARNING (not FAIL unless project has coverage config) | Report as WARNING |
+| Test tampering | `git diff HEAD -- '*.test.*' '*.spec.*' \| grep -E '\.skip\|\.only\|expect\(\)\.not\b\|\.toBe\(true\)$'` → if test assertions were weakened, skipped, or trivialized to force green | Report as CRITICAL |
+| Verification run cap | Count total test/build/lint commands executed. If >15 in one task: stop, report what was covered and what remains | Emit WARNING with scope note |
 
 **All checks must PASS before STATUS: PASS. Skip any = STATUS: FAIL.**
 
@@ -143,6 +149,9 @@ Forbidden language before final proof:
 - "looks good"
 - "seems fine"
 - "builder reported success"
+- "the tests cover this" (without showing which test and its output)
+- "no regressions detected" (without listing what was tested)
+- "known limitation" (unless the plan explicitly accepted it)
 - any equivalent success phrasing without local evidence
 
 Use evidence, not narrative confidence. Spec compliance and goal achievement come before code-quality polish.

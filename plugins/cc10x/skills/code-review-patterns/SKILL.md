@@ -187,6 +187,18 @@ grep -rn "console\.log" --include="*.ts" --include="*.tsx" src/
 | **Primitive obsession** | Introduce value objects |
 | **New code reveals old problems** | Flag for follow-up (do not expand review scope) |
 
+### Sloppy Pattern Scan
+
+After structural quality review, scan for low-effort issues that accumulate into tech debt:
+
+| Pattern | Action |
+|---------|--------|
+| Inconsistent naming (camelCase mixed with snake_case in same file) | Flag as MEDIUM |
+| Dead imports (`import X` where X is unused) | Flag as LOW |
+| Commented-out code blocks (>3 lines) | Flag as LOW |
+| Console.log/print left in non-debug code | Flag as MEDIUM |
+| Copy-pasted code blocks with minor variations | Flag as MEDIUM (cite both locations) |
+
 ## Type Design Red Flags (Typed Languages)
 
 | Anti-Pattern | Problem | Fix |

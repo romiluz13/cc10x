@@ -1,7 +1,7 @@
 {
   "name": "cc10x",
-  "version": "10.1.13",
-  "description": "Claude Code plugin for competition-grade build/debug/review/plan workflows with ruflo-informed research quality heuristics, multi-language silent-failure detection, friction-scan thresholds, rollback decision trees, plan completeness gates, behavioral TDD focus, partial-phase review scoping, abstraction thresholds, split-brain contradiction handling, and evidence-before-reporting hard rules.",
+  "version": "10.1.14",
+  "description": "Claude Code plugin for competition-grade build/debug/review/plan workflows with multi-repo harmony integration, test tampering detection, claim extraction verification, environment escape hatches, analysis paralysis guards, near-miss negative testing, de-sloppify pattern scans, plans-are-prompts principle, cross-phase data contracts, and professional objectivity hard rules.",
   "author": {
     "name": "Rom Iluz",
     "email": "rom@iluz.net",

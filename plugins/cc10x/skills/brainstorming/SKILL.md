@@ -165,7 +165,11 @@ AskUserQuestion({
 })
 ```
 
-**After the unresolved dimensions are answered:** Proceed to Phase 3 with collected answers. Do not force the full 5-question sequence when the intent contract is already complete.
+**Optional Q6 (ask only when the user seems to have unexpressed aspirations):** "If there were no constraints, what would the ideal version look like?" This unlocks hidden requirements and aspirational features — capture them, then apply YAGNI to defer what is not essential.
+
+**Q7 — Out-of-scope discovery (always ask):** "What is explicitly NOT part of this? What should we defer?" Document answers in the Out of Scope section of the design document. This prevents scope creep from assumptions about what "should" be included.
+
+**After the unresolved dimensions are answered:** Proceed to Phase 3 with collected answers. Do not force the full 7-question sequence when the intent contract is already complete.
 
 ### Phase 3: Explore Approaches
 
@@ -272,6 +276,9 @@ If you find yourself:
 - Asking multiple questions at once
 - Assuming you know what the user wants
 - Not validating incrementally
+- Asking leading questions that steer toward a pre-decided solution ("Should we use React?" instead of "What UI approach fits?")
+- Asking compound questions (more than one decision per question)
+- Accepting vague answers without probing ("It should be fast" → "What response time is acceptable?")
 
 **STOP. Go back to Phase 2.**
 
