@@ -95,6 +95,17 @@ If the prompt or plan says `Verification Rigor: critical_path`:
 
 If the phase is not critical-path work, use normal TDD discipline without pretending formal proof exists.
 
+## TDD Quick Reference
+
+**Vertical slicing (one feature at a time):**
+- RED→GREEN: test1→impl1, then RED→GREEN: test2→impl2
+- NOT: write test1, test2, test3... then impl1, impl2, impl3
+
+**When tests are hard to write, fix the interface:**
+- Accept dependencies as parameters (dependency injection)
+- Return results instead of producing side effects
+- Minimize method count and parameter complexity
+
 ## Pre-Flight Check (WHEN Plan File is present)
 
 After reading the plan file, BEFORE writing the first test, scan for uncertainties in the current phase:
@@ -296,6 +307,7 @@ NEXT_ACTION: "review" | "remediation" | "abort"
 REMEDIATION_NEEDED: [true if router should create remediation]
 REQUIRES_REMEDIATION: [true if TDD evidence missing]
 REMEDIATION_REASON: null | "Missing TDD evidence - need RED exit=1 and GREEN exit=0"
+# Memory durability: describe behaviors and patterns, not line numbers. Reference stable module boundaries.
 MEMORY_NOTES:
   learnings: ["What was built and key patterns used"]
   patterns: ["Any new conventions discovered"]

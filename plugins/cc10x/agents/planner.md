@@ -129,12 +129,14 @@ Research is executed by `cc10x:web-researcher` + `cc10x:github-researcher` (in p
 6. **Plan-vs-Code Gaps** - For every meaningful change, compare current behavior/structure to the planned approach. If code contradicts the plan, surface it explicitly instead of smoothing it over.
 7. **Hidden-Assumption Pass** - Classify assumptions as `proven_by_code`, `inferred`, or `needs_user_confirmation`. If a critical assumption is not proven, expose it in the artifact.
 8. **Decision discipline** - For `decision_rfc`, research before recommendation, include at least 2 alternatives, and state drawbacks honestly.
+   After listing alternatives, give an explicit recommendation with a one-sentence rationale. Do not leave the decision open when the evidence clearly favors one approach. Alternatives provide context, not cover.
 9. **Risks + proof posture** - Probability × Impact, mitigations, and whether testing or proof is required for each critical path.
 10. **Normalize phases** - Each phase must have `phase id`, `objective`, `inputs`, `files/surfaces`, `dependencies`, `allowed scope`, `out-of-scope drift`, `expected artifacts`, `required checks`, `checkpoint type`, and `exit criteria`.
-11. **Two-layer artifact** - Write a short Human Layer first, then the Execution Contract Layer. The human layer explains what is being recommended; the execution layer makes it buildable without improvisation.
-12. **Fresh review resolution (when present)** - If the prompt includes fresh-review findings, add a `Fresh Review Resolution` section that records accepted findings and explicit rejections with reasons.
-13. **Save plan** - `docs/plans/YYYY-MM-DD-<feature>-plan.md`
-14. **Emit memory notes** - Summarize plan learnings, artifacts, and deferred items in the Router Contract
+11. **Classify autonomy** - For each phase, label `AFK` (checkpoint_type=none) or `HITL` (any other checkpoint). Prefer AFK where possible. Justify every HITL classification.
+12. **Two-layer artifact** - Write a short Human Layer first, then the Execution Contract Layer. The human layer explains what is being recommended; the execution layer makes it buildable without improvisation.
+13. **Fresh review resolution (when present)** - If the prompt includes fresh-review findings, add a `Fresh Review Resolution` section that records accepted findings and explicit rejections with reasons.
+14. **Save plan** - `docs/plans/YYYY-MM-DD-<feature>-plan.md`
+15. **Emit memory notes** - Summarize plan learnings, artifacts, and deferred items in the Router Contract
 
 ## Artifact Save (CRITICAL)
 ```
@@ -291,6 +293,11 @@ Phase 2: API Layer
 ### Phase Plan
 - [Phase ID]: objective, concrete repo surfaces, dependencies, allowed scope, out-of-scope drift, expected artifacts, required checks, checkpoint type, exit criteria
 
+### Phase Autonomy Classification
+| Phase | Checkpoint Type | Classification | Reason |
+|-------|----------------|----------------|--------|
+| [Phase ID] | [none/human_verify/decision/human_action] | [AFK/HITL] | [why] |
+
 ### Acceptance Checks
 - [command / scenario / review gate]
 
@@ -355,6 +362,7 @@ REQUIRES_REMEDIATION: [false if PLAN_CREATED; true if NEEDS_CLARIFICATION]
 REMEDIATION_REASON: null | "Clarification required before plan can proceed: {summary of Your Input Needed items}"
 GATE_PASSED: [true if plan-review-gate returned SPEC_GATE_PASS (or was skipped as trivial); false if the gate failed]
 USER_INPUT_NEEDED: ["Q1 text", "Q2 text"] | []  # Compaction-safe list of open questions (same as Your Input Needed bullets)
+# Memory durability: describe behaviors and patterns, not line numbers. Reference stable module boundaries.
 MEMORY_NOTES:
   learnings: ["Planning approach and key insights"]
   patterns: ["Architectural decisions made"]

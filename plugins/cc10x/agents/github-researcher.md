@@ -130,6 +130,7 @@ IMPLEMENTATIONS_FOUND: [N]
 WHAT_CHANGED_RECOMMENDATION: "[highest-signal finding]"
 BLOCKING: false
 REQUIRES_REMEDIATION: false
+# Memory durability: describe behaviors and patterns, not line numbers. Reference stable module boundaries.
 MEMORY_NOTES:
   learnings: ["GitHub research complete for {topic}"]
   verification: ["GitHub findings saved to {FILE_PATH}"]

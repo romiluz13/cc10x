@@ -2,7 +2,7 @@
 
 ### Router-Owned Claude Code Harness
 
-**Current version:** 10.1.11
+**Current version:** 10.1.12
 
 **Recommended: Create `~/.claude/CLAUDE.md` (global) so the router is always active across all projects.**
 
@@ -582,6 +582,7 @@ I'll help you build a task tracker! Let me start...
 
 | Version | Highlights |
 |---------|------------|
+| **v10.1.12** | Prompt engineering uplift: 15 techniques from mattpocock/skills integrated across 13 files — durable decisions, tracer bullets, vertical-slice TDD, dependency taxonomy, HITL/AFK phases, opinionated review, friction scan, scope assessment, domain context injection |
 | **v10.1.11** | DAG-visible PLAN review loop: the full bounded planning review chain is now pre-created in the task graph, with explicit branch pruning and `plan-gap-reviewer` restored to `gpt-5.4-mini` |
 | **v10.1.10** | Always-on fresh planning review: every saved plan artifact now queues the bounded `plan-gap-reviewer` task before final plan handoff, with replay coverage locking it in |
 | **v10.1.4** | Fresh planning review cleanup: raw user request passed to `plan-gap-reviewer`, lighter read-only reviewer contract, bounded pass counting fixed, docs/version surfaces refreshed |

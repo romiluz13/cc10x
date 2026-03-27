@@ -1,7 +1,7 @@
 {
   "name": "cc10x",
-  "version": "10.1.11",
-  "description": "Claude Code plugin for competition-grade build/debug/review/plan workflows with code-grounded planning, a DAG-visible fresh planning review loop, a lightweight gpt-5.4-mini plan-gap-reviewer, sharper prompt contracts, adversarial plan gates, proof-oriented phase execution, stable workflow identities, versioned v10 state, advisory internal skills, plugin-native hooks, optional user-configured MCP-accelerated research, fail-closed memory persistence, and latency-safe verifier telemetry.",
+  "version": "10.1.12",
+  "description": "Claude Code plugin for competition-grade build/debug/review/plan workflows with skills-repo-informed prompt engineering uplift, deep-module dependency taxonomy, vertical-slice TDD enforcement, durable-decisions planning, HITL/AFK phase classification, opinionated review posture, structured scope assessment, domain-context injection, and latency-safe verifier telemetry.",
   "author": {
     "name": "Rom Iluz",
     "email": "rom@iluz.net",

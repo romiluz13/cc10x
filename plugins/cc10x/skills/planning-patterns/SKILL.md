@@ -39,6 +39,8 @@ NO VAGUE STEPS - EVERY STEP IS A SPECIFIC ACTION
 - "Implement the feature" (multiple actions)
 - "Test it" (which tests? how?)
 
+Treat plan phases as a directed acyclic graph — each phase may only depend on predecessors, never on future phases. The plan-review-gate enforces this ordering.
+
 ## Plan Document Header
 
 **Every plan MUST start with this header:**
@@ -56,6 +58,8 @@ NO VAGUE STEPS - EVERY STEP IS A SPECIFIC ACTION
 **Tech Stack:** [Key technologies/libraries]
 
 **Prerequisites:** [What must exist before starting]
+
+**Durable Decisions:** [Foundational choices that apply across all phases — route structures, DB schema shape, key data models, auth approach, third-party service boundaries. Every phase references these.]
 
 ---
 ```
@@ -292,7 +296,11 @@ If you find yourself:
 
 **Prerequisites:** [Requirements]
 
+**Durable Decisions:** [Foundational choices that apply across all phases — route structures, DB schema shape, key data models, auth approach, third-party service boundaries]
+
 ---
+
+<!-- Phase 1 must be a tracer bullet — a thin vertical slice through ALL integration layers (schema → API → UI → tests). Proves architecture works before subsequent phases widen the slice. For infrastructure-only plans, Phase 1 may be setup. -->
 
 ## Phase 1: [Demonstrable Milestone]
 

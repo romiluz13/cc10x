@@ -211,6 +211,19 @@ Admin Flow: Delete file
 **Fallback**: What's the degraded experience?
 ```
 
+### Dependency Classification
+
+Before choosing a pattern, classify the dependency:
+
+| Category | Examples | Testing Strategy |
+|----------|----------|-----------------|
+| **In-process** | Pure computation, in-memory state | Test directly — merge modules and verify |
+| **Local-substitutable** | Database (PGLite), filesystem (in-memory FS) | Test with local stand-in in test suite |
+| **Remote but owned** | Your own microservices, internal APIs | Define port (interface), inject transport. Test with in-memory adapter |
+| **True external** | Stripe, Twilio, third-party APIs | Mock at boundary. Inject dependency as port |
+
+The category determines the pattern. In-process needs nothing. True external needs mocks. The middle two need ports and adapters.
+
 ## Observability Design
 
 **For each component, define:**

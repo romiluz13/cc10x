@@ -57,6 +57,21 @@ Do not self-load internal CC10X skills. The router is the only authority allowed
 | `?.` chains without logging | Silent short-circuit | Log when chain short-circuits to null |
 | Retry without notification | User unaware of degradation | Notify after retry exhaustion |
 
+### Red Flag Examples
+
+```typescript
+// BAD: Error swallowed — user never knows
+try { await riskyOperation(); }
+catch (e) { console.log(e); }
+
+// GOOD: Error surfaced with context
+try { await riskyOperation(); }
+catch (e) {
+  logger.error('Operation failed', { error: e, context });
+  throw new UserFacingError('Operation failed. Please try again.');
+}
+```
+
 ## Severity Rubric (MANDATORY Classification)
 
 | Severity | Definition | Examples | Blocks Ship? |

@@ -293,6 +293,7 @@ REQUIRES_REMEDIATION: [true if TDD evidence missing or VARIANTS_COVERED=0]
 REMEDIATION_REASON: null | "Add regression test (RED→GREEN) + variant coverage"
 NEEDS_EXTERNAL_RESEARCH: [true if local investigation exhausted and external patterns needed, else false]
 RESEARCH_REASON: null | "[specific error/pattern to search for on GitHub]"
+# Memory durability: describe behaviors and patterns, not line numbers. Reference stable module boundaries.
 MEMORY_NOTES:
   learnings: ["Root cause and fix approach"]
   patterns: ["Bug pattern for Common Gotchas"]

@@ -1,5 +1,23 @@
 # Changelog
 
+## [10.1.12] - 2026-03-27
+
+### Prompt engineering uplift from mattpocock/skills
+
+#### Changed
+- **Planning:** Added Durable Decisions field to plan header and output template. Phase 1 tracer-bullet guidance. DAG ordering principle. HITL/AFK phase autonomy classification table. Planner now gives opinionated recommendations for decision_rfc.
+- **TDD:** Vertical Slicing anti-pattern with ASCII diagram. Mocking DON'T list (never mock your own code). Design for Testability rules (DI, pure functions, small surface). Test Prioritization guidance.
+- **Code Review:** "Be opinionated" posture directive. Pass 4: Friction Scan for architectural friction. Code Smell Quick-Reference with smell→remedy mapping.
+- **Architecture:** Dependency Classification taxonomy (in-process, local-substitutable, remote-but-owned, true-external).
+- **Router:** Structured scope assessment replacing vague "trivial vs complex" gate. Domain Context injection in prompt scaffold. Sharper research triggers with actionable criteria.
+- **Memory:** Durability comments on all 5 agent MEMORY_NOTES sections.
+- **Plan Review Gate:** Durable Decisions presence check for multi-phase plans.
+- **Component Builder:** TDD Quick Reference with vertical slicing and testability rules.
+- **Silent Failure Hunter:** Red Flag code examples (BAD/GOOD error handling).
+
+#### Unchanged
+- Zero YAML contract fields modified. Zero state machine transitions. Zero workflow graphs. Zero hook definitions. All hard rules preserved.
+
 ## [10.1.11] - 2026-03-26
 
 ### DAG-visible PLAN review loop

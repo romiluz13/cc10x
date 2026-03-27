@@ -73,6 +73,27 @@ Implement fresh from tests. Period.
                     Next Feature
 ```
 
+### Vertical Slicing (CRITICAL)
+
+```
+WRONG (horizontal — all tests then all code):
+  RED:   test1, test2, test3, test4, test5
+  GREEN: impl1, impl2, impl3, impl4, impl5
+
+RIGHT (vertical — one feature at a time):
+  RED->GREEN: test1->impl1
+  RED->GREEN: test2->impl2
+  RED->GREEN: test3->impl3
+```
+
+**DO NOT write all tests first, then all implementation.** This produces bad tests:
+- Tests written in bulk test _imagined_ behavior, not _actual_ behavior
+- You end up testing the _shape_ of things rather than user-facing behavior
+- Tests become insensitive to real changes — pass when behavior breaks, fail when behavior is fine
+- You outrun your headlights, committing to test structure before understanding the implementation
+
+**Correct approach:** One test → one implementation → repeat. Each test responds to what you learned from the previous cycle.
+
 ### RED - Write Failing Test
 
 Write one minimal test showing what should happen.
@@ -295,6 +316,11 @@ jest.advanceTimersByTime(1000)
 
 **Mock quality check:** If mock setup > test code, reconsider design.
 
+**Never mock:**
+- Your own classes or modules — test them with real code
+- Internal collaborators — if you need to mock them, the coupling is the bug
+- Anything you control — mocks are for boundaries you don't own
+
 ## Why Order Matters
 
 **"I'll write tests after to verify it works"**
@@ -426,6 +452,15 @@ Target: **80%+ code coverage** across:
 
 **Below threshold?** Add missing tests before claiming completion.
 
+### Test Prioritization
+
+80% coverage means deliberate choices about what to test first. Focus effort on:
+- Critical user-facing paths (auth, payments, data integrity)
+- Complex logic with multiple branches
+- Code that has broken before (regression-prone areas)
+
+Do NOT skip tests because code "looks simple" — simple code breaks too. The 80% target is a floor, not a ceiling.
+
 ## Test Smells (Anti-Patterns)
 
 | Smell | Bad Example | Why It's Bad | Fix |
@@ -449,6 +484,20 @@ Target: **80%+ code coverage** across:
 | Test too complicated | Design too complicated. Simplify interface. |
 | Must mock everything | Code too coupled. Use dependency injection. |
 | Test setup huge | Extract helpers. Still complex? Simplify design. |
+
+## Design for Testability (When Tests Are Hard)
+
+If tests are hard to write, the interface needs work:
+
+1. **Accept dependencies, don't create them**
+   - Testable: `function processOrder(order, paymentGateway) {}`
+   - Hard to test: `function processOrder(order) { const gw = new StripeGateway(); }`
+
+2. **Return results, don't produce side effects**
+   - Testable: `function calculateDiscount(cart): Discount {}`
+   - Hard to test: `function applyDiscount(cart): void { cart.total -= discount; }`
+
+3. **Small surface area** — fewer methods = fewer tests needed, fewer params = simpler setup
 
 ## Output Format
 

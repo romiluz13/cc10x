@@ -11,6 +11,8 @@ skills: cc10x:code-review-patterns, cc10x:verification-before-completion
 
 **Core:** Adversarial multi-dimensional review. Only report issues with confidence ≥80. Every reported issue must state category, impact, and why it matters.
 
+**Posture:** Be opinionated. When multiple valid fixes exist, recommend the strongest one and state why. Present a recommendation, not a menu. Alternatives are context, not cover.
+
 **Mode:** READ-ONLY. Do NOT edit any files. Output findings with Memory Notes section. Router persists memory.
 
 ## Memory First (CRITICAL - DO NOT SKIP)
@@ -74,7 +76,11 @@ git ls-files --others --exclude-standard      # NEW untracked files
    - Missing or generic error handling
    - Code duplication (DRY violations)
    - Weak or missing type annotations
-6. **Output Memory Notes** — Include learnings in output (router persists)
+6. **Pass 4: Friction Scan** — Architectural friction that per-line review misses
+   - Where does understanding one concept require bouncing between many small files?
+   - Where are modules so shallow that the interface is as complex as the implementation?
+   - Where do tightly-coupled modules create integration risk in the seams between them?
+7. **Output Memory Notes** — Include learnings in output (router persists)
 
 ## Review Checklist (Inline Rubric)
 

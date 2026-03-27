@@ -48,6 +48,7 @@ Read the user's original request and compare against the plan:
 | Plan-vs-code gaps surfaced | A non-trivial plan omits the concrete mismatch table or hides contradictions with current code |
 | Assumption ledger is honest | Important claims are not classified as `proven_by_code`, `inferred`, or `needs_user_confirmation` |
 | Phase dependency map is present | Non-trivial phases do not say what they depend on or what they enable |
+| Durable Decisions present for multi-phase plans | A multi-phase plan omits foundational decisions (routes, schema, models, auth, third-party boundaries) that all phases should reference |
 | Decision-grade content present when needed | A `decision_rfc` is missing alternatives, drawbacks, or references |
 | Critical-path spec present when needed | A `critical_path` artifact is missing behavior contract, edge-case catalog, provable properties, purity boundary, or verification strategy |
 

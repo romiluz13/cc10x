@@ -176,6 +176,17 @@ grep -rn "console\.log" --include="*.ts" --include="*.tsx" src/
 | **Clarity** | Explicit, readable flow | Nested ternaries, dense one-liners |
 | **Testability** | Injectable dependencies | Global state |
 
+## Code Smell Quick-Reference
+
+| Smell | Remedy |
+|-------|--------|
+| **Duplication** | Extract function or class |
+| **Long methods** | Break into private helpers (keep tests on public interface) |
+| **Shallow modules** | Combine or deepen — small interface hiding large implementation |
+| **Feature envy** | Move logic to where the data lives |
+| **Primitive obsession** | Introduce value objects |
+| **New code reveals old problems** | Flag for follow-up (do not expand review scope) |
+
 ## Type Design Red Flags (Typed Languages)
 
 | Anti-Pattern | Problem | Fix |

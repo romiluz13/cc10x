@@ -331,9 +331,9 @@ Router-owned interface fields:
    - `plan_mode` must be explicit when a plan artifact exists.
    - `verification_rigor` must be explicit when a plan artifact exists.
    - If either condition fails, ask for clarification and do not start BUILD.
-4. If plan path is `N/A`, use an adaptive gate:
-   - obviously trivial, low-risk work -> continue directly to BUILD
-   - complex, ambiguous, multi-step, or cross-cutting work -> ask: `Plan first (Recommended)` or `Build directly`
+4. If plan path is `N/A`, assess scope before dispatch:
+   - **Trivial** (single concern, one file group, one failure mode) → continue directly to BUILD.
+   - **Non-trivial** (spans multiple independent file groups, has separable concerns, or involves distinct failure modes) → ask: `Plan first (Recommended)` or `Build directly`.
    - `Plan first` -> switch to PLAN workflow.
    - `Build directly` -> continue without a plan.
 5. If the referenced plan file is missing:
@@ -643,6 +643,9 @@ Research tasks are siblings, never blockers on the workflow parent. The follow-u
 ## Project Patterns
 {User Standards + Common Gotchas, trimmed if needed}
 
+## Domain Context
+{If UBIQUITOUS_LANGUAGE.md, DOMAIN_GLOSSARY.md, or docs/domain/*.md exist, include content. Otherwise omit section.}
+
 ## SKILL_HINTS
 {router-detected skill list or "None"}
 ```
@@ -929,10 +932,11 @@ If integration-verifier emits `FAIL` and the findings contain `REVERT`:
 
 Research runs only when triggered by:
 - Explicit user request for research.
-- External integration or unfamiliar post-2024 technology.
-- Debug workflow stuck state.
-- Multiple remediation cycles on the same issue.
-- PLAN workflow where external patterns materially improve the plan.
+- Plan references an external API, SDK, or service whose current behavior must be verified.
+- Plan proposes an architecture pattern not currently used in the codebase.
+- Bug investigation suspects a dependency version regression or behavioral change.
+- Two or more remediation cycles on the same issue without convergence.
+- PLAN workflow where the planner needs to choose between approaches with external precedent.
 
 Loop caps:
 - Count research rounds by `wf:` + `reason:` using `kind:research` tasks.
