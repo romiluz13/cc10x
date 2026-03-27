@@ -236,6 +236,10 @@ Hook policy:
   - `TaskCompleted` for task metadata checks
   - `PostCompact` for compaction event capture in workflow event log (audit only)
   - `SubagentStop` for agent contract presence audit (telemetry only)
+  - `PreCompact` for workflow state snapshot before compaction (persistence only)
+  - `Stop` for workflow state snapshot on session stop (persistence only, never blocks)
+  - `StopFailure` for API error logging to workflow event log (async, telemetry only)
+  - `InstructionsLoaded` for instruction file load audit trail (async, telemetry only)
 - Default mode is audit-only. Do not rely on hooks as the only source of truth; the router still owns orchestration decisions.
 - Repo-local `.claude/settings.json` is not part of the shipped CC10X product.
 - Optional accelerator MCPs are user-configured in Claude Code. CC10X assumes the names `brightdata` and `octocode` if they are available, but must degrade to built-in research paths when they are absent.

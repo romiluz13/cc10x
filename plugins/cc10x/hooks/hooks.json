@@ -74,6 +74,56 @@
           }
         ]
       }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/cc10x_precompact_state.py\"",
+            "timeout": 5,
+            "statusMessage": "CC10X pre-compaction state snapshot"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/cc10x_stop_persist.py\"",
+            "timeout": 3,
+            "statusMessage": "CC10X session state persistence"
+          }
+        ]
+      }
+    ],
+    "StopFailure": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/cc10x_stop_failure_log.py\"",
+            "timeout": 3,
+            "async": true,
+            "statusMessage": "CC10X failure event logging"
+          }
+        ]
+      }
+    ],
+    "InstructionsLoaded": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/cc10x_instructions_loaded_audit.py\"",
+            "timeout": 5,
+            "async": true,
+            "statusMessage": "CC10X instruction audit"
+          }
+        ]
+      }
     ]
   }
 }

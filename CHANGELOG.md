@@ -1,5 +1,26 @@
 # Changelog
 
+## [10.1.15] - 2026-03-27
+
+### Hook expansion — 4 audit-only hooks for persistence and telemetry
+
+4 new Claude Code hook events added. All audit-only — zero blocking, zero context injection, zero routing decisions. Router remains sole orchestration authority.
+
+#### Added
+- **PreCompact hook:** Saves workflow state snapshot (UUID, phase cursor, plan file) to `precompact-state.json` before context compaction destroys memory. Completes the PreCompact→PostCompact lifecycle bracket.
+- **Stop hook:** Saves same workflow state snapshot on every session stop. Defensive `stop_hook_active` check prevents any interaction with continuation stops. Never blocks.
+- **StopFailure hook:** Logs API failures (rate limits, auth errors, server errors) to workflow event log. Async fire-and-forget. Output/exit code ignored per Claude Code spec.
+- **InstructionsLoaded hook:** Audit trail for instruction file loads (CLAUDE.md, rules, skills). Logs file path, memory type, and load reason. Async.
+
+#### Changed
+- **hooks.json:** 6 → 10 event entries
+- **hook-mode.json:** 6 → 10 mode keys (all "audit")
+- **Router SKILL.md Section 2a:** Hook policy updated with 4 new bullets
+- **hooks/README.md:** Hook inventory updated
+
+#### Unchanged
+- Zero YAML contract fields modified. Zero state machine transitions. Zero workflow graphs. Zero blocking hooks. All existing 6 hooks unchanged. hooklib.py not modified. Router remains sole orchestration authority.
+
 ## [10.1.14] - 2026-03-27
 
 ### Multi-repo harmony integration — 29 patterns from 11 reference repos

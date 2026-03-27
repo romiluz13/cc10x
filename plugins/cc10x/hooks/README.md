@@ -3,10 +3,16 @@
 This directory now serves two different purposes:
 
 1. **Plugin runtime hooks** via `hooks.json`
-   - `PreToolUse`
-   - `SessionStart`
-   - `PostToolUse`
-   - `TaskCompleted`
+   - `PreToolUse` — protected writes guard
+   - `SessionStart` — workflow resume context
+   - `PostToolUse` — workflow artifact integrity audit
+   - `TaskCompleted` — task metadata validation
+   - `PostCompact` — compaction event capture
+   - `SubagentStop` — agent contract presence audit
+   - `PreCompact` — workflow state snapshot before compaction
+   - `Stop` — workflow state snapshot on session stop
+   - `StopFailure` — API error logging (async)
+   - `InstructionsLoaded` — instruction file load audit (async)
 2. **Optional git pre-commit helper** via `pre-commit`
 
 ## Plugin Runtime Hooks
@@ -19,6 +25,8 @@ The shipped runtime hooks are intentionally minimal and audit-first:
 - inject workflow resume context
 - audit workflow artifact integrity after writes
 - validate CC10X task metadata on completion
+- snapshot workflow state before compaction and on session stop
+- log API failures and instruction file loads for telemetry
 
 ## Internal Publication Audit
 
