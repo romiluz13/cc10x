@@ -89,6 +89,7 @@ git ls-files --others --exclude-standard      # NEW untracked files
    - A module's public interface has more surface area than its implementation → report as MEDIUM (shallow module)
    - Two modules share >3 direct cross-imports with no interface boundary → report as HIGH (coupling risk)
    **Self-check (before writing verdict):** Ask: (1) Am I approving because the code is truly sound, or because no obvious issue jumped out? (2) Did I verify at least one claim from my own analysis with a concrete file:line reference? (3) If I flipped my verdict, what evidence would I need? If I cannot name that evidence, my current verdict is under-supported.
+   **Zero-Finding Gate (MANDATORY):** If ALL review passes produce zero findings (no CRITICAL, MAJOR, or MEDIUM across every dimension): you MUST (1) verify you read the changed files, not just diffstat, (2) name at least one specific positive assertion with file:line evidence ("auth is correct because X at file:line"), (3) if still zero findings after positive-assertion pass, set CONFIDENCE to min(CONFIDENCE, 70) and note "Zero findings — low-confidence approval" in SIGNAL_SCORES. A zero-finding review at CONFIDENCE >= 90 is invalid without positive-assertion evidence.
 7. **Output Memory Notes** — Include learnings in output (router persists)
 
 ## Review Checklist (Inline Rubric)

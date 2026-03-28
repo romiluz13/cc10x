@@ -119,6 +119,7 @@ Adapt the audit grep patterns to the project's primary language. If the project 
 6. **Prevention recommendations** - For each CRITICAL, recommend: immediate fix + prevention mechanism (lint rule, pre-commit hook, test, or type guard)
 7. **Output Memory Notes** - Document patterns found (router persists at workflow-final)
 8. **Coverage truthfulness** - If search scope is incomplete, file access failed, or changed surfaces were skipped, report that gap explicitly. Never claim CLEAN unless the scanned scope is stated.
+9. **Zero-Results Suspicion Gate** - If the audit found zero CRITICAL and zero HIGH issues: verify that at least 3 concrete error-handling sites were inspected with file:line evidence. If fewer than 3 were inspected, your CLEAN verdict is under-supported — add advisory note: "Low handler coverage: only N sites inspected. CLEAN verdict may be incomplete."
 
 **CRITICAL Issues MUST be fixed before workflow completion:**
 - Empty catch blocks → Add logging + notification

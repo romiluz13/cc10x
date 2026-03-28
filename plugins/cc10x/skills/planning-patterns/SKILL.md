@@ -143,6 +143,10 @@ A developer with zero codebase context should be able to execute the plan WITHOU
 
 **Why:** Claude forgets context. External docs get stale. File:line references are always accurate.
 
+### Distillation Rule
+
+Plans MUST use distilled content, not summarized. Distilled = lossless compression preserving every entity, relationship, decision, and constraint. Summarized = lossy reduction that drops specifics. If a plan section can be shortened without losing any fact the builder needs, distill it. If shortening requires dropping facts, keep the full version. Test: Could a builder agent execute from this plan alone without re-reading source files? If not, the plan is under-distilled.
+
 ## Validation Levels
 
 **Match validation depth to plan complexity:**

@@ -107,6 +107,14 @@ When recording a failed hypothesis in `activeContext.md` under `## Recent Change
 | Fix changes public API/interface | `ROOT_CAUSE` + `REMEDIATION_REASON` describing the API break and callers |
 | Multiple valid root causes (confidence gap <20 between H1/H2) | `STATUS: INVESTIGATING` with both hypotheses in the narrative |
 
+## Step Sequence Discipline (MANDATORY)
+
+Steps 1-12 below MUST execute in order. NEVER skip a step. NEVER reorder.
+- Steps 1-4 (Understand, Git History, Context, LOG FIRST) are investigative. They produce hypotheses.
+- Step 5 (Variant Scan) MUST complete before Step 7 (RED). Skipping Variant Scan before RED produces hardcoded regression tests that miss the root cause.
+- Step 9 (Blast Radius Scan) MUST run after GREEN, not before. Scanning before the fix exists wastes cycles on patterns that may not match the root cause.
+- If a step is genuinely not applicable (e.g., no variants for a pure logic bug), state "Step N: Not applicable — {reason}" explicitly. Silent skip is forbidden.
+
 ## Process
 1. **Understand** - Expected vs actual behavior, when did it start?
 2. **Git History** - Recent changes to affected files:

@@ -169,7 +169,12 @@ AskUserQuestion({
 
 **Q7 — Out-of-scope discovery (always ask):** "What is explicitly NOT part of this? What should we defer?" Document answers in the Out of Scope section of the design document. This prevents scope creep from assumptions about what "should" be included.
 
-**After the unresolved dimensions are answered:** Proceed to Phase 3 with collected answers. Do not force the full 7-question sequence when the intent contract is already complete.
+**After the unresolved dimensions are answered:** Verify the collected intent passes the Intent Completeness Gate before proceeding:
+1. **Small enough** — intent fits in one paragraph without losing specifics.
+2. **Contradiction-free** — no answer conflicts with another answer or a stated constraint.
+3. **Sufficiently specific** — a builder agent could act on it without asking clarifying questions.
+
+If ANY check fails, ask one more targeted question to resolve the gap. Do NOT proceed with ambiguous or contradictory intent. Once all three checks pass, proceed to Phase 3 with collected answers. Do not force the full 7-question sequence when the intent contract is already complete.
 
 ### Phase 3: Explore Approaches
 

@@ -231,6 +231,22 @@ if (!name) {
 return name ?? 'Unknown';
 ```
 
+## Edge Case Classification Taxonomy
+
+Reference checklist for systematic edge case scanning during review:
+
+| Category | Examples | Detection |
+|----------|----------|-----------|
+| Missing else/default | Switch without default, if without else for nullable | Check switch/if exhaustiveness |
+| Unguarded inputs | No validation on user input, missing null checks | Direct parameter use without validation |
+| Off-by-one | Loop bounds, array indexing, pagination | Review all `<` vs `<=`, `array[length]` vs `array[length-1]` |
+| Arithmetic edge cases | Division by zero, integer overflow, floating point | `/` operator without divisor validation |
+| Implicit type coercion | `==` instead of `===`, string-to-number, truthy/falsy | `==` (not `===`), `+` with mixed types |
+| Race conditions | Shared mutable state, async without locking | Shared variables modified in async paths |
+| Timeout/retry gaps | No timeout on network calls, no retry exhaustion | fetch/axios without timeout config |
+
+Use during Stage 2 Quality Review. Check only categories relevant to the changed code.
+
 ## Clarity Over Brevity
 
 - Nested ternary `a ? b ? c : d : e` → Use if/else or switch
@@ -311,6 +327,10 @@ return name ?? 'Unknown';
 1. If ANY HARD signal = 0 → STATUS: CHANGES_REQUESTED (non-negotiable)
 2. CONFIDENCE = min(HARD scores), reduced by max 10 if SOFT signals are low
 3. Include per-signal breakdown in Router Handoff for targeted remediation
+
+### Zero-Finding Halt
+
+If a review produces ZERO findings across ALL dimensions (security, correctness, performance, maintainability, UX/A11y), the review MUST halt and re-examine. Zero findings in a non-trivial change is a signal of insufficient review depth, not perfect code. Action: Re-read every changed file. Apply the Sloppy Pattern Scan. Run Security Quick-Scan Commands. If still zero findings after deliberate re-examination, document: "Zero findings confirmed after forced re-examination of [N files, M lines changed]. Reviewed: [list specific checks performed]." A bare "no issues" without re-examination proof is INVALID.
 
 **Evidence requirement per signal:**
 Each signal MUST cite specific file:line. A signal without evidence = not reported.

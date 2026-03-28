@@ -163,6 +163,13 @@ BUILD runs `code-reviewer ∥ silent-failure-hunter` in parallel. To avoid confl
 - Agents do not edit memory markdown during parallel phases.
 - Router persists structured notes into the workflow artifact mid-phase and writes markdown only in Memory Update.
 
+### Distillation Rule (MANDATORY for all MEMORY_NOTES)
+
+All memory entries must be distilled, not summarized:
+- **Preserve:** entity names, file paths as stable module boundaries, decision outcomes with rationale, causal relationships, error signatures.
+- **Strip:** decorative prose, hedging language, step-by-step narration of what was done, redundant restatements of the prompt.
+- **Test:** If an LLM reading only memory files cannot reconstruct the key decisions and constraints without re-reading source files, the distillation failed.
+
 ## Pre-Compaction Memory Safety
 
 **Update memory IMMEDIATELY when you notice:**

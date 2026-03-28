@@ -133,11 +133,11 @@ While executing, you will discover work not spelled out line-by-line in the phas
 If the extra work is not directly traceable to the current phase contract, do not quietly absorb it.
 
 ## Process
-1. **Understand** - Read relevant files, define acceptance criteria for the current phase, and name at least one success scenario tied to the phase intent
-2. **RED** - Write failing test (must exit 1)
-3. **GREEN** - Minimal code to pass (must exit 0)
-4. **REFACTOR** - Clean up, keep tests green
-5. **Verify** - All tests pass, functionality works, truths/artifacts/wiring reconcile, and phase exit criteria are satisfied
+1. **Understand** - Read relevant files, define acceptance criteria for the current phase, and name at least one success scenario tied to the phase intent. **Done:** Acceptance criteria stated with at least one named scenario. **Wrong:** No criteria stated, or scenario does not map to phase intent — FAIL with REMEDIATION_REASON.
+2. **RED** - Write failing test (must exit 1). **Done:** Test exists, runs, exits 1 with meaningful failure message. **Wrong:** Test exits 0 (not actually failing), or does not run (import/syntax error) — fix before GREEN.
+3. **GREEN** - Minimal code to pass (must exit 0). **Done:** Test passes, exit 0, no unrelated test breakage. **Wrong:** Test still fails, or other tests broken — do not proceed to REFACTOR.
+4. **REFACTOR** - Clean up, keep tests green. **Done:** Tests still pass after cleanup. **Wrong:** Tests fail after refactor — revert refactor, return to GREEN.
+5. **Verify** - All tests pass, functionality works, truths/artifacts/wiring reconcile, and phase exit criteria are satisfied. **Done:** All verification evidence collected with exit codes. **Wrong:** Missing exit codes or untested scenarios — collect evidence before reporting.
 6. **Report scope truthfully** - If any planned step is incomplete, report `PHASE_STATUS: partial` and stop. Do not narrate partial completion as success.
 7. **Emit memory notes** - Summarize learnings, patterns, verification, and deferred items in the Router Contract
 

@@ -320,6 +320,12 @@ Before creating a new workflow:
 - Read `progress.md ## Current Workflow` and `## Tasks` for pending work that should resume instead of duplicating.
 - Read the latest `.claude/cc10x/v10/workflows/*.json` artifact if one exists for the current conversation.
 
+**Intent Readiness Gate (MANDATORY before PLAN or BUILD):**
+Before dispatching to planner or builder, verify the intent contract meets three conditions:
+1. **Context-bounded:** The full intent (goal + constraints + acceptance criteria) fits within the agent's prompt scaffold without truncation. If the intent requires loading more than 5 source files to be understood, decompose first (switch to PLAN).
+2. **Contradiction-free:** No acceptance criterion contradicts a stated constraint or non-goal. If contradictions exist, halt and persist `pending_gate="intent_contradiction"`.
+3. **Sufficiently specific:** Every acceptance criterion maps to at least one verifiable scenario. If a criterion is unverifiable ("make it better" without a metric), halt and ask for specificity.
+
 Router-owned interface fields:
 - `plan_mode`: `direct` | `execution_plan` | `decision_rfc`
 - `verification_rigor`: `standard` | `critical_path`
@@ -335,7 +341,9 @@ Router-owned interface fields:
    - `Differences from agreement` must be present, even if empty.
    - `plan_mode` must be explicit when a plan artifact exists.
    - `verification_rigor` must be explicit when a plan artifact exists.
-   - If either condition fails, ask for clarification and do not start BUILD.
+   - If `plan_mode` is `execution_plan` or `decision_rfc`: every phase in `normalized_phases` must carry non-empty `exit_criteria`, and `intent.acceptance_criteria` must be non-empty. Field presence is not enough — field completeness is required.
+   - Cross-check `intent.constraints` against approved decisions. If any approved decision explicitly contradicts an `intent.constraint`, emit NOGO with the contradiction and ask the user to resolve before BUILD starts.
+   - If any condition fails, ask for clarification and do not start BUILD.
 4. If plan path is `N/A`, assess scope before dispatch:
    - **Trivial** (single concern, one file group, one failure mode) → continue directly to BUILD.
      Heuristic signals: touches 1-2 files, single logical change, one testable outcome, no cross-module wiring.
@@ -652,7 +660,7 @@ Research tasks are siblings, never blockers on the workflow parent. The follow-u
 {User Standards + Common Gotchas, trimmed if needed}
 
 ## Domain Context
-{If UBIQUITOUS_LANGUAGE.md, DOMAIN_GLOSSARY.md, or docs/domain/*.md exist, include content. Otherwise omit section.}
+{If UBIQUITOUS_LANGUAGE.md, DOMAIN_GLOSSARY.md, docs/domain/*.md, or project-context.md exist, include content. Otherwise omit section.}
 
 ## SKILL_HINTS
 {router-detected skill list or "None"}
@@ -784,7 +792,9 @@ If the YAML block is missing or malformed:
 | component-builder | `STATUS=PASS` requires `TDD_RED_EXIT=1`, `TDD_GREEN_EXIT=0`, `PHASE_STATUS=completed`, `PHASE_EXIT_READY=true`, `PROOF_STATUS=passed`, empty `BLOCKED_ITEMS`, and a non-empty `SCENARIOS` array with at least one passing scenario. That passing scenario must include non-empty `name`, `command`, `expected`, `actual`, and `exit_code`. |
 | bug-investigator | `STATUS=FIXED` requires `VERIFICATION_RIGOR` to be explicit, `TDD_RED_EXIT=1`, `TDD_GREEN_EXIT=0`, `VARIANTS_COVERED>=1`, a non-empty `BLAST_RADIUS_SCAN`, and a non-empty `SCENARIOS` array unless it explicitly set `NEEDS_EXTERNAL_RESEARCH=true`. At least one scenario name must start with `Regression:` and one with `Variant:`. Both required scenarios must include non-empty `command`, `expected`, `actual`, and `exit_code`. |
 | code-reviewer | `APPROVE` + critical issues becomes `CHANGES_REQUESTED` |
+| code-reviewer | `APPROVE` with zero findings across ALL dimensions AND fewer than 3 file:line evidence citations → trigger fallback inline verification. Rubber-stamp approvals without substantive analysis are invalid. |
 | silent-failure-hunter | `CLEAN` + critical issues becomes `ISSUES_FOUND` |
+| silent-failure-hunter | `CLEAN` with zero error-handling sites inspected OR zero files scanned → trigger fallback inline verification. A CLEAN verdict requires stated scope. |
 | integration-verifier | `PASS` + critical issues becomes `FAIL`; scenario totals must reconcile with the scenario table and evidence array; every counted scenario must map to a concrete evidence row; every scenario row must contain non-empty `Expected` and `Actual` values |
 | planner | `PLAN_CREATED` or `DECISION_RFC_CREATED` requires non-empty `PLAN_FILE`, explicit `PLAN_MODE`, explicit `VERIFICATION_RIGOR`, `CONFIDENCE>=50`, `GATE_PASSED=true`, a non-empty `SCENARIOS` array, `OPEN_DECISIONS=[]`, and `DIFFERENCES_FROM_AGREEMENT` explicitly present. `PLAN_MODE=decision_rfc` also requires non-empty `ALTERNATIVES` and `DRAWBACKS`; `VERIFICATION_RIGOR=critical_path` requires non-empty `PROVABLE_PROPERTIES`. |
 | plan-gap-reviewer | `PASS` requires `BLOCKING_FINDINGS_COUNT=0` and `REPLAN_NEEDED=false`; `FINDINGS` requires explicit finding buckets and a non-empty `REPLAN_REASON` when blocking findings exist. |
@@ -1057,6 +1067,7 @@ TaskCreate({
 5. If `code-reviewer` and `silent-failure-hunter` are both ready in BUILD:
    - mark both in_progress first
    - invoke them in the same message
+   - If parallel invocation fails or is unavailable (API error, rate limit): fall back to sequential execution (reviewer first, then hunter). Never block a workflow because parallelism is unavailable. Log `event=parallel_fallback` in the workflow event log.
 6. After each agent returns:
    - validate output
    - capture memory payload
@@ -1150,3 +1161,4 @@ For DEBUG:
 - Only parallelize agents whose file-write surfaces do not overlap. Reviewer and hunter are read-only and safe to parallelize. Two write agents on overlapping files must be serialized. [EASY TO MISS: Each parallel agent must have a distinct phase value and unique task description. Identical prompts cause agents to duplicate work or silently clobber each other's output.]
 - Agents must never inherit raw conversation context. They receive only the structured scaffold from the dispatcher. Leaking conversation history into agent prompts causes scope pollution and non-reproducible behavior.
 - Maintain professional objectivity in all routing decisions. Do not rationalize a failing workflow as "close enough" or downgrade critical findings to avoid remediation. The router exists to enforce quality, not to please.
+- Agents must never reference or read internal skill files from other agents or skills (e.g., component-builder must never read code-review-patterns/SKILL.md). Cross-agent knowledge flows exclusively through router-mediated scaffolds and workflow artifacts.

@@ -1,5 +1,28 @@
 # Changelog
 
+## [10.1.16] - 2026-03-28
+
+### BMAD-METHOD harmony integration — 10 certified prompt engineering patterns
+
+10 patterns extracted from BMAD-METHOD, rated NATIVE by 3 parallel harmony mappers, certified through cross-layer dedup. All prompt-text additions to existing files. Zero YAML contracts changed. Zero new files.
+
+#### Added
+- **Zero-Finding Gate:** Rubber-stamp prevention across code-reviewer, silent-failure-hunter, code-review-patterns, and router contract overrides. Zero findings in a non-trivial review triggers mandatory re-examination.
+- **Intent Readiness Gate:** Three-condition pre-dispatch check (context-bounded, contradiction-free, sufficiently specific) prevents ambiguous delegation to agents.
+- **Graceful Degradation:** Subagent parallel invocation failure falls back to sequential. Workflows never block on infrastructure unavailability.
+- **Step Sequence Discipline:** Bug-investigator steps 1-12 are now explicitly mandatory-sequential with named ordering rationale.
+- **Done/Wrong Definitions:** Component-builder process steps 1-5 now define explicit success criteria and failure modes.
+- **Distillation Rule:** Formal rule in session-memory and planning-patterns: lossless compression preserving entities and decisions, stripping narration.
+- **Edge Case Taxonomy:** 7-category classification table in code-review-patterns for systematic edge case scanning.
+- **Skill Encapsulation:** Hard rule in router: agents must never cross-read other agents' or skills' internal files.
+- **Project Context Discovery:** Router Domain Context section now includes project-context.md in discovery glob.
+- **Plan Trust Gate Strengthening:** Field completeness checks (non-empty exit_criteria, acceptance_criteria) and intent-constraint contradiction detection.
+
+#### Changed
+- **Router SKILL.md:** 6 surgical additions (Sections 5, 7, 8, 12, 14)
+- **4 agent files:** code-reviewer, silent-failure-hunter, bug-investigator, component-builder
+- **4 skill files:** code-review-patterns, brainstorming, planning-patterns, session-memory
+
 ## [10.1.15] - 2026-03-27
 
 ### Hook expansion — 4 audit-only hooks for persistence and telemetry
