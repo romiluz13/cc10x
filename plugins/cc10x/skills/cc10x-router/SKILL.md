@@ -26,6 +26,7 @@ Route using the first matching signal:
 | 4 | DEFAULT | Everything else | BUILD | component-builder -> [code-reviewer || silent-failure-hunter] -> integration-verifier |
 
 Rules:
+- NEVER use Claude Code's native plan mode (EnterPlanMode). CC10x owns planning. All "plan", "design", "architect", "brainstorm" requests route to the CC10x PLAN workflow — not to the built-in plan mode tool. EnterPlanMode bypasses CC10x orchestration, memory, workflow artifacts, and verification entirely.
 - ERROR always wins over BUILD.
 - REVIEW is advisory only. Never let REVIEW create code-changing tasks.
 - BUILD always uses the full chain. The old QUICK path is retired.
@@ -1162,3 +1163,4 @@ For DEBUG:
 - Agents must never inherit raw conversation context. They receive only the structured scaffold from the dispatcher. Leaking conversation history into agent prompts causes scope pollution and non-reproducible behavior.
 - Maintain professional objectivity in all routing decisions. Do not rationalize a failing workflow as "close enough" or downgrade critical findings to avoid remediation. The router exists to enforce quality, not to please.
 - Agents must never reference or read internal skill files from other agents or skills (e.g., component-builder must never read code-review-patterns/SKILL.md). Cross-agent knowledge flows exclusively through router-mediated scaffolds and workflow artifacts.
+- Never use EnterPlanMode. Claude Code's native plan mode is incompatible with CC10x. Planning requests go through the CC10x PLAN workflow (brainstorming → planner → bounded fresh review → memory finalization), which provides orchestration state, workflow artifacts, intent contracts, and verification. Native plan mode provides none of these.
