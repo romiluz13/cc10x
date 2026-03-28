@@ -7,7 +7,7 @@
 **Recommended: Create `~/.claude/CLAUDE.md` (global) so the router is always active across all projects.**
 
 <p align="center">
-  <strong>1 Router</strong> &nbsp;•&nbsp; <strong>9 Agents</strong> &nbsp;•&nbsp; <strong>13 Skills</strong> &nbsp;•&nbsp; <strong>4 Workflows</strong>
+  <strong>1 Router</strong> &nbsp;•&nbsp; <strong>9 Agents</strong> &nbsp;•&nbsp; <strong>14 Skills</strong> &nbsp;•&nbsp; <strong>4 Workflows</strong>
 </p>
 
 <p align="center">
@@ -446,9 +446,9 @@ WORKFLOW STATE (.claude/cc10x/workflows/)
 
 ---
 
-## The 13 Skills
+## The 14 Skills
 
-Skills are **loaded automatically by agents**. You never invoke them directly.
+Skills are **loaded automatically by agents** or invoked directly when user-invocable.
 
 | Skill | Used By | Purpose |
 |-------|---------|---------|
@@ -464,6 +464,7 @@ Skills are **loaded automatically by agents**. You never invoke them directly.
 | **brainstorming** | planner | Idea exploration |
 | **plan-review-gate** | planner | Final plan sanity gate before handoff |
 | **research** | planner, bug-investigator (via github-researcher agent) | Synthesis-only: guides agents on how to interpret research results; GitHub execution is handled by the `github-researcher` agent |
+| **building-cc10x** | USER-INVOCABLE | Reference repo analysis, DNA fingerprint, harmony integration pipeline |
 | **cc10x-router** | ENTRY POINT | Routes to correct workflow |
 
 ---
