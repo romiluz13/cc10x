@@ -9,7 +9,7 @@ This inventory defines which prompt surfaces are allowed to affect trust-critica
 ### planner
 - Path: `plugins/cc10x/agents/planner.md`
 - Role: agreement-first planning artifact creation
-- Allowed edits: wording clarity, contract wording, output sections, codebase-reality checks, examples, context-loading guidance
+- Allowed edits: wording clarity, contract wording, output sections, codebase-reality checks, live-verification planning wording, examples, context-loading guidance
 - Forbidden edits: anything that changes routing, approval semantics, plan-mode meaning, or build-start conditions
 - Comparison references: `metaswarm` plan review, `get-shit-done` planning/execution contract, `cc10x-v7` planner usability
 - Review requirement: audit + replay + manual semantic review
@@ -41,7 +41,7 @@ This inventory defines which prompt surfaces are allowed to affect trust-critica
 ### verification-before-completion
 - Path: `plugins/cc10x/skills/verification-before-completion/SKILL.md`
 - Role: fresh-evidence honesty layer before completion claims
-- Allowed edits: compactness, anti-rationalization wording, example cleanup
+- Allowed edits: compactness, anti-rationalization wording, live-proof wording, example cleanup
 - Forbidden edits: relaxing fresh-evidence requirement or reducing scope to only tests/build
 - Comparison references: `superpowers` verification-before-completion, `get-shit-done` goal-backward verification
 - Review requirement: audit + replay + manual semantic review

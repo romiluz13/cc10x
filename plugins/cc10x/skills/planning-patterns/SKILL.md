@@ -160,6 +160,19 @@ Plans MUST use distilled content, not summarized. Distilled = lossless compressi
 
 **Include specific validation commands in each task step.**
 
+## Production-Like Verification Planning
+
+When the request needs real APIs, seeded data, browser flows, background jobs, or stress/load behavior, read `references/live-verification-strategy.md` before finalizing the plan.
+
+Use that reference to add a `### Live Verification Strategy` section that names:
+- harness manifest path
+- setup, reset, seed, health, and cleanup commands
+- first-party system boundaries vs external dependencies
+- named proof scenarios with Given/When/Then
+- stress profile and pass thresholds when load behavior matters
+
+Do not silently downgrade production-like verification into replay-only, unit-only, or manual-only steps. If the live harness does not exist yet, keep that gap explicit in the plan.
+
 ## Requirements Checklist
 
 Before writing a plan:

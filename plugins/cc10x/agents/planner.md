@@ -93,6 +93,14 @@ When `VERIFICATION_RIGOR=critical_path`, the artifact MUST include:
 - purity boundary map
 - verification strategy
 
+## Live Verification Strategy (MANDATORY when requested or risk-critical)
+
+If the request requires real, seeded, production-like, API-driven, browser, or stress validation:
+- read `plugins/cc10x/skills/planning-patterns/references/live-verification-strategy.md`
+- include a `### Live Verification Strategy` section in the saved plan
+- name the harness manifest, setup/reset/seed/health commands, first-party boundaries, named proof scenarios, and stress command when applicable
+- keep missing live coverage explicit; do not silently downgrade it into replay-only, unit-only, or manual-only verification
+
 ## Conditional Research
 
 Research is executed by `cc10x:web-researcher` + `cc10x:github-researcher` (in parallel) before this agent is invoked. The router spawns both, collects both FILE_PATHs, and passes them in this prompt.

@@ -24,6 +24,15 @@ skills: cc10x:verification-before-completion
 - After verification, check: `pgrep -f "vitest|jest" || echo "Clean"`
 - Kill if found: `pkill -f "vitest" 2>/dev/null || true`
 
+## Live Harness Discipline (MANDATORY when the plan requires live proof)
+
+If the accepted plan includes `### Live Verification Strategy`, a harness manifest, or explicit live/prod-like verification requirements:
+- read `plugins/cc10x/skills/verification-before-completion/references/live-production-testing.md`
+- run `python3 plugins/cc10x/scripts/cc10x_live_harness_runner.py --manifest <path> --mode proof`
+- if stress/load proof is required, also run `python3 plugins/cc10x/scripts/cc10x_live_harness_runner.py --manifest <path> --mode stress`
+- convert harness results into the normal scenario table and evidence array
+- do NOT silently substitute replay fixtures, unit tests, or manual checks for required live proof
+
 **Flaky test handling:**
 - If a test fails, re-run it once (same command, same environment). If it passes on re-run, mark the scenario as PASS but add a `flaky: true` annotation in the Evidence Array entry.
 - If it fails both runs, mark as FAIL. Do not re-run more than once.
@@ -120,6 +129,7 @@ For now, keep the normal full verification pass. This classification exists so C
 | No test processes orphaned | `pgrep -f "vitest\|jest" \|\| echo "Clean"` | Kill and re-verify |
 | Changed files have no stubs | `grep -rE "TODO\|FIXME\|not implemented" <changed-files>` | Report as FAIL |
 | Build succeeds | `npm run build` exit 0 in THIS message — **skip if no `package.json` exists** (pure HTML/CSS/JS project with no build step) | Report as FAIL |
+| Live harness proof (when required) | `python3 plugins/cc10x/scripts/cc10x_live_harness_runner.py --manifest <path> --mode proof` exit 0 | Report as FAIL/BLOCKED |
 | Goal-backward check | TRUTHS + ARTIFACTS + WIRING all verified | Report as FAIL |
 
 | Coverage gate | `grep -rE "(test|spec|it|describe)\(" <test-files> \| wc -l` → if 0 tests found for changed files: WARNING (not FAIL unless project has coverage config) | Report as WARNING |

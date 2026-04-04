@@ -178,6 +178,19 @@ False completion destroys trust, ships broken code, and creates rework. Verifica
 
 **Include the appropriate validation level for each verification step.**
 
+## Production-Like Live Proof
+
+If the accepted plan or current task requires real, seeded, production-like verification, read `references/live-production-testing.md` before claiming completion.
+
+Use the live harness when the task depends on:
+- real API calls
+- seeded or resettable data
+- browser or worker orchestration
+- cross-service side effects
+- load or stress behavior
+
+Do not treat replay fixtures, unit tests, or manual spot-checks as equivalent proof when the plan requires live-system evidence.
+
 ## Verification Checklist
 
 Before marking work complete:

@@ -20,7 +20,22 @@ VERIFIER_LATENCY_MODEL = ROOT / "docs" / "verifier-latency-model.md"
 LATENCY_REDUCTION_NOTE = ROOT / "docs" / "latency-reduction-note.md"
 REPLAY_CHECK = PLUGIN_ROOT / "scripts" / "cc10x_workflow_replay_check.py"
 LATENCY_AUDIT = PLUGIN_ROOT / "scripts" / "cc10x_latency_audit.py"
+LIVE_HARNESS_RUNNER = PLUGIN_ROOT / "scripts" / "cc10x_live_harness_runner.py"
 FIXTURES_DIR = PLUGIN_ROOT / "tests" / "fixtures"
+LIVE_MANIFEST_TEMPLATE = PLUGIN_ROOT / "templates" / "live-harness.template.json"
+PLANNING_LIVE_REFERENCE = (
+    PLUGIN_ROOT / "skills" / "planning-patterns" / "references" / "live-verification-strategy.md"
+)
+VERIFY_LIVE_REFERENCE = (
+    PLUGIN_ROOT
+    / "skills"
+    / "verification-before-completion"
+    / "references"
+    / "live-production-testing.md"
+)
+LIVE_MANIFEST_BOOTSTRAP = (
+    PLUGIN_ROOT / "tests" / "live" / "manifests" / "cc10x-bootstrap.json"
+)
 FIRST_PLACE_STRATEGY = (
     ROOT / "docs" / "benchmarks" / "2026-03-12-first-place-strategy.md"
 )
@@ -149,6 +164,16 @@ def main() -> int:
         errors.append("missing latency reduction note")
     if not LATENCY_AUDIT.exists():
         errors.append("missing latency audit script")
+    if not LIVE_HARNESS_RUNNER.exists():
+        errors.append("missing live harness runner script")
+    if not LIVE_MANIFEST_TEMPLATE.exists():
+        errors.append("missing live harness template manifest")
+    if not PLANNING_LIVE_REFERENCE.exists():
+        errors.append("missing planning live verification reference")
+    if not VERIFY_LIVE_REFERENCE.exists():
+        errors.append("missing verification live testing reference")
+    if not LIVE_MANIFEST_BOOTSTRAP.exists():
+        errors.append("missing live harness bootstrap manifest")
 
     for required in ("brightdata", "octocode"):
         if required not in router:
@@ -356,12 +381,17 @@ def main() -> int:
         "**Artifacts:** What must EXIST?",
         "**Wiring:** What must be WIRED?",
         "## Phase-Exit Proof vs Extended Audit",
+        "live-production-testing.md",
     ):
         if phrase not in verification_skill:
             errors.append(
                 "verification-before-completion missing prompt safety phrase "
                 f"'{phrase}'"
             )
+
+    planning_skill = read(PLUGIN_ROOT / "skills" / "planning-patterns" / "SKILL.md")
+    if "live-verification-strategy.md" not in planning_skill:
+        errors.append("planning-patterns missing live verification reference link")
 
     description_hygiene = {
         PLUGIN_ROOT

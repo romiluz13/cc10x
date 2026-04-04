@@ -100,6 +100,14 @@ Validated against the live prompt surface:
 **Safe to weaken:** Never.
 **Safe to strengthen:** Yes.
 
+### PINV-011: Live-proof requirements cannot silently downgrade
+**Covers:** `plugins/cc10x/agents/planner.md`, `plugins/cc10x/skills/planning-patterns/SKILL.md`, `plugins/cc10x/agents/integration-verifier.md`, `plugins/cc10x/skills/verification-before-completion/SKILL.md`
+**Enforces:** When the request or accepted plan requires real, seeded, production-like verification, the plan must keep that requirement explicit and the verifier must not substitute replay-only, unit-only, or manual-only checks as equivalent proof.
+**Failure prevented:** CC10X reporting trust-grade verification while only exercising deterministic fixtures or lightweight local checks.
+**Wording drift that breaks it:** Framing live verification as optional when the plan made it required, or describing replay/unit/manual checks as interchangeable with live-system proof.
+**Safe to weaken:** Never.
+**Safe to strengthen:** Yes, if runtime orchestration ownership remains with the router.
+
 ## Change Policy
 
 - Tier 1 prompt edits require audit + replay + manual semantic review.
