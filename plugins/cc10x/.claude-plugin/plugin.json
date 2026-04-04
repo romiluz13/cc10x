@@ -1,6 +1,6 @@
 {
   "name": "cc10x",
-  "version": "10.1.16",
+  "version": "10.1.17",
   "description": "Claude Code plugin for competition-grade build/debug/review/plan workflows with multi-repo harmony integration, test tampering detection, claim extraction verification, environment escape hatches, analysis paralysis guards, near-miss negative testing, de-sloppify pattern scans, plans-are-prompts principle, cross-phase data contracts, and professional objectivity hard rules.",
   "author": {
     "name": "Rom Iluz",

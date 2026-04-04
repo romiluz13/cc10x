@@ -85,7 +85,7 @@ This inventory defines which prompt surfaces are allowed to affect trust-critica
 ### frontend-patterns
 - Path: `plugins/cc10x/skills/frontend-patterns/SKILL.md`
 - Role: advisory frontend guardrails
-- Allowed edits: trigger accuracy, brevity, advisory clarifications
+- Allowed edits: trigger accuracy, brevity, advisory clarifications, reference navigation, checklist extraction
 - Forbidden edits: authority drift that competes with user/project standards
 - Comparison references: `superpowers` writing-skills description hygiene
 - Review requirement: audit only unless authority wording changes
@@ -93,9 +93,25 @@ This inventory defines which prompt surfaces are allowed to affect trust-critica
 ### debugging-patterns
 - Path: `plugins/cc10x/skills/debugging-patterns/SKILL.md`
 - Role: advisory root-cause debugging reference
-- Allowed edits: trigger accuracy, brevity, root-cause emphasis
+- Allowed edits: trigger accuracy, brevity, root-cause emphasis, reference navigation, playbook extraction
 - Forbidden edits: language that authorizes shallow/local-only fixes
 - Comparison references: `superpowers` writing-skills description hygiene
+- Review requirement: audit only unless authority wording changes
+
+### code-review-patterns
+- Path: `plugins/cc10x/skills/code-review-patterns/SKILL.md`
+- Role: advisory review-order, security, and quality heuristics
+- Allowed edits: compactness, rubric clarity, reference navigation, checklist extraction
+- Forbidden edits: authority drift that bypasses router-owned review agents
+- Comparison references: `get-shit-done` review references, `superpowers` review skills
+- Review requirement: audit only unless authority wording changes
+
+### test-driven-development
+- Path: `plugins/cc10x/skills/test-driven-development/SKILL.md`
+- Role: advisory TDD discipline and verification-depth escalation
+- Allowed edits: compactness, examples, reference navigation, live-proof escalation wording
+- Forbidden edits: relaxing fail-first discipline or weakening delete-and-restart guidance
+- Comparison references: `superpowers` test-driven-development, `agent-skills` testing references
 - Review requirement: audit only unless authority wording changes
 
 ### architecture-patterns

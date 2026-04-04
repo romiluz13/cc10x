@@ -15,6 +15,14 @@ Write the test first. Watch it fail. Write minimal code to pass.
 
 **Violating the letter of the rules is violating the spirit of the rules.**
 
+## Reference Files
+
+Read only the references needed for the current test cycle:
+
+- `references/testing-patterns.md` for naming, AAA structure, near-miss negatives, behavioral focus, and anti-pattern checks
+- `references/test-data-and-mocks.md` for factories, mock boundaries, common boundary mocks, and env/time handling
+- `references/integration-and-live-proof.md` when unit tests are not enough, or the plan requires real APIs, seeded data, browser flows, or stress proof
+
 ## When to Use
 
 **Always:**
@@ -225,114 +233,11 @@ Next failing test for next feature.
 | **Clear** | Name describes behavior | `test('test1')` |
 | **Shows intent** | Demonstrates desired API | Obscures what code should do |
 
-### Near-Miss Negative Tests
+For deeper test structure, near-miss negative tests, behavior-vs-internals, and
+smell checks, read `references/testing-patterns.md`.
 
-Test that the system correctly rejects inputs that are almost-but-not-quite valid. Near-misses catch off-by-one boundaries, wrong-type coercions, and missing validations that happy-path + obvious-edge tests miss.
-
-| Test type | Example |
-|-----------|---------|
-| Boundary -1 | `expect(validate(minAge - 1)).toBe(false)` |
-| Wrong type | `expect(parseId("123abc")).toThrow()` |
-| Missing field | `expect(createUser({name: "Jo"})).toReject()` (email required) |
-| Expired state | `expect(useToken(expiredToken)).toBe(401)` |
-
-If your test suite has zero rejection tests, it is incomplete.
-
-## Factory Pattern for Tests (Reference Pattern)
-
-Create `getMockX(overrides?: Partial<X>)` functions for reusable test data:
-
-```typescript
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: 'admin' | 'user';
-}
-
-const getMockUser = (overrides?: Partial<User>): User => ({
-  id: '123',
-  name: 'John Doe',
-  email: 'john@example.com',
-  role: 'user',
-  ...overrides,
-});
-
-// Usage - override only what matters for the test
-it('shows admin badge for admin users', () => {
-  const user = getMockUser({ role: 'admin' });
-  render(<UserCard user={user} />);
-  expect(screen.getByText('Admin')).toBeTruthy();
-});
-```
-
-**Benefits:**
-- Sensible defaults - less boilerplate per test
-- Override specific properties - focus on what test cares about
-- Type-safe - catches missing properties
-- DRY - change mock in one place
-
-## Mocking External Dependencies (When Unavoidable)
-
-**Rule:** Prefer real code. Mock only when:
-- External API (network calls)
-- Database (test isolation)
-- Time-dependent logic
-- Third-party services
-
-### Common Mock Patterns
-
-**Supabase:**
-```typescript
-jest.mock('@/lib/supabase', () => ({
-  supabase: {
-    from: jest.fn(() => ({
-      select: jest.fn(() => ({
-        eq: jest.fn(() => Promise.resolve({ data: mockData, error: null }))
-      }))
-    }))
-  }
-}))
-```
-
-**Fetch/API:**
-```typescript
-global.fetch = jest.fn(() =>
-  Promise.resolve({ ok: true, json: () => Promise.resolve(mockResponse) })
-) as jest.Mock
-```
-
-**Redis:**
-```typescript
-jest.mock('@/lib/redis', () => ({
-  get: jest.fn(() => Promise.resolve(cachedValue)),
-  set: jest.fn(() => Promise.resolve('OK'))
-}))
-```
-
-**Environment Variables:**
-```typescript
-beforeEach(() => {
-  process.env.API_KEY = 'test-key'
-})
-afterEach(() => {
-  delete process.env.API_KEY
-})
-```
-
-**Time:**
-```typescript
-jest.useFakeTimers()
-// In test:
-jest.advanceTimersByTime(1000)
-```
-
-**Mock quality check:** If mock setup > test code, reconsider design.
-
-**Never mock:**
-- Your own classes or modules — test them with real code
-- Internal collaborators — if you need to mock them, the coupling is the bug
-- Anything you control — mocks are for boundaries you don't own
+For factories, mocks, and env/time handling, read
+`references/test-data-and-mocks.md`.
 
 ## Why Order Matters
 
@@ -453,6 +358,21 @@ Before marking work complete:
 
 Can't check all boxes? You skipped TDD. Start over.
 
+## Integration And Live Proof
+
+When the accepted plan or risk profile goes beyond local behavior, read
+`references/integration-and-live-proof.md`.
+
+Unit tests are not enough when the task depends on:
+- real API calls
+- seeded or resettable data
+- browser or worker orchestration
+- cross-service side effects
+- load or stress behavior
+
+In those cases, keep TDD for the inner loop and escalate verification depth for
+the outer proof.
+
 ## Coverage Threshold (Project Default)
 
 Target: **80%+ code coverage** across:
@@ -473,30 +393,6 @@ Target: **80%+ code coverage** across:
 - Code that has broken before (regression-prone areas)
 
 Do NOT skip tests because code "looks simple" — simple code breaks too. The 80% target is a floor, not a ceiling.
-
-## Test Smells (Anti-Patterns)
-
-| Smell | Bad Example | Why It's Bad | Fix |
-|-------|-------------|--------------|-----|
-| **Testing implementation** | `expect(component.state.count).toBe(5)` | Breaks when internals change | Test user-visible behavior |
-| **Dependent tests** | Test B relies on Test A's state | Flaky, order-dependent | Each test sets up own data |
-| **Mocking everything** | Every dependency mocked | Tests mock, not code | Use real code where feasible |
-| **Giant setup** | 50 lines of setup per test | Hard to understand | Extract factories |
-| **Magic numbers** | `expect(result).toBe(42)` | Meaning unclear | Use named constants |
-| **Test name lies** | `test('works')` passes but doesn't test 'works' | Misleading | Name describes actual behavior |
-| **No assertions** | `test('loads', () => { loadData() })` | Tests nothing | Always assert outcomes |
-| **Commented tests** | `// test('edge case'...` | Dead code, skipped coverage | Delete or uncomment |
-
-**If you spot these in your tests:** Fix before claiming TDD cycle complete.
-
-### Pre-Run Anti-Pattern Check
-
-Before running the test suite, verify:
-- No test depends on another test's execution order or state
-- No test uses `setTimeout`/`sleep` for timing (use condition-based waits)
-- No test asserts on implementation internals (`.state`, `.length`, private fields)
-- No test mocks a module it is supposed to be testing
-If any fail: fix the test before running the suite. A flawed test run wastes the entire RED-GREEN cycle.
 
 ## When Stuck
 

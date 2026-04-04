@@ -13,6 +13,14 @@ Code reviews catch bugs before they ship. But reviewing code quality before func
 
 **Core principle:** First verify it works, THEN verify it's good.
 
+## Reference Files
+
+Read only the references needed for the current review:
+
+- `references/review-order-and-checkpoints.md` for concern-first reading order, review checkpoints, zero-finding halts, and re-review loops
+- `references/security-review-checklist.md` for auth, input/output, secrets, network, storage, and dependency checks
+- `references/code-review-heuristics.md` for maintainability, performance, hidden-failure, edge-case, sloppy-pattern, and UI quick scans
+
 ## Signal Quality Rule
 
 **Flag ONLY when certain. False positives erode trust and waste remediation cycles.**
@@ -80,37 +88,16 @@ Review in priority order:
 5. **UX** - User experience issues (if UI involved)
 6. **Accessibility** - A11y issues (if UI involved)
 
-## Security Review Checklist
+## Review Order
 
-**Reference:** [OWASP Top 10](https://owasp.org/www-project-top-ten/) - Check against industry standard vulnerabilities.
+Before scanning code line-by-line, read
+`references/review-order-and-checkpoints.md` and reconstruct the change by
+concern, not by raw diff order.
 
-| Check | Looking For | Example Vulnerability |
-|-------|-------------|----------------------|
-| Input validation | Unvalidated user input | SQL injection, XSS |
-| Authentication | Missing auth checks | Unauthorized access |
-| Authorization | Missing permission checks | Privilege escalation |
-| Secrets | Hardcoded credentials | API key exposure |
-| SQL queries | String concatenation | SQL injection |
-| Output encoding | Unescaped output | XSS attacks |
-| CSRF | Missing tokens | Cross-site request forgery |
-| File handling | Path traversal | Reading arbitrary files |
+## Security Review
 
-### Security Quick-Scan Commands
-
-**Run before any review:**
-```bash
-# Check for hardcoded secrets
-grep -rE "(api[_-]?key|password|secret|token)\s*[:=]" --include="*.ts" --include="*.js" src/
-
-# Check for SQL injection risk
-grep -rE "(query|exec)\s*\(" --include="*.ts" src/ | grep -v "parameterized"
-
-# Check for dangerous patterns
-grep -rE "(eval\(|innerHTML\s*=|dangerouslySetInnerHTML)" --include="*.ts" --include="*.tsx" src/
-
-# Check for console.log (remove before production)
-grep -rn "console\.log" --include="*.ts" --include="*.tsx" src/
-```
+For auth, data, network, storage, or externally reachable code, read
+`references/security-review-checklist.md` before forming findings.
 
 ## LSP-Powered Code Analysis
 
@@ -131,92 +118,10 @@ grep -rn "console\.log" --include="*.ts" --include="*.tsx" src/
 
 **CRITICAL:** Always get lineHint from localSearchCode first. Never guess line numbers.
 
-**Critical Security Patterns:**
+## Review Heuristics
 
-| Pattern | Risk | Detection | Fix |
-|---------|------|-----------|-----|
-| Hardcoded secret | API key exposure | `grep -r "sk-" src/` | Use env var |
-| SQL concatenation | SQL injection | `query(\`SELECT...${id}\`)` | Parameterized query |
-| `innerHTML = userInput` | XSS | grep for innerHTML | Use textContent |
-| `eval(userInput)` | Code injection | grep for eval | Never eval user input |
-| Missing auth check | Unauthorized access | Review API routes | Add middleware |
-| CORS `*` | Cross-origin attacks | Check CORS config | Whitelist origins |
-
-**OWASP Top 10 Quick Reference:**
-1. Injection (SQL, Command, XSS)
-2. Broken Authentication
-3. Sensitive Data Exposure
-4. XXE (XML External Entities)
-5. Broken Access Control
-6. Security Misconfiguration
-7. Cross-Site Scripting (XSS)
-8. Insecure Deserialization
-9. Using Vulnerable Components
-10. Insufficient Logging
-
-**Full security review:** See [OWASP Top 10](https://owasp.org/www-project-top-ten/)
-
-**For each security issue found:**
-```markdown
-- [CRITICAL] SQL injection at `src/api/users.ts:45`
-  - Problem: User input concatenated into query
-  - Fix: Use parameterized query
-  - Code: `db.query(\`SELECT * FROM users WHERE id = ?\`, [userId])`
-```
-
-## Quality Review Checklist
-
-| Check | Good | Bad |
-|-------|------|-----|
-| **Naming** | `calculateTotalPrice()` | `calc()`, `doStuff()` |
-| **Functions** | Does one thing | Multiple responsibilities |
-| **Complexity** | Linear flow | Nested conditions |
-| **Duplication** | DRY where sensible | Copy-paste code |
-| **Error handling** | Graceful failures | Silent failures |
-| **Clarity** | Explicit, readable flow | Nested ternaries, dense one-liners |
-| **Testability** | Injectable dependencies | Global state |
-
-## Code Smell Quick-Reference
-
-| Smell | Remedy |
-|-------|--------|
-| **Duplication** | Extract function or class |
-| **Long methods** | Break into private helpers (keep tests on public interface) |
-| **Shallow modules** | Combine or deepen — small interface hiding large implementation |
-| **Feature envy** | Move logic to where the data lives |
-| **Primitive obsession** | Introduce value objects |
-| **New code reveals old problems** | Flag for follow-up (do not expand review scope) |
-
-### Sloppy Pattern Scan
-
-After structural quality review, scan for low-effort issues that accumulate into tech debt:
-
-| Pattern | Action |
-|---------|--------|
-| Inconsistent naming (camelCase mixed with snake_case in same file) | Flag as MEDIUM |
-| Dead imports (`import X` where X is unused) | Flag as LOW |
-| Commented-out code blocks (>3 lines) | Flag as LOW |
-| Console.log/print left in non-debug code | Flag as MEDIUM |
-| Copy-pasted code blocks with minor variations | Flag as MEDIUM (cite both locations) |
-
-## Type Design Red Flags (Typed Languages)
-
-| Anti-Pattern | Problem | Fix |
-|--------------|---------|-----|
-| Exposed mutable internals | External code breaks invariants | Return copies or readonly |
-| No constructor validation | Invalid instances created | Validate at construction |
-| Invariants in docs only | Not enforced, easily broken | Encode in type system |
-| Anemic domain model | Data without behavior | Add methods enforcing rules |
-
-## Hidden Failure Patterns
-
-| Pattern | Why It Hides Failures |
-|---------|----------------------|
-| `?.` chains without logging | Silently skips failed operations |
-| `?? defaultValue` masking | Hides null/undefined source errors |
-| Catch-log-continue | User never sees the failure |
-| Retry exhaustion without notice | Fails silently after N attempts |
-| Fallback chains without explanation | Masks root cause with alternatives |
+For performance, maintainability, edge cases, hidden failures, type-design
+drift, or UI-specific checks, read `references/code-review-heuristics.md`.
 
 **Wrong/Right — Silent optional chaining:**
 ```typescript
@@ -269,38 +174,6 @@ Use during Stage 2 Quality Review. Check only categories relevant to the changed
 2. Include in your **Memory Notes (Patterns section)** - router will persist to patterns.md via Memory Update task
 3. Flag inconsistencies from established patterns
 
-## Performance Review Checklist
-
-| Pattern | Problem | Fix |
-|---------|---------|-----|
-| N+1 queries | Loop with DB call | Batch query |
-| Unnecessary loops | Iterating full list | Early return |
-| Missing cache | Repeated expensive ops | Add caching |
-| Memory leaks | Objects never cleaned | Cleanup on dispose |
-| Sync blocking | Blocking main thread | Async operation |
-
-## UX Review Checklist (UI Code)
-
-| Check | Verify |
-|-------|--------|
-| Loading states | Shows loading indicator |
-| Error states | Shows helpful error message |
-| Empty states | Shows appropriate empty message |
-| Success feedback | Confirms action completed |
-| Form validation | Shows inline errors |
-| Responsive | Works on mobile/tablet |
-
-## Accessibility Review Checklist (UI Code)
-
-| Check | Verify |
-|-------|--------|
-| Semantic HTML | Uses correct elements (button, not div) |
-| Alt text | Images have meaningful alt text |
-| Keyboard | All interactions keyboard accessible |
-| Focus | Focus visible and logical order |
-| Color contrast | Meets WCAG AA (4.5:1 text) |
-| Screen reader | Labels and ARIA where needed |
-
 ## Severity Classification
 
 | Severity | Definition | Action |
@@ -330,7 +203,7 @@ Use during Stage 2 Quality Review. Check only categories relevant to the changed
 
 ### Zero-Finding Halt
 
-If a review produces ZERO findings across ALL dimensions (security, correctness, performance, maintainability, UX/A11y), the review MUST halt and re-examine. Zero findings in a non-trivial change is a signal of insufficient review depth, not perfect code. Action: Re-read every changed file. Apply the Sloppy Pattern Scan. Run Security Quick-Scan Commands. If still zero findings after deliberate re-examination, document: "Zero findings confirmed after forced re-examination of [N files, M lines changed]. Reviewed: [list specific checks performed]." A bare "no issues" without re-examination proof is INVALID.
+If a review produces ZERO findings across ALL dimensions (security, correctness, performance, maintainability, UX/A11y), the review MUST halt and re-examine. Zero findings in a non-trivial change is a signal of insufficient review depth, not perfect code. Action: Re-read every changed file. Re-run the heuristic scans in `references/code-review-heuristics.md`. Re-run the security triage in `references/security-review-checklist.md`. If still zero findings after deliberate re-examination, document: "Zero findings confirmed after forced re-examination of [N files, M lines changed]. Reviewed: [list specific checks performed]." A bare "no issues" without re-examination proof is INVALID.
 
 **Evidence requirement per signal:**
 Each signal MUST cite specific file:line. A signal without evidence = not reported.

@@ -1,5 +1,38 @@
 # Changelog
 
+## [10.1.17] - 2026-04-05
+
+### Reference-first skill decomposition for safer CC10X prompt growth
+
+Expanded the new `references/` pattern across the four highest-leverage advisory
+skills without changing router, hook, or agent orchestration. The SKILL files
+now stay focused on control-plane rules while the heavier checklists and
+playbooks load only when needed.
+
+#### Added
+- **Debugging references:** Root-cause playbooks and investigation hygiene for
+  build/type failures, runtime crashes, browser issues, git bisect, context
+  discipline, and architectural escalation.
+- **Code review references:** Concern-first review ordering, security checklist,
+  and quality heuristics for maintainability, hidden failures, edge cases, and
+  UI quick scans.
+- **Frontend references:** UI state/feedback guidance, accessibility and forms
+  guidance, and performance/layout guidance for responsive behavior and color
+  mode checks.
+- **TDD references:** Testing patterns, test-data/mocks guidance, and
+  integration/live-proof escalation guidance that connects TDD to the existing
+  CC10X live verification lane.
+- **Audit coverage:** `cc10x_harness_audit.py` now fails if any of the new
+  reference files are missing.
+
+#### Changed
+- **4 skills slimmed under the soft prompt budget:** `debugging-patterns`,
+  `code-review-patterns`, `frontend-patterns`, and
+  `test-driven-development` now explicitly point to one-level-deep references
+  following `skill-creator` progressive disclosure.
+- **Prompt surface inventory:** Added advisory-surface guidance for the new
+  extracted review and TDD reference layers.
+
 ## [10.1.16] - 2026-03-28
 
 ### BMAD-METHOD harmony integration — 10 certified prompt engineering patterns

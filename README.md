@@ -2,7 +2,7 @@
 
 ### Router-Owned Claude Code Harness
 
-**Current version:** 10.1.16
+**Current version:** 10.1.17
 
 **Recommended: Create `~/.claude/CLAUDE.md` (global) so the router is always active across all projects.**
 

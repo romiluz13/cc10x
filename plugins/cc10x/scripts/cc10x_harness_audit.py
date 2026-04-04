@@ -36,6 +36,39 @@ VERIFY_LIVE_REFERENCE = (
 LIVE_MANIFEST_BOOTSTRAP = (
     PLUGIN_ROOT / "tests" / "live" / "manifests" / "cc10x-bootstrap.json"
 )
+DEBUGGING_PLAYBOOKS_REFERENCE = (
+    PLUGIN_ROOT / "skills" / "debugging-patterns" / "references" / "root-cause-playbooks.md"
+)
+DEBUGGING_HYGIENE_REFERENCE = (
+    PLUGIN_ROOT / "skills" / "debugging-patterns" / "references" / "investigation-hygiene.md"
+)
+REVIEW_ORDER_REFERENCE = (
+    PLUGIN_ROOT / "skills" / "code-review-patterns" / "references" / "review-order-and-checkpoints.md"
+)
+REVIEW_SECURITY_REFERENCE = (
+    PLUGIN_ROOT / "skills" / "code-review-patterns" / "references" / "security-review-checklist.md"
+)
+REVIEW_HEURISTICS_REFERENCE = (
+    PLUGIN_ROOT / "skills" / "code-review-patterns" / "references" / "code-review-heuristics.md"
+)
+FRONTEND_STATE_REFERENCE = (
+    PLUGIN_ROOT / "skills" / "frontend-patterns" / "references" / "ui-state-and-feedback.md"
+)
+FRONTEND_A11Y_REFERENCE = (
+    PLUGIN_ROOT / "skills" / "frontend-patterns" / "references" / "accessibility-and-forms.md"
+)
+FRONTEND_LAYOUT_REFERENCE = (
+    PLUGIN_ROOT / "skills" / "frontend-patterns" / "references" / "performance-and-layout.md"
+)
+TDD_PATTERNS_REFERENCE = (
+    PLUGIN_ROOT / "skills" / "test-driven-development" / "references" / "testing-patterns.md"
+)
+TDD_MOCKS_REFERENCE = (
+    PLUGIN_ROOT / "skills" / "test-driven-development" / "references" / "test-data-and-mocks.md"
+)
+TDD_LIVE_PROOF_REFERENCE = (
+    PLUGIN_ROOT / "skills" / "test-driven-development" / "references" / "integration-and-live-proof.md"
+)
 FIRST_PLACE_STRATEGY = (
     ROOT / "docs" / "benchmarks" / "2026-03-12-first-place-strategy.md"
 )
@@ -174,6 +207,28 @@ def main() -> int:
         errors.append("missing verification live testing reference")
     if not LIVE_MANIFEST_BOOTSTRAP.exists():
         errors.append("missing live harness bootstrap manifest")
+    if not DEBUGGING_PLAYBOOKS_REFERENCE.exists():
+        errors.append("missing debugging root-cause playbooks reference")
+    if not DEBUGGING_HYGIENE_REFERENCE.exists():
+        errors.append("missing debugging investigation hygiene reference")
+    if not REVIEW_ORDER_REFERENCE.exists():
+        errors.append("missing code review order/checkpoints reference")
+    if not REVIEW_SECURITY_REFERENCE.exists():
+        errors.append("missing code review security checklist reference")
+    if not REVIEW_HEURISTICS_REFERENCE.exists():
+        errors.append("missing code review heuristics reference")
+    if not FRONTEND_STATE_REFERENCE.exists():
+        errors.append("missing frontend UI state reference")
+    if not FRONTEND_A11Y_REFERENCE.exists():
+        errors.append("missing frontend accessibility/forms reference")
+    if not FRONTEND_LAYOUT_REFERENCE.exists():
+        errors.append("missing frontend performance/layout reference")
+    if not TDD_PATTERNS_REFERENCE.exists():
+        errors.append("missing TDD testing patterns reference")
+    if not TDD_MOCKS_REFERENCE.exists():
+        errors.append("missing TDD test-data-and-mocks reference")
+    if not TDD_LIVE_PROOF_REFERENCE.exists():
+        errors.append("missing TDD integration/live-proof reference")
 
     for required in ("brightdata", "octocode"):
         if required not in router:

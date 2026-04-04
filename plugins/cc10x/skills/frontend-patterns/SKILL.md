@@ -14,6 +14,14 @@ User interfaces exist to help users accomplish tasks. Every UI decision should m
 
 This skill is advisory in v10. Explicit user instructions, `CLAUDE.md`, repo standards, and approved plans override every suggestion here.
 
+## Reference Files
+
+Read only the references needed for the current UI task:
+
+- `references/ui-state-and-feedback.md` for loading/error/empty/success ordering, skeleton vs spinner, and mutation feedback
+- `references/accessibility-and-forms.md` for WCAG-oriented checks, keyboard/focus, labels, form patterns, and mobile usability
+- `references/performance-and-layout.md` for responsive checks, motion, overflow, URL state, performance guardrails, and light/dark mode checks
+
 ## Focus Areas (Reference Pattern)
 
 - **React component architecture** (hooks, context, performance)
@@ -75,39 +83,11 @@ Before writing any UI code, commit to answers for:
 
 **Key insight:** Bold maximalism and refined minimalism both work. The enemy is indecision and generic defaults.
 
-## Loading State Order (CRITICAL)
+## UI State References
 
-**Always handle states in this order:**
-
-```typescript
-// CORRECT order
-if (error) return <ErrorState error={error} onRetry={refetch} />;
-if (loading && !data) return <LoadingState />;
-if (!data?.items.length) return <EmptyState />;
-return <ItemList items={data.items} />;
-```
-
-**Loading State Decision Tree:**
-```
-Is there an error? → Yes: Show error with retry
-                   → No: Continue
-Is loading AND no data? → Yes: Show loading indicator
-                        → No: Continue
-Do we have data? → Yes, with items: Show data
-                 → Yes, but empty: Show empty state
-                 → No: Show loading (fallback)
-```
-
-**Golden Rule:** Show loading indicator ONLY when there's no data to display.
-
-## Skeleton vs Spinner
-
-| Use Skeleton When | Use Spinner When |
-|-------------------|------------------|
-| Known content shape | Unknown content shape |
-| List/card layouts | Modal actions |
-| Initial page load | Button submissions |
-| Content placeholders | Inline operations |
+Read `references/ui-state-and-feedback.md` before finalizing loading, error,
+empty, success, or mutation states. Keep the state order explicit; do not invent
+UI states ad hoc.
 
 ## Motion & Animation
 
@@ -127,14 +107,10 @@ Do we have data? → Yes, with items: Show data
 }
 ```
 
-## Error Handling Hierarchy
+## Accessibility And Forms
 
-| Level | Use For |
-|-------|---------|
-| **Inline error** | Field-level validation |
-| **Toast notification** | Recoverable errors, user can retry |
-| **Error banner** | Page-level errors, data still partially usable |
-| **Full error screen** | Unrecoverable, needs user action |
+Read `references/accessibility-and-forms.md` when the task touches keyboard
+navigation, forms, labels, focus, contrast, or touch ergonomics.
 
 ## Success Criteria Framework
 
@@ -145,40 +121,10 @@ Do we have data? → Yes, with items: Show data
 3. **Accessibility**: Can all users access it?
 4. **Performance**: Does it feel responsive?
 
-## Typography Rules
+## Layout And Performance References
 
-| Rule | Correct | Wrong |
-|------|---------|-------|
-| Ellipsis | `…` (single character) | `...` (three periods) |
-| Quotes | `" "` curly quotes | `" "` straight quotes |
-| Units | `10&nbsp;MB` (non-breaking) | `10 MB` (can break) |
-| Shortcuts | `⌘&nbsp;K` (non-breaking) | `⌘ K` (can break) |
-| Loading text | `Loading…` | `Loading...` |
-| Numbers in tables | `font-variant-numeric: tabular-nums` | Default proportional |
-| Headings | `text-wrap: balance` | Unbalanced line breaks |
-| Line length | 65-75 characters max | Unlimited width |
-
-## Content Overflow Handling
-
-**Prevent broken layouts from user-generated content:**
-
-| Scenario | Solution |
-|----------|----------|
-| Single-line overflow | `truncate` (Tailwind) or `text-overflow: ellipsis` |
-| Multi-line overflow | `line-clamp-2` / `line-clamp-3` |
-| Long words/URLs | `break-words` or `overflow-wrap: break-word` |
-| Flex child truncation | Add `min-w-0` to flex children (critical!) |
-| Empty strings/arrays | Show placeholder, not broken UI |
-
-```tsx
-{/* Flex truncation pattern - min-w-0 is REQUIRED */}
-<div className="flex items-center gap-2 min-w-0">
-  <Avatar />
-  <span className="truncate min-w-0">{user.name}</span>
-</div>
-```
-
-**Test with:** short text, average text, and absurdly long text (50+ characters).
+Read `references/performance-and-layout.md` for responsive checks, motion rules,
+overflow handling, URL state, touch/mobile, and color-mode validation.
 
 ## Universal Questions (Answer First)
 
@@ -227,50 +173,6 @@ User Flow: Create Account
 - **BLOCKS**: User cannot complete task
 - **IMPAIRS**: User can complete but with difficulty
 - **MINOR**: Small friction, not blocking
-
-## Accessibility Review Checklist (WCAG 2.1 AA)
-
-| Check | Criterion | How to Verify |
-|-------|-----------|---------------|
-| **Keyboard** | All interactive elements keyboard accessible | Tab through entire flow |
-| **Focus visible** | Current focus clearly visible | Tab and check highlight |
-| **Focus order** | Logical tab order | Tab matches visual order |
-| **Labels** | All inputs have labels | Check `<label>` or `aria-label` |
-| **Alt text** | Images have meaningful alt | Check `alt` attributes |
-| **Color contrast** | 4.5:1 for text, 3:1 for large | Use contrast checker |
-| **Color alone** | Info not conveyed by color only | Check without color |
-| **Screen reader** | Content accessible via SR | Test with VoiceOver/NVDA |
-
-**For each issue found:**
-```markdown
-- [WCAG 2.1 1.4.3] Color contrast at `component:line`
-  - Current: 3.2:1 (fails AA)
-  - Required: 4.5:1
-  - Fix: Change text color to #333 (7.1:1)
-```
-
-## Form Best Practices
-
-| Rule | Implementation |
-|------|----------------|
-| **Autocomplete** | Add `autocomplete="email"`, `autocomplete="name"`, etc. |
-| **Input types** | Use `type="email"`, `type="tel"`, `type="url"` for mobile keyboards |
-| **Input modes** | Add `inputMode="numeric"` for number-only fields |
-| **Never block paste** | No `onPaste` + `preventDefault()` — users paste passwords |
-| **Spellcheck off** | `spellCheck={false}` on emails, codes, usernames |
-| **Unsaved changes** | Warn before navigation (`beforeunload` or router guard) |
-| **Error focus** | Focus first error field on submit |
-| **Shared hit targets** | Checkbox/radio label + control = one clickable area |
-
-```tsx
-<input
-  type="email"
-  autoComplete="email"
-  spellCheck={false}
-  inputMode="email"
-  // Never: onPaste={(e) => e.preventDefault()}
-/>
-```
 
 ## Visual Design Checklist
 
@@ -414,54 +316,6 @@ function DataList({ isLoading, data, error }) {
 </div>
 ```
 
-## Responsive Design Checklist
-
-| Breakpoint | Check |
-|------------|-------|
-| **Mobile (< 640px)** | Touch targets 44px+, no horizontal scroll |
-| **Tablet (640-1024px)** | Layout adapts, navigation accessible |
-| **Desktop (> 1024px)** | Content readable, not too wide |
-
-## Performance Rules
-
-| Rule | Why | Implementation |
-|------|-----|----------------|
-| **Virtualize large lists** | >50 items kills performance | Use `virtua`, `react-window`, or `content-visibility: auto` |
-| **No layout reads in render** | Causes forced reflow | Avoid `getBoundingClientRect`, `offsetHeight` in render |
-| **Lazy load images** | Reduces initial load | `loading="lazy"` on below-fold images |
-| **Prioritize critical images** | Faster LCP | `fetchpriority="high"` or Next.js `priority` |
-| **Preconnect CDN** | Faster asset loading | `<link rel="preconnect" href="https://cdn...">` |
-| **Preload fonts** | Prevents FOUT | `<link rel="preload" as="font" crossorigin>` |
-
-## URL & State Management
-
-**URL should reflect UI state.** If it uses `useState`, consider URL sync.
-
-| State Type | URL Strategy |
-|------------|--------------|
-| Filters/search | `?q=term&category=books` |
-| Active tab | `?tab=settings` |
-| Pagination | `?page=3` |
-| Expanded panels | `?panel=details` |
-| Sort order | `?sort=price&dir=asc` |
-
-**Benefits:** Shareable links, back button works, refresh preserves state.
-
-```tsx
-// Use nuqs, next-usequerystate, or similar
-const [tab, setTab] = useQueryState('tab', { defaultValue: 'overview' })
-```
-
-## Touch & Mobile
-
-| Rule | Implementation |
-|------|----------------|
-| **44px touch targets** | Minimum for buttons, links, controls |
-| **No double-tap delay** | `touch-action: manipulation` on interactive elements |
-| **Modal scroll lock** | `overscroll-behavior: contain` in modals/drawers |
-| **Safe areas** | `padding: env(safe-area-inset-bottom)` for notches |
-| **Tap highlight** | Set `-webkit-tap-highlight-color` intentionally |
-
 ## Red Flags - STOP and Reconsider
 
 If you find yourself:
@@ -502,22 +356,6 @@ If you find yourself:
 | Emoji icons (🚀 ✨ 💫) | Unprofessional, inconsistent | Use SVG icons |
 | Hardcoded date/number formats | Breaks internationalization | Use `Intl.DateTimeFormat` |
 | `autoFocus` everywhere | Disorienting, mobile issues | Use sparingly, desktop only |
-
-## Light/Dark Mode
-
-| Rule | Light Mode | Dark Mode |
-|------|------------|-----------|
-| Glass/transparent | `bg-white/80` or higher | `bg-black/80` or darker |
-| Text contrast | Minimum 4.5:1 (slate-900) | Minimum 4.5:1 (slate-100) |
-| Borders | `border-gray-200` | `border-white/10` |
-| HTML attribute | — | `color-scheme: dark` on `<html>` |
-| Meta tag | Match background | Match background |
-
-```html
-<!-- Dark mode setup -->
-<html style="color-scheme: dark">
-<head><meta name="theme-color" content="#0f172a"></head>
-```
 
 ## Output Format
 
@@ -562,6 +400,7 @@ If you find yourself:
 - [ ] Loading state shown ONLY when no data exists
 - [ ] Empty state provided for all collections/lists
 - [ ] Success state with appropriate feedback
+- [ ] Non-trivial state-order or skeleton/spinner decisions checked against `references/ui-state-and-feedback.md`
 
 ### Buttons & Mutations
 - [ ] Buttons disabled during async operations
