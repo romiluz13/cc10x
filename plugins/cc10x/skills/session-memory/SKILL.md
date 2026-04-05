@@ -7,589 +7,257 @@ user-invocable: false
 
 # Session Memory (MANDATORY)
 
+## Overview
+
+CC10X memory is a small, stable, versioned Markdown index plus durable workflow artifacts.
+It exists to survive compaction, preserve decisions, and keep BUILD / DEBUG / REVIEW / PLAN
+aligned across sessions.
+
+**Memory is an index, not a transcript.**
+Be brief. Distill decisions, learnings, references, and verification evidence into durable,
+reusable notes.
+
+## Reference Map
+
+Keep this file as the control plane. Read only the reference you need:
+
+- `references/memory-model-and-ownership.md` for memory surfaces, ownership, promotion, and
+  workflow markers
+- `references/memory-operations.md` for permission-free operations, router-only persistence,
+  and targeted edit patterns
+- `references/memory-file-contracts.md` for required headings, stable anchors, templates, and
+  auto-heal rules
+- `references/context-budget-and-checkpointing.md` for context-budget rules, warning signs,
+  and checkpoint triggers
+
 ## The Iron Law
 
 ```
 EVERY WORKFLOW MUST:
-1. LOAD memory at START (and before key decisions)
-2. UPDATE memory at END (and after learnings/decisions)
+1. LOAD memory at START and before key decisions
+2. EMIT memory-worthy notes before finishing
+3. LET the router/workflow finalizer persist markdown memory
 ```
 
-**Brevity Rule:** Memory is an index, not a document. Be brief—one line per item.
+If memory is skipped, the workflow becomes conversation-dependent.
+If memory is narrated instead of distilled, it bloats context and loses signal.
 
-## What “Memory” Actually Is (The Guts)
+## Load-Bearing Boundaries
 
-CC10x memory is a **small, stable, permission-free Markdown database** used for:
-- **Continuity:** survive compaction/session resets
-- **Consistency:** avoid contradicting prior decisions
-- **Compounding:** promote learnings into reusable patterns
-- **Resumability:** recover where a workflow stopped
+- Memory lives under `.claude/cc10x/v10/`.
+- The router loads and auto-heals memory files before routing or resume.
+- WRITE agents read memory, but do **not** edit `.claude/cc10x/v10/*.md` directly.
+- WRITE agents emit structured `MEMORY_NOTES` in their Router Contract.
+- READ-ONLY agents emit `### Memory Notes (For Workflow-Final Persistence)`.
+- The router-owned memory-finalize task is the only final writer of memory markdown files.
+- Workflow artifacts under `.claude/cc10x/v10/workflows/{wf}.json` remain the durable
+  execution truth; markdown memory is the stable index.
+- Required headings and anchors are a contract. Do not invent new file layouts or marker
+  schemes.
+- Router-owned markers such as `[DEBUG-RESET: wf:{...}]` and
+  `[cc10x-internal] memory_task_id` are read and respected by agents; agents do not invent
+  replacements.
 
-### Memory Surfaces (Types)
+## Memory Surfaces
 
-1. **Index / Working Memory**: `.claude/cc10x/v10/activeContext.md`
-   - “What matters right now”: focus, next steps, active decisions, learnings
-   - Links to durable artifacts (plans/research)
-2. **Long-Term Project Memory**: `.claude/cc10x/v10/patterns.md`
-   - Conventions, architecture decisions, common gotchas, reusable solutions
-3. **Progress + Evidence Memory**: `.claude/cc10x/v10/progress.md`
-   - What’s done/remaining + verification evidence (commands + exit codes)
-4. **Artifact Memory (Durable)**: `docs/plans/*`, `docs/research/*`
-   - The details. Memory files are the index.
-5. **Workflow Artifacts (Durable Execution State)**: `.claude/cc10x/v10/workflows/{wf}.json`
-   - Canonical workflow state: task ids, phase status, structured agent results, pending gates
-   - Used for resume, verifier handoff, and memory finalization
-6. **Tasks (Execution State)**: Claude Code Tasks
-   - Great for orchestration, but not guaranteed to be the only durable source.
-   - Tasks remain runtime coordination only; the workflow artifact is the durable orchestration truth.
-  - **Task ID Warning:** Task IDs may not persist across session restarts unless `CLAUDE_CODE_TASK_LIST_ID` is configured. NEVER use stored task IDs as the primary source of truth on resume. Store workflow scope + phase + status in task descriptions, then hydrate from `TaskList()` / `TaskGet()`. Exception: the router may store `[cc10x-internal] memory_task_id` in `## References` as a transient hint for the active workflow only. Memory Update must remove it when the workflow completes.
-   - **Hydration Pattern (recommended for resume):**
-     - Session start: Read progress.md → create fresh tasks for each pending item → set dependencies
-     - Session end: Sync completed status back to progress.md via Memory Update task
-     - This makes workflows restartable without relying on old task IDs
+Use the right layer for the right kind of information:
 
-### Promotion Ladder (“Rises To”)
+- `activeContext.md`: current focus, recent changes, decisions, learnings, references,
+  blockers
+- `patterns.md`: reusable project standards, gotchas, conventions, and skill hints
+- `progress.md`: current workflow, tasks snapshot, completed items, verification evidence
+- `docs/plans/*` and `docs/research/*`: the detailed artifacts; memory points to them
+- `.claude/cc10x/v10/workflows/{wf}.json` and `.events.jsonl`: the durable orchestration
+  truth
 
-<!-- CC10X-M8: This ladder is aspirational guidance. Actual promotion is manual — agents must explicitly follow the Read-Edit-Verify pattern. No automated promotion mechanism exists yet. -->
-Information “graduates” to more durable layers:
-- **One-off observation** → `activeContext.md` (Learnings / Recent Changes)
-- **Repeated or reusable** → `patterns.md` (Pattern / Gotcha)
-- **Needs detail** → `docs/research/*` or `docs/plans/*` + link from `activeContext.md`
-- **Proven** → `progress.md` (Verification Evidence)
+Read `references/memory-model-and-ownership.md` if you need the full ownership model or the
+promotion ladder.
 
-### READ Side (Equally Important)
-**If memory is not loaded:** You work blind, repeat mistakes, lose context.
-**If decisions made without checking memory:** You contradict prior choices, waste effort.
+## Distillation Rule
 
-### WRITE Side
-**If memory is not updated:** Next session loses everything learned.
-**If learnings not recorded:** Same mistakes will be repeated.
+Memory entries must be distilled, not narrated.
 
-**BOTH SIDES ARE NON-NEGOTIABLE.**
+Preserve:
 
-## Permission-Free Operations (CRITICAL)
+- decisions with rationale
+- causal learnings
+- stable module boundaries and file paths
+- verification commands and exit truth
+- external artifact paths the next session will need
 
-**ALL memory operations are PERMISSION-FREE using the correct tools.**
+Strip:
 
-| Operation | Tool | Permission |
-|-----------|------|------------|
-| Create memory directory | `Bash(command="mkdir -p .claude/cc10x/v10")` | FREE |
-| **Read memory files** | `Read(file_path=".claude/cc10x/v10/activeContext.md")` | **FREE** |
-| **Create NEW memory file** | `Write(file_path="...", content="...")` | **FREE** (file doesn't exist) |
-| **Update EXISTING memory** | `Edit(file_path="...", old_string="...", new_string="...")` | **FREE** |
-| Save plan/design files | `Write(file_path="docs/plans/...", content="...")` | FREE |
+- decorative prose
+- step-by-step diary text
+- speculation that was never resolved
+- redundant retellings of the prompt
+- unstable line numbers unless they are the only durable locator available
 
-### CRITICAL: Write vs Edit
+Test:
 
-| Tool | Use For | Asks Permission? |
-|------|---------|------------------|
-| **Write** | Creating NEW files | NO (if file doesn't exist) |
-| **Write** | Overwriting existing files | **YES - asks "Do you want to overwrite?"** |
-| **Edit** | Updating existing files | **NO - always permission-free** |
+If a fresh agent reading memory cannot reconstruct the current constraints and next move
+without re-reading the whole conversation, the memory is under-distilled.
 
-**RULE: Use Write for NEW files, Edit for UPDATES.**
+## What To Load
 
-### CRITICAL: Use Read Tool, NOT Bash(cat)
+### Always Load
 
-**NEVER use Bash compound commands** (`mkdir && cat`) - they ASK PERMISSION.
-**ALWAYS use Read tool** for reading files - it's PERMISSION-FREE.
+At workflow start, continuation, or resume, read all three memory files:
 
-```
-# WRONG (asks permission - compound Bash command)
-mkdir -p .claude/cc10x/v10 && cat .claude/cc10x/v10/activeContext.md
-
-# RIGHT (permission-free - separate tools)
-Bash(command="mkdir -p .claude/cc10x/v10")
-Read(file_path=".claude/cc10x/v10/activeContext.md")
+```text
+.claude/cc10x/v10/activeContext.md
+.claude/cc10x/v10/patterns.md
+.claude/cc10x/v10/progress.md
 ```
 
-**NEVER use heredoc writes** (`cat > file << 'EOF'`) - they ASK PERMISSION.
-**Use Write for NEW files, Edit for EXISTING files.**
-
-```
-# WRONG (asks permission - heredoc)
-cat > .claude/cc10x/v10/activeContext.md << 'EOF'
-content here
-EOF
-
-# RIGHT for NEW files (permission-free)
-Write(file_path=".claude/cc10x/v10/activeContext.md", content="content here")
-
-# RIGHT for EXISTING files (permission-free)
-Edit(file_path=".claude/cc10x/v10/activeContext.md",
-     old_string="# Active Context",
-     new_string="# Active Context\n\n[new content]")
-```
-
-## Why This Matters
-
-> "My memory resets between sessions. The Memory Bank is my ONLY link to previous work."
-
-Without memory persistence:
-- Context lost on conversation compaction
-- Patterns relearned from scratch
-- Decisions forgotten and remade differently
-- Progress tracking lost
-- Same mistakes repeated
-
-**Memory is the difference between an expert who learns and a novice who forgets.**
-
-## Memory Structure
-
-```
-.claude/
-└── cc10x/
-    ├── activeContext.md   # Current focus + learnings + decisions (MOST IMPORTANT)
-    ├── patterns.md        # Project patterns, conventions, gotchas
-    └── progress.md        # What works, what's left, verification evidence
-```
-
-## Who Reads/Writes Memory (Ownership)
-
-### Read
-- **Router (always):** loads all 3 files before workflow selection and before resuming Tasks.
-- **WRITE agents** (component-builder, bug-investigator, planner): load memory files at task start via this skill.
-- **READ-ONLY agents** (code-reviewer, silent-failure-hunter, integration-verifier): read memory files directly at task start via their own Memory First section. They do NOT have Edit tool — they output `### Memory Notes` for the router to persist.
-
-### Write
-- **Router/workflow finalizer:** the ONLY writer of `.claude/cc10x/v10/{activeContext,patterns,progress}.md`.
-- **WRITE agents:** do NOT edit memory markdown files directly. Emit structured `MEMORY_NOTES` in the final Router Contract.
-- **READ-ONLY agents:** output `### Memory Notes (For Workflow-Final Persistence)` section. Router persists them into the workflow artifact immediately; Memory Update writes the markdown files at workflow finalization.
-- **Router-owned cleanup:** when Memory Update finishes, remove the matching `[cc10x-internal] memory_task_id` line for that workflow from `activeContext.md ## References`. Do not leave stale task IDs behind.
-
-### Concurrency Rule (Parallel Phases)
-
-BUILD runs `code-reviewer ∥ silent-failure-hunter` in parallel. To avoid conflicting edits:
-- Agents do not edit memory markdown during parallel phases.
-- Router persists structured notes into the workflow artifact mid-phase and writes markdown only in Memory Update.
-
-### Distillation Rule (MANDATORY for all MEMORY_NOTES)
-
-All memory entries must be distilled, not summarized:
-- **Preserve:** entity names, file paths as stable module boundaries, decision outcomes with rationale, causal relationships, error signatures.
-- **Strip:** decorative prose, hedging language, step-by-step narration of what was done, redundant restatements of the prompt.
-- **Test:** If an LLM reading only memory files cannot reconstruct the key decisions and constraints without re-reading source files, the distillation failed.
-
-## Pre-Compaction Memory Safety
-
-**Update memory IMMEDIATELY when you notice:**
-- Extended debugging (5+ cycles)
-- Long planning discussions
-- Multi-file refactoring
-- 30+ tool calls in session
-
-**Checkpoint Pattern:**
-```
-Edit(file_path=".claude/cc10x/v10/activeContext.md",
-     old_string="## Current Focus",
-     new_string="## Current Focus\n\n[Updated focus + key decisions]")
-Read(file_path=".claude/cc10x/v10/activeContext.md")  # Verify
-```
-
-**Rule:** When in doubt, update memory NOW. Better duplicate entries than lost context.
-
-## File Purposes
-
-Use these purposes to decide where information belongs:
-- **activeContext.md:** current state + pointers (what we’re doing, why, what’s next)
-- **patterns.md:** reusable knowledge (conventions, architecture, gotchas, “do it this way here”). `## User Standards` entries are **non-negotiable** — always follow them regardless of other context.
-- **progress.md:** execution tracking + hard evidence (tests/build/run commands, exit codes, scenario tables)
-
-## Memory File Contract (Never Break)
-
-CC10x memory files are not "notes" - they are **contracts** used as Edit anchors.
-
-Hard rules:
-- Do not rename the top-level headers (`# Active Context`, `# Project Patterns`, `# Progress Tracking`).
-- Do not rename section headers (e.g., `## Current Focus`, `## Last Updated`).
-- Only add content *inside* existing sections (append lists/rows).
-  - **Exception — Snapshot sections:** `## Recent Changes` (activeContext) and `## Tasks` (progress) are replaced (not appended) at workflow end by the Memory Update task. Mid-workflow agents still append normally.
-  - If a **canonical section from this template** is missing (e.g., `## References`, `## Decisions`, `## Learnings`), add it by inserting it just above `## Last Updated`.
-- After every `Edit(...)`, **Read back** the file and confirm the intended change exists.
-
-If an Edit does not apply cleanly:
-- STOP (do not guess).
-- Re-read the file and re-apply using a correct, exact `old_string` anchor.
-
-### activeContext.md (Read/Write EVERY session)
-
-**Current state of work - ALWAYS check this first:**
-
-```markdown
-# Active Context
-<!-- CC10X: Do not rename headings. Used as Edit anchors. -->
-
-## Current Focus
-[Active work]
-
-## Recent Changes  <!-- SNAPSHOT: replaced at workflow end -->
-- [Change] - [file:line]
-- [DEBUG-N]: {what was tried} → {result}  <!-- Use for debug workflow -->
-
-## Next Steps
-1. [Step]
-
-## Decisions
-- [Decision]: [Choice] - [Why]
-
-## Learnings
-- [Insight]
-
-## References
-- Plan: `docs/plans/...` (or N/A)
-- Design: `docs/plans/...` (or N/A)
-- Research: `docs/research/...` → [insight]
-- [cc10x-internal] memory_task_id: [task id] wf:[workflow id]  <!-- transient only; Memory Update removes this line -->
-
-## Blockers
-- [None]
-
-## Session Settings
-# AUTO_PROCEED: false  (set to true to enable JUST_GO mode — auto-defaults all non-REVERT gates)
-
-## Last Updated
-[timestamp]
-```
-
-**Merged sections:**
-- `## Active Decisions` + `## Learnings This Session` → `## Decisions` + `## Learnings`
-- `## Plan Reference` + `## Design Reference` + `## Research References` → `## References`
-- Removed: `## User Preferences Discovered` (goes in Learnings)
-
-### patterns.md (Accumulates over time)
-
-**Project-specific knowledge that persists:**
-
-```markdown
-# Project Patterns
-<!-- CC10X MEMORY CONTRACT: Do not rename headings. Used as Edit anchors. -->
-
-## User Standards
-- [Your non-negotiable coding principles — agents MUST follow these on every workflow]
-
-## Architecture Patterns
-- [Pattern]: [How this project implements it]
-
-## Code Conventions
-- [Convention]: [Example]
-
-## File Structure
-- [File type]: [Where it goes, naming convention]
-
-## Testing Patterns
-- [Test type]: [How to write, where to put]
-
-## Common Gotchas
-- [Gotcha]: [How to avoid / solution]
-- [Gotcha from research]: [Solution] (Source: docs/research/YYYY-MM-DD-topic.md)
-
-## API Patterns
-- [Endpoint pattern]: [Convention used]
-
-## Error Handling
-- [Error type]: [How project handles it]
-
-## Dependencies
-- [Dependency]: [Why used, how configured]
-
-## Project SKILL_HINTS
-- [cc10x:skill-name]  <!-- auto-populated: detected [tech signal] -->
-```
-
-### progress.md (Tracks completion)
-
-**What's done, what's not:**
-
-```markdown
-# Progress Tracking
-<!-- CC10X: Do not rename headings. Used as Edit anchors. -->
-
-## Current Workflow
-[PLAN | BUILD | REVIEW | DEBUG]
-
-## Tasks  <!-- SNAPSHOT: replaced at workflow end -->
-- [ ] Task 1
-- [x] Task 2 - evidence
-
-## Completed
-- [x] Item - evidence
-
-## Verification
-- `command` → exit 0 (X/X)
-
-## Last Updated
-[timestamp]
-```
-
-**Merged sections:**
-- `## Active Workflow Tasks` + `## In Progress` + `## Remaining` → `## Tasks`
-- `## Verification Evidence` table → `## Verification` bullets
-- Removed: `## Known Issues`, `## Evolution of Decisions`, `## Implementation Results` (rarely used, clutters template)
-
-## Stable Anchors (ONLY use these)
-
-| Anchor | File | Stability |
-|--------|------|-----------|
-| `## Recent Changes` | activeContext | GUARANTEED |
-| `## Learnings` | activeContext | GUARANTEED |
-| `## References` | activeContext | GUARANTEED |
-| `## Last Updated` | all files | GUARANTEED (fallback) |
-| `## Common Gotchas` | patterns | GUARANTEED |
-| `## Project SKILL_HINTS` | patterns | GUARANTEED |
-| `## Completed` | progress | GUARANTEED |
-| `## Verification` | progress | GUARANTEED |
-
-**NEVER use as anchors:**
-- Table headers (`| Col | Col |`)
-- Checkbox text (`- [ ] specific text`)
-- Optional sections that may not exist
-
----
-
-## Read-Edit-Verify (MANDATORY)
-
-Every memory edit MUST follow this exact sequence:
-
-### Step 1: READ
-```
-Read(file_path=".claude/cc10x/v10/activeContext.md")
-```
-
-### Step 2: VERIFY ANCHOR
-```
-# Check if intended anchor exists in the content you just read
-# If "## References" not found → use "## Last Updated" as fallback
-```
-
-### Step 3: EDIT
-```
-Edit(file_path=".claude/cc10x/v10/activeContext.md",
-     old_string="## Recent Changes",
-     new_string="## Recent Changes\n- [New entry]\n")
-```
-
-### Step 4: VERIFY
-```
-Read(file_path=".claude/cc10x/v10/activeContext.md")
-# Confirm your change appears. If not → STOP and retry.
-```
-
-**Why this works:**
-- Step 1 shows you what's actually there
-- Step 2 prevents "anchor not found" errors
-- Step 3 uses verified anchor
-- Step 4 catches silent failures
-
----
-
-## READ Triggers - When to Load Memory
-
-### ALWAYS Read (Non-Negotiable)
-
-| Trigger | Action | Why |
-|---------|--------|-----|
-| **Session start** | Load ALL 3 files | Fresh context needed |
-| **Workflow start** | Load ALL 3 files | Before BUILD/REVIEW/DEBUG/PLAN |
-| **Continuation session** | Load ALL 3 files | Resume from where we left |
-| **User says "continue"** | Load activeContext.md | Get current state |
-
-### Read BEFORE These Actions
-
-| Before This Action | Read This File | Why |
-|--------------------|----------------|-----|
-| **Making architectural decision** | patterns.md | Check existing patterns |
-| **Choosing implementation approach** | patterns.md + activeContext.md | Align with conventions + prior decisions |
-| **Starting to build something** | progress.md | Check if already done |
-| **Debugging an error** | activeContext.md + patterns.md | May have seen before + known gotchas |
-| **Planning next steps** | progress.md | Know what's remaining |
-| **Reviewing code** | patterns.md | Apply project conventions |
-| **Making any decision** | activeContext.md (Decisions) | Check prior decisions |
-
-### Read WHEN You Notice
-
-| Situation | Action | Why |
-|-----------|--------|-----|
-| User references "what we did" | Load activeContext.md | Get history |
-| You're about to repeat work | Load progress.md | Check if done |
-| You're unsure of convention | Load patterns.md | Project standards |
-| Error seems familiar | Load patterns.md (Common Gotchas) | Known issues |
-| Decision feels arbitrary | Load activeContext.md | Prior reasoning |
+### Re-Read Before These Actions
+
+| Action | Re-read | Why |
+|--------|---------|-----|
+| Architectural decision | `patterns.md` + `activeContext.md ## Decisions` | avoid contradicting project standards |
+| Choosing implementation approach | `patterns.md` + `activeContext.md` | align with conventions and recent decisions |
+| Debugging | `activeContext.md` + `patterns.md` + `progress.md` | reuse prior attempts, gotchas, and evidence |
+| Planning next steps | `progress.md` + `activeContext.md` | avoid duplicate work and preserve order |
+| Claiming completion | `progress.md` + current plan/design/research references | verify that proof and scope still match |
+| User says "continue" | all three files | restore the durable state, not the chat summary |
 
 ### File Selection Matrix
 
-```
-What do I need?              → Which file?
-─────────────────────────────────────────
-Current state / focus        → activeContext.md
-Prior decisions + reasoning  → activeContext.md (Decisions)
-What we learned              → activeContext.md (Learnings)
-Project conventions          → patterns.md
-How to structure code        → patterns.md
-Common gotchas to avoid      → patterns.md
-What's done / remaining      → progress.md
-Verification evidence        → progress.md
-Prior research on topic      → activeContext.md (References) → docs/research/
-```
+| Need | Read |
+|------|------|
+| current focus / blockers | `activeContext.md` |
+| prior decisions / rationale | `activeContext.md ## Decisions` |
+| learned gotchas | `patterns.md` |
+| project conventions | `patterns.md` |
+| what is done / remaining | `progress.md` |
+| proof commands and exits | `progress.md ## Verification` |
+| detailed plan / research | `activeContext.md ## References` then the referenced file |
 
-### Decision Integration
+## What To Persist
 
-**Before ANY decision, ask:**
+Emit only memory-worthy items:
 
-1. **Did we decide this before?** → Check activeContext.md Decisions section
-2. **Is there a project pattern?** → Check patterns.md
-3. **Did we learn something relevant?** → Check activeContext.md Learnings
+- decisions that change implementation direction
+- learnings that prevent repeating the same mistake
+- verification evidence with commands and exit truth
+- deferred non-blocking issues that should survive the session
+- plan, design, or research references the next workflow must follow
+- clarified user standards or conventions that should become durable project patterns
 
-**If memory has relevant info:**
-- Follow prior decision (or document why changing)
-- Apply project pattern
-- Use learned insight
+Do not persist:
 
-**If memory is empty/irrelevant:**
-- Make decision
-- RECORD it in activeContext.md for next time
+- whole diffs
+- verbose execution logs
+- celebratory narration
+- "looked correct" claims without evidence
+- duplicate notes that add no new constraint
 
----
+## Agent Output Contract
 
-## Mandatory Operations
+WRITE agents persist memory through the Router Contract:
 
-### At Workflow START (REQUIRED)
-
-**Use separate tool calls (PERMISSION-FREE):**
-
-```
-# Step 1: Create directory (single Bash command - permission-free)
-Bash(command="mkdir -p .claude/cc10x/v10")
-
-# Step 2: Load ALL 3 memory files using Read tool (permission-free)
-Read(file_path=".claude/cc10x/v10/activeContext.md")
-Read(file_path=".claude/cc10x/v10/patterns.md")
-Read(file_path=".claude/cc10x/v10/progress.md")
-
-# Step 3: Git Context - Understand project state (RECOMMENDED)
-Bash(command="git status")                 # Current working state
-Bash(command="git ls-files | head -50")    # Project file structure
-Bash(command="git log --oneline -10")      # Recent commits
+```yaml
+MEMORY_NOTES:
+  learnings: ["Key causal insight"]
+  patterns: ["Reusable gotcha or convention"]
+  verification: ["`npm test` -> exit 0"]
+  deferred: ["Non-blocking follow-up or risk"]
 ```
 
-**NEVER use this (asks permission):**
-```bash
-# WRONG - compound command asks permission
-mkdir -p .claude/cc10x/v10 && cat .claude/cc10x/v10/activeContext.md
-```
+Rules:
 
-**If file doesn't exist:** Read tool returns an error - that's fine, means starting fresh.
+- Keep each entry one line when possible.
+- Prefer stable nouns over temporary wording.
+- Put verification truth in `verification`, not in narrative prose.
+- Put non-blocking follow-up work in `deferred`, not in ad-hoc tasks.
+- If a complementary skill failed to load or a durable artifact was missing in a way that
+  matters, note it in `learnings` or `deferred`.
 
-### At Workflow END (REQUIRED)
+READ-ONLY agents use their own `### Memory Notes (For Workflow-Final Persistence)` section,
+but the router persists both shapes into the same final memory update.
 
-**MUST update before completing ANY workflow. Use Edit tool (NO permission prompt).**
+## Project Skill Hints
 
-```
-# First, read existing content
-Read(file_path=".claude/cc10x/v10/activeContext.md")
+After loading memory, check `patterns.md ## Project SKILL_HINTS`.
 
-# Prefer small, targeted edits. Avoid rewriting whole files.
+- Invoke listed skills after memory load when they are relevant and installed.
+- Treat missing skills as non-fatal; note the miss in memory-worthy output if it changed the
+  workflow.
+- Do not invent or rewrite skill IDs from this skill.
+- Do not try to "maintain" `## Project SKILL_HINTS` from a write agent by editing memory
+  directly. If a new durable recommendation matters, surface it in planner output or memory
+  notes for router-owned persistence.
 
-# Example A: Add a bullet to Recent Changes (prepend)
-Edit(file_path=".claude/cc10x/v10/activeContext.md",
-     old_string="## Recent Changes",
-     new_string="## Recent Changes\n- [YYYY-MM-DD] [What changed] - [file:line]\n")
+## Workflow Pattern
 
-# Example B: Add a decision (stable anchor)
-Edit(file_path=".claude/cc10x/v10/activeContext.md",
-     old_string="## Decisions",
-     new_string="## Decisions\n- [Decision]: [Choice] - [Why]")
+### Start
 
-# Example C: Add verification evidence to progress.md (stable anchor)
-Read(file_path=".claude/cc10x/v10/progress.md")
-Edit(file_path=".claude/cc10x/v10/progress.md",
-     old_string="## Verification",
-     new_string="## Verification\n- `[cmd]` → exit 0 (X/X)")
+1. Read all three memory files.
+2. Read current plan, design, or research files from `activeContext.md ## References` only if
+   the workflow needs them.
+3. Load approved project/domain skills from `## Project SKILL_HINTS` after memory is loaded.
+4. If context is already getting heavy, apply
+   `references/context-budget-and-checkpointing.md`.
 
-# VERIFY (do not skip)
-Read(file_path=".claude/cc10x/v10/activeContext.md")
-Read(file_path=".claude/cc10x/v10/progress.md")
-```
+### During
 
-**WHY Edit not Write?** Write asks "Do you want to overwrite?" for existing files. Edit is always permission-free.
+- Re-read memory before key decisions, not after the mistake.
+- Respect router-owned markers such as `[DEBUG-RESET: wf:{...}]`.
+- Keep notes distilled enough to survive compaction.
+- Prefer durable artifacts and file paths over long conversational summaries.
 
-### When Learning Patterns (APPEND)
+### End
 
-**Read existing patterns.md, then append using Edit:**
+1. Distill decisions, learnings, verification, and deferred items into `MEMORY_NOTES`.
+2. Keep each note factual and reusable.
+3. Assume the router/workflow finalizer will persist the markdown files.
+4. Do not report the workflow as truly complete if the memory cycle is missing.
 
-```
-# Read existing content
-Read(file_path=".claude/cc10x/v10/patterns.md")
+## Context Budget And Checkpointing
 
-# Append under an existing section header (preferred: stable anchor)
-Edit(file_path=".claude/cc10x/v10/patterns.md",
-     old_string="## Common Gotchas",
-     new_string="## Common Gotchas\n- [Gotcha]: [Solution / how to avoid]\n")
-```
+Long sessions degrade before they fail loudly.
 
-### When Completing Tasks (UPDATE)
+Use `references/context-budget-and-checkpointing.md` when:
 
-```
-# Read progress.md, then record completion with evidence
-Read(file_path=".claude/cc10x/v10/progress.md")
+- debugging has gone through multiple failed attempts
+- planning/research is pulling in many large files
+- the session has already accumulated many tool calls
+- you notice vagueness, skipped protocol steps, or rising uncertainty
 
-# Option A (preferred): append a completed line under "## Completed"
-Edit(file_path=".claude/cc10x/v10/progress.md",
-     old_string="## Completed",
-     new_string="## Completed\n- [x] [What was completed] - [evidence: command → exit 0]\n")
+Checkpoint principle:
 
-# Option B: flip an existing checkbox if one exists (more brittle)
-Edit(file_path=".claude/cc10x/v10/progress.md",
-     old_string="- [ ] [Task being completed]",
-     new_string="- [x] [Task being completed] - [verification evidence]")
-```
+- persist durable state into workflow artifacts, plans, research files, and memory notes
+- do not rely on the conversation transcript to carry load-bearing context
 
-## Integration with Agents
+## Red Flags
 
-**ALL agents MUST:**
+Stop and correct course if you catch yourself:
 
-1. **START**: Load memory files before any work
-2. **DURING**: Note learnings and decisions
-3. **END**: Update memory files with new context
-
-If an agent cannot safely update memory (e.g., no `Edit` tool available):
-- Include "memory-worthy" notes in the agent output (decisions, learnings, verification evidence).
-- The main assistant (router) must persist those notes into `.claude/cc10x/v10/*.md` using `Edit(...)` + Read-back verification.
-
-**Failure to update memory = incomplete work.**
-
-### Dynamic Skill Discovery (WRITE agents only)
-After Memory First read, check patterns.md `## Project SKILL_HINTS`:
-- **Invoke found skills:** `Skill(skill="[each listed entry]")` — skip gracefully if not installed.
-- **Persist new tech:** If task involves domain tech not yet listed, append:
-  ```
-  Edit(old_string="## Project SKILL_HINTS", new_string="## Project SKILL_HINTS\n- [full-skill-id]  <!-- [tech signal] -->\n")
-  ```
-  Use the EXACT skill ID as-is — e.g., `mongodb-agent-skills:mongodb-schema-design`, `cc10x:research`, `react-best-practices`. Do NOT add or change namespaces.
-
-## Red Flags - STOP IMMEDIATELY
-
-If you catch yourself:
-- Starting work WITHOUT loading memory
-- Making decisions WITHOUT checking Decisions section
-- Completing work WITHOUT updating memory
-- Saying "I'll remember" instead of writing to memory
-
-**STOP. Load/update memory FIRST.**
+- starting work without loading memory
+- making decisions without checking `## Decisions` or project patterns
+- writing long diary-style memory notes
+- claiming you will "remember later"
+- editing `.claude/cc10x/v10/*.md` directly from a write agent
+- inventing new headings, markers, or memory file shapes
+- treating stale conversation context as better than durable memory
 
 ## Rationalization Prevention
 
 | Excuse | Reality |
 |--------|---------|
-| "I know what we decided" | Check the Decisions section. |
-| "Small task, no need" | Small tasks have context too. Always update. |
-| "I'll remember" | You won't. Conversation compacts. Write it down. |
-| "Memory is optional" | Memory is MANDATORY. No exceptions. |
+| "Small task, no need" | Small tasks still create decisions and evidence. |
+| "I'll remember" | You won't; compaction will win. |
+| "The conversation already has it" | Durable memory beats transcript lore. |
+| "I'll just tweak the markdown directly" | Router-owned persistence exists to keep memory coherent. |
+| "The note can be verbose" | Verbose notes burn context and hide the signal. |
 
 ## Verification Checklist
 
 - [ ] Memory loaded at workflow start
-- [ ] Decisions checked before making new ones
-- [ ] Learnings documented in activeContext.md
-- [ ] Progress updated in progress.md
+- [ ] Relevant decisions/patterns checked before new decisions
+- [ ] Notes distilled into `MEMORY_NOTES`
+- [ ] Verification truth captured in memory-worthy form
+- [ ] No direct write-agent edits to `.claude/cc10x/v10/*.md`
+- [ ] Context-budget checkpointing considered if the session got heavy
 
-**Cannot check all boxes? Memory cycle incomplete.**
+Cannot check these boxes? The memory cycle is incomplete.

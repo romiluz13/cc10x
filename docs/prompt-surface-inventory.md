@@ -64,6 +64,14 @@ This inventory defines which prompt surfaces are allowed to affect trust-critica
 - Comparison references: `get-shit-done` debugger, `superpowers` systematic-debugging
 - Review requirement: audit + targeted semantic review
 
+### session-memory
+- Path: `plugins/cc10x/skills/session-memory/SKILL.md`
+- Role: versioned memory load discipline, distillation rules, and router-subordinate memory-note protocol
+- Allowed edits: compactness, reference navigation, distillation wording, context-budget guidance, and examples that preserve current ownership
+- Forbidden edits: allowing write agents to edit `.claude/cc10x/v10/*.md` directly, changing the memory namespace or required headings, or weakening router-owned final persistence
+- Comparison references: `get-shit-done` context-budget, `agent-skills` context-engineering, `skill-creator` reference-first packaging
+- Review requirement: audit + targeted semantic review
+
 ### code-reviewer
 - Path: `plugins/cc10x/agents/code-reviewer.md`
 - Role: adversarial code review with remediation intent

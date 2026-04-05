@@ -1,6 +1,6 @@
 # CC10x Router Behavioral Invariant Registry
 
-> **Status note:** Current product line is `v10.1.16`. This registry is aligned to the live router structure in `plugins/cc10x/skills/cc10x-router/SKILL.md` as of 2026-03-28.
+> **Status note:** Current product line is `v10.1.17`. This registry is aligned to the live router structure in `plugins/cc10x/skills/cc10x-router/SKILL.md` as of 2026-04-05.
 
 ## Purpose
 

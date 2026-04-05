@@ -16,11 +16,16 @@ INVARIANTS = ROOT / "docs" / "router-invariants.md"
 PROMPT_INVARIANTS = ROOT / "docs" / "prompt-invariants.md"
 PROMPT_SURFACE_INVENTORY = ROOT / "docs" / "prompt-surface-inventory.md"
 PROMPT_CHANGE_CHECKLIST = ROOT / "docs" / "prompt-change-checklist.md"
+ORCHESTRATION_BIBLE = ROOT / "docs" / "cc10x-orchestration-bible.md"
+ORCHESTRATION_LOGIC = ROOT / "docs" / "cc10x-orchestration-logic-analysis.md"
+ORCHESTRATION_SAFETY = ROOT / "docs" / "cc10x-orchestration-safety.md"
+AGENT_CONTRACT_REGISTRY = ROOT / "docs" / "agent-contract-registry.md"
 VERIFIER_LATENCY_MODEL = ROOT / "docs" / "verifier-latency-model.md"
 LATENCY_REDUCTION_NOTE = ROOT / "docs" / "latency-reduction-note.md"
 REPLAY_CHECK = PLUGIN_ROOT / "scripts" / "cc10x_workflow_replay_check.py"
 LATENCY_AUDIT = PLUGIN_ROOT / "scripts" / "cc10x_latency_audit.py"
 LIVE_HARNESS_RUNNER = PLUGIN_ROOT / "scripts" / "cc10x_live_harness_runner.py"
+SESSION_MEMORY_SKILL = PLUGIN_ROOT / "skills" / "session-memory" / "SKILL.md"
 FIXTURES_DIR = PLUGIN_ROOT / "tests" / "fixtures"
 LIVE_MANIFEST_TEMPLATE = PLUGIN_ROOT / "templates" / "live-harness.template.json"
 PLANNING_LIVE_REFERENCE = (
@@ -68,6 +73,22 @@ TDD_MOCKS_REFERENCE = (
 )
 TDD_LIVE_PROOF_REFERENCE = (
     PLUGIN_ROOT / "skills" / "test-driven-development" / "references" / "integration-and-live-proof.md"
+)
+SESSION_MEMORY_MODEL_REFERENCE = (
+    PLUGIN_ROOT / "skills" / "session-memory" / "references" / "memory-model-and-ownership.md"
+)
+SESSION_MEMORY_OPERATIONS_REFERENCE = (
+    PLUGIN_ROOT / "skills" / "session-memory" / "references" / "memory-operations.md"
+)
+SESSION_MEMORY_FILE_CONTRACTS_REFERENCE = (
+    PLUGIN_ROOT / "skills" / "session-memory" / "references" / "memory-file-contracts.md"
+)
+SESSION_MEMORY_CONTEXT_BUDGET_REFERENCE = (
+    PLUGIN_ROOT
+    / "skills"
+    / "session-memory"
+    / "references"
+    / "context-budget-and-checkpointing.md"
 )
 FIRST_PLACE_STRATEGY = (
     ROOT / "docs" / "benchmarks" / "2026-03-12-first-place-strategy.md"
@@ -129,6 +150,10 @@ def main() -> int:
     prompt_invariants = read(PROMPT_INVARIANTS)
     prompt_surface_inventory = read(PROMPT_SURFACE_INVENTORY)
     prompt_change_checklist = read(PROMPT_CHANGE_CHECKLIST)
+    orchestration_bible = read(ORCHESTRATION_BIBLE)
+    orchestration_logic = read(ORCHESTRATION_LOGIC)
+    orchestration_safety = read(ORCHESTRATION_SAFETY)
+    session_memory = read(SESSION_MEMORY_SKILL)
     verifier_latency_model = read(VERIFIER_LATENCY_MODEL)
     latency_reduction_note = read(LATENCY_REDUCTION_NOTE)
 
@@ -187,6 +212,14 @@ def main() -> int:
         errors.append("missing prompt surface inventory")
     if not PROMPT_CHANGE_CHECKLIST.exists():
         errors.append("missing prompt change checklist")
+    if not ORCHESTRATION_BIBLE.exists():
+        errors.append("missing orchestration bible")
+    if not ORCHESTRATION_LOGIC.exists():
+        errors.append("missing orchestration logic analysis")
+    if not ORCHESTRATION_SAFETY.exists():
+        errors.append("missing orchestration safety doc")
+    if not AGENT_CONTRACT_REGISTRY.exists():
+        errors.append("missing agent contract registry")
     if not PROMPT_STEAL_NOTE.exists():
         errors.append("missing latest prompt benchmark note")
     if not PLANNING_RECOVERY_NOTE.exists():
@@ -229,6 +262,14 @@ def main() -> int:
         errors.append("missing TDD test-data-and-mocks reference")
     if not TDD_LIVE_PROOF_REFERENCE.exists():
         errors.append("missing TDD integration/live-proof reference")
+    if not SESSION_MEMORY_MODEL_REFERENCE.exists():
+        errors.append("missing session-memory model/ownership reference")
+    if not SESSION_MEMORY_OPERATIONS_REFERENCE.exists():
+        errors.append("missing session-memory operations reference")
+    if not SESSION_MEMORY_FILE_CONTRACTS_REFERENCE.exists():
+        errors.append("missing session-memory file-contract reference")
+    if not SESSION_MEMORY_CONTEXT_BUDGET_REFERENCE.exists():
+        errors.append("missing session-memory context-budget reference")
 
     for required in ("brightdata", "octocode"):
         if required not in router:
@@ -293,10 +334,52 @@ def main() -> int:
         errors.append("prompt-surface-inventory.md appears malformed")
     if "Prompt Change Checklist" not in prompt_change_checklist:
         errors.append("prompt-change-checklist.md appears malformed")
+    if "CC10X Orchestration Bible" not in orchestration_bible:
+        errors.append("cc10x-orchestration-bible.md appears malformed")
+    if "CC10x Orchestration Logic Analysis" not in orchestration_logic:
+        errors.append("cc10x-orchestration-logic-analysis.md appears malformed")
+    if "CC10x Orchestration Safety" not in orchestration_safety:
+        errors.append("cc10x-orchestration-safety.md appears malformed")
+    if "CC10X Agent Contract Registry" not in read(AGENT_CONTRACT_REGISTRY):
+        errors.append("agent-contract-registry.md appears malformed")
     if "Verifier Latency Model" not in verifier_latency_model:
         errors.append("verifier-latency-model.md appears malformed")
     if "Latency Reduction Note" not in latency_reduction_note:
         errors.append("latency-reduction-note.md appears malformed")
+
+    for required in (
+        "memory-model-and-ownership.md",
+        "memory-operations.md",
+        "memory-file-contracts.md",
+        "context-budget-and-checkpointing.md",
+        "MEMORY_NOTES",
+    ):
+        if required not in session_memory:
+            errors.append(f"session-memory skill missing required reference/text: {required}")
+
+    if "### session-memory" not in prompt_surface_inventory:
+        errors.append("prompt surface inventory missing session-memory entry")
+    if "PINV-012" not in prompt_invariants:
+        errors.append("prompt invariants missing session-memory invariant")
+
+    version_tag = f"v{version}"
+    for name, body in (
+        ("router invariants", invariants),
+        ("prompt invariants", prompt_invariants),
+        ("orchestration bible", orchestration_bible),
+        ("orchestration logic analysis", orchestration_logic),
+        ("agent contract registry", read(AGENT_CONTRACT_REGISTRY)),
+    ):
+        if version_tag not in body:
+            errors.append(f"{name} is not synced to current version tag {version_tag}")
+
+    for name, body in (
+        ("orchestration bible", orchestration_bible),
+        ("orchestration logic analysis", orchestration_logic),
+        ("orchestration safety", orchestration_safety),
+    ):
+        if ".claude/cc10x/v10/workflows" not in body:
+            errors.append(f"{name} does not reference the v10 workflow namespace")
 
     expected_router_fields = {
         "component-builder": [

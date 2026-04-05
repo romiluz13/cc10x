@@ -96,7 +96,7 @@ Quality weighting:
 
 ## Memory Output
 
-Do not edit `.claude/cc10x/*.md` directly from this skill or from the host agent.
+Do not edit `.claude/cc10x/v10/*.md` directly from this skill or from the host agent.
 
 Instead, surface the most durable takeaway through the host agent's `MEMORY_NOTES`, for example:
 - one research-backed gotcha worth preserving

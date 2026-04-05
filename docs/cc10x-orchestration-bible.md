@@ -1,6 +1,6 @@
-# CC10x Orchestration Bible (Plugin-Only Source of Truth)
+# CC10X Orchestration Bible (Plugin-Only Source of Truth)
 
-> **Last reviewed against live plugin files:** 2026-03-21 (`v10.1.4` product line: planner-owned fresh review loop, prompt safety system, latency-safe verifier telemetry, router-owned orchestration, versioned v10 state, workflow replay fixtures) | **Status:** IN SYNC WITH CURRENT MAIN
+> **Last reviewed against live plugin files:** 2026-04-05 (`v10.1.17` product line: planner-owned fresh review loop, prompt safety system, latency-safe verifier telemetry, router-owned orchestration, versioned v10 state, workflow replay fixtures, reference-first skill packaging, live harness bootstrap) | **Status:** IN SYNC WITH CURRENT MAIN
 
 > This document is derived **only** from `plugins/cc10x/` (agents + skills).
 > Ignore all other docs. Do not trust external narratives.
@@ -20,7 +20,8 @@ This document defines the **non-negotiable** routing, tasking, agent chaining, a
 - **Workflow**: One of BUILD, DEBUG, REVIEW, PLAN.
 - **Agents**: `component-builder`, `bug-investigator`, `code-reviewer`, `silent-failure-hunter`, `integration-verifier`, `planner`, `plan-gap-reviewer`, `web-researcher`, `github-researcher`.
 - **Skills**: Specialized rulebooks in `plugins/cc10x/skills/*/SKILL.md`.
-- **Memory**: `.claude/cc10x/{activeContext.md, patterns.md, progress.md}`.
+- **Memory**: `.claude/cc10x/v10/{activeContext.md, patterns.md, progress.md}`.
+- **Workflow Artifacts**: `.claude/cc10x/v10/workflows/{wf}.json` plus `.events.jsonl`.
 - **Router Contract**: Machine-readable output signal used by the router for validation. WRITE agents emit YAML. READ-ONLY agents emit an envelope-first contract on line 1 and a stable heading fallback on line 2.
 - **Dev Journal**: User transparency section in WRITE agent output only (narrative of what was done). Removed from READ-ONLY agents in v8.0.0 to reduce token pressure.
 
@@ -46,6 +47,8 @@ allowed-tools: Read, Grep # Tools that skip permission prompts when skill is act
 - `allowed-tools` is **NOT runtime enforcement**. It defines which tools skip permission prompts. The agent's `tools:` field controls actual tool availability.
 - Skills are loaded as text context.
 - Large preloaded skills increase startup context and contradiction risk.
+- Reference-first packaging keeps `SKILL.md` as the control plane and moves detailed templates,
+  checklists, and operations into one-level-deep `references/`.
 - Skills cannot call tools themselves. They instruct the hosting agent to call tools.
 
 ### What is an Agent?
@@ -84,7 +87,7 @@ Agents spawned via Task() run in isolated context windows by default — they ca
 **9 Agents (execution units):**
 - `component-builder` — Builds features (has Edit, Write, Bash)
 - `bug-investigator` — Debugs issues (has Edit, Write, Bash)
-- `planner` — Creates plans (has Edit, Write, Bash for plan files + memory only)
+- `planner` — Creates plans (has Edit, Write, Bash for plan files; memory persists via `MEMORY_NOTES`)
 - `plan-gap-reviewer` — Fresh read-only plan challenge pass (no Edit, no Write)
 - `code-reviewer` — Reviews code (READ-ONLY: no Edit, no Write)
 - `silent-failure-hunter` — Finds silent failures (READ-ONLY: no Edit, no Write)
@@ -92,7 +95,7 @@ Agents spawned via Task() run in isolated context windows by default — they ca
 - `web-researcher` — Executes web research (Bright Data + WebSearch); spawned by router in parallel
 - `github-researcher` — Executes GitHub research (Octocode MCP); spawned by router in parallel
 
-**12 Skills (instruction sets referenced by agents/router):**
+**13 Skills (instruction sets referenced by agents/router):**
 - `cc10x-router` — Orchestration engine (loaded by main Claude, not agents)
 - `session-memory` — Memory protocol (WRITE agents only)
 - `code-generation` — Code writing patterns (component-builder)
@@ -101,6 +104,7 @@ Agents spawned via Task() run in isolated context windows by default — they ca
 - `code-review-patterns` — Review methodology (code-reviewer, silent-failure-hunter)
 - `verification-before-completion` — Verification gates (4 agents)
 - `planning-patterns` — Plan writing (planner)
+- `plan-review-gate` — Inline saved-plan trust gate (planner only)
 - `brainstorming` — Idea exploration (router PLAN workflow in main context — NOT planner frontmatter)
 - `architecture-patterns` — Architecture guidance (loaded conditionally via SKILL_HINTS)
 - `frontend-patterns` — Frontend guidance (loaded conditionally via SKILL_HINTS)
@@ -132,7 +136,7 @@ The router never executes research inline.
 | Layer | Owned By | Examples |
 |-------|----------|----------|
 | Claude Code platform | Anthropic | subagents, tool allowlists, hooks, settings, `Skill()` loading |
-| CC10X orchestration | This plugin | BUILD/DEBUG/REVIEW/PLAN, `wf:` metadata, REM-FIX loops, `.claude/cc10x/*.md`, `memory_task_id` transient hint |
+| CC10X orchestration | This plugin | BUILD/DEBUG/REVIEW/PLAN, `wf:` metadata, REM-FIX loops, `.claude/cc10x/v10/*.md`, `memory_task_id` transient hint |
 
 ### Hook-Owned Invariants (Recommended)
 
@@ -323,14 +327,14 @@ The planner runs `plan-review-gate` inline before each saved-plan handoff. The r
 
 **Step 1 (MUST complete first):**
 ```
-mkdir -p .claude/cc10x
+mkdir -p .claude/cc10x/v10
 ```
 
 **Step 2 (AFTER Step 1):**
 ```
-Read .claude/cc10x/activeContext.md
-Read .claude/cc10x/patterns.md
-Read .claude/cc10x/progress.md
+Read .claude/cc10x/v10/activeContext.md
+Read .claude/cc10x/v10/patterns.md
+Read .claude/cc10x/v10/progress.md
 ```
 
 **Do NOT parallelize Step 1 and Step 2.**
@@ -338,8 +342,9 @@ Read .claude/cc10x/progress.md
 ### Update (After Workflow)
 
 **WRITE agents** (component-builder, bug-investigator, planner):
-- Update memory directly using `Edit(...)` + `Read(...)` verify pattern
-- Have session-memory skill for full protocol
+- Read memory directly at task start
+- Emit structured YAML `MEMORY_NOTES`
+- Do **not** edit `.claude/cc10x/v10/*.md` directly
 
 **READ-ONLY agents** (code-reviewer, silent-failure-hunter, integration-verifier):
 - Do NOT have Edit tool - cannot update memory directly
@@ -360,9 +365,11 @@ Read .claude/cc10x/progress.md
   2. Patterns/gotchas to `patterns.md ## Common Gotchas`
   3. Verification evidence to `progress.md ## Verification`
 - Task-enforced ensures persistence survives context compaction
+- `session-memory` now keeps templates, anchors, and low-level file operations in
+  `references/` so the main skill stays a compact control plane.
 
 **Memory contract (never break anchors):**
-- Do not rename the top-level headers or section headers in `.claude/cc10x/*.md`.
+- Do not rename the top-level headers or section headers in `.claude/cc10x/v10/*.md`.
 - After any `Edit(...)`, `Read(...)` back and confirm the intended change exists. If not, STOP and retry with a correct `old_string` anchor.
 
 ### Template Validation Gate (Auto-Heal)
@@ -380,12 +387,12 @@ After loading memory files, the router MUST ensure all required sections exist. 
 **Auto-heal pattern:**
 ```
 # If any section missing, insert before ## Last Updated:
-Edit(file_path=".claude/cc10x/activeContext.md",
+Edit(file_path=".claude/cc10x/v10/activeContext.md",
      old_string="## Last Updated",
      new_string="## References\n- Plan: N/A\n- Design: N/A\n- Research: N/A\n\n## Last Updated")
 
 # VERIFY after each heal
-Read(file_path=".claude/cc10x/activeContext.md")
+Read(file_path=".claude/cc10x/v10/activeContext.md")
 ```
 
 This is **idempotent**: runs once per project (subsequent sessions find sections present).
@@ -448,6 +455,9 @@ Router passes SKILL_HINTS in agent prompt. Agent invokes via `Skill(skill="{name
 ---
 
 ## Agent Output Requirements (Validation Gate)
+
+For a concise map of completion markers and memory handoff shapes, see
+`docs/agent-contract-registry.md`.
 
 ### WRITE Agent Output Format (component-builder, bug-investigator, planner)
 
@@ -650,7 +660,7 @@ Rules:
 
 ## Concurrent Session Warning
 
-`.claude/cc10x/` memory files are single-tenant. Running multiple cc10x sessions concurrently in the **same repository directory** causes:
+`.claude/cc10x/v10/` memory files are single-tenant. Running multiple cc10x sessions concurrently in the **same repository directory** causes:
 - Silent data corruption (progress.md pre-populated with wrong data)
 - Memory files overwritten mid-workflow by sibling sessions
 - No error — failures are invisible
@@ -692,7 +702,7 @@ Context compaction can destroy in-flight agent notes. CC10X survives this by per
 1. Extract `### Memory Notes` from the agent output.
 2. Append them to the `kind:memory` task description for the same `wf:`.
 3. Optionally write `[cc10x-internal] memory_task_id: {id} wf:{workflow_task_id}` to `activeContext.md ## References` as a transient hint.
-4. When the Memory Update task executes inline, it reads only its own description payload, persists the notes to `.claude/cc10x/*.md`, and removes the matching transient `memory_task_id` line.
+4. When the Memory Update task executes inline, it reads only its own description payload, persists the notes to `.claude/cc10x/v10/*.md`, and removes the matching transient `memory_task_id` line.
 
 This is why Memory Notes survive compaction and cross-turn truncation.
 

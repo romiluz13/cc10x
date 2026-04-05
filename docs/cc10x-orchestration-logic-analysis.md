@@ -1,6 +1,6 @@
 # CC10x Orchestration Logic Analysis
 
-> **Last synced with live router/agents:** 2026-03-21
+> **Last synced with live router/agents:** 2026-04-05 (`v10.1.17`)
 > **Status:** IN SYNC WITH CURRENT MAIN
 > **Relationship to Bible:** The bible is the canonical specification. This document explains the practical mechanics and why the system is shaped this way.
 
@@ -18,10 +18,12 @@ It is:
 - a small set of specialized agents
 - a small set of plugin hooks
 - optional user-configured MCP acceleration
-- workflow artifacts under `.claude/cc10x/workflows/`
+- reference-first advisory skills with one-level-deep `references/`
+- workflow artifacts under `.claude/cc10x/v10/workflows/`
 
 The system is still mostly **English orchestration**, but it is no longer prompt-only. The current design mixes:
 - prompt contracts
+- reference-first skill packaging
 - task metadata
 - durable workflow artifacts
 - plugin hooks
@@ -69,8 +71,8 @@ The router loads memory, checks for active workflow state, and either:
 Every workflow gets:
 - a parent task
 - workflow-scoped child tasks
-- `.claude/cc10x/workflows/{wf}.json`
-- `.claude/cc10x/workflows/{wf}.events.jsonl`
+- `.claude/cc10x/v10/workflows/{wf}.json`
+- `.claude/cc10x/v10/workflows/{wf}.events.jsonl`
 
 This is the durable truth for orchestration.
 
@@ -78,6 +80,7 @@ This is the durable truth for orchestration.
 Agents are narrow workers:
 - write agents produce YAML contracts
 - read-only agents produce envelope-first contracts
+- all agents emit structured memory notes instead of writing markdown memory directly
 - router interprets outputs and owns state transitions
 
 The important design boundary is:
@@ -107,6 +110,7 @@ Current main is better because:
 - plugin behavior is plugin-native
 - research is capability-aware and fallback-safe
 - evidence is stricter and more scenario-based
+- advisory skills are increasingly reference-first instead of monolithic
 - safety is checked by scripts, not only memory
 
 ## The Six SDLC Capabilities CC10X Actually Optimizes
@@ -134,6 +138,8 @@ Within that scope, the current design center is:
 Even after the stability hardening, the main remaining risk areas are:
 - live Claude runtime behavior under long sessions
 - model interpretation of router prose in unusual edge cases
+- doc drift when trust docs are not refreshed with prompt/runtime edits
+- oversized control planes that have not yet been split into references
 - prompt drift if agent contracts and router expectations diverge
 - future changes that bypass the replay/audit checks
 

@@ -37,8 +37,8 @@ Every child task must remain scoped by:
 
 ### 3. Workflow artifact durability
 Every workflow must keep:
-- `.claude/cc10x/workflows/{wf}.json`
-- `.claude/cc10x/workflows/{wf}.events.jsonl`
+- `.claude/cc10x/v10/workflows/{wf}.json`
+- `.claude/cc10x/v10/workflows/{wf}.events.jsonl`
 
 If those drift, resume and hook context degrade immediately.
 

@@ -1,6 +1,6 @@
 # CC10X Prompt Behavioral Invariant Registry
 
-> **Status note:** This registry is aligned to the live prompt stack in `plugins/cc10x/agents/` and `plugins/cc10x/skills/` as of 2026-03-21.
+> **Status note:** This registry is aligned to the live prompt stack in `plugins/cc10x/agents/` and `plugins/cc10x/skills/` as of 2026-04-05 (`v10.1.17`).
 
 ## Purpose
 
@@ -16,6 +16,7 @@ Validated against the live prompt surface:
 - plan-gap-reviewer
 - plan-review-gate, verification-before-completion
 - bug-investigator, code-reviewer, silent-failure-hunter
+- session-memory
 - advisory skill descriptions for frontend/debugging patterns
 
 ## Current Invariants
@@ -107,6 +108,14 @@ Validated against the live prompt surface:
 **Wording drift that breaks it:** Framing live verification as optional when the plan made it required, or describing replay/unit/manual checks as interchangeable with live-system proof.
 **Safe to weaken:** Never.
 **Safe to strengthen:** Yes, if runtime orchestration ownership remains with the router.
+
+### PINV-012: Session memory stays router-subordinate and distilled
+**Covers:** `plugins/cc10x/skills/session-memory/SKILL.md`
+**Enforces:** Agents load versioned memory early, emit distilled memory notes, and do not bypass router-owned final markdown persistence.
+**Failure prevented:** Duplicate memory write paths, bloated memory notes, and durable-state drift between workflow artifacts and markdown memory.
+**Wording drift that breaks it:** Telling write agents to edit `.claude/cc10x/v10/*.md` directly, weakening the distillation rule, or implying chat history can substitute for durable memory.
+**Safe to weaken:** Never.
+**Safe to strengthen:** Yes, if router-owned persistence and the v10 namespace remain unchanged.
 
 ## Change Policy
 
