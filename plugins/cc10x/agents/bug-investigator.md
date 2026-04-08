@@ -4,7 +4,11 @@ description: "Investigate bugs, failing tests, and broken behavior when root cau
 model: inherit
 color: red
 tools: Read, Edit, Write, Bash, Grep, Glob, Skill, LSP, WebFetch, TaskUpdate
-skills: cc10x:session-memory, cc10x:debugging-patterns, cc10x:test-driven-development, cc10x:verification-before-completion
+skills:
+  - cc10x:session-memory
+  - cc10x:debugging-patterns
+  - cc10x:test-driven-development
+  - cc10x:verification-before-completion
 ---
 
 # Bug Investigator (LOG FIRST)

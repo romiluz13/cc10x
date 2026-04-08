@@ -113,6 +113,46 @@ def read_latest_workflow_state() -> Tuple[Dict[str, Any], Path | None, str | Non
         return {}, latest, exc.__class__.__name__
 
 
+def workflow_artifact_path(workflow_id: str | None) -> Path | None:
+    if not workflow_id:
+        return None
+    path = workflows_dir() / f"{workflow_id}.json"
+    if not path.exists():
+        return None
+    return path
+
+
+def workflow_event_log_path(workflow_id: str | None) -> Path | None:
+    if not workflow_id:
+        return None
+    path = workflows_dir() / f"{workflow_id}.events.jsonl"
+    if not path.exists():
+        return None
+    return path
+
+
+def read_workflow_state(
+    workflow_id: str | None,
+) -> Tuple[Dict[str, Any], Path | None, str | None]:
+    path = workflow_artifact_path(workflow_id)
+    if path is None:
+        return {}, None, None
+    try:
+        return json.loads(path.read_text(encoding="utf-8")), path, None
+    except Exception as exc:
+        return {}, path, exc.__class__.__name__
+
+
+def workflow_event_log_contains(workflow_id: str | None, needle: str) -> bool:
+    path = workflow_event_log_path(workflow_id)
+    if path is None:
+        return False
+    try:
+        return needle in path.read_text(encoding="utf-8")
+    except Exception:
+        return False
+
+
 def workflow_event_log_exists(payload: Dict[str, Any], artifact_path: Path) -> bool:
     workflow_uuid = payload.get("workflow_uuid") or payload.get("workflow_id")
     if not workflow_uuid:

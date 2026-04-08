@@ -1,7 +1,7 @@
 ---
 name: debugging-patterns
 description: "Use when a bug, flaky test, or runtime/build failure needs root-cause tracing and a nearby duplicate-pattern scan before any fix."
-allowed-tools: Read, Grep, Glob, Bash, LSP
+allowed-tools: Read Grep Glob Bash LSP
 ---
 
 # Systematic Debugging

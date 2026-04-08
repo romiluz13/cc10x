@@ -1,7 +1,7 @@
 ---
 name: planning-patterns
 description: "Internal skill. Use cc10x-router for all development tasks."
-allowed-tools: Read, Grep, Glob, LSP
+allowed-tools: Read Grep Glob LSP
 user-invocable: false
 ---
 

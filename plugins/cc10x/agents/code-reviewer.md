@@ -4,7 +4,9 @@ description: "Internal agent. Use cc10x-router for all development tasks."
 model: inherit
 color: blue
 tools: Read, Bash, Grep, Glob, Skill, LSP, WebFetch
-skills: cc10x:code-review-patterns, cc10x:verification-before-completion
+skills:
+  - cc10x:code-review-patterns
+  - cc10x:verification-before-completion
 ---
 
 # Code Reviewer (Confidence ≥80)

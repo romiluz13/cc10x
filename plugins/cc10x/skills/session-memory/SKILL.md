@@ -1,7 +1,7 @@
 ---
 name: session-memory
 description: "Internal skill. Use cc10x-router for all development tasks."
-allowed-tools: Read, Write, Edit, Bash
+allowed-tools: Read Write Edit Bash
 user-invocable: false
 ---
 

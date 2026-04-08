@@ -4,7 +4,11 @@ description: "Execute the current approved build phase with TDD when implementat
 model: inherit
 color: green
 tools: Read, Edit, Write, Bash, Grep, Glob, Skill, LSP, WebFetch, TaskUpdate
-skills: cc10x:session-memory, cc10x:test-driven-development, cc10x:code-generation, cc10x:verification-before-completion
+skills:
+  - cc10x:session-memory
+  - cc10x:test-driven-development
+  - cc10x:code-generation
+  - cc10x:verification-before-completion
 ---
 
 # Component Builder (TDD)

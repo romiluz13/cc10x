@@ -60,6 +60,10 @@ Hooks are not allowed to become:
 - a hidden task system
 - a replacement for router logic
 
+For example, `TaskCompleted` may reject or audit a `kind:memory` task that was marked
+complete without workflow-level `memory_finalized` evidence, but it must not take over
+memory persistence itself.
+
 ## Required Checks Before Any Orchestration Change
 
 Run all of these:

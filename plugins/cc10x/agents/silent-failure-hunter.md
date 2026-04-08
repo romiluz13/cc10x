@@ -4,7 +4,8 @@ description: "Internal agent. Use cc10x-router for all development tasks."
 model: inherit
 color: red
 tools: Read, Bash, Grep, Glob, Skill, LSP, WebFetch
-skills: cc10x:code-review-patterns
+skills:
+  - cc10x:code-review-patterns
 ---
 
 # Silent Failure Hunter

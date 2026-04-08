@@ -59,7 +59,9 @@ An **agent** is a Markdown file with YAML frontmatter that defines an isolated s
 ```yaml
 name: agent-name          # Identifier
 tools: Read, Edit, Bash   # Actual tool allowlist (enforced at runtime)
-skills: skill-a, skill-b  # Skills to preload (full content injected at startup)
+skills:
+  - skill-a               # Skills to preload (full content injected at startup)
+  - skill-b
 model: inherit            # Model to use
 ```
 
@@ -69,7 +71,7 @@ model: inherit            # Model to use
 - Agent outputs are returned to the caller (router) as a single result.
 - Plain subagents do not provide team-style orchestration for free. CC10X implements that layer itself using tasks, workflow metadata, and router rules.
 
-Agents spawned via Task() run in isolated context windows by default — they cannot see the parent conversation, CLAUDE.md, or other agents' outputs. No frontmatter configuration is required for isolation.
+Agents spawned via Agent() run in isolated context windows by default — they cannot see the parent conversation, CLAUDE.md, or other agents' outputs. No frontmatter configuration is required for isolation.
 
 ### Skills vs Agents — The Distinction
 
@@ -79,7 +81,7 @@ Agents spawned via Task() run in isolated context windows by default — they ca
 | **Runs as** | Context injected into an agent | Isolated process with own context window |
 | **Can use tools?** | No — instructs the hosting agent to use tools | Yes — has its own `tools:` allowlist |
 | **Can see parent context?** | Only if loaded into parent; forked agents cannot see parent | No (isolated by default) |
-| **Loaded via** | Agent frontmatter `skills:` (automatic) or `Skill()` call (on-demand) | `Task(subagent_type="...")` |
+| **Loaded via** | Agent frontmatter `skills:` (automatic) or `Skill()` call (on-demand) | `Agent(agent_type="...")` |
 | **Frontmatter tool field** | `allowed-tools` (permission hint, NOT enforcement) | `tools` (actual allowlist, enforced) |
 
 ### How CC10x Uses This Architecture
@@ -116,8 +118,8 @@ Research runs as parallel agents spawned directly by the router (same pattern as
 
 ```
 Router detects research need
-  → Task(cc10x:web-researcher) [parallel]   → docs/research/{date}-{topic}-web.md
-  → Task(cc10x:github-researcher) [parallel] → docs/research/{date}-{topic}-github.md
+  → Agent(cc10x:web-researcher) [parallel]   → docs/research/{date}-{topic}-web.md
+  → Agent(cc10x:github-researcher) [parallel] → docs/research/{date}-{topic}-github.md
   Both complete → router collects both FILE_PATHs
   → Router passes both paths to planner or bug-investigator
 ```
@@ -269,7 +271,7 @@ flowchart TD
 4. Agent self-reports: calls `TaskUpdate({ taskId, status: "completed" })` in its final output. Router validates via `TaskList()` and calls `TaskUpdate` as fallback if status is still `in_progress`.
 5. Repeat until **ALL** agent tasks are completed.
 
-**Note (v6.0.29+):** Agents DO call TaskUpdate for their own task (self-completion). Router applies a fallback if the agent missed it. Both are defense-in-depth — not a contradiction. `Task()` return is the deterministic handoff point for the router to validate.
+**Note (v6.0.29+):** Agents DO call TaskUpdate for their own task (self-completion). Router applies a fallback if the agent missed it. Both are defense-in-depth — not a contradiction. The `Agent()` return is the deterministic handoff point for the router to validate.
 
 ### Tasks Tool Contract (Keep Examples Exact)
 

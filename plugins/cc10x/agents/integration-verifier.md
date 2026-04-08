@@ -4,7 +4,8 @@ description: "Verify built or fixed work end-to-end before any pass, completion,
 model: inherit
 color: yellow
 tools: Read, Bash, Grep, Glob, Skill, LSP, WebFetch
-skills: cc10x:verification-before-completion
+skills:
+  - cc10x:verification-before-completion
 ---
 
 # Integration Verifier (E2E)

@@ -12,6 +12,7 @@ CHANGELOG = ROOT / "CHANGELOG.md"
 PLUGIN_JSON = PLUGIN_ROOT / ".claude-plugin" / "plugin.json"
 MARKETPLACE_JSON = ROOT / ".claude-plugin" / "marketplace.json"
 HOOKS_JSON = PLUGIN_ROOT / "hooks" / "hooks.json"
+TASK_COMPLETED_GUARD = PLUGIN_ROOT / "scripts" / "cc10x_task_completed_guard.py"
 INVARIANTS = ROOT / "docs" / "router-invariants.md"
 PROMPT_INVARIANTS = ROOT / "docs" / "prompt-invariants.md"
 PROMPT_SURFACE_INVENTORY = ROOT / "docs" / "prompt-surface-inventory.md"
@@ -29,7 +30,11 @@ SESSION_MEMORY_SKILL = PLUGIN_ROOT / "skills" / "session-memory" / "SKILL.md"
 FIXTURES_DIR = PLUGIN_ROOT / "tests" / "fixtures"
 LIVE_MANIFEST_TEMPLATE = PLUGIN_ROOT / "templates" / "live-harness.template.json"
 PLANNING_LIVE_REFERENCE = (
-    PLUGIN_ROOT / "skills" / "planning-patterns" / "references" / "live-verification-strategy.md"
+    PLUGIN_ROOT
+    / "skills"
+    / "planning-patterns"
+    / "references"
+    / "live-verification-strategy.md"
 )
 VERIFY_LIVE_REFERENCE = (
     PLUGIN_ROOT
@@ -42,46 +47,98 @@ LIVE_MANIFEST_BOOTSTRAP = (
     PLUGIN_ROOT / "tests" / "live" / "manifests" / "cc10x-bootstrap.json"
 )
 DEBUGGING_PLAYBOOKS_REFERENCE = (
-    PLUGIN_ROOT / "skills" / "debugging-patterns" / "references" / "root-cause-playbooks.md"
+    PLUGIN_ROOT
+    / "skills"
+    / "debugging-patterns"
+    / "references"
+    / "root-cause-playbooks.md"
 )
 DEBUGGING_HYGIENE_REFERENCE = (
-    PLUGIN_ROOT / "skills" / "debugging-patterns" / "references" / "investigation-hygiene.md"
+    PLUGIN_ROOT
+    / "skills"
+    / "debugging-patterns"
+    / "references"
+    / "investigation-hygiene.md"
 )
 REVIEW_ORDER_REFERENCE = (
-    PLUGIN_ROOT / "skills" / "code-review-patterns" / "references" / "review-order-and-checkpoints.md"
+    PLUGIN_ROOT
+    / "skills"
+    / "code-review-patterns"
+    / "references"
+    / "review-order-and-checkpoints.md"
 )
 REVIEW_SECURITY_REFERENCE = (
-    PLUGIN_ROOT / "skills" / "code-review-patterns" / "references" / "security-review-checklist.md"
+    PLUGIN_ROOT
+    / "skills"
+    / "code-review-patterns"
+    / "references"
+    / "security-review-checklist.md"
 )
 REVIEW_HEURISTICS_REFERENCE = (
-    PLUGIN_ROOT / "skills" / "code-review-patterns" / "references" / "code-review-heuristics.md"
+    PLUGIN_ROOT
+    / "skills"
+    / "code-review-patterns"
+    / "references"
+    / "code-review-heuristics.md"
 )
 FRONTEND_STATE_REFERENCE = (
-    PLUGIN_ROOT / "skills" / "frontend-patterns" / "references" / "ui-state-and-feedback.md"
+    PLUGIN_ROOT
+    / "skills"
+    / "frontend-patterns"
+    / "references"
+    / "ui-state-and-feedback.md"
 )
 FRONTEND_A11Y_REFERENCE = (
-    PLUGIN_ROOT / "skills" / "frontend-patterns" / "references" / "accessibility-and-forms.md"
+    PLUGIN_ROOT
+    / "skills"
+    / "frontend-patterns"
+    / "references"
+    / "accessibility-and-forms.md"
 )
 FRONTEND_LAYOUT_REFERENCE = (
-    PLUGIN_ROOT / "skills" / "frontend-patterns" / "references" / "performance-and-layout.md"
+    PLUGIN_ROOT
+    / "skills"
+    / "frontend-patterns"
+    / "references"
+    / "performance-and-layout.md"
 )
 TDD_PATTERNS_REFERENCE = (
-    PLUGIN_ROOT / "skills" / "test-driven-development" / "references" / "testing-patterns.md"
+    PLUGIN_ROOT
+    / "skills"
+    / "test-driven-development"
+    / "references"
+    / "testing-patterns.md"
 )
 TDD_MOCKS_REFERENCE = (
-    PLUGIN_ROOT / "skills" / "test-driven-development" / "references" / "test-data-and-mocks.md"
+    PLUGIN_ROOT
+    / "skills"
+    / "test-driven-development"
+    / "references"
+    / "test-data-and-mocks.md"
 )
 TDD_LIVE_PROOF_REFERENCE = (
-    PLUGIN_ROOT / "skills" / "test-driven-development" / "references" / "integration-and-live-proof.md"
+    PLUGIN_ROOT
+    / "skills"
+    / "test-driven-development"
+    / "references"
+    / "integration-and-live-proof.md"
 )
 SESSION_MEMORY_MODEL_REFERENCE = (
-    PLUGIN_ROOT / "skills" / "session-memory" / "references" / "memory-model-and-ownership.md"
+    PLUGIN_ROOT
+    / "skills"
+    / "session-memory"
+    / "references"
+    / "memory-model-and-ownership.md"
 )
 SESSION_MEMORY_OPERATIONS_REFERENCE = (
     PLUGIN_ROOT / "skills" / "session-memory" / "references" / "memory-operations.md"
 )
 SESSION_MEMORY_FILE_CONTRACTS_REFERENCE = (
-    PLUGIN_ROOT / "skills" / "session-memory" / "references" / "memory-file-contracts.md"
+    PLUGIN_ROOT
+    / "skills"
+    / "session-memory"
+    / "references"
+    / "memory-file-contracts.md"
 )
 SESSION_MEMORY_CONTEXT_BUDGET_REFERENCE = (
     PLUGIN_ROOT
@@ -144,6 +201,7 @@ def main() -> int:
         json.loads(read(MARKETPLACE_JSON)) if MARKETPLACE_JSON.exists() else {}
     )
     router = read(ROUTER)
+    task_completed_guard = read(TASK_COMPLETED_GUARD)
     readme = read(README)
     changelog = read(CHANGELOG)
     invariants = read(INVARIANTS)
@@ -346,6 +404,18 @@ def main() -> int:
         errors.append("verifier-latency-model.md appears malformed")
     if "Latency Reduction Note" not in latency_reduction_note:
         errors.append("latency-reduction-note.md appears malformed")
+    if "MEMORY_FINAL_EVENT" not in task_completed_guard:
+        errors.append("task_completed_guard missing memory finalize event guard")
+    for phrase in (
+        'metadata.get("kind") != "memory"',
+        "workflow_event_log_contains(workflow_id, MEMORY_FINAL_EVENT)",
+        "missing-memory-finalized-event",
+        "CC10X Memory Update:",
+    ):
+        if phrase not in task_completed_guard:
+            errors.append(
+                f"task_completed_guard missing memory finalize phrase '{phrase}'"
+            )
 
     for required in (
         "memory-model-and-ownership.md",
@@ -355,7 +425,9 @@ def main() -> int:
         "MEMORY_NOTES",
     ):
         if required not in session_memory:
-            errors.append(f"session-memory skill missing required reference/text: {required}")
+            errors.append(
+                f"session-memory skill missing required reference/text: {required}"
+            )
 
     if "### session-memory" not in prompt_surface_inventory:
         errors.append("prompt surface inventory missing session-memory entry")

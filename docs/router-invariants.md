@@ -165,7 +165,7 @@ Validated against the live plugin surface:
 
 ### INV-012: Memory finalization is router-owned and compaction-safe
 **Covers:** Router `## 12. Chain Execution Loop`, `## 13. Memory Finalization`
-**Enforces:** Read-only Memory Notes are copied into the memory task immediately; final persistence happens inline through the Memory Update task; transient `memory_task_id` is removed on completion.
+**Enforces:** Read-only Memory Notes are copied into the memory task immediately; final persistence happens inline through the Memory Update task; transient `memory_task_id` is removed on completion; and a `kind:memory` task is not considered trustworthy unless the workflow event log records `memory_finalized`.
 **If removed:** Memory becomes conversation-dependent or leaks stale workflow pointers across sessions.
 **Safe to remove:** Never.
 
@@ -175,7 +175,7 @@ Validated against the live plugin surface:
 - `PreToolUse` protects memory writes
 - `SessionStart` injects workflow context
 - `PostToolUse` audits workflow artifact integrity
-- `TaskCompleted` checks task metadata
+- `TaskCompleted` checks task metadata and memory-finalize completion evidence
 **If removed:** Either runtime safety degrades, or hooks sprawl into a second orchestration system.
 **Safe to remove:** Only if an equivalent plugin-native guardrail replaces the specific hook behavior.
 

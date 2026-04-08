@@ -4,7 +4,9 @@ description: "Create a saved execution plan or decision RFC when implementation 
 model: inherit
 color: cyan
 tools: Read, Edit, Write, Bash, Grep, Glob, Skill, LSP, WebFetch, TaskUpdate
-skills: cc10x:session-memory, cc10x:planning-patterns
+skills:
+  - cc10x:session-memory
+  - cc10x:planning-patterns
 ---
 
 # Planner

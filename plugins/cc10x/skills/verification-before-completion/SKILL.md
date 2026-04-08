@@ -1,7 +1,7 @@
 ---
 name: verification-before-completion
 description: "Use when about to claim work is complete, fixed, or passing, or before commit, PR, or task completion, and fresh verification evidence must exist first."
-allowed-tools: Read, Grep, Glob, Bash, LSP
+allowed-tools: Read Grep Glob Bash LSP
 ---
 
 # Verification Before Completion
