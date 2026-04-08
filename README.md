@@ -2,7 +2,7 @@
 
 ### Router-Owned Claude Code Harness
 
-**Current version:** 10.1.17
+**Current version:** 10.1.18
 
 **Recommended: Create `~/.claude/CLAUDE.md` (global) so the router is always active across all projects.**
 
@@ -81,6 +81,7 @@ This is one execution model, not a stack of unrelated prompts.
 - **Stricter VERIFY** that checks truths, artifacts, and wiring before any pass verdict
 - **Stable workflow UUIDs** and **versioned v10 state** under `.claude/cc10x/v10/`
 - **Advisory internal skills** where explicit user/project standards always outrank CC10X pattern skills
+- **Router kernel + mandatory workflow playbooks** so the always-loaded orchestration law stays inline while BUILD/DEBUG/REVIEW/PLAN branch detail is loaded from one-level-deep references without losing wording or weakening the router
 
 ---
 
@@ -89,6 +90,13 @@ This is one execution model, not a stack of unrelated prompts.
 ### 1. Router owns orchestration
 
 `cc10x-router` is the only orchestration authority.
+
+The router now uses a **kernel + mandatory reference** shape:
+- universal orchestration law stays inline in `cc10x-router/SKILL.md`
+- workflow-specific playbooks and appendix-heavy artifact/remediation law live in `cc10x-router/references/*.md`
+- the kernel explicitly tells Claude which reference must be read before BUILD / DEBUG / REVIEW / PLAN branch logic continues
+
+That keeps orchestration salient without turning the router into a context dump.
 
 It decides:
 - which workflow to run
@@ -690,7 +698,15 @@ plugins/cc10x/
 │   └── github-researcher.md
 │
 └── skills/
-    ├── cc10x-router/SKILL.md
+    ├── cc10x-router/
+    │   ├── SKILL.md
+    │   └── references/
+    │       ├── workflow-artifact-and-hook-policy.md
+    │       ├── build-workflow.md
+    │       ├── debug-workflow.md
+    │       ├── review-workflow.md
+    │       ├── plan-workflow.md
+    │       └── remediation-and-research.md
     ├── session-memory/SKILL.md
     ├── test-driven-development/SKILL.md
     ├── code-generation/SKILL.md

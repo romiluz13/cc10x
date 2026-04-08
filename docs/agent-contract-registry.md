@@ -1,6 +1,6 @@
 # CC10X Agent Contract Registry
 
-> **Status note:** Aligned to the live agent and router prompt stack as of 2026-04-05 (`v10.1.17`).
+> **Status note:** Aligned to the live agent and router prompt stack as of 2026-04-09 (`v10.1.18`).
 > **Purpose:** Quick contract map for maintainers. This document summarizes what the live prompts already enforce; it does not add new behavior.
 
 ## Write Agents
@@ -38,6 +38,8 @@ All three emit `### Memory Notes (For Workflow-Final Persistence)` instead of YA
 - Router reads line-1 envelopes first for read-only agents.
 - Router falls back to stable headings if an envelope is malformed or absent.
 - Router interprets contracts and owns every workflow decision after the agent returns.
+- Router kernel may point to mandatory workflow/reference playbooks, but those
+  reads remain router-owned orchestration behavior.
 - Router remains the only orchestration owner for:
   - task creation
   - blocking / unblocking

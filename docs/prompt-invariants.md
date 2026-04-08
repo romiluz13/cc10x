@@ -1,6 +1,6 @@
 # CC10X Prompt Behavioral Invariant Registry
 
-> **Status note:** This registry is aligned to the live prompt stack in `plugins/cc10x/agents/` and `plugins/cc10x/skills/` as of 2026-04-05 (`v10.1.17`).
+> **Status note:** This registry is aligned to the live prompt stack in `plugins/cc10x/agents/` and `plugins/cc10x/skills/` as of 2026-04-09 (`v10.1.18`).
 
 ## Purpose
 
@@ -8,6 +8,10 @@ This file maps each load-bearing prompt behavior to the failure it prevents.
 If a Tier 1 or Tier 2 prompt contract changes, the matching invariant must be reviewed in the same change.
 
 This registry complements, but does not replace, [router-invariants.md](/Users/rom.iluz/Dev/cc10x_v5/cc10x/docs/router-invariants.md).
+
+`cc10x-router` itself is not treated as a prompt-only surface here. The router
+kernel and its mandatory references are orchestration-sensitive and must stay in
+the router/runtime lane with audit and replay.
 
 ## Audit Snapshot
 

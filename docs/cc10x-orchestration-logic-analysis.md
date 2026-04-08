@@ -1,6 +1,6 @@
 # CC10x Orchestration Logic Analysis
 
-> **Last synced with live router/agents:** 2026-04-05 (`v10.1.17`)
+> **Last synced with live router/agents:** 2026-04-09 (`v10.1.18`)
 > **Status:** IN SYNC WITH CURRENT MAIN
 > **Relationship to Bible:** The bible is the canonical specification. This document explains the practical mechanics and why the system is shaped this way.
 
@@ -106,6 +106,7 @@ Older CC10X revisions leaned too hard on:
 
 Current main is better because:
 - orchestration ownership is centralized
+- the router is now a kernel with mandatory workflow/reference playbooks instead of one giant always-loaded monolith
 - workflow state is durable
 - plugin behavior is plugin-native
 - research is capability-aware and fallback-safe
@@ -139,7 +140,7 @@ Even after the stability hardening, the main remaining risk areas are:
 - live Claude runtime behavior under long sessions
 - model interpretation of router prose in unusual edge cases
 - doc drift when trust docs are not refreshed with prompt/runtime edits
-- oversized control planes that have not yet been split into references
+- oversized control planes that have not yet been split into references, especially if they are still always-loaded
 - prompt drift if agent contracts and router expectations diverge
 - future changes that bypass the replay/audit checks
 

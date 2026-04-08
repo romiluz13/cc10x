@@ -7,6 +7,15 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 PLUGIN_ROOT = Path(__file__).resolve().parents[1]
 ROUTER = PLUGIN_ROOT / "skills" / "cc10x-router" / "SKILL.md"
+ROUTER_REFERENCES_DIR = PLUGIN_ROOT / "skills" / "cc10x-router" / "references"
+ROUTER_ARTIFACT_POLICY_REFERENCE = (
+    ROUTER_REFERENCES_DIR / "workflow-artifact-and-hook-policy.md"
+)
+ROUTER_BUILD_REFERENCE = ROUTER_REFERENCES_DIR / "build-workflow.md"
+ROUTER_DEBUG_REFERENCE = ROUTER_REFERENCES_DIR / "debug-workflow.md"
+ROUTER_REVIEW_REFERENCE = ROUTER_REFERENCES_DIR / "review-workflow.md"
+ROUTER_PLAN_REFERENCE = ROUTER_REFERENCES_DIR / "plan-workflow.md"
+ROUTER_REMEDIATION_REFERENCE = ROUTER_REFERENCES_DIR / "remediation-and-research.md"
 README = ROOT / "README.md"
 CHANGELOG = ROOT / "CHANGELOG.md"
 PLUGIN_JSON = PLUGIN_ROOT / ".claude-plugin" / "plugin.json"
@@ -201,6 +210,23 @@ def main() -> int:
         json.loads(read(MARKETPLACE_JSON)) if MARKETPLACE_JSON.exists() else {}
     )
     router = read(ROUTER)
+    router_artifact_policy_reference = read(ROUTER_ARTIFACT_POLICY_REFERENCE)
+    router_build_reference = read(ROUTER_BUILD_REFERENCE)
+    router_debug_reference = read(ROUTER_DEBUG_REFERENCE)
+    router_review_reference = read(ROUTER_REVIEW_REFERENCE)
+    router_plan_reference = read(ROUTER_PLAN_REFERENCE)
+    router_remediation_reference = read(ROUTER_REMEDIATION_REFERENCE)
+    router_surface = "\n\n".join(
+        [
+            router,
+            router_artifact_policy_reference,
+            router_build_reference,
+            router_debug_reference,
+            router_review_reference,
+            router_plan_reference,
+            router_remediation_reference,
+        ]
+    )
     task_completed_guard = read(TASK_COMPLETED_GUARD)
     readme = read(README)
     changelog = read(CHANGELOG)
@@ -337,7 +363,23 @@ def main() -> int:
                 f"README no longer documents optional MCP server '{required}'"
             )
 
-    required_router_headings = [
+    required_router_inline = [
+        "## 2a. Workflow Artifact And Hook Policy",
+        "references/workflow-artifact-and-hook-policy.md",
+        "references/build-workflow.md",
+        "references/debug-workflow.md",
+        "references/review-workflow.md",
+        "references/plan-workflow.md",
+        "references/remediation-and-research.md",
+        "## 12. Chain Execution Loop",
+        "## 13. Memory Finalization",
+        "## 14. Hard Rules",
+    ]
+    for heading in required_router_inline:
+        if heading not in router:
+            errors.append(f"router missing required inline reference/text: {heading}")
+
+    required_router_surface_text = [
         "## 1. Intent Routing",
         "## 2a. Workflow Artifact And Hook Policy",
         "## 3. Task Metadata Contract",
@@ -365,9 +407,47 @@ def main() -> int:
         "skill_precedence_gate",
         "Convergence rule:",
     ]
-    for heading in required_router_headings:
-        if heading not in router:
-            errors.append(f"router missing required heading/text: {heading}")
+    for heading in required_router_surface_text:
+        if heading not in router_surface:
+            errors.append(f"router surface missing required heading/text: {heading}")
+
+    reference_expectations = {
+        ROUTER_ARTIFACT_POLICY_REFERENCE: (
+            "## 2a. Workflow Artifact And Hook Policy",
+            "Artifact schema must include:",
+            "Hook policy:",
+        ),
+        ROUTER_BUILD_REFERENCE: (
+            "### BUILD preparation",
+            "### BUILD task graph",
+            "plan_trust_gate",
+        ),
+        ROUTER_DEBUG_REFERENCE: (
+            "### DEBUG preparation",
+            "### DEBUG task graph",
+            "[DEBUG-RESET:",
+        ),
+        ROUTER_REVIEW_REFERENCE: (
+            "### REVIEW preparation",
+            "### REVIEW task graph",
+            "CHANGES_REQUESTED",
+        ),
+        ROUTER_PLAN_REFERENCE: (
+            "### PLAN preparation",
+            "### PLAN task graph",
+            "decision_rfc",
+        ),
+        ROUTER_REMEDIATION_REFERENCE: (
+            "## 9. Remediation And Workflow Rules",
+            "## 10. Research Orchestration",
+            "## 11. Re-Review Loop",
+        ),
+    }
+    for path, expected_phrases in reference_expectations.items():
+        text = read(path)
+        for phrase in expected_phrases:
+            if phrase not in text:
+                errors.append(f"{path.name} missing required reference text: {phrase}")
 
     required_task_metadata = (
         "wf:",
@@ -379,8 +459,10 @@ def main() -> int:
         "reason:",
     )
     for field in required_task_metadata:
-        if field not in router:
-            errors.append(f"router missing task metadata contract field {field}")
+        if field not in router_surface:
+            errors.append(
+                f"router surface missing task metadata contract field {field}"
+            )
 
     if "Task Metadata Contract" not in invariants and "Status note:" not in invariants:
         errors.append(
@@ -529,7 +611,7 @@ def main() -> int:
                     f"{agent_name}.md missing expected contract field '{field}'"
                 )
 
-    prompt_phrase_guards = {
+    prompt_phrase_guards: dict[str, list[str]] = {
         "planner": [
             "The first draft must be decisive, but not by inventing facts",
             "Do not finalize a non-trivial plan before comparing it against the current codebase",
@@ -570,14 +652,14 @@ def main() -> int:
             "You do not own orchestration, plan approval, or plan edits.",
         ],
     }
-    for stem, phrases in prompt_phrase_guards.items():
+    for stem, guard_phrases in prompt_phrase_guards.items():
         path = (
             PLUGIN_ROOT / "agents" / f"{stem}.md"
             if (PLUGIN_ROOT / "agents" / f"{stem}.md").exists()
             else PLUGIN_ROOT / "skills" / stem / "SKILL.md"
         )
         text = read(path)
-        for phrase in phrases:
+        for phrase in guard_phrases:
             if phrase not in text:
                 errors.append(f"{path.name} missing prompt safety phrase '{phrase}'")
 

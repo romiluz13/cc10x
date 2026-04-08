@@ -1,8 +1,15 @@
 # CC10X Prompt Surface Inventory
 
+> **Status note:** Synced to `v10.1.18` on 2026-04-09.
+
 ## Purpose
 
 This inventory defines which prompt surfaces are allowed to affect trust-critical behavior and what kind of edits are safe on each.
+
+The router kernel and `cc10x-router/references/*.md` are intentionally excluded
+from prompt-only tiers here. They are orchestration surfaces and must be
+changed with replay + audit + Claude validation, not treated as ordinary prompt
+copy.
 
 ## Tier 1: Trust-Critical Prompt Contracts
 

@@ -1,6 +1,6 @@
 # CC10X Orchestration Bible (Plugin-Only Source of Truth)
 
-> **Last reviewed against live plugin files:** 2026-04-05 (`v10.1.17` product line: planner-owned fresh review loop, prompt safety system, latency-safe verifier telemetry, router-owned orchestration, versioned v10 state, workflow replay fixtures, reference-first skill packaging, live harness bootstrap) | **Status:** IN SYNC WITH CURRENT MAIN
+> **Last reviewed against live plugin files:** 2026-04-09 (`v10.1.18` product line: planner-owned fresh review loop, prompt safety system, latency-safe verifier telemetry, router-kernel orchestration, mandatory workflow playbooks, versioned v10 state, workflow replay fixtures, reference-first skill packaging, live harness bootstrap) | **Status:** IN SYNC WITH CURRENT MAIN
 
 > This document is derived **only** from `plugins/cc10x/` (agents + skills).
 > Ignore all other docs. Do not trust external narratives.
@@ -49,6 +49,9 @@ allowed-tools: Read, Grep # Tools that skip permission prompts when skill is act
 - Large preloaded skills increase startup context and contradiction risk.
 - Reference-first packaging keeps `SKILL.md` as the control plane and moves detailed templates,
   checklists, and operations into one-level-deep `references/`.
+- For the router specifically, references are not optional convenience material. The
+  kernel names mandatory reads for workflow and appendix law, and those
+  references are part of the orchestration contract.
 - Skills cannot call tools themselves. They instruct the hosting agent to call tools.
 
 ### What is an Agent?
@@ -172,6 +175,18 @@ The current main branch includes two non-runtime but load-bearing safety tools:
   - covers PLAN / BUILD / DEBUG / REVIEW / VERIFY regression paths without a live Claude session
 
 These are part of the maintenance contract even though they are not invoked by the router at runtime.
+
+### Router Packaging Rule
+
+The router now uses a **kernel + mandatory workflow playbooks** shape:
+- keep universal orchestration law inline in `cc10x-router/SKILL.md`
+- keep workflow-specific and appendix-heavy law in
+  `plugins/cc10x/skills/cc10x-router/references/*.md`
+- every BUILD / DEBUG / REVIEW / PLAN branch must explicitly instruct Claude to
+  read the correct reference before continuing
+
+This is not “optional progressive disclosure.” For the router, those references
+are part of the source of truth.
 
 ### External Skill Conflict Risk (Design Decision)
 

@@ -1,6 +1,6 @@
 # CC10x Router Behavioral Invariant Registry
 
-> **Status note:** Current product line is `v10.1.17`. This registry is aligned to the live router structure in `plugins/cc10x/skills/cc10x-router/SKILL.md` as of 2026-04-05.
+> **Status note:** Current product line is `v10.1.18`. This registry is aligned to the live router structure in `plugins/cc10x/skills/cc10x-router/SKILL.md` and `plugins/cc10x/skills/cc10x-router/references/*.md` as of 2026-04-09.
 
 ## Purpose
 
@@ -19,8 +19,15 @@ Validated against the live plugin surface:
 - memory finalization and transient `memory_task_id`
 - v10-only agent memory reads under `.claude/cc10x/v10/*.md`
 - verifier independence from builder/reviewer/hunter verdicts
+- router kernel plus mandatory workflow/reference playbooks
 
 ## Current Invariants
+
+### INV-027: Router kernel must explicitly load mandatory references
+**Covers:** Router `## 2a. Workflow Artifact And Hook Policy`, `## 5. Workflow Preparation`, `## 6. Workflow Task Graphs`, and `plugins/cc10x/skills/cc10x-router/references/*.md`
+**Enforces:** Universal orchestration law stays inline in the router kernel while workflow-specific and appendix-heavy law remains in one-level-deep references that are named explicitly at each decision point.
+**If removed:** Either the router swells back into a monolith, or branch-specific orchestration rules become optional context that Claude may skip under pressure.
+**Safe to remove:** Never.
 
 ### INV-025: Latency telemetry is informational only
 **Covers:** Router workflow artifact schema, workflow event log, latency audit tooling
@@ -59,7 +66,7 @@ Validated against the live plugin surface:
 **Safe to remove:** Never.
 
 ### INV-001: Workflow artifact creation is immediate and durable
-**Covers:** Router `## 2a. Workflow Artifact And Hook Policy`, `## 6. Workflow Task Graphs`
+**Covers:** Router `## 2a. Workflow Artifact And Hook Policy`, `## 6. Workflow Task Graphs`, `references/workflow-artifact-and-hook-policy.md`
 **Enforces:** Every workflow gets a JSON artifact and append-only event log under the v10 namespace as soon as the workflow UUID is known.
 **If removed:** Resume, verifier handoff, research quality tracking, and hook-based context injection become conversation-dependent and non-durable.
 **Safe to remove:** Never.
@@ -89,13 +96,13 @@ Validated against the live plugin surface:
 **Safe to remove:** Only if re-hunt is forced to `ALL_ISSUES` in every BUILD remediation path.
 
 ### INV-006: Remediation loops are workflow-scoped and bounded
-**Covers:** Router `## 9. Remediation And Workflow Rules`, `## 11. Re-Review Loop`
+**Covers:** Router `## 9. Remediation And Workflow Rules`, `## 11. Re-Review Loop`, `references/remediation-and-research.md`
 **Enforces:** `kind:remfix` counting, re-review task creation, and cycle limits all use the current `wf` scope.
 **If removed:** Remediation loops can count unrelated tasks, overrun, or deadlock in shared task lists.
 **Safe to remove:** Never.
 
 ### INV-007: Research quality is durable, not conversational
-**Covers:** Router `## 10. Research Orchestration`, `## Research Quality`, `## Research Files`
+**Covers:** Router `## 10. Research Orchestration`, `## Research Quality`, `## Research Files`, `references/remediation-and-research.md`
 **Enforces:** Research backend choice, quality level, and file paths are written into workflow artifacts and passed forward explicitly.
 **If removed:** Planner/debugger decisions begin depending on transient research prose and old memory references.
 **Safe to remove:** Never.
@@ -164,13 +171,13 @@ Validated against the live plugin surface:
 **Safe to remove:** Never.
 
 ### INV-012: Memory finalization is router-owned and compaction-safe
-**Covers:** Router `## 12. Chain Execution Loop`, `## 13. Memory Finalization`
+**Covers:** Router `## 12. Chain Execution Loop`, `## 13. Memory Finalization`, `references/build-workflow.md`, `references/debug-workflow.md`, `references/review-workflow.md`, `references/plan-workflow.md`
 **Enforces:** Read-only Memory Notes are copied into the memory task immediately; final persistence happens inline through the Memory Update task; transient `memory_task_id` is removed on completion; and a `kind:memory` task is not considered trustworthy unless the workflow event log records `memory_finalized`.
 **If removed:** Memory becomes conversation-dependent or leaks stale workflow pointers across sessions.
 **Safe to remove:** Never.
 
 ### INV-013: Plugin hooks are guardrails, not orchestration
-**Covers:** Router `## 2a. Workflow Artifact And Hook Policy`, plugin hooks
+**Covers:** Router `## 2a. Workflow Artifact And Hook Policy`, `references/workflow-artifact-and-hook-policy.md`, plugin hooks
 **Enforces:** Hooks remain minimal and audit-first:
 - `PreToolUse` protects memory writes
 - `SessionStart` injects workflow context

@@ -1,5 +1,36 @@
 # Changelog
 
+## [10.1.18] - 2026-04-09
+
+### Router kernel + mandatory workflow playbooks
+
+Refactored the load-bearing `cc10x-router` monolith into a kernel plus
+verbatim one-level-deep references without changing orchestration ownership or
+weakening trust gates. The router still owns every workflow decision, but now
+loads BUILD / DEBUG / REVIEW / PLAN branch law and appendix-heavy orchestration
+policy from explicit mandatory references.
+
+#### Added
+- **Router references:** New `plugins/cc10x/skills/cc10x-router/references/`
+  surface with verbatim extracted workflow and appendix law:
+  `workflow-artifact-and-hook-policy.md`, `build-workflow.md`,
+  `debug-workflow.md`, `review-workflow.md`, `plan-workflow.md`, and
+  `remediation-and-research.md`.
+- **Audit coverage for router references:** `cc10x_harness_audit.py` now treats
+  the router plus these references as one orchestration surface and fails if
+  required files or headings drift.
+
+#### Changed
+- **Router reduced to a control-plane kernel:** `cc10x-router/SKILL.md` now
+  keeps the universal orchestration law inline and uses mandatory reference
+  reads at branch points instead of carrying every workflow appendix inline.
+- **Trust docs synced:** README, invariants, orchestration bible, logic
+  analysis, safety guidance, and prompt-surface docs now describe the
+  router-kernel architecture explicitly.
+- **Claude Code validation preserved:** Plugin validation, replay fixtures,
+  harness audit, and Claude smoke prompts all passed against the new router
+  shape.
+
 ## [10.1.17] - 2026-04-05
 
 ### Reference-first skill decomposition for safer CC10X prompt growth

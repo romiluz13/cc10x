@@ -6,7 +6,7 @@
 ## Source Of Truth Order
 
 When behavior conflicts, trust sources in this order:
-1. `plugins/cc10x/skills/cc10x-router/SKILL.md`
+1. `plugins/cc10x/skills/cc10x-router/SKILL.md` plus `plugins/cc10x/skills/cc10x-router/references/*.md`
 2. `plugins/cc10x/agents/*.md`
 3. `plugins/cc10x/hooks/hooks.json`
 4. `plugins/cc10x/scripts/cc10x_harness_audit.py`
@@ -24,6 +24,9 @@ Workers may emit intent, but only the router owns:
 - remediation creation
 - workflow advancement
 - memory finalization
+
+The router may delegate exact wording to one-level-deep references, but those
+references are load-bearing orchestration law, not optional background.
 
 ### 2. Workflow-scoped metadata
 Every child task must remain scoped by:
@@ -103,9 +106,11 @@ in the same change.
 
 The preferred order for future improvements:
 1. make behavior explicit in the router
-2. add replay coverage
-3. add audit coverage
-4. update invariants
-5. update bible/logic docs
+2. if the router is too large, extract verbatim branch/appendix law into
+   one-level-deep mandatory references while keeping universal rules inline
+3. add replay coverage
+4. add audit coverage
+5. update invariants
+6. update bible/logic docs
 
 This keeps the plugin understandable and prevents silent drift.

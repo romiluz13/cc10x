@@ -72,178 +72,14 @@ v10 trust rule:
 
 ## 2a. Workflow Artifact And Hook Policy
 
-CC10X durable orchestration state lives in:
+Core law:
+- Durable router state lives under `.claude/cc10x/v10/workflows/{workflow_uuid}.json`
+- Companion event log lives under `.claude/cc10x/v10/workflows/{workflow_uuid}.events.jsonl`
+- Router-owned gates still include `plan_trust_gate`, `phase_exit_gate`, `failure_stop_gate`, `memory_sync_gate`, and `skill_precedence_gate`
 
-```text
-.claude/cc10x/v10/workflows/{workflow_uuid}.json
-```
-
-Artifact schema must include:
- - `workflow_uuid`
-- `workflow_id`
-- `workflow_type`
-- `state_root`
-- `user_request`
-- `plan_file`
-- `design_file`
-- `research_files`
-- `approved_decisions`
-- `intent`
-- `capabilities`
-- `phase_cursor`
-- `normalized_phases`
-- `research_rounds`
-- `research_backend_history`
-- `research_quality`
-- `task_ids`
-- `phase_status`
-- `results`
-- `evidence`
-- `telemetry`
-- `quality`
-- `planning_review_runs`
-- `planning_review_findings`
-- `planning_review_status`
-- `memory_notes`
-- `pending_gate`
-- `status_history`
-- `remediation_history`
-- `created_at`
-- `updated_at`
-
-Rules:
-- Router creates the workflows directory before the first workflow artifact write.
-- Router writes or updates the artifact after workflow creation, every agent completion, every remediation decision, every clarification answer, every phase completion, every blocking stop, and memory finalization.
-- Resume uses task metadata first, then workflow artifact, then memory markdown.
-- Verifier handoff and memory finalization read structured data from the workflow artifact, not transient conversation recovery.
-- The workflow UUID is generated independently of Claude task ids and is the canonical workflow identifier everywhere in v10.
-- `workflow_id` remains as a compatibility alias and must equal `workflow_uuid` in new artifacts.
-- `state_root` must equal `.claude/cc10x/v10`.
-- `phase_cursor` points at the only BUILD phase that may run next.
-- `normalized_phases` stores planner-approved executable phases with:
-  - `phase_id`
-  - `title`
-  - `objective`
-  - `files`
-  - `checks`
-  - `exit_criteria`
-- Bright Data MCP and Octocode MCP are optional accelerators. Base CC10X installs must continue to work with built-in Claude Code tools only.
-- When optional user-configured Claude Code MCP servers are available, use the server names `brightdata` and `octocode` so the research agents can auto-detect them without prompt edits.
-- `capabilities` records the session-level research backend availability model:
-  - `brightdata_available`
-  - `octocode_available`
-  - `websearch_available`
-  - `webfetch_available`
-- `results.research` must be structured as `web`, `github`, and `synthesis`.
-- `intent` stores the durable spec header for the workflow:
-  - `goal`
-  - `non_goals`
-  - `constraints`
-  - `acceptance_criteria`
-  - `open_decisions`
-- `approved_decisions` stores decisions explicitly approved by the user or already fixed in the saved plan.
-- `evidence` stores proof-of-work grouped by agent:
-  - `builder`
-  - `investigator`
-  - `reviewer`
-  - `hunter`
-  - `verifier`
-- `quality` stores convergence state:
-  - `confidence`
-  - `evidence_complete`
-  - `scenario_coverage`
-  - `research_quality`
-  - `convergence_state`
-- PLAN-local fresh review tracking stores:
-  - `planning_review_runs`
-  - `planning_review_findings`
-  - `planning_review_status`
-- `telemetry` is informational only and must never drive routing decisions:
-  - `task_metrics_available`
-  - `workflow_wall_clock_seconds`
-  - `agent_wall_clock_seconds`
-  - `loop_counts`
-  - `verifier`
-- `telemetry.agent_wall_clock_seconds` stores per-agent wall-clock timings when task metrics or explicit telemetry are available:
-  - `builder`
-  - `investigator`
-  - `reviewer`
-  - `hunter`
-  - `verifier`
-  - `planner`
-- `telemetry.loop_counts` stores:
-  - `re_review`
-  - `re_hunt`
-  - `re_verify`
-- `telemetry.verifier` stores:
-  - `phase_exit_proof_runs`
-  - `extended_audit_runs`
-  - `workload_seconds`
-- `telemetry.verifier.workload_seconds` stores:
-  - `tests`
-  - `build`
-  - `scan`
-  - `reconcile`
-  - `reasoning`
-- `pending_gate` is required whenever BUILD/PLAN/DEBUG is waiting on user clarification, scope selection, or persistence repair.
-- `status_history` and `remediation_history` are append-only summaries of major router decisions.
-
-v10 router gates:
-- `plan_trust_gate`
-- `phase_exit_gate`
-- `failure_stop_gate`
-- `memory_sync_gate`
-- `skill_precedence_gate`
-
-These are router-owned checks, not advisory hints.
-
-Workflow event log:
-- For every workflow, keep a lightweight append-only companion file:
-
-```text
-.claude/cc10x/v10/workflows/{workflow_uuid}.events.jsonl
-```
-
-- Append event objects with at least:
-  - `ts`
-  - `wf`
-  - `event`
-  - `phase`
-  - `task_id`
-  - `agent`
-  - `decision`
-  - `reason`
-- Optionally append:
-  - `duration_seconds`
-  - `work_category`
-  - `details`
-- Event types:
-  - `workflow_started`
-  - `agent_started`
-  - `agent_completed`
-  - `contract_parsed`
-  - `remediation_created`
-  - `scope_decision_requested`
-  - `scope_decision_resolved`
-  - `memory_finalized`
-  - `workflow_completed`
-  - `workflow_failed`
-
-Hook policy:
-- CC10X plugin hooks live in the plugin bundle under `hooks/hooks.json` and should stay minimal:
-  - `PreToolUse` for protected writes
-  - `SessionStart` for resume context (fires on startup|resume|compact)
-  - `PostToolUse` for workflow artifact integrity audit
-  - `TaskCompleted` for task metadata checks
-  - `PostCompact` for compaction event capture in workflow event log (audit only)
-  - `SubagentStop` for agent contract presence audit (telemetry only)
-  - `PreCompact` for workflow state snapshot before compaction (persistence only)
-  - `Stop` for workflow state snapshot on session stop (persistence only, never blocks)
-  - `StopFailure` for API error logging to workflow event log (async, telemetry only)
-  - `InstructionsLoaded` for instruction file load audit trail (async, telemetry only)
-- Default mode is audit-only. Do not rely on hooks as the only source of truth; the router still owns orchestration decisions.
-- Repo-local `.claude/settings.json` is not part of the shipped CC10X product.
-- Optional accelerator MCPs are user-configured in Claude Code. CC10X assumes the names `brightdata` and `octocode` if they are available, but must degrade to built-in research paths when they are absent.
+Mandatory reference read:
+- Before workflow creation, artifact mutation, hook policy changes, or resume logic that depends on artifact fields, immediately read `references/workflow-artifact-and-hook-policy.md`.
+- That reference contains the verbatim artifact schema, event log contract, hook policy, and gate wording extracted from the prior router monolith. Treat it as load-bearing orchestration law, not optional background.
 
 ## 3. Task Metadata Contract
 
@@ -335,87 +171,24 @@ Router-owned interface fields:
 
 ### BUILD preparation
 
-1. Read `- Plan:` from `activeContext.md ## References`.
-2. If plan path is not `N/A`, `Read(...)` the plan file before creating tasks.
-3. Run `plan_trust_gate` before BUILD:
-   - `Open Decisions` must be empty or explicitly marked approved.
-   - `Differences from agreement` must be present, even if empty.
-   - `plan_mode` must be explicit when a plan artifact exists.
-   - `verification_rigor` must be explicit when a plan artifact exists.
-   - If `plan_mode` is `execution_plan` or `decision_rfc`: every phase in `normalized_phases` must carry non-empty `exit_criteria`, and `intent.acceptance_criteria` must be non-empty. Field presence is not enough — field completeness is required.
-   - Cross-check `intent.constraints` against approved decisions. If any approved decision explicitly contradicts an `intent.constraint`, emit NOGO with the contradiction and ask the user to resolve before BUILD starts.
-   - If any condition fails, ask for clarification and do not start BUILD.
-4. If plan path is `N/A`, assess scope before dispatch:
-   - **Trivial** (single concern, one file group, one failure mode) → continue directly to BUILD.
-     Heuristic signals: touches 1-2 files, single logical change, one testable outcome, no cross-module wiring.
-     [EASY TO MISS: When the task is clearly trivial, do not ask clarifying questions or suggest planning. Execute directly. Analysis paralysis on trivial work is a net negative.]
-   - **Non-trivial** (spans multiple independent file groups, has separable concerns, or involves distinct failure modes) → ask: `Plan first (Recommended)` or `Build directly`.
-     Heuristic signals: touches 3+ files across different directories, multiple independent concerns that could fail separately, changes to both interface and implementation, or new cross-module dependencies.
-   - `Plan first` -> switch to PLAN workflow.
-   - `Build directly` -> continue without a plan.
-5. If the referenced plan file is missing:
-   - Ask: `Build without plan` or `Re-plan first (Recommended)`.
-   - `Build without plan` -> continue with `plan:N/A`
-   - `Re-plan first` -> switch to PLAN workflow
-6. Normalize planner phases into executable `normalized_phases` and initialize `phase_cursor` to the first incomplete phase.
-7. Persist the approved `plan_mode` and `verification_rigor` from the planner contract into the workflow artifact.
-8. Every normalized phase must carry:
-   - `objective`
-   - `inputs`
-   - `files/surfaces`
-   - `expected_artifacts`
-   - `required_checks`
-   - `checkpoint_type`
-   - `exit_criteria`
-9. Initialize workflow `proof_status` to `gaps_found` until the current phase is independently verified.
-10. Clarify missing requirements before builder only when the plan and memory do not already answer them.
-11. Persist pre-answered clarifications in `activeContext.md ## Decisions` using `Build clarification [{topic}]: {answer}`.
-12. Builder may execute only the phase at `phase_cursor`.
+- Before any BUILD-specific readiness decision or child-task creation, immediately read `references/build-workflow.md`.
+- Use the `### BUILD preparation` and `### BUILD task graph` blocks in that file as the canonical BUILD law.
 
 ### DEBUG preparation
 
-1. If the user explicitly asks for research or the bug clearly depends on external post-2024 behavior, allow a research round before the first investigator run.
-2. Immediately write `[DEBUG-RESET: wf:{workflow_uuid}]` once the workflow id exists.
-3. Preserve failed attempt counting semantics: the investigator counts `[DEBUG-N]:` entries after the most recent reset marker.
+- Before any DEBUG-specific readiness decision or child-task creation, immediately read `references/debug-workflow.md`.
+- Use the `### DEBUG preparation` and `### DEBUG task graph` blocks in that file as the canonical DEBUG law.
 
 ### REVIEW preparation
 
-1. REVIEW is advisory only.
-2. Never create REM-FIX or implementation tasks directly from a REVIEW workflow.
-3. If the final review verdict is `CHANGES_REQUESTED`, the router may offer `Start BUILD to fix (Recommended)` as a follow-up user choice.
+- Before any REVIEW-specific readiness decision or child-task creation, immediately read `references/review-workflow.md`.
+- Use the `### REVIEW preparation` and `### REVIEW task graph` blocks in that file as the canonical REVIEW law.
 
 ### PLAN preparation
 
-1. Restore design enrichment:
-   - Read `- Design:` from `activeContext.md ## References`.
-   - If a design path exists, verify it with `Glob(...)` and pass it under `## Design File`.
-2. Mandatory brainstorming (ALWAYS runs for PLAN workflows):
-   - ALWAYS run `Skill(skill="cc10x:brainstorming")` in the main context before planner. Brainstorming is how the user explores and clarifies intent — skipping it means the planner works from assumptions instead of understanding.
-   - If a valid design file exists from step 1: brainstorming uses it as a foundation (the skill's Spec File Workflow reads and expands the existing design rather than starting from scratch).
-   - If no design file exists: brainstorming starts from the user's request and explores the idea space.
-   - Brainstorming may ask the user questions and may save a `*-design.md` file. After it completes, re-read `activeContext.md ## References` and refresh the design path.
-   - Brainstorming should ask only unresolved, high-impact questions and stop as soon as the intent contract is complete.
-3. Optional research before planning:
-   - Ask whether to run web + GitHub research for external/unfamiliar technology when it would materially improve the plan.
-4. Planner receives `## Research Files` only when research files actually exist.
-5. Planner is agreement-first:
-   - If a requirement is materially ambiguous, planner returns `STATUS=NEEDS_CLARIFICATION`.
-   - Planner never treats its own defaults as approved implementation.
-6. Planner must choose one `plan_mode`:
-   - `direct` for trivial low-risk work
-   - `execution_plan` for standard implementation work
-   - `decision_rfc` for architecture or multi-option work
-7. Planner must choose one `verification_rigor`:
-   - `standard` by default (covers most work; keeps verification proportional to risk)
-   - `critical_path` for security, money, state-machine, concurrency, or irreversible-migration work (failure in these domains is irreversible or high-blast-radius; justifies extended scenario coverage)
-8. PLAN fresh-review loop:
-   - Every PLAN workflow pre-creates a bounded review DAG: `plan-create -> plan-review-gap-1 -> re-plan -> plan-review-gap-2 -> memory-finalize`.
-   - Every saved plan artifact enters that DAG, including `direct`, `execution_plan`, and `decision_rfc`.
-   - If pass 1 succeeds, the router prunes the unused `re-plan` and pass 2 branch explicitly.
-   - If pass 1 finds blocking issues, the router keeps the pre-created `re-plan` and pass 2 branch alive.
-   - Maximum fresh-review passes: 2.
-   - Planner remains the only plan writer.
-   - The existing inline `plan-review-gate` inside planner remains the final fail-closed boundary on each planner pass.
+- Before any PLAN-specific readiness decision or child-task creation, immediately read `references/plan-workflow.md`.
+- Use the `### PLAN preparation` and `### PLAN task graph` blocks in that file as the canonical PLAN law.
+- If planner clarification, review-loop findings, or plan remediation rules trigger later in the workflow, also read `references/remediation-and-research.md` before continuing.
 
 ## 6. Workflow Task Graphs
 
@@ -456,164 +229,24 @@ Only create child tasks after the v10 artifact exists.
 
 ### BUILD task graph
 
-BUILD is sequential in v10:
-- one approved executable phase at a time
-- one builder run for the current phase only
-- review, hunt, and verify validate that phase before `phase_cursor` advances
-- if phase exit evidence is incomplete, record `partial` or `blocked`, persist state, and stop
-
-```text
-TaskCreate({
-  subject: "CC10X component-builder: Execute phase {phase_id}",
-  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:build-implement\nplan:{plan_file or 'N/A'}\nscope:N/A\nreason:Execute approved phase\n\nExecute ONLY the phase at phase_cursor. Recover objective, inputs, expected artifacts, required checks, checkpoint type, and exit criteria from the approved phase. Stop if blocked, partial, or proof remains incomplete.",
-  activeForm: "Building components"
-}) -> builder_task_id
-
-TaskCreate({
-  subject: "CC10X code-reviewer: Review implementation",
-  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:build-review\nplan:{plan_file or 'N/A'}\nscope:N/A\nreason:Review current phase quality\n\nReview only the files and scope of the current phase.",
-  activeForm: "Reviewing code"
-}) -> reviewer_task_id
-TaskUpdate({ taskId: reviewer_task_id, addBlockedBy: [builder_task_id] })
-
-TaskCreate({
-  subject: "CC10X silent-failure-hunter: Hunt edge cases",
-  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:build-hunt\nplan:{plan_file or 'N/A'}\nscope:N/A\nreason:Audit current phase blast radius\n\nFind silent failures and edge cases adjacent to the current phase.",
-  activeForm: "Hunting failures"
-}) -> hunter_task_id
-TaskUpdate({ taskId: hunter_task_id, addBlockedBy: [builder_task_id] })
-
-TaskCreate({
-  subject: "CC10X integration-verifier: Verify integration",
-  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:build-verify\nplan:{plan_file or 'N/A'}\nscope:N/A\nreason:Phase exit verification\n\nRun required checks for the current phase and report whether truths, artifacts, wiring, and phase exit criteria are all satisfied.",
-  activeForm: "Verifying integration"
-}) -> verifier_task_id
-TaskUpdate({ taskId: verifier_task_id, addBlockedBy: [reviewer_task_id, hunter_task_id] })
-
-TaskCreate({
-  subject: "CC10X Memory Update: Persist workflow learnings",
-  description: "wf:{workflow_uuid}\nkind:memory\norigin:router\nphase:memory-finalize\nplan:{plan_file or 'N/A'}\nscope:N/A\nreason:Persist captured Memory Notes\n\nROUTER ONLY: execute inline. Read the workflow artifact and THIS task description payload, persist to .claude/cc10x/v10/*.md, then remove the matching [cc10x-internal] memory_task_id line from activeContext.md ## References. Never spawn Agent() for this task.",
-  activeForm: "Persisting workflow learnings"
-}) -> memory_task_id
-TaskUpdate({ taskId: memory_task_id, addBlockedBy: [verifier_task_id] })
-```
+- See `references/build-workflow.md` and apply its `### BUILD task graph` block verbatim before creating BUILD child tasks.
 
 ### DEBUG task graph
 
-```text
-TaskCreate({
-  subject: "CC10X bug-investigator: Investigate {error}",
-  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:debug-investigate\nplan:N/A\nscope:N/A\nreason:Find root cause\n\nFind the root cause and apply the fix.",
-  activeForm: "Investigating bug"
-}) -> investigator_task_id
-
-TaskCreate({
-  subject: "CC10X code-reviewer: Review fix",
-  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:debug-review\nplan:N/A\nscope:N/A\nreason:Review the fix\n\nReview the debug fix quality.",
-  activeForm: "Reviewing fix"
-}) -> reviewer_task_id
-TaskUpdate({ taskId: reviewer_task_id, addBlockedBy: [investigator_task_id] })
-
-TaskCreate({
-  subject: "CC10X integration-verifier: Verify fix",
-  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:debug-verify\nplan:N/A\nscope:N/A\nreason:Verify the fix\n\nVerify the fix works end-to-end.",
-  activeForm: "Verifying fix"
-}) -> verifier_task_id
-TaskUpdate({ taskId: verifier_task_id, addBlockedBy: [reviewer_task_id] })
-
-TaskCreate({
-  subject: "CC10X Memory Update: Persist debug learnings",
-  description: "wf:{workflow_uuid}\nkind:memory\norigin:router\nphase:memory-finalize\nplan:N/A\nscope:N/A\nreason:Persist captured Memory Notes\n\nROUTER ONLY: execute inline. Read the workflow artifact and THIS task description payload, persist to .claude/cc10x/v10/*.md, then remove the matching [cc10x-internal] memory_task_id line from activeContext.md ## References. Never spawn Agent() for this task.",
-  activeForm: "Persisting debug learnings"
-}) -> memory_task_id
-TaskUpdate({ taskId: memory_task_id, addBlockedBy: [verifier_task_id] })
-```
+- See `references/debug-workflow.md` and apply its `### DEBUG task graph` block verbatim before creating DEBUG child tasks.
 
 ### REVIEW task graph
 
-```text
-TaskCreate({
-  subject: "CC10X code-reviewer: Review {target}",
-  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:review-audit\nplan:N/A\nscope:N/A\nreason:Advisory review\n\nRun a scoped code review.",
-  activeForm: "Reviewing code"
-}) -> reviewer_task_id
-
-TaskCreate({
-  subject: "CC10X Memory Update: Persist review learnings",
-  description: "wf:{workflow_uuid}\nkind:memory\norigin:router\nphase:memory-finalize\nplan:N/A\nscope:N/A\nreason:Persist captured Memory Notes\n\nROUTER ONLY: execute inline. Read the workflow artifact and THIS task description payload, persist to .claude/cc10x/v10/*.md, then remove the matching [cc10x-internal] memory_task_id line from activeContext.md ## References. Never spawn Agent() for this task.",
-  activeForm: "Persisting review learnings"
-}) -> memory_task_id
-TaskUpdate({ taskId: memory_task_id, addBlockedBy: [reviewer_task_id] })
-```
+- See `references/review-workflow.md` and apply its `### REVIEW task graph` block verbatim before creating REVIEW child tasks.
 
 ### PLAN task graph
 
-```text
-TaskCreate({
-  subject: "CC10X planner: Create plan for {feature}",
-  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:plan-create\nplan:N/A\nscope:N/A\nreason:Create implementation plan\n\nChoose the correct plan mode (`direct`, `execution_plan`, or `decision_rfc`) and verification rigor (`standard` or `critical_path`). Create the corresponding planning artifact.",
-  activeForm: "Creating plan"
-}) -> planner_task_id
-
-TaskCreate({
-  subject: "CC10X plan-gap-reviewer: Fresh review pass 1",
-  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:plan-review-gap-1\nplan:N/A\nscope:N/A\nreason:Fresh anti-anchoring review of saved plan (pass 1)\n\nWait for the planner to save a plan artifact, then review it against the original user request and any approved design/research files.",
-  activeForm: "Fresh-reviewing plan"
-}) -> planning_review_pass1_task_id
-TaskUpdate({ taskId: planning_review_pass1_task_id, addBlockedBy: [planner_task_id] })
-
-TaskCreate({
-  subject: "CC10X planner: Revise plan after fresh review",
-  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:re-plan\nplan:N/A\nscope:N/A\nreason:Revise plan if fresh review finds blocking issues\n\nOnly run if pass 1 finds blocking issues. Revise the existing saved plan using structured planning review findings.",
-  activeForm: "Revising plan"
-}) -> planner_replan_task_id
-TaskUpdate({ taskId: planner_replan_task_id, addBlockedBy: [planning_review_pass1_task_id] })
-
-TaskCreate({
-  subject: "CC10X plan-gap-reviewer: Fresh review pass 2",
-  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:plan-review-gap-2\nplan:N/A\nscope:N/A\nreason:Fresh anti-anchoring review of saved plan (pass 2)\n\nOnly run if the re-plan task produces a revised saved plan after pass 1 findings.",
-  activeForm: "Fresh-reviewing revised plan"
-}) -> planning_review_pass2_task_id
-TaskUpdate({ taskId: planning_review_pass2_task_id, addBlockedBy: [planner_replan_task_id] })
-
-TaskCreate({
-  subject: "CC10X Memory Update: Index plan in memory",
-  description: "wf:{workflow_uuid}\nkind:memory\norigin:router\nphase:memory-finalize\nplan:N/A\nscope:N/A\nreason:Persist captured Memory Notes\n\nROUTER ONLY: execute inline. Read the workflow artifact and THIS task description payload, persist to .claude/cc10x/v10/*.md, then remove the matching [cc10x-internal] memory_task_id line from activeContext.md ## References. Never spawn Agent() for this task.",
-  activeForm: "Indexing plan in memory"
-}) -> memory_task_id
-TaskUpdate({ taskId: memory_task_id, addBlockedBy: [planner_task_id, planning_review_pass1_task_id, planner_replan_task_id, planning_review_pass2_task_id] })
-```
+- See `references/plan-workflow.md` and apply its `### PLAN task graph` block verbatim before creating PLAN child tasks.
 
 ### Research tasks
 
-Create research tasks only when a workflow explicitly triggers them:
-
-Before creating them:
-- Determine the preferred research path for this session and store it in the workflow artifact `capabilities`.
-- Preferred web path:
-  - `brightdata+websearch` when Bright Data MCP is available
-  - otherwise `websearch+webfetch`
-- Preferred GitHub path:
-  - `octocode` when Octocode MCP is available
-  - otherwise `web-only`
-- Allowed fallbacks always include the built-in Claude Code web tools so research remains plug-and-play.
-- Increment and record the workflow-scoped round number for the `(wf, reason)` pair.
-
-```text
-TaskCreate({
-  subject: "CC10X web-researcher: Research {topic}",
-  description: "wf:{workflow_uuid}\nkind:research\norigin:router\nphase:research-web\nplan:{plan_file or 'N/A'}\nscope:N/A\nreason:{research_reason}\n\nTopic: {topic}\nReason: {research_reason}\nFile: docs/research/{date}-{slug}-web.md\nPreferred Backend: {brightdata+websearch or websearch+webfetch}\nAllowed Fallbacks: websearch -> webfetch\nRound: {round_number}",
-  activeForm: "Researching web"
-}) -> web_task_id
-
-TaskCreate({
-  subject: "CC10X github-researcher: Research {topic}",
-  description: "wf:{workflow_uuid}\nkind:research\norigin:router\nphase:research-github\nplan:{plan_file or 'N/A'}\nscope:N/A\nreason:{research_reason}\n\nTopic: {topic}\nReason: {research_reason}\nFile: docs/research/{date}-{slug}-github.md\nPreferred Backend: {octocode or web-only}\nAllowed Fallbacks: package-docs -> websearch -> webfetch\nRound: {round_number}",
-  activeForm: "Researching GitHub"
-}) -> github_task_id
-```
-
-Research tasks are siblings, never blockers on the workflow parent. The follow-up agent task is blocked on both research tasks.
+- When a workflow explicitly triggers research task creation, immediately read `references/remediation-and-research.md`.
+- Use the `## 10. Research Orchestration`, `## Research Quality`, and `## Research Files` blocks there before creating or consuming research tasks.
 
 ### Marker rules
 
@@ -808,248 +441,24 @@ Convergence rule:
 
 ## 9. Remediation And Workflow Rules
 
-### Standard REM-FIX task shape
-
-Every remediation task description must include:
-
-```text
-wf:{workflow_task_id}
-kind:remfix
-origin:{originating agent}
-phase:{phase}
-plan:{plan_file or 'N/A'}
-scope:{ALL_ISSUES|CRITICAL_ONLY|N/A}
-reason:{short remediation reason}
-```
-
-### Circuit breaker
-
-Before creating a new remediation task:
-- Count tasks whose descriptions contain both `wf:{workflow_task_id}` and `kind:remfix`.
-- If count >= 3, ask the user how to proceed before creating another one.
-
-### Rule matrix
-
-| Rule | Condition | Action |
-|------|-----------|--------|
-| 0b | Legacy `STATUS=SELF_REMEDIATED` or blocked task state | Do not create a duplicate REM-FIX. Leave task blocked. |
-| 0c | bug-investigator sets `NEEDS_EXTERNAL_RESEARCH=true` | Spawn research tasks and re-invoke investigator. No REM-FIX yet. |
-| 1a-SCOPE | BUILD parallel phase has CRITICAL + HIGH issues | Ask for `critical only` vs `all issues`, store pending scope marker, stop. |
-| 1a | Blocking issue in BUILD/DEBUG | Router creates scoped REM-FIX task, blocks downstream tasks, stop. |
-| 1b | Non-blocking remediation needed | In BUILD/DEBUG, auto-create REM-FIX. In REVIEW, ask whether to start BUILD. |
-| 2 | Reviewer approved but hunter found issues | Ask whether to remediate or proceed. |
-| 2b | Planner needs clarification | Ask the user, persist answers, then restart PLAN with a fresh visible DAG after clarification. |
-| 2c | Investigator still investigating | Create follow-up investigation task with loop cap. |
-| 2d | Verifier failed | Router creates REM-FIX unless user chooses REVERT at the router gate. |
-| 2f | Investigator blocked | Ask: research, manual fix, or abort. |
-
-### Scope resolution
-
-The router is authoritative for BUILD remediation scope.
-
-- BUILD reviewer/verifier should request `REMEDIATION_SCOPE_REQUESTED: N/A`; the router resolves `CRITICAL_ONLY` vs `ALL_ISSUES`.
-- Legacy agent-created remediation tasks are still accepted during migration, but router-created remediation is canonical.
-- `1a-SCOPE` applies only in BUILD when the parallel review phase shows both:
-  - at least one CRITICAL issue
-  - at least one HIGH issue from the hunter/reviewer narrative
-- The trigger source is explicit:
-  - hunter summary line `High issues: [count]`
-  - or a `### Findings` bullet clearly labeled `HIGH`
-- When `1a-SCOPE` fires:
-  1. write `[SCOPE-DECISION-PENDING: wf:{workflow_task_id} reason:{top remediation reason}]` into `activeContext.md ## Decisions`
-  2. ask exactly: `Fix critical only (Recommended)` or `Fix all issues`
-  3. do not create a REM-FIX until the next user reply resolves the scope
-- If no reliable HIGH count/signal can be extracted, default to normal rule `1a` without pretending scope selection happened.
-
-### REVIEW-to-BUILD
-
-If a REVIEW workflow ends with `CHANGES_REQUESTED`:
-- Ask: `Start BUILD to fix (Recommended)` or `Done for now`
-- `Start BUILD` -> create a fresh BUILD workflow using reviewer findings as input context
-- `Done for now` -> persist the decision and stop
-
-### Planner clarification
-
-When planner returns `STATUS=NEEDS_CLARIFICATION`:
-- Prefer `USER_INPUT_NEEDED` from the YAML contract.
-- Fallback to bullets under `**Your Input Needed:**`.
-- If this was the initial `plan-create` task, prune the unused pre-created review branch before continuing:
-  - mark `plan-review-gap-1`, `re-plan`, and `plan-review-gap-2` as `deleted`
-- Persist answers in `activeContext.md ## Decisions`.
-- Create a follow-up PLAN workflow after the user answers clarification.
-- Do not mutate BUILD/DEBUG/REVIEW. Clarification answers restart PLAN with a fresh visible DAG.
-
-When planner returns `STATUS=PLAN_CREATED` or `STATUS=DECISION_RFC_CREATED`:
-- Verify `PLAN_FILE` exists with `Glob(...)`.
-- Extract the intent/spec header from the saved plan and persist it into workflow artifact `intent`.
-- Update the parent workflow task `plan:` line to the saved plan path.
-- Update the pending memory task `plan:` line to the same saved plan path so resume and finalization stay scoped to the real artifact.
-- Persist planner fresh-review fields when present:
-  - `planning_review_runs`
-  - `planning_review_status`
-- Do not create a new review task here. The bounded PLAN DAG already contains both fresh-review passes.
-- If the completed planner phase was `plan-create`:
-  - update the pre-created `plan-review-gap-1` task `plan:` line to `{plan_file}`
-  - keep `planning_review_status=pending_review`
-- If the completed planner phase was `re-plan`:
-  - update the pre-created `plan-review-gap-2` task `plan:` line to `{plan_file}`
-  - keep `planning_review_status=pending_review`
-- `planning_review_runs` counts only completed fresh-review passes with valid contract output. Invalid or malformed reviewer output must fail closed without consuming one of the two allowed passes.
-
-When `plan-gap-reviewer` pass 1 returns `PASS`:
-- Increment `planning_review_runs += 1`
-- Set `planning_review_status=passed`
-- Persist findings summary into `results.planning_reviewer`
-- Mark the pre-created `re-plan` and `plan-review-gap-2` tasks as `deleted`
-- Continue to memory finalization
-
-When `plan-gap-reviewer` pass 1 returns `FINDINGS`:
-- Increment `planning_review_runs += 1`
-- Persist findings into:
-  - `planning_review_findings`
-  - `planning_review_status=findings_received`
-  - `results.planning_reviewer`
-- Do not create a new `re-plan` task. The pre-created `re-plan` task becomes the next runnable PLAN node.
-
-When `plan-gap-reviewer` pass 2 returns `PASS`:
-- Increment `planning_review_runs += 1`
-- Set `planning_review_status=passed`
-- Persist findings summary into `results.planning_reviewer`
-- Continue to memory finalization
-
-When `plan-gap-reviewer` pass 2 returns `FINDINGS`:
-- Increment `planning_review_runs += 1`
-- Persist findings into:
-  - `planning_review_findings`
-  - `planning_review_status=needs_clarification`
-  - `results.planning_reviewer`
-- Stop with clarification:
-  - set `pending_gate=clarification`
-  - ask the user for a decision on the unresolved plan contradiction
-  - do not create more fresh-review or re-plan tasks
-
-### Investigator continuation
-
-When bug-investigator returns `STATUS=INVESTIGATING`:
-- Count prior investigation continuation tasks in the same `wf:`. If count >= 2, ask the user before creating another.
-- Otherwise create a follow-up investigation task:
-
-```text
-TaskCreate({
-  subject: "CC10X bug-investigator: Continue investigation",
-  description: "wf:{workflow_task_id}\nkind:agent\norigin:router\nphase:debug-investigate\nplan:N/A\nscope:N/A\nreason:{ROOT_CAUSE or 'Continue investigation'}\n\nContinue investigating using the prior root-cause hints and evidence.",
-  activeForm: "Continuing investigation"
-})
-```
-
-### Verifier REVERT gate
-
-If integration-verifier emits `FAIL` and the findings contain `REVERT`:
-- Ask the user whether to revert or create a fix task.
-- `Revert` -> record the decision in memory and stop.
-- `Create fix task instead` -> continue with normal remediation creation.
+- When remediation, scope resolution, review-to-build escalation, planner clarification, investigation continuation, or the verifier REVERT gate is in play, immediately read `references/remediation-and-research.md`.
+- Use the `## 9. Remediation And Workflow Rules` block there as canonical router law.
 
 ## 10. Research Orchestration
 
-Research runs only when triggered by:
-- Explicit user request for research.
-- Plan references an external API, SDK, or service whose current behavior must be verified.
-- Plan proposes an architecture pattern not currently used in the codebase.
-- Bug investigation suspects a dependency version regression or behavioral change.
-- Two or more remediation cycles on the same issue without convergence.
-- PLAN workflow where the planner needs to choose between approaches with external precedent.
-- [EASY TO MISS: LLM training data may be stale. When a dependency, API, or framework version post-dates the model cutoff, treat pre-training knowledge as unreliable and require research evidence before planning or building.]
+- See `references/remediation-and-research.md` and apply its `## 10. Research Orchestration`, `## Research Quality`, and `## Research Files` blocks whenever research is triggered or consumed.
 
-Loop caps:
-- Count research rounds by `wf:` + `reason:` using `kind:research` tasks.
-- If the same workflow already created 2 research rounds for the same reason, ask the user before creating more.
-
-Capability model:
-1. Research backends are optional accelerators, never hard dependencies.
-2. Before the first research round in a workflow, record capability assumptions in the workflow artifact:
-   - `brightdata_available=true` only if the session can use Bright Data MCP
-   - `octocode_available=true` only if the session can use Octocode MCP
-   - `websearch_available` and `webfetch_available` reflect built-in tool availability
-3. If capability is unknown, prefer the accelerated backend first and fall back immediately when it fails. Persist the observed result in the artifact so later rounds do not guess again.
-
-Research persistence:
-1. Wait for both research tasks in the round to finish.
-2. Parse each agent YAML contract for:
-   - `FILE_PATH`
-   - `BACKEND_MODE`
-   - `SOURCES_ATTEMPTED`
-   - `SOURCES_USED`
-   - `QUALITY_LEVEL`
-3. Persist discovered paths and backend metadata into the workflow artifact immediately:
-   - `results.research.web`
-   - `results.research.github`
-   - `research_backend_history`
-   - `research_quality`
-   - `research_rounds`
-   - `results.research.synthesis`
-4. Index research file paths in `activeContext.md ## References` during memory finalization, not before.
-5. Partial success is valid:
-   - If one file exists and the other is unavailable, proceed with the successful file.
-6. Build `## Research Quality` using artifact-backed status:
-
-```text
 ## Research Quality
-Web: {COMPLETE|PARTIAL|DEGRADED|UNAVAILABLE} ({quality_level})
-GitHub: {COMPLETE|PARTIAL|DEGRADED|UNAVAILABLE} ({quality_level})
-Overall: {high|medium|low|none}
-```
 
-7. Re-invoke planner or investigator with:
+- See `references/remediation-and-research.md` and apply its `## Research Quality` block whenever research quality must be summarized or persisted.
 
-```text
 ## Research Files
-Web: {web_file or 'Unavailable'}
-GitHub: {github_file or 'Unavailable'}
-```
 
-8. Include `cc10x:research` in `## SKILL_HINTS` only when at least one research file exists.
+- See `references/remediation-and-research.md` and apply its `## Research Files` block whenever research file paths are handed to planner or investigator.
 
 ## 11. Re-Review Loop
 
-When a `kind:remfix` task completes:
-
-1. Count completed remediation tasks in the same `wf:`. If count >= 2, run the cycle-cap gate before continuing.
-2. Create a re-review task:
-
-```text
-TaskCreate({
-  subject: "CC10X code-reviewer: Re-review after REM-FIX",
-  description: "wf:{workflow_task_id}\nkind:agent\norigin:router\nphase:re-review\nplan:{plan_file or 'N/A'}\nscope:{scope from completed remfix}\nreason:{reason from completed remfix}\n\nRe-review the changes made by the completed remediation task.",
-  activeForm: "Re-reviewing fix"
-}) -> rereview_task_id
-```
-
-3. In BUILD, create a re-hunt task:
-
-```text
-TaskCreate({
-  subject: "CC10X silent-failure-hunter: Re-hunt after REM-FIX",
-  description: "wf:{workflow_task_id}\nkind:agent\norigin:router\nphase:re-hunt\nplan:{plan_file or 'N/A'}\nscope:{scope from completed remfix}\nreason:{reason from completed remfix}\n\nIf scope=ALL_ISSUES: perform a FULL re-audit of CRITICAL and HIGH issue categories after remediation.\nIf scope=CRITICAL_ONLY: verify the CRITICAL issue was resolved and treat HIGH issues as deferred unless newly escalated.\n\nRe-scan for silent failures after remediation.",
-  activeForm: "Re-hunting failures"
-}) -> rehunt_task_id
-```
-
-4. Reuse the pending verifier in the same `wf:` if one exists; otherwise create:
-
-```text
-TaskCreate({
-  subject: "CC10X integration-verifier: Re-verify after REM-FIX",
-  description: "wf:{workflow_task_id}\nkind:reverify\norigin:router\nphase:re-verify\nplan:{plan_file or 'N/A'}\nscope:{scope from completed remfix}\nreason:{reason from completed remfix}\n\nRe-verify after remediation.",
-  activeForm: "Re-verifying fix"
-}) -> reverify_task_id
-```
-
-5. Block verifier on re-review and re-hunt as applicable.
-6. Re-block the memory task on the verifier for BUILD/DEBUG or on the re-reviewer for REVIEW.
-7. Increment telemetry loop counters whenever the follow-up tasks are created:
-   - `telemetry.loop_counts.re_review += 1`
-   - `telemetry.loop_counts.re_hunt += 1` in BUILD
-   - `telemetry.loop_counts.re_verify += 1`
+- See `references/remediation-and-research.md` and apply its `## 11. Re-Review Loop` block whenever a `kind:remfix` task completes.
 
 ## 12. Chain Execution Loop
 
