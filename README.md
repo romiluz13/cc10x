@@ -298,7 +298,7 @@ IMPORTANT: NEVER use Edit, Write, or Bash (for code changes) without first invok
 "Write(.claude/cc10x/*)"
 ```
 
-> **Why the Edit/Write permissions?** cc10x memory files (`activeContext.md`, `patterns.md`, `progress.md`) live in `.claude/cc10x/`. Without these lines, Claude Code will prompt you for permission on every memory write. Adding them pre-approves edits to that folder only.
+> **Why the Edit/Write permissions?** The live cc10x memory namespace is `.claude/cc10x/v10/`. The permission examples use the parent `.claude/cc10x/*` scope so the versioned namespace continues to work without re-prompting on every memory write.
 
 ### Step 4: Set User Standards (Optional)
 
@@ -307,19 +307,19 @@ Ask the user:
 
 **If user provides standards**, write them to the project's memory:
 ```
-Bash(command="mkdir -p .claude/cc10x")
+Bash(command="mkdir -p .claude/cc10x/v10")
 # Check if patterns.md already exists (Read returns error = doesn't exist)
-Read(file_path=".claude/cc10x/patterns.md")
+Read(file_path=".claude/cc10x/v10/patterns.md")
 
 # If it DOESN'T exist — create with standards already populated:
-Write(file_path=".claude/cc10x/patterns.md", content="# Project Patterns\n<!-- CC10X MEMORY CONTRACT: Do not rename headings. Used as Edit anchors. -->\n\n## User Standards\n- {standard 1}\n- {standard 2}\n\n## Architecture Patterns\n\n## Code Conventions\n\n## Common Gotchas\n\n## Last Updated\n{date}")
+Write(file_path=".claude/cc10x/v10/patterns.md", content="# Project Patterns\n<!-- CC10X MEMORY CONTRACT: Do not rename headings. Used as Edit anchors. -->\n\n## User Standards\n- {standard 1}\n- {standard 2}\n\n## Architecture Patterns\n\n## Code Conventions\n\n## Common Gotchas\n\n## Last Updated\n{date}")
 
 # If it DOES exist — append under User Standards:
-Edit(file_path=".claude/cc10x/patterns.md",
+Edit(file_path=".claude/cc10x/v10/patterns.md",
      old_string="## User Standards",
      new_string="## User Standards\n- {standard 1}\n- {standard 2}")
 
-Read(file_path=".claude/cc10x/patterns.md")  # Verify
+Read(file_path=".claude/cc10x/v10/patterns.md")  # Verify
 ```
 
 **If user skips:** No action. The memory file will be created on first workflow run with an empty `## User Standards` section for them to fill in later.
@@ -426,12 +426,12 @@ USER REQUEST
      │
      └── PLAN ───► planner
 
-MEMORY (.claude/cc10x/)
+MEMORY (.claude/cc10x/v10/)
 ├── activeContext.md  ◄── Current focus, decisions, learnings
 ├── patterns.md       ◄── Project conventions, common gotchas
 └── progress.md       ◄── Completed work, remaining tasks
 
-WORKFLOW STATE (.claude/cc10x/workflows/)
+WORKFLOW STATE (.claude/cc10x/v10/workflows/)
 ├── {wf}.json         ◄── Durable workflow artifact
 └── {wf}.events.jsonl ◄── Append-only workflow event log
 ```
@@ -481,7 +481,7 @@ Skills are **loaded automatically by agents**. You never invoke them directly.
 cc10x survives context compaction. This is critical for long sessions.
 
 ```
-.claude/cc10x/
+.claude/cc10x/v10/
 ├── activeContext.md   # What you're working on NOW
 │   - Current task
 │   - Active decisions (and WHY)
@@ -497,6 +497,8 @@ cc10x survives context compaction. This is critical for long sessions.
     - Remaining tasks
     - Blockers
 ```
+
+If both `.claude/cc10x/` and `.claude/cc10x/v10/` exist in a project, `v10/` is the live namespace. Root-level `.claude/cc10x/*.md` and `.claude/cc10x/workflows/*` are legacy pre-10.1.0 residue and are ignored by current router hydration.
 
 **Iron Law:** Every workflow loads memory at START and updates at END.
 
@@ -760,6 +762,8 @@ Add these two lines to `~/.claude/settings.json` under `permissions.allow`:
 "Edit(.claude/cc10x/*)",
 "Write(.claude/cc10x/*)"
 ```
+
+These permission examples cover the live `.claude/cc10x/v10/` namespace.
 
 Or run **"Set up cc10x for me"** again — the setup wizard adds them automatically.
 

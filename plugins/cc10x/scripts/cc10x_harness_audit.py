@@ -36,6 +36,7 @@ REPLAY_CHECK = PLUGIN_ROOT / "scripts" / "cc10x_workflow_replay_check.py"
 LATENCY_AUDIT = PLUGIN_ROOT / "scripts" / "cc10x_latency_audit.py"
 LIVE_HARNESS_RUNNER = PLUGIN_ROOT / "scripts" / "cc10x_live_harness_runner.py"
 SESSION_MEMORY_SKILL = PLUGIN_ROOT / "skills" / "session-memory" / "SKILL.md"
+PLANNER_AGENT = PLUGIN_ROOT / "agents" / "planner.md"
 FIXTURES_DIR = PLUGIN_ROOT / "tests" / "fixtures"
 LIVE_MANIFEST_TEMPLATE = PLUGIN_ROOT / "templates" / "live-harness.template.json"
 PLANNING_LIVE_REFERENCE = (
@@ -238,6 +239,7 @@ def main() -> int:
     orchestration_logic = read(ORCHESTRATION_LOGIC)
     orchestration_safety = read(ORCHESTRATION_SAFETY)
     session_memory = read(SESSION_MEMORY_SKILL)
+    planner_agent = read(PLANNER_AGENT)
     verifier_latency_model = read(VERIFIER_LATENCY_MODEL)
     latency_reduction_note = read(LATENCY_REDUCTION_NOTE)
 
@@ -361,6 +363,19 @@ def main() -> int:
         if required not in readme:
             errors.append(
                 f"README no longer documents optional MCP server '{required}'"
+            )
+
+    if ".claude/cc10x/v10/" not in readme:
+        errors.append("README does not document the live v10 memory namespace")
+    for stale in (
+        "live in `.claude/cc10x/`",
+        "MEMORY (.claude/cc10x/)",
+        "WORKFLOW STATE (.claude/cc10x/workflows/)",
+        ".claude/cc10x/\n├── activeContext.md",
+    ):
+        if stale in readme:
+            errors.append(
+                f"README still contains stale root-level memory text: {stale}"
             )
 
     required_router_inline = [
@@ -510,6 +525,9 @@ def main() -> int:
             errors.append(
                 f"session-memory skill missing required reference/text: {required}"
             )
+
+    if ".claude/cc10x/v10/*" not in planner_agent:
+        errors.append("planner agent no longer documents the live v10 memory namespace")
 
     if "### session-memory" not in prompt_surface_inventory:
         errors.append("prompt surface inventory missing session-memory entry")

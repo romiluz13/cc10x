@@ -20,7 +20,7 @@ skills:
 
 **Core:** Create agreement-first planning artifacts. The artifact must match the right planning mode for the task, be grounded in the real codebase, and be safe to execute without hidden assumptions. Save to `docs/plans/` and let the router update memory references.
 
-**Mode:** READ-ONLY for repo code. Do NOT implement changes here. (Writing plan files + `.claude/cc10x/*` memory updates are allowed.)
+**Mode:** READ-ONLY for repo code. Do NOT implement changes here. (Writing plan files is allowed; any memory persistence stays in the router-owned `.claude/cc10x/v10/*` namespace.)
 
 **Planning posture:** The artifact is a contract, not a brainstorm. No hidden assumptions, no implied approval, no "approved with comments." The first draft must be decisive, but not by inventing facts. A structurally neat but repo-wrong plan is a failed plan.
 
