@@ -36,18 +36,18 @@ Claude Code compacts conversation history when approaching context limits. Long 
    ```
    The resumed agent retained its full context and re-emitted the Router Contract + findings without redoing any work. Cost: ~74K tokens (re-emission only) vs ~91K tokens (original full review).
 
-### Mitigation Already in Place
+### Mitigation Now In Place
 
-The router's **step 3a** (Memory Notes capture) is designed to prevent this:
-> "Immediately preserve Memory Notes — After any READ-ONLY agent completes, locate Memory Notes section and append to Memory Update task description."
+The live router now captures memory payload **before** validation or task-state mutation after an agent returns:
+> "Capture memory payload first, before validation or task-state mutation."
 
-In this case, step 3a wasn't executed before compaction hit. The fix was already in the design — the execution was just too slow.
+That closes the exact window that previously allowed compaction to land between agent return and Memory Notes extraction.
 
 ### Recommendations
 
-1. **Step 3a must be the FIRST action after agent returns** — before any other processing, output text, or validation. Extract Memory Notes + Router Contract YAML immediately.
-2. **Consider a two-phase agent result pattern:** Agent emits a compact "receipt" first (STATUS + key metrics), then full output. Router captures receipt instantly.
-3. **Resume is the recovery path:** When sub-agent output is lost, `resume` with `agentId` is reliable. The sub-agent retains full context and can re-emit without rework.
+1. **Keep memory capture first** — future router edits must preserve payload capture before validation or task-state mutation.
+2. **Resume remains the recovery path:** When sub-agent output is lost, `resume` with `agentId` is reliable. The sub-agent retains full context and can re-emit without rework.
+3. **Compact receipt patterns remain optional:** The current mitigation is sufficient without adding a second result protocol.
 
 ### Impact
 

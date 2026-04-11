@@ -1,6 +1,6 @@
 # CC10X Prompt Surface Inventory
 
-> **Status note:** Synced to `v10.1.18` on 2026-04-09.
+> **Status note:** Synced to `v10.1.19` on 2026-04-12.
 
 ## Purpose
 

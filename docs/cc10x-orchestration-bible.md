@@ -1,6 +1,6 @@
 # CC10X Orchestration Bible (Plugin-Only Source of Truth)
 
-> **Last reviewed against live plugin files:** 2026-04-09 (`v10.1.18` product line: planner-owned fresh review loop, prompt safety system, latency-safe verifier telemetry, router-kernel orchestration, mandatory workflow playbooks, versioned v10 state, workflow replay fixtures, reference-first skill packaging, live harness bootstrap) | **Status:** IN SYNC WITH CURRENT MAIN
+> **Last reviewed against live plugin files:** 2026-04-12 (`v10.1.19` product line: harmony hardening, router-owned prompt assembly, phase-local handoffs, early memory capture, router-owned review fan-in, versioned v10 state, workflow replay fixtures, reference-first skill packaging) | **Status:** SYNCED TO LIVE PROMPTS
 
 > This document is derived **only** from `plugins/cc10x/` (agents + skills).
 > Ignore all other docs. Do not trust external narratives.
@@ -23,7 +23,7 @@ This document defines the **non-negotiable** routing, tasking, agent chaining, a
 - **Memory**: `.claude/cc10x/v10/{activeContext.md, patterns.md, progress.md}`.
 - **Workflow Artifacts**: `.claude/cc10x/v10/workflows/{wf}.json` plus `.events.jsonl`.
 - **Router Contract**: Machine-readable output signal used by the router for validation. WRITE agents emit YAML. READ-ONLY agents emit an envelope-first contract on line 1 and a stable heading fallback on line 2.
-- **Dev Journal**: User transparency section in WRITE agent output only (narrative of what was done). Removed from READ-ONLY agents in v8.0.0 to reduce token pressure.
+- **Human Layer**: User transparency section in WRITE agent output only (narrative of what was done). Removed from READ-ONLY agents in v8.0.0 to reduce token pressure.
 
 ---
 
@@ -283,10 +283,12 @@ flowchart TD
 1. `TaskList()` → find tasks with `status=pending` and no blockers.
 2. `TaskUpdate({ taskId, status: "in_progress" })`
 3. Run agent(s). If more than one is ready, **invoke in the same message** (parallel).
-4. Agent self-reports: calls `TaskUpdate({ taskId, status: "completed" })` in its final output. Router validates via `TaskList()` and calls `TaskUpdate` as fallback if status is still `in_progress`.
+4. Completion is split by agent type:
+   - WRITE agents self-report with `TaskUpdate({ taskId, status: "completed" })`.
+   - READ-ONLY agents do not self-complete; the router validates output and applies fallback `TaskUpdate` when appropriate.
 5. Repeat until **ALL** agent tasks are completed.
 
-**Note (v6.0.29+):** Agents DO call TaskUpdate for their own task (self-completion). Router applies a fallback if the agent missed it. Both are defense-in-depth — not a contradiction. The `Agent()` return is the deterministic handoff point for the router to validate.
+**Note:** Completion remains defense-in-depth, but the live system is not symmetric. Write-agent self-completion and read-only router fallback are both intentional parts of the current contract.
 
 ### Tasks Tool Contract (Keep Examples Exact)
 
@@ -426,7 +428,7 @@ Trigger conditions (any one):
 - External service error or 3+ failed debug attempts.
 
 Mandatory steps:
-1. Execute research using octocode tools.
+1. Execute web research via Bright Data/web fallback and GitHub research via Octocode/GitHub fallback.
 2. Persist to `docs/research/YYYY-MM-DD-<topic>-research.md`.
 3. Update `activeContext.md` with research reference.
 4. If gotchas found, append to `patterns.md`.
@@ -483,7 +485,7 @@ WRITE agents output these sections (unchanged since v6.0.0):
 ```markdown
 ## {Action}: {summary}
 
-### Dev Journal (User Transparency)
+### Human Layer
 **What I Did:** [Narrative of actions taken]
 **Key Decisions Made:** [Decisions + WHY]
 **Alternatives Considered:** [What was rejected + reason]
@@ -647,7 +649,7 @@ The router passes:
 - `SKILL_HINTS`
 
 Rules:
-- WRITE agents emit `### Dev Journal` and YAML router contract.
+- WRITE agents emit `### Human Layer` and YAML router contract.
 - READ-ONLY agents emit line-1 envelope, line-2 heading fallback, and `### Memory Notes`.
 - Agents must never tell the user they are complete without either calling their valid task tool or letting the router complete them via fallback.
 - Router-owned user interaction stays in the router. Agents surface clarification through structured output, not direct user questioning, unless they actually have that capability.

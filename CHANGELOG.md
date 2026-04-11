@@ -1,5 +1,46 @@
 # Changelog
 
+## [10.1.19] - 2026-04-12
+
+### Harmony hardening release
+
+Tightened CC10X around its existing router/artifact/memory model without
+adding new agents, workflow types, memory paths, or contract fields. This
+release removes live instruction drift, makes router handoffs more
+self-contained and phase-local, moves memory payload capture ahead of
+validation, and aligns docs and release metadata with the shipped behavior.
+
+#### Changed
+- **Top-level instruction cleanup:** `CLAUDE.md` now defines one router entry
+  rule with minimal orientation before routing, and the stale
+  `mongodb-query-and-index-optimize` alias is replaced with the installed
+  `mongodb-query-optimizer` skill name.
+- **Prompt-surface contradiction cleanup:** `bug-investigator` no longer tells
+  agents to persist notes directly into memory files, `code-reviewer` no longer
+  self-activates internal CC10X skills, and `planner` now refers to the live
+  `Human Layer` / `Execution Contract Layer` wording instead of stale `Dev
+  Journal` language.
+- **Router-owned handoff hardening:** `cc10x-router` now requires routed prompts
+  to be self-contained from workflow artifact state, approved files, and the
+  current task contract.
+- **Phase-local BUILD context:** BUILD handoffs now explicitly scope the
+  current phase to objective, inputs, expected artifacts, checks, exit
+  criteria, and active blockers rather than broad historical narrative.
+- **Compaction-safe memory capture:** Router processing now captures memory
+  payload before validation or task-state mutation after an agent returns.
+- **Review/hunt fan-in:** BUILD review and hunt outputs now have an explicit
+  router-owned merge point before verifier handoff using existing workflow
+  result state.
+- **Docs and release alignment:** README, changelog, plugin metadata,
+  marketplace metadata, invariants, logic analysis, and the orchestration bible
+  are aligned to `10.1.19`.
+
+#### Verified
+- `python3 plugins/cc10x/scripts/cc10x_harness_audit.py`
+- `python3 plugins/cc10x/scripts/cc10x_workflow_replay_check.py`
+- `python3 plugins/cc10x/scripts/cc10x_instructions_loaded_audit.py`
+- `python3 plugins/cc10x/scripts/cc10x_latency_audit.py --fixtures`
+
 ## [10.1.18] - 2026-04-09
 
 ### Router kernel + mandatory workflow playbooks
@@ -218,7 +259,7 @@ playbooks load only when needed.
 
 #### Added
 - Planning-specific replay fixtures for repo-alignment preservation and contradiction-driven clarification.
-- A planning recovery benchmark note documenting what was borrowed from `v7`, `metaswarm`, and `get-shit-done`.
+- A planning recovery benchmark note documenting the reference analysis used to pressure-test the recovery design against prior systems.
 
 #### Fixed
 - Release hygiene now tracks the planning recovery benchmark note required by the harness audit.
@@ -1935,7 +1976,7 @@ Major orchestration hardening release. **33 surgical changes** across `cc10x-rou
 
 ### Added
 
-- **Iterative Retrieval Pattern** (stolen from Everything Claude Code)
+- **Iterative Retrieval Pattern** (adapted into CC10X after reference analysis)
   - Added to bug-investigator: Context Retrieval step for large codebase debugging
   - Added to planner: Context Retrieval step before designing features
   - Pattern: DISPATCH (broad) → EVALUATE (score 0-1) → REFINE (narrow) → LOOP (max 3)

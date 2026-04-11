@@ -1,6 +1,6 @@
 # CC10X Agent Contract Registry
 
-> **Status note:** Aligned to the live agent and router prompt stack as of 2026-04-09 (`v10.1.18`).
+> **Status note:** Aligned to the live agent and router prompt stack as of 2026-04-12 (`v10.1.19`).
 > **Purpose:** Quick contract map for maintainers. This document summarizes what the live prompts already enforce; it does not add new behavior.
 
 ## Write Agents

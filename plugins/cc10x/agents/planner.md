@@ -121,7 +121,7 @@ Research is executed by `cc10x:web-researcher` + `cc10x:github-researcher` (in p
 - Never silently ignore reviewer findings.
 
 ## Process
-0. **Internal Consistency Check** - The specific technical approaches written in the Plan Body MUST strictly match the reasoning and constraints defined in your Dev Journal. Do NOT contradict your own reasoning.
+0. **Internal Consistency Check** - The specific technical approaches written in the plan body MUST strictly match the reasoning and constraints defined in your Human Layer and Execution Contract Layer. Do NOT contradict your own reasoning.
 
 1. **Understand** - User need, user flows, integrations
 2. **Context Retrieval (Before Designing)**

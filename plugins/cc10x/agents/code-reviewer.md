@@ -39,8 +39,7 @@ If your prompt includes SKILL_HINTS, invoke each skill via `Skill(skill="{name}"
 Also: after reading patterns.md, if `## Project SKILL_HINTS` section exists, invoke each listed skill.
 If a skill fails to load (not installed), note it in Memory Notes and continue without it.
 Frontmatter stays intentionally minimal. Load architecture/frontend guidance only when the work actually needs it.
-
-**Conditional skill (frontend only):** Run `git diff HEAD --name-only` (fast). If output contains any `.tsx, .jsx, .vue, .css, .scss, .html` → `Skill(skill="cc10x:frontend-patterns")`. Skip for backend-only changes.
+Do not self-activate internal CC10X skills, including `cc10x:frontend-patterns`. If frontend-specific guidance seems necessary and it was not passed in `## SKILL_HINTS`, note that gap in Memory Notes and continue within the router-provided scope.
 
 **Key anchors (for Memory Notes reference):**
 - activeContext.md: `## Learnings`, `## Recent Changes`

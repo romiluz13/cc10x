@@ -6,14 +6,14 @@
     "url": "https://github.com/romiluz13"
   },
   "metadata": {
-    "description": "cc10x v10.1.18 - Competition-grade Claude Code plugin with router-kernel orchestration, mandatory workflow playbooks, multi-repo harmony integration, test tampering detection, claim extraction verification, environment escape hatches, analysis paralysis guards, and professional objectivity hard rules",
-    "version": "10.1.18"
+    "description": "cc10x v10.1.19 - Harmony-hardened Claude Code plugin with router-kernel orchestration, mandatory workflow playbooks, contradiction cleanup, phase-local handoffs, early memory capture, review-fan-in hardening, and professional objectivity hard rules",
+    "version": "10.1.19"
   },
   "plugins": [
     {
       "name": "cc10x",
       "description": "Trust-first Claude Code plugin with specialized subagents, composable skills, agreement-first planning, TDD-first phase execution, adversarial review, BDD-style verification, proof-of-work workflow artifacts, plugin-native hooks, and optional user-configured Bright Data/Octocode research acceleration.",
-      "version": "10.1.18",
+      "version": "10.1.19",
       "author": {
         "name": "Rom Iluz",
         "email": "rom@iluz.net",

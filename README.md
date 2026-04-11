@@ -2,7 +2,7 @@
 
 ### Router-Owned Claude Code Harness
 
-**Current version:** 10.1.18
+**Current version:** 10.1.19
 
 **Recommended: Create `~/.claude/CLAUDE.md` (global) so the router is always active across all projects.**
 
@@ -592,6 +592,7 @@ I'll help you build a task tracker! Let me start...
 
 | Version | Highlights |
 |---------|------------|
+| **v10.1.19** | Harmony hardening release: contradiction cleanup across router-facing instructions, router-owned self-contained handoffs, phase-local BUILD context, early memory capture before validation, review/hunt fan-in at the router, and full docs/release metadata alignment. |
 | **v10.1.15** | Hook expansion: 4 audit-only hooks (PreCompact, Stop, StopFailure, InstructionsLoaded) for workflow state persistence and telemetry. 6→10 hook events. Zero blocking, zero context injection, router remains sole authority. |
 | **v10.1.14** | Multi-repo harmony integration: 29 certified patterns from 11 reference repos via 3-phase harmony pipeline. Test tampering detection, claim extraction, environment escape hatches, analysis paralysis guards, near-miss negative testing, de-sloppify scans, plans-are-prompts principle, professional objectivity hard rules. |
 | **v10.1.13** | Ruflo harmony integration: 29 prompt engineering edits across 16 files — research quality heuristics, multi-language silent-failure detection, friction-scan thresholds, rollback decision trees, plan completeness gates, behavioral TDD focus, partial-phase review scoping, abstraction thresholds, split-brain contradiction handling, evidence-before-reporting hard rules |

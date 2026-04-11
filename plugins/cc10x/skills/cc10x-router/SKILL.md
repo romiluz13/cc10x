@@ -313,6 +313,12 @@ Optional sections:
 - `## Approved Context Files` only for `plan-gap-reviewer`.
 - `## Previous Agent Findings` only for integration-verifier and only after review/hunt phases.
 
+### Prompt assembly rule
+
+- Every routed prompt must be self-contained from the workflow artifact, approved files, and the current task contract.
+- Do not rely on prior chat turns or completed-phase narrative when the same fact already exists in the workflow artifact, plan, design, or research files.
+- Include only the current-phase objective, live blockers, approved decisions, and directly relevant evidence. Omit unrelated completed-phase detail.
+
 ### Deterministic skill hints
 
 - Router is the only authority allowed to load internal CC10X skills.
@@ -481,9 +487,10 @@ Convergence rule:
    - invoke them in the same message
    - If parallel invocation fails or is unavailable (API error, rate limit): fall back to sequential execution (reviewer first, then hunter). Never block a workflow because parallelism is unavailable. Log `event=parallel_fallback` in the workflow event log.
 6. After each agent returns:
+   - capture memory payload immediately
    - validate output
-   - capture memory payload
    - persist task-state side effects
+   - if BUILD review and hunt are both complete for the current phase, write one router-owned merged findings summary into the existing workflow results before verifier handoff
    - apply workflow rules
    - for BUILD, run `phase_exit_gate`; if the current phase is not complete, persist `phase_status={partial|blocked}` and stop
    - never advance to the next phase or workflow step on apology prose alone
@@ -499,6 +506,9 @@ Pre-check before processing agent output:
 - Is follow-up work needed that the agent did not self-remediate?
 If any answer is "no" or "unknown", treat as incomplete and apply the fallback validation path below.
 
+0. Capture memory payload first, before validation or task-state mutation.
+   - READ-ONLY agents: extract `### Memory Notes (For Workflow-Final Persistence)` immediately after return.
+   - WRITE agents: extract `MEMORY_NOTES` from YAML immediately after return.
 1. `TaskGet({ taskId })` or `TaskList()` to verify final task state.
 2. WRITE agents:
    - They should already have called `TaskUpdate(status="completed")`.
@@ -506,9 +516,9 @@ If any answer is "no" or "unknown", treat as incomplete and apply the fallback v
 3. READ-ONLY agents:
    - During compatibility phase, if task is still `in_progress` with blockers, treat it as legacy self-remediation.
    - Otherwise router applies fallback `TaskUpdate(status="completed")`.
-4. Capture memory:
-   - READ-ONLY agents: extract `### Memory Notes (For Workflow-Final Persistence)` and append to the memory task description.
-   - WRITE agents: do not expect `### Memory Notes`; use `MEMORY_NOTES` from YAML. Append only deferred or supplemental memory payload needed by the memory task.
+4. Memory payload was already captured in step 0:
+   - READ-ONLY agents: append extracted notes to the memory task description.
+   - WRITE agents: append deferred or supplemental payload needed by the memory task.
 5. Update `.claude/cc10x/v10/workflows/{workflow_uuid}.json` with:
    - intent contract fields from planner output when available
    - task ids

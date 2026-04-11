@@ -36,6 +36,10 @@
 10. Clarify missing requirements before builder only when the plan and memory do not already answer them.
 11. Persist pre-answered clarifications in `activeContext.md ## Decisions` using `Build clarification [{topic}]: {answer}`.
 12. Builder may execute only the phase at `phase_cursor`.
+13. Router handoff for the current BUILD phase must be phase-local:
+   - include only the current phase objective, inputs, expected artifacts, required checks, checkpoint type, exit criteria, and approved clarifications still in force
+   - include prior-phase detail only when it remains an active blocker, dependency, or unresolved finding
+   - do not rehydrate broad historical narrative when the workflow artifact already captures it
 
 ### BUILD task graph
 

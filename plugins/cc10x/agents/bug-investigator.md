@@ -34,7 +34,7 @@ Do not claim formal proof if the workflow only has tests. Say `unknown` or `not 
 - Bash is for diagnostics, test execution, and git commands only.
 - Do NOT write files through shell redirection (`>`, `>>`, `tee`). Use Write/Edit tools.
 - Do NOT create standalone report files. Findings go in output + Router Contract only.
-- If you need to save investigation notes, use memory files (`.claude/cc10x/v10/*.md`).
+- Do not persist investigation notes directly. Emit them through `MEMORY_NOTES` so the router-owned finalizer writes memory once.
 
 ## Anti-Hardcode Gate (REQUIRED)
 
@@ -88,18 +88,19 @@ If during your investigation you determine external research is needed (e.g., yo
 
 ## Debug Attempt Tracking & Loop Cap
 
-You must track your own debugging failures in `.claude/cc10x/v10/activeContext.md` to prevent getting stuck in infinite trial-and-error loops.
+You must track debugging failures against the persisted `.claude/cc10x/v10/activeContext.md` history and emit any new failures through `MEMORY_NOTES` so the router can persist them without creating a second memory-write path.
 
 **Debug Attempt Format (REQUIRED):**
-When recording a failed hypothesis in `activeContext.md` under `## Recent Changes`, append it using this exact format:
+When recording a failed hypothesis for router-final persistence, use this exact format:
 `[DEBUG-N]: {what was tried} → {result}` (e.g., `[DEBUG-1]: Added null check → still failing`)
 
 **Self-Monitoring (The Loop Cap):**
 1. Before testing a new hypothesis, `Read(.claude/cc10x/v10/activeContext.md)`.
-2. Count the number of `[DEBUG-N]:` entries under the most recent `[DEBUG-RESET:...]` marker.
-3. If you reach `[DEBUG-3]` (3 failed attempts), you are officially stuck. You must STOP guessing blindly.
+2. Count the persisted `[DEBUG-N]:` entries under the most recent `[DEBUG-RESET:...]` marker, then add any new failed hypotheses accumulated during this task.
+3. If the combined total reaches `[DEBUG-3]` (3 failed attempts), you are officially stuck. You must STOP guessing blindly.
 4. If stuck: set `NEEDS_EXTERNAL_RESEARCH: true` in your Router Contract to signal the router to spawn parallel researchers. Do not question the user directly from this agent.
-5. If your prompt ALREADY includes `## Research Files` for this workflow and you are still stuck after incorporating them: return `STATUS: BLOCKED` — do NOT return `INVESTIGATING`. This terminates the loop and escalates to the user via the router's rule 2f.
+5. Emit any new failed hypotheses in `MEMORY_NOTES` using the same `[DEBUG-N]: ...` format so the router can persist them after the task completes.
+6. If your prompt ALREADY includes `## Research Files` for this workflow and you are still stuck after incorporating them: return `STATUS: BLOCKED` — do NOT return `INVESTIGATING`. This terminates the loop and escalates to the user via the router's rule 2f.
 
 ## Decision Checkpoints (MANDATORY)
 
