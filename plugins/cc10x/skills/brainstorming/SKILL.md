@@ -377,7 +377,7 @@ For UI features, include ASCII mockup in the design:
 
 ## Saving the Design (MANDATORY)
 
-**Two saves are required - design file AND memory update:**
+**One direct save and one router handoff are required - design file plus machine-readable handoff.**
 
 ### Step 1: Save Design File (Use Write tool - NO PERMISSION NEEDED)
 
@@ -397,39 +397,19 @@ Write(file_path="{PROJECT_DIR}/docs/plans/YYYY-MM-DD-<feature>-design.md", conte
 # Do NOT auto-commit — let the user decide when to commit
 ```
 
-### Step 2: Update Memory (CRITICAL - Links Design to Memory)
+### Step 2: Emit Router-Owned Handoff (CRITICAL)
 
-**Use Read-Edit-Verify with stable anchors:**
+Do **NOT** edit `.claude/cc10x/v10/*.md` from brainstorming.
 
-```
-# Step 1: READ
-Read(file_path=".claude/cc10x/v10/activeContext.md")
+Instead, end your response with this machine-readable handoff so the router can carry the design forward and let memory finalization persist it once:
 
-# Step 2: VERIFY anchors exist (## References, ## Recent Changes, ## Next Steps)
-
-# Step 3: EDIT using stable anchors
-# Add design to References
-Edit(file_path=".claude/cc10x/v10/activeContext.md",
-     old_string="## References",
-     new_string="## References\n- Design: `{PROJECT_DIR}/docs/plans/YYYY-MM-DD-<feature>-design.md`")
-
-# Index the design creation in Recent Changes
-Edit(file_path=".claude/cc10x/v10/activeContext.md",
-     old_string="## Recent Changes",
-     new_string="## Recent Changes\n- Design saved: docs/plans/YYYY-MM-DD-<feature>-design.md")
-
-# Make the next step explicit
-Edit(file_path=".claude/cc10x/v10/activeContext.md",
-     old_string="## Next Steps",
-     new_string="## Next Steps\n1. [BRAINSTORM-DONE] Planner agent pending — design at docs/plans/YYYY-MM-DD-<feature>-design.md")
-
-# Step 4: VERIFY (do not skip)
-Read(file_path=".claude/cc10x/v10/activeContext.md")
+```yaml
+### Brainstorming Handoff (MACHINE-READABLE)
+DESIGN_FILE: "{PROJECT_DIR}/docs/plans/YYYY-MM-DD-<feature>-design.md"
+DESIGN_SUMMARY: "[one-sentence summary of the chosen design]"
 ```
 
-**WHY BOTH:** Design files are artifacts. Memory is the index. Without memory update, next session won't know the design exists.
-
-**This is non-negotiable.** Memory is the single source of truth.
+**WHY BOTH:** The design file is the artifact. The handoff tells the router what to pass to planner and what to persist later. Memory stays single-writer and router-owned.
 
 ## Pre-Handoff Design Check (Optional)
 
@@ -444,7 +424,7 @@ If concerns found, revise the design file before presenting. This is a self-revi
 
 **Announce to the user:**
 
-> "Design saved to `{design_file_path}`. Memory updated with design reference."
+> "Design saved to `{DESIGN_FILE}`. Router will carry the design reference forward and manage any research or planning transitions automatically."
 
 The router handles workflow transitions — do not prompt the user for next steps. The router will proceed to research and/or planning automatically.
 

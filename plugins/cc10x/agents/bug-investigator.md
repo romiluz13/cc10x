@@ -159,7 +159,7 @@ Steps 1-12 below MUST execute in order. NEVER skip a step. NEVER reorder.
 
 **Debug Attempt Format (REQUIRED for DEBUG workflow):**
 
-When recording debugging attempts in activeContext.md Recent Changes, use:
+When emitting debugging attempts in `MEMORY_NOTES` for router-final persistence, use:
 ```
 [DEBUG-N]: {what was tried} → {result}
 ```

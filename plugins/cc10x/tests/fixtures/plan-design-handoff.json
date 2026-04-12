@@ -1,0 +1,94 @@
+{
+  "id": "plan-design-handoff",
+  "workflow_type": "PLAN",
+  "starting_artifact": {
+    "workflow_uuid": "wf-20260412T101500Z-plan-design-handoff",
+    "workflow_id": "wf-20260412T101500Z-plan-design-handoff",
+    "workflow_type": "PLAN",
+    "state_root": ".claude/cc10x/v10",
+    "plan_mode": "execution_plan",
+    "verification_rigor": "standard",
+    "proof_status": "gaps_found",
+    "traceability": {
+      "requirements": [],
+      "phases": [],
+      "verification": [],
+      "remediation": []
+    },
+    "phase_cursor": null,
+    "task_ids": {},
+    "results": {},
+    "intent": {
+      "goal": "Plan a MongoDB-backed memory compaction improvement"
+    },
+    "evidence": {},
+    "quality": {
+      "convergence_state": "pending"
+    },
+    "status_history": [],
+    "remediation_history": []
+  },
+  "relevant_tasks": {
+    "planner_create": {
+      "phase": "plan-create",
+      "status": "pending",
+      "blockedBy": []
+    },
+    "planning_review_pass1": {
+      "phase": "plan-review-gap-1",
+      "status": "pending",
+      "blockedBy": [
+        "planner_create"
+      ]
+    },
+    "planner_replan": {
+      "phase": "re-plan",
+      "status": "pending",
+      "blockedBy": [
+        "planning_review_pass1"
+      ]
+    },
+    "planning_review_pass2": {
+      "phase": "plan-review-gap-2",
+      "status": "pending",
+      "blockedBy": [
+        "planner_replan"
+      ]
+    },
+    "memory_finalize": {
+      "phase": "memory-finalize",
+      "status": "pending",
+      "blockedBy": [
+        "planner_create",
+        "planning_review_pass1",
+        "planner_replan",
+        "planning_review_pass2"
+      ]
+    }
+  },
+  "agent_outputs": {
+    "brainstorming_handoff": {
+      "DESIGN_FILE": "/workspace/cc10x/docs/plans/2026-04-12-memory-compaction-design.md",
+      "DESIGN_SUMMARY": "Use router-owned memory finalization while preserving design-file enrichment for the planner."
+    }
+  },
+  "expected": {
+    "next_action": "run_planner_with_design_file",
+    "artifact_delta": {
+      "design_file": "/workspace/cc10x/docs/plans/2026-04-12-memory-compaction-design.md",
+      "memory_sync": {
+        "design_reference_persisted": true,
+        "plan_recent_change_persisted": true,
+        "next_step_persisted": true
+      }
+    },
+    "planner_inputs": {
+      "design_file": "/workspace/cc10x/docs/plans/2026-04-12-memory-compaction-design.md"
+    },
+    "planner_markers": [
+      "## Design File",
+      "Do NOT edit `.claude/cc10x/v10/*.md` directly."
+    ],
+    "gate_markers": []
+  }
+}

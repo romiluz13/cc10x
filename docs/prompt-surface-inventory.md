@@ -21,6 +21,22 @@ copy.
 - Comparison references: `metaswarm` plan review, `get-shit-done` planning/execution contract, `cc10x-v7` planner usability
 - Review requirement: audit + replay + manual semantic review
 
+### planning-patterns
+- Path: `plugins/cc10x/skills/planning-patterns/SKILL.md`
+- Role: planner save discipline and router-subordinate memory intent guidance
+- Allowed edits: wording clarity, plan-save examples, `MEMORY_NOTES` guidance, live-verification wording
+- Forbidden edits: direct writes to `.claude/cc10x/v10/*.md`, altered plan-mode semantics, or bypassing router-owned memory finalization
+- Comparison references: `get-shit-done` artifact-first planning, `skill-creator` reference-backed skill design
+- Review requirement: audit + replay + manual semantic review
+
+### brainstorming
+- Path: `plugins/cc10x/skills/brainstorming/SKILL.md`
+- Role: inline design clarification and planner handoff
+- Allowed edits: clarification wording, design template structure, handoff wording, save examples
+- Forbidden edits: direct writes to `.claude/cc10x/v10/*.md`, changing the brainstorming handoff schema, or bypassing planner handoff
+- Comparison references: `metaswarm` clarification discipline, `get-shit-done` design-before-plan behavior
+- Review requirement: audit + replay + manual semantic review
+
 ### component-builder
 - Path: `plugins/cc10x/agents/component-builder.md`
 - Role: current approved phase execution

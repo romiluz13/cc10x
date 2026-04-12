@@ -37,6 +37,8 @@ LATENCY_AUDIT = PLUGIN_ROOT / "scripts" / "cc10x_latency_audit.py"
 LIVE_HARNESS_RUNNER = PLUGIN_ROOT / "scripts" / "cc10x_live_harness_runner.py"
 SESSION_MEMORY_SKILL = PLUGIN_ROOT / "skills" / "session-memory" / "SKILL.md"
 PLANNER_AGENT = PLUGIN_ROOT / "agents" / "planner.md"
+PLANNING_PATTERNS_SKILL = PLUGIN_ROOT / "skills" / "planning-patterns" / "SKILL.md"
+BRAINSTORMING_SKILL = PLUGIN_ROOT / "skills" / "brainstorming" / "SKILL.md"
 FIXTURES_DIR = PLUGIN_ROOT / "tests" / "fixtures"
 LIVE_MANIFEST_TEMPLATE = PLUGIN_ROOT / "templates" / "live-harness.template.json"
 PLANNING_LIVE_REFERENCE = (
@@ -176,6 +178,7 @@ REQUIRED_FIXTURES = (
     "plan-fresh-review-pass.json",
     "plan-fresh-review-findings.json",
     "plan-fresh-review-exhausted.json",
+    "plan-design-handoff.json",
     "build-happy-path.json",
     "build-checkpoint-decision.json",
     "build-phase-blocked.json",
@@ -240,6 +243,8 @@ def main() -> int:
     orchestration_safety = read(ORCHESTRATION_SAFETY)
     session_memory = read(SESSION_MEMORY_SKILL)
     planner_agent = read(PLANNER_AGENT)
+    planning_patterns = read(PLANNING_PATTERNS_SKILL)
+    brainstorming = read(BRAINSTORMING_SKILL)
     verifier_latency_model = read(VERIFIER_LATENCY_MODEL)
     latency_reduction_note = read(LATENCY_REDUCTION_NOTE)
 
@@ -276,6 +281,12 @@ def main() -> int:
         "cc10x_posttooluse_artifact_guard.py",
         "cc10x_sessionstart_context.py",
         "cc10x_task_completed_guard.py",
+        "cc10x_postcompact_context.py",
+        "cc10x_subagent_stop_audit.py",
+        "cc10x_precompact_state.py",
+        "cc10x_stop_persist.py",
+        "cc10x_stop_failure_log.py",
+        "cc10x_instructions_loaded_audit.py",
     ):
         if script not in hook_commands:
             errors.append(f"hooks.json does not reference {script}")
@@ -531,6 +542,11 @@ def main() -> int:
 
     if "### session-memory" not in prompt_surface_inventory:
         errors.append("prompt surface inventory missing session-memory entry")
+    for required_surface in ("### planning-patterns", "### brainstorming"):
+        if required_surface not in prompt_surface_inventory:
+            errors.append(
+                f"prompt surface inventory missing required entry {required_surface}"
+            )
     if "PINV-012" not in prompt_invariants:
         errors.append("prompt invariants missing session-memory invariant")
 
@@ -699,9 +715,65 @@ def main() -> int:
                 f"'{phrase}'"
             )
 
-    planning_skill = read(PLUGIN_ROOT / "skills" / "planning-patterns" / "SKILL.md")
-    if "live-verification-strategy.md" not in planning_skill:
+    if "live-verification-strategy.md" not in planning_patterns:
         errors.append("planning-patterns missing live verification reference link")
+
+    forbidden_direct_memory_writes = (
+        'Edit(file_path=".claude/cc10x/v10/activeContext.md"',
+        'Edit(file_path=".claude/cc10x/v10/progress.md"',
+        'Edit(file_path=".claude/cc10x/v10/patterns.md"',
+    )
+    for forbidden in forbidden_direct_memory_writes:
+        if forbidden in planning_patterns:
+            errors.append(
+                "planning-patterns still contains direct v10 memory writes instead of router-owned MEMORY_NOTES"
+            )
+        if forbidden in brainstorming:
+            errors.append(
+                "brainstorming still contains direct v10 memory writes instead of router-owned handoff"
+            )
+
+    for phrase in (
+        "One direct save is required - the plan file. Memory indexing is router-owned.",
+        "Emit Router-Owned Memory Intent",
+        "MEMORY_NOTES",
+    ):
+        if phrase not in planning_patterns:
+            errors.append(f"planning-patterns missing harmony phrase '{phrase}'")
+
+    for phrase in (
+        "router handoff are required",
+        "### Brainstorming Handoff (MACHINE-READABLE)",
+        "DESIGN_FILE:",
+        "Router will carry the design reference forward and manage any research or planning transitions automatically.",
+    ):
+        if phrase not in brainstorming:
+            errors.append(f"brainstorming missing harmony phrase '{phrase}'")
+
+    for phrase in (
+        "parse `### Brainstorming Handoff (MACHINE-READABLE)`",
+        "persist it into the workflow artifact `design_file` field",
+        "fall back to the pre-existing memory design reference",
+    ):
+        if phrase not in router_plan_reference:
+            errors.append(f"plan-workflow missing design handoff phrase '{phrase}'")
+
+    for phrase in (
+        "### Inline brainstorming handoff",
+        "persist it into workflow artifact `design_file`",
+        "- Ensure `- Design: {design_file}` remains correct",
+    ):
+        if phrase not in router:
+            errors.append(f"router missing design-handoff phrase '{phrase}'")
+
+    if "Explore project first, then invoke the router." in readme:
+        errors.append(
+            "README still contains the stale explore-before-router instruction"
+        )
+    if "The plugin ships four Claude Code-native hooks:" in readme:
+        errors.append("README still contains the stale four-hooks inventory")
+    if "query-optimize," in planner_agent or " query-optimize " in planner_agent:
+        errors.append("planner still contains stale MongoDB example 'query-optimize'")
 
     description_hygiene = {
         PLUGIN_ROOT

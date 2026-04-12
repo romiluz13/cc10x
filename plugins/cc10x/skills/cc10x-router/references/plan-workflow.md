@@ -2,12 +2,14 @@
 
 1. Restore design enrichment:
    - Read `- Design:` from `activeContext.md ## References`.
-   - If a design path exists, verify it with `Glob(...)` and pass it under `## Design File`.
+   - If a design path exists, verify it with `Glob(...)` and hold it as fallback.
 2. Mandatory brainstorming (ALWAYS runs for PLAN workflows):
    - ALWAYS run `Skill(skill="cc10x:brainstorming")` in the main context before planner. Brainstorming is how the user explores and clarifies intent — skipping it means the planner works from assumptions instead of understanding.
    - If a valid design file exists from step 1: brainstorming uses it as a foundation (the skill's Spec File Workflow reads and expands the existing design rather than starting from scratch).
    - If no design file exists: brainstorming starts from the user's request and explores the idea space.
-   - Brainstorming may ask the user questions and may save a `*-design.md` file. After it completes, re-read `activeContext.md ## References` and refresh the design path.
+   - Brainstorming may ask the user questions and may save a `*-design.md` file. After it completes, parse `### Brainstorming Handoff (MACHINE-READABLE)` and capture `DESIGN_FILE`.
+   - If `DESIGN_FILE` is present, persist it into the workflow artifact `design_file` field and pass it under `## Design File`.
+   - If no handoff is present, fall back to the pre-existing memory design reference from step 1.
    - Brainstorming should ask only unresolved, high-impact questions and stop as soon as the intent contract is complete.
 3. Optional research before planning:
    - Ask whether to run web + GitHub research for external/unfamiliar technology when it would materially improve the plan.

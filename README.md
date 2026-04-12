@@ -257,7 +257,7 @@ This section is written for Claude Code to follow when the user says "set up cc1
 # CC10x Orchestration (Always On)
 
 IMPORTANT: ALWAYS invoke cc10x-router on ANY development task. First action, no exceptions.
-IMPORTANT: Explore project first, then invoke the router.
+IMPORTANT: Do only minimal orientation if needed, then invoke the router immediately.
 IMPORTANT: Prefer retrieval-led reasoning over pre-training-led reasoning for orchestration decisions.
 IMPORTANT: Never bypass the router. It is the system.
 IMPORTANT: NEVER use Edit, Write, or Bash (for code changes) without first invoking cc10x-router.
@@ -528,7 +528,7 @@ cc10x uses Claude Code's Tasks system for workflow coordination:
 
 ## Hooks
 
-The plugin ships four Claude Code-native hooks:
+The plugin currently ships these Claude Code-native hooks:
 
 | Hook | Purpose |
 |------|---------|
@@ -536,6 +536,12 @@ The plugin ships four Claude Code-native hooks:
 | `SessionStart` | Rehydrate workflow context after restart or compaction |
 | `PostToolUse` | Audit workflow artifact integrity after writes |
 | `TaskCompleted` | Validate CC10X task metadata before task completion |
+| `PostCompact` | Capture compaction events for workflow telemetry |
+| `SubagentStop` | Audit subagent outputs for required contract markers |
+| `PreCompact` | Snapshot workflow state before compaction |
+| `Stop` | Snapshot workflow state on session stop |
+| `StopFailure` | Log API failure telemetry asynchronously |
+| `InstructionsLoaded` | Audit instruction-file loading asynchronously |
 
 These hooks are intentionally minimal. They improve reliability without turning the plugin into a second runtime.
 

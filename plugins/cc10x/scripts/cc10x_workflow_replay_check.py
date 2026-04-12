@@ -21,6 +21,7 @@ REQUIRED_FIXTURES = (
     "plan-fresh-review-pass.json",
     "plan-fresh-review-findings.json",
     "plan-fresh-review-exhausted.json",
+    "plan-design-handoff.json",
     "build-happy-path.json",
     "build-checkpoint-decision.json",
     "build-phase-blocked.json",
@@ -695,6 +696,51 @@ def check_plan_fresh_review_exhausted(fixture: dict[str, Any]) -> None:
     )
 
 
+def check_plan_design_handoff(fixture: dict[str, Any]) -> None:
+    handoff = fixture["agent_outputs"]["brainstorming_handoff"]
+    require(
+        handoff["DESIGN_FILE"] == fixture["expected"]["artifact_delta"]["design_file"],
+        "plan-design-handoff: router must persist the brainstorming design_file into the artifact",
+    )
+    require(
+        bool(handoff["DESIGN_SUMMARY"]),
+        "plan-design-handoff: brainstorming handoff must include a design summary",
+    )
+    require(
+        fixture["expected"]["planner_inputs"]["design_file"] == handoff["DESIGN_FILE"],
+        "plan-design-handoff: planner must receive the handoff design file",
+    )
+    planner_text = load_text(PLANNER_PROMPT)
+    gate_text = load_text(PLAN_REVIEW_GATE)
+    for marker in fixture["expected"]["planner_markers"]:
+        require(
+            marker in planner_text,
+            f"plan-design-handoff: planner marker missing '{marker}'",
+        )
+    for marker in fixture["expected"]["gate_markers"]:
+        require(
+            marker in gate_text or marker == "memory_router_owned",
+            f"plan-design-handoff: missing required marker '{marker}'",
+        )
+    require(
+        fixture["expected"]["next_action"] == "run_planner_with_design_file",
+        "plan-design-handoff: wrong next action",
+    )
+    memory_sync = fixture["expected"]["artifact_delta"]["memory_sync"]
+    require(
+        memory_sync["design_reference_persisted"] is True,
+        "plan-design-handoff: design reference must be persisted during memory finalization",
+    )
+    require(
+        memory_sync["plan_recent_change_persisted"] is True,
+        "plan-design-handoff: plan save event must be persisted during memory finalization",
+    )
+    require(
+        memory_sync["next_step_persisted"] is True,
+        "plan-design-handoff: next step must be persisted during memory finalization",
+    )
+
+
 def check_build_happy_path(fixture: dict[str, Any]) -> None:
     validate_builder_contract(
         "build-happy-path", fixture["agent_outputs"]["builder_contract"]
@@ -904,6 +950,7 @@ CHECKS = {
     "plan-fresh-review-pass.json": check_plan_fresh_review_pass,
     "plan-fresh-review-findings.json": check_plan_fresh_review_findings,
     "plan-fresh-review-exhausted.json": check_plan_fresh_review_exhausted,
+    "plan-design-handoff.json": check_plan_design_handoff,
     "build-happy-path.json": check_build_happy_path,
     "build-checkpoint-decision.json": check_build_checkpoint_decision,
     "build-phase-blocked.json": check_build_phase_blocked,

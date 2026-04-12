@@ -427,6 +427,19 @@ If the YAML block is missing or malformed:
 - Do not continue the workflow based on prose alone.
 - Re-run inline verification and fail safe.
 
+### Inline brainstorming handoff
+
+After `Skill(skill="cc10x:brainstorming")`, parse the fenced YAML block under
+`### Brainstorming Handoff (MACHINE-READABLE)`.
+
+Required field:
+- `DESIGN_FILE`
+
+If present:
+- persist it into workflow artifact `design_file`
+- pass it to planner as `## Design File`
+- do not require `activeContext.md` to be updated first
+
 ### Contract overrides
 
 | Agent | Override |
@@ -514,8 +527,9 @@ If any answer is "no" or "unknown", treat as incomplete and apply the fallback v
    - They should already have called `TaskUpdate(status="completed")`.
    - Parse YAML before continuing.
 3. READ-ONLY agents:
-   - During compatibility phase, if task is still `in_progress` with blockers, treat it as legacy self-remediation.
-   - Otherwise router applies fallback `TaskUpdate(status="completed")`.
+   - Router owns completion fallback for read-only tasks.
+   - If the task is still not completed after agent return, router applies fallback `TaskUpdate(status="completed")`.
+   - Blockers or findings may change workflow routing, but they never transfer orchestration ownership back to the read-only agent.
 4. Memory payload was already captured in step 0:
    - READ-ONLY agents: append extracted notes to the memory task description.
    - WRITE agents: append deferred or supplemental payload needed by the memory task.
@@ -563,6 +577,9 @@ The memory task:
 
 For PLAN:
 - Ensure `- Plan: {plan_file}` remains correct in `activeContext.md ## References`.
+- Ensure `- Design: {design_file}` remains correct in `activeContext.md ## References` when a design exists.
+- If a plan exists, record `Plan saved: {plan_file}` in `activeContext.md ## Recent Changes`.
+- If a plan exists, set `activeContext.md ## Next Steps` to `1. Execute plan: {plan_file}` unless the workflow ended in clarification-needed state.
 
 For DEBUG:
 - Preserve the latest `[DEBUG-RESET: wf:{workflow_task_id}]` section in `## Recent Changes` and summarize the final result beneath it.

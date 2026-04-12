@@ -171,7 +171,7 @@ It means:
 - bad summaries can destroy a good workflow
 - description design is part of behavior design
 
-CC10X should steal this insight aggressively.
+CC10X should absorb this insight aggressively.
 
 ## 4. Babysitter is stronger as process code than as English prompt design
 

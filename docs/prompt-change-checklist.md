@@ -58,7 +58,7 @@ For each changed Tier 1 prompt, confirm:
 Every major prompt-only round must record:
 - what changed
 - why it is safe
-- which competitor idea inspired it
+- which external reference or prior pattern informed it
 - which prompt surfaces changed
 - whether the change copied wording, structure, or only principle
 - which invariants were intentionally untouched
