@@ -468,7 +468,7 @@ Skills are **loaded automatically by agents**. You never invoke them directly.
 | **code-review-patterns** | code-reviewer, hunter | Security, quality, performance |
 | **planning-patterns** | planner | Comprehensive plans |
 | **architecture-patterns** | ALL agents | System & API design |
-| **frontend-patterns** | ALL agents | UX, accessibility |
+| **frontend-patterns** | ALL agents | UX, accessibility, DESIGN.md authoring |
 | **brainstorming** | planner | Idea exploration |
 | **plan-review-gate** | planner | Final plan sanity gate before handoff |
 | **research** | planner, bug-investigator (via github-researcher agent) | Synthesis-only: guides agents on how to interpret research results; GitHub execution is handled by the `github-researcher` agent |
@@ -725,6 +725,7 @@ plugins/cc10x/
     ├── brainstorming/SKILL.md
     ├── architecture-patterns/SKILL.md
     ├── frontend-patterns/SKILL.md
+    │   └── references/{ui-state-and-feedback,accessibility-and-forms,performance-and-layout,design-md-authoring,design-md-inspiration-index}.md
     ├── research/SKILL.md
     └── verification-before-completion/SKILL.md
 ```

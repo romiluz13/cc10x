@@ -114,6 +114,20 @@ FRONTEND_LAYOUT_REFERENCE = (
     / "references"
     / "performance-and-layout.md"
 )
+FRONTEND_DESIGN_MD_REFERENCE = (
+    PLUGIN_ROOT
+    / "skills"
+    / "frontend-patterns"
+    / "references"
+    / "design-md-authoring.md"
+)
+FRONTEND_DESIGN_MD_INSPIRATION_REFERENCE = (
+    PLUGIN_ROOT
+    / "skills"
+    / "frontend-patterns"
+    / "references"
+    / "design-md-inspiration-index.md"
+)
 TDD_PATTERNS_REFERENCE = (
     PLUGIN_ROOT
     / "skills"
@@ -353,6 +367,10 @@ def main() -> int:
         errors.append("missing frontend accessibility/forms reference")
     if not FRONTEND_LAYOUT_REFERENCE.exists():
         errors.append("missing frontend performance/layout reference")
+    if not FRONTEND_DESIGN_MD_REFERENCE.exists():
+        errors.append("missing frontend DESIGN.md authoring reference")
+    if not FRONTEND_DESIGN_MD_INSPIRATION_REFERENCE.exists():
+        errors.append("missing frontend DESIGN.md inspiration reference")
     if not TDD_PATTERNS_REFERENCE.exists():
         errors.append("missing TDD testing patterns reference")
     if not TDD_MOCKS_REFERENCE.exists():
@@ -774,6 +792,40 @@ def main() -> int:
         errors.append("README still contains the stale four-hooks inventory")
     if "query-optimize," in planner_agent or " query-optimize " in planner_agent:
         errors.append("planner still contains stale MongoDB example 'query-optimize'")
+
+    frontend_skill = read(PLUGIN_ROOT / "skills" / "frontend-patterns" / "SKILL.md")
+    frontend_design_md = read(FRONTEND_DESIGN_MD_REFERENCE)
+    frontend_design_md_inspiration = read(FRONTEND_DESIGN_MD_INSPIRATION_REFERENCE)
+    for phrase in (
+        "DESIGN.md authoring from screenshots",
+        "references/design-md-authoring.md",
+        "references/design-md-inspiration-index.md",
+        "Treat inspiration as input to the project's own design contract",
+    ):
+        if phrase not in frontend_skill:
+            errors.append(
+                f"frontend-patterns missing DESIGN.md trigger/reference phrase '{phrase}'"
+            )
+    for phrase in (
+        "`DESIGN.md` is a project-local visual contract.",
+        "Do not copy a screenshot or a brand.",
+        "## Stable Structure",
+        "## Screenshot-Specific Rules",
+        "Use inspiration references to choose a direction, not to clone",
+    ):
+        if phrase not in frontend_design_md:
+            errors.append(
+                f"design-md-authoring reference missing required phrase '{phrase}'"
+            )
+    for phrase in (
+        "inspect only the requested company/style entry.",
+        "Choose at most one primary reference and one secondary accent.",
+        "Never paste a company `DESIGN.md` into project memory.",
+    ):
+        if phrase not in frontend_design_md_inspiration:
+            errors.append(
+                f"design-md-inspiration-index reference missing required phrase '{phrase}'"
+            )
 
     description_hygiene = {
         PLUGIN_ROOT

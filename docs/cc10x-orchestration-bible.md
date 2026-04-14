@@ -112,7 +112,7 @@ Agents spawned via Agent() run in isolated context windows by default — they c
 - `plan-review-gate` — Inline saved-plan trust gate (planner only)
 - `brainstorming` — Idea exploration (router PLAN workflow in main context — NOT planner frontmatter)
 - `architecture-patterns` — Architecture guidance (loaded conditionally via SKILL_HINTS)
-- `frontend-patterns` — Frontend guidance (loaded conditionally via SKILL_HINTS)
+- `frontend-patterns` — Frontend guidance and DESIGN.md authoring (loaded conditionally via SKILL_HINTS)
 - `research` — Synthesis guidance (passed as SKILL_HINTS to planner/bug-investigator when parallel research files are available — NOT router-executed inline)
 
 ### Research Architecture
@@ -458,7 +458,7 @@ Router passes SKILL_HINTS in agent prompt. Agent invokes via `Skill(skill="{name
 
 **Sources for SKILL_HINTS:**
 1. Approved project/domain skills from `CLAUDE.md` or `patterns.md`
-2. `cc10x:frontend-patterns` when the task is UI/frontend-heavy
+2. `cc10x:frontend-patterns` when the task is UI/frontend-heavy, involves screenshots/visual preferences, or needs a project-local `DESIGN.md`
 3. `cc10x:architecture-patterns` when the task spans APIs, schemas, auth, integration boundaries, or multiple subsystems
 4. `cc10x:research` when planner or investigator has research files to synthesize
 
