@@ -212,6 +212,43 @@ If not, the plugin still works. Research falls back to built-in Claude Code tool
 
 **You describe the work. cc10x routes it, brings in the right specialists, and keeps the bar for "done" higher than a convincing paragraph.**
 
+```
+                        YOU
+                         │
+                         ▼
+            ┌────────────────────────┐
+            │      cc10x-router      │  ◄── only entry point
+            │   detects intent       │
+            └────────────┬───────────┘
+                         │
+          ┌──────────────┼──────────────┬─────────────┐
+          │              │              │             │
+          ▼              ▼              ▼             ▼
+        BUILD          DEBUG         REVIEW         PLAN
+          │              │              │             │
+          ▼              ▼              ▼             ▼
+    component-      bug-          code-          planner
+      builder    investigator   reviewer            │
+          │              │              │             ▼
+          ▼              ▼           (done)     plan-gap-
+  [code-reviewer    code-reviewer             reviewer
+   ∥ silent-            │
+   failure-            ▼
+    hunter]      integration-
+          │         verifier
+          ▼
+   integration-
+     verifier
+
+                 ┌──────────────────────────┐
+                 │  STATE (every workflow)  │
+                 │  activeContext.md        │
+                 │  patterns.md            │
+                 │  progress.md            │
+                 │  {wf}.json + .events    │
+                 └──────────────────────────┘
+```
+
 ---
 
 ## Installation
