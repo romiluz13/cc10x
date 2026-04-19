@@ -196,6 +196,7 @@ cc10x_V2-main/
 !docs/cc10x-orchestration-logic-analysis.md
 !docs/router-invariants.md
 !docs/known-flaws.md
+!docs/2026-04-19-diff-driven-docs-plan.md
 
 # Production code (DO NOT IGNORE)
 !plugins/
