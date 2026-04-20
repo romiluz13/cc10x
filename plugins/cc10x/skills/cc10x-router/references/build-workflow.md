@@ -77,10 +77,23 @@ TaskCreate({
 }) -> verifier_task_id
 TaskUpdate({ taskId: verifier_task_id, addBlockedBy: [reviewer_task_id, hunter_task_id] })
 
+**Opt-out check:** Before creating the doc-sync task, read `activeContext.md ## Session Settings`. If `DIFF_DRIVEN_DOCS: skip` is present, skip doc-sync task creation entirely and update Memory Update to block on `verifier_task_id` directly instead of `doc_sync_task_id`. Skip the remaining doc-sync task graph below.
+
+TaskCreate({
+  subject: "CC10X doc-syncer: Sync documentation",
+  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:build-doc-sync\nplan:{plan_file or 'N/A'}\nscope:N/A\nreason:Sync docs to reflect diff\n\nAnalyze the diff from this BUILD phase. Classify doc impact. Update documentation across business, technical, and audit layers as applicable. Emit SKIPPED contract immediately if IMPACT_LEVEL=none.",
+  activeForm: "Syncing documentation"
+}) -> doc_sync_task_id
+TaskUpdate({ taskId: doc_sync_task_id, addBlockedBy: [verifier_task_id] })
+
 TaskCreate({
   subject: "CC10X Memory Update: Persist workflow learnings",
   description: "wf:{workflow_uuid}\nkind:memory\norigin:router\nphase:memory-finalize\nplan:{plan_file or 'N/A'}\nscope:N/A\nreason:Persist captured Memory Notes\n\nROUTER ONLY: execute inline. Read the workflow artifact and THIS task description payload, persist to .claude/cc10x/v10/*.md, then remove the matching [cc10x-internal] memory_task_id line from activeContext.md ## References. Never spawn Agent() for this task.",
   activeForm: "Persisting workflow learnings"
 }) -> memory_task_id
-TaskUpdate({ taskId: memory_task_id, addBlockedBy: [verifier_task_id] })
+TaskUpdate({ taskId: memory_task_id, addBlockedBy: [doc_sync_task_id] })
 ```
+
+### doc-syncer SKIPPED state
+
+If doc-syncer returns `STATUS: SKIPPED` (i.e., `IMPACT_LEVEL: none`), the router treats it as a passing state — equivalent to `COMPLETE` for workflow-advance purposes. The router must not block Memory Update when the SKIPPED contract is present and `SKIP_REASON` is non-empty. Advance to Memory Update immediately.
