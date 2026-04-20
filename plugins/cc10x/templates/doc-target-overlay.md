@@ -7,6 +7,9 @@ the generic heuristics in `references/doc-target-heuristics.md`.
 **Where to paste:** Add the content below as a new top-level section in your CLAUDE.md,
 after your project description and before any `## Commands` or `## Architecture` sections.
 
+**Important:** The examples below show a React/Next.js + Supabase project. Replace the file
+patterns and doc paths with the ones that match your actual stack.
+
 ---
 
 ## Doc Targets
@@ -14,6 +17,10 @@ after your project description and before any `## Commands` or `## Architecture`
 Project-specific documentation targets for diff-driven-docs (cc10x:doc-syncer).
 
 ### Technical Layer
+
+Replace the example rows below with patterns that match your project's file layout.
+
+> **Example — React/Next.js + Supabase:**
 
 | File Pattern | Doc File | Update Instructions |
 |-------------|----------|---------------------|
@@ -23,11 +30,20 @@ Project-specific documentation targets for diff-driven-docs (cc10x:doc-syncer).
 | `supabase/functions/**/*.ts` | `docs/supabase/functions-reference.md` | Add/update edge function entry |
 | `src/pages/**/*.tsx` | `docs/architecture.md` | Update route structure section |
 
+> **Example — Python/FastAPI + SQLAlchemy:**
+>
+> | File Pattern | Doc File | Update Instructions |
+> |-------------|----------|---------------------|
+> | `app/routers/**/*.py` | `docs/api-reference.md` | Add/update endpoint entry: method, path, params, response |
+> | `app/models/**/*.py` | `docs/database-schema.md` | Update model fields and relationships |
+> | `alembic/versions/**/*.py` | `docs/database-schema.md` | Update table/column definitions |
+> | `app/services/**/*.py` | `docs/developer/services.md` | Add/update service description and public methods |
+
 ### Business Layer
 
 | Signal | Doc File |
 |--------|---------|
-| New feature page | `docs/admin-guide/` — create or update relevant guide |
+| New feature page | Project-specific user guide directory — create or update relevant guide |
 | Permission change | `docs/admin-guide/roles-and-permissions.md` |
 | Config option added | `docs/admin-guide/settings-reference.md` |
 

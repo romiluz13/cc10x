@@ -5,21 +5,25 @@ Projects customize targets in CLAUDE.md (see templates/doc-target-overlay.md).
 
 ## Technical Layer Heuristics
 
+These patterns are language- and framework-agnostic. Projects override them with a `## Doc Targets` table in `CLAUDE.md`.
+
 | File Pattern | Doc Area | What to Update |
 |-------------|----------|----------------|
-| `src/hooks/use*.{ts,js}` | Hooks reference | Signature, params, return, key behaviors |
-| `src/components/**/*.{tsx,jsx}` | Components catalog | Table row: name, path, description |
-| `src/pages/**/*.{tsx,jsx}` | Route/page docs | Route structure section |
-| `src/lib/**/*.{ts,js}` | Library/utility docs | Exported API entry |
-| `src/contexts/**/*.{tsx,jsx}` | Context/provider docs | Provider description and API |
-| `supabase/functions/**/*.{ts,js}` | Edge function reference | Function entry |
-| `supabase/migrations/**/*.sql` | Database schema docs | Table/column definitions |
-| `**/migrations/**/*.sql` | Database schema docs | Table/column definitions |
-| `src/integrations/**/*.{ts,js}` | Integration docs | Integration description |
-| `src/types/**/*.{ts,js}` | Type definition docs | Type entry |
-| `src/api/**/*.{ts,js}` | API reference | Endpoint or service entry |
-| `**/*.config.{ts,js,json}` | Configuration docs | Config option docs |
-| `.env.example` | Environment variable docs | New variable entry |
+| `**/components/**/*.{ts,tsx,js,jsx,vue,svelte,py,rb}` | Components/widgets catalog | Table row: name, path, description |
+| `**/hooks/**/*.{ts,js}` or `use*.{ts,js}` | Hooks/composables reference | Signature, params, return, key behaviors |
+| `**/pages/**/*.{ts,tsx,js,jsx,py,rb}` | Route/page docs | Route structure section |
+| `**/routes/**/*.{ts,js,py,rb,go}` | API/route docs | Endpoint entry: method, path, params, response |
+| `**/controllers/**/*.{ts,js,py,rb,go}` | Controller/handler docs | Handler entry |
+| `**/services/**/*.{ts,js,py,rb,go}` | Service layer docs | Service description and public API |
+| `**/models/**/*.{ts,js,py,rb,go}` | Data model docs | Model schema, fields, relationships |
+| `**/lib/**/*.{ts,js,py,rb,go}` or `**/utils/**/*.{ts,js,py,rb,go}` | Library/utility docs | Exported API entry |
+| `**/contexts/**/*.{ts,tsx,js,jsx}` or `**/providers/**/*.{ts,js}` | Context/provider docs | Provider description and API |
+| `**/functions/**/*.{ts,js,py}` or `**/handlers/**/*.{ts,js,py,go}` | Function/handler reference | Function entry |
+| `**/migrations/**/*.sql` or `**/migrations/**/*.py` | Database schema docs | Table/column definitions |
+| `**/types/**/*.{ts,py}` or `**/schemas/**/*.{ts,js,py}` | Type/schema docs | Type entry |
+| `**/api/**/*.{ts,js,py,rb,go}` or `**/endpoints/**/*.{ts,js,py}` | API reference | Endpoint or service entry |
+| `**/*.config.{ts,js,json,yaml,toml}` | Configuration docs | Config option docs |
+| `.env.example` or `.env.template` | Environment variable docs | New variable entry |
 
 ## Business Layer Heuristics
 
@@ -53,7 +57,7 @@ Never duplicate doc content in CLAUDE.md — it is an index only.
 
 ## JSDoc Rule
 
-For any exported function, hook, or component whose signature was added or changed:
-- Add or update the JSDoc block with `@param`, `@returns`, and a one-line description
-- For React components, JSDoc on the Props interface is sufficient
-- Skip trivial internal helpers and private functions
+For any exported function, module, or component whose signature was added or changed:
+- Add or update the inline doc block (`@param`, `@returns`, or language-equivalent annotations) with a one-line description
+- For component-based frameworks, document component inputs (props, arguments, or slots)
+- Skip trivial internal helpers and private/unexported functions

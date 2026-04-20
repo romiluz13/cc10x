@@ -62,7 +62,7 @@ Hooks reference, components catalog, schema documentation, architecture notes, a
 
 - Scope: hooks reference, components catalog, API reference, edge function reference, database schema docs, environment variable docs, architecture notes
 - Update trigger: any exported function, hook, or component whose signature was added or changed; any migration or schema change; any new route or page
-- What to write: name, file path, description, signature, params, return value, key behaviors; for React components, JSDoc on the Props interface is sufficient
+- What to write: name, file path, description, signature, params, return value, key behaviors; for component-based frameworks, document component inputs (props, arguments, or slots)
 
 ### Audit Layer
 
