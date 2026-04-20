@@ -12,6 +12,7 @@
 | `planner` | YAML `### Router Contract` | `PLAN_CREATED`, `DECISION_RFC_CREATED`, `NEEDS_CLARIFICATION` | open decisions, failed spec gate, or blocking clarification need | `MEMORY_NOTES` |
 | `web-researcher` | YAML result block | `COMPLETE`, `PARTIAL`, `DEGRADED`, `UNAVAILABLE` | degraded or unavailable backend | `MEMORY_NOTES` |
 | `github-researcher` | YAML result block | `COMPLETE`, `PARTIAL`, `DEGRADED`, `UNAVAILABLE` | degraded or unavailable backend | `MEMORY_NOTES` |
+| `doc-syncer` | YAML `### Router Contract` | `COMPLETE`, `SKIPPED`, `PARTIAL`, `FAIL` | `STATUS=FAIL` or `STATUS=PARTIAL` with missing required layers | `MEMORY_NOTES` |
 
 ## Read-Only Review Agents
 

@@ -1,0 +1,42 @@
+{
+  "id": "build-doc-sync-skipped",
+  "workflow_type": "BUILD",
+  "description": "doc-syncer skips all layers when diff is test-only with no new patterns",
+  "starting_artifact": {
+    "workflow_uuid": "wf-20260419T143000Z-doc-skip",
+    "workflow_id": "wf-20260419T143000Z-doc-skip",
+    "workflow_type": "BUILD",
+    "state_root": ".claude/cc10x/v10",
+    "plan_mode": "execution_plan",
+    "verification_rigor": "standard",
+    "proof_status": "passed",
+    "traceability": {"requirements": [], "phases": [], "verification": [], "remediation": []},
+    "phase_cursor": "phase-1",
+    "task_ids": {},
+    "results": {},
+    "intent": {"goal": "Add test coverage for existing auth flow"},
+    "evidence": {},
+    "quality": {"convergence_state": "stable"},
+    "status_history": [],
+    "remediation_history": []
+  },
+  "relevant_tasks": {},
+  "agent_outputs": {
+    "doc_syncer_contract": {
+      "STATUS": "SKIPPED",
+      "IMPACT_LEVEL": "none",
+      "DOC_LAYERS_EVALUATED": [],
+      "DOC_FILES_UPDATED": [],
+      "DOC_FILES_SKIPPED": [],
+      "SKIP_REASON": "Diff contains only test additions with no new patterns; no doc layers triggered",
+      "AUDIT_DOCS_CREATED": [],
+      "AUDIT_DOCS_UPDATED": [],
+      "MEMORY_NOTES": {"learnings": [], "patterns": [], "verification": [], "deferred": []}
+    }
+  },
+  "expected": {
+    "next_action": "memory_finalize",
+    "doc_syncer_status": "SKIPPED",
+    "note": "SKIPPED is a passing state; router advances to Memory Update immediately"
+  }
+}
