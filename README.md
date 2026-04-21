@@ -1,4 +1,6 @@
-# cc10x
+<p align="center">
+  <img src="assets/logo.png" alt="CC10x — Claude Code harness | specialist agents. Orange stylized X with starburst and CC10x wordmark." width="320" />
+</p>
 
 ### Router-Owned Claude Code Harness
 
