@@ -798,6 +798,7 @@ def main() -> int:
     frontend_design_md_inspiration = read(FRONTEND_DESIGN_MD_INSPIRATION_REFERENCE)
     for phrase in (
         "DESIGN.md authoring from screenshots",
+        "spec-aligned project-local `DESIGN.md`",
         "references/design-md-authoring.md",
         "references/design-md-inspiration-index.md",
         "Treat inspiration as input to the project's own design contract",
@@ -809,8 +810,11 @@ def main() -> int:
     for phrase in (
         "`DESIGN.md` is a project-local visual contract.",
         "Do not copy a screenshot or a brand.",
+        "## Format Contract",
         "## Stable Structure",
+        "## Token Rules",
         "## Screenshot-Specific Rules",
+        "npx @google/design.md lint DESIGN.md",
         "Use inspiration references to choose a direction, not to clone",
     ):
         if phrase not in frontend_design_md:
@@ -821,6 +825,7 @@ def main() -> int:
         "inspect only the requested company/style entry.",
         "Choose at most one primary reference and one secondary accent.",
         "Never paste a company `DESIGN.md` into project memory.",
+        "YAML token front matter first",
     ):
         if phrase not in frontend_design_md_inspiration:
             errors.append(

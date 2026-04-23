@@ -21,7 +21,7 @@ Read only the references needed for the current UI task:
 - `references/ui-state-and-feedback.md` for loading/error/empty/success ordering, skeleton vs spinner, and mutation feedback
 - `references/accessibility-and-forms.md` for WCAG-oriented checks, keyboard/focus, labels, form patterns, and mobile usability
 - `references/performance-and-layout.md` for responsive checks, motion, overflow, URL state, performance guardrails, and light/dark mode checks
-- `references/design-md-authoring.md` for creating or updating a project-local `DESIGN.md` from screenshots, existing UI, user preferences, or a selected inspiration style
+- `references/design-md-authoring.md` for creating or updating a spec-aligned project-local `DESIGN.md` from screenshots, existing UI, user preferences, or a selected inspiration style
 - `references/design-md-inspiration-index.md` only when the user asks for a style reference, brand-like direction, moodboard, or DESIGN.md-style examples
 
 ## Focus Areas (Reference Pattern)
@@ -87,7 +87,7 @@ Before writing any UI code, commit to answers for:
 
 ## DESIGN.md Authoring
 
-Read `references/design-md-authoring.md` before creating or updating a project-local `DESIGN.md`, especially when the user provides screenshots, existing UI, visual preferences, or asks the agent to preserve a design direction.
+Read `references/design-md-authoring.md` before creating or updating a spec-aligned project-local `DESIGN.md`, especially when the user provides screenshots, existing UI, visual preferences, or asks the agent to preserve a design direction.
 
 When inspiration is needed, read `references/design-md-inspiration-index.md` to choose a style family. Treat inspiration as input to the project's own design contract, not as an instruction to copy another company's UI.
 

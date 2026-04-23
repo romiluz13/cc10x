@@ -458,7 +458,7 @@ Router passes SKILL_HINTS in agent prompt. Agent invokes via `Skill(skill="{name
 
 **Sources for SKILL_HINTS:**
 1. Approved project/domain skills from `CLAUDE.md` or `patterns.md`
-2. `cc10x:frontend-patterns` when the task is UI/frontend-heavy, involves screenshots/visual preferences, or needs a project-local `DESIGN.md`
+2. `cc10x:frontend-patterns` when the task is UI/frontend-heavy, involves screenshots/visual preferences, or needs a spec-aligned project-local `DESIGN.md`
 3. `cc10x:architecture-patterns` when the task spans APIs, schemas, auth, integration boundaries, or multiple subsystems
 4. `cc10x:research` when planner or investigator has research files to synthesize
 

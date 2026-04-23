@@ -115,10 +115,10 @@ copy.
 
 ### frontend-patterns
 - Path: `plugins/cc10x/skills/frontend-patterns/SKILL.md`
-- Role: advisory frontend guardrails and project-local DESIGN.md authoring guidance
+- Role: advisory frontend guardrails and spec-aligned project-local DESIGN.md authoring guidance
 - Allowed edits: trigger accuracy, brevity, advisory clarifications, reference navigation, checklist extraction, DESIGN.md authoring guidance
 - Forbidden edits: authority drift that competes with user/project standards or copying external brand/design references as project authority
-- Comparison references: `superpowers` writing-skills description hygiene
+- Comparison references: DESIGN.md format specification and `superpowers` writing-skills description hygiene
 - Review requirement: audit only unless authority wording changes
 
 ### debugging-patterns

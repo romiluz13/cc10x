@@ -23,4 +23,6 @@ Choose at most one primary reference and one secondary accent. If more are tempt
 
 ## Output Rule
 
-Never paste a company `DESIGN.md` into project memory. Distill the durable visual rules into the project's own `DESIGN.md` using `design-md-authoring.md`.
+Never paste a company `DESIGN.md` into project memory. Distill the durable visual rules into the project's own spec-aligned `DESIGN.md` using `design-md-authoring.md`.
+
+The output should preserve the canonical DESIGN.md shape: YAML token front matter first, then the ordered markdown sections from `design-md-authoring.md`.

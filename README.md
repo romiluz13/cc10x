@@ -507,7 +507,7 @@ Skills are **loaded automatically by agents**. You never invoke them directly.
 | **code-review-patterns** | code-reviewer, hunter | Security, quality, performance |
 | **planning-patterns** | planner | Comprehensive plans |
 | **architecture-patterns** | ALL agents | System & API design |
-| **frontend-patterns** | ALL agents | UX, accessibility, DESIGN.md authoring |
+| **frontend-patterns** | ALL agents | UX, accessibility, spec-aligned DESIGN.md authoring |
 | **brainstorming** | planner | Idea exploration |
 | **plan-review-gate** | planner | Final plan sanity gate before handoff |
 | **research** | planner, bug-investigator (via github-researcher agent) | Synthesis-only: guides agents on how to interpret research results; GitHub execution is handled by the `github-researcher` agent |
