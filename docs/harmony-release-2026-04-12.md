@@ -33,7 +33,7 @@ Goal: remove active conflicts before refining behavior.
 Required changes:
 - Update `CLAUDE.md` so orientation and router invocation no longer contradict each other.
 - Replace the stale MongoDB skill alias in `CLAUDE.md` with the installed `mongodb-query-optimizer` name.
-- Update `plugins/cc10x/agents/bug-investigator.md` so debug attempt tracking reads memory and emits memory notes, but never instructs the agent to edit `.claude/cc10x/v10/*.md` directly.
+- Update `plugins/cc10x/agents/bug-investigator.md` so debug attempt tracking reads memory and emits memory notes, but never instructs the agent to edit `.cc10x/v10/*.md` directly.
 - Update `plugins/cc10x/agents/code-reviewer.md` so internal CC10X skills are loaded only when passed by the router through `## SKILL_HINTS`.
 - Update stale planner terminology where `Dev Journal` no longer matches the live plan contract language.
 

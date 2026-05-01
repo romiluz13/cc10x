@@ -49,7 +49,7 @@ All three emit `### Memory Notes (For Workflow-Final Persistence)` instead of YA
 
 ## Memory Handoff Rules
 
-- WRITE agents never edit `.claude/cc10x/v10/*.md` directly.
+- WRITE agents never edit `.cc10x/v10/*.md` directly.
 - WRITE agents emit YAML `MEMORY_NOTES`.
 - READ-ONLY agents emit `### Memory Notes (For Workflow-Final Persistence)`.
 - Router persists both shapes into workflow artifacts first, then final markdown memory.

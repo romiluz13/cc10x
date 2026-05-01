@@ -44,13 +44,13 @@ If memory is narrated instead of distilled, it bloats context and loses signal.
 
 ## Load-Bearing Boundaries
 
-- Memory lives under `.claude/cc10x/v10/`.
+- Memory lives under `.cc10x/v10/`.
 - The router loads and auto-heals memory files before routing or resume.
-- WRITE agents read memory, but do **not** edit `.claude/cc10x/v10/*.md` directly.
+- WRITE agents read memory, but do **not** edit `.cc10x/v10/*.md` directly.
 - WRITE agents emit structured `MEMORY_NOTES` in their Router Contract.
 - READ-ONLY agents emit `### Memory Notes (For Workflow-Final Persistence)`.
 - The router-owned memory-finalize task is the only final writer of memory markdown files.
-- Workflow artifacts under `.claude/cc10x/v10/workflows/{wf}.json` remain the durable
+- Workflow artifacts under `.cc10x/v10/workflows/{wf}.json` remain the durable
   execution truth; markdown memory is the stable index.
 - Required headings and anchors are a contract. Do not invent new file layouts or marker
   schemes.
@@ -67,7 +67,7 @@ Use the right layer for the right kind of information:
 - `patterns.md`: reusable project standards, gotchas, conventions, and skill hints
 - `progress.md`: current workflow, tasks snapshot, completed items, verification evidence
 - `docs/plans/*` and `docs/research/*`: the detailed artifacts; memory points to them
-- `.claude/cc10x/v10/workflows/{wf}.json` and `.events.jsonl`: the durable orchestration
+- `.cc10x/v10/workflows/{wf}.json` and `.events.jsonl`: the durable orchestration
   truth
 
 Read `references/memory-model-and-ownership.md` if you need the full ownership model or the
@@ -105,9 +105,9 @@ without re-reading the whole conversation, the memory is under-distilled.
 At workflow start, continuation, or resume, read all three memory files:
 
 ```text
-.claude/cc10x/v10/activeContext.md
-.claude/cc10x/v10/patterns.md
-.claude/cc10x/v10/progress.md
+.cc10x/v10/activeContext.md
+.cc10x/v10/patterns.md
+.cc10x/v10/progress.md
 ```
 
 ### Re-Read Before These Actions
@@ -237,7 +237,7 @@ Stop and correct course if you catch yourself:
 - making decisions without checking `## Decisions` or project patterns
 - writing long diary-style memory notes
 - claiming you will "remember later"
-- editing `.claude/cc10x/v10/*.md` directly from a write agent
+- editing `.cc10x/v10/*.md` directly from a write agent
 - inventing new headings, markers, or memory file shapes
 - treating stale conversation context as better than durable memory
 
@@ -257,7 +257,7 @@ Stop and correct course if you catch yourself:
 - [ ] Relevant decisions/patterns checked before new decisions
 - [ ] Notes distilled into `MEMORY_NOTES`
 - [ ] Verification truth captured in memory-worthy form
-- [ ] No direct write-agent edits to `.claude/cc10x/v10/*.md`
+- [ ] No direct write-agent edits to `.cc10x/v10/*.md`
 - [ ] Context-budget checkpointing considered if the session got heavy
 
 Cannot check these boxes? The memory cycle is incomplete.

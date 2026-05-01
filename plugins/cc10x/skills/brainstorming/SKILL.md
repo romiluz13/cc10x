@@ -399,7 +399,7 @@ Write(file_path="{PROJECT_DIR}/docs/plans/YYYY-MM-DD-<feature>-design.md", conte
 
 ### Step 2: Emit Router-Owned Handoff (CRITICAL)
 
-Do **NOT** edit `.claude/cc10x/v10/*.md` from brainstorming.
+Do **NOT** edit `.cc10x/v10/*.md` from brainstorming.
 
 Instead, end your response with this machine-readable handoff so the router can carry the design forward and let memory finalization persist it once:
 

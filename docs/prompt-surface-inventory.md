@@ -25,7 +25,7 @@ copy.
 - Path: `plugins/cc10x/skills/planning-patterns/SKILL.md`
 - Role: planner save discipline and router-subordinate memory intent guidance
 - Allowed edits: wording clarity, plan-save examples, `MEMORY_NOTES` guidance, live-verification wording
-- Forbidden edits: direct writes to `.claude/cc10x/v10/*.md`, altered plan-mode semantics, or bypassing router-owned memory finalization
+- Forbidden edits: direct writes to `.cc10x/v10/*.md`, altered plan-mode semantics, or bypassing router-owned memory finalization
 - Comparison references: `get-shit-done` artifact-first planning, `skill-creator` reference-backed skill design
 - Review requirement: audit + replay + manual semantic review
 
@@ -33,7 +33,7 @@ copy.
 - Path: `plugins/cc10x/skills/brainstorming/SKILL.md`
 - Role: inline design clarification and planner handoff
 - Allowed edits: clarification wording, design template structure, handoff wording, save examples
-- Forbidden edits: direct writes to `.claude/cc10x/v10/*.md`, changing the brainstorming handoff schema, or bypassing planner handoff
+- Forbidden edits: direct writes to `.cc10x/v10/*.md`, changing the brainstorming handoff schema, or bypassing planner handoff
 - Comparison references: `metaswarm` clarification discipline, `get-shit-done` design-before-plan behavior
 - Review requirement: audit + replay + manual semantic review
 
@@ -91,7 +91,7 @@ copy.
 - Path: `plugins/cc10x/skills/session-memory/SKILL.md`
 - Role: versioned memory load discipline, distillation rules, and router-subordinate memory-note protocol
 - Allowed edits: compactness, reference navigation, distillation wording, context-budget guidance, and examples that preserve current ownership
-- Forbidden edits: allowing write agents to edit `.claude/cc10x/v10/*.md` directly, changing the memory namespace or required headings, or weakening router-owned final persistence
+- Forbidden edits: allowing write agents to edit `.cc10x/v10/*.md` directly, changing the memory namespace or required headings, or weakening router-owned final persistence
 - Comparison references: `get-shit-done` context-budget, `agent-skills` context-engineering, `skill-creator` reference-first packaging
 - Review requirement: audit + targeted semantic review
 

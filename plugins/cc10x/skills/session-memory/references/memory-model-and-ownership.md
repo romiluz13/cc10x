@@ -37,9 +37,9 @@ information belongs where.
   - verification evidence
 - `docs/plans/*` and `docs/research/*`
   - detailed artifacts that memory points to
-- `.claude/cc10x/v10/workflows/{wf}.json`
+- `.cc10x/v10/workflows/{wf}.json`
   - canonical workflow state
-- `.claude/cc10x/v10/workflows/{wf}.events.jsonl`
+- `.cc10x/v10/workflows/{wf}.events.jsonl`
   - append-only event trail
 
 ## Ownership
@@ -56,7 +56,7 @@ information belongs where.
 ### WRITE Agents
 
 - read memory at start and before key decisions
-- do not edit `.claude/cc10x/v10/*.md` directly
+- do not edit `.cc10x/v10/*.md` directly
 - emit structured `MEMORY_NOTES` in their Router Contract
 
 ### READ-ONLY Agents

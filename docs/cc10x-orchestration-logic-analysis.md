@@ -19,7 +19,7 @@ It is:
 - a small set of plugin hooks
 - optional user-configured MCP acceleration
 - reference-first advisory skills with one-level-deep `references/`
-- workflow artifacts under `.claude/cc10x/v10/workflows/`
+- workflow artifacts under `.cc10x/v10/workflows/`
 
 The system is still mostly **English orchestration**, but it is no longer prompt-only. The current design mixes:
 - prompt contracts
@@ -71,8 +71,8 @@ The router loads memory, checks for active workflow state, and either:
 Every workflow gets:
 - a parent task
 - workflow-scoped child tasks
-- `.claude/cc10x/v10/workflows/{wf}.json`
-- `.claude/cc10x/v10/workflows/{wf}.events.jsonl`
+- `.cc10x/v10/workflows/{wf}.json`
+- `.cc10x/v10/workflows/{wf}.events.jsonl`
 
 This is the durable truth for orchestration.
 

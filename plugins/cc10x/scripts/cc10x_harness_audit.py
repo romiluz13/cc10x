@@ -394,13 +394,13 @@ def main() -> int:
                 f"README no longer documents optional MCP server '{required}'"
             )
 
-    if ".claude/cc10x/v10/" not in readme:
+    if ".cc10x/v10/" not in readme:
         errors.append("README does not document the live v10 memory namespace")
     for stale in (
-        "live in `.claude/cc10x/`",
-        "MEMORY (.claude/cc10x/)",
-        "WORKFLOW STATE (.claude/cc10x/workflows/)",
-        ".claude/cc10x/\n├── activeContext.md",
+        "live in `.cc10x/`",
+        "MEMORY (.cc10x/)",
+        "WORKFLOW STATE (.cc10x/workflows/)",
+        ".cc10x/\n├── activeContext.md",
     ):
         if stale in readme:
             errors.append(
@@ -432,7 +432,7 @@ def main() -> int:
         "## 10. Research Orchestration",
         "## 12. Chain Execution Loop",
         "## 13. Memory Finalization",
-        ".claude/cc10x/v10/workflows",
+        ".cc10x/v10/workflows",
         "workflow_uuid",
         "phase_cursor",
         "plan_mode",
@@ -555,7 +555,7 @@ def main() -> int:
                 f"session-memory skill missing required reference/text: {required}"
             )
 
-    if ".claude/cc10x/v10/*" not in planner_agent:
+    if ".cc10x/v10/*" not in planner_agent:
         errors.append("planner agent no longer documents the live v10 memory namespace")
 
     if "### session-memory" not in prompt_surface_inventory:
@@ -584,7 +584,7 @@ def main() -> int:
         ("orchestration logic analysis", orchestration_logic),
         ("orchestration safety", orchestration_safety),
     ):
-        if ".claude/cc10x/v10/workflows" not in body:
+        if ".cc10x/v10/workflows" not in body:
             errors.append(f"{name} does not reference the v10 workflow namespace")
 
     expected_router_fields = {
@@ -699,7 +699,7 @@ def main() -> int:
         ],
         "plan-gap-reviewer": [
             "Freshness rule:",
-            "Do NOT load `.claude/cc10x/v10/*.md`.",
+            "Do NOT load `.cc10x/v10/*.md`.",
             "Return structured findings only.",
             "You do not own orchestration, plan approval, or plan edits.",
         ],
@@ -737,9 +737,9 @@ def main() -> int:
         errors.append("planning-patterns missing live verification reference link")
 
     forbidden_direct_memory_writes = (
-        'Edit(file_path=".claude/cc10x/v10/activeContext.md"',
-        'Edit(file_path=".claude/cc10x/v10/progress.md"',
-        'Edit(file_path=".claude/cc10x/v10/patterns.md"',
+        'Edit(file_path=".cc10x/v10/activeContext.md"',
+        'Edit(file_path=".cc10x/v10/progress.md"',
+        'Edit(file_path=".cc10x/v10/patterns.md"',
     )
     for forbidden in forbidden_direct_memory_writes:
         if forbidden in planning_patterns:

@@ -117,7 +117,7 @@ Validated against the live prompt surface:
 **Covers:** `plugins/cc10x/skills/session-memory/SKILL.md`
 **Enforces:** Agents load versioned memory early, emit distilled memory notes, and do not bypass router-owned final markdown persistence.
 **Failure prevented:** Duplicate memory write paths, bloated memory notes, and durable-state drift between workflow artifacts and markdown memory.
-**Wording drift that breaks it:** Telling write agents to edit `.claude/cc10x/v10/*.md` directly, weakening the distillation rule, or implying chat history can substitute for durable memory.
+**Wording drift that breaks it:** Telling write agents to edit `.cc10x/v10/*.md` directly, weakening the distillation rule, or implying chat history can substitute for durable memory.
 **Safe to weaken:** Never.
 **Safe to strengthen:** Yes, if router-owned persistence and the v10 namespace remain unchanged.
 

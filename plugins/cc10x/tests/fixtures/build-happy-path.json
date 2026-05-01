@@ -5,7 +5,7 @@
     "workflow_uuid": "wf-20260312T161500Z-build-happy",
     "workflow_id": "wf-20260312T161500Z-build-happy",
     "workflow_type": "BUILD",
-    "state_root": ".claude/cc10x/v10",
+    "state_root": ".cc10x/v10",
     "plan_mode": "execution_plan",
     "verification_rigor": "standard",
     "proof_status": "gaps_found",

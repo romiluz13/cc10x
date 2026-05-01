@@ -831,7 +831,7 @@
       { id: 'progress', label: 'progress.md', subtitle: 'Verification Evidence', x: 590, y: 640, w: 140, h: 48, layer: 'memory', color: '#fbcfe8', type: 'memory' },
 
       // Memory Directory
-      { id: 'memory-dir', label: '.claude/cc10x/', subtitle: 'Permission-Free Storage', x: 400, y: 715, w: 150, h: 35, layer: 'memory', color: '#f9a8d4', type: 'memory' }
+      { id: 'memory-dir', label: '.cc10x/', subtitle: 'Permission-Free Storage', x: 400, y: 715, w: 150, h: 35, layer: 'memory', color: '#f9a8d4', type: 'memory' }
     ];
 
     // =============================================
@@ -922,7 +922,7 @@
           { node: 'code-reviewer', desc: '[PARALLEL] code-reviewer + silent-failure-hunter run TOGETHER. Security, performance, quality audit...' },
           { node: 'silent-failure-hunter', desc: '[PARALLEL] Scanning for empty catches, swallowed errors, log-only handlers...' },
           { node: 'integration-verifier', desc: 'Waits for BOTH reviewers. Runs E2E tests. exit 0 required.' },
-          { node: 'memory-update', desc: 'Task-enforced Memory Update. Collects Memory Notes from READ-ONLY agents. Persists to .claude/cc10x/' },
+          { node: 'memory-update', desc: 'Task-enforced Memory Update. Collects Memory Notes from READ-ONLY agents. Persists to .cc10x/' },
           { node: 'activeContext', desc: 'activeContext.md updated: Recent changes, learnings, decisions.' },
           { node: 'progress', desc: 'progress.md updated: Verification evidence with exit codes. BUILD complete!' }
         ]
@@ -1127,7 +1127,7 @@ docs/plans/YYYY-MM-DD-feature-plan.md
 
 ## Purpose
 Collect Memory Notes from READ-ONLY agents
-Persist to .claude/cc10x/ files
+Persist to .cc10x/ files
 
 ## Why Task-Enforced?
 - Survives context compaction
@@ -1153,7 +1153,7 @@ Persist to .claude/cc10x/ files
 
 ## Load Protocol
 \`\`\`
-mkdir -p .claude/cc10x
+mkdir -p .cc10x
 Read activeContext.md
 Read patterns.md
 Read progress.md

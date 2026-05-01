@@ -81,7 +81,7 @@ This is one execution model, not a stack of unrelated prompts.
 - **Adversarial spec gates** that stop BUILD when feasibility, completeness, or alignment is weak
 - **Proof-oriented BUILD** with explicit checkpoint types, expected artifacts, proof states, and no auto-advance on partial evidence
 - **Stricter VERIFY** that checks truths, artifacts, and wiring before any pass verdict
-- **Stable workflow UUIDs** and **versioned v10 state** under `.claude/cc10x/v10/`
+- **Stable workflow UUIDs** and **versioned v10 state** under `.cc10x/v10/`
 - **Advisory internal skills** where explicit user/project standards always outrank CC10X pattern skills
 - **Router kernel + mandatory workflow playbooks** so the always-loaded orchestration law stays inline while BUILD/DEBUG/REVIEW/PLAN branch detail is loaded from one-level-deep references without losing wording or weakening the router
 
@@ -143,8 +143,8 @@ They provide:
 cc10x writes proof-of-work workflow state under:
 
 ```text
-.claude/cc10x/v10/workflows/{wf}.json
-.claude/cc10x/v10/workflows/{wf}.events.jsonl
+.cc10x/v10/workflows/{wf}.json
+.cc10x/v10/workflows/{wf}.events.jsonl
 ```
 
 These artifacts track:
@@ -326,18 +326,18 @@ IMPORTANT: NEVER use Edit, Write, or Bash (for code changes) without first invok
 **If file exists:** MERGE these permissions into the existing `permissions.allow` array (don't overwrite!):
 
 ```json
-"Bash(mkdir -p .claude/cc10x)",
+"Bash(mkdir -p .cc10x)",
 "Bash(mkdir -p docs/plans)",
 "Bash(mkdir -p docs/research)",
 "Bash(git status)",
 "Bash(git diff:*)",
 "Bash(git log:*)",
 "Bash(git branch:*)",
-"Edit(.claude/cc10x/*)",
-"Write(.claude/cc10x/*)"
+"Edit(.cc10x/*)",
+"Write(.cc10x/*)"
 ```
 
-> **Why the Edit/Write permissions?** The live cc10x memory namespace is `.claude/cc10x/v10/`. The permission examples use the parent `.claude/cc10x/*` scope so the versioned namespace continues to work without re-prompting on every memory write.
+> **Why the Edit/Write permissions?** The live cc10x memory namespace is `.cc10x/v10/`. The permission examples use the parent `.cc10x/*` scope so the versioned namespace continues to work without re-prompting on every memory write.
 
 ### Step 4: Set User Standards (Optional)
 
@@ -346,19 +346,19 @@ Ask the user:
 
 **If user provides standards**, write them to the project's memory:
 ```
-Bash(command="mkdir -p .claude/cc10x/v10")
+Bash(command="mkdir -p .cc10x/v10")
 # Check if patterns.md already exists (Read returns error = doesn't exist)
-Read(file_path=".claude/cc10x/v10/patterns.md")
+Read(file_path=".cc10x/v10/patterns.md")
 
 # If it DOESN'T exist — create with standards already populated:
-Write(file_path=".claude/cc10x/v10/patterns.md", content="# Project Patterns\n<!-- CC10X MEMORY CONTRACT: Do not rename headings. Used as Edit anchors. -->\n\n## User Standards\n- {standard 1}\n- {standard 2}\n\n## Architecture Patterns\n\n## Code Conventions\n\n## Common Gotchas\n\n## Last Updated\n{date}")
+Write(file_path=".cc10x/v10/patterns.md", content="# Project Patterns\n<!-- CC10X MEMORY CONTRACT: Do not rename headings. Used as Edit anchors. -->\n\n## User Standards\n- {standard 1}\n- {standard 2}\n\n## Architecture Patterns\n\n## Code Conventions\n\n## Common Gotchas\n\n## Last Updated\n{date}")
 
 # If it DOES exist — append under User Standards:
-Edit(file_path=".claude/cc10x/v10/patterns.md",
+Edit(file_path=".cc10x/v10/patterns.md",
      old_string="## User Standards",
      new_string="## User Standards\n- {standard 1}\n- {standard 2}")
 
-Read(file_path=".claude/cc10x/v10/patterns.md")  # Verify
+Read(file_path=".cc10x/v10/patterns.md")  # Verify
 ```
 
 **If user skips:** No action. The memory file will be created on first workflow run with an empty `## User Standards` section for them to fill in later.
@@ -465,12 +465,12 @@ USER REQUEST
      │
      └── PLAN ───► planner
 
-MEMORY (.claude/cc10x/v10/)
+MEMORY (.cc10x/v10/)
 ├── activeContext.md  ◄── Current focus, decisions, learnings
 ├── patterns.md       ◄── Project conventions, common gotchas
 └── progress.md       ◄── Completed work, remaining tasks
 
-WORKFLOW STATE (.claude/cc10x/v10/workflows/)
+WORKFLOW STATE (.cc10x/v10/workflows/)
 ├── {wf}.json         ◄── Durable workflow artifact
 └── {wf}.events.jsonl ◄── Append-only workflow event log
 ```
@@ -520,7 +520,7 @@ Skills are **loaded automatically by agents**. You never invoke them directly.
 cc10x survives context compaction. This is critical for long sessions.
 
 ```
-.claude/cc10x/v10/
+.cc10x/v10/
 ├── activeContext.md   # What you're working on NOW
 │   - Current task
 │   - Active decisions (and WHY)
@@ -537,7 +537,7 @@ cc10x survives context compaction. This is critical for long sessions.
     - Blockers
 ```
 
-If both `.claude/cc10x/` and `.claude/cc10x/v10/` exist in a project, `v10/` is the live namespace. Root-level `.claude/cc10x/*.md` and `.claude/cc10x/workflows/*` are legacy pre-10.1.0 residue and are ignored by current router hydration.
+If both `.cc10x/` and `.cc10x/v10/` exist in a project, `v10/` is the live namespace. Root-level `.cc10x/*.md` and `.cc10x/workflows/*` are legacy pre-10.1.0 residue and are ignored by current router hydration.
 
 **Iron Law:** Every workflow loads memory at START and updates at END.
 
@@ -806,11 +806,11 @@ cc10x works out of the box with no MCPs required. These are **optional** — the
 Add these two lines to `~/.claude/settings.json` under `permissions.allow`:
 
 ```json
-"Edit(.claude/cc10x/*)",
-"Write(.claude/cc10x/*)"
+"Edit(.cc10x/*)",
+"Write(.cc10x/*)"
 ```
 
-These permission examples cover the live `.claude/cc10x/v10/` namespace.
+These permission examples cover the live `.cc10x/v10/` namespace.
 
 Or run **"Set up cc10x for me"** again — the setup wizard adds them automatically.
 

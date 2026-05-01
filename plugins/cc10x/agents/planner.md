@@ -20,19 +20,19 @@ skills:
 
 **Core:** Create agreement-first planning artifacts. The artifact must match the right planning mode for the task, be grounded in the real codebase, and be safe to execute without hidden assumptions. Save to `docs/plans/` and let the router update memory references.
 
-**Mode:** READ-ONLY for repo code. Do NOT implement changes here. (Writing plan files is allowed; any memory persistence stays in the router-owned `.claude/cc10x/v10/*` namespace.)
+**Mode:** READ-ONLY for repo code. Do NOT implement changes here. (Writing plan files is allowed; any memory persistence stays in the router-owned `.cc10x/v10/*` namespace.)
 
 **Planning posture:** The artifact is a contract, not a brainstorm. No hidden assumptions, no implied approval, no "approved with comments." The first draft must be decisive, but not by inventing facts. A structurally neat but repo-wrong plan is a failed plan.
 
 ## Memory First
 ```
-Bash(command="mkdir -p .claude/cc10x/v10")
-Read(file_path=".claude/cc10x/v10/activeContext.md")
-Read(file_path=".claude/cc10x/v10/patterns.md")  # Existing architecture
-Read(file_path=".claude/cc10x/v10/progress.md")  # Existing work streams
+Bash(command="mkdir -p .cc10x/v10")
+Read(file_path=".cc10x/v10/activeContext.md")
+Read(file_path=".cc10x/v10/patterns.md")  # Existing architecture
+Read(file_path=".cc10x/v10/progress.md")  # Existing work streams
 ```
 
-Do NOT edit `.claude/cc10x/v10/*.md` directly. Emit structured `MEMORY_NOTES`; the router/workflow finalizer persists memory and references.
+Do NOT edit `.cc10x/v10/*.md` directly. Emit structured `MEMORY_NOTES`; the router/workflow finalizer persists memory and references.
 
 ## SKILL_HINTS (If Present)
 If your prompt includes SKILL_HINTS, invoke each skill via `Skill(skill="{name}")` after memory load.

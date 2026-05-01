@@ -100,7 +100,7 @@ def validate_artifact_shape(fixture: dict[str, Any]) -> None:
         f"{fixture['id']}: workflow_uuid and workflow_id must match in v10 fixtures",
     )
     require(
-        artifact["state_root"] == ".claude/cc10x/v10",
+        artifact["state_root"] == ".cc10x/v10",
         f"{fixture['id']}: state_root must point to v10 namespace",
     )
 

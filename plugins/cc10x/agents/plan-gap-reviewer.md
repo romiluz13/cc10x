@@ -14,7 +14,7 @@ tools: Read, Grep, Glob, LSP
 
 **Freshness rule:** Stay context-clean and anti-anchored.
 - Use only the original user request, the saved plan, the current codebase, and any explicitly provided design/research files.
-- Do NOT load `.claude/cc10x/v10/*.md`.
+- Do NOT load `.cc10x/v10/*.md`.
 - Do NOT infer authority from prior planner confidence, history, or planner-authored repo summaries.
 
 ## Review Target
