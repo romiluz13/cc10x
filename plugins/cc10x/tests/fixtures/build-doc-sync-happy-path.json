@@ -1,0 +1,77 @@
+{
+  "id": "build-doc-sync-happy-path",
+  "workflow_type": "BUILD",
+  "description": "doc-syncer runs after verifier, finds medium-impact diff, updates technical docs and creates audit record",
+  "starting_artifact": {
+    "workflow_uuid": "wf-20260419T143000Z-a3f8b2c1",
+    "workflow_id": "wf-20260419T143000Z-a3f8b2c1",
+    "workflow_type": "BUILD",
+    "state_root": ".claude/cc10x/v10",
+    "plan_mode": "execution_plan",
+    "verification_rigor": "standard",
+    "proof_status": "gaps_found",
+    "traceability": {"requirements": [], "phases": [], "verification": [], "remediation": []},
+    "phase_cursor": "phase-1",
+    "task_ids": {},
+    "results": {},
+    "intent": {"goal": "Add useOrderStatus hook with retry logic"},
+    "evidence": {},
+    "quality": {"convergence_state": "pending"},
+    "status_history": [],
+    "remediation_history": []
+  },
+  "relevant_tasks": {},
+  "agent_outputs": {
+    "verifier_contract": {
+      "SCENARIOS_TOTAL": 1,
+      "SCENARIOS_PASSED": 1,
+      "SCENARIOS_FAILED": 0,
+      "SCENARIO_ROWS": [
+        {
+          "name": "useOrderStatus retries on transient failure",
+          "given": "a transient network error on first call",
+          "when": "useOrderStatus is invoked",
+          "then": "it retries and returns status on success",
+          "command": "CI=true npm test -- useOrderStatus",
+          "expected": "hook retries 3 times and resolves",
+          "actual": "hook retried 3 times and resolved",
+          "exit_code": 0,
+          "status": "PASS"
+        }
+      ],
+      "EVIDENCE": {
+        "scenarios": [
+          "useOrderStatus retries on transient failure | Given transient network error | When useOrderStatus invoked | Then retries and resolves | CI=true npm test -- useOrderStatus -> exit 0 | expected=hook retries 3 times and resolves | actual=hook retried 3 times and resolved"
+        ]
+      }
+    },
+    "doc_syncer_contract": {
+      "STATUS": "COMPLETE",
+      "IMPACT_LEVEL": "medium",
+      "DOC_LAYERS_EVALUATED": ["technical", "audit"],
+      "DOC_FILES_UPDATED": ["docs/developer/hooks-reference.md"],
+      "DOC_FILES_SKIPPED": [
+        {
+          "path": "docs/admin-guide/feature-guide.md",
+          "reason": "no user-facing surface changed; hook is internal to order processing"
+        }
+      ],
+      "SKIP_REASON": "",
+      "AUDIT_DOCS_CREATED": ["docs/2026-04-19-new-hook-pattern-decision.md"],
+      "AUDIT_DOCS_UPDATED": [],
+      "MEMORY_NOTES": {
+        "learnings": ["New hook useOrderStatus added with retry logic; hooks-reference.md updated with signature and key behaviors"],
+        "patterns": ["Retry pattern introduced for hooks — document in hooks-reference with retry count and backoff strategy"],
+        "verification": ["doc-syncer STATUS=COMPLETE; 1 technical doc updated; 1 audit doc created"],
+        "deferred": []
+      }
+    }
+  },
+  "expected": {
+    "next_action": "memory_finalize",
+    "doc_syncer_status": "COMPLETE",
+    "artifact_delta": {
+      "quality": {"convergence_state": "stable"}
+    }
+  }
+}
