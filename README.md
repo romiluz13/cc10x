@@ -2,88 +2,43 @@
   <img src="assets/logo.png" alt="CC10x — Claude Code harness | specialist agents. Orange stylized X with starburst and CC10x wordmark." width="320" />
 </p>
 
-### Router-Owned Claude Code Harness
+### Router-owned Claude Code harness
 
 **Current version:** 10.1.20
 
-**Recommended: Create `~/.claude/CLAUDE.md` (global) so the router is always active across all projects.**
-
-<p align="center">
-  <strong>1 Router</strong> &nbsp;•&nbsp; <strong>9 Agents</strong> &nbsp;•&nbsp; <strong>13 Skills</strong> &nbsp;•&nbsp; <strong>4 Workflows</strong>
-</p>
-
-<p align="center">
-  <em>An opinionated Claude Code harness for developers who want routing, state, and verification to behave like engineering infrastructure.</em>
-</p>
-
 ---
 
-## Why cc10x
+## The harness you install when you're done babysitting Claude Code
 
-cc10x is for developers who like Claude Code, but do not want to babysit it.
+You know the loop. Ask Claude for something complex. It works for a while. Then it declares "Done!" — but tests are still red, the refactor is half-finished, and by message 40 it's contradicting itself because the context is gone.
 
-It makes the coding loop behave more like a disciplined engineering system:
+cc10x treats the coding loop like engineering infrastructure instead of a clever prompt.
 
-- one router entry point
-- explicit workflows instead of ad-hoc prompting
-- specialist agents instead of one overloaded assistant
-- memory and workflow artifacts that survive long sessions
-- evidence before advancement: LOG FIRST, RED → GREEN → REFACTOR, expected vs actual verification
-
-The point is not "more AI". The point is tighter execution:
+- **One router, not twelve slash commands.** Every request hits `cc10x-router` first. Router picks the workflow. Workflow picks the specialist. You never wire agents together by hand.
+- **Claude doesn't decide when it's done.** `integration-verifier` is independent of the builder. Phase-exit gates block advancement on partial evidence. Fail-closed by design — no "declared victory" on red tests.
+- **Adversarial review runs in parallel.** `code-reviewer` and `silent-failure-hunter` fan out at the same time. The hunter greps for swallowed errors and empty catches you didn't ask about.
+- **Planning has teeth.** Three modes — `direct`, `execution_plan`, `decision_rfc` — chosen by intent, not vibes. Every non-trivial plan gets a fresh anti-anchored review by a read-only reviewer who never saw the planner's rationale.
+- **Survives compaction.** Workflow state on disk with stable UUIDs, memory files the router auto-heals. Resume is deterministic, not "hope it remembers."
+- **Zero sensitive-file prompts.** State lives at `.cc10x/` — outside `.claude/`, so the harness's sensitive-file gate never fires on your workflow. Router fanouts are silent under default permissions.
+- **Self-tested orchestration.** 23 replay fixtures, harness audits, runtime-path drift guards. We prove the router behaves the way the docs say it does.
 
 ```text
-You describe the job. cc10x decides the workflow, loads the right context,
-brings in narrow specialists, and blocks weak "done" states.
+1 router  •  9 specialist agents  •  13 skills  •  4 workflows
+        all wired together as one plugin
 ```
 
 ---
 
-## What cc10x Is
+## Install
 
-cc10x is a **developer-focused Claude Code harness** packaged as a marketplace plugin.
-
-Its job is straightforward:
-- take `PLAN`, `BUILD`, `DEBUG`, `REVIEW`, and `RESEARCH` requests and route them through a known execution model
-- keep orchestration in one place: `cc10x-router`
-- split execution across specialist subagents instead of a single general prompt
-- persist enough workflow state to survive long sessions, compaction, and handoffs
-- stay native to Claude Code primitives: `skills`, `subagents`, `hooks`, and optional user-configured MCP
-
-Short mental model:
-
-```text
-cc10x = a thin orchestration layer on top of Claude Code
-      + durable workflow state
-      + specialist agents
-      + guardrails that fail closed
+```bash
+/plugin marketplace add romiluz13/cc10x
+/plugin install cc10x@romiluz13
 ```
 
-It is not a hosted product, background daemon, or parallel control plane. It is a Claude Code plugin that makes normal coding sessions more deterministic.
+Then paste this README into Claude Code and say **"set up cc10x for me"**. Restart Claude Code. Done.
 
-## What You Get
-
-With cc10x installed, Claude Code stops behaving like a single assistant session and starts behaving like a routed workflow:
-
-- `PLAN` that resolves intent, constraints, scenarios, and default decisions before code starts
-- `BUILD` that pushes implementation through RED → GREEN → REFACTOR, then review, then verification
-- `DEBUG` that starts from logs and observed behavior instead of guess-and-patch loops
-- `REVIEW` that is adversarial by design and reports only confidence-backed findings
-- `VERIFY` that checks scenarios, artifacts, and wiring before anything is treated as complete
-- `RESEARCH` that can use Octocode/Bright Data when present, but does not collapse if they are absent
-
-This is one execution model, not a stack of unrelated prompts.
-
-## What 10.1 adds
-
-- **Decision-grade planning** with `direct`, `execution_plan`, and `decision_rfc` modes selected by the router
-- **Fresh planning review loop** with a bounded read-only `plan-gap-reviewer` pass before final plan acceptance
-- **Adversarial spec gates** that stop BUILD when feasibility, completeness, or alignment is weak
-- **Proof-oriented BUILD** with explicit checkpoint types, expected artifacts, proof states, and no auto-advance on partial evidence
-- **Stricter VERIFY** that checks truths, artifacts, and wiring before any pass verdict
-- **Stable workflow UUIDs** and **versioned v10 state** under `.cc10x/v10/`
-- **Advisory internal skills** where explicit user/project standards always outrank CC10X pattern skills
-- **Router kernel + mandatory workflow playbooks** so the always-loaded orchestration law stays inline while BUILD/DEBUG/REVIEW/PLAN branch detail is loaded from one-level-deep references without losing wording or weakening the router
+Everything below is for readers who want to know *how* it works before they install.
 
 ---
 
@@ -250,28 +205,6 @@ If not, the plugin still works. Research falls back to built-in Claude Code tool
                  │  {wf}.json + .events    │
                  └──────────────────────────┘
 ```
-
----
-
-## Installation
-
-### Step 1: Install Plugin
-
-```bash
-# Add marketplace
-/plugin marketplace add romiluz13/cc10x
-
-# Install plugin
-/plugin install cc10x@romiluz13
-```
-
-### Step 2: Setup Config Files
-
-Copy this README, paste it into Claude Code, and say: **"Set up cc10x for me"**
-
-### Step 3: Restart Claude Code
-
-Done!
 
 ---
 
