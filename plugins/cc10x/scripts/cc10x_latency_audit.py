@@ -7,7 +7,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[3]
 PLUGIN_ROOT = Path(__file__).resolve().parents[1]
-RUNTIME_WORKFLOWS = ROOT / ".claude" / "cc10x" / "v10" / "workflows"
+RUNTIME_WORKFLOWS = ROOT / ".cc10x" / "v10" / "workflows"
 FIXTURES_DIR = PLUGIN_ROOT / "tests" / "fixtures"
 
 

@@ -280,7 +280,7 @@ DELTA_RULES: tuple[DeltaRule, ...] = (
             ("workflow_uuid", "stable workflow identity independent of task ids"),
             ("phase_exit_gate", "sequential phase gating"),
             ("skill_precedence_gate", "explicit instruction precedence enforcement"),
-            (".claude/cc10x/v10", "versioned v10 state root"),
+            (".cc10x/v10", "versioned v10 state root"),
         ),
     ),
     DeltaRule(
@@ -310,7 +310,7 @@ DELTA_RULES: tuple[DeltaRule, ...] = (
         (
             ("BLAST_RADIUS_SCAN", "blast-radius scan is mandatory"),
             ("Variant Coverage", "variant coverage is explicit"),
-            (".claude/cc10x/v10", "debug memory reads are versioned"),
+            (".cc10x/v10", "debug memory reads are versioned"),
         ),
     ),
     DeltaRule(
@@ -347,7 +347,7 @@ DELTA_RULES: tuple[DeltaRule, ...] = (
         "plugins/cc10x/agents/silent-failure-hunter.md",
         "hunter",
         (
-            (".claude/cc10x/v10", "hunter reads only v10 memory state"),
+            (".cc10x/v10", "hunter reads only v10 memory state"),
             (
                 "Do not self-load internal CC10X skills",
                 "hunter obeys router-owned internal skill precedence",
@@ -480,7 +480,7 @@ DELTA_RULES: tuple[DeltaRule, ...] = (
         "docs",
         (
             ("What 10.0 adds", "v10 contract is documented"),
-            (".claude/cc10x/v10/workflows", "versioned state root is documented"),
+            (".cc10x/v10/workflows", "versioned state root is documented"),
             ("Stable workflow UUIDs", "stable identity is documented"),
         ),
     ),
@@ -666,7 +666,7 @@ def detect_harness_signals(repo: Path) -> dict[str, bool]:
         for x in ("workflows/", "artifacts", "run artifacts", "transcript capture")
     )
     hits["versioned_state"] = (
-        ".claude/cc10x/v10" in blob or "state_root" in lower or "runs-dir" in lower
+        ".cc10x/v10" in blob or "state_root" in lower or "runs-dir" in lower
     )
     hits["stable_workflow_identity"] = any(
         x in lower

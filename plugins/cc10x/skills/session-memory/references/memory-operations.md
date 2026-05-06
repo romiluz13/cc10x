@@ -4,7 +4,7 @@
 
 This file records the detailed file-operation rules behind CC10X memory.
 
-Write agents normally do **not** edit `.claude/cc10x/v10/*.md` directly. They emit
+Write agents normally do **not** edit `.cc10x/v10/*.md` directly. They emit
 `MEMORY_NOTES`, and the router-owned memory-finalize step persists markdown memory.
 
 These patterns matter for router maintenance, template repair, and manual audits.
@@ -58,22 +58,22 @@ The router memory-finalize step:
 ### Create the directory
 
 ```bash
-mkdir -p .claude/cc10x/v10
+mkdir -p .cc10x/v10
 ```
 
 ### Read memory files
 
 ```text
-Read(file_path=".claude/cc10x/v10/activeContext.md")
-Read(file_path=".claude/cc10x/v10/patterns.md")
-Read(file_path=".claude/cc10x/v10/progress.md")
+Read(file_path=".cc10x/v10/activeContext.md")
+Read(file_path=".cc10x/v10/patterns.md")
+Read(file_path=".cc10x/v10/progress.md")
 ```
 
 ### Add a missing canonical section
 
 ```text
 Edit(
-  file_path=".claude/cc10x/v10/activeContext.md",
+  file_path=".cc10x/v10/activeContext.md",
   old_string="## Last Updated",
   new_string="## References\n- Plan: N/A\n- Design: N/A\n- Research: N/A\n\n## Last Updated"
 )
@@ -83,7 +83,7 @@ Edit(
 
 ```text
 Edit(
-  file_path=".claude/cc10x/v10/progress.md",
+  file_path=".cc10x/v10/progress.md",
   old_string="## Verification",
   new_string="## Verification\n- `npm test` -> exit 0"
 )
@@ -92,5 +92,5 @@ Edit(
 ### Verify the write
 
 ```text
-Read(file_path=".claude/cc10x/v10/progress.md")
+Read(file_path=".cc10x/v10/progress.md")
 ```

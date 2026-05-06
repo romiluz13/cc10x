@@ -420,7 +420,7 @@ Write(file_path="docs/plans/YYYY-MM-DD-<feature>-plan.md", content="[full plan c
 
 ### Step 2: Emit Router-Owned Memory Intent (CRITICAL)
 
-Do **NOT** edit `.claude/cc10x/v10/*.md` from this skill.
+Do **NOT** edit `.cc10x/v10/*.md` from this skill.
 
 Instead, use the planner agent's existing `MEMORY_NOTES` contract only for durable learnings, deferred items, or verification context that is not already derivable from the planner contract.
 

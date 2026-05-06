@@ -1,6 +1,6 @@
 # CC10x Orchestration Logic Analysis
 
-> **Last synced with live router/agents:** 2026-04-12 (`v10.1.19`)
+> **Last synced with live router/agents:** 2026-05-06 (`v10.1.20`; last structural sync `v10.1.19` on 2026-04-12, with the `.claude/cc10x/` → `.cc10x/` state-root migration shipped in `v10.1.20`)
 > **Status:** SYNCED TO LIVE PROMPTS
 > **Relationship to Bible:** The bible is the canonical specification. This document explains the practical mechanics and why the system is shaped this way.
 
@@ -19,7 +19,7 @@ It is:
 - a small set of plugin hooks
 - optional user-configured MCP acceleration
 - reference-first advisory skills with one-level-deep `references/`
-- workflow artifacts under `.claude/cc10x/v10/workflows/`
+- workflow artifacts under `.cc10x/v10/workflows/`
 
 The system is still mostly **English orchestration**, but it is no longer prompt-only. The current design mixes:
 - prompt contracts
@@ -71,8 +71,8 @@ The router loads memory, checks for active workflow state, and either:
 Every workflow gets:
 - a parent task
 - workflow-scoped child tasks
-- `.claude/cc10x/v10/workflows/{wf}.json`
-- `.claude/cc10x/v10/workflows/{wf}.events.jsonl`
+- `.cc10x/v10/workflows/{wf}.json`
+- `.cc10x/v10/workflows/{wf}.events.jsonl`
 
 This is the durable truth for orchestration.
 

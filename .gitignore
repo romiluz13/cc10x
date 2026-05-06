@@ -28,8 +28,8 @@ ORCHESTRATION_INVESTIGATION.md
 # Runtime directories (user-specific context)
 # Use glob-level ignore so sub-directories can be un-ignored
 .claude/*
-!.claude/cc10x
-.claude/cc10x/*
+!.cc10x
+.cc10x/*
 # Keep runtime memory local-only. These files are user/session state, not product files.
 
 # Dependency directories

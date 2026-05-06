@@ -1,6 +1,6 @@
 # CC10x Router Behavioral Invariant Registry
 
-> **Status note:** Current product line is `v10.1.19`. This registry is aligned to the live router structure in `plugins/cc10x/skills/cc10x-router/SKILL.md` and `plugins/cc10x/skills/cc10x-router/references/*.md` as of 2026-04-12.
+> **Status note:** Current product line is `v10.1.20`. This registry is aligned to the live router structure in `plugins/cc10x/skills/cc10x-router/SKILL.md` and `plugins/cc10x/skills/cc10x-router/references/*.md` as of 2026-05-06. Structural contract last changed on 2026-04-12 (`v10.1.19`); `v10.1.20` is a state-root path migration (`.claude/cc10x/` → `.cc10x/`) with no invariant changes.
 
 ## Purpose
 
@@ -10,14 +10,14 @@ If a router section changes, the matching invariant must be updated in the same 
 ## Audit Snapshot
 
 Validated against the live plugin surface:
-- workflow artifacts under `.claude/cc10x/v10/workflows/{wf}.json`
-- workflow event logs under `.claude/cc10x/v10/workflows/{wf}.events.jsonl`
+- workflow artifacts under `.cc10x/v10/workflows/{wf}.json`
+- workflow event logs under `.cc10x/v10/workflows/{wf}.events.jsonl`
 - plugin hooks in `plugins/cc10x/hooks/hooks.json`
 - router-owned remediation creation
 - bounded fresh planning review via `plan-gap-reviewer`
 - fail-closed scenario evidence rules for BUILD / DEBUG / VERIFY
 - memory finalization and transient `memory_task_id`
-- v10-only agent memory reads under `.claude/cc10x/v10/*.md`
+- v10-only agent memory reads under `.cc10x/v10/*.md`
 - verifier independence from builder/reviewer/hunter verdicts
 - router kernel plus mandatory workflow/reference playbooks
 
@@ -154,7 +154,7 @@ Validated against the live plugin surface:
 
 ### INV-018: Agents use only the v10 state namespace
 **Covers:** Router `## 2. Memory Load And Template Validation`, agent memory-read sections
-**Enforces:** BUILD / DEBUG / REVIEW / VERIFY agents read from `.claude/cc10x/v10/*.md` only and never mix legacy memory paths into active orchestration.
+**Enforces:** BUILD / DEBUG / REVIEW / VERIFY agents read from `.cc10x/v10/*.md` only and never mix legacy memory paths into active orchestration.
 **If removed:** Agents can read stale state, leak legacy decisions into live workflows, or disagree about the active workflow memory surface.
 **Safe to remove:** Never.
 

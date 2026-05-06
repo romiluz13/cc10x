@@ -394,13 +394,13 @@ def main() -> int:
                 f"README no longer documents optional MCP server '{required}'"
             )
 
-    if ".claude/cc10x/v10/" not in readme:
+    if ".cc10x/v10/" not in readme:
         errors.append("README does not document the live v10 memory namespace")
     for stale in (
-        "live in `.claude/cc10x/`",
-        "MEMORY (.claude/cc10x/)",
-        "WORKFLOW STATE (.claude/cc10x/workflows/)",
-        ".claude/cc10x/\n├── activeContext.md",
+        "live in `.cc10x/`",
+        "MEMORY (.cc10x/)",
+        "WORKFLOW STATE (.cc10x/workflows/)",
+        ".cc10x/\n├── activeContext.md",
     ):
         if stale in readme:
             errors.append(
@@ -432,7 +432,7 @@ def main() -> int:
         "## 10. Research Orchestration",
         "## 12. Chain Execution Loop",
         "## 13. Memory Finalization",
-        ".claude/cc10x/v10/workflows",
+        ".cc10x/v10/workflows",
         "workflow_uuid",
         "phase_cursor",
         "plan_mode",
@@ -555,7 +555,7 @@ def main() -> int:
                 f"session-memory skill missing required reference/text: {required}"
             )
 
-    if ".claude/cc10x/v10/*" not in planner_agent:
+    if ".cc10x/v10/*" not in planner_agent:
         errors.append("planner agent no longer documents the live v10 memory namespace")
 
     if "### session-memory" not in prompt_surface_inventory:
@@ -584,7 +584,7 @@ def main() -> int:
         ("orchestration logic analysis", orchestration_logic),
         ("orchestration safety", orchestration_safety),
     ):
-        if ".claude/cc10x/v10/workflows" not in body:
+        if ".cc10x/v10/workflows" not in body:
             errors.append(f"{name} does not reference the v10 workflow namespace")
 
     expected_router_fields = {
@@ -699,7 +699,7 @@ def main() -> int:
         ],
         "plan-gap-reviewer": [
             "Freshness rule:",
-            "Do NOT load `.claude/cc10x/v10/*.md`.",
+            "Do NOT load `.cc10x/v10/*.md`.",
             "Return structured findings only.",
             "You do not own orchestration, plan approval, or plan edits.",
         ],
@@ -737,9 +737,9 @@ def main() -> int:
         errors.append("planning-patterns missing live verification reference link")
 
     forbidden_direct_memory_writes = (
-        'Edit(file_path=".claude/cc10x/v10/activeContext.md"',
-        'Edit(file_path=".claude/cc10x/v10/progress.md"',
-        'Edit(file_path=".claude/cc10x/v10/patterns.md"',
+        'Edit(file_path=".cc10x/v10/activeContext.md"',
+        'Edit(file_path=".cc10x/v10/progress.md"',
+        'Edit(file_path=".cc10x/v10/patterns.md"',
     )
     for forbidden in forbidden_direct_memory_writes:
         if forbidden in planning_patterns:
@@ -871,6 +871,25 @@ def main() -> int:
         first_lines = "\n".join(text.splitlines()[:6]).lower()
         if banned_word in first_lines:
             errors.append(f"{path.name} description appears to summarize workflow")
+
+    # Runtime state-root drift guard.
+    # Prompt surfaces, fixtures, and hook runtime (cc10x_hooklib.py) must agree on
+    # the workflow state root. Drift between them produces split-brain: agents write
+    # to one location, hooks read from another, and guards silently stop firing.
+    # Scope the scan to runtime Python so historical CHANGELOG entries stay accurate.
+    # This audit file itself is excluded because it has to name the legacy literal
+    # in order to detect drift.
+    runtime_scripts = sorted(
+        p
+        for p in (PLUGIN_ROOT / "scripts").glob("*.py")
+        if p.name not in {"__init__.py", "cc10x_harness_audit.py"}
+    )
+    for script in runtime_scripts:
+        body = read(script)
+        if ".claude/cc10x" in body or ".claude\" / \"cc10x" in body:
+            errors.append(
+                f"{script.name} still references the legacy .claude/cc10x state root"
+            )
 
     if errors:
         return fail(errors)

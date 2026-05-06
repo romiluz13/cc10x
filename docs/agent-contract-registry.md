@@ -1,6 +1,6 @@
 # CC10X Agent Contract Registry
 
-> **Status note:** Aligned to the live agent and router prompt stack as of 2026-04-12 (`v10.1.19`).
+> **Status note:** Aligned to the live agent and router prompt stack as of 2026-05-06 (`v10.1.20`; last structural sync `v10.1.19` on 2026-04-12, followed by the `.claude/cc10x/` → `.cc10x/` state-root migration in `v10.1.20`).
 > **Purpose:** Quick contract map for maintainers. This document summarizes what the live prompts already enforce; it does not add new behavior.
 
 ## Write Agents
@@ -49,7 +49,7 @@ All three emit `### Memory Notes (For Workflow-Final Persistence)` instead of YA
 
 ## Memory Handoff Rules
 
-- WRITE agents never edit `.claude/cc10x/v10/*.md` directly.
+- WRITE agents never edit `.cc10x/v10/*.md` directly.
 - WRITE agents emit YAML `MEMORY_NOTES`.
 - READ-ONLY agents emit `### Memory Notes (For Workflow-Final Persistence)`.
 - Router persists both shapes into workflow artifacts first, then final markdown memory.

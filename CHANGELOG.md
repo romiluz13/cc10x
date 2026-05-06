@@ -1,5 +1,54 @@
 # Changelog
 
+## [10.1.20] - 2026-05-06
+
+### Escape the Claude Code sensitive-file gate
+
+Moved the workflow state root from `.claude/cc10x/v10/` to `.cc10x/v10/`
+across every prompt surface, runtime hook, audit script, and fixture.
+The Claude Code harness treats any path under `.claude/` as a sensitive
+file and prompts the user on every read/write/mkdir regardless of
+`permissions.allow`, `additionalDirectories`, `defaultMode`, or
+`PreToolUse` hook decisions — the gate runs above the hook layer, so
+plugin-side and user-side workarounds could not suppress the prompt.
+
+The new path is outside `.claude/`, so the harness no longer flags it
+sensitive. Every router fanout, event-log append, and memory refresh is
+now silent in default-permission setups.
+
+#### Changed
+- Workflow state root relocated to `.cc10x/v10/` in all 7 agent tool
+  lists, 12 skill files, 4 audit/benchmark scripts, 23 test fixtures,
+  `.gitignore`, README, claude-settings template, and explorer HTMLs.
+- `cc10x_hooklib.state_root()` now resolves to
+  `<project>/.cc10x/v10/`; every hook that imports it (PreToolUse
+  guard, PostToolUse artifact guard, SessionStart context hydration,
+  PreCompact/PostCompact state snapshots, Stop persist, Stop-failure
+  log, TaskCompleted guard) follows the rename automatically.
+- `cc10x_latency_audit.RUNTIME_WORKFLOWS` points at the new path.
+
+#### Added
+- `cc10x_harness_audit.py` now scans every runtime Python script under
+  `plugins/cc10x/scripts/` for the legacy `.claude/cc10x` literal and
+  fails the audit if any drift remains. This prevents the class of bug
+  where a rename updates prompt surfaces but leaves hook runtime
+  pointing at the old location.
+
+#### Migration
+Existing users with live state should run once at each project root:
+
+```bash
+mv .claude/cc10x .cc10x
+```
+
+The `.gitignore` rule is updated accordingly.
+
+#### Verified
+- `python3 plugins/cc10x/scripts/cc10x_harness_audit.py`
+- `python3 plugins/cc10x/scripts/cc10x_workflow_replay_check.py`
+- `python3 plugins/cc10x/scripts/cc10x_reference_benchmark.py`
+- `python3 plugins/cc10x/scripts/cc10x_worldclass_benchmark.py`
+
 ## [10.1.19] - 2026-04-12
 
 ### Harmony hardening release

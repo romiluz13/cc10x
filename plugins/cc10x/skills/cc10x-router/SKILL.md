@@ -37,10 +37,10 @@ Rules:
 Always run this before routing or resuming:
 
 ```text
-1. Bash("mkdir -p .claude/cc10x/v10")
-2. Read(".claude/cc10x/v10/activeContext.md")
-3. Read(".claude/cc10x/v10/patterns.md")
-4. Read(".claude/cc10x/v10/progress.md")
+1. Bash("mkdir -p .cc10x/v10")
+2. Read(".cc10x/v10/activeContext.md")
+3. Read(".cc10x/v10/patterns.md")
+4. Read(".cc10x/v10/progress.md")
 ```
 
 Do not parallelize step 1 with reads.
@@ -73,8 +73,8 @@ v10 trust rule:
 ## 2a. Workflow Artifact And Hook Policy
 
 Core law:
-- Durable router state lives under `.claude/cc10x/v10/workflows/{workflow_uuid}.json`
-- Companion event log lives under `.claude/cc10x/v10/workflows/{workflow_uuid}.events.jsonl`
+- Durable router state lives under `.cc10x/v10/workflows/{workflow_uuid}.json`
+- Companion event log lives under `.cc10x/v10/workflows/{workflow_uuid}.events.jsonl`
 - Router-owned gates still include `plan_trust_gate`, `phase_exit_gate`, `failure_stop_gate`, `memory_sync_gate`, and `skill_precedence_gate`
 
 Mandatory reference read:
@@ -116,7 +116,7 @@ Hydration rules:
 - Find active parent workflow tasks by subject prefix `CC10X BUILD:`, `CC10X DEBUG:`, `CC10X REVIEW:`, `CC10X PLAN:`.
 - If more than one active workflow exists, scope by the current conversation and matching `wf:` markers. Do not resume a workflow you cannot scope confidently.
 - Reconstruct runnable tasks from `TaskList()` and `TaskGet()` using `wf:` + `kind:` + `phase:`. Do not rely on stored task IDs for correctness.
-- Read and write only the v10 namespace. Ignore legacy `.claude/cc10x/*.md` and `.claude/cc10x/workflows/*` state during hydration.
+- Read and write only the v10 namespace. Ignore legacy `.cc10x/*.md` and `.cc10x/workflows/*` state during hydration.
 - `[cc10x-internal] memory_task_id` in `activeContext.md` is only a transient optimization. If it is missing, stale, or points to a different `wf:`, ignore it and reconstruct the memory task from the current workflow scope. [EASY TO MISS: stale memory_task_id is the #1 cause of cross-workflow pollution]
 - Never use an unscoped fallback like "first pending Memory Update task". [EASY TO MISS: unscoped lookups silently pick up orphan tasks from prior workflows]
 
@@ -155,7 +155,7 @@ Before creating a new workflow:
 - Read `activeContext.md ## References` to discover `Plan`, `Design`, and prior `Research` files.
 - Read `activeContext.md ## Decisions` for prior planner/build clarifications.
 - Read `progress.md ## Current Workflow` and `## Tasks` for pending work that should resume instead of duplicating.
-- Read the latest `.claude/cc10x/v10/workflows/*.json` artifact if one exists for the current conversation.
+- Read the latest `.cc10x/v10/workflows/*.json` artifact if one exists for the current conversation.
 
 **Intent Readiness Gate (MANDATORY before PLAN or BUILD):**
 Before dispatching to planner or builder, verify the intent contract meets three conditions:
@@ -216,11 +216,11 @@ TaskCreate({
 
 ```text
 Write(
-  file_path=".claude/cc10x/v10/workflows/{workflow_uuid}.json",
-  content="{\"workflow_uuid\":\"{workflow_uuid}\",\"workflow_id\":\"{workflow_uuid}\",\"workflow_type\":\"{WORKFLOW}\",\"state_root\":\".claude/cc10x/v10\",\"user_request\":\"{request}\",\"plan_file\":null,\"design_file\":null,\"research_files\":[],\"approved_decisions\":[],\"plan_mode\":null,\"verification_rigor\":\"standard\",\"proof_status\":\"gaps_found\",\"traceability\":{\"requirements\":[],\"phases\":[],\"verification\":[],\"remediation\":[]},\"intent\":{\"goal\":null,\"non_goals\":[],\"constraints\":[],\"acceptance_criteria\":[],\"open_decisions\":[]},\"normalized_phases\":[],\"phase_cursor\":null,\"capabilities\":{\"brightdata_available\":\"unknown\",\"octocode_available\":\"unknown\",\"websearch_available\":\"unknown\",\"webfetch_available\":\"unknown\"},\"research_rounds\":[],\"research_backend_history\":[],\"research_quality\":{\"web\":\"none\",\"github\":\"none\",\"overall\":\"none\"},\"task_ids\":{\"planner_create\":null,\"planning_review_pass1\":null,\"planner_replan\":null,\"planning_review_pass2\":null,\"memory_finalize\":null},\"phase_status\":{},\"results\":{\"builder\":null,\"investigator\":null,\"reviewer\":null,\"hunter\":null,\"verifier\":null,\"planner\":null,\"planning_reviewer\":null,\"research\":{\"web\":null,\"github\":null,\"synthesis\":null}},\"evidence\":{\"builder\":[],\"investigator\":[],\"reviewer\":[],\"hunter\":[],\"verifier\":[],\"planning_reviewer\":[]},\"telemetry\":{\"task_metrics_available\":\"unknown\",\"workflow_wall_clock_seconds\":0,\"agent_wall_clock_seconds\":{\"builder\":0,\"investigator\":0,\"reviewer\":0,\"hunter\":0,\"verifier\":0,\"planner\":0},\"loop_counts\":{\"re_review\":0,\"re_hunt\":0,\"re_verify\":0},\"verifier\":{\"phase_exit_proof_runs\":0,\"extended_audit_runs\":0,\"workload_seconds\":{\"tests\":0,\"build\":0,\"scan\":0,\"reconcile\":0,\"reasoning\":0}}},\"quality\":{\"confidence\":null,\"evidence_complete\":false,\"scenario_coverage\":0,\"research_quality\":\"none\",\"convergence_state\":\"pending\"},\"planning_review_runs\":0,\"planning_review_findings\":[],\"planning_review_status\":\"not_started\",\"memory_notes\":[],\"pending_gate\":null,\"status_history\":[{\"event\":\"workflow_started\",\"ts\":\"{iso_timestamp}\",\"phase\":\"{build|debug|review|plan}\"}],\"remediation_history\":[],\"created_at\":\"{iso_timestamp}\",\"updated_at\":\"{iso_timestamp}\"}"
+  file_path=".cc10x/v10/workflows/{workflow_uuid}.json",
+  content="{\"workflow_uuid\":\"{workflow_uuid}\",\"workflow_id\":\"{workflow_uuid}\",\"workflow_type\":\"{WORKFLOW}\",\"state_root\":\".cc10x/v10\",\"user_request\":\"{request}\",\"plan_file\":null,\"design_file\":null,\"research_files\":[],\"approved_decisions\":[],\"plan_mode\":null,\"verification_rigor\":\"standard\",\"proof_status\":\"gaps_found\",\"traceability\":{\"requirements\":[],\"phases\":[],\"verification\":[],\"remediation\":[]},\"intent\":{\"goal\":null,\"non_goals\":[],\"constraints\":[],\"acceptance_criteria\":[],\"open_decisions\":[]},\"normalized_phases\":[],\"phase_cursor\":null,\"capabilities\":{\"brightdata_available\":\"unknown\",\"octocode_available\":\"unknown\",\"websearch_available\":\"unknown\",\"webfetch_available\":\"unknown\"},\"research_rounds\":[],\"research_backend_history\":[],\"research_quality\":{\"web\":\"none\",\"github\":\"none\",\"overall\":\"none\"},\"task_ids\":{\"planner_create\":null,\"planning_review_pass1\":null,\"planner_replan\":null,\"planning_review_pass2\":null,\"memory_finalize\":null},\"phase_status\":{},\"results\":{\"builder\":null,\"investigator\":null,\"reviewer\":null,\"hunter\":null,\"verifier\":null,\"planner\":null,\"planning_reviewer\":null,\"research\":{\"web\":null,\"github\":null,\"synthesis\":null}},\"evidence\":{\"builder\":[],\"investigator\":[],\"reviewer\":[],\"hunter\":[],\"verifier\":[],\"planning_reviewer\":[]},\"telemetry\":{\"task_metrics_available\":\"unknown\",\"workflow_wall_clock_seconds\":0,\"agent_wall_clock_seconds\":{\"builder\":0,\"investigator\":0,\"reviewer\":0,\"hunter\":0,\"verifier\":0,\"planner\":0},\"loop_counts\":{\"re_review\":0,\"re_hunt\":0,\"re_verify\":0},\"verifier\":{\"phase_exit_proof_runs\":0,\"extended_audit_runs\":0,\"workload_seconds\":{\"tests\":0,\"build\":0,\"scan\":0,\"reconcile\":0,\"reasoning\":0}}},\"quality\":{\"confidence\":null,\"evidence_complete\":false,\"scenario_coverage\":0,\"research_quality\":\"none\",\"convergence_state\":\"pending\"},\"planning_review_runs\":0,\"planning_review_findings\":[],\"planning_review_status\":\"not_started\",\"memory_notes\":[],\"pending_gate\":null,\"status_history\":[{\"event\":\"workflow_started\",\"ts\":\"{iso_timestamp}\",\"phase\":\"{build|debug|review|plan}\"}],\"remediation_history\":[],\"created_at\":\"{iso_timestamp}\",\"updated_at\":\"{iso_timestamp}\"}"
 )
 Write(
-  file_path=".claude/cc10x/v10/workflows/{workflow_uuid}.events.jsonl",
+  file_path=".cc10x/v10/workflows/{workflow_uuid}.events.jsonl",
   content="{\"ts\":\"{iso_timestamp}\",\"wf\":\"{workflow_uuid}\",\"event\":\"workflow_started\",\"phase\":\"{build|debug|review|plan}\",\"task_id\":\"{parent_task_id}\",\"agent\":\"router\",\"decision\":\"start\",\"reason\":\"User request\"}\n"
 )
 ```
@@ -281,7 +281,7 @@ Only create child tasks after the v10 artifact exists.
 - Task Phase: {phase}
 - Plan File: {plan_file or 'None'}
 - Workflow Scope: wf:{workflow_uuid}
-- Workflow Artifact: .claude/cc10x/v10/workflows/{workflow_uuid}.json
+- Workflow Artifact: .cc10x/v10/workflows/{workflow_uuid}.json
 
 ## User Request
 {request}
@@ -489,7 +489,7 @@ Convergence rule:
 3. If the runnable task kind is memory:
    - execute inline in the main context
    - persist workflow artifact results + Memory Notes from the task description
-   - append `memory_finalized` to `.claude/cc10x/v10/workflows/{wf}.events.jsonl`
+   - append `memory_finalized` to `.cc10x/v10/workflows/{wf}.events.jsonl`
    - clean up the matching [cc10x-internal] memory_task_id entry
    - mark the memory task completed
    - mark the parent workflow task completed
@@ -533,7 +533,7 @@ If any answer is "no" or "unknown", treat as incomplete and apply the fallback v
 4. Memory payload was already captured in step 0:
    - READ-ONLY agents: append extracted notes to the memory task description.
    - WRITE agents: append deferred or supplemental payload needed by the memory task.
-5. Update `.claude/cc10x/v10/workflows/{workflow_uuid}.json` with:
+5. Update `.cc10x/v10/workflows/{workflow_uuid}.json` with:
    - intent contract fields from planner output when available
    - task ids
    - phase status

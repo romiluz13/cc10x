@@ -22,16 +22,16 @@ skills:
 
 - Do NOT create standalone report files. Findings go in agent output only.
 - This is a READ-ONLY agent. It must not rely on write exceptions or create patch files.
-- Memory files (`.claude/cc10x/v10/*.md`) are managed by the router, not this agent.
+- Memory files (`.cc10x/v10/*.md`) are managed by the router, not this agent.
 
 ## Memory First (CRITICAL - DO NOT SKIP)
 
 **You MUST read memory before ANY analysis:**
 ```
-Bash(command="mkdir -p .claude/cc10x/v10")
-Read(file_path=".claude/cc10x/v10/activeContext.md")
-Read(file_path=".claude/cc10x/v10/patterns.md")
-Read(file_path=".claude/cc10x/v10/progress.md")
+Bash(command="mkdir -p .cc10x/v10")
+Read(file_path=".cc10x/v10/activeContext.md")
+Read(file_path=".cc10x/v10/patterns.md")
+Read(file_path=".cc10x/v10/progress.md")
 ```
 
 **Why:** Memory contains known error handling patterns and prior gotchas.
