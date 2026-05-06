@@ -1,6 +1,6 @@
 # CC10X Prompt Surface Inventory
 
-> **Status note:** Synced to `v10.1.19` on 2026-04-12.
+> **Status note:** Synced to `v10.1.20` on 2026-05-06. Structural contract last changed on 2026-04-12 (`v10.1.19`); `v10.1.20` is a state-root path migration (`.claude/cc10x/` → `.cc10x/`) with no prompt-surface changes.
 
 ## Purpose
 

@@ -872,6 +872,25 @@ def main() -> int:
         if banned_word in first_lines:
             errors.append(f"{path.name} description appears to summarize workflow")
 
+    # Runtime state-root drift guard.
+    # Prompt surfaces, fixtures, and hook runtime (cc10x_hooklib.py) must agree on
+    # the workflow state root. Drift between them produces split-brain: agents write
+    # to one location, hooks read from another, and guards silently stop firing.
+    # Scope the scan to runtime Python so historical CHANGELOG entries stay accurate.
+    # This audit file itself is excluded because it has to name the legacy literal
+    # in order to detect drift.
+    runtime_scripts = sorted(
+        p
+        for p in (PLUGIN_ROOT / "scripts").glob("*.py")
+        if p.name not in {"__init__.py", "cc10x_harness_audit.py"}
+    )
+    for script in runtime_scripts:
+        body = read(script)
+        if ".claude/cc10x" in body or ".claude\" / \"cc10x" in body:
+            errors.append(
+                f"{script.name} still references the legacy .claude/cc10x state root"
+            )
+
     if errors:
         return fail(errors)
 

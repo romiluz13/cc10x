@@ -1,6 +1,6 @@
 # CC10x Router Behavioral Invariant Registry
 
-> **Status note:** Current product line is `v10.1.19`. This registry is aligned to the live router structure in `plugins/cc10x/skills/cc10x-router/SKILL.md` and `plugins/cc10x/skills/cc10x-router/references/*.md` as of 2026-04-12.
+> **Status note:** Current product line is `v10.1.20`. This registry is aligned to the live router structure in `plugins/cc10x/skills/cc10x-router/SKILL.md` and `plugins/cc10x/skills/cc10x-router/references/*.md` as of 2026-05-06. Structural contract last changed on 2026-04-12 (`v10.1.19`); `v10.1.20` is a state-root path migration (`.claude/cc10x/` → `.cc10x/`) with no invariant changes.
 
 ## Purpose
 

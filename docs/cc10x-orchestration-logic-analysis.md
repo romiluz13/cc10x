@@ -1,6 +1,6 @@
 # CC10x Orchestration Logic Analysis
 
-> **Last synced with live router/agents:** 2026-04-12 (`v10.1.19`)
+> **Last synced with live router/agents:** 2026-05-06 (`v10.1.20`; last structural sync `v10.1.19` on 2026-04-12, with the `.claude/cc10x/` → `.cc10x/` state-root migration shipped in `v10.1.20`)
 > **Status:** SYNCED TO LIVE PROMPTS
 > **Relationship to Bible:** The bible is the canonical specification. This document explains the practical mechanics and why the system is shaped this way.
 

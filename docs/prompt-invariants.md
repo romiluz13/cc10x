@@ -1,6 +1,6 @@
 # CC10X Prompt Behavioral Invariant Registry
 
-> **Status note:** This registry is aligned to the live prompt stack in `plugins/cc10x/agents/` and `plugins/cc10x/skills/` as of 2026-04-12 (`v10.1.19`).
+> **Status note:** This registry is aligned to the live prompt stack in `plugins/cc10x/agents/` and `plugins/cc10x/skills/` as of 2026-05-06 (`v10.1.20`). Invariants last changed on 2026-04-12 (`v10.1.19`); `v10.1.20` is a state-root path migration (`.claude/cc10x/` → `.cc10x/`) with no invariant changes.
 
 ## Purpose
 

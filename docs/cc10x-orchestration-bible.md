@@ -1,6 +1,6 @@
 # CC10X Orchestration Bible (Plugin-Only Source of Truth)
 
-> **Last reviewed against live plugin files:** 2026-04-12 (`v10.1.19` product line: harmony hardening, router-owned prompt assembly, phase-local handoffs, early memory capture, router-owned review fan-in, versioned v10 state, workflow replay fixtures, reference-first skill packaging) | **Status:** SYNCED TO LIVE PROMPTS
+> **Last reviewed against live plugin files:** 2026-05-06 (`v10.1.20` product line: same harmony-hardened router/agent/skill contracts as `v10.1.19`, with workflow state relocated from `.claude/cc10x/v10/` to `.cc10x/v10/` to escape the Claude Code sensitive-file gate; no changes to router invariants, agent contracts, memory model, or verification rigor) | **Status:** SYNCED TO LIVE PROMPTS
 
 > This document is derived **only** from `plugins/cc10x/` (agents + skills).
 > Ignore all other docs. Do not trust external narratives.

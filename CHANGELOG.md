@@ -1,5 +1,54 @@
 # Changelog
 
+## [10.1.20] - 2026-05-06
+
+### Escape the Claude Code sensitive-file gate
+
+Moved the workflow state root from `.claude/cc10x/v10/` to `.cc10x/v10/`
+across every prompt surface, runtime hook, audit script, and fixture.
+The Claude Code harness treats any path under `.claude/` as a sensitive
+file and prompts the user on every read/write/mkdir regardless of
+`permissions.allow`, `additionalDirectories`, `defaultMode`, or
+`PreToolUse` hook decisions — the gate runs above the hook layer, so
+plugin-side and user-side workarounds could not suppress the prompt.
+
+The new path is outside `.claude/`, so the harness no longer flags it
+sensitive. Every router fanout, event-log append, and memory refresh is
+now silent in default-permission setups.
+
+#### Changed
+- Workflow state root relocated to `.cc10x/v10/` in all 7 agent tool
+  lists, 12 skill files, 4 audit/benchmark scripts, 23 test fixtures,
+  `.gitignore`, README, claude-settings template, and explorer HTMLs.
+- `cc10x_hooklib.state_root()` now resolves to
+  `<project>/.cc10x/v10/`; every hook that imports it (PreToolUse
+  guard, PostToolUse artifact guard, SessionStart context hydration,
+  PreCompact/PostCompact state snapshots, Stop persist, Stop-failure
+  log, TaskCompleted guard) follows the rename automatically.
+- `cc10x_latency_audit.RUNTIME_WORKFLOWS` points at the new path.
+
+#### Added
+- `cc10x_harness_audit.py` now scans every runtime Python script under
+  `plugins/cc10x/scripts/` for the legacy `.claude/cc10x` literal and
+  fails the audit if any drift remains. This prevents the class of bug
+  where a rename updates prompt surfaces but leaves hook runtime
+  pointing at the old location.
+
+#### Migration
+Existing users with live state should run once at each project root:
+
+```bash
+mv .claude/cc10x .cc10x
+```
+
+The `.gitignore` rule is updated accordingly.
+
+#### Verified
+- `python3 plugins/cc10x/scripts/cc10x_harness_audit.py`
+- `python3 plugins/cc10x/scripts/cc10x_workflow_replay_check.py`
+- `python3 plugins/cc10x/scripts/cc10x_reference_benchmark.py`
+- `python3 plugins/cc10x/scripts/cc10x_worldclass_benchmark.py`
+
 ## [10.1.19] - 2026-04-12
 
 ### Harmony hardening release
@@ -320,7 +369,7 @@ playbooks load only when needed.
 
 #### Changed
 - Reframed CC10X around a trust-first v10 contract: agreement-first planning, sequential phase-gated BUILD, fail-stop progression, explicit instruction precedence, stable workflow UUIDs, and fail-closed memory persistence.
-- Moved durable workflow state and hook logging to the versioned namespace `.cc10x/v10/`.
+- Moved durable workflow state and hook logging to the versioned namespace `.claude/cc10x/v10/`.
 - Upgraded router, planner, component-builder, and bug-investigator contracts to require explicit phase/open-decision/blast-radius reporting instead of relying on implied success.
 - Recast `frontend-patterns`, `debugging-patterns`, and `architecture-patterns` as advisory layers that cannot outrank explicit user or project standards.
 
@@ -352,7 +401,7 @@ playbooks load only when needed.
 
 #### Added
 - `plugins/cc10x/scripts/cc10x_harness_audit.py` — internal publication-safety audit for manifest/docs version drift, hook/MCP references, router section coverage, metadata field consistency, and router-consumed agent contract fields.
-- Router guidance for append-only workflow event logs under `.cc10x/workflows/{wf}.events.jsonl`.
+- Router guidance for append-only workflow event logs under `.claude/cc10x/workflows/{wf}.events.jsonl`.
 
 #### Fixed
 - Adaptive PLAN gating is now explicit: trivial work may build directly, while complex or ambiguous work must pass through intent/spec planning.
@@ -548,7 +597,7 @@ playbooks load only when needed.
 ### Fixed — CC10X-057/058 minimal output bug (two-fix solution)
 
 - **Fix A — `silent-failure-hunter.md`**: Added explicit "Zero-results path (CRITICAL)" at Process step 1 — when grep finds no code patterns (e.g., Markdown-only projects), agent must still emit full output with STATUS=CLEAN. Replaced escape hatch ("If analysis complete but output is short: emit one sentence") with unconditional "NO EXCEPTIONS" rule: `"Task N: COMPLETED" alone is NEVER sufficient output.`
-- **Fix B — `cc10x-router/SKILL.md`**: Disambiguated IMPORTANT block bullet 4 — `"no memory edits"` now explicitly means "skip Edit() calls on `.cc10x/*.md`" — not reduced analysis scope. Analysis quality (≥200 chars), Router Contract YAML, and Memory Notes section are REQUIRED regardless of parallel phase status.
+- **Fix B — `cc10x-router/SKILL.md`**: Disambiguated IMPORTANT block bullet 4 — `"no memory edits"` now explicitly means "skip Edit() calls on `.claude/cc10x/*.md`" — not reduced analysis scope. Analysis quality (≥200 chars), Router Contract YAML, and Memory Notes section are REQUIRED regardless of parallel phase status.
 
 ### Investigation notes
 
@@ -584,7 +633,7 @@ Parallel hunt (3 theories) confirmed two root causes: (1) hunter greps for code 
 ### Fixed — 3 UX/DX improvements
 
 **Memory files now git-tracked:**
-- `.cc10x/` un-ignored in `.gitignore` using glob-level pattern. Memory files (`activeContext.md`, `patterns.md`, `progress.md`) are now tracked and push to GitHub. Works locally today; now also works across machines and teams.
+- `.claude/cc10x/` un-ignored in `.gitignore` using glob-level pattern. Memory files (`activeContext.md`, `patterns.md`, `progress.md`) are now tracked and push to GitHub. Works locally today; now also works across machines and teams.
 
 **Routing transparency:**
 - Router announces its decision before executing any workflow: `→ {WORKFLOW} workflow (signals: {matched keywords})`. One line, zero bloat. Makes the black-box routing legible to users.
@@ -743,7 +792,7 @@ Comprehensive internal audit of the entire cc10x orchestration system. Found and
 - `code-generation/SKILL.md`: Examples used `grep`/`ls`/`cat` bash commands instead of dedicated `Grep`/`Glob`/`Read` tools
 
 **Contradictions (6):**
-- 3 READ-ONLY agents: Added `mkdir -p .cc10x` before memory reads — prevents failure on fresh projects
+- 3 READ-ONLY agents: Added `mkdir -p .claude/cc10x` before memory reads — prevents failure on fresh projects
 - `code-reviewer.md`: Added `SELF_REMEDIATED` to Router Contract STATUS enum — was handled by router but missing from agent's declared values
 - `session-memory/SKILL.md`: Updated READ-ONLY agent description to match reality (agents read files directly, not "receive summary in prompt")
 - `bug-investigator.md`: DEBUG-RESET variable changed from `{TASK_ID}` to `{PARENT_WORKFLOW_ID}` to match router
@@ -1374,7 +1423,7 @@ Major orchestration hardening release. **33 surgical changes** across `cc10x-rou
 - **User Standards support** (`session-memory/SKILL.md` + README) (#13)
   - Added `## User Standards` section to the `patterns.md` template — agents load patterns.md on every workflow, so any standards written there are automatically followed
   - `## User Standards` entries are marked **non-negotiable** in the session-memory skill
-  - Setup wizard (Step 4) now asks for user standards and writes them to `.cc10x/patterns.md` on install
+  - Setup wizard (Step 4) now asks for user standards and writes them to `.claude/cc10x/patterns.md` on install
   - Closes #13
 
 ### Fixed
@@ -1411,7 +1460,7 @@ Major orchestration hardening release. **33 surgical changes** across `cc10x-rou
 ### Fixed
 
 - **Memory file permission prompts** (README Step 3)
-  - Added `Edit(.cc10x/*)` and `Write(.cc10x/*)` to settings.json template
+  - Added `Edit(.claude/cc10x/*)` and `Write(.claude/cc10x/*)` to settings.json template
   - Pre-approves edits to memory files, eliminating repeated permission prompts
   - Closes #7
 
@@ -2574,7 +2623,7 @@ Router (cc10x-router)
     ├── DEBUG → bug-investigator → code-reviewer → integration-verifier
     └── PLAN → planner
 
-Memory (.cc10x/)
+Memory (.claude/cc10x/)
     ├── activeContext.md (current focus, decisions, learnings)
     ├── patterns.md (project conventions, gotchas)
     └── progress.md (completed, remaining, evidence)

@@ -4,7 +4,7 @@
 
 ### Router-Owned Claude Code Harness
 
-**Current version:** 10.1.19
+**Current version:** 10.1.20
 
 **Recommended: Create `~/.claude/CLAUDE.md` (global) so the router is always active across all projects.**
 
@@ -537,7 +537,7 @@ cc10x survives context compaction. This is critical for long sessions.
     - Blockers
 ```
 
-If both `.cc10x/` and `.cc10x/v10/` exist in a project, `v10/` is the live namespace. Root-level `.cc10x/*.md` and `.cc10x/workflows/*` are legacy pre-10.1.0 residue and are ignored by current router hydration.
+The live namespace is `.cc10x/v10/`. Two legacy residue locations are ignored by current router hydration if present: `.claude/cc10x/` (pre-10.1.20, before the workflow state moved out of `.claude/` to escape the harness sensitive-file gate — run `mv .claude/cc10x .cc10x` once to migrate), and root-level `.cc10x/*.md` and `.cc10x/workflows/*` under `v10/`'s parent (pre-10.1.0 residue from the unversioned namespace).
 
 **Iron Law:** Every workflow loads memory at START and updates at END.
 
@@ -637,6 +637,7 @@ I'll help you build a task tracker! Let me start...
 
 | Version | Highlights |
 |---------|------------|
+| **v10.1.20** | Escape the Claude Code sensitive-file gate: workflow state root relocated from `.claude/cc10x/v10/` to `.cc10x/v10/` across every prompt surface, runtime hook, and fixture. Every router fanout, event-log append, and memory refresh is now silent in default-permission setups. Audit now catches runtime/prompt path drift so this class of regression fails self-tests before release. |
 | **v10.1.19** | Harmony hardening release: contradiction cleanup across router-facing instructions, router-owned self-contained handoffs, phase-local BUILD context, early memory capture before validation, review/hunt fan-in at the router, and full docs/release metadata alignment. |
 | **v10.1.15** | Hook expansion: 4 audit-only hooks (PreCompact, Stop, StopFailure, InstructionsLoaded) for workflow state persistence and telemetry. 6→10 hook events. Zero blocking, zero context injection, router remains sole authority. |
 | **v10.1.14** | Multi-repo harmony integration: 29 certified patterns from 11 reference repos via 3-phase harmony pipeline. Test tampering detection, claim extraction, environment escape hatches, analysis paralysis guards, near-miss negative testing, de-sloppify scans, plans-are-prompts principle, professional objectivity hard rules. |

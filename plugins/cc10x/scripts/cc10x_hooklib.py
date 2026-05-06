@@ -28,7 +28,7 @@ def plugin_config_dir() -> Path:
 
 
 def state_root() -> Path:
-    path = project_dir() / ".claude" / "cc10x" / STATE_VERSION
+    path = project_dir() / ".cc10x" / STATE_VERSION
     path.mkdir(parents=True, exist_ok=True)
     return path
 
