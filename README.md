@@ -1,31 +1,22 @@
 <p align="center">
-  <img src="assets/logo.png" alt="CC10x — Claude Code harness | specialist agents. Orange stylized X with starburst and CC10x wordmark." width="320" />
+  <img src="assets/logo.png" alt="CC10x — Claude Code harness | specialist agents. Orange stylized X with starburst and CC10x wordmark." width="280" />
 </p>
 
-### Router-owned Claude Code harness
+<h1 align="center">cc10x</h1>
+
+<p align="center">
+  <em>The Claude Code harness you install when you're done babysitting.</em>
+</p>
+
+<p align="center">
+  <strong>1 router</strong> &nbsp;·&nbsp; <strong>9 specialist agents</strong> &nbsp;·&nbsp; <strong>13 skills</strong> &nbsp;·&nbsp; <strong>4 workflows</strong>
+</p>
+
+<p align="center">
+  Fail-closed gates &nbsp;·&nbsp; survives compaction &nbsp;·&nbsp; zero prompt spam &nbsp;·&nbsp; self-tested orchestration
+</p>
 
 **Current version:** 10.1.20
-
----
-
-## The harness you install when you're done babysitting Claude Code
-
-You know the loop. Ask Claude for something complex. It works for a while. Then it declares "Done!" — but tests are still red, the refactor is half-finished, and by message 40 it's contradicting itself because the context is gone.
-
-cc10x treats the coding loop like engineering infrastructure instead of a clever prompt.
-
-- **One router, not twelve slash commands.** Every request hits `cc10x-router` first. Router picks the workflow. Workflow picks the specialist. You never wire agents together by hand.
-- **Claude doesn't decide when it's done.** `integration-verifier` is independent of the builder. Phase-exit gates block advancement on partial evidence. Fail-closed by design — no "declared victory" on red tests.
-- **Adversarial review runs in parallel.** `code-reviewer` and `silent-failure-hunter` fan out at the same time. The hunter greps for swallowed errors and empty catches you didn't ask about.
-- **Planning has teeth.** Three modes — `direct`, `execution_plan`, `decision_rfc` — chosen by intent, not vibes. Every non-trivial plan gets a fresh anti-anchored review by a read-only reviewer who never saw the planner's rationale.
-- **Survives compaction.** Workflow state on disk with stable UUIDs, memory files the router auto-heals. Resume is deterministic, not "hope it remembers."
-- **Zero sensitive-file prompts.** State lives at `.cc10x/` — outside `.claude/`, so the harness's sensitive-file gate never fires on your workflow. Router fanouts are silent under default permissions.
-- **Self-tested orchestration.** 23 replay fixtures, harness audits, runtime-path drift guards. We prove the router behaves the way the docs say it does.
-
-```text
-1 router  •  9 specialist agents  •  13 skills  •  4 workflows
-        all wired together as one plugin
-```
 
 ---
 
@@ -36,9 +27,26 @@ cc10x treats the coding loop like engineering infrastructure instead of a clever
 /plugin install cc10x@romiluz13
 ```
 
-Then paste this README into Claude Code and say **"set up cc10x for me"**. Restart Claude Code. Done.
+Then say **"set up cc10x for me"** in Claude Code and restart. Done.
 
-Everything below is for readers who want to know *how* it works before they install.
+---
+
+## Why cc10x
+
+Ask Claude for something complex. It works for a while. Then it declares **"Done!"** — tests still red, refactor half-finished, and by message 40 it's contradicting itself because the context is gone.
+
+**cc10x fixes the loop, not the prompt.**
+
+| The pain you know | How cc10x handles it |
+|---|---|
+| "Done!" on red tests | `integration-verifier` is independent of the builder. Phase-exit gates block advancement on partial evidence. |
+| Silent failures nobody asked about | `silent-failure-hunter` runs in parallel with review — greps for swallowed errors and empty catches. |
+| Context falls apart after compaction | Workflow state on disk with stable UUIDs. Memory files the router auto-heals. |
+| Planning is just a chat | Three planning modes chosen by intent, with a fresh anti-anchored review by a reviewer who never saw the planner's rationale. |
+| 12 slash commands to remember | One router. Every request hits `cc10x-router` first. |
+| `.claude/` prompt spam on every fanout | State lives at `.cc10x/` — outside `.claude/`, so the harness's sensitive-file gate never fires. |
+
+Everything below is the architecture. Keep reading if you want to know *how* before you install.
 
 ---
 
