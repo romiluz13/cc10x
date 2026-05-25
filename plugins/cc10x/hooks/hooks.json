@@ -15,6 +15,17 @@
     ],
     "SessionStart": [
       {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/cc10x_context_migration.py\"",
+            "timeout": 15,
+            "statusMessage": "CC10X context migration check"
+          }
+        ]
+      },
+      {
         "matcher": "startup|resume|compact",
         "hooks": [
           {
