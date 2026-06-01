@@ -1,7 +1,8 @@
 ---
 name: code-generation
 description: "Internal skill. Use cc10x-router for all development tasks."
-allowed-tools: Read, Grep, Glob, Write, Edit, LSP
+allowed-tools: Read Grep Glob Write Edit LSP
+user-invocable: false
 ---
 
 # Code Generation
@@ -97,15 +98,15 @@ lspFindReferences(lineHint=N) → see all usages
 
 ### 1. Study Project Patterns First
 
-```bash
+```
 # Find similar implementations
-grep -r "similar_pattern" --include="*.ts" src/ | head -10
+Grep(pattern="similar_pattern", glob="*.ts", path="src/")
 
 # Check file structure
-ls -la src/components/ # or relevant directory
+Glob(pattern="src/components/*")
 
 # Read existing similar code
-cat src/path/to/similar/file.ts
+Read(file_path="src/path/to/similar/file.ts")
 ```
 
 **Match:**
@@ -141,6 +142,15 @@ function calculateTotal(
   // YAGNI - Was this asked for?
 }
 ```
+
+### Code Clarity
+
+**Prefer explicit, readable code over compact one-liners:**
+
+- Avoid nested ternaries (`a ? b ? c : d : e`) — use `if/else` or `switch`
+- Don't sacrifice readability for fewer lines — 3 clear lines beats 1 clever line
+- Consolidate related logic, but don't merge unrelated concerns into one function
+- Remove comments that describe what the code obviously does — let clear naming speak
 
 ### Minimal Diffs Principle
 
@@ -184,6 +194,7 @@ If you find yourself:
 - Not handling edge cases ("happy path only")
 - Creating abstractions for one use case
 - Adding configuration options not requested
+- Using magic numbers or hardcoded thresholds instead of named constants or derived formulas
 - Writing comments instead of clear code
 - Multiple valid approaches exist but not presenting options
 
@@ -199,6 +210,7 @@ If you find yourself:
 | "I'll add docs later" | Code should be self-documenting. Write clear code now. |
 | "It's just a quick prototype" | Prototypes become production. Write it right. |
 | "I know a better way" | The codebase has patterns. Follow them. |
+| "I understand enough to start" | Partial understanding produces wrong code. Read the full spec, pattern, or reference before writing. |
 
 ## When to Present Multiple Options
 
@@ -212,7 +224,23 @@ If you find yourself:
 - Project patterns already established (follow existing pattern)
 - User request is specific (no ambiguity)
 
-**Use brainstorming skill when presenting options.**
+**When multiple valid approaches exist:** Prefer the simplest option that matches project patterns. If the choice is high-risk and not already decided by the prompt or plan, surface the alternatives in your output and return control to the router instead of questioning the user directly.
+
+## When to Abstract
+
+Abstraction has a cost. Only introduce it when concrete evidence justifies it:
+
+| Signal | Action |
+|--------|--------|
+| Pattern seen in 1 example only | Do not extract. This is overfitting to a single case. |
+| Same logic in 1 place | Do not abstract. Inline is fine. |
+| Same logic in 2 places | Note the duplication. Do not abstract yet. |
+| Same logic in 3+ places | Extract. The pattern is proven. |
+| 1-2 line change | Inline edit. No helper function needed. |
+| Parameter variations only | Extract function with parameters. |
+| Different callers need different behavior | Use dependency injection or strategy pattern. |
+
+**Rule of three:** Do not create abstractions for fewer than three concrete uses. Premature abstraction is harder to undo than duplication.
 
 ## Code Quality Checklist
 

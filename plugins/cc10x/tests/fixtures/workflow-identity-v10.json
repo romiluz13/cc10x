@@ -1,0 +1,32 @@
+{
+  "id": "workflow-identity-v10",
+  "workflow_type": "BUILD",
+  "starting_artifact": {
+    "workflow_uuid": "wf-20260312T162700Z-a1b2c3d4",
+    "workflow_id": "wf-20260312T162700Z-a1b2c3d4",
+    "workflow_type": "BUILD",
+    "state_root": ".cc10x/v10",
+    "plan_mode": "execution_plan",
+    "verification_rigor": "standard",
+    "proof_status": "gaps_found",
+    "traceability": {"requirements": [], "phases": [], "verification": [], "remediation": []},
+    "phase_cursor": "phase-1",
+    "task_ids": {},
+    "results": {},
+    "intent": {"goal": "Implement global search"},
+    "evidence": {},
+    "quality": {"convergence_state": "pending"},
+    "status_history": [],
+    "remediation_history": []
+  },
+  "relevant_tasks": {
+    "previous_session_ids": [
+      "wf-20260311T221100Z-a1b2c3d4",
+      "wf-20260312T101500Z-deadbeef"
+    ]
+  },
+  "agent_outputs": {},
+  "expected": {
+    "collides_with_previous_session": false
+  }
+}

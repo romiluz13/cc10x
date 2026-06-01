@@ -1,7 +1,8 @@
 ---
 name: test-driven-development
 description: "Internal skill. Use cc10x-router for all development tasks."
-allowed-tools: Read, Grep, Glob, Bash, Write, Edit
+allowed-tools: Read Grep Glob Bash Write Edit
+user-invocable: false
 ---
 
 # Test-Driven Development (TDD)
@@ -13,6 +14,14 @@ Write the test first. Watch it fail. Write minimal code to pass.
 **Core principle:** If you didn't watch the test fail, you don't know if it tests the right thing.
 
 **Violating the letter of the rules is violating the spirit of the rules.**
+
+## Reference Files
+
+Read only the references needed for the current test cycle:
+
+- `references/testing-patterns.md` for naming, AAA structure, near-miss negatives, behavioral focus, and anti-pattern checks
+- `references/test-data-and-mocks.md` for factories, mock boundaries, common boundary mocks, and env/time handling
+- `references/integration-and-live-proof.md` when unit tests are not enough, or the plan requires real APIs, seeded data, browser flows, or stress proof
 
 ## When to Use
 
@@ -71,6 +80,27 @@ Implement fresh from tests. Period.
          └────────────────────────────────────┘
                     Next Feature
 ```
+
+### Vertical Slicing (CRITICAL)
+
+```
+WRONG (horizontal — all tests then all code):
+  RED:   test1, test2, test3, test4, test5
+  GREEN: impl1, impl2, impl3, impl4, impl5
+
+RIGHT (vertical — one feature at a time):
+  RED->GREEN: test1->impl1
+  RED->GREEN: test2->impl2
+  RED->GREEN: test3->impl3
+```
+
+**DO NOT write all tests first, then all implementation.** This produces bad tests:
+- Tests written in bulk test _imagined_ behavior, not _actual_ behavior
+- You end up testing the _shape_ of things rather than user-facing behavior
+- Tests become insensitive to real changes — pass when behavior breaks, fail when behavior is fine
+- You outrun your headlights, committing to test structure before understanding the implementation
+
+**Correct approach:** One test → one implementation → repeat. Each test responds to what you learned from the previous cycle.
 
 ### RED - Write Failing Test
 
@@ -203,96 +233,11 @@ Next failing test for next feature.
 | **Clear** | Name describes behavior | `test('test1')` |
 | **Shows intent** | Demonstrates desired API | Obscures what code should do |
 
-## Factory Pattern for Tests (Reference Pattern)
+For deeper test structure, near-miss negative tests, behavior-vs-internals, and
+smell checks, read `references/testing-patterns.md`.
 
-Create `getMockX(overrides?: Partial<X>)` functions for reusable test data:
-
-```typescript
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: 'admin' | 'user';
-}
-
-const getMockUser = (overrides?: Partial<User>): User => ({
-  id: '123',
-  name: 'John Doe',
-  email: 'john@example.com',
-  role: 'user',
-  ...overrides,
-});
-
-// Usage - override only what matters for the test
-it('shows admin badge for admin users', () => {
-  const user = getMockUser({ role: 'admin' });
-  render(<UserCard user={user} />);
-  expect(screen.getByText('Admin')).toBeTruthy();
-});
-```
-
-**Benefits:**
-- Sensible defaults - less boilerplate per test
-- Override specific properties - focus on what test cares about
-- Type-safe - catches missing properties
-- DRY - change mock in one place
-
-## Mocking External Dependencies (When Unavoidable)
-
-**Rule:** Prefer real code. Mock only when:
-- External API (network calls)
-- Database (test isolation)
-- Time-dependent logic
-- Third-party services
-
-### Common Mock Patterns
-
-**Supabase:**
-```typescript
-jest.mock('@/lib/supabase', () => ({
-  supabase: {
-    from: jest.fn(() => ({
-      select: jest.fn(() => ({
-        eq: jest.fn(() => Promise.resolve({ data: mockData, error: null }))
-      }))
-    }))
-  }
-}))
-```
-
-**Fetch/API:**
-```typescript
-global.fetch = jest.fn(() =>
-  Promise.resolve({ ok: true, json: () => Promise.resolve(mockResponse) })
-) as jest.Mock
-```
-
-**Redis:**
-```typescript
-jest.mock('@/lib/redis', () => ({
-  get: jest.fn(() => Promise.resolve(cachedValue)),
-  set: jest.fn(() => Promise.resolve('OK'))
-}))
-```
-
-**Environment Variables:**
-```typescript
-beforeEach(() => {
-  process.env.API_KEY = 'test-key'
-})
-afterEach(() => {
-  delete process.env.API_KEY
-})
-```
-
-**Time:**
-```typescript
-jest.useFakeTimers()
-// In test:
-jest.advanceTimersByTime(1000)
-```
-
-**Mock quality check:** If mock setup > test code, reconsider design.
+For factories, mocks, and env/time handling, read
+`references/test-data-and-mocks.md`.
 
 ## Why Order Matters
 
@@ -413,6 +358,21 @@ Before marking work complete:
 
 Can't check all boxes? You skipped TDD. Start over.
 
+## Integration And Live Proof
+
+When the accepted plan or risk profile goes beyond local behavior, read
+`references/integration-and-live-proof.md`.
+
+Unit tests are not enough when the task depends on:
+- real API calls
+- seeded or resettable data
+- browser or worker orchestration
+- cross-service side effects
+- load or stress behavior
+
+In those cases, keep TDD for the inner loop and escalate verification depth for
+the outer proof.
+
 ## Coverage Threshold (Project Default)
 
 Target: **80%+ code coverage** across:
@@ -425,20 +385,14 @@ Target: **80%+ code coverage** across:
 
 **Below threshold?** Add missing tests before claiming completion.
 
-## Test Smells (Anti-Patterns)
+### Test Prioritization
 
-| Smell | Bad Example | Why It's Bad | Fix |
-|-------|-------------|--------------|-----|
-| **Testing implementation** | `expect(component.state.count).toBe(5)` | Breaks when internals change | Test user-visible behavior |
-| **Dependent tests** | Test B relies on Test A's state | Flaky, order-dependent | Each test sets up own data |
-| **Mocking everything** | Every dependency mocked | Tests mock, not code | Use real code where feasible |
-| **Giant setup** | 50 lines of setup per test | Hard to understand | Extract factories |
-| **Magic numbers** | `expect(result).toBe(42)` | Meaning unclear | Use named constants |
-| **Test name lies** | `test('works')` passes but doesn't test 'works' | Misleading | Name describes actual behavior |
-| **No assertions** | `test('loads', () => { loadData() })` | Tests nothing | Always assert outcomes |
-| **Commented tests** | `// test('edge case'...` | Dead code, skipped coverage | Delete or uncomment |
+80% coverage means deliberate choices about what to test first. Focus effort on:
+- Critical user-facing paths (auth, payments, data integrity)
+- Complex logic with multiple branches
+- Code that has broken before (regression-prone areas)
 
-**If you spot these in your tests:** Fix before claiming TDD cycle complete.
+Do NOT skip tests because code "looks simple" — simple code breaks too. The 80% target is a floor, not a ceiling.
 
 ## When Stuck
 
@@ -448,6 +402,42 @@ Target: **80%+ code coverage** across:
 | Test too complicated | Design too complicated. Simplify interface. |
 | Must mock everything | Code too coupled. Use dependency injection. |
 | Test setup huge | Extract helpers. Still complex? Simplify design. |
+
+## Design for Testability (When Tests Are Hard)
+
+If tests are hard to write, the interface needs work:
+
+1. **Accept dependencies, don't create them**
+   - Testable: `function processOrder(order, paymentGateway) {}`
+   - Hard to test: `function processOrder(order) { const gw = new StripeGateway(); }`
+
+2. **Return results, don't produce side effects**
+   - Testable: `function calculateDiscount(cart): Discount {}`
+   - Hard to test: `function applyDiscount(cart): void { cart.total -= discount; }`
+
+3. **Small surface area** — fewer methods = fewer tests needed, fewer params = simpler setup
+
+### Behavioral Focus
+
+Test how objects collaborate, not what they contain. If a test inspects `.state`, `.length`, or private fields, it is testing structure — and will break when internals change without behavior changing.
+
+| Test target | Correct | Wrong |
+|-------------|---------|-------|
+| Function output | `expect(calculate(input)).toBe(result)` | `expect(calculator.internalCache).toContain(...)` |
+| Component behavior | `expect(screen.getByText('Saved')).toBeTruthy()` | `expect(component.state.saved).toBe(true)` |
+| Service interaction | `expect(response.status).toBe(201)` | `expect(service.callCount).toBe(1)` |
+
+This is already implied by the "Testing implementation" smell in the Test Smells table. Make it the default lens: every assertion should answer "what did the user/caller observe?" not "what happened inside?"
+
+### Test Contracts Across Agents
+
+When CC10x routes work across multiple agents (planner writes test specs, builder implements, reviewer verifies), the test file IS the contract:
+
+- **Planner** defines expected behavior as test names and assertions in the plan
+- **Builder** writes tests first, implements to green — the test file proves the contract is met
+- **Reviewer** re-runs the same tests — pass means contract fulfilled, fail means contract broken
+
+Do not duplicate the contract in prose. If the test file expresses the requirement, the test file is the requirement.
 
 ## Output Format
 

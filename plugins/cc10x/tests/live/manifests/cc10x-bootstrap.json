@@ -1,0 +1,41 @@
+{
+  "name": "cc10x-bootstrap",
+  "workdir": ".",
+  "environment": {
+    "CI": "true"
+  },
+  "healthcheck": {
+    "name": "CC10X plugin files are present",
+    "command": "python3 -c \"from pathlib import Path; import sys; path = Path('plugins/cc10x/.claude-plugin/plugin.json'); ok = path.exists(); print('ok' if ok else 'missing'); sys.exit(0 if ok else 1)\"",
+    "expected": "Prints ok"
+  },
+  "scenarios": [
+    {
+      "name": "Publication audit passes",
+      "mode": "proof",
+      "given": "The repo contains the expected plugin, docs, and safety files",
+      "when": "The harness runs the publication audit",
+      "then": "The audit exits cleanly",
+      "command": "python3 plugins/cc10x/scripts/cc10x_harness_audit.py",
+      "expected": "Audit exits 0"
+    },
+    {
+      "name": "Replay checker passes",
+      "mode": "proof",
+      "given": "The workflow fixtures and contracts are internally consistent",
+      "when": "The harness replays the deterministic safety fixtures",
+      "then": "The replay checker exits cleanly",
+      "command": "python3 plugins/cc10x/scripts/cc10x_workflow_replay_check.py",
+      "expected": "Replay checker exits 0"
+    },
+    {
+      "name": "Latency audit reads fixture telemetry",
+      "mode": "stress",
+      "given": "Fixture telemetry is present in the repo",
+      "when": "The harness runs the latency audit against fixtures",
+      "then": "The audit completes without parse errors",
+      "command": "python3 plugins/cc10x/scripts/cc10x_latency_audit.py --fixtures",
+      "expected": "Latency audit exits 0"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+#!/bin/bash
+# cc10x pre-commit gate — blocks commit if tests fail.
+# Install: cp plugins/cc10x/hooks/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+
+# Detect test runner and run tests
+if [ -f package.json ]; then
+  if grep -q '"vitest"' package.json 2>/dev/null; then
+    CI=true npx vitest run || { echo "cc10x: Tests must pass before commit (vitest)"; exit 1; }
+  elif grep -q '"jest"' package.json 2>/dev/null; then
+    CI=true npx jest --passWithNoTests || { echo "cc10x: Tests must pass before commit (jest)"; exit 1; }
+  elif grep -q '"test"' package.json 2>/dev/null; then
+    CI=true npm test || { echo "cc10x: Tests must pass before commit"; exit 1; }
+  fi
+elif [ -f pyproject.toml ] || [ -f setup.py ]; then
+  python -m pytest -q || { echo "cc10x: Tests must pass before commit (pytest)"; exit 1; }
+fi
+
+exit 0

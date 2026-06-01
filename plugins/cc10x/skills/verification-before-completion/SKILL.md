@@ -1,7 +1,7 @@
 ---
 name: verification-before-completion
-description: "Internal skill. Use cc10x-router for all development tasks."
-allowed-tools: Read, Grep, Glob, Bash, LSP
+description: "Use when about to claim work is complete, fixed, or passing, or before commit, PR, or task completion, and fresh verification evidence must exist first."
+allowed-tools: Read Grep Glob Bash LSP
 ---
 
 # Verification Before Completion
@@ -11,6 +11,8 @@ allowed-tools: Read, Grep, Glob, Bash, LSP
 Claiming work is complete without verification is dishonesty, not efficiency.
 
 **Core principle:** Evidence before claims, always.
+
+<!-- CC10X-M7: Overlap with integration-verifier is intentional (defense in depth). VBC is loaded by WRITE agents for self-verification before reporting done; integration-verifier is a separate router-spawned agent. Both check different moments in the workflow. -->
 
 **Violating the letter of this rule is violating the spirit of this rule.**
 
@@ -115,13 +117,7 @@ If you find yourself:
 
 ## Why This Matters
 
-From real failure patterns:
-
-- Your user said "I don't believe you" - trust broken
-- Undefined functions shipped - would crash in production
-- Missing requirements shipped - incomplete features
-- Time wasted on false completion → redirect → rework
-- Violates: "Honesty is a core value. If you lie, you'll be replaced."
+False completion destroys trust, ships broken code, and creates rework. Verification exists to stop that. No fresh evidence, no completion claim.
 
 ## When To Apply
 
@@ -181,6 +177,19 @@ From real failure patterns:
 | 4 | Manual Validation | User flow walkthrough | High-Critical risk tasks |
 
 **Include the appropriate validation level for each verification step.**
+
+## Production-Like Live Proof
+
+If the accepted plan or current task requires real, seeded, production-like verification, read `references/live-production-testing.md` before claiming completion.
+
+Use the live harness when the task depends on:
+- real API calls
+- seeded or resettable data
+- browser or worker orchestration
+- cross-service side effects
+- load or stress behavior
+
+Do not treat replay fixtures, unit tests, or manual spot-checks as equivalent proof when the plan requires live-system evidence.
 
 ## Verification Checklist
 
@@ -251,9 +260,9 @@ EVIDENCE:
 After standard verification passes, apply this additional check:
 
 ### Three Questions
-1. **Truths:** What must be OBSERVABLE? (user-facing behaviors)
-2. **Artifacts:** What must EXIST? (files, endpoints, tests)
-3. **Wiring:** What must be CONNECTED? (component → API → database)
+1. **Truths:** What must be TRUE? (observable user or business outcomes)
+2. **Artifacts:** What must EXIST? (files, endpoints, tests, records)
+3. **Wiring:** What must be WIRED? (component → API → database)
 
 ### Why This Catches Stubs
 A component can:
@@ -261,6 +270,22 @@ A component can:
 - Pass lint ✓
 - Have tests ✓
 - But NOT be wired to the system ✗
+
+## Phase-Exit Proof vs Extended Audit
+
+Use this distinction when verification gets expensive:
+
+- **Phase-exit proof** is the non-negotiable minimum:
+  - truths
+  - artifacts
+  - wiring
+  - fresh scenario evidence
+- **Extended audit** is additional confidence work:
+  - broader scans
+  - extra pattern sweeps
+  - deeper blast-radius checks
+
+Never skip phase-exit proof. If extended audit is not run, say so explicitly instead of implying it happened.
 
 Goal-backward asks: "Does the GOAL work?" not "Did the TASK complete?"
 

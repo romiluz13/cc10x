@@ -1,0 +1,33 @@
+{
+  "id": "memory-sync-blocking",
+  "workflow_type": "DEBUG",
+  "starting_artifact": {
+    "workflow_uuid": "wf-20260312T162800Z-memory-sync",
+    "workflow_id": "wf-20260312T162800Z-memory-sync",
+    "workflow_type": "DEBUG",
+    "state_root": ".cc10x/v10",
+    "plan_mode": "execution_plan",
+    "verification_rigor": "standard",
+    "proof_status": "gaps_found",
+    "traceability": {"requirements": [], "phases": [], "verification": [], "remediation": []},
+    "phase_cursor": "debug-investigate",
+    "task_ids": {},
+    "results": {},
+    "intent": {"goal": "Fix flaky retry banner"},
+    "evidence": {},
+    "quality": {"convergence_state": "needs_iteration"},
+    "status_history": [],
+    "remediation_history": []
+  },
+  "relevant_tasks": {},
+  "agent_outputs": {},
+  "expected": {
+    "next_action": "stop_after_memory_sync",
+    "artifact_delta": {
+      "memory_sync": {
+        "blocking_exit_persisted": true
+      },
+      "quality": {"convergence_state": "needs_iteration"}
+    }
+  }
+}

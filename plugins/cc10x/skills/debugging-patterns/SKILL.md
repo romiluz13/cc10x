@@ -1,7 +1,7 @@
 ---
 name: debugging-patterns
-description: "Internal skill. Use cc10x-router for all development tasks."
-allowed-tools: Read, Grep, Glob, Bash, LSP
+description: "Use when a bug, flaky test, or runtime/build failure needs root-cause tracing and a nearby duplicate-pattern scan before any fix."
+allowed-tools: Read Grep Glob Bash LSP
 ---
 
 # Systematic Debugging
@@ -12,7 +12,14 @@ Random fixes waste time and create new bugs. Quick patches mask underlying issue
 
 **Core principle:** ALWAYS find root cause before attempting fixes. Symptom fixes are failure.
 
-**Violating the letter of this process is violating the spirit of debugging.**
+This skill is advisory in v10. It deepens investigation quality. It does not authorize local-only patches, guesswork, or "fix the line that crashed" thinking.
+
+## Reference Files
+
+Read only the references needed for the current investigation:
+
+- `references/root-cause-playbooks.md` for build/type failures, flaky tests, runtime crashes, browser errors, git bisect, and boundary tracing
+- `references/investigation-hygiene.md` for context discipline, evidence logging, hypothesis tracking, restart protocol, and architectural escalation
 
 ## The Iron Law
 
@@ -30,7 +37,7 @@ For rapid debugging, use this concise flow:
 1. Capture error message and stack trace
 2. Identify reproduction steps
 3. Isolate the failure location
-4. Implement minimal fix
+4. Implement minimal general fix
 5. Verify solution works
 ```
 
@@ -50,6 +57,7 @@ For rapid debugging, use this concise flow:
 5. Find original trigger - Where did problem actually start?
 ```
 **Never fix solely where errors appear—trace to the original trigger.**
+After root cause is identified, scan for the same signature nearby before declaring success.
 
 ## LSP-Powered Root Cause Tracing
 
@@ -80,124 +88,21 @@ For rapid debugging, use this concise flow:
 - Testing approach
 - Prevention recommendations
 
-## Common Debugging Scenarios
+## Scenario Playbooks
 
-### Build & Type Errors (Quick Reference)
+Read `references/root-cause-playbooks.md` when the failure matches one of these
+shapes:
+- build or type breakage
+- failing tests
+- runtime crashes
+- browser or console errors
+- intermittent async bugs
+- regressions where "it worked before"
+- multi-component handoff failures
 
-**Commands:**
-```bash
-npx tsc --noEmit --pretty          # TypeScript check
-npm run build                       # Full build
-npx eslint . --ext .ts,.tsx        # Lint check
-```
-
-**Common Error → Fix Patterns:**
-
-| Error Pattern | Cause | Fix |
-|---------------|-------|-----|
-| `Parameter 'x' implicitly has 'any' type` | Missing type annotation | Add `: Type` annotation |
-| `Object is possibly 'undefined'` | Null safety violation | Add `?.` optional chaining or null check |
-| `Property 'x' does not exist on type` | Missing property | Add to interface or fix typo |
-| `Cannot find module 'x'` | Import path wrong or missing package | Fix path or `npm install` |
-| `Type 'string' is not assignable to 'number'` | Type mismatch | Parse string or fix type |
-| `'await' only allowed in async function` | Missing async keyword | Add `async` to function |
-| `JSX element 'X' has no corresponding closing tag` | Malformed JSX | Fix tag structure |
-| `Module not found: Can't resolve` | Path alias misconfigured | Check tsconfig paths |
-| `Export 'X' was not found in 'Y'` | Named export missing | Check export name/default |
-
-**Minimal Diff Strategy:**
-- Add type annotation where missing
-- Add null check where needed
-- Fix import path
-- **DO NOT:** Refactor, rename, or "improve" unrelated code
-
-**Build Error Priority:**
-
-| Level | Symptom | Action |
-|-------|---------|--------|
-| 🔴 CRITICAL | Build completely broken | Fix immediately |
-| 🟡 HIGH | Type errors in new code | Fix before commit |
-| 🟢 MEDIUM | Lint warnings | Fix when possible |
-
-### Test Failures
-```
-1. Read FULL error message and stack trace
-2. Identify which assertion failed and why
-3. Check test setup - is environment correct?
-4. Check test data - are mocks/fixtures correct?
-5. Trace to source of unexpected value
-```
-
-### Runtime Errors
-```
-1. Capture full stack trace
-2. Identify line that throws
-3. Check what values are undefined/null
-4. Trace backward to where bad value originated
-5. Add validation at the source
-```
-
-### "It worked before"
-```
-1. Use `git bisect` to find breaking commit
-2. Compare change with previous working version
-3. Identify what assumption changed
-4. Fix at source of assumption violation
-```
-
-### Intermittent Failures
-```
-1. Look for race conditions
-2. Check for shared mutable state
-3. Examine async operation ordering
-4. Look for timing dependencies
-5. Add deterministic waits or proper synchronization
-```
-
-### Frontend Browser Errors
-```
-1. Request clean console: AskUserQuestion → "F12 → Console → Clear → reproduce → Copy all"
-2. Analyze grouped messages for repetition patterns
-3. Check for hidden CORS errors (enable "Show CORS errors in console")
-4. If insufficient: request user add console.log at suspected locations
-5. Trace to source of unexpected value
-```
-
-### Git Bisect (Finding Breaking Commit)
-
-**When to use:** "It worked before" scenarios.
-
-```bash
-# Start bisect
-git bisect start
-
-# Mark current (broken) as bad
-git bisect bad
-
-# Mark known good commit (e.g., last release)
-git bisect good v1.2.0
-
-# Git will checkout middle commit - test it
-npm test  # or whatever reproduces the bug
-
-# Mark result
-git bisect good  # if tests pass
-git bisect bad   # if tests fail
-
-# Repeat until git identifies the breaking commit
-# Git will output: "abc123 is the first bad commit"
-
-# End bisect
-git bisect reset
-```
-
-**Automate if you have a test:**
-```bash
-git bisect start
-git bisect bad HEAD
-git bisect good v1.2.0
-git bisect run npm test -- --grep "failing test"
-```
+Keep this `SKILL.md` focused on the four-phase investigation workflow. Use the
+reference for concrete commands, boundary tracing patterns, and git-bisect
+recipes.
 
 ## When to Use
 
@@ -263,23 +168,8 @@ You MUST complete each phase before proceeding to the next.
    THEN analyze evidence to identify failing component
    THEN investigate that specific component
    ```
-
-   **Example (multi-layer system):**
-   ```bash
-   # Layer 1: Entry point
-   echo "=== Input data: ==="
-   echo "Request: ${REQUEST}"
-
-   # Layer 2: Processing layer
-   echo "=== After processing: ==="
-   echo "Transformed: ${TRANSFORMED}"
-
-   # Layer 3: Output layer
-   echo "=== Final state: ==="
-   echo "Result: ${RESULT}"
-   ```
-
-   **This reveals:** Which layer fails (input → processing ✓, processing → output ✗)
+   For a concrete boundary-tracing recipe, read
+   `references/root-cause-playbooks.md`.
 
 5. **Trace Data Flow**
 
@@ -288,6 +178,15 @@ You MUST complete each phase before proceeding to the next.
    - What called this with bad value?
    - Keep tracing up until you find the source
    - Fix at source, not at symptom
+
+6. **Trace configuration to its consumer (third-party SDKs, env, import time)**
+
+   **BEFORE proposing replacements, migrations, or large refactors:**
+
+   - **Option Zero:** Can this be fixed with **only** a configuration or environment change? State and test that hypothesis *before* you propose code rewrites. Many integration bugs are wiring problems, not architecture problems.
+   - When an env var is validated in application config but **never passed into** library constructors, ask **who reads it?** Third-party SDKs often read `process.env` (or language equivalents) at **module import / load time**—not through your app's DI or config objects. The fix may be setting or correcting env, not changing application code.
+   - **Before** proposing to replace a third-party SDK, spend a short cycle on **how** it is configured: package README, official docs, or the installed source under `node_modules` (or vendor path). The failure may be a wrong endpoint or flag, not a need for a different library.
+   - When code comments describe **import-time** behavior or env-var dependencies, treat them as **investigation breadcrumbs**, not decoration—follow them to the real consumer.
 
 ### Phase 2: Pattern Analysis
 
@@ -485,6 +384,7 @@ If you catch yourself thinking:
 - "Pattern says X but I'll adapt it differently"
 - "Here are the main problems: [lists fixes without investigation]"
 - Proposing solutions before tracing data flow
+- Proposing SDK replacement or a large migration before ruling out a **config-only** fix (Option Zero) and tracing **who** reads env / config at import time
 - **"One more fix attempt" (when already tried 2+)**
 - **Each fix reveals new problem in different place**
 

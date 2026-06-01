@@ -1,33 +1,152 @@
-# cc10x
+<p align="center">
+  <img src="assets/logo.png" alt="CC10x — Claude Code harness | specialist agents. Orange stylized X with starburst and CC10x wordmark." width="280" />
+</p>
 
-### The Intelligent Orchestrator for Claude Code
-
-**Current version:** 6.0.19
-
-**Recommended: Create `~/.claude/CLAUDE.md` (global) so the router is always active across all projects.**
+<h1 align="center">cc10x</h1>
 
 <p align="center">
-  <strong>1 Router</strong> &nbsp;•&nbsp; <strong>6 Agents</strong> &nbsp;•&nbsp; <strong>12 Skills</strong> &nbsp;•&nbsp; <strong>4 Workflows</strong>
+  <em>The Claude Code harness you install when you're done babysitting.</em>
 </p>
 
 <p align="center">
-  <em>Stop picking skills manually. Let the system work for you.</em>
+  <strong>1 router</strong> &nbsp;·&nbsp; <strong>9 specialist agents</strong> &nbsp;·&nbsp; <strong>13 skills</strong> &nbsp;·&nbsp; <strong>4 workflows</strong>
 </p>
+
+<p align="center">
+  Fail-closed gates &nbsp;·&nbsp; survives compaction &nbsp;·&nbsp; zero prompt spam &nbsp;·&nbsp; self-tested orchestration
+</p>
+
+**Current version:** 10.1.20
 
 ---
 
-## The Problem With Other Plugins
+## Install
 
-Most Claude Code plugins are **bloated and over-engineered**:
-
-```
-❌ 50+ skills you'll never use
-❌ 30+ agents with overlapping responsibilities
-❌ No guidance on WHEN to use WHAT
-❌ You end up using nothing because it's overwhelming
+```bash
+/plugin marketplace add romiluz13/cc10x
+/plugin install cc10x@romiluz13
 ```
 
-**cc10x is different.** One intelligent router detects your intent and automatically orchestrates the right agents with the right skills. You just work.
+Then say **"set up cc10x for me"** in Claude Code and restart. Done.
+
+---
+
+## Why cc10x
+
+Ask Claude for something complex. It works for a while. Then it declares **"Done!"** — tests still red, refactor half-finished, and by message 40 it's contradicting itself because the context is gone.
+
+**cc10x fixes the loop, not the prompt.**
+
+| The pain you know | How cc10x handles it |
+|---|---|
+| "Done!" on red tests | `integration-verifier` is independent of the builder. Phase-exit gates block advancement on partial evidence. |
+| Silent failures nobody asked about | `silent-failure-hunter` runs in parallel with review — greps for swallowed errors and empty catches. |
+| Context falls apart after compaction | Workflow state on disk with stable UUIDs. Memory files the router auto-heals. |
+| Planning is just a chat | Three planning modes chosen by intent, with a fresh anti-anchored review by a reviewer who never saw the planner's rationale. |
+| 12 slash commands to remember | One router. Every request hits `cc10x-router` first. |
+| `.claude/` prompt spam on every fanout | State lives at `.cc10x/` — outside `.claude/`, so the harness's sensitive-file gate never fires. |
+
+Everything below is the architecture. Keep reading if you want to know *how* before you install.
+
+---
+
+## Runtime Model
+
+### 1. Router owns orchestration
+
+`cc10x-router` is the only orchestration authority.
+
+The router now uses a **kernel + mandatory reference** shape:
+- universal orchestration law stays inline in `cc10x-router/SKILL.md`
+- workflow-specific playbooks and appendix-heavy artifact/remediation law live in `cc10x-router/references/*.md`
+- the kernel explicitly tells Claude which reference must be read before BUILD / DEBUG / REVIEW / PLAN branch logic continues
+
+That keeps orchestration salient without turning the router into a context dump.
+
+It decides:
+- which workflow to run
+- which subagent to invoke next
+- when to pause for clarification or scope decisions
+- when remediation is required
+- when a workflow is allowed to advance
+- when memory and workflow artifacts are finalized
+
+Agents do not own workflow state. They return structured results. The router interprets them.
+
+### 2. Agents are narrow specialists
+
+The shipped subagents are intentionally specialized:
+- `planner`
+- `plan-gap-reviewer`
+- `component-builder`
+- `bug-investigator`
+- `code-reviewer`
+- `silent-failure-hunter`
+- `integration-verifier`
+- `web-researcher`
+- `github-researcher`
+
+Each agent is optimized for one role. This keeps prompts sharper and makes workflow behavior easier to reason about.
+
+### 3. Skills are reusable local instructions
+
+Skills are the reusable instruction layer that agents and the router depend on.
+
+They provide:
+- planning patterns
+- TDD rules
+- debugging patterns
+- review rules
+- research synthesis
+- memory handling
+- verification-before-completion discipline
+
+### 4. Workflow artifacts are the durable truth
+
+cc10x writes proof-of-work workflow state under:
+
+```text
+.cc10x/v10/workflows/{wf}.json
+.cc10x/v10/workflows/{wf}.events.jsonl
+```
+
+These artifacts track:
+- workflow type and task ids
+- intent/spec context
+- agent results
+- evidence and quality state
+- remediation history
+- lifecycle events
+
+This is what makes resume, review, and debugging more reliable than relying on chat context alone.
+
+### 5. Hooks are guardrails, not a second orchestrator
+
+cc10x ships a minimal Claude Code-native hook set:
+- `PreToolUse`
+- `SessionStart`
+- `PostToolUse`
+- `TaskCompleted`
+
+Hooks do not replace the router. They provide lightweight enforcement and diagnostics:
+- protected file and workflow write checks
+- resume context hydration
+- workflow artifact integrity audit
+- task metadata validation
+
+This follows the official Claude Code pattern: hooks are small guardrails around tool use, not a parallel control plane.
+
+### 6. MCP is optional acceleration only
+
+cc10x does **not** ship MCP server config inside the plugin.
+
+If the user already has Claude Code MCP servers named:
+- `octocode`
+- `brightdata`
+
+then research gets better automatically.
+
+If not, the plugin still works. Research falls back to built-in Claude Code tools and records degraded confidence where appropriate.
 
 ---
 
@@ -56,33 +175,50 @@ Most Claude Code plugins are **bloated and over-engineered**:
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
-**You say what you want. cc10x figures out the rest.**
+**You describe the work. cc10x routes it, brings in the right specialists, and keeps the bar for "done" higher than a convincing paragraph.**
 
----
+```
+                        YOU
+                         │
+                         ▼
+            ┌────────────────────────┐
+            │      cc10x-router      │  ◄── only entry point
+            │   detects intent       │
+            └────────────┬───────────┘
+                         │
+          ┌──────────────┼──────────────┬─────────────┐
+          │              │              │             │
+          ▼              ▼              ▼             ▼
+        BUILD          DEBUG         REVIEW         PLAN
+          │              │              │             │
+          ▼              ▼              ▼             ▼
+    component-      bug-          code-          planner
+      builder    investigator   reviewer            │
+          │              │              │             ▼
+          ▼              ▼           (done)     plan-gap-
+  [code-reviewer    code-reviewer             reviewer
+   ∥ silent-            │
+   failure-            ▼
+    hunter]      integration-
+          │         verifier
+          ▼
+   integration-
+     verifier
 
-## 👤 FOR HUMANS: Read This
-
-### Step 1: Install Plugin
-
-```bash
-# Add marketplace
-/plugin marketplace add romiluz13/cc10x
-
-# Install plugin
-/plugin install cc10x@romiluz13
+                 ┌──────────────────────────┐
+                 │  STATE (every workflow)  │
+                 │  activeContext.md        │
+                 │  patterns.md            │
+                 │  progress.md            │
+                 │  {wf}.json + .events    │
+                 └──────────────────────────┘
 ```
 
-### Step 2: Setup Config Files
-
-Copy this README, paste it into Claude Code, and say: **"Set up cc10x for me"**
-
-### Step 3: Restart Claude Code
-
-Done!
-
 ---
 
-## 🤖 FOR CLAUDE CODE: Execute This
+## Claude Setup Instructions
+
+This section is written for Claude Code to follow when the user says "set up cc10x for me".
 
 **When user says "set up cc10x", "install cc10x", or similar:**
 
@@ -95,11 +231,13 @@ Done!
 **If file doesn't exist:** CREATE with the template below.
 **If file exists:** PREPEND the cc10x section below, keep user's existing content.
 
+> **Multi-project note:** The global `~/.claude/CLAUDE.md` activates cc10x in **every** project automatically — you do not need to reinstall or reconfigure per project. Only add the cc10x section to a project's `.claude/CLAUDE.md` if that project has its own conflicting CLAUDE.md already.
+
 ```markdown
 # CC10x Orchestration (Always On)
 
 IMPORTANT: ALWAYS invoke cc10x-router on ANY development task. First action, no exceptions.
-IMPORTANT: Explore project first, then invoke the router.
+IMPORTANT: Do only minimal orientation if needed, then invoke the router immediately.
 IMPORTANT: Prefer retrieval-led reasoning over pre-training-led reasoning for orchestration decisions.
 IMPORTANT: Never bypass the router. It is the system.
 IMPORTANT: NEVER use Edit, Write, or Bash (for code changes) without first invoking cc10x-router.
@@ -129,16 +267,44 @@ IMPORTANT: NEVER use Edit, Write, or Bash (for code changes) without first invok
 **If file exists:** MERGE these permissions into the existing `permissions.allow` array (don't overwrite!):
 
 ```json
-"Bash(mkdir -p .claude/cc10x)",
+"Bash(mkdir -p .cc10x)",
 "Bash(mkdir -p docs/plans)",
 "Bash(mkdir -p docs/research)",
 "Bash(git status)",
 "Bash(git diff:*)",
 "Bash(git log:*)",
-"Bash(git branch:*)"
+"Bash(git branch:*)",
+"Edit(.cc10x/*)",
+"Write(.cc10x/*)"
 ```
 
-### Step 4: Scan Installed Skills & Add to Table
+> **Why the Edit/Write permissions?** The live cc10x memory namespace is `.cc10x/v10/`. The permission examples use the parent `.cc10x/*` scope so the versioned namespace continues to work without re-prompting on every memory write.
+
+### Step 4: Set User Standards (Optional)
+
+Ask the user:
+> "Do you have coding standards or principles you want cc10x agents to always follow? (e.g. 'always use TypeScript strict mode', 'follow SOLID principles', 'never use `any`', 'prefer functional patterns')"
+
+**If user provides standards**, write them to the project's memory:
+```
+Bash(command="mkdir -p .cc10x/v10")
+# Check if patterns.md already exists (Read returns error = doesn't exist)
+Read(file_path=".cc10x/v10/patterns.md")
+
+# If it DOESN'T exist — create with standards already populated:
+Write(file_path=".cc10x/v10/patterns.md", content="# Project Patterns\n<!-- CC10X MEMORY CONTRACT: Do not rename headings. Used as Edit anchors. -->\n\n## User Standards\n- {standard 1}\n- {standard 2}\n\n## Architecture Patterns\n\n## Code Conventions\n\n## Common Gotchas\n\n## Last Updated\n{date}")
+
+# If it DOES exist — append under User Standards:
+Edit(file_path=".cc10x/v10/patterns.md",
+     old_string="## User Standards",
+     new_string="## User Standards\n- {standard 1}\n- {standard 2}")
+
+Read(file_path=".cc10x/v10/patterns.md")  # Verify
+```
+
+**If user skips:** No action. The memory file will be created on first workflow run with an empty `## User Standards` section for them to fill in later.
+
+### Step 5: Scan Installed Skills & Add to Table
 
 **Where to find installed skills:**
 1. `~/.claude/settings.json` → check `enabledPlugins` object (plugins with value `true`)
@@ -167,7 +333,7 @@ react-best-practices/SKILL.md
 | React, Next.js, UI | `react-best-practices` |
 ```
 
-### Step 5: Confirm
+### Step 6: Confirm
 > "cc10x is set up! Please restart Claude Code to activate."
 
 ---
@@ -176,47 +342,10 @@ react-best-practices/SKILL.md
 
 | Intent | Trigger Words | What Happens |
 |--------|---------------|--------------|
-| **BUILD** | build, implement, create, make, write, add | TDD cycle → Code review → Silent failure hunt → Integration verify |
-| **DEBUG** | debug, fix, error, bug, broken, troubleshoot | Log-first investigation → Review fix → Verify works |
-| **REVIEW** | review, audit, check, analyze, assess | Multi-dimensional review with 80%+ confidence scoring |
-| **PLAN** | plan, design, architect, roadmap, strategy | Comprehensive planning with external research |
-
----
-
-## What Makes cc10x Different
-
-<table>
-<tr>
-<td width="50%">
-
-### Without cc10x
-
-```
-❌ Claude guesses at bugs
-❌ Skips tests ("I'll add later")
-❌ Claims "it should work"
-❌ Forgets context on compaction
-❌ Picks random skills
-❌ No verification evidence
-```
-
-</td>
-<td width="50%">
-
-### With cc10x
-
-```
-✓ LOG FIRST - evidence before fixes
-✓ TDD enforced - RED-GREEN-REFACTOR
-✓ Exit code 0 or it didn't happen
-✓ Memory persists across sessions
-✓ Router picks the right workflow
-✓ Confidence scoring (≥80% only)
-```
-
-</td>
-</tr>
-</table>
+| **BUILD** | build, implement, create, make, write, add | Clarify scope → TDD implementation → adversarial review → integration verification |
+| **DEBUG** | debug, fix, error, bug, broken, troubleshoot | Reproduce from evidence → isolate cause → validate fix → prove no regression |
+| **REVIEW** | review, audit, check, analyze, assess | High-signal review with confidence thresholds and file:line citations |
+| **PLAN** | plan, design, architect, roadmap, strategy | Turn rough intent into an execution-ready plan with explicit decisions |
 
 ---
 
@@ -227,11 +356,11 @@ react-best-practices/SKILL.md
 "build a user authentication system"
 
 → Router detects BUILD intent
-→ Clarifies requirements FIRST (won't skip this)
-→ component-builder with TDD
-→ code-reviewer + silent-failure-hunter (parallel)
-→ integration-verifier
-→ Memory updated
+→ Stops to resolve missing requirements first
+→ component-builder drives RED → GREEN → REFACTOR
+→ code-reviewer + silent-failure-hunter run in parallel
+→ integration-verifier checks wiring, artifacts, and behavior
+→ Workflow state and memory are updated
 ```
 
 ### Fix a Bug
@@ -239,11 +368,11 @@ react-best-practices/SKILL.md
 "debug the payment processing error"
 
 → Router detects DEBUG intent
-→ Checks memory for Common Gotchas
-→ bug-investigator with LOG FIRST
-→ code-reviewer validates fix
-→ integration-verifier confirms
-→ Added to Common Gotchas
+→ Loads prior failures and project memory
+→ bug-investigator starts from logs and observed behavior
+→ code-reviewer checks the fix path
+→ integration-verifier confirms the bug is actually closed
+→ Useful findings go back into memory
 ```
 
 ### Review Code
@@ -251,9 +380,9 @@ react-best-practices/SKILL.md
 "review this PR for security issues"
 
 → Router detects REVIEW intent
-→ code-reviewer with git context
-→ Only reports issues with ≥80% confidence
-→ File:line citations for every finding
+→ code-reviewer uses repo and git context
+→ Reports findings only when confidence clears the bar
+→ Every finding includes file:line evidence
 ```
 
 ---
@@ -277,15 +406,19 @@ USER REQUEST
      │
      └── PLAN ───► planner
 
-MEMORY (.claude/cc10x/)
+MEMORY (.cc10x/v10/)
 ├── activeContext.md  ◄── Current focus, decisions, learnings
 ├── patterns.md       ◄── Project conventions, common gotchas
 └── progress.md       ◄── Completed work, remaining tasks
+
+WORKFLOW STATE (.cc10x/v10/workflows/)
+├── {wf}.json         ◄── Durable workflow artifact
+└── {wf}.events.jsonl ◄── Append-only workflow event log
 ```
 
 ---
 
-## The 6 Agents
+## The 9 Agents
 
 | Agent | Purpose | Key Behavior |
 |-------|---------|--------------|
@@ -295,10 +428,13 @@ MEMORY (.claude/cc10x/)
 | **silent-failure-hunter** | Finds error gaps | Zero tolerance for empty catch blocks |
 | **integration-verifier** | E2E validation | Exit codes: PASS/FAIL with evidence |
 | **planner** | Creates plans | Saves to `docs/plans/` + updates memory |
+| **plan-gap-reviewer** | Fresh plan challenge pass | Read-only anti-anchoring review before final plan handoff |
+| **web-researcher** | Fetches web data via Bright Data + WebSearch | Saves findings to file |
+| **github-researcher** | Searches GitHub repos + packages via Octocode MCP | Saves findings to file |
 
 ---
 
-## The 12 Skills
+## The 13 Skills
 
 Skills are **loaded automatically by agents**. You never invoke them directly.
 
@@ -312,9 +448,10 @@ Skills are **loaded automatically by agents**. You never invoke them directly.
 | **code-review-patterns** | code-reviewer, hunter | Security, quality, performance |
 | **planning-patterns** | planner | Comprehensive plans |
 | **architecture-patterns** | ALL agents | System & API design |
-| **frontend-patterns** | ALL agents | UX, accessibility |
+| **frontend-patterns** | ALL agents | UX, accessibility, spec-aligned DESIGN.md authoring |
 | **brainstorming** | planner | Idea exploration |
-| **github-research** | planner, bug-investigator (conditional) | External package research |
+| **plan-review-gate** | planner | Final plan sanity gate before handoff |
+| **research** | planner, bug-investigator (via github-researcher agent) | Synthesis-only: guides agents on how to interpret research results; GitHub execution is handled by the `github-researcher` agent |
 | **cc10x-router** | ENTRY POINT | Routes to correct workflow |
 
 ---
@@ -324,7 +461,7 @@ Skills are **loaded automatically by agents**. You never invoke them directly.
 cc10x survives context compaction. This is critical for long sessions.
 
 ```
-.claude/cc10x/
+.cc10x/v10/
 ├── activeContext.md   # What you're working on NOW
 │   - Current task
 │   - Active decisions (and WHY)
@@ -340,6 +477,8 @@ cc10x survives context compaction. This is critical for long sessions.
     - Remaining tasks
     - Blockers
 ```
+
+The live namespace is `.cc10x/v10/`. Two legacy residue locations are ignored by current router hydration if present: `.claude/cc10x/` (pre-10.1.20, before the workflow state moved out of `.claude/` to escape the harness sensitive-file gate — run `mv .claude/cc10x .cc10x` once to migrate), and root-level `.cc10x/*.md` and `.cc10x/workflows/*` under `v10/`'s parent (pre-10.1.0 residue from the unversioned namespace).
 
 **Iron Law:** Every workflow loads memory at START and updates at END.
 
@@ -363,6 +502,28 @@ cc10x uses Claude Code's Tasks system for workflow coordination:
 - **Parallel execution**: reviewer + hunter run simultaneously
 - **Resume capability**: TaskList() checks for active workflows
 - **Automatic handoff**: Each agent updates status when done
+- **Router-owned advancement**: only the router decides whether a workflow can continue
+
+---
+
+## Hooks
+
+The plugin currently ships these Claude Code-native hooks:
+
+| Hook | Purpose |
+|------|---------|
+| `PreToolUse` | Guard protected files and workflow-owned writes |
+| `SessionStart` | Rehydrate workflow context after restart or compaction |
+| `PostToolUse` | Audit workflow artifact integrity after writes |
+| `TaskCompleted` | Validate CC10X task metadata before task completion |
+| `PostCompact` | Capture compaction events for workflow telemetry |
+| `SubagentStop` | Audit subagent outputs for required contract markers |
+| `PreCompact` | Snapshot workflow state before compaction |
+| `Stop` | Snapshot workflow state on session stop |
+| `StopFailure` | Log API failure telemetry asynchronously |
+| `InstructionsLoaded` | Audit instruction-file loading asynchronously |
+
+These hooks are intentionally minimal. They improve reliability without turning the plugin into a second runtime.
 
 ---
 
@@ -417,6 +578,29 @@ I'll help you build a task tracker! Let me start...
 
 | Version | Highlights |
 |---------|------------|
+| **v10.1.20** | Escape the Claude Code sensitive-file gate: workflow state root relocated from `.claude/cc10x/v10/` to `.cc10x/v10/` across every prompt surface, runtime hook, and fixture. Every router fanout, event-log append, and memory refresh is now silent in default-permission setups. Audit now catches runtime/prompt path drift so this class of regression fails self-tests before release. |
+| **v10.1.19** | Harmony hardening release: contradiction cleanup across router-facing instructions, router-owned self-contained handoffs, phase-local BUILD context, early memory capture before validation, review/hunt fan-in at the router, and full docs/release metadata alignment. |
+| **v10.1.15** | Hook expansion: 4 audit-only hooks (PreCompact, Stop, StopFailure, InstructionsLoaded) for workflow state persistence and telemetry. 6→10 hook events. Zero blocking, zero context injection, router remains sole authority. |
+| **v10.1.14** | Multi-repo harmony integration: 29 certified patterns from 11 reference repos via 3-phase harmony pipeline. Test tampering detection, claim extraction, environment escape hatches, analysis paralysis guards, near-miss negative testing, de-sloppify scans, plans-are-prompts principle, professional objectivity hard rules. |
+| **v10.1.13** | Ruflo harmony integration: 29 prompt engineering edits across 16 files — research quality heuristics, multi-language silent-failure detection, friction-scan thresholds, rollback decision trees, plan completeness gates, behavioral TDD focus, partial-phase review scoping, abstraction thresholds, split-brain contradiction handling, evidence-before-reporting hard rules |
+| **v10.1.12** | Prompt engineering uplift: 15 techniques from mattpocock/skills integrated across 13 files — durable decisions, tracer bullets, vertical-slice TDD, dependency taxonomy, HITL/AFK phases, opinionated review, friction scan, scope assessment, domain context injection |
+| **v10.1.11** | DAG-visible PLAN review loop: the full bounded planning review chain is now pre-created in the task graph, with explicit branch pruning and `plan-gap-reviewer` restored to `gpt-5.4-mini` |
+| **v10.1.10** | Always-on fresh planning review: every saved plan artifact now queues the bounded `plan-gap-reviewer` task before final plan handoff, with replay coverage locking it in |
+| **v10.1.4** | Fresh planning review cleanup: raw user request passed to `plan-gap-reviewer`, lighter read-only reviewer contract, bounded pass counting fixed, docs/version surfaces refreshed |
+| **v10.1.3** | Planning recovery: code-grounded plans, explicit plan-vs-code gap surfacing, stronger repo-aware plan review, and planning-specific replay coverage |
+| **v10.1.2** | Trust-preserving latency instrumentation: verifier workload telemetry, phase-exit vs extended-audit classification, no proof-gating change |
+| **v10.1.1** | Prompt-only hardening: sharper anti-false-completion wording, better trigger/description hygiene, reduced prompt dilution, no orchestration/runtime changes |
+| **v10.1.0** | Competition-grade release: decision-grade planning, adversarial plan gates, proof-oriented BUILD, harsher VERIFY, and benchmark-backed prompt/harness hardening |
+| **v10.0.0** | Trust-first recovery: agreement-first planning, phase-gated BUILD, stable workflow UUIDs, versioned v10 state, advisory internal skills |
+| **v9.1.1** | Removed shipped MCP config to avoid startup warnings; MCP research remains optional via user-configured Claude Code MCP servers named `brightdata` and `octocode` |
+| **v9.1.0** | Publication polish: intent-first planning, BDD-style scenario evidence, DDD-style domain language preservation, proof-of-work workflow artifacts, built-in harness drift audit |
+| **v9.0.0** | Plugin-native packaging: bundled Claude Code hooks, optional plugin MCP acceleration, router-owned research quality model, workflow artifacts as durable truth |
+| **v8.5.0** | Fix 1: READ-ONLY task completion as explicit mandatory gate (3-GATE). Fix 2b: CRITICAL+HIGH scope question via text (Rule 1a-SCOPE + Scope Decision Resume + scope-aware re-hunt) |
+| **v8.0.0** | Radical simplification — remove Router Contract YAML from read-only agents; text-based verdict extraction; JUST_GO session mode; ~280 lines removed |
+| **v7.9.0** | OBS-2/3/4/6/7/8/10/11/12/13/14 batch fix — self-healing verifier, explicit DEBUG-RESET marker, conditional frontend-patterns load |
+| **v7.8.0** | OBS-1/9/15/16/DEBUG-RESET — 5-issue fix, 13/13 smoke test pass |
+| **v6.0.21** | User standards support; multi-project docs; Linux install troubleshooting |
+| **v6.0.20** | Agent self-report task completion; MCP docs; permissions fix for memory files |
 | **v6.0.19** | Babysitter-inspired: Multi-signal HARD/SOFT scoring, evidence arrays, decision checkpoints, completion guard |
 | **v6.0.0** | Orchestration hardening: Tasks contract correctness + Task-enforced gates + re-review loop |
 | **v5.25.1** | GSD-inspired enhancements (wiring verification, hypothesis criteria) |
@@ -433,6 +617,9 @@ I'll help you build a task tracker! Let me start...
 <details>
 <summary>Full version history</summary>
 
+- **v8.0.0** - Radical Simplification: Removed Router Contract YAML from code-reviewer, silent-failure-hunter, integration-verifier. Replaced ~200-line YAML validation block in router with 30-line text extraction (reads heading from first 5 lines). Added JUST_GO session mode (AUTO_PROCEED flag). Simplified Empty Answer Guard — only ⚠️ REVERT gates block; all others auto-default. Removed REM-EVIDENCE retry loop (root cause of 6/6 stress test failures). Net: ~280 lines removed, 0 new complexity.
+- **v7.9.0** - OBS-2/3/4/6/7/8/10/11/12/13/14 batch fix: self-healing integration-verifier (creates REM-FIX + blocks own task), explicit DEBUG-RESET marker written by router, conditional frontend-patterns load (.tsx/.jsx/.vue/.css/.scss/.html only)
+- **v7.8.0** - OBS-1/9/15/16/DEBUG-RESET 5-issue fix, 13/13 smoke test pass
 - **v6.0.19** - Babysitter-inspired enhancements: Multi-signal HARD/SOFT scoring (per-dimension review), evidence array protocol (structured proof), decision checkpoints (mandatory pause points), completion guard (final gate before Router Contract)
 - **v6.0.0** - Orchestration hardening:
   - Tasks contract correctness (no undocumented TaskCreate fields; canonical TaskUpdate object form)
@@ -476,16 +663,40 @@ I'll help you build a task tracker! Let me start...
 
 ```
 plugins/cc10x/
+├── .claude-plugin/
+│   └── plugin.json
+├── hooks/
+│   └── hooks.json
+├── scripts/
+│   ├── cc10x_harness_audit.py
+│   ├── cc10x_hooklib.py
+│   ├── cc10x_posttooluse_artifact_guard.py
+│   ├── cc10x_pretooluse_guard.py
+│   ├── cc10x_sessionstart_context.py
+│   ├── cc10x_task_completed_guard.py
+│   └── cc10x_workflow_replay_check.py
+├── tests/
+│   └── fixtures/
 ├── agents/
 │   ├── component-builder.md
 │   ├── bug-investigator.md
 │   ├── code-reviewer.md
 │   ├── integration-verifier.md
 │   ├── planner.md
-│   └── silent-failure-hunter.md
+│   ├── silent-failure-hunter.md
+│   ├── web-researcher.md
+│   └── github-researcher.md
 │
 └── skills/
-    ├── cc10x-router/SKILL.md
+    ├── cc10x-router/
+    │   ├── SKILL.md
+    │   └── references/
+    │       ├── workflow-artifact-and-hook-policy.md
+    │       ├── build-workflow.md
+    │       ├── debug-workflow.md
+    │       ├── review-workflow.md
+    │       ├── plan-workflow.md
+    │       └── remediation-and-research.md
     ├── session-memory/SKILL.md
     ├── test-driven-development/SKILL.md
     ├── code-generation/SKILL.md
@@ -495,9 +706,100 @@ plugins/cc10x/
     ├── brainstorming/SKILL.md
     ├── architecture-patterns/SKILL.md
     ├── frontend-patterns/SKILL.md
-    ├── github-research/SKILL.md
+    │   └── references/{ui-state-and-feedback,accessibility-and-forms,performance-and-layout,design-md-authoring,design-md-inspiration-index}.md
+    ├── research/SKILL.md
     └── verification-before-completion/SKILL.md
 ```
+
+Additional developer docs live under:
+
+```text
+docs/cc10x-orchestration-bible.md
+docs/cc10x-orchestration-logic-analysis.md
+docs/cc10x-orchestration-safety.md
+docs/router-invariants.md
+```
+
+If you need to understand or evolve the harness, start there after reading `cc10x-router`.
+
+---
+
+## Optional MCP Integrations
+
+cc10x works out of the box with no MCPs required. These are **optional** — they unlock specific features when installed in your own Claude Code MCP settings.
+
+| MCP | Feature Unlocked | How to Install |
+|-----|-----------------|----------------|
+| **[octocode](https://github.com/nicepkg/octocode)** | GitHub research: find packages, search code across repos, read PR history. Triggered automatically when planner or bug-investigator needs external research. | Install via Claude Code MCP settings using the server name `octocode` |
+| **[brightdata](https://github.com/nicepkg/mcp-brightdata)** | Web scraping for research tasks — used as fallback when web content is needed beyond GitHub. | Install via Claude Code MCP settings using the server name `brightdata` |
+
+**Important:** CC10X no longer ships MCP server config inside the plugin. This avoids startup warnings for users who do not have Bright Data or Octocode credentials configured.
+
+**Without these MCPs:** cc10x still works fully. The research agents degrade to built-in Claude Code tools and note the lower-confidence path in their outputs.
+
+**With octocode installed:** When the router detects new/unfamiliar tech, 3+ failed debug attempts, or explicit research requests, it automatically calls octocode tools to search GitHub before invoking the planner or bug-investigator.
+
+---
+
+## Troubleshooting
+
+### Claude Code keeps asking for permission to edit memory files
+
+Add these two lines to `~/.claude/settings.json` under `permissions.allow`:
+
+```json
+"Edit(.cc10x/*)",
+"Write(.cc10x/*)"
+```
+
+These permission examples cover the live `.cc10x/v10/` namespace.
+
+Or run **"Set up cc10x for me"** again — the setup wizard adds them automatically.
+
+---
+
+### cc10x not activating in a specific project
+
+The global `~/.claude/CLAUDE.md` activates cc10x in every project — you only need one install. If it's not activating in a specific project:
+
+1. **Check if that project has its own `.claude/CLAUDE.md`** — open it and verify the cc10x section is present. If the project-level file exists but doesn't have the cc10x entry, add it there.
+2. **Verify the entry format** — use `[CC10x]|entry: cc10x:cc10x-router` (plugin reference). A relative path like `./plugins/cc10x/...` only works in the cc10x repo itself, not in your projects.
+3. **Restart Claude Code** — the plugin system requires a restart after any CLAUDE.md change.
+
+---
+
+### Ubuntu / Linux install error: EXDEV cross-device link
+
+If you see:
+```
+Error: Failed to install: EXDEV: cross-device link not permitted
+```
+
+This is a Linux filesystem issue — `/tmp` and your home directory are on different filesystems, so the installer can't `rename()` across them. Fix:
+
+```bash
+# Set TMPDIR to a directory on the same filesystem as your home:
+mkdir -p ~/.claude/tmp
+TMPDIR=~/.claude/tmp claude
+# Then install normally: /plugin install cc10x@romiluz13
+```
+
+If that doesn't work, install manually:
+```bash
+# Clone directly into the plugins directory
+git clone https://github.com/romiluz13/cc10x.git ~/.claude/plugins/cc10x
+```
+Then follow Step 2 in the setup guide above to add the cc10x entry to `~/.claude/CLAUDE.md`.
+
+---
+
+### "Unknown skill cc10x:cc10x-router"
+
+The cc10x plugin is disabled. Run:
+```
+/plugins enable cc10x
+```
+Then retry your command.
 
 ---
 
@@ -516,6 +818,6 @@ MIT License
 ---
 
 <p align="center">
-  <strong>cc10x v6.0.19</strong><br>
+  <strong>cc10x v8.3.0</strong><br>
   <em>The Intelligent Orchestrator for Claude Code</em>
 </p>

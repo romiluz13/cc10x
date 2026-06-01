@@ -1,0 +1,63 @@
+{
+  "id": "plan-clarification",
+  "workflow_type": "PLAN",
+  "starting_artifact": {
+    "workflow_uuid": "wf-20260312T162000Z-plan-clarification",
+    "workflow_id": "wf-20260312T162000Z-plan-clarification",
+    "workflow_type": "PLAN",
+    "state_root": ".cc10x/v10",
+    "plan_mode": "decision_rfc",
+    "verification_rigor": "critical_path",
+    "proof_status": "gaps_found",
+    "traceability": {"requirements": [], "phases": [], "verification": [], "remediation": []},
+    "phase_cursor": null,
+    "task_ids": {},
+    "results": {},
+    "intent": {"goal": "Plan notifications system"},
+    "evidence": {},
+    "quality": {"convergence_state": "pending"},
+    "status_history": [],
+    "remediation_history": []
+  },
+  "relevant_tasks": {
+    "planner_create": {
+      "phase": "plan-create",
+      "status": "completed",
+      "blockedBy": []
+    },
+    "planning_review_pass1": {
+      "phase": "plan-review-gap-1",
+      "status": "deleted",
+      "blockedBy": ["planner_create"]
+    },
+    "planner_replan": {
+      "phase": "re-plan",
+      "status": "deleted",
+      "blockedBy": ["planning_review_pass1"]
+    },
+    "planning_review_pass2": {
+      "phase": "plan-review-gap-2",
+      "status": "deleted",
+      "blockedBy": ["planner_replan"]
+    },
+    "memory_finalize": {
+      "phase": "memory-finalize",
+      "status": "pending",
+      "blockedBy": ["planner_create", "planning_review_pass1", "planner_replan", "planning_review_pass2"]
+    }
+  },
+  "agent_outputs": {
+    "planner_contract": {
+      "STATUS": "NEEDS_CLARIFICATION",
+      "BLOCKING": true,
+      "REMEDIATION_REASON": "Need delivery-channel priority and retention constraints"
+    }
+  },
+  "expected": {
+    "next_action": "ask_user",
+    "pending_gate": "clarification",
+    "artifact_delta": {
+      "quality": {"convergence_state": "needs_iteration"}
+    }
+  }
+}

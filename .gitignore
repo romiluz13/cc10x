@@ -26,10 +26,11 @@ ORCHESTRATION_INVESTIGATION.md
 # ========================================
 
 # Runtime directories (user-specific context)
-.claude/
-!.claude/memory/
-!.claude/memory/CONSTITUTION.md
-!.claude/context.json
+# Use glob-level ignore so sub-directories can be un-ignored
+.claude/*
+!.cc10x
+.cc10x/*
+# Keep runtime memory local-only. These files are user/session state, not product files.
 
 # Dependency directories
 node_modules/
@@ -62,6 +63,7 @@ Thumbs.db
 .settings/
 *.sublime-project
 *.sublime-workspace
+.history
 
 # ========================================
 # LOGS & TEMPORARY FILES
@@ -117,6 +119,8 @@ reference/
 scratch/
 docs_/
 audit/
+audit-28.02/
+audit-29.02/
 .claude/plans/
 plans/
 planning/
@@ -129,6 +133,19 @@ demo-app/
 
 # Internal documentation (development-only)
 docs/
+!docs/
+!docs/benchmarks/
+docs/benchmarks/*
+!docs/benchmarks/2026-03-12-first-place-strategy.md
+!docs/benchmarks/2026-03-12-prompt-engineering-round-2-head-to-head.md
+!docs/benchmarks/2026-03-12-session-learnings.md
+!docs/benchmarks/2026-03-14-prompt-steal-hardening.md
+!docs/benchmarks/2026-03-16-planning-recovery.md
+!docs/prompt-change-checklist.md
+!docs/prompt-invariants.md
+!docs/prompt-surface-inventory.md
+!docs/verifier-latency-model.md
+!docs/latency-reduction-note.md
 
 # Testing and audit files (development-only)
 *TESTING*.md
@@ -144,6 +161,7 @@ push_v3.1.py
 *.py
 !plugins/cc10x/hooks/*.sh
 !plugins/cc10x/scripts/*.sh
+!plugins/cc10x/scripts/*.py
 
 # ========================================
 # BACKUP & ARCHIVE FILES
@@ -177,6 +195,9 @@ cc10x_V2-main/
 # Orchestration documentation (source of truth)
 !docs/cc10x-orchestration-bible.md
 !docs/cc10x-orchestration-logic-analysis.md
+!docs/router-invariants.md
+!docs/known-flaws.md
+!docs/2026-04-19-diff-driven-docs-plan.md
 
 # Production code (DO NOT IGNORE)
 !plugins/
@@ -201,9 +222,13 @@ cc10x_V2-main/
 # Reference repos (not committed)
 .reference/
 ref/
+ref-(dont-read-unless-specificly-mentioned)/
 audit/
 docs/viral-reddit-post.md
 FINAL_ORCHESTRATION_UNDERSTANDING.md
+
+# Python cache
+plugins/cc10x/scripts/__pycache__/
 
 # ========================================
 # LIVE CODING PREP (NEVER COMMIT)

@@ -1,0 +1,140 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/cc10x_pretooluse_guard.py\"",
+            "timeout": 10,
+            "statusMessage": "CC10X protected-write guard"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/cc10x_context_migration.py\"",
+            "timeout": 15,
+            "statusMessage": "CC10X context migration check"
+          }
+        ]
+      },
+      {
+        "matcher": "startup|resume|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/cc10x_sessionstart_context.py\"",
+            "timeout": 10,
+            "statusMessage": "CC10X workflow resume context"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/cc10x_posttooluse_artifact_guard.py\"",
+            "timeout": 10,
+            "statusMessage": "CC10X workflow artifact audit"
+          }
+        ]
+      }
+    ],
+    "TaskCompleted": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/cc10x_task_completed_guard.py\"",
+            "timeout": 10,
+            "statusMessage": "CC10X task metadata guard"
+          }
+        ]
+      }
+    ],
+    "PostCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/cc10x_postcompact_context.py\"",
+            "timeout": 10,
+            "statusMessage": "CC10X compaction event capture"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/cc10x_subagent_stop_audit.py\"",
+            "timeout": 10,
+            "statusMessage": "CC10X subagent contract audit"
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/cc10x_precompact_state.py\"",
+            "timeout": 5,
+            "statusMessage": "CC10X pre-compaction state snapshot"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/cc10x_stop_persist.py\"",
+            "timeout": 3,
+            "statusMessage": "CC10X session state persistence"
+          }
+        ]
+      }
+    ],
+    "StopFailure": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/cc10x_stop_failure_log.py\"",
+            "timeout": 3,
+            "async": true,
+            "statusMessage": "CC10X failure event logging"
+          }
+        ]
+      }
+    ],
+    "InstructionsLoaded": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/cc10x_instructions_loaded_audit.py\"",
+            "timeout": 5,
+            "async": true,
+            "statusMessage": "CC10X instruction audit"
+          }
+        ]
+      }
+    ]
+  }
+}

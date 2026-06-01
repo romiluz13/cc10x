@@ -1,0 +1,36 @@
+{
+  "id": "build-scope-gate",
+  "workflow_type": "BUILD",
+  "starting_artifact": {
+    "workflow_uuid": "wf-20260312T161700Z-build-scope",
+    "workflow_id": "wf-20260312T161700Z-build-scope",
+    "workflow_type": "BUILD",
+    "state_root": ".cc10x/v10",
+    "plan_mode": "execution_plan",
+    "verification_rigor": "standard",
+    "proof_status": "gaps_found",
+    "traceability": {"requirements": [], "phases": [], "verification": [], "remediation": []},
+    "phase_cursor": "phase-1",
+    "task_ids": {},
+    "results": {},
+    "intent": {"goal": "Build checkout flow"},
+    "evidence": {},
+    "quality": {"convergence_state": "pending"},
+    "status_history": [],
+    "remediation_history": []
+  },
+  "relevant_tasks": {},
+  "agent_outputs": {
+    "parallel_findings": {
+      "critical_issues": 1,
+      "high_issues": 3
+    }
+  },
+  "expected": {
+    "next_action": "pause_for_scope_decision",
+    "pending_gate": "scope_decision",
+    "artifact_delta": {
+      "quality": {"convergence_state": "needs_iteration"}
+    }
+  }
+}

@@ -1,7 +1,8 @@
 ---
 name: planning-patterns
 description: "Internal skill. Use cc10x-router for all development tasks."
-allowed-tools: Read, Grep, Glob, AskUserQuestion, LSP
+allowed-tools: Read Grep Glob LSP
+user-invocable: false
 ---
 
 # Writing Plans
@@ -9,6 +10,8 @@ allowed-tools: Read, Grep, Glob, AskUserQuestion, LSP
 ## Overview
 
 Write comprehensive implementation plans assuming the engineer has zero context for the codebase and questionable taste. Document everything they need to know: which files to touch for each task, code, testing, docs they might need to check, how to test it. Give them the whole plan as bite-sized tasks. DRY. YAGNI. TDD. Frequent commits.
+
+**Plans are prompts.** The plan will be consumed by an AI agent with zero prior context. Write it as you would write a prompt: specific, complete, unambiguous. If a different agent could misinterpret a step, the step is underspecified.
 
 Assume they are a skilled developer, but know almost nothing about the toolset or problem domain. Assume they don't know good test design very well.
 
@@ -38,6 +41,10 @@ NO VAGUE STEPS - EVERY STEP IS A SPECIFIC ACTION
 - "Implement the feature" (multiple actions)
 - "Test it" (which tests? how?)
 
+Treat plan phases as a directed acyclic graph — each phase may only depend on predecessors, never on future phases. The plan-review-gate enforces this ordering.
+
+**Decomposition trigger:** If a step touches 3+ files or takes more than one sentence to describe, split it. If a phase has >5 tasks, consider splitting the phase. Individual steps target 2-5 minutes; task clusters (a full RED-GREEN-REFACTOR cycle) up to 15 minutes.
+
 ## Plan Document Header
 
 **Every plan MUST start with this header:**
@@ -55,6 +62,8 @@ NO VAGUE STEPS - EVERY STEP IS A SPECIFIC ACTION
 **Tech Stack:** [Key technologies/libraries]
 
 **Prerequisites:** [What must exist before starting]
+
+**Durable Decisions:** [Foundational choices that apply across all phases — route structures, DB schema shape, key data models, auth approach, third-party service boundaries. Every phase references these.]
 
 ---
 ```
@@ -134,6 +143,10 @@ A developer with zero codebase context should be able to execute the plan WITHOU
 
 **Why:** Claude forgets context. External docs get stale. File:line references are always accurate.
 
+### Distillation Rule
+
+Plans MUST use distilled content, not summarized. Distilled = lossless compression preserving every entity, relationship, decision, and constraint. Summarized = lossy reduction that drops specifics. If a plan section can be shortened without losing any fact the builder needs, distill it. If shortening requires dropping facts, keep the full version. Test: Could a builder agent execute from this plan alone without re-reading source files? If not, the plan is under-distilled.
+
 ## Validation Levels
 
 **Match validation depth to plan complexity:**
@@ -146,6 +159,19 @@ A developer with zero codebase context should be able to execute the plan WITHOU
 | 4 | Manual Validation | User flow walkthrough | High-Critical risk |
 
 **Include specific validation commands in each task step.**
+
+## Production-Like Verification Planning
+
+When the request needs real APIs, seeded data, browser flows, background jobs, or stress/load behavior, read `references/live-verification-strategy.md` before finalizing the plan.
+
+Use that reference to add a `### Live Verification Strategy` section that names:
+- harness manifest path
+- setup, reset, seed, health, and cleanup commands
+- first-party system boundaries vs external dependencies
+- named proof scenarios with Given/When/Then
+- stress profile and pass thresholds when load behavior matters
+
+Do not silently downgrade production-like verification into replay-only, unit-only, or manual-only steps. If the live harness does not exist yet, keep that gap explicit in the plan.
 
 ## Requirements Checklist
 
@@ -160,7 +186,34 @@ Before writing a plan:
 - [ ] Existing code patterns understood
 - [ ] Context References section prepared with file:line references
 
+## Plan Completeness Gate
+
+Before saving, verify every phase passes:
+
+| Criterion | Test |
+|-----------|------|
+| **Definition of done** | Exit criteria are demonstrable and testable (not "Foundation complete") |
+| **Measurable deliverables** | Each task names exact files to create/modify with file:line |
+| **Realistic estimates** | No task exceeds 5 minutes; no phase exceeds 1 hour |
+| **Dependencies explicit** | Phase N references only predecessors, never future phases |
+| **Risk mitigation present** | Every risk with Score > 8 has a mitigation row |
+| **Testable at each phase** | Each phase exit criteria can be verified by running a command |
+| **Cross-phase contracts** | Phase N exit criteria include the exact data shape, API contract, or file structure that Phase N+1 expects |
+
+A plan missing any row is incomplete. Revise before saving.
+
+**Exit criteria by example:** Do not write "Phase 1 complete when auth works." Write "Phase 1 complete when `curl -X POST /api/auth/login -d '{"email":"test@test.com","password":"pass"}' returns 200 with `{token: string}`." Concrete input/output examples prevent misinterpretation.
+
 ## Risk Assessment Table
+
+Classify each risk into one of four dimensions before scoring:
+
+| Dimension | What to assess |
+|-----------|---------------|
+| **Technical** | Complexity beyond team experience, unknown libraries, integration unknowns |
+| **Timeline** | Estimation uncertainty, resource availability, external dependency delivery dates |
+| **Quality** | Testing gaps, regression surface area, manual-only verification steps |
+| **Security** | Vulnerability exposure, auth surface, data sensitivity, compliance requirements |
 
 For each identified risk:
 
@@ -275,6 +328,7 @@ If you find yourself:
 | "File paths are discoverable" | Write the exact path. |
 | "Commits are implied" | Write when to commit. |
 | "They can figure out edge cases" | List every edge case. |
+| "Plan isn't perfect yet" | Good plan now beats perfect plan never. Ship it, iterate in execution. |
 
 ## Output Format
 
@@ -291,7 +345,11 @@ If you find yourself:
 
 **Prerequisites:** [Requirements]
 
+**Durable Decisions:** [Foundational choices that apply across all phases — route structures, DB schema shape, key data models, auth approach, third-party service boundaries]
+
 ---
+
+<!-- Phase 1 must be a tracer bullet — a thin vertical slice through ALL integration layers (schema → API → UI → tests). Proves architecture works before subsequent phases widen the slice. For infrastructure-only plans, Phase 1 may be setup. -->
 
 ## Phase 1: [Demonstrable Milestone]
 
@@ -346,7 +404,7 @@ git commit -m "feat: [description]"
 
 ## Save the Plan (MANDATORY)
 
-**Two saves are required - plan file AND memory update:**
+**One direct save is required - the plan file. Memory indexing is router-owned.**
 
 ### Step 1: Save Plan File (Use Write tool - NO PERMISSION NEEDED)
 
@@ -360,110 +418,24 @@ Write(file_path="docs/plans/YYYY-MM-DD-<feature>-plan.md", content="[full plan c
 # Do NOT auto-commit — let the user decide when to commit
 ```
 
-### Step 2: Update Memory (CRITICAL - Links Plan to Memory)
+### Step 2: Emit Router-Owned Memory Intent (CRITICAL)
 
-**Use Read-Edit-Verify with stable anchors:**
+Do **NOT** edit `.cc10x/v10/*.md` from this skill.
 
-```
-# Step 1: READ
-Read(file_path=".claude/cc10x/activeContext.md")
+Instead, use the planner agent's existing `MEMORY_NOTES` contract only for durable learnings, deferred items, or verification context that is not already derivable from the planner contract.
 
-# Step 2: VERIFY anchors exist (## References, ## Recent Changes, ## Next Steps)
+**WHY BOTH:** The plan file is the artifact. Router-owned memory finalization derives plan indexing from `PLAN_FILE` and workflow state, so this skill must not invent a second memory serialization path.
 
-# Step 3: EDIT using stable anchors
-# Add plan to References
-Edit(file_path=".claude/cc10x/activeContext.md",
-     old_string="## References",
-     new_string="## References\n- Plan: `docs/plans/YYYY-MM-DD-<feature>-plan.md`")
+## Router-Owned Task Tracking
 
-# Index the plan creation in Recent Changes
-Edit(file_path=".claude/cc10x/activeContext.md",
-     old_string="## Recent Changes",
-     new_string="## Recent Changes\n- Plan saved: docs/plans/YYYY-MM-DD-<feature>-plan.md")
+The planner does **not** create execution tasks. Its job is to create the plan artifact and emit a router contract.
 
-# Make execution the default next step
-Edit(file_path=".claude/cc10x/activeContext.md",
-     old_string="## Next Steps",
-     new_string="## Next Steps\n1. Execute plan: docs/plans/YYYY-MM-DD-<feature>-plan.md")
+After planning:
+- Save the plan file.
+- Update memory with the plan reference.
+- Let the router create workflow and execution tasks from the approved plan.
 
-# Step 4: VERIFY (do not skip)
-Read(file_path=".claude/cc10x/activeContext.md")
-```
-
-**Also append to progress.md using stable anchor:**
-```
-Read(file_path=".claude/cc10x/progress.md")
-
-Edit(file_path=".claude/cc10x/progress.md",
-     old_string="## Completed",
-     new_string="## Completed\n- [x] Plan saved - docs/plans/YYYY-MM-DD-<feature>-plan.md")
-
-# VERIFY (do not skip)
-Read(file_path=".claude/cc10x/progress.md")
-```
-
-**WHY BOTH:** Plan files are artifacts. Memory is the index. Without memory update, next session won't know the plan exists.
-
-**This is non-negotiable.** Memory is the single source of truth.
-
-## Task-Based Execution Tracking
-
-After saving plan, create execution tasks for tracking progress:
-
-### Step 1: Create Parent Task
-```
-TaskCreate({
-  subject: "CC10X Execute Plan: {feature}",
-  description: "Plan file: docs/plans/YYYY-MM-DD-{feature}-plan.md\n\n{brief_plan_summary}",
-  activeForm: "Executing {feature} plan"
-})
-# Returns parent_task_id
-```
-
-### Step 2: Create Phase Tasks with Dependencies
-```
-# For each phase in plan:
-TaskCreate({
-  subject: "CC10X Phase 1: {phase_title}",
-  description: "**Plan:** docs/plans/YYYY-MM-DD-{feature}-plan.md\n**Section:** Phase 1\n**Exit Criteria:** {demonstrable_milestone}\n\n{phase_details}",
-  activeForm: "Working on {phase_title}"
-})
-# Returns phase_1_id
-
-TaskCreate({
-  subject: "CC10X Phase 2: {phase_title}",
-  description: "**Plan:** docs/plans/YYYY-MM-DD-{feature}-plan.md\n**Section:** Phase 2\n**Exit Criteria:** {demonstrable_milestone}\n\n{phase_details}",
-  activeForm: "Working on {phase_title}"
-})
-TaskUpdate({ taskId: phase_2_id, addBlockedBy: [phase_1_id] })
-
-# Continue for all phases...
-```
-
-### Step 3: Store Task IDs in Memory
-
-Update `.claude/cc10x/progress.md` with task *subjects* (and optionally task IDs for the current session).
-Do not rely on task IDs for long-term continuity unless you deliberately share the task list across sessions.
-
-Use Edit + Read-back verify:
-
-```
-Read(file_path=".claude/cc10x/progress.md")
-
-Edit(file_path=".claude/cc10x/progress.md",
-     old_string="## Tasks",
-     new_string="## Tasks
-
-- CC10X Execute Plan: {feature} (blocked by: -)
-- CC10X Phase 1: {title} (blocked by: -)
-- CC10X Phase 2: {title} (blocked by: CC10X Phase 1: {title})
-")
-
-# VERIFY (do not skip)
-Read(file_path=".claude/cc10x/progress.md")
-```
-
-**WHY:** Tasks help orchestration (dependencies + parallelism) and survive context compactions. For cross-session continuity, the plan file + CC10x memory files are the durable source of truth. If you intentionally share a task list across sessions (official Claude Code supports this), subjects/namespacing keep scope safe.
+Do not instruct the planner to call `TaskCreate` or `TaskUpdate` for phase tracking.
 
 ## Plan-Task Linkage (Context Preservation)
 

@@ -1,0 +1,83 @@
+{
+  "id": "build-happy-path",
+  "workflow_type": "BUILD",
+  "starting_artifact": {
+    "workflow_uuid": "wf-20260312T161500Z-build-happy",
+    "workflow_id": "wf-20260312T161500Z-build-happy",
+    "workflow_type": "BUILD",
+    "state_root": ".cc10x/v10",
+    "plan_mode": "execution_plan",
+    "verification_rigor": "standard",
+    "proof_status": "gaps_found",
+    "traceability": {"requirements": [], "phases": [], "verification": [], "remediation": []},
+    "phase_cursor": "phase-1",
+    "task_ids": {},
+    "results": {},
+    "intent": {"goal": "Build user profile page"},
+    "evidence": {},
+    "quality": {"convergence_state": "pending"},
+    "status_history": [],
+    "remediation_history": []
+  },
+  "relevant_tasks": {},
+  "agent_outputs": {
+    "builder_contract": {
+      "STATUS": "PASS",
+      "PHASE_ID": "phase-1",
+      "PHASE_STATUS": "completed",
+      "PHASE_EXIT_READY": true,
+      "CHECKPOINT_TYPE": "none",
+      "PROOF_STATUS": "passed",
+      "INPUTS": ["authenticated session"],
+      "EXPECTED_ARTIFACTS": ["profile page route", "profile tests"],
+      "TDD_RED_EXIT": 1,
+      "TDD_GREEN_EXIT": 0,
+      "BLOCKED_ITEMS": [],
+      "SKIPPED_ITEMS": [],
+      "SCOPE_INCREASES": [],
+      "SCENARIOS": [
+        {
+          "name": "Profile page renders",
+          "given": "an authenticated user",
+          "when": "they open /profile",
+          "then": "their profile fields appear",
+          "command": "npm test -- profile",
+          "expected": "profile fields rendered",
+          "actual": "profile fields rendered",
+          "exit_code": 0,
+          "status": "PASS"
+        }
+      ]
+    },
+    "verifier_contract": {
+      "SCENARIOS_TOTAL": 1,
+      "SCENARIOS_PASSED": 1,
+      "SCENARIOS_FAILED": 0,
+      "SCENARIO_ROWS": [
+        {
+          "name": "Profile page renders",
+          "given": "an authenticated user",
+          "when": "they open /profile",
+          "then": "their profile fields appear",
+          "command": "npm test -- profile",
+          "expected": "profile fields rendered",
+          "actual": "profile fields rendered",
+          "exit_code": 0,
+          "status": "PASS"
+        }
+      ],
+      "EVIDENCE": {
+        "scenarios": [
+          "Profile page renders | Given authenticated user | When open /profile | Then fields appear | npm test -- profile -> exit 0 | expected=profile fields rendered | actual=profile fields rendered"
+        ]
+      }
+    }
+  },
+  "expected": {
+    "next_action": "memory_finalize",
+    "artifact_delta": {
+      "phase_cursor": "phase-2",
+      "quality": {"convergence_state": "stable"}
+    }
+  }
+}

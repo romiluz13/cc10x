@@ -1,7 +1,8 @@
 ---
 name: architecture-patterns
 description: "Internal skill. Use cc10x-router for all development tasks."
-allowed-tools: Read, Grep, Glob, LSP
+allowed-tools: Read Grep Glob LSP
+user-invocable: false
 ---
 
 # Architecture Patterns
@@ -11,6 +12,8 @@ allowed-tools: Read, Grep, Glob, LSP
 Architecture exists to support functionality. Every architectural decision should trace back to a functionality requirement.
 
 **Core principle:** Design architecture FROM functionality, not TO functionality.
+
+This skill is advisory in v10. It frames decisions and tradeoffs; it does not outrank explicit user requirements, repo standards, or an approved plan/design doc.
 
 ## Focus Areas (Reference Pattern)
 
@@ -207,6 +210,31 @@ Admin Flow: Delete file
 **Error handling**: What happens when it fails?
 **Fallback**: What's the degraded experience?
 ```
+
+### Dependency Classification
+
+Before choosing a pattern, classify the dependency:
+
+| Category | Examples | Testing Strategy |
+|----------|----------|-----------------|
+| **In-process** | Pure computation, in-memory state | Test directly — merge modules and verify |
+| **Local-substitutable** | Database (PGLite), filesystem (in-memory FS) | Test with local stand-in in test suite |
+| **Remote but owned** | Your own microservices, internal APIs | Define port (interface), inject transport. Test with in-memory adapter |
+| **True external** | Stripe, Twilio, third-party APIs | Mock at boundary. Inject dependency as port |
+
+The category determines the pattern. In-process needs nothing. True external needs mocks. The middle two need ports and adapters.
+
+**Implementation ordering — build from leaves inward:**
+```
+Level 0 (no deps):      [Pure utils] [Config]
+        ↓
+Level 1 (Level 0 only): [Repositories] [External clients]
+        ↓
+Level 2 (Level 0-1):    [Services]
+        ↓
+Level 3 (Level 0-2):    [Controllers] [API routes]
+```
+Level 0 components are testable immediately. Each subsequent level depends only on predecessors. This ordering eliminates mock-heavy tests in early phases and matches the planner's DAG constraint (phases depend only on predecessors, never on future phases).
 
 ## Observability Design
 

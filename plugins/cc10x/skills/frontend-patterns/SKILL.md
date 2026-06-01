@@ -1,7 +1,7 @@
 ---
 name: frontend-patterns
-description: "Internal skill. Use cc10x-router for all development tasks."
-allowed-tools: Read, Grep, Glob, LSP
+description: "Use when frontend UI work needs accessibility, responsive layout, loading/error states, performance guardrails, or DESIGN.md authoring from screenshots, existing UI, user preferences, or chosen visual inspiration under an approved visual direction."
+allowed-tools: Read Grep Glob LSP
 ---
 
 # Frontend Patterns
@@ -12,14 +12,24 @@ User interfaces exist to help users accomplish tasks. Every UI decision should m
 
 **Core principle:** Design for user success, not aesthetic preference.
 
-**Violating the letter of this process is violating the spirit of frontend design.**
+This skill is advisory in v10. Explicit user instructions, `CLAUDE.md`, repo standards, and approved plans override every suggestion here.
+
+## Reference Files
+
+Read only the references needed for the current UI task:
+
+- `references/ui-state-and-feedback.md` for loading/error/empty/success ordering, skeleton vs spinner, and mutation feedback
+- `references/accessibility-and-forms.md` for WCAG-oriented checks, keyboard/focus, labels, form patterns, and mobile usability
+- `references/performance-and-layout.md` for responsive checks, motion, overflow, URL state, performance guardrails, and light/dark mode checks
+- `references/design-md-authoring.md` for creating or updating a spec-aligned project-local `DESIGN.md` from screenshots, existing UI, user preferences, or a selected inspiration style
+- `references/design-md-inspiration-index.md` only when the user asks for a style reference, brand-like direction, moodboard, or DESIGN.md-style examples
 
 ## Focus Areas (Reference Pattern)
 
-- **Component architecture** (composition, encapsulation, reusability)
+- **React component architecture** (hooks, context, performance)
 - **Responsive CSS** with Tailwind/CSS-in-JS
-- **State management** (component-local vs shared, URL sync)
-- **Frontend performance** (lazy loading, code splitting, virtualization)
+- **State management** (Redux, Zustand, Context API)
+- **Frontend performance** (lazy loading, code splitting, memoization)
 - **Accessibility** (WCAG compliance, ARIA labels, keyboard navigation)
 
 ## Approach (Reference Pattern)
@@ -30,12 +40,22 @@ User interfaces exist to help users accomplish tasks. Every UI decision should m
 4. **Semantic HTML** and proper ARIA attributes
 5. **Type safety** with TypeScript when applicable
 
+## Advisory Guardrails
+
+Use this skill to add:
+- accessibility checks
+- responsive/layout verification
+- performance and loading-state checks
+- optional style ideas when the user explicitly wants them
+
+Do not use this skill to override an explicit visual direction, component contract, or approved workflow.
+
 ## Component Output Checklist
 
 **Every frontend deliverable should include:**
 
-- [ ] Complete component with typed props/inputs
-- [ ] Styling solution (Tailwind classes or CSS modules)
+- [ ] Complete React component with props interface
+- [ ] Styling solution (Tailwind classes or styled-components)
 - [ ] State management implementation if needed
 - [ ] Basic unit test structure
 - [ ] Accessibility checklist for the component
@@ -65,39 +85,17 @@ Before writing any UI code, commit to answers for:
 
 **Key insight:** Bold maximalism and refined minimalism both work. The enemy is indecision and generic defaults.
 
-## Loading State Order (CRITICAL)
+## DESIGN.md Authoring
 
-**Always handle states in this order:**
+Read `references/design-md-authoring.md` before creating or updating a spec-aligned project-local `DESIGN.md`, especially when the user provides screenshots, existing UI, visual preferences, or asks the agent to preserve a design direction.
 
-```
-// CORRECT order (pseudo-code — see your framework skill for syntax)
-if error        → show ErrorState with retry action
-if loading AND no data → show LoadingState
-if data is empty     → show EmptyState
-otherwise        → show data
-```
+When inspiration is needed, read `references/design-md-inspiration-index.md` to choose a style family. Treat inspiration as input to the project's own design contract, not as an instruction to copy another company's UI.
 
-**Loading State Decision Tree:**
-```
-Is there an error? → Yes: Show error with retry
-                   → No: Continue
-Is loading AND no data? → Yes: Show loading indicator
-                        → No: Continue
-Do we have data? → Yes, with items: Show data
-                 → Yes, but empty: Show empty state
-                 → No: Show loading (fallback)
-```
+## UI State References
 
-**Golden Rule:** Show loading indicator ONLY when there's no data to display.
-
-## Skeleton vs Spinner
-
-| Use Skeleton When | Use Spinner When |
-|-------------------|------------------|
-| Known content shape | Unknown content shape |
-| List/card layouts | Modal actions |
-| Initial page load | Button submissions |
-| Content placeholders | Inline operations |
+Read `references/ui-state-and-feedback.md` before finalizing loading, error,
+empty, success, or mutation states. Keep the state order explicit; do not invent
+UI states ad hoc.
 
 ## Motion & Animation
 
@@ -117,14 +115,10 @@ Do we have data? → Yes, with items: Show data
 }
 ```
 
-## Error Handling Hierarchy
+## Accessibility And Forms
 
-| Level | Use For |
-|-------|---------|
-| **Inline error** | Field-level validation |
-| **Toast notification** | Recoverable errors, user can retry |
-| **Error banner** | Page-level errors, data still partially usable |
-| **Full error screen** | Unrecoverable, needs user action |
+Read `references/accessibility-and-forms.md` when the task touches keyboard
+navigation, forms, labels, focus, contrast, or touch ergonomics.
 
 ## Success Criteria Framework
 
@@ -135,40 +129,10 @@ Do we have data? → Yes, with items: Show data
 3. **Accessibility**: Can all users access it?
 4. **Performance**: Does it feel responsive?
 
-## Typography Rules
+## Layout And Performance References
 
-| Rule | Correct | Wrong |
-|------|---------|-------|
-| Ellipsis | `…` (single character) | `...` (three periods) |
-| Quotes | `" "` curly quotes | `" "` straight quotes |
-| Units | `10&nbsp;MB` (non-breaking) | `10 MB` (can break) |
-| Shortcuts | `⌘&nbsp;K` (non-breaking) | `⌘ K` (can break) |
-| Loading text | `Loading…` | `Loading...` |
-| Numbers in tables | `font-variant-numeric: tabular-nums` | Default proportional |
-| Headings | `text-wrap: balance` | Unbalanced line breaks |
-| Line length | 65-75 characters max | Unlimited width |
-
-## Content Overflow Handling
-
-**Prevent broken layouts from user-generated content:**
-
-| Scenario | Solution |
-|----------|----------|
-| Single-line overflow | `truncate` (Tailwind) or `text-overflow: ellipsis` |
-| Multi-line overflow | `line-clamp-2` / `line-clamp-3` |
-| Long words/URLs | `break-words` or `overflow-wrap: break-word` |
-| Flex child truncation | Add `min-w-0` to flex children (critical!) |
-| Empty strings/arrays | Show placeholder, not broken UI |
-
-```html
-<!-- Flex truncation pattern - min-w-0 is REQUIRED -->
-<div class="flex items-center gap-2 min-w-0">
-  <img class="avatar" />
-  <span class="truncate min-w-0">User Name</span>
-</div>
-```
-
-**Test with:** short text, average text, and absurdly long text (50+ characters).
+Read `references/performance-and-layout.md` for responsive checks, motion rules,
+overflow handling, URL state, touch/mobile, and color-mode validation.
 
 ## Universal Questions (Answer First)
 
@@ -218,50 +182,6 @@ User Flow: Create Account
 - **IMPAIRS**: User can complete but with difficulty
 - **MINOR**: Small friction, not blocking
 
-## Accessibility Review Checklist (WCAG 2.1 AA)
-
-| Check | Criterion | How to Verify |
-|-------|-----------|---------------|
-| **Keyboard** | All interactive elements keyboard accessible | Tab through entire flow |
-| **Focus visible** | Current focus clearly visible | Tab and check highlight |
-| **Focus order** | Logical tab order | Tab matches visual order |
-| **Labels** | All inputs have labels | Check `<label>` or `aria-label` |
-| **Alt text** | Images have meaningful alt | Check `alt` attributes |
-| **Color contrast** | 4.5:1 for text, 3:1 for large | Use contrast checker |
-| **Color alone** | Info not conveyed by color only | Check without color |
-| **Screen reader** | Content accessible via SR | Test with VoiceOver/NVDA |
-
-**For each issue found:**
-```markdown
-- [WCAG 2.1 1.4.3] Color contrast at `component:line`
-  - Current: 3.2:1 (fails AA)
-  - Required: 4.5:1
-  - Fix: Change text color to #333 (7.1:1)
-```
-
-## Form Best Practices
-
-| Rule | Implementation |
-|------|----------------|
-| **Autocomplete** | Add `autocomplete="email"`, `autocomplete="name"`, etc. |
-| **Input types** | Use `type="email"`, `type="tel"`, `type="url"` for mobile keyboards |
-| **Input modes** | Add `inputMode="numeric"` for number-only fields |
-| **Never block paste** | No `onPaste` + `preventDefault()` — users paste passwords |
-| **Spellcheck off** | `spellCheck={false}` on emails, codes, usernames |
-| **Unsaved changes** | Warn before navigation (`beforeunload` or router guard) |
-| **Error focus** | Focus first error field on submit |
-| **Shared hit targets** | Checkbox/radio label + control = one clickable area |
-
-```html
-<input
-  type="email"
-  autocomplete="email"
-  spellcheck="false"
-  inputmode="email"
-/>
-<!-- Never block paste on any input -->
-```
-
 ## Visual Design Checklist
 
 | Check | Good | Bad |
@@ -303,62 +223,106 @@ Move beyond safe, centered layouts:
 
 ## Component Patterns
 
-**Framework-specific component examples are in your framework skill:**
-- React projects → see `react-patterns` skill
-- Vue projects → see `vue-patterns` skill
+### Buttons
+```tsx
+// Primary action button with all states
+<button
+  type="button"
+  onClick={handleAction}
+  disabled={isLoading || isDisabled}
+  aria-busy={isLoading}
+  aria-disabled={isDisabled}
+  className={cn(
+    'btn-primary',
+    isLoading && 'btn-loading'
+  )}
+>
+  {isLoading ? (
+    <>
+      <Spinner aria-hidden />
+      <span>Processing...</span>
+    </>
+  ) : (
+    'Submit'
+  )}
+</button>
+```
 
-**All component patterns must follow:**
-- Proper ARIA attributes for interactive elements (`aria-busy`, `aria-invalid`, `aria-describedby`)
-- All four states handled: loading, error, empty, success
-- Keyboard accessibility for all controls
-- Disabled state during async operations
-- Error messages with `role="alert"` and recovery actions
-- Labels on all form inputs (`<label>` or `aria-label`)
+### Forms with Validation
+```tsx
+<form onSubmit={handleSubmit} noValidate>
+  <div className="form-field">
+    <label htmlFor="email">
+      Email <span aria-hidden>*</span>
+      <span className="sr-only">(required)</span>
+    </label>
+    <input
+      id="email"
+      type="email"
+      value={email}
+      onChange={handleChange}
+      aria-invalid={errors.email ? 'true' : undefined}
+      aria-describedby={errors.email ? 'email-error' : 'email-hint'}
+      required
+    />
+    <span id="email-hint" className="hint">
+      We'll never share your email
+    </span>
+    {errors.email && (
+      <span id="email-error" role="alert" className="error">
+        {errors.email}
+      </span>
+    )}
+  </div>
+</form>
+```
 
-## Responsive Design Checklist
+### Loading States
+```tsx
+function DataList({ isLoading, data, error }) {
+  if (isLoading) {
+    return (
+      <div aria-live="polite" aria-busy="true">
+        <Spinner />
+        <span>Loading items...</span>
+      </div>
+    );
+  }
 
-| Breakpoint | Check |
-|------------|-------|
-| **Mobile (< 640px)** | Touch targets 44px+, no horizontal scroll |
-| **Tablet (640-1024px)** | Layout adapts, navigation accessible |
-| **Desktop (> 1024px)** | Content readable, not too wide |
+  if (error) {
+    return (
+      <div role="alert" className="error-state">
+        <p>Failed to load items: {error.message}</p>
+        <button onClick={retry}>Try again</button>
+      </div>
+    );
+  }
 
-## Performance Rules
+  if (!data?.length) {
+    return (
+      <div className="empty-state">
+        <p>No items found</p>
+        <button onClick={createNew}>Create your first item</button>
+      </div>
+    );
+  }
 
-| Rule | Why | Implementation |
-|------|-----|----------------|
-| **Virtualize large lists** | >50 items kills performance | Use `virtua`, `@tanstack/virtual`, or `content-visibility: auto` |
-| **No layout reads in render** | Causes forced reflow | Avoid `getBoundingClientRect`, `offsetHeight` in render |
-| **Lazy load images** | Reduces initial load | `loading="lazy"` on below-fold images |
-| **Prioritize critical images** | Faster LCP | `fetchpriority="high"` or Next.js `priority` |
-| **Preconnect CDN** | Faster asset loading | `<link rel="preconnect" href="https://cdn...">` |
-| **Preload fonts** | Prevents FOUT | `<link rel="preload" as="font" crossorigin>` |
+  return <ul>{data.map(item => <Item key={item.id} {...item} />)}</ul>;
+}
+```
 
-## URL & State Management
-
-**URL should reflect UI state.** If it uses `useState`, consider URL sync.
-
-| State Type | URL Strategy |
-|------------|--------------|
-| Filters/search | `?q=term&category=books` |
-| Active tab | `?tab=settings` |
-| Pagination | `?page=3` |
-| Expanded panels | `?panel=details` |
-| Sort order | `?sort=price&dir=asc` |
-
-**Benefits:** Shareable links, back button works, refresh preserves state.
-
-Use a URL state library (e.g., `nuqs` for React, `vue-router` query for Vue) to sync UI state with URL parameters.
-
-## Touch & Mobile
-
-| Rule | Implementation |
-|------|----------------|
-| **44px touch targets** | Minimum for buttons, links, controls |
-| **No double-tap delay** | `touch-action: manipulation` on interactive elements |
-| **Modal scroll lock** | `overscroll-behavior: contain` in modals/drawers |
-| **Safe areas** | `padding: env(safe-area-inset-bottom)` for notches |
-| **Tap highlight** | Set `-webkit-tap-highlight-color` intentionally |
+### Error Messages
+```tsx
+// Inline error with recovery action
+<div role="alert" className="error-banner">
+  <Icon name="error" aria-hidden />
+  <div>
+    <p className="error-title">Upload failed</p>
+    <p className="error-detail">File too large. Maximum size is 10MB.</p>
+  </div>
+  <button onClick={selectFile}>Choose different file</button>
+</div>
+```
 
 ## Red Flags - STOP and Reconsider
 
@@ -400,22 +364,6 @@ If you find yourself:
 | Emoji icons (🚀 ✨ 💫) | Unprofessional, inconsistent | Use SVG icons |
 | Hardcoded date/number formats | Breaks internationalization | Use `Intl.DateTimeFormat` |
 | `autoFocus` everywhere | Disorienting, mobile issues | Use sparingly, desktop only |
-
-## Light/Dark Mode
-
-| Rule | Light Mode | Dark Mode |
-|------|------------|-----------|
-| Glass/transparent | `bg-white/80` or higher | `bg-black/80` or darker |
-| Text contrast | Minimum 4.5:1 (slate-900) | Minimum 4.5:1 (slate-100) |
-| Borders | `border-gray-200` | `border-white/10` |
-| HTML attribute | — | `color-scheme: dark` on `<html>` |
-| Meta tag | Match background | Match background |
-
-```html
-<!-- Dark mode setup -->
-<html style="color-scheme: dark">
-<head><meta name="theme-color" content="#0f172a"></head>
-```
 
 ## Output Format
 
@@ -460,6 +408,7 @@ If you find yourself:
 - [ ] Loading state shown ONLY when no data exists
 - [ ] Empty state provided for all collections/lists
 - [ ] Success state with appropriate feedback
+- [ ] Non-trivial state-order or skeleton/spinner decisions checked against `references/ui-state-and-feedback.md`
 
 ### Buttons & Mutations
 - [ ] Buttons disabled during async operations

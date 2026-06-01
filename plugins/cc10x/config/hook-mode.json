@@ -1,0 +1,12 @@
+{
+  "artifactIntegrity": "audit",
+  "protectedWrites": "audit",
+  "memoryWrites": "audit",
+  "taskMetadata": "audit",
+  "postcompactAudit": "audit",
+  "subagentStopAudit": "audit",
+  "precompactState": "audit",
+  "stopPersist": "audit",
+  "stopFailureLog": "audit",
+  "instructionsLoadedAudit": "audit"
+}

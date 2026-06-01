@@ -1,0 +1,63 @@
+{
+  "name": "live-harness-template",
+  "workdir": ".",
+  "required_env": [
+    "API_BASE_URL"
+  ],
+  "environment": {
+    "CI": "true"
+  },
+  "setup": [
+    {
+      "name": "Install dependencies",
+      "command": "npm ci",
+      "expected": "Dependencies installed"
+    }
+  ],
+  "reset": [
+    {
+      "name": "Reset database to a known state",
+      "command": "npm run db:reset",
+      "expected": "Database reset completed"
+    }
+  ],
+  "seed": [
+    {
+      "name": "Seed live verification data",
+      "command": "npm run db:seed:e2e",
+      "expected": "Seed data created"
+    }
+  ],
+  "healthcheck": {
+    "name": "System healthcheck",
+    "command": "curl -sf \"$API_BASE_URL/api/health\"",
+    "expected": "Health endpoint returns HTTP 200"
+  },
+  "scenarios": [
+    {
+      "name": "Golden path: user completes core flow",
+      "mode": "proof",
+      "given": "Seed data exists and the first-party services are healthy",
+      "when": "The harness runs the core end-to-end proof command",
+      "then": "The real user flow succeeds with all expected side effects",
+      "command": "npx playwright test tests/e2e/core-flow.spec.ts --project=chromium",
+      "expected": "Core flow passes with persisted side effects"
+    },
+    {
+      "name": "Stress path: burst traffic stays within thresholds",
+      "mode": "stress",
+      "given": "Seed data exists and the system is ready for load",
+      "when": "The harness runs the configured load profile",
+      "then": "Latency and error rate stay within agreed thresholds",
+      "command": "k6 run tests/load/core-flow.js",
+      "expected": "Load thresholds stay green"
+    }
+  ],
+  "cleanup": [
+    {
+      "name": "Stop ephemeral services",
+      "command": "docker compose down --remove-orphans",
+      "expected": "Ephemeral services stopped"
+    }
+  ]
+}

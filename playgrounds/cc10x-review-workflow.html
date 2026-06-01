@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CC10x REVIEW Workflow</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary: #0a0f1a;
+      --bg-secondary: #111827;
+      --bg-tertiary: #1f2937;
+      --border: #374151;
+      --text-primary: #f9fafb;
+      --text-secondary: #9ca3af;
+      --text-muted: #6b7280;
+      --blue: #3b82f6;
+      --blue-dim: #2563eb;
+      --cyan: #22d3ee;
+      --green: #10b981;
+      --red: #ef4444;
+      --orange: #f59e0b;
+      --purple: #a855f7;
+      --pink: #ec4899;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+
+    .header {
+      background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 24px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .logo-text {
+      font-size: 28px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--blue) 0%, var(--cyan) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .workflow-badge {
+      background: linear-gradient(135deg, var(--blue) 0%, var(--cyan) 100%);
+      color: white;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 20px;
+      letter-spacing: 0.05em;
+    }
+
+    .header-subtitle {
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: var(--blue);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--blue-dim);
+    }
+
+    .btn-primary.playing {
+      background: var(--green);
+    }
+
+    .btn-secondary {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+    }
+
+    .main {
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      min-height: calc(100vh - 85px);
+    }
+
+    .sidebar {
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border);
+      padding: 24px;
+      overflow-y: auto;
+    }
+
+    .section {
+      margin-bottom: 28px;
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* Review Dimensions */
+    .dimensions-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .dimension-card {
+      background: var(--bg-tertiary);
+      border-radius: 12px;
+      padding: 16px;
+      border: 2px solid transparent;
+      transition: all 0.3s;
+    }
+
+    .dimension-card.active {
+      border-color: var(--blue);
+      background: rgba(59, 130, 246, 0.1);
+    }
+
+    .dimension-card .icon {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+
+    .dimension-card .name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .dimension-card .desc {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Confidence Meter */
+    .confidence-meter {
+      background: var(--bg-primary);
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid var(--border);
+    }
+
+    .confidence-bar {
+      height: 12px;
+      background: var(--bg-tertiary);
+      border-radius: 6px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+
+    .confidence-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--red), var(--orange), var(--green));
+      border-radius: 6px;
+      transition: width 0.5s;
+    }
+
+    .confidence-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .confidence-value {
+      text-align: center;
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--blue);
+      margin-top: 16px;
+    }
+
+    .confidence-threshold {
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .confidence-threshold span {
+      color: var(--green);
+      font-weight: 600;
+    }
+
+    /* Chain Preview */
+    .chain-preview {
+      background: var(--bg-primary);
+      border-radius: 12px;
+      padding: 16px;
+      border: 1px solid var(--border);
+    }
+
+    .chain-step {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 0;
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-family: 'SF Mono', Monaco, monospace;
+    }
+
+    .chain-step.active {
+      color: var(--blue);
+    }
+
+    .chain-step.completed {
+      color: var(--green);
+    }
+
+    .chain-step .icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      background: var(--bg-tertiary);
+      border: 2px solid var(--border);
+    }
+
+    .chain-step.active .icon {
+      background: var(--blue);
+      border-color: var(--blue);
+      color: white;
+      animation: pulse-blue 1.5s infinite;
+    }
+
+    .chain-step.completed .icon {
+      background: var(--green);
+      border-color: var(--green);
+      color: white;
+    }
+
+    @keyframes pulse-blue {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+      50% { box-shadow: 0 0 0 8px rgba(59, 130, 246, 0); }
+    }
+
+    /* Canvas */
+    .canvas {
+      position: relative;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.03) 0%, transparent 50%),
+        var(--bg-primary);
+    }
+
+    .canvas svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Info Panel */
+    .info-panel {
+      position: absolute;
+      bottom: 24px;
+      left: 24px;
+      right: 24px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px 24px;
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+    }
+
+    .info-step {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 200px;
+    }
+
+    .info-step-number {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--blue) 0%, var(--cyan) 100%);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 700;
+      color: white;
+    }
+
+    .info-step-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .info-step-name {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .info-divider {
+      width: 1px;
+      height: 50px;
+      background: var(--border);
+    }
+
+    .info-content {
+      flex: 1;
+    }
+
+    .info-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .info-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .info-tags {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .info-tag {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 4px 8px;
+      font-size: 10px;
+      color: var(--text-secondary);
+    }
+
+    /* Node Styles */
+    .node {
+      cursor: pointer;
+      transition: filter 0.2s;
+    }
+
+    .node:hover {
+      filter: brightness(1.1);
+    }
+
+    .node.highlighted {
+      filter: drop-shadow(0 0 20px var(--blue));
+    }
+
+    .node.completed {
+      filter: drop-shadow(0 0 12px var(--green));
+    }
+
+    .node-title {
+      font-size: 13px;
+      font-weight: 600;
+      fill: var(--bg-primary);
+    }
+
+    .node-subtitle {
+      font-size: 9px;
+      fill: var(--bg-primary);
+      opacity: 0.7;
+    }
+
+    .node-badge {
+      font-size: 8px;
+      font-weight: 700;
+      fill: white;
+    }
+
+    .connection {
+      fill: none;
+      stroke-width: 2;
+      opacity: 0.4;
+      transition: all 0.3s;
+    }
+
+    .connection.active {
+      opacity: 1;
+      stroke-width: 3;
+      filter: drop-shadow(0 0 6px currentColor);
+    }
+
+    .connection.routes { stroke: var(--blue); }
+    .connection.invokes { stroke: var(--cyan); stroke-dasharray: 8, 4; }
+    .connection.memory { stroke: var(--pink); stroke-dasharray: 4, 4; }
+
+    .progress {
+      position: absolute;
+      top: 24px;
+      left: 24px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .progress-bar {
+      width: 120px;
+      height: 6px;
+      background: var(--bg-tertiary);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--blue), var(--cyan));
+      border-radius: 3px;
+      transition: width 0.5s;
+    }
+
+    .progress-text {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .progress-text span {
+      color: var(--blue);
+      font-weight: 600;
+    }
+
+    /* Speed control */
+    .speed-control {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .speed-control label {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .speed-control input[type="range"] {
+      width: 100%;
+      height: 4px;
+      background: var(--bg-tertiary);
+      border-radius: 2px;
+      -webkit-appearance: none;
+    }
+
+    .speed-control input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      background: var(--blue);
+      border-radius: 50%;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">
+      <div>
+        <div class="logo-text">CC10x</div>
+        <div class="header-subtitle">AI Agent Orchestration</div>
+      </div>
+      <div class="workflow-badge">REVIEW WORKFLOW</div>
+    </div>
+    <div class="controls">
+      <button class="btn btn-secondary" id="reset-btn">Reset</button>
+      <button class="btn btn-primary" id="play-btn">
+        <span id="play-icon">▶</span>
+        <span id="play-text">Play Animation</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="sidebar">
+      <div class="section">
+        <div class="section-title">Review Dimensions</div>
+        <div class="dimensions-grid" id="dimensions">
+          <div class="dimension-card" data-dim="security">
+            <div class="icon">🔒</div>
+            <div class="name">Security</div>
+            <div class="desc">OWASP Top 10</div>
+          </div>
+          <div class="dimension-card" data-dim="quality">
+            <div class="icon">✨</div>
+            <div class="name">Quality</div>
+            <div class="desc">Code Smells</div>
+          </div>
+          <div class="dimension-card" data-dim="performance">
+            <div class="icon">⚡</div>
+            <div class="name">Performance</div>
+            <div class="desc">O(n), Memory</div>
+          </div>
+          <div class="dimension-card" data-dim="accessibility">
+            <div class="icon">♿</div>
+            <div class="name">Accessibility</div>
+            <div class="desc">WCAG 2.1 AA</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Confidence Threshold</div>
+        <div class="confidence-meter">
+          <div class="confidence-bar">
+            <div class="confidence-fill" id="confidence-fill" style="width: 0%"></div>
+          </div>
+          <div class="confidence-labels">
+            <span>0%</span>
+            <span>50%</span>
+            <span>100%</span>
+          </div>
+          <div class="confidence-value" id="confidence-value">0%</div>
+          <div class="confidence-threshold">
+            Only report issues with confidence <span>≥80%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Agent Chain</div>
+        <div class="chain-preview">
+          <div class="chain-step" data-step="0">
+            <span class="icon">1</span>
+            <span>router</span>
+          </div>
+          <div class="chain-step" data-step="1">
+            <span class="icon">2</span>
+            <span>code-reviewer</span>
+          </div>
+          <div class="chain-step" data-step="2">
+            <span class="icon">3</span>
+            <span>Memory Update</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Animation Speed</div>
+        <div class="speed-control">
+          <label>Slow</label>
+          <input type="range" id="speed" min="0.5" max="3" step="0.5" value="1">
+          <label>Fast</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="canvas">
+      <svg id="canvas" viewBox="0 0 900 600">
+        <defs>
+          <marker id="arrow-blue" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#3b82f6"/>
+          </marker>
+          <marker id="arrow-cyan" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#22d3ee"/>
+          </marker>
+          <marker id="arrow-pink" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#ec4899"/>
+          </marker>
+
+          <linearGradient id="grad-router" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#3b82f6"/>
+            <stop offset="100%" style="stop-color:#22d3ee"/>
+          </linearGradient>
+          <linearGradient id="grad-review" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#3b82f6"/>
+            <stop offset="100%" style="stop-color:#6366f1"/>
+          </linearGradient>
+          <linearGradient id="grad-reviewer" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#3b82f6"/>
+            <stop offset="100%" style="stop-color:#22d3ee"/>
+          </linearGradient>
+          <linearGradient id="grad-memory" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#ec4899"/>
+            <stop offset="100%" style="stop-color:#a855f7"/>
+          </linearGradient>
+        </defs>
+
+        <g id="connections"></g>
+        <g id="nodes"></g>
+      </svg>
+
+      <div class="progress">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+        </div>
+        <div class="progress-text">
+          Step <span id="current-step">0</span> of <span id="total-steps">6</span>
+        </div>
+      </div>
+
+      <div class="info-panel">
+        <div class="info-step">
+          <div class="info-step-number" id="info-number">0</div>
+          <div>
+            <div class="info-step-label">Current Step</div>
+            <div class="info-step-name" id="info-name">Ready to Start</div>
+          </div>
+        </div>
+        <div class="info-divider"></div>
+        <div class="info-content">
+          <div class="info-title" id="info-title">REVIEW Workflow</div>
+          <div class="info-desc" id="info-desc">
+            Multi-dimensional code audit. Only reports issues with ≥80% confidence to reduce false positives. Single agent workflow optimized for focused analysis.
+          </div>
+          <div class="info-tags" id="info-tags">
+            <span class="info-tag">≥80% Confidence</span>
+            <span class="info-tag">Multi-Dimensional</span>
+            <span class="info-tag">READ-ONLY</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const state = {
+      isPlaying: false,
+      currentStep: 0,
+      speed: 1,
+      visitedNodes: new Set(),
+      activeConnections: new Set()
+    };
+
+    const nodes = [
+      { id: 'router', label: 'CC10x Router', subtitle: 'Entry Point', x: 400, y: 60, w: 140, h: 50, gradient: 'grad-router' },
+      { id: 'review', label: 'REVIEW', subtitle: 'Workflow Selected', x: 400, y: 160, w: 100, h: 40, gradient: 'grad-review' },
+      { id: 'code-reviewer', label: 'code-reviewer', subtitle: 'Multi-Dimensional Analysis', x: 400, y: 270, w: 180, h: 60, gradient: 'grad-reviewer', mode: 'READ' },
+      { id: 'memory-update', label: 'Memory Update', subtitle: 'Review Summary Persisted', x: 400, y: 400, w: 160, h: 50, gradient: 'grad-memory' }
+    ];
+
+    const connections = [
+      { from: 'router', to: 'review', type: 'routes' },
+      { from: 'review', to: 'code-reviewer', type: 'invokes' },
+      { from: 'code-reviewer', to: 'memory-update', type: 'invokes' }
+    ];
+
+    const steps = [
+      {
+        node: 'router',
+        title: 'Review Request Detected',
+        desc: 'Keywords: "review", "audit", "check", "analyze", "assess", "what do you think". Single-agent workflow initiated.',
+        chainStep: 0, dims: [], confidence: 0
+      },
+      {
+        node: 'review',
+        title: 'REVIEW Workflow Selected',
+        desc: 'Simplest workflow - just code-reviewer. No parallel execution, no verification step. Focused analysis.',
+        chainStep: 0, dims: [], confidence: 0
+      },
+      {
+        node: 'code-reviewer',
+        title: 'Security Dimension',
+        desc: 'Analyzing for OWASP Top 10 vulnerabilities: SQL injection, XSS, CSRF, auth bypass, data exposure...',
+        chainStep: 1, dims: ['security'], confidence: 25
+      },
+      {
+        node: 'code-reviewer',
+        title: 'Quality Dimension',
+        desc: 'Checking code smells, complexity metrics, DRY violations, naming conventions, magic numbers...',
+        chainStep: 1, dims: ['security', 'quality'], confidence: 50
+      },
+      {
+        node: 'code-reviewer',
+        title: 'Performance Dimension',
+        desc: 'Analyzing time complexity O(n), memory usage, N+1 queries, unnecessary re-renders, bundle size...',
+        chainStep: 1, dims: ['security', 'quality', 'performance'], confidence: 75
+      },
+      {
+        node: 'code-reviewer',
+        title: 'Accessibility Dimension',
+        desc: 'Checking WCAG 2.1 AA compliance: semantic HTML, ARIA labels, keyboard navigation, color contrast...',
+        chainStep: 1, dims: ['security', 'quality', 'performance', 'accessibility'], confidence: 100
+      },
+      {
+        node: 'memory-update',
+        title: 'Review Complete',
+        desc: 'Review summary persisted to activeContext.md. Only issues with ≥80% confidence reported. Memory Notes saved.',
+        chainStep: 2, dims: ['security', 'quality', 'performance', 'accessibility'], confidence: 100
+      }
+    ];
+
+    const canvas = document.getElementById('canvas');
+    const nodesGroup = document.getElementById('nodes');
+    const connectionsGroup = document.getElementById('connections');
+
+    function getNode(id) {
+      return nodes.find(n => n.id === id);
+    }
+
+    function drawConnection(conn) {
+      const from = getNode(conn.from);
+      const to = getNode(conn.to);
+      const x1 = from.x + from.w / 2;
+      const y1 = from.y + from.h;
+      const x2 = to.x + to.w / 2;
+      const y2 = to.y;
+      const midY = (y1 + y2) / 2;
+
+      const pathEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      pathEl.setAttribute('d', `M ${x1} ${y1} C ${x1} ${midY}, ${x2} ${midY}, ${x2} ${y2}`);
+      pathEl.setAttribute('class', `connection ${conn.type}`);
+      pathEl.setAttribute('marker-end', `url(#arrow-${conn.type === 'routes' ? 'blue' : conn.type === 'invokes' ? 'cyan' : 'pink'})`);
+      pathEl.setAttribute('data-from', conn.from);
+      pathEl.setAttribute('data-to', conn.to);
+      return pathEl;
+    }
+
+    function drawNode(node) {
+      const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      g.setAttribute('class', 'node');
+      g.setAttribute('data-id', node.id);
+
+      const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      rect.setAttribute('x', node.x);
+      rect.setAttribute('y', node.y);
+      rect.setAttribute('width', node.w);
+      rect.setAttribute('height', node.h);
+      rect.setAttribute('rx', 10);
+      rect.setAttribute('fill', `url(#${node.gradient})`);
+
+      const title = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      title.setAttribute('x', node.x + node.w / 2);
+      title.setAttribute('y', node.y + (node.h > 50 ? 24 : 18));
+      title.setAttribute('text-anchor', 'middle');
+      title.setAttribute('class', 'node-title');
+      title.textContent = node.label;
+
+      const subtitle = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      subtitle.setAttribute('x', node.x + node.w / 2);
+      subtitle.setAttribute('y', node.y + (node.h > 50 ? 42 : 32));
+      subtitle.setAttribute('text-anchor', 'middle');
+      subtitle.setAttribute('class', 'node-subtitle');
+      subtitle.textContent = node.subtitle;
+
+      g.appendChild(rect);
+      g.appendChild(title);
+      g.appendChild(subtitle);
+
+      if (node.mode) {
+        const badgeRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        badgeRect.setAttribute('x', node.x + node.w - 40);
+        badgeRect.setAttribute('y', node.y + 5);
+        badgeRect.setAttribute('width', 35);
+        badgeRect.setAttribute('height', 14);
+        badgeRect.setAttribute('rx', 4);
+        badgeRect.setAttribute('fill', '#7c2d12');
+
+        const badgeText = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        badgeText.setAttribute('x', node.x + node.w - 22);
+        badgeText.setAttribute('y', node.y + 15);
+        badgeText.setAttribute('text-anchor', 'middle');
+        badgeText.setAttribute('class', 'node-badge');
+        badgeText.textContent = 'READ';
+
+        g.appendChild(badgeRect);
+        g.appendChild(badgeText);
+      }
+
+      return g;
+    }
+
+    function render() {
+      connectionsGroup.innerHTML = '';
+      nodesGroup.innerHTML = '';
+      connections.forEach(c => connectionsGroup.appendChild(drawConnection(c)));
+      nodes.forEach(n => nodesGroup.appendChild(drawNode(n)));
+      updateVisuals();
+    }
+
+    function updateVisuals() {
+      document.querySelectorAll('.node').forEach(n => {
+        const id = n.getAttribute('data-id');
+        n.classList.remove('highlighted', 'completed');
+        if (state.visitedNodes.has(id)) n.classList.add('completed');
+      });
+
+      if (state.currentStep < steps.length) {
+        const curr = document.querySelector(`.node[data-id="${steps[state.currentStep].node}"]`);
+        if (curr) {
+          curr.classList.remove('completed');
+          curr.classList.add('highlighted');
+        }
+      }
+
+      document.querySelectorAll('.connection').forEach(c => {
+        c.classList.remove('active');
+        if (state.activeConnections.has(`${c.getAttribute('data-from')}-${c.getAttribute('data-to')}`)) {
+          c.classList.add('active');
+        }
+      });
+
+      const step = steps[state.currentStep];
+
+      // Update chain
+      document.querySelectorAll('.chain-step').forEach(s => {
+        const cs = parseInt(s.dataset.step);
+        s.classList.remove('active', 'completed');
+        if (step && cs < step.chainStep) s.classList.add('completed');
+        else if (step && cs === step.chainStep) s.classList.add('active');
+      });
+
+      // Update dimensions
+      document.querySelectorAll('.dimension-card').forEach(d => d.classList.remove('active'));
+      if (step) step.dims.forEach(dim => {
+        const el = document.querySelector(`.dimension-card[data-dim="${dim}"]`);
+        if (el) el.classList.add('active');
+      });
+
+      // Update confidence
+      if (step) {
+        document.getElementById('confidence-fill').style.width = `${step.confidence}%`;
+        document.getElementById('confidence-value').textContent = `${step.confidence}%`;
+      }
+
+      // Update progress
+      const progress = (state.currentStep / (steps.length - 1)) * 100;
+      document.getElementById('progress-fill').style.width = `${progress}%`;
+      document.getElementById('current-step').textContent = state.currentStep + 1;
+      document.getElementById('total-steps').textContent = steps.length;
+
+      // Update info
+      if (step) {
+        document.getElementById('info-number').textContent = state.currentStep + 1;
+        document.getElementById('info-name').textContent = step.node;
+        document.getElementById('info-title').textContent = step.title;
+        document.getElementById('info-desc').textContent = step.desc;
+      }
+    }
+
+    function advanceStep() {
+      if (!state.isPlaying || state.currentStep >= steps.length - 1) {
+        stopAnimation();
+        return;
+      }
+
+      const step = steps[state.currentStep];
+      state.visitedNodes.add(step.node);
+      connections.filter(c => c.from === step.node || c.to === step.node).forEach(c => {
+        state.activeConnections.add(`${c.from}-${c.to}`);
+      });
+
+      state.currentStep++;
+      updateVisuals();
+      setTimeout(advanceStep, 2000 / state.speed);
+    }
+
+    function startAnimation() {
+      state.isPlaying = true;
+      document.getElementById('play-btn').classList.add('playing');
+      document.getElementById('play-icon').textContent = '⏸';
+      document.getElementById('play-text').textContent = 'Pause';
+      advanceStep();
+    }
+
+    function stopAnimation() {
+      state.isPlaying = false;
+      document.getElementById('play-btn').classList.remove('playing');
+      document.getElementById('play-icon').textContent = '▶';
+      document.getElementById('play-text').textContent = 'Play Animation';
+    }
+
+    function resetAnimation() {
+      stopAnimation();
+      state.currentStep = 0;
+      state.visitedNodes.clear();
+      state.activeConnections.clear();
+      updateVisuals();
+    }
+
+    document.getElementById('play-btn').addEventListener('click', () => {
+      if (state.isPlaying) stopAnimation();
+      else {
+        if (state.currentStep >= steps.length - 1) resetAnimation();
+        startAnimation();
+      }
+    });
+
+    document.getElementById('reset-btn').addEventListener('click', resetAnimation);
+    document.getElementById('speed').addEventListener('input', e => state.speed = parseFloat(e.target.value));
+
+    document.addEventListener('keydown', e => {
+      if (e.code === 'Space') { e.preventDefault(); document.getElementById('play-btn').click(); }
+      else if (e.code === 'KeyR') resetAnimation();
+    });
+
+    render();
+  </script>
+</body>
+</html>
