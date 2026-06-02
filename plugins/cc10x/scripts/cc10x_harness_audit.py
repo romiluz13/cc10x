@@ -878,11 +878,16 @@ def main() -> int:
     # to one location, hooks read from another, and guards silently stop firing.
     # Scope the scan to runtime Python so historical CHANGELOG entries stay accurate.
     # This audit file itself is excluded because it has to name the legacy literal
-    # in order to detect drift.
+    # in order to detect drift. cc10x_context_migration.py is excluded because it
+    # must reference the legacy path as the source location to migrate FROM.
     runtime_scripts = sorted(
         p
         for p in (PLUGIN_ROOT / "scripts").glob("*.py")
-        if p.name not in {"__init__.py", "cc10x_harness_audit.py"}
+        if p.name not in {
+            "__init__.py",
+            "cc10x_harness_audit.py",
+            "cc10x_context_migration.py",
+        }
     )
     for script in runtime_scripts:
         body = read(script)
