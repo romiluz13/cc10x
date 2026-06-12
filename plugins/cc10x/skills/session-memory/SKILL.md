@@ -44,9 +44,12 @@ If memory is narrated instead of distilled, it bloats context and loses signal.
 
 ## Load-Bearing Boundaries
 
-- Memory lives under `.cc10x/v10/`.
+- Memory lives under `.cc10x/v10/` with two active namespaces:
+  - `project/` — long-lived cross-workflow state; always loaded at workflow start.
+  - `workflows/{wf-id}/` — per-workflow isolated state; loaded on resume when `workflow_uuid` is known.
+  - Root-flat `.cc10x/v10/*.md` — backward-compatibility fallback; used when no `workflow_uuid` is available.
 - The router loads and auto-heals memory files before routing or resume.
-- WRITE agents read memory, but do **not** edit `.cc10x/v10/*.md` directly.
+- WRITE agents read memory, but do **not** edit memory markdown files directly.
 - WRITE agents emit structured `MEMORY_NOTES` in their Router Contract.
 - READ-ONLY agents emit `### Memory Notes (For Workflow-Final Persistence)`.
 - The router-owned memory-finalize task is the only final writer of memory markdown files.
@@ -60,15 +63,27 @@ If memory is narrated instead of distilled, it bloats context and loses signal.
 
 ## Memory Surfaces
 
-Use the right layer for the right kind of information:
+Memory is organized in three tiers. Use the right tier for the right kind of information:
 
-- `activeContext.md`: current focus, recent changes, decisions, learnings, references,
-  blockers
-- `patterns.md`: reusable project standards, gotchas, conventions, and skill hints
-- `progress.md`: current workflow, tasks snapshot, completed items, verification evidence
-- `docs/plans/*` and `docs/research/*`: the detailed artifacts; memory points to them
-- `.cc10x/v10/workflows/{wf}.json` and `.events.jsonl`: the durable orchestration
-  truth
+**project/** (`project/activeContext.md`, `project/patterns.md`, `project/progress.md`):
+- Architecture decisions, domain patterns, ongoing blockers that span all workflows.
+- Durable reusable conventions and skill hints.
+- Cross-workflow completion history.
+- Write here when context should survive to the next Claude Code session indefinitely.
+
+**workflows/{wf-id}/** (`workflows/{wf}/activeContext.md`, etc.):
+- Current focus, recent changes, decisions, and learnings for THIS workflow only.
+- Task snapshot and verification evidence for this build/debug/review/plan run.
+- Non-blocking follow-ups that are relevant only to this workflow.
+- Isolated per-session; does not pollute parallel workflows on the same repo.
+
+**Root-flat fallback** (`.cc10x/v10/activeContext.md`, etc.):
+- Used when `workflow_uuid` is not yet available (first router turn before UUID generation).
+- Backward-compatible layer; populated automatically on first SessionStart.
+
+**External artifacts:**
+- `docs/plans/*` and `docs/research/*`: detailed artifacts; memory points to them.
+- `.cc10x/v10/workflows/{wf}.json` and `.events.jsonl`: the durable orchestration truth.
 
 Read `references/memory-model-and-ownership.md` if you need the full ownership model or the
 promotion ladder.
@@ -102,13 +117,28 @@ without re-reading the whole conversation, the memory is under-distilled.
 
 ### Always Load
 
-At workflow start, continuation, or resume, read all three memory files:
+At workflow start, continuation, or resume, load in this order:
 
 ```text
+# Tier 1 — always (long-lived project state)
+.cc10x/v10/project/activeContext.md
+.cc10x/v10/project/patterns.md
+.cc10x/v10/project/progress.md
+
+# Tier 2 — when workflow_uuid is known (per-workflow isolated state)
+.cc10x/v10/workflows/{workflow_uuid}/activeContext.md
+.cc10x/v10/workflows/{workflow_uuid}/patterns.md
+.cc10x/v10/workflows/{workflow_uuid}/progress.md
+
+# Fallback — when project/ is empty or workflow_uuid is not yet available
 .cc10x/v10/activeContext.md
 .cc10x/v10/patterns.md
 .cc10x/v10/progress.md
 ```
+
+Merge rule: workflow-scoped values override project-scoped for current-focus fields
+(`## Current Focus`, `## Next Steps`, `## Tasks`) only. Durable fields
+(`## Decisions`, `## User Standards`, `## Architecture Patterns`) always come from `project/`.
 
 ### Re-Read Before These Actions
 
@@ -237,7 +267,7 @@ Stop and correct course if you catch yourself:
 - making decisions without checking `## Decisions` or project patterns
 - writing long diary-style memory notes
 - claiming you will "remember later"
-- editing `.cc10x/v10/*.md` directly from a write agent
+- editing `.cc10x/v10/*.md`, `project/*.md`, or `workflows/{wf}/*.md` directly from a write agent
 - inventing new headings, markers, or memory file shapes
 - treating stale conversation context as better than durable memory
 
