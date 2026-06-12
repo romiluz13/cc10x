@@ -7,11 +7,30 @@ from cc10x_hooklib import (
     load_mode,
     log_event,
     pretool_deny,
+    project_state_dir,
     state_root,
+    workflows_dir,
 )
 
 
 PROTECTED_MEMORY_FILES = ("activeContext.md", "patterns.md", "progress.md")
+
+
+def _protected_memory_paths() -> set:
+    """Return all active memory locations that should be write-guarded."""
+    paths = {state_root() / name for name in PROTECTED_MEMORY_FILES}
+    try:
+        paths |= {project_state_dir() / name for name in PROTECTED_MEMORY_FILES}
+    except Exception:
+        pass
+    try:
+        wf_dir = workflows_dir()
+        for name in PROTECTED_MEMORY_FILES:
+            for candidate in wf_dir.glob(f"*/{name}"):
+                paths.add(candidate.resolve())
+    except Exception:
+        pass
+    return paths
 
 
 def main() -> int:
@@ -25,7 +44,7 @@ def main() -> int:
     path = Path(file_path).resolve()
     violations = []
 
-    protected_memory = {state_root() / name for name in PROTECTED_MEMORY_FILES}
+    protected_memory = _protected_memory_paths()
 
     if path in protected_memory:
         violations.append("memory-write")

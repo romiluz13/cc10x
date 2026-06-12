@@ -40,6 +40,20 @@ def workflows_dir() -> Path:
     return path
 
 
+def project_state_dir() -> Path:
+    """Long-lived cross-workflow state: .cc10x/v10/project/"""
+    path = state_root() / "project"
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def workflow_state_dir(workflow_id: str) -> Path:
+    """Per-workflow isolated state: .cc10x/v10/workflows/<wf-id>/"""
+    path = workflows_dir() / workflow_id
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
 def logs_dir() -> Path:
     path = state_root()
     path.mkdir(parents=True, exist_ok=True)

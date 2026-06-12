@@ -139,6 +139,29 @@ def _current_version_number() -> int:
     return 0
 
 
+def _migrate_flat_to_project(target_root: Path) -> int:
+    """One-time: copy root-flat memory files into project/ if not yet done.
+
+    This is an intra-v10 migration for repos that existed before the
+    project/ namespace was introduced. It copies (not moves) so that the
+    root-flat fallback remains intact for backward compatibility.
+    """
+    marker = target_root / ".project-namespace-migrated"
+    if marker.exists():
+        return 0
+    project_path = target_root / "project"
+    project_path.mkdir(exist_ok=True)
+    count = 0
+    for name in ("activeContext.md", "patterns.md", "progress.md"):
+        src = target_root / name
+        dst = project_path / name
+        if src.exists() and not dst.exists():
+            shutil.copy2(src, dst)
+            count += 1
+    marker.write_text(now_iso(), encoding="utf-8")
+    return count
+
+
 def _discover_sources(cc10x_base: Path) -> List[Dict[str, Any]]:
     """Find all migration sources ordered oldest-first."""
     sources: List[Dict[str, Any]] = []
@@ -148,12 +171,15 @@ def _discover_sources(cc10x_base: Path) -> List[Dict[str, Any]]:
     if (cc10x_base / "activeContext.md").exists():
         sources.append({"label": "legacy", "path": cc10x_base, "sort_key": -1})
 
-    # Versioned directories
+    # Versioned directories (skip namespace subdirs introduced in v10.2)
+    _NAMESPACE_DIRS = {"project", "workflows"}
     if cc10x_base.is_dir():
         for child in sorted(cc10x_base.iterdir()):
             if not child.is_dir():
                 continue
             name = child.name
+            if name in _NAMESPACE_DIRS:
+                continue  # skip project/ and workflows/ — not migration sources
             if not (name.startswith("v") and name[1:].isdigit()):
                 continue
             ver_num = int(name[1:])
@@ -273,10 +299,26 @@ def main() -> int:
     _ = data  # consumed for hook contract compliance
 
     target_root = state_root()
+
+    # Intra-v10 migration: promote root-flat files into project/ namespace
+    promoted = _migrate_flat_to_project(target_root)
+    if promoted > 0:
+        log_event(
+            "context_migration",
+            {
+                "source": "flat-root",
+                "target": f"{STATE_VERSION}/project",
+                "files_merged": ["activeContext.md", "patterns.md", "progress.md"],
+                "bullets_added": 0,
+                "decision": "copy",
+                "reason": "project_namespace_init",
+            },
+        )
+
     cc10x_base = project_dir() / ".claude" / "cc10x"
 
     if not cc10x_base.exists():
-        return 0  # fresh install, nothing to migrate
+        return 0  # fresh install, nothing to migrate from legacy path
 
     sources = _discover_sources(cc10x_base)
     if not sources:

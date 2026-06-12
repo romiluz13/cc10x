@@ -34,18 +34,30 @@ Rules:
 
 ## 2. Memory Load And Template Validation
 
-Always run this before routing or resuming:
+Always run this before routing or resuming. Memory is organized in two tiers:
+- **project/** — long-lived cross-workflow state (architecture decisions, durable patterns, ongoing blockers). Always load first.
+- **workflows/{wf-id}/** — per-workflow isolated state (current focus, active phase, in-flight tasks). Load only when a `workflow_uuid` is already known (resume path).
 
 ```text
-1. Bash("mkdir -p .cc10x/v10")
-2. Read(".cc10x/v10/activeContext.md")
-3. Read(".cc10x/v10/patterns.md")
-4. Read(".cc10x/v10/progress.md")
+1. Bash("mkdir -p .cc10x/v10/project")
+2. Read(".cc10x/v10/project/activeContext.md")
+3. Read(".cc10x/v10/project/patterns.md")
+4. Read(".cc10x/v10/project/progress.md")
+5. If workflow_uuid is known (resume path):
+   a. Bash("mkdir -p .cc10x/v10/workflows/{workflow_uuid}")
+   b. Read(".cc10x/v10/workflows/{workflow_uuid}/activeContext.md")
+   c. Read(".cc10x/v10/workflows/{workflow_uuid}/patterns.md")
+   d. Read(".cc10x/v10/workflows/{workflow_uuid}/progress.md")
+   Merge: workflow-scoped values override project-scoped for current-focus
+   fields (## Current Focus, ## Next Steps, ## Tasks) only.
+6. Fallback: If project/ files are missing or empty, also read the root-flat
+   files (.cc10x/v10/activeContext.md etc.) and merge content into project/
+   before proceeding. Root-flat files are the backward-compat layer.
 ```
 
 Do not parallelize step 1 with reads.
 
-If a memory file is missing:
+If a project/ memory file is missing:
 - Create it using the `cc10x:session-memory` template.
 - Read it before continuing.
 
@@ -225,7 +237,16 @@ Write(
 )
 ```
 
-Only create child tasks after the v10 artifact exists.
+4. Immediately after artifact creation, initialize the per-workflow state directory:
+
+```text
+Bash("mkdir -p .cc10x/v10/workflows/{workflow_uuid}")
+```
+
+This directory is where the memory-finalize task will write workflow-scoped
+memory (activeContext.md, patterns.md, progress.md for this workflow only).
+
+Only create child tasks after the v10 artifact and state directory exist.
 
 ### BUILD task graph
 
@@ -568,17 +589,30 @@ Before invoking `integration-verifier` in BUILD:
 
 The memory task executes inline only. Never spawn it as a sub-agent.
 
-The memory task:
-- Reads the workflow artifact plus its own description payload, not conversation history.
-- Persists learnings to:
-  - `activeContext.md ## Learnings`
-  - `patterns.md ## Common Gotchas`
-  - `progress.md ## Verification`
-- Writes deferred items as `[Deferred]: ...` under `patterns.md ## Common Gotchas`.
-- Replaces `progress.md ## Tasks` with the active workflow snapshot.
-- Keeps only the most recent 10 items in `progress.md ## Completed`.
-- Removes the matching `[cc10x-internal] memory_task_id` line from `activeContext.md ## References`.
+Memory is written to two tiers. Route each `MEMORY_NOTES` field as follows:
+
+| MEMORY_NOTES field | Write destination | Rationale |
+|--------------------|-------------------|-----------|
+| `learnings` | `workflows/{workflow_uuid}/activeContext.md ## Learnings` | Workflow-specific causal insights |
+| `patterns` | `project/patterns.md ## Common Gotchas` | Durable conventions that apply to all future workflows |
+| `verification` | `workflows/{workflow_uuid}/progress.md ## Verification` | Proof evidence scoped to this build/debug/review run |
+| `deferred` | `workflows/{workflow_uuid}/activeContext.md` as `[Deferred]: ...` | Non-blocking follow-ups scoped to this workflow |
+
+Cross-workflow promotion rule: If a `learnings` item is a project-wide constraint
+(not specific to the current task), also copy it to `project/activeContext.md ## Learnings`.
+Use judgment: workflow-local observations stay in `workflows/{wf}/`; durable project
+truths belong in `project/`.
+
+The memory task also:
+- Replaces `workflows/{workflow_uuid}/progress.md ## Tasks` with the active workflow snapshot.
+- Keeps only the most recent 10 items in `workflows/{workflow_uuid}/progress.md ## Completed`.
+- Updates `project/progress.md ## Completed` with a one-line summary of the finished workflow.
+- Removes the matching `[cc10x-internal] memory_task_id` line from `project/activeContext.md ## References`.
 - If any artifact or memory write fails, stop immediately. Never advance the workflow after a failed persistence write.
+
+Fallback: If `workflow_uuid` is unavailable, write to root-flat files
+(`.cc10x/v10/activeContext.md`, `.cc10x/v10/patterns.md`, `.cc10x/v10/progress.md`)
+as in prior versions.
 
 For PLAN:
 - Ensure `- Plan: {plan_file}` remains correct in `activeContext.md ## References`.
