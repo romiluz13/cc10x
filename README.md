@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <strong>1 router</strong> &nbsp;·&nbsp; <strong>10 specialist agents</strong> &nbsp;·&nbsp; <strong>14 skills</strong> &nbsp;·&nbsp; <strong>4 workflows</strong>
+  <strong>1 router</strong> &nbsp;·&nbsp; <strong>10 specialist agents</strong> &nbsp;·&nbsp; <strong>19 skills</strong> &nbsp;·&nbsp; <strong>4 workflows</strong>
 </p>
 
 <p align="center">
@@ -435,9 +435,9 @@ WORKFLOW STATE (.cc10x/workflows/)
 
 ---
 
-## The 14 Skills
+## The 19 Skills
 
-Skills are **loaded automatically by agents**. You never invoke them directly. (The `update` maintenance meta-skill is excluded from this count.)
+Skills are **loaded automatically by agents**. You never invoke them directly.
 
 | Skill | Used By | Purpose |
 |-------|---------|---------|
@@ -454,7 +454,14 @@ Skills are **loaded automatically by agents**. You never invoke them directly. (
 | **plan-review-gate** | planner | Final plan sanity gate before handoff |
 | **diff-driven-docs** | doc-syncer | Doc impact classification + audit-doc format |
 | **research** | planner, bug-investigator (via github-researcher agent) | Synthesis-only: guides agents on how to interpret research results; GitHub execution is handled by the `github-researcher` agent |
+| **prototyping** | planner, builder | Throwaway spike to answer ONE design question, then delete-or-absorb |
+| **finding-duplicate-functions** | code-reviewer | Semantic-duplicate audit for LLM-grown codebases |
+| **mcp-cli** | researchers | On-demand MCP server use without permanent context pollution |
+| **skill-eval-harness** | maintainers | Prove a router rule/gate triggers and holds under pressure |
+| **authoring-cc10x-guidance** | maintainers | Match the form of guidance (recipe vs prohibition) to the failure |
 | **cc10x-router** | ENTRY POINT | Routes to correct workflow |
+
+> The `update` maintenance meta-skill ships alongside these and is counted in the 19.
 
 ---
 
