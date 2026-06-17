@@ -97,6 +97,7 @@ reason:{short reason or N/A}
 
 Rules:
 - `wf:` is mandatory on every child task.
+- `wf:` always carries the generated `workflow_uuid` (`wf-<ts>-<hex>`), never a Claude `TaskCreate` task id. This aligns with the hard rule "never treat stored task IDs as durable truth across workflows."
 - Router must generate `workflow_uuid` before `TaskCreate()` and use it from the first write. `wf:PENDING_SELF` is not used.
 - `kind:` is mandatory and drives resume, routing, and counting logic.
 - `origin:` is mandatory on every `kind:remfix` task.
@@ -323,7 +324,7 @@ Optional sections:
 ### Deterministic skill hints
 
 - Router is the only authority allowed to load internal CC10X skills.
-- Agents may not self-activate `frontend-patterns`, `architecture-patterns`, or `debugging-patterns`.
+- Agents may not self-activate `frontend-patterns` or `architecture-patterns`.
 - Include `cc10x:frontend-patterns` only when the request, changed files, plan, or design clearly targets UI/frontend work.
 - Include `cc10x:architecture-patterns` only for multi-component, API, schema, auth, or integration-heavy work.
 - Include `cc10x:research` only when planner or investigator receives `## Research Files`.
@@ -587,7 +588,7 @@ For PLAN:
 - If a plan exists, set `activeContext.md ## Next Steps` to `1. Execute plan: {plan_file}` unless the workflow ended in clarification-needed state.
 
 For DEBUG:
-- Preserve the latest `[DEBUG-RESET: wf:{workflow_task_id}]` section in `## Recent Changes` and summarize the final result beneath it.
+- Preserve the latest `[DEBUG-RESET: wf:{workflow_uuid}]` section in `## Recent Changes` and summarize the final result beneath it.
 
 ## 14. Hard Rules
 

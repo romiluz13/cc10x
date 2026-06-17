@@ -36,6 +36,15 @@
       "then": "The audit completes without parse errors",
       "command": "python3 plugins/cc10x/scripts/cc10x_latency_audit.py --fixtures",
       "expected": "Latency audit exits 0"
+    },
+    {
+      "name": "Doc consistency check passes",
+      "mode": "proof",
+      "given": "The README counts and version strings should match disk and plugin.json",
+      "when": "The harness runs the doc consistency check",
+      "then": "Agent/skill counts and every version string are in sync",
+      "command": "python3 plugins/cc10x/scripts/cc10x_doc_consistency_check.py",
+      "expected": "Doc consistency check exits 0"
     }
   ]
 }

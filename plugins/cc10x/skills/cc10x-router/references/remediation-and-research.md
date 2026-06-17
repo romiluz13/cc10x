@@ -5,7 +5,7 @@
 Every remediation task description must include:
 
 ```text
-wf:{workflow_task_id}
+wf:{workflow_uuid}
 kind:remfix
 origin:{originating agent}
 phase:{phase}
@@ -17,7 +17,7 @@ reason:{short remediation reason}
 ### Circuit breaker
 
 Before creating a new remediation task:
-- Count tasks whose descriptions contain both `wf:{workflow_task_id}` and `kind:remfix`.
+- Count tasks whose descriptions contain both `wf:{workflow_uuid}` and `kind:remfix`.
 - If count >= 3, ask the user how to proceed before creating another one.
 
 ### Rule matrix
@@ -48,7 +48,7 @@ The router is authoritative for BUILD remediation scope.
   - hunter summary line `High issues: [count]`
   - or a `### Findings` bullet clearly labeled `HIGH`
 - When `1a-SCOPE` fires:
-  1. write `[SCOPE-DECISION-PENDING: wf:{workflow_task_id} reason:{top remediation reason}]` into `activeContext.md ## Decisions`
+  1. write `[SCOPE-DECISION-PENDING: wf:{workflow_uuid} reason:{top remediation reason}]` into `activeContext.md ## Decisions`
   2. ask exactly: `Fix critical only (Recommended)` or `Fix all issues`
   3. do not create a REM-FIX until the next user reply resolves the scope
 - If no reliable HIGH count/signal can be extracted, default to normal rule `1a` without pretending scope selection happened.
@@ -129,7 +129,7 @@ When bug-investigator returns `STATUS=INVESTIGATING`:
 ```text
 TaskCreate({
   subject: "CC10X bug-investigator: Continue investigation",
-  description: "wf:{workflow_task_id}\nkind:agent\norigin:router\nphase:debug-investigate\nplan:N/A\nscope:N/A\nreason:{ROOT_CAUSE or 'Continue investigation'}\n\nContinue investigating using the prior root-cause hints and evidence.",
+  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:debug-investigate\nplan:N/A\nscope:N/A\nreason:{ROOT_CAUSE or 'Continue investigation'}\n\nContinue investigating using the prior root-cause hints and evidence.",
   activeForm: "Continuing investigation"
 })
 ```
@@ -211,7 +211,7 @@ When a `kind:remfix` task completes:
 ```text
 TaskCreate({
   subject: "CC10X code-reviewer: Re-review after REM-FIX",
-  description: "wf:{workflow_task_id}\nkind:agent\norigin:router\nphase:re-review\nplan:{plan_file or 'N/A'}\nscope:{scope from completed remfix}\nreason:{reason from completed remfix}\n\nRe-review the changes made by the completed remediation task.",
+  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:re-review\nplan:{plan_file or 'N/A'}\nscope:{scope from completed remfix}\nreason:{reason from completed remfix}\n\nRe-review the changes made by the completed remediation task.",
   activeForm: "Re-reviewing fix"
 }) -> rereview_task_id
 ```
@@ -221,7 +221,7 @@ TaskCreate({
 ```text
 TaskCreate({
   subject: "CC10X silent-failure-hunter: Re-hunt after REM-FIX",
-  description: "wf:{workflow_task_id}\nkind:agent\norigin:router\nphase:re-hunt\nplan:{plan_file or 'N/A'}\nscope:{scope from completed remfix}\nreason:{reason from completed remfix}\n\nIf scope=ALL_ISSUES: perform a FULL re-audit of CRITICAL and HIGH issue categories after remediation.\nIf scope=CRITICAL_ONLY: verify the CRITICAL issue was resolved and treat HIGH issues as deferred unless newly escalated.\n\nRe-scan for silent failures after remediation.",
+  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:re-hunt\nplan:{plan_file or 'N/A'}\nscope:{scope from completed remfix}\nreason:{reason from completed remfix}\n\nIf scope=ALL_ISSUES: perform a FULL re-audit of CRITICAL and HIGH issue categories after remediation.\nIf scope=CRITICAL_ONLY: verify the CRITICAL issue was resolved and treat HIGH issues as deferred unless newly escalated.\n\nRe-scan for silent failures after remediation.",
   activeForm: "Re-hunting failures"
 }) -> rehunt_task_id
 ```
@@ -231,7 +231,7 @@ TaskCreate({
 ```text
 TaskCreate({
   subject: "CC10X integration-verifier: Re-verify after REM-FIX",
-  description: "wf:{workflow_task_id}\nkind:reverify\norigin:router\nphase:re-verify\nplan:{plan_file or 'N/A'}\nscope:{scope from completed remfix}\nreason:{reason from completed remfix}\n\nRe-verify after remediation.",
+  description: "wf:{workflow_uuid}\nkind:reverify\norigin:router\nphase:re-verify\nplan:{plan_file or 'N/A'}\nscope:{scope from completed remfix}\nreason:{reason from completed remfix}\n\nRe-verify after remediation.",
   activeForm: "Re-verifying fix"
 }) -> reverify_task_id
 ```

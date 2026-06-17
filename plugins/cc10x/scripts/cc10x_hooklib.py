@@ -50,7 +50,10 @@ def load_input() -> Dict[str, Any]:
     raw = sys.stdin.read()
     if not raw.strip():
         return {}
-    return json.loads(raw)
+    try:
+        return json.loads(raw)
+    except (ValueError, TypeError):
+        return {}
 
 
 def load_mode() -> Dict[str, str]:

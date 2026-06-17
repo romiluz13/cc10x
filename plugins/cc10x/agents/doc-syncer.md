@@ -3,7 +3,7 @@ name: doc-syncer
 description: "Sync documentation to reflect the current diff — updates business, technical, and audit doc layers, then reports what changed."
 model: inherit
 color: cyan
-tools: Read, Edit, Write, Bash, Grep, Glob
+tools: Read, Edit, Write, Bash, Grep, Glob, TaskUpdate
 skills:
   - cc10x:diff-driven-docs
   - cc10x:verification-before-completion
