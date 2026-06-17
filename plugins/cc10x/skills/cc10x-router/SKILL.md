@@ -374,7 +374,11 @@ Optional sections:
 - Include `cc10x:frontend-patterns` only when the request, changed files, plan, or design clearly targets UI/frontend work.
 - Include `cc10x:architecture-patterns` only for multi-component, API, schema, auth, or integration-heavy work.
 - Include `cc10x:research` only when planner or investigator receives `## Research Files`.
+- Include `cc10x:prototyping` only on an explicit de-risk/spike intent ("spike", "try out", "what should this look like", "prototype", "throwaway") — never as the default for a real build. Absorbing a spike's answer is a fresh gated BUILD, not promotion.
+- Include `cc10x:finding-duplicate-functions` only when the code-reviewer is asked for a reuse/consolidation audit or the request explicitly targets semantic duplication.
+- Include `cc10x:mcp-cli` only when a researcher needs a one-off MCP capability that is not already mounted.
 - Include project/domain skills only from `patterns.md ## Project SKILL_HINTS`.
+- `skill-eval-harness` and `authoring-cc10x-guidance` are maintainer-time meta-skills (loaded when authoring/changing cc10x itself), not routed into normal build/debug/review/plan workflows.
 - Skill precedence is strict:
   1. explicit user prompt
   2. project `CLAUDE.md` / repo standards / user standards
