@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import sys
 from pathlib import Path
 
 from cc10x_hooklib import (
@@ -60,6 +61,7 @@ def main() -> int:
     if not reasons:
         return 0
 
+    decision = mode.get("artifactIntegrity", "audit")
     log_event(
         "plugin_posttooluse_artifact_guard",
         {
@@ -74,10 +76,29 @@ def main() -> int:
             "tool_name": data.get("tool_name"),
             "path": str(path),
             "event": "posttool_artifact_guard",
-            "decision": mode.get("artifactIntegrity", "audit"),
+            "decision": decision,
             "reason": ";".join(reasons),
         },
     )
+
+    # Close the loop in block mode: a corrupt or key-missing artifact (the cases
+    # that silently break resume/verifier handoff) must surface to the model, not
+    # just the log. Exit code 2 is the PostToolUse blocking signal Claude Code
+    # shows back to the model. Only hard-corruption reasons block; the soft
+    # reasons (missing-event-log, stale write) stay audit-only to avoid false stops.
+    blocking_reasons = [
+        r for r in reasons if r.startswith("artifact-json:") or r.startswith("missing-keys:")
+    ]
+    if decision == "block" and blocking_reasons:
+        print(
+            "CC10X artifact integrity guard: the workflow artifact "
+            f"{artifact_path.name} is invalid ({';'.join(blocking_reasons)}). "
+            "Rewrite it from references/workflow-artifact.skeleton.json before "
+            "creating child tasks.",
+            file=sys.stderr,
+        )
+        return 2
+
     return 0
 
 

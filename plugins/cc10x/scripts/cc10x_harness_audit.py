@@ -16,6 +16,7 @@ ROUTER_DEBUG_REFERENCE = ROUTER_REFERENCES_DIR / "debug-workflow.md"
 ROUTER_REVIEW_REFERENCE = ROUTER_REFERENCES_DIR / "review-workflow.md"
 ROUTER_PLAN_REFERENCE = ROUTER_REFERENCES_DIR / "plan-workflow.md"
 ROUTER_REMEDIATION_REFERENCE = ROUTER_REFERENCES_DIR / "remediation-and-research.md"
+ROUTER_ARTIFACT_SKELETON = ROUTER_REFERENCES_DIR / "workflow-artifact.skeleton.json"
 README = ROOT / "README.md"
 CHANGELOG = ROOT / "CHANGELOG.md"
 PLUGIN_JSON = PLUGIN_ROOT / ".claude-plugin" / "plugin.json"
@@ -234,6 +235,7 @@ def main() -> int:
     router_review_reference = read(ROUTER_REVIEW_REFERENCE)
     router_plan_reference = read(ROUTER_PLAN_REFERENCE)
     router_remediation_reference = read(ROUTER_REMEDIATION_REFERENCE)
+    router_artifact_skeleton = read(ROUTER_ARTIFACT_SKELETON)
     router_surface = "\n\n".join(
         [
             router,
@@ -243,6 +245,7 @@ def main() -> int:
             router_review_reference,
             router_plan_reference,
             router_remediation_reference,
+            router_artifact_skeleton,
         ]
     )
     task_completed_guard = read(TASK_COMPLETED_GUARD)
@@ -387,7 +390,7 @@ def main() -> int:
         errors.append("missing session-memory context-budget reference")
 
     for required in ("brightdata", "octocode"):
-        if required not in router:
+        if required not in router_surface:
             errors.append(f"router no longer mentions MCP server '{required}'")
         if required not in readme:
             errors.append(

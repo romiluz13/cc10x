@@ -1,0 +1,122 @@
+{
+  "workflow_uuid": "__WORKFLOW_UUID__",
+  "workflow_id": "__WORKFLOW_UUID__",
+  "workflow_type": "__WORKFLOW_TYPE__",
+  "state_root": ".cc10x",
+  "user_request": "__USER_REQUEST__",
+  "plan_file": null,
+  "design_file": null,
+  "research_files": [],
+  "approved_decisions": [],
+  "plan_mode": null,
+  "verification_rigor": "standard",
+  "proof_status": "gaps_found",
+  "traceability": {
+    "requirements": [],
+    "phases": [],
+    "verification": [],
+    "remediation": []
+  },
+  "intent": {
+    "goal": null,
+    "non_goals": [],
+    "constraints": [],
+    "acceptance_criteria": [],
+    "open_decisions": []
+  },
+  "normalized_phases": [],
+  "phase_cursor": null,
+  "capabilities": {
+    "brightdata_available": "unknown",
+    "octocode_available": "unknown",
+    "websearch_available": "unknown",
+    "webfetch_available": "unknown"
+  },
+  "research_rounds": [],
+  "research_backend_history": [],
+  "research_quality": {
+    "web": "none",
+    "github": "none",
+    "overall": "none"
+  },
+  "task_ids": {
+    "planner_create": null,
+    "planning_review_pass1": null,
+    "planner_replan": null,
+    "planning_review_pass2": null,
+    "memory_finalize": null
+  },
+  "phase_status": {},
+  "results": {
+    "builder": null,
+    "investigator": null,
+    "reviewer": null,
+    "hunter": null,
+    "verifier": null,
+    "planner": null,
+    "planning_reviewer": null,
+    "research": {
+      "web": null,
+      "github": null,
+      "synthesis": null
+    }
+  },
+  "evidence": {
+    "builder": [],
+    "investigator": [],
+    "reviewer": [],
+    "hunter": [],
+    "verifier": [],
+    "planning_reviewer": []
+  },
+  "telemetry": {
+    "task_metrics_available": "unknown",
+    "workflow_wall_clock_seconds": 0,
+    "agent_wall_clock_seconds": {
+      "builder": 0,
+      "investigator": 0,
+      "reviewer": 0,
+      "hunter": 0,
+      "verifier": 0,
+      "planner": 0
+    },
+    "loop_counts": {
+      "re_review": 0,
+      "re_hunt": 0,
+      "re_verify": 0
+    },
+    "verifier": {
+      "phase_exit_proof_runs": 0,
+      "extended_audit_runs": 0,
+      "workload_seconds": {
+        "tests": 0,
+        "build": 0,
+        "scan": 0,
+        "reconcile": 0,
+        "reasoning": 0
+      }
+    }
+  },
+  "quality": {
+    "confidence": null,
+    "evidence_complete": false,
+    "scenario_coverage": 0,
+    "research_quality": "none",
+    "convergence_state": "pending"
+  },
+  "planning_review_runs": 0,
+  "planning_review_findings": [],
+  "planning_review_status": "not_started",
+  "memory_notes": [],
+  "pending_gate": null,
+  "status_history": [
+    {
+      "event": "workflow_started",
+      "ts": "__ISO_TIMESTAMP__",
+      "phase": "__PHASE__"
+    }
+  ],
+  "remediation_history": [],
+  "created_at": "__ISO_TIMESTAMP__",
+  "updated_at": "__ISO_TIMESTAMP__"
+}

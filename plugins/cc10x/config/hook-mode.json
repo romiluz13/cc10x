@@ -1,5 +1,5 @@
 {
-  "artifactIntegrity": "audit",
+  "artifactIntegrity": "block",
   "protectedWrites": "audit",
   "memoryWrites": "audit",
   "taskMetadata": "audit",
