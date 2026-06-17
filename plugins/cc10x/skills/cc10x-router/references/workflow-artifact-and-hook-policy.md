@@ -44,7 +44,7 @@ Rules:
 - Router writes or updates the artifact after workflow creation, every agent completion, every remediation decision, every clarification answer, every phase completion, every blocking stop, and memory finalization.
 - Resume uses task metadata first, then workflow artifact, then memory markdown.
 - Verifier handoff and memory finalization read structured data from the workflow artifact, not transient conversation recovery.
-- The workflow UUID is generated independently of Claude task ids and is the canonical workflow identifier everywhere in v10.
+- The workflow UUID is generated independently of Claude task ids and is the canonical workflow identifier everywhere in the orchestration system.
 - `workflow_id` remains as a compatibility alias and must equal `workflow_uuid` in new artifacts.
 - `state_root` must equal `.cc10x`.
 - `phase_cursor` points at the only BUILD phase that may run next.
@@ -116,7 +116,7 @@ Rules:
 - `pending_gate` is required whenever BUILD/PLAN/DEBUG is waiting on user clarification, scope selection, or persistence repair.
 - `status_history` and `remediation_history` are append-only summaries of major router decisions.
 
-v10 router gates:
+Router gates:
 - `plan_trust_gate`
 - `phase_exit_gate`
 - `failure_stop_gate`

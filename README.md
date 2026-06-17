@@ -9,14 +9,14 @@
 </p>
 
 <p align="center">
-  <strong>1 router</strong> &nbsp;·&nbsp; <strong>9 specialist agents</strong> &nbsp;·&nbsp; <strong>13 skills</strong> &nbsp;·&nbsp; <strong>4 workflows</strong>
+  <strong>1 router</strong> &nbsp;·&nbsp; <strong>10 specialist agents</strong> &nbsp;·&nbsp; <strong>14 skills</strong> &nbsp;·&nbsp; <strong>4 workflows</strong>
 </p>
 
 <p align="center">
   Fail-closed gates &nbsp;·&nbsp; survives compaction &nbsp;·&nbsp; zero prompt spam &nbsp;·&nbsp; self-tested orchestration
 </p>
 
-**Current version:** 10.1.20
+**Current version:** 11.0.0
 
 ---
 
@@ -106,8 +106,8 @@ They provide:
 cc10x writes proof-of-work workflow state under:
 
 ```text
-.cc10x/v10/workflows/{wf}.json
-.cc10x/v10/workflows/{wf}.events.jsonl
+.cc10x/workflows/{wf}.json
+.cc10x/workflows/{wf}.events.jsonl
 ```
 
 These artifacts track:
@@ -278,7 +278,7 @@ IMPORTANT: NEVER use Edit, Write, or Bash (for code changes) without first invok
 "Write(.cc10x/*)"
 ```
 
-> **Why the Edit/Write permissions?** The live cc10x memory namespace is `.cc10x/v10/`. The permission examples use the parent `.cc10x/*` scope so the versioned namespace continues to work without re-prompting on every memory write.
+> **Why the Edit/Write permissions?** The live cc10x memory namespace is `.cc10x/`. The permission examples use the `.cc10x/*` scope so the namespace works without re-prompting on every memory write.
 
 ### Step 4: Set User Standards (Optional)
 
@@ -287,19 +287,19 @@ Ask the user:
 
 **If user provides standards**, write them to the project's memory:
 ```
-Bash(command="mkdir -p .cc10x/v10")
+Bash(command="mkdir -p .cc10x")
 # Check if patterns.md already exists (Read returns error = doesn't exist)
-Read(file_path=".cc10x/v10/patterns.md")
+Read(file_path=".cc10x/patterns.md")
 
 # If it DOESN'T exist — create with standards already populated:
-Write(file_path=".cc10x/v10/patterns.md", content="# Project Patterns\n<!-- CC10X MEMORY CONTRACT: Do not rename headings. Used as Edit anchors. -->\n\n## User Standards\n- {standard 1}\n- {standard 2}\n\n## Architecture Patterns\n\n## Code Conventions\n\n## Common Gotchas\n\n## Last Updated\n{date}")
+Write(file_path=".cc10x/patterns.md", content="# Project Patterns\n<!-- CC10X MEMORY CONTRACT: Do not rename headings. Used as Edit anchors. -->\n\n## User Standards\n- {standard 1}\n- {standard 2}\n\n## Architecture Patterns\n\n## Code Conventions\n\n## Common Gotchas\n\n## Last Updated\n{date}")
 
 # If it DOES exist — append under User Standards:
-Edit(file_path=".cc10x/v10/patterns.md",
+Edit(file_path=".cc10x/patterns.md",
      old_string="## User Standards",
      new_string="## User Standards\n- {standard 1}\n- {standard 2}")
 
-Read(file_path=".cc10x/v10/patterns.md")  # Verify
+Read(file_path=".cc10x/patterns.md")  # Verify
 ```
 
 **If user skips:** No action. The memory file will be created on first workflow run with an empty `## User Standards` section for them to fill in later.
@@ -406,19 +406,19 @@ USER REQUEST
      │
      └── PLAN ───► planner
 
-MEMORY (.cc10x/v10/)
+MEMORY (.cc10x/)
 ├── activeContext.md  ◄── Current focus, decisions, learnings
 ├── patterns.md       ◄── Project conventions, common gotchas
 └── progress.md       ◄── Completed work, remaining tasks
 
-WORKFLOW STATE (.cc10x/v10/workflows/)
+WORKFLOW STATE (.cc10x/workflows/)
 ├── {wf}.json         ◄── Durable workflow artifact
 └── {wf}.events.jsonl ◄── Append-only workflow event log
 ```
 
 ---
 
-## The 9 Agents
+## The 10 Agents
 
 | Agent | Purpose | Key Behavior |
 |-------|---------|--------------|
@@ -427,6 +427,7 @@ WORKFLOW STATE (.cc10x/v10/workflows/)
 | **code-reviewer** | Reviews code | Confidence ≥80%: No vague feedback |
 | **silent-failure-hunter** | Finds error gaps | Zero tolerance for empty catch blocks |
 | **integration-verifier** | E2E validation | Exit codes: PASS/FAIL with evidence |
+| **doc-syncer** | Diff-driven documentation sync | Classifies doc impact; SKIPPED/PARTIAL/COMPLETE/FAIL contract gating Memory Update; honors `DIFF_DRIVEN_DOCS: skip` |
 | **planner** | Creates plans | Saves to `docs/plans/` + updates memory |
 | **plan-gap-reviewer** | Fresh plan challenge pass | Read-only anti-anchoring review before final plan handoff |
 | **web-researcher** | Fetches web data via Bright Data + WebSearch | Saves findings to file |
@@ -434,9 +435,9 @@ WORKFLOW STATE (.cc10x/v10/workflows/)
 
 ---
 
-## The 13 Skills
+## The 14 Skills
 
-Skills are **loaded automatically by agents**. You never invoke them directly.
+Skills are **loaded automatically by agents**. You never invoke them directly. (The `update` maintenance meta-skill is excluded from this count.)
 
 | Skill | Used By | Purpose |
 |-------|---------|---------|
@@ -451,6 +452,7 @@ Skills are **loaded automatically by agents**. You never invoke them directly.
 | **frontend-patterns** | ALL agents | UX, accessibility, spec-aligned DESIGN.md authoring |
 | **brainstorming** | planner | Idea exploration |
 | **plan-review-gate** | planner | Final plan sanity gate before handoff |
+| **diff-driven-docs** | doc-syncer | Doc impact classification + audit-doc format |
 | **research** | planner, bug-investigator (via github-researcher agent) | Synthesis-only: guides agents on how to interpret research results; GitHub execution is handled by the `github-researcher` agent |
 | **cc10x-router** | ENTRY POINT | Routes to correct workflow |
 
@@ -461,7 +463,7 @@ Skills are **loaded automatically by agents**. You never invoke them directly.
 cc10x survives context compaction. This is critical for long sessions.
 
 ```
-.cc10x/v10/
+.cc10x/
 ├── activeContext.md   # What you're working on NOW
 │   - Current task
 │   - Active decisions (and WHY)
@@ -478,7 +480,7 @@ cc10x survives context compaction. This is critical for long sessions.
     - Blockers
 ```
 
-The live namespace is `.cc10x/v10/`. Two legacy residue locations are ignored by current router hydration if present: `.claude/cc10x/` (pre-10.1.20, before the workflow state moved out of `.claude/` to escape the harness sensitive-file gate — run `mv .claude/cc10x .cc10x` once to migrate), and root-level `.cc10x/*.md` and `.cc10x/workflows/*` under `v10/`'s parent (pre-10.1.0 residue from the unversioned namespace).
+The live namespace is `.cc10x/` (memory `.cc10x/*.md`, workflow state `.cc10x/workflows/*`). Two legacy residue locations are ignored by current router hydration if present: `.claude/cc10x/` (pre-10.1.20, before the workflow state moved out of `.claude/` to escape the harness sensitive-file gate) and the version-segmented `.cc10x/v10/` layout (v10.x, before the namespace was de-versioned in v11). cc10x does not migrate either; a fresh `.cc10x/` is created on first use.
 
 **Iron Law:** Every workflow loads memory at START and updates at END.
 
@@ -752,7 +754,7 @@ Add these two lines to `~/.claude/settings.json` under `permissions.allow`:
 "Write(.cc10x/*)"
 ```
 
-These permission examples cover the live `.cc10x/v10/` namespace.
+These permission examples cover the live `.cc10x/` namespace.
 
 Or run **"Set up cc10x for me"** again — the setup wizard adds them automatically.
 

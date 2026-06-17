@@ -1,5 +1,29 @@
 # Changelog
 
+## [11.0.0] - 2026-06-17
+
+### De-version the state namespace: `.cc10x/v10/` → `.cc10x/`
+
+The on-disk state namespace is no longer version-segmented. Workflow
+artifacts and memory files now live directly under `.cc10x/` (e.g.
+`.cc10x/workflows/{wf}.json`, `.cc10x/activeContext.md`). The version
+identifier lives **only** in `plugin.json` and on GitHub — never in the
+state path. The runtime chokepoint `cc10x_hooklib.state_root()` builds
+`.cc10x` directly; `STATE_VERSION` is retained purely as a telemetry
+bookkeeping label (`v11`), decoupled from the path.
+
+**Breaking / migration:** Fresh start — there is **no** automatic
+migration of existing `.cc10x/v10/` state. On upgrade, cc10x creates a
+clean `.cc10x/` namespace; any prior `.cc10x/v10/` tree is orphaned and
+ignored by router hydration. The `cc10x_context_migration.py` script and
+its SessionStart hook entry were removed (this also retired the last
+runtime reference to the legacy `.claude/cc10x` root).
+
+Every prompt surface, runtime hook, audit script, validator needle, and
+test fixture was de-versioned in lockstep. Docs and the version-sync
+cascade (README banner, marketplace metadata, doc version tags) updated
+to `v11.0.0`.
+
 ## [10.1.20] - 2026-05-06
 
 ### Escape the Claude Code sensitive-file gate

@@ -12,7 +12,7 @@ Random fixes waste time and create new bugs. Quick patches mask underlying issue
 
 **Core principle:** ALWAYS find root cause before attempting fixes. Symptom fixes are failure.
 
-This skill is advisory in v10. It deepens investigation quality. It does not authorize local-only patches, guesswork, or "fix the line that crashed" thinking.
+This skill is advisory. It deepens investigation quality. It does not authorize local-only patches, guesswork, or "fix the line that crashed" thinking.
 
 ## Reference Files
 

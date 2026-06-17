@@ -12,7 +12,7 @@ description: |
 
 # cc10x Router
 
-**Runtime contract only.** v10 restores trust-first orchestration: route intent, hydrate workflow state, write workflow artifacts, execute the task graph, validate agent output, and fail closed on ambiguity, skipped work, or missing persistence.
+**Runtime contract only.** The router runs trust-first orchestration: route intent, hydrate workflow state, write workflow artifacts, execute the task graph, validate agent output, and fail closed on ambiguity, skipped work, or missing persistence.
 
 ## 1. Intent Routing
 
@@ -66,7 +66,7 @@ JUST_GO:
 - If `AUTO_PROCEED: true`, set `JUST_GO=true`.
 - While `JUST_GO=true`, auto-default all non-REVERT AskUserQuestion gates to the recommended option and log the choice in `## Decisions`.
 
-v10 trust rule:
+Trust rule:
 - `JUST_GO` never overrides explicit user/project standards, open plan decisions, or failure-stop gates.
 - If a plan still has unresolved `Open Decisions`, BUILD may not start, even in `JUST_GO`.
 
@@ -97,7 +97,7 @@ reason:{short reason or N/A}
 
 Rules:
 - `wf:` is mandatory on every child task.
-- Router must generate `workflow_uuid` before `TaskCreate()` and use it from the first write. `wf:PENDING_SELF` is retired in v10.
+- Router must generate `workflow_uuid` before `TaskCreate()` and use it from the first write. `wf:PENDING_SELF` is not used.
 - `kind:` is mandatory and drives resume, routing, and counting logic.
 - `origin:` is mandatory on every `kind:remfix` task.
 - `plan:` is required on workflow, agent, reverify, and memory tasks.
@@ -212,7 +212,7 @@ TaskCreate({
 })
 ```
 
-3. Immediately write the v10 artifact and event log:
+3. Immediately write the workflow artifact and event log:
 
 ```text
 Write(
@@ -225,7 +225,7 @@ Write(
 )
 ```
 
-Only create child tasks after the v10 artifact exists.
+Only create child tasks after the workflow artifact exists.
 
 ### BUILD task graph
 

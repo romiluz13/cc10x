@@ -280,7 +280,7 @@ DELTA_RULES: tuple[DeltaRule, ...] = (
             ("workflow_uuid", "stable workflow identity independent of task ids"),
             ("phase_exit_gate", "sequential phase gating"),
             ("skill_precedence_gate", "explicit instruction precedence enforcement"),
-            (".cc10x/v10", "versioned v10 state root"),
+            (".cc10x", "unversioned .cc10x state root"),
         ),
     ),
     DeltaRule(
@@ -310,7 +310,7 @@ DELTA_RULES: tuple[DeltaRule, ...] = (
         (
             ("BLAST_RADIUS_SCAN", "blast-radius scan is mandatory"),
             ("Variant Coverage", "variant coverage is explicit"),
-            (".cc10x/v10", "debug memory reads are versioned"),
+            (".cc10x", "debug memory reads use the .cc10x namespace"),
         ),
     ),
     DeltaRule(
@@ -347,7 +347,7 @@ DELTA_RULES: tuple[DeltaRule, ...] = (
         "plugins/cc10x/agents/silent-failure-hunter.md",
         "hunter",
         (
-            (".cc10x/v10", "hunter reads only v10 memory state"),
+            (".cc10x", "hunter reads only .cc10x memory state"),
             (
                 "Do not self-load internal CC10X skills",
                 "hunter obeys router-owned internal skill precedence",
@@ -362,9 +362,9 @@ DELTA_RULES: tuple[DeltaRule, ...] = (
         "plugins/cc10x/scripts/cc10x_hooklib.py",
         "hooks",
         (
-            ('STATE_VERSION = "v10"', "hook state root is versioned"),
+            ('STATE_VERSION = "v11"', "hook release line is stamped, not pathed"),
             ("workflow_uuid", "hooks prefer stable workflow identity"),
-            ("state_root", "hook paths centralize v10 state"),
+            ("state_root", "hook paths centralize .cc10x state"),
         ),
     ),
     DeltaRule(
@@ -372,7 +372,7 @@ DELTA_RULES: tuple[DeltaRule, ...] = (
         "hooks",
         (
             ("state_root()", "memory protection is scoped to versioned state"),
-            ("v10 memory markdown write", "guard reason is explicit"),
+            ("memory markdown write", "guard reason is explicit"),
         ),
     ),
     DeltaRule(
@@ -381,14 +381,14 @@ DELTA_RULES: tuple[DeltaRule, ...] = (
         (
             ("workflow_uuid", "artifact guard expects stable ids"),
             ("phase_cursor", "artifact guard validates phase-aware state"),
-            ("state_root", "artifact guard validates v10 schema"),
+            ("state_root", "artifact guard validates state schema"),
         ),
     ),
     DeltaRule(
         "plugins/cc10x/scripts/cc10x_sessionstart_context.py",
         "hooks",
         (
-            ("CC10X v10 workflow context", "session context is version-aware"),
+            ("CC10X workflow context", "session context is workflow-aware"),
             ("phase_cursor", "resume context includes phase cursor"),
         ),
     ),
@@ -420,7 +420,7 @@ DELTA_RULES: tuple[DeltaRule, ...] = (
         "internal-skill",
         (
             (
-                "advisory in v10",
+                "advisory",
                 "frontend patterns are advisory instead of authoritative",
             ),
             (
@@ -434,7 +434,7 @@ DELTA_RULES: tuple[DeltaRule, ...] = (
         "internal-skill",
         (
             (
-                "advisory in v10",
+                "advisory",
                 "debugging patterns are advisory instead of authoritative",
             ),
             (
@@ -448,7 +448,7 @@ DELTA_RULES: tuple[DeltaRule, ...] = (
         "internal-skill",
         (
             (
-                "advisory in v10",
+                "advisory",
                 "architecture patterns are advisory instead of authoritative",
             ),
             (
@@ -462,8 +462,8 @@ DELTA_RULES: tuple[DeltaRule, ...] = (
         "docs",
         (
             (
-                "Agents use only the v10 state namespace",
-                "v10-only agent state usage is codified",
+                "Agents use only the .cc10x state namespace",
+                "agent state usage is codified to one namespace",
             ),
             (
                 "Verification is independent of upstream approval",
@@ -480,7 +480,7 @@ DELTA_RULES: tuple[DeltaRule, ...] = (
         "docs",
         (
             ("What 10.0 adds", "v10 contract is documented"),
-            (".cc10x/v10/workflows", "versioned state root is documented"),
+            (".cc10x/workflows", "state root is documented"),
             ("Stable workflow UUIDs", "stable identity is documented"),
         ),
     ),
@@ -666,7 +666,7 @@ def detect_harness_signals(repo: Path) -> dict[str, bool]:
         for x in ("workflows/", "artifacts", "run artifacts", "transcript capture")
     )
     hits["versioned_state"] = (
-        ".cc10x/v10" in blob or "state_root" in lower or "runs-dir" in lower
+        ".cc10x" in blob or "state_root" in lower or "runs-dir" in lower
     )
     hits["stable_workflow_identity"] = any(
         x in lower

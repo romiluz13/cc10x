@@ -394,17 +394,17 @@ def main() -> int:
                 f"README no longer documents optional MCP server '{required}'"
             )
 
-    if ".cc10x/v10/" not in readme:
-        errors.append("README does not document the live v10 memory namespace")
-    for stale in (
-        "live in `.cc10x/`",
-        "MEMORY (.cc10x/)",
-        "WORKFLOW STATE (.cc10x/workflows/)",
-        ".cc10x/\n├── activeContext.md",
-    ):
-        if stale in readme:
+    if ".cc10x/" not in readme:
+        errors.append("README does not document the live .cc10x memory namespace")
+    # The retired version-segmented namespace must not be presented as live.
+    # Historical/migration mentions (legacy, residue, relocated, de-versioned,
+    # or a version-history table row) are allowed.
+    _history_markers = ("legacy", "residue", "relocated", "de-version", "| **v")
+    for line in readme.splitlines():
+        if ".cc10x/v10/" in line and not any(m in line.lower() for m in _history_markers):
             errors.append(
-                f"README still contains stale root-level memory text: {stale}"
+                "README presents the retired .cc10x/v10/ namespace as live: "
+                f"{line.strip()[:80]}"
             )
 
     required_router_inline = [
@@ -432,7 +432,7 @@ def main() -> int:
         "## 10. Research Orchestration",
         "## 12. Chain Execution Loop",
         "## 13. Memory Finalization",
-        ".cc10x/v10/workflows",
+        ".cc10x/workflows",
         "workflow_uuid",
         "phase_cursor",
         "plan_mode",
@@ -555,8 +555,8 @@ def main() -> int:
                 f"session-memory skill missing required reference/text: {required}"
             )
 
-    if ".cc10x/v10/*" not in planner_agent:
-        errors.append("planner agent no longer documents the live v10 memory namespace")
+    if ".cc10x/*" not in planner_agent:
+        errors.append("planner agent no longer documents the live .cc10x memory namespace")
 
     if "### session-memory" not in prompt_surface_inventory:
         errors.append("prompt surface inventory missing session-memory entry")
@@ -584,8 +584,8 @@ def main() -> int:
         ("orchestration logic analysis", orchestration_logic),
         ("orchestration safety", orchestration_safety),
     ):
-        if ".cc10x/v10/workflows" not in body:
-            errors.append(f"{name} does not reference the v10 workflow namespace")
+        if ".cc10x/workflows" not in body:
+            errors.append(f"{name} does not reference the .cc10x workflow namespace")
 
     expected_router_fields = {
         "component-builder": [
@@ -699,7 +699,7 @@ def main() -> int:
         ],
         "plan-gap-reviewer": [
             "Freshness rule:",
-            "Do NOT load `.cc10x/v10/*.md`.",
+            "Do NOT load `.cc10x/*.md`.",
             "Return structured findings only.",
             "You do not own orchestration, plan approval, or plan edits.",
         ],
@@ -737,18 +737,18 @@ def main() -> int:
         errors.append("planning-patterns missing live verification reference link")
 
     forbidden_direct_memory_writes = (
-        'Edit(file_path=".cc10x/v10/activeContext.md"',
-        'Edit(file_path=".cc10x/v10/progress.md"',
-        'Edit(file_path=".cc10x/v10/patterns.md"',
+        'Edit(file_path=".cc10x/activeContext.md"',
+        'Edit(file_path=".cc10x/progress.md"',
+        'Edit(file_path=".cc10x/patterns.md"',
     )
     for forbidden in forbidden_direct_memory_writes:
         if forbidden in planning_patterns:
             errors.append(
-                "planning-patterns still contains direct v10 memory writes instead of router-owned MEMORY_NOTES"
+                "planning-patterns still contains direct memory writes instead of router-owned MEMORY_NOTES"
             )
         if forbidden in brainstorming:
             errors.append(
-                "brainstorming still contains direct v10 memory writes instead of router-owned handoff"
+                "brainstorming still contains direct memory writes instead of router-owned handoff"
             )
 
     for phrase in (

@@ -12,7 +12,7 @@ User interfaces exist to help users accomplish tasks. Every UI decision should m
 
 **Core principle:** Design for user success, not aesthetic preference.
 
-This skill is advisory in v10. Explicit user instructions, `CLAUDE.md`, repo standards, and approved plans override every suggestion here.
+This skill is advisory. Explicit user instructions, `CLAUDE.md`, repo standards, and approved plans override every suggestion here.
 
 ## Reference Files
 

@@ -43,7 +43,7 @@
 
 ### BUILD task graph
 
-BUILD is sequential in v10:
+BUILD is sequential:
 - one approved executable phase at a time
 - one builder run for the current phase only
 - review, hunt, and verify validate that phase before `phase_cursor` advances
