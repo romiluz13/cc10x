@@ -1,5 +1,10 @@
 ### BUILD preparation
 
+0. **Workspace isolation offer (optional, runs once per workflow, before any builder dispatch).**
+   - Skip entirely when `build_scope=trivial` (resolved in step 4) or when already inside a linked worktree. Record `worktree=existing` and continue.
+   - If a native worktree primitive is available (a tool named `EnterWorktree`, a `/worktree` command, or a `--worktree` flag), prefer it. In `JUST_GO` mode invoke it on the recommended default; otherwise offer one `AskUserQuestion`: `Isolate in a worktree (Recommended)` or `Work in current branch`. On accept, defer to the native primitive (it owns directory placement, branch creation, and cleanup) and record `worktree=native`.
+   - If NO native primitive exists, do NOT shell out to `git worktree add`. Skip silently and record `worktree=in_place`. cc10x never hard-requires git worktrees.
+   - Persist the chosen `worktree` mode in the workflow artifact; this drives the finishing step's cleanup ownership.
 1. Read `- Plan:` from `activeContext.md ## References`.
 2. If plan path is not `N/A`, `Read(...)` the plan file before creating tasks.
 3. Run `plan_trust_gate` before BUILD:
@@ -134,3 +139,31 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [doc_sync_task_id] })
 ### doc-syncer SKIPPED state
 
 If doc-syncer returns `STATUS: SKIPPED` (i.e., `IMPACT_LEVEL: none`), the router treats it as a passing state — equivalent to `COMPLETE` for workflow-advance purposes. The router must not block Memory Update when the SKIPPED contract is present and `SKIP_REASON` is non-empty. Advance to Memory Update immediately.
+
+### BUILD-DONE finishing (optional)
+
+Finishing is a router-owned, optional step that runs AFTER the final phase's `integration-verifier` returns `PASS` and Memory Update is otherwise ready — it does NOT add a child agent task or a contract-enforced phase. It is a single inline router gate, tagged `phase:build-finish` only if the router chooses to log it in the event stream. It exists to close the end-to-end gap vs. superpowers `finishing-a-development-branch` without forking that skill.
+
+**When it runs:**
+- Only when `build_scope=standard` AND the workflow actually produced committable changes. Skip for `build_scope=trivial` and skip when no files changed.
+- Only after the final phase verified `PASS`. Never offer finishing while any phase is `partial`, `blocked`, or has unresolved remediation — finishing presupposes green.
+- At most once per workflow, immediately before Memory Update. Finishing never blocks Memory Update: if the user defers, persist the choice and let Memory Update proceed.
+
+**How it runs (gated, never auto-destructive):**
+1. Confirm verification is green from the workflow artifact (`proof_status=passed`, final phase `completed`). Do not re-derive from prose.
+2. Detect environment: normal repo vs. linked worktree vs. detached HEAD (reuse the `worktree` mode recorded in BUILD preparation step 0). This selects the menu and the cleanup owner.
+3. Offer exactly one `AskUserQuestion` with safe-by-default options:
+   - `Keep the branch as-is (Recommended)` — default; no git mutation.
+   - `Merge to base branch locally`
+   - `Push and open a Pull Request`
+   - `Discard this work`
+   On detached HEAD, drop `Merge` and offer `Push as new branch + PR` instead.
+4. Execute ONLY the chosen option. Hard constraints:
+   - `Keep as-is`: no git command. Report the branch/worktree path. (This is the `JUST_GO` auto-default.)
+   - `Merge`: verify the merge result, then optionally clean up. Never delete a branch before its worktree is removed.
+   - `PR`: push + open PR; preserve the worktree (the user still needs it). Never force-push.
+   - `Discard`: require a typed `discard` confirmation before any `git branch -D` or worktree removal. JUST_GO must NOT auto-select discard.
+   - Worktree cleanup: only for `Merge`/`Discard`, and only when cc10x created the worktree. If `worktree=native`, defer cleanup to the native primitive (e.g. `ExitWorktree`); if `worktree=existing` or harness-owned, leave it in place — never remove a workspace cc10x did not create. If `worktree=in_place`, there is nothing to clean up.
+5. Persist the finishing decision into the workflow artifact (`results.finishing.choice`) and append a `build_finished` event to the event log. Then advance to Memory Update.
+
+**JUST_GO interaction:** the finishing gate auto-defaults to `Keep the branch as-is` and logs the choice in `## Decisions`. JUST_GO never auto-merges, auto-pushes, or auto-discards — those touch durable git state and the failure-stop / non-destructive rules outrank JUST_GO.
