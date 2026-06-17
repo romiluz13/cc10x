@@ -5,6 +5,20 @@
    - If a native worktree primitive is available (a tool named `EnterWorktree`, a `/worktree` command, or a `--worktree` flag), prefer it. In `JUST_GO` mode invoke it on the recommended default; otherwise offer one `AskUserQuestion`: `Isolate in a worktree (Recommended)` or `Work in current branch`. On accept, defer to the native primitive (it owns directory placement, branch creation, and cleanup) and record `worktree=native`.
    - If NO native primitive exists, do NOT shell out to `git worktree add`. Skip silently and record `worktree=in_place`. cc10x never hard-requires git worktrees.
    - Persist the chosen `worktree` mode in the workflow artifact; this drives the finishing step's cleanup ownership.
+0a. **Git pre-flight (READ-ONLY, runs once after entering the workspace, before any builder dispatch).**
+   - This is a read-only orientation pass — issue no git mutations here. Record results in the workflow artifact under `results.git_preflight`; the BUILD-DONE finishing menu reuses them.
+   - Compare `git rev-parse --git-dir` against `git rev-parse --git-common-dir`. If they DIFFER, this tree is already an isolated linked worktree → record `isolated=true` and skip the step-0 isolation offer (do not re-offer). If they are equal but `git rev-parse --show-superproject-working-tree` returns a path, this is a submodule, not a worktree → record `isolated=submodule` and treat as in-place.
+   - Read `git branch --show-current`. If it is EMPTY, the workspace is in detached HEAD → record `detached_head=true`. This flows to the finishing menu's reduced form (drop local-merge; note "branch needed before PR").
+   - If any git command fails or is blocked by the sandbox, do not error out. Record `git_preflight=degraded` and continue; downstream gates that depend on git degrade gracefully and still OUTPUT suggested branch/commit/PR text instead of executing it.
+0b. **Dependency install on a fresh workspace (runs once, before the rank-`0c` baseline run and before the first builder dispatch).**
+   - Only when step 0 produced an isolated workspace (`worktree=native` or `isolated=true`) whose dependencies are NOT yet installed. Skip silently for in-place work where deps already exist.
+   - Detect the stack from a manifest at the workspace root: `package.json` (node), `Cargo.toml` (rust), `requirements.txt` / `pyproject.toml` (python), `go.mod` (go). If NO manifest is present, skip silently and record `deps=no_manifest`.
+   - Run the matching install using the project's EXISTING runner — do not invent one. Prefer the lockfile-implied tool (`pnpm install` / `yarn install` / `npm ci` per the present lockfile; `cargo fetch`; `pip install -r requirements.txt` or the project's `pyproject` runner; `go mod download`). Record `deps=installed` (or `deps=install_failed` with the error) in the workflow artifact.
+   - Rationale: a tree with no installed deps makes the first TDD RED fail for a spurious reason (missing `node_modules`), burning a builder strike on noise rather than the change.
+0c. **Clean-baseline snapshot (runs once, AFTER dependency install, before the first builder dispatch).**
+   - Run the project's existing test suite ONCE against the untouched workspace and record the baseline into the workflow artifact under `results.baseline`: total test count `N`, and the explicit set of tests ALREADY failing (`baseline_failures`, captured by test id/name, not just a count).
+   - If the suite cannot run (no test command, or `git_preflight=degraded` blocks it), record `baseline=unavailable` with the reason and continue; downstream verification then falls back to treating ANY failure as suspect and says so explicitly.
+   - This baseline is the anchor against the false-attribution family: without it the verifier cannot separate a NEW failure from a PRE-EXISTING one. The `phase_exit_gate` / `integration-verifier` DIFFS post-build results against `baseline_failures` so that ONLY newly-introduced failures block the phase exit; baseline-failing tests that remain failing do not block (but are surfaced, not hidden).
 1. Read `- Plan:` from `activeContext.md ## References`.
 2. If plan path is not `N/A`, `Read(...)` the plan file before creating tasks.
 3. Run `plan_trust_gate` before BUILD:
@@ -136,6 +150,13 @@ TaskCreate({
 TaskUpdate({ taskId: memory_task_id, addBlockedBy: [doc_sync_task_id] })
 ```
 
+### Deferred Minor findings roll-up
+
+Minor findings that do not block a phase exit must not silently evaporate — that violates the "no finding silently discarded" rule. The workflow artifact carries a `deferred_findings` array for exactly this:
+- When `code-reviewer` or `silent-failure-hunter` raise a Minor finding that does NOT block the current `phase_exit_gate`, the router appends it to `deferred_findings` (each entry: `source` agent, `phase_id`, terse `finding`, and `severity:minor`) rather than dropping it. Blocking findings still gate the phase as before — this array is only for the non-blocking remainder.
+- The array accumulates across phases for the whole workflow. Nothing consumes it mid-flight; it is surfaced once at BUILD-DONE (see the finishing block's triage step) so the user can decide explicitly: fix now, file as follow-up, or knowingly accept. No automatic action is taken on a deferred finding.
+- In the reduced task graph (`build_scope=trivial`) there is no separate reviewer/hunter, so the verifier's folded review/edge-case pass appends any Minor leftovers to `deferred_findings` the same way.
+
 ### doc-syncer SKIPPED state
 
 If doc-syncer returns `STATUS: SKIPPED` (i.e., `IMPACT_LEVEL: none`), the router treats it as a passing state — equivalent to `COMPLETE` for workflow-advance purposes. The router must not block Memory Update when the SKIPPED contract is present and `SKIP_REASON` is non-empty. Advance to Memory Update immediately.
@@ -151,19 +172,31 @@ Finishing is a router-owned, optional step that runs AFTER the final phase's `in
 
 **How it runs (gated, never auto-destructive):**
 1. Confirm verification is green from the workflow artifact (`proof_status=passed`, final phase `completed`). Do not re-derive from prose.
-2. Detect environment: normal repo vs. linked worktree vs. detached HEAD (reuse the `worktree` mode recorded in BUILD preparation step 0). This selects the menu and the cleanup owner.
+1a. **Surface deferred Minor findings before the menu.** Read `deferred_findings` from the workflow artifact. If non-empty, present the accumulated list (source, phase, finding) for explicit triage BEFORE offering the finishing menu, so nothing rolls off silently. Let the user fix now, file as follow-up, or knowingly accept; record the disposition in the artifact. An empty array is fine — just note "no deferred findings" and continue. This is surfacing-and-triage only; the router takes no automatic action on these findings.
+2. Detect environment: normal repo vs. linked worktree vs. detached HEAD. Reuse the `worktree` mode recorded in BUILD preparation step 0 AND the read-only `results.git_preflight` recorded in step 0a (`isolated`, `detached_head`, degraded). Re-run a single read-only pre-flight here only if step 0a was skipped. This selects the menu and the cleanup owner. If `git_preflight=degraded` (sandbox blocks git), degrade gracefully: skip every git mutation and instead OUTPUT the suggested branch name, commit message, and PR title/body text for the user to run manually.
 3. Offer exactly one `AskUserQuestion` with safe-by-default options:
    - `Keep the branch as-is (Recommended)` — default; no git mutation.
    - `Merge to base branch locally`
    - `Push and open a Pull Request`
    - `Discard this work`
-   On detached HEAD, drop `Merge` and offer `Push as new branch + PR` instead.
+   On detached HEAD (`detached_head=true`), use the REDUCED menu: drop `Merge to base branch locally` entirely (there is no current branch to merge), offer `Push as new branch + PR` instead, and note "branch needed before PR" so the user creates a branch first.
 4. Execute ONLY the chosen option. Hard constraints:
    - `Keep as-is`: no git command. Report the branch/worktree path. (This is the `JUST_GO` auto-default.)
-   - `Merge`: verify the merge result, then optionally clean up. Never delete a branch before its worktree is removed.
+   - `Merge`: follow the **merge-then-cleanup ordering invariant** below — verify on the merged result before any teardown. Never delete a branch before its worktree is removed, and never remove/delete before merge+tests confirm.
    - `PR`: push + open PR; preserve the worktree (the user still needs it). Never force-push.
    - `Discard`: require a typed `discard` confirmation before any `git branch -D` or worktree removal. JUST_GO must NOT auto-select discard.
-   - Worktree cleanup: only for `Merge`/`Discard`, and only when cc10x created the worktree. If `worktree=native`, defer cleanup to the native primitive (e.g. `ExitWorktree`); if `worktree=existing` or harness-owned, leave it in place — never remove a workspace cc10x did not create. If `worktree=in_place`, there is nothing to clean up.
+   - Worktree cleanup: only for `Merge`/`Discard`, and only when cc10x created the worktree (see the **worktree cleanup provenance** rule below). If `worktree=native`, defer cleanup to the native primitive (`ExitWorktree`); if `worktree=existing` or harness-owned, leave it in place — never remove a workspace cc10x did not create. If `worktree=in_place`, there is nothing to clean up.
 5. Persist the finishing decision into the workflow artifact (`results.finishing.choice`) and append a `build_finished` event to the event log. Then advance to Memory Update.
+
+**Merge-then-cleanup ordering invariant (`Merge to base branch locally`):**
+Execute these steps STRICTLY in order; do not reorder, and do not start teardown until the post-merge gate is green. A branch that was clean before merge can break after merging onto a moved base — that is exactly what the post-merge re-run catches.
+1. `git checkout <base>` (the branch the work targets).
+2. `git pull` to bring the base up to date.
+3. `git merge <work-branch>` (no force).
+4. **Post-merge verification gate:** RE-RUN the project's test suite ON THE MERGED RESULT. Diff against `results.baseline` (BUILD preparation step 0c) so only NEWLY-introduced failures count. If the merge introduces any new failure → STOP. Do NOT remove the worktree, do NOT delete the branch. Report the breakage and leave everything in place for the user to resolve.
+5. ONLY on a green post-merge run: tear down the worktree per the provenance rule (native `ExitWorktree` when `worktree=native`) — REMOVE THE WORKTREE FIRST.
+6. THEN delete the now-merged branch. Never delete the branch before its worktree is removed; never remove/delete anything before steps 4 confirms green.
+
+**Worktree cleanup provenance:** cc10x defers worktree CREATE to the native `EnterWorktree` primitive; teardown is symmetric. NEVER shell out to `git worktree remove`. Tear down ONLY worktrees cc10x itself created (`worktree=native`), and route ALL teardown through the native exit tool (`ExitWorktree`). Leave harness-owned or pre-existing workspaces (`worktree=existing`, `isolated=true` from step 0a but not created by cc10x) to the harness's own exit tool — removing a harness-created worktree leaves phantom state the harness can no longer see or reconcile.
 
 **JUST_GO interaction:** the finishing gate auto-defaults to `Keep the branch as-is` and logs the choice in `## Decisions`. JUST_GO never auto-merges, auto-pushes, or auto-discards — those touch durable git state and the failure-stop / non-destructive rules outrank JUST_GO.

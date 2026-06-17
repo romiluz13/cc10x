@@ -141,6 +141,50 @@ If integration-verifier emits `FAIL` and the findings contain `REVERT`:
 - `Revert` -> record the decision in memory and stop.
 - `Create fix task instead` -> continue with normal remediation creation.
 
+### Verify-before-implement (bidirectional remediation)
+
+A reviewer/hunter/verifier finding is an input to be checked, not an order to blindly apply. The REM-FIX agent must restate each finding and confirm it against codebase reality before changing code.
+
+For every finding in the dispatch, the fix agent first:
+1. Restates the finding in one line (what is allegedly wrong, where).
+2. Reads the cited code and confirms the defect actually exists as described.
+3. Only then applies the fix.
+
+A finding the fix agent believes is wrong may take the `FINDING_DISPUTED` path instead of being applied:
+- A dispute is valid ONLY if it carries a concrete `VERIFY_COMMAND` whose output PROVES the finding false (a passing test, a grep showing the alleged-missing guard already present, a type-check refuting the claim).
+- A dispute with no proving command is invalid. Treat it as unverified and apply the finding.
+- The dispute is adjudicated by the INDEPENDENT VERIFIER (integration-verifier), never by the reviewer/hunter who raised it. The verifier re-runs the `VERIFY_COMMAND` and rules `DISPUTE_UPHELD` or `DISPUTE_REJECTED`. On `DISPUTE_REJECTED`, the original finding stands and the fix agent must apply it.
+- [EASY TO MISS: this is evidence-gated and must NOT become a rationalization escape hatch. "The fix agent decided the finding was wrong" is not a dispute. Only a reproducible command that contradicts the finding is. Prose disagreement, "looks fine to me", or "the plan said so" are never grounds to dispute — they fall through to apply.]
+
+REM-FIX report carries, per disputed finding:
+
+```text
+FINDING_DISPUTED: {finding id or one-line restatement}
+VERIFY_COMMAND: {exact command}
+VERIFY_OUTPUT: {output proving the finding false}
+ADJUDICATOR: integration-verifier
+```
+
+### Fix-wave consolidation
+
+Do NOT fire one REM-FIX agent per finding. Batch ALL findings from a single review pass into ONE REM-FIX dispatch carrying the implementer contract.
+
+- One review pass -> one REM-FIX task -> counts as ONE cycle against the circuit breaker, not N.
+- Per-finding dispatch is wasteful: each agent rebuilds context and re-runs the suite, and each inflates the `kind:remfix` count toward the count >= 3 circuit-breaker gate, tripping it on a single review's worth of work.
+- The single dispatch lists every finding (each subject to verify-before-implement above); the fix agent works them as a batch and runs the covering tests once at the end.
+- Findings from a LATER, distinct review pass form a new wave and a new cycle. Consolidation is within one pass, never across passes.
+
+### Plan-mandated-finding adjudication carve-out
+
+The `skill_precedence_gate` (plan > domain skills) must NOT be misread as "auto-dismiss any reviewer finding the plan mandated". A wrong plan cannot launder defects past the gates by claiming precedence.
+
+- Normal precedence still applies when a finding merely prefers a different approach than the plan chose.
+- CARVE-OUT: when a finding DIRECTLY CONTRADICTS an explicit plan mandate (e.g. the plan mandated a test and the finding is that the test asserts nothing, or the plan mandated a guard the finding shows is unsafe), the router does NOT silently apply precedence.
+- Instead the router surfaces a which-governs `AskUserQuestion` that places the finding text BESIDE the plan mandate text so the user can see the contradiction directly:
+  - option A: `Plan governs` (finding is dismissed, record why)
+  - option B: `Finding governs` (plan mandate is overridden, REM-FIX applies the finding)
+- The reviewer must STILL report the finding regardless of plan precedence. Precedence governs what the router does with a finding, never whether the reviewer is allowed to raise it.
+
 ## 10. Research Orchestration
 
 Research runs only when triggered by:
@@ -201,6 +245,13 @@ GitHub: {github_file or 'Unavailable'}
 
 8. Include `cc10x:research` in `## SKILL_HINTS` only when at least one research file exists.
 
+Do not misread a tool/fallback message as a hard blocker (the "you ARE the provider" anti-pattern):
+
+- When an MCP accelerator (octocode, brightdata) returns a missing-capability, degraded, or fallback message, that is a signal to route around the backend — NOT a reason to abort the round to BLOCKED.
+- Before treating any such message as a blocker, the researcher must first ask: is the orchestrating model ITSELF the capability being requested? Tasks like summarizing, classifying, reasoning over fetched text, or comparing approaches are things the model does directly. A backend reporting it "cannot summarize" or "has no model for this" is irrelevant — the model is the provider; do the work and continue.
+- [EASY TO MISS: a backend saying "capability X unavailable" describes the BACKEND, not the workflow. Map it to the next available path (accelerated -> WebSearch/WebFetch -> the model's own analysis) per the capability model above. Never abort to BLOCKED while a built-in fallback path still exists.]
+- Only escalate to BLOCKED when EVERY path is genuinely exhausted: the accelerator failed, the built-in tools failed or are unavailable, AND the model cannot supply the capability itself. Record the exhausted paths in `research_backend_history` so the next round does not re-discover the same fallback.
+
 ## 11. Re-Review Loop
 
 When a `kind:remfix` task completes:
@@ -242,3 +293,18 @@ TaskCreate({
    - `telemetry.loop_counts.re_review += 1`
    - `telemetry.loop_counts.re_hunt += 1` in BUILD
    - `telemetry.loop_counts.re_verify += 1`
+
+### Re-review precondition gate
+
+The reviewer/hunter/verifier is NEVER re-dispatched on an unverified fix. Before step 2 above creates any re-review/re-hunt/re-verify task, the completed REM-FIX report MUST contain proof the fix was exercised:
+
+```text
+COVERING_TESTS: {test file names that cover the fixed behavior}
+TEST_COMMAND: {exact command run}
+TEST_OUTPUT: {its output}
+```
+
+- Name only the COVERING tests — the files that exercise the changed behavior — not the whole suite. "Ran all tests, green" is not sufficient; the report must point at the tests that would fail if this fix were wrong.
+- If `COVERING_TESTS`, `TEST_COMMAND`, and `TEST_OUTPUT` are missing or empty, the gate fails closed: do NOT create the re-review task. Send the REM-FIX back (or block the task) until the proof is supplied.
+- A `FINDING_DISPUTED` entry satisfies this gate for that finding via its `VERIFY_COMMAND`/`VERIFY_OUTPUT` pair (adjudicated by integration-verifier per Section 9), since the dispute itself carries the proving evidence.
+- This precondition is independent of the cycle-cap gate in step 1; both must pass before re-dispatch.

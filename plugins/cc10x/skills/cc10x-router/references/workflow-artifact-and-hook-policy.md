@@ -173,6 +173,59 @@ Hook policy:
 - Repo-local `.claude/settings.json` is not part of the shipped CC10X product.
 - Optional accelerator MCPs are user-configured in Claude Code. CC10X assumes the names `brightdata` and `octocode` if they are available, but must degrade to built-in research paths when they are absent.
 
+## Dispatch-Prompt Construction Rules
+
+The router forbids verdict-softeners in agent OUTPUT. The same fail-closed bar applies to agent INPUT: a biased dispatch prompt is a verification defect equal to a softened verdict. The router must not pre-judge or soften the prompts it constructs for read-only agents.
+
+Applies when the router builds a prompt for any read-only agent:
+- `code-reviewer`
+- `integration-verifier`
+- `silent-failure-hunter`
+- `plan-gap-reviewer`
+- `bug-investigator` (read/diagnose phase)
+
+The dispatch prompt MUST NOT:
+- Pre-judge findings or state a conclusion the agent is expected to confirm.
+- Pre-rate severity or cap it (no "at most Minor", no "treat as low risk").
+- Name what NOT to flag, or scope the agent away from a region the author assumes is fine.
+- Tell the agent the plan or author already decided something is acceptable.
+- Re-ask the implementer to re-run tests it already evidenced. Pass the evidence path instead (the `.cc10x/` artifact or `results.evidence` reference), and let the agent confirm against that proof.
+
+The dispatch prompt MUST:
+- State the surface to inspect (paths, diff package, phase scope) and the contract to return, neutrally.
+- Let the agent assign its own severity and form its own verdict from primary evidence.
+
+SELF-CHECK BLOCKLIST — before dispatch, the router greps its own drafted prompt for these literal phrases:
+- `do not flag`
+- `don't worry about`
+- `at most minor`
+- `the plan chose`
+- `already verified, just`
+- `should be fine`
+- `no need to check`
+
+If any blocklist phrase appears in the drafted prompt, the prompt is biased. Rewrite it to remove the bias before dispatching. Fail closed: do not dispatch a prompt that pre-judges, pre-rates, or scopes away findings.
+
+## Dispatch Context Hygiene
+
+The router's context is the orchestration bottleneck. Pasting full briefs, plan bodies, or prior agent outputs inline bloats the router context and corrupts resume-after-compaction (a single dispatch has been observed at ~42k chars, ~99% pasted history). Dispatch by reference, not by blob.
+
+Rules:
+- Dispatch prompts pass PATHS, never pasted file bodies:
+  - workflow artifact path (`.cc10x/workflows/{workflow_uuid}.json`)
+  - `plan_file`
+  - `design_file`
+  - `research_files`
+  - diff-package path
+- Sub-agents write their full evidence and report to a `.cc10x/` artifact (under the workflow `state_root`), not into the returned message.
+- Sub-agents RETURN only a thin CONTRACT envelope:
+  - `status`
+  - commits / files touched
+  - one-line test summary
+  - refs to concerns/findings artifacts (paths, not bodies)
+- The router reads artifact paths on demand and never inlines large file content into the next dispatch prompt. The next agent receives the path and reads it itself.
+- This reuses the existing artifact schema and `.cc10x/` workflow namespace: `state_root` is `.cc10x`, evidence is grouped under `evidence` and `results`, and handoff reads structured data from the workflow artifact, not from pasted conversation history.
+
 ## 8. Post-Agent Validation Contracts {#contracts}
 
 This section is consulted at post-agent validation time only, not at routing time. The router kernel (`SKILL.md` §8) points here before validating any write-agent contract.
