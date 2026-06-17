@@ -198,7 +198,7 @@ Use during Stage 2 Quality Review. Check only categories relevant to the changed
 
 **Aggregation rule:**
 1. If ANY HARD signal = 0 → STATUS: CHANGES_REQUESTED (non-negotiable)
-2. CONFIDENCE = min(HARD scores), reduced by max 10 if SOFT signals are low
+2. The exact CONFIDENCE formula and severity vocabulary are owned by the code-reviewer agent contract — do not restate the math here (a second copy drifts). Apply the agent's `CONFIDENCE = min(HARD scores) capped by avg(SOFT scores) - 10`, with a single HARD:0 forcing CONFIDENCE:0.
 3. Include per-signal breakdown in Router Handoff for targeted remediation
 
 ### Zero-Finding Halt

@@ -58,4 +58,34 @@ That closes the exact window that previously allowed compaction to land between 
 
 ---
 
+## FLAW-002: No complexity gradient — trivial work paid the full chain
+
+**Discovered:** 2026-06-17 (v11 revitalization audit) · **Fixed:** v11.0.0
+
+Retiring the QUICK path conflated "everything routes through the router" (kept) with "everything pays the full 6-task / 4-subagent chain" (the defect). A one-line edit triggered builder → reviewer + hunter → verifier → doc-sync → memory. The "Trivial" classifier only suppressed a clarifying question, never the task graph.
+
+**Fix:** BUILD task graph branches on `build_scope` (`references/build-workflow.md`). Trivial scope runs a reduced builder → verifier → memory graph and escalates to the full chain on any `SCOPE_INCREASES`/`BLOCKED_ITEMS`. Router remains the sole entry point. DEBUG's Variant scenario became conditional (`VARIANTS_NOT_APPLICABLE`) to stop fabrication pressure on no-variant bugs.
+
+## FLAW-003: Durable artifact was hand-typed escaped JSON
+
+**Discovered:** 2026-06-17 · **Fixed:** v11.0.0
+
+The router hand-emitted a 2,341-char escaped-JSON artifact — exactly the task LLMs fail at — and the PostToolUse guard that detected corruption only logged it (audit mode), so the model never saw the failure.
+
+**Fix:** ship `references/workflow-artifact.skeleton.json`; router copies it and edits only the live fields, then reads it back before any child task. The artifact guard now blocks (exit 2) on parse-error/missing-keys with `artifactIntegrity: block`.
+
+## FLAW-004: doc-syncer read the legacy memory path + lacked TaskUpdate
+
+**Discovered:** 2026-06-17 · **Fixed:** v11.0.0
+
+doc-syncer read `.claude/cc10x/v10/` (a path nothing else wrote to) and was told to call `TaskUpdate` without the tool granted — risking a hung BUILD finalization.
+
+**Fix:** path corrected to `.cc10x/` (and de-versioned project-wide in v11); `TaskUpdate` added to its frontmatter.
+
+## v11.0.0 — state de-versioned to `.cc10x/`
+
+The on-disk state namespace dropped its version segment (`.cc10x/v10/` → `.cc10x/`); the version lives only in `plugin.json`/GitHub. Fresh-start, no migration. The `cc10x_context_migration.py` script was removed. A `cc10x_doc_consistency_check.py` self-test now fails CI if README counts/versions drift from disk.
+
+---
+
 *Add new flaws below as they are discovered.*
