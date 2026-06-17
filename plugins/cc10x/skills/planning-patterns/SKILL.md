@@ -1,6 +1,6 @@
 ---
 name: planning-patterns
-description: "Internal skill. Use cc10x-router for all development tasks."
+description: "Internal cc10x skill, loaded by the planner. Use when producing a comprehensive implementation plan with phases, exit criteria, risks, and verifiable acceptance scenarios."
 allowed-tools: Read Grep Glob LSP
 user-invocable: false
 ---

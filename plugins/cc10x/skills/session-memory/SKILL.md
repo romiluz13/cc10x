@@ -1,6 +1,6 @@
 ---
 name: session-memory
-description: "Internal skill. Use cc10x-router for all development tasks."
+description: "Internal cc10x skill, loaded by WRITE agents and the router. Use when reading or persisting durable workflow state and memory under .cc10x/ (activeContext, patterns, progress) so context survives compaction."
 allowed-tools: Read Write Edit Bash
 user-invocable: false
 ---

@@ -1,6 +1,6 @@
 ---
 name: architecture-patterns
-description: "Internal skill. Use cc10x-router for all development tasks."
+description: "Internal cc10x skill, injected by the router via SKILL_HINTS for multi-component, API, schema, auth, or integration-heavy work. Frames system and API design tradeoffs; advisory, never overrides user/repo/plan."
 allowed-tools: Read Grep Glob LSP
 user-invocable: false
 ---

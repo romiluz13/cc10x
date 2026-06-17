@@ -1,6 +1,6 @@
 ---
 name: code-review-patterns
-description: "Internal skill. Use cc10x-router for all development tasks."
+description: "Internal cc10x skill, loaded by the code-reviewer and silent-failure-hunter. Use when reviewing a diff for correctness, security, performance, and maintainability with evidence-backed, confidence-scored findings."
 allowed-tools: Read Grep Glob LSP
 user-invocable: false
 ---

@@ -1,6 +1,6 @@
 ---
 name: test-driven-development
-description: "Internal skill. Use cc10x-router for all development tasks."
+description: "Internal cc10x skill, loaded by the router for the builder and bug-investigator. Use when writing production code or fixing a bug where a failing test must precede implementation (RED → GREEN → REFACTOR)."
 allowed-tools: Read Grep Glob Bash Write Edit
 user-invocable: false
 ---

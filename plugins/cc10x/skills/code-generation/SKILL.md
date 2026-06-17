@@ -1,6 +1,6 @@
 ---
 name: code-generation
-description: "Internal skill. Use cc10x-router for all development tasks."
+description: "Internal cc10x skill, loaded by the component-builder. Use when writing minimal production code that matches existing project patterns and conventions rather than introducing new abstractions."
 allowed-tools: Read Grep Glob Write Edit LSP
 user-invocable: false
 ---

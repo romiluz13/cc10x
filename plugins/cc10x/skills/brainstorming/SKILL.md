@@ -1,6 +1,6 @@
 ---
 name: brainstorming
-description: "Internal skill. Use cc10x-router for all development tasks."
+description: "Internal cc10x skill, loaded by the planner in the PLAN workflow. Use when exploring intent, requirements, and design options before a plan is written, emitting a machine-readable design handoff."
 allowed-tools: Read Grep Glob AskUserQuestion Write Edit Bash
 user-invocable: false
 ---
