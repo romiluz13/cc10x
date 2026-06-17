@@ -18,7 +18,5 @@ Dispatch a subagent with the eval's `prompt` field as the full task. The agent s
 
 | File | Scenario | Key pressure |
 |------|----------|-------------|
-| `eval-01-small-diff-skip-temptation.md` | One-line rename, agent wants to skip docs | "diff is tiny" rationalization |
+| `eval-01-small-diff-skip-temptation.md` | One-line utility change, agent wants to skip docs | "diff is tiny / JSDoc inline" rationalization |
 | `eval-02-new-exported-function.md` | New service method exported, no UI change | "no user impact" rationalization |
-| `eval-03-architectural-decision-audit.md` | New caching strategy introduced | "docs can wait" + audit doc required |
-| `eval-04-test-only-diff-fast-path.md` | Only test files changed, no-op path | MUST skip cleanly, SKIPPED contract |
