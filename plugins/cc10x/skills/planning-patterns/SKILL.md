@@ -45,6 +45,12 @@ Treat plan phases as a directed acyclic graph — each phase may only depend on 
 
 **Decomposition trigger:** If a step touches 3+ files or takes more than one sentence to describe, split it. If a phase has >5 tasks, consider splitting the phase. Individual steps target 2-5 minutes; task clusters (a full RED-GREEN-REFACTOR cycle) up to 15 minutes.
 
+**Per-phase right-sizing heuristic:** A phase boundary is the **smallest unit that carries its own test cycle and is worth a fresh reviewer's gate**. This aligns phase boundaries with cc10x's fresh-reviewer-per-phase chain — every phase is a clean handoff to a reviewer with no prior context.
+
+- **Split only where a reviewer could reject one phase while approving its neighbor.** If two candidate phases would always pass or fail together, they are one phase — splitting them just doubles the gate cost for no decision value.
+- **Each phase must be independently demoable/verifiable** — it ends on a state you can show working (a passing test, a curl, a rendered screen), not on "internals refactored, nothing observable yet."
+- Don't split below the test cycle (a phase with no test of its own is a task, not a phase); don't merge above the reviewer's judgment (a phase a reviewer can't accept-or-reject as a whole is two phases).
+
 ## Plan Document Header
 
 **Every plan MUST start with this header:**
@@ -147,6 +153,14 @@ A developer with zero codebase context should be able to execute the plan WITHOU
 
 Plans MUST use distilled content, not summarized. Distilled = lossless compression preserving every entity, relationship, decision, and constraint. Summarized = lossy reduction that drops specifics. If a plan section can be shortened without losing any fact the builder needs, distill it. If shortening requires dropping facts, keep the full version. Test: Could a builder agent execute from this plan alone without re-reading source files? If not, the plan is under-distilled.
 
+### Durability-Horizon Rule
+
+Match the precision of a reference to how long the artifact sits before code touches it. File:line numbers are accurate the moment they're written and rot the moment the file changes — so use them only where the artifact is acted on immediately:
+
+- **`execution_plan`** (acted on now, while the tree is frozen) — keep file:line Context-References. They are precise and they will still be true when the builder reads them in the next breath.
+- **`durable-brief` / `decision_rfc` / AFK artifacts** (sit for days while code moves underneath them) — describe **behavior + named types/signatures only**. Reference `class PaymentGateway` and `chargeCard(token, amountCents)`, never `payment.ts:142`. A name survives a refactor; a line number does not, and a stale line number is worse than no reference because it sends a fresh reader to the wrong place with confidence.
+- **Prototype-snippet exception:** when a short snippet encodes a decision more precisely than prose can — an exact data shape, a tricky signature, a non-obvious call ordering — embed the snippet even in a durable artifact. The snippet captures the *decision*, not a volatile location, so it stays true.
+
 ## Validation Levels
 
 **Match validation depth to plan complexity:**
@@ -185,6 +199,17 @@ Before writing a plan:
 - [ ] Success criteria defined
 - [ ] Existing code patterns understood
 - [ ] Context References section prepared with file:line references
+
+## Prefactor Question (Advisory)
+
+Before sequencing the build, ask one question: **is there a cheap refactor that would make the upcoming change trivial?** Make the change easy, then make the easy change.
+
+Scan the target surface for small, mechanical, behavior-preserving moves that flatten the real work — extracting a function the new code will hang off, renaming a misleading symbol, pulling a constant out, splitting a parameter list. If you find one, sequence it as its own **Phase 0/1** with its own test cycle, ahead of the feature phases.
+
+**This is advisory and gated — it must not fight scope discipline:**
+- A prefactor is in scope only when it makes the requested change demonstrably easier. "While we're here" cleanups are out of scope — defer them to a `MEMORY_NOTES` deferred item.
+- Respect the Decision-Checkpoint: do not expand the agreed scope to chase a refactor. If the prefactor is large enough to need its own checkpoint, surface it to the user, don't smuggle it in.
+- Respect the builder's >3-files guard: a prefactor phase that touches 3+ files is itself a planned, reviewer-gated phase — not a license for the builder to widen a feature task mid-flight.
 
 ## Plan Completeness Gate
 
@@ -244,6 +269,16 @@ Score = Probability × Impact. Address risks with score > 8 first.
 - Can it cause data loss? (high or critical)
 
 **Use this matrix when planning test steps. Don't over-test trivial changes. Don't under-test critical ones.**
+
+### Test-Seam Selection Discipline
+
+A seam is where the test attaches to the code. Choose seams deliberately — the plan must name them, not leave them to the builder's improvisation:
+
+- **Prefer EXISTING seams.** Reuse a boundary the code already exposes (a public function, a route handler, an interface) before inventing a new one. A new seam is new surface to maintain.
+- **Use the HIGHEST seam possible.** Test at the outermost stable boundary that still exercises the behavior — the public API, not the private helper three layers down. The highest single seam keeps the test contract stable across the builder → reviewer → verifier handoffs: **the test file IS the contract**, and a high seam couples it to behavior instead of to implementation detail that churns between phases.
+- **Minimize total seam count.** Fewer seams = fewer brittle attachment points. The ideal is **one** seam per behavior under test. Every extra seam is another place a refactor can break a passing test.
+- **The two-adapters rule.** A seam is only real when **two concrete adapters use it** — and the test double counts as the second. If only production code ever touches the seam, it is not a seam, it is a guess; do not plan a mock against it.
+- **Confirm chosen seams with the user.** Name the seams in the plan and get agreement before the builder writes tests. A seam disagreement caught in planning is cheap; caught in review it costs a rewrite.
 
 ## Functionality Flow Mapping
 

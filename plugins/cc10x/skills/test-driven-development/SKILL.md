@@ -7,7 +7,7 @@ user-invocable: false
 
 # Test-Driven Development (TDD)
 
-> **DIVERGENCE FROM superpowers:test-driven-development:** Forked. The RED-GREEN-REFACTOR Iron Law, the worked retry/bug-fix examples, and the rationalization table are core TDD discipline assumed here. CC10x ADDS: watch-mode process hygiene, vertical-slicing enforcement, an 80% coverage floor, Integration And Live Proof, and cross-agent Test Contracts (planner spec → builder green → reviewer re-run). Read references/ for the cc10x deepening.
+> **DIVERGENCE FROM superpowers:test-driven-development:** Forked. The RED-GREEN-REFACTOR Iron Law, the worked retry/bug-fix examples, and the rationalization table are core TDD discipline assumed here. CC10x ADDS: watch-mode process hygiene, vertical-slicing enforcement, an 80% coverage floor, Integration And Live Proof, cross-agent Test Contracts (planner spec → builder green → reviewer re-run), condition-based-waiting as a test-authoring discipline, and a per-gate dated scar-note convention. Read references/ for the cc10x deepening.
 
 ## Overview
 
@@ -55,6 +55,23 @@ Write code before the test? Delete it. Start over.
 - Delete means delete
 
 Implement fresh from tests. Period.
+
+> **Scar-note (why this gate exists):** Every test that proves you cannot ship implementation written before its failing test will eventually feel redundant to a reader who has only ever seen it pass. It is not. It is the absence of the failure it prevents — code that was never validated because it was authored before any test could disprove it.
+
+### Per-Gate Scar-Note Convention
+
+Each Iron Law and gate carries a short dated note recording the failure it covers, so a future simplification pass cannot delete a rule without first seeing the cost of removing it. The rule's existence is not self-justifying once it has been green for a long time; the scar note is the memory of why it was added.
+
+Format — one line, attached at the gate:
+
+```
+<!-- scar: YYYY-MM-DD — <the failure this gate prevents, stated concretely>. Remove only if that failure is now impossible. -->
+```
+
+Convention:
+- Add a scar note when introducing a new Iron Law or gate. Date it.
+- State the *failure*, not the rule (the rule is already visible above the note).
+- A simplification pass that wants to drop a gate must address the scar note's failure first. No scar note → treat as undocumented and investigate before removing.
 
 ## Test Process Discipline (CRITICAL)
 
@@ -138,6 +155,26 @@ Unit tests are not enough when the task depends on:
 
 In those cases, keep TDD for the inner loop and escalate verification depth for
 the outer proof.
+
+### Condition-Based Waiting (Test-Authoring Discipline)
+
+When a test must wait for an async result, poll the actual condition — never sleep a guessed duration. A `setTimeout`/`sleep(N)` that "usually passes" is a false GREEN: it proves the clock advanced, not that the behavior happened.
+
+**Rule:** wait on the condition you care about, with a bounded poll.
+- Poll the real assertion (`waitFor` / retry-until-true) on a short interval (~10ms) under a timeout cap.
+- The timeout is a failure ceiling, not the expected duration — a passing test returns the instant the condition holds.
+- **Principle:** wait for the condition you care about, not a guess about how long it takes. A 2s deterministic loop beats a 30s flaky one.
+
+**Legitimate timed-wait exception:** when timing itself is the contract (debounce, TTL, rate-limit window), first wait for the *triggering* condition, THEN do a justified timed wait against the known, documented interval — never against a hopeful guess.
+
+```
+WRONG:  trigger(); await sleep(2000); expect(result).toBe(...)   // guessed; flaky or slow
+RIGHT:  trigger(); await waitFor(() => result === ..., { timeout: 2000, interval: 10 })
+EXCEPT: await waitFor(() => debounceArmed);  // trigger condition first
+        await sleep(DEBOUNCE_MS + ε); expect(firedOnce).toBe(true)  // justified by known timing
+```
+
+> **Scar-note (why this gate exists):** A sleep long enough to pass on a fast machine is a coin-flip on a slow CI box and dead weight on every run in between. The flake it eventually produces reads as "the code is broken" when the only thing broken was the guess.
 
 ## Coverage Threshold (Project Default)
 

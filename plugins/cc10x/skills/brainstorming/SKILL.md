@@ -7,7 +7,7 @@ user-invocable: false
 
 # Brainstorming Ideas Into Designs
 
-> **DIVERGENCE FROM superpowers:brainstorming:** Lightly forked. The one-question-at-a-time / present-alternatives / validate-incrementally discipline is shared. CC10x ADDS: the Spec File Workflow, the AskUserQuestion interview machinery, the full design-document template, and the router-owned machine-readable handoff that carries the design forward into the PLAN workflow.
+> **DIVERGENCE FROM superpowers:brainstorming:** Lightly forked. The one-question-at-a-time / present-alternatives / validate-incrementally discipline is shared. CC10x ADDS: the Spec File Workflow, the AskUserQuestion interview machinery, the full design-document template, the router-owned machine-readable handoff that carries the design forward into the PLAN workflow, a front-of-flow scope-triage gate that decomposes multi-subsystem requests and brainstorms only the first sub-project, and a Design Self-Review gate that scans the produced design for placeholders, contradictions, and ambiguity before the handoff.
 
 ## Overview
 
@@ -70,6 +70,40 @@ Bash(command="git log --oneline -10 2>/dev/null || echo 'No git history'")
 Bash(command="ls src/ 2>/dev/null || ls . 2>/dev/null || echo 'Empty project'")
 ```
 **If project is empty/new:** Skip project scan, start from user's description.
+
+### Phase 1.5: Scope Triage (Decomposition Gate — Front of Flow)
+
+**Before opening the interview, decide whether this is ONE design or MANY.** Brainstorming produces a single coherent design that anchors a single plan. A request that spans multiple independent subsystems will produce a sprawling, unfocused design and a planner that can't sequence it.
+
+**Trigger:** The request describes 2+ pieces that could be built, tested, and shipped on their own — different surfaces (e.g. a backend API + a CLI + a dashboard), different data stores, different deploy targets, or pieces joined only by "and."
+
+**If the request is a single subsystem:** Skip this gate, go straight to Phase 2.
+
+**If the request is multi-subsystem:** Do NOT try to brainstorm all of it at once. Emit a decomposition recommendation, then brainstorm only the FIRST sub-project:
+
+```markdown
+## Scope Triage: Decomposition Recommended
+
+This request spans multiple independent subsystems. Brainstorming all of them in one design would be unfocused. Recommended decomposition:
+
+### Independent pieces
+1. **[Sub-project A]** — [one line: what it is, why it stands alone]
+2. **[Sub-project B]** — [one line]
+3. **[Sub-project C]** — [one line]
+
+### Relationships
+- [A → B: how they connect, what A produces that B consumes, or "independent"]
+- [shared contracts / interfaces between pieces]
+
+### Recommended build order
+1. [first — usually the piece others depend on, or the riskiest/most foundational]
+2. [second]
+3. [third]
+
+**Proceeding with sub-project #1 ([name]) now.** The remaining pieces are captured above; the router carries them forward so each gets its own brainstorm → design when its turn comes.
+```
+
+After emitting the recommendation, run the normal flow (Phase 2 onward) for the FIRST sub-project ONLY. Do not interview across all pieces at once — each sub-project earns its own pass.
 
 ### Phase 2: Explore the Idea (One Question at a Time)
 
@@ -354,6 +388,17 @@ For UI features, include ASCII mockup in the design:
 ```
 
 **Skip this for API-only or backend features.**
+
+## Design Self-Review Gate (MANDATORY — before the handoff)
+
+The Intent Completeness Gate (Phase 2) checks the inputs. This gate checks the OUTPUT: the design you just wrote is about to anchor the planner, so scan it once for the failures that quietly corrupt downstream plans. Read the design file top to bottom against these four checks and **fix inline** — there is no second review pass.
+
+1. **No placeholders / TBD.** Scan for `TODO`, `TBD`, `[bracketed placeholder]`, `???`, or "decide later." Every section the template asked for must hold a real decision, not a stub. If a section truly does not apply, say so explicitly ("N/A — no UI") rather than leaving it blank or templated.
+2. **Internally consistent.** No section contradicts another: the components named in Architecture all appear in Data Flow; Error Handling covers the failure modes the chosen Approach introduces; Success Criteria don't conflict with the stated Constraints or Out of Scope. Resolve any conflict in favor of the user's stated intent.
+3. **Single-plan scope.** The design must describe ONE coherent thing a single plan can sequence. If — despite the front-of-flow triage — the design grew to span multiple independent subsystems, decompose it: narrow this design to the first sub-project and record the rest in Out of Scope (so the router carries them forward). One design → one plan.
+4. **No two-way-ambiguous requirements.** Any requirement that could be read two valid ways is a planner trap. Pick ONE interpretation and state it explicitly in the design (e.g. "retries: exactly 3, then dead-letter" not "retries as needed"). Do not pass ambiguity downstream.
+
+Apply every fix directly to the saved design file (Edit/Write — permission-free). This is a self-review: no agents spawned, no re-review loop. Once the four checks pass, proceed to the handoff.
 
 ## Saving the Design (MANDATORY)
 

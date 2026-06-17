@@ -143,6 +143,19 @@ function calculateTotal(
 }
 ```
 
+**Grep-check "implement it properly" suggestions.** When a review finding or follow-up says *"implement X properly"*, *"build this out"*, *"make it complete/robust"*, or *"do it the right way"* — that is a scope-creep vector, not a confirmed requirement. Before writing the expansion, grep for actual callers:
+
+```
+Grep(pattern="\bfeatureX\b", glob="*.ts", path="src/")   # who calls it?
+lspFindReferences(lineHint=N)                              # confirm real usage
+```
+
+- **Nothing calls it** → propose **removal**, not buildout: *"Grepped — nothing calls this. Remove it (YAGNI)?"* Dead code asked to be "done properly" should usually be deleted, not finished.
+- **Real callers exist** → the buildout may be justified; implement only what those callers actually need.
+- **The suggestion grows scope beyond the current task** → this is a `SCOPE_INCREASES` escalation. Hand it back to the router with the grep evidence (caller count, file paths) rather than silently building it out. The grep result IS the evidence the escalation needs — "0 callers found in src/" is a stronger argument than an opinion.
+
+Never expand an unused surface just because a reviewer used the word "properly." Verify demand first.
+
 ### Code Clarity
 
 **Prefer explicit, readable code over compact one-liners:**

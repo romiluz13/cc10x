@@ -6,7 +6,7 @@ allowed-tools: Read Grep Glob Bash LSP
 
 # Verification Before Completion
 
-> **DIVERGENCE FROM superpowers:verification-before-completion:** Forked. The Iron Law, the Gate Function, and the "evidence before claims" doctrine are core discipline assumed here. CC10x ADDS: the Self-Critique Gate, Validation Levels, Production-Like Live Proof, the Evidence Array Protocol, the Goal-Backward Lens, Phase-Exit Proof vs Extended Audit, Stub Detection, and the Completion Guard that gates the Router Contract.
+> **DIVERGENCE FROM superpowers:verification-before-completion:** Forked. The Iron Law, the Gate Function, and the "evidence before claims" doctrine are core discipline assumed here. Because superpowers is NOT loaded when cc10x runs solo, the scannable Common Failures table, Red-Flags STOP list, and rationalization→reality rebuttal table are now RESTORED inline (no longer purely deferred upstream) so this skill is self-sufficient. CC10x ADDS: the Authoring Rule (keep gates high), the Self-Critique Gate, Validation Levels, Production-Like Live Proof, the Evidence Array Protocol, the Goal-Backward Lens, Phase-Exit Proof vs Extended Audit, Stub Detection, and the Completion Guard that gates the Router Contract.
 
 ## Overview
 
@@ -17,6 +17,12 @@ Claiming work is complete without verification is dishonesty, not efficiency.
 <!-- CC10X-M7: Overlap with integration-verifier is intentional (defense in depth). VBC is loaded by WRITE agents for self-verification before reporting done; integration-verifier is a separate router-spawned agent. Both check different moments in the workflow. -->
 
 **Violating the letter of this rule is violating the spirit of this rule.**
+
+## Authoring Rule: Keep Gates High
+
+Completion/exit gates MUST appear before ~line 1000 of any skill file, OR be re-stated verbatim at the emission point. A gate below the chunked-read window silently no-ops — the agent never reaches it and ships unverified. (See matt-pocock: "I never reached line 1224.")
+
+This is why cc10x's **Iron Law** and **Completion Guard** are deliberately kept high in this file: the Iron Law sits at the top, and the Completion Guard's core checks are re-stated at the Router Contract emission point. Do not bury a gate under long reference tables.
 
 ## The Iron Law
 
@@ -45,7 +51,33 @@ Skip any step = lying, not verifying
 
 ## Common Failures, Red Flags, Rationalizations
 
-The failure modes (previous-run ≠ fresh, linter ≠ compiler, agent-says-success ≠ verified), the satisfaction-before-evidence red flags ("Great!"/"Done!" before running), and the excuse/reality rationalization table are core verification doctrine — assumed, not repeated here (see superpowers:verification-before-completion). The operational rule: if you catch yourself using "should/probably/seems", expressing satisfaction before running the command, trusting an agent's success report, or relying on a partial check — STOP, run verification, get evidence, THEN speak. Different words do not exempt the rule; spirit over letter.
+These are core verification doctrine. They were once deferred to superpowers, but superpowers is not loaded when cc10x runs solo — so the scannable references live inline here. The operational rule: if you catch yourself using "should/probably/seems", expressing satisfaction before running the command, trusting an agent's success report, or relying on a partial check — STOP, run verification, get evidence, THEN speak. Different words do not exempt the rule; spirit over letter.
+
+### Common Failures
+
+| Failure | Why it lies | Fix |
+|---------|-------------|-----|
+| previous-run ≠ fresh | Output is from an earlier message; code changed since | Re-run the command in THIS message |
+| linter ≠ compiler | Lint passing says nothing about types/build | Run `tsc --noEmit` / build, not just lint |
+| agent-says-success ≠ verified | A spawned agent's "done" is a claim, not evidence | Demand its evidence array; re-run the gate yourself |
+
+### Red Flags — STOP
+
+If any of these appear BEFORE you have run the command, STOP and run it:
+
+- "Great!" / "Perfect!" / "Done!" / "All set!"
+- "should pass" / "should work"
+- "probably" / "seems fine" / "looks good"
+- "I've fixed it" with no exit code yet
+
+### Rationalization → Reality
+
+| Rationalization | Reality |
+|-----------------|---------|
+| "It's a trivial change, no need to test" | Trivial changes break builds too — run it |
+| "Tests passed earlier" | Earlier ≠ now; the diff invalidated that run |
+| "The agent reported success" | A report is a claim; evidence is exit code 0 in this session |
+| "Lint is green, so it's fine" | Lint ≠ types ≠ runtime; run the full gate |
 
 ## When To Apply
 

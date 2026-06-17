@@ -50,6 +50,15 @@ If memory is narrated instead of distilled, it bloats context and loses signal.
 - WRITE agents emit structured `MEMORY_NOTES` in their Router Contract.
 - READ-ONLY agents emit `### Memory Notes (For Workflow-Final Persistence)`.
 - The router-owned memory-finalize task is the only final writer of memory markdown files.
+- Redact secrets/PII before persist (OUTWARD artifacts only): before the router persists
+  any cc10x-authored content into outward artifacts — `docs/plans/*`, `docs/research/*`,
+  design docs, and persisted memory notes — redact pasted tokens, API keys,
+  connection-strings, credentials, and personal data captured in `MEMORY_NOTES` or
+  READ-ONLY agent notes. Replace with a stable placeholder (e.g. `<redacted:secret>`) and
+  keep the surrounding constraint intact. This is about authored CONTENT, complementing the
+  file-level "never commit .env" rule. It is SCOPED to outward artifacts and explicitly does
+  NOT apply to internal machine-owned `.cc10x/` orchestration state (`workflows/{wf}.json`,
+  `.events.jsonl`, router markers), which must stay verbatim so resume and dedupe keys hold.
 - Workflow artifacts under `.cc10x/workflows/{wf}.json` remain the durable
   execution truth; markdown memory is the stable index.
 - Required headings and anchors are a contract. Do not invent new file layouts or marker
@@ -151,6 +160,9 @@ Do not persist:
 - celebratory narration
 - "looked correct" claims without evidence
 - duplicate notes that add no new constraint
+- raw secrets/PII in notes bound for outward artifacts — redact tokens, keys,
+  connection-strings, and personal data before they reach docs/plans/research or persisted
+  memory (keep identity/key fields in internal `.cc10x/` state verbatim)
 
 ## Agent Output Contract
 
@@ -228,6 +240,24 @@ Checkpoint principle:
 
 - persist durable state into workflow artifacts, plans, research files, and memory notes
 - do not rely on the conversation transcript to carry load-bearing context
+
+### Compaction KEEP / SUMMARIZE / DROP Rubric
+
+cc10x's compaction-survival is structural — state lives in `.cc10x/`. But a native compaction
+can fire mid-phase BEFORE the router persists, and anything left only in the transcript can be
+silently dropped, then silently violated. Triage transcript content with this rubric:
+
+| Tier | What | Rule |
+|------|------|------|
+| KEEP | user hard-constraints and PROHIBITIONS ("do not touch Y"), the exact next step, open failures and their errors | preserve VERBATIM — never paraphrase a constraint or an error |
+| SUMMARIZE | resolved decisions with rationale, attempts already concluded, file/module boundaries discovered | distill to one durable line each |
+| DROP | decorative prose, step-by-step diary, superseded speculation, redundant prompt retellings | discard |
+
+Persist captured user PROHIBITIONS verbatim into the workflow artifact's intent field
+(`.cc10x/workflows/{wf}.json`) as soon as they are stated, not at workflow end. That way the
+precedence rule (explicit user instruction wins) survives a compaction that lands before the
+router's normal persist. If you cannot persist yet, hold the verbatim KEEP set at the top of
+your working context until the router can finalize.
 
 ## Red Flags
 

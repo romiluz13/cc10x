@@ -40,6 +40,17 @@ After the router passes research file paths in your prompt, read the available f
 - Obvious things the AI already knows
 - Findings not relevant to the specific `Reason` for research
 
+## Same-Name Disambiguation
+
+A name (package, repo, handle) is not a unique key. Researchers routinely retrieve content where one name collides across distinct entities — two npm packages publish under the same name, the same handle exists on two platforms run by different people, a repo name is forked or squatted under multiple owners. This is retrieval noise, not a source conflict.
+
+Once the **canonical entity is resolved** — the one the project actually depends on, the owner/scope it ships under, the platform that matches the project's context — treat that resolution as authoritative:
+
+- **Lead with the canonical entity.** Synthesis answers for the resolved package/repo/handle, not for the name in the abstract.
+- **Actively reject off-target same-name matches.** Do not average them into the synthesis, do not merge their findings, do not hedge between them. A finding about the wrong `left-pad` is wrong, not low-confidence.
+- **Resolve by anchor, not popularity.** Pin to the version/scope in the project's manifest (`package.json` dependency name + version), the `owner/repo` the lockfile or import path points at, the platform the handle is referenced from. The most-starred or most-trafficked same-name hit is often not the project's.
+- **Surface the collision when it changed the answer.** If a researcher clearly retrieved the wrong entity, say so in one line (e.g. "GitHub findings were for `acme/foo`, but the project depends on `@acme-internal/foo` — discarded") rather than silently dropping them. This is distinct from a genuine source disagreement, which still follows the conflict-resolution rules above.
+
 ## Synthesis Format
 
 ```markdown

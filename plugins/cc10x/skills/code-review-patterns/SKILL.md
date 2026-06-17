@@ -208,6 +208,24 @@ If a review produces ZERO findings across ALL dimensions (security, correctness,
 **Evidence requirement per signal:**
 Each signal MUST cite specific file:line. A signal without evidence = not reported.
 
+## Two Isolated Assessments + WEAVE Reconciliation
+
+cc10x runs the **code-reviewer** and the **silent-failure-hunter** in parallel on purpose.
+
+**Why independence is non-negotiable:** Collapsing both passes into ONE reasoning head silently ANCHORS them — the first concern read biases the second, the broad reviewer rationalizes away a hidden-failure smell, and the two "independent" signals quietly converge on one opinion. Independence is the entire point. Each pass must form its findings without seeing the other's. Reconcile only AFTER both have committed their lists.
+
+**WEAVE protocol (replaces a bare "stricter verdict wins" merge):** Before routing any finding, classify it.
+
+| Class | Definition | Routing |
+|-------|------------|---------|
+| **AGREED** | Both passes independently surfaced it (same file:line, same root cause) | Highest trust — report; convergence is strong signal |
+| **DETECTOR-ONLY** | Caught by exactly one pass (reviewer XOR silent-failure-hunter) | Keep it — a finding the other missed is the value of running two passes, NOT noise. Carry the detecting pass's evidence and severity as-is |
+| **FALSE-POSITIVE** | Triage suspect: no file:line, pre-existing, linter-owned, or refuted by the other pass's evidence | Drop, per "Do NOT Flag" and the Signal Quality Rule |
+
+Weave order: AGREED → DETECTOR-ONLY → FALSE-POSITIVE triage. Never let a DETECTOR-ONLY finding get demoted just because the other pass stayed silent — silence is not refutation.
+
+**Fallback — stricter verdict wins:** If, AFTER weaving, the two passes hold a genuine contradiction on the SAME finding (e.g. reviewer says safe, hunter says swallowed failure, neither's evidence refutes the other), the stricter verdict wins. Tie goes to CHANGES_REQUESTED. This is the residual rule, not the first move — weave first, escalate only on a true standoff.
+
 ## Do NOT Flag (False Positive Prevention)
 
 - Pre-existing issues not introduced by this change
@@ -264,6 +282,31 @@ If you find yourself:
 | "It's a small change" | Small changes cause big bugs. Review thoroughly. |
 | "No time for full review" | Bugs take more time than reviews. Do it properly. |
 | "Security is overkill" | One vulnerability can sink the company. Check it. |
+
+## Optional: Anchored 0-4 Quality Rubric (High-Rigor Reviews)
+
+The CONFIDENCE score measures *certainty in the findings*, not *quality of the result*. For high-rigor reviews, the reviewer MAY emit an anchored 0-4 quality score ALONGSIDE the verdict. Each integer is anchored to spelled-out criteria so two reviewers land on the same number:
+
+| Score | Criteria |
+|-------|----------|
+| **0** | Broken or unsafe. Fails spec, ships a HARD-signal defect (security hole, wrong output), or hides a failure. Do not merge |
+| **1** | Works in the happy path but fragile. Real gaps in error handling, edge cases, or validation that will bite under normal use |
+| **2** | Solid and correct, but unremarkable. Some maintainability or clarity debt; nothing that blocks merge |
+| **3** | Good. Correct, readable, well-tested, edge cases considered. The bar for code you would happily own |
+| **4** | Genuinely excellent. Correct AND clear AND defensively complete AND the design makes the next change easy. Rare |
+
+**Total band → action:**
+
+| Score | Action |
+|-------|--------|
+| 0 | CHANGES_REQUESTED — non-negotiable (mirrors HARD-signal:0) |
+| 1 | CHANGES_REQUESTED — name the fragility precisely |
+| 2 | APPROVE with noted follow-ups |
+| 3-4 | APPROVE |
+
+**Calibration:** Most real code scores mid-band (2). A 4 is genuinely excellent — do not inflate. If every review you write scores 3-4, your scale is broken, not the code.
+
+This is **additive** — it does NOT replace the existing verdict/CONFIDENCE contract owned by the code-reviewer agent. Its value is giving the router a cleaner gate input than a binary APPROVE: a graded 0-4 lets the router distinguish "barely passing, watch this" (1-2) from "ship it" (3-4) and route remediation effort accordingly.
 
 ## Output Format
 

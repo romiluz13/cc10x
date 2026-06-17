@@ -91,6 +91,24 @@ Read `references/design-md-authoring.md` before creating or updating a spec-alig
 
 When inspiration is needed, read `references/design-md-inspiration-index.md` to choose a style family. Treat inspiration as input to the project's own design contract, not as an instruction to copy another company's UI.
 
+### Mock-Fidelity Inventory (No Silent Loss)
+
+A build can pass every test and still quietly omit the hero, the signature motif, or whole sections the design called for. Apply VBC's anti-stub "no silent loss" discipline to UI: a green test suite is not proof the design shipped.
+
+**Once a design/mock is approved, before coding, INVENTORY its major visible ingredients and decide an implementation path for each:**
+
+| Ingredient | Examples | Implementation path |
+|------------|----------|---------------------|
+| **Hero / focal moment** | Headline + primary CTA, signature visual | Build now / phase 2 (explicit) / cut (approved) |
+| **Signature motifs** | Grain, gradients, custom cursor, illustration style | Build now / approximate / cut (approved) |
+| **Sections** | Each distinct band/region in the mock | Build now / phase 2 (explicit) / cut (approved) |
+| **Interactions** | Hover, scroll, motion, transitions | Build now / static fallback / cut (approved) |
+| **States** | Empty/loading/error variants shown in mock | Build now (states are not optional) |
+
+Every ingredient gets exactly one path. "Cut" and "phase 2" are legitimate, but only when **explicitly named** — never reached by omission.
+
+**Verification — pair this with VBC's Goal-Backward Lens.** The goal is the approved design, not the diff. Walk backward from each inventoried ingredient and confirm it is present (or was explicitly deferred/cut). Treat any **silently-dropped major ingredient** — present in the approved mock, absent in the build, never explicitly deferred — as a **P0 fidelity defect**, equal in severity to a broken task flow. Report it; do not let a passing test suite paper over it.
+
 ## UI State References
 
 Read `references/ui-state-and-feedback.md` before finalizing loading, error,
@@ -206,6 +224,26 @@ When creating frontends, avoid generic AI aesthetics:
 
 Make creative choices that feel designed for the specific context. No two designs should look the same.
 
+#### Two-Altitude Reflex Check
+
+Generic isn't only the obvious defaults — it's also the *predictable dodge away from* the defaults. Run both tests before committing a visual direction:
+
+- **First-order test:** Could you guess the theme/palette from the **category alone**? ("Fintech → blue + sans-serif." "AI tool → purple gradient + dark mode.") If yes, it's generic. Reject.
+- **Second-order test:** Could you guess it from **category + anti-references**? Once everyone "avoids the purple gradient," the avoidance itself becomes a reflex — fintech that dodges blue lands on the same off-black + lime, AI tools that dodge purple all land on the same warm-beige + serif. If the choice is predictable *given what people now flee toward*, it's still generic. Reject.
+
+The second test catches dodging reflex #1 straight into reflex #2. The cure for both is the same: derive the direction from the specific product, audience, and content — not from the category or from what the category is currently fleeing.
+
+**Reflex-reject lists (maintained, pruned as families saturate):**
+
+| Reflex-reject fonts | Reflex-reject aesthetic lanes |
+|---------------------|-------------------------------|
+| Inter, Roboto, Arial, system-ui defaults | Purple/violet gradient on white (AI-tool reflex #1) |
+| Geist / Geist Mono (now over-saturated) | Off-black + acid-lime "anti-corporate" (reflex #2) |
+| Space Grotesk as a default "modern" pick | Warm-beige + serif "anti-AI" editorial (reflex #2) |
+| Generic Google-Fonts pairing of the month | Glassmorphism cards on gradient mesh |
+
+Prune a lane *out* of this list once it genuinely stops being a reflex, and add new families *in* as they saturate. The list is a moving target on purpose; a stale blocklist becomes its own reflex.
+
 ### Spatial Composition (Break the Grid)
 
 Move beyond safe, centered layouts:
@@ -220,6 +258,23 @@ Move beyond safe, centered layouts:
 | **Controlled density** | Information-rich, productive | Dashboards, data-heavy UIs |
 
 **Rule:** Match spatial composition to the aesthetic direction chosen in Design Thinking. Minimalist = negative space. Maximalist = controlled density.
+
+## Design-System Drift Classifier
+
+When a feature deviates from the design system, "it looks a bit off" is not an actionable finding. For each deviation, **classify the root cause** — the class determines the fix:
+
+| Root cause | What it means | Fix |
+|------------|---------------|-----|
+| **Missing token** | The system has no value for this need (a shade, spacing step, radius) | Patch the value — add the token to the system, then use it |
+| **One-off impl** | A token/component exists, but this feature reimplemented it locally | Swap to the shared component/token; delete the one-off |
+| **Conceptual misalignment** | The feature's interaction model fights the system's | Rework the flow — patching pixels won't fix it |
+
+**Flow-shape match.** Beyond tokens, a feature's **flow shape** must match its neighbors. Inconsistent flow shape reads as broken even when every pixel is on-system:
+
+- **Modal vs. full-page** — if sibling editors open a modal, don't ship a full-page route (or vice versa).
+- **Save-on-blur vs. explicit submit** — if neighboring forms autosave, a lone submit-button form is a conceptual misalignment, not a styling nit.
+
+Require the feature's flow shape to match neighboring features, or to carry an explicit, approved reason for diverging. Treat an unexplained flow-shape mismatch as a conceptual-misalignment deviation, not a minor one.
 
 ## Component Patterns
 
