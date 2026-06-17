@@ -7,6 +7,8 @@ user-invocable: false
 
 # Brainstorming Ideas Into Designs
 
+> **DIVERGENCE FROM superpowers:brainstorming:** Lightly forked. The one-question-at-a-time / present-alternatives / validate-incrementally discipline is shared. CC10x ADDS: the Spec File Workflow, the AskUserQuestion interview machinery, the full design-document template, and the router-owned machine-readable handoff that carries the design forward into the PLAN workflow.
+
 ## Overview
 
 Help turn rough ideas into fully formed designs through collaborative dialogue. Don't jump to solutions - explore the problem space first.
@@ -271,31 +273,9 @@ Which direction feels right?
 ❌ Presenting the entire design in one 2000-word block
 ```
 
-## Red Flags - STOP and Ask More Questions
+## Red Flags & Rationalizations
 
-If you find yourself:
-
-- Designing without knowing the purpose
-- Jumping to implementation details
-- Presenting one approach without alternatives
-- Asking multiple questions at once
-- Assuming you know what the user wants
-- Not validating incrementally
-- Asking leading questions that steer toward a pre-decided solution ("Should we use React?" instead of "What UI approach fits?")
-- Asking compound questions (more than one decision per question)
-- Accepting vague answers without probing ("It should be fast" → "What response time is acceptable?")
-
-**STOP. Go back to Phase 2.**
-
-## Rationalization Prevention
-
-| Excuse | Reality |
-|--------|---------|
-| "I know what they need" | Ask. You might be wrong. |
-| "Multiple questions is faster" | Overwhelms. One at a time. |
-| "One approach is obviously best" | Present options. Let them choose. |
-| "They'll say if it's wrong" | Validate incrementally. Don't assume. |
-| "Details can wait" | Get details now. Assumptions cause rework. |
+The generic brainstorming red flags (designing without knowing the purpose, jumping to implementation, presenting one approach, asking compound/leading questions, accepting vague answers) and the excuse/reality table are core discipline — assumed, not repeated here (see superpowers:brainstorming). If you catch any of them: STOP and go back to Phase 2. cc10x adds the one-question-at-a-time interview machinery, the design-doc template, and the router-owned handoff below.
 
 ## Output: Design Document
 

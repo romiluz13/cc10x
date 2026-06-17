@@ -6,6 +6,8 @@ allowed-tools: Read Grep Glob Bash LSP
 
 # Verification Before Completion
 
+> **DIVERGENCE FROM superpowers:verification-before-completion:** Forked. The Iron Law, the Gate Function, and the "evidence before claims" doctrine are core discipline assumed here. CC10x ADDS: the Self-Critique Gate, Validation Levels, Production-Like Live Proof, the Evidence Array Protocol, the Goal-Backward Lens, Phase-Exit Proof vs Extended Audit, Stub Detection, and the Completion Guard that gates the Router Contract.
+
 ## Overview
 
 Claiming work is complete without verification is dishonesty, not efficiency.
@@ -41,83 +43,9 @@ BEFORE claiming any status or expressing satisfaction:
 Skip any step = lying, not verifying
 ```
 
-## Common Failures
+## Common Failures, Red Flags, Rationalizations
 
-| Claim | Requires | Not Sufficient |
-|-------|----------|----------------|
-| Tests pass | Test command output: 0 failures | Previous run, "should pass" |
-| Linter clean | Linter output: 0 errors | Partial check, extrapolation |
-| Build succeeds | Build command: exit 0 | Linter passing, logs look good |
-| Bug fixed | Test original symptom: passes | Code changed, assumed fixed |
-| Regression test works | Red-green cycle verified | Test passes once |
-| Agent completed | VCS diff shows changes | Agent reports "success" |
-| Requirements met | Line-by-line checklist | Tests passing |
-
-## Red Flags - STOP
-
-If you find yourself:
-
-- Using "should", "probably", "seems to"
-- Expressing satisfaction before verification ("Great!", "Perfect!", "Done!", etc.)
-- About to commit/push/PR without verification
-- Trusting agent success reports
-- Relying on partial verification
-- Thinking "just this once"
-- Tired and wanting work over
-- **ANY wording implying success without having run verification**
-
-**STOP. Run verification. Get evidence. THEN speak.**
-
-## Rationalization Prevention
-
-| Excuse | Reality |
-|--------|---------|
-| "Should work now" | RUN the verification |
-| "I'm confident" | Confidence ≠ evidence |
-| "Just this once" | No exceptions |
-| "Linter passed" | Linter ≠ compiler |
-| "Agent said success" | Verify independently |
-| "I'm tired" | Exhaustion ≠ excuse |
-| "Partial check is enough" | Partial proves nothing |
-| "Different words so rule doesn't apply" | Spirit over letter |
-| "I already tested it manually" | Manual ≠ automated evidence |
-| "The code looks correct" | Looking ≠ running |
-
-## Key Patterns
-
-**Tests:**
-```
-✅ [Run test command] [See: 34/34 pass] "All tests pass"
-❌ "Should pass now" / "Looks correct"
-```
-
-**Regression tests (TDD Red-Green):**
-```
-✅ Write → Run (pass) → Revert fix → Run (MUST FAIL) → Restore → Run (pass)
-❌ "I've written a regression test" (without red-green verification)
-```
-
-**Build:**
-```
-✅ [Run build] [See: exit 0] "Build passes"
-❌ "Linter passed" (linter doesn't check compilation)
-```
-
-**Requirements:**
-```
-✅ Re-read plan → Create checklist → Verify each → Report gaps or completion
-❌ "Tests pass, phase complete"
-```
-
-**Agent delegation:**
-```
-✅ Agent reports success → Check VCS diff → Verify changes → Report actual state
-❌ Trust agent report
-```
-
-## Why This Matters
-
-False completion destroys trust, ships broken code, and creates rework. Verification exists to stop that. No fresh evidence, no completion claim.
+The failure modes (previous-run ≠ fresh, linter ≠ compiler, agent-says-success ≠ verified), the satisfaction-before-evidence red flags ("Great!"/"Done!" before running), and the excuse/reality rationalization table are core verification doctrine — assumed, not repeated here (see superpowers:verification-before-completion). The operational rule: if you catch yourself using "should/probably/seems", expressing satisfaction before running the command, trusting an agent's success report, or relying on a partial check — STOP, run verification, get evidence, THEN speak. Different words do not exempt the rule; spirit over letter.
 
 ## When To Apply
 

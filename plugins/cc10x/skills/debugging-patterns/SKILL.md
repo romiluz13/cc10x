@@ -6,6 +6,8 @@ allowed-tools: Read Grep Glob Bash LSP
 
 # Systematic Debugging
 
+> **DIVERGENCE FROM superpowers:systematic-debugging:** Forked. The four-phase root-cause discipline and the rationalization table are core debugging doctrine assumed here. CC10x ADDS: LSP-powered root-cause tracing, scenario playbooks, hypothesis confidence scoring, cognitive-bias and meta-debugging guidance, the Option-Zero (config-only fix) check, and the restart-investigation protocol. The bug-investigator agent owns the operational process; this skill is the advisory depth it loads.
+
 ## Overview
 
 Random fixes waste time and create new bugs. Quick patches mask underlying issues.
@@ -392,29 +394,9 @@ If you catch yourself thinking:
 
 **If 3+ fixes failed:** Question the architecture (see Phase 4.5)
 
-## User's Signals You're Doing It Wrong
+## User's Signals & Rationalizations
 
-**Watch for these redirections:**
-- "Is that not happening?" - You assumed without verifying
-- "Will it show us...?" - You should have added evidence gathering
-- "Stop guessing" - You're proposing fixes without understanding
-- "Ultrathink this" - Question fundamentals, not just symptoms
-- "We're stuck?" (frustrated) - Your approach isn't working
-
-**When you see these:** STOP. Return to Phase 1.
-
-## Rationalization Prevention
-
-| Excuse | Reality |
-|--------|---------|
-| "Issue is simple, don't need process" | Simple issues have root causes too. Process is fast for simple bugs. |
-| "Emergency, no time for process" | Systematic debugging is FASTER than guess-and-check thrashing. |
-| "Just try this first, then investigate" | First fix sets the pattern. Do it right from the start. |
-| "I'll write test after confirming fix works" | Untested fixes don't stick. Test first proves it. |
-| "Multiple fixes at once saves time" | Can't isolate what worked. Causes new bugs. |
-| "Reference too long, I'll adapt the pattern" | Partial understanding guarantees bugs. Read it completely. |
-| "I see the problem, let me fix it" | Seeing symptoms ≠ understanding root cause. |
-| "One more fix attempt" (after 2+ failures) | 3+ failures = architectural problem. Question pattern, don't fix again. |
+The user-redirection signals ("Stop guessing", "Ultrathink this", "We're stuck?") and the excuse/reality rationalization table are core systematic-debugging discipline — assumed, not repeated here (see superpowers:systematic-debugging). The operational rule: any of these means STOP and return to Phase 1; simple/emergency bugs still have root causes and process is faster than guess-and-check; 3+ failed fixes means an architectural problem, not "one more attempt".
 
 ## Quick Reference
 
