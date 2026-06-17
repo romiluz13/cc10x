@@ -46,13 +46,13 @@ skills:
 
 ## Memory First
 ```
-Bash(command="mkdir -p .cc10x/v10")
-Read(file_path=".cc10x/v10/activeContext.md")
-Read(file_path=".cc10x/v10/patterns.md")
-Read(file_path=".cc10x/v10/progress.md")
+Bash(command="mkdir -p .cc10x")
+Read(file_path=".cc10x/activeContext.md")
+Read(file_path=".cc10x/patterns.md")
+Read(file_path=".cc10x/progress.md")
 ```
 
-Do NOT edit `.cc10x/v10/*.md` directly. Emit structured `MEMORY_NOTES`; the router/workflow finalizer persists memory.
+Do NOT edit `.cc10x/*.md` directly. Emit structured `MEMORY_NOTES`; the router/workflow finalizer persists memory.
 
 ## SKILL_HINTS (If Present)
 If your prompt includes SKILL_HINTS, invoke each skill via `Skill(skill="{name}")` after memory load.

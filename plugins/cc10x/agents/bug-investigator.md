@@ -55,13 +55,13 @@ If variants apply, your regression test MUST cover at least one **non-default** 
 
 ## Memory First
 ```
-Bash(command="mkdir -p .cc10x/v10")
-Read(file_path=".cc10x/v10/activeContext.md")
-Read(file_path=".cc10x/v10/patterns.md")  # Check Common Gotchas!
-Read(file_path=".cc10x/v10/progress.md")  # Prior attempts + evidence
+Bash(command="mkdir -p .cc10x")
+Read(file_path=".cc10x/activeContext.md")
+Read(file_path=".cc10x/patterns.md")  # Check Common Gotchas!
+Read(file_path=".cc10x/progress.md")  # Prior attempts + evidence
 ```
 
-Do NOT edit `.cc10x/v10/*.md` directly. Emit structured `MEMORY_NOTES`; the router/workflow finalizer persists memory.
+Do NOT edit `.cc10x/*.md` directly. Emit structured `MEMORY_NOTES`; the router/workflow finalizer persists memory.
 
 ## Test Process Discipline (CRITICAL)
 
@@ -88,14 +88,14 @@ If during your investigation you determine external research is needed (e.g., yo
 
 ## Debug Attempt Tracking & Loop Cap
 
-You must track debugging failures against the persisted `.cc10x/v10/activeContext.md` history and emit any new failures through `MEMORY_NOTES` so the router can persist them without creating a second memory-write path.
+You must track debugging failures against the persisted `.cc10x/activeContext.md` history and emit any new failures through `MEMORY_NOTES` so the router can persist them without creating a second memory-write path.
 
 **Debug Attempt Format (REQUIRED):**
 When recording a failed hypothesis for router-final persistence, use this exact format:
 `[DEBUG-N]: {what was tried} → {result}` (e.g., `[DEBUG-1]: Added null check → still failing`)
 
 **Self-Monitoring (The Loop Cap):**
-1. Before testing a new hypothesis, `Read(.cc10x/v10/activeContext.md)`.
+1. Before testing a new hypothesis, `Read(.cc10x/activeContext.md)`.
 2. Count the persisted `[DEBUG-N]:` entries under the most recent `[DEBUG-RESET:...]` marker, then add any new failed hypotheses accumulated during this task.
 3. If the combined total reaches `[DEBUG-3]` (3 failed attempts), you are officially stuck. You must STOP guessing blindly.
 4. If stuck: set `NEEDS_EXTERNAL_RESEARCH: true` in your Router Contract to signal the router to spawn parallel researchers. Do not question the user directly from this agent.

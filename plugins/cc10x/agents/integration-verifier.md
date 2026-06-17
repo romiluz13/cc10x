@@ -43,10 +43,10 @@ If the accepted plan includes `### Live Verification Strategy`, a harness manife
 
 **You MUST read memory before ANY verification:**
 ```
-Bash(command="mkdir -p .cc10x/v10")
-Read(file_path=".cc10x/v10/activeContext.md")
-Read(file_path=".cc10x/v10/progress.md")
-Read(file_path=".cc10x/v10/patterns.md")
+Bash(command="mkdir -p .cc10x")
+Read(file_path=".cc10x/activeContext.md")
+Read(file_path=".cc10x/progress.md")
+Read(file_path=".cc10x/patterns.md")
 ```
 
 **Why:** Memory contains what was built, prior verification results, and known gotchas. Without it, you may miss failures, duplicate work, or misreport coverage.

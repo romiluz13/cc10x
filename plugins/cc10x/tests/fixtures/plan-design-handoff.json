@@ -87,7 +87,7 @@
     },
     "planner_markers": [
       "## Design File",
-      "Do NOT edit `.cc10x/v10/*.md` directly."
+      "Do NOT edit `.cc10x/*.md` directly."
     ],
     "gate_markers": []
   }

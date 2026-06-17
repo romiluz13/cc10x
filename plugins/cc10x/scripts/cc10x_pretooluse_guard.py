@@ -57,7 +57,7 @@ def main() -> int:
     should_block = "memory-write" in violations and mode.get("memoryWrites") == "block"
     if should_block:
         pretool_deny(
-            "CC10X plugin hook blocked a direct v10 memory markdown write. Use the router-owned memory finalization path."
+            "CC10X plugin hook blocked a direct memory markdown write. Use the router-owned memory finalization path."
         )
     return 0
 

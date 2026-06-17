@@ -24,7 +24,7 @@ def main() -> int:
     overall_quality = (payload.get("research_quality") or {}).get("overall", "none")
     workflow_uuid = payload.get("workflow_uuid") or payload.get("workflow_id")
     message = (
-        f"CC10X v10 workflow context ({source}): "
+        f"CC10X workflow context ({source}): "
         f"wf={workflow_uuid} type={payload.get('workflow_type')} "
         f"plan={payload.get('plan_file') or 'N/A'} design={payload.get('design_file') or 'N/A'} "
         f"phase_cursor={payload.get('phase_cursor') or 'none'} "
