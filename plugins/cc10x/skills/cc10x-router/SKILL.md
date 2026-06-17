@@ -23,14 +23,28 @@ Route using the first matching signal:
 | 1 | ERROR | error, bug, fix, broken, crash, fail, debug, troubleshoot, issue | DEBUG | bug-investigator -> code-reviewer -> integration-verifier |
 | 2 | PLAN | plan, design, architect, roadmap, strategy, spec, brainstorm | PLAN | brainstorming -> planner -> bounded fresh review loop |
 | 3 | REVIEW | review, audit, analyze, assess, "is this good" | REVIEW | code-reviewer |
-| 4 | DEFAULT | Everything else | BUILD | component-builder -> [code-reviewer || silent-failure-hunter] -> integration-verifier |
+| 4 | ORIENT | zoom out, explain, understand, "how does X work", unfamiliar, "map this", "walk me through", "where is", "what does this do" | ORIENT | advisory orientation (no agents) |
+| 5 | DEFAULT | Everything else | BUILD | component-builder -> [code-reviewer || silent-failure-hunter] -> integration-verifier |
 
 Rules:
 - Planning runs through the CC10x PLAN workflow so it gains orchestration state, workflow artifacts, intent contracts, and the bounded fresh review. Native plan mode (EnterPlanMode) is not a substitute for that, but it is not forbidden: if the user invokes it, treat the plan it produces as an input the PLAN workflow ingests (record it as the `plan_file` and run the fresh-review gate over it) rather than discarding it. Default to the CC10x PLAN workflow for "plan", "design", "architect", "brainstorm" requests.
 - ERROR always wins over BUILD.
 - REVIEW is advisory only. Never let REVIEW create code-changing tasks.
+- ORIENT is read-only and advisory. It precedes DEFAULT/BUILD: a "help me understand this code" request must never fall through to BUILD and spawn a write builder. ORIENT spawns NO write agents and creates NO phase graph. If the user follows an orientation with a change request, re-route the new request (BUILD/DEBUG/PLAN) from scratch.
 - BUILD uses a complexity gradient (see `references/build-workflow.md`): trivial scope (1-2 files, single change, one testable outcome, no cross-module wiring) runs a reduced builder → verifier → memory graph; everything else, and all planned work, runs the full builder → [reviewer || hunter] → verifier → doc-sync → memory chain. The builder escalates trivial → full on any scope increase. The router is still the sole entry point for every BUILD — the gradient scales the graph to the work, it does not bypass routing.
 - Before execution, output one line: `-> {WORKFLOW} workflow (signals: {matched keywords})`
+
+### ORIENT move (read-only)
+
+Triggered when the user wants to understand existing code, not change it ("zoom out", "explain", "how does X work", "I'm unfamiliar with", "map this", "walk me through", "where is X", "what does this do"). The router answers inline — no `TaskCreate`, no workflow artifact, no phase graph, no write agents.
+
+Orientation procedure:
+1. Map the relevant modules/files for the named subject (use `localViewStructure` / `localFindFiles` / `localSearchCode` to locate, read only the slices needed to explain).
+2. Trace ONE layer up: callers and dependents of the focal symbols via LSP call-hierarchy (`lspCallHierarchy`) and references (`lspFindReferences`); run `localSearchCode` first to get the exact `lineHint` before any LSP call.
+3. Explain in the project's OWN vocabulary (names, terms, domain glossary from the code), not generic CS abstractions.
+4. Stop at understanding. Do not propose or apply edits. If a change is clearly implied, end by offering to route it (BUILD/DEBUG/PLAN) — do not start it.
+
+Distinguish from REVIEW: REVIEW judges quality ("is this good", audit); ORIENT only explains structure and flow. When both could match, prefer ORIENT for "help me understand", REVIEW for "tell me what's wrong".
 
 ## 2. Memory Load And Template Validation
 
@@ -284,6 +298,27 @@ Only create child tasks after the workflow artifact exists and the read-back pas
 | `kind:remfix` + `origin:bug-investigator` | `cc10x:bug-investigator` |
 | `build-doc-sync` | `cc10x:doc-syncer` |
 | `kind:remfix` + `origin:code-reviewer|silent-failure-hunter|integration-verifier|router` | `cc10x:component-builder` |
+
+### Per-role model-tier policy
+
+The router dispatches a full agent chain per phase. Match the model tier to the role's cognitive load instead of inheriting the session model for everything. Tiers are abstract: `cheap` (small/fast), `standard` (mid), `capable` (frontier). Resolve each to the concrete model id the host exposes at dispatch time.
+
+| Role / phase | Recommended tier | Why |
+|--------------|------------------|-----|
+| `component-builder` on trivial scope, transcription/mechanical builds (rote wiring, single-change, codegen-from-spec) | cheap | Mechanical execution against an explicit spec; little judgment. |
+| `doc-syncer` | cheap | Mechanical diff-driven doc edits. |
+| `component-builder` on multi-file / cross-module integration | standard | Real wiring decisions across files; needs coherence. |
+| `code-reviewer`, `silent-failure-hunter` | standard (FLOOR) | Judgment under adversarial intent; see reviewer floor below. |
+| `bug-investigator` | standard | Hypothesis search; escalate to capable on a stubborn root cause. |
+| `planner`, `plan-gap-reviewer` | capable | Architecture and decomposition; cheap planning poisons the whole chain. |
+| `integration-verifier` (final phase, REVERT authority) | capable | Last line before "done"; must not miss scenario gaps. |
+| `web-researcher`, `github-researcher` | standard | Retrieval + synthesis. |
+
+HARD rule — always specify the model explicitly. Omitting the model makes the agent inherit the expensive session model, which silently overpays for mechanical builders and reviewers. Every `Agent(...)` dispatch sets the model from this table; no implicit inheritance.
+
+Reviewer FLOOR — never run a verifier or reviewer (`code-reviewer`, `silent-failure-hunter`, `integration-verifier`, `plan-gap-reviewer`) on the cheapest tier. The cheapest tier rubber-stamps. Mid-tier is the floor for anything that gates quality; bump UP, never below.
+
+Turn-count dominates price — a capable model that one-shots a phase is cheaper than a cheap model that loops three times re-reading state and re-trying. When a role tends to iterate (planner, verifier, stubborn investigation), prefer the higher tier even though its per-token cost is greater: fewer turns wins. Under `JUST_GO`, still apply this policy — never silently downgrade a gating role to save tokens.
 
 ### Prompt scaffold for every agent
 
@@ -601,3 +636,13 @@ For DEBUG:
 - Agents must never read another agent's or skill's ORCHESTRATION STATE (workflow artifacts, another agent's contract, router-internal task bookkeeping). Cross-agent orchestration knowledge flows exclusively through router-mediated scaffolds and workflow artifacts. Reading a shared pattern/reference doc for domain guidance is fine; inheriting another agent's live state is not.
 - Native plan mode (EnterPlanMode) is not the planning substrate — the CC10x PLAN workflow is, because it carries orchestration state, workflow artifacts, intent contracts, and the bounded fresh review. But a plan the user produced via native plan mode is an acceptable input: ingest it as the `plan_file` and run the fresh-review gate over it rather than rejecting it outright.
 - Workspace isolation and branch finishing are router-owned, optional, and gated — never auto-run. At BUILD/PLAN start the router MAY offer worktree isolation, deferring to a native worktree primitive (e.g. EnterWorktree) when one exists and skipping silently when none does — cc10x never hard-requires git worktrees. After the final phase verifies PASS, the router MAY offer a finishing menu (merge / open-PR / keep / discard) via a single AskUserQuestion; it must never execute a destructive git operation (merge into a base branch, branch delete, force-push, discard) without the user's explicit menu choice, and JUST_GO auto-defaults this gate to the non-destructive `keep as-is` option. Both offers are skipped for `build_scope=trivial`. See references/build-workflow.md `### BUILD-DONE finishing (optional)` for the canonical wording.
+- A terse imperative specifies the GOAL, not the METHOD. "just add the endpoint", "quickly fix X", "simply wire Y" name a destination; they do NOT waive `phase_exit_gate`, the TDD/verifier chain, the complexity gradient's trivial→full escalation, or any governing workflow. Terseness lowers ceremony, never rigor. Treat "just"/"quickly"/"simply" as urgency cues, not as permission to skip routing or gates.
+- Route-and-load the governing workflow BEFORE asking clarifications or exploring. The workflow reference (`references/build-workflow.md`, `references/debug-workflow.md`, `references/review-workflow.md`, `references/plan-workflow.md`) tells you HOW to ask and what readiness it needs; do not freelance clarifying questions or broad exploration ahead of loading it.
+
+### Capability-offer interaction principle
+
+Optional, cost-bearing capabilities (worktree isolation, research accelerators / web+github researchers, the BUILD-DONE finishing menu) are offered under restraint:
+- Offer only when warranted by the actual task, never reflexively.
+- Put the offer in its OWN message — just the offer, nothing else bundled in — so it is easy to decline without derailing the work.
+- Be honest about cost: name that the capability is token-/cost-intensive or slower when it is.
+- NEVER re-offer a capability once the user has declined it, unless the user raises it again themselves. A declined offer is a closed decision for the rest of the session.

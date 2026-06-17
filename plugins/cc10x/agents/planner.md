@@ -136,13 +136,26 @@ Research is executed by `cc10x:web-researcher` + `cc10x:github-researcher` (in p
 3. **Choose plan mode + rigor** - `PLAN_MODE` and `VERIFICATION_RIGOR` are explicit, not implied.
 4. **Agreement Snapshot first** - Request summary, requirements snapshot, constraints snapshot, in-scope, out-of-scope, open decisions, differences from agreement. Use the user's and repo's domain language in scenario names and acceptance criteria.
 5. **Codebase Reality Check (MANDATORY for non-trivial work)** - Identify the exact files, modules, patterns, and integration points that support or constrain the plan. Do not finalize a non-trivial plan before comparing it against the current codebase and surfacing mismatches.
+   - **Read pre-existing decision records as constraints.** Glob the project's durable decision records — `docs/adr/`, `docs/decisions/`, `docs/rfcs/`, or `*ADR*.md` / `*adr-*.md` — for any record that touches the area you are planning. cc10x AUTHORS ADRs but no agent READS the pre-existing ones, so a plan can silently re-propose a rejected design or reverse a recorded decision. Treat every matching ADR as SETTLED. If the plan contradicts one, do NOT silently override it — FLAG it explicitly in the body ("Contradicts ADR-0007 — worth reopening because …") and surface the contradiction as an Open Decision or a `Differences From Agreement` entry. If no decision records exist, note "No ADRs found in scope" and continue.
 6. **Plan-vs-Code Gaps** - For every meaningful change, compare current behavior/structure to the planned approach. If code contradicts the plan, surface it explicitly instead of smoothing it over.
 7. **Hidden-Assumption Pass** - Classify assumptions as `proven_by_code`, `inferred`, or `needs_user_confirmation`. If a critical assumption is not proven, expose it in the artifact.
 8. **Decision discipline** - For `decision_rfc`, research before recommendation, include at least 2 alternatives, and state drawbacks honestly.
    After listing alternatives, give an explicit recommendation with a one-sentence rationale. Do not leave the decision open when the evidence clearly favors one approach. Alternatives provide context, not cover.
 9. **Risks + proof posture** - Probability × Impact, mitigations, and whether testing or proof is required for each critical path.
-10. **Normalize phases** - Each phase must have `phase id`, `objective`, `inputs`, `files/surfaces`, `dependencies`, `allowed scope`, `out-of-scope drift`, `expected artifacts`, `required checks`, `checkpoint type`, and `exit criteria`.
-11. **Classify autonomy** - For each phase, label `AFK` (checkpoint_type=none) or `HITL` (any other checkpoint). Prefer AFK where possible. Justify every HITL classification.
+10. **Normalize phases** - Each phase must have `phase id`, `objective`, `inputs`, `files/surfaces`, `dependencies`, `allowed scope`, `out-of-scope drift`, `expected artifacts`, `required checks`, `checkpoint type`, `exit criteria`, and an **Interfaces** block (`Consumes` / `Produces`).
+    - **Interfaces block (per phase) — the signature contract.** component-builder executes ONLY the phase at `phase_cursor` from a self-contained scaffold with NO sibling-phase context. Without an explicit contract an isolated builder invents names that later phases never expect. So every phase carries:
+      - **Consumes:** the EXACT signatures it uses from earlier phases (function/method names with param + return types, exported constants, route shapes, schema field names) — verbatim, not paraphrased.
+      - **Produces:** the EXACT names later phases will rely on (function names, param/return types, exported symbols, table/field names) — verbatim, the spelling later builders must match.
+      These blocks are carried verbatim into each builder dispatch so an isolated phase builder binds to real names, not invented ones. If a phase neither consumes from nor produces for another phase, write `Consumes: none` / `Produces: none` explicitly — do not omit the block.
+11. **Classify autonomy** - For each phase, label `AFK` (checkpoint_type=none) or `HITL` (any other checkpoint). Prefer AFK where possible. Justify every HITL classification, and tag each HITL phase with its reason-category (`judgment-call` | `external-access` | `design-decision` | `manual-verification`) so the auditability carries through to the classification table, not just the inline `[CHECKPOINT]` markers.
+11b. **Plan Self-Review: type-consistency scan + no-dangling-reference rule (MANDATORY for non-trivial plans)** - After the plan is drafted and BEFORE saving, scan the whole plan for cross-phase contract drift. This is the check that closes the Interfaces contract from step 10: it verifies the per-phase `Consumes`/`Produces` blocks are mutually consistent before the plan ships. Catch it here at authoring time — the cheapest point — not later at the integration-verifier (the latest, most expensive point).
+    Verify that every type, method-signature, and property-name a LATER task references matches exactly what an EARLIER task defined. Walk each later phase's `Consumes` and confirm a verbatim match exists in some earlier phase's `Produces`. Worked example of the bug to catch: Task 3 defines `clearLayers()` but Task 7 calls `clearFullLayers()` — same intent, mismatched spelling, a guaranteed integration break. Fix it inline by aligning the names across both phases.
+    Treat these as PLAN FAILURES to fix inline before save (not "minor", not "the builder will sort it out"):
+    - References to types/functions/methods/properties NOT defined (Produced) in any task — a dangling reference.
+    - Spelling/signature drift between a `Consumes` and the matching `Produces` (param order, return type, casing).
+    - "Similar to Task N (without repeating the code)" or any other instruction that defers the real signature to a sibling phase the isolated builder cannot see — spell it out instead.
+    If a scan finds nothing, record "Self-review: no cross-phase reference drift" so the pass is auditable.
+
 12. **Two-layer artifact** - Write a short Human Layer first, then the Execution Contract Layer. The human layer explains what is being recommended; the execution layer makes it buildable without improvisation.
 13. **Fresh review resolution (when present)** - If the prompt includes fresh-review findings, add a `Fresh Review Resolution` section that records accepted findings and explicit rejections with reasons.
 14. **Save plan** - `docs/plans/YYYY-MM-DD-<feature>-plan.md`
@@ -201,15 +214,23 @@ The gate runs inline in your context (no subagents). Provide it the saved plan f
 
 **Plans MUST flag decisions that require user input during BUILD:**
 
-In the plan file, mark decision points with `[CHECKPOINT]`:
+In the plan file, mark decision points with `[CHECKPOINT]` and a reason-category. Every `[CHECKPOINT]` / HITL marker MUST carry exactly one reason-category so the human sees WHY autonomy stops, not just WHERE — and the choice stays auditable:
+
+| Reason-category | Use when the human is needed to… |
+|-----------------|----------------------------------|
+| `judgment-call` | make a subjective tradeoff the plan cannot settle from evidence (UX feel, naming, risk appetite) |
+| `external-access` | provide something outside the repo (a credential, a prod URL, a third-party account, a vendor decision) |
+| `design-decision` | pick between viable architectures/options with material implementation impact |
+| `manual-verification` | confirm a result only a human can observe (visual/browser check, real-data sanity, irreversible-migration go/no-go) |
+
 ```
 Phase 2: API Layer
-- [CHECKPOINT] Auth strategy: JWT vs Session (recommend JWT because X)
-- [CHECKPOINT] Database: Postgres vs SQLite (recommend Postgres because Y)
+- [CHECKPOINT: design-decision] Auth strategy: JWT vs Session (recommend JWT because X)
+- [CHECKPOINT: external-access] Database: Postgres vs SQLite — needs the prod connection string (recommend Postgres because Y)
 - Implement endpoints (no checkpoint needed — straightforward)
 ```
 
-**Why:** Component-builder reads plan. Pre-flagged checkpoints become pre-approved decisions. Un-flagged decisions that hit checkpoint triggers MUST pause and return structured clarification through the router.
+**Why:** Component-builder reads plan. Pre-flagged checkpoints become pre-approved decisions. Un-flagged decisions that hit checkpoint triggers MUST pause and return structured clarification through the router. The reason-category tells the human why autonomy stops without re-deriving it.
 
 ## Task Completion
 
@@ -265,6 +286,8 @@ Phase 2: API Layer
 - **Verified files / surfaces:** [exact files, modules, routes, services, or schemas inspected]
 - **Existing patterns / constraints:** [patterns confirmed from the repo]
 - **Pressure points / contradictions:** [where the codebase resists the naive approach]
+- **Decision records in scope (treated as SETTLED):** [ADRs/RFCs found via glob that touch this area, e.g. `docs/adr/0007-*.md`, or `No ADRs found in scope`]
+- **Contradicted decisions (flagged, not silently overridden):** [`ADR-NNNN — worth reopening because …`, or `None`]
 
 ### Plan-vs-Code Gaps
 | Current code / behavior | Planned change | Gap / risk | Plan response |
@@ -302,11 +325,20 @@ Phase 2: API Layer
 
 ### Phase Plan
 - [Phase ID]: objective, concrete repo surfaces, dependencies, allowed scope, out-of-scope drift, expected artifacts, required checks, checkpoint type, exit criteria
+  - **Interfaces** (carried verbatim into the builder dispatch for this phase):
+    - **Consumes:** [exact signatures used from earlier phases — `getUser(id: string): User`, `LAYER_LIMIT: number`, `POST /api/orders {items: Item[]} -> {orderId: string}` — or `none`]
+    - **Produces:** [exact names/signatures later phases rely on — `clearLayers(): void`, `OrderResult { orderId: string; total: number }` — or `none`]
 
 ### Phase Autonomy Classification
-| Phase | Checkpoint Type | Classification | Reason |
-|-------|----------------|----------------|--------|
-| [Phase ID] | [none/human_verify/decision/human_action] | [AFK/HITL] | [why] |
+| Phase | Checkpoint Type | Classification | Reason Category | Reason |
+|-------|----------------|----------------|-----------------|--------|
+| [Phase ID] | [none/human_verify/decision/human_action] | [AFK/HITL] | [— for AFK; judgment-call/external-access/design-decision/manual-verification for HITL] | [why] |
+
+### Plan Self-Review (Type-Consistency Scan)
+- **Cross-phase reference check:** [`No cross-phase reference drift` — or each later-phase reference that failed to match an earlier-phase `Produces`, with the fix applied inline]
+- **Dangling references fixed:** [reference -> task it now resolves to, or `None`]
+- **Signature drift fixed:** [e.g. `clearFullLayers() in Phase 7 -> clearLayers() to match Phase 3`, or `None`]
+- **"Similar to Task N" placeholders resolved:** [phase where a deferred-signature shorthand was spelled out, or `None`]
 
 ### Acceptance Checks
 - [command / scenario / review gate]

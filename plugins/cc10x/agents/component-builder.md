@@ -127,6 +127,21 @@ After reading the plan file, BEFORE writing the first test, scan for uncertainti
 **Why before the first test:** A wrong assumption caught here costs nothing.
 The same assumption discovered at GREEN costs the entire TDD cycle.
 
+### BUILD_PREFLIGHT Token (MANDATORY before first mutation)
+
+Immediately BEFORE your first file mutation (the first Write/Edit, including the RED test file), emit a single literal line summarizing the gates that already exist above. This is the machine-readable proof that those gates ran — it invents no new gate.
+
+```
+BUILD_PREFLIGHT: context=pass patterns=pass uncertainty=pass mutation=open
+```
+
+- `context` — memory + plan/prompt read (Memory First + GATE: Plan File Check passed).
+- `patterns` — Phase Contract recovered (objective/inputs/files/artifacts/checks/exit criteria present).
+- `uncertainty` — this Pre-Flight uncertainty scan ran and found nothing blocking.
+- `mutation=open` — gates cleared, mutation permitted. Set a field to `fail` only if its gate did not clear, in which case do NOT mutate — return `STATUS: FAIL`, `PHASE_STATUS: blocked` instead.
+
+**Enforcement:** Emit this line exactly once, verbatim, on its own line, before any file is created or modified. A hook/router greps for `BUILD_PREFLIGHT:`. Its ABSENCE blocks acceptance of the build output — a build with no BUILD_PREFLIGHT token is treated as if the Pre-Flight gates never ran.
+
 ## Deviation Discipline
 
 While executing, you will discover work not spelled out line-by-line in the phase. Only absorb work that is directly caused by the current phase's changes or required to satisfy the current phase's stated exit criteria.
@@ -139,6 +154,11 @@ If the extra work is not directly traceable to the current phase contract, do no
 ## Process
 1. **Understand** - Read relevant files, define acceptance criteria for the current phase, and name at least one success scenario tied to the phase intent. **Done:** Acceptance criteria stated with at least one named scenario. **Wrong:** No criteria stated, or scenario does not map to phase intent — FAIL with REMEDIATION_REASON.
 2. **RED** - Write failing test (must exit 1). **Done:** Test exists, runs, exits 1 with meaningful failure message. **Wrong:** Test exits 0 (not actually failing), or does not run (import/syntax error) — fix before GREEN.
+
+   **RED must be BEHAVIORAL, not an ERROR (false-RED guard):** Exit 1 alone is not proof of a real RED. Exit 1 can come from a compile/import/collection ERROR (the test never ran) instead of the feature being missing. A genuine RED is a *behavioral* failure: the EXPECTED feature-missing reason — e.g. `X is not a function`, `undefined is not a constructor`, an assertion mismatch like `expected 3, received undefined`, or `Cannot find name 'X'` for the symbol under test. It is NOT a syntax error, a bad-import error on an unrelated module, a missing test dependency, or a test-collection ERROR.
+   - **RECORD the observed failure reason** verbatim from the runner output — you carry it into TDD Evidence and the Router Contract.
+   - If RED is an import/syntax/collection ERROR (the test harness is broken, not the feature), that is a false-RED. Fix the test harness and re-run until RED is a genuine behavioral feature-missing failure. Do not proceed to GREEN on a false-RED.
+   - The router validates the recorded reason before accepting RED. Exit 1 with an error-shaped reason is rejected the same as exit 0.
 3. **GREEN** - Minimal code to pass (must exit 0). **Done:** Test passes, exit 0, no unrelated test breakage. **Wrong:** Test still fails, or other tests broken — do not proceed to REFACTOR.
 4. **REFACTOR** - Clean up, keep tests green. **Done:** Tests still pass after cleanup. **Wrong:** Tests fail after refactor — revert refactor, return to GREEN.
 5. **Verify** - All tests pass, functionality works, truths/artifacts/wiring reconcile, and phase exit criteria are satisfied. **Done:** All verification evidence collected with exit codes. **Wrong:** Missing exit codes or untested scenarios — collect evidence before reporting.
@@ -245,6 +265,10 @@ The scenario must map back to the plan or prompt intent. STATUS=PASS without a p
 - Command: `[exact command run]`
 - Exit code: **1** (MUST be 1, not 0)
 - Failure message: `[actual error shown]`
+- Failure reason kind: `behavioral` (MUST be `behavioral`, not `error`)
+- Observed failure reason: `[verbatim feature-missing reason, e.g. "X is not a function" / "expected 3, received undefined"]`
+
+**RED behavioral gate:** A RED whose failure is a syntax/import/collection ERROR (kind=`error`) is a false-RED and is rejected even at exit 1. Fix the harness and re-run until the recorded reason is a genuine feature-missing behavioral failure.
 
 **GREEN Phase:**
 - Implementation file: `path/to/implementation.ts`
@@ -293,7 +317,10 @@ CHECKPOINT_TYPE: "none" | "human_verify" | "decision" | "human_action"
 PROOF_STATUS: "passed" | "gaps_found" | "human_needed"
 INPUTS: ["input 1", "input 2"] | []
 EXPECTED_ARTIFACTS: ["artifact 1", "artifact 2"] | []
+BUILD_PREFLIGHT_EMITTED: [true if the `BUILD_PREFLIGHT:` token was emitted before the first mutation, else false]
 TDD_RED_EXIT: [1 if red phase ran, null if missing]
+TDD_RED_REASON_KIND: "behavioral" | "error" | null
+TDD_RED_REASON: "[verbatim observed feature-missing failure reason]" | null
 TDD_GREEN_EXIT: [0 if green phase ran, null if missing]
 SCENARIOS:
   - name: "[scenario name]"
@@ -323,5 +350,5 @@ MEMORY_NOTES:
   verification: ["TDD evidence: RED exit={X}, GREEN exit={Y}"]
   deferred: ["Non-blocking findings for patterns.md — from Findings section"]
 ```
-**CONTRACT RULE:** STATUS=PASS requires PHASE_STATUS=`completed`, PHASE_EXIT_READY=true, `PROOF_STATUS=passed`, TDD_RED_EXIT=1, TDD_GREEN_EXIT=0, `BLOCKED_ITEMS=[]`, and at least one passing scenario in `SCENARIOS`. That passing scenario must include non-empty `name`, `command`, `expected`, `actual`, and `exit_code`. `CHECKPOINT_TYPE` must be `none` unless the phase is intentionally paused for human action. **Exception:** If no `package.json` exists (pure HTML/CSS/JS project with no test runner), TDD evidence may use manual browser verification instead — set TDD_RED_EXIT=1 and TDD_GREEN_EXIT=0 with evidence describing the manual check.
+**CONTRACT RULE:** STATUS=PASS requires PHASE_STATUS=`completed`, PHASE_EXIT_READY=true, `PROOF_STATUS=passed`, BUILD_PREFLIGHT_EMITTED=true, TDD_RED_EXIT=1, TDD_RED_REASON_KIND=`behavioral` with a non-empty TDD_RED_REASON, TDD_GREEN_EXIT=0, `BLOCKED_ITEMS=[]`, and at least one passing scenario in `SCENARIOS`. The router rejects a RED with TDD_RED_REASON_KIND=`error` (false-RED from a syntax/import/collection failure) the same as a missing RED, and rejects any build with BUILD_PREFLIGHT_EMITTED=false. That passing scenario must include non-empty `name`, `command`, `expected`, `actual`, and `exit_code`. `CHECKPOINT_TYPE` must be `none` unless the phase is intentionally paused for human action. **Exception:** If no `package.json` exists (pure HTML/CSS/JS project with no test runner), TDD evidence may use manual browser verification instead — set TDD_RED_EXIT=1 and TDD_GREEN_EXIT=0 with evidence describing the manual check.
 ```

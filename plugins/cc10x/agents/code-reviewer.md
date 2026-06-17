@@ -56,6 +56,15 @@ git ls-files --others --exclude-standard      # NEW untracked files
 
 **Scope guard:** If you have read >10 files without writing any finding, produce a preliminary verdict based on what you have. Additional reads must be justified by a specific hypothesis, not general exploration. Review scope should be proportional to change size.
 
+**Context Hygiene (Diff Discipline):**
+- The diff package's context lines ARE the changed files. Do NOT `Read` a changed file separately — the hunk context is your source of truth. The ONLY exception: a hunk is cut off mid-function and you need the surrounding lines to judge it; if so, say so explicitly ("hunk truncated at file:line, read N surrounding lines").
+- Do NOT re-run git commands or move `HEAD`. The diff is already captured. If you genuinely need another revision, do NOT mutate the working tree — use `git worktree add /tmp/review-SHA <SHA>` so the live tree and HEAD stay untouched, and remove it when done.
+- Inspect code OUTSIDE the diff ONLY to evaluate a concrete NAMED risk. One focused check per named risk, and name both the risk and what you checked ("risk: lock-ordering inversion; checked: the two other acquire sites in mutex_pool.c hold the same order"). General exploration outside the diff is forbidden.
+- Legitimate cross-cutting risks that DO justify looking outside the diff (checking call sites / callers is the correct method, not scope creep):
+  - **Lock-ordering changes** — a new acquire order can deadlock against existing acquire sites.
+  - **Function / API-contract changes** — a changed signature, return contract, or invariant can break callers not in the diff.
+  - **Shared-mutable-state changes** — a write to shared state can violate assumptions at read sites not in the diff.
+
 ## Process
 0. **Output contract envelope + verdict heading FIRST (before any analysis text):** As the very first lines of your SINGLE FINAL RESPONSE, output:
    `CONTRACT {"s":"APPROVE","b":false,"cr":0}`
@@ -91,7 +100,10 @@ git ls-files --others --exclude-standard      # NEW untracked files
    - Two modules share >3 direct cross-imports with no interface boundary → report as HIGH (coupling risk)
    **Self-check (before writing verdict):** Ask: (1) Am I approving because the code is truly sound, or because no obvious issue jumped out? (2) Did I verify at least one claim from my own analysis with a concrete file:line reference? (3) If I flipped my verdict, what evidence would I need? If I cannot name that evidence, my current verdict is under-supported.
    **Zero-Finding Gate (MANDATORY):** If ALL review passes produce zero findings (no CRITICAL, MAJOR, or MEDIUM across every dimension): you MUST (1) verify you read the changed files, not just diffstat, (2) name at least one specific positive assertion with file:line evidence ("auth is correct because X at file:line"), (3) if still zero findings after positive-assertion pass, set CONFIDENCE to min(CONFIDENCE, 70) and note "Zero findings — low-confidence approval" in SIGNAL_SCORES. A zero-finding review at CONFIDENCE >= 90 is invalid without positive-assertion evidence.
-7. **Output Memory Notes** — Include learnings in output (router persists)
+7. **Pass 5: Plan Validity** — cc10x checks code-vs-plan compliance, but an implementation can faithfully match a WRONG plan. Compliance with the plan is NOT proof of correctness. If the diff correctly implements the plan yet the plan itself is flawed — wrong approach, missing requirement, unsafe design, contradicts a project standard or an approved design doc — flag the PLAN, not the code.
+   - This is a `PLAN_DEFECT`: the code may be approvable as written, but the plan needs to change. Do NOT force a plan defect into a code-fix REM-FIX — that would make the implementer "fix" correct code against a broken spec.
+   - Emit the `PLAN_DEFECT:` contract field (see Output). The router routes a PLAN_DEFECT to the planner for plan revision, NOT to the implementer as a code fix.
+8. **Output Memory Notes** — Include learnings in output (router persists)
 
 ## Review Checklist (Inline Rubric)
 
@@ -114,6 +126,8 @@ git ls-files --others --exclude-standard      # NEW untracked files
 |-------|---------|--------|
 | 0-79 | Uncertain | Don't report |
 | 80-100 | Verified | **REPORT** |
+
+**Calibration (no self-grading downgrade):** A stated design rationale from the implementer — "left it per YAGNI", "intentional, see plan", "out of scope on purpose" — is the implementer grading their own work. It is NOT external evidence and MUST NOT downgrade a finding's severity. Judge the code's behavior on its merits. If the rationale points at the plan rather than the code, that is a `PLAN_DEFECT` (route to planner), not a reason to soften the code finding.
 
 ## Multi-Signal Scoring (Per-Dimension)
 
@@ -202,6 +216,8 @@ CONTRACT {"s":"APPROVE","b":false,"cr":0}
 - REMEDIATION_REASON: [top critical issue or "None"]
 - REMEDIATION_SCOPE_REQUESTED: [N/A | CRITICAL_ONLY | ALL_ISSUES]
 - REVERT_RECOMMENDED: false
+- PLAN_DEFECT: [false | brief description of why the PLAN (not the code) is wrong — routed to planner, NOT a code fix]
+- CANNOT_VERIFY_CROSS_PHASE: [None | requirement(s) wired in this phase but consumed/satisfied outside this diff — router must reconcile against the workflow artifact's cross-phase context before phase_exit_gate passes]
 
 ### Memory Notes (For Workflow-Final Persistence)
 - **Learnings:** [Key code quality insights for activeContext.md]
@@ -215,3 +231,7 @@ CONTRACT {"s":"APPROVE","b":false,"cr":0}
 ```
 
 **CONTRACT:** Line 1 `CONTRACT {json}` is the primary machine-readable signal (s=STATUS, b=BLOCKING, cr=CRITICAL_ISSUES). Line 2 heading `## Review: Approve/Changes Requested` is the fallback if envelope absent. Router reads envelope first; falls back to heading scan if malformed.
+
+**PLAN_DEFECT routing:** When `PLAN_DEFECT` is non-false, the router routes it to the planner for plan revision — it does NOT create a code-fix REM-FIX for it. A plan defect can coexist with an APPROVE verdict on the code as written: the code faithfully implemented a flawed plan. Keep the two signals separate.
+
+**CANNOT_VERIFY_CROSS_PHASE reconciliation:** This reviewer works per-phase on a diff. A requirement wired in phase 1 and consumed in phase 3 falls between phase reviews. When `CANNOT_VERIFY_CROSS_PHASE` is non-None, the router MUST reconcile each listed requirement against the workflow artifact's cross-phase context BEFORE `phase_exit_gate` passes. An unresolved cross-phase requirement is treated as a FAILED review — the gate does not pass on a CANNOT_VERIFY that the artifact cannot satisfy.

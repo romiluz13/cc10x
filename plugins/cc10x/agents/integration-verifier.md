@@ -139,6 +139,47 @@ For now, keep the normal full verification pass. This classification exists so C
 
 **All checks must PASS before STATUS: PASS. Skip any = STATUS: FAIL.**
 
+## Test Honesty Gates (MANDATORY — extends the test-tampering pass)
+
+The Pre-Completion `Test tampering` row catches assertions that were weakened, skipped, or trivialized. These gates catch a worse failure mode: a test that **passes while proving nothing** — the "looks-successful-but-does-nothing" defect. A green test is not proof the test is honest. Run these grep sweeps over the changed test files (and the production files they exercise). Any hit is a false-GREEN signal: treat the affected scenario as UNVERIFIED, not PASS, until you have re-proven it through the real interface.
+
+### False-GREEN red flags (grep-able)
+
+- **Asserting the mock, not the behavior** — assertions on `*-mock` testIDs / mock-shaped IDs. The test confirms the mock exists, never that real behavior happened.
+  - `grep -rEn "getByTestId\(['\"][^'\"]*-mock|data-testid=['\"][^'\"]*-mock|toBe\(['\"]mock|mockReturnValue\([^)]*\)\s*;[^}]*expect" <test-files>`
+  - Defect: a passing test for a component that is fully mocked out asserts nothing about production code.
+
+- **Schema-incomplete mocks** — mocks MISSING fields that the real schema/API defines. The mock object is narrower than the type it stands in for, so the test passes against a shape that can never occur in production.
+  - Compare each mock/fixture literal against the real type/interface/schema (read the source type, then diff the keys). Red flag: mock has fewer required fields than the schema, or omits a field the code under test will read in prod.
+  - `grep -rEn "as\s+(any|unknown|Partial<)" <test-files>` — casts that paper over a schema-incomplete mock.
+  - Defect: code that depends on a field the mock never supplies is exercised against a lie; the real path is never tested.
+
+- **DB-bypass verification** — behavior asserted by EXTERNAL means (direct DB query, queue peek, filesystem read) instead of through the public interface the user/caller actually uses.
+  - `grep -rEn "\.(find|findOne|collection|query|raw)\(|readFileSync|fs\.read|queue\.(peek|inspect)|redis\.(get|hget)" <test-files>`
+  - Rule: assert through the public interface (the API response, the returned value, the rendered UI). Reading the DB row a write *should* have produced confirms the write reached storage, not that the feature works end-to-end. If a test ONLY checks the side-channel and never the public surface, it is a false-GREEN.
+
+### Production-code contamination red flags
+
+- **Test-only methods in production classes** — production code that exposes methods only ever called from test files. They pollute production, are dangerous if invoked in prod, and belong in test utilities.
+  - For each suspiciously-named production method (`reset`, `__test`, `forTest`, `setInternalState`, `_seed`, `clearAll`), grep its call sites: `grep -rEn "<methodName>\(" <src-and-test>`. Red flag: every caller is under a test path (`*.test.*`, `*.spec.*`, `__tests__/`, `test/`).
+  - Defect: the method only exists to make tests pass; it is production surface area with no production caller. Report as a finding — the right home is a test helper, not the shipped class.
+
+- **Mocking-without-understanding** — a mock that removes a side effect the test actually depends on, making the test pass for the wrong reason.
+  - Red-flag phrases in test code/comments/PR: `grep -rEn "mock this to be safe|better mock it|might be slow|just mock|mock it out" <test-files>`
+  - Rule: a mock is only honest if you know what real behavior it replaces. The correct sequence is **run the test against the REAL implementation FIRST** to observe what side effects and return values it actually depends on, **THEN mock minimally at the lowest correct level** (mock the network boundary, not the function whose logic you are testing). A mock written "to be safe" before observing the real path is a guess, and a guessed mock that happens to go green proves nothing.
+  - Defect: the mocked-away side effect was the thing under test; the assertion now succeeds regardless of whether the real code works.
+
+### Condition-based-waiting (race-conditioned false-GREEN)
+
+A test that races is a false-GREEN you MUST catch: it goes green on a fast machine and red in CI, and a green-on-this-run does not mean the behavior is correct. Flag tests that use **arbitrary sleeps** where they should **poll the actual condition**.
+
+- Red flag: `grep -rEn "setTimeout\(|sleep\(|new Promise\(res[^)]*setTimeout|await delay\(|time\.sleep\(" <test-files>` — any fixed-duration wait used to "let the thing finish."
+- Correct pattern: **wait for the condition you care about, not a guess about how long it takes.** Poll the real condition with a bounded `waitFor`-style loop — a timeout (cap) plus a short (~10ms) poll interval — and assert the moment the condition is true.
+  - Core principle (state it in your finding when this fires): *a 30s flaky loop is barely better than no loop; a 2s deterministic loop is a debugging superpower.*
+- **Legitimate-timeout EXCEPTION:** when a real timed wait is genuinely unavoidable (e.g. a debounce, a TTL expiry, a rate-limit window with KNOWN timing), it is acceptable — but only when you FIRST wait for the TRIGGERING condition (the event that starts the clock), THEN apply a justified timed wait based on the KNOWN timing, not a round-number guess. A bare `sleep(3000)` with no preceding condition-wait is the defect; `waitFor(triggerFired) → sleep(knownDebounceMs)` is not.
+
+Each gate above is a "looks-successful-but-does-nothing" defect. A hit does NOT auto-FAIL the build, but it DOES forbid counting the affected scenario as PASS on the strength of that test alone — re-prove the behavior through the real interface, or mark the scenario FAILED. Record every hit in Findings and in Memory Notes under Patterns.
+
 ## Independence Rule
 
 - Treat build/review/hunter outputs as inputs to verify, not proof that verification already happened.
