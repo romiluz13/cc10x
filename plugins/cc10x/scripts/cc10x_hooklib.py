@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
-STATE_VERSION = "v10"
+STATE_VERSION = "v11"
 
 
 def project_dir() -> Path:
@@ -29,7 +29,7 @@ def plugin_config_dir() -> Path:
 
 
 def state_root() -> Path:
-    path = project_dir() / ".cc10x" / STATE_VERSION
+    path = project_dir() / ".cc10x"
     path.mkdir(parents=True, exist_ok=True)
     return path
 

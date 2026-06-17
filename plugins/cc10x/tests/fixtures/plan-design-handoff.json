@@ -5,7 +5,7 @@
     "workflow_uuid": "wf-20260412T101500Z-plan-design-handoff",
     "workflow_id": "wf-20260412T101500Z-plan-design-handoff",
     "workflow_type": "PLAN",
-    "state_root": ".cc10x/v10",
+    "state_root": ".cc10x",
     "plan_mode": "execution_plan",
     "verification_rigor": "standard",
     "proof_status": "gaps_found",
