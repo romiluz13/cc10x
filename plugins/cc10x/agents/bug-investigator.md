@@ -252,7 +252,7 @@ Call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` where `{TASK_ID}
 | Regression: [name] | [state] | [action] | [result] | [command] | [expected] | [actual] | [0/1] |
 | Variant: [name] | [state] | [action] | [result] | [command] | [expected] | [actual] | [0/1] |
 
-**Rule:** For `STATUS=FIXED`, include at least one `Regression:` scenario and one `Variant:` scenario. Both must have non-empty `command`, `expected`, `actual`, and `exit`.
+**Rule:** For `STATUS=FIXED`, always include at least one `Regression:` scenario with non-empty `command`, `expected`, `actual`, and `exit`. Include a `Variant:` scenario only when the bug has applicable variants; if it has none, omit it and set `VARIANTS_NOT_APPLICABLE: "{reason}"` rather than fabricating one.
 
 ### Assumptions
 - [Assumptions about root cause]
@@ -283,6 +283,7 @@ ROOT_CAUSE: "[one-line summary of root cause]"
 TDD_RED_EXIT: [1 if regression test failed before fix, null if missing]
 TDD_GREEN_EXIT: [0 if regression test passed after fix, null if missing]
 VARIANTS_COVERED: [count of variant cases in regression test]
+VARIANTS_NOT_APPLICABLE: null | "[reason this bug has no applicable variants, e.g. pure single-branch logic bug]"
 BLAST_RADIUS_SCAN:
   same_file: "[summary]"
   adjacent_scan: ["path/a", "path/b"] | []
@@ -302,7 +303,7 @@ DECISIONS: ["decision 1", "decision 2"]
 BLOCKING: [true if STATUS != FIXED]
 NEXT_ACTION: "review" | "research" | "investigate" | "abort"
 REMEDIATION_NEEDED: [true if router should create remediation instead of continuing]
-REQUIRES_REMEDIATION: [true if TDD evidence missing or VARIANTS_COVERED=0]
+REQUIRES_REMEDIATION: [true if TDD evidence missing, or VARIANTS_COVERED=0 without VARIANTS_NOT_APPLICABLE set]
 REMEDIATION_REASON: null | "Add regression test (RED→GREEN) + variant coverage"
 NEEDS_EXTERNAL_RESEARCH: [true if local investigation exhausted and external patterns needed, else false]
 RESEARCH_REASON: null | "[specific error/pattern to search for on GitHub]"
@@ -313,6 +314,6 @@ MEMORY_NOTES:
   verification: ["Fix: RED exit={X}, GREEN exit={Y}, {N} variants covered"]
   deferred: ["Non-blocking issues discovered during investigation"]
 ```
-**CONTRACT RULE:** STATUS=FIXED requires `VERIFICATION_RIGOR` to be explicit, TDD_RED_EXIT=1, TDD_GREEN_EXIT=0, VARIANTS_COVERED>=1, a non-empty `BLAST_RADIUS_SCAN`, a `Regression:` scenario, and a `Variant:` scenario. Both required scenarios must include non-empty `command`, `expected`, `actual`, and `exit_code`. **Exception:** If no `package.json` exists (pure HTML/CSS/JS project with no test runner), TDD evidence may use manual browser verification instead — set TDD_RED_EXIT=1 and TDD_GREEN_EXIT=0 with evidence describing the manual check.
+**CONTRACT RULE:** STATUS=FIXED requires `VERIFICATION_RIGOR` to be explicit, TDD_RED_EXIT=1, TDD_GREEN_EXIT=0, a non-empty `BLAST_RADIUS_SCAN`, and a `Regression:` scenario with non-empty `command`, `expected`, `actual`, and `exit_code`. **Variant coverage is conditional:** if the bug has applicable variants, also require `VARIANTS_COVERED>=1` and a `Variant:` scenario (same evidence completeness). If the bug genuinely has none (e.g. a pure single-branch logic bug), set `VARIANTS_COVERED: 0` and `VARIANTS_NOT_APPLICABLE: "{reason}"` — this is a valid path to FIXED with no fabricated `Variant:` scenario. Never invent a variant to satisfy the schema. **Exception:** If no `package.json` exists (pure HTML/CSS/JS project with no test runner), TDD evidence may use manual browser verification instead — set TDD_RED_EXIT=1 and TDD_GREEN_EXIT=0 with evidence describing the manual check.
 **CONTRACT RULE:** If NEEDS_EXTERNAL_RESEARCH=true: RESEARCH_REASON must be non-null
 ```

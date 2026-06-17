@@ -29,7 +29,7 @@ Rules:
 - NEVER use Claude Code's native plan mode (EnterPlanMode). CC10x owns planning. All "plan", "design", "architect", "brainstorm" requests route to the CC10x PLAN workflow — not to the built-in plan mode tool. EnterPlanMode bypasses CC10x orchestration, memory, workflow artifacts, and verification entirely.
 - ERROR always wins over BUILD.
 - REVIEW is advisory only. Never let REVIEW create code-changing tasks.
-- BUILD always uses the full chain. The old QUICK path is retired.
+- BUILD uses a complexity gradient (see `references/build-workflow.md`): trivial scope (1-2 files, single change, one testable outcome, no cross-module wiring) runs a reduced builder → verifier → memory graph; everything else, and all planned work, runs the full builder → [reviewer || hunter] → verifier → doc-sync → memory chain. The builder escalates trivial → full on any scope increase. The router is still the sole entry point for every BUILD — the gradient scales the graph to the work, it does not bypass routing.
 - Before execution, output one line: `-> {WORKFLOW} workflow (signals: {matched keywords})`
 
 ## 2. Memory Load And Template Validation
@@ -448,7 +448,7 @@ If present:
 | Agent | Override |
 |-------|----------|
 | component-builder | `STATUS=PASS` requires `TDD_RED_EXIT=1`, `TDD_GREEN_EXIT=0`, `PHASE_STATUS=completed`, `PHASE_EXIT_READY=true`, `PROOF_STATUS=passed`, empty `BLOCKED_ITEMS`, and a non-empty `SCENARIOS` array with at least one passing scenario. That passing scenario must include non-empty `name`, `command`, `expected`, `actual`, and `exit_code`. |
-| bug-investigator | `STATUS=FIXED` requires `VERIFICATION_RIGOR` to be explicit, `TDD_RED_EXIT=1`, `TDD_GREEN_EXIT=0`, `VARIANTS_COVERED>=1`, a non-empty `BLAST_RADIUS_SCAN`, and a non-empty `SCENARIOS` array unless it explicitly set `NEEDS_EXTERNAL_RESEARCH=true`. At least one scenario name must start with `Regression:` and one with `Variant:`. Both required scenarios must include non-empty `command`, `expected`, `actual`, and `exit_code`. |
+| bug-investigator | `STATUS=FIXED` requires `VERIFICATION_RIGOR` to be explicit, `TDD_RED_EXIT=1`, `TDD_GREEN_EXIT=0`, a non-empty `BLAST_RADIUS_SCAN`, and a non-empty `SCENARIOS` array unless it explicitly set `NEEDS_EXTERNAL_RESEARCH=true`. At least one scenario name must start with `Regression:` (non-empty `command`, `expected`, `actual`, `exit_code`). A `Variant:` scenario with `VARIANTS_COVERED>=1` is required ONLY when the bug has applicable variants; if `VARIANTS_NOT_APPLICABLE` is set with a reason and `VARIANTS_COVERED=0`, accept FIXED without a `Variant:` scenario. Do not force a fabricated variant. |
 | code-reviewer | `APPROVE` + critical issues becomes `CHANGES_REQUESTED` |
 | code-reviewer | `APPROVE` with zero findings across ALL dimensions AND fewer than 3 file:line evidence citations → trigger fallback inline verification. Rubber-stamp approvals without substantive analysis are invalid. |
 | silent-failure-hunter | `CLEAN` + critical issues becomes `ISSUES_FOUND` |

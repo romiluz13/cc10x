@@ -28,6 +28,7 @@ REQUIRED_FIXTURES = (
     "build-scope-gate.json",
     "build-remediation-loop.json",
     "debug-fixed.json",
+    "debug-fixed-no-variant.json",
     "debug-research.json",
     "skill-precedence.json",
     "workflow-identity-v10.json",
@@ -201,10 +202,6 @@ def validate_investigator_contract(
     require(contract["TDD_RED_EXIT"] == 1, f"{fixture_id}: missing regression RED")
     require(contract["TDD_GREEN_EXIT"] == 0, f"{fixture_id}: missing regression GREEN")
     require(
-        contract["VARIANTS_COVERED"] >= 1,
-        f"{fixture_id}: variant coverage must be at least 1",
-    )
-    require(
         bool(contract.get("BLAST_RADIUS_SCAN")),
         f"{fixture_id}: blast radius scan is required",
     )
@@ -215,10 +212,27 @@ def validate_investigator_contract(
         any(name.startswith("Regression:") for name in scenario_names),
         f"{fixture_id}: expected a Regression: scenario",
     )
-    require(
-        any(name.startswith("Variant:") for name in scenario_names),
-        f"{fixture_id}: expected a Variant: scenario",
-    )
+    # Variant coverage is conditional: required unless the bug has no applicable
+    # variants, in which case VARIANTS_NOT_APPLICABLE must explain why and
+    # VARIANTS_COVERED must be 0 (no fabricated variant).
+    if contract.get("VARIANTS_NOT_APPLICABLE"):
+        require(
+            contract["VARIANTS_COVERED"] == 0,
+            f"{fixture_id}: VARIANTS_NOT_APPLICABLE set but VARIANTS_COVERED != 0",
+        )
+        require(
+            not any(name.startswith("Variant:") for name in scenario_names),
+            f"{fixture_id}: VARIANTS_NOT_APPLICABLE set but a Variant: scenario was fabricated",
+        )
+    else:
+        require(
+            contract["VARIANTS_COVERED"] >= 1,
+            f"{fixture_id}: variant coverage must be at least 1",
+        )
+        require(
+            any(name.startswith("Variant:") for name in scenario_names),
+            f"{fixture_id}: expected a Variant: scenario",
+        )
 
 
 def validate_fixture_common(fixture: dict[str, Any]) -> None:
@@ -837,6 +851,21 @@ def check_debug_fixed(fixture: dict[str, Any]) -> None:
     )
 
 
+def check_debug_fixed_no_variant(fixture: dict[str, Any]) -> None:
+    # A genuinely no-variant bug must reach FIXED via VARIANTS_NOT_APPLICABLE
+    # with VARIANTS_COVERED=0 and no fabricated Variant: scenario.
+    contract = fixture["agent_outputs"]["investigator_contract"]
+    validate_investigator_contract("debug-fixed-no-variant", contract)
+    require(
+        bool(contract.get("VARIANTS_NOT_APPLICABLE")),
+        "debug-fixed-no-variant: expected VARIANTS_NOT_APPLICABLE to be set",
+    )
+    require(
+        fixture["expected"]["next_action"] == "debug_review",
+        "debug-fixed-no-variant: wrong next action",
+    )
+
+
 def check_debug_research(fixture: dict[str, Any]) -> None:
     validate_investigator_contract(
         "debug-research",
@@ -957,6 +986,7 @@ CHECKS = {
     "build-scope-gate.json": check_build_scope_gate,
     "build-remediation-loop.json": check_build_remediation_loop,
     "debug-fixed.json": check_debug_fixed,
+    "debug-fixed-no-variant.json": check_debug_fixed_no_variant,
     "debug-research.json": check_debug_research,
     "skill-precedence.json": check_skill_precedence,
     "workflow-identity-v10.json": check_workflow_identity_v10,

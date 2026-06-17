@@ -1,0 +1,57 @@
+{
+  "id": "debug-fixed-no-variant",
+  "workflow_type": "DEBUG",
+  "starting_artifact": {
+    "workflow_uuid": "wf-20260617T120000Z-debug-novariant",
+    "workflow_id": "wf-20260617T120000Z-debug-novariant",
+    "workflow_type": "DEBUG",
+    "state_root": ".cc10x",
+    "plan_mode": "execution_plan",
+    "verification_rigor": "standard",
+    "proof_status": "gaps_found",
+    "traceability": {"requirements": [], "phases": [], "verification": [], "remediation": []},
+    "phase_cursor": "debug-investigate",
+    "task_ids": {},
+    "results": {},
+    "intent": {"goal": "Fix null-deref on empty password login"},
+    "evidence": {},
+    "quality": {"convergence_state": "pending"},
+    "status_history": [],
+    "remediation_history": []
+  },
+  "relevant_tasks": {},
+  "agent_outputs": {
+    "investigator_contract": {
+      "STATUS": "FIXED",
+      "VERIFICATION_RIGOR": "standard",
+      "TDD_RED_EXIT": 1,
+      "TDD_GREEN_EXIT": 0,
+      "VARIANTS_COVERED": 0,
+      "VARIANTS_NOT_APPLICABLE": "Pure single-branch guard: reject empty password. No input variants change the code path.",
+      "BLAST_RADIUS_SCAN": {
+        "same_file": "Single guard added at the one login entry point; no sibling branches.",
+        "adjacent_scan": [],
+        "result": "fixed_repro_only_with_deferred_duplicates"
+      },
+      "SCENARIOS": [
+        {
+          "name": "Regression: login rejects empty password",
+          "given": "an empty password field",
+          "when": "the user submits the login form",
+          "then": "login is rejected with a validation error, no null deref",
+          "command": "npm test -- login-empty-password",
+          "expected": "validation error, exit 0",
+          "actual": "validation error, exit 0",
+          "exit_code": 0,
+          "status": "PASS"
+        }
+      ]
+    }
+  },
+  "expected": {
+    "next_action": "debug_review",
+    "artifact_delta": {
+      "quality": {"convergence_state": "pending"}
+    }
+  }
+}
