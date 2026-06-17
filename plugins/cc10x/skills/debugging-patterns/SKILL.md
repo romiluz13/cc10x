@@ -367,7 +367,7 @@ Consider starting over when:
    - Are we "sticking with it through sheer inertia"?
    - Should we refactor architecture vs. continue fixing symptoms?
 
-   **Discuss with your human partner before attempting more fixes**
+   **Discuss with the user before attempting more fixes**
 
    This is NOT a failed hypothesis - this is a wrong architecture.
 

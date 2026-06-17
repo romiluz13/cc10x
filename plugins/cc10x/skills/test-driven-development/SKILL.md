@@ -31,7 +31,7 @@ Read only the references needed for the current test cycle:
 - Refactoring
 - Behavior changes
 
-**Exceptions (ask your human partner):**
+**Exceptions (ask the user):**
 - Throwaway prototypes
 - Generated code
 - Configuration files
@@ -398,7 +398,7 @@ Do NOT skip tests because code "looks simple" — simple code breaks too. The 80
 
 | Problem | Solution |
 |---------|----------|
-| Don't know how to test | Write wished-for API. Write assertion first. Ask your human partner. |
+| Don't know how to test | Write wished-for API. Write assertion first. Ask the user. |
 | Test too complicated | Design too complicated. Simplify interface. |
 | Must mock everything | Code too coupled. Use dependency injection. |
 | Test setup huge | Extract helpers. Still complex? Simplify design. |
@@ -472,4 +472,4 @@ Production code → test exists and failed first
 Otherwise → not TDD
 ```
 
-No exceptions without your human partner's permission.
+No exceptions without the user's permission.
