@@ -24,6 +24,59 @@ test fixture was de-versioned in lockstep. Docs and the version-sync
 cascade (README banner, marketplace metadata, doc version tags) updated
 to `v11.0.0`.
 
+### Revitalization: complexity gradient, artifact hardening, router softening
+
+- **Complexity gradient restored.** Trivial BUILD work runs a reduced
+  builder→verifier→memory graph instead of the full 4-subagent chain;
+  standard/planned work keeps the full chain, with escalation on
+  scope-increase or blocked items. This removes the "one-line edit pays
+  full ceremony" cost without weakening gates.
+- **Artifact substrate hardened.** The hand-typed workflow artifact blob
+  was replaced with a copyable skeleton (`workflow-artifact.skeleton.json`),
+  and the post-tool-use artifact guard now fails closed (exit 2 with a
+  fix-hint) on corruption when `artifactIntegrity=block`.
+- **Router supremacy softened.** The router is the default for multi-step
+  work rather than an absolute gate; `EnterPlanMode` is ingestible (not
+  banned) and skill composition is allowed under a strict precedence
+  ladder. A `build-finish` phase adds an optional, gated finishing menu
+  (worktree isolation, merge/PR/discard).
+- **Doc-drift guard added.** A new `cc10x_doc_consistency_check.py`
+  validator asserts README counts/headings and every version string match
+  disk + `plugin.json` on every commit.
+- **Fork-strip.** The four near-verbatim superpowers forks (TDD,
+  verification-before-completion, brainstorming, debugging-patterns) were
+  trimmed to cc10x-deltas with explicit `DIVERGENCE` notes, and an eval
+  suite (`docs/EVAL-STANDARD.md` + per-skill `evals/`) was added.
+
+### Upstream idea harvest (superpowers 6.0.2 + matt-pocock + superpowers-lab)
+
+A comprehensive harvest stole the best ideas from the upstream skill
+ecosystem and adapted them to cc10x's accountability identity. Highlights:
+
+- **Guard dispatch INPUTS, not just outputs.** The router now self-checks
+  its own dispatch prompts against a blocklist so it cannot pre-judge or
+  soften a read-only verifier's task; dispatch passes artifact PATHS and
+  agents return thin contract envelopes (context hygiene).
+- **Bidirectional review.** Remediation gained `FINDING_DISPUTED`
+  (verifier-adjudicated, evidence-gated), `PLAN_DEFECT`, fix-wave
+  consolidation, a re-review precondition gate, and a plan-mandated-finding
+  carve-out.
+- **Baseline-before-change + feedback-loop-first debugging.** BUILD records
+  which tests were already failing; bug-investigator gates hypotheses
+  behind a real repro loop, with defense-in-depth fixes and boundary
+  instrumentation.
+- **Test/mock honesty gates**, behavioral-RED enforcement, model-tier
+  policy, a read-only ORIENT intent, and many skill-level deltas.
+- **Five net-new skills:** `skill-eval-harness` (prove the router triggers
+  correctly and gates hold under pressure), `authoring-cc10x-guidance`
+  (match-the-form-to-the-failure meta-authoring), `finding-duplicate-functions`
+  (semantic dup audit), `prototyping` (throwaway spike, delete-or-absorb),
+  and `mcp-cli` (on-demand MCP without permanent context pollution). Skill
+  count: 14 → 19.
+
+All changes were validator-gated (four validators green at every commit;
+full live harness 4/4 PASS).
+
 ## [10.1.20] - 2026-05-06
 
 ### Escape the Claude Code sensitive-file gate
