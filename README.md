@@ -712,12 +712,20 @@ plugins/cc10x/
     ├── debugging-patterns/SKILL.md
     ├── code-review-patterns/SKILL.md
     ├── planning-patterns/SKILL.md
-    ├── brainstorming/SKILL.md
     ├── architecture-patterns/SKILL.md
     ├── frontend-patterns/SKILL.md
     │   └── references/{ui-state-and-feedback,accessibility-and-forms,performance-and-layout,design-md-authoring,design-md-inspiration-index}.md
+    ├── brainstorming/SKILL.md
+    ├── plan-review-gate/SKILL.md
+    ├── diff-driven-docs/SKILL.md
     ├── research/SKILL.md
-    └── verification-before-completion/SKILL.md
+    ├── verification-before-completion/SKILL.md
+    ├── prototyping/SKILL.md
+    ├── finding-duplicate-functions/SKILL.md
+    ├── mcp-cli/SKILL.md
+    ├── skill-eval-harness/SKILL.md
+    ├── authoring-cc10x-guidance/SKILL.md
+    └── update/SKILL.md
 ```
 
 Additional developer docs live under:

@@ -153,6 +153,30 @@ copy.
 - Comparison references: internal benchmark notes
 - Review requirement: audit only unless authority wording changes
 
+### prototyping
+- Path: `plugins/cc10x/skills/prototyping/SKILL.md`
+- Role: advisory throwaway-spike mode (answer ONE design question, then delete-or-absorb)
+- Allowed edits: trigger accuracy, branch guidance, close-out/disposition wording
+- Forbidden edits: weakening the hard wall (spike "no tests/no abstractions" must never leak into BUILD; absorb is a fresh gated BUILD, not promotion)
+- Comparison references: `matt-pocock` prototype skill
+- Review requirement: audit only unless the hard-wall or precedence wording changes
+
+### finding-duplicate-functions
+- Path: `plugins/cc10x/skills/finding-duplicate-functions/SKILL.md`
+- Role: advisory semantic-duplicate audit for LLM-grown codebases (loaded by the reviewer or run standalone)
+- Allowed edits: phase clarity, high-risk-zone table, model-tier wiring, common-mistakes
+- Forbidden edits: language that authorizes deleting a duplicate without confirming the survivor has tests + callers updated + suite re-run
+- Comparison references: `superpowers-lab` finding-duplicate-functions
+- Review requirement: audit only unless authority wording changes
+
+### mcp-cli
+- Path: `plugins/cc10x/skills/mcp-cli/SKILL.md`
+- Role: advisory on-demand MCP invocation (transient, not permanently mounted)
+- Allowed edits: discovery/call/cleanup flow, install prereq, guard safety pattern
+- Forbidden edits: language that turns a missing-capability/fallback message into a hard blocker
+- Comparison references: `superpowers-lab` mcp-cli
+- Review requirement: audit only unless authority wording changes
+
 ## Review Classification
 
 Every prompt change must be classified before merge:

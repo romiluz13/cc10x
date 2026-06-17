@@ -56,6 +56,23 @@ def main() -> int:
         if a not in readme:
             errors.append(f"agent '{a}' not mentioned in README")
 
+    # Every skill dir must appear in the README file-tree block (the decorative
+    # `skills/` tree silently drifted when skills were added — the marquee/table
+    # updates are forced by n_skills, but nothing forced the tree). Locate the
+    # fenced block that holds the skills tree (contains 'cc10x-router/') and
+    # assert each skill dir name is present in it.
+    tree_block = ""
+    for block in re.findall(r"```[a-zA-Z]*\n(.*?)```", readme, re.DOTALL):
+        if "cc10x-router/" in block and "skills/" in block:
+            tree_block = block
+            break
+    if not tree_block:
+        errors.append("README file-tree block (skills/ with cc10x-router/) not found")
+    else:
+        for s in skill_dirs:
+            if s not in tree_block:
+                errors.append(f"skill '{s}' missing from README file-tree block")
+
     # Version banner matches plugin.json
     if f"**Current version:** {version}" not in readme:
         errors.append(f"README banner version != plugin.json ({version})")
