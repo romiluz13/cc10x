@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <strong>1 router</strong> &nbsp;·&nbsp; <strong>10 specialist agents</strong> &nbsp;·&nbsp; <strong>19 skills</strong> &nbsp;·&nbsp; <strong>4 workflows</strong>
+  <strong>1 router</strong> &nbsp;·&nbsp; <strong>10 specialist agents</strong> &nbsp;·&nbsp; <strong>23 skills</strong> &nbsp;·&nbsp; <strong>4 workflows</strong>
 </p>
 
 <p align="center">
@@ -435,7 +435,7 @@ WORKFLOW STATE (.cc10x/workflows/)
 
 ---
 
-## The 19 Skills
+## The 23 Skills
 
 Skills are **loaded automatically by agents**. You never invoke them directly.
 
@@ -459,9 +459,13 @@ Skills are **loaded automatically by agents**. You never invoke them directly.
 | **mcp-cli** | researchers | On-demand MCP server use without permanent context pollution |
 | **skill-eval-harness** | maintainers | Prove a router rule/gate triggers and holds under pressure |
 | **authoring-cc10x-guidance** | maintainers | Match the form of guidance (recipe vs prohibition) to the failure |
+| **receiving-code-review** | main session | Verify human/external review feedback before agreeing or implementing |
+| **codebase-deepening** | planner, ORIENT | Find & deepen shallow modules in existing (LLM-grown) code |
+| **frontend-design-critique** | code-reviewer | Anchored design-quality rubric + AI-slop ban-list, two isolated assessments |
+| **handoff-package** | WRITE agents | Portable secrets-redacted handoff doc for a coworker/other tool/fresh session |
 | **cc10x-router** | ENTRY POINT | Routes to correct workflow |
 
-> The `update` maintenance meta-skill ships alongside these and is counted in the 19.
+> The `update` maintenance meta-skill ships alongside these and is counted in the 23.
 
 ---
 
@@ -725,6 +729,10 @@ plugins/cc10x/
     ├── mcp-cli/SKILL.md
     ├── skill-eval-harness/SKILL.md
     ├── authoring-cc10x-guidance/SKILL.md
+    ├── receiving-code-review/SKILL.md
+    ├── codebase-deepening/SKILL.md
+    ├── frontend-design-critique/SKILL.md
+    ├── handoff-package/SKILL.md
     └── update/SKILL.md
 ```
 

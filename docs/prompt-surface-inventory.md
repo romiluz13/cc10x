@@ -177,6 +177,38 @@ copy.
 - Comparison references: `superpowers-lab` mcp-cli
 - Review requirement: audit only unless authority wording changes
 
+### receiving-code-review
+- Path: `plugins/cc10x/skills/receiving-code-review/SKILL.md`
+- Role: main-session discipline for verifying human/external review feedback before agreeing or implementing
+- Allowed edits: the 6-step loop, forbidden-responses table, YAGNI-grep step, when-to-push-back
+- Forbidden edits: language that restores performative agreement or that lets a suggestion be implemented without verification; weakening the user>standards>plan precedence
+- Comparison references: `superpowers` receiving-code-review
+- Review requirement: audit only unless authority/precedence wording changes
+
+### codebase-deepening
+- Path: `plugins/cc10x/skills/codebase-deepening/SKILL.md`
+- Role: advisory retrofit/deepening analysis for shallow modules in existing code (read-only; proposes, does not edit)
+- Allowed edits: deletion-test framing, diagnosis flow, candidate-badge presentation, two-adapters seam application
+- Forbidden edits: language that turns it into an ungated rewrite path bypassing the BUILD chain
+- Comparison references: `matt-pocock` improve-codebase-architecture, local `codebase-design` vocabulary
+- Review requirement: audit only unless it stops routing refactors through BUILD
+
+### frontend-design-critique
+- Path: `plugins/cc10x/skills/frontend-design-critique/SKILL.md`
+- Role: read-only design-quality critique (two isolated assessments + anchored rubric + AI-slop ban-list)
+- Allowed edits: rubric criteria, ban-list maintenance, isolation/synthesis protocol, RTL notes
+- Forbidden edits: making the optional deterministic detector a hard dependency; collapsing the two assessments into one head
+- Comparison references: `matt-pocock` impeccable critique
+- Review requirement: audit only unless it competes with frontend-patterns authority
+
+### handoff-package
+- Path: `plugins/cc10x/skills/handoff-package/SKILL.md`
+- Role: portable cross-session/cross-tool handoff doc (repo-external, reference-by-path, secrets-redacted)
+- Allowed edits: doc contents, location recipe, suggested-skills pointer
+- Forbidden edits: writing the handoff into the repo, pasting artifact contents instead of referencing, or dropping the redaction rule
+- Comparison references: `matt-pocock` handoff
+- Review requirement: audit only unless the redaction/location rules change
+
 ## Review Classification
 
 Every prompt change must be classified before merge:
