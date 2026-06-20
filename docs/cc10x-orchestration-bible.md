@@ -1,6 +1,6 @@
 # CC10X Orchestration Bible (Plugin-Only Source of Truth)
 
-> **Last reviewed against live plugin files:** 2026-06-17 (`v11.0.0`: workflow/memory state de-versioned from `.cc10x/v10/` to `.cc10x/` — the version now lives only in `plugin.json` and GitHub, never in the state path. Fresh-start on upgrade, no migration. Same harmony-hardened router/agent/skill contracts as the v10.1.x line.) | **Status:** Reviewed 2026-06-17 — verify any count or contract below against `plugins/cc10x/` before relying on it.
+> **Last reviewed against live plugin files:** 2026-06-17 (`v11.0.0`: workflow/memory state de-versioned from `.cc10x/v10/` to `.cc10x/` — the version now lives only in `plugin.json` and GitHub, never in the state path. Fresh-start on upgrade, no migration. Same harmony-hardened router/agent/skill contracts as the v10.1.x line. `v11.1.0` adds execution-engine scripts + inline fallback + 4 net-new skills, additive.) | **Status:** Reviewed 2026-06-17 — verify any count or contract below against `plugins/cc10x/` before relying on it.
 
 > This document is derived **only** from `plugins/cc10x/` (agents + skills).
 > Ignore all other docs. Do not trust external narratives.

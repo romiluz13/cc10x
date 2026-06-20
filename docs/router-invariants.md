@@ -1,6 +1,6 @@
 # CC10x Router Behavioral Invariant Registry
 
-> **Status note:** Current product line is `v11.0.0`. This registry is aligned to the live router structure in `plugins/cc10x/skills/cc10x-router/SKILL.md` and `plugins/cc10x/skills/cc10x-router/references/*.md` as of 2026-06-17. Structural contract last changed on 2026-04-12 (`v10.1.19`); `v11.0.0` de-versions the state root from `.cc10x/v10/` to `.cc10x/` (version lives only in `plugin.json`/GitHub) with no invariant changes.
+> **Status note:** Current product line is `v11.0.0`. This registry is aligned to the live router structure in `plugins/cc10x/skills/cc10x-router/SKILL.md` and `plugins/cc10x/skills/cc10x-router/references/*.md` as of 2026-06-17. Structural contract last changed on 2026-04-12 (`v10.1.19`); `v11.0.0` de-versions the state root from `.cc10x/v10/` to `.cc10x/` (version lives only in `plugin.json`/GitHub) with no invariant changes. `v11.1.0` adds execution-engine scripts (`cc10x_phase_brief`, `cc10x_review_package`), recorded-BASE diffing, an inline no-subagent fallback, and 4 net-new skills — additive, no invariant changes.
 
 ## Purpose
 

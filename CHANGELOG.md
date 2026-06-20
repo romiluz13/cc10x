@@ -1,5 +1,39 @@
 # Changelog
 
+## [11.1.0] - 2026-06-21
+
+### Execution-engine harvest (system-level comparison vs superpowers + matt-pocock)
+
+A system-level architecture comparison (after an earlier skill-by-skill harvest
+silently under-rated superpowers' per-task execution model) drove this release.
+The honest finding: cc10x leads on back-half verification (independent verifier +
+REVERT + test-honesty gates, parallel silent-failure-hunter, fail-closed hooks) and
+trailed on the execution engine. This release closes the engine gap additively —
+the per-phase build loop remains the default.
+
+- **New runnable scripts** (`scripts/cc10x_phase_brief.py`, `scripts/cc10x_review_package.py`):
+  dependency-free producers for dispatch-by-reference — a phase-brief extractor and a
+  recorded-`BASE..HEAD` diff-package builder. Resolves a live contradiction where the
+  hook policy and code-reviewer relied on a diff package that no script produced.
+- **Recorded-BASE diffing** across code-reviewer, silent-failure-hunter, doc-syncer,
+  and bug-investigator: diff `results.git_base_sha..HEAD` instead of lossy `HEAD~N` /
+  working-tree `git diff HEAD`, which silently dropped earlier commits of a multi-commit
+  TDD phase from review.
+- **Reviewer SPEC_COMPLIANCE verdict split** (Missing / Extra / Misunderstood +
+  cannot-verify-from-diff), separate from the code-quality verdict.
+- **Inline no-subagent execution fallback** in the router: keeps the fail-closed gates
+  when the Task/Agent primitive is unavailable or work is too tightly coupled to split.
+- **Per-TASK fresh-implementer dispatch** as an opt-in mode (per-phase remains default);
+  optional final whole-branch review before BUILD-DONE; on-BLOCKED-change-something rule;
+  feedback-loop-first debugging ladder; brainstorming domain glossary + synthesize-now.
+- **Four net-new skills (19 → 23):** `receiving-code-review` (verify human/external
+  feedback before agreeing — closes the ungoverned PR-comment loop), `codebase-deepening`
+  (deletion-test retrofit for shallow LLM-grown modules), `frontend-design-critique`
+  (two isolated assessments + anchored rubric + AI-slop ban-list, RTL-aware), and
+  `handoff-package` (portable secrets-redacted cross-tool/session handoff).
+
+All additive; four validators green at every commit and the live harness passes.
+
 ## [11.0.0] - 2026-06-17
 
 ### De-version the state namespace: `.cc10x/v10/` → `.cc10x/`

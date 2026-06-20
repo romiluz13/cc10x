@@ -16,7 +16,7 @@
   Fail-closed gates &nbsp;·&nbsp; survives compaction &nbsp;·&nbsp; zero prompt spam &nbsp;·&nbsp; self-tested orchestration
 </p>
 
-**Current version:** 11.0.0
+**Current version:** 11.1.0
 
 ---
 
@@ -843,6 +843,6 @@ MIT License
 ---
 
 <p align="center">
-  <strong>cc10x v11.0.0</strong><br>
+  <strong>cc10x v11.1.0</strong><br>
   <em>The Intelligent Orchestrator for Claude Code</em>
 </p>
