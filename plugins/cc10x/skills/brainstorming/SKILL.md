@@ -7,7 +7,7 @@ user-invocable: false
 
 # Brainstorming Ideas Into Designs
 
-> **DIVERGENCE FROM superpowers:brainstorming:** Lightly forked. The one-question-at-a-time / present-alternatives / validate-incrementally discipline is shared. CC10x ADDS: the Spec File Workflow, the AskUserQuestion interview machinery, the full design-document template, the router-owned machine-readable handoff that carries the design forward into the PLAN workflow, a front-of-flow scope-triage gate that decomposes multi-subsystem requests and brainstorms only the first sub-project, and a Design Self-Review gate that scans the produced design for placeholders, contradictions, and ambiguity before the handoff.
+> **DIVERGENCE FROM superpowers:brainstorming:** Lightly forked. The one-question-at-a-time / present-alternatives / validate-incrementally discipline is shared. CC10x ADDS: the Spec File Workflow, the AskUserQuestion interview machinery, the full design-document template, the router-owned machine-readable handoff that carries the design forward into the PLAN workflow, a front-of-flow scope-triage gate that decomposes multi-subsystem requests and brainstorms only the first sub-project, a Design Self-Review gate that scans the produced design for placeholders, contradictions, and ambiguity before the handoff, an accreting domain glossary plus inline ADR-on-rejection notes (durable vocabulary + rejected-alternative decisions, emitted via the router-owned handoff to feed ORIENT and the planner downstream), and a gated synthesize-now fast path that drafts the design from existing context when goal + constraints + acceptance are already evident, skipping the full interview.
 
 ## Overview
 
@@ -104,6 +104,37 @@ This request spans multiple independent subsystems. Brainstorming all of them in
 ```
 
 After emitting the recommendation, run the normal flow (Phase 2 onward) for the FIRST sub-project ONLY. Do not interview across all pieces at once — each sub-project earns its own pass.
+
+### Phase 1.6: Synthesize-Now Fast Path (Gated — Skip the Interview When Intent Is Already Complete)
+
+**Before opening the interview, check whether the conversation already contains enough to draft the design.** brainstorming defaults to interviewing — but when the user has already told you everything an interview would extract, re-asking it as multiple-choice is noise. In that case, synthesize the design from existing context and present it for confirmation instead of running Phase 2.
+
+**Gate — take the fast path ONLY when all three are already evident from the prompt, repo context, or prior conversation:**
+1. **Goal** — what to build and the problem it solves is stated, not inferred.
+2. **Constraints** — limitations, requirements, and what's out of scope are stated or clearly bounded.
+3. **Acceptance** — how we'll know it works (success criteria) is stated or unambiguous.
+
+If ANY of the three is missing or fuzzy, do NOT synthesize — run the normal interview (Phase 2 onward). When in doubt, interview. This is the conservative default; the fast path is the exception for when re-interviewing would only repeat what the user already said.
+
+**If the gate passes:**
+
+1. Skip Phase 2's AskUserQuestion sequence. Draft the design directly from the existing context using the Output: Design Document template.
+2. Still run Phase 3 (Explore Approaches) lightly — present the chosen approach and the rejected alternatives so the ADR-on-rejection note still gets captured. Synthesizing does not skip recording why the design is what it is.
+3. Present the synthesized design for confirmation in ONE pass, not section-by-section:
+
+```markdown
+## Synthesized Design (from existing context — confirm or correct)
+
+I have enough from our conversation to draft this directly rather than interview. Here is the design as I understand it:
+
+[full design from the Output: Design Document template]
+
+**Confirm this is right, or tell me what to change.** If anything is wrong or missing, I'll fall back to a targeted question instead of re-running the full interview.
+```
+
+4. On confirmation, run the Design Self-Review Gate and proceed to the handoff as normal. On correction, fix the named gap inline (one targeted question if needed) — do not restart the full interview.
+
+Everything downstream (glossary accretion, ADR notes, self-review, handoff) is identical whether the design came from the interview or the fast path.
 
 ### Phase 2: Explore the Idea (One Question at a Time)
 
@@ -212,6 +243,14 @@ AskUserQuestion({
 
 If ANY check fails, ask one more targeted question to resolve the gap. Do NOT proceed with ambiguous or contradictory intent. Once all three checks pass, proceed to Phase 3 with collected answers. Do not force the full 7-question sequence when the intent contract is already complete.
 
+**Accrete the domain glossary as you go.** Whenever the interview names or sharpens a domain term — the user gives a concept a stable name, you pin down a fuzzy word to one precise meaning, or the repo/prompt already has a load-bearing name for a thing — record it as a glossary entry in your working notes. This is *vocabulary*, not conventions: the nouns and verbs this project uses for its domain, each with the meaning agreed during the interview. Keep using the user's word; do not invent a synonym once a term is named. The glossary accumulates across the interview and is emitted in the handoff so ORIENT and the planner speak the project's language downstream.
+
+```markdown
+## Domain Glossary
+- **[Term]** — [precise meaning agreed during brainstorming; note if it sharpens or replaces a vaguer earlier word]
+- **[Term]** — [meaning]
+```
+
 ### Phase 3: Explore Approaches
 
 **Always present 2-3 options with trade-offs:**
@@ -237,6 +276,17 @@ If ANY check fails, ask one more targeted question to resolve the gap. Do NOT pr
 
 Which direction feels right?
 ```
+
+**Capture an ADR-on-rejection note for load-bearing decisions.** When the chosen direction *rejects* an alternative that mattered — a real fork where the road not taken was plausible — record it as an inline ADR-style note so the rejection is durable, not lost the moment the conversation moves on. A future builder (or you, downstream) should not have to re-litigate a settled choice. Record only load-bearing rejections; do not log every trivial preference.
+
+```markdown
+## Decisions (ADR notes)
+- **Decision**: [what was chosen]
+  **Rejected**: [the alternative(s) not taken]
+  **Why**: [the reason the rejected option lost — the constraint or trade-off that decided it]
+```
+
+These ADR notes live in the design document and are emitted in the handoff alongside the glossary, so the planner inherits *why* the design is shaped this way, not just what it is.
 
 ### Phase 4: Present Design Incrementally
 
@@ -339,6 +389,16 @@ After brainstorming, save the validated design:
 ## Approach Chosen
 [Which option and why]
 
+## Domain Glossary
+- **[Term]** — [precise meaning agreed during brainstorming]
+[Omit this section only if no domain terms were named or sharpened.]
+
+## Decisions (ADR notes)
+- **Decision**: [what was chosen]
+  **Rejected**: [alternative not taken]
+  **Why**: [the constraint or trade-off that decided it]
+[Omit this section only if no load-bearing alternative was rejected.]
+
 ## Architecture
 [High-level structure]
 
@@ -432,7 +492,17 @@ Instead, end your response with this machine-readable handoff so the router can 
 ### Brainstorming Handoff (MACHINE-READABLE)
 DESIGN_FILE: "{PROJECT_DIR}/docs/plans/YYYY-MM-DD-<feature>-design.md"
 DESIGN_SUMMARY: "[one-sentence summary of the chosen design]"
+MEMORY_NOTES:
+  glossary:
+    - term: "[Term]"
+      meaning: "[precise meaning agreed during brainstorming]"
+  decisions:
+    - decision: "[what was chosen]"
+      rejected: "[alternative not taken]"
+      why: "[the constraint or trade-off that decided it]"
 ```
+
+`MEMORY_NOTES` carries the accreted glossary and ADR-on-rejection notes to the router. Do **NOT** write memory yourself — emit the notes here and let the router-owned memory finalization persist them once. Omit a sub-key (or the whole `MEMORY_NOTES` block) if there were no glossary terms or rejected alternatives this pass. The router feeds the glossary to ORIENT (so it speaks the project's vocabulary) and both glossary and decisions to the planner.
 
 **WHY BOTH:** The design file is the artifact. The handoff tells the router what to pass to planner and what to persist later. Memory stays single-writer and router-owned.
 

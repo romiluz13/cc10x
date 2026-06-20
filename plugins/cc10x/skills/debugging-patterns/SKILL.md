@@ -6,7 +6,7 @@ allowed-tools: Read Grep Glob Bash LSP
 
 # Systematic Debugging
 
-> **DIVERGENCE FROM superpowers:systematic-debugging:** Forked. The four-phase root-cause discipline and the rationalization table are core debugging doctrine assumed here. CC10x ADDS: LSP-powered root-cause tracing, scenario playbooks, hypothesis confidence scoring, cognitive-bias and meta-debugging guidance, the Option-Zero (config-only fix) check, and the restart-investigation protocol. The bug-investigator agent owns the operational process; this skill is the advisory depth it loads.
+> **DIVERGENCE FROM superpowers:systematic-debugging:** Forked. The four-phase root-cause discipline and the rationalization table are core debugging doctrine assumed here. CC10x ADDS: the feedback-loop-first gate (build a fast, deterministic, agent-runnable repro loop BEFORE any hypothesis), LSP-powered root-cause tracing, scenario playbooks, hypothesis confidence scoring, cognitive-bias and meta-debugging guidance, the Option-Zero (config-only fix) check, and the restart-investigation protocol. The bug-investigator agent owns the operational process (it enforces the feedback loop as a fail-closed gate); this skill is the advisory depth it loads.
 
 ## Overview
 
@@ -30,6 +30,47 @@ NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST
 ```
 
 If you haven't completed Phase 1, you cannot propose fixes.
+
+## Feedback Loop FIRST (Before Any Hypothesis)
+
+**A hypothesis without a repro loop is a guess.** Before you form H1 — before you read code to build a theory — build a fast, deterministic, **agent-runnable** pass/fail signal that turns red on *this* bug and that you can re-run on every iteration. The loop IS the evidence this skill already demands. Everything downstream (bisection, hypothesis testing, instrumentation) just consumes it; without it, no amount of staring at code will save you.
+
+This is the advisory depth behind the bug-investigator agent's **Feedback Loop Gate**, which enforces it as a **fail-closed gate**: in the agent, no loop means no hypothesis (it returns `BLOCKED`, never advances to H1). The skill explains the technique; the agent makes it non-negotiable.
+
+**Spend disproportionate effort here.** Be aggressive, be creative, refuse to give up.
+
+### Construction Ladder (try in rank order; stop at the first that is fast + deterministic)
+
+1. **Failing automated test** (unit/integration/e2e) at whatever seam reaches the bug — best, because it is reusable as the RED regression test in Phase 4
+2. **`curl`/HTTP request** with an asserted response (status/body diff) against a running dev server
+3. **CLI snapshot diff** — run the command, diff stdout/stderr/exit code against a known-good snapshot
+4. **Headless browser script** (Playwright/Puppeteer) — drives the real DOM/runtime, asserts on DOM/console/network (a real crash, not just types)
+5. **Trace replay** — save a real request/payload/log/event to disk, replay it through the code path in isolation
+6. **Throwaway harness** — a tiny script that calls the suspect function directly with a fixture input
+7. **Property/fuzz check** — when the failing input is unknown, run many random inputs and watch for the failure mode
+8. **`git bisect run`** — when the bug is a regression between two known states and a test exists
+9. **Differential old-vs-new** — run the same input through the last-good revision beside HEAD (or two configs) and diff behavior
+10. **Human-in-the-loop** — LAST resort: scripted manual steps the user runs and reports back, so the loop stays structured
+
+### Treat the Loop as a Product
+
+Once you have *a* loop, do not settle for the first version. Sharpen it:
+
+- **Faster** — sub-second beats sub-minute; you will run it dozens of times. Cache setup, skip unrelated init, narrow the scope.
+- **Sharper** — assert the *exact* failing fact (the user's specific symptom), not a noisy superset or "didn't crash".
+- **More deterministic** — same input → same red. Pin time, seed RNG, isolate filesystem, freeze network, remove jitter.
+
+A 30-second flaky loop is barely better than no loop; a 2-second deterministic one is a debugging superpower.
+
+### Flaky / Non-Deterministic Bugs
+
+The goal is **not** a single clean repro — it is a **higher reproduction RATE**. Loop the trigger N times (`for i in $(seq 1 N); do ...; done`), record the hit rate (e.g. `3/50`), and treat raising that rate as loop iteration: control the seed, force a schedule, add concurrency/load/stress, inject sleeps, narrow timing windows. A bug you can reproduce 3/50 times deterministically-on-replay beats one you cannot reproduce at all. A 50%-flake bug is debuggable; 1% is not — keep raising the rate until it is.
+
+### When You Genuinely Cannot Build a Loop
+
+Stop and say so explicitly. Do **not** hypothesise into a vacuum. List each ladder rung you tried and why it failed, then ask the user for the one thing that would unblock the loop: (a) access to an environment that reproduces it, (b) a captured artifact (HAR file, log dump, core dump, full stack trace, failing input, screen recording with timestamps), or (c) permission to add temporary instrumentation in a live/prod path.
+
+> The loop comes FIRST. Only once it goes red do you proceed to the ranked, falsifiable hypotheses and confidence scoring below — those layer ON TOP of the loop, they do not replace it.
 
 ## Quick Five-Step Process (Reference Pattern)
 
@@ -142,11 +183,12 @@ You MUST complete each phase before proceeding to the next.
    - Read stack traces completely
    - Note line numbers, file paths, error codes
 
-2. **Reproduce Consistently**
+2. **Reproduce Consistently — build the feedback loop FIRST**
    - Can you trigger it reliably?
    - What are the exact steps?
    - Does it happen every time?
    - If not reproducible → gather more data, don't guess
+   - This is where you build the agent-runnable repro loop (see **Feedback Loop FIRST** above). Use the construction ladder; do NOT proceed to Phase 3 hypotheses until you have a red-capable loop. For flaky bugs, chase a higher reproduction rate, not a single clean hit.
 
 3. **Check Recent Changes**
    - What changed that could cause this?

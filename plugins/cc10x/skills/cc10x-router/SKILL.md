@@ -377,6 +377,10 @@ Optional sections:
 - Include `cc10x:prototyping` only on an explicit de-risk/spike intent ("spike", "try out", "what should this look like", "prototype", "throwaway") — never as the default for a real build. Absorbing a spike's answer is a fresh gated BUILD, not promotion.
 - Include `cc10x:finding-duplicate-functions` only when the code-reviewer is asked for a reuse/consolidation audit or the request explicitly targets semantic duplication.
 - Include `cc10x:mcp-cli` only when a researcher needs a one-off MCP capability that is not already mounted.
+- Include `cc10x:receiving-code-review` only when a human/external reviewer's feedback (pasted PR comments, review notes, "can you change X") must be acted on — it governs verify-before-agreeing in the MAIN session, not the internal reviewer→router→fix loop.
+- Include `cc10x:codebase-deepening` only when the request targets retrofitting/deepening shallow modules in EXISTING code (not greenfield architecture, which stays `cc10x:architecture-patterns`).
+- Include `cc10x:frontend-design-critique` only when reviewing the visual/UX QUALITY of built UI (scoring/slop-check) — distinct from `cc10x:frontend-patterns` (authoring guidance).
+- Include `cc10x:handoff-package` only when work is being handed to a coworker, a different tool, or a fresh non-cc10x session.
 - Include project/domain skills only from `patterns.md ## Project SKILL_HINTS`.
 - `skill-eval-harness` and `authoring-cc10x-guidance` are maintainer-time meta-skills (loaded when authoring/changing cc10x itself), not routed into normal build/debug/review/plan workflows.
 - Skill precedence is strict:
@@ -594,6 +598,27 @@ Before invoking `integration-verifier` in BUILD:
 - Read `results.reviewer` and `results.hunter` from the workflow artifact.
 - Build `## Previous Agent Findings` exactly in the format verifier expects.
 - Never invoke verifier without that section when review/hunt already ran.
+
+### Inline no-subagent execution (FALLBACK — not the default)
+
+The default execution model is per-phase subagent dispatch: every phase runs in a fresh-context agent via the dispatcher (§7), and that remains the default whenever the Task/Agent primitive is available AND the work is separable. The fallback below is a bounded degrade mode, NOT a shortcut to reach for when dispatch feels heavy. Prefer subagents. Only enter inline mode on one of the two triggers, and record which one in `status_history`.
+
+**Enter inline mode when EITHER trigger holds:**
+1. **Primitive unavailable (graceful degrade):** the host harness does not expose the Task/Agent primitive (no `Agent(...)` dispatch path, or `TaskCreate`/`TaskList` are absent). Without it the router cannot spawn phase agents at all; rather than be inoperative, it executes the plan itself.
+2. **Tightly-coupled work (anti-thrash):** the phases are so coupled that isolated phase agents would thrash — they cannot share in-flight state (e.g. a builder and its verifier must observe the same uncommitted in-memory/scratch state, or a phase boundary cannot be expressed as a self-contained scaffold without re-deriving most of the prior phase). Splitting such work across isolated agents loses the shared state at every handoff. When the §5 Intent Readiness Gate shows the phases cannot be cleanly decomposed into self-contained scaffolds, that is this trigger.
+
+**What changes vs. default:** the ROUTER executes each phase's work inline, in the main session, instead of spawning the phase agent. Walk the same task graph in the same order the dispatcher would. Lose the subagent isolation — KEEP every gate.
+
+**What does NOT change (the gates stay fail-closed):**
+- Run `phase_exit_gate` at each phase boundary exactly as in the default loop step 6 — if the phase is not complete, persist `phase_status={partial|blocked}` and stop. No phase advances on prose.
+- Persist structured results into the workflow artifact, including `results.baseline` and the per-phase results the spawned agent would have written. The artifact remains the source of truth; do not rely on conversation narrative.
+- Compute the **clean-baseline diff** the same way: record the baseline before the build phase, and at verification diff the working tree against it so the verifier checks only this workflow's changes.
+- Run an **inline verification pass** in place of spawning `integration-verifier`: the router itself applies the integration-verifier's checks (run the scenarios, capture `Expected`/`Actual` evidence per scenario, reconcile `SCENARIOS_TOTAL`/`PASSED`/`FAILED`, and honor the REVERT authority) and writes the same scenario-accounting into the artifact that §8 post-agent validation would parse. The point is to lose the subagent, not the verification — incomplete or contradictory evidence still sets `quality.convergence_state=needs_iteration` and stops on the remediation gate.
+- All §14 hard rules still bind: never report pass/fixed/complete without confirming the verification evidence, never exceed the 3-cycle remediation limit without a human checkpoint, fail closed on ambiguity or skipped work.
+
+**The cost — be disciplined about it:** inline mode forfeits fresh-context isolation. The router now carries the build, review, hunt, and verify context in one session, so context can bleed across phases (the very pollution subagents prevent). Counter it: between phases, re-ground from the workflow artifact rather than from earlier turns; include only the current-phase objective and live evidence when reasoning about a phase; treat completed-phase narrative as stale. If the session context grows large enough to threaten this discipline, prefer returning to subagent dispatch over pushing further inline.
+
+**Mode bookkeeping:** persist `execution_mode="inline_fallback"` and `inline_fallback_reason={primitive_unavailable|tightly_coupled}` in the workflow artifact, and log an `event=inline_fallback_entered` entry in `.cc10x/workflows/{wf}.events.jsonl`. If the primitive becomes available again and the remaining work is separable, the router MAY resume default subagent dispatch for later phases; log `event=inline_fallback_exited`.
 
 ## 13. Memory Finalization
 

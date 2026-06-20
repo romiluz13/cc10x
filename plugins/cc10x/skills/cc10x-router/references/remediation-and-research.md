@@ -20,6 +20,17 @@ Before creating a new remediation task:
 - Count tasks whose descriptions contain both `wf:{workflow_uuid}` and `kind:remfix`.
 - If count >= 3, ask the user how to proceed before creating another one.
 
+### Change-something-before-re-dispatch
+
+When an agent returns `BLOCKED` (or a fix attempt fails), the circuit breaker only BOUNDS the loop — it does not improve it. Re-dispatching the SAME agent with the SAME model on the SAME unchanged input just burns a circuit-breaker cycle and produces the same failure. Before any re-dispatch, the router MUST change at least one input:
+
+1. Provide missing context — supply the file/spec/decision the agent said it lacked.
+2. Escalate the model tier — re-dispatch on a more capable model when the task needs more reasoning.
+3. Shrink the task scope — split an oversized task into smaller, completable pieces.
+4. Escalate to the human — if the plan itself is wrong, stop and ask; do not loop.
+
+NEVER re-dispatch the same agent with the same model on the same unchanged input. If the agent said it is stuck, something must change. This complements (does not replace) the `>= 3` circuit breaker above.
+
 ### Rule matrix
 
 | Rule | Condition | Action |
