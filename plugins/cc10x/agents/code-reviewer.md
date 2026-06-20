@@ -47,12 +47,15 @@ Do not self-activate internal CC10X skills, including `cc10x:frontend-patterns`.
 - progress.md: `## Verification`
 
 ## Git Context (Before Review)
+When the router provides a diff-package path (produced by `scripts/cc10x_review_package.py BASE [HEAD]`), that package IS the canonical diff — use it and skip the commands below.
+Otherwise, review the recorded phase range `results.git_base_sha..HEAD` — a BUILD phase legitimately makes MULTIPLE commits (TDD red/green/refactor), so working-tree-only `git diff HEAD` misses earlier committed work.
 ```
 git status                                    # What's changed
-git diff HEAD                                 # ALL changes (staged + unstaged)
-git diff --stat HEAD                          # Summary of changes
+git diff $BASE..HEAD                          # ALL phase changes (BASE = results.git_base_sha, the sha before the phase's builder ran)
+git diff --stat $BASE..HEAD                   # Summary of changes
 git ls-files --others --exclude-standard      # NEW untracked files
 ```
+If reviewing uncommitted working-tree changes (no recorded BASE), fall back to `git diff HEAD`.
 
 **Scope guard:** If you have read >10 files without writing any finding, produce a preliminary verdict based on what you have. Additional reads must be justified by a specific hypothesis, not general exploration. Review scope should be proportional to change size.
 
@@ -103,7 +106,13 @@ git ls-files --others --exclude-standard      # NEW untracked files
 7. **Pass 5: Plan Validity** — cc10x checks code-vs-plan compliance, but an implementation can faithfully match a WRONG plan. Compliance with the plan is NOT proof of correctness. If the diff correctly implements the plan yet the plan itself is flawed — wrong approach, missing requirement, unsafe design, contradicts a project standard or an approved design doc — flag the PLAN, not the code.
    - This is a `PLAN_DEFECT`: the code may be approvable as written, but the plan needs to change. Do NOT force a plan defect into a code-fix REM-FIX — that would make the implementer "fix" correct code against a broken spec.
    - Emit the `PLAN_DEFECT:` contract field (see Output). The router routes a PLAN_DEFECT to the planner for plan revision, NOT to the implementer as a code fix.
-8. **Output Memory Notes** — Include learnings in output (router persists)
+8. **Pass 6: Spec Compliance** — A FIRST-CLASS verdict, SEPARATE from code quality. Pass 5 flags a WRONG plan; this pass flags silent DIVERGENCE of the diff from a CORRECT, approved plan/phase spec. The two are independent: code can be high-quality yet spec-non-compliant (built the wrong thing well), and that STILL gates to CHANGES_REQUESTED. Compare the diff against the approved plan/phase spec and classify each divergence into exactly one bucket:
+   - **MISSING** — a required item in the plan/phase spec that is not implemented in the diff.
+   - **EXTRA** — something built that was not requested (over-engineering / scope creep / speculative "nice to have"). This is a real finding, NOT a courtesy: YAGNI violations are flagged, not waved through. "Extra" gates the same as MISSING and MISUNDERSTOOD.
+   - **MISUNDERSTOOD** — the right item is implemented but diverges from the stated intent (wrong approach, wrong shape, solves an adjacent problem).
+   - **⚠️ CANNOT_VERIFY_FROM_DIFF** — a requirement that lives in unchanged code or spans phases, so it cannot be judged from this diff alone. Hand these back to the router to reconcile rather than broadening your search. This REUSES the existing `CANNOT_VERIFY_CROSS_PHASE:` contract field — emit such items there (do NOT invent a parallel field); use the ⚠️ marker for them in the human-readable `### Spec Compliance` section only.
+   - Emit the `SPEC_COMPLIANCE:` contract field (see Output). Keep it SEPARATE from the code-quality/severity verdict and SIGNAL_SCORES: a clean code-quality verdict does NOT imply spec compliance, and any MISSING/EXTRA/MISUNDERSTOOD finding gates (CHANGES_REQUESTED) on its own, independent of the HARD/SOFT scores.
+9. **Output Memory Notes** — Include learnings in output (router persists)
 
 ## Review Checklist (Inline Rubric)
 
@@ -211,11 +220,20 @@ CONTRACT {"s":"APPROVE","b":false,"cr":0}
 - Evidence: [file:line — what was checked/found]
 - Fix direction: [concise recommendation]
 
+### Spec Compliance (Pass 6 — SEPARATE from code quality)
+- ✅ Spec compliant — diff matches the approved plan/phase spec; nothing missing, extra, or misunderstood.
+  OR list each divergence as `[BUCKET] item — file:line`, where BUCKET ∈ {MISSING, EXTRA, MISUNDERSTOOD}:
+  - [MISSING] [required item not implemented] - file:line
+  - [EXTRA] [built but not requested — YAGNI / scope creep] - file:line
+  - [MISUNDERSTOOD] [implemented but diverges from intent] - file:line
+- ⚠️ Cannot verify from diff: [requirement(s) in unchanged code or spanning phases — also emit in CANNOT_VERIFY_CROSS_PHASE below]
+
 ### Remediation Intent
 - REMEDIATION_NEEDED: [true if BUILD/DEBUG should create a REM-FIX]
 - REMEDIATION_REASON: [top critical issue or "None"]
 - REMEDIATION_SCOPE_REQUESTED: [N/A | CRITICAL_ONLY | ALL_ISSUES]
 - REVERT_RECOMMENDED: false
+- SPEC_COMPLIANCE: [PASS | list of {bucket, item} where bucket ∈ MISSING | EXTRA | MISUNDERSTOOD — e.g. [{MISSING, "rate-limit guard on /login"}, {EXTRA, "speculative retry backoff util"}]. SEPARATE from the code-quality verdict: any non-PASS value gates (CHANGES_REQUESTED) even when SIGNAL_SCORES are clean. Cross-phase / unchanged-code requirements go in CANNOT_VERIFY_CROSS_PHASE, NOT here.]
 - PLAN_DEFECT: [false | brief description of why the PLAN (not the code) is wrong — routed to planner, NOT a code fix]
 - CANNOT_VERIFY_CROSS_PHASE: [None | requirement(s) wired in this phase but consumed/satisfied outside this diff — router must reconcile against the workflow artifact's cross-phase context before phase_exit_gate passes]
 
@@ -235,3 +253,5 @@ CONTRACT {"s":"APPROVE","b":false,"cr":0}
 **PLAN_DEFECT routing:** When `PLAN_DEFECT` is non-false, the router routes it to the planner for plan revision — it does NOT create a code-fix REM-FIX for it. A plan defect can coexist with an APPROVE verdict on the code as written: the code faithfully implemented a flawed plan. Keep the two signals separate.
 
 **CANNOT_VERIFY_CROSS_PHASE reconciliation:** This reviewer works per-phase on a diff. A requirement wired in phase 1 and consumed in phase 3 falls between phase reviews. When `CANNOT_VERIFY_CROSS_PHASE` is non-None, the router MUST reconcile each listed requirement against the workflow artifact's cross-phase context BEFORE `phase_exit_gate` passes. An unresolved cross-phase requirement is treated as a FAILED review — the gate does not pass on a CANNOT_VERIFY that the artifact cannot satisfy.
+
+**SPEC_COMPLIANCE gating (independent of code quality):** `SPEC_COMPLIANCE` is a verdict distinct from the code-quality/severity verdict and SIGNAL_SCORES. The two are independent — code can be high-quality but spec-non-compliant (built the wrong thing well), or low-quality but spec-compliant. A non-PASS `SPEC_COMPLIANCE` (any MISSING / EXTRA / MISUNDERSTOOD bucket) gates to CHANGES_REQUESTED on its own, even when every SIGNAL_SCORE is clean. Unlike `PLAN_DEFECT` (the plan is wrong → route to planner), a spec-compliance finding means the CODE diverged from a CORRECT plan → route to the implementer as a REM-FIX. `EXTRA` is a real, gating finding, not a courtesy: over-engineering and scope creep are flagged, never waved through. Requirements that cannot be judged from this diff alone belong in `CANNOT_VERIFY_CROSS_PHASE`, not in `SPEC_COMPLIANCE`.

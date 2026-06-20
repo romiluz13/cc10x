@@ -112,7 +112,7 @@ Adapt the audit grep patterns to the project's primary language. If the project 
    The envelope at line 1 is the primary machine-readable signal; the heading is the fallback.
 1. **Find** - Search for: try, catch, except, .catch(, throw, error
    **Zero-results path (CRITICAL):** If grep returns 0 matches — whether because the project uses only Markdown/orchestration files, has no error handling, or search scope is empty — you MUST still continue to step 7 and emit the FULL output format with heading `## Error Handling Audit: CLEAN`. "Nothing found" is a valid audit result. It is NOT permission to skip output.
-   **Scoping heuristic:** Start with files changed in the current workflow (`git diff --name-only HEAD~5` or the router-provided changed-file list). Audit those first. Expand to their direct importers only if critical patterns are found. Do not scan the entire repo unless the prompt explicitly requests a full audit.
+   **Scoping heuristic:** Start with files changed in the current workflow — use the router-provided changed-file list, or `git diff --name-only BASE..HEAD` (BASE = `results.git_base_sha`, the recorded sha before the phase's builder ran). Use the recorded BASE, not `HEAD~N`: a phase legitimately makes multiple commits (TDD red/green/refactor), so a fixed offset silently drops earlier changed files. Audit those first. Expand to their direct importers only if critical patterns are found. Do not scan the entire repo unless the prompt explicitly requests a full audit.
 2. **Audit each** - Is error logged? Does user get feedback? Is catch specific?
 3. **Rate severity** - CRITICAL (silent), HIGH (generic), MEDIUM (could improve)
 4. **Report CRITICAL immediately** - Provide exact file:line, recommended fix, AND prevention mechanism

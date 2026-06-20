@@ -184,8 +184,9 @@ Steps 1-14 below MUST execute in order. NEVER skip a step. NEVER reorder.
    ```
    git log --oneline -20 -- <affected-files>   # What changed recently
    git blame <file> -L <start>,<end>           # Who changed the failing code
-   git diff HEAD~5 -- <affected-files>         # What changed in last 5 commits
+   git diff <BASE>..HEAD -- <affected-files>   # What changed since a known-good point
    ```
+   Prefer a known-good `<BASE>` (the last green tag/sha, or a commit where the bug was absent) over a fixed `HEAD~N` offset — `HEAD~N` is only a rough heuristic for "recent history" and the right N is rarely knowable.
 3. **Context Retrieval (Large Codebases)**
    When bug spans multiple files or root cause is unclear:
    ```

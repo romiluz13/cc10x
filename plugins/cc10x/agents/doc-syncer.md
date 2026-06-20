@@ -40,8 +40,9 @@ Get the current diff using the appropriate command for the context:
 # Pre-commit (staged changes — preferred when commits are being staged):
 git diff --cached --stat && git diff --cached
 
-# Post-build (most recent commit — use when no staged changes exist):
-git diff HEAD~1 --stat && git diff HEAD~1
+# Post-build (whole phase — use when commits exist; BASE = results.git_base_sha, the recorded sha before the phase's builder ran):
+# A phase legitimately makes MULTIPLE commits (TDD red/green/refactor), so HEAD~1 would analyze only the last commit and miss earlier doc-impacting changes.
+git diff $BASE..HEAD --stat && git diff $BASE..HEAD
 ```
 
 Read the full diff output before classifying. Do not skim the stat summary only — the full diff reveals whether signatures, exports, or structural patterns changed.
