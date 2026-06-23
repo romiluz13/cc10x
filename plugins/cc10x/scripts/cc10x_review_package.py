@@ -4,13 +4,19 @@ extended context, written to one file the reviewer reads in a single call, so
 the diff never has to be pasted through the router's context. cc10x's analog of
 superpowers' review-package.
 
-Usage: cc10x_review_package.py BASE [HEAD]
+Usage: cc10x_review_package.py [--repo DIR] BASE [HEAD]
   BASE   the sha/ref recorded BEFORE the phase started
   HEAD   end ref (default HEAD)
+  --repo the git repo to diff (default: $CC10X_REPO_DIR, else the process cwd).
+         Lets the router drive a build against a repo OTHER than the process
+         cwd (a sibling repo, or one repo reached from a parent dir) so the
+         review/verify diff targets the repo that actually changed.
 
 Writes <state_root>/review-<base7>..<head7>.diff (state_root = .cc10x, resolved
 like the hooklib: CLAUDE_PROJECT_DIR env, else git toplevel, else cwd) and
-prints 'wrote <path>: <n> commit(s), <bytes> bytes'.
+prints 'wrote <path>: <n> commit(s), <bytes> bytes'. NOTE: --repo / CC10X_REPO_DIR
+only redirects the git QUERIES; the package is still written to the standard
+state_root (so the orchestrator reads it where it always does).
 
 CRITICAL: BASE must be the sha recorded before the phase started, NEVER HEAD~1.
 HEAD~1 silently drops all but the last commit of a multi-commit phase, so the
@@ -47,12 +53,22 @@ def state_root() -> Path:
     return path
 
 
+def repo_dir() -> str | None:
+    """The git repo the diff queries run against. `CC10X_REPO_DIR` lets the
+    router drive a build against a repo OTHER than the process cwd; unset
+    returns None so git runs in the process cwd exactly as before (default
+    behavior is unchanged). project_dir()/state_root() are intentionally NOT
+    affected — only the git source moves, not where the package is written."""
+    return os.environ.get("CC10X_REPO_DIR") or None
+
+
 def git(*args: str) -> str:
     return subprocess.run(
         ["git", *args],
         capture_output=True,
         text=True,
         check=True,
+        cwd=repo_dir(),
     ).stdout
 
 
@@ -71,7 +87,18 @@ def main() -> int:
     )
     parser.add_argument("base", help="sha/ref recorded BEFORE the phase started")
     parser.add_argument("head", nargs="?", default="HEAD", help="end ref (default HEAD)")
+    parser.add_argument(
+        "--repo",
+        default=None,
+        help="git repo to diff (default: $CC10X_REPO_DIR, else cwd). Lets the "
+        "router review a repo other than the process cwd.",
+    )
     args = parser.parse_args()
+
+    # --repo takes precedence over the env; both feed git() via CC10X_REPO_DIR
+    # so every git query in this run targets the same repo.
+    if args.repo:
+        os.environ["CC10X_REPO_DIR"] = args.repo
 
     print(
         "note: BASE must be the sha recorded before the phase started, "
