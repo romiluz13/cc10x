@@ -209,6 +209,3 @@ def session_context(message: str) -> None:
             }
         }
     )
-
-
-

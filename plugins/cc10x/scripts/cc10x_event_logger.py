@@ -4,6 +4,7 @@
 Takes the event name as argv[1], reads stdin JSON, appends a structured
 log line to .cc10x/events.jsonl and the hook-events log.
 """
+
 import sys
 
 from cc10x_hooklib import load_input, log_event
@@ -41,11 +42,19 @@ def main() -> int:
                 fh.write(json.dumps(event, ensure_ascii=True) + "\n")
         except Exception:
             pass
-        log_event("plugin_postcompact_context", {
-            "wf": wf, "trigger": trigger, "summary_len": len(summary),
-            "task_id": None, "agent": "hook", "event": "compact_occurred",
-            "decision": "logged", "reason": trigger,
-        })
+        log_event(
+            "plugin_postcompact_context",
+            {
+                "wf": wf,
+                "trigger": trigger,
+                "summary_len": len(summary),
+                "task_id": None,
+                "agent": "hook",
+                "event": "compact_occurred",
+                "decision": "logged",
+                "reason": trigger,
+            },
+        )
         return 0
 
     if event_name == "subagent_stop":
@@ -62,36 +71,54 @@ def main() -> int:
         )
         if not is_cc10x_agent:
             return 0
-        log_event("plugin_subagent_stop_audit", {
-            "agent_type": agent_type, "agent_id": agent_id,
-            "agent_transcript_path": agent_transcript_path,
-            "stop_hook_active": stop_hook_active,
-            "contract_found": contract_found,
-            "message_len": len(message),
-            "task_id": None, "agent": agent_type, "event": "subagent_stop",
-            "decision": "logged",
-            "reason": "contract_present" if contract_found else "contract_missing",
-        })
+        log_event(
+            "plugin_subagent_stop_audit",
+            {
+                "agent_type": agent_type,
+                "agent_id": agent_id,
+                "agent_transcript_path": agent_transcript_path,
+                "stop_hook_active": stop_hook_active,
+                "contract_found": contract_found,
+                "message_len": len(message),
+                "task_id": None,
+                "agent": agent_type,
+                "event": "subagent_stop",
+                "decision": "logged",
+                "reason": "contract_present" if contract_found else "contract_missing",
+            },
+        )
         return 0
 
     if event_name == "instructions_loaded":
         instructions_hash = data.get("instructions_hash", "")
         instruction_count = data.get("instruction_count", 0)
-        log_event("plugin_instructions_loaded_audit", {
-            "instructions_hash": instructions_hash,
-            "instruction_count": instruction_count,
-            "task_id": None, "agent": "hook", "event": "instructions_loaded",
-            "decision": "logged", "reason": "audit",
-        })
+        log_event(
+            "plugin_instructions_loaded_audit",
+            {
+                "instructions_hash": instructions_hash,
+                "instruction_count": instruction_count,
+                "task_id": None,
+                "agent": "hook",
+                "event": "instructions_loaded",
+                "decision": "logged",
+                "reason": "audit",
+            },
+        )
         return 0
 
     if event_name == "stop_failure":
         stop_hook_active = data.get("stop_hook_active", False)
-        log_event("plugin_stop_failure_log", {
-            "stop_hook_active": stop_hook_active,
-            "task_id": None, "agent": "hook", "event": "stop_failure",
-            "decision": "logged", "reason": "stop_hook_failure",
-        })
+        log_event(
+            "plugin_stop_failure_log",
+            {
+                "stop_hook_active": stop_hook_active,
+                "task_id": None,
+                "agent": "hook",
+                "event": "stop_failure",
+                "decision": "logged",
+                "reason": "stop_hook_failure",
+            },
+        )
         return 0
 
     return 0

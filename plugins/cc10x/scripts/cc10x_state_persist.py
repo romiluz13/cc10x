@@ -4,6 +4,7 @@
 Replaces cc10x_precompact_state.py and cc10x_stop_persist.py.
 Takes event type as argv[1].
 """
+
 import json
 import sys
 
@@ -46,7 +47,9 @@ def main() -> int:
         "source": event_type,
     }
 
-    output_file = "precompact-state.json" if event_type == "precompact" else "stop-state.json"
+    output_file = (
+        "precompact-state.json" if event_type == "precompact" else "stop-state.json"
+    )
 
     try:
         out = state_root() / output_file

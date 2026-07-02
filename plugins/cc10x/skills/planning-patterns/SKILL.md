@@ -119,6 +119,7 @@ Expected: PASS
 git add tests/path/test.ts src/path/file.ts
 git commit -m "feat: add specific feature"
 ```
+
 ```
 
 ## Context is King (Cole Medin Principle)
@@ -166,7 +167,7 @@ Match the precision of a reference to how long the artifact sits before code tou
 **Match validation depth to plan complexity:**
 
 | Level | Name | Commands | When |
-|-------|------|----------|------|
+| ------- | ------ | ---------- | ------ |
 | 1 | Syntax & Style | `npm run lint`, `tsc --noEmit` | Every task |
 | 2 | Unit Tests | `npm test` | Low-Medium risk |
 | 3 | Integration Tests | `npm run test:integration` | Medium-High risk |
@@ -179,6 +180,7 @@ Match the precision of a reference to how long the artifact sits before code tou
 When the request needs real APIs, seeded data, browser flows, background jobs, or stress/load behavior, read `references/live-verification-strategy.md` before finalizing the plan.
 
 Use that reference to add a `### Live Verification Strategy` section that names:
+
 - harness manifest path
 - setup, reset, seed, health, and cleanup commands
 - first-party system boundaries vs external dependencies
@@ -207,6 +209,7 @@ Before sequencing the build, ask one question: **is there a cheap refactor that 
 Scan the target surface for small, mechanical, behavior-preserving moves that flatten the real work — extracting a function the new code will hang off, renaming a misleading symbol, pulling a constant out, splitting a parameter list. If you find one, sequence it as its own **Phase 0/1** with its own test cycle, ahead of the feature phases.
 
 **This is advisory and gated — it must not fight scope discipline:**
+
 - A prefactor is in scope only when it makes the requested change demonstrably easier. "While we're here" cleanups are out of scope — defer them to a `MEMORY_NOTES` deferred item.
 - Respect the Decision-Checkpoint: do not expand the agreed scope to chase a refactor. If the prefactor is large enough to need its own checkpoint, surface it to the user, don't smuggle it in.
 - Respect the builder's >3-files guard: a prefactor phase that touches 3+ files is itself a planned, reviewer-gated phase — not a license for the builder to widen a feature task mid-flight.
@@ -216,7 +219,7 @@ Scan the target surface for small, mechanical, behavior-preserving moves that fl
 Before saving, verify every phase passes:
 
 | Criterion | Test |
-|-----------|------|
+| ----------- | ------ |
 | **Definition of done** | Exit criteria are demonstrable and testable (not "Foundation complete") |
 | **Measurable deliverables** | Each task names exact files to create/modify with file:line |
 | **Realistic estimates** | No task exceeds 5 minutes; no phase exceeds 1 hour |
@@ -227,14 +230,14 @@ Before saving, verify every phase passes:
 
 A plan missing any row is incomplete. Revise before saving.
 
-**Exit criteria by example:** Do not write "Phase 1 complete when auth works." Write "Phase 1 complete when `curl -X POST /api/auth/login -d '{"email":"test@test.com","password":"pass"}' returns 200 with `{token: string}`." Concrete input/output examples prevent misinterpretation.
+**Exit criteria by example:** Do not write "Phase 1 complete when auth works." Write "Phase 1 complete when `curl -X POST /api/auth/login -d '{"email":"test@test.com","password":"pass"}' returns 200 with`{token: string}`." Concrete input/output examples prevent misinterpretation.
 
 ## Risk Assessment Table
 
 Classify each risk into one of four dimensions before scoring:
 
 | Dimension | What to assess |
-|-----------|---------------|
+| ----------- | --------------- |
 | **Technical** | Complexity beyond team experience, unknown libraries, integration unknowns |
 | **Timeline** | Estimation uncertainty, resource availability, external dependency delivery dates |
 | **Quality** | Testing gaps, regression surface area, manual-only verification steps |
@@ -243,7 +246,7 @@ Classify each risk into one of four dimensions before scoring:
 For each identified risk:
 
 | Risk | Probability (1-5) | Impact (1-5) | Score | Mitigation |
-|------|-------------------|--------------|-------|------------|
+| ------ | ------------------- | -------------- | ------- | ------------ |
 | API timeout | 3 | 4 | 12 | Retry with backoff |
 | Invalid input | 4 | 2 | 8 | Validation layer |
 | Auth bypass | 2 | 5 | 10 | Security review |
@@ -255,7 +258,7 @@ Score = Probability × Impact. Address risks with score > 8 first.
 **Match testing depth to task risk:**
 
 | Task Risk | Example | Tests Required |
-|-----------|---------|----------------|
+| ----------- | --------- | ---------------- |
 | Trivial | Typo fix, docs update | None |
 | Low | Single file change, utility function | Unit tests only |
 | Medium | Multi-file feature, new component | Unit + Integration tests |
@@ -263,6 +266,7 @@ Score = Probability × Impact. Address risks with score > 8 first.
 | Critical | Payments, security, data migrations | All tests + Security audit |
 
 **How to assess risk:**
+
 - How many files touched? (1 = low, 3+ = medium, cross-service = high)
 - Is it auth/payments/security? (always high or critical)
 - Is it user-facing? (medium minimum)
@@ -285,6 +289,7 @@ A seam is where the test attaches to the code. Choose seams deliberately — the
 Before planning, document all flows:
 
 **User Flow:**
+
 ```
 1. User clicks [button]
 2. System shows [form]
@@ -295,6 +300,7 @@ Before planning, document all flows:
 ```
 
 **Admin Flow:**
+
 ```
 1. Admin opens [dashboard]
 2. Admin selects [item]
@@ -304,6 +310,7 @@ Before planning, document all flows:
 ```
 
 **System Flow:**
+
 ```
 1. Request arrives at [endpoint]
 2. Middleware validates [auth]
@@ -332,6 +339,7 @@ Use this format when a plan involves choosing between multiple valid approaches:
 ```
 
 **When to use ADR:**
+
 - Choosing between architectures (monolith vs microservices)
 - Selecting libraries/frameworks (React vs Vue)
 - Database decisions (SQL vs NoSQL)
@@ -356,7 +364,7 @@ If you find yourself:
 ## Rationalization Prevention
 
 | Excuse | Reality |
-|--------|---------|
+| -------- | --------- |
 | "They'll know what I mean" | No they won't. Be explicit. |
 | "Too much detail is annoying" | Vague plans cause bugs. |
 | "Testing is obvious" | Write the test command. |
@@ -417,6 +425,7 @@ git commit -m "feat: [description]"
 ```
 
 ### Task 2: [Second Component]
+
 ...
 
 ---
@@ -435,6 +444,7 @@ git commit -m "feat: [description]"
 - [ ] Feature works as specified
 - [ ] No regressions
 - [ ] Code reviewed
+
 ```
 
 ## Save the Plan (MANDATORY)
@@ -444,13 +454,17 @@ git commit -m "feat: [description]"
 ### Step 1: Save Plan File (Use Write tool - NO PERMISSION NEEDED)
 
 ```
+
 # First create directory
+
 Bash(command="mkdir -p docs/plans")
 
 # Then save plan using Write tool (permission-free)
+
 Write(file_path="docs/plans/YYYY-MM-DD-<feature>-plan.md", content="[full plan content from output format above]")
 
 # Do NOT auto-commit — let the user decide when to commit
+
 ```
 
 ### Step 2: Emit Router-Owned Memory Intent (CRITICAL)
@@ -477,6 +491,7 @@ Do not instruct the planner to call `TaskCreate` or `TaskUpdate` for phase track
 **The relationship between Plan Files and Tasks:**
 
 ```
+
 ┌─────────────────────────────────────────────────────────────────────┐
 │  PLAN FILE (Persistent - Source of Truth)                           │
 │  Location: docs/plans/YYYY-MM-DD-{feature}-plan.md                 │
@@ -490,6 +505,7 @@ Do not instruct the planner to call `TaskCreate` or `TaskUpdate` for phase track
 │  Survives: Context compaction; can be shared across sessions via   │
 │            task list configuration (official Claude Code)          │
 └─────────────────────────────────────────────────────────────────────┘
+
 ```
 
 **Plan path-in-description is CRITICAL:** If context compacts mid-execution, the task description contains enough info to:

@@ -21,7 +21,7 @@ Route using the first matching signal:
 | Priority | Signal | Keywords | Workflow | Chain |
 | ---------- | -------- | ---------- | ---------- | ------- |
 | 1 | ERROR | error, bug, fix, broken, crash, fail, debug, troubleshoot, issue | DEBUG | bug-investigator -> code-reviewer -> integration-verifier |
-| 2 | PLAN | plan, design, architect, roadmap, strategy, spec, brainstorm | PLAN | brainstorming -> planner -> bounded fresh review loop |
+| 2 | PLAN | plan, design, architect, roadmap, strategy, spec, brainstorm | PLAN | exploration -> planner -> bounded fresh review loop |
 | 3 | REVIEW | review, audit, analyze, assess, "is this good" | REVIEW | code-reviewer |
 | 4 | ORIENT | zoom out, explain, understand, "how does X work", unfamiliar, "map this", "walk me through", "where is", "what does this do" | ORIENT | advisory orientation (no agents) |
 | 5 | DEFAULT | Everything else | BUILD | component-builder -> code-reviewer -> integration-verifier |
@@ -392,7 +392,7 @@ Optional sections:
 - Include `cc10x:frontend-patterns` only when the request, changed files, plan, or design clearly targets UI/frontend work.
 - Include `cc10x:architecture-patterns` only for multi-component, API, schema, auth, or integration-heavy work.
 - Include `cc10x:research` only when planner or investigator receives `## Research Files`.
-- Include `cc10x:prototyping` only on an explicit de-risk/spike intent ("spike", "try out", "what should this look like", "prototype", "throwaway") — never as the default for a real build. Absorbing a spike's answer is a fresh gated BUILD, not promotion.
+- Include `cc10x:exploration` only on an explicit de-risk/spike intent ("spike", "try out", "what should this look like", "prototype", "throwaway") — never as the default for a real build. Absorbing a spike's answer is a fresh gated BUILD, not promotion.
 - Include `cc10x:finding-duplicate-functions` only when the code-reviewer is asked for a reuse/consolidation audit or the request explicitly targets semantic duplication.
 - Include `cc10x:mcp-cli` only when a researcher needs a one-off MCP capability that is not already mounted.
 - Include `cc10x:receiving-code-review` only when a human/external reviewer's feedback (pasted PR comments, review notes, "can you change X") must be acted on — it governs verify-before-agreeing in the MAIN session, not the internal reviewer→router→fix loop.
@@ -400,7 +400,7 @@ Optional sections:
 - Include `cc10x:frontend-design-critique` only when reviewing the visual/UX QUALITY of built UI (scoring/slop-check) — distinct from `cc10x:frontend-patterns` (authoring guidance).
 - Include `cc10x:handoff-package` only when work is being handed to a coworker, a different tool, or a fresh non-cc10x session.
 - Include project/domain skills only from `patterns.md ## Project SKILL_HINTS`.
-- `skill-eval-harness` and `authoring-cc10x-guidance` are maintainer-time meta-skills (loaded when authoring/changing cc10x itself), not routed into normal build/debug/review/plan workflows.
+
 - Skill precedence is strict:
   1. explicit user prompt
   2. project `CLAUDE.md` / repo standards / user standards
@@ -499,9 +499,9 @@ If the YAML block is missing or malformed:
 - Do not continue the workflow based on prose alone.
 - Re-run inline verification and fail safe.
 
-### Inline brainstorming handoff
+### Inline exploration handoff
 
-After `Skill(skill="cc10x:brainstorming")`, parse the fenced YAML block under
+After `Skill(skill="cc10x:exploration")`, parse the fenced YAML block under
 `### Brainstorming Handoff (MACHINE-READABLE)`.
 
 Required field:
