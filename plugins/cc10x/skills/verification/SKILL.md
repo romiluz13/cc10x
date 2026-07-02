@@ -1,439 +1,113 @@
 ---
 name: verification
-description: "Use when about to claim work is complete, fixed, or passing, or before commit, PR, or task completion, and fresh verification evidence must exist first."
-allowed-tools: Read Grep Glob Bash LSP
+description: |
+  Verification discipline: task completion is not goal achievement. Covers the gate
+  function, self-critique gate, validation levels, evidence array protocol, and
+  goal-backward lens. Loaded by integration-verifier, component-builder, and bug-investigator.
+allowed-tools: Read Bash Grep Glob
+user-invocable: false
 ---
 
-# Verification Before Completion
+# Verification
 
-> **DIVERGENCE FROM superpowers:verification-before-completion:** Forked. The Iron Law, the Gate Function, and the "evidence before claims" doctrine are core discipline assumed here. Because superpowers is NOT loaded when cc10x runs solo, the scannable Common Failures table, Red-Flags STOP list, and rationalization→reality rebuttal table are now RESTORED inline (no longer purely deferred upstream) so this skill is self-sufficient. CC10x ADDS: the Authoring Rule (keep gates high), the Self-Critique Gate, Validation Levels, Production-Like Live Proof, the Evidence Array Protocol, the Goal-Backward Lens, Phase-Exit Proof vs Extended Audit, Stub Detection, and the Completion Guard that gates the Router Contract.
+**Task completion is not goal achievement.** Verify that the phase achieved its goal, not that prior agents said it did.
 
-## Overview
+## Reference Files
 
-Claiming work is complete without verification is dishonesty, not efficiency.
-
-**Core principle:** Evidence before claims, always.
-
-<!-- CC10X-M7: Overlap with integration-verifier is intentional (defense in depth). VBC is loaded by WRITE agents for self-verification before reporting done; integration-verifier is a separate router-spawned agent. Both check different moments in the workflow. -->
-
-**Violating the letter of this rule is violating the spirit of this rule.**
-
-## Authoring Rule: Keep Gates High
-
-Completion/exit gates MUST appear before ~line 1000 of any skill file, OR be re-stated verbatim at the emission point. A gate below the chunked-read window silently no-ops — the agent never reaches it and ships unverified. (See matt-pocock: "I never reached line 1224.")
-
-This is why cc10x's **Iron Law** and **Completion Guard** are deliberately kept high in this file: the Iron Law sits at the top, and the Completion Guard's core checks are re-stated at the Router Contract emission point. Do not bury a gate under long reference tables.
-
-## The Iron Law
-
-```
-NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE
-```
-
-If you haven't run the verification command in this message, you cannot claim it passes.
+- `references/live-production-testing.md` — live/production verification strategy
 
 ## The Gate Function
 
 ```
-BEFORE claiming any status or expressing satisfaction:
-
-1. IDENTIFY: What command proves this claim?
-2. RUN: Execute the FULL command (fresh, complete)
-3. READ: Full output, check exit code, count failures
-4. VERIFY: Does output confirm the claim?
-   - If NO: State actual status with evidence
-   - If YES: State claim WITH evidence
-5. REFLECT: Pause to consider tool results before next action
-6. ONLY THEN: Make the claim
-
-Skip any step = lying, not verifying
+COMPLETION → TRUTH → PROOF
 ```
 
-## Common Failures, Red Flags, Rationalizations
+1. **Completion:** Did the agent finish its task? (contract says PASS)
+2. **Truth:** Is the work actually correct? (independent verification)
+3. **Proof:** Can you prove it with evidence? (exit codes, test output, screenshots)
 
-These are core verification doctrine. They were once deferred to superpowers, but superpowers is not loaded when cc10x runs solo — so the scannable references live inline here. The operational rule: if you catch yourself using "should/probably/seems", expressing satisfaction before running the command, trusting an agent's success report, or relying on a partial check — STOP, run verification, get evidence, THEN speak. Different words do not exempt the rule; spirit over letter.
+A PASS without proof is a claim. A claim is not verification.
 
-### Common Failures
-
-| Failure | Why it lies | Fix |
-| --------- | ------------- | ----- |
-| previous-run ≠ fresh | Output is from an earlier message; code changed since | Re-run the command in THIS message |
-| linter ≠ compiler | Lint passing says nothing about types/build | Run `tsc --noEmit` / build, not just lint |
-| agent-says-success ≠ verified | A spawned agent's "done" is a claim, not evidence | Demand its evidence array; re-run the gate yourself |
-
-### Red Flags — STOP
-
-If any of these appear BEFORE you have run the command, STOP and run it:
-
-- "Great!" / "Perfect!" / "Done!" / "All set!"
-- "should pass" / "should work"
-- "probably" / "seems fine" / "looks good"
-- "I've fixed it" with no exit code yet
-
-### Rationalization → Reality
-
-| Rationalization | Reality |
-| ----------------- | --------- |
-| "It's a trivial change, no need to test" | Trivial changes break builds too — run it |
-| "Tests passed earlier" | Earlier ≠ now; the diff invalidated that run |
-| "The agent reported success" | A report is a claim; evidence is exit code 0 in this session |
-| "Lint is green, so it's fine" | Lint ≠ types ≠ runtime; run the full gate |
-
-## When To Apply
-
-**ALWAYS before:**
-
-- ANY variation of success/completion claims
-- ANY expression of satisfaction
-- ANY positive statement about work state
-- Committing, PR creation, task completion
-- Moving to next task
-- Delegating to agents
-
-**Rule applies to:**
-
-- Exact phrases
-- Paraphrases and synonyms
-- Implications of success
-- ANY communication suggesting completion/correctness
+**Authoring Rule: Keep Gates High.** Every gate in this skill exists because a specific failure mode was observed. Removing a gate without understanding what it prevents reintroduces the failure. Gates are scar notes — they encode hard-won lessons.
 
 ## Self-Critique Gate (BEFORE Verification Commands)
 
-**MANDATORY: Check these BEFORE running verification commands:**
+Before running any test, audit your own work:
 
-### Code Quality
+**Code Quality:**
 
-- [ ] Follows patterns from reference files?
-- [ ] Naming matches project conventions?
-- [ ] Error handling in place?
-- [ ] No debug artifacts (console.log, TODO)?
-- [ ] No commented-out code?
-- [ ] No hardcoded values that should be constants?
+- [ ] No TODO/FIXME/stubs in changed files
+- [ ] No commented-out code
+- [ ] No debug logging left in
+- [ ] Error handling covers the failure modes the change introduces
+- [ ] Types are correct (not `as any` or `as unknown`)
 
-### Implementation Completeness
+**Implementation Completeness:**
 
-- [ ] All required files modified?
-- [ ] No unexpected files changed?
-- [ ] Requirements fully met?
-- [ ] No scope creep?
+- [ ] Every acceptance criterion from the plan has corresponding code
+- [ ] Every named scenario has a test
+- [ ] Every error path in the plan has handling
+- [ ] No silent failures (empty catches, discarded errors)
+- [ ] Build succeeds, type-check passes
 
-### Self-Critique Verdict
-
-**PROCEED:** [YES/NO]
-**CONFIDENCE:** [High/Medium/Low]
-
-- If NO → Fix issues before verification
-- If YES → Proceed to verification commands below
-
----
+**Self-Critique Verdict:** If any check fails, fix it BEFORE running verification. Don't run tests you know will fail on code quality issues.
 
 ## Validation Levels
 
-**Match validation depth to task complexity:**
+| Level | What | Exit Code | When |
+| ------- | ------ | ----------- | ------ |
+| **Deterministic** | Automated test | 0/1 | Always — the default |
+| **Probabilistic** | Test with known flake rate | 0/1 (retry policy) | When deterministic impossible (timing, network) |
+| **Manual** | Human verifies with checklist | n/a | When automation not worth the cost |
+| **Live** | Production-like environment | 0/1 | When plan requires live proof |
 
-| Level | Name | Commands | When to Use |
-| ------- | ------ | ---------- | ------------- |
-| 1 | Syntax & Style | `npm run lint`, `tsc --noEmit` | Every task |
-| 2 | Unit Tests | `npm test` | Low-Medium risk tasks |
-| 3 | Integration Tests | `npm run test:integration` | Medium-High risk tasks |
-| 4 | Manual Validation | User flow walkthrough | High-Critical risk tasks |
-
-**Include the appropriate validation level for each verification step.**
+Every verification must state its validation level. If manual, state the checklist. If deterministic, state the command + exit code. If live, state the harness command.
 
 ## Production-Like Live Proof
 
-If the accepted plan or current task requires real, seeded, production-like verification, read `references/live-production-testing.md` before claiming completion.
+When the plan includes `### Live Verification Strategy` or a harness manifest:
 
-Use the live harness when the task depends on:
+- Run `python3 plugins/cc10x/tools/live_harness_runner.py --manifest <path> --mode proof`
+- If stress required: also run `--mode stress`
+- Do NOT silently substitute replay fixtures or unit tests for required live proof
 
-- real API calls
-- seeded or resettable data
-- browser or worker orchestration
-- cross-service side effects
-- load or stress behavior
+**Flaky test handling:** re-run once. Pass on re-run → mark PASS with `flaky: true`. Fail both → FAIL. Never convert flaky pass into unconditional confidence.
 
-Do not treat replay fixtures, unit tests, or manual spot-checks as equivalent proof when the plan requires live-system evidence.
-
-## Verification Checklist
-
-Before marking work complete:
-
-- [ ] All relevant tests pass (exit 0) - **with fresh evidence**
-- [ ] Build succeeds (exit 0) - **with fresh evidence**
-- [ ] Feature functionality verified - **with command output**
-- [ ] No regressions introduced - **with test output**
-- [ ] Evidence captured for each check - **in this message**
-- [ ] Deviations from plan documented - **if implementation differed from design**
-- [ ] Appropriate validation level applied for task risk
-
-## Output Format
-
-```markdown
-## Verification Summary
-
-### Scope
-[What was completed]
-
-### Criteria
-[What was verified]
-
-### Evidence
-
-| Check | Command | Exit Code | Result |
-|-------|---------|-----------|--------|
-| Tests | `npm test` | 0 | PASS (34/34) |
-| Build | `npm run build` | 0 | PASS |
-| Feature | `npm test -- --grep "feature"` | 0 | PASS (3/3) |
-
-### Deviations from Plan (if any)
-| Planned | Actual | Reason |
-|---------|--------|--------|
-| [Original design] | [What changed] | [Why] |
-
-### Status
-COMPLETE - All verifications passed with fresh evidence
-```
-
-## Evidence Array Protocol
-
-**Every claim in verification output MUST have a corresponding evidence entry.**
-
-**Format:** `[command] → exit [code]: [result summary]`
-
-**Rules:**
-
-1. One evidence entry per claim — no claim without evidence, no evidence without claim
-2. Evidence must be from THIS session (not recalled from memory)
-3. Exit codes are mandatory — "looks good" is not evidence
-4. Group evidence by claim type:
+## Evidence Array Protocol (MANDATORY for PASS)
 
 ```
 EVIDENCE:
-  tests: ["CI=true npm test → exit 0: 34/34 passed"]
-  build: ["npm run build → exit 0: compiled in 2.3s"]
-  feature: ["curl localhost:3000/api/health → exit 0: {status: ok}"]
-  regression: ["npm test -- auth.test.ts → exit 0: regression case passes"]
+  scenarios:
+    - "[name] | Given [state] | When [action] | [command] → exit [code] | expected=[expected] | actual=[actual]"
+  regressions:
+    - "[test] → exit [code]: [result]"
+  edge_cases:
+    - "[case]: [command] → exit [code]: [result]"
 ```
 
-**Verification Summary must include this EVIDENCE block before the Status line.**
+Every scenario needs non-empty Expected and Actual. Every scenario maps to exactly one EVIDENCE entry. SCENARIOS_PASSED must equal EVIDENCE.scenarios with exit 0 + Result=PASS.
 
-**Anti-pattern:** `Status: COMPLETE - All verifications passed` without EVIDENCE block = INVALID.
+## Goal-Backward Lens
 
-## Goal-Backward Lens (GSD-Inspired)
+Walk backward from the goal to verify it was achieved:
 
-After standard verification passes, apply this additional check:
+1. **What was the goal?** (re-read the plan's exit criteria)
+2. **What would prove it?** (name the specific evidence)
+3. **Do I have that evidence?** (run the verification)
+4. **Does the evidence actually prove the goal?** (not "tests pass" but "the tests test the right thing")
 
-### Three Questions
+**Forbidden language before proof:** "should pass", "looks good", "seems fine", "builder reported success", "the tests cover this" (without showing which test), "no regressions detected" (without listing what was tested).
 
-1. **Truths:** What must be TRUE? (observable user or business outcomes)
-2. **Artifacts:** What must EXIST? (files, endpoints, tests, records)
-3. **Wiring:** What must be WIRED? (component → API → database)
+## Common Failures
 
-### Why This Catches Stubs
+| Failure | What happens | Fix |
+| --------- | ------------- | ----- |
+| **False green** | Test passes without exercising the real code path | Test Honesty Gates (see integration-verifier) |
+| **Scope skip** | "All tests pass" but untested scenarios exist | Goal-backward lens: name every scenario, verify each |
+| **Stale evidence** | "Tests pass" but you didn't run them this session | Re-run. Evidence must be from THIS session. |
+| **Claim without proof** | "It works" with no command/exit code | Evidence array is mandatory for PASS |
+| **Environment escape** | Test fails with env signal (command not found, ECONNREFUSED) | Classify as ENVIRONMENT not code. Mark BLOCKED. |
 
-A component can:
+## Auditor Posture
 
-- Exist ✓
-- Pass lint ✓
-- Have tests ✓
-- But NOT be wired to the system ✗
-
-## Phase-Exit Proof vs Extended Audit
-
-Use this distinction when verification gets expensive:
-
-- **Phase-exit proof** is the non-negotiable minimum:
-  - truths
-  - artifacts
-  - wiring
-  - fresh scenario evidence
-- **Extended audit** is additional confidence work:
-  - broader scans
-  - extra pattern sweeps
-  - deeper blast-radius checks
-
-Never skip phase-exit proof. If extended audit is not run, say so explicitly instead of implying it happened.
-
-Goal-backward asks: "Does the GOAL work?" not "Did the TASK complete?"
-
-### Quick Check Template
-
-```
-GOAL: [What user wants to achieve]
-
-TRUTHS (observable):
-- [ ] [User-facing behavior 1]
-- [ ] [User-facing behavior 2]
-
-ARTIFACTS (exist):
-- [ ] [Required file/endpoint 1]
-- [ ] [Required file/endpoint 2]
-
-WIRING (connected):
-- [ ] [Component] → [calls] → [API]
-- [ ] [API] → [queries] → [Database]
-
-Standard verification: exit code 0 ✓
-Goal check: All boxes checked?
-```
-
-### When to Apply
-
-- After integration-verifier runs
-- After any "feature complete" claim
-- Before marking BUILD workflow as done
-
-**Iron Law unchanged:** Exit code 0 still required. This is an additional verification lens, not a replacement.
-
-## Stub Detection Patterns
-
-After Goal-Backward Lens passes, scan for these stub indicators:
-
-### Universal Stubs
-
-```bash
-# Check for TODO/placeholder markers
-grep -rE "TODO|FIXME|placeholder|not implemented|coming soon" --include="*.ts" --include="*.tsx" --include="*.js"
-
-# Check for empty returns
-grep -rE "return null|return undefined|return \{\}|return \[\]" --include="*.ts" --include="*.tsx"
-```
-
-### React Component Stubs
-
-| Pattern | Why It's a Stub |
-| --------- | ----------------- |
-| `return <div>Placeholder</div>` | Renders nothing useful |
-| `onClick={() => {}}` | Click does nothing |
-| `onSubmit={(e) => e.preventDefault()}` | Only prevents default, no action |
-| `useState` with no setter calls | State never changes |
-
-### API Route Stubs
-
-| Pattern | Why It's a Stub |
-| --------- | ----------------- |
-| `return Response.json({ message: "Not implemented" })` | Explicit stub |
-| `return Response.json([])` without DB query | Returns empty, no real data |
-| `return NextResponse.json({})` with no logic | Empty response |
-
-### Function Stubs
-
-| Pattern | Why It's a Stub |
-| --------- | ----------------- |
-| `throw new Error("Not implemented")` | Will crash at runtime |
-| `console.log("TODO")` | Debug artifact |
-| `// TODO: implement` | Marked incomplete |
-
-### Quick Stub Check
-
-```bash
-# Run before claiming completion
-grep -rE "(TODO|FIXME|placeholder|not implemented)" src/
-grep -rE "onClick=\{?\(\) => \{\}\}?" src/
-grep -rE "return (null|undefined|\{\}|\[\])" src/
-```
-
-**If any stub patterns found:** DO NOT claim completion. Fix or document why it's intentional.
-
-### Wiring Verification (Component → API → Database)
-
-Artifacts can exist, pass lint, and have tests but NOT be wired to the system.
-
-**Component → API Check:**
-
-```bash
-# Does component actually call the API?
-grep -E "fetch\(['\"].*api|axios\.(get|post)" src/components/
-# Is response actually used?
-grep -A 5 "fetch\|axios" src/components/ | grep -E "await|\.then|setData|setState"
-```
-
-**API → Database Check:**
-
-```bash
-# Does API actually query database?
-grep -E "prisma\.|db\.|mongoose\." src/app/api/
-# Is result actually returned?
-grep -E "return.*json.*data|Response\.json" src/app/api/
-```
-
-**Red Flags:**
-
-| Pattern | Problem |
-| --------- | --------- |
-| `fetch('/api/x')` with no `await` | Call ignored |
-| `await prisma.findMany()` → `return { ok: true }` | Query result discarded |
-| Handler only has `e.preventDefault()` | Form does nothing |
-
-**Line Count Minimums:**
-
-| File Type | Minimum Lines | Below = Likely Stub |
-|-----------|---------------|---------------------|
-| Component | 15 | Too thin |
-| API route | 10 | Too thin |
-| Hook/util | 10 | Too thin |
-
-### Export/Import Verification
-
-Exports can exist but never be consumed. Check that key exports are actually used:
-
-```bash
-# Check if export is imported AND used (not just imported)
-check_export_used() {
-  local export_name="$1"
-  grep -r "import.*$export_name" src/ --include="*.ts" --include="*.tsx" | wc -l
-  grep -r "$export_name" src/ --include="*.ts" --include="*.tsx" | grep -v "import\|export" | wc -l
-}
-
-# Example: Check auth exports are consumed
-check_export_used "getCurrentUser"
-check_export_used "useAuth"
-```
-
-**Export Status:**
-
-| Status | Meaning | Action |
-| -------- | --------- | -------- |
-| CONNECTED | Imported AND used | ✓ Good |
-| IMPORTED_NOT_USED | Import exists but never called | Remove dead import or implement |
-| ORPHANED | Export exists, never imported | Dead code or missing integration |
-
-### Auth Protection Verification
-
-Sensitive routes must check authentication:
-
-```bash
-# Find routes that should be protected
-protected_patterns="dashboard|settings|profile|account|admin"
-grep -r -l "$protected_patterns" src/app/ --include="*.tsx"
-
-# For each, verify auth usage
-check_auth_protection() {
-  local file="$1"
-  grep -E "useAuth|useSession|getCurrentUser|isAuthenticated" "$file"
-  grep -E "redirect.*login|router.push.*login" "$file"
-}
-```
-
-**If sensitive route lacks auth check:** Add protection before claiming completion.
-
-## The Bottom Line
-
-**No shortcuts for verification.**
-
-Run the command. Read the output. THEN claim the result.
-
-This is non-negotiable.
-
-## Completion Guard (Final Gate Before Router Contract)
-
-**IMMEDIATELY before writing `### Router Contract (MACHINE-READABLE)`, verify ALL:**
-
-1. **Acceptance criteria met?** — Re-read task description. Check each criterion. Any gap = STATUS:FAIL
-2. **Evidence array complete?** — Every claim has `[command] → exit [code]` entry from THIS session
-3. **No stubs in changed files?** — Run stub detection on files YOU modified (not entire repo)
-4. **Fresh verification?** — Last test/build command ran in THIS message (not earlier in conversation)
-
-**If ANY check fails:** Fix it FIRST, then re-run Completion Guard. Do NOT emit Router Contract with STATUS:PASS/FIXED/APPROVE until all 4 pass.
-
-**This is the LAST gate. No exceptions. No "close enough."**
+You are an independent auditor. A reviewer approval, green unit test, or builder claim is never sufficient by itself for PASS. If you cannot independently reproduce a claimed success, return FAIL.

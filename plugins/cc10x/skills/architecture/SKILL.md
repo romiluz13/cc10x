@@ -1,397 +1,143 @@
 ---
 name: architecture
-description: "Internal cc10x skill, injected by the router via SKILL_HINTS for multi-component, API, schema, auth, or integration-heavy work. Frames system and API design tradeoffs; advisory, never overrides user/repo/plan."
-allowed-tools: Read Grep Glob LSP
+description: |
+  Greenfield architecture design: map functionality flows, draw components, design APIs,
+  classify dependencies, plan observability. For multi-component, API, schema, auth, or
+  integration-heavy work. For retrofitting existing code, use codebase-hygiene instead.
+allowed-tools: Read Grep Glob LSP Bash
 user-invocable: false
 ---
 
-# Architecture Patterns
+# Architecture
 
-## Overview
-
-Architecture exists to support functionality. Every architectural decision should trace back to a functionality requirement.
-
-**Core principle:** Design architecture FROM functionality, not TO functionality.
-
-This skill is advisory. It frames decisions and tradeoffs; it does not outrank explicit user requirements, repo standards, or an approved plan/design doc.
-
-## Focus Areas (Reference Pattern)
-
-- **RESTful API design** with proper versioning and error handling
-- **Service boundary definition** and inter-service communication
-- **Database schema design** (normalization, indexes, sharding)
-- **Caching strategies** and performance optimization
-- **Basic security patterns** (auth, rate limiting)
-
-## The Iron Law
-
-```
-NO ARCHITECTURE DESIGN BEFORE FUNCTIONALITY FLOWS ARE MAPPED
-```
-
-If you haven't documented user flows, admin flows, and system flows, you cannot design architecture.
+Design systems from scratch: map flows, then draw components. For retrofitting existing code, use `codebase-hygiene` instead.
 
 ## Intake Routing
 
-**First, determine what kind of architectural work is needed:**
-
-| Request Type | Route To |
-| -------------- | ---------- |
-| "Design API endpoints" | API Design section |
-| "Plan system architecture" | Full Architecture Design |
-| "Design data models" | Data Model section |
-| "Plan integrations" | Integration Patterns section |
-| "Make decisions" | Decision Framework section |
-
-## Universal Questions (Answer First)
-
-**ALWAYS answer before designing:**
-
-1. **What functionality are we building?** - User stories, not technical features
-2. **Who are the actors?** - Users, admins, external systems
-3. **What are the user flows?** - Step-by-step user actions
-4. **What are the system flows?** - Internal processing steps
-5. **What integrations exist?** - External dependencies
-6. **What are the constraints?** - Performance, security, compliance
-7. **What observability is needed?** - Logging, metrics, monitoring, alerting
+| Request type | Use |
+| ------------- | ----- |
+| New system/major feature (greenfield) | This skill |
+| Existing code with shallow modules | `codebase-hygiene` |
+| Multi-component integration | This skill |
+| Single-component refactor | `planning` + `building` |
 
 ## Functionality-First Design Process
 
 ### Phase 1: Map Functionality Flows
 
-**Before any architecture:**
+Map every user flow end-to-end before designing any component:
 
 ```
-User Flow (example):
-1. User opens upload page
-2. User selects file
-3. System validates file type/size
-4. System uploads to storage
-5. System shows success message
-
-Admin Flow (example):
-1. Admin opens dashboard
-2. Admin views all uploads
-3. Admin can delete uploads
-4. System logs admin action
-
-System Flow (example):
-1. Request received at API
-2. Auth middleware validates token
-3. Service processes request
-4. Database stores data
-5. Response returned
+Flow: [name]
+1. [step] → [what the system does] → [what the user sees]
+2. [step] → [what the system does] → [what the user sees]
+Error paths:
+- [error] → [system response] → [user sees]
 ```
+
+Every flow must have its error paths mapped. Unmapped error paths become unmapped components.
 
 ### Phase 2: Map to Architecture
 
-**Each flow maps to components:**
+Translate flows into components:
 
-| Flow Step | Architecture Component |
-| ----------- | ---------------------- |
-| User opens page | Frontend route + component |
-| User submits data | API endpoint |
-| System validates | Validation service |
-| System processes | Business logic service |
-| System stores | Database + repository |
-| System integrates | External client/adapter |
+- Each flow step maps to one or more components
+- Each error path maps to a component's error handling
+- Data crossings between components become interfaces
 
 ### Phase 3: Design Components
 
-**For each component, define:**
+For each component:
 
-- **Purpose**: What functionality it supports
-- **Inputs**: What data it receives
-- **Outputs**: What data it returns
-- **Dependencies**: What it needs
-- **Error handling**: What can fail
+- **Interface:** what it receives and returns (the contract)
+- **Responsibility:** what it does (one sentence)
+- **Dependencies:** what it needs (other components, external services)
+- **State:** what it remembers (if anything)
+- **Error handling:** what can go wrong and what it does about it
 
 ## Architecture Views
 
 ### System Context (C4 Level 1)
 
-```
-┌─────────────────────────────────────────────┐
-│                 SYSTEM                       │
-│  ┌─────────┐  ┌─────────┐  ┌─────────┐     │
-│  │   Web   │  │   API   │  │Database │     │
-│  │   App   │──│ Service │──│         │     │
-│  └─────────┘  └─────────┘  └─────────┘     │
-└─────────────────────────────────────────────┘
-       │              │              │
-    ┌──┴──┐        ┌──┴──┐        ┌──┴──┐
-    │User │        │Admin│        │ Ext │
-    └─────┘        └─────┘        └─────┘
-```
+Box diagram: your system + external systems it talks to. One paragraph per external system: what it provides, what you depend on.
 
 ### Container View (C4 Level 2)
 
-- **Web App**: React/Vue/Angular frontend
-- **API Service**: REST/GraphQL backend
-- **Database**: PostgreSQL/MongoDB/etc
-- **Cache**: Redis/Memcached
-- **Queue**: RabbitMQ/SQS for async
+Internal boxes: web app, API, database, queue, worker. Arrows show data flow. One paragraph per container: technology choice, responsibility.
 
 ### Component View (C4 Level 3)
 
-- **Controllers**: Handle HTTP requests
-- **Services**: Business logic
-- **Repositories**: Data access
-- **Clients**: External integrations
-- **Models**: Data structures
+Inside each container: the modules/classes. Arrows show call relationships. This is what the builder will implement.
 
 ## LSP-Powered Architecture Analysis
 
-**Use LSP to map actual code dependencies:**
+Use LSP to understand existing architecture before designing new:
 
-| Architecture Task | LSP Tool | Output |
-| ------------------- | ---------- | -------- |
-| Map component dependencies | `lspCallHierarchy(outgoing)` | What each component uses |
-| Find all consumers of a service | `lspCallHierarchy(incoming)` | Impact analysis |
-| Verify interface implementations | `lspFindReferences` | All implementers |
-| Trace data flow | Chain `lspCallHierarchy` calls | Full flow map |
-
-**Mapping Actual Architecture:**
-
-```
-1. localSearchCode("ServiceName") → find entry points
-2. lspCallHierarchy(outgoing) → map dependencies
-3. For each dependency: repeat step 2
-4. Build dependency graph from results
-```
-
-**Use LSP BEFORE drawing architecture diagrams** - verify assumptions with code.
-
-**CRITICAL:** Always get lineHint from localSearchCode first. Never guess line numbers.
+- **Go to Definition** on key functions to trace the call graph
+- **Find References** to understand blast radius of existing interfaces
+- **Go to Type Definition** to understand data models
+- **Incoming/Outgoing Calls** to map the dependency graph
 
 ## API Design (Functionality-Aligned)
 
-**Map user flows to endpoints:**
+Design APIs from the flow, not from the data model:
 
+1. **What does the user need to do?** (action, not resource)
+2. **What's the minimal interface that enables it?** (fewest endpoints/parameters)
+3. **What's the error contract?** (every error case from the flow mapping)
+4. **What's the type contract?** (input/output types, not just shapes)
+
+```typescript
+// Good: functionality-aligned
+POST /orders/{id}/cancel  →  { status, cancelledAt }
+
+// Bad: data-model-aligned
+PUT /orders/{id}  →  { ..., status: "cancelled", ... }
 ```
-User Flow: Upload file
-→ POST /api/files
-  Request: { file: binary, metadata: {...} }
-  Response: { id: string, url: string }
-  Errors: 400 (invalid), 413 (too large), 500 (storage failed)
-
-User Flow: View file
-→ GET /api/files/:id
-  Response: { id, url, metadata, createdAt }
-  Errors: 404 (not found), 403 (not authorized)
-
-Admin Flow: Delete file
-→ DELETE /api/files/:id
-  Response: { success: true }
-  Errors: 404, 403
-```
-
-**API Design Checklist:**
-
-- [ ] Each endpoint maps to a user/admin flow
-- [ ] Request schema matches flow inputs
-- [ ] Response schema matches flow outputs
-- [ ] Errors cover all failure modes
-- [ ] Auth/authz requirements documented
 
 ## Integration Patterns
 
-**Map integration requirements to patterns:**
+For each integration:
 
-| Requirement | Pattern |
-| ------------- | --------- |
-| Flaky external service | Retry with exponential backoff |
-| Slow external service | Circuit breaker + timeout |
-| Async processing needed | Message queue |
-| Real-time updates needed | WebSocket/SSE |
-| Data sync needed | Event sourcing |
-
-**For each integration:**
-
-```markdown
-### [Integration Name]
-
-**Functionality**: What user flow depends on this?
-**Pattern**: [Retry/Circuit breaker/Queue/etc]
-**Error handling**: What happens when it fails?
-**Fallback**: What's the degraded experience?
-```
+| Field | Value |
+| ------- | ------- |
+| **System** | [name] |
+| **Protocol** | [HTTP/gRPC/CLI/message queue] |
+| **Direction** | [we call them / they call us / both] |
+| **Contract** | [request/response schema or event schema] |
+| **Failure mode** | [what happens when it's down] |
+| **Retry policy** | [retries, backoff, circuit breaker] |
 
 ### Dependency Classification
 
-Before choosing a pattern, classify the dependency:
+| Class | Meaning | Example |
+| ------- | --------- | --------- |
+| **Owned** | We control the code and deploy it | Internal service |
+| **Wrapped** | We depend on it but wrap it in our interface | Third-party SDK behind adapter |
+| **Consumed** | We depend on it directly, no wrapper | External API called directly |
+| **Infra** | Platform-level dependency | Database, message queue |
 
-| Category | Examples | Testing Strategy |
-| ---------- | ---------- | ----------------- |
-| **In-process** | Pure computation, in-memory state | Test directly — merge modules and verify |
-| **Local-substitutable** | Database (PGLite), filesystem (in-memory FS) | Test with local stand-in in test suite |
-| **Remote but owned** | Your own microservices, internal APIs | Define port (interface), inject transport. Test with in-memory adapter |
-| **True external** | Stripe, Twilio, third-party APIs | Mock at boundary. Inject dependency as port |
-
-The category determines the pattern. In-process needs nothing. True external needs mocks. The middle two need ports and adapters.
-
-**Implementation ordering — build from leaves inward:**
-
-```
-Level 0 (no deps):      [Pure utils] [Config]
-        ↓
-Level 1 (Level 0 only): [Repositories] [External clients]
-        ↓
-Level 2 (Level 0-1):    [Services]
-        ↓
-Level 3 (Level 0-2):    [Controllers] [API routes]
-```
-
-Level 0 components are testable immediately. Each subsequent level depends only on predecessors. This ordering eliminates mock-heavy tests in early phases and matches the planner's DAG constraint (phases depend only on predecessors, never on future phases).
+Wrapped dependencies can be swapped. Consumed dependencies cannot. Track which is which — it determines your coupling risk.
 
 ## Observability Design
 
-**For each component, define:**
+For each component:
 
-| Aspect | Questions |
-| -------- | ----------- |
-| **Logging** | What events? What level? Structured format? |
-| **Metrics** | What to measure? Counters, gauges, histograms? |
-| **Alerts** | What thresholds? Who gets notified? |
-| **Tracing** | Span boundaries? Correlation IDs? |
-
-**Minimum observability:**
-
-- Request/response logging at boundaries
-- Error rates and latencies
-- Health check endpoint
-- Correlation ID propagation
+- **Logging:** what to log (not "everything" — specific events)
+- **Metrics:** what to track (business-relevant, not infra noise)
+- **Tracing:** what to trace (cross-component flows, not every function call)
+- **Alerting:** when to alert (user-visible impact, not internal noise)
 
 ## Decision Framework
 
-**For each architectural decision:**
+For architectural decisions with material trade-offs:
 
 ```markdown
 ### Decision: [Title]
-
-**Context**: What functionality requirement drives this?
-
-**Options**:
-1. [Option A] - [Brief description]
-2. [Option B] - [Brief description]
-3. [Option C] - [Brief description]
-
-**Trade-offs**:
-| Criterion | Option A | Option B | Option C |
-|-----------|----------|----------|----------|
-| Performance | Good | Better | Best |
-| Complexity | Low | Medium | High |
-| Cost | Low | Medium | High |
-
-**Decision**: [Option chosen]
-
-**Rationale**: [Why this option best supports functionality]
+**Context:** [why this decision is needed]
+**Options:** [2-3 alternatives with trade-offs]
+**Decision:** [what was chosen]
+**Rejected:** [what was not chosen and why]
+**Consequences:** [what this enables and prevents]
+**Reversibility:** [reversible or irreversible — irreversible decisions need more evidence]
 ```
-
-## Red Flags - STOP and Redesign
-
-If you find yourself:
-
-- Designing architecture before mapping flows
-- Adding components without clear functionality
-- Choosing patterns because "it's best practice"
-- Over-engineering for hypothetical scale
-- Ignoring existing architecture patterns
-- Making decisions without documenting trade-offs
-
-**STOP. Go back to functionality flows.**
-
-## Keep It Simple (Reference Pattern)
-
-**Approach for backend architecture:**
-
-1. Start with clear service boundaries
-2. Design APIs contract-first
-3. Consider data consistency requirements
-4. Plan for horizontal scaling from day one
-5. **Keep it simple - avoid premature optimization**
-
-**Architecture Output Checklist:**
-
-- [ ] API endpoint definitions with example requests/responses
-- [ ] Service architecture diagram (mermaid or ASCII)
-- [ ] Database schema with key relationships
-- [ ] Technology recommendations with brief rationale
-- [ ] Potential bottlenecks and scaling considerations
-
-**Always provide concrete examples. Focus on practical implementation over theory.**
-
-## Rationalization Prevention
-
-| Excuse | Reality |
-| -------- | --------- |
-| "This pattern is industry standard" | Does it support THIS functionality? |
-| "We might need it later" | YAGNI. Design for now. |
-| "Microservices are better" | For this functionality? Justify it. |
-| "Everyone uses this" | That's not a trade-off analysis. |
-| "It's more flexible" | Flexibility without need = complexity. |
-
-## Output Format
-
-```markdown
-# Architecture Design: [Feature/System Name]
-
-## Functionality Summary
-[What this architecture supports - trace to user value]
-
-## Flows Mapped
-
-### User Flows
-1. [Flow 1 steps]
-2. [Flow 2 steps]
-
-### System Flows
-1. [Flow 1 steps]
-2. [Flow 2 steps]
-
-## Architecture
-
-### System Context
-[Diagram or description of actors and system boundaries]
-
-### Components
-| Component | Purpose (Functionality) | Dependencies |
-|-----------|------------------------|--------------|
-| [Name] | [What flow it supports] | [What it needs] |
-
-### API Endpoints
-| Endpoint | Flow | Request | Response |
-|----------|------|---------|----------|
-| POST /api/x | User uploads | {...} | {...} |
-
-## Key Decisions
-
-### Decision 1: [Title]
-- Context: [Functionality driver]
-- Options: [List]
-- Trade-offs: [Table]
-- Decision: [Choice]
-- Rationale: [Why]
-
-## Implementation Roadmap
-
-### Critical (Must have for core flow)
-1. [Component/feature]
-
-### Important (Completes flows)
-1. [Component/feature]
-
-### Enhancement (Improves experience)
-1. [Component/feature]
-```
-
-## Final Check
-
-Before completing architecture design:
-
-- [ ] All user flows mapped
-- [ ] All system flows mapped
-- [ ] Each component traces to functionality
-- [ ] Each API endpoint traces to flow
-- [ ] Decisions documented with trade-offs
-- [ ] Implementation roadmap prioritized

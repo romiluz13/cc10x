@@ -1,512 +1,118 @@
 ---
 name: debugging
-description: "Use when a bug, flaky test, or runtime/build failure needs root-cause tracing and a nearby duplicate-pattern scan before any fix."
-allowed-tools: Read Grep Glob Bash LSP
+description: |
+  Debugging discipline: feedback loop FIRST, root cause before fix, blast radius after
+  fix. Covers the 10-rung construction ladder, LSP-powered tracing, hypothesis quality
+  criteria, and four-phase investigation. Loaded by bug-investigator.
+allowed-tools: Read Edit Bash Grep Glob LSP
+user-invocable: false
 ---
 
-# Systematic Debugging
+# Debugging
 
-> **DIVERGENCE FROM superpowers:systematic-debugging:** Forked. The four-phase root-cause discipline and the rationalization table are core debugging doctrine assumed here. CC10x ADDS: the feedback-loop-first gate (build a fast, deterministic, agent-runnable repro loop BEFORE any hypothesis), LSP-powered root-cause tracing, scenario playbooks, hypothesis confidence scoring, cognitive-bias and meta-debugging guidance, the Option-Zero (config-only fix) check, and the restart-investigation protocol. The bug-investigator agent owns the operational process (it enforces the feedback loop as a fail-closed gate); this skill is the advisory depth it loads.
-
-## Overview
-
-Random fixes waste time and create new bugs. Quick patches mask underlying issues.
-
-**Core principle:** ALWAYS find root cause before attempting fixes. Symptom fixes are failure.
-
-This skill is advisory. It deepens investigation quality. It does not authorize local-only patches, guesswork, or "fix the line that crashed" thinking.
+**Feedback Loop FIRST:** No hypothesis without a repro loop. No fix without root cause. No fix without blast radius scan.
 
 ## Reference Files
 
-Read only the references needed for the current investigation:
-
-- `references/root-cause-playbooks.md` for build/type failures, flaky tests, runtime crashes, browser errors, git bisect, and boundary tracing
-- `references/investigation-hygiene.md` for context discipline, evidence logging, hypothesis tracking, restart protocol, and architectural escalation
-
-## The Iron Law
-
-```
-NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST
-```
-
-If you haven't completed Phase 1, you cannot propose fixes.
+- `references/investigation-hygiene.md` — investigation discipline, evidence handling
+- `references/root-cause-playbooks.md` — scenario-specific debugging playbooks
 
 ## Feedback Loop FIRST (Before Any Hypothesis)
 
-**A hypothesis without a repro loop is a guess.** Before you form H1 — before you read code to build a theory — build a fast, deterministic, **agent-runnable** pass/fail signal that turns red on *this* bug and that you can re-run on every iteration. The loop IS the evidence this skill already demands. Everything downstream (bisection, hypothesis testing, instrumentation) just consumes it; without it, no amount of staring at code will save you.
+A hypothesis without a repro loop is a guess. Before H1, build a fast, deterministic, agent-runnable signal that turns red on the bug.
 
-This is the advisory depth behind the bug-investigator agent's **Feedback Loop Gate**, which enforces it as a **fail-closed gate**: in the agent, no loop means no hypothesis (it returns `BLOCKED`, never advances to H1). The skill explains the technique; the agent makes it non-negotiable.
+### Construction Ladder (try in rank order, stop at first that works)
 
-**Spend disproportionate effort here.** Be aggressive, be creative, refuse to give up.
+1. Failing automated test (unit/integration) — best: lives at a seam, reusable as RED
+2. `curl`/HTTP request with asserted response
+3. CLI snapshot diff (run command, diff stdout/stderr/exit)
+4. Headless browser script (real DOM/runtime crash)
+5. Trace replay (recorded request/log/event re-run)
+6. Throwaway harness (tiny script calling the suspect function)
+7. Property/fuzz check (when failing input is unknown)
+8. `git bisect run` (regression with existing test)
+9. Differential old-vs-new (last-good vs HEAD behavior diff)
+10. Human-in-the-loop (LAST resort: scripted manual steps)
 
-### Construction Ladder (try in rank order; stop at the first that is fast + deterministic)
+**Sharpen the loop:** sub-second beats sub-minute. Assert the exact failing fact, not a noisy superset. Same input → same red, no drift.
 
-1. **Failing automated test** (unit/integration/e2e) at whatever seam reaches the bug — best, because it is reusable as the RED regression test in Phase 4
-2. **`curl`/HTTP request** with an asserted response (status/body diff) against a running dev server
-3. **CLI snapshot diff** — run the command, diff stdout/stderr/exit code against a known-good snapshot
-4. **Headless browser script** (Playwright/Puppeteer) — drives the real DOM/runtime, asserts on DOM/console/network (a real crash, not just types)
-5. **Trace replay** — save a real request/payload/log/event to disk, replay it through the code path in isolation
-6. **Throwaway harness** — a tiny script that calls the suspect function directly with a fixture input
-7. **Property/fuzz check** — when the failing input is unknown, run many random inputs and watch for the failure mode
-8. **`git bisect run`** — when the bug is a regression between two known states and a test exists
-9. **Differential old-vs-new** — run the same input through the last-good revision beside HEAD (or two configs) and diff behavior
-10. **Human-in-the-loop** — LAST resort: scripted manual steps the user runs and reports back, so the loop stays structured
-
-### Treat the Loop as a Product
-
-Once you have *a* loop, do not settle for the first version. Sharpen it:
-
-- **Faster** — sub-second beats sub-minute; you will run it dozens of times. Cache setup, skip unrelated init, narrow the scope.
-- **Sharper** — assert the *exact* failing fact (the user's specific symptom), not a noisy superset or "didn't crash".
-- **More deterministic** — same input → same red. Pin time, seed RNG, isolate filesystem, freeze network, remove jitter.
-
-A 30-second flaky loop is barely better than no loop; a 2-second deterministic one is a debugging superpower.
-
-### Flaky / Non-Deterministic Bugs
-
-The goal is **not** a single clean repro — it is a **higher reproduction RATE**. Loop the trigger N times (`for i in $(seq 1 N); do ...; done`), record the hit rate (e.g. `3/50`), and treat raising that rate as loop iteration: control the seed, force a schedule, add concurrency/load/stress, inject sleeps, narrow timing windows. A bug you can reproduce 3/50 times deterministically-on-replay beats one you cannot reproduce at all. A 50%-flake bug is debuggable; 1% is not — keep raising the rate until it is.
+**Flaky bugs:** run in a tight loop (`for i in $(seq 1 N); do ...; done`), record hit rate (e.g. `3/50`), treat raising that rate as loop iteration.
 
 ### When You Genuinely Cannot Build a Loop
 
-Stop and say so explicitly. Do **not** hypothesise into a vacuum. List each ladder rung you tried and why it failed, then ask the user for the one thing that would unblock the loop: (a) access to an environment that reproduces it, (b) a captured artifact (HAR file, log dump, core dump, full stack trace, failing input, screen recording with timestamps), or (c) permission to add temporary instrumentation in a live/prod path.
+STOP. Do NOT advance to hypothesis. Return BLOCKED with:
 
-> The loop comes FIRST. Only once it goes red do you proceed to the ranked, falsifiable hypotheses and confidence scoring below — those layer ON TOP of the loop, they do not replace it.
-
-## Quick Five-Step Process (Reference Pattern)
-
-For rapid debugging, use this concise flow:
-
-```
-1. Capture error message and stack trace
-2. Identify reproduction steps
-3. Isolate the failure location
-4. Implement minimal general fix
-5. Verify solution works
-```
-
-**Debugging techniques:**
-
-- Analyze error messages and logs
-- Check recent code changes
-- Form and test hypotheses
-- **Add strategic debug logging**
-- **Inspect variable states**
-
-**Root Cause Tracing Technique:**
-
-```
-1. Observe symptom - Where does error manifest?
-2. Find immediate cause - Which code produces the error?
-3. Ask "What called this?" - Map call chain upward
-4. Keep tracing up - Follow invalid data backward
-5. Find original trigger - Where did problem actually start?
-```
-
-**Never fix solely where errors appear—trace to the original trigger.**
-After root cause is identified, scan for the same signature nearby before declaring success.
+- **What was tried:** each rung attempted and why it failed
+- **Concrete ask:** the one thing that would unblock (env/credential access, captured artifact, permission for temporary instrumentation)
 
 ## LSP-Powered Root Cause Tracing
 
-**Use LSP to trace execution flow systematically:**
+Use LSP to trace root causes through the codebase:
 
-| Debugging Need | LSP Tool | Usage |
-| ---------------- | ---------- | ------- |
-| "Where is this function defined?" | `lspGotoDefinition` | Jump to source |
-| "What calls this function?" | `lspCallHierarchy(incoming)` | Trace callers up |
-| "What does this function call?" | `lspCallHierarchy(outgoing)` | Trace callees down |
-| "All usages of this variable?" | `lspFindReferences` | Find all access points |
+- **Go to Definition** — follow the call chain to where the value is actually set
+- **Find References** — find all callers of a suspect function (blast radius)
+- **Go to Type Definition** — check if the type allows the failing value
+- **Hover** — check types and signatures at the failure site
 
-**Systematic Call Chain Tracing:**
-
-```
-1. localSearchCode("errorFunction") → get file + lineHint
-2. lspGotoDefinition(lineHint=N) → see implementation
-3. lspCallHierarchy(incoming, lineHint=N) → who calls this?
-4. For each caller: lspCallHierarchy(incoming) → trace up
-5. Continue until you find the root cause
-```
-
-**CRITICAL:** Always get lineHint from localSearchCode first. Never guess line numbers.
-
-**For each issue provide:**
-
-- Root cause explanation
-- Evidence supporting diagnosis
-- Specific code fix
-- Testing approach
-- Prevention recommendations
-
-## Scenario Playbooks
-
-Read `references/root-cause-playbooks.md` when the failure matches one of these
-shapes:
-
-- build or type breakage
-- failing tests
-- runtime crashes
-- browser or console errors
-- intermittent async bugs
-- regressions where "it worked before"
-- multi-component handoff failures
-
-Keep this `SKILL.md` focused on the four-phase investigation workflow. Use the
-reference for concrete commands, boundary tracing patterns, and git-bisect
-recipes.
-
-## When to Use
-
-Use for ANY technical issue:
-
-- Test failures
-- Bugs in production
-- Unexpected behavior
-- Performance problems
-- Build failures
-- Integration issues
-
-**Use this ESPECIALLY when:**
-
-- Under time pressure (emergencies make guessing tempting)
-- "Just one quick fix" seems obvious
-- You've already tried multiple fixes
-- Previous fix didn't work
-- You don't fully understand the issue
-
-**Don't skip when:**
-
-- Issue seems simple (simple bugs have root causes too)
-- You're in a hurry (rushing guarantees rework)
-- Manager wants it fixed NOW (systematic is faster than thrashing)
+Don't guess where a value comes from — trace it with LSP. Don't grep for a function name — use Find References to get every caller with type info.
 
 ## The Four Phases
 
-You MUST complete each phase before proceeding to the next.
-
 ### Phase 1: Root Cause Investigation
 
-**BEFORE attempting ANY fix:**
-
-1. **Read Error Messages Carefully**
-   - Don't skip past errors or warnings
-   - They often contain the exact solution
-   - Read stack traces completely
-   - Note line numbers, file paths, error codes
-
-2. **Reproduce Consistently — build the feedback loop FIRST**
-   - Can you trigger it reliably?
-   - What are the exact steps?
-   - Does it happen every time?
-   - If not reproducible → gather more data, don't guess
-   - This is where you build the agent-runnable repro loop (see **Feedback Loop FIRST** above). Use the construction ladder; do NOT proceed to Phase 3 hypotheses until you have a red-capable loop. For flaky bugs, chase a higher reproduction rate, not a single clean hit.
-
-3. **Check Recent Changes**
-   - What changed that could cause this?
-   - Git diff, recent commits
-   - New dependencies, config changes
-   - Environmental differences
-
-4. **Gather Evidence in Multi-Component Systems**
-
-   **WHEN system has multiple components (CI → build → signing, API → service → database):**
-
-   **BEFORE proposing fixes, add diagnostic instrumentation:**
-
-   ```
-   For EACH component boundary:
-     - Log what data enters component
-     - Log what data exits component
-     - Verify environment/config propagation
-     - Check state at each layer
-
-   Run once to gather evidence showing WHERE it breaks
-   THEN analyze evidence to identify failing component
-   THEN investigate that specific component
-   ```
-
-   For a concrete boundary-tracing recipe, read
-   `references/root-cause-playbooks.md`.
-
-5. **Trace Data Flow**
-
-   **WHEN error is deep in call stack:**
-   - Where does bad value originate?
-   - What called this with bad value?
-   - Keep tracing up until you find the source
-   - Fix at source, not at symptom
-
-6. **Trace configuration to its consumer (third-party SDKs, env, import time)**
-
-   **BEFORE proposing replacements, migrations, or large refactors:**
-
-   - **Option Zero:** Can this be fixed with **only** a configuration or environment change? State and test that hypothesis *before* you propose code rewrites. Many integration bugs are wiring problems, not architecture problems.
-   - When an env var is validated in application config but **never passed into** library constructors, ask **who reads it?** Third-party SDKs often read `process.env` (or language equivalents) at **module import / load time**—not through your app's DI or config objects. The fix may be setting or correcting env, not changing application code.
-   - **Before** proposing to replace a third-party SDK, spend a short cycle on **how** it is configured: package README, official docs, or the installed source under `node_modules` (or vendor path). The failure may be a wrong endpoint or flag, not a need for a different library.
-   - When code comments describe **import-time** behavior or env-var dependencies, treat them as **investigation breadcrumbs**, not decoration—follow them to the real consumer.
+1. **Understand** — expected vs actual, when did it start?
+2. **Git History** — `git log --oneline -20 -- <files>`, `git blame`, `git diff BASE..HEAD`
+3. **LOG FIRST** — collect error logs, stack traces, run failing commands
+4. **Feedback Loop** — build repro signal (construction ladder above). No loop → fail closed.
+5. **Variant Scan** — identify which variant dimensions must keep working (locale, config, env, platform, data shape, concurrency)
 
 ### Phase 2: Pattern Analysis
 
-**Find the pattern before fixing:**
-
-1. **Find Working Examples**
-   - Locate similar working code in same codebase
-   - What works that's similar to what's broken?
-
-2. **Compare Against References**
-   - If implementing pattern, read reference implementation COMPLETELY
-   - Don't skim - read every line
-   - Understand the pattern fully before applying
-
-3. **Identify Differences**
-   - What's different between working and broken?
-   - List every difference, however small
-   - Don't assume "that can't matter"
-
-4. **Understand Dependencies**
-   - What other components does this need?
-   - What settings, config, environment?
-   - What assumptions does it make?
+1. **Read the code around the failure** — not just the failing line, the surrounding logic
+2. **Check for recent changes** — `git diff` the files involved
+3. **Look for similar patterns** — grep for the same anti-pattern elsewhere
+4. **Identify the mechanism** — not "what's wrong" but "how does the wrong thing happen"
 
 ### Phase 3: Hypothesis and Testing
 
-**Scientific method:**
+Form H1/H2/H3 with 0-100 confidence. Proceed to fix only when one reaches 80+.
 
-1. **Form Single Hypothesis**
-   - State clearly: "I think X is the root cause because Y"
-   - Write it down
-   - Be specific, not vague
+**Hypothesis Quality Criteria:**
 
-2. **Test Minimally**
-   - Make the SMALLEST possible change to test hypothesis
-   - One variable at a time
-   - Don't fix multiple things at once
+- States a specific mechanism ("X returns null because Y is not set when Z")
+- Predicts a specific test outcome ("if I set Y, X returns the correct value")
+- Is falsifiable ("if Y is already set, this hypothesis is wrong")
+- Explains ALL observed symptoms, not just the primary one
 
-3. **Verify Before Continuing**
-   - Did it work? Yes → Phase 4
-   - Didn't work? Form NEW hypothesis
-   - DON'T add more fixes on top
+**Hypothesis Confidence Scoring:**
 
-4. **When You Don't Know**
-   - Say "I don't understand X"
-   - Don't pretend to know
-   - Ask for help
-   - Research more
+| Score | Meaning |
+| ------- | --------- |
+| 90-100 | Verified: traced with LSP, reproduces the bug, fix resolves it |
+| 80-89 | Strong: consistent with all evidence, mechanism is clear |
+| 60-79 | Plausible: fits some evidence but gaps remain — investigate more |
+| <60 | Speculative: do not act — gather more evidence |
 
-### Hypothesis Quality Criteria
-
-**Falsifiability Requirement:** A good hypothesis can be proven wrong. If you can't design an experiment to disprove it, it's not useful.
-
-**Bad (unfalsifiable):**
-
-- "Something is wrong with the state"
-- "The timing is off"
-- "There's a race condition somewhere"
-
-**Good (falsifiable):**
-
-- "User state resets because component remounts when route changes"
-- "API call completes after unmount, causing state update on unmounted component"
-- "Two async operations modify same array without locking, causing data loss"
-
-**The difference:** Specificity. Good hypotheses make specific, testable claims.
-
-### Hypothesis Confidence Scoring
-
-**Track multiple hypotheses with confidence levels:**
-
-```
-H1: [hypothesis] — Confidence: [0-100]
-    Evidence for: [what supports this]
-    Evidence against: [what contradicts this]
-    Next test: [what would raise or lower confidence]
-
-H2: [hypothesis] — Confidence: [0-100]
-    Evidence for: [...]
-    Evidence against: [...]
-    Next test: [...]
-
-H3: [hypothesis] — Confidence: [0-100]
-    Evidence for: [...]
-    Evidence against: [...]
-    Next test: [...]
-```
-
-**Scoring guidance:**
-
-| Range | Meaning | Action |
-| ------- | --------- | -------- |
-| 80-100 | Strong evidence, high certainty | Proceed to fix |
-| 50-79 | Circumstantial, needs more data | Run "Next test" |
-| 0-49 | Speculation, weak evidence | Deprioritize or discard |
-
-**Rules:**
-
-- Always maintain 2-3 hypotheses until one reaches 80+
-- Update confidence after EVERY piece of new evidence
-- Never proceed to fix with highest hypothesis below 50
-
-### Cognitive Biases in Debugging
-
-| Bias | Trap | Antidote |
-| ------ | ------ | ---------- |
-| **Confirmation** | Only look for evidence supporting your hypothesis | "What would prove me wrong?" |
-| **Anchoring** | First explanation becomes your anchor | Generate 3+ hypotheses before investigating any |
-| **Availability** | Recent bugs → assume similar cause | Treat each bug as novel until evidence suggests otherwise |
-| **Sunk Cost** | Spent 2 hours on path, keep going despite evidence | Every 30 min: "If fresh, would I take this path?" |
-
-### Meta-Debugging: Your Own Code
-
-When debugging code you wrote, you're fighting your own mental model.
-
-**Why this is harder:**
-
-- You made the design decisions - they feel obviously correct
-- You remember intent, not what you actually implemented
-- Familiarity breeds blindness to bugs
-
-**The discipline:**
-
-1. **Treat your code as foreign** - Read it as if someone else wrote it
-2. **Question your design decisions** - Your implementation choices are hypotheses, not facts
-3. **Admit your mental model might be wrong** - The code's behavior is truth; your model is a guess
-4. **Prioritize code you touched** - If you modified 100 lines and something breaks, those are prime suspects
-
-**The hardest admission:** "I implemented this wrong." Not "requirements were unclear" - YOU made an error.
-
-### When to Restart Investigation
-
-Consider starting over when:
-
-1. **2+ hours with no progress** - You're likely tunnel-visioned
-2. **3+ "fixes" that didn't work** - Your mental model is wrong
-3. **You can't explain the current behavior** - Don't add changes on top of confusion
-4. **You're debugging the debugger** - Something fundamental is wrong
-5. **The fix works but you don't know why** - This isn't fixed, this is luck
-
-**Restart protocol:**
-
-1. Close all files and terminals
-2. Write down what you know for certain
-3. Write down what you've ruled out
-4. List new hypotheses (different from before)
-5. Begin again from Phase 1
+**When to Restart Investigation:** If 3 hypotheses fail, you're pattern-matching, not investigating. Re-read the loop output. Re-trace with LSP. Consider you're looking at the wrong layer.
 
 ### Phase 4: Implementation
 
-**Fix the root cause, not the symptom:**
+1. **RED** — failing regression test reproducing the bug (must fail before fix)
+2. **GREEN** — minimal fix (smallest diff, no hardcoding)
+3. **Blast Radius Scan** — search same file for identical anti-patterns, adjacent files for same signature
+4. **Verify** — regression test passes + relevant suite passes
+5. **Prevention** — recommend lint rule, test, type guard, or monitoring
 
-1. **Create Failing Test Case**
-   - Simplest possible reproduction
-   - Automated test if possible
-   - One-off test script if no framework
-   - MUST have before fixing
+## Scenario Playbooks
 
-2. **Implement Single Fix**
-   - Address the root cause identified
-   - ONE change at a time
-   - No "while I'm here" improvements
-   - No bundled refactoring
+Read `references/root-cause-playbooks.md` for scenario-specific guidance:
 
-3. **Verify Fix**
-   - Test passes now?
-   - No other tests broken?
-   - Issue actually resolved?
+- State machine bugs (dead states, missing transitions)
+- Race conditions (timing-dependent failures)
+- Data corruption (cascading from wrong input)
+- Performance degradation (regression after change)
+- Integration failures (contract mismatch between services)
 
-4. **If Fix Doesn't Work**
-   - STOP
-   - Count: How many fixes have you tried?
-   - If < 3: Return to Phase 1, re-analyze with new information
-   - **If >= 3: STOP and question the architecture (step 5 below)**
-   - DON'T attempt Fix #4 without architectural discussion
+## Debug Attempt Tracking
 
-5. **If 3+ Fixes Failed: Question Architecture**
-
-   **Pattern indicating architectural problem:**
-   - Each fix reveals new shared state/coupling/problem in different place
-   - Fixes require "massive refactoring" to implement
-   - Each fix creates new symptoms elsewhere
-
-   **STOP and question fundamentals:**
-   - Is this pattern fundamentally sound?
-   - Are we "sticking with it through sheer inertia"?
-   - Should we refactor architecture vs. continue fixing symptoms?
-
-   **Discuss with the user before attempting more fixes**
-
-   This is NOT a failed hypothesis - this is a wrong architecture.
-
-## Red Flags - STOP and Follow Process
-
-If you catch yourself thinking:
-
-- "Quick fix for now, investigate later"
-- "Just try changing X and see if it works"
-- "Add multiple changes, run tests"
-- "Skip the test, I'll manually verify"
-- "It's probably X, let me fix that"
-- "I don't fully understand but this might work"
-- "Pattern says X but I'll adapt it differently"
-- "Here are the main problems: [lists fixes without investigation]"
-- Proposing solutions before tracing data flow
-- Proposing SDK replacement or a large migration before ruling out a **config-only** fix (Option Zero) and tracing **who** reads env / config at import time
-- **"One more fix attempt" (when already tried 2+)**
-- **Each fix reveals new problem in different place**
-
-**ALL of these mean: STOP. Return to Phase 1.**
-
-**If 3+ fixes failed:** Question the architecture (see Phase 4.5)
-
-## User's Signals & Rationalizations
-
-The user-redirection signals ("Stop guessing", "Ultrathink this", "We're stuck?") and the excuse/reality rationalization table are core systematic-debugging discipline — assumed, not repeated here (see superpowers:systematic-debugging). The operational rule: any of these means STOP and return to Phase 1; simple/emergency bugs still have root causes and process is faster than guess-and-check; 3+ failed fixes means an architectural problem, not "one more attempt".
-
-## Quick Reference
-
-| Phase | Key Activities | Success Criteria |
-| ------- | --------------- | ------------------ |
-| **1. Root Cause** | Read errors, reproduce, check changes, gather evidence | Understand WHAT and WHY |
-| **2. Pattern** | Find working examples, compare | Identify differences |
-| **3. Hypothesis** | Form theory, test minimally | Confirmed or new hypothesis |
-| **4. Implementation** | Create test, fix, verify | Bug resolved, tests pass |
-
-## When Process Reveals "No Root Cause"
-
-If systematic investigation reveals issue is truly environmental, timing-dependent, or external:
-
-1. You've completed the process
-2. Document what you investigated
-3. Implement appropriate handling (retry, timeout, error message)
-4. Add monitoring/logging for future investigation
-
-**But:** 95% of "no root cause" cases are incomplete investigation.
-
-## Output Format
-
-```markdown
-## Bug Investigation
-
-### Phase 1: Evidence Gathered
-- **Error**: [exact error message]
-- **Stack trace**: [relevant lines]
-- **Reproduction**: [steps to reproduce]
-- **Recent changes**: [commits/changes]
-
-### Phase 2: Pattern Analysis
-- **Working example**: [similar working code]
-- **Key differences**: [what's different]
-
-### Phase 3: Hypothesis
-- **Theory**: [I think X because Y]
-- **Test**: [minimal change made]
-- **Result**: [confirmed/refuted]
-
-### Phase 4: Fix
-- **Root cause**: [actual cause with evidence]
-- **Change**: [summary of fix]
-- **File**: [path:line]
-- **Regression test**: [test added]
-
-### Verification
-- Test command: [command] → exit 0
-- All tests: PASS
-- Functionality: Restored
-```
+Track failed hypotheses: `[DEBUG-N]: {what was tried} → {result}`. After 3 failed hypotheses, set `NEEDS_EXTERNAL_RESEARCH: true`. After research files provided and still stuck, return BLOCKED.
