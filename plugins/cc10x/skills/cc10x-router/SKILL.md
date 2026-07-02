@@ -63,7 +63,7 @@ Do not parallelize step 1 with reads.
 
 If a memory file is missing:
 
-- Create it using the `cc10x:session-memory` template.
+- Create it using the `cc10x:memory-and-handoff` template.
 - Read it before continuing.
 
 Required sections:
@@ -398,7 +398,7 @@ Optional sections:
 - Include `cc10x:receiving-code-review` only when a human/external reviewer's feedback (pasted PR comments, review notes, "can you change X") must be acted on — it governs verify-before-agreeing in the MAIN session, not the internal reviewer→router→fix loop.
 - Include `cc10x:codebase-hygiene` only when the request targets retrofitting/deepening shallow modules in EXISTING code (not greenfield architecture, which stays `cc10x:architecture-patterns`).
 - Include `cc10x:frontend` only when reviewing the visual/UX QUALITY of built UI (scoring/slop-check) — distinct from `cc10x:frontend` (authoring guidance).
-- Include `cc10x:handoff-package` only when work is being handed to a coworker, a different tool, or a fresh non-cc10x session.
+- Include `cc10x:memory-and-handoff` only when work is being handed to a coworker, a different tool, or a fresh non-cc10x session.
 - Include project/domain skills only from `patterns.md ## Project SKILL_HINTS`.
 
 - Skill precedence is strict:
