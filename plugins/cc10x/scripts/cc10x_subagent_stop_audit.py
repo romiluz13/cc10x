@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-from cc10x_hooklib import load_input, load_mode, log_event
+from cc10x_hooklib import load_input, log_event
 
 
 def main() -> int:
     data = load_input()
-    mode = load_mode()
     agent_type = data.get("agent_type", "") or ""
     agent_id = data.get("agent_id", "") or ""
     agent_transcript_path = data.get("agent_transcript_path", "") or ""
@@ -30,7 +29,6 @@ def main() -> int:
             "stop_hook_active": stop_hook_active,
             "contract_found": contract_found,
             "message_len": len(message),
-            "mode": mode.get("subagentStopAudit", "audit"),
             "task_id": None,
             "agent": agent_type,
             "event": "subagent_stop",

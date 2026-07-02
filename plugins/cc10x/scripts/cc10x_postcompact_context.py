@@ -5,7 +5,6 @@ from datetime import datetime, timezone
 from cc10x_hooklib import (
     latest_workflow_payload,
     load_input,
-    load_mode,
     log_event,
     workflows_dir,
 )
@@ -15,7 +14,6 @@ def main() -> int:
     data = load_input()
     trigger = data.get("trigger", "auto")
     summary = data.get("compact_summary", "") or ""
-    mode = load_mode()
 
     payload = latest_workflow_payload()
     if not payload:
@@ -47,7 +45,6 @@ def main() -> int:
             "wf": wf,
             "trigger": trigger,
             "summary_len": len(summary),
-            "mode": mode.get("postcompactAudit", "audit"),
             "task_id": None,
             "agent": "hook",
             "event": "compact_occurred",
