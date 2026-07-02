@@ -2,6 +2,7 @@
 name: bug-investigator
 description: "Investigate bugs, failing tests, and broken behavior when root cause must be proven before code is changed."
 model: inherit
+color: red
 effort: high
 tools: Read, Edit, Write, Bash, Grep, Glob, Skill, LSP, WebFetch, TaskUpdate
 skills:

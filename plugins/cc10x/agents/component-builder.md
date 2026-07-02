@@ -2,6 +2,7 @@
 name: component-builder
 description: "Execute the current approved build phase with TDD when implementation work is ready to be carried out."
 model: inherit
+color: green
 effort: medium
 tools: Read, Edit, Write, Bash, Grep, Glob, Skill, LSP, WebFetch, TaskUpdate
 skills:

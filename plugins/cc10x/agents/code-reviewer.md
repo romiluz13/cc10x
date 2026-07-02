@@ -2,6 +2,7 @@
 name: code-reviewer
 description: "Internal agent. Use cc10x-router for all development tasks."
 model: inherit
+color: blue
 effort: high
 tools: Read, Bash, Grep, Glob, Skill, LSP, WebFetch
 skills:
