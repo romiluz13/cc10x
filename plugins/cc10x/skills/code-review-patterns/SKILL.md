@@ -26,7 +26,7 @@ Read only the references needed for the current review:
 **Flag ONLY when certain. False positives erode trust and waste remediation cycles.**
 
 | Flag | Do NOT Flag |
-|------|-------------|
+| ------ | ------------- |
 | Will fail to compile/parse (syntax, type, import errors) | Style preferences not in project guidelines |
 | Logic error producing wrong results for all inputs | Potential issues dependent on specific inputs/state |
 | Clear guideline violation (quote the exact rule) | Subjective improvements or nitpicks |
@@ -104,13 +104,14 @@ For auth, data, network, storage, or externally reachable code, read
 **Use LSP for semantic understanding during reviews:**
 
 | Task | LSP Tool | Why Better Than Grep |
-|------|----------|---------------------|
+| ------ | ---------- | --------------------- |
 | Find all callers of a function | `lspCallHierarchy(incoming)` | Finds actual calls, not string matches |
 | Find all usages of a type/variable | `lspFindReferences` | Semantic, not text-based |
 | Navigate to definition | `lspGotoDefinition` | Jumps to actual definition |
 | Understand what function calls | `lspCallHierarchy(outgoing)` | Maps call chain |
 
 **Review Workflow with LSP:**
+
 1. `localSearchCode` → find symbol + get lineHint
 2. `lspGotoDefinition(lineHint=N)` → understand implementation
 3. `lspFindReferences(lineHint=N)` → check all usages for consistency
@@ -124,6 +125,7 @@ For performance, maintainability, edge cases, hidden failures, type-design
 drift, or UI-specific checks, read `references/code-review-heuristics.md`.
 
 **Wrong/Right — Silent optional chaining:**
+
 ```typescript
 // WRONG: silently swallows null user
 const name = user?.profile?.name ?? 'Unknown';
@@ -141,7 +143,7 @@ return name ?? 'Unknown';
 Reference checklist for systematic edge case scanning during review:
 
 | Category | Examples | Detection |
-|----------|----------|-----------|
+| ---------- | ---------- | ----------- |
 | Missing else/default | Switch without default, if without else for nullable | Check switch/if exhaustiveness |
 | Unguarded inputs | No validation on user input, missing null checks | Direct parameter use without validation |
 | Off-by-one | Loop bounds, array indexing, pagination | Review all `<` vs `<=`, `array[length]` vs `array[length-1]` |
@@ -163,13 +165,14 @@ Use during Stage 2 Quality Review. Check only categories relevant to the changed
 **During reviews, identify patterns worth documenting:**
 
 | Criteria | What to Look For | Example |
-|----------|------------------|---------|
+| ---------- | ------------------ | --------- |
 | **Tribal** | Knowledge new devs wouldn't know | "All API responses use envelope structure" |
 | **Opinionated** | Specific choices that could differ | "We use snake_case for DB, camelCase for JS" |
 | **Unusual** | Not standard framework patterns | "Custom retry logic with backoff" |
 | **Consistent** | Repeated across multiple files | "All services have health check endpoint" |
 
 **If you spot these during review:**
+
 1. Note the pattern in review feedback
 2. Include in your **Memory Notes (Patterns section)** - router will persist to patterns.md via Memory Update task
 3. Flag inconsistencies from established patterns
@@ -177,7 +180,7 @@ Use during Stage 2 Quality Review. Check only categories relevant to the changed
 ## Severity Classification
 
 | Severity | Definition | Action |
-|----------|------------|--------|
+| ---------- | ------------ | -------- |
 | **CRITICAL** | Security vulnerability or blocks functionality | Must fix before merge |
 | **MAJOR** | Affects functionality or significant quality issue | Should fix before merge |
 | **MINOR** | Style issues, small improvements | Can merge, fix later |
@@ -188,15 +191,18 @@ Use during Stage 2 Quality Review. Check only categories relevant to the changed
 **Each Stage 2 pass produces an independent signal. Score each dimension separately.**
 
 **HARD signals** (any failure blocks approval):
+
 - **Security:** One real vulnerability = dimension score 0
 - **Correctness:** One logic error producing wrong output = dimension score 0
 
 **SOFT signals** (concerns noted, don't block alone):
+
 - **Performance:** Scaling concern without immediate impact
 - **Maintainability:** Complex but functional code
 - **UX/A11y:** Missing states but core flow works
 
 **Aggregation rule:**
+
 1. If ANY HARD signal = 0 → STATUS: CHANGES_REQUESTED (non-negotiable)
 2. The exact CONFIDENCE formula and severity vocabulary are owned by the code-reviewer agent contract — do not restate the math here (a second copy drifts). Apply the agent's `CONFIDENCE = min(HARD scores) capped by avg(SOFT scores) - 10`, with a single HARD:0 forcing CONFIDENCE:0.
 3. Include per-signal breakdown in Router Handoff for targeted remediation
@@ -217,7 +223,7 @@ cc10x runs the **code-reviewer** and the **code-reviewer (Pass 1b)** in parallel
 **WEAVE protocol (replaces a bare "stricter verdict wins" merge):** Before routing any finding, classify it.
 
 | Class | Definition | Routing |
-|-------|------------|---------|
+| ------- | ------------ | --------- |
 | **AGREED** | Both passes independently surfaced it (same file:line, same root cause) | Highest trust — report; convergence is strong signal |
 | **DETECTOR-ONLY** | Caught by exactly one pass (reviewer XOR code-reviewer (Pass 1b)) | Keep it — a finding the other missed is the value of running two passes, NOT noise. Carry the detecting pass's evidence and severity as-is |
 | **FALSE-POSITIVE** | Triage suspect: no file:line, pre-existing, linter-owned, or refuted by the other pass's evidence | Drop, per "Do NOT Flag" and the Signal Quality Rule |
@@ -275,7 +281,7 @@ If you find yourself:
 ## Rationalization Prevention
 
 | Excuse | Reality |
-|--------|---------|
+| -------- | --------- |
 | "Tests pass so it's fine" | Tests can miss requirements. Check spec compliance. |
 | "Code looks clean" | Clean code can still be wrong. Verify functionality. |
 | "I trust this developer" | Trust but verify. Everyone makes mistakes. |
@@ -288,7 +294,7 @@ If you find yourself:
 The CONFIDENCE score measures *certainty in the findings*, not *quality of the result*. For high-rigor reviews, the reviewer MAY emit an anchored 0-4 quality score ALONGSIDE the verdict. Each integer is anchored to spelled-out criteria so two reviewers land on the same number:
 
 | Score | Criteria |
-|-------|----------|
+| ------- | ---------- |
 | **0** | Broken or unsafe. Fails spec, ships a HARD-signal defect (security hole, wrong output), or hides a failure. Do not merge |
 | **1** | Works in the happy path but fragile. Real gaps in error handling, edge cases, or validation that will bite under normal use |
 | **2** | Solid and correct, but unremarkable. Some maintainability or clarity debt; nothing that blocks merge |
@@ -298,7 +304,7 @@ The CONFIDENCE score measures *certainty in the findings*, not *quality of the r
 **Total band → action:**
 
 | Score | Action |
-|-------|--------|
+| ------- | -------- |
 | 0 | CHANGES_REQUESTED — non-negotiable (mirrors HARD-signal:0) |
 | 1 | CHANGES_REQUESTED — name the fragility precisely |
 | 2 | APPROVE with noted follow-ups |
@@ -375,7 +381,7 @@ After requesting changes:
 When reviewing code from a single phase of a multi-phase plan:
 
 | Scope question | Rule |
-|----------------|------|
+| ---------------- | ------ |
 | Review only this phase's changes? | YES — do not expand scope to future phases |
 | Flag problems in untouched code discovered during review? | Note for follow-up; do not block this phase |
 | Verify phase exit criteria? | YES — the plan defines exit criteria per phase; verify those, not the final product |
