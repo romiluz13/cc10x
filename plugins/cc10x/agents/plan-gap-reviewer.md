@@ -90,7 +90,7 @@ Do not report:
 ## Output
 
 ```
-CONTRACT {"s":"PASS","b":false,"bf":0}
+CONTRACT {"s":"PASS","b":false,"cr":0}
 ## Planning Review: Pass
 
 ### Summary
@@ -131,4 +131,4 @@ CONTRACT {"s":"PASS","b":false,"bf":0}
 - `s=PASS` means no meaningful gaps remain.
 - `s=FINDINGS` means the planner must inspect the findings.
 - `b=true` means at least one blocking finding exists.
-- `bf` is the blocking finding count.
+- `cr` is the blocking finding count (same envelope key every cc10x agent uses; must equal `BLOCKING_FINDINGS_COUNT`).

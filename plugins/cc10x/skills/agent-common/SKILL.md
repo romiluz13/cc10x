@@ -19,6 +19,8 @@ Read(file_path=".cc10x/progress.md")
 
 Memory contains prior decisions, known gotchas, and current context. Without it, you work blind.
 
+**Narrower agent protocols win:** if your agent doc deliberately narrows this protocol (anti-anchoring reviewers such as `code-reviewer` skip `activeContext.md`; `plan-gap-reviewer` reads no memory at all), follow the agent doc — the narrowing is intentional, not an omission.
+
 **Memory ownership:** Do NOT edit `.cc10x/*.md` files directly. Output a `### Memory Notes` section. The router persists memory at workflow-final via task-enforced workflow.
 
 **Key anchors:**

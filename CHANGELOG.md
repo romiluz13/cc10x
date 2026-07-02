@@ -1,5 +1,56 @@
 # Changelog
 
+## [12.1.0] - 2026-07-02
+
+### The Loop Engine — 73% line reduction, zero quality regression
+
+The largest refactoring in cc10x history. The harness was stripped from 17,634 lines to 4,759 lines (73% cut) while preserving every unique enforcement mechanism. Validated against Claude Code v2.1.198 docs. All 12 orchestration checks pass.
+
+**Skills: 24 → 17** (merged 10, deleted 2, added 1)
+
+- `brainstorming` + `prototyping` → `exploration` (688→140 lines, 80% cut)
+- `frontend-patterns` + `frontend-design-critique` → `frontend` (654→157 lines, 76% cut)
+- `finding-duplicate-functions` + `codebase-deepening` → `codebase-hygiene` (209→98 lines, 53% cut)
+- `session-memory` + `handoff-package` → `memory-and-handoff` (450→113 lines, 75% cut)
+- `code-generation` + `test-driven-development` → `building` (643→100 lines, 84% cut)
+- `code-review-patterns` + `receiving-code-review` → `code-review` (541→116 lines, 79% cut)
+- `verification-before-completion` → `verification`, `planning-patterns` → `planning`, `debugging-patterns` → `debugging`, `architecture-patterns` → `architecture`
+- Deleted: `authoring-cc10x-guidance`, `skill-eval-harness` (meta skills, not runtime)
+- Created: `agent-common` (shared preamble for all agents)
+- Added: Leading Words (red, green, tight, deep, shallow, seam), Loop Discipline vocabulary (trigger, checkpoint, push-right, brief, cycle, convergence)
+
+**Agents: 10 → 8** (merged 3, compressed 50%)
+
+- `web-researcher` + `github-researcher` → `researcher` (302→121 lines)
+- `silent-failure-hunter` → merged into `code-reviewer` as Pass 1b (red-flags → reference file)
+- All agents: compressed 50%, native frontmatter (effort, skills), colors restored
+- Shared preamble extracted to `agent-common` skill (Memory First, CONTRACT envelope, SINGLE FINAL RESPONSE RULE)
+
+**Hook scripts: 20 → 8** (merged 10, moved 8 to tools/)
+
+- 4 log-only hooks → 1 `cc10x_event_logger.py`
+- `precompact_state` + `stop_persist` → 1 `cc10x_state_persist.py`
+- 8 utility scripts moved to `tools/` directory
+- New: `cc10x_git_guard.py` — blocks dangerous git commands (push, reset --hard, clean -f, branch -D, checkout .) with approval token
+- Fixed: `stop_persist` clobber bug, `doc-syncer` skills/tools mismatch
+- Fixed: PostToolUse artifact guard mtime-latest footgun (scoped to artifact writes only)
+
+**Dead code removed:** `reference_benchmark.py` (338 lines), 3 dead hooklib functions, 6 dead config keys
+
+**Review fixes (from external audit):**
+
+- Reviewer/hunter duality resolved — ONE code-reviewer, no build-hunt phase
+- Model-tier policy made honest — advisory, not unenforceable HARD rule
+- Git-guard approval token — single-use, 10-min expiry for push/branch-delete
+- Contract drift reconciled — envelope keys unified, builder PASS parity, deferred_findings added to skeleton
+- Artifact-access contradiction resolved — agents read artifact by reference, scoped to named sections
+- Anti-anchoring made consistent — code-reviewer skips author narrative
+- Verdict-first incoherence fixed — decide before final response
+- All broken file references fixed — ghost skill dirs, repo-relative paths → CLAUDE_PLUGIN_ROOT
+- `review_package.py` --repo flag implemented (CC10X_REPO_DIR support)
+
+**21 unique innovations preserved:** Workflow artifacts, intent routing, complexity gradient, Test Honesty Gates, anti-anchoring plan review, verify-before-implement dispute, Feedback Loop FIRST, blast radius scan, clean-baseline diff, per-phase BASE sha, change-something-before-re-dispatch, circuit breaker, dispatch-by-reference, CONTRACT envelope, Two Isolated Assessments, Code-reviewer Pass 5+6, Interfaces block, Re-review precondition gate, Mock-Fidelity Inventory, Hard Wall, Compaction rubric.
+
 ## [11.1.0] - 2026-06-21
 
 ### Execution-engine harvest (system-level comparison vs superpowers + matt-pocock)
@@ -128,6 +179,7 @@ sensitive. Every router fanout, event-log append, and memory refresh is
 now silent in default-permission setups.
 
 #### Changed
+
 - Workflow state root relocated to `.cc10x/v10/` in all 7 agent tool
   lists, 12 skill files, 4 audit/benchmark scripts, 23 test fixtures,
   `.gitignore`, README, claude-settings template, and explorer HTMLs.
@@ -139,6 +191,7 @@ now silent in default-permission setups.
 - `cc10x_latency_audit.RUNTIME_WORKFLOWS` points at the new path.
 
 #### Added
+
 - `cc10x_harness_audit.py` now scans every runtime Python script under
   `plugins/cc10x/scripts/` for the legacy `.claude/cc10x` literal and
   fails the audit if any drift remains. This prevents the class of bug
@@ -146,6 +199,7 @@ now silent in default-permission setups.
   pointing at the old location.
 
 #### Migration
+
 Existing users with live state should run once at each project root:
 
 ```bash
@@ -155,6 +209,7 @@ mv .claude/cc10x .cc10x
 The `.gitignore` rule is updated accordingly.
 
 #### Verified
+
 - `python3 plugins/cc10x/scripts/cc10x_harness_audit.py`
 - `python3 plugins/cc10x/scripts/cc10x_workflow_replay_check.py`
 - `python3 plugins/cc10x/scripts/cc10x_reference_benchmark.py`
@@ -171,6 +226,7 @@ self-contained and phase-local, moves memory payload capture ahead of
 validation, and aligns docs and release metadata with the shipped behavior.
 
 #### Changed
+
 - **Top-level instruction cleanup:** `CLAUDE.md` now defines one router entry
   rule with minimal orientation before routing, and the stale
   `mongodb-query-and-index-optimize` alias is replaced with the installed
@@ -196,6 +252,7 @@ validation, and aligns docs and release metadata with the shipped behavior.
   are aligned to `10.1.19`.
 
 #### Verified
+
 - `python3 plugins/cc10x/scripts/cc10x_harness_audit.py`
 - `python3 plugins/cc10x/scripts/cc10x_workflow_replay_check.py`
 - `python3 plugins/cc10x/scripts/cc10x_instructions_loaded_audit.py`
@@ -212,6 +269,7 @@ loads BUILD / DEBUG / REVIEW / PLAN branch law and appendix-heavy orchestration
 policy from explicit mandatory references.
 
 #### Added
+
 - **Router references:** New `plugins/cc10x/skills/cc10x-router/references/`
   surface with verbatim extracted workflow and appendix law:
   `workflow-artifact-and-hook-policy.md`, `build-workflow.md`,
@@ -222,6 +280,7 @@ policy from explicit mandatory references.
   required files or headings drift.
 
 #### Changed
+
 - **Router reduced to a control-plane kernel:** `cc10x-router/SKILL.md` now
   keeps the universal orchestration law inline and uses mandatory reference
   reads at branch points instead of carrying every workflow appendix inline.
@@ -242,6 +301,7 @@ now stay focused on control-plane rules while the heavier checklists and
 playbooks load only when needed.
 
 #### Added
+
 - **Debugging references:** Root-cause playbooks and investigation hygiene for
   build/type failures, runtime crashes, browser issues, git bisect, context
   discipline, and architectural escalation.
@@ -258,6 +318,7 @@ playbooks load only when needed.
   reference files are missing.
 
 #### Changed
+
 - **4 skills slimmed under the soft prompt budget:** `debugging-patterns`,
   `code-review-patterns`, `frontend-patterns`, and
   `test-driven-development` now explicitly point to one-level-deep references
@@ -272,6 +333,7 @@ playbooks load only when needed.
 10 patterns extracted from BMAD-METHOD, rated NATIVE by 3 parallel harmony mappers, certified through cross-layer dedup. All prompt-text additions to existing files. Zero YAML contracts changed. Zero new files.
 
 #### Added
+
 - **Zero-Finding Gate:** Rubber-stamp prevention across code-reviewer, silent-failure-hunter, code-review-patterns, and router contract overrides. Zero findings in a non-trivial review triggers mandatory re-examination.
 - **Intent Readiness Gate:** Three-condition pre-dispatch check (context-bounded, contradiction-free, sufficiently specific) prevents ambiguous delegation to agents.
 - **Graceful Degradation:** Subagent parallel invocation failure falls back to sequential. Workflows never block on infrastructure unavailability.
@@ -284,6 +346,7 @@ playbooks load only when needed.
 - **Plan Trust Gate Strengthening:** Field completeness checks (non-empty exit_criteria, acceptance_criteria) and intent-constraint contradiction detection.
 
 #### Changed
+
 - **Router SKILL.md:** 6 surgical additions (Sections 5, 7, 8, 12, 14)
 - **4 agent files:** code-reviewer, silent-failure-hunter, bug-investigator, component-builder
 - **4 skill files:** code-review-patterns, brainstorming, planning-patterns, session-memory
@@ -295,18 +358,21 @@ playbooks load only when needed.
 4 new Claude Code hook events added. All audit-only — zero blocking, zero context injection, zero routing decisions. Router remains sole orchestration authority.
 
 #### Added
+
 - **PreCompact hook:** Saves workflow state snapshot (UUID, phase cursor, plan file) to `precompact-state.json` before context compaction destroys memory. Completes the PreCompact→PostCompact lifecycle bracket.
 - **Stop hook:** Saves same workflow state snapshot on every session stop. Defensive `stop_hook_active` check prevents any interaction with continuation stops. Never blocks.
 - **StopFailure hook:** Logs API failures (rate limits, auth errors, server errors) to workflow event log. Async fire-and-forget. Output/exit code ignored per Claude Code spec.
 - **InstructionsLoaded hook:** Audit trail for instruction file loads (CLAUDE.md, rules, skills). Logs file path, memory type, and load reason. Async.
 
 #### Changed
+
 - **hooks.json:** 6 → 10 event entries
 - **hook-mode.json:** 6 → 10 mode keys (all "audit")
 - **Router SKILL.md Section 2a:** Hook policy updated with 4 new bullets
 - **hooks/README.md:** Hook inventory updated
 
 #### Unchanged
+
 - Zero YAML contract fields modified. Zero state machine transitions. Zero workflow graphs. Zero blocking hooks. All existing 6 hooks unchanged. hooklib.py not modified. Router remains sole orchestration authority.
 
 ## [10.1.14] - 2026-03-27
@@ -316,6 +382,7 @@ playbooks load only when needed.
 396 patterns extracted from anthropics-skills, ralph-claude-code, babysitter, claude-code-harness, everything-claude-code, superpowers, wshobson-agents, get-shit-done, system-prompts, and symphony. 3-phase harmony pipeline (DNA fingerprint → layer mappers → cross-layer dedup) yielded 29 certified NATIVE patterns at 7.3% acceptance rate.
 
 #### Changed
+
 - **Router:** Stale training data `[EASY TO MISS]` annotation. Completion proof strengthening with anti-assertion examples. Parallel agent write-dependency isolation rule. Subagent context isolation (no conversation inheritance). Analysis paralysis guard on trivial scope. Context fidelity for verbatim user decisions. Professional objectivity hard rule.
 - **Integration Verifier:** Claim extraction from prior agents (MANDATORY). Test tampering detection (.skip/.only in test diffs). Verification run cap (15-command limit). Environment escape hatch (ENVIRONMENT vs code failures). Extended rationalization prevention (3 new forbidden phrases).
 - **Code Reviewer:** Security stop protocol (cross-pass escalation to CRITICAL). Red flags self-check (step 6.5 before verdict). Forbidden responses list (verdict-softener ban). Scope guard (10-file read cap).
@@ -328,6 +395,7 @@ playbooks load only when needed.
 - **Brainstorming:** Dream extraction questioning (optional Q6). Out-of-scope discovery (Q7). Questioning anti-patterns (leading, compound, vague acceptance).
 
 #### Unchanged
+
 - Zero YAML contract fields modified. Zero state machine transitions. Zero workflow graphs. Zero hook definitions. Zero new agents or skills. All existing hard rules preserved. No numbered step reordering. No frontmatter changes.
 
 ## [10.1.13] - 2026-03-27
@@ -335,6 +403,7 @@ playbooks load only when needed.
 ### Ruflo harmony integration — prompt engineering from ruvnet/claude-flow
 
 #### Changed
+
 - **Web Researcher:** Source quality tiers (high/medium/low confidence signals). Query formulation heuristics with "when to stop" signal (3 sources agree or 6-call cap).
 - **GitHub Researcher:** Search strategy ladder (packageSearch first). Repo quality signals (stars, activity, maintenance). Version matching guidance.
 - **Silent Failure Hunter:** Multi-language red flags table (Python, Go, Java, Rust, Shell). Scoping heuristic (changed files first, expand only if critical).
@@ -351,6 +420,7 @@ playbooks load only when needed.
 - **Router:** Scope assessment heuristic signals (1-2 files = trivial, 3+ files = non-trivial). Agent completion pre-check (scope, tests, follow-up). Split-brain contradiction handling (stricter verdict wins). "EASY TO MISS" annotations on memory_task_id pitfalls. Verification rigor inline rationale. Two new hard rules: evidence-before-reporting and anti-drift remediation checkpoint.
 
 #### Unchanged
+
 - Zero YAML contract fields modified. Zero state machine transitions. Zero workflow graphs. Zero hook definitions. All existing hard rules preserved. No numbered step reordering. No frontmatter changes.
 
 ## [10.1.12] - 2026-03-27
@@ -358,6 +428,7 @@ playbooks load only when needed.
 ### Prompt engineering uplift from mattpocock/skills
 
 #### Changed
+
 - **Planning:** Added Durable Decisions field to plan header and output template. Phase 1 tracer-bullet guidance. DAG ordering principle. HITL/AFK phase autonomy classification table. Planner now gives opinionated recommendations for decision_rfc.
 - **TDD:** Vertical Slicing anti-pattern with ASCII diagram. Mocking DON'T list (never mock your own code). Design for Testability rules (DI, pure functions, small surface). Test Prioritization guidance.
 - **Code Review:** "Be opinionated" posture directive. Pass 4: Friction Scan for architectural friction. Code Smell Quick-Reference with smell→remedy mapping.
@@ -369,6 +440,7 @@ playbooks load only when needed.
 - **Silent Failure Hunter:** Red Flag code examples (BAD/GOOD error handling).
 
 #### Unchanged
+
 - Zero YAML contract fields modified. Zero state machine transitions. Zero workflow graphs. Zero hook definitions. All hard rules preserved.
 
 ## [10.1.11] - 2026-03-26
@@ -376,11 +448,13 @@ playbooks load only when needed.
 ### DAG-visible PLAN review loop
 
 #### Changed
+
 - Refactored PLAN so the bounded fresh-context review loop is visible in the task DAG from the beginning: `planner:create -> plan-gap-reviewer pass 1 -> planner:replan -> plan-gap-reviewer pass 2 -> memory-finalize`.
 - Updated router docs, invariants, and replay fixtures so unused PLAN nodes are pruned explicitly instead of being created dynamically later.
 - Restored `plan-gap-reviewer` to the intended lightweight `gpt-5.4-mini` model while keeping the agent read-only and anti-anchored.
 
 #### Fixed
+
 - Clarification routing text now matches the shipped DAG-visible PLAN behavior instead of describing the older dynamic `re-plan` path.
 - Version metadata and release notes are aligned on `10.1.11`.
 
@@ -389,11 +463,13 @@ playbooks load only when needed.
 ### Always-on fresh planning review loop
 
 #### Changed
+
 - Removed the remaining `PLAN_MODE=direct` bypass so every saved PLAN artifact now enters the router-owned `plan-gap-reviewer` task loop before final handoff.
 - Updated the router prompt scaffold and replay coverage so `direct`, `execution_plan`, and `decision_rfc` all queue the same bounded fresh-review task flow.
 - Refreshed version metadata so plugin manifest, marketplace metadata, README, and changelog are aligned again after the later `10.1.5`-`10.1.9` push drift.
 
 #### Fixed
+
 - Replaced the stale `Repo Context Pack` scaffold reference for `plan-gap-reviewer` with the actual `Original User Request` and `Approved Context Files` sections used by the live router contract.
 
 ## [10.1.4] - 2026-03-21
@@ -401,11 +477,13 @@ playbooks load only when needed.
 ### Fresh planning review cleanup and Claude Code subagent alignment
 
 #### Changed
+
 - Tightened `plan-gap-reviewer` so it now runs as a lighter, truly read-only planning reviewer: pinned to `gpt-5.4-mini`, trimmed to local inspection tools, and instructed to review against the original user request instead of planner-authored summaries.
 - Refined the PLAN fresh-review loop so the router passes only the saved plan, the raw user request, and approved design/research context into the reviewer, preserving anti-anchoring behavior while keeping planner ownership and the inline `plan-review-gate` intact.
 - Clarified fresh-review accounting so `planning_review_runs` increments only after a valid reviewer contract is returned, preventing malformed reviewer output from consuming one of the bounded passes.
 
 #### Fixed
+
 - Public and internal docs now match the shipped planning-review loop, including agent counts, router/prompt invariant banners, and `10.1.4` version metadata.
 
 ## [10.1.3] - 2026-03-16
@@ -413,15 +491,18 @@ playbooks load only when needed.
 ### Planning recovery: code-grounded plans and repo-aware plan review
 
 #### Changed
+
 - Reworked `planner` so non-trivial plans must compare the proposed approach against the real codebase before finalization, with explicit `Codebase Reality Check`, `Plan-vs-Code Gaps`, `Assumption Ledger`, and `Phase Dependency Map` sections.
 - Tightened `plan-review-gate` so it fails repo-wrong plans, not just structurally weak ones, including missing touched surfaces, hidden architecture contradictions, and wrong execution order.
 - Updated prompt-safety docs so planning now has an explicit prompt invariant around repo-grounded alignment, not only open-decision honesty.
 
 #### Added
+
 - Planning-specific replay fixtures for repo-alignment preservation and contradiction-driven clarification.
 - A planning recovery benchmark note documenting the reference analysis used to pressure-test the recovery design against prior systems.
 
 #### Fixed
+
 - Release hygiene now tracks the planning recovery benchmark note required by the harness audit.
 - README, marketplace metadata, plugin manifest, and changelog are aligned on `10.1.3`.
 
@@ -430,15 +511,18 @@ playbooks load only when needed.
 ### Trust-preserving latency instrumentation
 
 #### Changed
+
 - Added non-decision latency telemetry to the workflow artifact and router guidance so BUILD, review, hunt, verify, and re-verify costs can be measured without changing phase order or proof gating.
 - Extended `integration-verifier` and `verification-before-completion` with explicit `phase_exit_proof` vs `extended_audit` classification so verifier cost can be explained before any future optimization.
 
 #### Added
+
 - `cc10x_latency_audit.py` for summarizing workflow latency telemetry from fixtures or runtime workflow artifacts.
 - Safety docs for verifier latency work, including the verifier latency model and the latency reduction note.
 - Replay coverage for telemetry shape via `latency-telemetry.json`.
 
 #### Fixed
+
 - Release hygiene now ships the prompt-safety and latency-safety docs required by the harness audit, so a fresh clone remains self-consistent.
 - README, marketplace metadata, plugin manifest, and changelog are aligned on `10.1.2`.
 
@@ -447,12 +531,14 @@ playbooks load only when needed.
 ### Prompt-only hardening and metadata hygiene
 
 #### Changed
+
 - Tightened core prompt wording in `verification-before-completion`, `plan-review-gate`, `planner`, `component-builder`, `integration-verifier`, and `bug-investigator` without changing router behavior, task graphs, gates, or state semantics.
 - Rewrote selected skill and agent descriptions to describe trigger conditions only, not workflow summaries, reducing the risk that metadata shortcuts the real prompt body.
 - Sharpened anti-false-completion and anti-rationalization language so success claims require local fresh evidence and partial progress is not narrated as completion.
 - Clarified advisory-skill posture in `frontend-patterns` and `debugging-patterns` so they support the router contract without sounding authoritative.
 
 #### Fixed
+
 - Version metadata and release notes are aligned on `10.1.1`.
 
 ## [10.1.0] - 2026-03-13
@@ -460,17 +546,20 @@ playbooks load only when needed.
 ### Competition-grade planning, proof-oriented execution, and prompt/harness hardening
 
 #### Changed
+
 - Upgraded CC10X from the trust-first v10 recovery baseline to a competition-grade contract: router-owned `plan_mode`, `verification_rigor`, stricter checkpoint/proof fields, and stronger traceability between requirements, phases, verification, and remediation.
 - Rewrote the core prompt stack around sharper contracts: decision-grade planning, adversarial plan gates, proof-oriented BUILD, blast-radius debugging, harsher verification, and clearer reviewer independence.
 - Tightened internal skill posture so orchestration contracts remain authoritative while pattern skills stay advisory and support explicit user/project precedence.
 - Hardened state/memory instructions and hook helpers around the versioned v10 namespace and stable workflow UUID model.
 
 #### Added
+
 - Competition benchmark scripts for reference scoring and head-to-head audit support: `cc10x_reference_benchmark.py` and `cc10x_worldclass_benchmark.py`.
 - Additional replay fixtures covering `decision_rfc`, phase-blocked BUILD, decision checkpoints, workflow identity, skill precedence, and blocking-exit memory sync.
 - Strategy and benchmark notes capturing the first-place release line and the prompt-engineering comparison for the highest-leverage instruction surfaces.
 
 #### Fixed
+
 - Release hygiene now excludes local reference clones and Python cache directories from accidental publication while allowing the selected benchmark strategy/docs required by the release audit.
 - README, marketplace metadata, plugin manifest, and changelog are aligned on `10.1.0`.
 
@@ -479,15 +568,18 @@ playbooks load only when needed.
 ### Trust-first recovery release
 
 #### Changed
+
 - Reframed CC10X around a trust-first v10 contract: agreement-first planning, sequential phase-gated BUILD, fail-stop progression, explicit instruction precedence, stable workflow UUIDs, and fail-closed memory persistence.
 - Moved durable workflow state and hook logging to the versioned namespace `.claude/cc10x/v10/`.
 - Upgraded router, planner, component-builder, and bug-investigator contracts to require explicit phase/open-decision/blast-radius reporting instead of relying on implied success.
 - Recast `frontend-patterns`, `debugging-patterns`, and `architecture-patterns` as advisory layers that cannot outrank explicit user or project standards.
 
 #### Added
+
 - Replay fixtures for phase-blocked BUILD, skill precedence, v10 workflow identity, and blocking-exit memory sync.
 
 #### Fixed
+
 - Hook guards and session context now resolve the latest workflow from the v10 namespace and prefer stable workflow UUIDs over session-local task ids.
 
 ## [9.1.1] - 2026-03-07
@@ -495,6 +587,7 @@ playbooks load only when needed.
 ### MCP startup warning fix
 
 #### Fixed
+
 - Removed shipped plugin MCP config from `plugins/cc10x/.mcp.json` so CC10X no longer triggers startup warnings when Bright Data or Octocode environment variables are not configured.
 - Changed CC10X MCP support from plugin-bundled config to **optional user-configured Claude Code MCP servers**. The recommended server names remain `brightdata` and `octocode`.
 - Updated router/docs/audit language so MCP acceleration is documented as user-configured and fallback-safe instead of plugin-shipped.
@@ -504,6 +597,7 @@ playbooks load only when needed.
 ### Publication polish: intent contracts, BDD evidence, proof-of-work artifacts, harness audit
 
 #### Changed
+
 - Upgraded PLAN output to require a compact intent/spec header with goal, non-goals, constraints, acceptance criteria, named scenarios, open decisions, and recommended defaults before implementation phases.
 - Standardized BDD-style scenario evidence across `component-builder`, `bug-investigator`, and `integration-verifier` so workflows can reconcile named scenarios with command-level proof.
 - Expanded workflow artifacts to describe intent, evidence, quality/convergence state, remediation history, and append-only workflow events.
@@ -511,10 +605,12 @@ playbooks load only when needed.
 - Standardized hook log fields (`wf`, `phase`, `task_id`, `agent`, `event`, `decision`, `reason`) so stress-test diagnostics no longer depend on rereading full chats.
 
 #### Added
+
 - `plugins/cc10x/scripts/cc10x_harness_audit.py` — internal publication-safety audit for manifest/docs version drift, hook/MCP references, router section coverage, metadata field consistency, and router-consumed agent contract fields.
 - Router guidance for append-only workflow event logs under `.claude/cc10x/workflows/{wf}.events.jsonl`.
 
 #### Fixed
+
 - Adaptive PLAN gating is now explicit: trivial work may build directly, while complex or ambiguous work must pass through intent/spec planning.
 - Research synthesis and degraded-confidence handling are now consistent across planner, investigator, and the research agents.
 
@@ -523,6 +619,7 @@ playbooks load only when needed.
 ### Plugin-native packaging + workflow-scoped research/runtime alignment
 
 #### Changed
+
 - Moved shipped CC10X runtime hooks into the plugin bundle under `plugins/cc10x/hooks/hooks.json`.
 - Added plugin-bundled hook scripts under `plugins/cc10x/scripts/` referenced via `${CLAUDE_PLUGIN_ROOT}`.
 - Added plugin-native optional MCP config under `plugins/cc10x/.mcp.json` for Bright Data and Octocode acceleration.
@@ -531,6 +628,7 @@ playbooks load only when needed.
 - Workflow artifacts now carry research backend history and quality so resume and downstream prompts do not depend on transient output recovery.
 
 #### Fixed
+
 - Restored BUILD scope-decision resume for mixed CRITICAL + HIGH findings via a `[SCOPE-DECISION-PENDING: wf:...]` marker and follow-up answer handling.
 - Restored scope-aware re-hunt instructions so `ALL_ISSUES` and `CRITICAL_ONLY` remediation paths do not collapse into the same re-audit behavior.
 - Corrected plugin/docs version truth to `9.0.0`.
@@ -542,6 +640,7 @@ playbooks load only when needed.
 **2 stress-test root-cause fixes** targeting task completion reliability and re-hunt scope accuracy.
 
 #### Fixed
+
 - **Fix 1 — READ-ONLY task completion gate** (router Chain Execution Loop step 3): The `TaskUpdate(completed)` fallback for READ-ONLY agents (code-reviewer, silent-failure-hunter, integration-verifier) was buried as prose in step 3, easily skipped under cognitive load. Replaced with an explicit **3-GATE** section that runs as the MANDATORY FIRST STEP before verdict extraction. Gate: (1) TaskList → find agent task, (2) if in_progress → check blockedBy, (3) blockedBy empty → execute TaskUpdate immediately. Preserves INV-005 (blockedBy exclusion for SELF_REMEDIATED protocol).
 - **Fix 2b — HIGH_ISSUES extraction** (router Step 2): Added scan for `### High` section headers in agent output to count HIGH_ISSUES separately from CRITICAL_ISSUES. Required for Rule 1a-SCOPE condition evaluation.
 - **Fix 2b — Scope Decision Resume section** (router, before routing): New section that runs after active task check, before routing. Detects `[SCOPE-DECISION-PENDING: ...]` marker in `activeContext.md ## Decisions`. If found: reads user's plain-text reply (`critical only` / `all issues`), clears marker, creates scope-aware REM-FIX task (with `REHUNT_SCOPE:` in description), blocks downstream tasks, STOPs.
@@ -557,6 +656,7 @@ playbooks load only when needed.
 **3 root-cause fixes** that have persisted through every stress test v3–v6.
 
 #### Fixed
+
 - **Issue #4 — PLAN-START marker displacement** (router Chain Execution Loop): After `CC10X planner:` task completes, router now re-writes `[PLAN-START: wf:{N}]` marker to top of `## Recent Changes`. The planner's Two-Step Save writes entries above the router-written marker, displacing it and breaking freshness trimming. Router already had identical restoration for `component-builder` (BUILD-START) and `bug-investigator` (DEBUG-RESET). Planner restoration was simply missing.
 - **OBS-15 — Minimal output: SINGLE FINAL RESPONSE RULE** (code-reviewer, silent-failure-hunter, integration-verifier): Root cause identified — `Task()` returns only the agent's LAST response turn, not intermediate messages. Agents were writing analysis in intermediate turns, then outputting only minimal text (`"Task N: COMPLETED."`) in their final turn — the router received only that. Fix: all 3 agents now have explicit instruction to batch all tool calls first (zero text output during tool turns), then produce ONE FINAL RESPONSE containing heading + full analysis + Memory Notes + Task Status + TaskUpdate call.
 - **OBS-15 — Minimal output: Inline verification fallback** (router Step 3): Replaced blind `APPROVE/CLEAN/PASS` safe-default with `INLINE VERIFICATION REQUIRED`. For integration-verifier: runs `npx vitest run` (fallback: `npm test`) inline via Bash and checks exit code. For code-reviewer/hunter: runs `git diff HEAD --name-only` + empty-catch grep on changed files. Actual quality gate instead of silent bypass — was effectively letting all bad code through whenever agents returned minimal output (which is 100% of the time in current stress tests).
@@ -570,6 +670,7 @@ playbooks load only when needed.
 **11 changes** across router, brainstorming skill, 6 agent files, and README.
 
 #### Fixed
+
 - **R1 — Design File Amnesia** (router PLAN step 6): PLAN step 2 captured `design_file` before brainstorming ran. Brainstorming writes fresh design path to memory at step 3. Step 6 now re-reads `activeContext.md ## References` post-brainstorming to get the updated `design_file` value. Eliminates null design path passed to planner when brainstorming creates a new design file.
 - **R2 — JUST_GO Phase 2 collision** (brainstorming/SKILL.md): Phase 2 AskUserQuestion options had no `(Recommended)` label — JUST_GO auto-default found nothing → undefined. Added `(Recommended)` to one option per each of the 4 Phase 2 questions.
 - **R3 — TaskUpdate escape hatch (component-builder)**: Added CRITICAL warning at Task Completion section: writing "Task {TASK_ID}: COMPLETED" in text output is NOT sufficient — TaskUpdate tool must execute.
@@ -587,6 +688,7 @@ playbooks load only when needed.
 **1 structural change** based on external AI audit + parallel strict/open-minded agent analysis.
 
 #### Changed
+
 - **Step 6 hybrid table (router)**: Replaced 158-line pure-narrative validation rules section with a hybrid structure: PRE-PROCESSING block (Rule 0 + Circuit Breaker) → 11-row Conditional Routing Matrix → Detailed Logic prose under `###` headers. All logic preserved verbatim. Satisfies 4 strict-agent requirements: PRE-PROCESSING labeled as "ALWAYS RUNS FIRST", Circuit Breaker explicitly called out in rule 1a and 1b Action cells, Rule 2 (Conflict check) is a distinct table row, REVERT gate called out in rule 2d Action cell. Estimated savings: ~30 lines. Readability: routing decisions now scannable in seconds via the matrix.
 
 ---
@@ -598,6 +700,7 @@ playbooks load only when needed.
 **3 orchestration fixes** identified via external AI audit and confirmed by parallel sub-agent analysis.
 
 #### Fixed
+
 - **Re-Review Loop — Original Reviewer Guard** (router Re-Review Loop): Added PRE-CHECK before Step 0. When a REM-FIX completes, the loop now checks whether the original `CC10X code-reviewer:` task has already run (status = "completed"). If not yet completed, the entire Re-Review Loop is skipped — the normal execution loop will invoke the reviewer once its blockers clear. Prevents premature re-reviewer spawn in QUICK mode builds and component-builder self-remediation scenarios where the original reviewer was never run.
 - **Duplicate integration-verifier race condition** (router Re-Review Loop Step 3): Before creating a new `re_verifier` task, Step 3 now checks if an existing `CC10X integration-verifier:` task is still `pending` (unblocked by REM-FIX completion). If found, reuses it and adds the re-reviewer as a blocker — eliminating the race where both the original unblocked verifier and a newly-created re_verifier ran in parallel.
 - **Circuit Breaker — cumulative count** (router Rule 1a): Changed from counting only `status IN [pending, in_progress]` REM-FIX tasks (which never exceeded 1 due to sequential execution) to counting ALL REM-FIX tasks in the current workflow scoped by `wf:{parent_task_id}`. Breaker now fires at 3 total fix attempts across the workflow lifecycle, regardless of whether prior fixes have already completed.
@@ -611,6 +714,7 @@ playbooks load only when needed.
 **10 targeted fixes** from two stress test runs on v8.0.0.
 
 #### Fixed
+
 - **Heading-first output** (`code-reviewer`, `silent-failure-hunter`, `integration-verifier`): Agents now output the machine-readable verdict heading (`## Review: Approve`, `## Error Handling Audit: CLEAN`, `## Verification: PASS`) as the very first text, before any tool calls. Eliminates "Task N: COMPLETED" as the only output when truncation happens — router can extract STATUS from first 5 lines regardless of subsequent truncation.
 - **BUILD-START/DEBUG-RESET marker restoration** (router Chain Execution Loop): After `component-builder` or `bug-investigator` completes, router immediately re-writes `[BUILD-START: wf:N]` or `[DEBUG-RESET: wf:N]` into `## Recent Changes`. Fixes regression where WRITE agents overwrote the marker, breaking Memory Update freshness trimming.
 - **Stale design reference guard** (router PLAN step 2): Design file path contains a `YYYY-MM-DD` prefix. If that date ≠ today → set `design_file = N/A` and log "Design reference from prior session cleared". Prevents prior-session design from polluting a new PLAN workflow.
@@ -631,6 +735,7 @@ playbooks load only when needed.
 **The insight:** Every agent already outputs a structured heading on the FIRST LINE (`## Review: Approve`, `## Error Handling Audit: CLEAN`, `## Verification: PASS`) that carries the same information as the YAML. These headings survive any truncation. The YAML added nothing except complexity and failure modes.
 
 ### Removed (~280 lines)
+
 - `### Router Contract (MACHINE-READABLE)` YAML from `code-reviewer.md`, `silent-failure-hunter.md`, `integration-verifier.md`
 - `### Router Handoff (Stable Extraction)` from `code-reviewer.md`, `integration-verifier.md`
 - `### Dev Journal (User Transparency)` from `code-reviewer.md`, `silent-failure-hunter.md`, `integration-verifier.md`
@@ -640,6 +745,7 @@ playbooks load only when needed.
 - `HIGH_ISSUES` / `EVIDENCE_ITEMS` / `CONFIDENCE<80` / `SCENARIOS_PASSED≠SCENARIOS_TOTAL` checks (all YAML-only fields)
 
 ### Added
+
 - **Text-Based Verdict Extraction** (30 lines) — extracts STATUS from heading (first 5 lines), counts `### Critical Issues` bullets, detects `SELF_REMEDIATED` from task state
 - **JUST_GO session mode** — reads `AUTO_PROCEED: true` from `activeContext.md ## Session Settings`; auto-defaults all non-REVERT gates without prompting
 - **Empty Answer Guard simplification** — only REVERT gates stop on empty answer; all others auto-proceed with recommended default
@@ -647,6 +753,7 @@ playbooks load only when needed.
 - **`**CONTRACT:**` note** at bottom of each read-only agent template documenting the text-based contract
 
 ### Changed
+
 - `cc10x-router/SKILL.md`: 866 → ~700 lines; replaced YAML validation with text extraction; rule 1b auto-defaults to "Fix now"; rule 2d simplified
 - `agents/code-reviewer.md`: 183 lines → 183 lines (net flat; sections restructured)
 - `agents/silent-failure-hunter.md`: 179 → 145 lines
@@ -666,6 +773,7 @@ playbooks load only when needed.
 - **Release checklist permanence**: Version bump checklist only existed in ephemeral session memory — invisible after compaction, not version-controlled. Fixed: `## Release Checklist` section added at end of router documenting all 3 required files (source plugin.json, cache plugin.json, marketplace.json) permanently.
 
 ### Changed
+
 - `cc10x-router/SKILL.md`: +Gate 9 logging fix, +step 7b Glob check, +Release Checklist section
 - `agents/integration-verifier.md`: Router Contract now before Task Status
 - `agents/planner.md`: +post-Write Glob verification
@@ -686,6 +794,7 @@ playbooks load only when needed.
 - **OBS-15 (code-reviewer token exhaustion)**: `code-reviewer` unconditionally loaded 4 skills (~28–36K tokens) plus unbounded `git diff HEAD` (up to 60K) before producing any output. Two fixes: (1) **Output skeleton first** — step 0 immediately outputs a one-liner before any tool calls, ensuring partial output even if token budget runs low. (2) **Conditional `frontend-patterns`** — removed from frontmatter (was always loaded); now loads only when `git diff HEAD --name-only` contains `.tsx, .jsx, .vue, .css, .scss, .html`. Saves up to 583 lines / 36% of skill token budget on pure backend reviews.
 
 ### Changed
+
 - `cc10x-router/SKILL.md`: 834 → 844 lines (+10 net across 6 edits)
 - `bug-investigator.md`: removed DEBUG-RESET section (−13 lines)
 - `code-reviewer.md`: output skeleton + conditional frontend skill (+4 net lines)
@@ -700,6 +809,7 @@ playbooks load only when needed.
 - **Fix C**: `integration-verifier.md` — PASS result requires full Router Contract YAML. Added unconditional "NO EXCEPTIONS" rule: `"Task N: COMPLETED" alone is NEVER sufficient even when all scenarios pass.` *Confirmed working live in dogfood session: verifier produced full Router Contract output for the first time.*
 
 ### Dogfooding catches during this session
+
 - OBS-16 nuance: ANY "work complete/done/succeeded" phrasing triggers premature TaskUpdate — not just the specific "already saved to memory" phrase. REM-EVIDENCE prompts must frame work as incomplete, not complete.
 - `bash grep` silently returns empty output for emoji/unicode patterns in zsh environment — use Python subprocess for reliable unicode grep.
 
@@ -735,6 +845,7 @@ Parallel hunt (3 theories) confirmed two root causes: (1) hunter greps for code 
 - **R2**: code-reviewer "What's Next" text now accurate for REVIEW context (no verifier in REVIEW chain)
 
 ### Changed
+
 - Router trimmed from 878 → 819 lines (C1/C3/C4/C5/C6 removed; C2 excluded — runtime prompt)
 - Results Collection section moved to integration-verifier.md ## Context from Previous Agents
 - Agent Chains merged into Decision Tree table (new "Agent Chain" column)
@@ -744,12 +855,15 @@ Parallel hunt (3 theories) confirmed two root causes: (1) hunter greps for code 
 ### Fixed — 3 UX/DX improvements
 
 **Memory files now git-tracked:**
+
 - `.claude/cc10x/` un-ignored in `.gitignore` using glob-level pattern. Memory files (`activeContext.md`, `patterns.md`, `progress.md`) are now tracked and push to GitHub. Works locally today; now also works across machines and teams.
 
 **Routing transparency:**
+
 - Router announces its decision before executing any workflow: `→ {WORKFLOW} workflow (signals: {matched keywords})`. One line, zero bloat. Makes the black-box routing legible to users.
 
 **CC10X-018 root cause confirmed — platform issue:**
+
 - Investigated via Claude Code docs. AskUserQuestion empty on first 1-3 calls is a Claude Code platform-level warm-up race condition, not a cc10x bug. No reliable mitigation exists from inside cc10x. Reported pattern for Anthropic to fix. Retry guard remains the only defensive option.
 
 ## [7.4.1] - 2026-03-02
@@ -765,30 +879,36 @@ Parallel hunt (3 theories) confirmed two root causes: (1) hunter greps for code 
 Dogfood-driven fixes from the 2026-03-02 real-app stress test and full system audit. All 24 open HIGH issues from the SSOT are now Fixed or Investigating.
 
 **Rule logic & evaluation order:**
+
 - **CC10X-010**: Rules 1b/2 `apply rule 1a` replaced with inline `TaskCreate` instructions — rule 1a's `BLOCKING=true` precondition was impossible to meet in those contexts
 - **CC10X-011**: Rule 0b/0c physical order now matches documented evaluation sequence (`0b → 0c`)
 
 **Template consolidation & systemic output fix:**
+
 - **CC10X-013**: Two divergent agent invocation templates unified — Chain Execution Loop now references the canonical Agent Invocation template; `Parent Workflow ID` added to canonical template
 - **CC10X-057 + CC10X-058**: "Output your analysis BEFORE calling TaskUpdate" added to canonical IMPORTANT block — systemic fix for 1-line output failure mode across all agents
 - **CC10X-012**: Integration-verifier Results Collection prompt now includes `Parent Workflow ID`, `Plan File`, `Memory Summary`, `SKILL_HINTS` — sub-agents don't inherit parent context
 
 **Loop caps & safety:**
+
 - **CC10X-017**: NEEDS_CLARIFICATION loop cap (≥3 planner completions) — last loop in the system without a cap
 - **CC10X-019**: Orphan detection now shows `blockedBy` context — self-healing tasks no longer appear as dead orphans on session resume
 - **CC10X-021**: DEBUG serial verifier circuit breaker (inline 2d-pre check) — fires after 2+ Re-verify completions in same DEBUG session
 - **CC10X-020**: Rule 2c re-invoke now passes explicit `Parent Workflow ID` to bug-investigator
 
 **REVIEW workflow:**
+
 - **CC10X-014**: REVIEW scope clarification persisted to `activeContext.md ## Decisions` (compaction-safe)
 - **CC10X-015**: REVIEW-to-BUILD transition gate added (step 6) — when reviewer finds `CHANGES_REQUESTED`, user offered guided BUILD path
 
 **PLAN workflow:**
+
 - **CC10X-022**: PLAN research paths (`web_file`, `github_file`) persisted to `## References` immediately after collection
 - **CC10X-023**: Brainstorming skill now emits a Router Contract (`STATUS: COMPLETE | INCOMPLETE`, `DESIGN_FILE`)
 - **CC10X-024**: PLAN step 2 now performs `Glob` existence check on design file before invoking planner
 
 **Bonus SDLC medium fixes (applied alongside Tier 2):**
+
 - Memory Update: WRITE agent `Deferred:` entries now collected (were silently dropped)
 - DEBUG clarify: skip heuristic for obvious errors (stack trace + file:line = no AskUserQuestion)
 - Research: timeout fallback if one parallel research agent fails
@@ -797,11 +917,13 @@ Dogfood-driven fixes from the 2026-03-02 real-app stress test and full system au
 - Agent Invocation: Project Patterns prompt truncated to `## Common Gotchas` + `## User Standards` ≤2000 chars
 
 **Documentation:**
+
 - `router-invariants.md`: INV-035 through INV-041 (7 new invariants)
 - `cc10x-orchestration-bible.md`: v7.3.0 guarantees table extended
 - SSOT: 25 issues Fixed, 1 Investigating (CC10X-018 — AskUserQuestion warmup), 1 Partially Fixed (CC10X-006)
 
 **Investigating (no code change):**
+
 - **CC10X-018**: AskUserQuestion returns empty on first 1-3 calls in session — consistent with platform-level warm-up race condition; no reliable mitigation identified
 
 ## [7.3.0] - 2026-03-02
@@ -811,24 +933,29 @@ Dogfood-driven fixes from the 2026-03-02 real-app stress test and full system au
 Fixes all 10 Tier 1 issues from the 2026-03-02 full audit + 4-workflow real-app stress test (github-horoscope). Confirmed via dogfooding: 3 BUILD workflows, 2 PLAN workflows, ~8 workflow runs total. Source-cache sync verified for all modified file pairs. Router 835 → 850 lines.
 
 **CRITICAL fixes (runtime-confirmed, 2+ sessions):**
+
 - **CC10X-001**: `silent-failure-hunter` — added `OUTPUT BEFORE TASK UPDATE` mandate + 200-char self-check before `TaskUpdate`. Router adds `<200 chars → AskUserQuestion` escalation (skips broken REM-EVIDENCE path). Previously: 3/4 sessions returned `"Task N: COMPLETED"` (22 chars) with REM-EVIDENCE failing to recover.
 - **CC10X-002**: Memory Update task — router Chain Execution Loop now executes Memory Update **inline** (never spawns Task()). Sub-agents don't inherit conversation context — previously router spawned a `planner` agent which wrote stale content to all 3 memory files.
 
 **HIGH fixes (router logic):**
+
 - **CC10X-003**: Rule 0b — removed `TaskUpdate({ status: "completed" })` for SELF_REMEDIATED agents. This was canceling the agent's own self-imposed block, preventing re-review after REM-FIX completion. Added explanation comment.
 - **CC10X-004**: Rule 0c — renamed `## External Research Findings` → `## Research Files` in re-invoke prompt. Bug-investigator expected `## Research Files`; mismatch caused research to be silently ignored on stuck re-invoke.
 - **CC10X-008**: PLAN step 5a — added `MANDATORY` label + dual-source check (planner output text AND `USER_INPUT_NEEDED` contract field as compaction-safe fallback). Previously the gate was conditional and skipped.
 - **CC10X-056**: QUICK escalation — added `TaskUpdate(in_progress)` for both escalated tasks before parallel `Task()` calls. Matches Chain Execution Loop step 2 standard.
 
 **HIGH fixes (agent files):**
+
 - **CC10X-005**: `code-reviewer` — added REVIEW WORKFLOW GUARD before Self-Healing Protocol. REVIEW context → `CHANGES_REQUESTED` (advisory, no REM-FIX). Previously: reviewer created REM-FIX and invoked component-builder in advisory/read-only workflows.
 - **CC10X-007**: `planner` — design file guard: `Read` failure → `REQUIRES_REMEDIATION: true` + `STATUS=NEEDS_CLARIFICATION`. Previously: planner silently invented new schemas when design file was missing.
 - **CC10X-009**: `planner` — added `GATE_PASSED` field to Router Contract + `USER_INPUT_NEEDED` list. Router CONTRACT RULE now enforces `GATE_PASSED=true` for `STATUS=PLAN_CREATED`. Previously: plan-review-gate was never invoked (confirmed 3 sessions).
 
 **HIGH fix (partial — brainstorming skill):**
+
 - **CC10X-006 + CC10X-016**: `brainstorming` — added `Write, Edit, Bash` to `allowed-tools`. Added `pwd` + absolute path guidance for design file saves. Prevents permission prompts and wrong-CWD saves. Router PROJECT_DIR resolution deferred to Tier 2.
 
 **Documentation:**
+
 - `router-invariants.md`: Added INV-029 through INV-034 (6 invariants for all Tier 1 router changes)
 - `cc10x-orchestration-bible.md`: Added "Known Behavioral Guarantees" table (v7.1.2, 2026-03-02)
 - `ssot.md`: 10 issues marked Fixed
@@ -840,6 +967,7 @@ Fixes all 10 Tier 1 issues from the 2026-03-02 full audit + 4-workflow real-app 
 Applies all Tier 3 audit findings + legacy cleanup + disconnect fixes from the comprehensive 47-finding SDLC audit. All changes reviewed and approved by code-reviewer (90% confidence, 0 CRITICAL).
 
 **Router hardening (8 changes):**
+
 - **G3**: Added "brainstorm, brainstorming, explore" keywords to PLAN Decision Tree — prevents misrouting to BUILD
 - **H1**: SELF_REMEDIATED agents now properly mark their original task as completed — fixes stuck task state
 - **H4**: Re-Review Loop now correctly skips hunter for DEBUG/REVIEW and verifier for REVIEW — matches actual Agent Chains
@@ -849,15 +977,18 @@ Applies all Tier 3 audit findings + legacy cleanup + disconnect fixes from the c
 - **D1+D2**: Design file pipeline — brainstorming saves design file, router extracts from References, forwards to planner
 
 **Agent hardening (3 changes):**
+
 - **H8**: TDD Failure Cap in component-builder — 3 consecutive GREEN failures escalate to STATUS: FAIL + REM-FIX
 - **H9**: Documented "No self-healing (by design)" in silent-failure-hunter — clarifies intentional design vs missing feature
 
 **Legacy cleanup (3 changes):**
+
 - **L1**: Removed brainstorming's "What's next? A/B/C" prompt that conflicted with router flow control
 - **L2**: Replaced code-generation's legacy "Use brainstorming skill" with AskUserQuestion guidance
 - **L3**: Removed temporal "now" from bug-investigator's legacy research guard
 
 **Known issue discovered and documented:**
+
 - Context compaction can lose sub-agent output before router processes it. Recovery pattern: resume sub-agent with `agentId` to re-emit findings. See `docs/known-flaws.md`.
 
 ## [7.1.0] - 2026-03-01
@@ -867,10 +998,12 @@ Applies all Tier 3 audit findings + legacy cleanup + disconnect fixes from the c
 Refactors inline THREE-PHASE research execution into a parallel agent architecture. The router now spawns two dedicated research agents simultaneously, replacing 5 verbose inline blocks with clean parallel invocations.
 
 **New agents (2):**
+
 - `web-researcher.md`: Executes web research via Bright Data + WebSearch in parallel. Returns Router Contract with `FILE_PATH` to saved findings. Always writes a file even on UNAVAILABLE — guarantees downstream agents always receive a valid path.
 - `github-researcher.md`: Executes GitHub/package research via Octocode MCP tools. Returns Router Contract with `FILE_PATH`. Same always-write contract.
 
 **Changed (5 files):**
+
 - `cc10x-router/SKILL.md`: All 5 THREE-PHASE research blocks replaced with parallel `Task(cc10x:web-researcher) ∥ Task(cc10x:github-researcher)` invocations. Router collects both `FILE_PATH` values and passes `## Research Files` to downstream agents. `RESEARCH_EXECUTED + RESEARCH_PERSISTED` gates merged into single `RESEARCH_COMPLETE` gate.
 - `research/SKILL.md`: Rewritten from 240-line THREE-PHASE executor to 91-line synthesis-guidance-only skill. Loaded via SKILL_HINTS by planner + bug-investigator when research files are passed.
 - `planner.md`: Updated research section — references web-researcher + github-researcher. Instructs agent not to spawn research itself.
@@ -878,9 +1011,11 @@ Refactors inline THREE-PHASE research execution into a parallel agent architectu
 - `cc10x-orchestration-bible.md`: Updated agent count (6 → 8). Added Research Architecture section with parallel flow diagram.
 
 **Fixed:**
+
 - Circuit Breaker "Research best practices" branch called `Skill(skill="cc10x:research")` directly — stale reference to old executor model. Replaced with parallel researcher spawn pattern.
 
 ### Validation
+
 - Integration-verifier E2E: 13/13 PASS
 - THREE-PHASE blocks remaining: 0
 - New agents in source + cache: 2
@@ -897,12 +1032,14 @@ Refactors inline THREE-PHASE research execution into a parallel agent architectu
 Comprehensive internal audit of the entire cc10x orchestration system. Found and fixed 17 issues across 10 files (4 bugs, 6 contradictions, 5 gaps + 2 from deep cross-file validation).
 
 **Bugs (4):**
+
 - `silent-failure-hunter.md`: Added missing `TaskCreate, TaskList` to tools — agent couldn't create self-healing tasks
 - `integration-verifier.md`: Shell Safety section referenced `Write/Edit` tools the READ-ONLY agent doesn't have — changed to "Report in output only"
 - `bug-investigator.md`: `Skill()` call used `query=` parameter instead of correct `args=`
 - `code-generation/SKILL.md`: Examples used `grep`/`ls`/`cat` bash commands instead of dedicated `Grep`/`Glob`/`Read` tools
 
 **Contradictions (6):**
+
 - 3 READ-ONLY agents: Added `mkdir -p .claude/cc10x` before memory reads — prevents failure on fresh projects
 - `code-reviewer.md`: Added `SELF_REMEDIATED` to Router Contract STATUS enum — was handled by router but missing from agent's declared values
 - `session-memory/SKILL.md`: Updated READ-ONLY agent description to match reality (agents read files directly, not "receive summary in prompt")
@@ -911,6 +1048,7 @@ Comprehensive internal audit of the entire cc10x orchestration system. Found and
 - `cc10x-orchestration-bible.md`: DEBUG-RESET authorship corrected from "router writes" to "bug-investigator writes"
 
 **Gaps (5):**
+
 - `bug-investigator.md`: Added Test Process Discipline section (orphan process cleanup for vitest/jest)
 - `code-reviewer.md` + `integration-verifier.md`: Documented `addBlockedBy` on in_progress task behavior
 - `component-builder.md` + `bug-investigator.md`: Added non-npm TDD escape clause for pure HTML/CSS/JS projects
@@ -918,10 +1056,12 @@ Comprehensive internal audit of the entire cc10x orchestration system. Found and
 - `brainstorming/SKILL.md`: Added `2>/dev/null` error handling for empty/new projects
 
 **Deep audit fixes (2):**
+
 - `bug-investigator.md`: Added non-npm TDD exception to CONTRACT RULE (component-builder had it, bug-investigator didn't)
 - `cc10x-router/SKILL.md`: Fixed comment variable name `{task_id}` → `{parent_task_id}` at DEBUG-RESET note
 
 ### Validation
+
 - Source ↔ v7.0.1 cache: 19/19 files MATCH
 - Smoke test: 42/42 PASS
 - Deep cross-file audit: 10/10 categories PASS (tool declarations, STATUS values, skill refs, memory protocol, chains, bible, variables, TDD, session-memory, brainstorming)
@@ -935,6 +1075,7 @@ Comprehensive internal audit of the entire cc10x orchestration system. Found and
 Fixes a fundamental violation of cc10x's orchestration model introduced in v7.0.0: two new skills were spawning `Task()` subagents outside the router's control plane. In Claude Code, only the main session (router) can spawn subagents — sub-agents cannot spawn sub-agents (platform-level nesting guard, v2.1.41).
 
 **plan-review-gate — rewritten as inline review (no subagents):**
+
 - Removed all `Task()` spawning from the skill
 - The 3 adversarial checks (Feasibility, Completeness, Scope) now run inline in the calling agent's context using Read/Grep/Glob
 - `allowed-tools` updated: `Task` removed
@@ -944,15 +1085,18 @@ Fixes a fundamental violation of cc10x's orchestration model introduced in v7.0.
 - Router step 5b removed entirely — planner owns the gate; router stays lean (802 lines)
 
 **brainstorming Post-Design Gate — Task() spawns removed:**
+
 - Replaced two `Task(subagent_type="general-purpose", ...)` blocks with 3-line advisory guidance
 - Renamed section to "Pre-Handoff Design Check (Optional)" — self-review, no agents
 
 **self-reflect skill — deleted:**
+
 - Removed `plugins/cc10x/skills/self-reflect/` from source and cache
 - Memory Update task + manual patterns.md editing covers the use case
 - No user-visible regression (Memory Update is fully automatic per workflow)
 
 ### Notes
+
 - BUILD/DEBUG/REVIEW chains: unchanged
 - planner.md: +14 lines (Plan Review Gate section)
 - cc10x-router/SKILL.md: -7 lines (step 5b removed); now 802 lines
@@ -967,22 +1111,27 @@ Fixes a fundamental violation of cc10x's orchestration model introduced in v7.0.
 Five high-value patterns extracted from metaswarm and integrated natively into cc10x.
 
 **1. Plan Review Gate (`plugins/cc10x/skills/plan-review-gate/SKILL.md`)**
+
 - New standalone skill: 3 adversarial reviewers (Feasibility, Completeness, Scope) run in parallel after planner
 - All 3 must PASS before plan reaches user; max 3 iterations then ESCALATION (Override/Revise/Simplify/Cancel)
 - Router step 5b: gate reads the actual plan and decides trivial/non-trivial itself
 
 **2. Adversarial Evidence Requirements (`plugins/cc10x/agents/code-reviewer.md`)**
+
 - `APPROVE` now requires `EVIDENCE_ITEMS≥1` — at least one cited `file:line` in the Router Contract
 - New `EVIDENCE:` block in Router Contract YAML; router CONTRACT RULE enforces `OR EVIDENCE_ITEMS<1`
 
 **3. Self-Reflect Skill (`plugins/cc10x/skills/self-reflect/SKILL.md`)**
+
 - New standalone skill: mines session context for learnings → patterns.md (Phase A–F, 4-filter quality gate)
 
 **4. Inline Rubric Criteria**
+
 - `code-reviewer`: `## Review Checklist` table (7 categories with severity tiers)
 - `integration-verifier`: Coverage gate WARNING row (0 tests found = WARNING, not FAIL)
 
 **5. Post-Design Review Gate (`plugins/cc10x/skills/brainstorming/SKILL.md`)**
+
 - Optional Architecture+Security parallel review after design doc is saved
 
 ### Changed (v7.0.0 — closes all 4 v6.0.38 deferred MEDIUM items)
@@ -993,11 +1142,13 @@ Five high-value patterns extracted from metaswarm and integrated natively into c
 - Router ESCALATION: "Remaining Blocking Issues" section passed verbatim to planner on Revise/Simplify (M-4)
 
 ### Docs
+
 - Bible: PLAN Chain (step 5b), code-reviewer EVIDENCE_ITEMS, new Standalone Skills section
 - router-invariants.md: INV-026 (plan-review-gate), INV-027 (EVIDENCE_ITEMS enforcement)
 - cc10x-orchestration-safety: plan-review-gate + self-reflect noted as approved exceptions
 
 ### Notes
+
 - BUILD/DEBUG/REVIEW chains unchanged — new skills are standalone (not in agent chains)
 - 13/13 v7.0.0 checks PASS; all 27 v6.0.38 regression checks intact
 
@@ -1010,11 +1161,13 @@ Five high-value patterns extracted from metaswarm and integrated natively into c
 Router logic moved to the agents that own it. The router routes; agents act.
 
 **Move 1 — DEBUG-RESET marker → `bug-investigator`**
+
 - Router: 8-line "Debug Workflow Scoping" block → 1-line pointer
 - `bug-investigator`: new `## DEBUG-RESET Marker` section writes `[DEBUG-RESET: wf:{PARENT_WORKFLOW_ID}]` at startup (before any investigation), using the parent DEBUG workflow task ID passed by the router
 - Router agent invocation template: now passes `Parent Workflow ID: {parent_task_id}` to all agents
 
 **Move 2 — CHOSEN_OPTION B/C handling → `integration-verifier`**
+
 - `integration-verifier`: Options B (revert branch) and C (accept limitation) now use inline `AskUserQuestion` before returning — verifier owns the user interaction
 - New STATUS values: `REVERT_RECOMMENDED` (user confirmed revert) and `LIMITATION_ACCEPTED` (user accepted limitation)
 - Router rule 2d: 15 lines → 2-line handler for the two new STATUS values
@@ -1024,6 +1177,7 @@ Router logic moved to the agents that own it. The router routes; agents act.
 **Net result:** Router 816 → 801 lines (−15). Agents are more self-contained. Logic lives where it belongs.
 
 ### Notes
+
 - v6.0.34–v6.0.36 were intermediate patch releases (correctness fixes + compression); v6.0.37 is the first architectural release
 - Move 3 (INVESTIGATING loop cap) was confirmed already removed in v6.0.30–v6.0.33
 
@@ -1032,10 +1186,12 @@ Router logic moved to the agents that own it. The router routes; agents act.
 ## [6.0.33] - 2026-03-01
 
 ### Fixed (Critical)
+
 - F1: Re-Review Loop now spawns a NEW integration-verifier task after each REM-FIX — completed tasks cannot be re-activated via addBlockedBy; Memory Update also blocked on new re-verifier
 - F2: Removed duplicate REM-FIX TaskCreate from integration-verifier.md — router rule 1a is sole authority for REM-FIX creation
 
 ### Fixed (Medium/Low)
+
 - F3: Added research loop cap (count >= 2) to rule 0c re-invocation — prevents infinite external research loops
 - F5: memory_task_id fallback now uses wf: scope from activeContext.md ## References when available
 - F7: Removed github-research from SKILL_HINTS prose note at line 439 (H-2 residual)
@@ -1045,6 +1201,7 @@ Router logic moved to the agents that own it. The router routes; agents act.
 ## [6.0.32] - 2026-02-28
 
 ### Fixed
+
 - C-1: Rule 1a now excludes integration-verifier FAIL with CHOSEN_OPTION B/C — options now reachable via rule 2d
 - C-2: Added NEEDS_EXTERNAL_RESEARCH and RESEARCH_REASON fields to bug-investigator Router Contract YAML schema
 - C-3: Cycle Cap now counts completed REM-FIX tasks (not active) — correctly detects recurring fix loops
@@ -1054,6 +1211,7 @@ Router logic moved to the agents that own it. The router routes; agents act.
 - L-2: Removed spurious "Recent Changes: REPLACE" from REVIEW Memory Update (REVIEW makes no code changes)
 
 ### Documentation
+
 - M-1: Documented memory_task_id exception to session-memory NEVER policy
 - M-2: Removed context:fork from Bible agent frontmatter examples (never valid for agents)
 - M-3: Added description field to Bible's TaskUpdate field list
@@ -2481,7 +2639,7 @@ Major orchestration hardening release. **33 surgical changes** across `cc10x-rou
 ### Skill Loading Matrix (Updated)
 
 | Agent | Auto-Loaded Skills |
-|-------|-------------------|
+| ------- | ------------------- |
 | component-builder | session-memory, test-driven-development, code-generation, verification-before-completion |
 | bug-investigator | session-memory, debugging-patterns, test-driven-development, verification-before-completion |
 | code-reviewer | session-memory, code-review-patterns, verification-before-completion |
@@ -2504,10 +2662,12 @@ Note: planner doesn't need verification (creates plans, doesn't verify code)
 ### Root Cause
 
 When user said "build a task tracker", Claude could match EITHER:
+
 1. cc10x-router skill (keyword: "build") → Correct: Full workflow
 2. component-builder agent (keyword: "build") → WRONG: Bypasses router
 
 Claude sometimes picked the agent directly, bypassing:
+
 - Memory loading
 - User confirmation gates
 - Agent chain (builder → reviewer → verifier)
@@ -2520,7 +2680,7 @@ Agents no longer have workflow trigger keywords. Only cc10x-router responds to:
 ### Agent Description Changes
 
 | Agent | Before | After |
-|-------|--------|-------|
+| ------- | -------- | ------- |
 | component-builder | "Triggers on build, create, implement..." | "Invoked by BUILD workflow. DO NOT invoke directly" |
 | code-reviewer | "Triggers on review, audit, check..." | "Invoked by REVIEW workflow. DO NOT invoke directly" |
 | bug-investigator | "Triggers on debug, fix, error, bug..." | "Invoked by DEBUG workflow. DO NOT invoke directly" |
@@ -2551,7 +2711,7 @@ Agents no longer have workflow trigger keywords. Only cc10x-router responds to:
 ### Agent Tool Matrix
 
 | Agent | Edit | Write | Bash | Grep | Glob | Skill |
-|-------|------|-------|------|------|------|-------|
+| ------- | ------ | ------- | ------ | ------ | ------ | ------- |
 | component-builder | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | bug-investigator | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | code-reviewer | ❌ | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -2583,6 +2743,7 @@ Agents no longer have workflow trigger keywords. Only cc10x-router responds to:
 ### Root Cause
 
 In v5.4.0, when user said "build a task tracker", Claude matched BOTH:
+
 1. cc10x-router (keyword: "build")
 2. test-driven-development skill (keyword: "build")
 
@@ -2612,12 +2773,14 @@ Skills no longer have workflow trigger keywords. Only cc10x-router responds to:
 ### Key Behavior Change
 
 **Before v5.4.0** (WRONG):
+
 ```
 user: "build a task tracker"
 assistant: "cc10x has these capabilities: brainstorming, planning, building..."
 ```
 
 **After v5.4.0** (CORRECT):
+
 ```
 user: "build a task tracker"
 assistant: "Detected BUILD intent. Executing BUILD workflow.

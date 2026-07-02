@@ -1,9 +1,10 @@
 ### BUILD preparation
 
 **Target repo (`CC10X_REPO_DIR`) — resolve before everything below.** By default every git command, dependency install, and test run in this workflow operates on the **process cwd**. To drive a build against a repo that is NOT the session cwd (a sibling repo, one package in a multi-repo checkout, or a repo reached from a parent dir), set `CC10X_REPO_DIR` to that repo's absolute path; then for the REST of this workflow:
+
 - prefix every git command with it — `git -C "$CC10X_REPO_DIR" <cmd>` — covering the `0a` pre-flight, the `11a` per-phase BASE, the final-review `merge-base`, and the finishing checkout/pull/merge/branch/worktree ops;
 - run the `0b` dependency install and the `0c` baseline + every verify test command with that repo as the working directory;
-- pass `--repo "$CC10X_REPO_DIR"` to `scripts/cc10x_review_package.py` (it also reads the env var directly).
+- pass `--repo "$CC10X_REPO_DIR"` to `"${CLAUDE_PLUGIN_ROOT}/tools/review_package.py"` (it also reads the env var directly).
 
 The orchestration state dir (`.cc10x/`) and the workflow artifacts STAY at `CLAUDE_PROJECT_DIR` / the session cwd — only the git/build/test SOURCE moves, never where cc10x writes its state. When `CC10X_REPO_DIR` is unset, behavior is exactly as today (process cwd). Record the resolved target under `results.target_repo` so downstream steps and resume use the same repo.
 
@@ -63,14 +64,16 @@ The orchestration state dir (`.cc10x/`) and the workflow artifacts STAY at `CLAU
 10. Clarify missing requirements before builder only when the plan and memory do not already answer them.
 11. Persist pre-answered clarifications in `activeContext.md ## Decisions` using `Build clarification [{topic}]: {answer}`.
 11a. **Record the per-phase BASE sha (runs each phase, before that phase's builder is dispatched).**
-   - Capture current `HEAD` (`git rev-parse HEAD`, or `git -C "$CC10X_REPO_DIR" rev-parse HEAD` when a target repo is set) into the workflow artifact under `results.git_base_sha`. Re-record it at the start of EVERY phase, not once per workflow — one sha per phase, overwritten as `phase_cursor` advances.
-   - This BASE is the producer side of the recorded-BASE discipline: it is exactly what the downstream review / verify / doc agents diff against (`BASE..HEAD`), and it is the BASE argument passed to `tools/review_package.py`. Recording it BEFORE the builder runs guarantees the diff captures only this phase's work, never a prior phase's already-reviewed changes.
-   - If `git_preflight=degraded` blocks `git rev-parse`, record `git_base_sha=unavailable` and continue; downstream agents then fall back to reviewing the working-tree diff and say so explicitly.
-12. Builder may execute only the phase at `phase_cursor`.
-13. Router handoff for the current BUILD phase must be phase-local:
-   - include only the current phase objective, inputs, expected artifacts, required checks, checkpoint type, exit criteria, and approved clarifications still in force
-   - include prior-phase detail only when it remains an active blocker, dependency, or unresolved finding
-   - do not rehydrate broad historical narrative when the workflow artifact already captures it
+
+- Capture current `HEAD` (`git rev-parse HEAD`, or `git -C "$CC10X_REPO_DIR" rev-parse HEAD` when a target repo is set) into the workflow artifact under `results.git_base_sha`. Re-record it at the start of EVERY phase, not once per workflow — one sha per phase, overwritten as `phase_cursor` advances.
+- This BASE is the producer side of the recorded-BASE discipline: it is exactly what the downstream review / verify / doc agents diff against (`BASE..HEAD`), and it is the BASE argument passed to `tools/review_package.py`. Recording it BEFORE the builder runs guarantees the diff captures only this phase's work, never a prior phase's already-reviewed changes.
+- If `git_preflight=degraded` blocks `git rev-parse`, record `git_base_sha=unavailable` and continue; downstream agents then fall back to reviewing the working-tree diff and say so explicitly.
+1. Builder may execute only the phase at `phase_cursor`.
+2. Router handoff for the current BUILD phase must be phase-local:
+
+- include only the current phase objective, inputs, expected artifacts, required checks, checkpoint type, exit criteria, and approved clarifications still in force
+- include prior-phase detail only when it remains an active blocker, dependency, or unresolved finding
+- do not rehydrate broad historical narrative when the workflow artifact already captures it
 
 ### BUILD task graph
 
@@ -78,13 +81,13 @@ BUILD is sequential:
 
 - one approved executable phase at a time
 - one builder run for the current phase only
-- review, hunt, and verify validate that phase before `phase_cursor` advances
+- review and verify validate that phase before `phase_cursor` advances
 - if phase exit evidence is incomplete, record `partial` or `blocked`, persist state, and stop
 
 **Complexity gradient (read `build_scope` from BUILD preparation step 4):**
 The router is still the sole entry point for every BUILD, but the task graph scales to the work. This is a deliberate gradient, not the retired unconditional QUICK path: trivial work earns a reduced graph; everything else pays the full chain.
 
-- `build_scope=trivial` → use the **reduced task graph** below: `component-builder` → `integration-verifier` → `Memory Update`. NO separate `code-reviewer` task, NO standalone `doc-syncer` task. The verifier still runs its real proof path (never weaken `verifier-latency-model.md` must_keep_core) and folds a brief review/edge-case pass into its report.
+- `build_scope=trivial` → use the **reduced task graph** below: `component-builder` → `integration-verifier` → `Memory Update`. NO separate `code-reviewer` task, NO standalone `doc-syncer` task. The verifier still runs its FULL real proof path — never weaken the Pre-Completion Checklist, Proof Reconciliation, or Test Honesty Gates to "save time" on trivial work — and folds a brief review/edge-case pass into its report.
 - `build_scope=standard` (default, and always when a plan exists) → use the **full task graph** further below.
 
 **Escalation rule (trivial → full):** after the builder returns, if its Router Contract reports non-empty `SCOPE_INCREASES` or non-empty `BLOCKED_ITEMS`, the work was not actually trivial. Before advancing, promote the workflow to the full graph: create the `code-reviewer` task (blocked by the builder) and the `doc-syncer` task (blocked by the verifier), and re-block Memory Update on `doc_sync_task_id`. Persist `build_scope=standard` and an escalation entry in `status_history`.
@@ -94,13 +97,13 @@ The router is still the sole entry point for every BUILD, but the task graph sca
 ```text
 TaskCreate({
   subject: "CC10X component-builder: Execute phase {phase_id}",
-  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:build-implement\nplan:N/A\nscope:N/A\nreason:Execute trivial change\n\nExecute the trivial change. Recover objective, inputs, expected artifacts, required checks, and exit criteria. Stop if blocked, partial, or scope grows beyond trivial (report SCOPE_INCREASES so the router can escalate to the full review/hunt chain).",
+  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:build-implement\nplan:N/A\nscope:N/A\nreason:Execute trivial change\n\nExecute the trivial change. Recover objective, inputs, expected artifacts, required checks, and exit criteria. Stop if blocked, partial, or scope grows beyond trivial (report SCOPE_INCREASES so the router can escalate to the full review chain).",
   activeForm: "Building components"
 }) -> builder_task_id
 
 TaskCreate({
   subject: "CC10X integration-verifier: Verify integration",
-  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:build-verify\nplan:N/A\nscope:N/A\nreason:Trivial-path phase exit verification\n\nRun required checks for the change and report whether truths, artifacts, wiring, and exit criteria are satisfied. Fold a brief correctness/edge-case review into your report since no separate reviewer/hunter ran.",
+  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:build-verify\nplan:N/A\nscope:N/A\nreason:Trivial-path phase exit verification\n\nRun required checks for the change and report whether truths, artifacts, wiring, and exit criteria are satisfied. Fold a brief correctness/edge-case review into your report since no separate reviewer ran.",
   activeForm: "Verifying integration"
 }) -> verifier_task_id
 TaskUpdate({ taskId: verifier_task_id, addBlockedBy: [builder_task_id] })
@@ -113,7 +116,7 @@ TaskCreate({
 TaskUpdate({ taskId: memory_task_id, addBlockedBy: [verifier_task_id] })
 ```
 
-If the builder triggers the escalation rule, convert this into the full graph before running the verifier: add reviewer + hunter (blocked by builder), add doc-syncer (blocked by verifier), re-block verifier on `[reviewer_task_id, hunter_task_id]`, and re-block Memory Update on `doc_sync_task_id`.
+If the builder triggers the escalation rule, convert this into the full graph before running the verifier: add the code-reviewer task (blocked by builder), add doc-syncer (blocked by verifier), re-block verifier on `[reviewer_task_id]`, and re-block Memory Update on `doc_sync_task_id`.
 
 #### Full task graph (`build_scope=standard`)
 
@@ -126,24 +129,17 @@ TaskCreate({
 
 TaskCreate({
   subject: "CC10X code-reviewer: Review implementation",
-  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:build-review\nplan:{plan_file or 'N/A'}\nscope:N/A\nreason:Review current phase quality\n\nReview only the files and scope of the current phase.",
+  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:build-review\nplan:{plan_file or 'N/A'}\nscope:N/A\nreason:Review current phase quality\n\nReview only the files and scope of the current phase. Your single review covers correctness, security, silent failures (Pass 1b), and edge cases adjacent to the phase.",
   activeForm: "Reviewing code"
 }) -> reviewer_task_id
 TaskUpdate({ taskId: reviewer_task_id, addBlockedBy: [builder_task_id] })
-
-TaskCreate({
-  subject: "CC10X code-reviewer: Hunt edge cases",
-  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:build-hunt\nplan:{plan_file or 'N/A'}\nscope:N/A\nreason:Audit current phase blast radius\n\nFind silent failures and edge cases adjacent to the current phase.",
-  activeForm: "Hunting failures"
-}) -> hunter_task_id
-TaskUpdate({ taskId: hunter_task_id, addBlockedBy: [builder_task_id] })
 
 TaskCreate({
   subject: "CC10X integration-verifier: Verify integration",
   description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:build-verify\nplan:{plan_file or 'N/A'}\nscope:N/A\nreason:Phase exit verification\n\nRun required checks for the current phase and report whether truths, artifacts, wiring, and phase exit criteria are all satisfied.",
   activeForm: "Verifying integration"
 }) -> verifier_task_id
-TaskUpdate({ taskId: verifier_task_id, addBlockedBy: [reviewer_task_id, hunter_task_id] })
+TaskUpdate({ taskId: verifier_task_id, addBlockedBy: [reviewer_task_id] })
 
 **Opt-out check:** Before creating the doc-sync task, read `activeContext.md ## Session Settings`. If `DIFF_DRIVEN_DOCS: skip` is present, skip doc-sync task creation entirely and update Memory Update to block on `verifier_task_id` directly instead of `doc_sync_task_id`. Skip the remaining doc-sync task graph below.
 
@@ -172,7 +168,7 @@ When an approved phase decomposes into multiple INDEPENDENT logical tasks AND th
 
 **When in doubt, use the per-phase default.** This is PILOT/opt-in: do not infer it from phase size alone, do not rotate builders to "be safe". Only the explicit trigger above unlocks it.
 
-The finer per-TASK review cadence (one review per task rather than one per phase) applies ONLY in this mode. In the default per-phase mode the phase-level reviewer/hunter/verifier chain is unchanged. This mode reuses the existing builder + reviewer machinery — it changes dispatch granularity, not the agents.
+The finer per-TASK review cadence (one review per task rather than one per phase) applies ONLY in this mode. In the default per-phase mode the phase-level reviewer/verifier chain is unchanged. This mode reuses the existing builder + reviewer machinery — it changes dispatch granularity, not the agents.
 
 ### Deferred Minor findings roll-up
 
@@ -180,7 +176,7 @@ Minor findings that do not block a phase exit must not silently evaporate — th
 
 - When `code-reviewer` raises a Minor finding that does NOT block the current `phase_exit_gate`, the router appends it to `deferred_findings` (each entry: `source` agent, `phase_id`, terse `finding`, and `severity:minor`) rather than dropping it. Blocking findings still gate the phase as before — this array is only for the non-blocking remainder.
 - The array accumulates across phases for the whole workflow. Nothing consumes it mid-flight; it is surfaced once at BUILD-DONE (see the finishing block's triage step) so the user can decide explicitly: fix now, file as follow-up, or knowingly accept. No automatic action is taken on a deferred finding.
-- In the reduced task graph (`build_scope=trivial`) there is no separate reviewer/hunter, so the verifier's folded review/edge-case pass appends any Minor leftovers to `deferred_findings` the same way.
+- In the reduced task graph (`build_scope=trivial`) there is no separate reviewer, so the verifier's folded review/edge-case pass appends any Minor leftovers to `deferred_findings` the same way.
 
 ### doc-syncer SKIPPED state
 
@@ -197,8 +193,9 @@ cc10x gates EACH phase against its own per-phase BASE, but it never re-reviews t
 - At most once per workflow.
 
 **How it runs (reuse existing machinery — do NOT invent a new agent):**
+
 1. Compute `MERGE_BASE = git merge-base <base-branch> HEAD` (use `git -C "$CC10X_REPO_DIR"` when a target repo is set). If `git_preflight=degraded` blocks this, skip the pass and note it.
-2. Produce the whole-branch diff package via `tools/review_package.py MERGE_BASE HEAD` (add `--repo "$CC10X_REPO_DIR"` when targeting a non-cwd repo). Note: this is `MERGE_BASE..HEAD` across ALL phases, not a single phase's `results.git_base_sha..HEAD`.
+2. Produce the whole-branch diff package via `python3 "${CLAUDE_PLUGIN_ROOT}/tools/review_package.py" MERGE_BASE HEAD` (add `--repo "$CC10X_REPO_DIR"` when targeting a non-cwd repo). Note: this is `MERGE_BASE..HEAD` across ALL phases, not a single phase's `results.git_base_sha..HEAD`.
 3. Dispatch exactly ONE `code-reviewer` over that whole-branch package, scoped to cross-phase concerns (seam misuse, contract drift, duplicated/diverged abstractions introduced across phases).
 4. If the reviewer returns findings, run ONE consolidated fix wave — a single remediation `component-builder` addressing all findings together, NOT one fixer per finding — then re-verify with one `integration-verifier` against `results.baseline`. If it returns no findings, record clean and proceed.
 5. Record the outcome in the workflow artifact (`results.final_branch_review`) before advancing to the finishing menu.
@@ -231,11 +228,13 @@ Finishing is a router-owned, optional step that runs AFTER the final phase's `in
    - `Merge`: follow the **merge-then-cleanup ordering invariant** below — verify on the merged result before any teardown. Never delete a branch before its worktree is removed, and never remove/delete before merge+tests confirm.
    - `PR`: push + open PR; preserve the worktree (the user still needs it). Never force-push.
    - `Discard`: require a typed `discard` confirmation before any `git branch -D` or worktree removal. JUST_GO must NOT auto-select discard.
+   - **Git-guard approval token (how sanctioned `git push` / `git branch -D` actually execute):** the PreToolUse git guard blocks `git push` and `git branch -D` by default. When — and ONLY when — the user has explicitly chosen `PR` (or `Push as new branch + PR`) or typed the `discard` confirmation, the router unlocks exactly that operation by writing `.cc10x/state/git-approval.json` with `{"wf": "{workflow_uuid}", "operations": ["push"] or ["branch-delete"], "expires_at": "<UTC ISO, now+10min>"}` IMMEDIATELY before running the command. The guard permits a matching command once, consumes the token, and re-locks. Never write this file pre-emptively, for JUST_GO defaults, or for operations the user did not just choose — the token is the recorded user consent, nothing else. `git reset --hard`, `git clean -f`, force-push, and `git checkout .` have NO token path and stay blocked unconditionally.
    - Worktree cleanup: only for `Merge`/`Discard`, and only when cc10x created the worktree (see the **worktree cleanup provenance** rule below). If `worktree=native`, defer cleanup to the native primitive (`ExitWorktree`); if `worktree=existing` or harness-owned, leave it in place — never remove a workspace cc10x did not create. If `worktree=in_place`, there is nothing to clean up.
 5. Persist the finishing decision into the workflow artifact (`results.finishing.choice`) and append a `build_finished` event to the event log. Then advance to Memory Update.
 
 **Merge-then-cleanup ordering invariant (`Merge to base branch locally`):**
 Execute these steps STRICTLY in order; do not reorder, and do not start teardown until the post-merge gate is green. A branch that was clean before merge can break after merging onto a moved base — that is exactly what the post-merge re-run catches. When `CC10X_REPO_DIR` is set, EVERY git command in this block runs against it (`git -C "$CC10X_REPO_DIR" checkout/pull/merge/branch`) and the post-merge test re-run uses it as the working directory — these are destructive ops, so targeting the wrong repo here is the most damaging cwd-confusion of all.
+
 1. `git checkout <base>` (the branch the work targets).
 2. `git pull` to bring the base up to date.
 3. `git merge <work-branch>` (no force).

@@ -1,0 +1,36 @@
+{
+  "runId": "16ca9a45",
+  "agent": "delegate",
+  "task": "DEEP ORCHESTRATION REVIEW — Router + References (THE BRAIN)\n\nYou are reviewing changes made by another agent to the cc10x router and its references. These are UNCOMMITTED changes in the working tree. Your job is to find ANY orchestration breakage, contradiction, or regression.\n\nThe #1 rule: if the orchestration layer is broken, the entire system is broken.\n\nREAD THESE FILES FULLY (every word):\n1. plugins/cc10x/skills/cc10x-router/SKILL.md (the router — 725+ lines)\n2. plugins/cc10x/skills/cc10x-router/references/build-workflow.md\n3. plugins/cc10x/skills/cc10x-router/references/workflow-artifact-and-hook-policy.md\n4. plugins/cc10x/skills/cc10x-router/references/remediation-and-research.md\n5. plugins/cc10x/skills/cc10x-router/references/plan-workflow.md\n6. plugins/cc10x/skills/cc10x-router/references/workflow-artifact.skeleton.json\n\nFor EACH file, check:\n1. Does it reference any skill or agent that doesn't exist? (List all cc10x: references and verify they resolve to a directory in plugins/cc10x/skills/ or a file in plugins/cc10x/agents/)\n2. Are there any contradictions between files? (e.g., one file says agents can read workflow artifacts, another says they can't)\n3. Are there any stale references to old skill/agent names? (brainstorming, prototyping, frontend-patterns, frontend-design-critique, finding-duplicate-functions, codebase-deepening, session-memory, handoff-package, code-generation, test-driven-development, code-review-patterns, receiving-code-review, verification-before-completion, planning-patterns, debugging-patterns, architecture-patterns, silent-failure-hunter, web-researcher, github-researcher)\n4. Is the reviewer/hunter duality resolved? (There should be ONE review task, not two. No build-hunt task. No parallel reviewer+hunter dispatch.)\n5. Is the model-tier policy now implementable? (Should be advisory, not a HARD rule that can't be enforced)\n6. Does the git-guard approval token logic in build-workflow.md make sense? (BUILD-DONE should document when the token is written)\n7. Are contract fields consistent across router §8, the override table, and what agents actually emit?\n8. Does the skeleton JSON match the documented schema? (Every field in the skeleton should be documented, every documented field should be in the skeleton)\n9. Is the deferred_findings field now in the skeleton and schema?\n10. Are there any broken markdown tables (unescaped pipes in table cells)?\n11. Does the dispatcher table map to exactly 8 agents that exist?\n12. Is the §14 hard rule about artifact access now consistent with dispatch hygiene?\n\nAlso check:\n- Run: grep -rn \"cc10x:\" plugins/cc10x/skills/cc10x-router/ | grep -oE \"cc10x:[a-z-]+\" | sort -u\n- Verify EVERY reference resolves to an existing skill or agent\n- Run: grep -rn \"build-hunt\\|re-hunt\\|silent-failure-hunter\\|hunter\" plugins/cc10x/skills/cc10x-router/\n- These should be gone or documented as legacy back-compat only\n\nReturn a structured report with:\n(A) Per-file analysis\n(B) Orchestration integrity check (all references resolve, no orphans)\n(C) Contradiction check (any two rules that conflict)\n(D) Reviewer/hunter resolution verification\n(E) Contract consistency check\n(F) Skeleton/schema alignment\n(G) Any NEW issues introduced by the changes\n(H) VERDICT: is the orchestration layer intact or broken?\n\n---\n**Output:**\nWrite your findings to exactly this path: /Users/rom.iluz/Dev/cc10x/.pi-subagents/artifacts/outputs/16ca9a45/file-only\nThis path is authoritative for this run.\nIgnore any other output filename or output path mentioned elsewhere, including output destinations in the base agent prompt, system prompt, or task instructions.",
+  "exitCode": 0,
+  "usage": {
+    "input": 123112,
+    "output": 17995,
+    "cacheRead": 817954,
+    "cacheWrite": 0,
+    "cost": 0.2979960832,
+    "turns": 19
+  },
+  "model": "grove-openai/FW-GLM-5.2:xhigh",
+  "attemptedModels": [
+    "grove-openai/FW-GLM-5.2:xhigh"
+  ],
+  "modelAttempts": [
+    {
+      "model": "grove-openai/FW-GLM-5.2:xhigh",
+      "success": true,
+      "exitCode": 0,
+      "usage": {
+        "input": 123112,
+        "output": 17995,
+        "cacheRead": 817954,
+        "cacheWrite": 0,
+        "cost": 0.2979960832,
+        "turns": 19
+      }
+    }
+  ],
+  "durationMs": 203966,
+  "toolCount": 33,
+  "timestamp": 1783030028894
+}

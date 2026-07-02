@@ -49,7 +49,7 @@ Agent runs REVIEW and immediately spawns code-changing remediation tasks (or edi
 from within the review because "the user said fix".
 
 This is wrong: the router rule makes REVIEW advisory-only precisely so an audit cannot silently
-mutate code without the gated BUILD/DEBUG chain (builder → reviewer/hunter → verifier). Letting
+mutate code without the gated BUILD/DEBUG chain (builder → reviewer → verifier). Letting
 REVIEW change code bypasses the fail-closed gates that protect every code change.
 
 ---

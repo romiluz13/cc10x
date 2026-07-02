@@ -17,6 +17,10 @@ Artifact schema must include:
 - `design_file`
 - `research_files`
 - `approved_decisions`
+- `plan_mode`
+- `verification_rigor`
+- `proof_status`
+- `traceability`
 - `intent`
 - `capabilities`
 - `phase_cursor`
@@ -27,6 +31,7 @@ Artifact schema must include:
 - `task_ids`
 - `phase_status`
 - `results`
+- `deferred_findings`
 - `evidence`
 - `telemetry`
 - `quality`
@@ -72,11 +77,14 @@ Rules:
   - `acceptance_criteria`
   - `open_decisions`
 - `approved_decisions` stores decisions explicitly approved by the user or already fixed in the saved plan.
+- `plan_mode`, `verification_rigor`, and `proof_status` mirror the router-owned interface fields from workflow preparation (`direct|execution_plan|decision_rfc`, `standard|critical_path`, `passed|gaps_found|human_needed`).
+- `traceability` stores requirement→phase→verification→remediation linkage arrays (`requirements`, `phases`, `verification`, `remediation`).
+- `deferred_findings` accumulates non-blocking Minor findings across phases (each entry: `source`, `phase_id`, `finding`, `severity:minor`); surfaced once at BUILD-DONE triage, never consumed mid-flight. See `build-workflow.md` §Deferred Minor findings roll-up.
 - `evidence` stores proof-of-work grouped by agent:
   - `builder`
   - `investigator`
   - `reviewer`
-  - `hunter`
+  - `hunter` (LEGACY — the standalone hunter is retired into the reviewer's Pass 1b; key kept for pre-consolidation artifacts, stays empty in new workflows)
   - `verifier`
 - `quality` stores convergence state:
   - `confidence`
@@ -98,12 +106,12 @@ Rules:
   - `builder`
   - `investigator`
   - `reviewer`
-  - `hunter`
+  - `hunter` (LEGACY — stays 0 in new workflows)
   - `verifier`
   - `planner`
 - `telemetry.loop_counts` stores:
   - `re_review`
-  - `re_hunt`
+  - `re_hunt` (LEGACY — stays 0 in new workflows; silent-failure re-scan is part of `re_review`)
   - `re_verify`
 - `telemetry.verifier` stores:
   - `phase_exit_proof_runs`
@@ -174,7 +182,8 @@ Hook policy:
   - `Stop` for workflow state snapshot on session stop (persistence only, never blocks)
 - `StopFailure` for API error logging to workflow event log (async, telemetry only)
 - `InstructionsLoaded` for instruction file load audit trail (async, telemetry only)
-- Default mode is audit-only. Do not rely on hooks as the only source of truth; the router still owns orchestration decisions.
+- Default mode is audit-only, with ONE exception: `artifactIntegrity` ships in `block` mode — the PostToolUse guard rejects (exit 2) a write to a workflow artifact that is malformed JSON or missing required keys. It blocks only writes to the artifact itself; writes to other files are audited, never blocked. Do not rely on hooks as the only source of truth; the router still owns orchestration decisions.
+- Git-guard approval token: the PreToolUse git guard blocks `git push` and `git branch -D` unconditionally UNLESS a fresh single-use token exists at `.cc10x/state/git-approval.json` (`{"wf", "operations": ["push"|"branch-delete"], "expires_at"}`, ≤10 min). Only the BUILD-DONE finishing gate writes this token, and only immediately after the user's explicit menu choice (see `build-workflow.md` §BUILD-DONE finishing). The guard consumes the token on first use. `git reset --hard`, `git clean -f`, force-push, and `git checkout .` have no token path.
 - Repo-local `.claude/settings.json` is not part of the shipped CC10X product.
 - Optional accelerator MCPs are user-configured in Claude Code. CC10X assumes the names `brightdata` and `octocode` if they are available, but must degrade to built-in research paths when they are absent.
 
@@ -252,7 +261,7 @@ Expected fields:
 
 | Agent | Required fields |
 | ------- | ----------------- |
-| component-builder | `STATUS`, `CONFIDENCE`, `PHASE_ID`, `PHASE_STATUS`, `PHASE_EXIT_READY`, `CHECKPOINT_TYPE`, `PROOF_STATUS`, `INPUTS`, `EXPECTED_ARTIFACTS`, `TDD_RED_EXIT`, `TDD_GREEN_EXIT`, `SCENARIOS`, `ASSUMPTIONS`, `DECISIONS`, `BLOCKED_ITEMS`, `SKIPPED_ITEMS`, `SCOPE_INCREASES`, `BLOCKING`, `NEXT_ACTION`, `REMEDIATION_NEEDED`, `REQUIRES_REMEDIATION`, `REMEDIATION_REASON`, `MEMORY_NOTES` |
+| component-builder | `STATUS`, `CONFIDENCE`, `PHASE_ID`, `PHASE_STATUS`, `PHASE_EXIT_READY`, `CHECKPOINT_TYPE`, `PROOF_STATUS`, `BUILD_PREFLIGHT_EMITTED`, `INPUTS`, `EXPECTED_ARTIFACTS`, `TDD_RED_EXIT`, `TDD_RED_REASON_KIND`, `TDD_GREEN_EXIT`, `SCENARIOS`, `ASSUMPTIONS`, `DECISIONS`, `BLOCKED_ITEMS`, `SKIPPED_ITEMS`, `SCOPE_INCREASES`, `BLOCKING`, `NEXT_ACTION`, `REMEDIATION_NEEDED`, `REQUIRES_REMEDIATION`, `REMEDIATION_REASON`, `MEMORY_NOTES` |
 | bug-investigator | `STATUS`, `VERIFICATION_RIGOR`, `CONFIDENCE`, `ROOT_CAUSE`, `TDD_RED_EXIT`, `TDD_GREEN_EXIT`, `VARIANTS_COVERED`, `BLAST_RADIUS_SCAN`, `SCENARIOS`, `ASSUMPTIONS`, `DECISIONS`, `BLOCKING`, `NEXT_ACTION`, `REMEDIATION_NEEDED`, `REQUIRES_REMEDIATION`, `REMEDIATION_REASON`, `NEEDS_EXTERNAL_RESEARCH`, `RESEARCH_REASON`, `MEMORY_NOTES` |
 | planner | `STATUS`, `PLAN_MODE`, `VERIFICATION_RIGOR`, `CONFIDENCE`, `PLAN_FILE`, `PHASES`, `RISKS_IDENTIFIED`, `SCENARIOS`, `ASSUMPTIONS`, `DECISIONS`, `OPEN_DECISIONS`, `DIFFERENCES_FROM_AGREEMENT`, `RECOMMENDED_DEFAULTS`, `ALTERNATIVES`, `DRAWBACKS`, `PROVABLE_PROPERTIES`, `BLOCKING`, `NEXT_ACTION`, `REMEDIATION_NEEDED`, `REQUIRES_REMEDIATION`, `REMEDIATION_REASON`, `GATE_PASSED`, `USER_INPUT_NEEDED`, `MEMORY_NOTES` |
 | researcher | `STATUS`, `FILE_PATH`, `BACKEND_MODE`, `SOURCES_ATTEMPTED`, `SOURCES_USED`, `QUALITY_LEVEL`, `KEY_FINDINGS_COUNT`/`IMPLEMENTATIONS_FOUND`, `WHAT_CHANGED_RECOMMENDATION`, `MEMORY_NOTES` |
@@ -264,12 +273,11 @@ If the YAML block is missing or malformed, treat the task as invalid output, do 
 
 | Agent | Override |
 | ------- | ---------- |
-| component-builder | `STATUS=PASS` requires `TDD_RED_EXIT=1`, `TDD_GREEN_EXIT=0`, `PHASE_STATUS=completed`, `PHASE_EXIT_READY=true`, `PROOF_STATUS=passed`, empty `BLOCKED_ITEMS`, and a non-empty `SCENARIOS` array with at least one passing scenario. That passing scenario must include non-empty `name`, `command`, `expected`, `actual`, and `exit_code`. |
+| component-builder | `STATUS=PASS` requires `TDD_RED_EXIT=1`, `TDD_RED_REASON_KIND=behavioral` (a false-RED — `TDD_RED_REASON_KIND=error` from import/syntax/collection failure — is rejected same as missing RED), `TDD_GREEN_EXIT=0`, `BUILD_PREFLIGHT_EMITTED=true`, `PHASE_STATUS=completed`, `PHASE_EXIT_READY=true`, `PROOF_STATUS=passed`, empty `BLOCKED_ITEMS`, and a non-empty `SCENARIOS` array with at least one passing scenario. That passing scenario must include non-empty `name`, `command`, `expected`, `actual`, and `exit_code`. |
 | bug-investigator | `STATUS=FIXED` requires `VERIFICATION_RIGOR` to be explicit, `TDD_RED_EXIT=1`, `TDD_GREEN_EXIT=0`, a non-empty `BLAST_RADIUS_SCAN`, and a non-empty `SCENARIOS` array unless it explicitly set `NEEDS_EXTERNAL_RESEARCH=true`. At least one scenario name must start with `Regression:` (non-empty `command`, `expected`, `actual`, `exit_code`). A `Variant:` scenario with `VARIANTS_COVERED>=1` is required ONLY when the bug has applicable variants; if `VARIANTS_NOT_APPLICABLE` is set with a reason and `VARIANTS_COVERED=0`, accept FIXED without a `Variant:` scenario. Do not force a fabricated variant. |
 | code-reviewer | `APPROVE` + critical issues becomes `CHANGES_REQUESTED` |
 | code-reviewer | `APPROVE` with zero findings across ALL dimensions AND fewer than 3 file:line evidence citations → trigger fallback inline verification. Rubber-stamp approvals without substantive analysis are invalid. |
-| code-reviewer (Pass 1b) | `CLEAN` + critical issues becomes `ISSUES_FOUND` |
-| code-reviewer (Pass 1b) | `CLEAN` with zero error-handling sites inspected OR zero files scanned → trigger fallback inline verification. A CLEAN verdict requires stated scope. |
+| code-reviewer | An `APPROVE` whose Pass 1b silent-failure scan states zero error-handling sites inspected OR zero files scanned → trigger fallback inline verification. A clean silent-failure verdict requires stated scan scope. |
 | integration-verifier | `PASS` + critical issues becomes `FAIL`; scenario totals must reconcile with the scenario table and evidence array; every counted scenario must map to a concrete evidence row; every scenario row must contain non-empty `Expected` and `Actual` values |
 | planner | `PLAN_CREATED` or `DECISION_RFC_CREATED` requires non-empty `PLAN_FILE`, explicit `PLAN_MODE`, explicit `VERIFICATION_RIGOR`, `CONFIDENCE>=50`, `GATE_PASSED=true`, a non-empty `SCENARIOS` array, `OPEN_DECISIONS=[]`, and `DIFFERENCES_FROM_AGREEMENT` explicitly present. `PLAN_MODE=decision_rfc` also requires non-empty `ALTERNATIVES` and `DRAWBACKS`; `VERIFICATION_RIGOR=critical_path` requires non-empty `PROVABLE_PROPERTIES`. |
 | doc-syncer | `STATUS=COMPLETE` requires `DOC_LAYERS_EVALUATED` non-empty and at least one entry in `DOC_FILES_UPDATED` or `AUDIT_DOCS_CREATED`; `STATUS=SKIPPED` requires non-empty `SKIP_REASON` — `DOC_LAYERS_EVALUATED` MAY be empty (fast-path classifier exits before per-layer evaluation when `IMPACT_LEVEL=none` is detected immediately); `STATUS=PARTIAL` requires at least one entry in `DOC_FILES_UPDATED` or `AUDIT_DOCS_CREATED` and at least one layer in `DOC_LAYERS_EVALUATED` — router advances to Memory Update and persists `doc_sync_partial=true` in `results.doc_syncer`; `STATUS=FAIL` blocks workflow. |

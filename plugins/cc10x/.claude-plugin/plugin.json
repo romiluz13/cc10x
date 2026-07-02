@@ -1,7 +1,7 @@
 {
   "name": "cc10x",
-  "version": "11.1.0",
-  "description": "Claude Code plugin for harmony-hardened build/debug/review/plan workflows with router-kernel orchestration, mandatory workflow playbooks, contradiction cleanup, phase-local handoffs, early memory capture, review-fan-in hardening, and professional objectivity hard rules.",
+  "version": "12.1.0",
+  "description": "The Loop Engine — harness and loop engineering plugin for Claude Code. Router-kernel orchestration, workflow artifacts, sub-agent delegation, hook enforcement, Test Honesty Gates, fresh-context verification, and memory that persists. 73% leaner than v11, zero quality regression.",
   "author": {
     "name": "Rom Iluz",
     "email": "rom@iluz.net",

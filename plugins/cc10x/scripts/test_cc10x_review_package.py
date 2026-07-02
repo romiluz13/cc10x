@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Self-contained test for cc10x_review_package.py's --repo / CC10X_REPO_DIR.
+"""Self-contained test for tools/review_package.py's --repo / CC10X_REPO_DIR.
 
 No framework: builds two throwaway git repos (A = process cwd, B = a sibling)
 and asserts the review package targets the right one — including that the
@@ -8,6 +8,7 @@ DEFAULT still targets cwd (regression guard), so the new knob is purely additive
 Lives in scripts/ because the repo's .gitignore tracks .py only under scripts/.
 Run:  python3 test_cc10x_review_package.py    (exit 0 = pass)
 """
+
 import os
 import re
 import subprocess
@@ -15,16 +16,21 @@ import sys
 import tempfile
 from pathlib import Path
 
-SCRIPT = Path(__file__).resolve().parent / "cc10x_review_package.py"
+SCRIPT = Path(__file__).resolve().parents[1] / "tools" / "review_package.py"
 
 
 def run_git(repo: Path, *args: str) -> None:
-    subprocess.run(["git", "-C", str(repo), *args], check=True, capture_output=True, text=True)
+    subprocess.run(
+        ["git", "-C", str(repo), *args], check=True, capture_output=True, text=True
+    )
 
 
 def rev(repo: Path, ref: str = "HEAD") -> str:
     return subprocess.run(
-        ["git", "-C", str(repo), "rev-parse", ref], capture_output=True, text=True, check=True
+        ["git", "-C", str(repo), "rev-parse", ref],
+        capture_output=True,
+        text=True,
+        check=True,
     ).stdout.strip()
 
 
@@ -46,14 +52,20 @@ def make_repo(repo: Path, marker: str) -> tuple[str, str]:
     return base, rev(repo)
 
 
-def run_script(cwd: Path, env_repo: str | None, args: list[str]) -> subprocess.CompletedProcess:
+def run_script(
+    cwd: Path, env_repo: str | None, args: list[str]
+) -> subprocess.CompletedProcess:
     env = dict(os.environ)
     env.pop("CC10X_REPO_DIR", None)
     if env_repo:
         env["CC10X_REPO_DIR"] = env_repo
     env["CLAUDE_PROJECT_DIR"] = str(cwd)  # pin output dir so we can find the package
     return subprocess.run(
-        [sys.executable, str(SCRIPT), *args], cwd=str(cwd), env=env, capture_output=True, text=True
+        [sys.executable, str(SCRIPT), *args],
+        cwd=str(cwd),
+        env=env,
+        capture_output=True,
+        text=True,
     )
 
 
@@ -73,27 +85,35 @@ def main() -> int:
         r = run_script(a, None, [base_a, head_a])
         p = wrote_path(r.stdout)
         c1 = r.returncode == 0 and p and "A_FILE" in Path(p).read_text()
-        print(f"[1] default targets cwd repo A: {'PASS' if c1 else 'FAIL'} (rc={r.returncode})")
+        print(
+            f"[1] default targets cwd repo A: {'PASS' if c1 else 'FAIL'} (rc={r.returncode})"
+        )
         ok &= bool(c1)
 
         # [2] CC10X_REPO_DIR=B (cwd=A) -> diffs B (B's shas only resolve in B)
         r = run_script(a, str(b), [base_b, head_b])
         p = wrote_path(r.stdout)
         c2 = r.returncode == 0 and p and "B_FILE" in Path(p).read_text()
-        print(f"[2] CC10X_REPO_DIR=B diffs B from cwd A: {'PASS' if c2 else 'FAIL'} (rc={r.returncode})")
+        print(
+            f"[2] CC10X_REPO_DIR=B diffs B from cwd A: {'PASS' if c2 else 'FAIL'} (rc={r.returncode})"
+        )
         ok &= bool(c2)
 
         # [3] regression guard: default truly = cwd -> B's shas DON'T resolve in A -> bad BASE (rc 2)
         r = run_script(a, None, [base_b, head_b])
         c3 = r.returncode == 2 and "bad BASE" in r.stderr
-        print(f"[3] default does NOT leak to B (rc2 bad BASE): {'PASS' if c3 else 'FAIL'} (rc={r.returncode})")
+        print(
+            f"[3] default does NOT leak to B (rc2 bad BASE): {'PASS' if c3 else 'FAIL'} (rc={r.returncode})"
+        )
         ok &= bool(c3)
 
         # [4] --repo flag overrides (cwd=A, no env)
         r = run_script(a, None, ["--repo", str(b), base_b, head_b])
         p = wrote_path(r.stdout)
         c4 = r.returncode == 0 and p and "B_FILE" in Path(p).read_text()
-        print(f"[4] --repo B flag overrides: {'PASS' if c4 else 'FAIL'} (rc={r.returncode})")
+        print(
+            f"[4] --repo B flag overrides: {'PASS' if c4 else 'FAIL'} (rc={r.returncode})"
+        )
         ok &= bool(c4)
 
     print("ALL PASS" if ok else "FAILURES PRESENT")

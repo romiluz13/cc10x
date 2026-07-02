@@ -27,7 +27,7 @@
 8. PLAN fresh-review loop:
    - Every PLAN workflow pre-creates a bounded review DAG: `plan-create -> plan-review-gap-1 -> re-plan -> plan-review-gap-2 -> memory-finalize`.
    - Every saved plan artifact enters that DAG, including `direct`, `execution_plan`, and `decision_rfc`.
-   - If pass 1 succeeds, the router prunes the unused `re-plan` and pass 2 branch explicitly.
+   - If pass 1 succeeds, the router prunes the unused `re-plan` and pass 2 branch explicitly (mark `deleted`; if the host task system does not support deletion, mark `completed` with the note `pruned — unused review branch`). Pruned tasks must never leave the memory task blocked — verify its blockers all resolve after pruning.
    - If pass 1 finds blocking issues, the router keeps the pre-created `re-plan` and pass 2 branch alive.
    - Maximum fresh-review passes: 2.
    - Planner remains the only plan writer.

@@ -64,8 +64,8 @@ When these appear, do not claim the work is verified with unit tests alone.
 ## Coordination With CC10X Live Verification
 
 If the plan requires live proof:
-- read `plugins/cc10x/skills/planning-patterns/references/live-verification-strategy.md`
-- read `plugins/cc10x/skills/verification-before-completion/references/live-production-testing.md`
+- read `"${CLAUDE_PLUGIN_ROOT}/skills/planning/references/live-verification-strategy.md"`
+- read `"${CLAUDE_PLUGIN_ROOT}/skills/verification/references/live-production-testing.md"`
 - use the harness manifest and proof commands defined there
 
 The TDD cycle still matters. Live proof is the outer confidence ring, not a

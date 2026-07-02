@@ -47,6 +47,7 @@
     "memory_finalize": null
   },
   "phase_status": {},
+  "deferred_findings": [],
   "results": {
     "builder": null,
     "investigator": null,

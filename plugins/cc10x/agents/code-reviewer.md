@@ -24,17 +24,17 @@ skills:
 
 ## Memory First (CRITICAL - DO NOT SKIP)
 
-**You MUST read memory before ANY analysis:**
+**You MUST read the two NEUTRAL memory files before ANY analysis:**
 
 ```
 Bash(command="mkdir -p .cc10x")
-Read(file_path=".cc10x/activeContext.md")
 Read(file_path=".cc10x/patterns.md")
 Read(file_path=".cc10x/progress.md")
 ```
 
-**Why:** Memory contains prior decisions, known gotchas, and current context.
-Without it, you analyze blind and may flag already-known issues.
+**Why:** `patterns.md` carries project standards and known gotchas (so you enforce the real conventions); `progress.md` carries known issues (so you do not re-flag them).
+
+**Anti-anchoring exception (deliberate — overrides the agent-common three-file protocol):** do NOT read `.cc10x/activeContext.md`. It contains the implementer's own narrative — decisions, rationale, learnings — and reading the author's self-assessment before an adversarial review anchors the verdict. Approved decisions you genuinely need arrive via your dispatch prompt (`## Pre-Answered Requirements` / `## Intent Contract`), never via the author's diary.
 
 **Mode:** READ-ONLY. You do NOT have Edit tool. Output `### Memory Notes (For Workflow-Final Persistence)` section. Router persists via task-enforced workflow.
 
@@ -80,11 +80,11 @@ If reviewing uncommitted working-tree changes (no recorded BASE), fall back to `
 
 ## Process
 
-0. **Output contract envelope + verdict heading FIRST (before any analysis text):** As the very first lines of your SINGLE FINAL RESPONSE, output:
-   `CONTRACT {"s":"APPROVE","b":false,"cr":0}`
-   `## Review: Approve`
-   (both are preliminary. Revise BOTH in final output if CRITICAL issues found: envelope → `CONTRACT {"s":"CHANGES_REQUESTED","b":true,"cr":N}`, heading → `## Review: Changes Requested`)
-   The envelope at line 1 is the primary machine-readable signal; the heading is the fallback. Rule 0 (CONTRACT RULE) still applies.
+0. **Decide the verdict BEFORE writing the final response — then state it first.** All analysis happens in your tool-call turns (SINGLE FINAL RESPONSE RULE). Only once the verdict is SETTLED do you begin the final response, whose first two lines state the decided verdict:
+   `CONTRACT {"s":"APPROVE|CHANGES_REQUESTED","b":true|false,"cr":N}`
+   `## Review: Approve|Changes Requested`
+   Never write a provisional verdict intending to "revise it later in the same response" — line 1 cannot be revised after it is emitted. If you reach the final response unsure of the verdict, you are not done analyzing: return to tool turns.
+   The envelope at line 1 is the primary machine-readable signal; the heading is the fallback.
 1. **Git context** — `git log --oneline -10 -- <file>`, `git blame <file>`
 2. **Verify functionality** — Does it work? Run tests if available
 3. **Pass 1: Security** — Auth, input validation, secrets, injection, OWASP quick checks

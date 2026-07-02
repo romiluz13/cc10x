@@ -29,10 +29,10 @@ Route using the first matching signal:
 Rules:
 
 - Planning runs through the CC10x PLAN workflow so it gains orchestration state, workflow artifacts, intent contracts, and the bounded fresh review. Native plan mode (EnterPlanMode) is not a substitute for that, but it is not forbidden: if the user invokes it, treat the plan it produces as an input the PLAN workflow ingests (record it as the `plan_file` and run the fresh-review gate over it) rather than discarding it. Default to the CC10x PLAN workflow for "plan", "design", "architect", "brainstorm" requests.
-- ERROR always wins over BUILD.
+- ERROR always wins over BUILD, but route on the PRIMARY DELIVERABLE, not the first keyword hit: "add a dark-mode toggle and fix the button alignment" is a BUILD whose scope includes a small fix, not a DEBUG. Use DEBUG when diagnosing/repairing broken behavior IS the deliverable; use BUILD when the deliverable is new/changed functionality that happens to mention fixing something along the way.
 - REVIEW is advisory only. Never let REVIEW create code-changing tasks.
 - ORIENT is read-only and advisory. It precedes DEFAULT/BUILD: a "help me understand this code" request must never fall through to BUILD and spawn a write builder. ORIENT spawns NO write agents and creates NO phase graph. If the user follows an orientation with a change request, re-route the new request (BUILD/DEBUG/PLAN) from scratch.
-- BUILD uses a complexity gradient (see `references/build-workflow.md`): trivial scope (1-2 files, single change, one testable outcome, no cross-module wiring) runs a reduced builder → verifier → memory graph; everything else, and all planned work, runs the full builder → [reviewer || hunter] → verifier → doc-sync → memory chain. The builder escalates trivial → full on any scope increase. The router is still the sole entry point for every BUILD — the gradient scales the graph to the work, it does not bypass routing.
+- BUILD uses a complexity gradient (see `references/build-workflow.md`): trivial scope (1-2 files, single change, one testable outcome, no cross-module wiring) runs a reduced builder → verifier → memory graph; everything else, and all planned work, runs the full builder → reviewer (correctness + Pass 1b silent-failure scan in ONE review) → verifier → doc-sync → memory chain. The builder escalates trivial → full on any scope increase. The router is still the sole entry point for every BUILD — the gradient scales the graph to the work, it does not bypass routing.
 - Before execution, output one line: `-> {WORKFLOW} workflow (signals: {matched keywords})`
 
 ### ORIENT move (read-only)
@@ -111,7 +111,7 @@ Every CC10X task description starts with normalized metadata lines:
 wf:{workflow_uuid}
 kind:{workflow|agent|remfix|memory|reverify|research}
 origin:{router|component-builder|bug-investigator|code-reviewer|integration-verifier|planner}
-phase:{build|build-implement|build-review|build-hunt|build-verify|build-doc-sync|build-finish|debug|debug-investigate|debug-review|debug-verify|review|review-audit|plan|plan-create|plan-review-gap-1|plan-review-gap-2|memory-finalize|re-review|re-hunt|re-verify|re-plan|research-web|research-github}
+phase:{build|build-implement|build-review|build-verify|build-doc-sync|build-finish|debug|debug-investigate|debug-review|debug-verify|review|review-audit|plan|plan-create|plan-review-gap-1|plan-review-gap-2|memory-finalize|re-review|re-verify|re-plan|research-web|research-github}
 plan:{path|N/A}
 scope:{ALL_ISSUES|CRITICAL_ONLY|N/A}
 reason:{short reason or N/A}
@@ -119,13 +119,13 @@ reason:{short reason or N/A}
 
 Rules:
 
-- `wf:` is mandatory on every child task.
+- ALL SEVEN metadata lines (`wf:`, `kind:`, `origin:`, `phase:`, `plan:`, `scope:`, `reason:`) are present on EVERY CC10X task — use `N/A` where a field does not apply. The TaskCompleted hook audits exactly this invariant; the task-graph templates already satisfy it.
 - `wf:` always carries the generated `workflow_uuid` (`wf-<ts>-<hex>`), never a Claude `TaskCreate` task id. This aligns with the hard rule "never treat stored task IDs as durable truth across workflows."
 - Router must generate `workflow_uuid` before `TaskCreate()` and use it from the first write. `wf:PENDING_SELF` is not used.
-- `kind:` is mandatory and drives resume, routing, and counting logic.
-- `origin:` is mandatory on every `kind:remfix` task.
-- `plan:` is required on workflow, agent, reverify, and memory tasks.
-- `reason:` is required on remediation and research tasks.
+- `kind:` drives resume, routing, and counting logic.
+- `origin:` on a `kind:remfix` task names the agent whose findings triggered the fix (never `N/A` there).
+- `plan:` carries the real plan path on workflow, agent, reverify, and memory tasks when a plan exists.
+- `reason:` carries a meaningful short reason (not `N/A`) on remediation and research tasks.
 - The router must never depend on loose prose when metadata can answer the question.
 
 ## 4. Resume And Hydration
@@ -147,6 +147,7 @@ Hydration rules:
 
 Resume algorithm:
 
+0. If `.cc10x/stop-state.json` or `.cc10x/precompact-state.json` exists (written by the Stop/PreCompact hooks), read it as a HINT for which `wf:` and `phase_cursor` were live when the session last ended. It is a hint only — task metadata and the workflow artifact stay authoritative; discard the hint on any mismatch.
 1. Identify the active parent workflow.
 2. Extract `workflow_uuid` from the `wf:` line.
 3. Read all CC10X tasks whose descriptions contain that `wf:`.
@@ -164,7 +165,7 @@ Scope-decision resume:
 - After consuming a valid answer:
   - remove the pending marker from `## Decisions`
   - create the scoped REM-FIX
-  - block downstream re-review / re-hunt / verifier tasks as normal
+  - block downstream re-review / verifier tasks as normal
   - stop after task creation so the next turn resumes from task state, not from repeated prose parsing
   - [EASY TO MISS: When persisting user decisions, use the user's exact words. Paraphrasing introduces drift that compounds across resume cycles.]
 
@@ -305,8 +306,7 @@ Only create child tasks after the workflow artifact exists and the read-back pas
 | ------------------- | ------- |
 | `build-implement` | `cc10x:component-builder` |
 | `debug-investigate` | `cc10x:bug-investigator` |
-| `build-review`, `debug-review`, `review-audit`, `re-review` | `cc10x:code-reviewer` |
-| `build-hunt`, `re-hunt` | `cc10x:code-reviewer` |
+| `build-review`, `debug-review`, `review-audit`, `re-review` | `cc10x:code-reviewer` (one review covers correctness AND the Pass 1b silent-failure scan) |
 | `build-verify`, `debug-verify`, `re-verify` | `cc10x:integration-verifier` |
 | `plan-create`, `re-plan` | `cc10x:planner` |
 | `plan-review-gap-1`, `plan-review-gap-2` | `cc10x:plan-gap-reviewer` |
@@ -314,7 +314,7 @@ Only create child tasks after the workflow artifact exists and the read-back pas
 | `research-github` | `cc10x:researcher` |
 | `kind:remfix` + `origin:bug-investigator` | `cc10x:bug-investigator` |
 | `build-doc-sync` | `cc10x:doc-syncer` |
-| `kind:remfix` + `origin:code-reviewer | integration-verifier | router` | `cc10x:component-builder` |
+| `kind:remfix` + `origin:code-reviewer` / `origin:integration-verifier` / `origin:router` | `cc10x:component-builder` |
 
 ### Per-role model-tier policy
 
@@ -329,13 +329,13 @@ The router dispatches a full agent chain per phase. Match the model tier to the 
 | `bug-investigator` | standard | Hypothesis search; escalate to capable on a stubborn root cause. |
 | `planner`, `plan-gap-reviewer` | capable | Architecture and decomposition; cheap planning poisons the whole chain. |
 | `integration-verifier` (final phase, REVERT authority) | capable | Last line before "done"; must not miss scenario gaps. |
-| `researcher`, `researcher` | standard | Retrieval + synthesis. |
+| `researcher` | standard | Retrieval + synthesis. |
 
-HARD rule — always specify the model explicitly. Omitting the model makes the agent inherit the expensive session model, which silently overpays for mechanical builders and reviewers. Every `Agent(...)` dispatch sets the model from this table; no implicit inheritance.
+How tiers are realized (ADVISORY — mechanism honesty): Claude Code selects a subagent's model from the agent's frontmatter `model:` field; the Task/Agent dispatch has NO per-call model parameter, so the router cannot set the model at dispatch time. cc10x therefore ships `model: haiku` on `doc-syncer` (safely mechanical) and `model: inherit` everywhere else so the user's session model choice is respected. Treat the table above as guidance for users tuning agent frontmatter (or for hosts that do expose per-dispatch model selection) — never claim a tier was applied when the mechanism cannot apply it.
 
 Reviewer FLOOR — never run a verifier or reviewer (`code-reviewer`, `integration-verifier`, `plan-gap-reviewer`) on the cheapest tier. The cheapest tier rubber-stamps. Mid-tier is the floor for anything that gates quality; bump UP, never below.
 
-Turn-count dominates price — a capable model that one-shots a phase is cheaper than a cheap model that loops three times re-reading state and re-trying. When a role tends to iterate (planner, verifier, stubborn investigation), prefer the higher tier even though its per-token cost is greater: fewer turns wins. Under `JUST_GO`, still apply this policy — never silently downgrade a gating role to save tokens.
+Turn-count dominates price — a capable model that one-shots a phase is cheaper than a cheap model that loops three times re-reading state and re-trying. When a role tends to iterate (planner, verifier, stubborn investigation), prefer the higher tier even though its per-token cost is greater: fewer turns wins. Under `JUST_GO`, still apply this policy where the mechanism allows — never downgrade a gating role's frontmatter below the reviewer floor to save tokens.
 
 ### Prompt scaffold for every agent
 
@@ -367,6 +367,8 @@ Turn-count dominates price — a capable model that one-shots a phase is cheaper
 {router-detected skill list or "None"}
 ```
 
+Anti-anchoring exception: for adversarial read-only dispatches (`code-reviewer`, `plan-gap-reviewer`) OMIT `## Memory Summary` — it carries the implementer's own narrative (decisions, learnings) and anchors the auditor. Keep `## Project Patterns` (user standards and gotchas are neutral law, not author narrative). Approved decisions the reviewer genuinely needs travel via `## Pre-Answered Requirements` / `## Intent Contract`, never via the memory summary.
+
 Optional sections:
 
 - `## Pre-Answered Requirements` for BUILD when router already gathered decisions.
@@ -377,7 +379,7 @@ Optional sections:
 - `## Planning Review Findings` only for `re-plan`.
 - `## Original User Request` only for `plan-gap-reviewer`.
 - `## Approved Context Files` only for `plan-gap-reviewer`.
-- `## Previous Agent Findings` only for integration-verifier and only after review/hunt phases.
+- `## Previous Agent Findings` only for integration-verifier and only after a review phase ran.
 
 ### Prompt assembly rule
 
@@ -450,7 +452,6 @@ Primary signal:
 Fallback heading on line 2:
 
 - `## Review: Approve|Changes Requested`
-- `## Error Handling Audit: CLEAN|ISSUES_FOUND`
 - `## Verification: PASS|FAIL`
 - `## Planning Review: Pass|Findings`
 
@@ -514,7 +515,7 @@ If present:
 
 ### Contract overrides
 
-- Before treating any agent `STATUS`/verdict as a pass, read `references/workflow-artifact-and-hook-policy.md` §contracts and apply the per-agent contract-override pass conditions verbatim (the `STATUS=PASS`/`FIXED`/`APPROVE`/`CLEAN`/`PLAN_CREATED`/`COMPLETE` gates, plus the reviewer/hunter rubber-stamp fallbacks).
+- Before treating any agent `STATUS`/verdict as a pass, read `references/workflow-artifact-and-hook-policy.md` §contracts and apply the per-agent contract-override pass conditions verbatim (the `STATUS=PASS`/`FIXED`/`APPROVE`/`PLAN_CREATED`/`COMPLETE` gates, plus the reviewer rubber-stamp fallback).
 
 Convergence rule:
 
@@ -573,15 +574,12 @@ The harness is a loop engine. These concepts govern how the loop runs:
    - mark the parent workflow task completed
    - continue
 4. Otherwise, map each runnable task through the dispatcher table.
-5. If `code-reviewer` is ready in BUILD:
-   - mark it in_progress first
-   - invoke it (it handles both correctness review and Pass 1b silent failure scan)
+5. Mark each task in_progress before invoking its agent. BUILD dispatches exactly ONE `code-reviewer` per review point — its single review covers correctness AND the Pass 1b silent-failure scan; never create a second reviewer task for the same phase.
    - If parallel invocation of multiple agents is needed but unavailable: fall back to sequential execution. Never block a workflow because parallelism is unavailable. Log `event=parallel_fallback` in the workflow event log.
 6. After each agent returns:
    - capture memory payload immediately
    - validate output
    - persist task-state side effects
-   - if BUILD review and hunt are both complete for the current phase, write one router-owned merged findings summary into the existing workflow results before verifier handoff
    - apply workflow rules
    - for BUILD, run `phase_exit_gate`; if the current phase is not complete, persist `phase_status={partial|blocked}` and stop
    - never advance to the next phase or workflow step on apology prose alone
@@ -637,9 +635,9 @@ If any answer is "no" or "unknown", treat as incomplete and apply the fallback v
 
 Before invoking `integration-verifier` in BUILD:
 
-- Read `results.reviewer` and `results.hunter` from the workflow artifact.
+- Read `results.reviewer` from the workflow artifact (it includes the Pass 1b silent-failure findings).
 - Build `## Previous Agent Findings` exactly in the format verifier expects.
-- Never invoke verifier without that section when review/hunt already ran.
+- Never invoke verifier without that section when a review already ran.
 
 ### Inline no-subagent execution (FALLBACK — not the default)
 
@@ -660,7 +658,7 @@ The default execution model is per-phase subagent dispatch: every phase runs in 
 - Run an **inline verification pass** in place of spawning `integration-verifier`: the router itself applies the integration-verifier's checks (run the scenarios, capture `Expected`/`Actual` evidence per scenario, reconcile `SCENARIOS_TOTAL`/`PASSED`/`FAILED`, and honor the REVERT authority) and writes the same scenario-accounting into the artifact that §8 post-agent validation would parse. The point is to lose the subagent, not the verification — incomplete or contradictory evidence still sets `quality.convergence_state=needs_iteration` and stops on the remediation gate.
 - All §14 hard rules still bind: never report pass/fixed/complete without confirming the verification evidence, never exceed the 3-cycle remediation limit without a human checkpoint, fail closed on ambiguity or skipped work.
 
-**The cost — be disciplined about it:** inline mode forfeits fresh-context isolation. The router now carries the build, review, hunt, and verify context in one session, so context can bleed across phases (the very pollution subagents prevent). Counter it: between phases, re-ground from the workflow artifact rather than from earlier turns; include only the current-phase objective and live evidence when reasoning about a phase; treat completed-phase narrative as stale. If the session context grows large enough to threaten this discipline, prefer returning to subagent dispatch over pushing further inline.
+**The cost — be disciplined about it:** inline mode forfeits fresh-context isolation. The router now carries the build, review, and verify context in one session, so context can bleed across phases (the very pollution subagents prevent). Counter it: between phases, re-ground from the workflow artifact rather than from earlier turns; include only the current-phase objective and live evidence when reasoning about a phase; treat completed-phase narrative as stale. If the session context grows large enough to threaten this discipline, prefer returning to subagent dispatch over pushing further inline.
 
 **Mode bookkeeping:** persist `execution_mode="inline_fallback"` and `inline_fallback_reason={primitive_unavailable|tightly_coupled}` in the workflow artifact, and log an `event=inline_fallback_entered` entry in `.cc10x/workflows/{wf}.events.jsonl`. If the primitive becomes available again and the remaining work is separable, the router MAY resume default subagent dispatch for later phases; log `event=inline_fallback_exited`.
 
@@ -705,11 +703,11 @@ For DEBUG:
 - Never let REVIEW create implementation tasks without an explicit router/user transition into BUILD.
 - Never report a workflow outcome (pass, fixed, complete) to the user without first confirming the verification evidence that supports that claim. "I believe it works" is not evidence. [EASY TO MISS: "I ran the tests and they passed" without showing command output, exit codes, or scenario evidence is also not evidence. Require concrete proof artifacts, not agent assertions.]
 - Never let a remediation loop run more than 3 cycles without a human checkpoint. Drift accumulates silently in long chains.
-- Only parallelize agents whose file-write surfaces do not overlap. Reviewer and hunter are read-only and safe to parallelize. Two write agents on overlapping files must be serialized. [EASY TO MISS: Each parallel agent must have a distinct phase value and unique task description. Identical prompts cause agents to duplicate work or silently clobber each other's output.]
+- Only parallelize agents whose file-write surfaces do not overlap. Read-only agents are safe to parallelize with each other. Two write agents on overlapping files must be serialized. [EASY TO MISS: Each parallel agent must have a distinct phase value and unique task description. Identical prompts cause agents to duplicate work or silently clobber each other's output.]
 - Agents must never inherit raw conversation context. They receive only the structured scaffold from the dispatcher. Leaking conversation history into agent prompts causes scope pollution and non-reproducible behavior.
 - Maintain professional objectivity in all routing decisions. Do not rationalize a failing workflow as "close enough" or downgrade critical findings to avoid remediation. The router exists to enforce quality, not to please.
 - `DIFF_DRIVEN_DOCS: skip` in Session Settings disables doc-syncer for projects that manage documentation separately; when present, skip `build-doc-sync` task creation and block Memory Update on `verifier_task_id` directly.
-- Agents must never read another agent's or skill's ORCHESTRATION STATE (workflow artifacts, another agent's contract, router-internal task bookkeeping). Cross-agent orchestration knowledge flows exclusively through router-mediated scaffolds and workflow artifacts. Reading a shared pattern/reference doc for domain guidance is fine; inheriting another agent's live state is not.
+- Agents must never read another agent's live contract output or router-internal task bookkeeping (TaskList/TaskGet state, `[cc10x-internal]` markers, `status_history`, other agents' `results.*` entries). The workflow artifact itself is dispatch-readable BY REFERENCE: an agent may read the artifact path handed to it in the scaffold, but only the sections its dispatch names (`intent`, `normalized_phases`, its own phase's `results`/`evidence`/`baseline`) — cross-agent orchestration knowledge still flows exclusively through router-mediated scaffolds. Reading a shared pattern/reference doc for domain guidance is fine; inheriting another agent's live state is not.
 - Native plan mode (EnterPlanMode) is not the planning substrate — the CC10x PLAN workflow is, because it carries orchestration state, workflow artifacts, intent contracts, and the bounded fresh review. But a plan the user produced via native plan mode is an acceptable input: ingest it as the `plan_file` and run the fresh-review gate over it rather than rejecting it outright.
 - Workspace isolation and branch finishing are router-owned, optional, and gated — never auto-run. At BUILD/PLAN start the router MAY offer worktree isolation, deferring to a native worktree primitive (e.g. EnterWorktree) when one exists and skipping silently when none does — cc10x never hard-requires git worktrees. After the final phase verifies PASS, the router MAY offer a finishing menu (merge / open-PR / keep / discard) via a single AskUserQuestion; it must never execute a destructive git operation (merge into a base branch, branch delete, force-push, discard) without the user's explicit menu choice, and JUST_GO auto-defaults this gate to the non-destructive `keep as-is` option. Both offers are skipped for `build_scope=trivial`. See references/build-workflow.md `### BUILD-DONE finishing (optional)` for the canonical wording.
 - A terse imperative specifies the GOAL, not the METHOD. "just add the endpoint", "quickly fix X", "simply wire Y" name a destination; they do NOT waive `phase_exit_gate`, the TDD/verifier chain, the complexity gradient's trivial→full escalation, or any governing workflow. Terseness lowers ceremony, never rigor. Treat "just"/"quickly"/"simply" as urgency cues, not as permission to skip routing or gates.

@@ -32,7 +32,7 @@
   "agent_outputs": {},
   "expected": {
     "next_action": "spawn_recheck_tasks",
-    "follow_up_tasks": ["re-review", "re-hunt", "re-verify"],
+    "follow_up_tasks": ["re-review", "re-verify"],
     "artifact_delta": {
       "quality": {"convergence_state": "pending"}
     }

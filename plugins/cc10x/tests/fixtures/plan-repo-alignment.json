@@ -9,13 +9,22 @@
     "plan_mode": "execution_plan",
     "verification_rigor": "standard",
     "proof_status": "gaps_found",
-    "traceability": {"requirements": [], "phases": [], "verification": [], "remediation": []},
+    "traceability": {
+      "requirements": [],
+      "phases": [],
+      "verification": [],
+      "remediation": []
+    },
     "phase_cursor": null,
     "task_ids": {},
     "results": {},
-    "intent": {"goal": "Plan a billing dashboard enhancement against an existing repo"},
+    "intent": {
+      "goal": "Plan a billing dashboard enhancement against an existing repo"
+    },
     "evidence": {},
-    "quality": {"convergence_state": "pending"},
+    "quality": {
+      "convergence_state": "pending"
+    },
     "status_history": [],
     "remediation_history": []
   },
@@ -58,8 +67,8 @@
     "planner_markers": [
       "Codebase Reality Check",
       "Plan-vs-Code Gaps",
-      "Assumption Ledger",
-      "Phase Dependency Map"
+      "Hidden-Assumption Pass",
+      "Plan Self-Review"
     ],
     "gate_markers": [
       "Codebase reality check is present",

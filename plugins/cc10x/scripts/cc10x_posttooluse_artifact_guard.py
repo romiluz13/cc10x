@@ -1,4 +1,15 @@
 #!/usr/bin/env python3
+"""PostToolUse workflow-artifact integrity guard.
+
+Scope discipline (prevents the stale-artifact footgun):
+- When the written file IS a workflow artifact (.cc10x/workflows/*.json,
+  not *.events.jsonl), validate THAT file — this is the only case that may
+  block (exit 2) in `artifactIntegrity: block` mode.
+- For any other Edit/Write, audit the latest workflow artifact for telemetry
+  but NEVER block: a malformed or legacy artifact from an old workflow must
+  not veto unrelated writes elsewhere in the project.
+"""
+
 import sys
 from pathlib import Path
 
@@ -7,8 +18,10 @@ from cc10x_hooklib import (
     load_mode,
     log_event,
     read_latest_workflow_state,
+    read_workflow_state,
     workflow_artifact_is_fresh,
     workflow_event_log_exists,
+    workflows_dir,
 )
 
 
@@ -28,6 +41,15 @@ REQUIRED_WORKFLOW_KEYS = (
 )
 
 
+def is_workflow_artifact(path: Path) -> bool:
+    if path.suffix != ".json" or path.name.endswith(".events.jsonl"):
+        return False
+    try:
+        return path.resolve().parent == workflows_dir().resolve()
+    except OSError:
+        return False
+
+
 def main() -> int:
     data = load_input()
     mode = load_mode()
@@ -37,9 +59,21 @@ def main() -> int:
         return 0
 
     path = Path(file_path)
-    payload, artifact_path, parse_error = read_latest_workflow_state()
-    if artifact_path is None:
-        return 0
+    target_is_artifact = is_workflow_artifact(path)
+
+    if target_is_artifact:
+        # Validate exactly the artifact that was just written.
+        payload, artifact_path, parse_error = read_workflow_state(path.stem)
+        if artifact_path is None:
+            # File may have been written under a name read_workflow_state cannot
+            # resolve; fall back to direct parse via latest-state helper semantics.
+            payload, artifact_path, parse_error = read_latest_workflow_state()
+            if artifact_path is None or artifact_path.name != path.name:
+                return 0
+    else:
+        payload, artifact_path, parse_error = read_latest_workflow_state()
+        if artifact_path is None:
+            return 0
 
     reasons: list[str] = []
     if parse_error:
@@ -52,7 +86,7 @@ def main() -> int:
         if not workflow_event_log_exists(payload, artifact_path):
             reasons.append("missing-event-log")
 
-        if path.suffix == ".json" and path.name == artifact_path.name:
+        if target_is_artifact:
             if not payload.get("updated_at"):
                 reasons.append("missing-updated-at")
             elif not workflow_artifact_is_fresh(artifact_path):
@@ -75,8 +109,9 @@ def main() -> int:
             "agent": "router",
             "tool_name": data.get("tool_name"),
             "path": str(path),
+            "target_is_artifact": target_is_artifact,
             "event": "posttool_artifact_guard",
-            "decision": decision,
+            "decision": decision if target_is_artifact else "audit",
             "reason": ";".join(reasons),
         },
     )
@@ -84,12 +119,13 @@ def main() -> int:
     # Close the loop in block mode: a corrupt or key-missing artifact (the cases
     # that silently break resume/verifier handoff) must surface to the model, not
     # just the log. Exit code 2 is the PostToolUse blocking signal Claude Code
-    # shows back to the model. Only hard-corruption reasons block; the soft
-    # reasons (missing-event-log, stale write) stay audit-only to avoid false stops.
+    # shows back to the model. Blocking applies ONLY when the write target is the
+    # artifact itself — never to unrelated files — and only for hard-corruption
+    # reasons; the soft reasons (missing-event-log, stale write) stay audit-only.
     blocking_reasons = [
-        r for r in reasons if r.startswith("artifact-json:") or r.startswith("missing-keys:")
+        r for r in reasons if r.startswith(("artifact-json:", "missing-keys:"))
     ]
-    if decision == "block" and blocking_reasons:
+    if decision == "block" and target_is_artifact and blocking_reasons:
         print(
             "CC10X artifact integrity guard: the workflow artifact "
             f"{artifact_path.name} is invalid ({';'.join(blocking_reasons)}). "

@@ -26,7 +26,7 @@ skills:
 
 If the plan includes `### Live Verification Strategy` or a harness manifest:
 
-- Run `python3 plugins/cc10x/tools/live_harness_runner.py --manifest <path> --mode proof`
+- Run `python3 "${CLAUDE_PLUGIN_ROOT}/tools/live_harness_runner.py" --manifest <path> --mode proof`
 - If stress required: also run `--mode stress`
 - Do NOT silently substitute replay fixtures or unit tests for required live proof
 

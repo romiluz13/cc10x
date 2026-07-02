@@ -86,8 +86,8 @@
       "design_file": "/workspace/cc10x/docs/plans/2026-04-12-memory-compaction-design.md"
     },
     "planner_markers": [
-      "## Design File",
-      "Do NOT edit `.cc10x/*.md` directly."
+      "read BEFORE planning",
+      "Do NOT invent a design"
     ],
     "gate_markers": []
   }
