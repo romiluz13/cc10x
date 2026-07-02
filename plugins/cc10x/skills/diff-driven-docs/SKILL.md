@@ -6,8 +6,6 @@ description: >-
   Also use when the user says "update docs", "sync docs", "document this",
   or asks whether documentation is up to date.
 allowed-tools: Read, Edit, Write, Bash, Grep, Glob
-skills:
-  - cc10x:verification-before-completion
 ---
 
 # diff-driven-docs
@@ -21,7 +19,7 @@ Stale documentation is worse than no documentation — it actively misleads cont
 Run this classifier before any doc work. Use it to determine which layers to evaluate and which to skip.
 
 | Diff Characteristic | Business Layer | Technical Layer | Audit Layer |
-|---------------------|---------------|----------------|-------------|
+| --------------------- | --------------- | ---------------- | ------------- |
 | Internal utility, helper, or type change only | SKIP | CHECK | SKIP |
 | Test addition with no new pattern | SKIP | SKIP | SKIP |
 | Style / formatting change | SKIP | SKIP | SKIP |
@@ -77,17 +75,20 @@ Decision records capturing what changed, why, alternatives considered, and impac
 ### When to Create vs. Update vs. Skip
 
 **CREATE new when:**
+
 - A pattern is introduced for the first time in this codebase
 - An architectural decision is made that future contributors will need to understand
 - A non-obvious tradeoff is accepted (performance vs. correctness, simplicity vs. extensibility)
 - A technology is chosen over alternatives
 
 **UPDATE existing when:**
+
 - An existing decision is amended or reversed
 - A previous tradeoff is resolved differently in a new context
 - Additional impact or context is discovered for a prior decision
 
 **SKIP when:**
+
 - Routine bug fix (correcting behavior to match existing intent)
 - Test addition with no new pattern
 - Style or formatting change
@@ -141,6 +142,7 @@ Use the project's `## Doc Targets` from `CLAUDE.md` if present. Otherwise apply 
 **Step 4 — Read then write**
 
 For each doc target:
+
 1. `Read` the entire target file first
 2. Apply minimal, targeted edits using `Edit` — do not rewrite sections that are not affected by the diff
 3. `Read` the file again after writing to verify the edit landed correctly
@@ -150,6 +152,7 @@ For audit docs: check whether an existing decision doc covers this topic. If yes
 **Step 5 — Self-review**
 
 Before emitting the contract, verify:
+
 - Every updated doc accurately reflects the diff (no hallucinated details)
 - Cross-references between docs are consistent
 - If a new doc file was created, it is indexed in the relevant `## Docs` section of `CLAUDE.md`
@@ -164,7 +167,7 @@ This skill is loaded by the `doc-syncer` agent in the BUILD chain. The router sp
 ## Rationalization Table
 
 | Common excuse | Counter |
-|---------------|---------|
+| --------------- | --------- |
 | "docs can wait" | Docs are a deliverable, not a follow-up. The workflow does not close until they are done. |
 | "it's just a refactor" | If file paths, function signatures, or exported APIs changed, technical docs need updating. |
 | "the diff is small" | Run the Impact Classifier. Small diffs still trigger technical doc updates when signatures change. |

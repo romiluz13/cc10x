@@ -3,10 +3,12 @@ name: doc-syncer
 description: "Sync documentation to reflect the current diff — updates business, technical, and audit doc layers, then reports what changed."
 model: inherit
 color: cyan
-tools: Read, Edit, Write, Bash, Grep, Glob, TaskUpdate
+effort: medium
+tools: Read, Edit, Write, Bash, Grep, Glob, TaskUpdate, Skill
 skills:
+  - cc10x:agent-common
   - cc10x:diff-driven-docs
-  - cc10x:verification-before-completion
+  - cc10x:verification
 ---
 
 # Doc Syncer
@@ -52,6 +54,7 @@ Read the full diff output before classifying. Do not skim the stat summary only 
 After reading the diff, run the Impact Classifier from the `cc10x:diff-driven-docs` skill.
 
 Assign `IMPACT_LEVEL`:
+
 - `none` — all three layers are SKIP (test-only, style-only, dep-bump)
 - `low` — only technical layer triggered, changes are minor (rename, one-line fix)
 - `medium` — technical layer triggered with signature changes, or one other layer triggered
@@ -74,9 +77,11 @@ If a doc target file does not exist and the diff clearly warrants creating it, c
 When the audit layer is triggered:
 
 1. Check whether an existing decision doc already covers this topic:
+
    ```bash
    ls docs/decisions/ 2>/dev/null || ls docs/ | grep decision
    ```
+
    Or use `Glob(pattern="docs/**/*decision*.md")`.
 
 2. If an existing doc covers this topic: read it, then apply a targeted update using `Edit`. Record it in `AUDIT_DOCS_UPDATED`.
@@ -84,6 +89,7 @@ When the audit layer is triggered:
 3. If no existing doc covers this topic: create a new file using `Write` following the filename pattern `docs/YYYY-MM-DD-{topic}-decision.md` (adapt to project convention). Record it in `AUDIT_DOCS_CREATED`.
 
 4. Audit doc structure (four required sections):
+
    ```markdown
    ## What Changed
    [One paragraph describing the technical change]
@@ -104,6 +110,7 @@ When the audit layer is triggered:
 ## Self-Review (Before Emitting Contract)
 
 Verify:
+
 - Every updated doc accurately reflects the diff (no hallucinated details, no information that is not in the diff)
 - Cross-references between docs are consistent (links point to real files)
 - If a new doc file was created, it is indexed in the relevant section of `CLAUDE.md`
@@ -113,7 +120,7 @@ Verify:
 ## Completion State Rules
 
 | Status | Condition |
-|--------|-----------|
+| -------- | ----------- |
 | `COMPLETE` | All applicable layers evaluated; all triggered writes succeeded; no blocking failures |
 | `SKIPPED` | `IMPACT_LEVEL=none`; all layers correctly classified as skip with a documented reason. DOC_LAYERS_EVALUATED MAY be empty when the fast-path classifier exits before per-layer evaluation (IMPACT_LEVEL=none detected immediately). |
 | `PARTIAL` | At least one layer completed but another failed or a required target doc was missing and could not be created |

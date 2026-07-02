@@ -12,8 +12,8 @@ user-invocable: false
 This skill is loaded via SKILL_HINTS by `cc10x:planner` and `cc10x:bug-investigator` when the router passes research files in the prompt. It provides instructions for synthesizing web and GitHub research findings.
 
 **This skill does NOT execute research.** Research execution is done by:
-- `cc10x:web-researcher` — prefers Bright Data, falls back to WebSearch/WebFetch
-- `cc10x:github-researcher` — prefers Octocode MCP, falls back to package/docs/GitHub web research
+- `cc10x:researcher (web mode)` — prefers Bright Data, falls back to WebSearch/WebFetch
+- `cc10x:researcher (github mode)` — prefers Octocode MCP, falls back to package/docs/GitHub web research
 
 ## Synthesis Goal
 
