@@ -43,7 +43,7 @@ A deep module fails the deletion test *productively*: you can't delete it withou
 
 ## Diagnosis Flow
 
-Run a **read-only** pass — no edits, no agents that write. Use Grep/Glob directly, or hand the sweep to the `Explore` agent or `cc10x:github-researcher` for breadth across naming conventions.
+Run a **read-only** pass — no edits, no agents that write. Use Grep/Glob directly, or hand the sweep to the `Explore` agent or `cc10x:researcher` for breadth across naming conventions.
 
 1. **Enumerate the surface.** Glob the source tree, Grep for exported definitions (`export function`, `export const … =>`, `def `, `class …`). Capture `name | file:line | signature`.
 2. **Flag shallow shapes.** Pull the candidates the table above describes — functions/classes that forward, layers that map 1:1, modules whose interface ≈ implementation.
@@ -112,6 +112,6 @@ This keeps the deepened module testable through its own interface and stops "dee
 
 This skill ends at a chosen candidate + a deeper-interface proposal + a named seam. It does **not** edit code. The refactor is a behavior-preserving change and gets cc10x's full bar:
 
-- It goes through the **planner** (the candidate + before/after + seam become the plan input), then the BUILD workflow — builder → [reviewer || silent-failure-hunter] → verifier → doc-sync → memory.
+- It goes through the **planner** (the candidate + before/after + seam become the plan input), then the BUILD workflow — builder → [reviewer || code-reviewer] → verifier → doc-sync → memory.
 - The deepening is verified against reality: the survivor interface has tests at its seam, every caller is repointed, the suite and typecheck pass after the merge. A deepening that isn't re-verified is not done.
 - Do not let this skill become an ungated rewrite path. Proposing is read-only; changing is gated.

@@ -25,7 +25,7 @@ If both assessments ran inside one reasoning pass, you did not critique — you 
 
 ## Two Isolated Assessments + Synthesis
 
-cc10x already runs the **code-reviewer** and **silent-failure-hunter** in parallel on purpose (see `code-review-patterns`). Apply the same isolation to design.
+cc10x already runs the **code-reviewer** and **code-reviewer (Pass 1b)** in parallel on purpose (see `code-review-patterns`). Apply the same isolation to design.
 
 - **Assessment A — design-director qualitative review.** An LLM reads the UI as a senior design director would: hierarchy, rhythm, restraint, whether the layout serves the task, whether it feels intentional or assembled. Score the rubric below. A forms its opinion WITHOUT running the ban-list scan.
 - **Assessment B — AI-slop / pattern scan.** A SEPARATE pass that walks the ban-list and the deterministic detector (if available). B must NOT see A's conclusions — give it the artifact, not A's writeup. A checklist pass that can read the design-director's narrative silently converges on it.

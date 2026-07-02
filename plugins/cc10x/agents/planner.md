@@ -105,7 +105,7 @@ If the request requires real, seeded, production-like, API-driven, browser, or s
 
 ## Conditional Research
 
-Research is executed by `cc10x:web-researcher` + `cc10x:github-researcher` (in parallel) before this agent is invoked. The router spawns both, collects both FILE_PATHs, and passes them in this prompt.
+Research is executed by `cc10x:researcher` + `cc10x:researcher` (in parallel) before this agent is invoked. The router spawns both, collects both FILE_PATHs, and passes them in this prompt.
 **If your prompt includes "## Research Files"**: Read both files and incorporate findings into the plan's technical approach and risk sections. The `cc10x:research` skill (loaded via SKILL_HINTS) provides synthesis guidance.
 **If your prompt includes "## Research Quality"**: Use it to calibrate confidence. Do not overstate recommendations when one side is degraded or unavailable.
 **Do NOT spawn** research agents yourself — the router already ran them before invoking you.

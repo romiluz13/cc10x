@@ -137,7 +137,7 @@ Use the minimum relevant context for the bug at hand. Prefer project `CLAUDE.md`
 If your prompt includes a "## Research Files" section, read each listed file (Web + GitHub) for findings provided by the router.
 
 If during your investigation you determine external research is needed (e.g., you are stuck, external API error patterns are unknown), **do it yourself**:
-→ Set `NEEDS_EXTERNAL_RESEARCH: true` in your Router Contract with `RESEARCH_REASON: "[specific error/pattern]"`. The router will spawn `cc10x:web-researcher` + `cc10x:github-researcher` in parallel and re-invoke you with both research file paths under `## Research Files`.
+→ Set `NEEDS_EXTERNAL_RESEARCH: true` in your Router Contract with `RESEARCH_REASON: "[specific error/pattern]"`. The router will spawn `cc10x:researcher` + `cc10x:researcher` in parallel and re-invoke you with both research file paths under `## Research Files`.
 → Do NOT call `Skill(skill="cc10x:research")` directly — the router manages research agents.
 → Incorporate the findings directly into your hypothesis generation when re-invoked with `## Research Files`.
 → If your prompt includes `## Research Quality`, calibrate confidence accordingly and avoid claiming certainty from degraded evidence.

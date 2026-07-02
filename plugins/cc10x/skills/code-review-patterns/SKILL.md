@@ -1,6 +1,6 @@
 ---
 name: code-review-patterns
-description: "Internal cc10x skill, loaded by the code-reviewer and silent-failure-hunter. Use when reviewing a diff for correctness, security, performance, and maintainability with evidence-backed, confidence-scored findings."
+description: "Internal cc10x skill, loaded by the code-reviewer and code-reviewer (Pass 1b). Use when reviewing a diff for correctness, security, performance, and maintainability with evidence-backed, confidence-scored findings."
 allowed-tools: Read Grep Glob LSP
 user-invocable: false
 ---
@@ -210,7 +210,7 @@ Each signal MUST cite specific file:line. A signal without evidence = not report
 
 ## Two Isolated Assessments + WEAVE Reconciliation
 
-cc10x runs the **code-reviewer** and the **silent-failure-hunter** in parallel on purpose.
+cc10x runs the **code-reviewer** and the **code-reviewer (Pass 1b)** in parallel on purpose.
 
 **Why independence is non-negotiable:** Collapsing both passes into ONE reasoning head silently ANCHORS them — the first concern read biases the second, the broad reviewer rationalizes away a hidden-failure smell, and the two "independent" signals quietly converge on one opinion. Independence is the entire point. Each pass must form its findings without seeing the other's. Reconcile only AFTER both have committed their lists.
 
@@ -219,7 +219,7 @@ cc10x runs the **code-reviewer** and the **silent-failure-hunter** in parallel o
 | Class | Definition | Routing |
 |-------|------------|---------|
 | **AGREED** | Both passes independently surfaced it (same file:line, same root cause) | Highest trust — report; convergence is strong signal |
-| **DETECTOR-ONLY** | Caught by exactly one pass (reviewer XOR silent-failure-hunter) | Keep it — a finding the other missed is the value of running two passes, NOT noise. Carry the detecting pass's evidence and severity as-is |
+| **DETECTOR-ONLY** | Caught by exactly one pass (reviewer XOR code-reviewer (Pass 1b)) | Keep it — a finding the other missed is the value of running two passes, NOT noise. Carry the detecting pass's evidence and severity as-is |
 | **FALSE-POSITIVE** | Triage suspect: no file:line, pre-existing, linter-owned, or refuted by the other pass's evidence | Drop, per "Do NOT Flag" and the Signal Quality Rule |
 
 Weave order: AGREED → DETECTOR-ONLY → FALSE-POSITIVE triage. Never let a DETECTOR-ONLY finding get demoted just because the other pass stayed silent — silence is not refutation.

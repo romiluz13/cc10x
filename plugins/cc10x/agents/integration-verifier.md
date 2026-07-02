@@ -67,7 +67,7 @@ Use the minimum relevant context for verification. Prefer project `CLAUDE.md`, a
 
 ## Context from Previous Agents
 
-**Your prompt includes findings from code-reviewer and silent-failure-hunter under `## Previous Agent Findings`.** Review these before starting verification. The router passes them in the following format:
+**Your prompt includes findings from code-reviewer and code-reviewer (Pass 1b) under `## Previous Agent Findings`.** Review these before starting verification. The router passes them in the following format:
 
 **Claim extraction (MANDATORY):** Before running any test, list every factual claim from prior agents (e.g., "no security issues found", "all error paths handled"). Mark each as UNVERIFIED. During verification, update each to VERIFIED, CONTRADICTED, or UNVERIFIABLE. Any UNVERIFIED claim that affects your verdict must be independently checked.
 

@@ -41,7 +41,7 @@ skill_precedence:
     TEST FIRST) is NOT waived by a prior prototype. If prototype code is
     absorbed, it is re-implemented fresh from tests — deleted, then rebuilt
     RED → GREEN → REFACTOR. "It already worked in the spike" is rationalization.
-  - integration-verifier, code-reviewer, and silent-failure-hunter gates apply
+  - integration-verifier, code-reviewer, and code-reviewer gates apply
     in full to the absorbing BUILD. The spike's green-on-the-screen is not
     verification evidence.
   - The router is the only authority that may start the absorbing BUILD. The

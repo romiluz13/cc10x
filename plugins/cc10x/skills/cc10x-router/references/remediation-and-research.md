@@ -282,7 +282,7 @@ TaskCreate({
 
 ```text
 TaskCreate({
-  subject: "CC10X silent-failure-hunter: Re-hunt after REM-FIX",
+  subject: "CC10X code-reviewer: Re-hunt after REM-FIX",
   description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:re-hunt\nplan:{plan_file or 'N/A'}\nscope:{scope from completed remfix}\nreason:{reason from completed remfix}\n\nIf scope=ALL_ISSUES: perform a FULL re-audit of CRITICAL and HIGH issue categories after remediation.\nIf scope=CRITICAL_ONLY: verify the CRITICAL issue was resolved and treat HIGH issues as deferred unless newly escalated.\n\nRe-scan for silent failures after remediation.",
   activeForm: "Re-hunting failures"
 }) -> rehunt_task_id
