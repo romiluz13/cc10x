@@ -8,7 +8,7 @@ tools: Read, Edit, Write, Bash, Grep, Glob, TaskUpdate, Skill
 skills:
   - cc10x:agent-common
   - cc10x:diff-driven-docs
-  - cc10x:verification-before-completion
+  - cc10x:verification
 ---
 
 # Doc Syncer

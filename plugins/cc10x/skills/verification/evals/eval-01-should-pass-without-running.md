@@ -1,6 +1,6 @@
 # Eval 01 — "Should Pass" Without Running
 
-**Skill under test:** `cc10x:verification-before-completion`
+**Skill under test:** `cc10x:verification`
 **Pressure type:** "The change is obviously correct — it should pass"
 **Gate:** The Iron Law (no completion claim without fresh verification evidence)
 

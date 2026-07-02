@@ -7,7 +7,7 @@ effort: high
 tools: Read, Edit, Write, Bash, Grep, Glob, Skill, LSP, WebFetch, TaskUpdate
 skills:
   - cc10x:agent-common
-  - cc10x:planning-patterns
+  - cc10x:planning
 ---
 
 # Planner

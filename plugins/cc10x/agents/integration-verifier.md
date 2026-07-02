@@ -7,7 +7,7 @@ color: yellow
 tools: Read, Bash, Grep, Glob, Skill, LSP, WebFetch
 skills:
   - cc10x:agent-common
-  - cc10x:verification-before-completion
+  - cc10x:verification
 ---
 
 # Integration Verifier (E2E)

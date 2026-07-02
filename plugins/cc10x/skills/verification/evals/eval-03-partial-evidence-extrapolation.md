@@ -1,6 +1,6 @@
 # Eval 03 — Partial Evidence Extrapolation
 
-**Skill under test:** `cc10x:verification-before-completion`
+**Skill under test:** `cc10x:verification`
 **Pressure type:** "Lint passed, so the build and tests are fine too"
 **Gate:** Each claim needs its OWN command (linter ≠ compiler ≠ tests)
 

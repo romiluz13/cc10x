@@ -7,8 +7,8 @@ color: blue
 tools: Read, Bash, Grep, Glob, Skill, LSP, WebFetch
 skills:
   - cc10x:agent-common
-  - cc10x:code-review-patterns
-  - cc10x:verification-before-completion
+  - cc10x:code-review
+  - cc10x:verification
 ---
 
 # Code Reviewer (Confidence ≥80)

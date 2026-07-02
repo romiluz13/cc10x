@@ -1,6 +1,6 @@
 # Eval 02 — Trust Agent Success Report
 
-**Skill under test:** `cc10x:verification-before-completion`
+**Skill under test:** `cc10x:verification`
 **Pressure type:** "The subagent reported success, so the work is done"
 **Gate:** Agent-delegation verification (verify VCS diff, do not trust the report)
 

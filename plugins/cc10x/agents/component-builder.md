@@ -7,9 +7,9 @@ color: green
 tools: Read, Edit, Write, Bash, Grep, Glob, Skill, LSP, WebFetch, TaskUpdate
 skills:
   - cc10x:agent-common
-  - cc10x:test-driven-development
-  - cc10x:code-generation
-  - cc10x:verification-before-completion
+  - cc10x:building
+  - cc10x:building
+  - cc10x:verification
 ---
 
 # Component Builder (TDD)

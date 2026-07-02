@@ -1,5 +1,5 @@
 ---
-name: debugging-patterns
+name: debugging
 description: "Use when a bug, flaky test, or runtime/build failure needs root-cause tracing and a nearby duplicate-pattern scan before any fix."
 allowed-tools: Read Grep Glob Bash LSP
 ---
@@ -85,6 +85,7 @@ For rapid debugging, use this concise flow:
 ```
 
 **Debugging techniques:**
+
 - Analyze error messages and logs
 - Check recent code changes
 - Form and test hypotheses
@@ -92,6 +93,7 @@ For rapid debugging, use this concise flow:
 - **Inspect variable states**
 
 **Root Cause Tracing Technique:**
+
 ```
 1. Observe symptom - Where does error manifest?
 2. Find immediate cause - Which code produces the error?
@@ -99,6 +101,7 @@ For rapid debugging, use this concise flow:
 4. Keep tracing up - Follow invalid data backward
 5. Find original trigger - Where did problem actually start?
 ```
+
 **Never fix solely where errors appear—trace to the original trigger.**
 After root cause is identified, scan for the same signature nearby before declaring success.
 
@@ -107,13 +110,14 @@ After root cause is identified, scan for the same signature nearby before declar
 **Use LSP to trace execution flow systematically:**
 
 | Debugging Need | LSP Tool | Usage |
-|----------------|----------|-------|
+| ---------------- | ---------- | ------- |
 | "Where is this function defined?" | `lspGotoDefinition` | Jump to source |
 | "What calls this function?" | `lspCallHierarchy(incoming)` | Trace callers up |
 | "What does this function call?" | `lspCallHierarchy(outgoing)` | Trace callees down |
 | "All usages of this variable?" | `lspFindReferences` | Find all access points |
 
 **Systematic Call Chain Tracing:**
+
 ```
 1. localSearchCode("errorFunction") → get file + lineHint
 2. lspGotoDefinition(lineHint=N) → see implementation
@@ -125,6 +129,7 @@ After root cause is identified, scan for the same signature nearby before declar
 **CRITICAL:** Always get lineHint from localSearchCode first. Never guess line numbers.
 
 **For each issue provide:**
+
 - Root cause explanation
 - Evidence supporting diagnosis
 - Specific code fix
@@ -135,6 +140,7 @@ After root cause is identified, scan for the same signature nearby before declar
 
 Read `references/root-cause-playbooks.md` when the failure matches one of these
 shapes:
+
 - build or type breakage
 - failing tests
 - runtime crashes
@@ -150,6 +156,7 @@ recipes.
 ## When to Use
 
 Use for ANY technical issue:
+
 - Test failures
 - Bugs in production
 - Unexpected behavior
@@ -158,6 +165,7 @@ Use for ANY technical issue:
 - Integration issues
 
 **Use this ESPECIALLY when:**
+
 - Under time pressure (emergencies make guessing tempting)
 - "Just one quick fix" seems obvious
 - You've already tried multiple fixes
@@ -165,6 +173,7 @@ Use for ANY technical issue:
 - You don't fully understand the issue
 
 **Don't skip when:**
+
 - Issue seems simple (simple bugs have root causes too)
 - You're in a hurry (rushing guarantees rework)
 - Manager wants it fixed NOW (systematic is faster than thrashing)
@@ -201,6 +210,7 @@ You MUST complete each phase before proceeding to the next.
    **WHEN system has multiple components (CI → build → signing, API → service → database):**
 
    **BEFORE proposing fixes, add diagnostic instrumentation:**
+
    ```
    For EACH component boundary:
      - Log what data enters component
@@ -212,6 +222,7 @@ You MUST complete each phase before proceeding to the next.
    THEN analyze evidence to identify failing component
    THEN investigate that specific component
    ```
+
    For a concrete boundary-tracing recipe, read
    `references/root-cause-playbooks.md`.
 
@@ -285,11 +296,13 @@ You MUST complete each phase before proceeding to the next.
 **Falsifiability Requirement:** A good hypothesis can be proven wrong. If you can't design an experiment to disprove it, it's not useful.
 
 **Bad (unfalsifiable):**
+
 - "Something is wrong with the state"
 - "The timing is off"
 - "There's a race condition somewhere"
 
 **Good (falsifiable):**
+
 - "User state resets because component remounts when route changes"
 - "API call completes after unmount, causing state update on unmounted component"
 - "Two async operations modify same array without locking, causing data loss"
@@ -318,13 +331,15 @@ H3: [hypothesis] — Confidence: [0-100]
 ```
 
 **Scoring guidance:**
+
 | Range | Meaning | Action |
-|-------|---------|--------|
+| ------- | --------- | -------- |
 | 80-100 | Strong evidence, high certainty | Proceed to fix |
 | 50-79 | Circumstantial, needs more data | Run "Next test" |
 | 0-49 | Speculation, weak evidence | Deprioritize or discard |
 
 **Rules:**
+
 - Always maintain 2-3 hypotheses until one reaches 80+
 - Update confidence after EVERY piece of new evidence
 - Never proceed to fix with highest hypothesis below 50
@@ -332,7 +347,7 @@ H3: [hypothesis] — Confidence: [0-100]
 ### Cognitive Biases in Debugging
 
 | Bias | Trap | Antidote |
-|------|------|----------|
+| ------ | ------ | ---------- |
 | **Confirmation** | Only look for evidence supporting your hypothesis | "What would prove me wrong?" |
 | **Anchoring** | First explanation becomes your anchor | Generate 3+ hypotheses before investigating any |
 | **Availability** | Recent bugs → assume similar cause | Treat each bug as novel until evidence suggests otherwise |
@@ -343,11 +358,13 @@ H3: [hypothesis] — Confidence: [0-100]
 When debugging code you wrote, you're fighting your own mental model.
 
 **Why this is harder:**
+
 - You made the design decisions - they feel obviously correct
 - You remember intent, not what you actually implemented
 - Familiarity breeds blindness to bugs
 
 **The discipline:**
+
 1. **Treat your code as foreign** - Read it as if someone else wrote it
 2. **Question your design decisions** - Your implementation choices are hypotheses, not facts
 3. **Admit your mental model might be wrong** - The code's behavior is truth; your model is a guess
@@ -358,6 +375,7 @@ When debugging code you wrote, you're fighting your own mental model.
 ### When to Restart Investigation
 
 Consider starting over when:
+
 1. **2+ hours with no progress** - You're likely tunnel-visioned
 2. **3+ "fixes" that didn't work** - Your mental model is wrong
 3. **You can't explain the current behavior** - Don't add changes on top of confusion
@@ -365,6 +383,7 @@ Consider starting over when:
 5. **The fix works but you don't know why** - This isn't fixed, this is luck
 
 **Restart protocol:**
+
 1. Close all files and terminals
 2. Write down what you know for certain
 3. Write down what you've ruled out
@@ -443,7 +462,7 @@ The user-redirection signals ("Stop guessing", "Ultrathink this", "We're stuck?"
 ## Quick Reference
 
 | Phase | Key Activities | Success Criteria |
-|-------|---------------|------------------|
+| ------- | --------------- | ------------------ |
 | **1. Root Cause** | Read errors, reproduce, check changes, gather evidence | Understand WHAT and WHY |
 | **2. Pattern** | Find working examples, compare | Identify differences |
 | **3. Hypothesis** | Form theory, test minimally | Confirmed or new hypothesis |

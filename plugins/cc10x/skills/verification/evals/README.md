@@ -14,7 +14,7 @@ Each eval in this directory follows the RED-GREEN-REFACTOR structure from
 ## Running an Eval
 
 Dispatch a subagent with the eval's Setup + Pressure as the full task. The agent should have the
-`cc10x:verification-before-completion` skill loaded. Evaluate whether the agent's output matches
+`cc10x:verification` skill loaded. Evaluate whether the agent's output matches
 `expected_behavior` — specifically, whether every completion claim carries fresh evidence from
 this session.
 

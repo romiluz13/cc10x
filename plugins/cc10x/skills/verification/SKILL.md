@@ -1,5 +1,5 @@
 ---
-name: verification-before-completion
+name: verification
 description: "Use when about to claim work is complete, fixed, or passing, or before commit, PR, or task completion, and fresh verification evidence must exist first."
 allowed-tools: Read Grep Glob Bash LSP
 ---
@@ -56,7 +56,7 @@ These are core verification doctrine. They were once deferred to superpowers, bu
 ### Common Failures
 
 | Failure | Why it lies | Fix |
-|---------|-------------|-----|
+| --------- | ------------- | ----- |
 | previous-run ≠ fresh | Output is from an earlier message; code changed since | Re-run the command in THIS message |
 | linter ≠ compiler | Lint passing says nothing about types/build | Run `tsc --noEmit` / build, not just lint |
 | agent-says-success ≠ verified | A spawned agent's "done" is a claim, not evidence | Demand its evidence array; re-run the gate yourself |
@@ -73,7 +73,7 @@ If any of these appear BEFORE you have run the command, STOP and run it:
 ### Rationalization → Reality
 
 | Rationalization | Reality |
-|-----------------|---------|
+| ----------------- | --------- |
 | "It's a trivial change, no need to test" | Trivial changes break builds too — run it |
 | "Tests passed earlier" | Earlier ≠ now; the diff invalidated that run |
 | "The agent reported success" | A report is a claim; evidence is exit code 0 in this session |
@@ -102,6 +102,7 @@ If any of these appear BEFORE you have run the command, STOP and run it:
 **MANDATORY: Check these BEFORE running verification commands:**
 
 ### Code Quality
+
 - [ ] Follows patterns from reference files?
 - [ ] Naming matches project conventions?
 - [ ] Error handling in place?
@@ -110,6 +111,7 @@ If any of these appear BEFORE you have run the command, STOP and run it:
 - [ ] No hardcoded values that should be constants?
 
 ### Implementation Completeness
+
 - [ ] All required files modified?
 - [ ] No unexpected files changed?
 - [ ] Requirements fully met?
@@ -130,7 +132,7 @@ If any of these appear BEFORE you have run the command, STOP and run it:
 **Match validation depth to task complexity:**
 
 | Level | Name | Commands | When to Use |
-|-------|------|----------|-------------|
+| ------- | ------ | ---------- | ------------- |
 | 1 | Syntax & Style | `npm run lint`, `tsc --noEmit` | Every task |
 | 2 | Unit Tests | `npm test` | Low-Medium risk tasks |
 | 3 | Integration Tests | `npm run test:integration` | Medium-High risk tasks |
@@ -143,6 +145,7 @@ If any of these appear BEFORE you have run the command, STOP and run it:
 If the accepted plan or current task requires real, seeded, production-like verification, read `references/live-production-testing.md` before claiming completion.
 
 Use the live harness when the task depends on:
+
 - real API calls
 - seeded or resettable data
 - browser or worker orchestration
@@ -198,6 +201,7 @@ COMPLETE - All verifications passed with fresh evidence
 **Format:** `[command] → exit [code]: [result summary]`
 
 **Rules:**
+
 1. One evidence entry per claim — no claim without evidence, no evidence without claim
 2. Evidence must be from THIS session (not recalled from memory)
 3. Exit codes are mandatory — "looks good" is not evidence
@@ -220,12 +224,15 @@ EVIDENCE:
 After standard verification passes, apply this additional check:
 
 ### Three Questions
+
 1. **Truths:** What must be TRUE? (observable user or business outcomes)
 2. **Artifacts:** What must EXIST? (files, endpoints, tests, records)
 3. **Wiring:** What must be WIRED? (component → API → database)
 
 ### Why This Catches Stubs
+
 A component can:
+
 - Exist ✓
 - Pass lint ✓
 - Have tests ✓
@@ -250,6 +257,7 @@ Never skip phase-exit proof. If extended audit is not run, say so explicitly ins
 Goal-backward asks: "Does the GOAL work?" not "Did the TASK complete?"
 
 ### Quick Check Template
+
 ```
 GOAL: [What user wants to achieve]
 
@@ -270,6 +278,7 @@ Goal check: All boxes checked?
 ```
 
 ### When to Apply
+
 - After integration-verifier runs
 - After any "feature complete" claim
 - Before marking BUILD workflow as done
@@ -281,6 +290,7 @@ Goal check: All boxes checked?
 After Goal-Backward Lens passes, scan for these stub indicators:
 
 ### Universal Stubs
+
 ```bash
 # Check for TODO/placeholder markers
 grep -rE "TODO|FIXME|placeholder|not implemented|coming soon" --include="*.ts" --include="*.tsx" --include="*.js"
@@ -290,28 +300,32 @@ grep -rE "return null|return undefined|return \{\}|return \[\]" --include="*.ts"
 ```
 
 ### React Component Stubs
+
 | Pattern | Why It's a Stub |
-|---------|-----------------|
+| --------- | ----------------- |
 | `return <div>Placeholder</div>` | Renders nothing useful |
 | `onClick={() => {}}` | Click does nothing |
 | `onSubmit={(e) => e.preventDefault()}` | Only prevents default, no action |
 | `useState` with no setter calls | State never changes |
 
 ### API Route Stubs
+
 | Pattern | Why It's a Stub |
-|---------|-----------------|
+| --------- | ----------------- |
 | `return Response.json({ message: "Not implemented" })` | Explicit stub |
 | `return Response.json([])` without DB query | Returns empty, no real data |
 | `return NextResponse.json({})` with no logic | Empty response |
 
 ### Function Stubs
+
 | Pattern | Why It's a Stub |
-|---------|-----------------|
+| --------- | ----------------- |
 | `throw new Error("Not implemented")` | Will crash at runtime |
 | `console.log("TODO")` | Debug artifact |
 | `// TODO: implement` | Marked incomplete |
 
 ### Quick Stub Check
+
 ```bash
 # Run before claiming completion
 grep -rE "(TODO|FIXME|placeholder|not implemented)" src/
@@ -326,6 +340,7 @@ grep -rE "return (null|undefined|\{\}|\[\])" src/
 Artifacts can exist, pass lint, and have tests but NOT be wired to the system.
 
 **Component → API Check:**
+
 ```bash
 # Does component actually call the API?
 grep -E "fetch\(['\"].*api|axios\.(get|post)" src/components/
@@ -334,6 +349,7 @@ grep -A 5 "fetch\|axios" src/components/ | grep -E "await|\.then|setData|setStat
 ```
 
 **API → Database Check:**
+
 ```bash
 # Does API actually query database?
 grep -E "prisma\.|db\.|mongoose\." src/app/api/
@@ -342,13 +358,15 @@ grep -E "return.*json.*data|Response\.json" src/app/api/
 ```
 
 **Red Flags:**
+
 | Pattern | Problem |
-|---------|---------|
+| --------- | --------- |
 | `fetch('/api/x')` with no `await` | Call ignored |
 | `await prisma.findMany()` → `return { ok: true }` | Query result discarded |
 | Handler only has `e.preventDefault()` | Form does nothing |
 
 **Line Count Minimums:**
+
 | File Type | Minimum Lines | Below = Likely Stub |
 |-----------|---------------|---------------------|
 | Component | 15 | Too thin |
@@ -373,8 +391,9 @@ check_export_used "useAuth"
 ```
 
 **Export Status:**
+
 | Status | Meaning | Action |
-|--------|---------|--------|
+| -------- | --------- | -------- |
 | CONNECTED | Imported AND used | ✓ Good |
 | IMPORTED_NOT_USED | Import exists but never called | Remove dead import or implement |
 | ORPHANED | Export exists, never imported | Dead code or missing integration |

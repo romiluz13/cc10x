@@ -7,7 +7,7 @@ description: >-
   or asks whether documentation is up to date.
 allowed-tools: Read, Edit, Write, Bash, Grep, Glob
 skills:
-  - cc10x:verification-before-completion
+  - cc10x:verification
 ---
 
 # diff-driven-docs

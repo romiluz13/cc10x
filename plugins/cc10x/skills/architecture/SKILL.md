@@ -1,5 +1,5 @@
 ---
-name: architecture-patterns
+name: architecture
 description: "Internal cc10x skill, injected by the router via SKILL_HINTS for multi-component, API, schema, auth, or integration-heavy work. Frames system and API design tradeoffs; advisory, never overrides user/repo/plan."
 allowed-tools: Read Grep Glob LSP
 user-invocable: false
@@ -36,7 +36,7 @@ If you haven't documented user flows, admin flows, and system flows, you cannot 
 **First, determine what kind of architectural work is needed:**
 
 | Request Type | Route To |
-|--------------|----------|
+| -------------- | ---------- |
 | "Design API endpoints" | API Design section |
 | "Plan system architecture" | Full Architecture Design |
 | "Design data models" | Data Model section |
@@ -88,7 +88,7 @@ System Flow (example):
 **Each flow maps to components:**
 
 | Flow Step | Architecture Component |
-|-----------|----------------------|
+| ----------- | ---------------------- |
 | User opens page | Frontend route + component |
 | User submits data | API endpoint |
 | System validates | Validation service |
@@ -109,6 +109,7 @@ System Flow (example):
 ## Architecture Views
 
 ### System Context (C4 Level 1)
+
 ```
 ┌─────────────────────────────────────────────┐
 │                 SYSTEM                       │
@@ -124,6 +125,7 @@ System Flow (example):
 ```
 
 ### Container View (C4 Level 2)
+
 - **Web App**: React/Vue/Angular frontend
 - **API Service**: REST/GraphQL backend
 - **Database**: PostgreSQL/MongoDB/etc
@@ -131,6 +133,7 @@ System Flow (example):
 - **Queue**: RabbitMQ/SQS for async
 
 ### Component View (C4 Level 3)
+
 - **Controllers**: Handle HTTP requests
 - **Services**: Business logic
 - **Repositories**: Data access
@@ -142,13 +145,14 @@ System Flow (example):
 **Use LSP to map actual code dependencies:**
 
 | Architecture Task | LSP Tool | Output |
-|-------------------|----------|--------|
+| ------------------- | ---------- | -------- |
 | Map component dependencies | `lspCallHierarchy(outgoing)` | What each component uses |
 | Find all consumers of a service | `lspCallHierarchy(incoming)` | Impact analysis |
 | Verify interface implementations | `lspFindReferences` | All implementers |
 | Trace data flow | Chain `lspCallHierarchy` calls | Full flow map |
 
 **Mapping Actual Architecture:**
+
 ```
 1. localSearchCode("ServiceName") → find entry points
 2. lspCallHierarchy(outgoing) → map dependencies
@@ -183,6 +187,7 @@ Admin Flow: Delete file
 ```
 
 **API Design Checklist:**
+
 - [ ] Each endpoint maps to a user/admin flow
 - [ ] Request schema matches flow inputs
 - [ ] Response schema matches flow outputs
@@ -194,7 +199,7 @@ Admin Flow: Delete file
 **Map integration requirements to patterns:**
 
 | Requirement | Pattern |
-|-------------|---------|
+| ------------- | --------- |
 | Flaky external service | Retry with exponential backoff |
 | Slow external service | Circuit breaker + timeout |
 | Async processing needed | Message queue |
@@ -202,6 +207,7 @@ Admin Flow: Delete file
 | Data sync needed | Event sourcing |
 
 **For each integration:**
+
 ```markdown
 ### [Integration Name]
 
@@ -216,7 +222,7 @@ Admin Flow: Delete file
 Before choosing a pattern, classify the dependency:
 
 | Category | Examples | Testing Strategy |
-|----------|----------|-----------------|
+| ---------- | ---------- | ----------------- |
 | **In-process** | Pure computation, in-memory state | Test directly — merge modules and verify |
 | **Local-substitutable** | Database (PGLite), filesystem (in-memory FS) | Test with local stand-in in test suite |
 | **Remote but owned** | Your own microservices, internal APIs | Define port (interface), inject transport. Test with in-memory adapter |
@@ -225,6 +231,7 @@ Before choosing a pattern, classify the dependency:
 The category determines the pattern. In-process needs nothing. True external needs mocks. The middle two need ports and adapters.
 
 **Implementation ordering — build from leaves inward:**
+
 ```
 Level 0 (no deps):      [Pure utils] [Config]
         ↓
@@ -234,6 +241,7 @@ Level 2 (Level 0-1):    [Services]
         ↓
 Level 3 (Level 0-2):    [Controllers] [API routes]
 ```
+
 Level 0 components are testable immediately. Each subsequent level depends only on predecessors. This ordering eliminates mock-heavy tests in early phases and matches the planner's DAG constraint (phases depend only on predecessors, never on future phases).
 
 ## Observability Design
@@ -241,13 +249,14 @@ Level 0 components are testable immediately. Each subsequent level depends only 
 **For each component, define:**
 
 | Aspect | Questions |
-|--------|-----------|
+| -------- | ----------- |
 | **Logging** | What events? What level? Structured format? |
 | **Metrics** | What to measure? Counters, gauges, histograms? |
 | **Alerts** | What thresholds? Who gets notified? |
 | **Tracing** | Span boundaries? Correlation IDs? |
 
 **Minimum observability:**
+
 - Request/response logging at boundaries
 - Error rates and latencies
 - Health check endpoint
@@ -315,7 +324,7 @@ If you find yourself:
 ## Rationalization Prevention
 
 | Excuse | Reality |
-|--------|---------|
+| -------- | --------- |
 | "This pattern is industry standard" | Does it support THIS functionality? |
 | "We might need it later" | YAGNI. Design for now. |
 | "Microservices are better" | For this functionality? Justify it. |
