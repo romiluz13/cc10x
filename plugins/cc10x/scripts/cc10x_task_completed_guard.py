@@ -1,4 +1,14 @@
 #!/usr/bin/env python3
+"""TaskCompleted guard.
+
+Validates:
+1. Every CC10X task has required metadata (wf, kind, origin, phase, plan, scope, reason)
+2. Memory tasks have router-owned evidence (origin=router, inline marker, finalized event)
+3. Fix #3/#5: After any non-memory CC10X task completes, check that the workflow
+   artifact was updated (updated_at bumped) since the task was created. A stale
+   artifact means the router skipped persistence — the most common stress-test
+   failure.
+"""
 import sys
 
 from cc10x_hooklib import (
@@ -7,6 +17,7 @@ from cc10x_hooklib import (
     log_event,
     parse_metadata,
     read_workflow_state,
+    workflow_artifact_is_fresh,
     workflow_event_log_contains,
 )
 
@@ -78,6 +89,59 @@ def validate_memory_task_completion(data: dict, metadata: dict, mode: dict) -> i
     return 0
 
 
+def check_artifact_freshness(data: dict, metadata: dict, mode: dict) -> int:
+    """Fix #3/#5: After a non-memory CC10X task completes, verify the workflow
+    artifact was updated since the task was created.
+
+    A stale artifact (updated_at unchanged since before the task ran) means the
+    router skipped persistence — the agent's results were not written to the
+    durable state. This breaks resume logic and leaves the workflow incomplete.
+
+    We use a generous window (300s = 5 min) because agent runs can be long.
+    The check is: artifact mtime must be newer than the task creation time.
+    """
+    if metadata.get("kind") == "memory":
+        return 0  # memory tasks are handled separately
+
+    workflow_id = metadata.get("wf")
+    if not workflow_id:
+        return 0
+
+    payload, artifact_path, parse_error = read_workflow_state(workflow_id)
+    if artifact_path is None or parse_error:
+        return 0  # don't compound errors — the main validator catches missing artifacts
+
+    # Check freshness: artifact should have been updated during this task's run.
+    # Use 300s window (agents can run for minutes) — if the artifact hasn't been
+    # touched in 5+ minutes after a task completes, it's stale.
+    if not workflow_artifact_is_fresh(artifact_path, max_age_seconds=300):
+        log_event(
+            "plugin_task_completed_stale_artifact",
+            {
+                "wf": workflow_id,
+                "phase": metadata.get("phase"),
+                "task_id": data.get("task_id"),
+                "agent": metadata.get("origin"),
+                "event": "task_completed_stale_artifact",
+                "decision": "audit",
+                "reason": "artifact-not-updated-after-task-completion",
+                "task_subject": data.get("task_subject", ""),
+            },
+        )
+        # Audit-only for now — blocking would be too aggressive since the model
+        # may update the artifact in the next turn. But the audit log entry
+        # creates an observable signal for stress tests.
+        sys.stderr.write(
+            f"CC10X WARNING: workflow artifact {artifact_path.name} appears stale "
+            f"after task completion (phase={metadata.get('phase')}, "
+            f"agent={metadata.get('origin')}). "
+            "Ensure the router updates the artifact with agent results before "
+            "proceeding.\n"
+        )
+
+    return 0
+
+
 def main() -> int:
     data = load_input()
     subject = data.get("task_subject", "")
@@ -89,29 +153,37 @@ def main() -> int:
         return 0
 
     missing = [item for item in REQUIRED_METADATA if item not in description]
-    if not missing:
-        return validate_memory_task_completion(data, metadata, mode)
-
-    log_event(
-        "plugin_task_completed_missing_metadata",
-        {
-            "wf": metadata.get("wf"),
-            "phase": metadata.get("phase"),
-            "task_id": data.get("task_id"),
-            "agent": metadata.get("origin"),
-            "event": "task_completed_guard",
-            "decision": "block" if mode.get("taskMetadata") == "block" else "audit",
-            "reason": ",".join(missing),
-            "task_subject": subject,
-        },
-    )
-    if mode.get("taskMetadata") == "block":
-        sys.stderr.write(
-            "CC10X task completion blocked: task description is missing metadata lines: "
-            + ", ".join(missing)
-            + "\n"
+    if missing:
+        log_event(
+            "plugin_task_completed_missing_metadata",
+            {
+                "wf": metadata.get("wf"),
+                "phase": metadata.get("phase"),
+                "task_id": data.get("task_id"),
+                "agent": metadata.get("origin"),
+                "event": "task_completed_guard",
+                "decision": "block" if mode.get("taskMetadata") == "block" else "audit",
+                "reason": ",".join(missing),
+                "task_subject": subject,
+            },
         )
-        return 2
+        if mode.get("taskMetadata") == "block":
+            sys.stderr.write(
+                "CC10X task completion blocked: task description is missing metadata lines: "
+                + ", ".join(missing)
+                + "\n"
+            )
+            return 2
+        return 0
+
+    # Metadata is complete — run the memory-task validator
+    result = validate_memory_task_completion(data, metadata, mode)
+    if result != 0:
+        return result
+
+    # Fix #3/#5: Check artifact freshness after any non-memory task
+    check_artifact_freshness(data, metadata, mode)
+
     return 0
 
 

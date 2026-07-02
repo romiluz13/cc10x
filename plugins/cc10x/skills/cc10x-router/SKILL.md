@@ -253,7 +253,7 @@ Bash(command="mkdir -p .cc10x/workflows && cp \"${CLAUDE_PLUGIN_ROOT}/skills/cc1
 Then `Edit` the copied file, replacing each placeholder token with the live value (the skeleton ships every required key already populated with safe defaults — you only fill these):
 
 - `__WORKFLOW_UUID__` → `{workflow_uuid}` (appears twice: `workflow_uuid` and `workflow_id`)
-- `__WORKFLOW_TYPE__` → `{WORKFLOW}` (BUILD | DEBUG | REVIEW | PLAN)
+- `__WORKFLOW_TYPE__` → `{WORKFLOW}` (BUILD | DEBUG | REVIEW | PLAN) — **if routing (§5) has not yet determined the workflow type, use `pending` and update it after §5 resolves.** Never hardcode BUILD before routing completes. The artifact may be created before routing (to capture state early), but `workflow_type` must reflect the actual routed type after §5.
 - `__USER_REQUEST__` → the user request (JSON-escape quotes/newlines)
 - `__PHASE__` → `{build|debug|review|plan}`
 - `__ISO_TIMESTAMP__` → the current UTC ISO timestamp (appears 3×: `status_history[0].ts`, `created_at`, `updated_at`)
@@ -629,7 +629,19 @@ If any answer is "no" or "unknown", treat as incomplete and apply the fallback v
    - quality/convergence state
    - status_history and remediation_history entries when decisions change workflow state
    - pending gate if waiting on user input
-6. Persist `[cc10x-internal] memory_task_id: {memory_task_id} wf:{workflow_uuid}` only if it matches the active workflow.
+   - **`updated_at` timestamp MUST be set to the current ISO timestamp** — a stale `updated_at` breaks resume logic and triggers the TaskCompleted guard's stale-artifact warning.
+   **READ-BACK GATE (MANDATORY):** After writing the artifact, Read it back and confirm:
+   - `updated_at` is set to a timestamp from THIS turn (not a prior turn)
+   - `results.{agent_name}` exists and contains the agent's contract fields
+   - If either check fails, rewrite the artifact immediately. Do not proceed to the next task.
+6. **Append event log entry:** For each result persisted to the artifact in step 5, append a matching entry to `.cc10x/workflows/{wf}.events.jsonl`:
+
+   ```json
+   {"ts":"<ISO>","wf":"<wf_id>","event":"result_persisted","phase":"<phase>","task_id":"<task_id>","agent":"<agent_name>","decision":"<contract_status>","reason":"<one-line summary>"}
+   ```
+
+   The event log MUST stay in sync with the artifact. A mutation without an event log entry is a desync that breaks the audit trail. (The PostToolUse guard auto-appends a fallback `artifact_mutated` event, but the router MUST write the semantic `result_persisted` entry with agent-specific metadata.)
+7. Persist `[cc10x-internal] memory_task_id: {memory_task_id} wf:{workflow_uuid}` only if it matches the active workflow.
 
 ### Verifier findings handoff
 

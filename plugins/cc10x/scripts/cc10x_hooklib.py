@@ -156,6 +156,34 @@ def workflow_event_log_contains(workflow_id: str | None, needle: str) -> bool:
         return False
 
 
+def workflow_event_log_append(workflow_id: str | None, event: dict[str, Any]) -> bool:
+    """Append a single event to the workflow event log.
+
+    Returns True on success, False on failure. Never raises.
+    """
+    if not workflow_id:
+        return False
+    path = workflows_dir() / f"{workflow_id}.events.jsonl"
+    try:
+        with path.open("a", encoding="utf-8") as fh:
+            fh.write(json.dumps(event, ensure_ascii=True) + "\n")
+        return True
+    except Exception:
+        return False
+
+
+def workflow_event_log_count(workflow_id: str | None) -> int:
+    """Count the number of lines in the event log."""
+    path = workflow_event_log_path(workflow_id)
+    if path is None:
+        return 0
+    try:
+        with path.open("r", encoding="utf-8") as fh:
+            return sum(1 for _ in fh)
+    except Exception:
+        return 0
+
+
 def workflow_event_log_exists(payload: dict[str, Any], artifact_path: Path) -> bool:
     workflow_uuid = payload.get("workflow_uuid") or payload.get("workflow_id")
     if not workflow_uuid:

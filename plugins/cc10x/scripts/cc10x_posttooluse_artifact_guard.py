@@ -17,9 +17,11 @@ from cc10x_hooklib import (
     load_input,
     load_mode,
     log_event,
+    now_iso,
     read_latest_workflow_state,
     read_workflow_state,
     workflow_artifact_is_fresh,
+    workflow_event_log_append,
     workflow_event_log_exists,
     workflows_dir,
 )
@@ -93,6 +95,26 @@ def main() -> int:
                 reasons.append("stale-artifact-write")
 
     if not reasons:
+        # Fix #2: auto-append event log entry when artifact is mutated.
+        # The router instructs the model to append events, but under context
+        # pressure the model may skip it. This hook ensures every artifact
+        # write gets a matching event log entry.
+        if target_is_artifact and payload:
+            wf_id = payload.get("workflow_uuid") or payload.get("workflow_id")
+            if wf_id:
+                workflow_event_log_append(
+                    wf_id,
+                    {
+                        "ts": now_iso(),
+                        "wf": wf_id,
+                        "event": "artifact_mutated",
+                        "phase": payload.get("phase_cursor", "unknown"),
+                        "task_id": None,
+                        "agent": "hook",
+                        "decision": "auto-logged",
+                        "reason": "posttool_guard_auto_append",
+                    },
+                )
         return 0
 
     decision = mode.get("artifactIntegrity", "audit")
