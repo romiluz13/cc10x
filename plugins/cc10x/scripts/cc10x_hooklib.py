@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 import json
 import os
-import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 STATE_VERSION = "v11"
 
@@ -46,7 +45,7 @@ def logs_dir() -> Path:
     return path
 
 
-def load_input() -> Dict[str, Any]:
+def load_input() -> dict[str, Any]:
     raw = sys.stdin.read()
     if not raw.strip():
         return {}
@@ -56,7 +55,7 @@ def load_input() -> Dict[str, Any]:
         return {}
 
 
-def load_mode() -> Dict[str, str]:
+def load_mode() -> dict[str, str]:
     path = plugin_config_dir() / "hook-mode.json"
     if not path.exists():
         return {
@@ -78,7 +77,7 @@ def now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def log_event(name: str, payload: Dict[str, Any]) -> None:
+def log_event(name: str, payload: dict[str, Any]) -> None:
     try:
         path = logs_dir() / "cc10x-hook-events.log"
         event = {
@@ -93,7 +92,7 @@ def log_event(name: str, payload: Dict[str, Any]) -> None:
         pass  # never fail the hook
 
 
-def latest_workflow_payload() -> Dict[str, Any]:
+def latest_workflow_payload() -> dict[str, Any]:
     payload, _, _ = read_latest_workflow_state()
     return payload
 
@@ -107,7 +106,7 @@ def latest_workflow_file() -> Path | None:
     return files[0]
 
 
-def read_latest_workflow_state() -> Tuple[Dict[str, Any], Path | None, str | None]:
+def read_latest_workflow_state() -> tuple[dict[str, Any], Path | None, str | None]:
     latest = latest_workflow_file()
     if latest is None:
         return {}, None, None
@@ -137,7 +136,7 @@ def workflow_event_log_path(workflow_id: str | None) -> Path | None:
 
 def read_workflow_state(
     workflow_id: str | None,
-) -> Tuple[Dict[str, Any], Path | None, str | None]:
+) -> tuple[dict[str, Any], Path | None, str | None]:
     path = workflow_artifact_path(workflow_id)
     if path is None:
         return {}, None, None
@@ -157,7 +156,7 @@ def workflow_event_log_contains(workflow_id: str | None, needle: str) -> bool:
         return False
 
 
-def workflow_event_log_exists(payload: Dict[str, Any], artifact_path: Path) -> bool:
+def workflow_event_log_exists(payload: dict[str, Any], artifact_path: Path) -> bool:
     workflow_uuid = payload.get("workflow_uuid") or payload.get("workflow_id")
     if not workflow_uuid:
         workflow_uuid = artifact_path.stem
@@ -173,8 +172,8 @@ def workflow_artifact_is_fresh(path: Path, max_age_seconds: int = 60) -> bool:
     return age <= max_age_seconds
 
 
-def parse_metadata(description: str) -> Dict[str, str]:
-    values: Dict[str, str] = {}
+def parse_metadata(description: str) -> dict[str, str]:
+    values: dict[str, str] = {}
     for line in description.splitlines():
         if ":" not in line:
             continue
@@ -185,7 +184,7 @@ def parse_metadata(description: str) -> Dict[str, str]:
     return values
 
 
-def json_print(payload: Dict[str, Any]) -> None:
+def json_print(payload: dict[str, Any]) -> None:
     print(json.dumps(payload, ensure_ascii=True))
 
 
@@ -212,34 +211,4 @@ def session_context(message: str) -> None:
     )
 
 
-def parse_markdown_sections(text: str) -> Dict[str, str]:
-    """Split markdown on ``## `` lines into {section_name: content_below}."""
-    sections: Dict[str, str] = {}
-    current: str | None = None
-    lines: List[str] = []
-    for raw_line in text.splitlines():
-        if raw_line.startswith("## "):
-            if current is not None:
-                sections[current] = "\n".join(lines)
-            current = raw_line[3:].strip()
-            lines = []
-        else:
-            lines.append(raw_line)
-    if current is not None:
-        sections[current] = "\n".join(lines)
-    return sections
 
-
-def extract_bullets(section_content: str) -> List[str]:
-    """Return all ``- `` prefixed lines from a section body."""
-    return [
-        line for line in section_content.splitlines() if line.lstrip().startswith("- ")
-    ]
-
-
-def normalize_bullet(line: str) -> str:
-    """Strip ``- `` prefix, collapse whitespace, and lowercase for dedup."""
-    text = line.lstrip()
-    if text.startswith("- "):
-        text = text[2:]
-    return re.sub(r"\s+", " ", text).strip().lower()
