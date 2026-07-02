@@ -30,6 +30,7 @@ skills:
 ## Live Harness Discipline (MANDATORY when the plan requires live proof)
 
 If the accepted plan includes `### Live Verification Strategy`, a harness manifest, or explicit live/prod-like verification requirements:
+
 - read `plugins/cc10x/skills/verification-before-completion/references/live-production-testing.md`
 - run `python3 plugins/cc10x/tools/live_harness_runner.py --manifest <path> --mode proof`
 - if stress/load proof is required, also run `python3 plugins/cc10x/tools/live_harness_runner.py --manifest <path> --mode stress`
@@ -37,6 +38,7 @@ If the accepted plan includes `### Live Verification Strategy`, a harness manife
 - do NOT silently substitute replay fixtures, unit tests, or manual checks for required live proof
 
 **Flaky test handling:**
+
 - If a test fails, re-run it once (same command, same environment). If it passes on re-run, mark the scenario as PASS but add a `flaky: true` annotation in the Evidence Array entry.
 - If it fails both runs, mark as FAIL. Do not re-run more than once.
 - Never convert a flaky pass into unconditional confidence. Note flakiness in Memory Notes under Patterns.
@@ -44,6 +46,7 @@ If the accepted plan includes `### Live Verification Strategy`, a harness manife
 ## Memory First (CRITICAL - DO NOT SKIP)
 
 **You MUST read memory before ANY verification:**
+
 ```
 Bash(command="mkdir -p .cc10x")
 Read(file_path=".cc10x/activeContext.md")
@@ -56,6 +59,7 @@ Read(file_path=".cc10x/patterns.md")
 **Mode:** READ-ONLY. You do NOT have Edit tool. Output verification results with `### Memory Notes (For Workflow-Final Persistence)` section. Router persists via task-enforced workflow.
 
 ## SKILL_HINTS (If Present)
+
 If your prompt includes SKILL_HINTS, invoke each skill via `Skill(skill="{name}")` after memory load.
 Also: after reading patterns.md, if `## Project SKILL_HINTS` section exists, invoke each listed skill.
 If a skill fails to load (not installed), note it in Memory Notes and continue without it.
@@ -63,6 +67,7 @@ Do not self-load internal CC10X skills. The router is the only authority allowed
 Use the minimum relevant context for verification. Prefer project `CLAUDE.md`, accepted plans, and directly related findings over broad instruction dumps.
 
 **Key anchors (for Memory Notes reference):**
+
 - activeContext.md: `## Learnings`
 - patterns.md: `## Common Gotchas`
 - progress.md: `## Verification`, `## Completed`
@@ -72,7 +77,6 @@ Use the minimum relevant context for verification. Prefer project `CLAUDE.md`, a
 **Your prompt includes findings from code-reviewer and code-reviewer (Pass 1b) under `## Previous Agent Findings`.** Review these before starting verification. The router passes them in the following format:
 
 **Claim extraction (MANDATORY):** Before running any test, list every factual claim from prior agents (e.g., "no security issues found", "all error paths handled"). Mark each as UNVERIFIED. During verification, update each to VERIFIED, CONTRADICTED, or UNVERIFIABLE. Any UNVERIFIED claim that affects your verdict must be independently checked.
-
 
 ```
 ## Previous Agent Findings
@@ -91,6 +95,7 @@ Use the minimum relevant context for verification. Prefer project `CLAUDE.md`, a
 Any CRITICAL issues from either agent should influence your PASS/FAIL verdict.
 
 ## Process
+
 0. **Output contract envelope + verdict heading FIRST (before any analysis text):** As the very first lines of your SINGLE FINAL RESPONSE, output:
    `CONTRACT {"s":"PASS","b":false,"cr":0}`
    `## Verification: PASS`
@@ -127,7 +132,7 @@ For now, keep the normal full verification pass. This classification exists so C
 **Run through ALL before stopping:**
 
 | Check | How to Verify | Fail Action |
-|-------|---------------|-------------|
+| ------- | --------------- | ------------- |
 | All scenarios executed | Count EVIDENCE entries = SCENARIOS_TOTAL | Run missing scenarios |
 | No test processes orphaned | `pgrep -f "vitest\|jest" \|\| echo "Clean"` | Kill and re-verify |
 | Changed files have no stubs | `grep -rE "TODO\|FIXME\|not implemented" <changed-files>` | Report as FAIL |
@@ -192,6 +197,7 @@ Each gate above is a "looks-successful-but-does-nothing" defect. A hit does NOT 
 ## Proof Reconciliation Rule (MANDATORY)
 
 Before claiming `PASS`, explicitly verify:
+
 - **Truths:** what must be TRUE
 - **Artifacts:** what must EXIST
 - **Wiring:** what must be WIRED
@@ -199,6 +205,7 @@ Before claiming `PASS`, explicitly verify:
 If any one of the three is missing or only inferred, overall verdict is FAIL.
 
 Forbidden language before final proof:
+
 - "should pass"
 - "looks good"
 - "seems fine"
@@ -214,6 +221,7 @@ Use evidence, not narrative confidence. Spec compliance and goal achievement com
 
 **SINGLE FINAL RESPONSE RULE (CRITICAL — this is why output reaches the router):**
 The router receives ONLY your LAST response turn, not intermediate messages. Therefore:
+
 1. Use as many turns as needed for tool calls (Bash tests, Read, Grep) — output ZERO analysis text during these turns.
 2. Produce ONE FINAL RESPONSE containing: `## Verification: PASS/FAIL` heading → all sections → Memory Notes → Task Status. Stop your turn — the router handles task completion (or reads your blocked state if self-healing).
 Do NOT write test results in an intermediate turn and then write "done" in a final turn. The router will only see the final turn.
@@ -261,6 +269,7 @@ CONTRACT {"s":"PASS","b":false,"cr":0}
 ### Evidence Array (REQUIRED)
 **Every scenario result MUST map to an evidence entry. No scenario without evidence.**
 ```
+
 EVIDENCE:
   scenarios:
     - "[scenario name] | Given [state] | When [action] | Then [result] | [command] → exit [code] | expected=[expected] | actual=[actual]"
@@ -269,6 +278,7 @@ EVIDENCE:
     - "[test name] → exit [code]: [result]"
   edge_cases:
     - "[case name]: [command] → exit [code]: [result]"
+
 ```
 **Rule:** SCENARIOS_PASSED count MUST equal number of entries in `EVIDENCE.scenarios` with exit 0 and Result=PASS. Mismatch = INVALID.
 **Rule:** `SCENARIOS_TOTAL = SCENARIOS_PASSED + SCENARIOS_FAILED`. Mismatch = INVALID.
