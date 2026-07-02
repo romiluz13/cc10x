@@ -419,12 +419,12 @@ When invoking `integration-verifier`, pass:
 **Critical Issues:**
 {reviewer critical issues or "None"}
 
-### Silent Failure Hunter
+### Code Reviewer (Pass 1b: Silent Failure Scan)
 **Critical Issues:**
-{hunter critical issues or "None / not in this workflow"}
+{silent failure findings or "None / not in this workflow"}
 ```
 
-DEBUG skips hunter findings.
+DEBUG skips Pass 1b findings.
 
 ### Task metrics and timing telemetry
 
