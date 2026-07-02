@@ -39,7 +39,7 @@ def main() -> int:
         "source": "stop",
     }
     try:
-        out = state_root() / "precompact-state.json"
+        out = state_root() / "stop-state.json"
         out.write_text(json.dumps(snapshot, ensure_ascii=True), encoding="utf-8")
     except Exception:
         pass  # never fail the hook
