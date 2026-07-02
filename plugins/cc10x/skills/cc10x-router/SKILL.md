@@ -388,16 +388,14 @@ Optional sections:
 ### Deterministic skill hints
 
 - Router is the only authority allowed to load internal CC10X skills.
-- Agents may not self-activate `frontend` or `architecture-patterns`.
-- Include `cc10x:frontend` only when the request, changed files, plan, or design clearly targets UI/frontend work.
+- Agents may not self-activate `frontend` or `architecture`.
+- Include `cc10x:frontend` only when the request, changed files, plan, or design targets UI/frontend work. The skill has two modes: authoring (build UI with patterns) and critique (score built UI). Router selects mode via dispatch context.
 - Include `cc10x:architecture` only for multi-component, API, schema, auth, or integration-heavy work.
 - Include `cc10x:research` only when planner or investigator receives `## Research Files`.
-- Include `cc10x:exploration` only on an explicit de-risk/spike intent ("spike", "try out", "what should this look like", "prototype", "throwaway") — never as the default for a real build. Absorbing a spike's answer is a fresh gated BUILD, not promotion.
-- Include `cc10x:codebase-hygiene` only when the code-reviewer is asked for a reuse/consolidation audit or the request explicitly targets semantic duplication.
+- Include `cc10x:exploration` only on an explicit de-risk/spike intent ("spike", "try out", "what should this look like", "prototype", "throwaway") — never as the default for a real build. The skill has two modes: design (brainstorm a design) and spike (throwaway prototype). Absorbing a spike's answer is a fresh gated BUILD, not promotion.
+- Include `cc10x:codebase-hygiene` only when (a) the code-reviewer is asked for a reuse/consolidation audit or the request targets semantic duplication, OR (b) the request targets retrofitting/deepening shallow modules in EXISTING code (not greenfield architecture, which stays `cc10x:architecture`). The skill has two modes: duplicate detection and module deepening.
 - Include `cc10x:mcp-cli` only when a researcher needs a one-off MCP capability that is not already mounted.
 - Include `cc10x:code-review` only when a human/external reviewer's feedback (pasted PR comments, review notes, "can you change X") must be acted on — it governs verify-before-agreeing in the MAIN session, not the internal reviewer→router→fix loop.
-- Include `cc10x:codebase-hygiene` only when the request targets retrofitting/deepening shallow modules in EXISTING code (not greenfield architecture, which stays `cc10x:architecture`).
-- Include `cc10x:frontend` only when reviewing the visual/UX QUALITY of built UI (scoring/slop-check) — distinct from `cc10x:frontend` (authoring guidance).
 - Include `cc10x:memory-and-handoff` only when work is being handed to a coworker, a different tool, or a fresh non-cc10x session.
 - Include project/domain skills only from `patterns.md ## Project SKILL_HINTS`.
 
