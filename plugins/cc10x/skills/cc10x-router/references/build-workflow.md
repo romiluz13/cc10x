@@ -1,5 +1,12 @@
 ### BUILD preparation
 
+**Target repo (`CC10X_REPO_DIR`) — resolve before everything below.** By default every git command, dependency install, and test run in this workflow operates on the **process cwd**. To drive a build against a repo that is NOT the session cwd (a sibling repo, one package in a multi-repo checkout, or a repo reached from a parent dir), set `CC10X_REPO_DIR` to that repo's absolute path; then for the REST of this workflow:
+- prefix every git command with it — `git -C "$CC10X_REPO_DIR" <cmd>` — covering the `0a` pre-flight, the `11a` per-phase BASE, the final-review `merge-base`, and the finishing checkout/pull/merge/branch/worktree ops;
+- run the `0b` dependency install and the `0c` baseline + every verify test command with that repo as the working directory;
+- pass `--repo "$CC10X_REPO_DIR"` to `scripts/cc10x_review_package.py` (it also reads the env var directly).
+
+The orchestration state dir (`.cc10x/`) and the workflow artifacts STAY at `CLAUDE_PROJECT_DIR` / the session cwd — only the git/build/test SOURCE moves, never where cc10x writes its state. When `CC10X_REPO_DIR` is unset, behavior is exactly as today (process cwd). Record the resolved target under `results.target_repo` so downstream steps and resume use the same repo.
+
 0. **Workspace isolation offer (optional, runs once per workflow, before any builder dispatch).**
    - Skip entirely when `build_scope=trivial` (resolved in step 4) or when already inside a linked worktree. Record `worktree=existing` and continue.
    - If a native worktree primitive is available (a tool named `EnterWorktree`, a `/worktree` command, or a `--worktree` flag), prefer it. In `JUST_GO` mode invoke it on the recommended default; otherwise offer one `AskUserQuestion`: `Isolate in a worktree (Recommended)` or `Work in current branch`. On accept, defer to the native primitive (it owns directory placement, branch creation, and cleanup) and record `worktree=native`.
@@ -56,17 +63,14 @@
 10. Clarify missing requirements before builder only when the plan and memory do not already answer them.
 11. Persist pre-answered clarifications in `activeContext.md ## Decisions` using `Build clarification [{topic}]: {answer}`.
 11a. **Record the per-phase BASE sha (runs each phase, before that phase's builder is dispatched).**
-
-- Capture current `HEAD` (`git rev-parse HEAD`) into the workflow artifact under `results.git_base_sha`. Re-record it at the start of EVERY phase, not once per workflow — one sha per phase, overwritten as `phase_cursor` advances.
-- This BASE is the producer side of the recorded-BASE discipline: it is exactly what the downstream review / verify / doc agents diff against (`BASE..HEAD`), and it is the BASE argument passed to `tools/review_package.py`. Recording it BEFORE the builder runs guarantees the diff captures only this phase's work, never a prior phase's already-reviewed changes.
-- If `git_preflight=degraded` blocks `git rev-parse`, record `git_base_sha=unavailable` and continue; downstream agents then fall back to reviewing the working-tree diff and say so explicitly.
-
-1. Builder may execute only the phase at `phase_cursor`.
-2. Router handoff for the current BUILD phase must be phase-local:
-
-- include only the current phase objective, inputs, expected artifacts, required checks, checkpoint type, exit criteria, and approved clarifications still in force
-- include prior-phase detail only when it remains an active blocker, dependency, or unresolved finding
-- do not rehydrate broad historical narrative when the workflow artifact already captures it
+   - Capture current `HEAD` (`git rev-parse HEAD`, or `git -C "$CC10X_REPO_DIR" rev-parse HEAD` when a target repo is set) into the workflow artifact under `results.git_base_sha`. Re-record it at the start of EVERY phase, not once per workflow — one sha per phase, overwritten as `phase_cursor` advances.
+   - This BASE is the producer side of the recorded-BASE discipline: it is exactly what the downstream review / verify / doc agents diff against (`BASE..HEAD`), and it is the BASE argument passed to `tools/review_package.py`. Recording it BEFORE the builder runs guarantees the diff captures only this phase's work, never a prior phase's already-reviewed changes.
+   - If `git_preflight=degraded` blocks `git rev-parse`, record `git_base_sha=unavailable` and continue; downstream agents then fall back to reviewing the working-tree diff and say so explicitly.
+12. Builder may execute only the phase at `phase_cursor`.
+13. Router handoff for the current BUILD phase must be phase-local:
+   - include only the current phase objective, inputs, expected artifacts, required checks, checkpoint type, exit criteria, and approved clarifications still in force
+   - include prior-phase detail only when it remains an active blocker, dependency, or unresolved finding
+   - do not rehydrate broad historical narrative when the workflow artifact already captures it
 
 ### BUILD task graph
 
@@ -193,9 +197,8 @@ cc10x gates EACH phase against its own per-phase BASE, but it never re-reviews t
 - At most once per workflow.
 
 **How it runs (reuse existing machinery — do NOT invent a new agent):**
-
-1. Compute `MERGE_BASE = git merge-base <base-branch> HEAD`. If `git_preflight=degraded` blocks this, skip the pass and note it.
-2. Produce the whole-branch diff package via `tools/review_package.py MERGE_BASE HEAD` (note: this is `MERGE_BASE..HEAD` across ALL phases, not a single phase's `results.git_base_sha..HEAD`).
+1. Compute `MERGE_BASE = git merge-base <base-branch> HEAD` (use `git -C "$CC10X_REPO_DIR"` when a target repo is set). If `git_preflight=degraded` blocks this, skip the pass and note it.
+2. Produce the whole-branch diff package via `tools/review_package.py MERGE_BASE HEAD` (add `--repo "$CC10X_REPO_DIR"` when targeting a non-cwd repo). Note: this is `MERGE_BASE..HEAD` across ALL phases, not a single phase's `results.git_base_sha..HEAD`.
 3. Dispatch exactly ONE `code-reviewer` over that whole-branch package, scoped to cross-phase concerns (seam misuse, contract drift, duplicated/diverged abstractions introduced across phases).
 4. If the reviewer returns findings, run ONE consolidated fix wave — a single remediation `component-builder` addressing all findings together, NOT one fixer per finding — then re-verify with one `integration-verifier` against `results.baseline`. If it returns no findings, record clean and proceed.
 5. Record the outcome in the workflow artifact (`results.final_branch_review`) before advancing to the finishing menu.
@@ -232,8 +235,7 @@ Finishing is a router-owned, optional step that runs AFTER the final phase's `in
 5. Persist the finishing decision into the workflow artifact (`results.finishing.choice`) and append a `build_finished` event to the event log. Then advance to Memory Update.
 
 **Merge-then-cleanup ordering invariant (`Merge to base branch locally`):**
-Execute these steps STRICTLY in order; do not reorder, and do not start teardown until the post-merge gate is green. A branch that was clean before merge can break after merging onto a moved base — that is exactly what the post-merge re-run catches.
-
+Execute these steps STRICTLY in order; do not reorder, and do not start teardown until the post-merge gate is green. A branch that was clean before merge can break after merging onto a moved base — that is exactly what the post-merge re-run catches. When `CC10X_REPO_DIR` is set, EVERY git command in this block runs against it (`git -C "$CC10X_REPO_DIR" checkout/pull/merge/branch`) and the post-merge test re-run uses it as the working directory — these are destructive ops, so targeting the wrong repo here is the most damaging cwd-confusion of all.
 1. `git checkout <base>` (the branch the work targets).
 2. `git pull` to bring the base up to date.
 3. `git merge <work-branch>` (no force).
