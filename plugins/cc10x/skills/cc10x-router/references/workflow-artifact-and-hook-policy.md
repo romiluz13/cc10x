@@ -227,8 +227,8 @@ Rules:
 - This reuses the existing artifact schema and `.cc10x/` workflow namespace: `state_root` is `.cc10x`, evidence is grouped under `evidence` and `results`, and handoff reads structured data from the workflow artifact, not from pasted conversation history.
 
 Producers (dispatch-by-reference is now realized, not just prescribed):
-- The `diff-package path` above is PRODUCED by `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/cc10x_review_package.py" BASE [HEAD]`, which writes `.cc10x/review-<base7>..<head7>.diff` (commits + `git diff --stat` + `git diff -U10`) and prints the path. BASE must be the sha recorded before the phase started, NEVER `HEAD~1` (which silently drops all but the last commit of a multi-commit phase).
-- The per-phase brief is PRODUCED by `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/cc10x_phase_brief.py" PLAN_FILE PHASE`, which slices one approved phase out of the plan into `.cc10x/phase-<PHASE>-brief.md` and prints the path. Pass that path in the dispatch prompt instead of pasting the phase body.
+- The `diff-package path` above is PRODUCED by `python3 "${CLAUDE_PLUGIN_ROOT}/tools/review_package.py" BASE [HEAD]`, which writes `.cc10x/review-<base7>..<head7>.diff` (commits + `git diff --stat` + `git diff -U10`) and prints the path. BASE must be the sha recorded before the phase started, NEVER `HEAD~1` (which silently drops all but the last commit of a multi-commit phase).
+- The per-phase brief is PRODUCED by `python3 "${CLAUDE_PLUGIN_ROOT}/tools/phase_brief.py" PLAN_FILE PHASE`, which slices one approved phase out of the plan into `.cc10x/phase-<PHASE>-brief.md` and prints the path. Pass that path in the dispatch prompt instead of pasting the phase body.
 
 ## 8. Post-Agent Validation Contracts {#contracts}
 

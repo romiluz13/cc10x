@@ -50,8 +50,8 @@ Always include a `### Live Verification Strategy` section with:
 The verifier uses the generic runner:
 
 ```bash
-python3 plugins/cc10x/scripts/cc10x_live_harness_runner.py --manifest <path> --mode proof
-python3 plugins/cc10x/scripts/cc10x_live_harness_runner.py --manifest <path> --mode stress
+python3 plugins/cc10x/tools/live_harness_runner.py --manifest <path> --mode proof
+python3 plugins/cc10x/tools/live_harness_runner.py --manifest <path> --mode stress
 ```
 
 Build the plan around those commands so live proof remains deterministic enough to audit.

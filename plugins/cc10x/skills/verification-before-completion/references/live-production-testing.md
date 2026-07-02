@@ -11,8 +11,8 @@ Produce proof from the real first-party system, not from mocks, narrative confid
 Run the harness with the manifest selected by the plan:
 
 ```bash
-python3 plugins/cc10x/scripts/cc10x_live_harness_runner.py --manifest <path> --mode proof
-python3 plugins/cc10x/scripts/cc10x_live_harness_runner.py --manifest <path> --mode stress
+python3 plugins/cc10x/tools/live_harness_runner.py --manifest <path> --mode proof
+python3 plugins/cc10x/tools/live_harness_runner.py --manifest <path> --mode stress
 ```
 
 ## Fail-Closed Rules

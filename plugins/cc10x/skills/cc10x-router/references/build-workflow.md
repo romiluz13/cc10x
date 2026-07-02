@@ -57,7 +57,7 @@
 11. Persist pre-answered clarifications in `activeContext.md ## Decisions` using `Build clarification [{topic}]: {answer}`.
 11a. **Record the per-phase BASE sha (runs each phase, before that phase's builder is dispatched).**
    - Capture current `HEAD` (`git rev-parse HEAD`) into the workflow artifact under `results.git_base_sha`. Re-record it at the start of EVERY phase, not once per workflow — one sha per phase, overwritten as `phase_cursor` advances.
-   - This BASE is the producer side of the recorded-BASE discipline: it is exactly what the downstream review / verify / doc agents diff against (`BASE..HEAD`), and it is the BASE argument passed to `scripts/cc10x_review_package.py`. Recording it BEFORE the builder runs guarantees the diff captures only this phase's work, never a prior phase's already-reviewed changes.
+   - This BASE is the producer side of the recorded-BASE discipline: it is exactly what the downstream review / verify / doc agents diff against (`BASE..HEAD`), and it is the BASE argument passed to `tools/review_package.py`. Recording it BEFORE the builder runs guarantees the diff captures only this phase's work, never a prior phase's already-reviewed changes.
    - If `git_preflight=degraded` blocks `git rev-parse`, record `git_base_sha=unavailable` and continue; downstream agents then fall back to reviewing the working-tree diff and say so explicitly.
 12. Builder may execute only the phase at `phase_cursor`.
 13. Router handoff for the current BUILD phase must be phase-local:
@@ -158,7 +158,7 @@ TaskUpdate({ taskId: memory_task_id, addBlockedBy: [doc_sync_task_id] })
 
 The documented default is unchanged: **one `component-builder` per phase**, dispatched per the graphs above. This mode is a bounded escape hatch, not a replacement.
 
-When an approved phase decomposes into multiple INDEPENDENT logical tasks AND the phase is large enough that a single builder's context would bloat, the router MAY rotate a fresh `component-builder` per task within that phase instead of one builder for the whole phase. Each task gets its own `cc10x_phase_brief`-style task brief, its own recorded BASE (`results.git_base_sha`, re-recorded per task exactly as preparation step 11a does per phase), and its own review.
+When an approved phase decomposes into multiple INDEPENDENT logical tasks AND the phase is large enough that a single builder's context would bloat, the router MAY rotate a fresh `component-builder` per task within that phase instead of one builder for the whole phase. Each task gets its own `phase_brief`-style task brief, its own recorded BASE (`results.git_base_sha`, re-recorded per task exactly as preparation step 11a does per phase), and its own review.
 
 **Explicit trigger (all must hold):** the phase has 3+ separable tasks AND those tasks share NO in-flight state (no task depends on another task's uncommitted output). If any two tasks touch shared in-flight state, they are not independent — keep them in one builder.
 
@@ -188,7 +188,7 @@ cc10x gates EACH phase against its own per-phase BASE, but it never re-reviews t
 
 **How it runs (reuse existing machinery — do NOT invent a new agent):**
 1. Compute `MERGE_BASE = git merge-base <base-branch> HEAD`. If `git_preflight=degraded` blocks this, skip the pass and note it.
-2. Produce the whole-branch diff package via `scripts/cc10x_review_package.py MERGE_BASE HEAD` (note: this is `MERGE_BASE..HEAD` across ALL phases, not a single phase's `results.git_base_sha..HEAD`).
+2. Produce the whole-branch diff package via `tools/review_package.py MERGE_BASE HEAD` (note: this is `MERGE_BASE..HEAD` across ALL phases, not a single phase's `results.git_base_sha..HEAD`).
 3. Dispatch exactly ONE `code-reviewer` over that whole-branch package, scoped to cross-phase concerns (seam misuse, contract drift, duplicated/diverged abstractions introduced across phases).
 4. If the reviewer returns findings, run ONE consolidated fix wave — a single remediation `component-builder` addressing all findings together, NOT one fixer per finding — then re-verify with one `integration-verifier` against `results.baseline`. If it returns no findings, record clean and proceed.
 5. Record the outcome in the workflow artifact (`results.final_branch_review`) before advancing to the finishing menu.

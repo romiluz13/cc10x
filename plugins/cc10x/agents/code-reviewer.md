@@ -47,7 +47,7 @@ Do not self-activate internal CC10X skills, including `cc10x:frontend-patterns`.
 - progress.md: `## Verification`
 
 ## Git Context (Before Review)
-When the router provides a diff-package path (produced by `scripts/cc10x_review_package.py BASE [HEAD]`), that package IS the canonical diff — use it and skip the commands below.
+When the router provides a diff-package path (produced by `tools/review_package.py BASE [HEAD]`), that package IS the canonical diff — use it and skip the commands below.
 Otherwise, review the recorded phase range `results.git_base_sha..HEAD` — a BUILD phase legitimately makes MULTIPLE commits (TDD red/green/refactor), so working-tree-only `git diff HEAD` misses earlier committed work.
 ```
 git status                                    # What's changed
