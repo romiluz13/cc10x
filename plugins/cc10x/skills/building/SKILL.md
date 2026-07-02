@@ -12,6 +12,17 @@ user-invocable: false
 
 **Iron Law:** NO PRODUCTION CODE WITHOUT A FAILING TEST FIRST.
 
+## Leading Words (compact vocabulary)
+
+| Word | Means | Replaces |
+| ------ | ------- | ---------- |
+| **red** | Failing test (behavioral, not error) | "write a test that fails because the feature is missing" |
+| **green** | Passing test after minimal code | "write just enough code to make the test pass" |
+| **tight** | Fast, deterministic, sub-second feedback loop | "build a quick repro that runs fast and is reliable" |
+| **deep** | Module with small interface, lots hidden inside | "well-abstracted module that hides complexity" |
+| **shallow** | Module with interface as complex as implementation | "thin wrapper that adds complexity without hiding any" |
+| **seam** | Place where a test can attach to exercise real behavior | "test insertion point at a module boundary" |
+
 ## Reference Files
 
 - `references/testing-patterns.md` — test structure, isolation, naming

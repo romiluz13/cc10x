@@ -6,6 +6,7 @@ color: blue
 tools: Read, Write, Edit, Bash, WebFetch, WebSearch, TaskUpdate
 skills:
   - cc10x:agent-common
+  - cc10x:mcp-cli
 ---
 
 # Researcher

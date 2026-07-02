@@ -11,6 +11,17 @@
             "statusMessage": "CC10X protected-write guard"
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/cc10x_git_guard.py\"",
+            "timeout": 5,
+            "statusMessage": "CC10X git guardrails"
+          }
+        ]
       }
     ],
     "SessionStart": [

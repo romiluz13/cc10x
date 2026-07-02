@@ -542,6 +542,21 @@ Convergence rule:
 
 - See `references/remediation-and-research.md` and apply its `## 11. Re-Review Loop` block whenever a `kind:remfix` task completes.
 
+## 11b. Loop Discipline (Vocabulary)
+
+The harness is a loop engine. These concepts govern how the loop runs:
+
+| Concept | Meaning |
+| --------- | --------- |
+| **Trigger** | The event that starts or resumes a loop iteration — user request, agent completion, checkpoint resolution. Every loop iteration has exactly one trigger. |
+| **Checkpoint** | A point where the loop pauses for human input. Only on irreversible actions, real scope changes, or input only the user can provide. Checkpoints are NOT for narration or "want me to continue?" prompts. |
+| **Push right** | Defer checkpoints as far as possible — do maximal work before involving the human. The loop should never stop on a promise or plan when it could act. If the next step is reversible and follows from the original request, proceed without asking. |
+| **Brief** | The decision-ready summary the loop produces when pausing. Not raw output, not a diary — the one thing the human needs to decide next. Outcome first, supporting detail second. |
+| **Cycle** | One complete plan → build → verify → learn iteration. The circuit breaker caps cycles at 3 before requiring a human checkpoint. |
+| **Convergence** | The loop's quality signal — when `quality.convergence_state` transitions from `needs_iteration` to `converged`, the loop is complete. Never declare convergence on prose alone. |
+
+**Autonomous mode:** When the user sets a goal that spans multiple iterations (e.g., `/goal` or explicit "do this end-to-end"), the loop runs without checkpointing for reversible actions. The user is not watching in real time and cannot answer questions mid-task. Before ending a turn, check the last paragraph — if it is a plan, analysis, question, list of next steps, or a promise about work not yet done, do that work now with tool calls. End the turn only when the task is complete or blocked on input only the user can provide.
+
 ## 12. Chain Execution Loop
 
 ```text
@@ -559,9 +574,9 @@ Convergence rule:
    - continue
 4. Otherwise, map each runnable task through the dispatcher table.
 5. If `code-reviewer` is ready in BUILD:
-   - mark both in_progress first
-   - invoke them in the same message
-   - If parallel invocation fails or is unavailable (API error, rate limit): fall back to sequential execution (reviewer first, then hunter). Never block a workflow because parallelism is unavailable. Log `event=parallel_fallback` in the workflow event log.
+   - mark it in_progress first
+   - invoke it (it handles both correctness review and Pass 1b silent failure scan)
+   - If parallel invocation of multiple agents is needed but unavailable: fall back to sequential execution. Never block a workflow because parallelism is unavailable. Log `event=parallel_fallback` in the workflow event log.
 6. After each agent returns:
    - capture memory payload immediately
    - validate output

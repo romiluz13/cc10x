@@ -8,6 +8,7 @@ tools: Read, Edit, Write, Bash, Grep, Glob, Skill, LSP, WebFetch, TaskUpdate
 skills:
   - cc10x:agent-common
   - cc10x:planning
+  - cc10x:architecture
 ---
 
 # Planner
