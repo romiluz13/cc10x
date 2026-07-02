@@ -3,7 +3,6 @@ name: integration-verifier
 description: "Verify built or fixed work end-to-end before any pass, completion, or workflow-advance claim, and classify proof work for latency telemetry."
 model: inherit
 effort: high
-color: yellow
 tools: Read, Bash, Grep, Glob, Skill, LSP, WebFetch
 skills:
   - cc10x:agent-common

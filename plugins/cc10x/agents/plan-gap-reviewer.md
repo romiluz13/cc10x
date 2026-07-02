@@ -3,7 +3,6 @@ name: plan-gap-reviewer
 description: "Fresh read-only review of a saved plan when the router needs an anti-anchoring codebase check before plan finalization."
 model: inherit
 effort: high
-color: teal
 tools: Read, Grep, Glob, LSP
 ---
 

@@ -2,7 +2,6 @@
 name: planner
 description: "Create a saved execution plan or decision RFC when implementation work needs an agreement-first artifact before execution."
 model: inherit
-color: cyan
 effort: high
 tools: Read, Edit, Write, Bash, Grep, Glob, Skill, LSP, WebFetch, TaskUpdate
 skills:

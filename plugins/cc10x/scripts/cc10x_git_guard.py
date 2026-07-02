@@ -9,6 +9,7 @@ PreToolUse hook for Bash commands. Blocks:
 - git checkout . (discard all changes)
 - git checkout -- . (discard all changes)
 """
+
 import json
 import re
 import sys
@@ -17,11 +18,23 @@ import sys
 BLOCKED_PATTERNS = [
     (r"\bgit\s+push\b", "git push — pushing to remote. Use a branch and PR instead."),
     (r"\bgit\s+reset\s+--hard\b", "git reset --hard — destroys uncommitted changes."),
-    (r"\bgit\s+clean\s+-[a-z]*f[a-z]*\b", "git clean -f — removes untracked files permanently."),
+    (
+        r"\bgit\s+clean\s+-[a-z]*f[a-z]*\b",
+        "git clean -f — removes untracked files permanently.",
+    ),
     (r"\bgit\s+branch\s+-D\b", "git branch -D — force-deletes a branch."),
-    (r"\bgit\s+checkout\s+\.\s*$", "git checkout . — discards all uncommitted changes."),
-    (r"\bgit\s+checkout\s+--\s+\.\s*$", "git checkout -- . — discards all uncommitted changes."),
-    (r"\bgit\s+checkout\s+\*\s*$", "git checkout * — discards all uncommitted changes."),
+    (
+        r"\bgit\s+checkout\s+\.\s*$",
+        "git checkout . — discards all uncommitted changes.",
+    ),
+    (
+        r"\bgit\s+checkout\s+--\s+\.\s*$",
+        "git checkout -- . — discards all uncommitted changes.",
+    ),
+    (
+        r"\bgit\s+checkout\s+\*\s*$",
+        "git checkout * — discards all uncommitted changes.",
+    ),
 ]
 
 
