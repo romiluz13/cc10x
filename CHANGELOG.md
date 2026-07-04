@@ -1,5 +1,71 @@
 # Changelog
 
+## [12.4.0] - 2026-07-05
+
+### Fixed: Brutal audit findings — de-duplicated skills, wired decorative patterns, hook-enforced circuit breaker
+
+A read-only adversarial self-audit found that several "18 patterns" additions from
+v12.3.0 had genuine defects — not stylistic quibbles, but content that had already
+drifted into self-contradiction, and infrastructure that was never actually wired
+into the execution path.
+
+#### De-duplication (content had drifted into contradiction, not "reinforcement")
+
+- `code-review/SKILL.md`: two different Fowler smell lists (one had "Long Parameter
+  List" duplicated within itself), two contradictory Residual Findings mechanisms
+  (CONTRACT-based vs file-based), two AI-anti-pattern lists, two Metric Honesty
+  wordings — merged into one canonical version each
+- `exploration/SKILL.md`: Doubt-Driven Development existed twice with **conflicting
+  stop thresholds** (3 cycles vs "2+ cycles" vs "3-cycle cap") — merged into one
+  consistent 5-step cycle with a single stop rule
+- `architecture/SKILL.md`: Deletion Test + Two-Adapter Rule defined twice, never
+  referenced by the actual Phase 1-3 design process — merged into one definition
+  and wired into Phase 3 (Design Components)
+
+#### Wired up decorative patterns instead of leaving them inert
+
+- **Knowledge Compounding Loop**: added a real conditional step to router §13
+  Memory Finalization (checks debug-attempt count, blast-radius file count, or
+  contradicted-assumption signal; writes `docs/solutions/{category}/{slug}.md`
+  when criteria are met). Created `docs/solutions/README.md` as a real target.
+  Wired "Ground" step into `planning/SKILL.md` and `debugging/SKILL.md` (both now
+  check `docs/solutions/` before starting). Added `mkdir -p docs/solutions` to the
+  setup wizard's permissions template.
+- **Residual Review Findings**: deleted the disconnected file-based mechanism
+  entirely. It duplicated the *already-working* `deferred_findings` array (which
+  the router already populates from reviewer/hunter Minor findings and surfaces
+  at BUILD-DONE triage) — replaced with a pointer to that real mechanism instead
+  of inventing a second, unwired one.
+- **Doubt-Driven Development**: added a router trigger in `plan-workflow.md` —
+  offered automatically for `decision_rfc` plan mode or `critical_path`
+  verification rigor, instead of only firing if an agent happens to invoke it
+  unprompted.
+
+#### Hook-enforced the circuit breaker (same bug class as the agent-name-conflict bug)
+
+- The 3-cycle remediation circuit breaker was 100% LLM-counted with zero hook
+  backing — the same failure class that caused the earlier `silent-failure-hunter`
+  substitution bug (a "MANDATORY" rule with nothing forcing compliance).
+- Added a mandatory `remediation_history` append instruction to REM-FIX task
+  creation (`remediation-and-research.md`).
+- Added `check_circuit_breaker()` to `cc10x_task_completed_guard.py`: on every
+  `kind:remfix` task completion, counts `remediation_history` entries in the
+  workflow artifact independently of the router's own counting, and flags/blocks
+  when the count exceeds 3.
+
+#### Corrected prior mis-verification
+
+- Re-verified agent `color:` against live Claude Code docs: the actual valid list
+  is exactly 8 values (`red, blue, green, yellow, purple, orange, pink, cyan`) —
+  a prior turn's advice suggesting `gray/magenta/white/black` (from binary-string
+  extraction, not doc verification) was wrong, though never applied to code.
+- Re-verified `skills:` frontmatter loading: confirmed (via live docs) that listed
+  skills are **fully injected at every dispatch**, not lazily loaded — meaning the
+  duplicated content found above was being paid for twice, on every single
+  invocation of `code-reviewer`/`bug-investigator`, until this release.
+
+Version: 12.4.0
+
 ## [12.3.1] - 2026-07-02
 
 ### Fix: Agent name conflict resolution

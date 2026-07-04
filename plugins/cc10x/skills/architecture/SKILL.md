@@ -55,6 +55,8 @@ For each component:
 - **State:** what it remembers (if anything)
 - **Error handling:** what can go wrong and what it does about it
 
+**Before finalizing any component boundary, apply the Deletion Test and Two-Adapter Rule (defined below under Architecture Vocabulary).** A component that fails the deletion test (complexity vanishes if deleted) or fails the two-adapter rule (only one caller/adapter exists) is not a real boundary yet — fold it into its caller or defer the split until a second concrete need appears.
+
 ## Architecture Views
 
 ### System Context (C4 Level 1)
@@ -130,31 +132,36 @@ For each component:
 
 ## Architecture Vocabulary (Precise Language)
 
-Use these terms to evaluate design quality. They make trade-offs explicit:
+Use these terms exactly — don't substitute. They make trade-offs explicit and carry precise meaning from Ousterhout's "A Philosophy of Software Design":
 
 | Term | Meaning | Signal |
 | ------- | --------- | ------- |
-| **Deep module** | Small interface, lots hidden inside | Good — complexity is contained |
+| **Module** | A unit of code with an interface and a hidden implementation | — |
+| **Interface** | The surface a module exposes — the contract, not the signature | — |
+| **Deep module** | Small interface, lots hidden inside (high leverage: complexity hidden ÷ interface size) | Good — complexity is contained |
 | **Shallow module** | Interface as complex as implementation | Bad — wrapper adds complexity without hiding any |
 | **Concealed complexity** | Work done behind a simple interface | The goal of deep modules |
 | **Leaky abstraction** | Interface exposes internal details callers must know | Design defect — fix the interface |
 | **Temporal coupling** | Caller must know the order of operations | Design defect — remove or document explicitly |
+| **Seam** | A place where behavior can be substituted (test boundary, adapter point) | — |
+| **Adapter** | Code that bridges your interface to an external system | — |
+| **Locality** | Whether related logic lives together — good locality means changes touch few files | — |
 
 ### The Deletion Test
 
-For every module, ask: "If I deleted this module and inlined its code at every call site, would the code get simpler or more complex?"
+For every module or abstraction, ask: **"If I deleted this module and inlined its code at every call site, where does the complexity go?"**
 
-- **Simpler** → the module is shallow. It adds indirection without hiding complexity. Remove it or deepen its interface.
-- **More complex** → the module is deep. It earns its existence by hiding complexity.
+- **It vanishes** → the module was a pass-through / shallow. It adds indirection without hiding complexity. Delete it or deepen its interface.
+- **It reappears across N call sites** → the module is deep. It earns its existence by hiding complexity that would otherwise be duplicated.
+
+This is a falsifiable test, not a matter of taste — apply it before accepting any new module boundary.
 
 ### The Two-Adapter Rule
 
-When wrapping a third-party dependency:
+- **One adapter** means a hypothetical seam — something *might* need to vary. This is premature abstraction.
+- **Two concrete adapters** means a real seam — something *does* vary. This is evidence-based design.
 
-1. **First adapter** is allowed — it isolates the external API behind your interface.
-2. **Second adapter** on top of the first is a smell — it means the first adapter's interface is wrong. Fix the first adapter instead of stacking abstractions.
-
-Three+ layers of adaptation = you're hiding a design problem behind indirection.
+When wrapping a third-party dependency, the first adapter is allowed (it isolates the external API). A **second adapter stacked on top of the first** is a smell — it means the first adapter's interface is wrong; fix the first adapter instead of stacking abstractions. Don't introduce a new seam until you have two concrete adapters that need it.
 
 ## Design It Twice
 
@@ -181,32 +188,6 @@ For architectural decisions with material trade-offs:
 **Reversibility:** [reversible or irreversible — irreversible decisions need more evidence]
 ```
 
-## Deep-Module Vocabulary
+## Note
 
-Use these terms exactly — don't substitute. They carry precise meaning from Ousterhout's "A Philosophy of Software Design":
-
-| Term | Means |
-| ------ | ------- |
-| **module** | A unit of code with an interface and hidden implementation |
-| **interface** | The surface a module exposes — the contract, not the signature |
-| **seam** | A place where behavior can be substituted (test boundary, adapter point) |
-| **adapter** | Code that bridges your interface to an external system |
-| **depth** | How much complexity is hidden behind the interface (deep = lots hidden, small interface) |
-| **leverage** | Ratio of complexity hidden to interface size. Deep modules have high leverage. |
-| **locality** | Whether related logic lives together. Good locality = changes touch few files. |
-
-### Deletion Test
-
-Before adding a module or abstraction, ask: **"If I delete this module, where does the complexity go?"**
-
-- If complexity vanishes → it was a pass-through. Delete it.
-- If complexity reappears across N callers → it was earning its keep. Keep it.
-
-This is a falsifiable test for whether an abstraction is justified.
-
-### Two-Adapter Rule
-
-- **One adapter** means a hypothetical seam — something *might* need to vary.
-- **Two adapters** means a real seam — something *does* vary.
-
-Don't introduce a seam until you have two concrete adapters that use it. One adapter is premature abstraction; two is evidence-based design.
+Deep-module vocabulary, the Deletion Test, and the Two-Adapter Rule are defined once above under **Architecture Vocabulary (Precise Language)**, and Phase 3 (Design Components) applies them directly. There is no second copy.

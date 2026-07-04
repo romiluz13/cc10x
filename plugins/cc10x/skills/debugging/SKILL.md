@@ -62,9 +62,10 @@ Don't guess where a value comes from — trace it with LSP. Don't grep for a fun
 
 1. **Understand** — expected vs actual, when did it start?
 2. **Git History** — `git log --oneline -20 -- <files>`, `git blame`, `git diff BASE..HEAD`
-3. **LOG FIRST** — collect error logs, stack traces, run failing commands
-4. **Feedback Loop** — build repro signal (construction ladder above). No loop → fail closed.
-5. **Variant Scan** — identify which variant dimensions must keep working (locale, config, env, platform, data shape, concurrency)
+3. **Compounded knowledge** — if `docs/solutions/debugging/` exists, check for a prior write-up matching this symptom before starting fresh investigation
+4. **LOG FIRST** — collect error logs, stack traces, run failing commands
+5. **Feedback Loop** — build repro signal (construction ladder above). No loop → fail closed.
+6. **Variant Scan** — identify which variant dimensions must keep working (locale, config, env, platform, data shape, concurrency)
 
 ### Phase 2: Pattern Analysis
 

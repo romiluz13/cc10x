@@ -705,6 +705,7 @@ The memory task:
 - Replaces `progress.md ## Tasks` with the active workflow snapshot.
 - Keeps only the most recent 10 items in `progress.md ## Completed`.
 - Removes the matching `[cc10x-internal] memory_task_id` line from `activeContext.md ## References`.
+- **Knowledge compounding check (BUILD/DEBUG only):** before the final write, evaluate whether this workflow's evidence crosses the solution-doc threshold: (a) the debug attempt count in `activeContext.md` for this `wf:` reached 3+ `[DEBUG-N]:` entries before resolving, OR (b) the reviewer/hunter blast-radius scan touched 3+ files with the same defect pattern, OR (c) the winning fix contradicts a documented assumption in `patterns.md`. If any condition is true, write `docs/solutions/{category}/{slug}.md` using the format in `cc10x:memory-and-handoff` (Problem / What Didn't Work / Solution / Why / Prevention), then reference it from `activeContext.md ## Learnings`. If none apply, skip — do not create a solution doc for mechanical fixes.
 - If any artifact or memory write fails, stop immediately. Never advance the workflow after a failed persistence write.
 
 For PLAN:

@@ -4,10 +4,13 @@
 Validates:
 1. Every CC10X task has required metadata (wf, kind, origin, phase, plan, scope, reason)
 2. Memory tasks have router-owned evidence (origin=router, inline marker, finalized event)
-3. Fix #3/#5: After any non-memory CC10X task completes, check that the workflow
-   artifact was updated (updated_at bumped) since the task was created. A stale
-   artifact means the router skipped persistence — the most common stress-test
-   failure.
+3. After any non-memory CC10X task completes, check that the workflow artifact was
+   updated (updated_at bumped) since the task was created. A stale artifact means the
+   router skipped persistence.
+4. Circuit breaker backstop: when a kind:remfix task completes, count remediation_history
+   entries in the workflow artifact. This is the hook-enforced version of the router's
+   own LLM-counted 3-cycle circuit breaker — it does not depend on the router counting
+   correctly, only on remediation_history being an accurate array in the artifact.
 """
 
 import sys
@@ -143,6 +146,64 @@ def check_artifact_freshness(data: dict, metadata: dict, mode: dict) -> int:
     return 0
 
 
+CIRCUIT_BREAKER_LIMIT = 3
+
+
+def check_circuit_breaker(data: dict, metadata: dict, mode: dict) -> int:
+    """When a kind:remfix task completes, count remediation_history entries in
+    the workflow artifact. This is the hook-enforced backstop for the router's
+    own LLM-counted 3-cycle circuit breaker (remediation-and-research.md
+    'Circuit breaker' section) — it does not depend on the router remembering
+    to count correctly, only on the router having appended a remediation_history
+    entry when it created this remfix task (also mandated in that same section).
+
+    Fires only on kind:remfix completion (not on every task) — the circuit
+    breaker is specifically about remediation cycles, not general task volume.
+    """
+    if metadata.get("kind") != "remfix":
+        return 0
+
+    workflow_id = metadata.get("wf")
+    if not workflow_id:
+        return 0
+
+    payload, artifact_path, parse_error = read_workflow_state(workflow_id)
+    if artifact_path is None or parse_error:
+        return 0  # can't evaluate without a readable artifact — don't compound errors
+
+    remediation_history = payload.get("remediation_history")
+    if not isinstance(remediation_history, list):
+        return 0  # field missing or malformed — nothing to count yet
+
+    cycle_count = len(remediation_history)
+    if cycle_count <= CIRCUIT_BREAKER_LIMIT:
+        return 0
+
+    decision = "block" if mode.get("taskMetadata") == "block" else "audit"
+    log_event(
+        "plugin_task_completed_circuit_breaker",
+        {
+            "wf": workflow_id,
+            "phase": metadata.get("phase"),
+            "task_id": data.get("task_id"),
+            "agent": metadata.get("origin"),
+            "event": "task_completed_circuit_breaker_exceeded",
+            "decision": decision,
+            "reason": f"remediation_history has {cycle_count} entries (limit {CIRCUIT_BREAKER_LIMIT})",
+            "task_subject": data.get("task_subject", ""),
+        },
+    )
+    sys.stderr.write(
+        f"CC10X circuit breaker: workflow {workflow_id} has {cycle_count} remediation "
+        f"cycles recorded in remediation_history, exceeding the {CIRCUIT_BREAKER_LIMIT}-cycle "
+        "limit. The router must stop and ask the user how to proceed before creating "
+        "another kind:remfix task.\n"
+    )
+    if decision == "block":
+        return 2
+    return 0
+
+
 def main() -> int:
     data = load_input()
     subject = data.get("task_subject", "")
@@ -182,8 +243,13 @@ def main() -> int:
     if result != 0:
         return result
 
-    # Fix #3/#5: Check artifact freshness after any non-memory task
+    # Check artifact freshness after any non-memory task
     check_artifact_freshness(data, metadata, mode)
+
+    # Circuit breaker backstop: enforced independently of router self-counting
+    result = check_circuit_breaker(data, metadata, mode)
+    if result != 0:
+        return result
 
     return 0
 

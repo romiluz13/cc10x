@@ -16,7 +16,7 @@
   Fail-closed gates &nbsp;·&nbsp; survives compaction &nbsp;·&nbsp; zero prompt spam &nbsp;·&nbsp; self-tested orchestration
 </p>
 
-**Current version:** 12.3.1
+**Current version:** 12.4.0
 
 ---
 
@@ -286,6 +286,7 @@ IMPORTANT: NEVER use Edit, Write, or Bash (for code changes) without first invok
 "Bash(mkdir -p .cc10x)",
 "Bash(mkdir -p docs/plans)",
 "Bash(mkdir -p docs/research)",
+"Bash(mkdir -p docs/solutions)",
 "Bash(git status)",
 "Bash(git diff:*)",
 "Bash(git log:*)",
@@ -868,6 +869,6 @@ MIT License
 ---
 
 <p align="center">
-  <strong>cc10x v12.3.1</strong><br>
+  <strong>cc10x v12.4.0</strong><br>
   <em>The Intelligent Orchestrator for Claude Code</em>
 </p>

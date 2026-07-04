@@ -21,6 +21,8 @@ Before creating a new remediation task:
 - Count tasks whose descriptions contain both `wf:{workflow_uuid}` and `kind:remfix`.
 - If count >= 3, ask the user how to proceed before creating another one.
 
+**Hook-enforced backstop (MANDATORY — do not skip):** immediately after creating any `kind:remfix` task, append an entry to the workflow artifact's `remediation_history` array: `{ts, phase, reason, cycle_number}` where `cycle_number` is this workflow's running REM-FIX count (starting at 1). The `TaskCompleted` guard independently counts `remediation_history` entries from the artifact on every `kind:remfix` completion and flags/blocks when the count exceeds 3 — this is the enforced version of the LLM-counted rule above and does not depend on the router's own counting being correct. If `remediation_history` and the router's own task count ever disagree, the artifact's `remediation_history` is authoritative.
+
 ### Change-something-before-re-dispatch
 
 When an agent returns `BLOCKED` (or a fix attempt fails), the circuit breaker only BOUNDS the loop — it does not improve it. Re-dispatching the SAME agent with the SAME model on the SAME unchanged input just burns a circuit-breaker cycle and produces the same failure. Before any re-dispatch, the router MUST change at least one input:
