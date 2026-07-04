@@ -1,6 +1,6 @@
 {
   "name": "cc10x",
-  "version": "12.2.0",
+  "version": "12.3.0",
   "description": "The Loop Engine — harness and loop engineering plugin for Claude Code. Router-kernel orchestration, workflow artifacts, sub-agent delegation, hook enforcement, Test Honesty Gates, fresh-context verification, and memory that persists. 73% leaner than v11, zero quality regression.",
   "author": {
     "name": "Rom Iluz",
