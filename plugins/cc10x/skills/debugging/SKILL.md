@@ -116,3 +116,55 @@ Read `references/root-cause-playbooks.md` for scenario-specific guidance:
 ## Debug Attempt Tracking
 
 Track failed hypotheses: `[DEBUG-N]: {what was tried} → {result}`. After 3 failed hypotheses, set `NEEDS_EXTERNAL_RESEARCH: true`. After research files provided and still stuck, return BLOCKED.
+
+## Repro Minimisation
+
+After reproducing the bug, shrink to the smallest scenario that still goes red before forming hypotheses. Cut inputs, callers, config, and environment one at a time. Re-run after each cut. Every remaining element is load-bearing — removing it should make the bug disappear.
+
+**Why:** A minimal repro shrinks the hypothesis space. The fewer moving parts, the fewer places the bug could hide.
+
+## Ranked Hypotheses Before Testing
+
+Generate 3-5 ranked hypotheses BEFORE testing any of them. Rank by explanatory power — which hypothesis explains the most symptoms with the fewest assumptions.
+
+**Why:** Testing the first plausible hypothesis anchors you. Generating multiple first prevents anchoring bias and surfaces connections between hypotheses.
+
+## Causal Chain Gate
+
+Do not propose a fix until you can explain the full causal chain from trigger to symptom with no gaps. "Somehow X leads to Y" is a gap, not an explanation.
+
+**Predictions for uncertain links:** When the causal chain has an uncertain link, form a prediction — something in a different code path that must also be true if your hypothesis is correct. If the prediction is wrong but the fix "works," you found a symptom fix, not the root cause.
+
+## Rationalization Table
+
+| Excuse | Reality |
+| --------- | -------- |
+| "Emergency, no time for process" | Systematic debugging is FASTER than guess-and-check thrashing (15-30 min vs 2-3 hours) |
+| "I'll just try changing X and see" | Random changes destroy evidence. Form a hypothesis first. |
+| "Quick fix for now, investigate later" | "Later" never comes. Ship the real fix now. |
+| "This should work" (without prediction) | If you can't predict what will happen, you don't understand the bug. |
+| "It worked before" | Something changed. Find what. `git bisect` or `git log --oneline -20 -- <files>`. |
+| "The tests pass so it's fixed" | Tests can pass for the wrong reason. Verify the test actually exercises the bug path. |
+| "I'm confident this is the cause" | Confidence without a prediction is a feeling, not evidence. |
+| "Let me just add a try/catch" | Catching the error hides the bug. Find the root cause first. |
+
+## Red Flags — STOP and Reconsider
+
+- You're about to make a change without a hypothesis
+- You're about to add a try/catch to suppress an error
+- You're about to hardcode a value to make a test pass
+- You've tried 3 fixes and none worked — you're pattern-matching, not debugging
+- You're considering skipping the feedback loop because "the bug is obvious"
+- You're about to mark FIXED without a regression test that was RED first
+- You're considering weakening an assertion to make the test pass
+- You're about to revert a fix and "try something else" without understanding why the fix failed
+
+## Pressure Testing
+
+The gates in this skill must hold under pressure — deadline, complexity, "obvious bug" overconfidence. Before trusting a debug cycle:
+
+- **Would this gate hold if the user said "just fix it now"?** If not, the gate is advisory, not enforced.
+- **Would this gate hold if the bug seemed obvious?** The feedback loop gate exists precisely because "obvious" bugs are often wrong diagnoses.
+- **Would this gate hold at 3am with no sleep?** Rationalization tables exist because tired engineers skip process.
+
+If a gate can be talked out of by pressure, it belongs in a hook (enforced), not in prose (advisory). The debugging gates here are advisory — the router and hooks enforce the structural ones (TDD_RED_EXIT, FEEDBACK_LOOP.rung, DEBUG_CLOSEOUT).

@@ -52,6 +52,15 @@ Write the minimum code to pass the test. No extra features, no abstractions for 
 
 Improve code quality while keeping tests green. If tests fail during refactor, revert. Re-run after every refactor step.
 
+**Safety-Check Guard (MANDATORY):** Never simplify away a safety check during refactoring. Safety checks include:
+
+- Input validation at trust boundaries (API entry points, user input, external data)
+- Error handling that prevents data loss or corruption
+- Security checks (auth, authorization, sanitization)
+- Accessibility checks (ARIA, keyboard navigation, semantic HTML)
+
+If a safety check seems unnecessary, verify with a test that proves it's dead code before removing. "Looks redundant" is not sufficient evidence.
+
 ### Vertical Slicing (CRITICAL)
 
 Build in thin vertical slices that cross all layers: UI → API → logic → data → test. A horizontal slice (all UI, then all API, then all logic) defers integration risk to the end and produces untestable layers. Each slice should be independently verifiable and shippable.
@@ -79,6 +88,44 @@ If the build scope grows beyond the approved phase — new files not in the plan
 ## Minimal Diffs
 
 Write minimal diffs. A bug fix doesn't need surrounding cleanup. A one-shot operation doesn't need a helper. Don't add error handling, fallbacks, or validation for scenarios that cannot happen. Trust internal code and framework guarantees. Only validate at system boundaries.
+
+## Rationalization Table
+
+| Excuse | Reality |
+| ------ | ------ |
+| "Too simple to test" | Simple code breaks. Test takes 30 seconds. |
+| "I'll write tests after" | "After" never comes. Write the test first — it IS the spec. |
+| "It's just a refactor" | Refactors break things. Run the tests before AND after. |
+| "The existing tests cover this" | Then your new test will pass immediately — that's a false RED. |
+| "I manually tested it" | Manual testing doesn't survive the next refactor or CI run. |
+| "Adding tests would slow down delivery" | Debugging untested code takes longer than writing the test. |
+| "The framework handles this" | Verify with a test. Framework guarantees have edge cases. |
+
+## Red Flags — STOP and Reconsider
+
+- You're about to write production code without a failing test
+- You're skipping the RED step because "the test will obviously fail"
+- You're adding error handling for a scenario that can't happen
+- You're introducing an abstraction with only one caller
+- You're changing code unrelated to the current phase
+- You're about to commit without running the full test suite
+- You're considering deleting a test to make the build pass
+- You're adding a dependency not in the plan
+
+## Tautological Test Anti-Pattern
+
+A tautological test recomputes the expected value the same way the code does — it passes by construction and can never disagree.
+
+```typescript
+// BAD — tautological: recomputes expected value using same logic
+const expected = items.reduce((sum, x) => sum + x.value, 0);
+expect(calculateTotal(items)).toBe(expected);
+
+// GOOD — expected value comes from an independent source of truth
+expect(calculateTotal([{value: 10}, {value: 20}, {value: 30}])).toBe(60);
+```
+
+**Rule:** Expected values must come from a known-good literal, a worked example, or the spec — never from re-running the same algorithm the code uses.
 
 ## Loop Caps
 

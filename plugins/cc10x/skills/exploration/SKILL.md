@@ -86,6 +86,33 @@ Router carries design forward and persists memory. Do NOT write memory yourself.
 
 ---
 
+## Mode: DOUBT (Doubt-Driven Development)
+
+For non-trivial decisions where correctness matters more than speed: subject the decision to a fresh-context adversarial review BEFORE it stands. This is IN-FLIGHT course correction, not post-hoc review.
+
+### When to Use
+
+- Working in unfamiliar code
+- Stakes are high (production, security-sensitive, irreversible operations)
+- A confident output would be cheaper to verify now than to debug later
+- The decision involves >2 non-trivial trade-offs
+
+### The 5-Step Cycle
+
+1. **CLAIM** — state the decision and its rationale in one paragraph
+2. **EXTRACT** — identify the key assumptions the claim depends on
+3. **DOUBT** — spawn a fresh-context adversarial review. The reviewer gets the ARTIFACT + CONTRACT only, NOT the CLAIM — prevents biasing toward agreement. The reviewer's job: find the weakest assumption, the scenario where the decision backfires.
+4. **RECONCILE** — address each substantive finding. Fix the decision, strengthen the assumption, or reject the finding with evidence.
+5. **STOP** — if 3 cycles produce substantive findings but zero are classified as actionable, you're doing doubt theater, not doubting. Escalate to the user.
+
+### What This Is NOT
+
+- NOT post-hoc review on completed work — this is in-flight, while changes are still cheap
+- NOT self-critique — the doubter must be a fresh context, not the same reasoning head
+- NOT perfectionism — one cycle is often enough. Escalate only when findings are substantive AND actionable.
+
+---
+
 ## Mode: SPIKE
 
 A prototype is **throwaway code that answers exactly ONE design question**. It exists to de-risk an unknown cheaply before paying for the full BUILD chain.

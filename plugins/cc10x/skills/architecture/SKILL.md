@@ -128,6 +128,45 @@ For each component:
 - **Tracing:** what to trace (cross-component flows, not every function call)
 - **Alerting:** when to alert (user-visible impact, not internal noise)
 
+## Architecture Vocabulary (Precise Language)
+
+Use these terms to evaluate design quality. They make trade-offs explicit:
+
+| Term | Meaning | Signal |
+| ------- | --------- | ------- |
+| **Deep module** | Small interface, lots hidden inside | Good — complexity is contained |
+| **Shallow module** | Interface as complex as implementation | Bad — wrapper adds complexity without hiding any |
+| **Concealed complexity** | Work done behind a simple interface | The goal of deep modules |
+| **Leaky abstraction** | Interface exposes internal details callers must know | Design defect — fix the interface |
+| **Temporal coupling** | Caller must know the order of operations | Design defect — remove or document explicitly |
+
+### The Deletion Test
+
+For every module, ask: "If I deleted this module and inlined its code at every call site, would the code get simpler or more complex?"
+
+- **Simpler** → the module is shallow. It adds indirection without hiding complexity. Remove it or deepen its interface.
+- **More complex** → the module is deep. It earns its existence by hiding complexity.
+
+### The Two-Adapter Rule
+
+When wrapping a third-party dependency:
+
+1. **First adapter** is allowed — it isolates the external API behind your interface.
+2. **Second adapter** on top of the first is a smell — it means the first adapter's interface is wrong. Fix the first adapter instead of stacking abstractions.
+
+Three+ layers of adaptation = you're hiding a design problem behind indirection.
+
+## Design It Twice
+
+When a module's interface is non-trivial, design it twice:
+
+1. **First design:** the obvious approach. Write it out fully.
+2. **Second design:** a different approach (not a refinement of the first).
+
+Compare both. The first design is usually shallow — it mirrors the implementation. The second design reveals what the interface *should* hide. Use the better one, or a hybrid.
+
+**Why:** One-pass interfaces optimize for the implementer. Two-pass interfaces optimize for the caller.
+
 ## Decision Framework
 
 For architectural decisions with material trade-offs:
@@ -141,3 +180,33 @@ For architectural decisions with material trade-offs:
 **Consequences:** [what this enables and prevents]
 **Reversibility:** [reversible or irreversible — irreversible decisions need more evidence]
 ```
+
+## Deep-Module Vocabulary
+
+Use these terms exactly — don't substitute. They carry precise meaning from Ousterhout's "A Philosophy of Software Design":
+
+| Term | Means |
+| ------ | ------- |
+| **module** | A unit of code with an interface and hidden implementation |
+| **interface** | The surface a module exposes — the contract, not the signature |
+| **seam** | A place where behavior can be substituted (test boundary, adapter point) |
+| **adapter** | Code that bridges your interface to an external system |
+| **depth** | How much complexity is hidden behind the interface (deep = lots hidden, small interface) |
+| **leverage** | Ratio of complexity hidden to interface size. Deep modules have high leverage. |
+| **locality** | Whether related logic lives together. Good locality = changes touch few files. |
+
+### Deletion Test
+
+Before adding a module or abstraction, ask: **"If I delete this module, where does the complexity go?"**
+
+- If complexity vanishes → it was a pass-through. Delete it.
+- If complexity reappears across N callers → it was earning its keep. Keep it.
+
+This is a falsifiable test for whether an abstraction is justified.
+
+### Two-Adapter Rule
+
+- **One adapter** means a hypothetical seam — something *might* need to vary.
+- **Two adapters** means a real seam — something *does* vary.
+
+Don't introduce a seam until you have two concrete adapters that use it. One adapter is premature abstraction; two is evidence-based design.

@@ -75,6 +75,11 @@ BLOCKED_PATTERNS = [
         "git checkout * — discards all uncommitted changes.",
         None,
     ),
+    (
+        r"\bgit\s+restore\s+\.\s*$",
+        "git restore . — discards all uncommitted changes (same as checkout .).",
+        None,
+    ),
 ]
 
 

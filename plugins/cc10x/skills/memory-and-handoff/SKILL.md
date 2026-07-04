@@ -111,3 +111,29 @@ cc10x's own resume is structural (`.cc10x/` + router rehydrates). The handoff pa
 | Artifacts (by path) | plan, diff/PR, key source files with behavioral descriptions |
 
 The "suggested skills/tools" pointer is load-bearing: tell the next agent how to continue. If cc10x is present: invoke `cc10x-router`. If not: name domain skills and point at plan/research docs.
+
+---
+
+## Knowledge Compounding Loop
+
+Memory is not just for context survival — it's for system self-improvement. After every BUILD or DEBUG cycle, structured learnings should compound into reusable knowledge.
+
+### The Loop
+
+1. **Capture** — During workflow-finalize, the router writes structured learnings from agent `MEMORY_NOTES` into `activeContext.md ## Learnings` and `patterns.md ## Common Gotchas`.
+2. **Ground** — Before starting new work, agents read `patterns.md` and `activeContext.md` to avoid repeating solved problems.
+3. **Consolidate** — When the same gotcha appears 3+ times in `patterns.md`, promote it to a dedicated reference file or skill section.
+
+### Compounding Outcomes
+
+When reviewing prior learnings during memory-finalize, apply one of five outcomes:
+
+| Outcome | When | Action |
+| ---------- | ------ | -------- |
+| **Keep** | Learning is still accurate and useful | Leave as-is |
+| **Update** | Learning is correct but incomplete | Add the missing detail |
+| **Consolidate** | Same lesson appears multiple times | Merge into one entry, remove duplicates |
+| **Replace** | Learning is outdated or superseded | Replace with the current truth |
+| **Delete** | Learning no longer applies (framework changed, code removed) | Remove it |
+
+**Why this matters:** Without consolidation, memory accumulates stale entries that mislead future work. The compounding loop ensures memory gets sharper over time, not just larger.
