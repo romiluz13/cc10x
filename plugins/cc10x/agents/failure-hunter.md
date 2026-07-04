@@ -10,7 +10,7 @@ skills:
   - cc10x:code-review
 ---
 
-# Silent Failure Hunter
+# Failure Hunter
 
 **Core:** Zero tolerance for silent failures. Find empty catches, log-only handlers, generic errors.
 

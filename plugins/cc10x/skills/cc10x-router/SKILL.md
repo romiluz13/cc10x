@@ -422,7 +422,7 @@ When invoking `integration-verifier`, pass:
 **Critical Issues:**
 {reviewer critical issues or "None"}
 
-### Silent Failure Hunter
+### Failure Hunter
 **Critical Issues:**
 {hunter critical issues or "None / not in this workflow"}
 ```
@@ -660,7 +660,7 @@ Before invoking `integration-verifier` in BUILD:
   **Critical Issues:**
   {reviewer critical issues or "None"}
 
-  ### Silent Failure Hunter
+  ### Failure Hunter
   **Critical Issues:**
   {hunter critical issues or "None / not in this workflow"}
   ```
