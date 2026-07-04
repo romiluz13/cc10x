@@ -22,9 +22,16 @@
 
 ## Install
 
+**Step 1 — Add the marketplace:**
+
 ```bash
 /plugin marketplace add romiluz13/cc10x
-/plugin install cc10x@romiluz13
+```
+
+**Step 2 — Install the plugin:**
+
+```bash
+/plugin install cc10x@cc10x
 ```
 
 Then say **"set up cc10x for me"** in Claude Code and restart. Done.
@@ -820,7 +827,7 @@ This is a Linux filesystem issue — `/tmp` and your home directory are on diffe
 # Set TMPDIR to a directory on the same filesystem as your home:
 mkdir -p ~/.claude/tmp
 TMPDIR=~/.claude/tmp claude
-# Then install normally: /plugin install cc10x@romiluz13
+# Then install normally: /plugin install cc10x@cc10x
 ```
 
 If that doesn't work, install manually:
