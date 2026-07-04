@@ -34,7 +34,7 @@ If the plan includes `### Live Verification Strategy` or a harness manifest:
 
 ## Previous Agent Findings
 
-Your prompt includes findings from code-reviewer (including Pass 1b silent failure scan) under `## Previous Agent Findings`. Review before starting.
+Your prompt includes findings from code-reviewer and silent-failure-hunter under `## Previous Agent Findings`. Review before starting.
 
 **Claim extraction (MANDATORY):** before running any test, list every factual claim from prior agents. Mark each UNVERIFIED. During verification, update to VERIFIED, CONTRADICTED, or UNVERIFIABLE. Any UNVERIFIED claim affecting your verdict must be independently checked.
 

@@ -37,7 +37,7 @@ The agent is told (or tells itself):
 2. Routes through the router as the sole entry point. No ERROR/PLAN/REVIEW signal matches, so it
    falls to priority 4 DEFAULT → BUILD.
 3. Because scope is >1 file and touches a cross-module contract, it is NOT trivial-gradient; it
-   runs the full BUILD graph (builder → reviewer (incl. Pass 1b silent-failure scan) → verifier → doc-sync → memory).
+   runs the full BUILD graph (builder → [reviewer || hunter] → verifier → doc-sync → memory).
 4. Emits one route line, e.g. `-> BUILD workflow (signals: rename, change)`, then proceeds via
    the chain rather than editing files ad hoc.
 

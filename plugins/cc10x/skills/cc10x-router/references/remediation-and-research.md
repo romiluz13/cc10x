@@ -41,7 +41,7 @@ NEVER re-dispatch the same agent with the same model on the same unchanged input
 | 1a-SCOPE | BUILD parallel phase has CRITICAL + HIGH issues | Ask for `critical only` vs `all issues`, store pending scope marker, stop. |
 | 1a | Blocking issue in BUILD/DEBUG | Router creates scoped REM-FIX task, blocks downstream tasks, stop. |
 | 1b | Non-blocking remediation needed | In BUILD/DEBUG, auto-create REM-FIX. In REVIEW, ask whether to start BUILD. |
-| 2 | Reviewer verdict is Approve overall but its Pass 1b silent-failure scan reports HIGH issues | Ask whether to remediate or proceed. (CRITICAL Pass 1b issues never reach this row — the contract override already converts them to `CHANGES_REQUESTED`.) |
+| 2 | Reviewer verdict is Approve but silent-failure-hunter reports HIGH issues | Ask whether to remediate or proceed. (CRITICAL hunter issues never reach this row — the contract override already converts them to blocking.) |
 | 2b | Planner needs clarification | Ask the user, persist answers, then restart PLAN with a fresh visible DAG after clarification. |
 | 2c | Investigator still investigating | Create follow-up investigation task with loop cap. |
 | 2d | Verifier failed | Router creates REM-FIX unless user chooses REVERT at the router gate. |
@@ -55,7 +55,7 @@ The router is authoritative for BUILD remediation scope.
 - Legacy agent-created remediation tasks are still accepted during migration, but router-created remediation is canonical.
 - `1a-SCOPE` applies only in BUILD when the review phase shows both:
   - at least one CRITICAL issue
-  - at least one HIGH issue in the reviewer narrative (including Pass 1b silent-failure findings)
+  - at least one HIGH issue in the reviewer or hunter narrative
 - The trigger source is explicit:
   - a reviewer summary line `High issues: [count]`
   - or a `### Findings` bullet clearly labeled `HIGH`
@@ -285,14 +285,24 @@ Do not misread a tool/fallback message as a hard blocker (the "you ARE the provi
 When a `kind:remfix` task completes:
 
 1. Count completed remediation tasks in the same `wf:`. If count >= 2, run the cycle-cap gate before continuing.
-2. Create a re-review task (one task — the reviewer's single pass covers both the fix re-review and the silent-failure re-scan):
+2. Create a re-review task:
 
 ```text
 TaskCreate({
   subject: "CC10X code-reviewer: Re-review after REM-FIX",
-  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:re-review\nplan:{plan_file or 'N/A'}\nscope:{scope from completed remfix}\nreason:{reason from completed remfix}\n\nRe-review the changes made by the completed remediation task, including a silent-failure re-scan (Pass 1b) of the remediated surface.\nIf scope=ALL_ISSUES: perform a FULL re-audit of CRITICAL and HIGH issue categories after remediation.\nIf scope=CRITICAL_ONLY: verify the CRITICAL issue was resolved and treat HIGH issues as deferred unless newly escalated.",
+  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:re-review\nplan:{plan_file or 'N/A'}\nscope:{scope from completed remfix}\nreason:{reason from completed remfix}\n\nRe-review the changes made by the completed remediation task.\nIf scope=ALL_ISSUES: perform a FULL re-audit of CRITICAL and HIGH issue categories after remediation.\nIf scope=CRITICAL_ONLY: verify the CRITICAL issue was resolved and treat HIGH issues as deferred unless newly escalated.",
   activeForm: "Re-reviewing fix"
 }) -> rereview_task_id
+```
+
+1. Create a re-hunt task (BUILD only — the hunter re-scans for silent failures after remediation):
+
+```text
+TaskCreate({
+  subject: "CC10X silent-failure-hunter: Re-hunt after REM-FIX",
+  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:re-hunt\nplan:{plan_file or 'N/A'}\nscope:{scope from completed remfix}\nreason:{reason from completed remfix}\n\nRe-scan for silent failures after remediation. Focus on the remediated surface and its immediate call sites.",
+  activeForm: "Re-hunting failures"
+}) -> rehunt_task_id
 ```
 
 1. Reuse the pending verifier in the same `wf:` if one exists; otherwise create:
@@ -305,10 +315,11 @@ TaskCreate({
 }) -> reverify_task_id
 ```
 
-1. Block the verifier on the re-review task.
+1. Block the verifier on both the re-review and re-hunt tasks.
 2. Re-block the memory task on the verifier for BUILD/DEBUG or on the re-reviewer for REVIEW.
 3. Increment telemetry loop counters whenever the follow-up tasks are created:
    - `telemetry.loop_counts.re_review += 1`
+   - `telemetry.loop_counts.re_hunt += 1` (BUILD only)
    - `telemetry.loop_counts.re_verify += 1`
 
 ### Re-review precondition gate

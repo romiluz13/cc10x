@@ -9,6 +9,7 @@ Validates:
    artifact means the router skipped persistence — the most common stress-test
    failure.
 """
+
 import sys
 
 from cc10x_hooklib import (

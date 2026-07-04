@@ -9,14 +9,14 @@
 </p>
 
 <p align="center">
-  <strong>1 router</strong> &nbsp;·&nbsp; <strong>8 specialist agents</strong> &nbsp;·&nbsp; <strong>16 skills</strong> &nbsp;·&nbsp; <strong>4 workflows</strong>
+  <strong>1 router</strong> &nbsp;·&nbsp; <strong>9 specialist agents</strong> &nbsp;·&nbsp; <strong>16 skills</strong> &nbsp;·&nbsp; <strong>4 workflows</strong>
 </p>
 
 <p align="center">
   Fail-closed gates &nbsp;·&nbsp; survives compaction &nbsp;·&nbsp; zero prompt spam &nbsp;·&nbsp; self-tested orchestration
 </p>
 
-**Current version:** 12.1.0
+**Current version:** 12.2.0
 
 ---
 
@@ -861,6 +861,6 @@ MIT License
 ---
 
 <p align="center">
-  <strong>cc10x v12.1.0</strong><br>
+  <strong>cc10x v12.2.0</strong><br>
   <em>The Intelligent Orchestrator for Claude Code</em>
 </p>

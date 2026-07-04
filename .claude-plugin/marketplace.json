@@ -6,14 +6,14 @@
     "url": "https://github.com/romiluz13"
   },
   "metadata": {
-    "description": "cc10x v12.1.0 - The Loop Engine: harness and loop engineering plugin for Claude Code. Router-kernel orchestration, workflow artifacts, sub-agent delegation, hook enforcement, Test Honesty Gates, fresh-context verification, and memory that persists",
-    "version": "12.1.0"
+    "description": "cc10x v12.2.0 - The Loop Engine: harness and loop engineering plugin for Claude Code. Router-kernel orchestration, workflow artifacts, sub-agent delegation, hook enforcement, Test Honesty Gates, fresh-context verification, and memory that persists",
+    "version": "12.2.0"
   },
   "plugins": [
     {
       "name": "cc10x",
       "description": "Trust-first Claude Code plugin with specialized subagents, composable skills, agreement-first planning, TDD-first phase execution, adversarial review, BDD-style verification, proof-of-work workflow artifacts, plugin-native hooks, and optional user-configured Bright Data/Octocode research acceleration.",
-      "version": "12.1.0",
+      "version": "12.2.0",
       "author": {
         "name": "Rom Iluz",
         "email": "rom@iluz.net",

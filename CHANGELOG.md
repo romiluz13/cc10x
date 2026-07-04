@@ -1,5 +1,38 @@
 # Changelog
 
+## [12.2.0] - 2026-07-02
+
+### Restored: Parallel Review (silent-failure-hunter)
+
+Restored the standalone `silent-failure-hunter` agent and all parallel dispatch infrastructure that was incorrectly merged into `code-reviewer` as "Pass 1b" in v12.1.0.
+
+**Agents: 8 → 9** (restored silent-failure-hunter)
+
+#### What was restored
+
+- `silent-failure-hunter` agent (separate context, zero-tolerance posture, no confidence threshold, no self-healing)
+- Parallel dispatch: `code-reviewer` + `silent-failure-hunter` invoked in the same message in BUILD
+- Router-owned merged findings summary before verifier handoff
+- Contradiction resolution (stricter verdict wins, logged in status_history)
+- `phase:build-hunt` and `phase:re-hunt` in metadata contract
+- `build-hunt` and `re-hunt` in dispatcher table
+- Parallel task DAG: verifier blocked by `[reviewer_task_id, hunter_task_id]`
+- Re-hunt task after remediation (BUILD only)
+- `telemetry.loop_counts.re_hunt` counter (ACTIVE, no longer LEGACY)
+- Verifier handoff format: separate "Silent Failure Hunter" section
+- Routing table: `[code-reviewer || silent-failure-hunter]` notation
+
+#### What was removed
+
+- Pass 1b step from `code-reviewer.md`
+- "This pass replaces the former standalone silent-failure-hunter agent" line
+- LEGACY tags from hunter keys in artifact policy and skeleton
+- Stale "Two Isolated Assessments + WEAVE" section in code-review skill (replaced with "Parallel Review + Router Merge")
+
+#### Why
+
+The merge sacrificed genuine parallelism, context isolation, and the router's merge orchestration pattern for ~80 lines of savings. Two agents running in parallel cannot bias each other — the reviewer doesn't know what the hunter will find, and vice versa. One agent doing sequential passes introduces anchoring bias. The hunter's zero-tolerance posture and suspicion gate get diluted when competing with 6 other passes in one context.
+
 ## [12.1.0] - 2026-07-02
 
 ### The Loop Engine — 73% line reduction, zero quality regression

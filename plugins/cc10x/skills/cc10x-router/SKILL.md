@@ -24,7 +24,7 @@ Route using the first matching signal:
 | 2 | PLAN | plan, design, architect, roadmap, strategy, spec, brainstorm | PLAN | exploration -> planner -> bounded fresh review loop |
 | 3 | REVIEW | review, audit, analyze, assess, "is this good" | REVIEW | code-reviewer |
 | 4 | ORIENT | zoom out, explain, understand, "how does X work", unfamiliar, "map this", "walk me through", "where is", "what does this do" | ORIENT | advisory orientation (no agents) |
-| 5 | DEFAULT | Everything else | BUILD | component-builder -> code-reviewer -> integration-verifier |
+| 5 | DEFAULT | Everything else | BUILD | component-builder → [code-reviewer ‖ silent-failure-hunter] → integration-verifier |
 
 Rules:
 
@@ -32,7 +32,7 @@ Rules:
 - ERROR always wins over BUILD, but route on the PRIMARY DELIVERABLE, not the first keyword hit: "add a dark-mode toggle and fix the button alignment" is a BUILD whose scope includes a small fix, not a DEBUG. Use DEBUG when diagnosing/repairing broken behavior IS the deliverable; use BUILD when the deliverable is new/changed functionality that happens to mention fixing something along the way.
 - REVIEW is advisory only. Never let REVIEW create code-changing tasks.
 - ORIENT is read-only and advisory. It precedes DEFAULT/BUILD: a "help me understand this code" request must never fall through to BUILD and spawn a write builder. ORIENT spawns NO write agents and creates NO phase graph. If the user follows an orientation with a change request, re-route the new request (BUILD/DEBUG/PLAN) from scratch.
-- BUILD uses a complexity gradient (see `references/build-workflow.md`): trivial scope (1-2 files, single change, one testable outcome, no cross-module wiring) runs a reduced builder → verifier → memory graph; everything else, and all planned work, runs the full builder → reviewer (correctness + Pass 1b silent-failure scan in ONE review) → verifier → doc-sync → memory chain. The builder escalates trivial → full on any scope increase. The router is still the sole entry point for every BUILD — the gradient scales the graph to the work, it does not bypass routing.
+- BUILD uses a complexity gradient (see `references/build-workflow.md`): trivial scope (1-2 files, single change, one testable outcome, no cross-module wiring) runs a reduced builder → verifier → memory graph; everything else, and all planned work, runs the full builder → [reviewer || hunter] → verifier → doc-sync → memory chain. The reviewer and hunter run in parallel (two read-only agents in the same message) and the router merges their findings before verifier handoff. The builder escalates trivial → full on any scope increase. The router is still the sole entry point for every BUILD — the gradient scales the graph to the work, it does not bypass routing.
 - Before execution, output one line: `-> {WORKFLOW} workflow (signals: {matched keywords})`
 
 ### ORIENT move (read-only)
@@ -111,7 +111,7 @@ Every CC10X task description starts with normalized metadata lines:
 wf:{workflow_uuid}
 kind:{workflow|agent|remfix|memory|reverify|research}
 origin:{router|component-builder|bug-investigator|code-reviewer|integration-verifier|planner}
-phase:{build|build-implement|build-review|build-verify|build-doc-sync|build-finish|debug|debug-investigate|debug-review|debug-verify|review|review-audit|plan|plan-create|plan-review-gap-1|plan-review-gap-2|memory-finalize|re-review|re-verify|re-plan|research-web|research-github}
+phase:{build|build-implement|build-review|build-hunt|build-verify|build-doc-sync|build-finish|debug|debug-investigate|debug-review|debug-verify|review|review-audit|plan|plan-create|plan-review-gap-1|plan-review-gap-2|memory-finalize|re-review|re-hunt|re-verify|re-plan|research-web|research-github}
 plan:{path|N/A}
 scope:{ALL_ISSUES|CRITICAL_ONLY|N/A}
 reason:{short reason or N/A}
@@ -306,7 +306,8 @@ Only create child tasks after the workflow artifact exists and the read-back pas
 | ------------------- | ------- |
 | `build-implement` | `cc10x:component-builder` |
 | `debug-investigate` | `cc10x:bug-investigator` |
-| `build-review`, `debug-review`, `review-audit`, `re-review` | `cc10x:code-reviewer` (one review covers correctness AND the Pass 1b silent-failure scan) |
+| `build-review`, `debug-review`, `review-audit`, `re-review` | `cc10x:code-reviewer` |
+| `build-hunt`, `re-hunt` | `cc10x:silent-failure-hunter` |
 | `build-verify`, `debug-verify`, `re-verify` | `cc10x:integration-verifier` |
 | `plan-create`, `re-plan` | `cc10x:planner` |
 | `plan-review-gap-1`, `plan-review-gap-2` | `cc10x:plan-gap-reviewer` |
@@ -421,12 +422,12 @@ When invoking `integration-verifier`, pass:
 **Critical Issues:**
 {reviewer critical issues or "None"}
 
-### Code Reviewer (Pass 1b: Silent Failure Scan)
+### Silent Failure Hunter
 **Critical Issues:**
-{silent failure findings or "None / not in this workflow"}
+{hunter critical issues or "None / not in this workflow"}
 ```
 
-DEBUG skips Pass 1b findings.
+DEBUG skips the hunter.
 
 ### Task metrics and timing telemetry
 
@@ -574,12 +575,13 @@ The harness is a loop engine. These concepts govern how the loop runs:
    - mark the parent workflow task completed
    - continue
 4. Otherwise, map each runnable task through the dispatcher table.
-5. Mark each task in_progress before invoking its agent. BUILD dispatches exactly ONE `code-reviewer` per review point — its single review covers correctness AND the Pass 1b silent-failure scan; never create a second reviewer task for the same phase.
-   - If parallel invocation of multiple agents is needed but unavailable: fall back to sequential execution. Never block a workflow because parallelism is unavailable. Log `event=parallel_fallback` in the workflow event log.
+5. Mark each task in_progress before invoking its agent. If `code-reviewer` and `silent-failure-hunter` are both ready in BUILD: mark both in_progress first, invoke them in the same message. They are read-only and safe to parallelize.
+   - If parallel invocation fails or is unavailable (API error, rate limit): fall back to sequential execution (reviewer first, then hunter). Never block a workflow because parallelism is unavailable. Log `event=parallel_fallback` in the workflow event log.
 6. After each agent returns:
    - capture memory payload immediately
    - validate output
    - persist task-state side effects
+   - if BUILD review and hunt are both complete for the current phase, write one router-owned merged findings summary into the existing workflow results before verifier handoff
    - apply workflow rules
    - for BUILD, run `phase_exit_gate`; if the current phase is not complete, persist `phase_status={partial|blocked}` and stop
    - never advance to the next phase or workflow step on apology prose alone
@@ -647,9 +649,23 @@ If any answer is "no" or "unknown", treat as incomplete and apply the fallback v
 
 Before invoking `integration-verifier` in BUILD:
 
-- Read `results.reviewer` from the workflow artifact (it includes the Pass 1b silent-failure findings).
-- Build `## Previous Agent Findings` exactly in the format verifier expects.
-- Never invoke verifier without that section when a review already ran.
+- Read `results.reviewer` and `results.hunter` from the workflow artifact.
+- Build `## Previous Agent Findings` exactly in the format verifier expects:
+
+  ```
+  ## Previous Agent Findings
+
+  ### Code Reviewer
+  **Verdict:** {Approve|Changes Requested}
+  **Critical Issues:**
+  {reviewer critical issues or "None"}
+
+  ### Silent Failure Hunter
+  **Critical Issues:**
+  {hunter critical issues or "None / not in this workflow"}
+  ```
+
+- Never invoke verifier without that section when review/hunt already ran.
 
 ### Inline no-subagent execution (FALLBACK — not the default)
 
@@ -715,7 +731,7 @@ For DEBUG:
 - Never let REVIEW create implementation tasks without an explicit router/user transition into BUILD.
 - Never report a workflow outcome (pass, fixed, complete) to the user without first confirming the verification evidence that supports that claim. "I believe it works" is not evidence. [EASY TO MISS: "I ran the tests and they passed" without showing command output, exit codes, or scenario evidence is also not evidence. Require concrete proof artifacts, not agent assertions.]
 - Never let a remediation loop run more than 3 cycles without a human checkpoint. Drift accumulates silently in long chains.
-- Only parallelize agents whose file-write surfaces do not overlap. Read-only agents are safe to parallelize with each other. Two write agents on overlapping files must be serialized. [EASY TO MISS: Each parallel agent must have a distinct phase value and unique task description. Identical prompts cause agents to duplicate work or silently clobber each other's output.]
+- Only parallelize agents whose file-write surfaces do not overlap. Reviewer and hunter are read-only and safe to parallelize. Two write agents on overlapping files must be serialized. [EASY TO MISS: Each parallel agent must have a distinct phase value and unique task description. Identical prompts cause agents to duplicate work or silently clobber each other's output.]
 - Agents must never inherit raw conversation context. They receive only the structured scaffold from the dispatcher. Leaking conversation history into agent prompts causes scope pollution and non-reproducible behavior.
 - Maintain professional objectivity in all routing decisions. Do not rationalize a failing workflow as "close enough" or downgrade critical findings to avoid remediation. The router exists to enforce quality, not to please.
 - `DIFF_DRIVEN_DOCS: skip` in Session Settings disables doc-syncer for projects that manage documentation separately; when present, skip `build-doc-sync` task creation and block Memory Update on `verifier_task_id` directly.
