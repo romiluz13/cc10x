@@ -137,3 +137,48 @@ When reviewing prior learnings during memory-finalize, apply one of five outcome
 | **Delete** | Learning no longer applies (framework changed, code removed) | Remove it |
 
 **Why this matters:** Without consolidation, memory accumulates stale entries that mislead future work. The compounding loop ensures memory gets sharper over time, not just larger.
+
+## Knowledge Compounding Loop (docs/solutions/)
+
+Memory files (`activeContext.md`, `patterns.md`, `progress.md`) are for session-scoped context. For **durable, structured learnings that survive across projects and sessions**, write to `docs/solutions/`.
+
+### When to Write a Solution Doc
+
+After any non-trivial debug or build cycle, the router (during memory-finalize) should evaluate whether to write a solution doc:
+
+- **Write** if: the problem took 3+ hypotheses to solve, OR the bug pattern appears in 3+ files, OR the solution contradicts a common assumption
+- **Skip** if: the fix was mechanical (typo, import error, one-line change)
+- **Offer neutrally** if: the lesson is one sentence (mention in memory notes instead)
+
+### Solution Doc Format
+
+```markdown
+# [Problem Title]
+Category: [debugging | architecture | testing | workflow | conventions]
+Tags: [comma-separated]
+Date: YYYY-MM-DD
+
+## Problem
+[What went wrong — symptoms, not just the error message]
+
+## What Didn't Work
+[Hypotheses that failed and why]
+
+## Solution
+[What actually worked — with code example if applicable]
+
+## Why
+[Why the solution works — the underlying principle]
+
+## Prevention
+[How to prevent this class of problem in the future]
+```
+
+### The Full Loop
+
+1. **Capture** — Write solution doc after non-trivial cycles
+2. **Ground** — Planning and debugging skills read `docs/solutions/` as context before starting new work
+3. **Refresh** — Periodically audit solution docs: Keep / Update / Consolidate / Replace / Delete (same five-outcome model as memory consolidation)
+4. **Discover** — Ensure `CLAUDE.md` or `AGENTS.md` points to `docs/solutions/` so agents can find it
+
+This closes the loop: every solved problem makes the next problem easier. Without `docs/solutions/`, the system repeats mistakes. With it, the system compounds knowledge.

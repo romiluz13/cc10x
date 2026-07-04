@@ -165,3 +165,21 @@ MEMORY_NOTES: "[one-line durable lesson, or N/A]"
 - **ABSORB** — spike's pure core or winning variant is worth keeping. This triggers a **fresh BUILD through the router** (full gates). Delete the throwaway harness; re-implement the core under TDD/reviewer/verifier. Set `PROTOTYPE_DISPOSITION: absorb` and name `ABSORB_TARGET` so the router opens the absorbing BUILD.
 
 The prototype skill NEVER transitions itself into BUILD. It emits the verdict and hands back to the router.
+
+## Doubt-Driven Development (In-Flight Review)
+
+For non-trivial design decisions made during exploration, spawn an **in-flight adversarial review** while the decision is still cheap to change. This is NOT the post-hoc code-review — it's course correction during design.
+
+**5-step cycle:**
+
+1. **CLAIM** — state the design decision as a testable claim: "We will use X because Y"
+2. **EXTRACT** — extract the artifacts the claim depends on (code samples, API signatures, data flows)
+3. **DOUBT** — spawn a fresh-context reviewer with the ARTIFACT + CONTRACT only — NOT the CLAIM. The reviewer gets the evidence, not the argument, to prevent biasing toward agreement.
+4. **RECONCILE** — compare the reviewer's independent assessment against the original claim. Where they agree → high confidence. Where the reviewer found issues the claim missed → revise the claim.
+5. **STOP** — if 2+ cycles produce substantive findings but zero are classified as actionable, you're validating not doubting. Escalate to the user.
+
+**3-cycle cap:** After 3 doubt cycles without convergence, escalate. Don't loop forever.
+
+**Cross-model option:** In interactive mode, offer to run the doubt review through a different model family (Gemini, Codex) for genuine independence. Never silently skip this option.
+
+**Rationalization guard:** "This is too simple to doubt" → Simple decisions have simple artifacts, so the doubt review is fast. No excuse to skip.

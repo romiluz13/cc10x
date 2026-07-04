@@ -1,0 +1,1 @@
+Now I have a thorough understanding of both systems. Let me create the output directory and write the findings:
