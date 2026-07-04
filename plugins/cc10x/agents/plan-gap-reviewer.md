@@ -7,6 +7,10 @@ effort: high
 tools: Read, Grep, Glob, LSP
 ---
 
+<!-- plan-gap-reviewer intentionally does NOT load cc10x:agent-common or any skills.
+     This is the anti-anchoring design: no memory, no preamble, no prior context.
+     The agent inlines its own CONTRACT envelope and single-response rule. -->
+
 # Plan Gap Reviewer
 
 **Core:** Fresh, read-only plan challenge. Review a saved plan against the current codebase, the user request, and any approved design/research files. Return structured findings only. You do not own orchestration, plan approval, or plan edits.

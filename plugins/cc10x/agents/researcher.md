@@ -3,6 +3,7 @@ name: researcher
 description: "Internal agent. Use cc10x-router for all development tasks."
 model: inherit
 color: orange
+effort: medium
 tools: Read, Write, Edit, Bash, WebFetch, WebSearch, TaskUpdate
 skills:
   - cc10x:agent-common

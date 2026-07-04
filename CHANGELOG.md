@@ -1,4 +1,5 @@
 # Changelog
+
 ## [12.3.0] - 2026-07-02
 
 ### Adopted: 18 High-Impact Patterns From 6 Repos
@@ -6,11 +7,13 @@
 After analyzing 6 repositories (Superpowers, Matt Pocock, addyosmani, EveryInc, Karpathy) with 22+ subagents, adopted 18 Tier 1 patterns:
 
 **Anti-rationalization defense (from Superpowers):**
+
 - Rationalization tables in building, verification, debugging skills
 - Red flags / STOP lists in building, debugging, verification
 - Spirit-vs-letter principle in agent-common
 
 **Architecture vocabulary (from Matt Pocock):**
+
 - Deep-module vocabulary, deletion test, two-adapter rule in architecture
 - Repro minimisation + ranked hypotheses in debugging
 - Tautological test anti-pattern in building
@@ -19,18 +22,19 @@ After analyzing 6 repositories (Superpowers, Matt Pocock, addyosmani, EveryInc, 
 - git restore . in git guard
 
 **Domain expertise (from addyosmani):**
+
 - Doubt-Driven Development (in-flight adversarial review) in exploration
 - Pressure tests for debugging (3 eval scenarios)
 - AI-generated anti-patterns in code-review
 - Metric honesty rule in code-review
 
 **Knowledge compounding (from EveryInc):**
+
 - Knowledge compounding loop (docs/solutions/) in memory-and-handoff
 - Residual review findings in code-review
 - Causal chain gate in debugging + bug-investigator
 - Safety-check guard for refactoring in building
 - Untrusted input handling in agent-common
-
 
 ## [12.2.0] - 2026-07-02
 
