@@ -1,5 +1,21 @@
 # Changelog
 
+## [12.3.1] - 2026-07-02
+
+### Fix: Agent name conflict resolution
+
+Renamed `silent-failure-hunter` agent to `failure-hunter` to resolve a name
+collision with the official Claude plugins marketplace's `pr-review-toolkit`
+plugin, which also registers an agent named `silent-failure-hunter`.
+
+When two plugins register agents with the same `name:` field, Claude Code
+cannot resolve the namespaced reference (`cc10x:silent-failure-hunter`),
+causing the parallel review pattern to fail with "Agent type not available."
+
+The agent's functionality, color (red), tools, skills, and role are unchanged.
+Only the registered name differs: `cc10x:failure-hunter` instead of
+`cc10x:silent-failure-hunter`.
+
 ## [12.3.0] - 2026-07-02
 
 ### Adopted: 18 High-Impact Patterns From 6 Repos
@@ -38,11 +54,11 @@ After analyzing 6 repositories (Superpowers, Matt Pocock, addyosmani, EveryInc, 
 
 ## [12.2.0] - 2026-07-02
 
-### Restored: Parallel Review (silent-failure-hunter)
+### Restored: Parallel Review (failure-hunter)
 
-Restored the standalone `silent-failure-hunter` agent and all parallel dispatch infrastructure that was incorrectly merged into `code-reviewer` as "Pass 1b" in v12.1.0.
+Restored the standalone `failure-hunter` agent and all parallel dispatch infrastructure that was incorrectly merged into `code-reviewer` as "Pass 1b" in v12.1.0.
 
-**Agents: 8 → 9** (restored silent-failure-hunter)
+**Agents: 8 → 9** (restored failure-hunter)
 
 #### What was restored
 

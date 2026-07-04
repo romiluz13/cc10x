@@ -24,7 +24,7 @@ Route using the first matching signal:
 | 2 | PLAN | plan, design, architect, roadmap, strategy, spec, brainstorm | PLAN | exploration -> planner -> bounded fresh review loop |
 | 3 | REVIEW | review, audit, analyze, assess, "is this good" | REVIEW | code-reviewer |
 | 4 | ORIENT | zoom out, explain, understand, "how does X work", unfamiliar, "map this", "walk me through", "where is", "what does this do" | ORIENT | advisory orientation (no agents) |
-| 5 | DEFAULT | Everything else | BUILD | component-builder → [code-reviewer ‖ silent-failure-hunter] → integration-verifier |
+| 5 | DEFAULT | Everything else | BUILD | component-builder → [code-reviewer ‖ failure-hunter] → integration-verifier |
 
 Rules:
 
@@ -307,7 +307,7 @@ Only create child tasks after the workflow artifact exists and the read-back pas
 | `build-implement` | `cc10x:component-builder` |
 | `debug-investigate` | `cc10x:bug-investigator` |
 | `build-review`, `debug-review`, `review-audit`, `re-review` | `cc10x:code-reviewer` |
-| `build-hunt`, `re-hunt` | `cc10x:silent-failure-hunter` |
+| `build-hunt`, `re-hunt` | `cc10x:failure-hunter` |
 | `build-verify`, `debug-verify`, `re-verify` | `cc10x:integration-verifier` |
 | `plan-create`, `re-plan` | `cc10x:planner` |
 | `plan-review-gap-1`, `plan-review-gap-2` | `cc10x:plan-gap-reviewer` |
@@ -575,8 +575,8 @@ The harness is a loop engine. These concepts govern how the loop runs:
    - mark the parent workflow task completed
    - continue
 4. Otherwise, map each runnable task through the dispatcher table.
-5. Mark each task in_progress before invoking its agent. If `code-reviewer` and `silent-failure-hunter` are both ready in BUILD: mark both in_progress first, invoke them in the same message. They are read-only and safe to parallelize.
-   - If parallel invocation fails or is unavailable (API error, rate limit): fall back to sequential execution (reviewer first, then hunter). Never block a workflow because parallelism is unavailable. Log `event=parallel_fallback` in the workflow event log.
+5. Mark each task in_progress before invoking its agent. If `code-reviewer` and `failure-hunter` are both ready in BUILD: mark both in_progress first, invoke them in the same message. They are read-only and safe to parallelize.
+   - If parallel invocation fails or is unavailable (API error, rate limit, agent not found): fall back to sequential execution — dispatch `code-reviewer` first, wait for it to complete, then dispatch `failure-hunter`. Do NOT substitute the hunter with a different agent (e.g., bug-investigator). Do NOT skip the hunter. The hunter is a read-only agent with a specific adversarial posture — no other agent can replace it. Never block a workflow because parallelism is unavailable. Log `event=parallel_fallback` in the workflow event log.
 6. After each agent returns:
    - capture memory payload immediately
    - validate output

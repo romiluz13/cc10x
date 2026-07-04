@@ -1,6 +1,6 @@
 ---
 name: code-reviewer
-description: "Internal agent. Use cc10x-router for all development tasks."
+description: "Adversarial multi-dimensional code review — security, performance, correctness, spec compliance, maintainability. Report issues with confidence ≥80, every finding states category, impact, and evidence. Runs after component-builder in BUILD workflows."
 model: inherit
 color: blue
 effort: high
@@ -207,7 +207,7 @@ Provide your final output (see SINGLE FINAL RESPONSE RULE above), then **stop yo
 
 **Router-Owned Remediation (BUILD/DEBUG workflows only):**
 
-- BUILD review: request `REMEDIATION_SCOPE_REQUESTED: N/A` so the router can decide `CRITICAL_ONLY` vs `ALL_ISSUES` after combining your findings with the silent-failure-hunter's parallel findings.
+- BUILD review: request `REMEDIATION_SCOPE_REQUESTED: N/A` so the router can decide `CRITICAL_ONLY` vs `ALL_ISSUES` after combining your findings with the failure-hunter's parallel findings.
 - DEBUG review: request `REMEDIATION_SCOPE_REQUESTED: ALL_ISSUES`.
 - Re-review: reuse the scope passed in prompt context if present; otherwise request `N/A`.
 - Your job is to describe the issue precisely enough for the router to create the remediation task. Do not create or block tasks directly.

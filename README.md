@@ -16,7 +16,7 @@
   Fail-closed gates &nbsp;·&nbsp; survives compaction &nbsp;·&nbsp; zero prompt spam &nbsp;·&nbsp; self-tested orchestration
 </p>
 
-**Current version:** 12.3.0
+**Current version:** 12.3.1
 
 ---
 
@@ -47,7 +47,7 @@ Ask Claude for something complex. It works for a while. Then it declares **"Done
 | The pain you know | How cc10x handles it |
 | --- | --- |
 | "Done!" on red tests | `integration-verifier` is independent of the builder. Phase-exit gates block advancement on partial evidence. |
-| Silent failures nobody asked about | `silent-failure-hunter` runs in parallel with review — greps for swallowed errors and empty catches. |
+| Silent failures nobody asked about | `failure-hunter` runs in parallel with review — greps for swallowed errors and empty catches. |
 | Context falls apart after compaction | Workflow state on disk with stable UUIDs. Memory files the router auto-heals. |
 | Planning is just a chat | Three planning modes chosen by intent, with a fresh anti-anchored review by a reviewer who never saw the planner's rationale. |
 | 12 slash commands to remember | One router. Every request hits `cc10x-router` first. |
@@ -91,7 +91,7 @@ The shipped subagents are intentionally specialized:
 - `component-builder`
 - `bug-investigator`
 - `code-reviewer`
-- `silent-failure-hunter`
+- `failure-hunter`
 - `integration-verifier`
 - `web-researcher`
 - `github-researcher`
@@ -381,7 +381,7 @@ react-best-practices/SKILL.md
 → Router detects BUILD intent
 → Stops to resolve missing requirements first
 → component-builder drives RED → GREEN → REFACTOR
-→ code-reviewer + silent-failure-hunter run in parallel
+→ code-reviewer + failure-hunter run in parallel
 → integration-verifier checks wiring, artifacts, and behavior
 → Workflow state and memory are updated
 ```
@@ -423,7 +423,7 @@ USER REQUEST
 │              Detects intent → Routes to workflow                │
 └─────────────────────────────────────────────────────────────────┘
      │
-     ├── BUILD ──► component-builder ──► [code-reviewer ∥ silent-failure-hunter] ──► integration-verifier
+     ├── BUILD ──► component-builder ──► [code-reviewer ∥ failure-hunter] ──► integration-verifier
      │
      ├── DEBUG ──► bug-investigator ──► code-reviewer ──► integration-verifier
      │
@@ -522,7 +522,7 @@ cc10x uses Claude Code's Tasks system for workflow coordination:
 │  BUILD: User Authentication                                     │
 │  ├── component-builder (pending)                                │
 │  ├── code-reviewer (blocked by: builder)                        │
-│  ├── silent-failure-hunter (blocked by: builder)                │
+│  ├── failure-hunter (blocked by: builder)                │
 │  └── integration-verifier (blocked by: reviewer, hunter)        │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -868,6 +868,6 @@ MIT License
 ---
 
 <p align="center">
-  <strong>cc10x v12.3.0</strong><br>
+  <strong>cc10x v12.3.1</strong><br>
   <em>The Intelligent Orchestrator for Claude Code</em>
 </p>

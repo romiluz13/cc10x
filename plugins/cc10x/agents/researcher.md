@@ -1,6 +1,6 @@
 ---
 name: researcher
-description: "Internal agent. Use cc10x-router for all development tasks."
+description: "Execute web and GitHub research using Bright Data MCP, Octocode MCP, and WebSearch/WebFetch. Persist findings to dated files, return structured research contracts. Invoked by the router when external research is needed."
 model: inherit
 color: orange
 effort: medium

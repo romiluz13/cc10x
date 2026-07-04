@@ -41,7 +41,7 @@ NEVER re-dispatch the same agent with the same model on the same unchanged input
 | 1a-SCOPE | BUILD parallel phase has CRITICAL + HIGH issues | Ask for `critical only` vs `all issues`, store pending scope marker, stop. |
 | 1a | Blocking issue in BUILD/DEBUG | Router creates scoped REM-FIX task, blocks downstream tasks, stop. |
 | 1b | Non-blocking remediation needed | In BUILD/DEBUG, auto-create REM-FIX. In REVIEW, ask whether to start BUILD. |
-| 2 | Reviewer verdict is Approve but silent-failure-hunter reports HIGH issues | Ask whether to remediate or proceed. (CRITICAL hunter issues never reach this row — the contract override already converts them to blocking.) |
+| 2 | Reviewer verdict is Approve but failure-hunter reports HIGH issues | Ask whether to remediate or proceed. (CRITICAL hunter issues never reach this row — the contract override already converts them to blocking.) |
 | 2b | Planner needs clarification | Ask the user, persist answers, then restart PLAN with a fresh visible DAG after clarification. |
 | 2c | Investigator still investigating | Create follow-up investigation task with loop cap. |
 | 2d | Verifier failed | Router creates REM-FIX unless user chooses REVERT at the router gate. |
@@ -299,7 +299,7 @@ TaskCreate({
 
 ```text
 TaskCreate({
-  subject: "CC10X silent-failure-hunter: Re-hunt after REM-FIX",
+  subject: "CC10X failure-hunter: Re-hunt after REM-FIX",
   description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:re-hunt\nplan:{plan_file or 'N/A'}\nscope:{scope from completed remfix}\nreason:{reason from completed remfix}\n\nRe-scan for silent failures after remediation. Focus on the remediated surface and its immediate call sites.",
   activeForm: "Re-hunting failures"
 }) -> rehunt_task_id

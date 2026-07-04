@@ -1,6 +1,6 @@
 ---
-name: silent-failure-hunter
-description: "Internal agent. Use cc10x-router for all development tasks."
+name: failure-hunter
+description: "Find silent failures in code — empty catches, log-only error handlers, discarded errors, generic error messages, swallowed exceptions. Zero tolerance for error handling that hides bugs. Runs in parallel with code-reviewer during BUILD workflows."
 model: inherit
 color: red
 effort: high

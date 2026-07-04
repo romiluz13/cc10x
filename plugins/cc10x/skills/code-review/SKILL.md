@@ -53,10 +53,10 @@ Top-down (spec → architecture → module → function → line) for first pass
 
 ### Parallel Review + Router Merge
 
-When `code-reviewer` and `silent-failure-hunter` run in parallel (BUILD workflow):
+When `code-reviewer` and `failure-hunter` run in parallel (BUILD workflow):
 
 - **code-reviewer** (Assessment A): correctness, performance, spec compliance. Forms opinion WITHOUT seeing the hunter's scan.
-- **silent-failure-hunter** (Assessment B): silent failure scan using red-flags table. Does NOT see the reviewer's findings.
+- **failure-hunter** (Assessment B): silent failure scan using red-flags table. Does NOT see the reviewer's findings.
 - **Router-owned merge:** after both complete, the router writes a merged findings summary into the workflow artifact before verifier handoff. Where both agree → high confidence. Where the hunter caught what the reviewer missed → keep. Where the hunter finding is a false positive → drop with reason. Contradictory verdicts: stricter verdict wins, logged in `status_history`.
 
 ### Zero-Finding Halt

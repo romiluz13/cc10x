@@ -88,7 +88,7 @@ BUILD is sequential:
 **Complexity gradient (read `build_scope` from BUILD preparation step 4):**
 The router is still the sole entry point for every BUILD, but the task graph scales to the work. This is a deliberate gradient, not the retired unconditional QUICK path: trivial work earns a reduced graph; everything else pays the full chain.
 
-- `build_scope=trivial` → use the **reduced task graph** below: `component-builder` → `integration-verifier` → `Memory Update`. NO separate `code-reviewer` task, NO `silent-failure-hunter` task, NO standalone `doc-syncer` task. The verifier still runs its FULL real proof path — never weaken the Pre-Completion Checklist, Proof Reconciliation, or Test Honesty Gates to "save time" on trivial work — and folds a brief review/edge-case pass into its report.
+- `build_scope=trivial` → use the **reduced task graph** below: `component-builder` → `integration-verifier` → `Memory Update`. NO separate `code-reviewer` task, NO `failure-hunter` task, NO standalone `doc-syncer` task. The verifier still runs its FULL real proof path — never weaken the Pre-Completion Checklist, Proof Reconciliation, or Test Honesty Gates to "save time" on trivial work — and folds a brief review/edge-case pass into its report.
 - `build_scope=standard` (default, and always when a plan exists) → use the **full task graph** further below.
 
 **Escalation rule (trivial → full):** after the builder returns, if its Router Contract reports non-empty `SCOPE_INCREASES` or non-empty `BLOCKED_ITEMS`, the work was not actually trivial. Before advancing, promote the workflow to the full graph: create the `code-reviewer` task (blocked by the builder) and the `doc-syncer` task (blocked by the verifier), and re-block Memory Update on `doc_sync_task_id`. Persist `build_scope=standard` and an escalation entry in `status_history`.
@@ -117,7 +117,7 @@ TaskCreate({
 TaskUpdate({ taskId: memory_task_id, addBlockedBy: [verifier_task_id] })
 ```
 
-If the builder triggers the escalation rule, convert this into the full graph before running the verifier: add the code-reviewer task (blocked by builder), add the silent-failure-hunter task (blocked by builder), add doc-syncer (blocked by verifier), re-block verifier on `[reviewer_task_id, hunter_task_id]`, and re-block Memory Update on `doc_sync_task_id`.
+If the builder triggers the escalation rule, convert this into the full graph before running the verifier: add the code-reviewer task (blocked by builder), add the failure-hunter task (blocked by builder), add doc-syncer (blocked by verifier), re-block verifier on `[reviewer_task_id, hunter_task_id]`, and re-block Memory Update on `doc_sync_task_id`.
 
 #### Full task graph (`build_scope=standard`)
 
@@ -136,7 +136,7 @@ TaskCreate({
 TaskUpdate({ taskId: reviewer_task_id, addBlockedBy: [builder_task_id] })
 
 TaskCreate({
-  subject: "CC10X silent-failure-hunter: Hunt edge cases",
+  subject: "CC10X failure-hunter: Hunt edge cases",
   description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:build-hunt\nplan:{plan_file or 'N/A'}\nscope:N/A\nreason:Audit current phase blast radius\n\nFind silent failures and edge cases adjacent to the current phase.",
   activeForm: "Hunting failures"
 }) -> hunter_task_id
@@ -182,7 +182,7 @@ The finer per-TASK review cadence (one review per task rather than one per phase
 
 Minor findings that do not block a phase exit must not silently evaporate — that violates the "no finding silently discarded" rule. The workflow artifact carries a `deferred_findings` array for exactly this:
 
-- When `code-reviewer` or `silent-failure-hunter` raises a Minor finding that does NOT block the current `phase_exit_gate`, the router appends it to `deferred_findings` (each entry: `source` agent, `phase_id`, terse `finding`, and `severity:minor`) rather than dropping it. Blocking findings still gate the phase as before — this array is only for the non-blocking remainder.
+- When `code-reviewer` or `failure-hunter` raises a Minor finding that does NOT block the current `phase_exit_gate`, the router appends it to `deferred_findings` (each entry: `source` agent, `phase_id`, terse `finding`, and `severity:minor`) rather than dropping it. Blocking findings still gate the phase as before — this array is only for the non-blocking remainder.
 - The array accumulates across phases for the whole workflow. Nothing consumes it mid-flight; it is surfaced once at BUILD-DONE (see the finishing block's triage step) so the user can decide explicitly: fix now, file as follow-up, or knowingly accept. No automatic action is taken on a deferred finding.
 - In the reduced task graph (`build_scope=trivial`) there is no separate reviewer, so the verifier's folded review/edge-case pass appends any Minor leftovers to `deferred_findings` the same way.
 
