@@ -876,6 +876,51 @@
         </p>
       </div>
 
+      <!-- ════ SLIDE 2c — THE BACKLASH ════ -->
+      <div class="slide" data-section="Intro">
+        <div class="eyebrow">The elephant in the room</div>
+        <h2 style="font-size: 42px">
+          "Loop engineering is a
+          <span style="color: var(--red)">psyop</span>."
+        </h2>
+        <div class="glow-line red"></div>
+        <div class="card-grid cols2 mt32" style="max-width: 1000px">
+          <div class="card highlight-red">
+            <div class="card-title accent-red">What the skeptics say</div>
+            <div class="card-body" style="font-size: 14px">
+              <strong>r/ClaudeCode:</strong> "I am really struggling to
+              believe that loop engineering is the applied AI skill I should
+              be developing right now. Seems fishy."<br /><br />
+              <strong>The Register:</strong> "Loop engineering, latest AI
+              buzzword, still needs humans in the loop."<br /><br />
+              <strong>Hacker News:</strong> "Tokenmaxxing with extra steps.
+              Diminishes the work product of engineers."<br /><br />
+              <em style="color: var(--text3)">They're right to be
+              skeptical.</em>
+            </div>
+          </div>
+          <div class="card highlight-cyan">
+            <div class="card-title accent">Why they're wrong</div>
+            <div class="card-body" style="font-size: 14px">
+              The skepticism is about <strong>hype without proof</strong>.
+              And that's fair — most "loop engineering" content is
+              think-pieces, not working systems.<br /><br />
+              But the <strong>pattern is real</strong>. Reflexion (Shinn et
+              al., 2023) proved structured reflection adds +11 points on
+              HumanEval. Boris Cherny isn't selling a course — he's
+              describing how his team actually works.<br /><br />
+              <em style="color: var(--cyan)">The proof isn't in the
+              buzzword. It's in the system.</em>
+            </div>
+          </div>
+        </div>
+        <p class="body-text mt24" style="text-align: center; font-size: 15px">
+          A buzzword without a working system is hype. A working system
+          without the vocabulary is unlabeled. <span class="accent">CC10x is
+          both.</span>
+        </p>
+      </div>
+
       <!-- ════ SLIDE 3 — WHAT IS A HARNESS ════ -->
       <div class="slide slide-harness-bg" data-section="Harness Engineering">
         <div class="eyebrow">Part I — Harness Engineering</div>
@@ -959,7 +1004,12 @@
             <div class="chain-arrow">→</div>
             <div class="chain-node read">
               code-reviewer
-              <small>READ-ONLY · Pass 1-6 + silent failures</small>
+              <small>READ-ONLY · 6-pass adversarial</small>
+            </div>
+            <div class="chain-arrow">+</div>
+            <div class="chain-node read">
+              failure-hunter
+              <small>READ-ONLY · silent failures</small>
             </div>
             <div class="chain-arrow">→</div>
             <div class="chain-node verify">
@@ -1569,6 +1619,65 @@
         </p>
       </div>
 
+      <!-- ════ SLIDE 9b — ANDREW NG'S THREE LOOPS ════ -->
+      <div class="slide slide-loop-bg" data-section="Loop Engineering">
+        <div class="eyebrow">The full landscape — Andrew Ng's framework</div>
+        <h2 style="font-size: 40px">
+          Three loops. Three timescales.<br />
+          <span class="accent-purple">One discipline.</span>
+        </h2>
+        <div class="glow-line purple"></div>
+        <div class="card-grid cols3 mt32" style="max-width: 1100px">
+          <div class="card highlight-green">
+            <div class="card-icon">⚡</div>
+            <div class="card-title" style="color: var(--green)">
+              Minute-scale loop
+            </div>
+            <div class="card-body">
+              <strong>Agentic coding.</strong> Write code → run tests → fix
+              failures → repeat. The tightest loop. This is what CC10x
+              automates — BUILD → REVIEW → VERIFY → REMFIX, bounded at 3
+              cycles.<br /><br />
+              <span class="pill pill-green">CC10x lives here</span>
+            </div>
+          </div>
+          <div class="card highlight-cyan">
+            <div class="card-icon">📅</div>
+            <div class="card-title" style="color: var(--cyan)">
+              Daily-scale loop
+            </div>
+            <div class="card-body">
+              <strong>Build-test-ship.</strong> Ship a feature → gather
+              feedback → learn → plan tomorrow's work. The team loop. CI/CD
+              pipelines, PR review cycles, retrospective learnings stored in
+              <code style="font-size: 12px; color: var(--cyan)">patterns.md</code>.<br /><br />
+              <span class="pill pill-cyan">CC10x feeds this</span>
+            </div>
+          </div>
+          <div class="card highlight-purple">
+            <div class="card-icon">🎯</div>
+            <div class="card-title" style="color: var(--purple)">
+              Weekly-scale loop
+            </div>
+            <div class="card-body">
+              <strong>Product-market fit.</strong> Ship product → measure
+              usage → adjust roadmap → re-plan. The strategic loop. The
+              compounding knowledge in
+              <code style="font-size: 12px; color: var(--purple)">docs/solutions/</code>
+              informs this loop across weeks and teams.<br /><br />
+              <span class="pill pill-purple">CC10x compounds this</span>
+            </div>
+          </div>
+        </div>
+        <p class="body-text mt24" style="text-align: center; font-size: 15px">
+          <strong>Andrew Ng:</strong> "Loops are now a key part of how we get
+          AI agents to iterate at length to build software."<br />
+          <span style="color: var(--text3)">— The minute-scale loop is the
+          foundation. Without it, the daily and weekly loops have no signal to
+          consume.</span>
+        </p>
+      </div>
+
       <!-- ════ SLIDE 10 — HARNESS + LOOP TOGETHER ════ -->
       <div class="slide slide-proof-bg" data-section="Proof">
         <div class="eyebrow">They're not separate disciplines</div>
@@ -1603,7 +1712,7 @@
       <div class="slide slide-proof-bg" data-section="Proof">
         <div class="eyebrow">CC10x — the full system in one view</div>
         <h2 style="font-size: 38px">
-          8 agents · 17 skills · 4 workflows<br /><span class="accent-green"
+          9 agents · 17 skills · 4 workflows<br /><span class="accent-green"
             >One coherent harness.</span
           >
         </h2>
@@ -1848,15 +1957,28 @@
       <!-- ════ SLIDE 14 — CLOSE ════ -->
       <div class="slide slide-title-bg" data-section="Close">
         <div class="eyebrow">The takeaway</div>
-        <div class="big-quote" style="font-size: 52px">
+        <div class="big-quote" style="font-size: 44px">
           Stop chasing better models.<br />
           Build a better <em class="cyan">harness</em>.<br />
           Engineer your <em class="green">loops</em>.
         </div>
-        <div class="glow-line cyan" style="margin-top: 48px"></div>
-        <div class="mt32 stat-row">
+        <div class="glow-line cyan" style="margin-top: 32px"></div>
+        <div class="mt24" style="max-width: 800px; margin: 24px auto 0">
+          <div class="card highlight-cyan" style="padding: 20px">
+            <div class="card-body" style="font-size: 16px; text-align: center">
+              The humans don't go away.<br />
+              They <span class="accent">move up</span> — from prompting to
+              designing the loops.<br />
+              <span style="color: var(--text3); font-size: 14px"
+                >Boris Cherny: "Everyone on our team codes." The engineer's
+                job becomes loop architecture, not prompt writing.</span
+              >
+            </div>
+          </div>
+        </div>
+        <div class="mt24 stat-row">
           <div class="stat-item">
-            <div class="stat-value" style="font-size: 56px">8</div>
+            <div class="stat-value" style="font-size: 56px">9</div>
             <div class="stat-label">Agents</div>
           </div>
           <div class="stat-divider"></div>
@@ -1875,8 +1997,10 @@
             <div class="stat-label">Better loops</div>
           </div>
         </div>
-        <p class="subtitle mt32" style="font-size: 16px; color: var(--text3)">
-          CC10x is open. The pattern is yours. Go build the harness.
+        <p class="subtitle mt24" style="font-size: 16px; color: var(--text3)">
+          CC10x is open. The pattern is yours. The next frontier is
+          <span class="accent-purple">self-harnessing</span> — harnesses that
+          improve themselves from their own learnings. Go build it.
         </p>
       </div>
     </div>
