@@ -387,6 +387,7 @@ Optional sections:
 - Every routed prompt must be self-contained from the workflow artifact, approved files, and the current task contract.
 - Do not rely on prior chat turns or completed-phase narrative when the same fact already exists in the workflow artifact, plan, design, or research files.
 - Include only the current-phase objective, live blockers, approved decisions, and directly relevant evidence. Omit unrelated completed-phase detail.
+- **Anti-pre-judging guard (adversarial dispatches only):** before dispatching `code-reviewer`, `failure-hunter`, or `plan-gap-reviewer`, scan the constructed prompt for bias phrases — "do not flag", "don't treat X as a defect", "at most Minor", "the plan chose", "should be fine", "no need to check". If any are present, rewrite them out: you are pre-judging the reviewer's verdict before they have seen the code. The router knows the plan, the intent contract, and the approved decisions — that knowledge can unknowingly inject bias ("the plan chose approach X, so don't flag Y"). Reviewers must form their own opinion from the diff. State approved decisions as neutral facts ("approach X was approved for reason Z"), never as instructions to suppress findings.
 
 ### Deterministic skill hints
 
@@ -586,6 +587,7 @@ The harness is a loop engine. These concepts govern how the loop runs:
    - for BUILD, run `phase_exit_gate`; if the current phase is not complete, persist `phase_status={partial|blocked}` and stop
    - never advance to the next phase or workflow step on apology prose alone
    - if two agents in the same phase return contradictory verdicts (e.g., reviewer approves but verifier fails on the same evidence), treat the stricter verdict as authoritative and do not average or reconcile the signals. Log the contradiction in `status_history`.
+   - **Cross-reviewer agreement promotion:** if `code-reviewer` and `failure-hunter` independently flag the SAME finding (same file:line, same defect, raised from different passes), that is stronger signal than either alone — promote the merged finding's confidence by one tier (80→90, or mark it `cross-confirmed` in the merged findings summary). Agreement between two mutually-blind reviewers is independent confirmation; use it. Promotion never overrides the quote-the-line gate — a finding without a verbatim `file:line` quote cannot be promoted, only demoted.
    - doc-syncer `STATUS=SKIPPED` is a passing state; advance to Memory Update immediately
    - doc-syncer STATUS=PARTIAL: soft pass; advance to Memory Update; persist doc_sync_partial=true in workflow artifact results.doc_syncer for user review
 7. Repeat until all tasks in the active `wf:` are completed.
@@ -666,6 +668,8 @@ Before invoking `integration-verifier` in BUILD:
   ```
 
 - Never invoke verifier without that section when review/hunt already ran.
+
+**Post-verifier finding validation (act on hallucinated findings):** after the verifier returns, read its `### Reviewer Finding Validation` section. For any finding the verifier marked `validated: false`, DROP that finding from the merged findings set before creating a REM-FIX task — a hallucinated critical finding must not gate the phase or waste a builder cycle. Log the dropped finding in `status_history` (`finding_dropped: hallucinated — verifier could not confirm quote at file:line`). For `validated: degraded` CRITICAL/HIGH findings, KEEP them in the blocking set (fail-safe — a transient access failure must never silently remove a critical finding). This gate runs BEFORE the REM-FIX scope decision in §remediation-and-research, so `CRITICAL_ONLY` / `ALL_ISSUES` scope is computed over validated findings only.
 
 ### Inline no-subagent execution (FALLBACK — not the default)
 

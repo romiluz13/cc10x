@@ -525,9 +525,7 @@ def main() -> int:
             "planner agent no longer loads agent-common (which owns the .cc10x memory namespace law)"
         )
 
-    if (
-        "### memory-and-handoff" not in prompt_surface_inventory
-    ):
+    if "### memory-and-handoff" not in prompt_surface_inventory:
         errors.append("prompt surface inventory missing memory-and-handoff entry")
     for required_surface in ("### planning", "### brainstorming"):
         if required_surface not in prompt_surface_inventory:
@@ -714,9 +712,7 @@ def main() -> int:
                 "brainstorming still contains direct memory writes instead of router-owned handoff"
             )
 
-    for phrase in (
-        "## Plan Completeness Gate (MANDATORY — before save)",
-    ):
+    for phrase in ("## Plan Completeness Gate (MANDATORY — before save)",):
         if phrase not in planning_patterns:
             errors.append(f"planning missing harmony phrase '{phrase}'")
     if "MEMORY_NOTES" not in planner_agent:

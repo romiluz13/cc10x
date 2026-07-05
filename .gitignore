@@ -236,3 +236,5 @@ plugins/cc10x/tools/__pycache__/
 # LIVE CODING PREP (NEVER COMMIT)
 # ========================================
 Live Coding Prep/
+.pi-subagents/
+.pi-subagents/

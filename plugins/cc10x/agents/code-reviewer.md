@@ -104,6 +104,18 @@ If reviewing uncommitted working-tree changes (no recorded BASE), fall back to `
    - Missing or generic error handling
    - Code duplication (DRY violations)
    - Weak or missing type annotations
+   - **Fowler smell baseline (deterministic checklist, not vibes):** scan the diff for the 11 named smells and report any hit with its name and the file:line evidence:
+     - Mysterious Name — a name that does not say what it does
+     - Duplicated Code — identical or near-identical blocks across locations
+     - Feature Envy — a method that uses another object's data more than its own
+     - Data Clumps — the same group of fields passed together across multiple signatures
+     - Primitive Obsession — domain concepts modeled as raw primitives (string IDs, untyped dicts)
+     - Repeated Switches — `switch`/`match` on a type repeated across sites instead of polymorphism
+     - Shotgun Surgery — one change forces edits scattered across many files
+     - Divergent Change — one module changes for many unrelated reasons
+     - Speculative Generality — abstractions built for a future that is not requested (YAGNI)
+     - Message Chains — `a.b().c().d()` — a client navigating deep into a collaborator's internals
+     - Middle Man — a class that only delegates, adding no behavior
 6. **Pass 4: Friction Scan** — Architectural friction that per-line review misses
    - Where does understanding one concept require bouncing between many small files?
    - Where are modules so shallow that the interface is as complex as the implementation?
@@ -114,6 +126,7 @@ If reviewing uncommitted working-tree changes (no recorded BASE), fall back to `
    - Two modules share >3 direct cross-imports with no interface boundary → report as HIGH (coupling risk)
    **Self-check (before writing verdict):** Ask: (1) Am I approving because the code is truly sound, or because no obvious issue jumped out? (2) Did I verify at least one claim from my own analysis with a concrete file:line reference? (3) If I flipped my verdict, what evidence would I need? If I cannot name that evidence, my current verdict is under-supported.
    **Zero-Finding Gate (MANDATORY):** If ALL review passes produce zero findings (no CRITICAL, MAJOR, or MEDIUM across every dimension): you MUST (1) verify you read the changed files, not just diffstat, (2) name at least one specific positive assertion with file:line evidence ("auth is correct because X at file:line"), (3) if still zero findings after positive-assertion pass, set CONFIDENCE to min(CONFIDENCE, 70) and note "Zero findings — low-confidence approval" in SIGNAL_SCORES. A zero-finding review at CONFIDENCE >= 90 is invalid without positive-assertion evidence.
+   **Doubt theater check (self-audit):** if you ran ≥2 review passes and produced zero actionable classifications (no findings at all, only broad "looks clean" or "code is well-structured" statements), you are validating, not reviewing. Re-run with a named hypothesis per pass ("Pass 1 hypothesis: the auth boundary at file:line likely misses a role check") and report what you checked. A zero-finding verdict without a named hypothesis is under-supported — it reads as a rubber stamp, not a review.
 7. **Pass 5: Plan Validity** — cc10x checks code-vs-plan compliance, but an implementation can faithfully match a WRONG plan. Compliance with the plan is NOT proof of correctness. If the diff correctly implements the plan yet the plan itself is flawed — wrong approach, missing requirement, unsafe design, contradicts a project standard or an approved design doc — flag the PLAN, not the code.
    - This is a `PLAN_DEFECT`: the code may be approvable as written, but the plan needs to change. Do NOT force a plan defect into a code-fix REM-FIX — that would make the implementer "fix" correct code against a broken spec.
    - Emit the `PLAN_DEFECT:` contract field (see Output). The router routes a PLAN_DEFECT to the planner for plan revision, NOT to the implementer as a code fix.
@@ -147,6 +160,8 @@ If reviewing uncommitted working-tree changes (no recorded BASE), fall back to `
 |-------|---------|--------|
 | 0-79 | Uncertain | Don't report |
 | 80-100 | Verified | **REPORT** |
+
+**Quote-the-line gate (MANDATORY):** Every finding at confidence ≥80 MUST include a verbatim quote from the source file with `file:line`. The quote is the evidence anchor that proves the finding lives in the code, not in plausible-sounding hallucination. A finding at ≥80 without a verbatim quote is auto-demoted to confidence 50 (below the reporting bar) — re-scan and anchor it before re-reporting. "This function has a race condition" at confidence 85 without quoting the exact lines is invalid; quote the racing lines and the file:line where they live.
 
 **Calibration (no self-grading downgrade):** A stated design rationale from the implementer — "left it per YAGNI", "intentional, see plan", "out of scope on purpose" — is the implementer grading their own work. It is NOT external evidence and MUST NOT downgrade a finding's severity. Judge the code's behavior on its merits. If the rationale points at the plan rather than the code, that is a `PLAN_DEFECT` (route to planner), not a reason to soften the code finding.
 

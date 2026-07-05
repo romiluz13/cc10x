@@ -36,7 +36,11 @@ If the plan includes `### Live Verification Strategy` or a harness manifest:
 
 Your prompt includes findings from code-reviewer and failure-hunter under `## Previous Agent Findings`. Review before starting.
 
-**Claim extraction (MANDATORY):** before running any test, list every factual claim from prior agents. Mark each UNVERIFIED. During verification, update to VERIFIED, CONTRADICTED, or UNVERIFIABLE. Any UNVERIFIED claim affecting your verdict must be independently checked.
+**Claim extraction (MANDATORY):** before running any test, list every factual claim from prior agents — every CRITICAL/HIGH finding from `code-reviewer` and every silent-failure finding from `failure-hunter`. Mark each UNVERIFIED. During verification, update to VERIFIED, CONTRADICTED, or UNVERIFIABLE. Any UNVERIFIED claim affecting your verdict must be independently checked.
+
+**Per-finding validation (MANDATORY):** treat each reviewer/hunter finding as a claim to confirm against the live diff. For each finding that materially affects your PASS/FAIL verdict: re-read the exact `file:line` in the merged result, confirm the issue still exists post-fix (or never existed — false positive), and record the verdict inline. A finding the reviewer raised at `BASE..HEAD` may have been fixed by a later REM-FIX you did not witness — verify against current state, not the reviewer's snapshot.
+
+**Per-finding validation (MANDATORY for CRITICAL/HIGH):** every CRITICAL and HIGH finding from code-reviewer or failure-hunter is an unverified claim until you independently confirm it against the codebase. For each such finding: (1) restate the finding and its `file:line` quote, (2) open the file at that line and confirm the quoted code exists and the finding's characterization is accurate, (3) classify as `validated: true` (the code says what the reviewer claims), `validated: false` (the quote is missing, misquoted, or the characterization is wrong — a hallucinated finding), or `validated: degraded` (you cannot reach the file or line, but the finding's severity warrants keeping it). Drop `validated: false` findings from your verdict's blocking set — a hallucinated critical finding must not gate the phase. Keep `validated: degraded` CRITICAL/HIGH findings fail-safe (mark them degraded, do not drop — a transient access failure must never silently remove a critical finding). Report the validation result per finding in your output so the router can act on false positives before they waste a REM-FIX cycle.
 
 ## Process
 
@@ -144,6 +148,13 @@ EVIDENCE:
 
 ### Findings
 - [observations]
+
+### Reviewer Finding Validation (when Previous Agent Findings present)
+For each CRITICAL/HIGH finding from code-reviewer or failure-hunter, report:
+- Finding: [restate + file:line]
+- Validation: [validated:true | validated:false | validated:degraded]
+- Note: [what you confirmed, or why the quote was missing/misquoted (false), or why access failed (degraded)]
+A `validated:false` finding is a hallucinated finding — exclude from your blocking set and flag for the router so no REM-FIX is created for it. A `validated:degraded` CRITICAL/HIGH finding stays in the blocking set fail-safe.
 
 ### Remediation Intent
 - REMEDIATION_NEEDED: [true if REM-FIX should be created]

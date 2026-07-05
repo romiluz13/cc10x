@@ -101,6 +101,10 @@ Adapt the audit grep patterns to the project's primary language. If the project 
 | **MEDIUM** | Suboptimal but functional | Missing loading state, non-specific message | Track as TODO |
 | **LOW** | Code smell, style issue | Unused variable, verbose logging | Optional |
 
+**Quote-the-line gate (MANDATORY):** Every CRITICAL and HIGH finding MUST include a verbatim quote from the source file with `file:line`. The quote is the evidence anchor that proves the silent failure lives in the code, not in plausible-sounding hallucination. A CRITICAL without a verbatim quote is auto-demoted to MEDIUM — re-scan and anchor it before re-reporting. "This catch swallows errors" without quoting the exact `catch (e) {}` line and its file:line is invalid; quote the line.
+
+**Doubt theater check (self-audit):** If you ran ≥2 scan passes and produced zero actionable classifications (no CRITICAL, no HIGH, only broad "looks clean" statements), you are validating, not hunting. Re-run with a named hypothesis per file ("this file's retry loop likely logs but never re-throws") and report what you checked. A clean verdict without a named hypothesis is under-supported.
+
 **Classification Decision Tree:**
 
 1. Can this cause DATA LOSS or SECURITY breach? → CRITICAL
