@@ -265,7 +265,7 @@ BAKEOFF_SCENARIOS: tuple[Scenario, ...] = (
         weak_patterns=(
             "verification-loop",
             "independent verification",
-            "verification-before-completion",
+            "verification",
         ),
     ),
 )
@@ -343,14 +343,14 @@ DELTA_RULES: tuple[DeltaRule, ...] = (
         ),
     ),
     DeltaRule(
-        # The standalone failure-hunter agent is retired; its hunting
-        # duty is consolidated into code-reviewer Pass 1b.
+        # The standalone failure-hunter agent runs in parallel with code-reviewer.
+        # It is NOT consolidated into code-reviewer — it has its own agent file.
         "plugins/cc10x/agents/code-reviewer.md",
         "hunter",
         (
             (
-                "Pass 1b: Silent Failure Scan",
-                "silent-failure hunting is consolidated into the reviewer",
+                "Zero tolerance for silent failures",
+                "failure-hunter runs in parallel with code-reviewer",
             ),
             (
                 "Do not self-activate internal CC10X skills",
@@ -434,7 +434,7 @@ DELTA_RULES: tuple[DeltaRule, ...] = (
         ),
     ),
     DeltaRule(
-        "plugins/cc10x/skills/debugging-patterns/SKILL.md",
+        "plugins/cc10x/skills/debugging/SKILL.md",
         "internal-skill",
         (
             (
@@ -448,7 +448,7 @@ DELTA_RULES: tuple[DeltaRule, ...] = (
         ),
     ),
     DeltaRule(
-        "plugins/cc10x/skills/architecture-patterns/SKILL.md",
+        "plugins/cc10x/skills/architecture/SKILL.md",
         "internal-skill",
         (
             (
@@ -726,7 +726,8 @@ def detect_harness_signals(repo: Path) -> dict[str, bool]:
         for x in (
             "expected vs actual",
             "scenarios_total",
-            "verification-before-completion",
+            "cc10x:verification",
+            "cc10x:verification",
             "blocking fail",
             "convergence_state",
         )

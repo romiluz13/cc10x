@@ -93,8 +93,8 @@ The shipped subagents are intentionally specialized:
 - `code-reviewer`
 - `failure-hunter`
 - `integration-verifier`
-- `web-researcher`
-- `github-researcher`
+- `researcher`
+- `doc-syncer`
 
 Each agent is optimized for one role. This keeps prompts sharper and makes workflow behavior easier to reason about.
 

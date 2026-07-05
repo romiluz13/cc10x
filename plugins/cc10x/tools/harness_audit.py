@@ -527,7 +527,6 @@ def main() -> int:
 
     if (
         "### memory-and-handoff" not in prompt_surface_inventory
-        and "### session-memory" not in prompt_surface_inventory
     ):
         errors.append("prompt surface inventory missing memory-and-handoff entry")
     for required_surface in ("### planning", "### brainstorming"):

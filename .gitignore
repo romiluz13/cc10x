@@ -230,6 +230,7 @@ FINAL_ORCHESTRATION_UNDERSTANDING.md
 
 # Python cache
 plugins/cc10x/scripts/__pycache__/
+plugins/cc10x/tools/__pycache__/
 
 # ========================================
 # LIVE CODING PREP (NEVER COMMIT)
