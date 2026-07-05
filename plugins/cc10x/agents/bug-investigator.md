@@ -104,14 +104,14 @@ Before testing a new hypothesis, read activeContext, count `[DEBUG-N]:` entries.
 Write the regression test only at a **seam** that exercises the real bug pattern at the call site. A test that asserts on a reshaped internal, a stubbed-out path, or a happy case the bug never touched is a *shallow test* — it goes green without running the broken code.
 
 - **Correct seam exists** → write the test there.
-- **No correct seam** → do NOT ship a shallow test. Document seam absence as a finding. Set `REQUIRES_REMEDIATION: true` or `STATUS: INVESTIGATING`. Flag for architecture-patterns with specifics.
+- **No correct seam** → do NOT ship a shallow test. Document seam absence as a finding. Set `REQUIRES_REMEDIATION: true` or `STATUS: INVESTIGATING`. Flag for architecture with specifics.
 
 ## Debug Close-Out (MANDATORY)
 
 1. **Grep-remove instrumentation** — `grep -rn "DEBUG_BUGINV_" .` must return nothing (except intentionally retained forensic instrumentation, tagged differently)
 2. **Confirm repro no longer fires** — re-run Step 4 loop; must be green (or flaky rate drops to 0)
 3. **State winning hypothesis** — which Hn won, commit/PR, write to `MEMORY_NOTES.learnings`
-4. **Architectural hand-off** — if "what would have prevented this?" is architectural, hand off to architecture-patterns with specifics
+4. **Architectural hand-off** — if "what would have prevented this?" is architectural, hand off to architecture with specifics
 
 ## Self-Managed Research
 

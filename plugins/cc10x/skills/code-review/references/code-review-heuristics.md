@@ -1,6 +1,7 @@
 # Code Review Heuristics
 
 ## Table of Contents
+
 - [Maintainability Scan](#maintainability-scan)
 - [Performance Scan](#performance-scan)
 - [Hidden Failure Scan](#hidden-failure-scan)
@@ -12,6 +13,7 @@
 ## Maintainability Scan
 
 Look for:
+
 - unclear naming
 - multiple responsibilities in one function
 - dense nested branching
@@ -23,6 +25,7 @@ Flag only when the problem materially increases bug risk or future change cost.
 ## Performance Scan
 
 Look for:
+
 - N+1 database or network calls
 - expensive work inside loops or render paths
 - missing early returns on large collections
@@ -35,6 +38,7 @@ blockers.
 ## Hidden Failure Scan
 
 Watch for patterns that suppress truth:
+
 - optional chaining that swallows missing state without logging
 - fallback defaults masking null or undefined source errors
 - catch-log-continue flows that never surface failure to the caller
@@ -46,6 +50,7 @@ Hidden failures are high value because tests often miss them.
 ## Edge-Case Taxonomy
 
 Use only the categories relevant to the change:
+
 - missing else/default branch
 - unguarded input
 - off-by-one bounds
@@ -60,6 +65,7 @@ shape makes plausible.
 ## Sloppy Pattern Scan
 
 After the main review, do a quick debt scan:
+
 - dead imports
 - leftover debug prints
 - commented-out code blocks
@@ -72,16 +78,18 @@ paths.
 ## UI Quick Scan
 
 If the diff includes UI:
+
 - loading, error, empty, and success states exist
 - interactive elements use semantic controls
 - focus and keyboard behavior are preserved
 - labels and names exist for controls
 
-For deep UI review, pair this with `frontend-patterns` references.
+For deep UI review, pair this with `frontend` references.
 
 ## Type Design Red Flags
 
 Typed code deserves an extra pass for:
+
 - mutable internals exposed to callers
 - invariants documented but not enforced
 - constructors or factories that allow invalid objects

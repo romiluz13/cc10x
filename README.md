@@ -444,13 +444,14 @@ WORKFLOW STATE (.cc10x/workflows/)
 
 ---
 
-## The 8 Agents
+## The 9 Agents
 
 | Agent | Purpose | Key Behavior |
 | ------- | --------- | -------------- |
 | **component-builder** | Builds features | TDD: RED → GREEN → REFACTOR (no exceptions) |
 | **bug-investigator** | Fixes bugs | LOG FIRST: Evidence before any fix |
-| **code-reviewer** | Reviews code | Confidence ≥80%; single review covers correctness AND the Pass 1b silent-failure scan (zero tolerance for empty catch blocks) |
+| **code-reviewer** | Reviews code | Confidence ≥80%; 6-pass adversarial review (security, performance, quality, friction, plan validity, spec compliance) |
+| **failure-hunter** | Hunts silent failures | Runs in parallel with code-reviewer; zero-tolerance for empty catches, log-only handlers, discarded errors |
 | **integration-verifier** | E2E validation | Exit codes: PASS/FAIL with evidence |
 | **doc-syncer** | Diff-driven documentation sync | Classifies doc impact; SKIPPED/PARTIAL/COMPLETE/FAIL contract gating Memory Update; honors `DIFF_DRIVEN_DOCS: skip` |
 | **planner** | Creates plans | Saves to `docs/plans/` + updates memory |

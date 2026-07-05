@@ -1,7 +1,7 @@
-# verification-before-completion Evals
+# verification Evals
 
 Pressure scenarios for testing whether an agent correctly follows the
-`verification-before-completion` skill.
+`verification` skill.
 
 Each eval in this directory follows the RED-GREEN-REFACTOR structure from
 `superpowers:writing-skills` (see `docs/EVAL-STANDARD.md`):
@@ -21,7 +21,7 @@ this session.
 ## Evals in This Directory
 
 | File | Scenario | Key pressure |
-|------|----------|-------------|
+| ------ | ---------- | ------------- |
 | `eval-01-should-pass-without-running.md` | Edit made, no command run, agent wants to call it done | "the change is obviously right, it should pass" |
 | `eval-02-trust-agent-success-report.md` | Subagent reports success, parent about to mark complete | "the agent said it succeeded, that's enough" |
 | `eval-03-partial-evidence-extrapolation.md` | Lint passed; agent claims build + tests pass too | "lint is green, so the rest is fine" |
