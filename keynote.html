@@ -888,36 +888,38 @@
           <div class="card highlight-red">
             <div class="card-title accent-red">What the skeptics say</div>
             <div class="card-body" style="font-size: 14px">
-              <strong>r/ClaudeCode:</strong> "I am really struggling to
-              believe that loop engineering is the applied AI skill I should
-              be developing right now. Seems fishy."<br /><br />
+              <strong>r/ClaudeCode:</strong> "I am really struggling to believe
+              that loop engineering is the applied AI skill I should be
+              developing right now. Seems fishy."<br /><br />
               <strong>The Register:</strong> "Loop engineering, latest AI
               buzzword, still needs humans in the loop."<br /><br />
               <strong>Hacker News:</strong> "Tokenmaxxing with extra steps.
               Diminishes the work product of engineers."<br /><br />
-              <em style="color: var(--text3)">They're right to be
-              skeptical.</em>
+              <em style="color: var(--text3)"
+                >They're right to be skeptical.</em
+              >
             </div>
           </div>
           <div class="card highlight-cyan">
             <div class="card-title accent">Why they're wrong</div>
             <div class="card-body" style="font-size: 14px">
-              The skepticism is about <strong>hype without proof</strong>.
-              And that's fair — most "loop engineering" content is
-              think-pieces, not working systems.<br /><br />
-              But the <strong>pattern is real</strong>. Reflexion (Shinn et
-              al., 2023) proved structured reflection adds +11 points on
-              HumanEval. Boris Cherny isn't selling a course — he's
-              describing how his team actually works.<br /><br />
-              <em style="color: var(--cyan)">The proof isn't in the
-              buzzword. It's in the system.</em>
+              The skepticism is about <strong>hype without proof</strong>. And
+              that's fair — most "loop engineering" content is think-pieces, not
+              working systems.<br /><br />
+              But the <strong>pattern is real</strong>. Reflexion (Shinn et al.,
+              2023) proved structured reflection adds +11 points on HumanEval.
+              Boris Cherny isn't selling a course — he's describing how his team
+              actually works.<br /><br />
+              <em style="color: var(--cyan)"
+                >The proof isn't in the buzzword. It's in the system.</em
+              >
             </div>
           </div>
         </div>
         <p class="body-text mt24" style="text-align: center; font-size: 15px">
-          A buzzword without a working system is hype. A working system
-          without the vocabulary is unlabeled. <span class="accent">CC10x is
-          both.</span>
+          A buzzword without a working system is hype. A working system without
+          the vocabulary is unlabeled.
+          <span class="accent">CC10x is both.</span>
         </p>
       </div>
 
@@ -1635,9 +1637,8 @@
             </div>
             <div class="card-body">
               <strong>Agentic coding.</strong> Write code → run tests → fix
-              failures → repeat. The tightest loop. This is what CC10x
-              automates — BUILD → REVIEW → VERIFY → REMFIX, bounded at 3
-              cycles.<br /><br />
+              failures → repeat. The tightest loop. This is what CC10x automates
+              — BUILD → REVIEW → VERIFY → REMFIX, bounded at 3 cycles.<br /><br />
               <span class="pill pill-green">CC10x lives here</span>
             </div>
           </div>
@@ -1647,10 +1648,12 @@
               Daily-scale loop
             </div>
             <div class="card-body">
-              <strong>Build-test-ship.</strong> Ship a feature → gather
-              feedback → learn → plan tomorrow's work. The team loop. CI/CD
-              pipelines, PR review cycles, retrospective learnings stored in
-              <code style="font-size: 12px; color: var(--cyan)">patterns.md</code>.<br /><br />
+              <strong>Build-test-ship.</strong> Ship a feature → gather feedback
+              → learn → plan tomorrow's work. The team loop. CI/CD pipelines, PR
+              review cycles, retrospective learnings stored in
+              <code style="font-size: 12px; color: var(--cyan)"
+                >patterns.md</code
+              >.<br /><br />
               <span class="pill pill-cyan">CC10x feeds this</span>
             </div>
           </div>
@@ -1660,21 +1663,24 @@
               Weekly-scale loop
             </div>
             <div class="card-body">
-              <strong>Product-market fit.</strong> Ship product → measure
-              usage → adjust roadmap → re-plan. The strategic loop. The
-              compounding knowledge in
-              <code style="font-size: 12px; color: var(--purple)">docs/solutions/</code>
+              <strong>Product-market fit.</strong> Ship product → measure usage
+              → adjust roadmap → re-plan. The strategic loop. The compounding
+              knowledge in
+              <code style="font-size: 12px; color: var(--purple)"
+                >docs/solutions/</code
+              >
               informs this loop across weeks and teams.<br /><br />
               <span class="pill pill-purple">CC10x compounds this</span>
             </div>
           </div>
         </div>
         <p class="body-text mt24" style="text-align: center; font-size: 15px">
-          <strong>Andrew Ng:</strong> "Loops are now a key part of how we get
-          AI agents to iterate at length to build software."<br />
-          <span style="color: var(--text3)">— The minute-scale loop is the
-          foundation. Without it, the daily and weekly loops have no signal to
-          consume.</span>
+          <strong>Andrew Ng:</strong> "Loops are now a key part of how we get AI
+          agents to iterate at length to build software."<br />
+          <span style="color: var(--text3)"
+            >— The minute-scale loop is the foundation. Without it, the daily
+            and weekly loops have no signal to consume.</span
+          >
         </p>
       </div>
 
@@ -1703,6 +1709,239 @@
               <span style="color: var(--green)"
                 >→ Loops close the quality gap the harness exposes.</span
               >
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ SLIDE 10a — WORKFLOW: BUILD ════ -->
+      <div class="slide slide-proof-bg" data-section="Workflows">
+        <div class="eyebrow">Workflow deep-dive — BUILD</div>
+        <h2 style="font-size: 36px">
+          BUILD: <span class="accent-green">code that's verified before it ships</span>
+        </h2>
+        <div class="mt24" style="width: 100%; max-width: 1100px">
+          <div class="chain" style="justify-content: center; flex-wrap: wrap; gap: 6px">
+            <div class="chain-node router">router<small>intent: BUILD</small></div>
+            <div class="chain-arrow">→</div>
+            <div class="chain-node write">component-builder<small>WRITE · TDD</small></div>
+            <div class="chain-arrow">→</div>
+            <div style="display: flex; gap: 4px; align-items: center">
+              <div class="chain-node read">code-reviewer<small>6-pass review</small></div>
+              <span style="color: var(--text3); font-size: 12px">∥</span>
+              <div class="chain-node read" style="border-color: var(--red)">failure-hunter<small>silent failures</small></div>
+            </div>
+            <div class="chain-arrow">→</div>
+            <div class="chain-node verify">integration-verifier<small>exit 0</small></div>
+            <div class="chain-arrow">→</div>
+            <div class="chain-node gate">phase_exit_gate<small>fail-closed</small></div>
+            <div class="chain-arrow">→</div>
+            <div class="chain-node memory">doc-syncer → memory<small>persist</small></div>
+          </div>
+        </div>
+        <div class="card-grid cols3 mt24" style="max-width: 1100px">
+          <div class="card highlight-green">
+            <div class="card-title" style="color: var(--green); font-size: 14px">Skills loaded</div>
+            <div class="card-body" style="font-size: 12px">
+              <strong>Builder:</strong> building, verification, agent-common<br />
+              <strong>Reviewer:</strong> code-review, verification, codebase-hygiene, agent-common<br />
+              <strong>Hunter:</strong> code-review, agent-common<br />
+              <strong>Verifier:</strong> verification, agent-common<br />
+              <strong>Contextual:</strong> architecture, frontend, research (router-injected per request)
+            </div>
+          </div>
+          <div class="card highlight-purple">
+            <div class="card-title" style="color: var(--purple); font-size: 14px">The loop</div>
+            <div class="card-body" style="font-size: 12px">
+              reviewer finds issues → router creates REMFIX → builder fixes →
+              <strong>re-review + re-hunt</strong> (parallel) → re-verify<br /><br />
+              <span class="pill pill-purple">max 3 cycles</span>
+              <span class="pill pill-red">then: human checkpoint</span><br /><br />
+              <strong>Complexity gradient:</strong> trivial work skips
+              reviewer+hunter (builder → verifier → memory). Escalates to full
+              chain on scope increase.
+            </div>
+          </div>
+          <div class="card highlight-cyan">
+            <div class="card-title" style="color: var(--cyan); font-size: 14px">Why it works</div>
+            <div class="card-body" style="font-size: 12px">
+              <strong>Parallel review</strong> — reviewer and hunter can't bias
+              each other. Fresh contexts, independent verdicts. Router merges.<br /><br />
+              <strong>Anti-anchoring</strong> — reviewers skip
+              activeContext.md (the builder's self-assessment). They form their
+              own opinion from the diff.<br /><br />
+              <strong>Contract enforcement</strong> — TDD_RED_EXIT=1,
+              TDD_RED_REASON_KIND=behavioral. Machine-verified, not hoped.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ SLIDE 10b — WORKFLOW: PLAN ════ -->
+      <div class="slide slide-proof-bg" data-section="Workflows">
+        <div class="eyebrow">Workflow deep-dive — PLAN</div>
+        <h2 style="font-size: 36px">
+          PLAN: <span class="accent-cyan">agreement-first, anti-anchored review</span>
+        </h2>
+        <div class="mt24" style="width: 100%; max-width: 1100px">
+          <div class="chain" style="justify-content: center; flex-wrap: wrap; gap: 6px">
+            <div class="chain-node router">router<small>intent: PLAN</small></div>
+            <div class="chain-arrow">→</div>
+            <div class="chain-node write" style="border-color: var(--cyan)">exploration<small>brainstorm + design</small></div>
+            <div class="chain-arrow">→</div>
+            <div class="chain-node write">planner<small>3 modes: direct / execution_plan / decision_rfc</small></div>
+            <div class="chain-arrow">→</div>
+            <div class="chain-node read" style="border-color: var(--purple)">plan-gap-reviewer<small>fresh context · NO memory loaded</small></div>
+            <div class="chain-arrow">↻</div>
+            <div class="chain-node write" style="border-color: var(--cyan)">re-plan<small>if blocking findings</small></div>
+            <div class="chain-arrow">→</div>
+            <div class="chain-node read" style="border-color: var(--purple)">gap-review pass 2<small>max 2 passes</small></div>
+            <div class="chain-arrow">→</div>
+            <div class="chain-node memory">memory<small>persist plan</small></div>
+          </div>
+        </div>
+        <div class="card-grid cols3 mt24" style="max-width: 1100px">
+          <div class="card highlight-cyan">
+            <div class="card-title" style="color: var(--cyan); font-size: 14px">Skills loaded</div>
+            <div class="card-body" style="font-size: 12px">
+              <strong>Exploration:</strong> exploration skill (design + spike modes)<br />
+              <strong>Planner:</strong> planning, architecture, plan-review-gate, agent-common<br />
+              <strong>Gap-reviewer:</strong> NONE — intentionally no skills, no memory. Pure fresh-context review.<br />
+              <strong>Optional:</strong> Doubt-Driven Development (for decision_rfc / critical_path)
+            </div>
+          </div>
+          <div class="card highlight-purple">
+            <div class="card-title" style="color: var(--purple); font-size: 14px">The loop</div>
+            <div class="card-body" style="font-size: 12px">
+              planner writes plan → gap-reviewer challenges from fresh context →
+              <strong>if blocking findings: re-plan → re-review</strong><br /><br />
+              <span class="pill pill-purple">max 2 review passes</span><br /><br />
+              If pass 1 succeeds: prune re-plan + pass 2 (unused branches deleted).<br />
+              If pass 2 finds issues: stop with clarification gate.
+            </div>
+          </div>
+          <div class="card highlight-green">
+            <div class="card-title" style="color: var(--green); font-size: 14px">Why it works</div>
+            <div class="card-body" style="font-size: 12px">
+              <strong>Anti-anchoring by design</strong> — the gap-reviewer
+              loads ZERO memory, ZERO skills. It has never seen the planner's
+              rationale. It reviews the plan against the codebase, not against
+              the planner's confidence.<br /><br />
+              <strong>Agreement-first</strong> — planner returns
+              NEEDS_CLARIFICATION on ambiguity. Never treats its own defaults
+              as approved.<br /><br />
+              <strong>Doubt-Driven Development</strong> — for high-stakes
+              decisions, an in-flight adversarial reviewer challenges the
+              design BEFORE the plan is finalized.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ SLIDE 10c — WORKFLOW: DEBUG ════ -->
+      <div class="slide slide-proof-bg" data-section="Workflows">
+        <div class="eyebrow">Workflow deep-dive — DEBUG</div>
+        <h2 style="font-size: 36px">
+          DEBUG: <span class="accent-red">evidence before any fix</span>
+        </h2>
+        <div class="mt24" style="width: 100%; max-width: 1100px">
+          <div class="chain" style="justify-content: center; flex-wrap: wrap; gap: 6px">
+            <div class="chain-node router">router<small>intent: ERROR</small></div>
+            <div class="chain-arrow">→</div>
+            <div class="chain-node write" style="border-color: var(--red)">bug-investigator<small>LOG FIRST · 10-rung feedback loop</small></div>
+            <div class="chain-arrow">→</div>
+            <div class="chain-node read">code-reviewer<small>review the fix</small></div>
+            <div class="chain-arrow">→</div>
+            <div class="chain-node verify">integration-verifier<small>regression test passes</small></div>
+            <div class="chain-arrow">→</div>
+            <div class="chain-node memory">memory<small>gotcha persisted</small></div>
+          </div>
+        </div>
+        <div class="card-grid cols3 mt24" style="max-width: 1100px">
+          <div class="card highlight-red">
+            <div class="card-title" style="color: var(--red); font-size: 14px">Skills loaded</div>
+            <div class="card-body" style="font-size: 12px">
+              <strong>Investigator:</strong> debugging, building, verification, agent-common<br />
+              <strong>Reviewer:</strong> code-review, verification, codebase-hygiene, agent-common<br />
+              <strong>Contextual:</strong> research (if stuck), architecture (if prevention is architectural)<br /><br />
+              <strong>Tools:</strong> LSP (Go-to-Definition, Find References, Type Definition) for root-cause tracing — not just grep.
+            </div>
+          </div>
+          <div class="card highlight-purple">
+            <div class="card-title" style="color: var(--purple); font-size: 14px">The loop</div>
+            <div class="card-body" style="font-size: 12px">
+              <strong>Feedback loop gate (MANDATORY):</strong> build repro signal BEFORE any hypothesis. No loop → fail closed.<br /><br />
+              <strong>Hypothesis loop:</strong> generate 3-5 ranked hypotheses → test → if all fail: NEEDS_EXTERNAL_RESEARCH<br /><br />
+              <strong>Fix loop:</strong> RED (failing test) → GREEN (minimal fix) → blast radius scan → verify<br /><br />
+              <span class="pill pill-purple">3 hypothesis cap</span>
+              <span class="pill pill-red">then: research or BLOCKED</span>
+            </div>
+          </div>
+          <div class="card highlight-cyan">
+            <div class="card-title" style="color: var(--cyan); font-size: 14px">Why it works</div>
+            <div class="card-body" style="font-size: 12px">
+              <strong>No-Loop-No-Hypothesis gate</strong> — you can't guess
+              without a repro. Prevents pattern-matching death spirals.<br /><br />
+              <strong>Causal chain gate</strong> — must explain the full chain
+              from trigger to symptom. "Somehow X leads to Y" is a gap, not
+              an answer. Predictions catch symptom fixes.<br /><br />
+              <strong>Debug memory</strong> — every failed hypothesis stored
+              as <code style="font-size: 11px">[DEBUG-N]</code> in
+              activeContext.md. The system remembers what didn't work.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ SLIDE 10d — WORKFLOW: REVIEW ════ -->
+      <div class="slide slide-proof-bg" data-section="Workflows">
+        <div class="eyebrow">Workflow deep-dive — REVIEW + ORIENT</div>
+        <h2 style="font-size: 36px">
+          REVIEW: <span class="accent-blue">advisory only, never mutates</span>
+        </h2>
+        <div class="mt24" style="width: 100%; max-width: 1100px">
+          <div class="chain" style="justify-content: center; flex-wrap: wrap; gap: 6px">
+            <div class="chain-node router">router<small>intent: REVIEW</small></div>
+            <div class="chain-arrow">→</div>
+            <div class="chain-node read">code-reviewer<small>6-pass · confidence ≥80</small></div>
+            <div class="chain-arrow">→</div>
+            <div class="chain-node memory">memory<small>persist findings</small></div>
+          </div>
+        </div>
+        <div class="card-grid cols3 mt24" style="max-width: 1100px">
+          <div class="card highlight-cyan">
+            <div class="card-title" style="color: var(--cyan); font-size: 14px">Skills loaded</div>
+            <div class="card-body" style="font-size: 12px">
+              <strong>Reviewer:</strong> code-review, verification, codebase-hygiene, agent-common<br />
+              <strong>Contextual:</strong> frontend (if UI), architecture (if structural)<br /><br />
+              <strong>6 passes:</strong> Security → Performance → Quality → Friction → Plan Validity → Spec Compliance<br /><br />
+              <strong>Quantitative scoring:</strong> HARD/SOFT signals, min(HARD) capped by avg(SOFT)-10. Confidence ≥80 to report.
+            </div>
+          </div>
+          <div class="card highlight-purple">
+            <div class="card-title" style="color: var(--purple); font-size: 14px">The loop</div>
+            <div class="card-body" style="font-size: 12px">
+              <strong>No remediation loop</strong> — REVIEW is advisory. It
+              never creates REM-FIX tasks or mutates code.<br /><br />
+              If verdict is CHANGES_REQUESTED: router offers
+              <em>"Start BUILD to fix (Recommended)"</em> — a transition, not
+              an automatic action.<br /><br />
+              <strong>Zero-finding gate:</strong> zero findings on non-trivial
+              change → confidence capped at 70. Must produce positive
+              assertions with file:line evidence. No rubber-stamps.
+            </div>
+          </div>
+          <div class="card highlight-green">
+            <div class="card-title" style="color: var(--green); font-size: 14px">ORIENT (read-only)</div>
+            <div class="card-body" style="font-size: 12px">
+              <strong>Zero agents.</strong> Zero tasks. Zero artifacts.<br /><br />
+              The router answers inline — maps modules, traces call hierarchy
+              via LSP, explains in the project's own vocabulary.<br /><br />
+              <em>"Help me understand this code"</em> never falls through to
+              BUILD and spawns a write agent. ORIENT precedes DEFAULT.<br /><br />
+              <strong>Why:</strong> orientation is the most common request.
+              Routing it to BUILD would mean a builder modifying code you
+              just wanted explained.
             </div>
           </div>
         </div>
@@ -1763,8 +2002,10 @@
                 Agent chain — execution
               </div>
               <div class="card-body" style="font-size: 13px">
-                WRITE agents (builder, investigator, planner) produce artifacts.
-                READ-ONLY agents (reviewer, verifier) produce structured
+                9 agents: planner, component-builder, bug-investigator,
+                code-reviewer, failure-hunter, integration-verifier,
+                doc-syncer, plan-gap-reviewer, researcher. WRITE agents
+                produce artifacts. READ-ONLY agents produce structured
                 verdicts. Router decides next action from verdict.
               </div>
             </div>
@@ -1970,8 +2211,8 @@
               They <span class="accent">move up</span> — from prompting to
               designing the loops.<br />
               <span style="color: var(--text3); font-size: 14px"
-                >Boris Cherny: "Everyone on our team codes." The engineer's
-                job becomes loop architecture, not prompt writing.</span
+                >Boris Cherny: "Everyone on our team codes." The engineer's job
+                becomes loop architecture, not prompt writing.</span
               >
             </div>
           </div>
