@@ -517,6 +517,11 @@
         box-shadow: 0 0 12px var(--green);
       }
 
+      .glow-line.red {
+        background: linear-gradient(90deg, var(--red), transparent);
+        box-shadow: 0 0 12px var(--red);
+      }
+
       .slide-title-bg {
         background:
           radial-gradient(
@@ -611,23 +616,26 @@
             line-height: 1.6;
           "
         >
-          <span style="color: var(--text3)">“</span>I don't prompt Claude
-          anymore.<br />
-          I have loops running that prompt Claude.<br />
-          My job is to write loops.<span style="color: var(--text3)">”</span>
+          <span style="color: var(--text3)">“</span>Loops are the future at this
+          point.<br />
+          If you haven't experimented with it,<br />
+          highly, highly recommend it.<span style="color: var(--text3)">”</span>
         </p>
         <p style="font-size: 13px; color: var(--text3); margin-top: 10px">
-          — Boris Cherny, head of Claude Code, Anthropic · June 2026
+          — Boris Cherny, head of Claude Code, Anthropic · Sequoia talk, June
+          2026
         </p>
         <div class="mt40 stat-row">
           <div class="stat-item">
-            <div class="stat-value">10×</div>
-            <div class="stat-label">Leverage over<br />prompting</div>
+            <div class="stat-value">Top 30 → 5</div>
+            <div class="stat-label">
+              Terminal Bench rank<br />harness-only change
+            </div>
           </div>
           <div class="stat-divider"></div>
           <div class="stat-item">
             <div class="stat-value">259</div>
-            <div class="stat-label">PRs in 30 days<br />all agent-written</div>
+            <div class="stat-label">PRs in 30 days<br />by Claude Code</div>
           </div>
           <div class="stat-divider"></div>
           <div class="stat-item">
@@ -668,9 +676,9 @@
           </div>
         </div>
         <p class="body-text mt32" style="text-align: center">
-          Harness design creates up to
-          <span class="accent-yellow">10× leverage</span> over prompting the
-          same model. The shift:
+          LangChain went from
+          <span class="accent-yellow">Top 30 to Top 5</span> on Terminal Bench
+          by changing only the harness — same model. The shift:
           <span class="accent">prompt → context → harness → loop</span>.
         </p>
       </div>
@@ -871,8 +879,10 @@
           </div>
         </div>
         <p class="body-text mt16" style="text-align: center; font-size: 15px">
-          cc10x covers <span class="accent-purple">harness</span> AND
-          <span class="accent">loop</span>. Most tools only cover the loop.
+          cc10x is the only Claude Code plugin with a
+          <span class="accent-purple">single router</span> as sole entry point,
+          <span class="accent">fail-closed gates</span>, and
+          <span class="accent-green">durable workflow state</span>.
         </p>
       </div>
 
@@ -906,10 +916,10 @@
               The skepticism is about <strong>hype without proof</strong>. And
               that's fair — most "loop engineering" content is think-pieces, not
               working systems.<br /><br />
-              But the <strong>pattern is real</strong>. Reflexion (Shinn et al.,
-              2023) proved structured reflection adds +11 points on HumanEval.
-              Boris Cherny isn't selling a course — he's describing how his team
-              actually works.<br /><br />
+              But the <strong>pattern is real</strong>. In 2023, Reflexion
+              (Shinn et al.) proved structured reflection adds +11 points on
+              HumanEval — the original evidence. Boris Cherny isn't selling a
+              course — he's describing how his team actually works.<br /><br />
               <em style="color: var(--cyan)"
                 >The proof isn't in the buzzword. It's in the system.</em
               >
@@ -1055,12 +1065,13 @@
           </div>
           <div class="card highlight-red">
             <div class="card-title" style="color: var(--red)">
-              Fail-closed gates
+              Audit-enforced gates
             </div>
             <div class="card-body">
               No phase advances on prose alone.
               <span style="color: var(--red)">CONTRACT YAML required.</span>
-              Missing or malformed? Workflow stops. Not retries — stops.
+              Artifact integrity ships in block mode. Other gates ship in audit
+              mode — observable, upgradeable to block.
             </div>
           </div>
         </div>
@@ -1133,11 +1144,10 @@
                 17 skills, contextually loaded
               </div>
               <div class="card-body">
-                Not all loaded all the time. Lean prompt surface. Each skill is
-                injected only when the request pattern matches —
-                <span style="color: var(--orange)"
-                  >deterministic, not probabilistic.</span
-                >
+                17 skills. A minimal set preloads per agent; the rest inject on
+                demand via SKILL_HINTS. Preloaded skills are full-content, not
+                lazy. Lean by design,
+                <span style="color: var(--orange)">not by magic.</span>
               </div>
             </div>
             <div class="card highlight-green">
@@ -1606,7 +1616,7 @@
               </tr>
               <tr>
                 <td>Result</td>
-                <td><strong>91% on HumanEval</strong> vs 80% GPT-4</td>
+                <td><strong>91% on HumanEval</strong> vs 80% GPT-4 (2023)</td>
                 <td>
                   Quality gaps caught in BUILD are closed before merge — not
                   discovered in prod
@@ -1616,8 +1626,8 @@
           </table>
         </div>
         <p class="body-text mt24" style="text-align: center">
-          The paper achieved +11 points by adding structured reflection.<br />
-          CC10x applies the same insight to every engineering workflow.
+          The 2023 study established the pattern. CC10x applies the same
+          insight to every engineering workflow.
         </p>
       </div>
 
@@ -1805,7 +1815,8 @@
               (the builder's self-assessment). They form their own opinion from
               the diff.<br /><br />
               <strong>Contract enforcement</strong> — TDD_RED_EXIT=1,
-              TDD_RED_REASON_KIND=behavioral. Machine-verified, not hoped.
+              TDD_RED_REASON_KIND=behavioral. Router-verified contract parsing.
+              Artifact integrity hook-enforced.
             </div>
           </div>
         </div>
@@ -1999,7 +2010,8 @@
       <div class="slide slide-proof-bg" data-section="Workflows">
         <div class="eyebrow">Workflow deep-dive — REVIEW + ORIENT</div>
         <h2 style="font-size: 36px">
-          REVIEW: <span style="color: var(--blue)">advisory only, never mutates</span>
+          REVIEW:
+          <span style="color: var(--blue)">advisory only, never mutates</span>
         </h2>
         <div class="mt24" style="width: 100%; max-width: 1100px">
           <div
@@ -2106,7 +2118,8 @@
               <div class="card-body" style="font-size: 13px">
                 Sole entry point. Owns all orchestration state. Agents cannot
                 see each other or self-route. Workflow artifact is the single
-                source of truth. Gates are fail-closed.
+                source of truth. Artifact integrity gate ships fail-closed;
+                other gates ship audit-mode, upgradeable to block.
               </div>
             </div>
             <div
@@ -2212,7 +2225,8 @@
             <div>
               <strong>Gates are evidence, not time.</strong> A phase ends when
               proof exists — not when N seconds pass or the model says it's
-              done.
+              done. Artifact integrity gate blocks by default; other gates audit
+              by default, upgradeable to block.
             </div>
           </div>
           <div class="check-item">
@@ -2366,9 +2380,10 @@
           </div>
         </div>
         <p class="subtitle mt24" style="font-size: 16px; color: var(--text3)">
-          CC10x is open. The pattern is yours. The next frontier is
+          CC10x is open. The pattern is yours. I believe the next frontier is
           <span class="accent-purple">self-harnessing</span> — harnesses that
-          improve themselves from their own learnings. Go build it.
+          improve themselves from their own learnings. That's a term I'm using
+          for the first time here. Go build it.
         </p>
       </div>
     </div>
