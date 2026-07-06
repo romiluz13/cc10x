@@ -593,7 +593,7 @@
     <div class="logomark">CC10x</div>
     <div class="section-label" id="section-label">Intro</div>
     <div class="progress-bar" id="progress-bar"></div>
-    <div class="slide-counter" id="slide-counter">1 / 21</div>
+    <div class="slide-counter" id="slide-counter">1 / 22</div>
     <div class="nav-hint">
       <kbd>←</kbd> <kbd>→</kbd> to navigate &nbsp;·&nbsp;
       <kbd>F</kbd> fullscreen
@@ -886,50 +886,49 @@
         </p>
       </div>
 
-      <!-- ════ SLIDE 2c — THE BACKLASH ════ -->
+      <!-- ════ SLIDE 2c — THE ONE THING THE SKEPTICS GET RIGHT ════ -->
       <div class="slide" data-section="Intro">
-        <div class="eyebrow">The elephant in the room</div>
+        <div class="eyebrow">The one thing the skeptics get right</div>
         <h2 style="font-size: 42px">
           "Loop engineering is a
           <span style="color: var(--red)">psyop</span>."
         </h2>
         <div class="glow-line red"></div>
-        <div class="card-grid cols2 mt32" style="max-width: 1000px">
+        <p
+          class="body-text mt24"
+          style="text-align: center; max-width: 820px; font-size: 17px"
+        >
+          r/ClaudeCode, The Register, Hacker News — the backlash is real, and
+          it's <span class="accent-red">half right</span>: most "loop
+          engineering" content is think-pieces, not working systems. A buzzword
+          without a working system <em>is</em> hype.
+        </p>
+        <div class="card-grid cols2 mt24" style="max-width: 1000px">
           <div class="card highlight-red">
-            <div class="card-title accent-red">What the skeptics say</div>
+            <div class="card-title accent-red">The half that's wrong</div>
             <div class="card-body" style="font-size: 14px">
-              <strong>r/ClaudeCode:</strong> "I am really struggling to believe
-              that loop engineering is the applied AI skill I should be
-              developing right now. Seems fishy."<br /><br />
-              <strong>The Register:</strong> "Loop engineering, latest AI
-              buzzword, still needs humans in the loop."<br /><br />
-              <strong>Hacker News:</strong> "Tokenmaxxing with extra steps.
-              Diminishes the work product of engineers."<br /><br />
+              The <strong>pattern is real</strong>. In 2023, Reflexion (Shinn et
+              al.) proved structured reflection adds +11 points on HumanEval.
+              Boris Cherny isn't selling a course — he's describing how his team
+              actually ships.<br /><br />
               <em style="color: var(--text3)"
-                >They're right to be skeptical.</em
+                >The pattern predates the buzzword by three years.</em
               >
             </div>
           </div>
           <div class="card highlight-cyan">
-            <div class="card-title accent">Why they're wrong</div>
+            <div class="card-title accent">The half that's right</div>
             <div class="card-body" style="font-size: 14px">
-              The skepticism is about <strong>hype without proof</strong>. And
-              that's fair — most "loop engineering" content is think-pieces, not
-              working systems.<br /><br />
-              But the <strong>pattern is real</strong>. In 2023, Reflexion
-              (Shinn et al.) proved structured reflection adds +11 points on
-              HumanEval — the original evidence. Boris Cherny isn't selling a
-              course — he's describing how his team actually works.<br /><br />
-              <em style="color: var(--cyan)"
-                >The proof isn't in the buzzword. It's in the system.</em
-              >
+              You can't <strong>talk</strong> your way to convergence. You have
+              to <strong>build</strong> the gates, the artifacts, the circuit
+              breakers. The proof isn't a slide — it's a system you can read.<br /><br />
+              <em style="color: var(--cyan)">So let's read one.</em>
             </div>
           </div>
         </div>
-        <p class="body-text mt24" style="text-align: center; font-size: 15px">
-          A buzzword without a working system is hype. A working system without
-          the vocabulary is unlabeled.
-          <span class="accent">CC10x is both.</span>
+        <p class="body-text mt16" style="text-align: center; font-size: 15px">
+          A working system without the vocabulary is unlabeled.
+          <span class="accent">CC10x is both — and it's open source.</span>
         </p>
       </div>
 
@@ -996,7 +995,7 @@
         <div class="eyebrow">Harness Engineering — CC10x as living proof</div>
         <h2 class="left" style="font-size: 42px">
           The router owns the harness.<br /><span class="accent"
-            >Agents never see each other.</span
+            >Agents never see each other by default.</span
           >
         </h2>
         <div class="mt32" style="width: 100%; max-width: 1100px">
@@ -1055,12 +1054,16 @@
           </div>
           <div class="card highlight-cyan">
             <div class="card-title" style="color: var(--cyan)">
-              Tiered model policy
+              The router audits itself
             </div>
             <div class="card-body">
-              Planner + verifier → <span class="accent">capable</span> model.
-              Builder → standard. Doc-sync → cheap. Harness determines cost, not
-              vibes.
+              Before dispatching a reviewer, the router greps its
+              <strong>own drafted prompt</strong> for bias phrases — "do not
+              flag," "at most minor," "should be fine." Found? The prompt is
+              biased.
+              <span style="color: var(--cyan)">Rewrite before dispatch.</span>
+              You can corrupt a reviewer two ways: feed them the author's diary,
+              or pre-decide their answer.
             </div>
           </div>
           <div class="card highlight-red">
@@ -1140,13 +1143,15 @@
               </div>
             </div>
             <div class="card highlight-orange">
-              <div class="card-title" style="color: var(--orange)">
-                17 skills, contextually loaded
+              <div
+                style="font-size: 12px; font-weight: 700; color: var(--orange)"
+              >
+                16 skills + router kernel
               </div>
-              <div class="card-body">
-                17 skills. A minimal set preloads per agent; the rest inject on
-                demand via SKILL_HINTS. Preloaded skills are full-content, not
-                lazy. Lean by design,
+              <div class="card-body" style="font-size: 12px">
+                16 expertise skills. A minimal set preloads per agent; the rest
+                inject on demand via SKILL_HINTS. Preloaded skills are
+                full-content, not lazy. Lean by design,
                 <span style="color: var(--orange)">not by magic.</span>
               </div>
             </div>
@@ -1618,8 +1623,10 @@
                 <td>Result</td>
                 <td><strong>91% on HumanEval</strong> vs 80% GPT-4 (2023)</td>
                 <td>
-                  Quality gaps caught in BUILD are closed before merge — not
-                  discovered in prod
+                  Gates fire <strong>per-phase against a recorded BASE</strong>;
+                  the verifier re-reads every reviewer quote at file:line before
+                  it can gate. Cross-phase regressions caught by an optional
+                  whole-branch review.
                 </td>
               </tr>
             </tbody>
@@ -1981,11 +1988,11 @@
             <div class="card-body" style="font-size: 12px">
               <strong>Feedback loop gate (MANDATORY):</strong> build repro
               signal BEFORE any hypothesis. No loop → fail closed.<br /><br />
-              <strong>Hypothesis loop:</strong> generate 3-5 ranked hypotheses →
-              test → if all fail: NEEDS_EXTERNAL_RESEARCH<br /><br />
+              <strong>Hypothesis loop:</strong> generate 3-5 ranked hypotheses
+              <em>up front</em> → test → if all fail: NEEDS_EXTERNAL_RESEARCH<br /><br />
               <strong>Fix loop:</strong> RED (failing test) → GREEN (minimal
               fix) → blast radius scan → verify<br /><br />
-              <span class="pill pill-purple">3 hypothesis cap</span>
+              <span class="pill pill-purple">3 failed attempts</span>
               <span class="pill pill-red">then: research or BLOCKED</span>
             </div>
           </div>
@@ -2087,11 +2094,81 @@
         </div>
       </div>
 
+      <!-- ════ SLIDE 10e — TEST HONESTY GATES ════ -->
+      <div class="slide slide-proof-bg" data-section="Workflows">
+        <div class="eyebrow">The gate that catches green lies</div>
+        <h2 style="font-size: 40px">
+          "Tests passed" is not evidence.<br />
+          <span class="accent-green">Exit 0 is evidence.</span>
+        </h2>
+        <div class="glow-line green"></div>
+        <div class="card-grid cols2 mt32" style="max-width: 1100px">
+          <div class="card highlight-red">
+            <div class="card-title accent-red">
+              False-green patterns — auto-flagged
+            </div>
+            <div class="card-body" style="font-size: 13px">
+              The verifier greps changed test files for tests that
+              <strong>pass while proving nothing</strong>:<br /><br />
+              <code style="color: var(--red); font-size: 12px"
+                >getByTestId('…-mock')</code
+              >
+              — asserting the mock, not the behavior<br />
+              <code style="color: var(--red); font-size: 12px"
+                >as any · as unknown</code
+              >
+              — schema-incomplete mocks<br />
+              <code style="color: var(--red); font-size: 12px"
+                >.find() · readFileSync</code
+              >
+              — DB-bypass, not the public interface<br />
+              <code style="color: var(--red); font-size: 12px"
+                >setTimeout( · sleep(</code
+              >
+              — arbitrary waits, not condition-waits<br /><br />
+              <em style="color: var(--text3)"
+                >A hit doesn't auto-fail — but that scenario can't count as PASS
+                on that test's strength alone.</em
+              >
+            </div>
+          </div>
+          <div class="card highlight-green">
+            <div class="card-title accent-green">Quote-the-line gate</div>
+            <div class="card-body" style="font-size: 13px">
+              Every finding at confidence ≥80 MUST include a
+              <strong>verbatim file:line quote</strong>. No quote → auto-demoted
+              below the reporting bar.<br /><br />
+              Then the verifier
+              <strong>independently re-reads</strong> the exact file:line and
+              marks it:<br />
+              <span class="pill pill-green">validated: true</span>
+              &nbsp;<span class="pill pill-red">validated: false → dropped</span
+              ><br /><br />
+              <em style="color: var(--text3)"
+                >A hallucinated critical finding cannot waste a fix cycle. The
+                verifier kills it before it gates.</em
+              >
+            </div>
+          </div>
+        </div>
+        <div class="hdivider" style="max-width: 900px"></div>
+        <p
+          class="body-text"
+          style="text-align: center; max-width: 900px; font-size: 16px"
+        >
+          <span class="accent-red">"Should work now"</span> → RUN the command.
+          <span class="accent-red">"Should"</span> is not evidence.<br />
+          <span class="accent-red">"I'm confident it works"</span> → Confidence
+          is not evidence.
+          <span class="accent-green">Exit code 0 is evidence.</span>
+        </p>
+      </div>
+
       <!-- ════ SLIDE 11 — THE FULL SYSTEM ════ -->
       <div class="slide slide-proof-bg" data-section="Proof">
         <div class="eyebrow">CC10x — the full system in one view</div>
         <h2 style="font-size: 38px">
-          9 agents · 17 skills · 4 workflows<br /><span class="accent-green"
+          9 agents · 16 skills · 4 workflows<br /><span class="accent-green"
             >One coherent harness.</span
           >
         </h2>
@@ -2170,10 +2247,10 @@
                 Skills — expertise injection
               </div>
               <div class="card-body" style="font-size: 13px">
-                17 skills loaded contextually by router. Building, debugging,
-                code review, architecture, frontend, codebase hygiene,
-                exploration, verification — expertise on demand, not always-on
-                context.
+                16 expertise skills loaded contextually by router. Building,
+                debugging, code review, architecture, frontend, codebase
+                hygiene, exploration, verification — expertise on demand, not
+                always-on context.
               </div>
             </div>
             <div
@@ -2265,8 +2342,23 @@
             >You need the pattern.</span
           >
         </h2>
+        <div class="mt24" style="width: 100%; max-width: 1100px">
+          <div
+            class="card highlight-red"
+            style="padding: 16px 22px; margin-bottom: 4px"
+          >
+            <div class="card-body" style="font-size: 14px">
+              <strong class="accent-red">The scar:</strong> one real dispatch
+              hit <strong>42k chars — 99% pasted history</strong>. The
+              orchestrator that pastes the prior conversation into every child
+              rots its own context. The fix became law:
+              <span class="accent">dispatch by reference, not by blob</span> —
+              write the diff to disk, pass the path, never the body.
+            </div>
+          </div>
+        </div>
         <div
-          class="mt32"
+          class="mt16"
           style="display: flex; gap: 40px; width: 100%; max-width: 1100px"
         >
           <div style="flex: 1">
@@ -2366,7 +2458,7 @@
           </div>
           <div class="stat-divider"></div>
           <div class="stat-item">
-            <div class="stat-value" style="font-size: 56px">17</div>
+            <div class="stat-value" style="font-size: 56px">16</div>
             <div class="stat-label">Skills</div>
           </div>
           <div class="stat-divider"></div>
@@ -2381,10 +2473,12 @@
           </div>
         </div>
         <p class="subtitle mt24" style="font-size: 16px; color: var(--text3)">
-          CC10x is open. The pattern is yours. I believe the next frontier is
-          <span class="accent-purple">self-harnessing</span> — harnesses that
-          improve themselves from their own learnings. That's a term I'm using
-          for the first time here. Go build it.
+          CC10x is open. The pattern is yours. The next frontier isn't harnesses
+          that <em>store</em> learnings — cc10x already does that. It's
+          <span class="accent-purple">self-harnessing</span>: harnesses that
+          <em>rewrite their own gates</em> from observed failure modes — a
+          broken circuit breaker that proposes a new gate to the user. I'm using
+          that term for the first time here. Go build it.
         </p>
       </div>
     </div>

@@ -1,11 +1,17 @@
 <p align="center">
-  <img src="assets/logo.png" alt="CC10x — Claude Code harness | specialist agents. Orange stylized X with starburst and CC10x wordmark." width="280" />
+  <img src="assets/logo.png" alt="CC10x — The Loop Engine for Claude Code. Orange stylized X with starburst and CC10x wordmark." width="280" />
 </p>
 
-<h1 align="center">cc10x</h1>
+<h1 align="center">cc10x — The Loop Engine for Claude Code</h1>
 
 <p align="center">
-  <em>The Claude Code harness you install when you're done babysitting.</em>
+  <em>Stop chasing better models. Engineer the loop.</em>
+</p>
+
+<p align="center">
+  Same model. Same Claude Code. Different outcome.<br />
+  The agent forgets between turns. <strong>The harness remembers across runs.</strong><br />
+  cc10x writes every workflow to disk — intent, evidence, verdicts, failures — so resume, review, and verification read from the artifact, not from a context window that's already gone.
 </p>
 
 <p align="center">
@@ -13,10 +19,10 @@
 </p>
 
 <p align="center">
-  Fail-closed gates &nbsp;·&nbsp; survives compaction &nbsp;·&nbsp; zero prompt spam &nbsp;·&nbsp; self-tested orchestration
+  Fail-closed gates &nbsp;·&nbsp; survives compaction &nbsp;·&nbsp; dispatch-by-reference &nbsp;·&nbsp; test honesty gates &nbsp;·&nbsp; anti-anchored review
 </p>
 
-**Current version:** 12.4.0
+**Current version:** 12.5.0
 
 ---
 
@@ -42,7 +48,7 @@ Then say **"set up cc10x for me"** in Claude Code and restart. Done.
 
 Ask Claude for something complex. It works for a while. Then it declares **"Done!"** — tests still red, refactor half-finished, and by message 40 it's contradicting itself because the context is gone.
 
-**cc10x fixes the loop, not the prompt.**
+**cc10x fixes the loop, not the prompt.** A better model running free loses to the same model, constrained and looped correctly. That's the whole bet.
 
 | The pain you know | How cc10x handles it |
 | --- | --- |
@@ -52,6 +58,9 @@ Ask Claude for something complex. It works for a while. Then it declares **"Done
 | Planning is just a chat | Three planning modes chosen by intent, with a fresh anti-anchored review by a reviewer who never saw the planner's rationale. |
 | 12 slash commands to remember | One router. Every request hits `cc10x-router` first. |
 | `.claude/` prompt spam on every fanout | State lives at `.cc10x/` — outside `.claude/`, so the harness's sensitive-file gate never fires. |
+| Green tests that prove nothing | Test Honesty Gates grep for `getByTestId('…-mock')`, `as any`, `.find()` bypass, `setTimeout()` waits. A hit can't count as PASS on that test's strength alone. |
+| Reviewer findings that sound right but aren't | Every finding at confidence ≥80 needs a verbatim `file:line` quote or it's auto-demoted. The verifier independently re-reads the line and drops hallucinated findings before they can gate. |
+| Orchestrator context rotting with pasted history | Dispatch by reference, not by blob — the diff is written to disk, the prompt passes a path, never a body. (One real dispatch hit 42k chars, 99% pasted history. The scar became law.) |
 
 Everything below is the architecture. Keep reading if you want to know *how* before you install.
 
@@ -870,6 +879,6 @@ MIT License
 ---
 
 <p align="center">
-  <strong>cc10x v12.4.0</strong><br>
+  <strong>cc10x v12.5.0</strong><br>
   <em>The Intelligent Orchestrator for Claude Code</em>
 </p>
