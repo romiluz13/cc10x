@@ -111,10 +111,8 @@
       .logomark {
         font-size: 28px;
         font-weight: 800;
-        background: linear-gradient(135deg, var(--cyan), var(--green));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        color: var(--cyan);
+        letter-spacing: -0.5px;
         position: fixed;
         top: 20px;
         left: 32px;
@@ -134,15 +132,7 @@
         font-weight: 800;
         line-height: 1;
         letter-spacing: -2px;
-        background: linear-gradient(
-          135deg,
-          var(--cyan) 0%,
-          var(--green) 50%,
-          var(--purple) 100%
-        );
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        color: var(--text);
         text-align: center;
         margin-bottom: 24px;
       }
@@ -233,8 +223,7 @@
         background: rgba(239, 68, 68, 0.04);
       }
       .card-icon {
-        font-size: 32px;
-        margin-bottom: 14px;
+        display: none;
       }
       .card-title {
         font-size: 18px;
@@ -346,18 +335,16 @@
       }
       .big-quote em {
         font-style: normal;
-        -webkit-text-fill-color: transparent;
-        -webkit-background-clip: text;
-        background-clip: text;
+        color: var(--text);
       }
       .big-quote em.cyan {
-        background-image: linear-gradient(90deg, var(--cyan), var(--blue));
+        color: var(--cyan);
       }
       .big-quote em.green {
-        background-image: linear-gradient(90deg, var(--green), var(--cyan));
+        color: var(--green);
       }
       .big-quote em.orange {
-        background-image: linear-gradient(90deg, var(--orange), var(--red));
+        color: var(--orange);
       }
 
       .stat-row {
@@ -373,10 +360,10 @@
         font-size: 80px;
         font-weight: 800;
         line-height: 1;
-        background: linear-gradient(135deg, var(--cyan), var(--purple));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        color: var(--cyan);
+        font-family: "SF Mono", "Cascadia Code", Monaco, monospace;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: -1px;
       }
       .stat-label {
         font-size: 14px;
@@ -505,21 +492,17 @@
         margin: 20px auto;
       }
       .glow-line.cyan {
-        background: linear-gradient(90deg, var(--cyan), transparent);
-        box-shadow: 0 0 12px var(--cyan);
+        background: var(--cyan);
       }
       .glow-line.purple {
-        background: linear-gradient(90deg, var(--purple), transparent);
-        box-shadow: 0 0 12px var(--purple);
+        background: var(--purple);
       }
       .glow-line.green {
-        background: linear-gradient(90deg, var(--green), transparent);
-        box-shadow: 0 0 12px var(--green);
+        background: var(--green);
       }
 
       .glow-line.red {
-        background: linear-gradient(90deg, var(--red), transparent);
-        box-shadow: 0 0 12px var(--red);
+        background: var(--red);
       }
 
       .slide-title-bg {
@@ -629,13 +612,13 @@
           <div class="stat-item">
             <div class="stat-value">Top 30 → 5</div>
             <div class="stat-label">
-              Terminal Bench rank<br />harness-only change
+              Terminal Bench 2.0 rank<br />harness-only · LangChain
             </div>
           </div>
           <div class="stat-divider"></div>
           <div class="stat-item">
             <div class="stat-value">259</div>
-            <div class="stat-label">PRs in 30 days<br />by Claude Code</div>
+            <div class="stat-label">PRs in 30 days<br />Boris Cherny · Claude Code</div>
           </div>
           <div class="stat-divider"></div>
           <div class="stat-item">
