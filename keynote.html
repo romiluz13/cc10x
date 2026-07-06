@@ -871,50 +871,80 @@
         </p>
       </div>
 
-      <!-- ════ SLIDE 2c — THE ONE THING THE SKEPTICS GET RIGHT ════ -->
+      <!-- ════ SLIDE 2c — SHOW ME THE LINE ════ -->
       <div class="slide" data-section="Intro">
-        <div class="eyebrow">The one thing the skeptics get right</div>
+        <div class="eyebrow">Some call this a psyop. The proof is in the code.</div>
         <h2 style="font-size: 42px">
-          "Loop engineering is a
-          <span style="color: var(--red)">psyop</span>."
+          Don't tell me it's clever.<br />
+          <span class="accent">Show me the line.</span>
         </h2>
-        <div class="glow-line red"></div>
-        <p
-          class="body-text mt24"
-          style="text-align: center; max-width: 820px; font-size: 17px"
+        <div class="glow-line cyan"></div>
+        <div
+          class="mt24"
+          style="display: flex; gap: 20px; width: 100%; max-width: 1100px; align-items: stretch;"
         >
-          r/ClaudeCode, The Register, Hacker News — the backlash is real, and
-          it's <span class="accent-red">half right</span>: most "loop
-          engineering" content is think-pieces, not working systems. A buzzword
-          without a working system <em>is</em> hype.
-        </p>
-        <div class="card-grid cols2 mt24" style="max-width: 1000px">
-          <div class="card highlight-red">
-            <div class="card-title accent-red">The half that's wrong</div>
-            <div class="card-body" style="font-size: 14px">
-              The <strong>pattern is real</strong>. In 2023, Reflexion (Shinn et
-              al.) proved structured reflection adds +11 points on HumanEval.
-              Boris Cherny isn't selling a course — he's describing how his team
-              actually ships.<br /><br />
-              <em style="color: var(--text3)"
-                >The pattern predates the buzzword by three years.</em
-              >
+          <div style="flex: 1.15; display: flex; flex-direction: column;">
+            <div
+              class="code-block"
+              style="padding: 18px 22px; font-size: 13px; line-height: 1.65; flex: 1;"
+            >
+              <span class="cmt"># THE ROUTER AUDITS ITSELF</span>
+              <span class="cmt"># before dispatching a reviewer, grep</span>
+              <span class="cmt"># your OWN drafted prompt for:</span>
+
+              <span class="str">"do not flag"</span>
+              <span class="str">"don't worry about"</span>
+              <span class="str">"at most minor"</span>
+              <span class="str">"the plan chose"</span>
+              <span class="str">"already verified, just"</span>
+              <span class="str">"should be fine"</span>
+              <span class="str">"no need to check"</span>
+
+              <span class="cmt"># any hit? the prompt is biased.</span>
+              <span class="cmt"># rewrite before dispatch.</span>
             </div>
+            <p
+              class="card-body"
+              style="font-size: 12px; margin-top: 10px; color: var(--text3); line-height: 1.5;"
+            >
+              You can corrupt a reviewer two ways: feed them the author's
+              diary, or pre-decide their answer. cc10x catches
+              <strong>both</strong>. The second one is the one nobody else has
+              noticed.
+            </p>
           </div>
-          <div class="card highlight-cyan">
-            <div class="card-title accent">The half that's right</div>
-            <div class="card-body" style="font-size: 14px">
-              You can't <strong>talk</strong> your way to convergence. You have
-              to <strong>build</strong> the gates, the artifacts, the circuit
-              breakers. The proof isn't a slide — it's a system you can read.<br /><br />
-              <em style="color: var(--cyan)">So let's read one.</em>
+          <div style="flex: 1; display: flex; flex-direction: column; gap: 14px;">
+            <div
+              class="code-block"
+              style="padding: 16px 20px; font-size: 12px; line-height: 1.6;"
+            >
+              <span class="cmt"># THE SCARS (verbatim from the spec)</span>
+
+              <span class="err">[EASY TO MISS]</span> stale
+              memory_task_id is the #1 cause of cross-workflow pollution.
+
+              <span class="err">[EASY TO MISS]</span> unscoped lookups
+              silently pick up orphan tasks from prior workflows.
+            </div>
+            <p
+              class="card-body"
+              style="font-size: 12px; color: var(--text3); line-height: 1.5; margin: 0;"
+            >
+              When a spec needs 15+ "easy to miss" annotations, you're
+              fighting the medium. Each one is a real bug that happened.
+            </p>
+            <div
+              class="code-block"
+              style="padding: 14px 18px; font-size: 12px; line-height: 1.55; border-color: var(--cyan);"
+            >
+              <span class="cmt"># MECHANISM HONESTY</span>
+              <span class="hl">"never claim a tier was applied</span>
+              <span class="hl"> when the mechanism cannot</span>
+              <span class="hl"> apply it."</span>
+              <span class="cmt">  — the router's own spec</span>
             </div>
           </div>
         </div>
-        <p class="body-text mt16" style="text-align: center; font-size: 15px">
-          A working system without the vocabulary is unlabeled.
-          <span class="accent">CC10x is both — and it's open source.</span>
-        </p>
       </div>
 
       <!-- ════ SLIDE 3 — WHAT IS A HARNESS ════ -->
