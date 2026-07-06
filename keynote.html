@@ -618,7 +618,9 @@
           <div class="stat-divider"></div>
           <div class="stat-item">
             <div class="stat-value">259</div>
-            <div class="stat-label">PRs in 30 days<br />Boris Cherny · Claude Code</div>
+            <div class="stat-label">
+              PRs in 30 days<br />Boris Cherny · Claude Code
+            </div>
           </div>
           <div class="stat-divider"></div>
           <div class="stat-item">
@@ -1715,105 +1717,7 @@
         </div>
       </div>
 
-      <!-- ════ SLIDE 10a — WORKFLOW: BUILD ════ -->
-      <div class="slide slide-proof-bg" data-section="Workflows">
-        <div class="eyebrow">Workflow deep-dive — BUILD</div>
-        <h2 style="font-size: 36px">
-          BUILD:
-          <span class="accent-green">code that's verified before it ships</span>
-        </h2>
-        <div class="mt24" style="width: 100%; max-width: 1100px">
-          <div
-            class="chain"
-            style="justify-content: center; flex-wrap: wrap; gap: 6px"
-          >
-            <div class="chain-node router">
-              router<small>intent: BUILD</small>
-            </div>
-            <div class="chain-arrow">→</div>
-            <div class="chain-node write">
-              component-builder<small>WRITE · TDD</small>
-            </div>
-            <div class="chain-arrow">→</div>
-            <div style="display: flex; gap: 4px; align-items: center">
-              <div class="chain-node read">
-                code-reviewer<small>6-pass review</small>
-              </div>
-              <span style="color: var(--text3); font-size: 12px">∥</span>
-              <div class="chain-node read" style="border-color: var(--red)">
-                failure-hunter<small>silent failures</small>
-              </div>
-            </div>
-            <div class="chain-arrow">→</div>
-            <div class="chain-node verify">
-              integration-verifier<small>exit 0</small>
-            </div>
-            <div class="chain-arrow">→</div>
-            <div class="chain-node gate">
-              phase_exit_gate<small>fail-closed</small>
-            </div>
-            <div class="chain-arrow">→</div>
-            <div class="chain-node memory">
-              doc-syncer → memory<small>persist</small>
-            </div>
-          </div>
-        </div>
-        <div class="card-grid cols3 mt24" style="max-width: 1100px">
-          <div class="card highlight-green">
-            <div
-              class="card-title"
-              style="color: var(--green); font-size: 14px"
-            >
-              Skills loaded
-            </div>
-            <div class="card-body" style="font-size: 12px">
-              <strong>Builder:</strong> building, verification, agent-common<br />
-              <strong>Reviewer:</strong> code-review, verification,
-              codebase-hygiene, agent-common<br />
-              <strong>Hunter:</strong> code-review, agent-common<br />
-              <strong>Verifier:</strong> verification, agent-common<br />
-              <strong>Contextual:</strong> architecture, frontend, research
-              (router-injected per request)
-            </div>
-          </div>
-          <div class="card highlight-purple">
-            <div
-              class="card-title"
-              style="color: var(--purple); font-size: 14px"
-            >
-              The loop
-            </div>
-            <div class="card-body" style="font-size: 12px">
-              reviewer finds issues → router creates REMFIX → builder fixes →
-              <strong>re-review + re-hunt</strong> (parallel) → re-verify<br /><br />
-              <span class="pill pill-purple">max 3 cycles</span>
-              <span class="pill pill-red">then: human checkpoint</span
-              ><br /><br />
-              <strong>Complexity gradient:</strong> trivial work skips
-              reviewer+hunter (builder → verifier → memory). Escalates to full
-              chain on scope increase.
-            </div>
-          </div>
-          <div class="card highlight-cyan">
-            <div class="card-title" style="color: var(--cyan); font-size: 14px">
-              Why it works
-            </div>
-            <div class="card-body" style="font-size: 12px">
-              <strong>Parallel review</strong> — reviewer and hunter can't bias
-              each other. Fresh contexts, independent verdicts. Router
-              merges.<br /><br />
-              <strong>Anti-anchoring</strong> — reviewers skip activeContext.md
-              (the builder's self-assessment). They form their own opinion from
-              the diff.<br /><br />
-              <strong>Contract enforcement</strong> — TDD_RED_EXIT=1,
-              TDD_RED_REASON_KIND=behavioral. Router-verified contract parsing.
-              Artifact integrity hook-enforced.
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ════ SLIDE 10b — WORKFLOW: PLAN ════ -->
+      <!-- ════ SLIDE 10a — WORKFLOW: PLAN ════ -->
       <div class="slide slide-proof-bg" data-section="Workflows">
         <div class="eyebrow">Workflow deep-dive — PLAN</div>
         <h2 style="font-size: 36px">
@@ -1908,6 +1812,104 @@
               <strong>Doubt-Driven Development</strong> — for high-stakes
               decisions, an in-flight adversarial reviewer challenges the design
               BEFORE the plan is finalized.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ SLIDE 10b — WORKFLOW: BUILD ════ -->
+      <div class="slide slide-proof-bg" data-section="Workflows">
+        <div class="eyebrow">Workflow deep-dive — BUILD</div>
+        <h2 style="font-size: 36px">
+          BUILD:
+          <span class="accent-green">code that's verified before it ships</span>
+        </h2>
+        <div class="mt24" style="width: 100%; max-width: 1100px">
+          <div
+            class="chain"
+            style="justify-content: center; flex-wrap: wrap; gap: 6px"
+          >
+            <div class="chain-node router">
+              router<small>intent: BUILD</small>
+            </div>
+            <div class="chain-arrow">→</div>
+            <div class="chain-node write">
+              component-builder<small>WRITE · TDD</small>
+            </div>
+            <div class="chain-arrow">→</div>
+            <div style="display: flex; gap: 4px; align-items: center">
+              <div class="chain-node read">
+                code-reviewer<small>6-pass review</small>
+              </div>
+              <span style="color: var(--text3); font-size: 12px">∥</span>
+              <div class="chain-node read" style="border-color: var(--red)">
+                failure-hunter<small>silent failures</small>
+              </div>
+            </div>
+            <div class="chain-arrow">→</div>
+            <div class="chain-node verify">
+              integration-verifier<small>exit 0</small>
+            </div>
+            <div class="chain-arrow">→</div>
+            <div class="chain-node gate">
+              phase_exit_gate<small>fail-closed</small>
+            </div>
+            <div class="chain-arrow">→</div>
+            <div class="chain-node memory">
+              doc-syncer → memory<small>persist</small>
+            </div>
+          </div>
+        </div>
+        <div class="card-grid cols3 mt24" style="max-width: 1100px">
+          <div class="card highlight-green">
+            <div
+              class="card-title"
+              style="color: var(--green); font-size: 14px"
+            >
+              Skills loaded
+            </div>
+            <div class="card-body" style="font-size: 12px">
+              <strong>Builder:</strong> building, verification, agent-common<br />
+              <strong>Reviewer:</strong> code-review, verification,
+              codebase-hygiene, agent-common<br />
+              <strong>Hunter:</strong> code-review, agent-common<br />
+              <strong>Verifier:</strong> verification, agent-common<br />
+              <strong>Contextual:</strong> architecture, frontend, research
+              (router-injected per request)
+            </div>
+          </div>
+          <div class="card highlight-purple">
+            <div
+              class="card-title"
+              style="color: var(--purple); font-size: 14px"
+            >
+              The loop
+            </div>
+            <div class="card-body" style="font-size: 12px">
+              reviewer finds issues → router creates REMFIX → builder fixes →
+              <strong>re-review + re-hunt</strong> (parallel) → re-verify<br /><br />
+              <span class="pill pill-purple">max 3 cycles</span>
+              <span class="pill pill-red">then: human checkpoint</span
+              ><br /><br />
+              <strong>Complexity gradient:</strong> trivial work skips
+              reviewer+hunter (builder → verifier → memory). Escalates to full
+              chain on scope increase.
+            </div>
+          </div>
+          <div class="card highlight-cyan">
+            <div class="card-title" style="color: var(--cyan); font-size: 14px">
+              Why it works
+            </div>
+            <div class="card-body" style="font-size: 12px">
+              <strong>Parallel review</strong> — reviewer and hunter can't bias
+              each other. Fresh contexts, independent verdicts. Router
+              merges.<br /><br />
+              <strong>Anti-anchoring</strong> — reviewers skip activeContext.md
+              (the builder's self-assessment). They form their own opinion from
+              the diff.<br /><br />
+              <strong>Contract enforcement</strong> — TDD_RED_EXIT=1,
+              TDD_RED_REASON_KIND=behavioral. Router-verified contract parsing.
+              Artifact integrity hook-enforced.
             </div>
           </div>
         </div>
