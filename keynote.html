@@ -3,31 +3,60 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Harness & Loop Engineering — CC10x</title>
+    <title>Harness & Loop Engineering — A Field Guide</title>
     <style>
+      @font-face {
+        font-family: "Archivo";
+        src: url("assets/fonts/archivo-400.ttf") format("truetype");
+        font-weight: 400;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "Archivo";
+        src: url("assets/fonts/archivo-600.ttf") format("truetype");
+        font-weight: 600;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "Archivo";
+        src: url("assets/fonts/archivo-900.ttf") format("truetype");
+        font-weight: 900;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "Archivo Narrow";
+        src: url("assets/fonts/archivo-narrow-700.ttf") format("truetype");
+        font-weight: 700;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "IBM Plex Mono";
+        src: url("assets/fonts/ibm-plex-mono-500.ttf") format("truetype");
+        font-weight: 500;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "IBM Plex Mono";
+        src: url("assets/fonts/ibm-plex-mono-600.ttf") format("truetype");
+        font-weight: 600;
+        font-display: swap;
+      }
+      :root {
+        --paper: oklch(91% 0.02 75);
+        --paper-deep: oklch(84% 0.028 75);
+        --ink: oklch(14% 0.012 65);
+        --muted: oklch(42% 0.018 65);
+        --warning: oklch(60% 0.21 34);
+        --cobalt: oklch(45% 0.21 270);
+        --verified: oklch(52% 0.13 155);
+        --memory: oklch(67% 0.14 79);
+        --cream: oklch(96% 0.012 78);
+        --ease: cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
       * {
         box-sizing: border-box;
         margin: 0;
-        padding: 0;
-      }
-
-      :root {
-        --bg: #0a0f1a;
-        --bg2: #111827;
-        --bg3: #1f2937;
-        --border: #374151;
-        --border2: #4b5563;
-        --text: #f9fafb;
-        --text2: #9ca3af;
-        --text3: #6b7280;
-        --cyan: #22d3ee;
-        --green: #10b981;
-        --red: #ef4444;
-        --orange: #f59e0b;
-        --blue: #3b82f6;
-        --purple: #a855f7;
-        --pink: #ec4899;
-        --yellow: #fbbf24;
       }
 
       html,
@@ -35,2530 +64,1333 @@
         width: 100%;
         height: 100%;
         overflow: hidden;
-        background: var(--bg);
-        color: var(--text);
-        font-family:
-          -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+        background: var(--ink);
+        color: var(--ink);
+        font-family: "Archivo", Arial, sans-serif;
       }
 
-      .deck {
+      #deck {
         width: 100vw;
         height: 100vh;
         position: relative;
       }
+
       .slide {
         position: absolute;
         inset: 0;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 60px 80px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        align-content: center;
+        padding: clamp(28px, 3vh, 56px) clamp(32px, 6vw, 104px);
         opacity: 0;
         pointer-events: none;
-        transition: opacity 0.4s ease;
+        transform: translateY(12px);
+        transition:
+          opacity 300ms var(--ease),
+          transform 400ms var(--ease);
+        overflow: hidden;
       }
+
       .slide.active {
         opacity: 1;
-        pointer-events: all;
+        pointer-events: auto;
+        transform: translateY(0);
+      }
+      .paper {
+        background: var(--paper);
+      }
+      .ink {
+        background: var(--ink);
+        color: var(--paper);
+      }
+      .cobalt {
+        background: var(--cobalt);
+        color: var(--cream);
+      }
+      .warning {
+        background: var(--warning);
+        color: var(--ink);
+      }
+      .verified {
+        background: var(--verified);
+        color: var(--cream);
       }
 
-      .progress-bar {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        height: 3px;
-        background: linear-gradient(90deg, var(--cyan), var(--purple));
-        transition: width 0.4s ease;
-        z-index: 100;
-      }
+      .topline,
+      .folio,
+      .source,
+      .nav-hint,
+      .section-label,
       .slide-counter {
-        position: fixed;
-        bottom: 18px;
-        right: 24px;
-        font-size: 12px;
-        color: var(--text3);
-        z-index: 100;
-        font-variant-numeric: tabular-nums;
-      }
-      .nav-hint {
-        position: fixed;
-        bottom: 18px;
-        left: 24px;
-        font-size: 11px;
-        color: var(--text3);
-        z-index: 100;
-      }
-      .nav-hint kbd {
-        background: var(--bg3);
-        border: 1px solid var(--border);
-        border-radius: 3px;
-        padding: 1px 5px;
-        font-family: inherit;
-        font-size: 10px;
-      }
-      .section-label {
-        position: fixed;
-        top: 24px;
-        right: 32px;
-        font-size: 11px;
-        font-weight: 700;
+        font-family: "IBM Plex Mono", ui-monospace, monospace;
+        font-size: clamp(16px, 1.1vw, 18px);
+        font-weight: 600;
         letter-spacing: 0.12em;
         text-transform: uppercase;
-        color: var(--text3);
-        z-index: 100;
-      }
-      .logomark {
-        font-size: 28px;
-        font-weight: 800;
-        color: var(--cyan);
-        letter-spacing: -0.5px;
-        position: fixed;
-        top: 20px;
-        left: 32px;
-        z-index: 100;
       }
 
-      .eyebrow {
-        font-size: 13px;
-        font-weight: 700;
-        letter-spacing: 0.15em;
-        text-transform: uppercase;
-        color: var(--text3);
-        margin-bottom: 20px;
+      .topline {
+        color: var(--warning);
+        margin-bottom: clamp(16px, 2vw, 32px);
       }
-      h1 {
-        font-size: 80px;
-        font-weight: 800;
-        line-height: 1;
-        letter-spacing: -2px;
-        color: var(--text);
-        text-align: center;
-        margin-bottom: 24px;
+      .ink .topline,
+      .cobalt .topline,
+      .verified .topline {
+        color: var(--memory);
       }
-      h2 {
-        font-size: 56px;
-        font-weight: 800;
-        line-height: 1.05;
-        letter-spacing: -1.5px;
-        text-align: center;
-        margin-bottom: 20px;
-      }
-      h2.left {
-        text-align: left;
-      }
-      h3 {
-        font-size: 28px;
-        font-weight: 700;
-        margin-bottom: 12px;
-      }
-      .subtitle {
-        font-size: 22px;
-        color: var(--text2);
-        text-align: center;
-        max-width: 760px;
-        line-height: 1.5;
-      }
-      .body-text {
-        font-size: 18px;
-        color: var(--text2);
-        line-height: 1.6;
-        max-width: 820px;
-      }
-      .accent {
-        color: var(--cyan);
-      }
-      .accent-green {
-        color: var(--green);
-      }
-      .accent-orange {
-        color: var(--orange);
-      }
-      .accent-purple {
-        color: var(--purple);
-      }
-      .accent-red {
-        color: var(--red);
-      }
-      .accent-yellow {
-        color: var(--yellow);
+      .warning .topline {
+        color: var(--ink);
       }
 
-      .card-grid {
-        display: grid;
-        gap: 20px;
-        width: 100%;
-        max-width: 1100px;
-      }
-      .card-grid.cols2 {
-        grid-template-columns: 1fr 1fr;
-      }
-      .card-grid.cols3 {
-        grid-template-columns: 1fr 1fr 1fr;
-      }
-      .card {
-        background: var(--bg2);
-        border: 1px solid var(--border);
-        border-radius: 16px;
-        padding: 28px 32px;
-      }
-      .card.highlight-cyan {
-        border-color: rgba(34, 211, 238, 0.5);
-        background: rgba(34, 211, 238, 0.04);
-      }
-      .card.highlight-green {
-        border-color: rgba(16, 185, 129, 0.5);
-        background: rgba(16, 185, 129, 0.04);
-      }
-      .card.highlight-purple {
-        border-color: rgba(168, 85, 247, 0.5);
-        background: rgba(168, 85, 247, 0.04);
-      }
-      .card.highlight-orange {
-        border-color: rgba(245, 158, 11, 0.5);
-        background: rgba(245, 158, 11, 0.04);
-      }
-      .card.highlight-red {
-        border-color: rgba(239, 68, 68, 0.5);
-        background: rgba(239, 68, 68, 0.04);
-      }
-      .card-icon {
+      .folio {
         display: none;
       }
-      .card-title {
-        font-size: 18px;
-        font-weight: 700;
-        margin-bottom: 8px;
+      .source {
+        position: absolute;
+        right: clamp(32px, 6vw, 104px);
+        bottom: 28px;
+        max-width: 58ch;
+        text-align: right;
+        color: var(--muted);
       }
-      .card-body {
-        font-size: 14px;
-        color: var(--text2);
-        line-height: 1.6;
+      .ink .source,
+      .cobalt .source,
+      .verified .source {
+        color: color-mix(in oklch, currentColor 65%, transparent);
       }
 
-      .chain {
-        display: flex;
-        align-items: center;
-        gap: 0;
-        flex-wrap: nowrap;
-        max-width: 100%;
+      .brand {
+        position: fixed;
+        top: 22px;
+        right: 28px;
+        z-index: 10;
+        font-family:
+          "Archivo Narrow",
+          Arial Narrow,
+          sans-serif;
+        font-size: 22px;
+        font-weight: 900;
+        letter-spacing: -0.08em;
+        color: var(--paper);
       }
-      .chain-node {
-        background: var(--bg3);
-        border: 2px solid var(--border2);
-        border-radius: 10px;
-        padding: 12px 18px;
-        font-size: 14px;
+      .brand span {
+        color: var(--warning);
+      }
+      .section-label,
+      .slide-counter,
+      .nav-hint {
+        position: fixed;
+        z-index: 10;
+        color: var(--paper-deep);
+      }
+      body[data-theme="light"] .brand,
+      body[data-theme="light"] .section-label,
+      body[data-theme="light"] .slide-counter,
+      body[data-theme="light"] .nav-hint {
+        color: var(--ink);
+      }
+      body[data-theme="light"] .brand span {
+        color: var(--warning);
+      }
+      .section-label {
+        display: none;
+      }
+      .slide-counter {
+        left: 28px;
+        bottom: 22px;
+      }
+      .nav-hint {
+        display: none;
+      }
+      .progress {
+        position: fixed;
+        left: 0;
+        bottom: 0;
+        z-index: 11;
+        width: 0;
+        height: 7px;
+        background: var(--warning);
+        transition: width 260ms var(--ease);
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        text-wrap: balance;
+      }
+      h1,
+      h2 {
+        font-family:
+          "Archivo Narrow",
+          Arial Narrow,
+          sans-serif;
+        font-weight: 900;
+        letter-spacing: -0.08em;
+        text-transform: uppercase;
+        line-height: 0.82;
+      }
+      h1 {
+        max-width: 12ch;
+        font-size: clamp(60px, 9vw, 150px);
+      }
+      h2 {
+        max-width: 15ch;
+        font-size: clamp(44px, 6vw, 110px);
+      }
+      h3 {
+        font-family:
+          "Archivo Narrow",
+          Arial Narrow,
+          sans-serif;
+        font-size: clamp(28px, 3.6vw, 58px);
+        font-weight: 900;
+        letter-spacing: -0.055em;
+        line-height: 0.9;
+        text-transform: uppercase;
+      }
+      .lead {
+        max-width: 48ch;
+        margin-top: 28px;
+        font-size: clamp(18px, 2.1vw, 34px);
+        font-weight: 650;
+        line-height: 1.18;
+      }
+      .body {
+        max-width: 62ch;
+        font-size: clamp(16px, 1.45vw, 24px);
         font-weight: 600;
-        color: var(--text);
-        white-space: nowrap;
-        text-align: center;
+        line-height: 1.35;
       }
-      .chain-node.router {
-        border-color: var(--purple);
-        color: var(--purple);
+      .red {
+        color: var(--warning);
       }
-      .chain-node.write {
-        border-color: var(--green);
-        color: var(--green);
+      .blue {
+        color: var(--cobalt);
       }
-      .chain-node.read {
-        border-color: var(--blue);
-        color: var(--blue);
+      .green {
+        color: var(--verified);
       }
-      .chain-node.verify {
-        border-color: var(--yellow);
-        color: var(--yellow);
+      .gold {
+        color: var(--memory);
       }
-      .chain-node.memory {
-        border-color: var(--pink);
-        color: var(--pink);
-      }
-      .chain-node.gate {
-        border-color: var(--red);
-        color: var(--red);
-        background: rgba(239, 68, 68, 0.07);
-      }
-      .chain-node small {
-        display: block;
-        font-size: 10px;
-        font-weight: 400;
-        opacity: 0.7;
-        margin-top: 2px;
-      }
-      .chain-arrow {
-        color: var(--text3);
-        font-size: 18px;
-        padding: 0 8px;
-        flex-shrink: 0;
+      .paper-text {
+        color: var(--paper);
       }
 
-      .code-block {
-        background: var(--bg3);
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 24px 28px;
-        font-family: "SF Mono", "Cascadia Code", Monaco, monospace;
-        font-size: 15px;
-        line-height: 1.7;
-        color: var(--text2);
-        width: 100%;
-        max-width: 900px;
-      }
-      .code-block .kw {
-        color: var(--purple);
-      }
-      .code-block .fn {
-        color: var(--cyan);
-      }
-      .code-block .str {
-        color: var(--green);
-      }
-      .code-block .cmt {
-        color: var(--text3);
-        font-style: italic;
-      }
-      .code-block .hl {
-        color: var(--yellow);
-      }
-      .code-block .err {
-        color: var(--red);
-      }
-
-      .big-quote {
-        font-size: 42px;
-        font-weight: 700;
-        line-height: 1.2;
-        text-align: center;
-        max-width: 900px;
-        color: var(--text);
-      }
-      .big-quote em {
-        font-style: normal;
-        color: var(--text);
-      }
-      .big-quote em.cyan {
-        color: var(--cyan);
-      }
-      .big-quote em.green {
-        color: var(--green);
-      }
-      .big-quote em.orange {
-        color: var(--orange);
-      }
-
-      .stat-row {
+      .hero {
         display: flex;
-        gap: 60px;
-        align-items: center;
+        min-height: 74vh;
+        flex-direction: column;
         justify-content: center;
       }
-      .stat-item {
-        text-align: center;
+      .hero h1 .line {
+        display: block;
       }
-      .stat-value {
-        font-size: 80px;
-        font-weight: 800;
-        line-height: 1;
-        color: var(--cyan);
-        font-family: "SF Mono", "Cascadia Code", Monaco, monospace;
-        font-variant-numeric: tabular-nums;
-        letter-spacing: -1px;
+      .hero h1 .outline {
+        color: transparent;
+        -webkit-text-stroke: 2px var(--ink);
       }
-      .stat-label {
-        font-size: 14px;
-        color: var(--text3);
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        margin-top: 6px;
+      .ink .hero h1 .outline {
+        -webkit-text-stroke-color: var(--paper);
       }
-      .stat-divider {
-        width: 1px;
-        height: 80px;
-        background: var(--border);
+      .hero .rule {
+        width: min(62vw, 790px);
+        height: 10px;
+        margin-top: 34px;
+        background: var(--warning);
       }
 
-      .check-list {
+      .statement {
+        display: grid;
+        gap: clamp(18px, 3vw, 44px);
+      }
+      .statement .small {
+        max-width: 42ch;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: clamp(13px, 1.1vw, 18px);
+        font-weight: 600;
+        line-height: 1.45;
+      }
+
+      .split {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(240px, 0.72fr);
+        gap: clamp(28px, 6vw, 112px);
+        align-items: end;
+      }
+      .split.reverse {
+        grid-template-columns: minmax(240px, 0.72fr) minmax(0, 1fr);
+      }
+      .split .body {
+        padding-bottom: 8px;
+      }
+
+      .six-owns {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        border-top: 2px solid currentColor;
+        border-left: 2px solid currentColor;
+        margin-top: 42px;
+      }
+      .own {
+        min-height: 132px;
+        padding: 18px;
+        border-right: 2px solid currentColor;
+        border-bottom: 2px solid currentColor;
         display: flex;
         flex-direction: column;
-        gap: 16px;
-        max-width: 800px;
-        width: 100%;
+        justify-content: space-between;
       }
-      .check-item {
-        display: flex;
-        gap: 16px;
-        align-items: flex-start;
-        font-size: 18px;
-        color: var(--text2);
-      }
-      .check-item .check {
-        color: var(--green);
-        font-size: 20px;
-        flex-shrink: 0;
-        margin-top: 1px;
-      }
-      .check-item .cross {
-        color: var(--red);
-        font-size: 20px;
-        flex-shrink: 0;
-        margin-top: 1px;
-      }
-      .check-item strong {
-        color: var(--text);
-      }
-
-      .compare-table {
-        width: 100%;
-        max-width: 1000px;
-        border-collapse: collapse;
-        font-size: 15px;
-      }
-      .compare-table th {
-        background: var(--bg3);
-        padding: 14px 20px;
-        text-align: left;
-        font-size: 12px;
-        font-weight: 700;
+      .own b {
+        font-family:
+          "Archivo Narrow",
+          Arial Narrow,
+          sans-serif;
+        font-size: clamp(22px, 2.6vw, 42px);
+        letter-spacing: -0.05em;
         text-transform: uppercase;
-        letter-spacing: 0.1em;
-        color: var(--text3);
-        border-bottom: 2px solid var(--border);
       }
-      .compare-table td {
-        padding: 14px 20px;
-        border-bottom: 1px solid var(--border);
-        color: var(--text2);
-        vertical-align: top;
+      .own span {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 14px;
+        line-height: 1.35;
       }
-      .compare-table td:first-child {
-        font-family: "SF Mono", Monaco, monospace;
-        font-size: 13px;
-        color: var(--cyan);
-        white-space: nowrap;
+      .own.context b,
+      .own.router b {
+        color: var(--cobalt);
       }
-      .compare-table td strong {
-        color: var(--text);
+      .own.authority b,
+      .own.control b,
+      .own.gate b {
+        color: var(--warning);
       }
-      .compare-table tr:last-child td {
-        border-bottom: none;
+      .own.state b,
+      .own.memory b {
+        color: var(--memory);
       }
-
-      .pill {
-        display: inline-block;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 700;
-        letter-spacing: 0.05em;
-      }
-      .pill-green {
-        background: rgba(16, 185, 129, 0.15);
-        color: var(--green);
-        border: 1px solid rgba(16, 185, 129, 0.3);
-      }
-      .pill-cyan {
-        background: rgba(34, 211, 238, 0.12);
-        color: var(--cyan);
-        border: 1px solid rgba(34, 211, 238, 0.3);
-      }
-      .pill-red {
-        background: rgba(239, 68, 68, 0.12);
-        color: var(--red);
-        border: 1px solid rgba(239, 68, 68, 0.3);
-      }
-      .pill-orange {
-        background: rgba(245, 158, 11, 0.12);
-        color: var(--orange);
-        border: 1px solid rgba(245, 158, 11, 0.3);
-      }
-      .pill-purple {
-        background: rgba(168, 85, 247, 0.12);
-        color: var(--purple);
-        border: 1px solid rgba(168, 85, 247, 0.3);
+      .own.evidence b,
+      .own.trace b {
+        color: var(--verified);
       }
 
-      .hdivider {
-        width: 100%;
-        max-width: 900px;
-        height: 1px;
-        background: var(--border);
-        margin: 32px 0;
+      .assembly {
+        display: grid;
+        grid-template-columns: 1.15fr 0.8fr 0.8fr 0.8fr;
+        grid-template-rows: repeat(2, minmax(118px, 1fr));
+        gap: 2px;
+        margin-top: 34px;
+        background: var(--paper);
       }
-      .glow-line {
-        width: 80px;
-        height: 4px;
-        border-radius: 4px;
-        margin: 20px auto;
+      .assembly article {
+        padding: 20px;
+        background: var(--ink);
+        color: var(--paper);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
       }
-      .glow-line.cyan {
-        background: var(--cyan);
+      .assembly .assembly-router {
+        grid-row: 1 / 3;
+        background: var(--cobalt);
       }
-      .glow-line.purple {
-        background: var(--purple);
+      .assembly .assembly-memory {
+        grid-column: 2 / 4;
+        background: var(--memory);
+        color: var(--ink);
       }
-      .glow-line.green {
-        background: var(--green);
+      .assembly .assembly-gate {
+        background: var(--warning);
+        color: var(--ink);
       }
-
-      .glow-line.red {
-        background: var(--red);
+      .assembly .assembly-trace {
+        background: var(--verified);
       }
-
-      .slide-title-bg {
-        background:
-          radial-gradient(
-            ellipse at 50% 0%,
-            rgba(34, 211, 238, 0.1) 0%,
-            transparent 55%
-          ),
-          radial-gradient(
-            ellipse at 0% 100%,
-            rgba(168, 85, 247, 0.07) 0%,
-            transparent 50%
-          ),
-          radial-gradient(
-            ellipse at 100% 100%,
-            rgba(16, 185, 129, 0.06) 0%,
-            transparent 50%
-          ),
-          var(--bg);
+      .assembly b {
+        font-family:
+          "Archivo Narrow",
+          Arial Narrow,
+          sans-serif;
+        font-size: clamp(25px, 3vw, 50px);
+        font-weight: 900;
+        line-height: 0.88;
+        letter-spacing: -0.055em;
+        text-transform: uppercase;
       }
-      .slide-harness-bg {
-        background:
-          radial-gradient(
-            ellipse at 80% 20%,
-            rgba(34, 211, 238, 0.08) 0%,
-            transparent 50%
-          ),
-          var(--bg);
-      }
-      .slide-loop-bg {
-        background:
-          radial-gradient(
-            ellipse at 20% 80%,
-            rgba(168, 85, 247, 0.08) 0%,
-            transparent 50%
-          ),
-          var(--bg);
-      }
-      .slide-proof-bg {
-        background:
-          radial-gradient(
-            ellipse at 50% 50%,
-            rgba(16, 185, 129, 0.06) 0%,
-            transparent 60%
-          ),
-          var(--bg);
+      .assembly p {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 15px;
+        font-weight: 600;
+        line-height: 1.35;
       }
 
-      .mt8 {
-        margin-top: 8px;
+      .fit-map {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr auto 1fr;
+        gap: 14px;
+        align-items: center;
+        margin-top: 48px;
       }
-      .mt16 {
-        margin-top: 16px;
+      .fit-map div {
+        min-height: 142px;
+        padding: 22px;
+        border: 2px solid var(--ink);
+        display: flex;
+        align-items: end;
+        font-family:
+          "Archivo Narrow",
+          Arial Narrow,
+          sans-serif;
+        font-size: clamp(24px, 3vw, 48px);
+        font-weight: 900;
+        letter-spacing: -0.06em;
+        text-transform: uppercase;
       }
-      .mt24 {
-        margin-top: 24px;
+      .fit-map i {
+        font-family: "IBM Plex Mono", monospace;
+        font-style: normal;
+        font-size: clamp(24px, 4vw, 54px);
+        color: var(--warning);
       }
-      .mt32 {
-        margin-top: 32px;
+
+      .loop-line {
+        display: grid;
+        grid-template-columns: repeat(7, auto);
+        justify-content: start;
+        align-items: center;
+        gap: 10px;
+        margin-top: 44px;
+        font-family:
+          "Archivo Narrow",
+          Arial Narrow,
+          sans-serif;
+        font-size: clamp(30px, 4.2vw, 70px);
+        font-weight: 900;
+        letter-spacing: -0.065em;
+        text-transform: uppercase;
       }
-      .mt40 {
+      .loop-line span {
+        padding: 8px 14px;
+      }
+      .loop-line .evidence {
+        background: var(--verified);
+        color: var(--cream);
+      }
+      .loop-line .verdict {
+        background: var(--warning);
+      }
+      .loop-line i {
+        font-family: "IBM Plex Mono", monospace;
+        font-style: normal;
+        color: var(--cobalt);
+      }
+      .ink .loop-line i {
+        color: var(--memory);
+      }
+
+      .comparison {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2px;
+        margin-top: 42px;
+        background: var(--ink);
+        border: 2px solid var(--ink);
+      }
+      .comparison > div {
+        min-height: 260px;
+        padding: clamp(24px, 4vw, 54px);
+        background: var(--paper);
+        color: var(--ink);
+      }
+      .comparison .bad {
+        background: var(--warning);
+      }
+      .comparison .badge {
+        display: block;
+        margin-bottom: 28px;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 14px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+      .comparison p {
+        margin-top: 22px;
+        font-size: clamp(17px, 1.6vw, 26px);
+        font-weight: 650;
+        line-height: 1.25;
+      }
+
+      .workflow {
+        display: grid;
+        grid-template-columns: 0.8fr auto 1fr auto 0.8fr;
+        gap: 12px;
+        align-items: stretch;
         margin-top: 40px;
       }
-      .mt48 {
-        margin-top: 48px;
+      .workflow.four {
+        grid-template-columns: 0.75fr auto 0.9fr auto 0.75fr auto 0.9fr;
+      }
+      .workflow .stage {
+        min-height: 190px;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        border: 2px solid currentColor;
+      }
+      .workflow .stage b {
+        font-family:
+          "Archivo Narrow",
+          Arial Narrow,
+          sans-serif;
+        font-size: clamp(28px, 3.3vw, 54px);
+        font-weight: 900;
+        letter-spacing: -0.055em;
+        line-height: 0.88;
+        text-transform: uppercase;
+      }
+      .workflow .stage small {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 14px;
+        line-height: 1.4;
+      }
+      .workflow .arrow {
+        align-self: center;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 34px;
+      }
+      .workflow .gate {
+        background: var(--warning);
+        color: var(--ink);
+      }
+      .workflow .proof {
+        background: var(--verified);
+        color: var(--cream);
+      }
+      .workflow .memory-box {
+        background: var(--memory);
+        color: var(--ink);
+      }
+      .workflow-note {
+        margin-top: 18px;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 15px;
+        font-weight: 600;
+      }
+      .system-title {
+        font-size: clamp(42px, 5vw, 80px);
+        max-width: 17ch;
+      }
+      .routes {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 14px;
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .route {
+        padding: 8px 10px;
+        border: 2px solid var(--ink);
+      }
+      .route.replan {
+        color: var(--cobalt);
+        border-color: var(--cobalt);
+      }
+      .route.repair {
+        color: var(--verified);
+        border-color: var(--verified);
+      }
+      .route.escalate {
+        color: var(--warning);
+        border-color: var(--warning);
+      }
+      .route.handoff {
+        color: var(--memory);
+        border-color: var(--memory);
+      }
+
+      .vertical-contract {
+        display: grid;
+        grid-template-columns: 96px 1fr;
+        border-top: 2px solid currentColor;
+        margin-top: 34px;
+      }
+      .vertical-contract .n {
+        padding: 14px 0;
+        border-bottom: 2px solid currentColor;
+        font-family: "IBM Plex Mono", monospace;
+        color: var(--warning);
+      }
+      .vertical-contract .copy {
+        padding: 14px 0;
+        border-bottom: 2px solid currentColor;
+        font-size: clamp(17px, 1.65vw, 27px);
+        font-weight: 650;
+        line-height: 1.2;
+      }
+
+      .components {
+        display: grid;
+        grid-template-columns: 1.25fr 1fr 1fr;
+        gap: 2px;
+        margin-top: 42px;
+        background: var(--paper);
+      }
+      .components article {
+        min-height: 240px;
+        padding: 28px;
+        background: var(--ink);
+        color: var(--paper);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .components article:nth-child(2) {
+        background: var(--cobalt);
+      }
+      .components article:nth-child(3) {
+        background: var(--warning);
+        color: var(--ink);
+      }
+      .components article b {
+        font-family:
+          "Archivo Narrow",
+          Arial Narrow,
+          sans-serif;
+        font-size: clamp(28px, 3vw, 50px);
+        font-weight: 900;
+        line-height: 0.88;
+        letter-spacing: -0.055em;
+        text-transform: uppercase;
+      }
+      .components article p {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 14px;
+        font-weight: 600;
+        line-height: 1.4;
+      }
+
+      .production-list {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        margin-top: 36px;
+        border-top: 2px solid currentColor;
+        border-left: 2px solid currentColor;
+      }
+      .production-list article {
+        min-height: 230px;
+        padding: 18px;
+        border-right: 2px solid currentColor;
+        border-bottom: 2px solid currentColor;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .production-list b {
+        font-family:
+          "Archivo Narrow",
+          Arial Narrow,
+          sans-serif;
+        font-size: clamp(22px, 2.35vw, 38px);
+        line-height: 0.9;
+        letter-spacing: -0.055em;
+        text-transform: uppercase;
+      }
+      .production-list span {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 15px;
+        line-height: 1.35;
+      }
+
+      .xray {
+        display: grid;
+        grid-template-columns: 1fr 110px 1fr;
+        align-items: stretch;
+        margin-top: 38px;
+      }
+      .xray .host {
+        min-height: 340px;
+        padding: 30px;
+        border: 2px solid currentColor;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .xray .host h3 {
+        font-size: clamp(38px, 4vw, 66px);
+      }
+      .xray .host p {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 15px;
+        line-height: 1.45;
+      }
+      .xray .same {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--warning);
+        color: var(--ink);
+        font-family:
+          "Archivo Narrow",
+          Arial Narrow,
+          sans-serif;
+        font-size: 28px;
+        font-weight: 900;
+        letter-spacing: -0.05em;
+        line-height: 0.85;
+        text-align: center;
+        text-transform: uppercase;
+        writing-mode: vertical-rl;
+        transform: rotate(180deg);
+      }
+
+      .canvas {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        border-top: 2px solid var(--ink);
+        border-left: 2px solid var(--ink);
+        margin-top: 36px;
+      }
+      .canvas div {
+        min-height: 145px;
+        padding: 18px;
+        border-right: 2px solid var(--ink);
+        border-bottom: 2px solid var(--ink);
+      }
+      .canvas b {
+        display: block;
+        margin-bottom: 10px;
+        font-family:
+          "Archivo Narrow",
+          Arial Narrow,
+          sans-serif;
+        font-size: clamp(22px, 2.5vw, 42px);
+        letter-spacing: -0.055em;
+        line-height: 0.9;
+        text-transform: uppercase;
+      }
+      .canvas span {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 14px;
+        line-height: 1.4;
+      }
+      .canvas div:nth-child(2) b,
+      .canvas div:nth-child(5) b {
+        color: var(--cobalt);
+      }
+      .canvas div:nth-child(3) b,
+      .canvas div:nth-child(6) b {
+        color: var(--warning);
+      }
+      .canvas div:nth-child(4) b {
+        color: var(--verified);
+      }
+
+      .close {
+        display: flex;
+        min-height: 74vh;
+        flex-direction: column;
+        justify-content: center;
+      }
+      .close h2 {
+        max-width: 11ch;
+      }
+      .close .closing-rule {
+        width: min(72vw, 940px);
+        height: clamp(20px, 3vh, 42px);
+        margin-top: 30px;
+        background: var(--cobalt);
+      }
+
+      @media (max-width: 760px) {
+        .slide {
+          padding: 72px 26px 56px;
+          overflow-y: auto;
+        }
+        .brand {
+          font-size: 18px;
+        }
+        .brand {
+          top: 20px;
+          right: 24px;
+        }
+        .six-owns,
+        .production-list,
+        .canvas {
+          grid-template-columns: 1fr 1fr;
+        }
+        .split,
+        .split.reverse,
+        .comparison,
+        .xray {
+          grid-template-columns: 1fr;
+        }
+        .xray .same {
+          min-height: 58px;
+          writing-mode: horizontal-tb;
+          transform: none;
+        }
+        .workflow {
+          grid-template-columns: 1fr;
+        }
+        .workflow .arrow {
+          transform: rotate(90deg);
+          justify-self: center;
+        }
+        .fit-map {
+          grid-template-columns: 1fr;
+        }
+        .fit-map i {
+          text-align: center;
+          transform: rotate(90deg);
+        }
+        .loop-line {
+          grid-template-columns: 1fr;
+          gap: 0;
+        }
+        .loop-line i {
+          transform: rotate(90deg);
+          justify-self: center;
+        }
+        .components {
+          grid-template-columns: 1fr;
+        }
+        .nav-hint {
+          display: none;
+        }
       }
     </style>
   </head>
   <body>
-    <div class="logomark">CC10x</div>
-    <div class="section-label" id="section-label">Intro</div>
-    <div class="progress-bar" id="progress-bar"></div>
-    <div class="slide-counter" id="slide-counter">1 / 22</div>
-    <div class="nav-hint">
-      <kbd>←</kbd> <kbd>→</kbd> to navigate &nbsp;·&nbsp;
-      <kbd>F</kbd> fullscreen
-    </div>
+    <div class="brand">H<span>+</span>L</div>
+    <div class="section-label" id="section-label">The Shift</div>
+    <div class="slide-counter" id="slide-counter">1 / 19</div>
+    <div class="nav-hint">← → / SPACE TO NAVIGATE · F FOR FULLSCREEN</div>
+    <div class="progress" id="progress-bar"></div>
 
-    <div class="deck" id="deck">
-      <!-- ════ SLIDE 1 — TITLE ════ -->
-      <div class="slide active slide-title-bg" data-section="Intro">
-        <div class="eyebrow">
-          A field guide to building AI agents that actually work
+    <main id="deck">
+      <section class="slide paper active" data-section="The Shift">
+        <span class="folio">01 / FIELD GUIDE</span>
+        <div class="hero">
+          <div class="topline">
+            Harness &amp; Loop Engineering / Senior Builders / 2026
+          </div>
+          <h1>
+            <span class="line">Build the</span>
+            <span class="line outline">operating system</span>
+            <span class="line">around</span>
+            <span class="line red">the agent.</span>
+          </h1>
+          <div class="rule"></div>
         </div>
-        <h1>Harness &<br />Loop Engineering</h1>
-        <div class="glow-line cyan"></div>
-        <p
-          class="subtitle mt16"
-          style="
-            font-size: 24px;
-            color: var(--text);
-            max-width: 680px;
-            line-height: 1.6;
-          "
+        <span class="source"
+          >FIELD NOTE 01 · THE SUBJECT IS THE DISCIPLINE, NOT THE TOOL</span
         >
-          <span style="color: var(--text3)">“</span>Loops are the future at this
-          point.<br />
-          If you haven't experimented with it,<br />
-          highly, highly recommend it.<span style="color: var(--text3)">”</span>
-        </p>
-        <p style="font-size: 13px; color: var(--text3); margin-top: 10px">
-          — Boris Cherny, head of Claude Code, Anthropic · Sequoia talk, June
-          2026
-        </p>
-        <div class="mt40 stat-row">
-          <div class="stat-item">
-            <div class="stat-value">Top 30 → 5</div>
-            <div class="stat-label">
-              Terminal Bench 2.0 rank<br />harness-only · LangChain
-            </div>
-          </div>
-          <div class="stat-divider"></div>
-          <div class="stat-item">
-            <div class="stat-value">259</div>
-            <div class="stat-label">
-              PRs in 30 days<br />Boris Cherny · Claude Code
-            </div>
-          </div>
-          <div class="stat-divider"></div>
-          <div class="stat-item">
-            <div class="stat-value">CC10x</div>
-            <div class="stat-label">Living proof</div>
-          </div>
-        </div>
-      </div>
+      </section>
 
-      <!-- ════ SLIDE 2 — THE BROKEN MENTAL MODEL ════ -->
-      <div class="slide" data-section="Intro">
-        <div class="eyebrow">The assumption that's killing your agents</div>
+      <section class="slide warning" data-section="The Shift">
+        <span class="folio">02 / CLAIM</span>
+        <div class="statement">
+          <div class="topline">A familiar moment</div>
+          <h2>“DONE.”<br />IS A <span class="outline">CLAIM.</span></h2>
+          <p class="lead">
+            The agent can be eloquent, fast, and wrong. Completion is not a
+            feeling. It is a contract with reality.
+          </p>
+          <p class="small">
+            THE ENGINEERING QUESTION: WHAT SYSTEM DECIDES WHETHER THE CLAIM
+            HOLDS?
+          </p>
+        </div>
+      </section>
+
+      <section class="slide ink" data-section="The Shift">
+        <span class="folio">03 / SHIFT</span>
+        <div class="split">
+          <div>
+            <div class="topline">The work changed</div>
+            <h2>
+              A PROMPT<br />IS A REQUEST.<br /><span class="gold"
+                >A HARNESS IS<br />A SYSTEM.</span
+              >
+            </h2>
+          </div>
+          <p class="body">
+            Models matter. Prompts matter. But reliable work depends on the
+            context, tools, authority, state, evidence, and control designed
+            around them.
+          </p>
+        </div>
+        <span class="source"
+          >OPENAI, “Harness engineering” · openai.com/index/harness-engineering/
+          · LANGCHAIN, “How to Build a Custom Agent Harness” ·
+          langchain.com/blog/how-to-build-a-custom-agent-harness</span
+        >
+      </section>
+
+      <section class="slide paper" data-section="Harness Engineering">
+        <span class="folio">04 / DEFINITION</span>
+        <div class="split">
+          <div>
+            <div class="topline">Harness Engineering</div>
+            <h2>
+              ENGINEER<br />THE <span class="red">ENVIRONMENT</span><br />AROUND
+              THE MODEL.
+            </h2>
+          </div>
+          <p class="body">
+            A harness makes a family of workflows repeatable. It brings the
+            right reality to the agent, controls what it can do, and records
+            what happened.
+          </p>
+        </div>
+        <span class="source"
+          >LANGCHAIN, “How to Build a Custom Agent Harness” ·
+          langchain.com/blog/how-to-build-a-custom-agent-harness</span
+        >
+      </section>
+
+      <section class="slide paper" data-section="Harness Engineering">
+        <span class="folio">05 / CONTROL SURFACE</span>
+        <div class="topline">What a harness owns</div>
+        <div class="six-owns">
+          <div class="own">
+            <b>Context</b><span>WHAT THE AGENT CAN KNOW NOW</span>
+          </div>
+          <div class="own">
+            <b>Tools</b><span>WHAT IT CAN OBSERVE OR CHANGE</span>
+          </div>
+          <div class="own">
+            <b>Authority</b><span>WHAT REQUIRES A HUMAN OR A GATE</span>
+          </div>
+          <div class="own"><b>State</b><span>WHAT SURVIVES THIS RUN</span></div>
+          <div class="own">
+            <b>Evidence</b><span>WHAT CAN PROVE THE CLAIM</span>
+          </div>
+          <div class="own"><b>Control</b><span>WHAT HAPPENS NEXT</span></div>
+        </div>
+        <span class="source"
+          >LANGCHAIN, “How to Build a Custom Agent Harness” · CONTEXT, TOOLS,
+          MEMORY, POLICY, AND OBSERVABILITY</span
+        >
+      </section>
+
+      <section class="slide cobalt" data-section="Harness Engineering">
+        <span class="folio">06 / FIT</span>
+        <div class="topline">There is no universal harness</div>
+        <h2>FIT THE SYSTEM<br />TO THE <span class="gold">WORK.</span></h2>
+        <div class="fit-map">
+          <div>Task</div>
+          <i>+</i>
+          <div>Risk</div>
+          <i>+</i>
+          <div>Host</div>
+        </div>
+        <p class="lead">
+          A production fix, a feature, a review, and an incident do not deserve
+          the same context, autonomy, evidence, or stopping rule.
+        </p>
+        <span class="source"
+          >LANGCHAIN, “How to Build a Custom Agent Harness” · TASK-HARNESS
+          FIT</span
+        >
+      </section>
+
+      <section class="slide ink" data-section="Loop Engineering">
+        <span class="folio">07 / DEFINITION</span>
+        <div class="topline">Loop Engineering</div>
         <h2>
-          We've been thinking<br />about this
-          <span style="color: var(--red)">wrong</span>.
+          FEEDBACK<br />THAT <span class="gold">CHANGES</span><br />THE NEXT
+          MOVE.
         </h2>
-        <div class="glow-line cyan"></div>
-        <div class="card-grid cols2 mt40" style="max-width: 900px">
-          <div class="card highlight-red">
-            <div class="card-icon">🧠</div>
-            <div class="card-title accent-red">The old mental model</div>
-            <div class="card-body">
-              <strong>Better model → better output.</strong><br /><br />
-              Swap in the next release. Iterate on your prompt. Hope for the
-              best.<br /><br />
-              <em style="color: var(--text3)">The model is the product.</em>
-            </div>
-          </div>
-          <div class="card highlight-cyan">
-            <div class="card-icon">⚙️</div>
-            <div class="card-title accent">The right mental model</div>
-            <div class="card-body">
-              <strong>Agent = Model + Harness.</strong><br /><br />
-              The same model, constrained and looped correctly, outperforms a
-              "better" model running freely.<br /><br />
-              <em style="color: var(--cyan)">The harness is the product.</em>
-            </div>
-          </div>
+        <div class="loop-line">
+          <span>Claim</span><i>→</i><span class="evidence">Evidence</span
+          ><i>→</i><span class="verdict">Verdict</span><i>→</i
+          ><span>Next state</span>
         </div>
-        <p class="body-text mt32" style="text-align: center">
-          LangChain went from
-          <span class="accent-yellow">Top 30 to Top 5</span> on Terminal Bench
-          2.0 by changing only the harness — same model. The shift:
-          <span class="accent">prompt → context → harness → loop</span>.
-        </p>
-      </div>
-
-      <!-- ════ SLIDE 2b — THE FOUR-LAYER EVOLUTION ════ -->
-      <div class="slide" data-section="Intro">
-        <div class="eyebrow">The evolution — June 2026</div>
-        <h2 style="font-size: 44px">Four layers. Each nests the one before.</h2>
-        <div class="glow-line purple"></div>
-        <div
-          class="mt32"
-          style="
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-          "
+        <span class="source"
+          >ANTHROPIC, “Building effective agents” · WORKFLOWS,
+          EVALUATOR-OPTIMIZER, AND BOUNDED AGENTS</span
         >
-          <div
-            style="
-              position: relative;
-              width: 580px;
-              height: 320px;
-              margin: 0 auto;
-            "
-          >
-            <div
-              style="
-                position: absolute;
-                inset: 0;
-                border: 2px solid var(--purple);
-                border-radius: 16px;
-                background: rgba(168, 85, 247, 0.04);
-                padding: 8px;
-              "
-            >
-              <div
-                style="
-                  font-size: 12px;
-                  font-weight: 700;
-                  color: var(--purple);
-                  text-transform: uppercase;
-                  letter-spacing: 0.1em;
-                  padding: 4px 12px;
-                "
-              >
-                Harness Engineering · 2026
-              </div>
-              <div
-                style="
-                  margin-top: 4px;
-                  border: 2px solid var(--cyan);
-                  border-radius: 12px;
-                  background: rgba(34, 211, 238, 0.04);
-                  padding: 8px;
-                "
-              >
-                <div
-                  style="
-                    font-size: 12px;
-                    font-weight: 700;
-                    color: var(--cyan);
-                    text-transform: uppercase;
-                    letter-spacing: 0.1em;
-                    padding: 4px 12px;
-                  "
-                >
-                  Loop Engineering · June 2026
-                </div>
-                <div
-                  style="
-                    margin-top: 4px;
-                    border: 2px solid var(--green);
-                    border-radius: 10px;
-                    background: rgba(16, 185, 129, 0.04);
-                    padding: 8px;
-                  "
-                >
-                  <div
-                    style="
-                      font-size: 12px;
-                      font-weight: 700;
-                      color: var(--green);
-                      text-transform: uppercase;
-                      letter-spacing: 0.1em;
-                      padding: 4px 12px;
-                    "
-                  >
-                    Context Engineering · 2025
-                  </div>
-                  <div
-                    style="
-                      margin-top: 4px;
-                      border: 2px solid var(--orange);
-                      border-radius: 8px;
-                      background: rgba(245, 158, 11, 0.04);
-                      padding: 12px;
-                      text-align: center;
-                    "
-                  >
-                    <div
-                      style="
-                        font-size: 12px;
-                        font-weight: 700;
-                        color: var(--orange);
-                        text-transform: uppercase;
-                        letter-spacing: 0.1em;
-                      "
-                    >
-                      Prompt Engineering · 2022
-                    </div>
-                    <div
-                      style="
-                        font-size: 13px;
-                        color: var(--text3);
-                        margin-top: 4px;
-                      "
-                    >
-                      words → context → environment → cycle
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div
-          class="card-grid mt24"
-          style="
-            max-width: 1100px;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
-          "
-        >
-          <div
-            class="card"
-            style="
-              border-color: var(--orange);
-              background: rgba(245, 158, 11, 0.04);
-              padding: 16px;
-            "
-          >
-            <div
-              style="font-size: 12px; font-weight: 700; color: var(--orange)"
-            >
-              Prompt
-            </div>
-            <div class="card-body" style="font-size: 12px">
-              Wording: role, format, steps, examples
-            </div>
-          </div>
-          <div
-            class="card"
-            style="
-              border-color: var(--green);
-              background: rgba(16, 185, 129, 0.04);
-              padding: 16px;
-            "
-          >
-            <div style="font-size: 12px; font-weight: 700; color: var(--green)">
-              Context
-            </div>
-            <div class="card-body" style="font-size: 12px">
-              Assembly: history, RAG, tools, CLAUDE.md
-            </div>
-          </div>
-          <div
-            class="card"
-            style="
-              border-color: var(--purple);
-              background: rgba(168, 85, 247, 0.04);
-              padding: 16px;
-            "
-          >
-            <div
-              style="font-size: 12px; font-weight: 700; color: var(--purple)"
-            >
-              Harness
-            </div>
-            <div class="card-body" style="font-size: 12px">
-              Runtime: sandbox, retries, gates, hooks
-            </div>
-          </div>
-          <div
-            class="card"
-            style="
-              border-color: var(--cyan);
-              background: rgba(34, 211, 238, 0.04);
-              padding: 16px;
-            "
-          >
-            <div style="font-size: 12px; font-weight: 700; color: var(--cyan)">
-              Loop
-            </div>
-            <div class="card-body" style="font-size: 12px">
-              Cycle: trigger → act → verify → learn
-            </div>
-          </div>
-        </div>
-        <p class="body-text mt16" style="text-align: center; font-size: 15px">
-          cc10x is the only Claude Code plugin with a
-          <span class="accent-purple">single router</span> as sole entry point,
-          <span class="accent">fail-closed gates</span>, and
-          <span class="accent-green">durable workflow state</span>.
-        </p>
-      </div>
+      </section>
 
-      <!-- ════ SLIDE 2c — SHOW ME THE LINE ════ -->
-      <div class="slide" data-section="Intro">
-        <div class="eyebrow">Some call this a psyop. The proof is in the code.</div>
-        <h2 style="font-size: 42px">
-          Don't tell me it's clever.<br />
-          <span class="accent">Show me the line.</span>
-        </h2>
-        <div class="glow-line cyan"></div>
-        <div
-          class="mt24"
-          style="display: flex; gap: 20px; width: 100%; max-width: 1100px; align-items: stretch;"
-        >
-          <div style="flex: 1.15; display: flex; flex-direction: column;">
-            <div
-              class="code-block"
-              style="padding: 18px 22px; font-size: 13px; line-height: 1.65; flex: 1;"
-            >
-              <span class="cmt"># THE ROUTER AUDITS ITSELF</span>
-              <span class="cmt"># before dispatching a reviewer, grep</span>
-              <span class="cmt"># your OWN drafted prompt for:</span>
-
-              <span class="str">"do not flag"</span>
-              <span class="str">"don't worry about"</span>
-              <span class="str">"at most minor"</span>
-              <span class="str">"the plan chose"</span>
-              <span class="str">"already verified, just"</span>
-              <span class="str">"should be fine"</span>
-              <span class="str">"no need to check"</span>
-
-              <span class="cmt"># any hit? the prompt is biased.</span>
-              <span class="cmt"># rewrite before dispatch.</span>
-            </div>
-            <p
-              class="card-body"
-              style="font-size: 12px; margin-top: 10px; color: var(--text3); line-height: 1.5;"
-            >
-              You can corrupt a reviewer two ways: feed them the author's
-              diary, or pre-decide their answer. cc10x catches
-              <strong>both</strong>. The second one is the one nobody else has
-              noticed.
+      <section class="slide paper" data-section="Loop Engineering">
+        <span class="folio">08 / NOT A RETRY</span>
+        <div class="topline">The difference matters</div>
+        <div class="comparison">
+          <div class="bad">
+            <span class="badge">Blind retry</span>
+            <h3>TRY AGAIN.</h3>
+            <p>
+              Same failure. Same context. More tokens. No new signal. No reason
+              to believe the next result is better.
             </p>
           </div>
-          <div style="flex: 1; display: flex; flex-direction: column; gap: 14px;">
-            <div
-              class="code-block"
-              style="padding: 16px 20px; font-size: 12px; line-height: 1.6;"
-            >
-              <span class="cmt"># THE SCARS (verbatim from the spec)</span>
-
-              <span class="err">[EASY TO MISS]</span> stale
-              memory_task_id is the #1 cause of cross-workflow pollution.
-
-              <span class="err">[EASY TO MISS]</span> unscoped lookups
-              silently pick up orphan tasks from prior workflows.
-            </div>
-            <p
-              class="card-body"
-              style="font-size: 12px; color: var(--text3); line-height: 1.5; margin: 0;"
-            >
-              When a spec needs 15+ "easy to miss" annotations, you're
-              fighting the medium. Each one is a real bug that happened.
+          <div>
+            <span class="badge">Convergence loop</span>
+            <h3>LEARN, THEN MOVE.</h3>
+            <p>
+              Named evidence changes the next state: repair differently,
+              re-plan, ask a human, or stop before drift compounds.
             </p>
-            <div
-              class="code-block"
-              style="padding: 14px 18px; font-size: 12px; line-height: 1.55; border-color: var(--cyan);"
-            >
-              <span class="cmt"># MECHANISM HONESTY</span>
-              <span class="hl">"never claim a tier was applied</span>
-              <span class="hl"> when the mechanism cannot</span>
-              <span class="hl"> apply it."</span>
-              <span class="cmt">  — the router's own spec</span>
-            </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      <!-- ════ SLIDE 3 — WHAT IS A HARNESS ════ -->
-      <div class="slide slide-harness-bg" data-section="Harness Engineering">
-        <div class="eyebrow">Part I — Harness Engineering</div>
+      <section class="slide paper" data-section="Workflow System">
+        <span class="folio">09 / SYSTEM MAP</span>
+        <div class="topline">Workflows are connected contracts</div>
+        <h2 class="system-title">
+          ONE ROUTE.<br />NOT THE<br /><span class="red">ONLY ROUTE.</span>
+        </h2>
+        <div class="workflow four">
+          <div class="stage">
+            <b>Plan</b><small>INTENT · CONSTRAINTS · DEFINITION OF DONE</small>
+          </div>
+          <div class="arrow">→</div>
+          <div class="stage gate">
+            <b>Challenge</b><small>INDEPENDENT PLAN VALIDATION</small>
+          </div>
+          <div class="arrow">→</div>
+          <div class="stage proof">
+            <b>Build</b><small>BOUNDED EXECUTION AGAINST A CONTRACT</small>
+          </div>
+          <div class="arrow">→</div>
+          <div class="stage">
+            <b>Prove</b
+            ><small>EVIDENCE → APPROVE · REPAIR · RE-PLAN · ESCALATE</small>
+          </div>
+        </div>
+        <p class="workflow-note">
+          ENTRY POINTS: PLAN · DEBUG · REVIEW. THE VERDICT BRANCHES, IT DOES NOT
+          JUST ADVANCE.
+        </p>
+        <div class="routes" aria-label="Verdict branches">
+          <span class="route replan">PROVE → RE-PLAN</span>
+          <span class="route repair">PROVE → REPAIR BUILD</span>
+          <span class="route escalate">PROVE → ESCALATE HUMAN</span>
+          <span class="route handoff">PROVE → PRESERVE HANDOFF</span>
+        </div>
+      </section>
+
+      <section class="slide warning" data-section="Workflow System">
+        <span class="folio">10 / PLAN</span>
+        <div class="split reverse">
+          <p class="body">
+            Planning is not a warm-up chat. It produces a contract the next
+            workflow can challenge: intent, assumptions, constraints, evidence,
+            and a definition of done.
+          </p>
+          <div>
+            <div class="topline">Workflow one</div>
+            <h2>
+              TURN A<br />REQUEST<br />INTO A<br /><span class="outline"
+                >CONTRACT.</span
+              >
+            </h2>
+          </div>
+        </div>
+        <div class="vertical-contract">
+          <div class="n">01</div>
+          <div class="copy">Name the outcome and non-goals.</div>
+          <div class="n">02</div>
+          <div class="copy">
+            Expose assumptions before implementation buries them.
+          </div>
+          <div class="n">03</div>
+          <div class="copy">State what proof will count as done.</div>
+        </div>
+      </section>
+
+      <section class="slide ink" data-section="Workflow System">
+        <span class="folio">11 / PLAN VALIDATION</span>
+        <div class="topline">Workflow two</div>
         <h2>
-          What <em style="font-style: normal; color: var(--cyan)">is</em> a
-          harness?
+          FOR CONSEQUENTIAL<br />PLANS, ADD AN<br /><span class="gold"
+            >INDEPENDENT CHALLENGE.</span
+          >
         </h2>
-        <div class="glow-line cyan"></div>
-        <div
-          class="big-quote mt32"
-          style="
-            font-size: 32px;
-            max-width: 900px;
-            text-align: center;
-            color: var(--text2);
-          "
+        <div class="split" style="margin-top: 36px">
+          <p class="body">
+            Give an independent role the plan, the relevant reality, and the
+            evaluation contract. It finds missing states, false assumptions,
+            scope gaps, and proof gaps before expensive work begins.
+          </p>
+          <p class="small">
+            INDEPENDENCE IS A SYSTEM PROPERTY, NOT A PERSONALITY TRAIT.
+          </p>
+        </div>
+        <span class="source"
+          >ANTHROPIC, “Building effective agents” ·
+          anthropic.com/engineering/building-effective-agents</span
         >
-          The harness is everything <em class="cyan">around</em> the LLM call
-          —<br />
-          the scaffolding that determines
-          <em class="green">what the model sees</em>,<br />
-          <em class="orange">what it's allowed to do</em>, and
-          <em class="cyan">how its output is verified</em>.
-        </div>
-        <div class="card-grid cols3 mt40" style="max-width: 1100px">
-          <div class="card highlight-cyan">
-            <div class="card-icon">👁</div>
-            <div class="card-title" style="color: var(--cyan)">
-              Context control
-            </div>
-            <div class="card-body">
-              What the model sees. Which files. Which history. Which
-              constraints. Curated, not dumped.
-            </div>
-          </div>
-          <div class="card highlight-orange">
-            <div class="card-icon">🚧</div>
-            <div class="card-title" style="color: var(--orange)">
-              Permission surface
-            </div>
-            <div class="card-body">
-              What the model can touch. WRITE agents vs READ-ONLY agents. Roles
-              enforced structurally, not by asking nicely.
-            </div>
-          </div>
-          <div class="card highlight-green">
-            <div class="card-icon">✅</div>
-            <div class="card-title" style="color: var(--green)">
-              Verification gates
-            </div>
-            <div class="card-body">
-              Evidence before advancement. No phase exits without proof. "exit 0
-              or it didn't happen."
-            </div>
-          </div>
-        </div>
-      </div>
+      </section>
 
-      <!-- ════ SLIDE 4 — HARNESS: CC10x PROOF ════ -->
-      <div class="slide slide-harness-bg" data-section="Harness Engineering">
-        <div class="eyebrow">Harness Engineering — CC10x as living proof</div>
-        <h2 class="left" style="font-size: 42px">
-          The router owns the harness.<br /><span class="accent"
-            >Agents never see each other by default.</span
-          >
-        </h2>
-        <div class="mt32" style="width: 100%; max-width: 1100px">
-          <div
-            class="chain"
-            style="justify-content: center; flex-wrap: wrap; gap: 8px"
-          >
-            <div class="chain-node router">
-              cc10x-router
-              <small>sole entry point</small>
-            </div>
-            <div class="chain-arrow">→</div>
-            <div class="chain-node write">
-              component-builder
-              <small>WRITE · TDD first</small>
-            </div>
-            <div class="chain-arrow">→</div>
-            <div class="chain-node read">
-              code-reviewer
-              <small>READ-ONLY · 6-pass adversarial</small>
-            </div>
-            <div class="chain-arrow">+</div>
-            <div class="chain-node read" style="border-color: var(--red)">
-              failure-hunter
-              <small>READ-ONLY · silent failures</small>
-            </div>
-            <div class="chain-arrow">→</div>
-            <div class="chain-node verify">
-              integration-verifier
-              <small>exit 0 required</small>
-            </div>
-            <div class="chain-arrow">→</div>
-            <div class="chain-node gate">
-              phase_exit_gate
-              <small>fail-closed</small>
-            </div>
-            <div class="chain-arrow">→</div>
-            <div class="chain-node memory">
-              memory-update
-              <small>task-enforced</small>
-            </div>
-          </div>
+      <section class="slide cobalt" data-section="Workflow System">
+        <span class="folio">12 / BUILD</span>
+        <div class="topline">Workflow three</div>
+        <h2>MAKE ONE<br /><span class="gold">BOUNDED</span><br />CHANGE.</h2>
+        <div class="components">
+          <article>
+            <b>Skills</b>
+            <p>LOAD THE METHOD REQUIRED FOR THIS KIND OF WORK.</p>
+          </article>
+          <article>
+            <b>Roles</b>
+            <p>GIVE EACH AGENT A NARROW JOB, CONTEXT, AND AUTHORITY.</p>
+          </article>
+          <article>
+            <b>Tools</b>
+            <p>MAKE THE ENVIRONMENT LEGIBLE ENOUGH TO ACT IN.</p>
+          </article>
         </div>
-        <div class="card-grid cols3 mt32" style="max-width: 1100px">
-          <div class="card highlight-purple">
-            <div class="card-title" style="color: var(--purple)">
-              Deterministic routing
-            </div>
-            <div class="card-body">
-              Router matches intent to workflow by keyword signal priority. No
-              model judgment. No ambiguity.
-              <span style="color: var(--purple)"
-                >ERROR always beats BUILD.</span
-              >
-            </div>
-          </div>
-          <div class="card highlight-cyan">
-            <div class="card-title" style="color: var(--cyan)">
-              The router audits itself
-            </div>
-            <div class="card-body">
-              Before dispatching a reviewer, the router greps its
-              <strong>own drafted prompt</strong> for bias phrases — "do not
-              flag," "at most minor," "should be fine." Found? The prompt is
-              biased.
-              <span style="color: var(--cyan)">Rewrite before dispatch.</span>
-              You can corrupt a reviewer two ways: feed them the author's diary,
-              or pre-decide their answer.
-            </div>
-          </div>
-          <div class="card highlight-red">
-            <div class="card-title" style="color: var(--red)">
-              Audit-enforced gates
-            </div>
-            <div class="card-body">
-              No phase advances on prose alone.
-              <span style="color: var(--red)">CONTRACT YAML required.</span>
-              Artifact integrity ships in block mode. Other gates ship in audit
-              mode — observable, upgradeable to block.
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ════ SLIDE 5 — SKILL HINTS AS CONSTRAINTS ════ -->
-      <div class="slide slide-harness-bg" data-section="Harness Engineering">
-        <div class="eyebrow">Harness Engineering — expertise injection</div>
-        <h2 style="font-size: 46px">
-          Skills are
-          <em style="font-style: normal; color: var(--cyan)">constraints</em
-          >,<br />not suggestions.
-        </h2>
-        <div class="glow-line cyan"></div>
-        <div
-          class="mt32"
-          style="
-            display: flex;
-            gap: 40px;
-            width: 100%;
-            max-width: 1100px;
-            align-items: flex-start;
-          "
+        <span class="source"
+          >LANGCHAIN, “How to Build a Custom Agent Harness” · POLICY, TOOL, AND
+          CALL-LIMIT CONTROLS</span
         >
-          <div style="flex: 1">
-            <div class="code-block">
-              <span class="cmt">## SKILL_HINTS (injected by router)</span>
-              <span class="cmt">## agent never self-activates these</span>
+      </section>
 
-              <span class="kw">if</span> request
-              <span class="fn">targets_existing_code</span>(): inject(<span
-                class="str"
-                >"cc10x:codebase-hygiene"</span
-              >)
-
-              <span class="kw">if</span> request
-              <span class="fn">targets_ui</span>(): inject(<span class="str"
-                >"cc10x:frontend"</span
-              >)
-              <span class="cmt">## authoring + critique in one skill</span>
-
-              <span class="kw">if</span> human_review
-              <span class="fn">is_incoming</span>(): inject(<span class="str"
-                >"cc10x:code-review"</span
-              >)
-              <span class="cmt">## verify before agreeing</span>
-
-              <span class="kw">if</span> request
-              <span class="fn">is_greenfield</span>(): inject(<span class="str"
-                >"cc10x:architecture"</span
-              >)
-              <span class="cmt">## functionality-first design</span>
-            </div>
-          </div>
-          <div
-            style="flex: 1; display: flex; flex-direction: column; gap: 14px"
-          >
-            <div class="card highlight-cyan">
-              <div class="card-title" style="color: var(--cyan)">
-                Router is the only authority
-              </div>
-              <div class="card-body">
-                Agents cannot self-activate domain skills. The harness decides
-                what expertise is in scope — not the model's judgment about what
-                it needs.
-              </div>
-            </div>
-            <div class="card highlight-orange">
-              <div
-                style="font-size: 12px; font-weight: 700; color: var(--orange)"
-              >
-                16 skills + router kernel
-              </div>
-              <div class="card-body" style="font-size: 12px">
-                16 expertise skills. A minimal set preloads per agent; the rest
-                inject on demand via SKILL_HINTS. Preloaded skills are
-                full-content, not lazy. Lean by design,
-                <span style="color: var(--orange)">not by magic.</span>
-              </div>
-            </div>
-            <div class="card highlight-green">
-              <div class="card-title" style="color: var(--green)">
-                Skill precedence is law
-              </div>
-              <div class="card-body">
-                user instructions → project standards → approved plan → domain
-                skills → cc10x internals → model heuristics. The harness
-                enforces this stack every time.
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ════ SLIDE 6 — TRANSITION TO LOOP ════ -->
-      <div class="slide" data-section="Harness Engineering">
-        <div class="big-quote">
-          A harness without feedback loops is just<br />
-          a <em class="orange">very expensive one-shot.</em>
-        </div>
-        <div class="glow-line purple" style="margin-top: 40px"></div>
-        <p class="subtitle mt24">
-          The harness sets the stage.<br />
-          <span class="accent-purple">Loop engineering</span> is what makes the
-          agent <em>converge</em>.
-        </p>
-      </div>
-
-      <!-- ════ SLIDE 7 — WHAT IS LOOP ENGINEERING ════ -->
-      <div class="slide slide-loop-bg" data-section="Loop Engineering">
-        <div class="eyebrow">Part II — Loop Engineering</div>
+      <section class="slide verified" data-section="Workflow System">
+        <span class="folio">13 / BUILD VALIDATION</span>
+        <div class="topline">Workflow four</div>
         <h2>
-          Not retries.<br /><em style="font-style: normal; color: var(--purple)"
-            >Convergence loops.</em
+          THE TEST<br />PASSED.<br /><span class="outline"
+            >WHAT DID IT<br />PROVE?</span
           >
         </h2>
-        <div class="glow-line purple"></div>
-        <div
-          class="mt32"
-          style="
-            display: flex;
-            gap: 48px;
-            align-items: center;
-            width: 100%;
-            max-width: 1100px;
-          "
+        <div class="workflow">
+          <div class="stage">
+            <b>Claim</b><small>THE BEHAVIOR WE SAY CHANGED</small>
+          </div>
+          <div class="arrow">→</div>
+          <div class="stage memory-box">
+            <b>Evidence</b
+            ><small>TEST · BROWSER · TRACE · REVIEW · HUMAN APPROVAL</small>
+          </div>
+          <div class="arrow">→</div>
+          <div class="stage">
+            <b>Verdict</b><small>APPROVE · REMEDIATE · ESCALATE</small>
+          </div>
+        </div>
+        <span class="source"
+          >ANTHROPIC, “Effective harnesses for long-running agents” · END-TO-END
+          VALIDATION</span
         >
-          <div style="flex: 1">
-            <div class="check-list">
-              <div class="check-item">
-                <span class="cross">✗</span>
-                <div>
-                  <strong>Not retries</strong> — hoping the model gets it right
-                  on attempt N
-                </div>
-              </div>
-              <div class="check-item">
-                <span class="cross">✗</span>
-                <div>
-                  <strong>Not polling</strong> — running the same check until it
-                  passes
-                </div>
-              </div>
-              <div class="check-item">
-                <span class="check">✓</span>
-                <div>
-                  <strong>Evidence-driven iteration</strong> — each loop
-                  consumes findings from the prior cycle as structured input
-                </div>
-              </div>
-              <div class="check-item">
-                <span class="check">✓</span>
-                <div>
-                  <strong>Bounded convergence</strong> — hard limits prevent
-                  infinite drift. At N cycles: human checkpoint.
-                </div>
-              </div>
-              <div class="check-item">
-                <span class="check">✓</span>
-                <div>
-                  <strong>Memory across loops</strong> —
-                  <code style="color: var(--purple); font-size: 14px"
-                    >patterns.md ## Common Gotchas</code
-                  >
-                  — what failed once never fails the same way twice
-                </div>
-              </div>
-            </div>
-          </div>
-          <div style="flex: 0 0 380px">
-            <svg viewBox="0 0 380 380" width="380" height="380">
-              <defs>
-                <marker
-                  id="arr"
-                  markerWidth="8"
-                  markerHeight="6"
-                  refX="7"
-                  refY="3"
-                  orient="auto"
-                >
-                  <polygon points="0 0, 8 3, 0 6" fill="#a855f7" />
-                </marker>
-              </defs>
-              <circle
-                cx="190"
-                cy="190"
-                r="155"
-                fill="none"
-                stroke="#374151"
-                stroke-width="1.5"
-                stroke-dasharray="6,4"
-              />
-              <!-- BUILD -->
-              <rect
-                x="140"
-                y="20"
-                width="100"
-                height="44"
-                rx="8"
-                fill="#1f2937"
-                stroke="#10b981"
-                stroke-width="2"
-              />
-              <text
-                x="190"
-                y="40"
-                text-anchor="middle"
-                fill="#10b981"
-                font-size="13"
-                font-weight="700"
-              >
-                BUILD
-              </text>
-              <text
-                x="190"
-                y="56"
-                text-anchor="middle"
-                fill="#6b7280"
-                font-size="10"
-              >
-                component-builder
-              </text>
-              <!-- REVIEW -->
-              <rect
-                x="290"
-                y="145"
-                width="80"
-                height="44"
-                rx="8"
-                fill="#1f2937"
-                stroke="#3b82f6"
-                stroke-width="2"
-              />
-              <text
-                x="330"
-                y="165"
-                text-anchor="middle"
-                fill="#3b82f6"
-                font-size="12"
-                font-weight="700"
-              >
-                REVIEW
-              </text>
-              <text
-                x="330"
-                y="181"
-                text-anchor="middle"
-                fill="#6b7280"
-                font-size="10"
-              >
-                Pass 1-6
-              </text>
-              <!-- VERIFY -->
-              <rect
-                x="230"
-                y="285"
-                width="110"
-                height="44"
-                rx="8"
-                fill="#1f2937"
-                stroke="#fbbf24"
-                stroke-width="2"
-              />
-              <text
-                x="285"
-                y="305"
-                text-anchor="middle"
-                fill="#fbbf24"
-                font-size="12"
-                font-weight="700"
-              >
-                VERIFY
-              </text>
-              <text
-                x="285"
-                y="321"
-                text-anchor="middle"
-                fill="#6b7280"
-                font-size="10"
-              >
-                exit 0 required
-              </text>
-              <!-- GATE -->
-              <rect
-                x="40"
-                y="285"
-                width="100"
-                height="44"
-                rx="8"
-                fill="rgba(239,68,68,0.1)"
-                stroke="#ef4444"
-                stroke-width="2"
-              />
-              <text
-                x="90"
-                y="305"
-                text-anchor="middle"
-                fill="#ef4444"
-                font-size="12"
-                font-weight="700"
-              >
-                GATE
-              </text>
-              <text
-                x="90"
-                y="321"
-                text-anchor="middle"
-                fill="#6b7280"
-                font-size="10"
-              >
-                issues?
-              </text>
-              <!-- REMFIX -->
-              <rect
-                x="10"
-                y="145"
-                width="90"
-                height="44"
-                rx="8"
-                fill="#1f2937"
-                stroke="#a855f7"
-                stroke-width="2"
-              />
-              <text
-                x="55"
-                y="165"
-                text-anchor="middle"
-                fill="#a855f7"
-                font-size="12"
-                font-weight="700"
-              >
-                REMFIX
-              </text>
-              <text
-                x="55"
-                y="181"
-                text-anchor="middle"
-                fill="#6b7280"
-                font-size="10"
-              >
-                scoped fix
-              </text>
-              <!-- arrows -->
-              <path
-                d="M 240 42 Q 330 42 330 145"
-                fill="none"
-                stroke="#a855f7"
-                stroke-width="2"
-                marker-end="url(#arr)"
-              />
-              <path
-                d="M 330 189 Q 330 285 340 285"
-                fill="none"
-                stroke="#a855f7"
-                stroke-width="2"
-                marker-end="url(#arr)"
-              />
-              <path
-                d="M 230 307 L 140 307"
-                fill="none"
-                stroke="#a855f7"
-                stroke-width="2"
-                marker-end="url(#arr)"
-              />
-              <path
-                d="M 90 285 L 90 189"
-                fill="none"
-                stroke="#ef4444"
-                stroke-width="2"
-                marker-end="url(#arr)"
-              />
-              <path
-                d="M 55 145 Q 55 42 140 42"
-                fill="none"
-                stroke="#a855f7"
-                stroke-width="2"
-                marker-end="url(#arr)"
-              />
-              <path
-                d="M 90 307 Q 90 370 190 370"
-                fill="none"
-                stroke="#10b981"
-                stroke-width="2"
-                marker-end="url(#arr)"
-              />
-              <text
-                x="190"
-                y="375"
-                text-anchor="middle"
-                fill="#10b981"
-                font-size="12"
-                font-weight="700"
-              >
-                DONE
-              </text>
-              <text
-                x="190"
-                y="190"
-                text-anchor="middle"
-                fill="#6b7280"
-                font-size="11"
-              >
-                max 3 cycles
-              </text>
-              <text
-                x="190"
-                y="208"
-                text-anchor="middle"
-                fill="#ef4444"
-                font-size="10"
-              >
-                → human checkpoint
-              </text>
-              <!-- Five loop component labels -->
-              <text
-                x="190"
-                y="100"
-                text-anchor="middle"
-                fill="#6b7280"
-                font-size="9"
-                font-weight="700"
-              >
-                TRIGGER → ACTION → VERIFICATION → MEMORY
-              </text>
-            </svg>
-          </div>
-        </div>
-      </div>
+      </section>
 
-      <!-- ════ SLIDE 8 — LOOP PATTERNS ════ -->
-      <div class="slide slide-loop-bg" data-section="Loop Engineering">
-        <div class="eyebrow">Loop Engineering — CC10x as living proof</div>
-        <h2 style="font-size: 42px">
-          Three loops.<br /><span class="accent-purple"
-            >All bounded. All evidence-gated.</span
-          >
-        </h2>
-        <div class="card-grid cols3 mt40" style="max-width: 1100px">
-          <div class="card highlight-purple">
-            <div class="card-icon">🔁</div>
-            <div class="card-title" style="color: var(--purple)">
-              Remediation loop
-            </div>
-            <div class="card-body">
-              reviewer finds issues →<br />
-              router creates REMFIX task →<br />
-              builder fixes →<br />
-              re-review / re-verify<br /><br />
-              <span class="pill pill-purple">max 3 cycles</span>&nbsp;
-              <span class="pill pill-red">then: human checkpoint</span>
-            </div>
+      <section class="slide paper" data-section="Workflow System">
+        <span class="folio">14 / CONTINUITY</span>
+        <div class="split">
+          <div>
+            <div class="topline">The loop closes with state</div>
+            <h2>
+              REPAIR.<br />STOP.<br /><span class="red">ESCALATE.</span
+              ><br />PRESERVE.
+            </h2>
           </div>
-          <div class="card highlight-cyan">
-            <div class="card-icon">🐛</div>
-            <div class="card-title" style="color: var(--cyan)">
-              Debug loop (Reflexion-style)
-            </div>
-            <div class="card-body">
-              LOG FIRST → reproduce → hypothesize → fix<br /><br />
-              Each failed attempt is stored in
-              <code style="color: var(--cyan); font-size: 12px"
-                >patterns.md</code
-              >
-              as a gotcha.<br /><br />
-              <span class="pill pill-cyan">verbal memory</span>&nbsp;
-              <span class="pill pill-green">improves next session</span>
-            </div>
-          </div>
-          <div class="card highlight-green">
-            <div class="card-icon">📋</div>
-            <div class="card-title" style="color: var(--green)">
-              Plan review loop
-            </div>
-            <div class="card-body">
-              planner writes plan →<br />
-              plan-gap-reviewer anti-anchors →<br />
-              REPLAN if blocking findings<br /><br />
-              <span class="pill pill-green">fresh context</span>&nbsp;
-              <span class="pill pill-orange">no rubber-stamping</span>
-            </div>
-          </div>
+          <p class="body">
+            Every verdict changes the next state. Context is working memory.
+            Durable memory preserves decisions, evidence, constraints, and the
+            next state. The harness decides when to retrieve and write it.
+          </p>
         </div>
-        <div class="hdivider" style="max-width: 1100px"></div>
-        <p class="body-text" style="text-align: center; max-width: 900px">
-          Every loop has an
-          <span class="accent-red">exit condition based on evidence</span>, not
-          time or count.<br />
-          The gate that triggers the loop is the same gate that closes it.
-        </p>
-      </div>
-
-      <!-- ════ SLIDE 9 — THE REFLEXION PARALLEL ════ -->
-      <div class="slide" data-section="Loop Engineering">
-        <div class="eyebrow">Research parallel</div>
-        <h2 style="font-size: 44px">
-          CC10x is <span class="accent-purple">Reflexion</span><br />applied to
-          software engineering.
-        </h2>
-        <div class="mt32" style="width: 100%; max-width: 1000px">
-          <table class="compare-table">
-            <thead>
-              <tr>
-                <th>Concept</th>
-                <th>Reflexion (Shinn et al. 2023)</th>
-                <th>CC10x</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Verbal memory</td>
-                <td>
-                  Agents reflect on failure in natural language, stored as
-                  episodic memory
-                </td>
-                <td>
-                  <code style="color: var(--pink); font-size: 12px"
-                    >patterns.md ## Common Gotchas</code
-                  >
-                  — debug failures stored as structured notes, loaded next
-                  session
-                </td>
-              </tr>
-              <tr>
-                <td>Feedback signal</td>
-                <td>Task evaluator score drives reflection</td>
-                <td>
-                  Reviewer YAML contract —
-                  <code style="color: var(--cyan); font-size: 12px"
-                    >REMEDIATION_NEEDED: true</code
-                  >
-                  drives next loop
-                </td>
-              </tr>
-              <tr>
-                <td>Convergence</td>
-                <td>Loop until eval passes or trial limit</td>
-                <td>
-                  Loop until
-                  <code style="color: var(--green); font-size: 12px"
-                    >phase_exit_gate</code
-                  >
-                  passes — or human checkpoint at cycle 3
-                </td>
-              </tr>
-              <tr>
-                <td>Result</td>
-                <td><strong>91% on HumanEval</strong> vs 80% GPT-4 (2023)</td>
-                <td>
-                  Gates fire <strong>per-phase against a recorded BASE</strong>;
-                  the verifier re-reads every reviewer quote at file:line before
-                  it can gate. Cross-phase regressions caught by an optional
-                  whole-branch review.
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <p class="body-text mt24" style="text-align: center">
-          The 2023 study established the pattern. CC10x applies the same insight
-          to every engineering workflow.
-        </p>
-      </div>
-
-      <!-- ════ SLIDE 9b — ANDREW NG'S THREE LOOPS ════ -->
-      <div class="slide slide-loop-bg" data-section="Loop Engineering">
-        <div class="eyebrow">The full landscape — Andrew Ng's framework</div>
-        <h2 style="font-size: 40px">
-          Three loops. Three timescales.<br />
-          <span class="accent-purple">One discipline.</span>
-        </h2>
-        <div class="glow-line purple"></div>
-        <div class="card-grid cols3 mt32" style="max-width: 1100px">
-          <div class="card highlight-green">
-            <div class="card-icon">⚡</div>
-            <div class="card-title" style="color: var(--green)">
-              Minutes — agentic coding
-            </div>
-            <div class="card-body">
-              <strong>AI agent</strong> writes code → runs tests → fixes
-              failures → repeats. The tightest loop. This is what CC10x
-              automates — BUILD → REVIEW → VERIFY → REMFIX, bounded at 3
-              cycles.<br /><br />
-              <span class="pill pill-green">CC10x lives here</span>
-            </div>
-          </div>
-          <div class="card highlight-cyan">
-            <div class="card-icon">👥</div>
-            <div class="card-title" style="color: var(--cyan)">
-              Hours — developer feedback
-            </div>
-            <div class="card-body">
-              <strong>Human developer</strong> steers features, UI, flows;
-              refines the spec. As agents test their own code, developers shift
-              upstack to product decisions. Learnings stored in
-              <code style="font-size: 12px; color: var(--cyan)"
-                >patterns.md</code
-              >.<br /><br />
-              <span class="pill pill-cyan">CC10x feeds this</span>
-            </div>
-          </div>
-          <div class="card highlight-purple">
-            <div class="card-icon">🎯</div>
-            <div class="card-title" style="color: var(--purple)">
-              Days+ — external feedback
-            </div>
-            <div class="card-body">
-              <strong>Users, testers, market</strong> validate the vision.
-              Friends, alpha testers, A/B tests. The slowest loop informs the
-              next spec. Compounding knowledge in
-              <code style="font-size: 12px; color: var(--purple)"
-                >docs/solutions/</code
-              >
-              feeds this across weeks and teams.<br /><br />
-              <span class="pill pill-purple">CC10x compounds this</span>
-            </div>
-          </div>
-        </div>
-        <p class="body-text mt24" style="text-align: center; font-size: 15px">
-          <strong>Andrew Ng</strong> — The Batch, June 30, 2026: three nested
-          loops for AI-native product building.<br />
-          <span style="color: var(--text3)"
-            >— The minute-scale loop is the foundation. Without it, the hour and
-            day loops have no signal to consume.</span
-          >
-        </p>
-      </div>
-
-      <!-- ════ SLIDE 10 — HARNESS + LOOP TOGETHER ════ -->
-      <div class="slide slide-proof-bg" data-section="Proof">
-        <div class="eyebrow">They're not separate disciplines</div>
-        <div class="big-quote">
-          The <em class="cyan">harness</em> defines the channel.<br />
-          The <em class="green">loop</em> fills it with signal.<br />
-          <em class="orange">Together</em> they produce quality.
-        </div>
-        <div class="mt40 card-grid cols2" style="max-width: 900px">
-          <div class="card highlight-cyan">
-            <div class="card-body" style="font-size: 15px">
-              Without the harness, loops have no gates — you get infinite drift
-              and no convergence signal.<br /><br />
-              <span style="color: var(--cyan)"
-                >→ Harness defines what counts as done.</span
-              >
-            </div>
-          </div>
-          <div class="card highlight-green">
-            <div class="card-body" style="font-size: 15px">
-              Without loops, the harness is a one-shot executor — no correction,
-              no learning, no recovery.<br /><br />
-              <span style="color: var(--green)"
-                >→ Loops close the quality gap the harness exposes.</span
-              >
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ════ SLIDE 10a — WORKFLOW: PLAN ════ -->
-      <div class="slide slide-proof-bg" data-section="Workflows">
-        <div class="eyebrow">Workflow deep-dive — PLAN</div>
-        <h2 style="font-size: 36px">
-          PLAN:
-          <span class="accent">agreement-first, anti-anchored review</span>
-        </h2>
-        <div class="mt24" style="width: 100%; max-width: 1100px">
-          <div
-            class="chain"
-            style="justify-content: center; flex-wrap: wrap; gap: 6px"
-          >
-            <div class="chain-node router">
-              router<small>intent: PLAN</small>
-            </div>
-            <div class="chain-arrow">→</div>
-            <div class="chain-node write" style="border-color: var(--cyan)">
-              exploration<small>brainstorm + design</small>
-            </div>
-            <div class="chain-arrow">→</div>
-            <div class="chain-node write" style="border-color: var(--cyan)">
-              planner<small
-                >3 modes: direct / execution_plan / decision_rfc</small
-              >
-            </div>
-            <div class="chain-arrow">→</div>
-            <div class="chain-node read" style="border-color: var(--purple)">
-              plan-gap-reviewer<small>fresh context · NO memory loaded</small>
-            </div>
-            <div class="chain-arrow">↻</div>
-            <div class="chain-node write" style="border-color: var(--cyan)">
-              re-plan<small>if blocking findings</small>
-            </div>
-            <div class="chain-arrow">→</div>
-            <div class="chain-node read" style="border-color: var(--purple)">
-              gap-review pass 2<small>max 2 passes</small>
-            </div>
-            <div class="chain-arrow">→</div>
-            <div class="chain-node memory">
-              memory<small>persist plan</small>
-            </div>
-          </div>
-        </div>
-        <div class="card-grid cols3 mt24" style="max-width: 1100px">
-          <div class="card highlight-cyan">
-            <div class="card-title" style="color: var(--cyan); font-size: 14px">
-              Skills loaded
-            </div>
-            <div class="card-body" style="font-size: 12px">
-              <strong>Exploration:</strong> exploration skill (design + spike
-              modes)<br />
-              <strong>Planner:</strong> planning, architecture,
-              plan-review-gate, agent-common<br />
-              <strong>Gap-reviewer:</strong> NONE — intentionally no skills, no
-              memory. Pure fresh-context review.<br />
-              <strong>Optional:</strong> Doubt-Driven Development (for
-              decision_rfc / critical_path)
-            </div>
-          </div>
-          <div class="card highlight-purple">
-            <div
-              class="card-title"
-              style="color: var(--purple); font-size: 14px"
-            >
-              The loop
-            </div>
-            <div class="card-body" style="font-size: 12px">
-              planner writes plan → gap-reviewer challenges from fresh context →
-              <strong>if blocking findings: re-plan → re-review</strong
-              ><br /><br />
-              <span class="pill pill-purple">max 2 review passes</span
-              ><br /><br />
-              If pass 1 succeeds: prune re-plan + pass 2 (unused branches
-              deleted).<br />
-              If pass 2 finds issues: stop with clarification gate.
-            </div>
-          </div>
-          <div class="card highlight-green">
-            <div
-              class="card-title"
-              style="color: var(--green); font-size: 14px"
-            >
-              Why it works
-            </div>
-            <div class="card-body" style="font-size: 12px">
-              <strong>Anti-anchoring by design</strong> — the gap-reviewer loads
-              ZERO memory, ZERO skills. It has never seen the planner's
-              rationale. It reviews the plan against the codebase, not against
-              the planner's confidence.<br /><br />
-              <strong>Agreement-first</strong> — planner returns
-              NEEDS_CLARIFICATION on ambiguity. Never treats its own defaults as
-              approved.<br /><br />
-              <strong>Doubt-Driven Development</strong> — for high-stakes
-              decisions, an in-flight adversarial reviewer challenges the design
-              BEFORE the plan is finalized.
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ════ SLIDE 10b — WORKFLOW: BUILD ════ -->
-      <div class="slide slide-proof-bg" data-section="Workflows">
-        <div class="eyebrow">Workflow deep-dive — BUILD</div>
-        <h2 style="font-size: 36px">
-          BUILD:
-          <span class="accent-green">code that's verified before it ships</span>
-        </h2>
-        <div class="mt24" style="width: 100%; max-width: 1100px">
-          <div
-            class="chain"
-            style="justify-content: center; flex-wrap: wrap; gap: 6px"
-          >
-            <div class="chain-node router">
-              router<small>intent: BUILD</small>
-            </div>
-            <div class="chain-arrow">→</div>
-            <div class="chain-node write">
-              component-builder<small>WRITE · TDD</small>
-            </div>
-            <div class="chain-arrow">→</div>
-            <div style="display: flex; gap: 4px; align-items: center">
-              <div class="chain-node read">
-                code-reviewer<small>6-pass review</small>
-              </div>
-              <span style="color: var(--text3); font-size: 12px">∥</span>
-              <div class="chain-node read" style="border-color: var(--red)">
-                failure-hunter<small>silent failures</small>
-              </div>
-            </div>
-            <div class="chain-arrow">→</div>
-            <div class="chain-node verify">
-              integration-verifier<small>exit 0</small>
-            </div>
-            <div class="chain-arrow">→</div>
-            <div class="chain-node gate">
-              phase_exit_gate<small>fail-closed</small>
-            </div>
-            <div class="chain-arrow">→</div>
-            <div class="chain-node memory">
-              doc-syncer → memory<small>persist</small>
-            </div>
-          </div>
-        </div>
-        <div class="card-grid cols3 mt24" style="max-width: 1100px">
-          <div class="card highlight-green">
-            <div
-              class="card-title"
-              style="color: var(--green); font-size: 14px"
-            >
-              Skills loaded
-            </div>
-            <div class="card-body" style="font-size: 12px">
-              <strong>Builder:</strong> building, verification, agent-common<br />
-              <strong>Reviewer:</strong> code-review, verification,
-              codebase-hygiene, agent-common<br />
-              <strong>Hunter:</strong> code-review, agent-common<br />
-              <strong>Verifier:</strong> verification, agent-common<br />
-              <strong>Contextual:</strong> architecture, frontend, research
-              (router-injected per request)
-            </div>
-          </div>
-          <div class="card highlight-purple">
-            <div
-              class="card-title"
-              style="color: var(--purple); font-size: 14px"
-            >
-              The loop
-            </div>
-            <div class="card-body" style="font-size: 12px">
-              reviewer finds issues → router creates REMFIX → builder fixes →
-              <strong>re-review + re-hunt</strong> (parallel) → re-verify<br /><br />
-              <span class="pill pill-purple">max 3 cycles</span>
-              <span class="pill pill-red">then: human checkpoint</span
-              ><br /><br />
-              <strong>Complexity gradient:</strong> trivial work skips
-              reviewer+hunter (builder → verifier → memory). Escalates to full
-              chain on scope increase.
-            </div>
-          </div>
-          <div class="card highlight-cyan">
-            <div class="card-title" style="color: var(--cyan); font-size: 14px">
-              Why it works
-            </div>
-            <div class="card-body" style="font-size: 12px">
-              <strong>Parallel review</strong> — reviewer and hunter can't bias
-              each other. Fresh contexts, independent verdicts. Router
-              merges.<br /><br />
-              <strong>Anti-anchoring</strong> — reviewers skip activeContext.md
-              (the builder's self-assessment). They form their own opinion from
-              the diff.<br /><br />
-              <strong>Contract enforcement</strong> — TDD_RED_EXIT=1,
-              TDD_RED_REASON_KIND=behavioral. Router-verified contract parsing.
-              Artifact integrity hook-enforced.
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ════ SLIDE 10c — WORKFLOW: DEBUG ════ -->
-      <div class="slide slide-proof-bg" data-section="Workflows">
-        <div class="eyebrow">Workflow deep-dive — DEBUG</div>
-        <h2 style="font-size: 36px">
-          DEBUG: <span class="accent-red">evidence before any fix</span>
-        </h2>
-        <div class="mt24" style="width: 100%; max-width: 1100px">
-          <div
-            class="chain"
-            style="justify-content: center; flex-wrap: wrap; gap: 6px"
-          >
-            <div class="chain-node router">
-              router<small>intent: ERROR</small>
-            </div>
-            <div class="chain-arrow">→</div>
-            <div class="chain-node write" style="border-color: var(--red)">
-              bug-investigator<small>LOG FIRST · 10-rung feedback loop</small>
-            </div>
-            <div class="chain-arrow">→</div>
-            <div class="chain-node read">
-              code-reviewer<small>review the fix</small>
-            </div>
-            <div class="chain-arrow">→</div>
-            <div class="chain-node verify">
-              integration-verifier<small>regression test passes</small>
-            </div>
-            <div class="chain-arrow">→</div>
-            <div class="chain-node memory">
-              memory<small>gotcha persisted</small>
-            </div>
-          </div>
-        </div>
-        <div class="card-grid cols3 mt24" style="max-width: 1100px">
-          <div class="card highlight-red">
-            <div class="card-title" style="color: var(--red); font-size: 14px">
-              Skills loaded
-            </div>
-            <div class="card-body" style="font-size: 12px">
-              <strong>Investigator:</strong> debugging, building, verification,
-              agent-common<br />
-              <strong>Reviewer:</strong> code-review, verification,
-              codebase-hygiene, agent-common<br />
-              <strong>Contextual:</strong> research (if stuck), architecture (if
-              prevention is architectural)<br /><br />
-              <strong>Tools:</strong> LSP (Go-to-Definition, Find References,
-              Type Definition) for root-cause tracing — not just grep.
-            </div>
-          </div>
-          <div class="card highlight-purple">
-            <div
-              class="card-title"
-              style="color: var(--purple); font-size: 14px"
-            >
-              The loop
-            </div>
-            <div class="card-body" style="font-size: 12px">
-              <strong>Feedback loop gate (MANDATORY):</strong> build repro
-              signal BEFORE any hypothesis. No loop → fail closed.<br /><br />
-              <strong>Hypothesis loop:</strong> generate 3-5 ranked hypotheses
-              <em>up front</em> → test → if all fail: NEEDS_EXTERNAL_RESEARCH<br /><br />
-              <strong>Fix loop:</strong> RED (failing test) → GREEN (minimal
-              fix) → blast radius scan → verify<br /><br />
-              <span class="pill pill-purple">3 failed attempts</span>
-              <span class="pill pill-red">then: research or BLOCKED</span>
-            </div>
-          </div>
-          <div class="card highlight-cyan">
-            <div class="card-title" style="color: var(--cyan); font-size: 14px">
-              Why it works
-            </div>
-            <div class="card-body" style="font-size: 12px">
-              <strong>No-Loop-No-Hypothesis gate</strong> — you can't guess
-              without a repro. Prevents pattern-matching death spirals.<br /><br />
-              <strong>Causal chain gate</strong> — must explain the full chain
-              from trigger to symptom. "Somehow X leads to Y" is a gap, not an
-              answer. Predictions catch symptom fixes.<br /><br />
-              <strong>Debug memory</strong> — every failed hypothesis stored as
-              <code style="font-size: 11px">[DEBUG-N]</code> in
-              activeContext.md. The system remembers what didn't work.
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ════ SLIDE 10d — WORKFLOW: REVIEW ════ -->
-      <div class="slide slide-proof-bg" data-section="Workflows">
-        <div class="eyebrow">Workflow deep-dive — REVIEW + ORIENT</div>
-        <h2 style="font-size: 36px">
-          REVIEW:
-          <span style="color: var(--blue)">advisory only, never mutates</span>
-        </h2>
-        <div class="mt24" style="width: 100%; max-width: 1100px">
-          <div
-            class="chain"
-            style="justify-content: center; flex-wrap: wrap; gap: 6px"
-          >
-            <div class="chain-node router">
-              router<small>intent: REVIEW</small>
-            </div>
-            <div class="chain-arrow">→</div>
-            <div class="chain-node read">
-              code-reviewer<small>6-pass · confidence ≥80</small>
-            </div>
-            <div class="chain-arrow">→</div>
-            <div class="chain-node memory">
-              memory<small>persist findings</small>
-            </div>
-          </div>
-        </div>
-        <div class="card-grid cols3 mt24" style="max-width: 1100px">
-          <div class="card highlight-cyan">
-            <div class="card-title" style="color: var(--cyan); font-size: 14px">
-              Skills loaded
-            </div>
-            <div class="card-body" style="font-size: 12px">
-              <strong>Reviewer:</strong> code-review, verification,
-              codebase-hygiene, agent-common<br />
-              <strong>Contextual:</strong> frontend (if UI), architecture (if
-              structural)<br /><br />
-              <strong>6 passes:</strong> Security → Performance → Quality →
-              Friction → Plan Validity → Spec Compliance<br /><br />
-              <strong>Quantitative scoring:</strong> HARD/SOFT signals,
-              min(HARD) capped by avg(SOFT)-10. Confidence ≥80 to report.
-            </div>
-          </div>
-          <div class="card highlight-purple">
-            <div
-              class="card-title"
-              style="color: var(--purple); font-size: 14px"
-            >
-              The loop
-            </div>
-            <div class="card-body" style="font-size: 12px">
-              <strong>No remediation loop</strong> — REVIEW is advisory. It
-              never creates REM-FIX tasks or mutates code.<br /><br />
-              If verdict is CHANGES_REQUESTED: router offers
-              <em>"Start BUILD to fix (Recommended)"</em> — a transition, not an
-              automatic action.<br /><br />
-              <strong>Zero-finding gate:</strong> zero findings on non-trivial
-              change → confidence capped at 70. Must produce positive assertions
-              with file:line evidence. No rubber-stamps.
-            </div>
-          </div>
-          <div class="card highlight-green">
-            <div
-              class="card-title"
-              style="color: var(--green); font-size: 14px"
-            >
-              ORIENT (read-only)
-            </div>
-            <div class="card-body" style="font-size: 12px">
-              <strong>Zero agents.</strong> Zero tasks. Zero artifacts.<br /><br />
-              The router answers inline — maps modules, traces call hierarchy
-              via LSP, explains in the project's own vocabulary.<br /><br />
-              <em>"Help me understand this code"</em> never falls through to
-              BUILD and spawns a write agent. ORIENT precedes DEFAULT.<br /><br />
-              <strong>Why:</strong> orientation is the most common request.
-              Routing it to BUILD would mean a builder modifying code you just
-              wanted explained.
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ════ SLIDE 10e — TEST HONESTY GATES ════ -->
-      <div class="slide slide-proof-bg" data-section="Workflows">
-        <div class="eyebrow">The gate that catches green lies</div>
-        <h2 style="font-size: 40px">
-          "Tests passed" is not evidence.<br />
-          <span class="accent-green">Exit 0 is evidence.</span>
-        </h2>
-        <div class="glow-line green"></div>
-        <div class="card-grid cols2 mt32" style="max-width: 1100px">
-          <div class="card highlight-red">
-            <div class="card-title accent-red">
-              False-green patterns — auto-flagged
-            </div>
-            <div class="card-body" style="font-size: 13px">
-              The verifier greps changed test files for tests that
-              <strong>pass while proving nothing</strong>:<br /><br />
-              <code style="color: var(--red); font-size: 12px"
-                >getByTestId('…-mock')</code
-              >
-              — asserting the mock, not the behavior<br />
-              <code style="color: var(--red); font-size: 12px"
-                >as any · as unknown</code
-              >
-              — schema-incomplete mocks<br />
-              <code style="color: var(--red); font-size: 12px"
-                >.find() · readFileSync</code
-              >
-              — DB-bypass, not the public interface<br />
-              <code style="color: var(--red); font-size: 12px"
-                >setTimeout( · sleep(</code
-              >
-              — arbitrary waits, not condition-waits<br /><br />
-              <em style="color: var(--text3)"
-                >A hit doesn't auto-fail — but that scenario can't count as PASS
-                on that test's strength alone.</em
-              >
-            </div>
-          </div>
-          <div class="card highlight-green">
-            <div class="card-title accent-green">Quote-the-line gate</div>
-            <div class="card-body" style="font-size: 13px">
-              Every finding at confidence ≥80 MUST include a
-              <strong>verbatim file:line quote</strong>. No quote → auto-demoted
-              below the reporting bar.<br /><br />
-              Then the verifier
-              <strong>independently re-reads</strong> the exact file:line and
-              marks it:<br />
-              <span class="pill pill-green">validated: true</span>
-              &nbsp;<span class="pill pill-red">validated: false → dropped</span
-              ><br /><br />
-              <em style="color: var(--text3)"
-                >A hallucinated critical finding cannot waste a fix cycle. The
-                verifier kills it before it gates.</em
-              >
-            </div>
-          </div>
-        </div>
-        <div class="hdivider" style="max-width: 900px"></div>
-        <p
-          class="body-text"
-          style="text-align: center; max-width: 900px; font-size: 16px"
+        <span class="source"
+          >ANTHROPIC, “Effective harnesses for long-running agents” ·
+          anthropic.com/engineering/effective-harnesses-for-long-running-agents</span
         >
-          <span class="accent-red">"Should work now"</span> → RUN the command.
-          <span class="accent-red">"Should"</span> is not evidence.<br />
-          <span class="accent-red">"I'm confident it works"</span> → Confidence
-          is not evidence.
-          <span class="accent-green">Exit code 0 is evidence.</span>
-        </p>
-      </div>
+      </section>
 
-      <!-- ════ SLIDE 11 — THE FULL SYSTEM ════ -->
-      <div class="slide slide-proof-bg" data-section="Proof">
-        <div class="eyebrow">CC10x — the full system in one view</div>
-        <h2 style="font-size: 38px">
-          9 agents · 16 skills · 4 workflows<br /><span class="accent-green"
-            >One coherent harness.</span
-          >
-        </h2>
-        <div class="mt32" style="width: 100%; max-width: 1100px">
-          <div class="card-grid cols2" style="gap: 16px">
-            <div
-              class="card"
-              style="
-                border-color: var(--purple);
-                background: rgba(168, 85, 247, 0.04);
-              "
-            >
-              <div
-                style="
-                  font-size: 12px;
-                  font-weight: 700;
-                  color: var(--purple);
-                  text-transform: uppercase;
-                  letter-spacing: 0.1em;
-                  margin-bottom: 12px;
-                "
-              >
-                Router — the harness owner
-              </div>
-              <div class="card-body" style="font-size: 13px">
-                Sole entry point. Owns all orchestration state. Agents cannot
-                see each other or self-route. Workflow artifact is the single
-                source of truth. Artifact integrity gate ships fail-closed;
-                other gates ship audit-mode, upgradeable to block.
-              </div>
-            </div>
-            <div
-              class="card"
-              style="
-                border-color: var(--green);
-                background: rgba(16, 185, 129, 0.04);
-              "
-            >
-              <div
-                style="
-                  font-size: 12px;
-                  font-weight: 700;
-                  color: var(--green);
-                  text-transform: uppercase;
-                  letter-spacing: 0.1em;
-                  margin-bottom: 12px;
-                "
-              >
-                Agent chain — execution
-              </div>
-              <div class="card-body" style="font-size: 13px">
-                9 agents: planner, component-builder, bug-investigator,
-                code-reviewer, failure-hunter, integration-verifier, doc-syncer,
-                plan-gap-reviewer, researcher. WRITE agents produce artifacts.
-                READ-ONLY agents produce structured verdicts. Router decides
-                next action from verdict.
-              </div>
-            </div>
-            <div
-              class="card"
-              style="
-                border-color: var(--cyan);
-                background: rgba(34, 211, 238, 0.04);
-              "
-            >
-              <div
-                style="
-                  font-size: 12px;
-                  font-weight: 700;
-                  color: var(--cyan);
-                  text-transform: uppercase;
-                  letter-spacing: 0.1em;
-                  margin-bottom: 12px;
-                "
-              >
-                Skills — expertise injection
-              </div>
-              <div class="card-body" style="font-size: 13px">
-                16 expertise skills loaded contextually by router. Building,
-                debugging, code review, architecture, frontend, codebase
-                hygiene, exploration, verification — expertise on demand, not
-                always-on context.
-              </div>
-            </div>
-            <div
-              class="card"
-              style="
-                border-color: var(--pink);
-                background: rgba(236, 72, 153, 0.04);
-              "
-            >
-              <div
-                style="
-                  font-size: 12px;
-                  font-weight: 700;
-                  color: var(--pink);
-                  text-transform: uppercase;
-                  letter-spacing: 0.1em;
-                  margin-bottom: 12px;
-                "
-              >
-                Memory — loop persistence
-              </div>
-              <div class="card-body" style="font-size: 13px">
-                <code style="font-size: 12px">activeContext.md</code> ·
-                <code style="font-size: 12px">patterns.md</code> ·
-                <code style="font-size: 12px">progress.md</code><br />
-                What failed becomes a gotcha. What passed becomes a pattern.
-                Loops improve over time.
-              </div>
-            </div>
-          </div>
+      <section class="slide ink" data-section="Workflow System">
+        <span class="folio">15 / ASSEMBLY</span>
+        <div class="topline">The components change by workflow</div>
+        <h2>ASSEMBLE<br />A <span class="gold">SYSTEM.</span></h2>
+        <div class="assembly">
+          <article class="assembly-router">
+            <b>Router</b>
+            <p>SELECTS THE RIGHT WORKFLOW AND ACTIVATES ITS COMPONENTS.</p>
+          </article>
+          <article>
+            <b>Skill</b>
+            <p>THE METHOD REQUIRED FOR THIS KIND OF WORK.</p>
+          </article>
+          <article>
+            <b>Role</b>
+            <p>A NARROW PERSPECTIVE OR AUTHORITY BOUNDARY.</p>
+          </article>
+          <article class="assembly-memory">
+            <b>Memory</b>
+            <p>DURABLE DECISIONS, EVIDENCE, CONSTRAINTS, AND NEXT STATE.</p>
+          </article>
+          <article class="assembly-gate">
+            <b>Gate</b>
+            <p>DECIDES WHETHER THE WORK CAN ADVANCE.</p>
+          </article>
+          <article class="assembly-trace">
+            <b>Trace</b>
+            <p>MAKES ACTIVATION AND EVIDENCE INSPECTABLE.</p>
+          </article>
         </div>
-      </div>
+      </section>
 
-      <!-- ════ SLIDE 12 — THE PRINCIPLES ════ -->
-      <div class="slide" data-section="Proof">
-        <div class="eyebrow">Principles you can take home today</div>
-        <h2 style="font-size: 42px">
-          The <span class="accent">5 laws</span> of harness + loop engineering.
-        </h2>
-        <div class="check-list mt32" style="max-width: 900px">
-          <div class="check-item">
-            <span class="check">1.</span>
-            <div>
-              <strong>One entry point, one owner.</strong> The harness owns
-              orchestration state. Agents execute; they never route.
-            </div>
-          </div>
-          <div class="check-item">
-            <span class="check">2.</span>
-            <div>
-              <strong>Gates are evidence, not time.</strong> A phase ends when
-              proof exists — not when N seconds pass or the model says it's
-              done. Artifact integrity gate blocks by default; other gates audit
-              by default, upgradeable to block.
-            </div>
-          </div>
-          <div class="check-item">
-            <span class="check">3.</span>
-            <div>
-              <strong>Loops have a ceiling.</strong> Unbounded loops drift. Hard
-              limit + human checkpoint at N is a design constraint, not a
-              workaround.
-            </div>
-          </div>
-          <div class="check-item">
-            <span class="check">4.</span>
-            <div>
-              <strong>Expertise is injected, not assumed.</strong> The harness
-              decides what skills are in scope. Models don't self-select their
-              constraints.
-            </div>
-          </div>
-          <div class="check-item">
-            <span class="check">5.</span>
-            <div>
-              <strong>Memory closes the loop across sessions.</strong> What
-              failed once is a gotcha forever. The system gets smarter; the
-              model doesn't have to.
-            </div>
-          </div>
+      <section class="slide paper" data-section="Production">
+        <span class="folio">16 / PRODUCTION FORMS</span>
+        <div class="topline">What can you build?</div>
+        <h2>FIVE SYSTEMS.<br />REAL <span class="red">WORK.</span></h2>
+        <div class="production-list">
+          <article>
+            <b>Issue → fix</b><span>REPRODUCE · CHANGE · PROVE · REVIEW</span>
+          </article>
+          <article>
+            <b>Feature builder</b><span>SPEC · SLICE · HANDOFF · CONTINUE</span>
+          </article>
+          <article>
+            <b>Ops approval</b><span>GATHER · DRAFT · GATE · RECORD</span>
+          </article>
+          <article>
+            <b>Quality loop</b><span>PLAN · MAKE · EVALUATE · REPAIR</span>
+          </article>
+          <article>
+            <b>Repo care</b><span>INSPECT · FIND DRIFT · OPEN NARROW WORK</span>
+          </article>
         </div>
-      </div>
-
-      <!-- ════ SLIDE 13 — THE BLUEPRINT ════ -->
-      <div class="slide slide-proof-bg" data-section="Proof">
-        <div class="eyebrow">Build your own</div>
-        <h2 style="font-size: 42px">
-          You don't need CC10x.<br /><span class="accent-green"
-            >You need the pattern.</span
-          >
-        </h2>
-        <div class="mt24" style="width: 100%; max-width: 1100px">
-          <div
-            class="card highlight-red"
-            style="padding: 16px 22px; margin-bottom: 4px"
-          >
-            <div class="card-body" style="font-size: 14px">
-              <strong class="accent-red">The scar:</strong> one real dispatch
-              hit <strong>42k chars — 99% pasted history</strong>. The
-              orchestrator that pastes the prior conversation into every child
-              rots its own context. The fix became law:
-              <span class="accent">dispatch by reference, not by blob</span> —
-              write the diff to disk, pass the path, never the body.
-            </div>
-          </div>
-        </div>
-        <div
-          class="mt16"
-          style="display: flex; gap: 40px; width: 100%; max-width: 1100px"
+        <span class="source"
+          >OPENAI, “Harness engineering” · OBSERVABILITY, VALIDATION, AND
+          RECURRENT CLEANUP</span
         >
-          <div style="flex: 1">
-            <div class="code-block">
-              <span class="cmt"># The minimum viable harness</span>
+      </section>
 
-              <span class="kw">def</span>
-              <span class="fn">harness</span>(request): intent =
-              <span class="fn">route</span>(request)
-              <span class="cmt"># deterministic</span> context =
-              <span class="fn">load_memory</span>()
-              <span class="cmt"># structured</span> skills =
-              <span class="fn">inject_hints</span>(intent)
-              <span class="cmt"># contextual</span>
-
-              <span class="kw">for</span> phase
-              <span class="kw">in</span> intent.chain: result =
-              <span class="fn">run_agent</span>( phase, context, skills )
-              <span class="kw">if not</span>
-              <span class="fn">gate_passes</span>(result):
-              <span class="kw">return</span>
-              <span class="fn">remediate</span>(result)
-              <span class="cmt"># loop</span>
-
-              <span class="fn">persist_memory</span>(result)
-              <span class="cmt"># closes loop</span>
-              <span class="kw">return</span> result
-            </div>
+      <section class="slide warning" data-section="Production">
+        <span class="folio">17 / OPEN-SOURCE X-RAY</span>
+        <div class="topline">Two hosts. One discipline.</div>
+        <div class="xray">
+          <div class="host">
+            <h3>CC10x</h3>
+            <p>
+              CLAUDE CODE HOST<br /><br />WORKFLOW ROUTING · SPECIALIST ROLES ·
+              DURABLE ARTIFACTS · GATES · INDEPENDENT VERIFICATION
+            </p>
           </div>
-          <div
-            style="
-              flex: 1;
-              display: flex;
-              flex-direction: column;
-              gap: 14px;
-              justify-content: center;
-            "
-          >
-            <div class="card highlight-cyan">
-              <div class="card-body" style="font-size: 14px">
-                <strong style="color: var(--cyan)">route()</strong> — keyword
-                signal → deterministic workflow. No model judgment at this
-                layer.
-              </div>
-            </div>
-            <div class="card highlight-orange">
-              <div class="card-body" style="font-size: 14px">
-                <strong style="color: var(--orange)">gate_passes()</strong> —
-                structured contract validation. YAML, not prose. Schema, not
-                vibes.
-              </div>
-            </div>
-            <div class="card highlight-purple">
-              <div class="card-body" style="font-size: 14px">
-                <strong style="color: var(--purple)">remediate()</strong> —
-                creates a scoped fix task with evidence. Bounded. Re-enters the
-                loop with new context.
-              </div>
-            </div>
-            <div class="card highlight-green">
-              <div class="card-body" style="font-size: 14px">
-                <strong style="color: var(--green)">persist_memory()</strong> —
-                gotchas, patterns, decisions. The loop learns even if the model
-                doesn't.
-              </div>
-            </div>
+          <div class="same">Same<br />system<br />idea</div>
+          <div class="host">
+            <h3>Auto-Pi</h3>
+            <p>
+              PI HOST<br /><br />A HOST-SPECIFIC POC. ITS CONCRETE MECHANISMS
+              BELONG IN THE TALK ONLY WHEN A REPRODUCIBLE TRACE SUPPORTS THEM.
+            </p>
           </div>
         </div>
-      </div>
-
-      <!-- ════ SLIDE 14 — CLOSE ════ -->
-      <div class="slide slide-title-bg" data-section="Close">
-        <div class="eyebrow">The takeaway</div>
-        <div class="big-quote" style="font-size: 44px">
-          Stop chasing better models.<br />
-          Build a better <em class="cyan">harness</em>.<br />
-          Engineer your <em class="green">loops</em>.
-        </div>
-        <div class="glow-line cyan" style="margin-top: 32px"></div>
-        <div class="mt24" style="max-width: 800px; margin: 24px auto 0">
-          <div class="card highlight-cyan" style="padding: 20px">
-            <div class="card-body" style="font-size: 16px; text-align: center">
-              The humans don't go away.<br />
-              They <span class="accent">move up</span> — from prompting to
-              designing the loops.<br />
-              <span style="color: var(--text3); font-size: 14px"
-                >Boris Cherny: "Everyone on our team codes." The engineer's job
-                becomes loop architecture, not prompt writing.</span
-              >
-            </div>
-          </div>
-        </div>
-        <div class="mt24 stat-row">
-          <div class="stat-item">
-            <div class="stat-value" style="font-size: 56px">9</div>
-            <div class="stat-label">Agents</div>
-          </div>
-          <div class="stat-divider"></div>
-          <div class="stat-item">
-            <div class="stat-value" style="font-size: 56px">16</div>
-            <div class="stat-label">Skills</div>
-          </div>
-          <div class="stat-divider"></div>
-          <div class="stat-item">
-            <div class="stat-value" style="font-size: 56px">4</div>
-            <div class="stat-label">Workflows</div>
-          </div>
-          <div class="stat-divider"></div>
-          <div class="stat-item">
-            <div class="stat-value" style="font-size: 56px">∞</div>
-            <div class="stat-label">Better loops</div>
-          </div>
-        </div>
-        <p class="subtitle mt24" style="font-size: 16px; color: var(--text3)">
-          CC10x is open. The pattern is yours. The next frontier isn't harnesses
-          that <em>store</em> learnings — cc10x already does that. It's
-          <span class="accent-purple">self-harnessing</span>: harnesses that
-          <em>rewrite their own gates</em> from observed failure modes — a
-          broken circuit breaker that proposes a new gate to the user. I'm using
-          that term for the first time here. Go build it.
+        <p class="workflow-note">
+          THE IMPLEMENTATION CHANGES WITH THE HOST. THE DESIGN QUESTIONS DO NOT.
         </p>
-      </div>
-    </div>
-    <!-- /deck -->
+      </section>
+
+      <section class="slide cobalt" data-section="Build Your Own">
+        <span class="folio">18 / HARNESS CANVAS</span>
+        <div class="topline">Your first design review</div>
+        <h2>
+          WHAT WORK<br />DESERVES<br />A <span class="gold">HARNESS?</span>
+        </h2>
+        <div class="canvas">
+          <div>
+            <b>Workflow</b
+            ><span>WHAT REPEATED, HIGH-VALUE WORK ARE YOU DESIGNING?</span>
+          </div>
+          <div>
+            <b>Context</b><span>WHAT REALITY MUST THE AGENT SEE, NOW?</span>
+          </div>
+          <div>
+            <b>Authority</b
+            ><span>WHAT MAY IT DO, AND WHAT MUST IT NOT DO?</span>
+          </div>
+          <div><b>Evidence</b><span>WHAT WILL CHANGE THE VERDICT?</span></div>
+          <div>
+            <b>Budget</b><span>WHEN DOES THE LOOP STOP OR ASK FOR HELP?</span>
+          </div>
+          <div>
+            <b>Memory</b><span>WHAT MUST THE NEXT RUN OR PERSON INHERIT?</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="slide paper" data-section="Build Your Own">
+        <span class="folio">19 / CLOSE</span>
+        <div class="close">
+          <div class="topline">Harness &amp; Loop Engineering</div>
+          <h2>
+            DON’T ASK<br />YOUR AGENT<br />FOR A <span class="red">FIX.</span
+            ><br />BUILD THE SYSTEM<br />THAT CAN<br />EARN ONE.
+          </h2>
+          <div class="closing-rule"></div>
+        </div>
+        <span class="source"
+          >CC10X IS AN INSPECTABLE OPEN-SOURCE EXAMPLE. AUTO-PI IS A
+          HOST-SPECIFIC POC. THE PATTERN IS YOURS.</span
+        >
+      </section>
+    </main>
 
     <script>
       const slides = Array.from(document.querySelectorAll(".slide"));
       const total = slides.length;
       let current = 0;
-
       const progressBar = document.getElementById("progress-bar");
       const slideCounter = document.getElementById("slide-counter");
       const sectionLabel = document.getElementById("section-label");
 
+      function updateUI() {
+        const percentage = total === 1 ? 100 : (current / (total - 1)) * 100;
+        const activeSlide = slides[current];
+        const isLight =
+          activeSlide.classList.contains("paper") ||
+          activeSlide.classList.contains("warning");
+        document.body.dataset.theme = isLight ? "light" : "dark";
+        progressBar.style.width = `${percentage}%`;
+        slideCounter.textContent = `${current + 1} / ${total}`;
+        sectionLabel.textContent = activeSlide.dataset.section || "";
+      }
+
       function goTo(index) {
-        if (index < 0 || index >= total) return;
+        if (index < 0 || index >= total || index === current) return;
         slides[current].classList.remove("active");
         current = index;
         slides[current].classList.add("active");
         updateUI();
       }
 
-      function updateUI() {
-        const pct = total === 1 ? 100 : (current / (total - 1)) * 100;
-        progressBar.style.width = pct + "%";
-        slideCounter.textContent = current + 1 + " / " + total;
-        sectionLabel.textContent = slides[current].dataset.section || "";
-      }
-
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "ArrowRight" || e.key === "ArrowDown" || e.key === " ") {
-          e.preventDefault();
+      document.addEventListener("keydown", (event) => {
+        if (["ArrowRight", "ArrowDown", " ", "PageDown"].includes(event.key)) {
+          event.preventDefault();
           goTo(current + 1);
-        } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
-          e.preventDefault();
+        } else if (["ArrowLeft", "ArrowUp", "PageUp"].includes(event.key)) {
+          event.preventDefault();
           goTo(current - 1);
-        } else if (e.key === "f" || e.key === "F") {
-          if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen();
-          } else {
-            document.exitFullscreen();
-          }
-        } else if (e.key === "Home") {
+        } else if (event.key === "Home") {
           goTo(0);
-        } else if (e.key === "End") {
+        } else if (event.key === "End") {
           goTo(total - 1);
+        } else if (event.key.toLowerCase() === "f") {
+          if (document.fullscreenElement) document.exitFullscreen();
+          else document.documentElement.requestFullscreen();
         }
       });
 
       let touchStartX = 0;
       document.addEventListener(
         "touchstart",
-        (e) => {
-          touchStartX = e.touches[0].clientX;
+        (event) => {
+          touchStartX = event.touches[0].clientX;
         },
         { passive: true },
       );
-      document.addEventListener("touchend", (e) => {
-        const dx = e.changedTouches[0].clientX - touchStartX;
-        if (Math.abs(dx) > 50) goTo(current + (dx < 0 ? 1 : -1));
+      document.addEventListener("touchend", (event) => {
+        const delta = event.changedTouches[0].clientX - touchStartX;
+        if (Math.abs(delta) > 50) goTo(current + (delta < 0 ? 1 : -1));
       });
-
-      document.addEventListener("click", (e) => {
-        const mid = window.innerWidth / 2;
-        goTo(current + (e.clientX > mid ? 1 : -1));
+      document.addEventListener("click", (event) => {
+        if (event.target.closest("a, button, input, textarea, select")) return;
+        goTo(current + (event.clientX > window.innerWidth / 2 ? 1 : -1));
       });
 
       updateUI();
