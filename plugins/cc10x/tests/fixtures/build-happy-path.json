@@ -9,13 +9,22 @@
     "plan_mode": "execution_plan",
     "verification_rigor": "standard",
     "proof_status": "gaps_found",
-    "traceability": {"requirements": [], "phases": [], "verification": [], "remediation": []},
+    "traceability": {
+      "requirements": [],
+      "phases": [],
+      "verification": [],
+      "remediation": []
+    },
     "phase_cursor": "phase-1",
     "task_ids": {},
     "results": {},
-    "intent": {"goal": "Build user profile page"},
+    "intent": {
+      "goal": "Build user profile page"
+    },
     "evidence": {},
-    "quality": {"convergence_state": "pending"},
+    "quality": {
+      "convergence_state": "pending"
+    },
     "status_history": [],
     "remediation_history": []
   },
@@ -28,8 +37,13 @@
       "PHASE_EXIT_READY": true,
       "CHECKPOINT_TYPE": "none",
       "PROOF_STATUS": "passed",
-      "INPUTS": ["authenticated session"],
-      "EXPECTED_ARTIFACTS": ["profile page route", "profile tests"],
+      "INPUTS": [
+        "authenticated session"
+      ],
+      "EXPECTED_ARTIFACTS": [
+        "profile page route",
+        "profile tests"
+      ],
       "TDD_RED_EXIT": 1,
       "TDD_GREEN_EXIT": 0,
       "BLOCKED_ITEMS": [],
@@ -47,7 +61,14 @@
           "exit_code": 0,
           "status": "PASS"
         }
-      ]
+      ],
+      "TEST_SEAMS": [
+        "UserProfile.render"
+      ],
+      "SEAM_GATE_STATUS": "confirmed",
+      "BUILD_PREFLIGHT_EMITTED": true,
+      "TDD_RED_REASON_KIND": "behavioral",
+      "TDD_RED_REASON": "UserProfile renders null when bio is empty (expected 3, received undefined)"
     },
     "verifier_contract": {
       "SCENARIOS_TOTAL": 1,
@@ -77,7 +98,9 @@
     "next_action": "memory_finalize",
     "artifact_delta": {
       "phase_cursor": "phase-2",
-      "quality": {"convergence_state": "stable"}
+      "quality": {
+        "convergence_state": "stable"
+      }
     }
   }
 }

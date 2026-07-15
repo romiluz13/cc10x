@@ -58,7 +58,7 @@ When `critical_path`: include behavior contract, edge-case catalog, provable pro
 7. **Hidden-Assumption Pass** — classify as `proven_by_code`, `inferred`, or `needs_user_confirmation`. Expose unproven critical assumptions.
 8. **Decision discipline** — for `decision_rfc`: research before recommendation, ≥2 alternatives, state drawbacks honestly. Give explicit recommendation with rationale.
 9. **Risks + proof posture** — Probability × Impact, mitigations, testing/proof requirements.
-10. **Normalize phases** — each phase: `phase id`, `objective`, `inputs`, `files/surfaces`, `dependencies`, `allowed scope`, `out-of-scope drift`, `expected artifacts`, `required checks`, `checkpoint type`, `exit criteria`, and **Interfaces block**:
+10. **Normalize phases** — each phase: `phase id`, `objective`, `inputs`, `files/surfaces`, `dependencies`, `allowed scope`, `out-of-scope drift`, `expected artifacts`, `required checks`, `checkpoint type`, `exit criteria`, `test_seams` (the seams this phase tests at — drawn from the `### Test Seams` subsection of the planning skill; required for standard-planned builds, optional for trivial/direct), and **Interfaces block**:
     - **Consumes:** exact signatures used from earlier phases (function names with param/return types, exported constants, route shapes, schema field names) — verbatim
     - **Produces:** exact names later phases rely on — verbatim, the spelling later builders must match
     - If neither: write `Consumes: none` / `Produces: none` explicitly

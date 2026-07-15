@@ -9,13 +9,22 @@
     "plan_mode": "execution_plan",
     "verification_rigor": "critical_path",
     "proof_status": "gaps_found",
-    "traceability": {"requirements": [], "phases": [], "verification": [], "remediation": []},
+    "traceability": {
+      "requirements": [],
+      "phases": [],
+      "verification": [],
+      "remediation": []
+    },
     "phase_cursor": "phase-2",
     "task_ids": {},
     "results": {},
-    "intent": {"goal": "Build billing settings wizard"},
+    "intent": {
+      "goal": "Build billing settings wizard"
+    },
     "evidence": {},
-    "quality": {"convergence_state": "needs_iteration"},
+    "quality": {
+      "convergence_state": "needs_iteration"
+    },
     "status_history": [],
     "remediation_history": []
   },
@@ -28,11 +37,18 @@
       "PHASE_EXIT_READY": false,
       "CHECKPOINT_TYPE": "human_verify",
       "PROOF_STATUS": "human_needed",
-      "INPUTS": ["current wizard draft", "rounding policy"],
-      "EXPECTED_ARTIFACTS": ["billing settings step"],
+      "INPUTS": [
+        "current wizard draft",
+        "rounding policy"
+      ],
+      "EXPECTED_ARTIFACTS": [
+        "billing settings step"
+      ],
       "TDD_RED_EXIT": 1,
       "TDD_GREEN_EXIT": 0,
-      "BLOCKED_ITEMS": ["Awaiting confirmed currency rounding rule"],
+      "BLOCKED_ITEMS": [
+        "Awaiting confirmed currency rounding rule"
+      ],
       "SKIPPED_ITEMS": [],
       "SCOPE_INCREASES": [],
       "SCENARIOS": [
@@ -47,14 +63,19 @@
           "exit_code": 0,
           "status": "PASS"
         }
-      ]
+      ],
+      "TEST_SEAMS": [],
+      "SEAM_GATE_STATUS": "disagreed",
+      "REMEDIATION_REASON": "Ambiguous test surface \u2014 no seam exercises the real risk"
     }
   },
   "expected": {
     "next_action": "stop_for_blocked_phase",
     "artifact_delta": {
       "pending_gate": "phase_blocked",
-      "quality": {"convergence_state": "needs_iteration"}
+      "quality": {
+        "convergence_state": "needs_iteration"
+      }
     }
   }
 }
