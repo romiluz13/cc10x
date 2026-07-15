@@ -66,9 +66,19 @@ Hooks reference, components catalog, schema documentation, architecture notes, a
 
 Decision records capturing what changed, why, alternatives considered, and impact. Audit docs are written for future contributors who need to understand the reasoning behind a decision.
 
-- Scope: docs/decisions/ (or project equivalent), compliance notes, migration guides for breaking changes
+- Scope: `docs/adr/` (canonical, NNNN-numbered; legacy `docs/decisions/` date-named files migrated lazily on touch), compliance notes, migration guides for breaking changes
 - Update trigger: new architectural pattern, technology choice, non-obvious tradeoff, breaking change, security or compliance impact
-- What to write: structured record following the four-section format below
+- What to write: structured record following the four-section format below (or a single-paragraph ADR for simple decisions, per `cc10x:domain-modeling/ADR-FORMAT.md`)
+- Dedup rule: if a decision exists in both `docs/decisions/` and `docs/adr/`, the `docs/adr/` version wins; delete the legacy duplicate
+
+### Glossary Layer
+
+`CONTEXT.md` at the repo root — the project's domain language (terms and their meanings, no implementation details). Maintained inline by shaping phases (planner, exploration DESIGN mode, doc-syncer) via `cc10x:domain-modeling`.
+
+- Scope: `CONTEXT.md` (root), or per-context `CONTEXT.md` files if `CONTEXT-MAP.md` exists
+- Update trigger: a domain term is resolved, sharpened, or found to contradict the code during a BUILD/PLAN/DEBUG workflow
+- What to write: append-only glossary entries using `cc10x:domain-modeling/CONTEXT-FORMAT.md` (term, one-two sentence definition, `_Avoid_` aliases)
+- Do NOT write implementation details, specs, or scratch notes in CONTEXT.md — it is a glossary only
 
 ## Audit Doc Guidance
 
@@ -96,7 +106,7 @@ Decision records capturing what changed, why, alternatives considered, and impac
 
 ### Filename Pattern
 
-`docs/YYYY-MM-DD-{topic}-decision.md` — adapt to the project's actual convention (e.g., `docs/decisions/`, `docs/adr/`).
+`docs/adr/NNNN-{topic}.md` (canonical) — scan `docs/adr/` for the highest existing number and increment. Legacy `docs/YYYY-MM-DD-{topic}-decision.md` files in `docs/decisions/` are migrated to `docs/adr/` on next touch. Use `cc10x:domain-modeling/ADR-FORMAT.md` for the format.
 
 ### Audit Doc Structure
 
@@ -147,7 +157,7 @@ For each doc target:
 2. Apply minimal, targeted edits using `Edit` — do not rewrite sections that are not affected by the diff
 3. `Read` the file again after writing to verify the edit landed correctly
 
-For audit docs: check whether an existing decision doc covers this topic. If yes, update it. If no, create a new file following the filename pattern.
+For audit docs: check whether an existing decision doc covers this topic in `docs/adr/` (canonical) or legacy `docs/decisions/`. If yes, update it (migrating legacy files to `docs/adr/` on touch). If no, create a new file at `docs/adr/NNNN-{topic}.md` following the ADR format. For glossary docs: if a domain term was resolved or sharpened during the workflow, append it to `CONTEXT.md` (create lazily if missing) using the domain-modeling format — but only if this doc-syncer run is the designated writer (shaping phases write CONTEXT.md; builders emit proposals, see `cc10x:domain-modeling`).
 
 **Step 5 — Self-review**
 

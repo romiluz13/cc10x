@@ -29,6 +29,12 @@ Memory contains prior decisions, known gotchas, and current context. Without it,
 - patterns.md: `## Common Gotchas`
 - progress.md: `## Verification`
 
+## Domain Glossary (read-only)
+
+Read `CONTEXT.md` at the repo root if present. Use the project's domain vocabulary in all output — test names, variable names, findings, contracts. Respect any ADRs in `docs/adr/` for the area you're touching.
+
+**Do NOT write or edit `CONTEXT.md` from this skill.** `agent-common` is loaded by read-only agents (failure-hunter, integration-verifier, code-reviewer) that must never mutate repository artifacts. CONTEXT.md is written inline only by designated shaping phases (planner, exploration DESIGN mode, doc-syncer) via the `cc10x:domain-modeling` skill. If you discover a glossary contradiction, emit a `**Domain proposal:**` line in Memory Notes — do not resolve it.
+
 ## SKILL_HINTS
 
 If your prompt includes SKILL_HINTS, invoke each skill via `Skill(skill="{name}")` after memory load. Also: after reading patterns.md, if `## Project SKILL_HINTS` section exists, invoke each listed skill. If a skill fails to load, note it in Memory Notes and continue.

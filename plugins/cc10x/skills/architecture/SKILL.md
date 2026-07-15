@@ -130,38 +130,17 @@ For each component:
 - **Tracing:** what to trace (cross-component flows, not every function call)
 - **Alerting:** when to alert (user-visible impact, not internal noise)
 
-## Architecture Vocabulary (Precise Language)
+## Architecture Vocabulary
 
-Use these terms exactly — don't substitute. They make trade-offs explicit and carry precise meaning from Ousterhout's "A Philosophy of Software Design":
+The canonical deep-module vocabulary (module, interface, depth, seam, adapter, leverage, locality, the deletion test, the two-adapter rule) lives in `cc10x:codebase-design`. **Use those terms exactly** — don't restate them here. Depth is leverage at the interface (a lot of behaviour behind a small interface), NOT a lines-ratio — `codebase-design` explicitly rejects the Ousterhout implementation-lines/interface-lines framing.
 
-| Term | Meaning | Signal |
-| ------- | --------- | ------- |
-| **Module** | A unit of code with an interface and a hidden implementation | — |
-| **Interface** | The surface a module exposes — the contract, not the signature | — |
-| **Deep module** | Small interface, lots hidden inside (high leverage: complexity hidden ÷ interface size) | Good — complexity is contained |
-| **Shallow module** | Interface as complex as implementation | Bad — wrapper adds complexity without hiding any |
-| **Concealed complexity** | Work done behind a simple interface | The goal of deep modules |
-| **Leaky abstraction** | Interface exposes internal details callers must know | Design defect — fix the interface |
-| **Temporal coupling** | Caller must know the order of operations | Design defect — remove or document explicitly |
-| **Seam** | A place where behavior can be substituted (test boundary, adapter point) | — |
-| **Adapter** | Code that bridges your interface to an external system | — |
-| **Locality** | Whether related logic lives together — good locality means changes touch few files | — |
+Two extra terms specific to greenfield architecture (not in codebase-design):
 
-### The Deletion Test
+- **Concealed complexity** — work done behind a simple interface. The goal of deep modules.
+- **Temporal coupling** — caller must know the order of operations. Design defect — remove or document explicitly.
+- **Leaky abstraction** — interface exposes internal details callers must know. Design defect — fix the interface.
 
-For every module or abstraction, ask: **"If I deleted this module and inlined its code at every call site, where does the complexity go?"**
-
-- **It vanishes** → the module was a pass-through / shallow. It adds indirection without hiding complexity. Delete it or deepen its interface.
-- **It reappears across N call sites** → the module is deep. It earns its existence by hiding complexity that would otherwise be duplicated.
-
-This is a falsifiable test, not a matter of taste — apply it before accepting any new module boundary.
-
-### The Two-Adapter Rule
-
-- **One adapter** means a hypothetical seam — something *might* need to vary. This is premature abstraction.
-- **Two concrete adapters** means a real seam — something *does* vary. This is evidence-based design.
-
-When wrapping a third-party dependency, the first adapter is allowed (it isolates the external API). A **second adapter stacked on top of the first** is a smell — it means the first adapter's interface is wrong; fix the first adapter instead of stacking abstractions. Don't introduce a new seam until you have two concrete adapters that need it.
+Before finalizing any component boundary, apply the **Deletion Test** and **Two-Adapter Rule** as defined in `cc10x:codebase-design` — not restated here. A component that fails the deletion test (complexity vanishes if deleted) or fails the two-adapter rule (only one caller/adapter exists) is not a real boundary yet — fold it into its caller or defer the split until a second concrete need appears.
 
 ## Design It Twice
 

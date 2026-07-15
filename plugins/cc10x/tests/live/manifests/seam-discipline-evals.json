@@ -1,0 +1,59 @@
+{
+  "name": "seam-discipline-evals",
+  "workdir": ".",
+  "environment": {
+    "CI": "true"
+  },
+  "healthcheck": {
+    "name": "Building skill has Seam Discipline",
+    "command": "grep -q 'Seam Discipline' plugins/cc10x/skills/building/SKILL.md",
+    "expected": "Seam Discipline section present"
+  },
+  "scenarios": [
+    {
+      "name": "1-planned-with-seam: builder records TEST_SEAMS",
+      "mode": "proof",
+      "given": "A plan with a Test Seams subsection naming the seam, and an Interfaces block",
+      "when": "The builder dispatches against the plan with the merged building skill",
+      "then": "The builder records TEST_SEAMS in its DECISIONS contract and proceeds",
+      "command": "python3 plugins/cc10x/tests/live/seam_eval.py --scenario planned-with-seam",
+      "expected": "Exit 0 — builder would record TEST_SEAMS and proceed (structural assertion on the building skill's Seam Discipline clauses)"
+    },
+    {
+      "name": "2-planned-without-seam: builder proceeds (advisory, no gate)",
+      "mode": "proof",
+      "given": "A plan with no Test Seams subsection",
+      "when": "The builder dispatches against the plan",
+      "then": "The builder does NOT FAIL solely for a missing seam field; it proceeds (seam selection is advisory in sub-project 1)",
+      "command": "python3 plugins/cc10x/tests/live/seam_eval.py --scenario planned-without-seam",
+      "expected": "Exit 0 — builder would proceed without a seam-related block"
+    },
+    {
+      "name": "3-direct-no-plan: builder proceeds, no seam gate",
+      "mode": "proof",
+      "given": "A non-trivial build with no plan (Build directly path)",
+      "when": "The builder dispatches without a plan",
+      "then": "The builder proceeds; no seam gate fires (the fail-closed seam gate is sub-project 2, not sub-project 1)",
+      "command": "python3 plugins/cc10x/tests/live/seam_eval.py --scenario direct-no-plan",
+      "expected": "Exit 0 — builder would proceed via the standard graph without a seam block"
+    },
+    {
+      "name": "4-trivial: reduced graph, no seam expectation",
+      "mode": "proof",
+      "given": "A trivial single-file change (build_scope=trivial)",
+      "when": "The builder dispatches via the reduced graph",
+      "then": "The build completes via the trivial graph with no seam expectation",
+      "command": "python3 plugins/cc10x/tests/live/seam_eval.py --scenario trivial",
+      "expected": "Exit 0 — builder would complete via the trivial graph"
+    },
+    {
+      "name": "5-builder-disagrees-with-seam: records disagreement, blocks only on ambiguity",
+      "mode": "proof",
+      "given": "A plan proposing a seam the builder finds cannot exercise the real risk",
+      "when": "The builder evaluates the proposed seam against the phase's risk",
+      "then": "The builder records the disagreement in DECISIONS and either proceeds with a better seam OR blocks with REMEDIATION_REASON 'Ambiguous test surface' only if ambiguity is genuine",
+      "command": "python3 plugins/cc10x/tests/live/seam_eval.py --scenario builder-disagrees",
+      "expected": "Exit 0 — builder would record disagreement; block only on genuine ambiguity"
+    }
+  ]
+}

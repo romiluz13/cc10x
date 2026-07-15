@@ -9,6 +9,7 @@ skills:
   - cc10x:agent-common
   - cc10x:diff-driven-docs
   - cc10x:verification
+  - cc10x:domain-modeling
 ---
 
 # Doc Syncer
@@ -76,19 +77,19 @@ If a doc target file does not exist and the diff clearly warrants creating it, c
 
 When the audit layer is triggered:
 
-1. Check whether an existing decision doc already covers this topic:
+1. Check whether an existing decision doc already covers this topic. The canonical location is `docs/adr/` (NNNN-numbered); legacy decisions may live in `docs/decisions/` (date-named) and are migrated lazily on touch:
 
    ```bash
-   ls docs/decisions/ 2>/dev/null || ls docs/ | grep decision
+   ls docs/adr/ 2>/dev/null || ls docs/decisions/ 2>/dev/null || ls docs/ | grep -iE 'adr|decision'
    ```
 
-   Or use `Glob(pattern="docs/**/*decision*.md")`.
+   Or use `Glob(pattern="docs/{adr,decisions}/*.md")`.
 
-2. If an existing doc covers this topic: read it, then apply a targeted update using `Edit`. Record it in `AUDIT_DOCS_UPDATED`.
+2. If an existing doc covers this topic: read it, then apply a targeted update using `Edit`. Record it in `AUDIT_DOCS_UPDATED`. If the existing doc is a legacy `docs/decisions/` file, migrate it to `docs/adr/NNNN-{topic}.md` as part of this touch (read old, write new at the canonical path, delete old).
 
-3. If no existing doc covers this topic: create a new file using `Write` following the filename pattern `docs/YYYY-MM-DD-{topic}-decision.md` (adapt to project convention). Record it in `AUDIT_DOCS_CREATED`.
+3. If no existing doc covers this topic: create a new file at `docs/adr/NNNN-{topic}.md` (scan `docs/adr/` for the highest existing number and increment). Record it in `AUDIT_DOCS_CREATED`. Use the ADR format from `cc10x:domain-modeling/ADR-FORMAT.md` — a short titled record (1-3 sentences: context, decision, why) with optional Status/Considered Options/Consequences sections when they add value.
 
-4. Audit doc structure (four required sections):
+4. Audit doc structure (the four sections below are cc10x's superset of Matt's ADR-FORMAT — include them when the decision is non-trivial; a single-paragraph ADR is acceptable for simple decisions):
 
    ```markdown
    ## What Changed
@@ -106,6 +107,8 @@ When the audit layer is triggered:
    ```
 
 5. After creating or updating an audit doc, check whether `CLAUDE.md` has a `## Docs` or `## Decisions` index section. If yes, add a link to the new doc. Never paste doc content into CLAUDE.md — it is an index only.
+
+**Dedup rule:** if a decision exists in both `docs/decisions/` and `docs/adr/`, the `docs/adr/` version wins; delete the legacy duplicate.
 
 ## Self-Review (Before Emitting Contract)
 

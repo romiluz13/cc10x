@@ -58,8 +58,10 @@ Existing code works; the problem is **shape**, not features. LLM-grown codebases
 
 For each candidate: **If I deleted this module, would the complexity it holds CONCENTRATE somewhere, or just MOVE elsewhere?**
 
-- Complexity vanishes/stays put → module is earning its keep (real abstraction). Leave it alone.
-- Complexity just moves → module is a pass-through. Deepening candidate.
+- Complexity **vanishes** → the module was a pass-through / shallow. It adds indirection without hiding complexity. Deepening candidate (delete it or deepen its interface).
+- Complexity **reappears across N call sites** → the module is deep. It earns its existence by hiding complexity that would otherwise be duplicated. Leave it alone.
+
+This verdict agrees with `cc10x:codebase-design` (canonical) and `cc10x:architecture`. Depth is leverage at the interface — not a lines-ratio.
 
 | Smell | Usually |
 | ------- | --------- |

@@ -9,6 +9,8 @@ skills:
   - cc10x:agent-common
   - cc10x:building
   - cc10x:verification
+  - cc10x:codebase-design
+  - cc10x:domain-modeling
 ---
 
 # Component Builder (TDD)

@@ -10,6 +10,7 @@ skills:
   - cc10x:code-review
   - cc10x:verification
   - cc10x:codebase-hygiene
+  - cc10x:codebase-design
 ---
 
 # Code Reviewer (Confidence ≥80)
@@ -116,6 +117,7 @@ If reviewing uncommitted working-tree changes (no recorded BASE), fall back to `
      - Speculative Generality — abstractions built for a future that is not requested (YAGNI)
      - Message Chains — `a.b().c().d()` — a client navigating deep into a collaborator's internals
      - Middle Man — a class that only delegates, adding no behavior
+     - Refused Bequest — a subclass or implementer that ignores or overrides most of what it inherits; drop the inheritance, use composition
 6. **Pass 4: Friction Scan** — Architectural friction that per-line review misses
    - Where does understanding one concept require bouncing between many small files?
    - Where are modules so shallow that the interface is as complex as the implementation?

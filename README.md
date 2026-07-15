@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  <strong>1 router</strong> &nbsp;·&nbsp; <strong>9 specialist agents</strong> &nbsp;·&nbsp; <strong>16 skills</strong> &nbsp;·&nbsp; <strong>4 workflows</strong>
+  <strong>1 router</strong> &nbsp;·&nbsp; <strong>9 specialist agents</strong> &nbsp;·&nbsp; <strong>18 skills</strong> &nbsp;·&nbsp; <strong>4 workflows</strong>
 </p>
 
 <p align="center">
@@ -469,7 +469,7 @@ WORKFLOW STATE (.cc10x/workflows/)
 
 ---
 
-## The 16 Skills
+## The 18 Skills
 
 Skills are **loaded automatically by agents**. You never invoke them directly.
 
@@ -489,6 +489,8 @@ Skills are **loaded automatically by agents**. You never invoke them directly.
 | **diff-driven-docs** | doc-syncer | Doc impact classification + audit-doc format |
 | **research** | planner, bug-investigator (via researcher agent) | Synthesis-only: how to interpret research results |
 | **codebase-hygiene** | code-reviewer, planner (router-gated) | Semantic-duplicate audit + shallow-module deepening |
+| **codebase-design** | planner, builder, investigator, reviewer (router-gated) | Canonical deep-module vocabulary: module, interface, depth, seam, adapter, leverage, locality |
+| **domain-modeling** | planner, doc-syncer (active); builder, investigator (read-only) | Active glossary discipline: challenge terms, sharpen language, write CONTEXT.md + ADRs |
 | **mcp-cli** | researcher | On-demand MCP server use without permanent context pollution |
 | **update** | maintainers | Maintenance meta-skill for updating cc10x itself |
 
@@ -763,6 +765,10 @@ plugins/cc10x/
     ├── research/SKILL.md
     ├── verification/SKILL.md
     ├── codebase-hygiene/SKILL.md
+    ├── codebase-design/SKILL.md
+    │   └── references/{DEEPENING,DESIGN-IT-TWICE}.md
+    ├── domain-modeling/SKILL.md
+    │   └── references/{CONTEXT-FORMAT,ADR-FORMAT}.md
     ├── mcp-cli/SKILL.md
     └── update/SKILL.md
 ```

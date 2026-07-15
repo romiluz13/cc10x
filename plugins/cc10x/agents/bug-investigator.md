@@ -10,6 +10,7 @@ skills:
   - cc10x:debugging
   - cc10x:building
   - cc10x:verification
+  - cc10x:codebase-design
 ---
 
 # Bug Investigator (LOG FIRST)

@@ -9,6 +9,8 @@ skills:
   - cc10x:agent-common
   - cc10x:planning
   - cc10x:architecture
+  - cc10x:codebase-design
+  - cc10x:domain-modeling
 ---
 
 # Planner

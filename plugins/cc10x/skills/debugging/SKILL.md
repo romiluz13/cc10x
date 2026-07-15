@@ -36,6 +36,21 @@ A hypothesis without a repro loop is a guess. Before H1, build a fast, determini
 
 **Sharpen the loop:** sub-second beats sub-minute. Assert the exact failing fact, not a noisy superset. Same input → same red, no drift.
 
+**Tighten the loop** — treat it as a product. Once you have a loop, keep tightening:
+
+- **Faster?** Cache setup, skip unrelated init, narrow the test scope.
+- **Sharper signal?** Assert the specific symptom, not "didn't crash".
+- **More deterministic?** Pin time, seed RNG, isolate filesystem, freeze network.
+A 30-second flaky loop is barely better than none; a 2-second deterministic one is a debugging superpower.
+
+**Red-capable completion criteria** — the loop is done when you can name **one command** (a script path, a test invocation, a curl) that you have **already run at least once**, and it is:
+
+- [ ] **Red-capable** — drives the actual bug code path and asserts the user's exact symptom (can go red on this bug, green once fixed). Not "runs without erroring".
+- [ ] **Deterministic** — same verdict every run (flaky bugs: a pinned, high reproduction rate).
+- [ ] **Fast** — seconds, not minutes.
+- [ ] **Agent-runnable** — you can run it unattended.
+No red-capable command, no hypothesis phase. If you catch yourself reading code to build a theory before this command exists, STOP.
+
 **Flaky bugs:** run in a tight loop (`for i in $(seq 1 N); do ...; done`), record hit rate (e.g. `3/50`), treat raising that rate as loop iteration.
 
 ### When You Genuinely Cannot Build a Loop
@@ -85,6 +100,15 @@ Form H1/H2/H3 with 0-100 confidence. Proceed to fix only when one reaches 80+.
 - Is falsifiable ("if Y is already set, this hypothesis is wrong")
 - Explains ALL observed symptoms, not just the primary one
 
+**Instrumentation preference:** Each probe must map to a specific prediction. Change one variable at a time. Tool preference:
+
+1. **Debugger / REPL inspection** if the env supports it — one breakpoint beats ten logs.
+2. **Targeted logs** at the boundaries that distinguish hypotheses.
+3. Never "log everything and grep".
+Tag every debug log with a unique prefix (e.g. `[DEBUG-a4f2]`) so cleanup is a single grep.
+
+**Performance branch:** For performance regressions, logs are usually wrong. Establish a baseline measurement first (timing harness, `performance.now`, profiler, query plan), then bisect. Measure first, fix second.
+
 **Hypothesis Confidence Scoring:**
 
 | Score | Meaning |
@@ -103,6 +127,7 @@ Form H1/H2/H3 with 0-100 confidence. Proceed to fix only when one reaches 80+.
 3. **Blast Radius Scan** — search same file for identical anti-patterns, adjacent files for same signature
 4. **Verify** — regression test passes + relevant suite passes
 5. **Prevention** — recommend lint rule, test, type guard, or monitoring
+6. **Cleanup** — delete throwaway harnesses/prototypes, or move them to a clearly-marked debug location. Grep-remove all `[DEBUG-...]` tagged instrumentation (must return nothing). Confirm the repro loop no longer fires.
 
 ## Scenario Playbooks
 

@@ -65,6 +65,18 @@ If a safety check seems unnecessary, verify with a test that proves it's dead co
 
 Build in thin vertical slices that cross all layers: UI → API → logic → data → test. A horizontal slice (all UI, then all API, then all logic) defers integration risk to the end and produces untestable layers. Each slice should be independently verifiable and shippable.
 
+### Seam Discipline
+
+**One seam, one test, one minimal implementation per cycle.** Each test is a tracer bullet that responds to what the last cycle taught you. Don't write all tests first then all implementation (horizontal slicing) — work one vertical slice at a time.
+
+**Test only at pre-agreed seams.** A seam is the public boundary where you observe behavior without reaching inside. Before writing any test, know which seam you're testing at. Prefer existing seams to new ones; use the highest seam possible; the fewer seams across the codebase, the better (ideal is one). If the plan provides a `### Test Seams` subsection or an Interfaces block, draw your seams from there.
+
+**Implementation-coupled anti-pattern.** A test is implementation-coupled if it mocks internal collaborators, tests private methods, or verifies through a side channel (querying the database instead of using the interface). The tell: the test breaks when you refactor but behavior hasn't changed. Test through the public interface, not internals.
+
+**Record your seams.** In your Router Contract `DECISIONS` array, record `TEST_SEAMS: [seam names]` with one line of rationale per seam. This is advisory in sub-project 1 — the verifier uses it to confirm your test exercised the phase's real risk.
+
+**Block only on genuine ambiguity.** If the test surface is genuinely ambiguous or no seam can exercise the phase's real risk, return `STATUS: FAIL`, `PHASE_STATUS: blocked`, `REMEDIATION_REASON: "Ambiguous test surface — no seam exercises the real risk"`. Do NOT block merely because a seam field is missing from the plan — seam selection is advisory here; the enforced gate arrives in sub-project 2.
+
 ## Study Project Patterns First
 
 Before writing code: read 2-3 existing similar components in the repo. Match naming, file structure, export style, test patterns. Follow the project's conventions — don't introduce a new pattern when an existing one works.

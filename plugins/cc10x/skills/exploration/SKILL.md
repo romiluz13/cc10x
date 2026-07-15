@@ -51,6 +51,16 @@ One question at a time. Multiple choice preferred. Present 2-3 approaches with t
 
 Accrete domain vocabulary as the interview names terms. Record load-bearing rejected alternatives as ADR notes. Both are emitted in the handoff so the planner inherits the project's language and the rationale for rejected directions.
 
+**Challenge domain terms — don't just accrete, challenge.**
+
+- **Contradiction with CONTEXT.md:** when a term the user uses conflicts with the existing glossary, surface it immediately ("your glossary defines cancellation as X, but you seem to mean Y — which is it?"). Domain-shaping contradictions (contracts/persistence/user-language) stop for human input; low-blast-radius ones proceed with a recorded assumption.
+- **Contradiction with code:** when the user states how something works, check whether the code agrees. If not, surface it: "your code cancels entire Orders, but you just said partial cancellation is possible — which is right?"
+- **Vague/overloaded terms:** propose a precise canonical term ("you're saying account — do you mean the Customer or the User? those are different things").
+- **Update CONTEXT.md inline** as terms resolve (append-only glossary entries). Use the format in `cc10x:domain-modeling/CONTEXT-FORMAT.md`. Create the file lazily if it doesn't exist.
+- **Offer an ADR** only when all three are true: hard to reverse, surprising without context, and the result of a real trade-off. Use `cc10x:domain-modeling/ADR-FORMAT.md`; write to `docs/adr/`.
+
+Exploration in DESIGN mode is a designated CONTEXT.md writer (alongside planner and doc-syncer).
+
 ### Design Output
 
 Save to `docs/plans/YYYY-MM-DD-<feature>-design.md` (use `-design.md` suffix, not `-plan.md`, to prevent collision with planner output).
