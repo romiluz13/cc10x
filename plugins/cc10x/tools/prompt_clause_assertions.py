@@ -160,6 +160,134 @@ ASSERTIONS = [
         ),
         "resolving-merge-conflicts skill has all 5 steps (incl. run checks) + never-abort rule",
     ),
+    # sub-project 2b — TRIAGE + CODEBASE-HEALTH routing + agents
+    A(
+        "router: TRIAGE route row anchored",
+        PLUGIN / "skills" / "cc10x-router" / "SKILL.md",
+        contains_all(
+            "| 5 | TRIAGE | triage, \"incoming issues\", \"look at #\", \"triage #\" | TRIAGE | triage-agent",
+        ),
+        "TRIAGE row anchored with non-colliding keywords + chain",
+    ),
+    A(
+        "router: CODEBASE-HEALTH route row anchored",
+        PLUGIN / "skills" / "cc10x-router" / "SKILL.md",
+        contains_all(
+            "| 6 | CODEBASE-HEALTH | \"codebase health\", \"improve architecture\", \"deepening\", \"ball of mud\", \"shallow modules\", \"architecture audit\" | CODEBASE-HEALTH | architecture-scanner",
+        ),
+        "CODEBASE-HEALTH row anchored with non-colliding keywords + chain",
+    ),
+    A(
+        "router: TRIAGE keywords do not collide with ERROR",
+        PLUGIN / "skills" / "cc10x-router" / "SKILL.md",
+        contains_none("\"bug report\"", "\"issue #\"", "\"feature request\""),
+        "TRIAGE keywords do not include bug report/issue #/feature request (would collide with ERROR/steal BUILD)",
+    ),
+    A(
+        "router: CODEBASE-HEALTH keywords do not collide with REVIEW",
+        PLUGIN / "skills" / "cc10x-router" / "SKILL.md",
+        contains_none("\"audit architecture\""),
+        "CODEBASE-HEALTH keywords do not include audit architecture (would collide with REVIEW's audit)",
+    ),
+    A(
+        "router: priority 1-4 rows anchored unchanged",
+        PLUGIN / "skills" / "cc10x-router" / "SKILL.md",
+        contains_all(
+            "| 1 | ERROR | error, bug, fix, broken, crash, fail, debug, troubleshoot, issue | DEBUG | bug-investigator -> code-reviewer -> integration-verifier |",
+            "| 2 | PLAN | plan, design, architect, roadmap, strategy, spec, brainstorm | PLAN | exploration -> planner -> bounded fresh review loop |",
+            "| 3 | REVIEW | review, audit, analyze, assess, \"is this good\" | REVIEW | code-reviewer |",
+            "| 4 | ORIENT | zoom out, explain, understand, \"how does X work\", unfamiliar, \"map this\", \"walk me through\", \"where is\", \"what does this do\" | ORIENT | advisory orientation (no agents) |",
+        ),
+        "priority 1-4 rows byte-for-byte anchored (ERROR/PLAN/REVIEW/ORIENT unchanged)",
+    ),
+    A(
+        "router: DEFAULT row anchored at priority 7",
+        PLUGIN / "skills" / "cc10x-router" / "SKILL.md",
+        contains_all(
+            "| 7 | DEFAULT | Everything else | BUILD | component-builder",
+        ),
+        "DEFAULT row at priority 7 with BUILD chain unchanged",
+    ),
+    A(
+        "router: TRIAGE primary-deliverable rule",
+        PLUGIN / "skills" / "cc10x-router" / "SKILL.md",
+        contains_all("Primary-deliverable rule", "TRIAGE applies only when triage", "asks to implement/fix/change it is BUILD or DEBUG"),
+        "TRIAGE primary-deliverable rule prevents BUILD-stealing",
+    ),
+    A(
+        "router: CODEBASE-HEALTH primary-deliverable rule",
+        PLUGIN / "skills" / "cc10x-router" / "SKILL.md",
+        contains_all("CODEBASE-HEALTH applies only when discovery", "refactor/fix/change specific code is BUILD"),
+        "CODEBASE-HEALTH primary-deliverable rule prevents BUILD-stealing",
+    ),
+    A(
+        "router: TRIAGE advisory-only rule",
+        PLUGIN / "skills" / "cc10x-router" / "SKILL.md",
+        contains_all("TRIAGE is advisory-only", "never auto-routes"),
+        "TRIAGE advisory-only rule present",
+    ),
+    A(
+        "router: CODEBASE-HEALTH advisory-only rule",
+        PLUGIN / "skills" / "cc10x-router" / "SKILL.md",
+        contains_all("CODEBASE-HEALTH is advisory-only upkeep", "never writes code"),
+        "CODEBASE-HEALTH advisory-only rule present",
+    ),
+    A(
+        "triage-agent: read-only tools + YAML contract + no TaskUpdate",
+        AGENTS / "triage-agent.md",
+        contains_all(
+            "tools: Read, Bash, Grep, Glob, Skill, LSP, WebFetch",
+            "STATUS: TRIAGED | NEEDS_INFO | WONTFIX",
+            "CATEGORY:",
+            "STATE:",
+            "BRIEF_PATH:",
+            "cc10x:codebase-hygiene",
+        ),
+        "triage-agent has read-only tools (no TaskUpdate), YAML contract with STATUS/CATEGORY/STATE/BRIEF_PATH, loads codebase-hygiene",
+    ),
+    A(
+        "triage-agent: no Edit/TaskUpdate in tools line",
+        AGENTS / "triage-agent.md",
+        lambda text: "Edit" not in text.split("tools:", 1)[1].split("\n", 1)[0] and "TaskUpdate" not in text.split("tools:", 1)[1].split("\n", 1)[0],
+        "triage-agent tools line has no Edit/TaskUpdate (read-only, router-owned completion)",
+    ),
+    A(
+        "architecture-scanner: read-only tools (Write for temp only) + YAML contract",
+        AGENTS / "architecture-scanner.md",
+        contains_all(
+            "tools: Read, Bash, Grep, Glob, Skill, LSP, Write",
+            "STATUS: CANDIDATES_FOUND | NO_CANDIDATES",
+            "CANDIDATES:",
+            "REPORT_PATH:",
+            "cc10x:codebase-design",
+            "deletion test",
+        ),
+        "architecture-scanner has Write (temp HTML only) + YAML contract with STATUS/CANDIDATES/REPORT_PATH + canonical vocab",
+    ),
+    A(
+        "architecture-scanner: no Edit/TaskUpdate in tools line",
+        AGENTS / "architecture-scanner.md",
+        lambda text: "Edit" not in text.split("tools:", 1)[1].split("\n", 1)[0] and "TaskUpdate" not in text.split("tools:", 1)[1].split("\n", 1)[0],
+        "architecture-scanner tools line has no Edit/TaskUpdate (read-only source, router-owned completion)",
+    ),
+    A(
+        "triage-workflow reference exists",
+        PLUGIN / "skills" / "cc10x-router" / "references" / "triage-workflow.md",
+        contains_all("TRIAGE workflow", "dvisory-only", "triage-agent"),
+        "triage-workflow.md reference exists",
+    ),
+    A(
+        "codebase-health-workflow reference exists",
+        PLUGIN
+        / "skills"
+        / "cc10x-router"
+        / "references"
+        / "codebase-health-workflow.md",
+        contains_all(
+            "CODEBASE-HEALTH workflow", "dvisory-only", "architecture-scanner"
+        ),
+        "codebase-health-workflow.md reference exists",
+    ),
     # codebase-hygiene — deletion test fixed (ticket #38)
     A(
         "codebase-hygiene: deletion test not inverted",

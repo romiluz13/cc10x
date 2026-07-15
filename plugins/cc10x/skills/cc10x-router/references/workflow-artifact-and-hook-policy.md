@@ -10,7 +10,7 @@ Artifact schema must include:
 
 - `workflow_uuid`
 - `workflow_id`
-- `workflow_type`
+- `workflow_type` — one of `BUILD`, `DEBUG`, `PLAN`, `REVIEW`, `ORIENT`, `TRIAGE`, `CODEBASE-HEALTH`, or `pending` (transitional value before routing resolves)
 - `state_root`
 - `user_request`
 - `plan_file`
@@ -124,7 +124,7 @@ Rules:
   - `scan`
   - `reconcile`
   - `reasoning`
-- `pending_gate` is required whenever BUILD/PLAN/DEBUG is waiting on user clarification, scope selection, or persistence repair.
+- `pending_gate` is required whenever BUILD/PLAN/DEBUG/TRIAGE/CODEBASE-HEALTH is waiting on user clarification, scope selection, or persistence repair.
 - `status_history` and `remediation_history` are append-only summaries of major router decisions.
 
 Router gates:

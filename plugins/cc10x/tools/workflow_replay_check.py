@@ -29,6 +29,8 @@ REQUIRED_FIXTURES = (
     "build-remediation-loop.json",
     "build-doc-sync-happy-path.json",
     "build-doc-sync-skipped.json",
+    "triage-happy-path.json",
+    "codebase-health-happy-path.json",
     "debug-fixed.json",
     "debug-fixed-no-variant.json",
     "debug-research.json",
@@ -1116,6 +1118,94 @@ def check_build_doc_sync_skipped(fixture: dict[str, Any]) -> None:
     )
 
 
+def validate_triage_contract(fixture_id: str, contract: dict[str, Any]) -> None:
+    """Validate a triage-agent Router Contract."""
+    valid_status = {"TRIAGED", "NEEDS_INFO", "WONTFIX"}
+    require(
+        contract["STATUS"] in valid_status,
+        f"{fixture_id}: invalid triage STATUS '{contract['STATUS']}'",
+    )
+    if contract["STATUS"] == "TRIAGED":
+        require(
+            contract.get("CATEGORY") in {"bug", "enhancement"},
+            f"{fixture_id}: TRIAGED requires CATEGORY bug|enhancement",
+        )
+        require(
+            contract.get("STATE")
+            in {
+                "needs-triage",
+                "needs-info",
+                "ready-for-agent",
+                "ready-for-human",
+                "wontfix",
+            },
+            f"{fixture_id}: invalid STATE",
+        )
+        if contract.get("STATE") == "ready-for-agent":
+            require(
+                bool(contract.get("BRIEF_PATH")),
+                f"{fixture_id}: ready-for-agent requires BRIEF_PATH",
+            )
+    require("REDUNDANCY_CHECK" in contract, f"{fixture_id}: missing REDUNDANCY_CHECK")
+    require(
+        "PRIOR_REJECTION_CHECK" in contract,
+        f"{fixture_id}: missing PRIOR_REJECTION_CHECK",
+    )
+
+
+def check_triage_happy_path(fixture: dict[str, Any]) -> None:
+    ta = fixture["agent_outputs"]["triage_agent_contract"]
+    validate_triage_contract("triage-happy-path", ta)
+    require(ta["STATUS"] == "TRIAGED", "triage-happy-path: expected TRIAGED")
+    require(ta["CATEGORY"] == "bug", "triage-happy-path: expected bug")
+    require(
+        ta["STATE"] == "ready-for-agent",
+        "triage-happy-path: expected ready-for-agent",
+    )
+    require(
+        bool(ta.get("BRIEF_PATH")),
+        "triage-happy-path: expected non-empty BRIEF_PATH",
+    )
+
+
+def validate_architecture_scanner_contract(
+    fixture_id: str, contract: dict[str, Any]
+) -> None:
+    """Validate an architecture-scanner Router Contract."""
+    valid_status = {"CANDIDATES_FOUND", "NO_CANDIDATES"}
+    require(
+        contract["STATUS"] in valid_status,
+        f"{fixture_id}: invalid scanner STATUS '{contract['STATUS']}'",
+    )
+    if contract["STATUS"] == "CANDIDATES_FOUND":
+        candidates = contract.get("CANDIDATES", [])
+        require(
+            isinstance(candidates, list) and len(candidates) > 0,
+            f"{fixture_id}: CANDIDATES_FOUND requires non-empty CANDIDATES array",
+        )
+        require(
+            bool(contract.get("REPORT_PATH")),
+            f"{fixture_id}: CANDIDATES_FOUND requires REPORT_PATH",
+        )
+
+
+def check_codebase_health_happy_path(fixture: dict[str, Any]) -> None:
+    asc = fixture["agent_outputs"]["architecture_scanner_contract"]
+    validate_architecture_scanner_contract("codebase-health-happy-path", asc)
+    require(
+        asc["STATUS"] == "CANDIDATES_FOUND",
+        "codebase-health-happy-path: expected CANDIDATES_FOUND",
+    )
+    require(
+        len(asc.get("CANDIDATES", [])) >= 2,
+        "codebase-health-happy-path: expected >=2 candidates",
+    )
+    require(
+        bool(asc.get("REPORT_PATH")),
+        "codebase-health-happy-path: expected non-empty REPORT_PATH",
+    )
+
+
 def check_latency_telemetry(fixture: dict[str, Any]) -> None:
     telemetry = fixture["starting_artifact"]["telemetry"]
     validate_latency_telemetry(
@@ -1150,6 +1240,8 @@ CHECKS = {
     "build-remediation-loop.json": check_build_remediation_loop,
     "build-doc-sync-happy-path.json": check_build_doc_sync_happy_path,
     "build-doc-sync-skipped.json": check_build_doc_sync_skipped,
+    "triage-happy-path.json": check_triage_happy_path,
+    "codebase-health-happy-path.json": check_codebase_health_happy_path,
     "debug-fixed.json": check_debug_fixed,
     "debug-fixed-no-variant.json": check_debug_fixed_no_variant,
     "debug-research.json": check_debug_research,

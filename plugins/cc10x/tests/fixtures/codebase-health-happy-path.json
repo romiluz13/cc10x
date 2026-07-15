@@ -1,0 +1,75 @@
+{
+  "id": "codebase-health-happy-path",
+  "workflow_type": "CODEBASE-HEALTH",
+  "description": "architecture-scanner finds 2 deepening candidates and produces an HTML report",
+  "starting_artifact": {
+    "workflow_uuid": "wf-20260716T110000Z-health-001",
+    "workflow_id": "wf-20260716T110000Z-health-001",
+    "workflow_type": "CODEBASE-HEALTH",
+    "state_root": ".cc10x",
+    "intent": {
+      "goal": "Audit codebase architecture for deepening opportunities"
+    },
+    "results": {},
+    "status_history": [],
+    "plan_mode": null,
+    "verification_rigor": "standard",
+    "proof_status": "gaps_found",
+    "traceability": {
+      "requirements": [],
+      "phases": [],
+      "verification": [],
+      "remediation": []
+    },
+    "phase_cursor": null,
+    "task_ids": {},
+    "evidence": {},
+    "quality": {
+      "convergence_state": "N/A"
+    },
+    "remediation_history": []
+  },
+  "agent_outputs": {
+    "architecture_scanner_contract": {
+      "STATUS": "CANDIDATES_FOUND",
+      "CANDIDATES": [
+        {
+          "files": [
+            "src/api/handler.ts",
+            "src/api/router.ts"
+          ],
+          "problem": "Router is a pass-through \u2014 1:1 mapping to handler, no logic hidden",
+          "solution": "Merge router into handler; handler becomes the deep module",
+          "strength": "Strong"
+        },
+        {
+          "files": [
+            "src/utils/format.ts"
+          ],
+          "problem": "Pure functions extracted for testability but bugs hide in callers",
+          "solution": "Move formatting logic into the calling module; test through its interface",
+          "strength": "Worth exploring"
+        }
+      ],
+      "REPORT_PATH": "/tmp/architecture-review-20260716.html",
+      "BLOCKING": false,
+      "MEMORY_NOTES": {
+        "learnings": [
+          "Router module is shallow (deletion test: complexity just moves)"
+        ],
+        "patterns": [
+          "Pass-through router pattern \u2014 deepening candidate"
+        ],
+        "verification": [
+          "Codebase health: 2 candidates found, report at /tmp/"
+        ],
+        "deferred": []
+      }
+    }
+  },
+  "expected": {
+    "next_action": "present_report",
+    "artifact_delta": {}
+  },
+  "relevant_tasks": {}
+}

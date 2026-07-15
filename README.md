@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  <strong>1 router</strong> &nbsp;·&nbsp; <strong>9 specialist agents</strong> &nbsp;·&nbsp; <strong>19 skills</strong> &nbsp;·&nbsp; <strong>4 workflows</strong>
+  <strong>1 router</strong> &nbsp;·&nbsp; <strong>11 specialist agents</strong> &nbsp;·&nbsp; <strong>19 skills</strong> &nbsp;·&nbsp; <strong>4 workflows</strong>
 </p>
 
 <p align="center">
@@ -453,7 +453,7 @@ WORKFLOW STATE (.cc10x/workflows/)
 
 ---
 
-## The 9 Agents
+## The 11 Agents
 
 | Agent | Purpose | Key Behavior |
 | ------- | --------- | -------------- |
@@ -466,6 +466,8 @@ WORKFLOW STATE (.cc10x/workflows/)
 | **planner** | Creates plans | Saves to `docs/plans/` + updates memory |
 | **plan-gap-reviewer** | Fresh plan challenge pass | Read-only anti-anchoring review before final plan handoff |
 | **researcher** | Web + GitHub research (Bright Data / Octocode MCP accelerators, built-in fallbacks) | Saves findings to file |
+| **triage-agent** | Triages incoming issues/PRs | Read-only; categorizes, verifies, checks redundancy + prior rejection, writes agent-ready briefs |
+| **architecture-scanner** | Codebase health audit | Read-only; scans for shallow modules + deepening candidates, produces HTML report with before/after diagrams |
 
 ---
 
@@ -738,6 +740,8 @@ plugins/cc10x/
 │   ├── planner.md
 │   ├── plan-gap-reviewer.md
 │   ├── researcher.md
+│   ├── triage-agent.md
+│   ├── architecture-scanner.md
 │   └── references/silent-failure-red-flags.md
 │
 └── skills/
@@ -750,6 +754,8 @@ plugins/cc10x/
     │       ├── debug-workflow.md
     │       ├── review-workflow.md
     │       ├── plan-workflow.md
+    │       ├── triage-workflow.md
+    │       ├── codebase-health-workflow.md
     │       └── remediation-and-research.md
     ├── agent-common/SKILL.md
     ├── memory-and-handoff/SKILL.md

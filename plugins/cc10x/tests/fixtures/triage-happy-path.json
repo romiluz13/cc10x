@@ -1,0 +1,61 @@
+{
+  "id": "triage-happy-path",
+  "workflow_type": "TRIAGE",
+  "description": "triage-agent categorizes a bug report, verifies it, writes an agent-ready brief",
+  "starting_artifact": {
+    "workflow_uuid": "wf-20260716T100000Z-triage-001",
+    "workflow_id": "wf-20260716T100000Z-triage-001",
+    "workflow_type": "TRIAGE",
+    "state_root": ".cc10x",
+    "intent": {
+      "goal": "Triage incoming bug report #99"
+    },
+    "results": {},
+    "status_history": [],
+    "plan_mode": null,
+    "verification_rigor": "standard",
+    "proof_status": "gaps_found",
+    "traceability": {
+      "requirements": [],
+      "phases": [],
+      "verification": [],
+      "remediation": []
+    },
+    "phase_cursor": null,
+    "task_ids": {},
+    "evidence": {},
+    "quality": {
+      "convergence_state": "N/A"
+    },
+    "remediation_history": []
+  },
+  "agent_outputs": {
+    "triage_agent_contract": {
+      "STATUS": "TRIAGED",
+      "CATEGORY": "bug",
+      "STATE": "ready-for-agent",
+      "VERIFICATION_RESULT": "confirmed",
+      "REDUNDANCY_CHECK": "none \u2014 searched src/api/ and src/handlers/ for existing implementation",
+      "PRIOR_REJECTION_CHECK": "none \u2014 .out-of-scope/ empty",
+      "BRIEF_PATH": ".scratch/fix-invite-403/brief.md",
+      "BLOCKING": false,
+      "MEMORY_NOTES": {
+        "learnings": [
+          "Bug #99 confirmed: invite endpoint returns 403 for superadmin role"
+        ],
+        "patterns": [
+          "Role-based access check at src/api/invite.ts:42 missing superadmin case"
+        ],
+        "verification": [
+          "Triage: STATUS=TRIAGED, category=bug, state=ready-for-agent"
+        ],
+        "deferred": []
+      }
+    }
+  },
+  "expected": {
+    "next_action": "present_brief",
+    "artifact_delta": {}
+  },
+  "relevant_tasks": {}
+}
