@@ -105,7 +105,7 @@ If reviewing uncommitted working-tree changes (no recorded BASE), fall back to `
    - Missing or generic error handling
    - Code duplication (DRY violations)
    - Weak or missing type annotations
-   - **Fowler smell baseline (deterministic checklist, not vibes):** scan the diff for the 11 named smells and report any hit with its name and the file:line evidence:
+   - **Fowler smell baseline (deterministic checklist, not vibes):** scan the diff for the 12 named smells and report any hit with its name and the file:line evidence:
      - Mysterious Name — a name that does not say what it does
      - Duplicated Code — identical or near-identical blocks across locations
      - Feature Envy — a method that uses another object's data more than its own

@@ -85,7 +85,7 @@ When the audit layer is triggered:
 
    Or use `Glob(pattern="docs/{adr,decisions}/*.md")`.
 
-2. If an existing doc covers this topic: read it, then apply a targeted update using `Edit`. Record it in `AUDIT_DOCS_UPDATED`. If the existing doc is a legacy `docs/decisions/` file, migrate it to `docs/adr/NNNN-{topic}.md` as part of this touch (read old, write new at the canonical path, delete old).
+2. If an existing doc covers this topic: read it, then apply a targeted update using `Edit`. Record it in `AUDIT_DOCS_UPDATED`. **Also add the path to `DOC_FILES_UPDATED`** — the router override accepts `DOC_FILES_UPDATED` or `AUDIT_DOCS_CREATED` for COMPLETE/PARTIAL, so any updated or migrated audit path MUST appear in `DOC_FILES_UPDATED` too. If the existing doc is a legacy `docs/decisions/` file, migrate it to `docs/adr/NNNN-{topic}.md` as part of this touch (read old, write new at the canonical path, delete old) — record the new `docs/adr/` path in both `AUDIT_DOCS_UPDATED` and `DOC_FILES_UPDATED`.
 
 3. If no existing doc covers this topic: create a new file at `docs/adr/NNNN-{topic}.md` (scan `docs/adr/` for the highest existing number and increment). Record it in `AUDIT_DOCS_CREATED`. Use the ADR format from `cc10x:domain-modeling/ADR-FORMAT.md` — a short titled record (1-3 sentences: context, decision, why) with optional Status/Considered Options/Consequences sections when they add value.
 
@@ -144,6 +144,7 @@ DOC_LAYERS_EVALUATED:
   - business
   - technical
   - audit
+  - glossary
 DOC_FILES_UPDATED:
   - path/to/updated-doc.md
 DOC_FILES_SKIPPED:

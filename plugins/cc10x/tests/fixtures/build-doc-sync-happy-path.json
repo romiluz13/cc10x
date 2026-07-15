@@ -48,8 +48,8 @@
     "doc_syncer_contract": {
       "STATUS": "COMPLETE",
       "IMPACT_LEVEL": "medium",
-      "DOC_LAYERS_EVALUATED": ["technical", "audit"],
-      "DOC_FILES_UPDATED": ["docs/developer/hooks-reference.md"],
+      "DOC_LAYERS_EVALUATED": ["technical", "audit", "glossary"],
+      "DOC_FILES_UPDATED": ["docs/developer/hooks-reference.md", "docs/adr/0001-new-hook-pattern.md"],
       "DOC_FILES_SKIPPED": [
         {
           "path": "docs/admin-guide/feature-guide.md",
@@ -57,7 +57,8 @@
         }
       ],
       "SKIP_REASON": "",
-      "AUDIT_DOCS_CREATED": ["docs/2026-04-19-new-hook-pattern-decision.md"],
+      "AUDIT_DOCS_CREATED": ["docs/adr/0001-new-hook-pattern.md"],
+      "AUDIT_DOCS_UPDATED": [],
       "AUDIT_DOCS_UPDATED": [],
       "MEMORY_NOTES": {
         "learnings": ["New hook useOrderStatus added with retry logic; hooks-reference.md updated with signature and key behaviors"],

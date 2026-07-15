@@ -16,11 +16,11 @@ Before spawning sub-agents, write a user-facing explanation of the problem space
 
 Show this to the user, then immediately proceed to Step 2. The user reads and thinks while the sub-agents work in parallel.
 
-### 2. Spawn sub-agents
+### 2. Spawn sub-agents (router-mediated)
 
-Spawn 3+ sub-agents in parallel using the Agent tool. Each must produce a **radically different** interface for the deepened module.
+**The agent loading this skill does NOT have an `Agent`/`subagent` tool.** Sub-agent fan-out is a router-owned capability, not a skill-owned one. To run Design It Twice, the agent emits a **Design-It-Twice request** in its Memory Notes / handoff for the router to dispatch, OR (if the surrounding workflow supports it) the router spawns the parallel design sub-agents directly. Do NOT instruct the agent to call an `Agent` tool it does not have.
 
-Prompt each sub-agent with a separate technical brief (file paths, coupling details, dependency category from [DEEPENING.md](DEEPENING.md), what sits behind the seam). The brief is independent of the user-facing problem-space explanation in Step 1. Give each agent a different design constraint:
+The router dispatches 3+ sub-agents in parallel, each with a separate technical brief (file paths, coupling details, dependency category from [DEEPENING.md](DEEPENING.md), what sits behind the seam). The brief is independent of the user-facing problem-space explanation in Step 1. Give each sub-agent a different design constraint:
 
 - Agent 1: "Minimize the interface — aim for 1–3 entry points max. Maximise leverage per entry point."
 - Agent 2: "Maximise flexibility — support many use cases and extension."

@@ -12,27 +12,28 @@ allowed-tools: Read, Edit, Write, Bash, Grep, Glob
 
 ## Overview
 
-Stale documentation is worse than no documentation — it actively misleads contributors, users, and future maintainers. diff-driven-docs treats documentation as a first-class deliverable of every BUILD phase, not an afterthought. Just as test-driven-development enforces that tests must be produced as part of the code-change cycle, diff-driven-docs enforces that doc updates must accompany code changes before the workflow closes. The doc-syncer agent analyzes the actual diff, classifies documentation impact across three layers (business, technical, audit), and writes only the updates that are genuinely needed — skipping trivially low-impact changes fast.
+Stale documentation is worse than no documentation — it actively misleads contributors, users, and future maintainers. diff-driven-docs treats documentation as a first-class deliverable of every BUILD phase, not an afterthought. Just as test-driven-development enforces that tests must be produced as part of the code-change cycle, diff-driven-docs enforces that doc updates must accompany code changes before the workflow closes. The doc-syncer agent analyzes the actual diff, classifies documentation impact across four layers (business, technical, audit, glossary), and writes only the updates that are genuinely needed — skipping trivially low-impact changes fast.
 
 ## Impact Classifier
 
 Run this classifier before any doc work. Use it to determine which layers to evaluate and which to skip.
 
-| Diff Characteristic | Business Layer | Technical Layer | Audit Layer |
-| --------------------- | --------------- | ---------------- | ------------- |
-| Internal utility, helper, or type change only | SKIP | CHECK | SKIP |
-| Test addition with no new pattern | SKIP | SKIP | SKIP |
-| Style / formatting change | SKIP | SKIP | SKIP |
-| Dependency version bump (no API change) | SKIP | SKIP | SKIP |
-| Routine bug fix (existing behavior corrected) | SKIP | CHECK | SKIP |
-| Simple refactor (behavior unchanged) | SKIP | CHECK if signatures changed | SKIP |
-| New exported function / hook / component | SKIP | CHECK | CHECK |
-| New page or route | CHECK | CHECK | CHECK |
-| Architectural pattern introduced | SKIP | CHECK | CREATE |
-| Technology choice made | SKIP | CHECK | CREATE |
-| Breaking change to public API | CHECK | CHECK | CREATE |
-| Permission or role change | CHECK | CHECK | CHECK |
-| Security or compliance impact | CHECK | CHECK | CREATE or UPDATE |
+| Diff Characteristic | Business Layer | Technical Layer | Audit Layer | Glossary Layer |
+| --------------------- | --------------- | ---------------- | ------------- | ---------------- |
+| Internal utility, helper, or type change only | SKIP | CHECK | SKIP | SKIP |
+| Test addition with no new pattern | SKIP | SKIP | SKIP | SKIP |
+| Style / formatting change | SKIP | SKIP | SKIP | SKIP |
+| Dependency version bump (no API change) | SKIP | SKIP | SKIP | SKIP |
+| Routine bug fix (existing behavior corrected) | SKIP | CHECK | SKIP | SKIP |
+| Simple refactor (behavior unchanged) | SKIP | CHECK if signatures changed | SKIP | SKIP |
+| New exported function / hook / component | SKIP | CHECK | CHECK | SKIP |
+| New page or route | CHECK | CHECK | CHECK | CHECK |
+| Architectural pattern introduced | SKIP | CHECK | CREATE | CHECK |
+| Technology choice made | SKIP | CHECK | CREATE | CHECK |
+| Breaking change to public API | CHECK | CHECK | CREATE | CHECK |
+| Permission or role change | CHECK | CHECK | CHECK | SKIP |
+| Security or compliance impact | CHECK | CHECK | CREATE or UPDATE | SKIP |
+| Domain term resolved or sharpened during the workflow | SKIP | SKIP | SKIP | CHECK |
 
 **SKIP business docs if:** no user-facing surface changed; only internal utils, types, or tests were modified.
 
@@ -42,9 +43,11 @@ Run this classifier before any doc work. Use it to determine which layers to eva
 
 **CREATE an audit doc if:** an architectural decision was made, a new pattern was introduced, a non-obvious tradeoff was accepted, or a team member six months from now would ask "why did we do it this way?"
 
-If all three layers are SKIP, set `IMPACT_LEVEL: none` and emit a SKIPPED contract immediately without opening any doc files.
+**CHECK glossary docs if:** a domain term was resolved, sharpened, or found to contradict the code during a BUILD/PLAN/DEBUG workflow. The glossary layer is written only by designated shaping phases (planner, exploration DESIGN mode, doc-syncer) via `cc10x:domain-modeling`; builders emit proposals. See the Glossary Layer section below.
 
-## The Three Layers
+If all four layers are SKIP, set `IMPACT_LEVEL: none` and emit a SKIPPED contract immediately without opening any doc files.
+
+## The Four Layers
 
 ### Business Layer
 

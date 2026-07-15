@@ -86,7 +86,7 @@ This is a falsifiable test, not a matter of taste — apply it before accepting 
 - **Depth is a property of the interface, not the implementation.** A deep module can be internally composed of small, mockable, swappable parts — they just aren't part of the interface. A module can have **internal seams** (private to its implementation, used by its own tests) as well as the **external seam** at its interface.
 - **The deletion test** (above) — falsifiable, canonical.
 - **The interface is the test surface.** Callers and tests cross the same seam. If you want to test _past_ the interface, the module is probably the wrong shape.
-- **One adapter means a hypothetical seam. Two adapters means a real one.** Don't introduce a seam unless something actually varies across it.
+- **One adapter means a hypothetical seam. Two adapters means a real one.** This rule is about **ports** — external dependency seams where you inject an adapter (production vs test, or two real transports). It does NOT apply to every internal seam or test boundary: an in-process deepening needs no adapter (see [DEEPENING.md](DEEPENING.md)), and an ordinary caller or test exercising a public interface is NOT an adapter. Don't introduce a port unless something actually varies across it.
 
 ## Designing for testability
 
