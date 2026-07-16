@@ -24,7 +24,9 @@ Route using the first matching signal:
 | 2 | PLAN | plan, design, architect, roadmap, strategy, spec, brainstorm | PLAN | exploration -> planner -> bounded fresh review loop |
 | 3 | REVIEW | review, audit, analyze, assess, "is this good" | REVIEW | code-reviewer |
 | 4 | ORIENT | zoom out, explain, understand, "how does X work", unfamiliar, "map this", "walk me through", "where is", "what does this do" | ORIENT | advisory orientation (no agents) |
-| 5 | DEFAULT | Everything else | BUILD | component-builder → [code-reviewer ‖ failure-hunter] → integration-verifier |
+| 5 | TRIAGE | triage, "incoming issues", "look at #", "triage #" | TRIAGE | triage-agent → optional exploration → agent-ready brief |
+| 6 | CODEBASE-HEALTH | "codebase health", "improve architecture", "deepening", "ball of mud", "shallow modules", "architecture audit" | CODEBASE-HEALTH | architecture-scanner → HTML report → human picks → exploration (grilling) → feeds PLAN |
+| 7 | DEFAULT | Everything else | BUILD | component-builder → [code-reviewer ‖ failure-hunter] → integration-verifier |
 
 Rules:
 
@@ -32,6 +34,8 @@ Rules:
 - ERROR always wins over BUILD, but route on the PRIMARY DELIVERABLE, not the first keyword hit: "add a dark-mode toggle and fix the button alignment" is a BUILD whose scope includes a small fix, not a DEBUG. Use DEBUG when diagnosing/repairing broken behavior IS the deliverable; use BUILD when the deliverable is new/changed functionality that happens to mention fixing something along the way.
 - REVIEW is advisory only. Never let REVIEW create code-changing tasks.
 - ORIENT is read-only and advisory. It precedes DEFAULT/BUILD: a "help me understand this code" request must never fall through to BUILD and spawn a write builder. ORIENT spawns NO write agents and creates NO phase graph. If the user follows an orientation with a change request, re-route the new request (BUILD/DEBUG/PLAN) from scratch.
+- TRIAGE is advisory-only. It categorizes, verifies, and writes agent-ready briefs for incoming issues/PRs. It never writes code. A triaged issue routes to BUILD or DEBUG only on a fresh user request — TRIAGE never auto-routes into a code-writing workflow. Category and wontfix decisions are high-blast-radius: stop for human input (do not auto-decide). **Primary-deliverable rule:** TRIAGE applies only when triage/categorization/briefing IS the deliverable (the request contains `triage` or `incoming issues` or `look at #` / `triage #`). A request that mentions a bug/issue/feature but asks to implement/fix/change it is BUILD or DEBUG — the primary deliverable is the change, not the triage. Do not route to TRIAGE unless the user explicitly asks to triage.
+- CODEBASE-HEALTH is advisory-only upkeep. It surfaces deepening candidates and grills the chosen one. It never writes code. A chosen candidate routes to PLAN only on a fresh user request. The scanner writes a single HTML report to the OS temp dir (not the repo). **Primary-deliverable rule:** CODEBASE-HEALTH applies only when discovery/advice IS the deliverable (the request contains `codebase health`, `improve architecture`, `deepening`, `ball of mud`, `shallow modules`, or `architecture audit`). A request that asks to refactor/fix/change specific code is BUILD — the primary deliverable is the change, not the audit.
 - BUILD uses a complexity gradient (see `references/build-workflow.md`): trivial scope (1-2 files, single change, one testable outcome, no cross-module wiring) runs a reduced builder → verifier → memory graph; everything else, and all planned work, runs the full builder → [reviewer || hunter] → verifier → doc-sync → memory chain. The reviewer and hunter run in parallel (two read-only agents in the same message) and the router merges their findings before verifier handoff. The builder escalates trivial → full on any scope increase. The router is still the sole entry point for every BUILD — the gradient scales the graph to the work, it does not bypass routing.
 - Before execution, output one line: `-> {WORKFLOW} workflow (signals: {matched keywords})`
 
@@ -253,9 +257,9 @@ Bash(command="mkdir -p .cc10x/workflows && cp \"${CLAUDE_PLUGIN_ROOT}/skills/cc1
 Then `Edit` the copied file, replacing each placeholder token with the live value (the skeleton ships every required key already populated with safe defaults — you only fill these):
 
 - `__WORKFLOW_UUID__` → `{workflow_uuid}` (appears twice: `workflow_uuid` and `workflow_id`)
-- `__WORKFLOW_TYPE__` → `{WORKFLOW}` (BUILD | DEBUG | REVIEW | PLAN) — **if routing (§5) has not yet determined the workflow type, use `pending` and update it after §5 resolves.** Never hardcode BUILD before routing completes. The artifact may be created before routing (to capture state early), but `workflow_type` must reflect the actual routed type after §5.
+- `__WORKFLOW_TYPE__` → `{WORKFLOW}` (BUILD | DEBUG | REVIEW | PLAN | ORIENT | TRIAGE | CODEBASE-HEALTH) — **if routing (§5) has not yet determined the workflow type, use `pending` and update it after §5 resolves.** Never hardcode BUILD before routing completes. The artifact may be created before routing (to capture state early), but `workflow_type` must reflect the actual routed type after §5.
 - `__USER_REQUEST__` → the user request (JSON-escape quotes/newlines)
-- `__PHASE__` → `{build|debug|review|plan}`
+- `__PHASE__` → `{build|debug|review|plan|orient|triage|codebase-health}`
 - `__ISO_TIMESTAMP__` → the current UTC ISO timestamp (appears 3×: `status_history[0].ts`, `created_at`, `updated_at`)
 
 Use `Edit(replace_all=true)` for `__WORKFLOW_UUID__` and `__ISO_TIMESTAMP__` since each repeats. Then write the event log:
