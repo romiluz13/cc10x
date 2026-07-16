@@ -2,6 +2,7 @@
 
 > **Last synced with live router/agents:** 2026-06-17 (`v11.0.0`; last structural sync `v10.1.19` on 2026-04-12; `v11.0.0` de-versions the state root from `.cc10x/v10/` to `.cc10x/`, version held only in `plugin.json`/GitHub; `v11.1.0` adds execution-engine deltas + 4 net-new skills, additive)
 > **Status:** SYNCED TO LIVE PROMPTS
+> **v12.5.0:** adds the enforced seam gate, resolving-merge-conflicts skill, CONTEXT.md/docs/adr/ canonical artifacts, 2 new agents (triage-agent, architecture-scanner), and 2 advisory on-ramp workflows (TRIAGE priority 5, CODEBASE-HEALTH priority 6) — additive, priority 1-4 routes unchanged.
 > **Relationship to Bible:** The bible is the canonical specification. This document explains the practical mechanics and why the system is shaped this way.
 
 ## What CC10X Actually Is
@@ -9,11 +10,13 @@
 CC10X is a **Claude Code plugin-native orchestration harness**.
 
 It is not:
+
 - a standalone agent service
 - an issue tracker worker
 - a hidden repo-local sidecar
 
 It is:
+
 - one router skill
 - a small set of specialized agents
 - a small set of plugin hooks
@@ -22,6 +25,7 @@ It is:
 - workflow artifacts under `.cc10x/workflows/`
 
 The system is still mostly **English orchestration**, but it is no longer prompt-only. The current design mixes:
+
 - prompt contracts
 - reference-first skill packaging
 - task metadata
@@ -34,7 +38,9 @@ That mix is the current reliability model.
 ## Current Layers
 
 ### 1. Claude Code platform layer
+
 Owned by Claude Code:
+
 - plugin packaging
 - subagents
 - hooks
@@ -42,7 +48,9 @@ Owned by Claude Code:
 - task primitives
 
 ### 2. CC10X orchestration layer
+
 Owned by this plugin:
+
 - intent routing
 - workflow selection
 - task graph creation
@@ -52,7 +60,9 @@ Owned by this plugin:
 - memory finalization
 
 ### 3. Safety layer
+
 Also owned by this plugin:
+
 - hook guards
 - workflow artifacts
 - workflow event logs
@@ -63,12 +73,16 @@ Also owned by this plugin:
 ## The Real Runtime Flow
 
 ### Entry
+
 The router loads memory, checks for active workflow state, and either:
+
 - resumes a workflow
 - or routes into BUILD / DEBUG / REVIEW / PLAN
 
 ### Workflow state
+
 Every workflow gets:
+
 - a parent task
 - workflow-scoped child tasks
 - `.cc10x/workflows/{wf}.json`
@@ -77,18 +91,23 @@ Every workflow gets:
 This is the durable truth for orchestration.
 
 ### Worker model
+
 Agents are narrow workers:
+
 - write agents produce YAML contracts
 - read-only agents produce envelope-first contracts
 - all agents emit structured memory notes instead of writing markdown memory directly
 - router interprets outputs and owns state transitions
 
 The important design boundary is:
+
 - workers analyze/build/fix/verify
 - router decides what happens next
 
 ### Hook model
+
 Hooks are intentionally small:
+
 - `PreToolUse` protects memory writes
 - `SessionStart` re-injects workflow context
 - `PostToolUse` audits workflow artifact integrity
@@ -99,12 +118,14 @@ Hooks are not a second router.
 ## Why The Current Shape Is Better Than The Old Shape
 
 Older CC10X revisions leaned too hard on:
+
 - very large router prose
 - worker-side orchestration
 - repo-local runtime assumptions
 - memory markdown as live truth
 
 Current main is better because:
+
 - orchestration ownership is centralized
 - the router is now a kernel with mandatory workflow/reference playbooks instead of one giant always-loaded monolith
 - workflow state is durable
@@ -117,6 +138,7 @@ Current main is better because:
 ## The Six SDLC Capabilities CC10X Actually Optimizes
 
 CC10X is intentionally optimized for:
+
 - `PLAN`
 - `BUILD`
 - `DEBUG`
@@ -127,6 +149,7 @@ CC10X is intentionally optimized for:
 It is not trying to be a full deployment/ops/compliance platform.
 
 Within that scope, the current design center is:
+
 - intent-first planning
 - TDD-driven building/debugging
 - adversarial review
@@ -137,6 +160,7 @@ Within that scope, the current design center is:
 ## Where The Remaining Risk Still Lives
 
 Even after the stability hardening, the main remaining risk areas are:
+
 - live Claude runtime behavior under long sessions
 - model interpretation of router prose in unusual edge cases
 - doc drift when trust docs are not refreshed with prompt/runtime edits
@@ -145,6 +169,7 @@ Even after the stability hardening, the main remaining risk areas are:
 - future changes that bypass the replay/audit checks
 
 That is why the safety stack now includes:
+
 - `cc10x_harness_audit.py`
 - `cc10x_workflow_replay_check.py`
 - `router-invariants.md`
@@ -152,6 +177,7 @@ That is why the safety stack now includes:
 ## Maintenance Rule
 
 When changing orchestration, always update in this order:
+
 1. router/runtime behavior
 2. replay fixtures/checker
 3. harness audit

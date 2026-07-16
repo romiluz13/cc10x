@@ -1,12 +1,13 @@
 # CC10X Agent Contract Registry
 
 > **Status note:** Aligned to the live agent and router prompt stack as of 2026-06-17 (`v11.0.0`; last structural sync `v10.1.19` on 2026-04-12; `v11.0.0` de-versions the state root from `.cc10x/v10/` to `.cc10x/`, version held only in `plugin.json`/GitHub; `v11.1.0` adds the SPEC_COMPLIANCE reviewer verdict split + recorded-BASE diffing, additive).
+> **v12.5.0:** adds TEST_SEAMS + SEAM_GATE_STATUS to the component-builder contract; FEEDBACK_LOOP + DEBUG_CLOSEOUT enforcement to bug-investigator; ALTERNATIVES ≥2 for decision_rfc; 2 new read-only agents (triage-agent, architecture-scanner) with router-owned completion; resolving-merge-conflicts skill; CONTEXT.md/docs/adr/ canonical artifacts. Additive — no existing agent contract schema changed.
 > **Purpose:** Quick contract map for maintainers. This document summarizes what the live prompts already enforce; it does not add new behavior.
 
 ## Write Agents
 
 | Agent | Contract type | Completion states | Key blocking signal | Memory payload |
-|------|---------------|-------------------|---------------------|----------------|
+| ------ | --------------- | ------------------- | --------------------- | ---------------- |
 | `component-builder` | YAML `### Router Contract` | `PASS`, `FAIL` | `BLOCKING=true`, `PHASE_STATUS!=completed`, or `PROOF_STATUS!=passed` | `MEMORY_NOTES` |
 | `bug-investigator` | YAML `### Router Contract` | `FIXED`, `INVESTIGATING`, `BLOCKED` | `STATUS!=FIXED` or research escalation | `MEMORY_NOTES` |
 | `planner` | YAML `### Router Contract` | `PLAN_CREATED`, `DECISION_RFC_CREATED`, `NEEDS_CLARIFICATION` | open decisions, failed spec gate, or blocking clarification need | `MEMORY_NOTES` |
@@ -17,10 +18,10 @@
 ## Read-Only Review Agents
 
 | Agent | Primary machine signal | Heading fallback | Completion states |
-|------|-------------------------|------------------|-------------------|
-| `code-reviewer` | `CONTRACT {"s":"APPROVE|CHANGES_REQUESTED","b":...,"cr":...}` | `## Review: Approve` / `## Review: Changes Requested` | `APPROVE`, `CHANGES_REQUESTED` |
-| `silent-failure-hunter` | `CONTRACT {"s":"CLEAN|ISSUES_FOUND","b":...,"cr":...}` | `## Error Handling Audit: CLEAN` / `## Error Handling Audit: ISSUES_FOUND` | `CLEAN`, `ISSUES_FOUND` |
-| `integration-verifier` | `CONTRACT {"s":"PASS|FAIL","b":...,"cr":...}` | `## Verification: PASS` / `## Verification: FAIL` | `PASS`, `FAIL` |
+| ------ | ------------------------- | ------------------ | ------------------- |
+| `code-reviewer` | `CONTRACT {"s":"APPROVE | CHANGES_REQUESTED","b":...,"cr":...}` | `## Review: Approve` / `## Review: Changes Requested` | `APPROVE`, `CHANGES_REQUESTED` |
+| `silent-failure-hunter` | `CONTRACT {"s":"CLEAN | ISSUES_FOUND","b":...,"cr":...}` | `## Error Handling Audit: CLEAN` / `## Error Handling Audit: ISSUES_FOUND` | `CLEAN`, `ISSUES_FOUND` |
+| `integration-verifier` | `CONTRACT {"s":"PASS | FAIL","b":...,"cr":...}` | `## Verification: PASS` / `## Verification: FAIL` | `PASS`, `FAIL` |
 
 All three emit `### Memory Notes (For Workflow-Final Persistence)` instead of YAML
 `MEMORY_NOTES`.
