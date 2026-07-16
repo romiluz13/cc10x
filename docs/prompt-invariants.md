@@ -1,6 +1,6 @@
 # CC10X Prompt Behavioral Invariant Registry
 
-> **Status note:** This registry is aligned to the live prompt stack in `plugins/cc10x/agents/` and `plugins/cc10x/skills/` as of 2026-06-17 (`v11.0.0`). Invariants last changed on 2026-04-12 (`v10.1.19`); `v11.0.0` de-versions the state root from `.cc10x/v10/` to `.cc10x/` (version lives only in `plugin.json`/GitHub) with no invariant changes. `v11.1.0` adds execution-engine deltas and 4 net-new skills — additive, no invariant changes.
+> **Status note:** This registry is aligned to the live prompt stack in `plugins/cc10x/agents/` and `plugins/cc10x/skills/` as of 2026-06-17 (`v11.0.0`). Invariants last changed on 2026-04-12 (`v10.1.19`); `v11.0.0` de-versions the state root from `.cc10x/v10/` to `.cc10x/` (version lives only in `plugin.json`/GitHub) with no invariant changes. `v11.1.0` adds execution-engine deltas and 4 net-new skills — additive, no invariant changes. `v12.5.0` adds the enforced seam gate, resolving-merge-conflicts skill, CONTEXT.md/docs/adr/ canonical artifacts, and 2 advisory on-ramp workflows (TRIAGE, CODEBASE-HEALTH) — additive, no invariant changes to existing agent contracts.
 
 ## Purpose
 
@@ -16,6 +16,7 @@ the router/runtime lane with audit and replay.
 ## Audit Snapshot
 
 Validated against the live prompt surface:
+
 - planner, component-builder, integration-verifier
 - plan-gap-reviewer
 - plan-review-gate, verification-before-completion
@@ -26,6 +27,7 @@ Validated against the live prompt surface:
 ## Current Invariants
 
 ### PINV-001: Planner cannot silently approve open decisions
+
 **Covers:** `plugins/cc10x/agents/planner.md`
 **Enforces:** Open decisions remain explicit, recommended defaults remain unapproved, and differences from agreement remain visible.
 **Failure prevented:** Planner defaults masquerade as approved requirements.
@@ -34,6 +36,7 @@ Validated against the live prompt surface:
 **Safe to strengthen:** Yes, if the prompt stays non-runtime and does not change router gating semantics.
 
 ### PINV-002: Plan review stays fail-closed and verdict-based
+
 **Covers:** `plugins/cc10x/skills/plan-review-gate/SKILL.md`
 **Enforces:** Review is adversarial, evidence-backed, and binary enough to block execution on unresolved issues.
 **Failure prevented:** “Approved with comments” behavior sneaks back into plan review.
@@ -42,6 +45,7 @@ Validated against the live prompt surface:
 **Safe to strengthen:** Yes, if runtime isolation is not falsely implied.
 
 ### PINV-003: Builder treats the approved phase as the contract
+
 **Covers:** `plugins/cc10x/agents/component-builder.md`
 **Enforces:** The builder follows only the current approved phase, reports scope truthfully, and does not improvise later-phase work.
 **Failure prevented:** Silent phase skipping, hidden scope creep, and narrative success on partial execution.
@@ -50,6 +54,7 @@ Validated against the live prompt surface:
 **Safe to strengthen:** Yes, if it does not add new router-owned checkpoints or task graph behavior.
 
 ### PINV-004: Verifier remains independent from upstream approval
+
 **Covers:** `plugins/cc10x/agents/integration-verifier.md`
 **Enforces:** Reviewer approval, hunter CLEAN, or builder confidence are inputs to verification, never substitutes for proof.
 **Failure prevented:** Self-certified completion where one agent’s confidence is mistaken for verification.
@@ -58,6 +63,7 @@ Validated against the live prompt surface:
 **Safe to strengthen:** Yes, if it does not alter router remediation flow.
 
 ### PINV-005: Verification-before-completion preserves fresh-evidence discipline
+
 **Covers:** `plugins/cc10x/skills/verification-before-completion/SKILL.md`
 **Enforces:** No completion/fix/pass claim without fresh verification evidence from the current session.
 **Failure prevented:** False completion, stale-evidence claims, and “should pass” rationalization.
@@ -66,6 +72,7 @@ Validated against the live prompt surface:
 **Safe to strengthen:** Yes, if it stays wording-only and does not add runtime steps.
 
 ### PINV-006: Internal skills remain advisory under explicit user/project authority
+
 **Covers:** planner, component-builder, integration-verifier, bug-investigator, `frontend-patterns`, `debugging-patterns`
 **Enforces:** User prompt, `CLAUDE.md`, repo standards, and approved plans outrank internal CC10X skills.
 **Failure prevented:** Internal patterns silently competing with explicit project direction.
@@ -74,6 +81,7 @@ Validated against the live prompt surface:
 **Safe to strengthen:** Yes.
 
 ### PINV-007: Skill descriptions describe when to use, not workflow summaries
+
 **Covers:** `frontend-patterns`, `debugging-patterns`, `plan-review-gate`, `verification-before-completion`
 **Enforces:** Descriptions stay trigger-oriented and do not summarize workflow steps that Claude may follow instead of reading the body.
 **Failure prevented:** Trigger false positives and workflow shortcuts caused by over-descriptive metadata.
@@ -82,6 +90,7 @@ Validated against the live prompt surface:
 **Safe to strengthen:** Yes, as long as trigger accuracy improves.
 
 ### PINV-008: Goal-backward verification framing remains intact
+
 **Covers:** `integration-verifier`, `verification-before-completion`
 **Enforces:** Verification still reasons over truths, artifacts, and wiring, not only exit codes or file presence.
 **Failure prevented:** Stubs, unwired implementations, and local illusions passing as complete.
@@ -90,6 +99,7 @@ Validated against the live prompt surface:
 **Safe to strengthen:** Yes.
 
 ### PINV-009: Non-trivial plans must be grounded in repo reality
+
 **Covers:** `plugins/cc10x/agents/planner.md`, `plugins/cc10x/skills/plan-review-gate/SKILL.md`
 **Enforces:** Non-trivial plans expose a codebase reality check, plan-vs-code gaps, an assumption ledger, and phase dependencies before they can pass review.
 **Failure prevented:** Plans that look rigorous on paper but ignore the actual codebase and force the user into repeated “compare it to the code again” loops.
@@ -98,6 +108,7 @@ Validated against the live prompt surface:
 **Safe to strengthen:** Yes, if it remains inside planning artifacts and review wording only.
 
 ### PINV-010: Fresh planning review stays reviewer-only
+
 **Covers:** `plugins/cc10x/agents/plan-gap-reviewer.md`, `plugins/cc10x/agents/planner.md`
 **Enforces:** The fresh planning reviewer can challenge the plan, but it cannot rewrite the plan, own memory, ask the user questions, or take over workflow decisions from the planner/router.
 **Failure prevented:** Subagent freshness turning into orchestration drift or multi-owner plan artifacts.
@@ -106,6 +117,7 @@ Validated against the live prompt surface:
 **Safe to strengthen:** Yes.
 
 ### PINV-011: Live-proof requirements cannot silently downgrade
+
 **Covers:** `plugins/cc10x/agents/planner.md`, `plugins/cc10x/skills/planning-patterns/SKILL.md`, `plugins/cc10x/agents/integration-verifier.md`, `plugins/cc10x/skills/verification-before-completion/SKILL.md`
 **Enforces:** When the request or accepted plan requires real, seeded, production-like verification, the plan must keep that requirement explicit and the verifier must not substitute replay-only, unit-only, or manual-only checks as equivalent proof.
 **Failure prevented:** CC10X reporting trust-grade verification while only exercising deterministic fixtures or lightweight local checks.
@@ -114,6 +126,7 @@ Validated against the live prompt surface:
 **Safe to strengthen:** Yes, if runtime orchestration ownership remains with the router.
 
 ### PINV-012: Session memory stays router-subordinate and distilled
+
 **Covers:** `plugins/cc10x/skills/session-memory/SKILL.md`
 **Enforces:** Agents load versioned memory early, emit distilled memory notes, and do not bypass router-owned final markdown persistence.
 **Failure prevented:** Duplicate memory write paths, bloated memory notes, and durable-state drift between workflow artifacts and markdown memory.

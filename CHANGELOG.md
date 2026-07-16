@@ -1,5 +1,56 @@
 # Changelog
 
+## [12.5.0] - 2026-07-16
+
+### Added: Matt Pocock skills integration + enforced seam gate + advisory on-ramp workflows
+
+Three sub-projects integrating Matt Pocock's engineering skills (github.com/mattpocock/skills) into cc10x's autonomous workflow scaffold — Matt's discipline as the payload, cc10x's router as the enforcement. Workflow structure (plan→loop→prove; build→review→integration→verify) untouched across all three.
+
+#### Sub-project 1 — payload layer (commit 7de3f82 + fix 3ad8e9d)
+
+- 2 new skills: `codebase-design` (canonical deep-module vocabulary), `domain-modeling` (active glossary discipline with autonomous transform)
+- `building` Seam Discipline: one-seam/one-test/one-impl + implementation-coupled anti-pattern + advisory TEST_SEAMS
+- `codebase-hygiene` deletion-test bug fix (was inverted — vanishes→keep; now vanishes→pass-through, matching architecture + codebase-design)
+- `architecture` deduped → points to canonical codebase-design
+- `code-reviewer`: 12th Fowler smell (Refused Bequest) + loads codebase-design
+- `planning`: advisory Test Seams + Wide-Refactor expand–contract phasing
+- `debugging`: tighten-the-loop + red-capable completion criteria + REPL-first + measurement-first perf branch + throwaway cleanup
+- `exploration`: active domain-term challenge
+- CONTEXT.md + `docs/adr/` adopted as first-class artifacts; `docs/decisions/` migrated to `docs/adr/`
+- Frontmatter skills: added on 5 agents (active for shaping phases, read-only for builders)
+- 3 GPT-5.6 Sol reviewers (14 findings, all incorporated)
+
+#### Sub-project 2a — enforced seam gate + merge-conflicts skill + router policy gap fixes (PR #56)
+
+- `TEST_SEAMS` + `SEAM_GATE_STATUS` (confirmed/proposed/disagreed/not_applicable) in the builder contract, validated per build_scope
+- `resolving-merge-conflicts` skill (Matt's 5-step, never --abort)
+- Pre-existing router-policy gap fixes: non-empty TDD_RED_REASON, FEEDBACK_LOOP + DEBUG_CLOSEOUT enforcement, ALTERNATIVES ≥2 for decision_rfc
+- Doc-sync fixtures registered in replay (26 fixtures); validators now enforce new fields (4 negative probes)
+- 3 GPT-5.6 Sol reviewers (all findings incorporated)
+
+#### Sub-project 2b — TRIAGE + CODEBASE-HEALTH on-ramp workflows (PR #63)
+
+- 2 new advisory-only intent routes (priority 5 + 6); priority 1-4 unchanged byte-for-byte; DEFAULT→BUILD moved 5→7
+- `triage-agent` (read-only): categorizes/verifies/briefs incoming issues
+- `architecture-scanner` (read-only): surfaces deepening candidates as HTML report
+- Primary-deliverable rules prevent BUILD-stealing; keyword collisions removed
+- workflow_type enum + router substitution list updated (+pending transitional)
+- 3 GPT-5.6 Sol reviewers (all findings incorporated)
+
+#### Verification infrastructure
+
+- `prompt_clause_assertions.py`: 61 anchored assertions (full row text, non-collision checks, tools-line lambda checks)
+- `seam_eval.py`: 6 structural scenarios for the seam gate
+- `workflow_replay_check.py`: 28 fixtures, validators now enforce new contract fields
+- ADRs: `docs/adr/0001-enforced-seam-gate.md`, `docs/adr/0002-advisory-onramp-workflows.md`
+
+### Fixed
+
+- `codebase-hygiene` inverted deletion-test verdict (was contradicting `architecture` + `codebase-design`)
+- `build-doc-sync-happy-path` duplicate `AUDIT_DOCS_UPDATED` key (caught by an independent external-session review)
+- Contract-override policy drift: persona-required fields (TDD_RED_REASON, FEEDBACK_LOOP, DEBUG_CLOSEOUT, ≥2 alternatives) now policy-enforced
+- Doc-sync fixtures orphaned from REQUIRED_FIXTURES — now registered
+
 ## [12.4.0] - 2026-07-05
 
 ### Fixed: Brutal audit findings — de-duplicated skills, wired decorative patterns, hook-enforced circuit breaker
