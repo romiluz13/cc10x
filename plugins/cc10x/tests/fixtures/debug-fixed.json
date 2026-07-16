@@ -9,13 +9,22 @@
     "plan_mode": "execution_plan",
     "verification_rigor": "standard",
     "proof_status": "gaps_found",
-    "traceability": {"requirements": [], "phases": [], "verification": [], "remediation": []},
+    "traceability": {
+      "requirements": [],
+      "phases": [],
+      "verification": [],
+      "remediation": []
+    },
     "phase_cursor": "debug-investigate",
     "task_ids": {},
     "results": {},
-    "intent": {"goal": "Fix CSV export bug"},
+    "intent": {
+      "goal": "Fix CSV export bug"
+    },
     "evidence": {},
-    "quality": {"convergence_state": "pending"},
+    "quality": {
+      "convergence_state": "pending"
+    },
     "status_history": [],
     "remediation_history": []
   },
@@ -29,7 +38,10 @@
       "VARIANTS_COVERED": 2,
       "BLAST_RADIUS_SCAN": {
         "same_file": "Found two sibling CSV delimiter branches and updated both.",
-        "adjacent_scan": ["src/export/csv.ts", "src/export/csvOptions.ts"],
+        "adjacent_scan": [
+          "src/export/csv.ts",
+          "src/export/csvOptions.ts"
+        ],
         "result": "fixed_all_safe_duplicates"
       },
       "SCENARIOS": [
@@ -55,13 +67,43 @@
           "exit_code": 0,
           "status": "PASS"
         }
-      ]
+      ],
+      "FEEDBACK_LOOP": {
+        "rung": "failing_test",
+        "command": "CI=true npx vitest run currency-rounding",
+        "deterministic": true,
+        "flaky_rate": null
+      },
+      "NO_LOOP_BLOCKED": {
+        "tried": [],
+        "ask": null
+      },
+      "BOUNDARY_MATRIX": {
+        "applicable": false,
+        "failing_layer": null
+      },
+      "REGRESSION_SEAM": {
+        "status": "seam_exists",
+        "note": null
+      },
+      "DEFENSE_IN_DEPTH": {
+        "applicable": false,
+        "layers": []
+      },
+      "DEBUG_CLOSEOUT": {
+        "instrumentation_removed": true,
+        "repro_no_longer_fires": true,
+        "winning_hypothesis": "H1: rounding used floor instead of round-half-up",
+        "architecture_handoff": null
+      }
     }
   },
   "expected": {
     "next_action": "debug_review",
     "artifact_delta": {
-      "quality": {"convergence_state": "pending"}
+      "quality": {
+        "convergence_state": "pending"
+      }
     }
   }
 }

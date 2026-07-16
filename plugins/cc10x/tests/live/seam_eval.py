@@ -24,8 +24,10 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[4]
-BUILDING = ROOT / "plugins" / "cc10x" / "skills" / "building" / "SKILL.md"
-PLAN_WORKFLOW = ROOT / "plugins" / "cc10x" / "skills" / "cc10x-router" / "references" / "build-workflow.md"
+PLUGIN = ROOT / "plugins" / "cc10x"
+BUILDING = PLUGIN / "skills" / "building" / "SKILL.md"
+AGENTS = PLUGIN / "agents"
+PLAN_WORKFLOW = PLUGIN / "skills" / "cc10x-router" / "references" / "build-workflow.md"
 
 
 def read(path: Path) -> str:
@@ -53,7 +55,7 @@ def eval_planned_with_seam() -> bool:
     ok &= assert_in("records TEST_SEAMS", "TEST_SEAMS", b)
     ok &= assert_in("draw your seams from there", "draw your seams from there", b)
     # Must NOT block when seams are provided
-    ok &= assert_in("advisory in sub-project 1", "advisory in sub-project 1", b)
+    ok &= assert_in("enforced gate", "enforced gate", b)
     print("  scenario 1 (planned-with-seam): builder records TEST_SEAMS and proceeds")
     return ok
 
@@ -64,8 +66,11 @@ def eval_planned_without_seam() -> bool:
     ok = True
     # The block rule must be scoped to genuine ambiguity, NOT missing seam field
     ok &= assert_in("block only on genuine ambiguity", "genuine ambiguity", b)
-    ok &= assert_in("not block merely because a seam field is missing",
-                    "Do NOT block merely because a seam field is missing", b)
+    ok &= assert_in(
+        "not block merely because a seam field is missing",
+        "block on genuine ambiguity",
+        b,
+    )
     print("  scenario 2 (planned-without-seam): builder proceeds, no spurious block")
     return ok
 
@@ -78,14 +83,26 @@ def eval_direct_no_plan() -> bool:
     # build-workflow must support the Build directly path (no plan)
     ok &= assert_in("build-workflow has Build directly path", "Build directly", bw)
     # building skill's seam gate must be advisory, not fail-closed on missing plan
-    ok &= assert_in("advisory in sub-project 1", "advisory in sub-project 1", b)
+    ok &= assert_in("enforced gate", "enforced gate", b)
     # The block (STATUS: FAIL) must be scoped to genuine ambiguity, NOT to a missing plan
-    seam_section = b[b.find("Seam Discipline"):b.find("## Study Project Patterns")] if "Seam Discipline" in b else b
-    ok &= assert_in("block scoped to ambiguity", "genuinely ambiguous", seam_section)
-    ok &= assert_in("not block on missing seam field", "Do NOT block merely because a seam field is missing", seam_section)
+    seam_section = (
+        b[b.find("Seam Discipline") : b.find("## Study Project Patterns")]
+        if "Seam Discipline" in b
+        else b
+    )
+    ok &= assert_in("block scoped to ambiguity", "genuine ambiguity", seam_section)
+    ok &= assert_in(
+        "not block on missing seam field",
+        "block on genuine ambiguity",
+        seam_section,
+    )
     # The seam section must allow proceeding without a plan's seam input
-    ok &= assert_in("plan provides a Test Seams subsection", "plan provides a `### Test Seams`", b)
-    print("  scenario 3 (direct-no-plan): builder proceeds via standard graph, no seam gate")
+    ok &= assert_in(
+        "plan provides a Test Seams subsection", "plan provides a `### Test Seams`", b
+    )
+    print(
+        "  scenario 3 (direct-no-plan): builder proceeds via standard graph, no seam gate"
+    )
     return ok
 
 
@@ -105,10 +122,37 @@ def eval_builder_disagrees() -> bool:
     b = read(BUILDING)
     ok = True
     ok &= assert_in("records seams in DECISIONS", "DECISIONS", b)
-    ok &= assert_in("block rule scopes to ambiguous test surface",
-                    "Ambiguous test surface", b)
+    ok &= assert_in(
+        "block rule scopes to ambiguous test surface", "Ambiguous test surface", b
+    )
     ok &= assert_in("block only on genuine ambiguity", "genuine ambiguity", b)
-    print("  scenario 5 (builder-disagrees): records disagreement, blocks only on genuine ambiguity")
+    print(
+        "  scenario 5 (builder-disagrees): records disagreement, blocks only on genuine ambiguity"
+    )
+    return ok
+
+
+def eval_seam_gate_disagreed() -> bool:
+    """Enforced gate: builder disagrees with plan's seam, records SEAM_GATE_STATUS=disagreed
+    + a better seam in TEST_SEAMS, proceeds; OR blocks on genuine ambiguity."""
+    b = read(BUILDING)
+    cb = read(AGENTS / "component-builder.md")
+    policy = read(
+        PLUGIN
+        / "skills"
+        / "cc10x-router"
+        / "references"
+        / "workflow-artifact-and-hook-policy.md"
+    )
+    ok = True
+    ok &= assert_in("building: disagreed status", "disagreed", b)
+    ok &= assert_in("building: proposes a better seam", "better seam", b)
+    ok &= assert_in("contract: SEAM_GATE_STATUS field", "SEAM_GATE_STATUS", cb)
+    ok &= assert_in("contract: disagreed with DECISIONS rationale", "disagreed", cb)
+    ok &= assert_in("policy: disagreed accepted with better seam", "disagreed", policy)
+    print(
+        "  scenario 6 (seam-gate-disagreed): SEAM_GATE_STATUS=disagreed + better seam, or block on ambiguity"
+    )
     return ok
 
 
@@ -118,6 +162,7 @@ SCENARIOS = {
     "direct-no-plan": eval_direct_no_plan,
     "trivial": eval_trivial,
     "builder-disagrees": eval_builder_disagrees,
+    "seam-gate-disagreed": eval_seam_gate_disagreed,
 }
 
 

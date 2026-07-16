@@ -59,7 +59,6 @@
       "SKIP_REASON": "",
       "AUDIT_DOCS_CREATED": ["docs/adr/0001-new-hook-pattern.md"],
       "AUDIT_DOCS_UPDATED": [],
-      "AUDIT_DOCS_UPDATED": [],
       "MEMORY_NOTES": {
         "learnings": ["New hook useOrderStatus added with retry logic; hooks-reference.md updated with signature and key behaviors"],
         "patterns": ["Retry pattern introduced for hooks — document in hooks-reference with retry count and backoff strategy"],

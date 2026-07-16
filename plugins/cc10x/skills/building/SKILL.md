@@ -73,9 +73,19 @@ Build in thin vertical slices that cross all layers: UI → API → logic → da
 
 **Implementation-coupled anti-pattern.** A test is implementation-coupled if it mocks internal collaborators, tests private methods, or verifies through a side channel (querying the database instead of using the interface). The tell: the test breaks when you refactor but behavior hasn't changed. Test through the public interface, not internals.
 
-**Record your seams.** In your Router Contract `DECISIONS` array, record `TEST_SEAMS: [seam names]` with one line of rationale per seam. This is advisory in sub-project 1 — the verifier uses it to confirm your test exercised the phase's real risk.
+**Record your seams (enforced contract fields).** Your Router Contract carries two seam fields:
 
-**Block only on genuine ambiguity.** If the test surface is genuinely ambiguous or no seam can exercise the phase's real risk, return `STATUS: FAIL`, `PHASE_STATUS: blocked`, `REMEDIATION_REASON: "Ambiguous test surface — no seam exercises the real risk"`. Do NOT block merely because a seam field is missing from the plan — seam selection is advisory here; the enforced gate arrives in sub-project 2.
+- `TEST_SEAMS: [seam names you actually tested at]`
+- `SEAM_GATE_STATUS: "confirmed" | "proposed" | "disagreed" | "not_applicable"`
+
+Set `SEAM_GATE_STATUS` as follows:
+
+- **`confirmed`** — the plan provided `test_seams` and you used them (TEST_SEAMS non-empty, matching the plan).
+- **`proposed`** — no plan (direct/no-plan path) OR a legacy plan whose phase omits `test_seams`; you proposed seams at BUILD_PREFLIGHT (TEST_SEAMS non-empty).
+- **`disagreed`** — the plan's proposed seam cannot exercise the phase's real risk. Record the disagreement in `DECISIONS` and either propose a better seam (TEST_SEAMS non-empty with the better seam) or block on genuine ambiguity (`STATUS: FAIL`, `REMEDIATION_REASON: "Ambiguous test surface — no seam exercises the real risk"`).
+- **`not_applicable`** — `build_scope=trivial`; no seam expectation.
+
+The router validates these per `build_scope` (see the contract-override table). This is the enforced gate — not advisory.
 
 ## Study Project Patterns First
 

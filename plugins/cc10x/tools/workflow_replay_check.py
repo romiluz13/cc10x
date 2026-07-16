@@ -27,6 +27,8 @@ REQUIRED_FIXTURES = (
     "build-phase-blocked.json",
     "build-scope-gate.json",
     "build-remediation-loop.json",
+    "build-doc-sync-happy-path.json",
+    "build-doc-sync-skipped.json",
     "debug-fixed.json",
     "debug-fixed-no-variant.json",
     "debug-research.json",
@@ -197,6 +199,52 @@ def validate_builder_contract(fixture_id: str, contract: dict[str, Any]) -> None
     require(
         not contract.get("BLOCKED_ITEMS"), f"{fixture_id}: blocked items must be empty"
     )
+    # Enforced builder PASS fields (sub-project 2a gap fix): preflight + behavioral RED reason.
+    # Backward-compat: fixtures predating 2a may omit; when present, enforce.
+    if "BUILD_PREFLIGHT_EMITTED" in contract:
+        require(
+            strict_bool(contract["BUILD_PREFLIGHT_EMITTED"], True),
+            f"{fixture_id}: BUILD_PREFLIGHT_EMITTED must be true for PASS",
+        )
+    if "TDD_RED_REASON_KIND" in contract:
+        require(
+            contract["TDD_RED_REASON_KIND"] == "behavioral",
+            f"{fixture_id}: TDD_RED_REASON_KIND must be behavioral for PASS (false-RED rejected)",
+        )
+        require(
+            bool(contract.get("TDD_RED_REASON")),
+            f"{fixture_id}: behavioral RED requires non-empty TDD_RED_REASON",
+        )
+    # Enforced seam gate (sub-project 2a): TEST_SEAMS + SEAM_GATE_STATUS are contract fields.
+    # Backward-compat: fixtures predating 2a may omit them; when present, validate consistency.
+    seam_status = contract.get("SEAM_GATE_STATUS")
+    if seam_status is not None:
+        require(
+            seam_status in {"confirmed", "proposed", "disagreed", "not_applicable"},
+            f"{fixture_id}: invalid SEAM_GATE_STATUS '{seam_status}'",
+        )
+        test_seams = contract.get("TEST_SEAMS", [])
+        if seam_status in {"confirmed", "proposed"}:
+            require(
+                isinstance(test_seams, list) and len(test_seams) > 0,
+                f"{fixture_id}: SEAM_GATE_STATUS={seam_status} requires non-empty TEST_SEAMS",
+            )
+        elif seam_status == "disagreed":
+            # disagreed with non-empty TEST_SEAMS = better seam proposed; empty TEST_SEAMS only
+            # valid when STATUS=FAIL with the exact ambiguity remediation reason.
+            has_seams = isinstance(test_seams, list) and len(test_seams) > 0
+            if has_seams:
+                pass  # better seam proposed — valid
+            else:
+                require(
+                    contract.get("STATUS") == "FAIL",
+                    f"{fixture_id}: disagreed with empty TEST_SEAMS requires STATUS=FAIL (ambiguity block)",
+                )
+                reason = contract.get("REMEDIATION_REASON", "")
+                require(
+                    "Ambiguous test surface" in reason,
+                    f"{fixture_id}: disagreed+empty+FAIL requires the ambiguity REMEDIATION_REASON",
+                )
     validate_scenarios(fixture_id, contract["SCENARIOS"], require_pass=True)
 
 
@@ -217,6 +265,36 @@ def validate_investigator_contract(
         bool(contract.get("BLAST_RADIUS_SCAN")),
         f"{fixture_id}: blast radius scan is required",
     )
+    # Enforced feedback loop + debug close-out (sub-project 2a gap fix).
+    # Backward-compat: fixtures predating 2a may omit; when present, enforce.
+    feedback_loop = contract.get("FEEDBACK_LOOP")
+    if feedback_loop is not None:
+        require(
+            isinstance(feedback_loop, dict),
+            f"{fixture_id}: FEEDBACK_LOOP must be an object",
+        )
+        require(
+            feedback_loop.get("rung") != "none",
+            f"{fixture_id}: FIXED requires FEEDBACK_LOOP.rung != none (no loop -> BLOCKED)",
+        )
+        require(
+            bool(feedback_loop.get("command")),
+            f"{fixture_id}: FIXED requires non-null FEEDBACK_LOOP.command",
+        )
+    closeout = contract.get("DEBUG_CLOSEOUT")
+    if closeout is not None:
+        require(
+            isinstance(closeout, dict),
+            f"{fixture_id}: DEBUG_CLOSEOUT must be an object",
+        )
+        require(
+            strict_bool(closeout.get("instrumentation_removed"), True),
+            f"{fixture_id}: FIXED requires DEBUG_CLOSEOUT.instrumentation_removed=true",
+        )
+        require(
+            strict_bool(closeout.get("repro_no_longer_fires"), True),
+            f"{fixture_id}: FIXED requires DEBUG_CLOSEOUT.repro_no_longer_fires=true",
+        )
     scenarios = contract["SCENARIOS"]
     validate_scenarios(fixture_id, scenarios, require_pass=True)
     scenario_names = [scenario["name"] for scenario in scenarios]
@@ -967,6 +1045,77 @@ def check_verify_fail_closed(fixture: dict[str, Any]) -> None:
     )
 
 
+def validate_doc_syncer_contract(fixture_id: str, contract: dict[str, Any]) -> None:
+    """Validate a doc-syncer Router Contract against the override rules."""
+    valid_status = {"COMPLETE", "SKIPPED", "PARTIAL", "FAIL"}
+    require(
+        contract["STATUS"] in valid_status,
+        f"{fixture_id}: invalid doc-syncer STATUS '{contract['STATUS']}'",
+    )
+    require("IMPACT_LEVEL" in contract, f"{fixture_id}: missing IMPACT_LEVEL")
+    require(
+        isinstance(contract.get("DOC_LAYERS_EVALUATED"), list),
+        f"{fixture_id}: DOC_LAYERS_EVALUATED must be a list",
+    )
+    if contract["STATUS"] == "COMPLETE":
+        require(
+            len(contract.get("DOC_LAYERS_EVALUATED", [])) > 0,
+            f"{fixture_id}: COMPLETE requires non-empty DOC_LAYERS_EVALUATED",
+        )
+        has_update = bool(contract.get("DOC_FILES_UPDATED")) or bool(
+            contract.get("AUDIT_DOCS_CREATED")
+        )
+        require(
+            has_update,
+            f"{fixture_id}: COMPLETE requires DOC_FILES_UPDATED or AUDIT_DOCS_CREATED",
+        )
+    elif contract["STATUS"] == "SKIPPED":
+        require(
+            bool(contract.get("SKIP_REASON")),
+            f"{fixture_id}: SKIPPED requires non-empty SKIP_REASON",
+        )
+    elif contract["STATUS"] == "PARTIAL":
+        has_update = bool(contract.get("DOC_FILES_UPDATED")) or bool(
+            contract.get("AUDIT_DOCS_CREATED")
+        )
+        require(
+            has_update,
+            f"{fixture_id}: PARTIAL requires DOC_FILES_UPDATED or AUDIT_DOCS_CREATED",
+        )
+        require(
+            len(contract.get("DOC_LAYERS_EVALUATED", [])) > 0,
+            f"{fixture_id}: PARTIAL requires non-empty DOC_LAYERS_EVALUATED",
+        )
+
+
+def check_build_doc_sync_happy_path(fixture: dict[str, Any]) -> None:
+    ds = fixture["agent_outputs"]["doc_syncer_contract"]
+    validate_doc_syncer_contract("build-doc-sync-happy-path", ds)
+    require(ds["STATUS"] == "COMPLETE", "build-doc-sync-happy-path: expected COMPLETE")
+    require(
+        ds["IMPACT_LEVEL"] == "medium",
+        "build-doc-sync-happy-path: expected medium impact",
+    )
+    require(
+        bool(ds.get("AUDIT_DOCS_CREATED")),
+        "build-doc-sync-happy-path: expected an audit doc created",
+    )
+    require(
+        bool(ds.get("DOC_FILES_UPDATED")),
+        "build-doc-sync-happy-path: expected DOC_FILES_UPDATED non-empty",
+    )
+
+
+def check_build_doc_sync_skipped(fixture: dict[str, Any]) -> None:
+    ds = fixture["agent_outputs"]["doc_syncer_contract"]
+    validate_doc_syncer_contract("build-doc-sync-skipped", ds)
+    require(ds["STATUS"] == "SKIPPED", "build-doc-sync-skipped: expected SKIPPED")
+    require(
+        bool(ds.get("SKIP_REASON")),
+        "build-doc-sync-skipped: expected non-empty SKIP_REASON",
+    )
+
+
 def check_latency_telemetry(fixture: dict[str, Any]) -> None:
     telemetry = fixture["starting_artifact"]["telemetry"]
     validate_latency_telemetry(
@@ -999,6 +1148,8 @@ CHECKS = {
     "build-phase-blocked.json": check_build_phase_blocked,
     "build-scope-gate.json": check_build_scope_gate,
     "build-remediation-loop.json": check_build_remediation_loop,
+    "build-doc-sync-happy-path.json": check_build_doc_sync_happy_path,
+    "build-doc-sync-skipped.json": check_build_doc_sync_skipped,
     "debug-fixed.json": check_debug_fixed,
     "debug-fixed-no-variant.json": check_debug_fixed_no_variant,
     "debug-research.json": check_debug_research,

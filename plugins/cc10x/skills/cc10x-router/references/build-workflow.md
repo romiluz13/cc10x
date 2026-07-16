@@ -60,6 +60,7 @@ The orchestration state dir (`.cc10x/`) and the workflow artifacts STAY at `CLAU
    - `required_checks`
    - `checkpoint_type`
    - `exit_criteria`
+   - `test_seams` — array of seam names the phase will test at. **Required for `build_scope=standard` with a plan**; the builder draws `TEST_SEAMS` from here and sets `SEAM_GATE_STATUS` accordingly. Optional (empty or omitted) for `build_scope=trivial` or direct/no-plan builds (builder proposes at BUILD_PREFLIGHT or sets `not_applicable`).
 9. Initialize workflow `proof_status` to `gaps_found` until the current phase is independently verified.
 10. Clarify missing requirements before builder only when the plan and memory do not already answer them.
 11. Persist pre-answered clarifications in `activeContext.md ## Decisions` using `Build clarification [{topic}]: {answer}`.

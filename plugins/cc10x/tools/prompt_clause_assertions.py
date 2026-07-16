@@ -73,10 +73,92 @@ ASSERTIONS = [
         "implementation-coupled anti-pattern present",
     ),
     A(
-        "building: TEST_SEAMS recording",
+        "building: TEST_SEAMS + SEAM_GATE_STATUS (enforced)",
         SKILLS / "building" / "SKILL.md",
-        contains("TEST_SEAMS"),
-        "builder records TEST_SEAMS in DECISIONS",
+        contains_all(
+            "TEST_SEAMS",
+            "SEAM_GATE_STATUS",
+            "confirmed",
+            "proposed",
+            "disagreed",
+            "not_applicable",
+        ),
+        "builder records enforced seam-gate contract fields + 4 statuses",
+    ),
+    # component-builder contract — enforced seam gate (sub-project 2a)
+    A(
+        "component-builder: enforced seam-gate fields in contract",
+        AGENTS / "component-builder.md",
+        contains_all(
+            "TEST_SEAMS",
+            "SEAM_GATE_STATUS",
+            "confirmed",
+            "proposed",
+            "disagreed",
+            "not_applicable",
+        ),
+        "builder contract has the enforced seam-gate fields + 4 statuses",
+    ),
+    # workflow-artifact-and-hook-policy — enforced gate + pre-existing gap fixes (sub-project 2a)
+    A(
+        "policy: component-builder seam-gate override",
+        PLUGIN
+        / "skills"
+        / "cc10x-router"
+        / "references"
+        / "workflow-artifact-and-hook-policy.md",
+        contains_all(
+            "SEAM_GATE_STATUS", "confirmed", "proposed", "disagreed", "not_applicable"
+        ),
+        "override enforces the 4 seam-gate statuses per build_scope",
+    ),
+    A(
+        "policy: non-empty TDD_RED_REASON enforced",
+        PLUGIN
+        / "skills"
+        / "cc10x-router"
+        / "references"
+        / "workflow-artifact-and-hook-policy.md",
+        contains("non-empty `TDD_RED_REASON`"),
+        "override requires non-empty TDD_RED_REASON for behavioral RED (gap fix)",
+    ),
+    A(
+        "policy: bug-investigator feedback loop + closeout enforced",
+        PLUGIN
+        / "skills"
+        / "cc10x-router"
+        / "references"
+        / "workflow-artifact-and-hook-policy.md",
+        contains_all(
+            "FEEDBACK_LOOP.rung",
+            "DEBUG_CLOSEOUT.instrumentation_removed",
+            "DEBUG_CLOSEOUT.repro_no_longer_fires",
+        ),
+        "override requires feedback loop + debug close-out for FIXED (gap fix)",
+    ),
+    A(
+        "policy: planner >=2 alternatives for decision_rfc",
+        PLUGIN
+        / "skills"
+        / "cc10x-router"
+        / "references"
+        / "workflow-artifact-and-hook-policy.md",
+        contains("length ≥2"),
+        "override requires >=2 alternatives for decision_rfc (gap fix)",
+    ),
+    # resolving-merge-conflicts skill (sub-project 2a)
+    A(
+        "resolving-merge-conflicts: exists with 5 steps + never-abort",
+        SKILLS / "resolving-merge-conflicts" / "SKILL.md",
+        contains_all(
+            "See the current state",
+            "Find the primary sources",
+            "Resolve each hunk",
+            "Run the project's automated checks",
+            "Finish the merge",
+            "never --abort",
+        ),
+        "resolving-merge-conflicts skill has all 5 steps (incl. run checks) + never-abort rule",
     ),
     # codebase-hygiene — deletion test fixed (ticket #38)
     A(
