@@ -54,6 +54,15 @@
       "then": "The builder records the disagreement in DECISIONS and either proceeds with a better seam OR blocks with REMEDIATION_REASON 'Ambiguous test surface' only if ambiguity is genuine",
       "command": "python3 plugins/cc10x/tests/live/seam_eval.py --scenario builder-disagrees",
       "expected": "Exit 0 — builder would record disagreement; block only on genuine ambiguity"
+    },
+    {
+      "name": "6-seam-gate-disagreed: enforced contract shape for disagreement",
+      "mode": "proof",
+      "given": "A builder contract carrying SEAM_GATE_STATUS=disagreed",
+      "when": "The enforced seam gate evaluates the disagreement",
+      "then": "Either a better seam is recorded in TEST_SEAMS, or the contract blocks with the ambiguity REMEDIATION_REASON",
+      "command": "python3 plugins/cc10x/tests/live/seam_eval.py --scenario seam-gate-disagreed",
+      "expected": "Exit 0 — disagreed requires a better seam or the ambiguity block"
     }
   ]
 }

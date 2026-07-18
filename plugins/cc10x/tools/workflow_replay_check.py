@@ -11,36 +11,7 @@ FIXTURES_DIR = PLUGIN_ROOT / "tests" / "fixtures"
 PLANNER_PROMPT = PLUGIN_ROOT / "agents" / "planner.md"
 PLAN_REVIEW_GATE = PLUGIN_ROOT / "skills" / "plan-review-gate" / "SKILL.md"
 
-REQUIRED_FIXTURES = (
-    "plan-direct.json",
-    "plan-decision-rfc.json",
-    "plan-full.json",
-    "plan-clarification.json",
-    "plan-repo-alignment.json",
-    "plan-code-contradiction.json",
-    "plan-fresh-review-pass.json",
-    "plan-fresh-review-findings.json",
-    "plan-fresh-review-exhausted.json",
-    "plan-design-handoff.json",
-    "build-happy-path.json",
-    "build-checkpoint-decision.json",
-    "build-phase-blocked.json",
-    "build-scope-gate.json",
-    "build-remediation-loop.json",
-    "build-doc-sync-happy-path.json",
-    "build-doc-sync-skipped.json",
-    "triage-happy-path.json",
-    "codebase-health-happy-path.json",
-    "debug-fixed.json",
-    "debug-fixed-no-variant.json",
-    "debug-research.json",
-    "skill-precedence.json",
-    "workflow-identity-v10.json",
-    "memory-sync-blocking.json",
-    "review-advisory.json",
-    "verify-fail-closed.json",
-    "latency-telemetry.json",
-)
+from fixture_registry import REQUIRED_FIXTURES, check_registry_complete
 
 REQUIRED_ARTIFACT_KEYS = (
     "workflow_uuid",
@@ -201,24 +172,33 @@ def validate_builder_contract(fixture_id: str, contract: dict[str, Any]) -> None
     require(
         not contract.get("BLOCKED_ITEMS"), f"{fixture_id}: blocked items must be empty"
     )
-    # Enforced builder PASS fields (sub-project 2a gap fix): preflight + behavioral RED reason.
-    # Backward-compat: fixtures predating 2a may omit; when present, enforce.
-    if "BUILD_PREFLIGHT_EMITTED" in contract:
-        require(
-            strict_bool(contract["BUILD_PREFLIGHT_EMITTED"], True),
-            f"{fixture_id}: BUILD_PREFLIGHT_EMITTED must be true for PASS",
-        )
-    if "TDD_RED_REASON_KIND" in contract:
-        require(
-            contract["TDD_RED_REASON_KIND"] == "behavioral",
-            f"{fixture_id}: TDD_RED_REASON_KIND must be behavioral for PASS (false-RED rejected)",
-        )
-        require(
-            bool(contract.get("TDD_RED_REASON")),
-            f"{fixture_id}: behavioral RED requires non-empty TDD_RED_REASON",
-        )
+    # Enforced builder PASS fields (sub-project 2a): preflight + behavioral RED reason.
+    # Mandatory for every builder PASS contract — "enforced" means enforced in fixtures too.
+    require(
+        "BUILD_PREFLIGHT_EMITTED" in contract,
+        f"{fixture_id}: builder PASS contract missing BUILD_PREFLIGHT_EMITTED (enforced gate)",
+    )
+    require(
+        strict_bool(contract["BUILD_PREFLIGHT_EMITTED"], True),
+        f"{fixture_id}: BUILD_PREFLIGHT_EMITTED must be true for PASS",
+    )
+    require(
+        "TDD_RED_REASON_KIND" in contract,
+        f"{fixture_id}: builder PASS contract missing TDD_RED_REASON_KIND (enforced gate)",
+    )
+    require(
+        contract["TDD_RED_REASON_KIND"] == "behavioral",
+        f"{fixture_id}: TDD_RED_REASON_KIND must be behavioral for PASS (false-RED rejected)",
+    )
+    require(
+        bool(contract.get("TDD_RED_REASON")),
+        f"{fixture_id}: behavioral RED requires non-empty TDD_RED_REASON",
+    )
     # Enforced seam gate (sub-project 2a): TEST_SEAMS + SEAM_GATE_STATUS are contract fields.
-    # Backward-compat: fixtures predating 2a may omit them; when present, validate consistency.
+    require(
+        "SEAM_GATE_STATUS" in contract,
+        f"{fixture_id}: builder PASS contract missing SEAM_GATE_STATUS (enforced gate)",
+    )
     seam_status = contract.get("SEAM_GATE_STATUS")
     if seam_status is not None:
         require(
@@ -267,8 +247,16 @@ def validate_investigator_contract(
         bool(contract.get("BLAST_RADIUS_SCAN")),
         f"{fixture_id}: blast radius scan is required",
     )
-    # Enforced feedback loop + debug close-out (sub-project 2a gap fix).
-    # Backward-compat: fixtures predating 2a may omit; when present, enforce.
+    # Enforced feedback loop + debug close-out (sub-project 2a).
+    # Mandatory for every FIXED contract — "enforced" means enforced in fixtures too.
+    require(
+        "FEEDBACK_LOOP" in contract,
+        f"{fixture_id}: FIXED contract missing FEEDBACK_LOOP (enforced gate)",
+    )
+    require(
+        "DEBUG_CLOSEOUT" in contract,
+        f"{fixture_id}: FIXED contract missing DEBUG_CLOSEOUT (enforced gate)",
+    )
     feedback_loop = contract.get("FEEDBACK_LOOP")
     if feedback_loop is not None:
         require(
@@ -1259,7 +1247,7 @@ def main() -> int:
         print("FAIL: fixtures directory missing", file=sys.stderr)
         return 1
 
-    errors: list[str] = []
+    errors: list[str] = list(check_registry_complete())
     for name in REQUIRED_FIXTURES:
         try:
             fixture = load_fixture(name)
