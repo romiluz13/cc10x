@@ -12,10 +12,12 @@ user-invocable: false
 
 ## Reference Files
 
-- `references/memory-model-and-ownership.md` — memory surfaces, ownership, promotion, workflow markers
-- `references/memory-operations.md` — permission-free operations, router-only persistence, edit patterns
-- `references/memory-file-contracts.md` — required headings, stable anchors, templates, auto-heal rules
-- `references/context-budget-and-checkpointing.md` — context-budget rules, warning signs, checkpoint triggers
+Read only what's needed:
+
+- `references/memory-model-and-ownership.md` — memory surfaces, ownership, promotion, workflow markers; load when deciding which surface holds a piece of state or who may write it
+- `references/memory-operations.md` — permission-free operations, router-only persistence, edit patterns; load when actually reading or writing `.cc10x/` files
+- `references/memory-file-contracts.md` — required headings, stable anchors, templates, auto-heal rules; load when creating a memory file or healing a malformed one
+- `references/context-budget-and-checkpointing.md` — context-budget rules, warning signs, checkpoint triggers; load when context is getting heavy or before a compaction/checkpoint decision
 
 ---
 
@@ -116,17 +118,29 @@ The "suggested skills/tools" pointer is load-bearing: tell the next agent how to
 
 ## Knowledge Compounding Loop
 
-Memory is not just for context survival — it's for system self-improvement. After every BUILD or DEBUG cycle, structured learnings should compound into reusable knowledge.
+Memory is not just for context survival — it's for system self-improvement. After every BUILD or DEBUG cycle, structured learnings should compound into reusable knowledge. Memory files (`activeContext.md`, `patterns.md`, `progress.md`) hold session-scoped context; **durable, structured learnings that survive across projects and sessions** go to `docs/solutions/`.
 
 ### The Loop
 
-1. **Capture** — During workflow-finalize, the router writes structured learnings from agent `MEMORY_NOTES` into `activeContext.md ## Learnings` and `patterns.md ## Common Gotchas`.
-2. **Ground** — Before starting new work, agents read `patterns.md` and `activeContext.md` to avoid repeating solved problems.
-3. **Consolidate** — When the same gotcha appears 3+ times in `patterns.md`, promote it to a dedicated reference file or skill section.
+1. **Capture** — During workflow-finalize, the router writes structured learnings from agent `MEMORY_NOTES` into `activeContext.md ## Learnings` and `patterns.md ## Common Gotchas`; learnings that cross the solution-doc threshold (below) are written to `docs/solutions/`.
+2. **Ground** — Before starting new work, agents read `patterns.md`, `activeContext.md`, and `docs/solutions/` to avoid repeating solved problems.
+3. **Consolidate** — When the same gotcha appears 3+ times in `patterns.md`, promote it to a solution doc under `docs/solutions/`.
+4. **Refresh** — Periodically audit learnings and solution docs with the five-outcome model (below).
+5. **Discover** — Ensure `CLAUDE.md` or `AGENTS.md` points to `docs/solutions/` so agents can find it.
+
+This closes the loop: every solved problem makes the next problem easier.
+
+### When to Write a Solution Doc
+
+After any non-trivial debug or build cycle, the router (during memory-finalize) evaluates whether to write a solution doc:
+
+- **Write** if: the problem took 3+ hypotheses (debug attempts) to solve, OR the same defect pattern appears in 3+ files, OR the solution contradicts a documented assumption in `patterns.md`
+- **Skip** if: the fix was mechanical (typo, import error, one-line change)
+- **Offer neutrally** if: the lesson is one sentence (mention in memory notes instead)
 
 ### Compounding Outcomes
 
-When reviewing prior learnings during memory-finalize, apply one of five outcomes:
+When reviewing prior learnings during memory-finalize (or auditing solution docs), apply one of five outcomes:
 
 | Outcome | When | Action |
 | ---------- | ------ | -------- |
@@ -137,18 +151,6 @@ When reviewing prior learnings during memory-finalize, apply one of five outcome
 | **Delete** | Learning no longer applies (framework changed, code removed) | Remove it |
 
 **Why this matters:** Without consolidation, memory accumulates stale entries that mislead future work. The compounding loop ensures memory gets sharper over time, not just larger.
-
-## Knowledge Compounding Loop (docs/solutions/)
-
-Memory files (`activeContext.md`, `patterns.md`, `progress.md`) are for session-scoped context. For **durable, structured learnings that survive across projects and sessions**, write to `docs/solutions/`.
-
-### When to Write a Solution Doc
-
-After any non-trivial debug or build cycle, the router (during memory-finalize) should evaluate whether to write a solution doc:
-
-- **Write** if: the problem took 3+ hypotheses to solve, OR the bug pattern appears in 3+ files, OR the solution contradicts a common assumption
-- **Skip** if: the fix was mechanical (typo, import error, one-line change)
-- **Offer neutrally** if: the lesson is one sentence (mention in memory notes instead)
 
 ### Solution Doc Format
 
@@ -173,12 +175,3 @@ Date: YYYY-MM-DD
 ## Prevention
 [How to prevent this class of problem in the future]
 ```
-
-### The Full Loop
-
-1. **Capture** — Write solution doc after non-trivial cycles
-2. **Ground** — Planning and debugging skills read `docs/solutions/` as context before starting new work
-3. **Refresh** — Periodically audit solution docs: Keep / Update / Consolidate / Replace / Delete (same five-outcome model as memory consolidation)
-4. **Discover** — Ensure `CLAUDE.md` or `AGENTS.md` points to `docs/solutions/` so agents can find it
-
-This closes the loop: every solved problem makes the next problem easier. Without `docs/solutions/`, the system repeats mistakes. With it, the system compounds knowledge.

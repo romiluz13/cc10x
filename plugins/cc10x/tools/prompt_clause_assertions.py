@@ -392,10 +392,10 @@ ASSERTIONS = [
         "Test-Seam section augmented with prefer-existing/ideal=1",
     ),
     A(
-        "planning: advisory to builder",
+        "planning: seams feed the enforced builder gate",
         SKILLS / "planning" / "SKILL.md",
-        contains("advisory input to the builder"),
-        "seams marked advisory not fail-closed",
+        contains("feed the builder's **enforced** seam gate"),
+        "planned seams are the starting contract for the enforced SEAM_GATE_STATUS gate",
     ),
     A(
         "planning: Wide-Refactor Phasing",
@@ -813,6 +813,139 @@ ASSERTIONS = [
         SKILLS / "agent-common" / "SKILL.md",
         contains_all("Single exception:", "BUILD_PREFLIGHT:"),
         "zero-mid-turn-text rule carries the mirrored component-builder exception",
+    ),
+    # --- Skills library reconciliation (ticket #74) ---
+    A(
+        "planning: seam gate acknowledged as enforced",
+        SKILLS / "planning" / "SKILL.md",
+        contains_all("SEAM_GATE_STATUS", "enforced", "fail-closed"),
+        "planner-facing seam note names the builder's enforced SEAM_GATE_STATUS contract",
+    ),
+    A(
+        "planning: stale advisory seam note removed",
+        SKILLS / "planning" / "SKILL.md",
+        contains_none(
+            "The enforced seam gate is sub-project 2",
+            "advisory input to the builder",
+            "without a fail-closed gate",
+        ),
+        "pre-sub-project-2 advisory framing no longer present",
+    ),
+    A(
+        "planning: validation levels point at verification",
+        SKILLS / "planning" / "SKILL.md",
+        contains_all("cc10x:verification", "Live"),
+        "planning defers to verification's canonical Validation Levels incl. Live",
+    ),
+    A(
+        "planning: no divergent validation-levels table",
+        SKILLS / "planning" / "SKILL.md",
+        contains_none("| **Deterministic** | Automated test with exit code |"),
+        "the old three-level table no longer defines levels divergently",
+    ),
+    A(
+        "verification: canonical validation levels retain Live",
+        SKILLS / "verification" / "SKILL.md",
+        contains_all("## Validation Levels", "**Live**"),
+        "verification remains the single owner of the four-level table",
+    ),
+    A(
+        "doc-target-overlay: current ADR path, no deprecated path",
+        PLUGIN / "templates" / "doc-target-overlay.md",
+        lambda text: "docs/adr/" in text and "docs/decisions/" not in text,
+        "template prescribes docs/adr/NNNN, not the deprecated docs/decisions/ path",
+    ),
+    A(
+        "exploration: no subagent spawn in doubt pass",
+        SKILLS / "exploration" / "SKILL.md",
+        contains_none("spawn a fresh-context adversarial review"),
+        "DOUBT no longer instructs spawning a subagent the agent cannot spawn",
+    ),
+    A(
+        "exploration: doubt folded as inline DESIGN sub-procedure",
+        SKILLS / "exploration" / "SKILL.md",
+        contains_all("Doubt Pass", "not a third mode"),
+        "doubt is an inline self-check sub-procedure, keeping the two-mode inventory true",
+    ),
+    A(
+        "update: working patch form, no in-cache git apply --3way",
+        SKILLS / "update" / "SKILL.md",
+        lambda text: "patch --forward" in text
+        and 'git apply --3way "$BACKUP_DIR' not in text,
+        "Phase 4 uses patch with an explicit target; broken in-cache git apply --3way removed",
+    ),
+    A(
+        "update: find predicates parenthesized",
+        SKILLS / "update" / "SKILL.md",
+        contains('-type f \\( -name "*.md" -o -name "*.json" -o -name "*.py" \\)'),
+        "Phase 2 find applies -type f to all three name predicates",
+    ),
+    A(
+        "update: registry updated after swap",
+        SKILLS / "update" / "SKILL.md",
+        contains("Update registry only after the swap succeeded"),
+        "Phase 3 records the new version only once the cache swap has happened",
+    ),
+    A(
+        "memory-and-handoff: single knowledge compounding loop",
+        SKILLS / "memory-and-handoff" / "SKILL.md",
+        lambda text: text.count("## Knowledge Compounding Loop") == 1,
+        "the two duplicate sections are merged into one",
+    ),
+    A(
+        "code-review: smell count matches table",
+        SKILLS / "code-review" / "SKILL.md",
+        lambda text: (
+            lambda m, rows: m is not None and int(m.group(1)) == rows
+        )(
+            re.search(r"Scan for these (\d+) named smells", text),
+            len(
+                [
+                    line
+                    for line in text.split("### Code Smells (Fowler Catalog)")[1]
+                    .split("\n### ")[0]
+                    .splitlines()
+                    if line.startswith("| **")
+                ]
+            ),
+        ),
+        "the claimed smell count equals the number of table rows",
+    ),
+    A(
+        "code-review: sub-threshold security findings surface as questions",
+        SKILLS / "code-review" / "SKILL.md",
+        contains_all("Security exception:", "open question"),
+        "security findings below 80 confidence surface in the Summary instead of vanishing",
+    ),
+    A(
+        "architecture: term count matches bullets",
+        SKILLS / "architecture" / "SKILL.md",
+        contains("Three extra terms specific to greenfield architecture"),
+        "the extra-terms count matches the three bullets",
+    ),
+    A(
+        "architecture: note no longer self-denying",
+        SKILLS / "architecture" / "SKILL.md",
+        contains_none("There is no second copy", "Architecture Vocabulary (Precise Language)"),
+        "the closing note no longer denies an existing duplicate or cites a nonexistent heading",
+    ),
+    A(
+        "building: reference list has load triggers",
+        SKILLS / "building" / "SKILL.md",
+        lambda text: text.count("load when") >= 3,
+        "each of the three references states when to load it",
+    ),
+    A(
+        "code-review: reference list has load triggers",
+        SKILLS / "code-review" / "SKILL.md",
+        lambda text: text.count("load when") >= 2 and "load whenever" in text,
+        "each of the three references states when to load it",
+    ),
+    A(
+        "memory-and-handoff: reference list has load triggers",
+        SKILLS / "memory-and-handoff" / "SKILL.md",
+        lambda text: text.count("load when") >= 4,
+        "each of the four references states when to load it",
     ),
 ]
 

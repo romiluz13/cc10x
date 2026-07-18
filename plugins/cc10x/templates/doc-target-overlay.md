@@ -49,7 +49,7 @@ Replace the example rows below with patterns that match your project's file layo
 
 ### Audit Layer
 
-Decision records location: `docs/decisions/YYYY-MM-DD-{topic}-decision.md`
+Decision records location: `docs/adr/NNNN-{topic}.md` (scan `docs/adr/` for the highest existing number and increment; use `cc10x:domain-modeling/ADR-FORMAT.md` for the format)
 
 Threshold: create a decision record when a team member 6 months from now would ask "why did we do it this way?"
 

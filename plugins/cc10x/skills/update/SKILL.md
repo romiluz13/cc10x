@@ -41,11 +41,11 @@ Verify `$MARKETPLACE_ROOT/.git` exists. If missing → STOP.
 
 ## Phase 2: Stash Local Modifications
 
-1. Enumerate cache files: `find "$CACHE_ROOT" -type f -name "*.md" -o -name "*.json" -o -name "*.py" | sort`
-2. For each cached file, diff against marketplace source:
+1. Enumerate cache files: `find "$CACHE_ROOT" -type f \( -name "*.md" -o -name "*.json" -o -name "*.py" \) | sort`
+2. For each cached file, diff against marketplace source (pristine → locally-modified, so applying the patch later re-adds your changes):
 
    ```bash
-   diff "$CACHE_ROOT/$file" "$MARKETPLACE_ROOT/plugins/cc10x/$file"
+   diff -u "$MARKETPLACE_ROOT/plugins/cc10x/$file" "$CACHE_ROOT/$file"
    ```
 
 3. If diffs found → save to `$BACKUP_DIR/patches/` as `.patch` files. Report which files have local modifications.
@@ -59,15 +59,15 @@ Verify `$MARKETPLACE_ROOT/.git` exists. If missing → STOP.
 1. Git pull: `cd "$MARKETPLACE_ROOT" && git pull origin main`
 2. Read new version from updated `plugin.json`
 3. Create new cache: `mkdir -p "$CACHE_ROOT.new"` then copy all files from marketplace
-4. Update registry: update `cc10x@cc10x` version to new version
-5. Swap: `mv "$CACHE_ROOT" "$CACHE_ROOT.old" && mv "$CACHE_ROOT.new" "$CACHE_ROOT"`
+4. Swap: `mv "$CACHE_ROOT" "$CACHE_ROOT.old" && mv "$CACHE_ROOT.new" "$CACHE_ROOT"`
+5. Update registry only after the swap succeeded: update `cc10x@cc10x` version to new version (a failed swap must not leave the registry claiming the new version)
 6. Gate: Ask user before cleaning old cache: "Remove $CACHE_ROOT.old? (your patches are safely in $BACKUP_DIR)"
 
 ## Phase 4: Rebase Patches
 
 For each `.patch` file in `$BACKUP_DIR/patches/`:
 
-1. Try: `cd "$CACHE_ROOT" && git apply --3way "$BACKUP_DIR/patches/$file.patch"` (or manual reapplication)
+1. Try: `patch --forward "$CACHE_ROOT/$file" "$BACKUP_DIR/patches/$file.patch"` — the explicit target file makes header paths irrelevant, and `patch` works in `$CACHE_ROOT`, which is NOT a git repository (so `git apply --3way`, which needs a repo index, is unavailable there). Fallback: if `patch` rejects a hunk (`.rej` file), reapply manually — open the `.rej` and the rebuilt file, re-edit, then delete the `.rej`.
 2. If conflict: report the conflict, show both versions, ask user to resolve
 3. If clean: confirm applied
 
