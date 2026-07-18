@@ -152,7 +152,11 @@ docs/benchmarks/*
 *AUDIT*.md
 *test*.md
 *audit*.md
-!plugins/cc10x/skills/cc10x-orchestrator/workflows/*.md
+# Dev-note patterns (and the workspace-junk block above, e.g. planning/) must
+# never shadow shipped plugin content — scar: 2026-07-18, the entire
+# skills/planning skill plus 5 *test*.md references/evals were silently
+# untracked and missing from the published repo.
+!plugins/cc10x/skills/**
 
 # Internal scripts (should not be in repo)
 push-to-github.sh

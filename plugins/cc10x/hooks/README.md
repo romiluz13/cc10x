@@ -20,11 +20,22 @@ This directory now serves two different purposes:
 When CC10X is installed as a Claude Code plugin, Claude Code reads `hooks/hooks.json`
 from the plugin bundle and runs the referenced scripts from `${CLAUDE_PLUGIN_ROOT}/scripts`.
 
-The shipped runtime hooks are intentionally minimal and audit-first:
-- protect direct memory markdown writes
-- inject workflow resume context
-- audit workflow artifact integrity after writes
-- validate CC10X task metadata on completion
+The shipped runtime hooks are intentionally minimal and audit-first. Be
+precise about what blocks and what only logs (`config/hook-mode.json`):
+
+**Blocking** (the only two enforcement points):
+- workflow-artifact integrity after writes — a malformed or key-missing
+  artifact write exits 2 (`artifactIntegrity: "block"`)
+- git guardrails — push/reset-hard/clean/branch-D/checkout-dot are denied
+  unless a fresh single-use approval token covers the operation
+
+**Audit-only** (log lines, never denials — `"audit"` in hook-mode.json):
+- direct memory markdown writes (flip `memoryWrites` to `"block"` to deny)
+- CC10X task metadata + memory-finalization evidence on task completion
+  and the remediation circuit-breaker backstop (flip `taskMetadata`)
+
+**Context/telemetry** (no enforcement role):
+- inject workflow resume context on session start
 - snapshot workflow state before compaction and on session stop
 - log API failures and instruction file loads for telemetry
 
@@ -33,7 +44,7 @@ The shipped runtime hooks are intentionally minimal and audit-first:
 The plugin also ships an internal drift check:
 
 ```bash
-python3 plugins/cc10x/scripts/cc10x_harness_audit.py
+python3 plugins/cc10x/tools/harness_audit.py
 ```
 
 It validates the publication-critical contract:

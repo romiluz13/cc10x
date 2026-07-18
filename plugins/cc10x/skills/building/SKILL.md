@@ -25,9 +25,11 @@ user-invocable: false
 
 ## Reference Files
 
-- `references/testing-patterns.md` — test structure, isolation, naming
-- `references/test-data-and-mocks.md` — mock discipline, test data factories
-- `references/integration-and-live-proof.md` — integration test guidance, live verification
+Read only what's needed:
+
+- `references/testing-patterns.md` — test structure, isolation, naming; load when writing the first test of a cycle or a test feels awkward to structure
+- `references/test-data-and-mocks.md` — mock discipline, test data factories; load when a test needs fixtures/factories or you are about to mock anything
+- `references/integration-and-live-proof.md` — integration test guidance, live verification; load when the slice crosses a service/DB/API boundary or the plan names live proof
 
 ## Test Process Discipline
 

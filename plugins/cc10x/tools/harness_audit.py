@@ -137,36 +137,13 @@ SESSION_MEMORY_CONTEXT_BUDGET_REFERENCE = (
 FIRST_PLACE_STRATEGY = (
     ROOT / "docs" / "benchmarks" / "2026-03-12-first-place-strategy.md"
 )
+from fixture_registry import REQUIRED_FIXTURES  # noqa: E402 shared with workflow_replay_check
+
 PROMPT_STEAL_NOTE = (
     ROOT / "docs" / "benchmarks" / "2026-03-14-prompt-steal-hardening.md"
 )
 PLANNING_RECOVERY_NOTE = (
     ROOT / "docs" / "benchmarks" / "2026-03-16-planning-recovery.md"
-)
-REQUIRED_FIXTURES = (
-    "plan-direct.json",
-    "plan-decision-rfc.json",
-    "plan-full.json",
-    "plan-clarification.json",
-    "plan-repo-alignment.json",
-    "plan-code-contradiction.json",
-    "plan-fresh-review-pass.json",
-    "plan-fresh-review-findings.json",
-    "plan-fresh-review-exhausted.json",
-    "plan-design-handoff.json",
-    "build-happy-path.json",
-    "build-checkpoint-decision.json",
-    "build-phase-blocked.json",
-    "build-scope-gate.json",
-    "build-remediation-loop.json",
-    "debug-fixed.json",
-    "debug-research.json",
-    "skill-precedence.json",
-    "workflow-identity-v10.json",
-    "memory-sync-blocking.json",
-    "review-advisory.json",
-    "verify-fail-closed.json",
-    "latency-telemetry.json",
 )
 
 

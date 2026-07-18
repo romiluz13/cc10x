@@ -131,11 +131,18 @@ Verify:
 
 ## Task Completion
 
-After emitting the Router Contract, call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` where `{TASK_ID}` is from the Task Context in your prompt.
+Before emitting your final response, call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` where `{TASK_ID}` is from the Task Context in your prompt. The Router Contract is your final message — no tool calls after it.
 
 ---
 
 ### Router Contract (MACHINE-READABLE)
+
+Emit the CONTRACT envelope on line 1, the heading on line 2, then the Router Contract YAML block. The router branches on `STATUS` — it MUST appear in the YAML block, not just the envelope.
+
+```text
+CONTRACT {"s":"COMPLETE","b":false,"cr":0}
+## Doc Sync: [COMPLETE/SKIPPED/PARTIAL/FAIL]
+```
 
 ```yaml
 STATUS: COMPLETE|SKIPPED|PARTIAL|FAIL

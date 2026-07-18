@@ -2,7 +2,7 @@
 
 > **Last synced with live router/agents:** 2026-06-17 (`v11.0.0`; last structural sync `v10.1.19` on 2026-04-12; `v11.0.0` de-versions the state root from `.cc10x/v10/` to `.cc10x/`, version held only in `plugin.json`/GitHub; `v11.1.0` adds execution-engine deltas + 4 net-new skills, additive)
 > **Status:** SYNCED TO LIVE PROMPTS
-> **v12.5.0:** adds the enforced seam gate, resolving-merge-conflicts skill, CONTEXT.md/docs/adr/ canonical artifacts, 2 new agents (triage-agent, architecture-scanner), and 2 advisory on-ramp workflows (TRIAGE priority 5, CODEBASE-HEALTH priority 6) — additive, priority 1-4 routes unchanged.
+> **v12.5.0:** adds the enforced seam gate, resolving-merge-conflicts skill, CONTEXT.md/docs/adr/ canonical artifacts, 2 new agents (triage-agent, architecture-scanner), and 2 advisory on-ramp workflows (TRIAGE priority 5, CODEBASE-HEALTH priority 6) — additive, priority 1-4 routes unchanged. **v12.6.0** is an integrity reconciliation (spec #65): audit-seam revival, router-kernel drift fixes (phase enum + dispatcher rows for triage/codebase-health, tie-break stated, gates operationally defined, single circuit-breaker source), unified agent contract dialect (envelope + fenced YAML, per-agent fields unchanged), guard fail-open fixes, and skills reconciliation — behavior-preserving; no routing, gate-semantic, or hook-mode changes.
 > **Relationship to Bible:** The bible is the canonical specification. This document explains the practical mechanics and why the system is shaped this way.
 
 ## What CC10X Actually Is

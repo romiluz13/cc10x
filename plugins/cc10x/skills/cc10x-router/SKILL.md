@@ -16,7 +16,7 @@ description: |
 
 ## 1. Intent Routing
 
-Route using the first matching signal:
+Route using the first matching signal. A keyword hit only NOMINATES a row — the primary-deliverable rules below decide. When keywords from more than one row match, route by the primary deliverable of the request; priority order breaks ties only between rows whose primary-deliverable conditions both genuinely hold (e.g. "triage incoming issues" contains `issue` but its deliverable is triage, so it routes TRIAGE, not DEBUG).
 
 | Priority | Signal | Keywords | Workflow | Chain |
 | ---------- | -------- | ---------- | ---------- | ------- |
@@ -41,7 +41,7 @@ Rules:
 
 ### ORIENT move (read-only)
 
-Triggered when the user wants to understand existing code, not change it ("zoom out", "explain", "how does X work", "I'm unfamiliar with", "map this", "walk me through", "where is X", "what does this do"). The router answers inline — no `TaskCreate`, no workflow artifact, no phase graph, no write agents.
+Triggered when the user wants to understand existing code, not change it ("zoom out", "explain", "how does X work", "I'm unfamiliar with", "map this", "walk me through", "where is X", "what does this do"). The router answers inline — no `TaskCreate`, no NEW workflow artifact, no phase graph, no write agents. (Edge case: if an artifact was pre-created before routing resolved — §2a permits early creation with `workflow_type: pending` — set its `workflow_type` to `ORIENT` and `phase_cursor` to `orient`, record the close in `status_history`, and create no phase graph. That is the only reason `ORIENT`/`orient` appear in the artifact enums.)
 
 Orientation procedure:
 
@@ -115,7 +115,7 @@ Every CC10X task description starts with normalized metadata lines:
 wf:{workflow_uuid}
 kind:{workflow|agent|remfix|memory|reverify|research}
 origin:{router|component-builder|bug-investigator|code-reviewer|integration-verifier|planner}
-phase:{build|build-implement|build-review|build-hunt|build-verify|build-doc-sync|build-finish|debug|debug-investigate|debug-review|debug-verify|review|review-audit|plan|plan-create|plan-review-gap-1|plan-review-gap-2|memory-finalize|re-review|re-hunt|re-verify|re-plan|research-web|research-github}
+phase:{build|build-implement|build-review|build-hunt|build-verify|build-doc-sync|build-finish|debug|debug-investigate|debug-review|debug-verify|review|review-audit|plan|plan-create|plan-review-gap-1|plan-review-gap-2|triage|codebase-health|memory-finalize|re-review|re-hunt|re-verify|re-plan|research-web|research-github}
 plan:{path|N/A}
 scope:{ALL_ISSUES|CRITICAL_ONLY|N/A}
 reason:{short reason or N/A}
@@ -317,6 +317,8 @@ Only create child tasks after the workflow artifact exists and the read-back pas
 | `plan-review-gap-1`, `plan-review-gap-2` | `cc10x:plan-gap-reviewer` |
 | `research-web` | `cc10x:researcher` |
 | `research-github` | `cc10x:researcher` |
+| `triage` | `cc10x:triage-agent` |
+| `codebase-health` | `cc10x:architecture-scanner` |
 | `kind:remfix` + `origin:bug-investigator` | `cc10x:bug-investigator` |
 | `build-doc-sync` | `cc10x:doc-syncer` |
 | `kind:remfix` + `origin:code-reviewer` / `origin:integration-verifier` / `origin:router` | `cc10x:component-builder` |
@@ -417,22 +419,7 @@ Optional sections:
 
 ### Previous Agent Findings handoff
 
-When invoking `integration-verifier`, pass:
-
-```text
-## Previous Agent Findings
-
-### Code Reviewer
-**Verdict:** {Approve|Changes Requested}
-**Critical Issues:**
-{reviewer critical issues or "None"}
-
-### Failure Hunter
-**Critical Issues:**
-{hunter critical issues or "None / not in this workflow"}
-```
-
-DEBUG skips the hunter.
+When invoking `integration-verifier`, build and pass the `## Previous Agent Findings` section per the **Verifier findings handoff** law in §13 — read `results.reviewer` and `results.hunter` from the workflow artifact and use the exact template defined there (single source). DEBUG skips the hunter.
 
 ### Task metrics and timing telemetry
 
@@ -559,7 +546,7 @@ The harness is a loop engine. These concepts govern how the loop runs:
 | **Checkpoint** | A point where the loop pauses for human input. Only on irreversible actions, real scope changes, or input only the user can provide. Checkpoints are NOT for narration or "want me to continue?" prompts. |
 | **Push right** | Defer checkpoints as far as possible — do maximal work before involving the human. The loop should never stop on a promise or plan when it could act. If the next step is reversible and follows from the original request, proceed without asking. |
 | **Brief** | The decision-ready summary the loop produces when pausing. Not raw output, not a diary — the one thing the human needs to decide next. Outcome first, supporting detail second. |
-| **Cycle** | One complete plan → build → verify → learn iteration. The circuit breaker caps cycles at 3 before requiring a human checkpoint. |
+| **Cycle** | One complete plan → build → verify → learn iteration. The circuit breaker (single definition: `references/remediation-and-research.md` — remediation count `>= 3` → human checkpoint) caps cycles at 3. |
 | **Convergence** | The loop's quality signal — when `quality.convergence_state` transitions from `needs_iteration` to `converged`, the loop is complete. Never declare convergence on prose alone. |
 
 **Autonomous mode:** When the user sets a goal that spans multiple iterations (e.g., `/goal` or explicit "do this end-to-end"), the loop runs without checkpointing for reversible actions. The user is not watching in real time and cannot answer questions mid-task. Before ending a turn, check the last paragraph — if it is a plan, analysis, question, list of next steps, or a promise about work not yet done, do that work now with tool calls. End the turn only when the task is complete or blocked on input only the user can provide.
@@ -642,7 +629,7 @@ If any answer is "no" or "unknown", treat as incomplete and apply the fallback v
    - `updated_at` is set to a timestamp from THIS turn (not a prior turn)
    - `results.{agent_name}` exists and contains the agent's contract fields
    - If either check fails, rewrite the artifact immediately. Do not proceed to the next task.
-6. **Append event log entry:** For each result persisted to the artifact in step 5, append a matching entry to `.cc10x/workflows/{wf}.events.jsonl`:
+6. **Append event log entry:** For each result persisted to the artifact in step 5, append a matching entry to `.cc10x/workflows/{wf}.events.jsonl`. **Append mechanism:** the `Write` tool overwrites whole files — NEVER `Write` only the new line. Either Read the current `.events.jsonl` and Write it back with the new line added at the end, or use a Bash append (`printf '%s\n' '{...}' >> .cc10x/workflows/{wf}.events.jsonl`). Entry shape:
 
    ```json
    {"ts":"<ISO>","wf":"<wf_id>","event":"result_persisted","phase":"<phase>","task_id":"<task_id>","agent":"<agent_name>","decision":"<contract_status>","reason":"<one-line summary>"}
@@ -739,7 +726,7 @@ For DEBUG:
 - Never create `CC10X TODO:` tasks. Non-blocking discoveries go into `**Deferred:**` memory notes.
 - Never let REVIEW create implementation tasks without an explicit router/user transition into BUILD.
 - Never report a workflow outcome (pass, fixed, complete) to the user without first confirming the verification evidence that supports that claim. "I believe it works" is not evidence. [EASY TO MISS: "I ran the tests and they passed" without showing command output, exit codes, or scenario evidence is also not evidence. Require concrete proof artifacts, not agent assertions.]
-- Never let a remediation loop run more than 3 cycles without a human checkpoint. Drift accumulates silently in long chains.
+- Never let a remediation loop reach 3 cycles without a human checkpoint (the `>= 3` circuit breaker in `references/remediation-and-research.md` is the single definition). Drift accumulates silently in long chains.
 - Only parallelize agents whose file-write surfaces do not overlap. Reviewer and hunter are read-only and safe to parallelize. Two write agents on overlapping files must be serialized. [EASY TO MISS: Each parallel agent must have a distinct phase value and unique task description. Identical prompts cause agents to duplicate work or silently clobber each other's output.]
 - Agents must never inherit raw conversation context. They receive only the structured scaffold from the dispatcher. Leaking conversation history into agent prompts causes scope pollution and non-reproducible behavior.
 - Maintain professional objectivity in all routing decisions. Do not rationalize a failing workflow as "close enough" or downgrade critical findings to avoid remediation. The router exists to enforce quality, not to please.

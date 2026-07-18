@@ -72,7 +72,12 @@ Do NOT propose interfaces yet. After the report is written, tell the user: "Whic
 
 ## Output
 
-Emit the CONTRACT envelope on line 1, then the full Router Contract (MACHINE-READABLE) YAML block. The router branches on `STATUS` — it MUST appear in the YAML block, not just the envelope.
+Emit the CONTRACT envelope on line 1, the heading on line 2, then the full Router Contract (MACHINE-READABLE) YAML block, then the prose sections. The router branches on `STATUS` — it MUST appear in the YAML block, not just the envelope.
+
+```text
+CONTRACT {"s":"CANDIDATES_FOUND","b":false,"cr":0}
+## Architecture Scan: [CANDIDATES_FOUND/NO_CANDIDATES]
+```
 
 ```yaml
 STATUS: CANDIDATES_FOUND | NO_CANDIDATES
@@ -91,9 +96,6 @@ MEMORY_NOTES:
 ```
 
 ```text
-CONTRACT {"s":"CANDIDATES_FOUND","b":false,"cr":0}
-## Architecture Scan: [CANDIDATES_FOUND/NO_CANDIDATES]
-
 ### Summary
 - Candidates found: [count]
 - Report: [absolute path to HTML report]

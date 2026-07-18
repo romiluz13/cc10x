@@ -182,15 +182,15 @@ If reviewing uncommitted working-tree changes (no recorded BASE), fall back to `
 **CONFIDENCE calculation:** `min(HARD scores)` capped by `avg(SOFT scores) - 10`.
 A single HARD:0 = CONFIDENCE:0 regardless of other dimensions.
 
-**In Summary section, include the signal breakdown:**
+**In the Router Contract YAML, include the signal breakdown:**
 
 ```
 SIGNAL_SCORES:
   security: [HARD] 100
   correctness: [HARD] 85
-  performance: [SOFT] 70
-  maintainability: [SOFT] 90
-CONFIDENCE: 85  (min HARD=85, avg SOFT=80)
+  performance: [SOFT] 95
+  maintainability: [SOFT] 95
+CONFIDENCE: 85  (min HARD=85, avg SOFT=95 → cap 85)
 ```
 
 **Why this matters:** Router reads heading (`## Review: Approve/Changes Requested`) + counts `### Critical Issues` entries for blocking decisions. Signal scores survive in Memory Notes for pattern tracking.
@@ -234,16 +234,37 @@ Provide your final output (see SINGLE FINAL RESPONSE RULE above), then **stop yo
 
 ## Output
 
-```
+Emit the CONTRACT envelope on line 1, the heading on line 2, then the Router Contract (MACHINE-READABLE) YAML block, then the prose sections. The router branches on `STATUS` — it MUST appear in the YAML block, not just the envelope.
+
+```text
 CONTRACT {"s":"APPROVE","b":false,"cr":0}
 ## Review: [Approve/Changes Requested]
+```
 
-### Summary
-- Functionality: [Works/Broken]
-- Verdict: [Approve / Changes Requested]
-- CONFIDENCE: [0-100]
-- SIGNAL_SCORES: security [HARD N], correctness [HARD N], performance [SOFT N], maintainability [SOFT N]
+```yaml
+STATUS: APPROVE | CHANGES_REQUESTED
+FUNCTIONALITY: Works | Broken
+CONFIDENCE: [0-100]
+SIGNAL_SCORES:
+  security: "[HARD] [N]"
+  correctness: "[HARD] [N]"
+  performance: "[SOFT] [N]"
+  maintainability: "[SOFT] [N]"
+REMEDIATION_NEEDED: [true if BUILD/DEBUG should create a REM-FIX]
+REMEDIATION_REASON: "[top critical issue]" | None
+REMEDIATION_SCOPE_REQUESTED: N/A | CRITICAL_ONLY | ALL_ISSUES
+REVERT_RECOMMENDED: false
+SPEC_COMPLIANCE: [PASS | list of {bucket, item} where bucket ∈ MISSING | EXTRA | MISUNDERSTOOD — e.g. [{MISSING, "rate-limit guard on /login"}, {EXTRA, "speculative retry backoff util"}]. SEPARATE from the code-quality verdict: any non-PASS value gates (CHANGES_REQUESTED) even when SIGNAL_SCORES are clean. Cross-phase / unchanged-code requirements go in CANNOT_VERIFY_CROSS_PHASE, NOT here.]
+PLAN_DEFECT: [false | brief description of why the PLAN (not the code) is wrong — routed to planner, NOT a code fix]
+CANNOT_VERIFY_CROSS_PHASE: [None | requirement(s) wired in this phase but consumed/satisfied outside this diff — router must reconcile against the workflow artifact's cross-phase context before phase_exit_gate passes]
+MEMORY_NOTES:
+  learnings: []
+  patterns: []
+  verification: []
+  deferred: []
+```
 
+```text
 ### Critical Issues (≥80 confidence)
 - [95] [issue] - file:line → Fix: [action]
 
@@ -260,16 +281,7 @@ CONTRACT {"s":"APPROVE","b":false,"cr":0}
   - [MISSING] [required item not implemented] - file:line
   - [EXTRA] [built but not requested — YAGNI / scope creep] - file:line
   - [MISUNDERSTOOD] [implemented but diverges from intent] - file:line
-- ⚠️ Cannot verify from diff: [requirement(s) in unchanged code or spanning phases — also emit in CANNOT_VERIFY_CROSS_PHASE below]
-
-### Remediation Intent
-- REMEDIATION_NEEDED: [true if BUILD/DEBUG should create a REM-FIX]
-- REMEDIATION_REASON: [top critical issue or "None"]
-- REMEDIATION_SCOPE_REQUESTED: [N/A | CRITICAL_ONLY | ALL_ISSUES]
-- REVERT_RECOMMENDED: false
-- SPEC_COMPLIANCE: [PASS | list of {bucket, item} where bucket ∈ MISSING | EXTRA | MISUNDERSTOOD — e.g. [{MISSING, "rate-limit guard on /login"}, {EXTRA, "speculative retry backoff util"}]. SEPARATE from the code-quality verdict: any non-PASS value gates (CHANGES_REQUESTED) even when SIGNAL_SCORES are clean. Cross-phase / unchanged-code requirements go in CANNOT_VERIFY_CROSS_PHASE, NOT here.]
-- PLAN_DEFECT: [false | brief description of why the PLAN (not the code) is wrong — routed to planner, NOT a code fix]
-- CANNOT_VERIFY_CROSS_PHASE: [None | requirement(s) wired in this phase but consumed/satisfied outside this diff — router must reconcile against the workflow artifact's cross-phase context before phase_exit_gate passes]
+- ⚠️ Cannot verify from diff: [requirement(s) in unchanged code or spanning phases — also emit in CANNOT_VERIFY_CROSS_PHASE in the YAML block]
 
 ### Memory Notes (For Workflow-Final Persistence)
 - **Learnings:** [Key code quality insights for activeContext.md]
@@ -282,7 +294,7 @@ CONTRACT {"s":"APPROVE","b":false,"cr":0}
 - (Task completion is handled by the router — do NOT call TaskUpdate or create tasks directly.)
 ```
 
-**CONTRACT:** Line 1 `CONTRACT {json}` is the primary machine-readable signal (s=STATUS, b=BLOCKING, cr=CRITICAL_ISSUES). Line 2 heading `## Review: Approve/Changes Requested` is the fallback if envelope absent. Router reads envelope first; falls back to heading scan if malformed.
+**CONTRACT:** Line 1 `CONTRACT {json}` is the primary machine-readable signal (s=STATUS, b=BLOCKING, cr=CRITICAL_ISSUES). Line 2 heading `## Review: Approve/Changes Requested` is the fallback if envelope absent. The YAML block carries the structured fields the router branches on (`STATUS`, `CONFIDENCE`, `SIGNAL_SCORES`, remediation-intent fields). Router reads envelope first; falls back to heading scan if malformed.
 
 **PLAN_DEFECT routing:** When `PLAN_DEFECT` is non-false, the router routes it to the planner for plan revision — it does NOT create a code-fix REM-FIX for it. A plan defect can coexist with an APPROVE verdict on the code as written: the code faithfully implemented a flawed plan. Keep the two signals separate.
 

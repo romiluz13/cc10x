@@ -392,10 +392,10 @@ ASSERTIONS = [
         "Test-Seam section augmented with prefer-existing/ideal=1",
     ),
     A(
-        "planning: advisory to builder",
+        "planning: seams feed the enforced builder gate",
         SKILLS / "planning" / "SKILL.md",
-        contains("advisory input to the builder"),
-        "seams marked advisory not fail-closed",
+        contains("feed the builder's **enforced** seam gate"),
+        "planned seams are the starting contract for the enforced SEAM_GATE_STATUS gate",
     ),
     A(
         "planning: Wide-Refactor Phasing",
@@ -535,6 +535,417 @@ ASSERTIONS = [
         AGENTS / "integration-verifier.md",
         contains_none("cc10x:codebase-design", "cc10x:domain-modeling"),
         "integration-verifier frontmatter unchanged (read-only)",
+    ),
+    # --- Router kernel reconciliation (ticket #69) ---
+    A(
+        "router: phase enum covers triage + codebase-health",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        contains("|triage|codebase-health|"),
+        "task-metadata phase enum includes the TRIAGE and CODEBASE-HEALTH phases their workflows create",
+    ),
+    A(
+        "router: dispatcher row for triage-agent",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        contains_all("| `triage` | `cc10x:triage-agent` |"),
+        "dispatcher table alone resolves phase:triage",
+    ),
+    A(
+        "router: dispatcher row for architecture-scanner",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        contains_all("| `codebase-health` | `cc10x:architecture-scanner` |"),
+        "dispatcher table alone resolves phase:codebase-health",
+    ),
+    A(
+        "router: routing table carries primary-deliverable tie-break",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        contains("A keyword hit only NOMINATES a row"),
+        "keyword table is explicitly subordinate to the primary-deliverable rules",
+    ),
+    A(
+        "router: ORIENT artifact rule single-voiced",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        contains("no NEW workflow artifact"),
+        "ORIENT law reconciles with the pre-created-artifact enum entries",
+    ),
+    A(
+        "router: events-log append mechanism explicit",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        contains_all(
+            "NEVER `Write` only the new line",
+            "Write it back with the new line added at the end",
+        ),
+        "a literal reading of the append instruction cannot overwrite the event log",
+    ),
+    A(
+        "router: single verifier-handoff template",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: text.count("**Critical Issues:**") == 2,
+        "the Previous Agent Findings template exists exactly once (dispatcher section points at §13)",
+    ),
+    A(
+        "router: circuit breaker single-sourced",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        contains_none("more than 3 cycles"),
+        "kernel defers to the >= 3 circuit breaker in remediation-and-research.md",
+    ),
+    A(
+        "remediation: no undefined cycle-cap gate",
+        SKILLS / "cc10x-router" / "references" / "remediation-and-research.md",
+        contains_none("cycle-cap gate"),
+        "re-review loop references the defined circuit breaker, not an undefined gate name",
+    ),
+    A(
+        "remediation: re-review loop numbering coherent",
+        SKILLS / "cc10x-router" / "references" / "remediation-and-research.md",
+        contains_all(
+            "3. Create a re-hunt task",
+            "4. Reuse the pending verifier",
+            "7. Increment telemetry loop counters",
+        ),
+        "ordered steps 1-7 are unique so cross-references resolve unambiguously",
+    ),
+    A(
+        "policy: every router gate operationally defined",
+        SKILLS / "cc10x-router" / "references" / "workflow-artifact-and-hook-policy.md",
+        contains_all(
+            "`plan_trust_gate` —",
+            "`phase_exit_gate` —",
+            "`failure_stop_gate` —",
+            "`memory_sync_gate` —",
+            "`skill_precedence_gate` —",
+        ),
+        "no router gate exists as a bare name without semantics",
+    ),
+    A(
+        "policy: reviewer rubber-stamp override deduplicated",
+        SKILLS / "cc10x-router" / "references" / "workflow-artifact-and-hook-policy.md",
+        lambda text: text.count("fewer than 3 file:line evidence citations") == 1,
+        "the code-reviewer zero-findings override row appears exactly once",
+    ),
+    # --- Build workflow + skeleton reconciliation (ticket #70) ---
+    A(
+        "build: escalation rule includes the failure-hunter",
+        SKILLS / "cc10x-router" / "references" / "build-workflow.md",
+        contains_all(
+            "never skip the hunter on escalation",
+            "they are one rule, not two",
+        ),
+        "trivial->full escalation is a single rule that always adds the failure-hunter",
+    ),
+    A(
+        "build: preparation list numbering coherent",
+        SKILLS / "cc10x-router" / "references" / "build-workflow.md",
+        contains_all(
+            "12. Builder may execute only the phase at `phase_cursor`.",
+            "13. Router handoff for the current BUILD phase must be phase-local:",
+        ),
+        "the 1-13 preparation sequence has no duplicate step numbers",
+    ),
+    A(
+        "skeleton: carries BUILD/DEBUG state fields",
+        SKILLS / "cc10x-router" / "references" / "workflow-artifact.skeleton.json",
+        contains_all(
+            '"build_scope"',
+            '"worktree"',
+            '"execution_mode"',
+            '"git_preflight"',
+            '"baseline"',
+            '"git_base_sha"',
+            '"doc_syncer"',
+            '"finishing"',
+            '"final_branch_review"',
+        ),
+        "the canonical skeleton includes the fields BUILD/DEBUG workflows persist",
+    ),
+    # --- Agent contract unification + prompt fixes (tickets #71/#72) ---
+    # 71.1 — every agent prescribes the canonical envelope + fenced-YAML shape
+    *[
+        A(
+            f"{stem}: canonical envelope + fenced YAML contract",
+            AGENTS / f"{stem}.md",
+            contains_all('CONTRACT {"s":', "```yaml"),
+            "output section shows the line-1 CONTRACT envelope and a fenced yaml Router Contract block",
+        )
+        for stem in (
+            "architecture-scanner",
+            "bug-investigator",
+            "code-reviewer",
+            "component-builder",
+            "doc-syncer",
+            "failure-hunter",
+            "integration-verifier",
+            "plan-gap-reviewer",
+            "planner",
+            "researcher",
+            "triage-agent",
+        )
+    ],
+    A(
+        "agent-common: canonical shape prescribed once for the fleet",
+        SKILLS / "agent-common" / "SKILL.md",
+        contains_all(
+            "fenced ```yaml Router Contract block",
+            "never call a tool (including TaskUpdate) after emitting it",
+        ),
+        "agent-common mandates envelope + fenced-YAML shape and forbids post-contract tool calls",
+    ),
+    # 71.2 — worked examples show the envelope FIRST
+    A(
+        "architecture-scanner: example shows envelope before YAML block",
+        AGENTS / "architecture-scanner.md",
+        lambda text: 0
+        <= text.find('CONTRACT {"s":"CANDIDATES_FOUND"')
+        < text.find("STATUS: CANDIDATES_FOUND | NO_CANDIDATES"),
+        "worked example emits the CONTRACT envelope before the Router Contract YAML",
+    ),
+    A(
+        "triage-agent: example shows envelope before YAML block",
+        AGENTS / "triage-agent.md",
+        lambda text: 0
+        <= text.find('CONTRACT {"s":"TRIAGED"')
+        < text.find("STATUS: TRIAGED | NEEDS_INFO | WONTFIX"),
+        "worked example emits the CONTRACT envelope before the Router Contract YAML",
+    ),
+    # 71.3 — no agent instructs tool calls after the final contract response
+    A(
+        "researcher: TaskUpdate before final contract response",
+        AGENTS / "researcher.md",
+        lambda text: "Before emitting your final response" in text
+        and "no tool calls after it" in text
+        and "After outputting Router Contract" not in text,
+        "TaskUpdate ordered before the final contract response, never after",
+    ),
+    A(
+        "doc-syncer: TaskUpdate before final contract response",
+        AGENTS / "doc-syncer.md",
+        lambda text: "Before emitting your final response" in text
+        and "no tool calls after it" in text
+        and "After emitting the Router Contract" not in text,
+        "TaskUpdate ordered before the final contract response, never after",
+    ),
+    # 71.4 — verifier per-finding validation is a single merged paragraph
+    A(
+        "integration-verifier: single per-finding validation paragraph",
+        AGENTS / "integration-verifier.md",
+        lambda text: text.count("Per-finding validation (MANDATORY") == 1
+        and all(
+            n in text
+            for n in ("validated: true", "validated: false", "validated: degraded")
+        ),
+        "the two near-duplicate validation paragraphs are merged, keeping the validated taxonomy",
+    ),
+    # 72.5 — reviewer CONFIDENCE worked example obeys its own formula
+    A(
+        "code-reviewer: CONFIDENCE example arithmetic is valid",
+        AGENTS / "code-reviewer.md",
+        contains_all(
+            "performance: [SOFT] 95",
+            "maintainability: [SOFT] 95",
+            "CONFIDENCE: 85  (min HARD=85, avg SOFT=95 → cap 85)",
+        ),
+        "worked example: min(HARD)=85 within avg(SOFT)-10=85 cap, so CONFIDENCE 85 is valid",
+    ),
+    # 72.6 — hunter settles the verdict before emitting, no revision of line 1
+    A(
+        "failure-hunter: single-emission verdict (no preliminary/revise)",
+        AGENTS / "failure-hunter.md",
+        lambda text: "Decide the verdict BEFORE writing the final response" in text
+        and "line 1 cannot be revised" in text
+        and "both are preliminary" not in text
+        and "Revise BOTH" not in text,
+        "step 0 computes the final verdict internally and emits the envelope exactly once",
+    ),
+    # 72.7 — planner has an honest path when open decisions remain
+    A(
+        "planner: open decisions route to NEEDS_CLARIFICATION",
+        AGENTS / "planner.md",
+        contains_all(
+            "If OPEN_DECISIONS is non-empty:",
+            "STATUS MUST be `NEEDS_CLARIFICATION`",
+            "USER_INPUT_NEEDED",
+            "Never present an open decision as settled",
+        ),
+        "non-empty OPEN_DECISIONS must return NEEDS_CLARIFICATION with the decisions in USER_INPUT_NEEDED",
+    ),
+    # 72.8 — bug-investigator memory-write carve-out declared in agent-common
+    A(
+        "agent-common: bug-investigator [DEBUG-N] carve-out",
+        SKILLS / "agent-common" / "SKILL.md",
+        contains_all("Sole carve-out:", "[DEBUG-N]", "## Debug History"),
+        "memory-ownership ban carries the narrow bug-investigator Debug History carve-out",
+    ),
+    A(
+        "bug-investigator: [DEBUG-N] tracking cites the carve-out anchor",
+        AGENTS / "bug-investigator.md",
+        contains_all("## Debug History", "sole memory-write carve-out"),
+        "debug attempt tracking appends under ## Debug History per the agent-common carve-out",
+    ),
+    # 72.9 — triage-agent can Write, scoped to .scratch/ and .out-of-scope/
+    A(
+        "triage-agent: Write tool present and scoped",
+        AGENTS / "triage-agent.md",
+        lambda text: ", Write" in text.split("tools:", 1)[1].split("\n", 1)[0]
+        and "ONLY under `.scratch/` and `.out-of-scope/`" in text,
+        "Write in frontmatter tools, prompt law scopes it to .scratch/ and .out-of-scope/ only",
+    ),
+    # 72.10 — red-flags reference relocated out of the agent auto-registration path
+    A(
+        "silent-failure-red-flags: lives under skills/agent-common/references",
+        SKILLS / "agent-common" / "references" / "silent-failure-red-flags.md",
+        contains("Silent Failure Red Flags"),
+        "red-flags reference exists at the non-agent path",
+    ),
+    A(
+        "silent-failure-red-flags: absent from agents/references",
+        SKILLS / "agent-common" / "references" / "silent-failure-red-flags.md",
+        lambda text: not (AGENTS / "references" / "silent-failure-red-flags.md").exists(),
+        "agents/references/ no longer contains the file, so it cannot register as an all-tools agent",
+    ),
+    # 72.11 — BUILD_PREFLIGHT exception declared in builder and mirrored in agent-common
+    A(
+        "component-builder: BUILD_PREFLIGHT is the single mid-run exception",
+        AGENTS / "component-builder.md",
+        contains("SINGLE permitted mid-run status line"),
+        "builder declares the token as the sole exception to the zero-mid-turn-text rule",
+    ),
+    A(
+        "agent-common: mirrors the BUILD_PREFLIGHT exception",
+        SKILLS / "agent-common" / "SKILL.md",
+        contains_all("Single exception:", "BUILD_PREFLIGHT:"),
+        "zero-mid-turn-text rule carries the mirrored component-builder exception",
+    ),
+    # --- Skills library reconciliation (ticket #74) ---
+    A(
+        "planning: seam gate acknowledged as enforced",
+        SKILLS / "planning" / "SKILL.md",
+        contains_all("SEAM_GATE_STATUS", "enforced", "fail-closed"),
+        "planner-facing seam note names the builder's enforced SEAM_GATE_STATUS contract",
+    ),
+    A(
+        "planning: stale advisory seam note removed",
+        SKILLS / "planning" / "SKILL.md",
+        contains_none(
+            "The enforced seam gate is sub-project 2",
+            "advisory input to the builder",
+            "without a fail-closed gate",
+        ),
+        "pre-sub-project-2 advisory framing no longer present",
+    ),
+    A(
+        "planning: validation levels point at verification",
+        SKILLS / "planning" / "SKILL.md",
+        contains_all("cc10x:verification", "Live"),
+        "planning defers to verification's canonical Validation Levels incl. Live",
+    ),
+    A(
+        "planning: no divergent validation-levels table",
+        SKILLS / "planning" / "SKILL.md",
+        contains_none("| **Deterministic** | Automated test with exit code |"),
+        "the old three-level table no longer defines levels divergently",
+    ),
+    A(
+        "verification: canonical validation levels retain Live",
+        SKILLS / "verification" / "SKILL.md",
+        contains_all("## Validation Levels", "**Live**"),
+        "verification remains the single owner of the four-level table",
+    ),
+    A(
+        "doc-target-overlay: current ADR path, no deprecated path",
+        PLUGIN / "templates" / "doc-target-overlay.md",
+        lambda text: "docs/adr/" in text and "docs/decisions/" not in text,
+        "template prescribes docs/adr/NNNN, not the deprecated docs/decisions/ path",
+    ),
+    A(
+        "exploration: no subagent spawn in doubt pass",
+        SKILLS / "exploration" / "SKILL.md",
+        contains_none("spawn a fresh-context adversarial review"),
+        "DOUBT no longer instructs spawning a subagent the agent cannot spawn",
+    ),
+    A(
+        "exploration: doubt folded as inline DESIGN sub-procedure",
+        SKILLS / "exploration" / "SKILL.md",
+        contains_all("Doubt Pass", "not a third mode"),
+        "doubt is an inline self-check sub-procedure, keeping the two-mode inventory true",
+    ),
+    A(
+        "update: working patch form, no in-cache git apply --3way",
+        SKILLS / "update" / "SKILL.md",
+        lambda text: "patch --forward" in text
+        and 'git apply --3way "$BACKUP_DIR' not in text,
+        "Phase 4 uses patch with an explicit target; broken in-cache git apply --3way removed",
+    ),
+    A(
+        "update: find predicates parenthesized",
+        SKILLS / "update" / "SKILL.md",
+        contains('-type f \\( -name "*.md" -o -name "*.json" -o -name "*.py" \\)'),
+        "Phase 2 find applies -type f to all three name predicates",
+    ),
+    A(
+        "update: registry updated after swap",
+        SKILLS / "update" / "SKILL.md",
+        contains("Update registry only after the swap succeeded"),
+        "Phase 3 records the new version only once the cache swap has happened",
+    ),
+    A(
+        "memory-and-handoff: single knowledge compounding loop",
+        SKILLS / "memory-and-handoff" / "SKILL.md",
+        lambda text: text.count("## Knowledge Compounding Loop") == 1,
+        "the two duplicate sections are merged into one",
+    ),
+    A(
+        "code-review: smell count matches table",
+        SKILLS / "code-review" / "SKILL.md",
+        lambda text: (
+            lambda m, rows: m is not None and int(m.group(1)) == rows
+        )(
+            re.search(r"Scan for these (\d+) named smells", text),
+            len(
+                [
+                    line
+                    for line in text.split("### Code Smells (Fowler Catalog)")[1]
+                    .split("\n### ")[0]
+                    .splitlines()
+                    if line.startswith("| **")
+                ]
+            ),
+        ),
+        "the claimed smell count equals the number of table rows",
+    ),
+    A(
+        "code-review: sub-threshold security findings surface as questions",
+        SKILLS / "code-review" / "SKILL.md",
+        contains_all("Security exception:", "open question"),
+        "security findings below 80 confidence surface in the Summary instead of vanishing",
+    ),
+    A(
+        "architecture: term count matches bullets",
+        SKILLS / "architecture" / "SKILL.md",
+        contains("Three extra terms specific to greenfield architecture"),
+        "the extra-terms count matches the three bullets",
+    ),
+    A(
+        "architecture: note no longer self-denying",
+        SKILLS / "architecture" / "SKILL.md",
+        contains_none("There is no second copy", "Architecture Vocabulary (Precise Language)"),
+        "the closing note no longer denies an existing duplicate or cites a nonexistent heading",
+    ),
+    A(
+        "building: reference list has load triggers",
+        SKILLS / "building" / "SKILL.md",
+        lambda text: text.count("load when") >= 3,
+        "each of the three references states when to load it",
+    ),
+    A(
+        "code-review: reference list has load triggers",
+        SKILLS / "code-review" / "SKILL.md",
+        lambda text: text.count("load when") >= 2 and "load whenever" in text,
+        "each of the three references states when to load it",
+    ),
+    A(
+        "memory-and-handoff: reference list has load triggers",
+        SKILLS / "memory-and-handoff" / "SKILL.md",
+        lambda text: text.count("load when") >= 4,
+        "each of the four references states when to load it",
     ),
 ]
 

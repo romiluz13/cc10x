@@ -39,7 +39,7 @@ The agent is told (or tells itself):
    `-> DEBUG workflow (signals: crash, throwing)`.
 
 **Key assertion:** A request that combines a fix-motivation with additive phrasing routes
-DEBUG, not BUILD. ERROR signals take priority 1 over the priority-4 default.
+DEBUG, not BUILD. ERROR signals take priority 1 over the priority-7 default.
 
 ---
 
@@ -59,5 +59,5 @@ ERROR always wins over BUILD.
 
 | Excuse | Counter |
 |--------|---------|
-| "It says 'Add', so it's a BUILD" | ERROR keywords are priority 1 and win over BUILD's priority 4. A crash that motivates the change routes DEBUG regardless of additive verbs. |
+| "It says 'Add', so it's a BUILD" | ERROR keywords are priority 1 and win over BUILD's priority-7 default. A crash that motivates the change routes DEBUG regardless of additive verbs. |
 | "The crash is just context" | The crash IS the work — diagnose root cause before patching. A BUILD path skips bug-investigator. |

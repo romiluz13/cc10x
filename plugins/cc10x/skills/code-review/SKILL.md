@@ -12,9 +12,11 @@ user-invocable: false
 
 ## Reference Files
 
-- `references/review-order-and-checkpoints.md` — review order, checkpoint discipline
-- `references/code-review-heuristics.md` — heuristics, pattern recognition, false-positive prevention
-- `references/security-review-checklist.md` — security review checklist
+Read only what's needed:
+
+- `references/review-order-and-checkpoints.md` — review order, checkpoint discipline; load when starting a review that spans multiple files or needs a checkpointed pass
+- `references/code-review-heuristics.md` — heuristics, pattern recognition, false-positive prevention; load when the diff is non-trivial or before reporting CLEAN (Zero-Finding Halt re-scan)
+- `references/security-review-checklist.md` — security review checklist; load whenever the diff touches auth, input handling, network, secrets, or data access
 
 ---
 
@@ -51,6 +53,8 @@ Top-down (spec → architecture → module → function → line) for first pass
 | 80-89 | Strong: read surrounding context, pattern is clear |
 | <80 | Do not report — insufficient evidence |
 
+**Security exception:** a security-category finding below 80 confidence is NOT silently dropped. Surface it as an explicit open question in the review Summary (e.g., "Possible auth bypass at `file:line` — could not confirm exploit path"), not as a finding. The <80 floor drops everything else.
+
 ### Parallel Review + Router Merge
 
 When `code-reviewer` and `failure-hunter` run in parallel (BUILD workflow):
@@ -65,7 +69,7 @@ Zero findings on a non-trivial change → insufficient depth, not perfect code. 
 
 ### Code Smells (Fowler Catalog)
 
-Scan for these 12 named smells during review. Each is actionable — not a style preference. "Messy" is not actionable; "Mysterious Name" is:
+Scan for these 16 named smells during review. Each is actionable — not a style preference. "Messy" is not actionable; "Mysterious Name" is:
 
 | Smell | Signal | Fix |
 | ------ | ------ | ---- |

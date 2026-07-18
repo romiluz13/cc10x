@@ -24,7 +24,7 @@
 7. Planner must choose one `verification_rigor`:
    - `standard` by default (covers most work; keeps verification proportional to risk)
    - `critical_path` for security, money, state-machine, concurrency, or irreversible-migration work (failure in these domains is irreversible or high-blast-radius; justifies extended scenario coverage)
-7a. Doubt-Driven Development trigger: when `plan_mode=decision_rfc` OR `verification_rigor=critical_path` is chosen, offer the user Doubt-Driven Development (`cc10x:exploration` Mode: DOUBT) as an optional in-flight adversarial pass on the key decision BEFORE the plan is finalized — this is cheaper than discovering the flaw during BUILD or REVIEW. Skip the offer for `standard`/`direct` work; the fresh-review DAG (step 8) already covers that risk tier.
+7a. Doubt-Driven Development trigger: when `plan_mode=decision_rfc` OR `verification_rigor=critical_path` is chosen, offer the user a Doubt Pass (`cc10x:exploration`, the DESIGN mode's inline Doubt Pass sub-procedure) as an optional in-flight adversarial pass on the key decision BEFORE the plan is finalized — this is cheaper than discovering the flaw during BUILD or REVIEW. Skip the offer for `standard`/`direct` work; the fresh-review DAG (step 8) already covers that risk tier.
 8. PLAN fresh-review loop:
    - Every PLAN workflow pre-creates a bounded review DAG: `plan-create -> plan-review-gap-1 -> re-plan -> plan-review-gap-2 -> memory-finalize`.
    - Every saved plan artifact enters that DAG, including `direct`, `execution_plan`, and `decision_rfc`.

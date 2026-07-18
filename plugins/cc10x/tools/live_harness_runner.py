@@ -17,7 +17,6 @@ BLOCKED_PATTERNS = (
     "econnrefused",
     "connection refused",
     "enospc",
-    "engine",
     "module not found",
     "cannot find module",
 )

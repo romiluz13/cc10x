@@ -28,21 +28,24 @@ def plugin_config_dir() -> Path:
 
 
 def state_root() -> Path:
-    path = project_dir() / ".cc10x"
+    """The project's .cc10x dir. Never creates it — guards must not litter
+    state dirs into repos that never opted into CC10x. Callers that write
+    into an opted-in project use ensure_state_root()."""
+    return project_dir() / ".cc10x"
+
+
+def ensure_state_root() -> Path:
+    path = state_root()
     path.mkdir(parents=True, exist_ok=True)
     return path
 
 
 def workflows_dir() -> Path:
-    path = state_root() / "workflows"
-    path.mkdir(parents=True, exist_ok=True)
-    return path
+    return state_root() / "workflows"
 
 
 def logs_dir() -> Path:
-    path = state_root()
-    path.mkdir(parents=True, exist_ok=True)
-    return path
+    return state_root()
 
 
 def load_input() -> dict[str, Any]:
@@ -59,7 +62,6 @@ def load_mode() -> dict[str, str]:
     path = plugin_config_dir() / "hook-mode.json"
     if not path.exists():
         return {
-            "protectedWrites": "audit",
             "memoryWrites": "audit",
             "taskMetadata": "audit",
         }
@@ -67,7 +69,6 @@ def load_mode() -> dict[str, str]:
         return json.loads(path.read_text(encoding="utf-8"))
     except Exception:
         return {
-            "protectedWrites": "audit",
             "memoryWrites": "audit",
             "taskMetadata": "audit",
         }
@@ -79,6 +80,8 @@ def now_iso() -> str:
 
 def log_event(name: str, payload: dict[str, Any]) -> None:
     try:
+        if not logs_dir().is_dir():
+            return  # not a CC10x project — never create state dirs to log
         path = logs_dir() / "cc10x-hook-events.log"
         event = {
             "ts": now_iso(),
@@ -98,12 +101,20 @@ def latest_workflow_payload() -> dict[str, Any]:
 
 
 def latest_workflow_file() -> Path | None:
-    files = sorted(
-        workflows_dir().glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True
-    )
-    if not files:
+    def mtime_or_none(path: Path) -> float | None:
+        try:
+            return path.stat().st_mtime
+        except OSError:
+            return None  # deleted between glob and stat, or dangling symlink
+
+    stamped = [
+        (mtime, p)
+        for p in workflows_dir().glob("*.json")
+        if (mtime := mtime_or_none(p)) is not None
+    ]
+    if not stamped:
         return None
-    return files[0]
+    return max(stamped)[1]
 
 
 def read_latest_workflow_state() -> tuple[dict[str, Any], Path | None, str | None]:

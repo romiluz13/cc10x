@@ -1,7 +1,7 @@
 # CC10X Agent Contract Registry
 
 > **Status note:** Aligned to the live agent and router prompt stack as of 2026-06-17 (`v11.0.0`; last structural sync `v10.1.19` on 2026-04-12; `v11.0.0` de-versions the state root from `.cc10x/v10/` to `.cc10x/`, version held only in `plugin.json`/GitHub; `v11.1.0` adds the SPEC_COMPLIANCE reviewer verdict split + recorded-BASE diffing, additive).
-> **v12.5.0:** adds TEST_SEAMS + SEAM_GATE_STATUS to the component-builder contract; FEEDBACK_LOOP + DEBUG_CLOSEOUT enforcement to bug-investigator; ALTERNATIVES ≥2 for decision_rfc; 2 new read-only agents (triage-agent, architecture-scanner) with router-owned completion; resolving-merge-conflicts skill; CONTEXT.md/docs/adr/ canonical artifacts. Additive — no existing agent contract schema changed.
+> **v12.5.0:** adds TEST_SEAMS + SEAM_GATE_STATUS to the component-builder contract; FEEDBACK_LOOP + DEBUG_CLOSEOUT enforcement to bug-investigator; ALTERNATIVES ≥2 for decision_rfc; 2 new read-only agents (triage-agent, architecture-scanner) with router-owned completion; resolving-merge-conflicts skill; CONTEXT.md/docs/adr/ canonical artifacts. Additive — no existing agent contract schema changed. **v12.6.0:** all 11 agents unified on one return dialect — line-1 CONTRACT envelope + fenced YAML Router Contract; per-agent required fields and override rules unchanged; planner gains the explicit NEEDS_CLARIFICATION path for non-empty OPEN_DECISIONS; triage-agent gains Write scoped to .scratch/.
 > **Purpose:** Quick contract map for maintainers. This document summarizes what the live prompts already enforce; it does not add new behavior.
 
 ## Write Agents

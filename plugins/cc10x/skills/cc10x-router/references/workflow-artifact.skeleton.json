@@ -9,6 +9,10 @@
   "research_files": [],
   "approved_decisions": [],
   "plan_mode": null,
+  "build_scope": null,
+  "worktree": null,
+  "execution_mode": "subagent_dispatch",
+  "inline_fallback_reason": null,
   "verification_rigor": "standard",
   "proof_status": "gaps_found",
   "traceability": {
@@ -40,6 +44,12 @@
     "overall": "none"
   },
   "task_ids": {
+    "builder": null,
+    "investigator": null,
+    "reviewer": null,
+    "hunter": null,
+    "verifier": null,
+    "doc_syncer": null,
     "planner_create": null,
     "planning_review_pass1": null,
     "planner_replan": null,
@@ -49,6 +59,10 @@
   "phase_status": {},
   "deferred_findings": [],
   "results": {
+    "git_preflight": null,
+    "baseline": null,
+    "git_base_sha": null,
+    "target_repo": null,
     "builder": null,
     "investigator": null,
     "reviewer": null,
@@ -56,6 +70,9 @@
     "verifier": null,
     "planner": null,
     "planning_reviewer": null,
+    "doc_syncer": null,
+    "finishing": null,
+    "final_branch_review": null,
     "research": {
       "web": null,
       "github": null,

@@ -134,7 +134,7 @@ For each component:
 
 The canonical deep-module vocabulary (module, interface, depth, seam, adapter, leverage, locality, the deletion test, the two-adapter rule) lives in `cc10x:codebase-design`. **Use those terms exactly** — don't restate them here. Depth is leverage at the interface (a lot of behaviour behind a small interface), NOT a lines-ratio — `codebase-design` explicitly rejects the Ousterhout implementation-lines/interface-lines framing.
 
-Two extra terms specific to greenfield architecture (not in codebase-design):
+Three extra terms specific to greenfield architecture (not in codebase-design):
 
 - **Concealed complexity** — work done behind a simple interface. The goal of deep modules.
 - **Temporal coupling** — caller must know the order of operations. Design defect — remove or document explicitly.
@@ -169,4 +169,4 @@ For architectural decisions with material trade-offs:
 
 ## Note
 
-Deep-module vocabulary, the Deletion Test, and the Two-Adapter Rule are defined once above under **Architecture Vocabulary (Precise Language)**, and Phase 3 (Design Components) applies them directly. There is no second copy.
+Deep-module vocabulary, the Deletion Test, and the Two-Adapter Rule are defined once in `cc10x:codebase-design` and pointed to above under **Architecture Vocabulary**. The one-line application rule (a boundary that fails either test is folded into its caller or deferred) is deliberately repeated at its two points of use — Design Components and Architecture Vocabulary; the definitions themselves are not restated.

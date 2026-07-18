@@ -38,9 +38,7 @@ Your prompt includes findings from code-reviewer and failure-hunter under `## Pr
 
 **Claim extraction (MANDATORY):** before running any test, list every factual claim from prior agents — every CRITICAL/HIGH finding from `code-reviewer` and every silent-failure finding from `failure-hunter`. Mark each UNVERIFIED. During verification, update to VERIFIED, CONTRADICTED, or UNVERIFIABLE. Any UNVERIFIED claim affecting your verdict must be independently checked.
 
-**Per-finding validation (MANDATORY):** treat each reviewer/hunter finding as a claim to confirm against the live diff. For each finding that materially affects your PASS/FAIL verdict: re-read the exact `file:line` in the merged result, confirm the issue still exists post-fix (or never existed — false positive), and record the verdict inline. A finding the reviewer raised at `BASE..HEAD` may have been fixed by a later REM-FIX you did not witness — verify against current state, not the reviewer's snapshot.
-
-**Per-finding validation (MANDATORY for CRITICAL/HIGH):** every CRITICAL and HIGH finding from code-reviewer or failure-hunter is an unverified claim until you independently confirm it against the codebase. For each such finding: (1) restate the finding and its `file:line` quote, (2) open the file at that line and confirm the quoted code exists and the finding's characterization is accurate, (3) classify as `validated: true` (the code says what the reviewer claims), `validated: false` (the quote is missing, misquoted, or the characterization is wrong — a hallucinated finding), or `validated: degraded` (you cannot reach the file or line, but the finding's severity warrants keeping it). Drop `validated: false` findings from your verdict's blocking set — a hallucinated critical finding must not gate the phase. Keep `validated: degraded` CRITICAL/HIGH findings fail-safe (mark them degraded, do not drop — a transient access failure must never silently remove a critical finding). Report the validation result per finding in your output so the router can act on false positives before they waste a REM-FIX cycle.
+**Per-finding validation (MANDATORY):** every CRITICAL and HIGH finding from code-reviewer or failure-hunter — and any other finding that materially affects your PASS/FAIL verdict — is an unverified claim until you independently confirm it against the codebase. For each such finding: (1) restate the finding and its `file:line` quote, (2) open the file at that line in the merged result and confirm the quoted code exists and the finding's characterization is accurate — a finding raised at `BASE..HEAD` may have been fixed by a later REM-FIX you did not witness, so verify against current state, not the reviewer's snapshot, (3) classify as `validated: true` (the code says what the reviewer claims), `validated: false` (the quote is missing, misquoted, the issue was since fixed, or the characterization is wrong — a hallucinated or stale finding), or `validated: degraded` (you cannot reach the file or line, but the finding's severity warrants keeping it). Drop `validated: false` findings from your verdict's blocking set — a hallucinated critical finding must not gate the phase. Keep `validated: degraded` CRITICAL/HIGH findings fail-safe (mark them degraded, do not drop — a transient access failure must never silently remove a critical finding). Report the validation result per finding in your output so the router can act on false positives before they waste a REM-FIX cycle.
 
 ## Process
 
@@ -102,17 +100,33 @@ Verify all three: **Truths** (what must be true), **Artifacts** (what must exist
 
 ## Output
 
-```
+Emit the CONTRACT envelope on line 1, the heading on line 2, then the Router Contract (MACHINE-READABLE) YAML block, then the prose sections. The router branches on `STATUS` — it MUST appear in the YAML block, not just the envelope.
+
+```text
 CONTRACT {"s":"PASS","b":false,"cr":0}
 ## Verification: [PASS/FAIL]
+```
 
+```yaml
+STATUS: PASS | FAIL
+PROOF_STATUS: passed | gaps_found | human_needed
+SCENARIOS_TOTAL: [total]
+SCENARIOS_PASSED: [count]
+SCENARIOS_FAILED: [count]
+REMEDIATION_NEEDED: [true if REM-FIX should be created]
+REMEDIATION_REASON: "[reason]" | None
+REVERT_RECOMMENDED: [true if Option B]
+MEMORY_NOTES:
+  learnings: []
+  patterns: []
+  verification: []
+```
+
+```text
 ### Summary
 - Overall: [PASS/FAIL]
 - Proof Status: `passed` | `gaps_found` | `human_needed`
 - Scenarios Passed: X/Y
-- SCENARIOS_TOTAL: [total]
-- SCENARIOS_PASSED: [count]
-- SCENARIOS_FAILED: [count]
 
 ### Proof Reconciliation
 - Truths: [verified / missing]
@@ -156,11 +170,6 @@ For each CRITICAL/HIGH finding from code-reviewer or failure-hunter, report:
 - Note: [what you confirmed, or why the quote was missing/misquoted (false), or why access failed (degraded)]
 A `validated:false` finding is a hallucinated finding — exclude from your blocking set and flag for the router so no REM-FIX is created for it. A `validated:degraded` CRITICAL/HIGH finding stays in the blocking set fail-safe.
 
-### Remediation Intent
-- REMEDIATION_NEEDED: [true if REM-FIX should be created]
-- REMEDIATION_REASON: [reason or "None"]
-- REVERT_RECOMMENDED: [true if Option B]
-
 ### Memory Notes
 - **Learnings:** [integration insights]
 - **Patterns:** [edge cases discovered]
@@ -170,6 +179,6 @@ A `validated:false` finding is a hallucinated finding — exclude from your bloc
 - (Task completion handled by router. Do NOT call TaskUpdate directly.)
 ```
 
-**CONTRACT:** Line 1 envelope IS the contract. No separate YAML block. Router reads envelope first, falls back to heading.
+**CONTRACT:** Line 1 envelope is the primary machine-readable signal. The YAML block carries the structured fields the router branches on (`STATUS`, `PROOF_STATUS`, scenario counts, remediation-intent fields). Router reads envelope first, falls back to heading.
 
 **Rules:** SCENARIOS_PASSED must equal EVIDENCE.scenarios with exit 0 + Result=PASS. SCENARIOS_TOTAL = PASSED + FAILED. Every scenario needs non-empty Expected and Actual. Every scenario maps to exactly one EVIDENCE entry.

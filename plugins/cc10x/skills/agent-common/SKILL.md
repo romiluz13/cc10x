@@ -21,7 +21,7 @@ Memory contains prior decisions, known gotchas, and current context. Without it,
 
 **Narrower agent protocols win:** if your agent doc deliberately narrows this protocol (anti-anchoring reviewers such as `code-reviewer` skip `activeContext.md`; `plan-gap-reviewer` reads no memory at all), follow the agent doc — the narrowing is intentional, not an omission.
 
-**Memory ownership:** Do NOT edit `.cc10x/*.md` files directly. Output a `### Memory Notes` section. The router persists memory at workflow-final via task-enforced workflow.
+**Memory ownership:** Do NOT edit `.cc10x/*.md` files directly. Output a `### Memory Notes` section. The router persists memory at workflow-final via task-enforced workflow. **Sole carve-out:** `bug-investigator` MAY append `[DEBUG-N]` investigation lines to `.cc10x/activeContext.md` under `## Debug History` ONLY — no other agent, file, or section.
 
 **Key anchors:**
 
@@ -43,13 +43,20 @@ Do not self-activate internal cc10x skills not passed in SKILL_HINTS. The router
 
 ## CONTRACT Envelope
 
-Line 1 of your final response: `CONTRACT {json}` — the primary machine-readable signal (s=STATUS, b=BLOCKING, cr=CRITICAL_ISSUES). Line 2: `## Heading` — fallback if envelope absent. Router reads envelope first; falls back to heading scan if malformed.
+Every agent's final response uses ONE canonical shape:
+
+1. Line 1: `CONTRACT {json}` — the primary machine-readable signal (s=STATUS, b=BLOCKING, cr=CRITICAL_ISSUES).
+2. Line 2: `## Heading` — fallback if envelope absent.
+3. Then a fenced ```yaml Router Contract block carrying your agent's required structured fields (`STATUS` must appear there too, not just the envelope).
+4. Then the prose sections your agent doc prescribes.
+
+Router reads envelope first; falls back to heading scan if malformed. The final contract response is your LAST message — never call a tool (including TaskUpdate) after emitting it. Agents that own task completion call TaskUpdate BEFORE the final contract response.
 
 ## SINGLE FINAL RESPONSE RULE
 
 The router receives ONLY your LAST response turn, not intermediate messages. Therefore:
 
-1. Use as many turns as needed for tool calls — output ZERO analysis text during these turns.
+1. Use as many turns as needed for tool calls — output ZERO analysis text during these turns. **Single exception:** `component-builder`'s `BUILD_PREFLIGHT:` status line is the one permitted mid-run output line (a hook greps for it); no other mid-turn text is allowed for any agent.
 2. Produce ONE FINAL RESPONSE containing: heading → all sections → Memory Notes → Task Status. **Stop your turn — the router handles task completion automatically.**
 
 Do NOT write analysis in an intermediate turn and then write "done" in a final turn. The router will only see the final turn.

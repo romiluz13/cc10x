@@ -1,5 +1,39 @@
 # Changelog
 
+## [12.6.0] - 2026-07-18
+
+### Integrity reconciliation — audit-seam revival, router drift, contract unification, guard hardening (spec #65, tickets #66–#75)
+
+A full functional-file audit (historical audit docs deliberately ignored) found the system working but drifted: the publication proof suite silently proved nothing, newer workflows were bolted onto older router law without reconciling it, agents spoke three contract dialects, and several guards failed open. Every fix landed regression-locked through one repaired seam. Routing behavior, gate semantics, and hook modes are unchanged.
+
+#### Audit seam revived (#66, #67, #68)
+
+- Bootstrap live manifest invokes checkers at their real `tools/` paths (was: moved-file paths → every scenario BLOCKED); bare `engine` removed from the runner's BLOCKED patterns (was reclassifying genuine FAILs); deliberate-failure now provably reports FAIL
+- New guard-script behavioral test suite (`scripts/test_cc10x_guards.py`, 39 tests): every hook entry point invoked as the runtime invokes it (subprocess, stdin JSON), dependency-free, wired into the manifest
+- One shared fixture registry (`tools/fixture_registry.py`) for the publication audit and replay checker (lists had drifted 23 vs 28); disk↔registry mismatches fail both directions; sub-project-2a gates now mandatory on every builder-PASS / investigator-FIXED fixture; seam-discipline scenario 6 wired into its manifest
+
+#### Router kernel reconciliation (#69, #70) — behavior-preserving, net −13 kernel lines
+
+- Phase enum + dispatcher rows for `triage`/`codebase-health`; routing table states its keyword-nominates/primary-deliverable-decides tie-break; ORIENT artifact rule single-voiced; events-log append mechanism explicit (literal reading can no longer overwrite the log); verifier-handoff template deduplicated; circuit breaker single-sourced at `>= 3` with the hook backstop documented as deliberately one cycle behind; all five router gates operationally defined (three were bare names); duplicated reviewer override row removed; single trivial→full escalation rule (always includes the failure-hunter); artifact skeleton gains the BUILD/DEBUG fields the workflows persist (was PLAN-biased)
+
+#### Agent contract unification (#71, #72)
+
+- All 11 agents on one dialect: line-1 `CONTRACT` JSON envelope + fenced YAML Router Contract (per-agent fields unchanged; router parsing untouched)
+- Fixed: code-reviewer CONFIDENCE example arithmetic, failure-hunter impossible revise-line-1 protocol, planner honest open-decisions path (→ NEEDS_CLARIFICATION, never presented as settled), bug-investigator memory carve-out made explicit, triage-agent Write scoped to `.scratch/` so its brief is producible, BUILD_PREFLIGHT declared the single mid-run-line exception, orphaned red-flags reference moved out of the agent-registration path (roster is now exactly 11 agents)
+
+#### Guard hardening (#73) — bug-first, all repros verified failing pre-fix
+
+- Memory guard resolves both sides of the path comparison (symlinked project dirs no longer bypass); workflow-file stat race no longer crashes guards open; circuit breaker surfaces missing `remediation_history` instead of silently passing; git guard matches per shell segment and collapses git global flags (`git -C dir …`, compound and multi-line commands no longer evade); guards no longer create `.cc10x/` in repos that never opted in; pre-commit tolerates pytest exit 5 (test-less repos can commit); artifact freshness compares against task lifetime when available; task-metadata keys line-anchored; hooks README states the exact block/audit split; dead `protectedWrites` key removed
+
+#### Skills library reconciliation (#74)
+
+- planning acknowledges the shipped enforced seam gate and points at verification's canonical Validation Levels; doc-target-overlay template on `docs/adr/`; exploration's ghost DOUBT mode folded into an inline DESIGN Doubt Pass; update skill's rebase procedure fixed to work at runtime; memory-and-handoff duplicate section merged with router-matching thresholds; code-review smell count corrected and sub-80 security findings now surface as open questions; load-when triggers on the most-loaded reference lists
+- **Shipping bug fixed:** `.gitignore`'s `planning/` and `*test*.md` patterns silently excluded the entire planning skill and 5 reference/eval files from the published repo; scoped `!plugins/cc10x/skills/**` re-include added and all 8 files tracked
+
+#### Verification totals
+
+122 prompt-clause assertions (61 → 122; every fix locked by an assertion proven failing against the pre-fix tree), 39 guard tests green under mise 3.13 and Homebrew 3.14, 28 replay fixtures with mandatory gates, bootstrap manifest 5/5 proof + 2/2 stress, seam manifest 7/7, zero BLOCKED anywhere.
+
 ## [12.5.0] - 2026-07-16
 
 ### Added: Matt Pocock skills integration + enforced seam gate + advisory on-ramp workflows

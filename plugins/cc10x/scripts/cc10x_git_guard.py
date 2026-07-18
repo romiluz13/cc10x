@@ -134,6 +134,31 @@ def consume_approval(operation: str) -> str | None:
     return None
 
 
+def command_segments(command: str) -> list[str]:
+    """Split a shell command into the simple commands the patterns expect.
+
+    Multi-line scripts, `&&`/`||` chains, `;` sequences, and pipelines each
+    hide a git invocation from end-anchored patterns; match per segment.
+    """
+    parts = re.split(r"\n|;|\|\||&&|\|", command)
+    return [part.strip() for part in parts if part.strip()]
+
+
+GIT_GLOBAL_FLAGS = (
+    r"\bgit\s+((-C\s+\S+|-c\s+\S+|--git-dir(=|\s+)\S+|--work-tree(=|\s+)\S+"
+    r"|-P|--no-pager|--paginate)\s+)+"
+)
+
+
+def normalize_segment(segment: str) -> str:
+    """Collapse git's global flags so `git -C dir <op>` matches `git <op>`,
+    and strip trailing shell comments so `git restore . # tidy` still hits
+    the end-anchored discard patterns. (Heuristic: ` #` outside quotes is
+    rare in legitimate git arguments; erring toward deny is the safe side.)"""
+    segment = re.sub(r"\s+#.*$", "", segment)
+    return re.sub(GIT_GLOBAL_FLAGS, "git ", segment)
+
+
 def main() -> int:
     try:
         data = json.load(sys.stdin)
@@ -144,8 +169,10 @@ def main() -> int:
     if not command:
         return 0
 
+    segments = [normalize_segment(segment) for segment in command_segments(command)]
+
     for pattern, reason, operation in BLOCKED_PATTERNS:
-        if re.search(pattern, command):
+        if any(re.search(pattern, segment) for segment in segments):
             if operation is not None:
                 wf = consume_approval(operation)
                 if wf is not None:
