@@ -622,6 +622,41 @@ ASSERTIONS = [
         lambda text: text.count("fewer than 3 file:line evidence citations") == 1,
         "the code-reviewer zero-findings override row appears exactly once",
     ),
+    # --- Build workflow + skeleton reconciliation (ticket #70) ---
+    A(
+        "build: escalation rule includes the failure-hunter",
+        SKILLS / "cc10x-router" / "references" / "build-workflow.md",
+        contains_all(
+            "never skip the hunter on escalation",
+            "they are one rule, not two",
+        ),
+        "trivial->full escalation is a single rule that always adds the failure-hunter",
+    ),
+    A(
+        "build: preparation list numbering coherent",
+        SKILLS / "cc10x-router" / "references" / "build-workflow.md",
+        contains_all(
+            "12. Builder may execute only the phase at `phase_cursor`.",
+            "13. Router handoff for the current BUILD phase must be phase-local:",
+        ),
+        "the 1-13 preparation sequence has no duplicate step numbers",
+    ),
+    A(
+        "skeleton: carries BUILD/DEBUG state fields",
+        SKILLS / "cc10x-router" / "references" / "workflow-artifact.skeleton.json",
+        contains_all(
+            '"build_scope"',
+            '"worktree"',
+            '"execution_mode"',
+            '"git_preflight"',
+            '"baseline"',
+            '"git_base_sha"',
+            '"doc_syncer"',
+            '"finishing"',
+            '"final_branch_review"',
+        ),
+        "the canonical skeleton includes the fields BUILD/DEBUG workflows persist",
+    ),
 ]
 
 

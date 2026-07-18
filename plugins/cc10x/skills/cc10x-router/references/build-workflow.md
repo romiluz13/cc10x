@@ -70,8 +70,8 @@ The orchestration state dir (`.cc10x/`) and the workflow artifacts STAY at `CLAU
 - This BASE is the producer side of the recorded-BASE discipline: it is exactly what the downstream review / verify / doc agents diff against (`BASE..HEAD`), and it is the BASE argument passed to `tools/review_package.py`. Recording it BEFORE the builder runs guarantees the diff captures only this phase's work, never a prior phase's already-reviewed changes.
 - If `git_preflight=degraded` blocks `git rev-parse`, record `git_base_sha=unavailable` and continue; downstream agents then fall back to reviewing the working-tree diff and say so explicitly.
 
-1. Builder may execute only the phase at `phase_cursor`.
-2. Router handoff for the current BUILD phase must be phase-local:
+12. Builder may execute only the phase at `phase_cursor`.
+13. Router handoff for the current BUILD phase must be phase-local:
 
 - include only the current phase objective, inputs, expected artifacts, required checks, checkpoint type, exit criteria, and approved clarifications still in force
 - include prior-phase detail only when it remains an active blocker, dependency, or unresolved finding
@@ -92,7 +92,7 @@ The router is still the sole entry point for every BUILD, but the task graph sca
 - `build_scope=trivial` → use the **reduced task graph** below: `component-builder` → `integration-verifier` → `Memory Update`. NO separate `code-reviewer` task, NO `failure-hunter` task, NO standalone `doc-syncer` task. The verifier still runs its FULL real proof path — never weaken the Pre-Completion Checklist, Proof Reconciliation, or Test Honesty Gates to "save time" on trivial work — and folds a brief review/edge-case pass into its report.
 - `build_scope=standard` (default, and always when a plan exists) → use the **full task graph** further below.
 
-**Escalation rule (trivial → full):** after the builder returns, if its Router Contract reports non-empty `SCOPE_INCREASES` or non-empty `BLOCKED_ITEMS`, the work was not actually trivial. Before advancing, promote the workflow to the full graph: create the `code-reviewer` task (blocked by the builder) and the `doc-syncer` task (blocked by the verifier), and re-block Memory Update on `doc_sync_task_id`. Persist `build_scope=standard` and an escalation entry in `status_history`.
+**Escalation rule (trivial → full):** after the builder returns, if its Router Contract reports non-empty `SCOPE_INCREASES` or non-empty `BLOCKED_ITEMS`, the work was not actually trivial. Before advancing, promote the workflow to the full graph: create the `code-reviewer` task AND the `failure-hunter` task (both blocked by the builder — never skip the hunter on escalation), create the `doc-syncer` task (blocked by the verifier), re-block the verifier on `[reviewer_task_id, hunter_task_id]`, and re-block Memory Update on `doc_sync_task_id`. Persist `build_scope=standard` and an escalation entry in `status_history`. (The conversion note under the reduced graph below states the same rule — they are one rule, not two.)
 
 #### Reduced task graph (`build_scope=trivial`)
 
