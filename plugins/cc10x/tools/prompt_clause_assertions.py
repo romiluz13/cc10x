@@ -536,6 +536,92 @@ ASSERTIONS = [
         contains_none("cc10x:codebase-design", "cc10x:domain-modeling"),
         "integration-verifier frontmatter unchanged (read-only)",
     ),
+    # --- Router kernel reconciliation (ticket #69) ---
+    A(
+        "router: phase enum covers triage + codebase-health",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        contains("|triage|codebase-health|"),
+        "task-metadata phase enum includes the TRIAGE and CODEBASE-HEALTH phases their workflows create",
+    ),
+    A(
+        "router: dispatcher row for triage-agent",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        contains_all("| `triage` | `cc10x:triage-agent` |"),
+        "dispatcher table alone resolves phase:triage",
+    ),
+    A(
+        "router: dispatcher row for architecture-scanner",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        contains_all("| `codebase-health` | `cc10x:architecture-scanner` |"),
+        "dispatcher table alone resolves phase:codebase-health",
+    ),
+    A(
+        "router: routing table carries primary-deliverable tie-break",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        contains("A keyword hit only NOMINATES a row"),
+        "keyword table is explicitly subordinate to the primary-deliverable rules",
+    ),
+    A(
+        "router: ORIENT artifact rule single-voiced",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        contains("no NEW workflow artifact"),
+        "ORIENT law reconciles with the pre-created-artifact enum entries",
+    ),
+    A(
+        "router: events-log append mechanism explicit",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        contains_all(
+            "NEVER `Write` only the new line",
+            "Write it back with the new line added at the end",
+        ),
+        "a literal reading of the append instruction cannot overwrite the event log",
+    ),
+    A(
+        "router: single verifier-handoff template",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: text.count("**Critical Issues:**") == 2,
+        "the Previous Agent Findings template exists exactly once (dispatcher section points at §13)",
+    ),
+    A(
+        "router: circuit breaker single-sourced",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        contains_none("more than 3 cycles"),
+        "kernel defers to the >= 3 circuit breaker in remediation-and-research.md",
+    ),
+    A(
+        "remediation: no undefined cycle-cap gate",
+        SKILLS / "cc10x-router" / "references" / "remediation-and-research.md",
+        contains_none("cycle-cap gate"),
+        "re-review loop references the defined circuit breaker, not an undefined gate name",
+    ),
+    A(
+        "remediation: re-review loop numbering coherent",
+        SKILLS / "cc10x-router" / "references" / "remediation-and-research.md",
+        contains_all(
+            "3. Create a re-hunt task",
+            "4. Reuse the pending verifier",
+            "7. Increment telemetry loop counters",
+        ),
+        "ordered steps 1-7 are unique so cross-references resolve unambiguously",
+    ),
+    A(
+        "policy: every router gate operationally defined",
+        SKILLS / "cc10x-router" / "references" / "workflow-artifact-and-hook-policy.md",
+        contains_all(
+            "`plan_trust_gate` —",
+            "`phase_exit_gate` —",
+            "`failure_stop_gate` —",
+            "`memory_sync_gate` —",
+            "`skill_precedence_gate` —",
+        ),
+        "no router gate exists as a bare name without semantics",
+    ),
+    A(
+        "policy: reviewer rubber-stamp override deduplicated",
+        SKILLS / "cc10x-router" / "references" / "workflow-artifact-and-hook-policy.md",
+        lambda text: text.count("fewer than 3 file:line evidence citations") == 1,
+        "the code-reviewer zero-findings override row appears exactly once",
+    ),
 ]
 
 

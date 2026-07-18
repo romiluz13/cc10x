@@ -21,14 +21,14 @@ Before creating a new remediation task:
 - Count tasks whose descriptions contain both `wf:{workflow_uuid}` and `kind:remfix`.
 - If count >= 3, ask the user how to proceed before creating another one.
 
-**Hook-enforced backstop (MANDATORY — do not skip):** immediately after creating any `kind:remfix` task, append an entry to the workflow artifact's `remediation_history` array: `{ts, phase, reason, cycle_number}` where `cycle_number` is this workflow's running REM-FIX count (starting at 1). The `TaskCompleted` guard independently counts `remediation_history` entries from the artifact on every `kind:remfix` completion and flags/blocks when the count exceeds 3 — this is the enforced version of the LLM-counted rule above and does not depend on the router's own counting being correct. If `remediation_history` and the router's own task count ever disagree, the artifact's `remediation_history` is authoritative.
+**Hook-enforced backstop (MANDATORY — do not skip):** immediately after creating any `kind:remfix` task, append an entry to the workflow artifact's `remediation_history` array: `{ts, phase, reason, cycle_number}` where `cycle_number` is this workflow's running REM-FIX count (starting at 1). The `TaskCompleted` guard independently counts `remediation_history` entries from the artifact on every `kind:remfix` completion and flags/blocks when the count exceeds 3 — deliberately one cycle BEHIND the router's own `>= 3` ask-user rule, so the hook fires only if the router already missed its checkpoint. This is the enforced version of the LLM-counted rule above and does not depend on the router's own counting being correct. If `remediation_history` and the router's own task count ever disagree, the artifact's `remediation_history` is authoritative.
 
 ### Change-something-before-re-dispatch
 
 When an agent returns `BLOCKED` (or a fix attempt fails), the circuit breaker only BOUNDS the loop — it does not improve it. Re-dispatching the SAME agent with the SAME model on the SAME unchanged input just burns a circuit-breaker cycle and produces the same failure. Before any re-dispatch, the router MUST change at least one input:
 
 1. Provide missing context — supply the file/spec/decision the agent said it lacked.
-2. Escalate the model tier — re-dispatch on a more capable model when the task needs more reasoning.
+2. Escalate the model tier — re-dispatch on a more capable model when the task needs more reasoning (only where the mechanism allows; per the router's model-tier policy the model comes from agent frontmatter, so when per-dispatch selection is unavailable change context or scope instead).
 3. Shrink the task scope — split an oversized task into smaller, completable pieces.
 4. Escalate to the human — if the plan itself is wrong, stop and ask; do not loop.
 
@@ -286,7 +286,7 @@ Do not misread a tool/fallback message as a hard blocker (the "you ARE the provi
 
 When a `kind:remfix` task completes:
 
-1. Count completed remediation tasks in the same `wf:`. If count >= 2, run the cycle-cap gate before continuing.
+1. Count completed remediation tasks in the same `wf:`. Apply the circuit breaker above (count `>= 3` → ask the user) before continuing.
 2. Create a re-review task:
 
 ```text
@@ -297,7 +297,7 @@ TaskCreate({
 }) -> rereview_task_id
 ```
 
-1. Create a re-hunt task (BUILD only — the hunter re-scans for silent failures after remediation):
+3. Create a re-hunt task (BUILD only — the hunter re-scans for silent failures after remediation):
 
 ```text
 TaskCreate({
@@ -307,7 +307,7 @@ TaskCreate({
 }) -> rehunt_task_id
 ```
 
-1. Reuse the pending verifier in the same `wf:` if one exists; otherwise create:
+4. Reuse the pending verifier in the same `wf:` if one exists; otherwise create:
 
 ```text
 TaskCreate({
@@ -317,9 +317,9 @@ TaskCreate({
 }) -> reverify_task_id
 ```
 
-1. Block the verifier on both the re-review and re-hunt tasks.
-2. Re-block the memory task on the verifier for BUILD/DEBUG or on the re-reviewer for REVIEW.
-3. Increment telemetry loop counters whenever the follow-up tasks are created:
+5. Block the verifier on both the re-review and re-hunt tasks.
+6. Re-block the memory task on the verifier for BUILD/DEBUG or on the re-reviewer for REVIEW.
+7. Increment telemetry loop counters whenever the follow-up tasks are created:
    - `telemetry.loop_counts.re_review += 1`
    - `telemetry.loop_counts.re_hunt += 1` (BUILD only)
    - `telemetry.loop_counts.re_verify += 1`
@@ -337,4 +337,4 @@ TEST_OUTPUT: {its output}
 - Name only the COVERING tests — the files that exercise the changed behavior — not the whole suite. "Ran all tests, green" is not sufficient; the report must point at the tests that would fail if this fix were wrong.
 - If `COVERING_TESTS`, `TEST_COMMAND`, and `TEST_OUTPUT` are missing or empty, the gate fails closed: do NOT create the re-review task. Send the REM-FIX back (or block the task) until the proof is supplied.
 - A `FINDING_DISPUTED` entry satisfies this gate for that finding via its `VERIFY_COMMAND`/`VERIFY_OUTPUT` pair (adjudicated by integration-verifier per Section 9), since the dispute itself carries the proving evidence.
-- This precondition is independent of the cycle-cap gate in step 1; both must pass before re-dispatch.
+- This precondition is independent of the circuit-breaker check in step 1; both must pass before re-dispatch.

@@ -35,7 +35,7 @@ The agent is told (or tells itself):
    (renamed exported field, altered API response), so it is NOT the single trivial one-line
    edit that may skip routing.
 2. Routes through the router as the sole entry point. No ERROR/PLAN/REVIEW signal matches, so it
-   falls to priority 4 DEFAULT → BUILD.
+   falls to the priority-7 DEFAULT → BUILD.
 3. Because scope is >1 file and touches a cross-module contract, it is NOT trivial-gradient; it
    runs the full BUILD graph (builder → [reviewer || hunter] → verifier → doc-sync → memory).
 4. Emits one route line, e.g. `-> BUILD workflow (signals: rename, change)`, then proceeds via

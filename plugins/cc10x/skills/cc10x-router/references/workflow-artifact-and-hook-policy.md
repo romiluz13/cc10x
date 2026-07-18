@@ -127,13 +127,13 @@ Rules:
 - `pending_gate` is required whenever BUILD/PLAN/DEBUG/TRIAGE/CODEBASE-HEALTH is waiting on user clarification, scope selection, or persistence repair.
 - `status_history` and `remediation_history` are append-only summaries of major router decisions.
 
-Router gates:
+Router gates (operational definitions — a gate name without these semantics is meaningless):
 
-- `plan_trust_gate`
-- `phase_exit_gate`
-- `failure_stop_gate`
-- `memory_sync_gate`
-- `skill_precedence_gate`
+- `plan_trust_gate` — before executing any phase from a plan: the plan file exists, matches the recorded `plan_trust` anchor, and has no unresolved Open Decisions. On mismatch, stop and re-anchor with the user; never build from a plan the artifact no longer trusts.
+- `phase_exit_gate` — a phase task may complete only when its agent contract validates (per the Contract overrides table), its result is persisted to `results.{agent}`, and the matching event-log entry exists. A failed contract routes to remediation; it never advances `phase_cursor`.
+- `failure_stop_gate` — any agent `FAIL`/`BLOCKED` halts chain advancement. Until it is cleared through remediation, research, or a user checkpoint, the router may not create or unblock downstream phase tasks.
+- `memory_sync_gate` — the workflow may not reach final state until Memory Update ran (router-inline, never a subagent) and the `memory_finalized` event is in the event log; the TaskCompleted guard audits exactly this evidence.
+- `skill_precedence_gate` — dispatched skills and instructions resolve conflicts by the precedence order (user > project standards > approved plans > domain skills > internal skills > defaults); the router records any conflict it resolved in `status_history`.
 
 These are router-owned checks, not advisory hints.
 
@@ -278,7 +278,6 @@ If the YAML block is missing or malformed, treat the task as invalid output, do 
 | bug-investigator | `STATUS=FIXED` requires `VERIFICATION_RIGOR` to be explicit, `TDD_RED_EXIT=1`, `TDD_GREEN_EXIT=0`, a non-empty `BLAST_RADIUS_SCAN`, and a non-empty `SCENARIOS` array unless it explicitly set `NEEDS_EXTERNAL_RESEARCH=true`. At least one scenario name must start with `Regression:` (non-empty `command`, `expected`, `actual`, `exit_code`). A `Variant:` scenario with `VARIANTS_COVERED>=1` is required ONLY when the bug has applicable variants; if `VARIANTS_NOT_APPLICABLE` is set with a reason and `VARIANTS_COVERED=0`, accept FIXED without a `Variant:` scenario. Do not force a fabricated variant. **Feedback loop + close-out:** `FEEDBACK_LOOP.rung` must not be `none` (with non-null `FEEDBACK_LOOP.command`), and `DEBUG_CLOSEOUT.instrumentation_removed=true` + `DEBUG_CLOSEOUT.repro_no_longer_fires=true`. No loop → STATUS MUST be BLOCKED with `NO_LOOP_BLOCKED` populated. |
 | code-reviewer | `APPROVE` + critical issues becomes `CHANGES_REQUESTED` |
 | code-reviewer | `APPROVE` with zero findings across ALL dimensions AND fewer than 3 file:line evidence citations → trigger fallback inline verification. Rubber-stamp approvals without substantive analysis are invalid. |
-| code-reviewer | An `APPROVE` with zero findings across ALL dimensions AND fewer than 3 file:line evidence citations → trigger fallback inline verification. Rubber-stamp approvals without substantive analysis are invalid. |
 | failure-hunter | A `CLEAN` verdict that states zero error-handling sites inspected OR zero files scanned → trigger fallback inline verification. A clean silent-failure verdict requires stated scan scope. |
 | integration-verifier | `PASS` + critical issues becomes `FAIL`; scenario totals must reconcile with the scenario table and evidence array; every counted scenario must map to a concrete evidence row; every scenario row must contain non-empty `Expected` and `Actual` values |
 | planner | `PLAN_CREATED` or `DECISION_RFC_CREATED` requires non-empty `PLAN_FILE`, explicit `PLAN_MODE`, explicit `VERIFICATION_RIGOR`, `CONFIDENCE>=50`, `GATE_PASSED=true`, a non-empty `SCENARIOS` array, `OPEN_DECISIONS=[]`, and `DIFFERENCES_FROM_AGREEMENT` explicitly present. `PLAN_MODE=decision_rfc` also requires `ALTERNATIVES` with **length ≥2** (not just non-empty) and non-empty `DRAWBACKS`; `VERIFICATION_RIGOR=critical_path` requires non-empty `PROVABLE_PROPERTIES`. |
