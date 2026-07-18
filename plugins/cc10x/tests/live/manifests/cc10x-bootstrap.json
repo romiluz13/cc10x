@@ -16,7 +16,7 @@
       "given": "The repo contains the expected plugin, docs, and safety files",
       "when": "The harness runs the publication audit",
       "then": "The audit exits cleanly",
-      "command": "python3 plugins/cc10x/scripts/cc10x_harness_audit.py",
+      "command": "python3 plugins/cc10x/tools/harness_audit.py",
       "expected": "Audit exits 0"
     },
     {
@@ -25,7 +25,7 @@
       "given": "The workflow fixtures and contracts are internally consistent",
       "when": "The harness replays the deterministic safety fixtures",
       "then": "The replay checker exits cleanly",
-      "command": "python3 plugins/cc10x/scripts/cc10x_workflow_replay_check.py",
+      "command": "python3 plugins/cc10x/tools/workflow_replay_check.py",
       "expected": "Replay checker exits 0"
     },
     {
@@ -34,8 +34,17 @@
       "given": "Fixture telemetry is present in the repo",
       "when": "The harness runs the latency audit against fixtures",
       "then": "The audit completes without parse errors",
-      "command": "python3 plugins/cc10x/scripts/cc10x_latency_audit.py --fixtures",
+      "command": "python3 plugins/cc10x/tools/latency_audit.py --fixtures",
       "expected": "Latency audit exits 0"
+    },
+    {
+      "name": "Guard-script behavioral tests pass",
+      "mode": "proof",
+      "given": "The hook guard scripts are invoked as the Claude Code hook runtime invokes them",
+      "when": "The harness runs the stdin-JSON behavioral test suite against every guard script",
+      "then": "All guard behaviors match the locked baseline",
+      "command": "python3 plugins/cc10x/scripts/test_cc10x_guards.py",
+      "expected": "Guard test suite exits 0"
     },
     {
       "name": "Doc consistency check passes",
@@ -43,7 +52,7 @@
       "given": "The README counts and version strings should match disk and plugin.json",
       "when": "The harness runs the doc consistency check",
       "then": "Agent/skill counts and every version string are in sync",
-      "command": "python3 plugins/cc10x/scripts/cc10x_doc_consistency_check.py",
+      "command": "python3 plugins/cc10x/tools/doc_consistency_check.py",
       "expected": "Doc consistency check exits 0"
     }
   ]

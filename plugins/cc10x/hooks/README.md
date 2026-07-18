@@ -33,7 +33,7 @@ The shipped runtime hooks are intentionally minimal and audit-first:
 The plugin also ships an internal drift check:
 
 ```bash
-python3 plugins/cc10x/scripts/cc10x_harness_audit.py
+python3 plugins/cc10x/tools/harness_audit.py
 ```
 
 It validates the publication-critical contract:
