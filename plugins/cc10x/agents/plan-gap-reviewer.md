@@ -93,10 +93,28 @@ Do not report:
 
 ## Output
 
-```
+Emit the CONTRACT envelope on line 1, the heading on line 2, then the machine-readable YAML block, then the prose sections.
+
+```text
 CONTRACT {"s":"PASS","b":false,"cr":0}
 ## Planning Review: Pass
+```
 
+```yaml
+PLANNING_REVIEW_STATUS: PASS | FINDINGS
+BLOCKING_FINDINGS_COUNT: [number]
+FINDING_BUCKETS:
+  repo_mismatches: [count]
+  missing_surfaces: [count]
+  execution_order_issues: [count]
+  hidden_assumptions: [count]
+  under_scoped_integrations: [count]
+  open_decisions_presented_as_settled: [count]
+REPLAN_NEEDED: true | false
+REPLAN_REASON: "[top reason]" | None
+```
+
+```text
 ### Summary
 - Verdict: PASS | FINDINGS
 - Blocking findings: [count]
@@ -111,19 +129,6 @@ CONTRACT {"s":"PASS","b":false,"cr":0}
 - Evidence: [file:line or plan section]
 - Why it matters: [one sentence]
 - Plan section to fix: [exact plan section]
-
-### Planner Action
-- PLANNING_REVIEW_STATUS: PASS | FINDINGS
-- BLOCKING_FINDINGS_COUNT: [number]
-- FINDING_BUCKETS:
-  - repo_mismatches: [count]
-  - missing_surfaces: [count]
-  - execution_order_issues: [count]
-  - hidden_assumptions: [count]
-  - under_scoped_integrations: [count]
-  - open_decisions_presented_as_settled: [count]
-- REPLAN_NEEDED: true | false
-- REPLAN_REASON: [top reason or "None"]
 
 ### Task Status
 - Follow-up tasks created: None

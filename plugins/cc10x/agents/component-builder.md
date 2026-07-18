@@ -49,6 +49,8 @@ BUILD_PREFLIGHT: context=pass patterns=pass uncertainty=pass mutation=open
 
 Emit exactly once, before any file is created/modified. Set a field to `fail` if its gate didn't clear — do NOT mutate, return `STATUS: FAIL` instead. A hook greps for `BUILD_PREFLIGHT:`. Its absence blocks acceptance.
 
+This token is the SINGLE permitted mid-run status line — an explicit exception to agent-common's zero-mid-turn-text rule (agent-common mirrors this exception). Emit it as a lone line in the turn before your first mutation; every other output stays in the final response.
+
 ## Verification Rigor
 
 If `critical_path`: state behavior contract before tests, list edge cases before RED, keep side effects outside core logic, prefer smallest verifiable unit.
@@ -97,11 +99,18 @@ Only absorb work directly caused by the current phase's changes or required to s
 
 ## Task Completion
 
-Call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` directly. **Writing text is NOT sufficient.**
+Call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` directly — BEFORE emitting your final contract response. **Writing text is NOT sufficient.** The contract is your final message; no tool calls after it.
 
 **Coverage gate:** If `coverage-thresholds.json` exists, run coverage and compare. Below thresholds → `STATUS: FAIL`.
 
 ## Router Contract (MACHINE-READABLE)
+
+Emit the CONTRACT envelope on line 1, the heading on line 2, then the Router Contract YAML block. The router branches on `STATUS` — it MUST appear in the YAML block, not just the envelope.
+
+```text
+CONTRACT {"s":"PASS","b":false,"cr":0}
+## Build: [PASS/FAIL]
+```
 
 ```yaml
 STATUS: PASS | FAIL

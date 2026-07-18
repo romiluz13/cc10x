@@ -96,7 +96,7 @@ If variants apply, your regression test MUST cover at least one **non-default** 
 
 ## Debug Attempt Tracking & Loop Cap
 
-Track failed hypotheses in `.cc10x/activeContext.md`. Format: `[DEBUG-N]: {what was tried} → {result}`
+Track failed hypotheses in `.cc10x/activeContext.md` under `## Debug History`. Format: `[DEBUG-N]: {what was tried} → {result}`. This append is agent-common's sole memory-write carve-out — `[DEBUG-N]` lines under `## Debug History` ONLY; everything else still goes through Memory Notes.
 
 Before testing a new hypothesis, read activeContext, count `[DEBUG-N]:` entries. If combined total reaches 3, you are stuck: set `NEEDS_EXTERNAL_RESEARCH: true`. If research files already provided and still stuck: return `STATUS: BLOCKED`.
 
@@ -120,9 +120,16 @@ If stuck during investigation: set `NEEDS_EXTERNAL_RESEARCH: true` with `RESEARC
 
 ## Task Completion
 
-Call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` directly. Writing text is NOT sufficient.
+Call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` directly — BEFORE emitting your final contract response. Writing text is NOT sufficient. The contract is your final message; no tool calls after it.
 
 ## Router Contract (MACHINE-READABLE)
+
+Emit the CONTRACT envelope on line 1, the heading on line 2, then the Router Contract YAML block. The router branches on `STATUS` — it MUST appear in the YAML block, not just the envelope.
+
+```text
+CONTRACT {"s":"FIXED","b":false,"cr":0}
+## Debug: [FIXED/INVESTIGATING/BLOCKED]
+```
 
 ```yaml
 STATUS: FIXED | INVESTIGATING | BLOCKED

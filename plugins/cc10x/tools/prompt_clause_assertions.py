@@ -657,6 +657,163 @@ ASSERTIONS = [
         ),
         "the canonical skeleton includes the fields BUILD/DEBUG workflows persist",
     ),
+    # --- Agent contract unification + prompt fixes (tickets #71/#72) ---
+    # 71.1 — every agent prescribes the canonical envelope + fenced-YAML shape
+    *[
+        A(
+            f"{stem}: canonical envelope + fenced YAML contract",
+            AGENTS / f"{stem}.md",
+            contains_all('CONTRACT {"s":', "```yaml"),
+            "output section shows the line-1 CONTRACT envelope and a fenced yaml Router Contract block",
+        )
+        for stem in (
+            "architecture-scanner",
+            "bug-investigator",
+            "code-reviewer",
+            "component-builder",
+            "doc-syncer",
+            "failure-hunter",
+            "integration-verifier",
+            "plan-gap-reviewer",
+            "planner",
+            "researcher",
+            "triage-agent",
+        )
+    ],
+    A(
+        "agent-common: canonical shape prescribed once for the fleet",
+        SKILLS / "agent-common" / "SKILL.md",
+        contains_all(
+            "fenced ```yaml Router Contract block",
+            "never call a tool (including TaskUpdate) after emitting it",
+        ),
+        "agent-common mandates envelope + fenced-YAML shape and forbids post-contract tool calls",
+    ),
+    # 71.2 — worked examples show the envelope FIRST
+    A(
+        "architecture-scanner: example shows envelope before YAML block",
+        AGENTS / "architecture-scanner.md",
+        lambda text: 0
+        <= text.find('CONTRACT {"s":"CANDIDATES_FOUND"')
+        < text.find("STATUS: CANDIDATES_FOUND | NO_CANDIDATES"),
+        "worked example emits the CONTRACT envelope before the Router Contract YAML",
+    ),
+    A(
+        "triage-agent: example shows envelope before YAML block",
+        AGENTS / "triage-agent.md",
+        lambda text: 0
+        <= text.find('CONTRACT {"s":"TRIAGED"')
+        < text.find("STATUS: TRIAGED | NEEDS_INFO | WONTFIX"),
+        "worked example emits the CONTRACT envelope before the Router Contract YAML",
+    ),
+    # 71.3 — no agent instructs tool calls after the final contract response
+    A(
+        "researcher: TaskUpdate before final contract response",
+        AGENTS / "researcher.md",
+        lambda text: "Before emitting your final response" in text
+        and "no tool calls after it" in text
+        and "After outputting Router Contract" not in text,
+        "TaskUpdate ordered before the final contract response, never after",
+    ),
+    A(
+        "doc-syncer: TaskUpdate before final contract response",
+        AGENTS / "doc-syncer.md",
+        lambda text: "Before emitting your final response" in text
+        and "no tool calls after it" in text
+        and "After emitting the Router Contract" not in text,
+        "TaskUpdate ordered before the final contract response, never after",
+    ),
+    # 71.4 — verifier per-finding validation is a single merged paragraph
+    A(
+        "integration-verifier: single per-finding validation paragraph",
+        AGENTS / "integration-verifier.md",
+        lambda text: text.count("Per-finding validation (MANDATORY") == 1
+        and all(
+            n in text
+            for n in ("validated: true", "validated: false", "validated: degraded")
+        ),
+        "the two near-duplicate validation paragraphs are merged, keeping the validated taxonomy",
+    ),
+    # 72.5 — reviewer CONFIDENCE worked example obeys its own formula
+    A(
+        "code-reviewer: CONFIDENCE example arithmetic is valid",
+        AGENTS / "code-reviewer.md",
+        contains_all(
+            "performance: [SOFT] 95",
+            "maintainability: [SOFT] 95",
+            "CONFIDENCE: 85  (min HARD=85, avg SOFT=95 → cap 85)",
+        ),
+        "worked example: min(HARD)=85 within avg(SOFT)-10=85 cap, so CONFIDENCE 85 is valid",
+    ),
+    # 72.6 — hunter settles the verdict before emitting, no revision of line 1
+    A(
+        "failure-hunter: single-emission verdict (no preliminary/revise)",
+        AGENTS / "failure-hunter.md",
+        lambda text: "Decide the verdict BEFORE writing the final response" in text
+        and "line 1 cannot be revised" in text
+        and "both are preliminary" not in text
+        and "Revise BOTH" not in text,
+        "step 0 computes the final verdict internally and emits the envelope exactly once",
+    ),
+    # 72.7 — planner has an honest path when open decisions remain
+    A(
+        "planner: open decisions route to NEEDS_CLARIFICATION",
+        AGENTS / "planner.md",
+        contains_all(
+            "If OPEN_DECISIONS is non-empty:",
+            "STATUS MUST be `NEEDS_CLARIFICATION`",
+            "USER_INPUT_NEEDED",
+            "Never present an open decision as settled",
+        ),
+        "non-empty OPEN_DECISIONS must return NEEDS_CLARIFICATION with the decisions in USER_INPUT_NEEDED",
+    ),
+    # 72.8 — bug-investigator memory-write carve-out declared in agent-common
+    A(
+        "agent-common: bug-investigator [DEBUG-N] carve-out",
+        SKILLS / "agent-common" / "SKILL.md",
+        contains_all("Sole carve-out:", "[DEBUG-N]", "## Debug History"),
+        "memory-ownership ban carries the narrow bug-investigator Debug History carve-out",
+    ),
+    A(
+        "bug-investigator: [DEBUG-N] tracking cites the carve-out anchor",
+        AGENTS / "bug-investigator.md",
+        contains_all("## Debug History", "sole memory-write carve-out"),
+        "debug attempt tracking appends under ## Debug History per the agent-common carve-out",
+    ),
+    # 72.9 — triage-agent can Write, scoped to .scratch/ and .out-of-scope/
+    A(
+        "triage-agent: Write tool present and scoped",
+        AGENTS / "triage-agent.md",
+        lambda text: ", Write" in text.split("tools:", 1)[1].split("\n", 1)[0]
+        and "ONLY under `.scratch/` and `.out-of-scope/`" in text,
+        "Write in frontmatter tools, prompt law scopes it to .scratch/ and .out-of-scope/ only",
+    ),
+    # 72.10 — red-flags reference relocated out of the agent auto-registration path
+    A(
+        "silent-failure-red-flags: lives under skills/agent-common/references",
+        SKILLS / "agent-common" / "references" / "silent-failure-red-flags.md",
+        contains("Silent Failure Red Flags"),
+        "red-flags reference exists at the non-agent path",
+    ),
+    A(
+        "silent-failure-red-flags: absent from agents/references",
+        SKILLS / "agent-common" / "references" / "silent-failure-red-flags.md",
+        lambda text: not (AGENTS / "references" / "silent-failure-red-flags.md").exists(),
+        "agents/references/ no longer contains the file, so it cannot register as an all-tools agent",
+    ),
+    # 72.11 — BUILD_PREFLIGHT exception declared in builder and mirrored in agent-common
+    A(
+        "component-builder: BUILD_PREFLIGHT is the single mid-run exception",
+        AGENTS / "component-builder.md",
+        contains("SINGLE permitted mid-run status line"),
+        "builder declares the token as the sole exception to the zero-mid-turn-text rule",
+    ),
+    A(
+        "agent-common: mirrors the BUILD_PREFLIGHT exception",
+        SKILLS / "agent-common" / "SKILL.md",
+        contains_all("Single exception:", "BUILD_PREFLIGHT:"),
+        "zero-mid-turn-text rule carries the mirrored component-builder exception",
+    ),
 ]
 
 

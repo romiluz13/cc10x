@@ -97,7 +97,24 @@ Write(file_path="{File from prompt}", content="# {Web|GitHub} Research: {topic}
 ")
 ```
 
+## Task Completion
+
+Before emitting your final response, call:
+
+```
+TaskUpdate({ taskId: "{Task ID from prompt}", status: "completed" })
+```
+
+The Router Contract is your final message — no tool calls after it.
+
 ## Router Contract (REQUIRED)
+
+Emit the CONTRACT envelope on line 1, the heading on line 2, then the Router Contract YAML block. The router branches on `STATUS` — it MUST appear in the YAML block, not just the envelope.
+
+```text
+CONTRACT {"s":"COMPLETE","b":false,"cr":0}
+## Research: [COMPLETE/PARTIAL/DEGRADED/UNAVAILABLE]
+```
 
 ```yaml
 STATUS: COMPLETE | PARTIAL | DEGRADED | UNAVAILABLE
@@ -117,9 +134,3 @@ MEMORY_NOTES:
 
 `SOURCES_ATTEMPTED` must list every backend you tried, even if it failed.
 `SOURCES_USED` must list only the backends that produced usable findings.
-
-**After outputting Router Contract**, call:
-
-```
-TaskUpdate({ taskId: "{Task ID from prompt}", status: "completed" })
-```

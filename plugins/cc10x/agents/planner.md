@@ -77,9 +77,16 @@ When `critical_path`: include behavior contract, edge-case catalog, provable pro
 
 ## Task Completion
 
-Call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` directly.
+Call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` directly — BEFORE emitting your final contract response. The contract is your final message; no tool calls after it.
 
 ## Router Contract (MACHINE-READABLE)
+
+Emit the CONTRACT envelope on line 1, the heading on line 2, then the Router Contract YAML block. The router branches on `STATUS` — it MUST appear in the YAML block, not just the envelope.
+
+```text
+CONTRACT {"s":"PLAN_CREATED","b":false,"cr":0}
+## Plan: [PLAN_CREATED/DECISION_RFC_CREATED/NEEDS_CLARIFICATION]
+```
 
 ```yaml
 STATUS: PLAN_CREATED | DECISION_RFC_CREATED | NEEDS_CLARIFICATION
@@ -120,6 +127,7 @@ MEMORY_NOTES:
 **CONTRACT RULES:**
 
 - `PLAN_CREATED` or `DECISION_RFC_CREATED` requires: valid PLAN_FILE, PLAN_MODE set, VERIFICATION_RIGOR set, CONFIDENCE≥50, GATE_PASSED=true, non-empty SCENARIOS, OPEN_DECISIONS=[], DIFFERENCES_FROM_AGREEMENT present.
+- **If OPEN_DECISIONS is non-empty:** STATUS MUST be `NEEDS_CLARIFICATION`, with every open decision listed as a question in USER_INPUT_NEEDED (and OPEN_DECISIONS still populated). Never present an open decision as settled, and never bury one in RECOMMENDED_DEFAULTS or DECISIONS to qualify for PLAN_CREATED — hiding an open decision is a contract violation, not a shortcut. (A genuinely low-impact ambiguity with an obvious safe default is not an open decision: record it under RECOMMENDED_DEFAULTS, explicitly unapproved.)
 - `decision_rfc` requires ≥2 ALTERNATIVES and ≥1 DRAWBACKS.
 - `critical_path` requires non-empty PROVABLE_PROPERTIES and matching body sections.
 - `NEEDS_CLARIFICATION` requires BLOCKING=true and REMEDIATION_REASON summarizing open questions.

@@ -114,10 +114,10 @@ Adapt the audit grep patterns to the project's primary language. If the project 
 
 ## Process
 
-0. **Output contract envelope + verdict heading FIRST (before any analysis text):** As the very first lines of your SINGLE FINAL RESPONSE, output:
-   `CONTRACT {"s":"CLEAN","b":false,"cr":0}`
-   `## Error Handling Audit: CLEAN`
-   (both are preliminary. Revise BOTH in final output if critical failures found: envelope → `CONTRACT {"s":"ISSUES_FOUND","b":true,"cr":N}`, heading → `## Error Handling Audit: ISSUES_FOUND`)
+0. **Decide the verdict BEFORE writing the final response — then state it first.** All analysis happens in your tool-call turns (SINGLE FINAL RESPONSE RULE). Only once the verdict is SETTLED do you begin the final response, whose first two lines state the decided verdict:
+   `CONTRACT {"s":"CLEAN","b":false,"cr":0}` (clean) or `CONTRACT {"s":"ISSUES_FOUND","b":true,"cr":N}` (critical failures found)
+   `## Error Handling Audit: CLEAN` or `## Error Handling Audit: ISSUES_FOUND`
+   Never write a preliminary verdict intending to "revise it later in the same response" — line 1 cannot be revised after it is emitted. If you reach the final response unsure of the verdict, you are not done hunting: return to tool turns.
    The envelope at line 1 is the primary machine-readable signal; the heading is the fallback.
 1. **Find** - Search for: try, catch, except, .catch(, throw, error
    **Zero-results path (CRITICAL):** If grep returns 0 matches — whether because the project uses only Markdown/orchestration files, has no error handling, or search scope is empty — you MUST still continue to step 7 and emit the FULL output format with heading `## Error Handling Audit: CLEAN`. "Nothing found" is a valid audit result. It is NOT permission to skip output.
@@ -170,10 +170,26 @@ Count characters in your output text above the Task Status section. If < 200 cha
 
 ## Output
 
-```
+Emit the CONTRACT envelope on line 1, the heading on line 2, then the Router Contract (MACHINE-READABLE) YAML block, then the prose sections. The router branches on `STATUS` — it MUST appear in the YAML block, not just the envelope.
+
+```text
 CONTRACT {"s":"CLEAN","b":false,"cr":0}
 ## Error Handling Audit: [CLEAN/ISSUES_FOUND]
+```
 
+```yaml
+STATUS: CLEAN | ISSUES_FOUND
+TOTAL_HANDLERS_AUDITED: [count]
+CRITICAL_ISSUES: [count]
+HIGH_ISSUES: [count]
+MEMORY_NOTES:
+  learnings: []
+  patterns: []
+  verification: []
+  deferred: []
+```
+
+```text
 ### Summary
 - Total handlers audited: [count]
 - Critical issues: [count]
