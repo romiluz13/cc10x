@@ -623,6 +623,17 @@ def test_git_guard_denies_restore_dot_on_any_line(tmp_path):
     assert out["hookSpecificOutput"]["permissionDecision"] == "deny"
 
 
+def test_git_guard_denies_discard_with_trailing_comment(tmp_path):
+    # End-anchored discard patterns were defeated by a trailing comment.
+    r = run_guard(
+        "cc10x_git_guard.py",
+        {"tool_input": {"command": "git restore . # tidy up"}},
+        tmp_path,
+    )
+    out = json.loads(r.stdout)
+    assert out["hookSpecificOutput"]["permissionDecision"] == "deny"
+
+
 def test_guards_do_not_litter_foreign_repos(tmp_path):
     # Guards ran state_root()/workflows_dir() with mkdir on every event,
     # creating .cc10x/ in every repo the user touched — CC10x or not.

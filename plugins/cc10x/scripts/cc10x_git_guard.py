@@ -151,7 +151,11 @@ GIT_GLOBAL_FLAGS = (
 
 
 def normalize_segment(segment: str) -> str:
-    """Collapse git's global flags so `git -C dir <op>` matches `git <op>`."""
+    """Collapse git's global flags so `git -C dir <op>` matches `git <op>`,
+    and strip trailing shell comments so `git restore . # tidy` still hits
+    the end-anchored discard patterns. (Heuristic: ` #` outside quotes is
+    rare in legitimate git arguments; erring toward deny is the safe side.)"""
+    segment = re.sub(r"\s+#.*$", "", segment)
     return re.sub(GIT_GLOBAL_FLAGS, "git ", segment)
 
 
