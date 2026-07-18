@@ -13,7 +13,9 @@ Validates:
    correctly, only on remediation_history being an accurate array in the artifact.
 """
 
+import re
 import sys
+from datetime import datetime, timezone
 
 from cc10x_hooklib import (
     load_input,
@@ -115,10 +117,26 @@ def check_artifact_freshness(data: dict, metadata: dict, mode: dict) -> int:
     if artifact_path is None or parse_error:
         return 0  # don't compound errors — the main validator catches missing artifacts
 
-    # Check freshness: artifact should have been updated during this task's run.
-    # Use 300s window (agents can run for minutes) — if the artifact hasn't been
-    # touched in 5+ minutes after a task completes, it's stale.
-    if not workflow_artifact_is_fresh(artifact_path, max_age_seconds=300):
+    # Freshness = the artifact was updated SINCE THE TASK WAS CREATED (task
+    # lifetime), not merely "touched within the last 5 minutes" — wall-clock
+    # recency false-warns on long tasks and false-passes on short ones. When
+    # the hook payload carries no task-creation timestamp, fall back to the
+    # old 300s wall-clock window.
+    created_raw = data.get("task_created_at") or (data.get("task") or {}).get(
+        "created_at"
+    )
+    stale = False
+    if isinstance(created_raw, str):
+        try:
+            created = datetime.fromisoformat(created_raw.replace("Z", "+00:00"))
+            if created.tzinfo is None:
+                created = created.replace(tzinfo=timezone.utc)
+            stale = artifact_path.stat().st_mtime < created.timestamp()
+        except (ValueError, OSError):
+            created_raw = None
+    if not isinstance(created_raw, str):
+        stale = not workflow_artifact_is_fresh(artifact_path, max_age_seconds=300)
+    if stale:
         log_event(
             "plugin_task_completed_stale_artifact",
             {
@@ -173,7 +191,29 @@ def check_circuit_breaker(data: dict, metadata: dict, mode: dict) -> int:
 
     remediation_history = payload.get("remediation_history")
     if not isinstance(remediation_history, list):
-        return 0  # field missing or malformed — nothing to count yet
+        # A remfix task completed but the router never wrote (or corrupted)
+        # remediation_history — the exact bookkeeping failure this backstop
+        # exists to catch. Surface it instead of silently passing.
+        log_event(
+            "plugin_task_completed_circuit_breaker",
+            {
+                "wf": workflow_id,
+                "phase": metadata.get("phase"),
+                "task_id": data.get("task_id"),
+                "agent": metadata.get("origin"),
+                "event": "task_completed_circuit_breaker_missing_history",
+                "decision": "audit",
+                "reason": "remediation_history missing or malformed on kind:remfix completion",
+                "task_subject": data.get("task_subject", ""),
+            },
+        )
+        sys.stderr.write(
+            f"CC10X WARNING: workflow {workflow_id} completed a kind:remfix task "
+            "but the artifact's remediation_history is missing or not an array — "
+            "the circuit breaker cannot count cycles. The router must append "
+            "{ts, phase, reason, cycle_number} on every REM-FIX creation.\n"
+        )
+        return 0
 
     cycle_count = len(remediation_history)
     if cycle_count <= CIRCUIT_BREAKER_LIMIT:
@@ -214,7 +254,13 @@ def main() -> int:
     if not subject.startswith("CC10X "):
         return 0
 
-    missing = [item for item in REQUIRED_METADATA if item not in description]
+    # Line-anchored: a key counts only as a real metadata line (`^wf:...`),
+    # never as prose that merely mentions "plan:" somewhere mid-sentence.
+    missing = [
+        item
+        for item in REQUIRED_METADATA
+        if not re.search(rf"^{re.escape(item)}", description, re.MULTILINE)
+    ]
     if missing:
         log_event(
             "plugin_task_completed_missing_metadata",

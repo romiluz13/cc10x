@@ -2,6 +2,7 @@
 from pathlib import Path
 
 from cc10x_hooklib import (
+    ensure_state_root,
     latest_workflow_payload,
     load_input,
     load_mode,
@@ -25,13 +26,21 @@ def main() -> int:
     path = Path(file_path).resolve()
     violations = []
 
-    protected_memory = {state_root() / name for name in PROTECTED_MEMORY_FILES}
+    # Resolve BOTH sides: a symlinked or aliased project dir must not bypass
+    # protection (macOS /var -> /private/var, direnv aliases, case variants).
+    protected_memory = {
+        (state_root() / name).resolve() for name in PROTECTED_MEMORY_FILES
+    }
 
     if path in protected_memory:
         violations.append("memory-write")
 
     if not violations:
         return 0
+
+    # The write targets .cc10x itself, so creating the state dir here is not
+    # litter — it also guarantees the violation event below is recordable.
+    ensure_state_root()
 
     workflow = latest_workflow_payload()
 

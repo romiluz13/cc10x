@@ -337,6 +337,8 @@ def test_task_guard_accepts_complete_metadata(tmp_path):
 
 def test_task_guard_audits_missing_metadata_in_shipped_mode(tmp_path):
     # Shipped config: taskMetadata=audit — missing lines log, never block.
+    # A CC10X task implies the router already created the state dir.
+    (tmp_path / ".cc10x").mkdir()
     r = run_guard(
         "cc10x_task_completed_guard.py",
         {"task_subject": "CC10X planner: plan it", "task_description": "wf:wf-1"},
@@ -488,6 +490,8 @@ def test_state_persist_skips_continuation_stop(tmp_path):
 
 
 def test_event_logger_audits_cc10x_subagent_contract(tmp_path):
+    # A cc10x subagent implies an active workflow, so .cc10x exists.
+    (tmp_path / ".cc10x").mkdir()
     r = run_guard(
         "cc10x_event_logger.py",
         {
@@ -529,6 +533,198 @@ def test_event_logger_postcompact_appends_workflow_event(tmp_path):
     events_log = tmp_path / ".cc10x" / "workflows" / "wf-test.events.jsonl"
     lines = [json.loads(line) for line in events_log.read_text().splitlines()]
     assert any(e["event"] == "compact_occurred" for e in lines)
+
+
+# --- T8 (#73) bug reproductions: each of these failed before the fix -------
+
+
+def test_pretooluse_guard_blocks_memory_write_through_symlinked_project(tmp_path):
+    # Path-resolution bypass: the guard resolves the written path but built the
+    # protected set from the unresolved project dir. A symlinked project dir
+    # (macOS /var -> /private/var, or any alias) silently skipped protection.
+    real = tmp_path / "real-project"
+    real.mkdir()
+    link = tmp_path / "alias"
+    link.symlink_to(real)
+    root = mode_root(tmp_path, {"memoryWrites": "block"})
+    target = real / ".cc10x" / "activeContext.md"  # resolved form of the write
+    r = run_guard(
+        "cc10x_pretooluse_guard.py",
+        {"tool_name": "Write", "tool_input": {"file_path": str(target)}},
+        link,  # CLAUDE_PROJECT_DIR is the unresolved alias
+        plugin_root=root,
+    )
+    assert r.returncode == 0
+    out = json.loads(r.stdout)
+    assert out["hookSpecificOutput"]["permissionDecision"] == "deny"
+
+
+def test_hooklib_survives_unstatable_workflow_entry(tmp_path):
+    # latest_workflow_file() stat()s during sort; an entry that exists in the
+    # glob but cannot be stat()ed (deleted concurrently — reproduced here with
+    # a dangling symlink) crashed every caller, failing the guard open.
+    workflows = tmp_path / ".cc10x" / "workflows"
+    workflows.mkdir(parents=True)
+    (workflows / "dangling.json").symlink_to(workflows / "gone.json")
+    r = run_guard("cc10x_sessionstart_context.py", {"source": "startup"}, tmp_path)
+    assert r.returncode == 0
+    assert "Traceback" not in r.stderr
+
+
+def test_task_guard_circuit_breaker_surfaces_missing_history(tmp_path):
+    # The breaker counts remediation_history; when the router never wrote it
+    # (the exact failure the backstop exists to catch) the guard silently
+    # passed. It must at least emit an audit event.
+    write_artifact(tmp_path, remediation_history=None)
+    r = run_guard(
+        "cc10x_task_completed_guard.py",
+        {
+            "task_subject": "CC10X component-builder: remediation fix",
+            "task_description": CC10X_METADATA.replace("kind:agent", "kind:remfix"),
+            "task_id": "t3",
+        },
+        tmp_path,
+    )
+    assert r.returncode == 0
+    events = hook_log_lines(tmp_path)
+    assert any(
+        e["event"] == "task_completed_circuit_breaker_missing_history"
+        for e in events
+    )
+
+
+def test_git_guard_denies_push_with_directory_flag(tmp_path):
+    r = run_guard(
+        "cc10x_git_guard.py",
+        {"tool_input": {"command": "git -C /some/dir push origin main"}},
+        tmp_path,
+    )
+    out = json.loads(r.stdout)
+    assert out["hookSpecificOutput"]["permissionDecision"] == "deny"
+
+
+def test_git_guard_denies_checkout_dot_in_compound_command(tmp_path):
+    r = run_guard(
+        "cc10x_git_guard.py",
+        {"tool_input": {"command": "git checkout . && ls"}},
+        tmp_path,
+    )
+    out = json.loads(r.stdout)
+    assert out["hookSpecificOutput"]["permissionDecision"] == "deny"
+
+
+def test_git_guard_denies_restore_dot_on_any_line(tmp_path):
+    r = run_guard(
+        "cc10x_git_guard.py",
+        {"tool_input": {"command": "echo start\ngit restore .\necho done"}},
+        tmp_path,
+    )
+    out = json.loads(r.stdout)
+    assert out["hookSpecificOutput"]["permissionDecision"] == "deny"
+
+
+def test_guards_do_not_litter_foreign_repos(tmp_path):
+    # Guards ran state_root()/workflows_dir() with mkdir on every event,
+    # creating .cc10x/ in every repo the user touched — CC10x or not.
+    run_guard(
+        "cc10x_pretooluse_guard.py",
+        {"tool_name": "Write", "tool_input": {"file_path": str(tmp_path / "a.py")}},
+        tmp_path,
+    )
+    run_guard(
+        "cc10x_posttooluse_artifact_guard.py",
+        {"tool_name": "Write", "tool_input": {"file_path": str(tmp_path / "a.py")}},
+        tmp_path,
+    )
+    run_guard("cc10x_sessionstart_context.py", {"source": "startup"}, tmp_path)
+    run_guard("cc10x_state_persist.py", {}, tmp_path, argv=["stop"])
+    run_guard(
+        "cc10x_git_guard.py",
+        {"tool_input": {"command": "git status"}},
+        tmp_path,
+    )
+    assert not (tmp_path / ".cc10x").exists()
+
+
+def test_task_guard_metadata_keys_must_anchor_line_starts(tmp_path):
+    # Substring matching accepted prose that merely mentioned 'plan:' etc.
+    # anywhere in the description; the seven keys must be real metadata lines.
+    prose = (
+        "This wf:embedded task is kind: of important; its origin:story "
+        "explains the phase:moon plan:B scope:wide reason:because."
+    )
+    root = mode_root(tmp_path, {"taskMetadata": "block"})
+    r = run_guard(
+        "cc10x_task_completed_guard.py",
+        {"task_subject": "CC10X planner: plan it", "task_description": prose},
+        tmp_path,
+        plugin_root=root,
+    )
+    assert r.returncode == 2
+    assert "missing metadata" in r.stderr
+
+
+def test_task_guard_freshness_compares_against_task_creation(tmp_path):
+    # The check warned whenever the artifact mtime was >300s old — pure
+    # wall-clock recency. An artifact updated AFTER the task was created is
+    # fresh, however long ago that was.
+    import os
+    import time
+
+    path = write_artifact(tmp_path)
+    old = time.time() - 600
+    os.utime(path, (old, old))  # updated 10 min ago...
+    created = time.strftime(
+        "%Y-%m-%dT%H:%M:%S+00:00", time.gmtime(old - 600)
+    )  # ...but the task started 20 min ago
+    r = run_guard(
+        "cc10x_task_completed_guard.py",
+        {
+            "task_subject": "CC10X component-builder: Execute phase 1",
+            "task_description": CC10X_METADATA,
+            "task_id": "t4",
+            "task_created_at": created,
+        },
+        tmp_path,
+    )
+    assert r.returncode == 0
+    assert "stale" not in r.stderr
+
+
+def run_precommit_with_pytest_exit(tmp_path: Path, exit_code: int) -> int:
+    """Run hooks/pre-commit in a Python project whose `python -m pytest`
+    exits with `exit_code` (hermetic shim — no real pytest dependency)."""
+    (tmp_path / "pyproject.toml").write_text("[project]\nname='x'\nversion='0'\n")
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    shim = bin_dir / "python"
+    shim.write_text(
+        "#!/bin/bash\n"
+        'if [ "$1" = "-m" ] && [ "$2" = "pytest" ]; then\n'
+        f"  exit {exit_code}\n"
+        "fi\n"
+        "exit 0\n"
+    )
+    shim.chmod(0o755)
+    r = subprocess.run(
+        ["/bin/bash", str(PLUGIN_ROOT / "hooks" / "pre-commit")],
+        cwd=tmp_path,
+        capture_output=True,
+        text=True,
+        env={"PATH": f"{bin_dir}:/usr/bin:/bin"},
+        timeout=60,
+    )
+    return r.returncode
+
+
+def test_precommit_passes_when_pytest_collects_no_tests(tmp_path):
+    # pytest exits 5 on zero collected tests; the hook treated that as
+    # failure, bricking commits in test-less Python repos.
+    assert run_precommit_with_pytest_exit(tmp_path, 5) == 0
+
+
+def test_precommit_still_blocks_on_real_test_failure(tmp_path):
+    assert run_precommit_with_pytest_exit(tmp_path, 1) == 1
 
 
 def main() -> int:

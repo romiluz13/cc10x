@@ -12,7 +12,12 @@ if [ -f package.json ]; then
     CI=true npm test || { echo "cc10x: Tests must pass before commit"; exit 1; }
   fi
 elif [ -f pyproject.toml ] || [ -f setup.py ]; then
-  python -m pytest -q || { echo "cc10x: Tests must pass before commit (pytest)"; exit 1; }
+  # pytest exit 5 = no tests collected — a test-less repo must not brick commits
+  python -m pytest -q
+  rc=$?
+  if [ $rc -ne 0 ] && [ $rc -ne 5 ]; then
+    echo "cc10x: Tests must pass before commit (pytest)"; exit 1
+  fi
 fi
 
 exit 0
