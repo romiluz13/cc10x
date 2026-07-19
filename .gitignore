@@ -157,6 +157,9 @@ docs/benchmarks/*
 # skills/planning skill plus 5 *test*.md references/evals were silently
 # untracked and missing from the published repo.
 !plugins/cc10x/skills/**
+# scar: 2026-07-19 — *audit*.md silently excluded the committed research
+# findings maps that shipped tickets cite; docs/research is publishable.
+!docs/research/**
 
 # Internal scripts (should not be in repo)
 push-to-github.sh
