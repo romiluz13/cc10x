@@ -1287,11 +1287,12 @@ ASSERTIONS = [
         "architecture: two-adapter gloss is ports-only, caller/adapter gloss gone",
         SKILLS / "architecture" / "SKILL.md",
         lambda text: "only one caller/adapter exists" not in text
+        and "callers and tests don't count as adapters" not in text
         and text.count(
-            "fails the two-adapter rule (it is a port with only one adapter — callers and tests don't count as adapters)"
+            "fails the two-adapter rule (it is a port with only one adapter — an ordinary caller or test exercising the interface is not an adapter)"
         )
         == 2,
-        "codebase-design's canonical rule says an ordinary caller or test is NOT an adapter; the old gloss would veto nearly every single-caller module",
+        "matches codebase-design verbatim: an ordinary caller or test exercising the interface is NOT an adapter (a test ADAPTER implementing the port still counts, per DEEPENING.md production+test)",
     ),
     # 81.2 — codebase-hygiene: deletion-test question uses canonical inline-at-call-site phrasing
     A(
@@ -1354,9 +1355,10 @@ ASSERTIONS = [
         SKILLS / "diff-driven-docs" / "SKILL.md",
         lambda text: "**SKIP audit docs if:**" not in text
         and "**SKIP when:**" not in text
-        and "`low` = only CHECK verdicts, no CREATE" in text
-        and "`medium` = at least one UPDATE" in text
-        and "CREATE in two or more layers" in text
+        and "`low` = only the technical layer triggered" in text
+        and "`medium` = technical layer triggered with signature changes" in text
+        and "the audit layer requires a new decision record" in text
+        and "`low` = only CHECK verdicts, no CREATE" not in text
         and "**CREATE new when:**" in text
         and "**UPDATE existing when:**" in text,
         "SKIP set stated once (the classifier table); low/medium/high have assignment procedures; CREATE/UPDATE detail kept",
@@ -1687,8 +1689,9 @@ ASSERTIONS = [
             "Before finalizing any component boundary, apply the **Deletion Test** and "
             "**Two-Adapter Rule** as defined in `cc10x:codebase-design`. A component that "
             "fails the deletion test (complexity vanishes if deleted) or fails the "
-            "two-adapter rule (it is a port with only one adapter — callers and tests "
-            "don't count as adapters) is not a real boundary yet — fold it into its "
+            "two-adapter rule (it is a port with only one adapter — an ordinary caller "
+            "or test exercising the interface is not an adapter) is not a real boundary "
+            "yet — fold it into its "
             "caller or defer the split until a second concrete need appears."
         )
         == 2,

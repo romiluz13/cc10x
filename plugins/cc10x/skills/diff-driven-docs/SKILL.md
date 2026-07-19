@@ -139,7 +139,7 @@ Read the full diff output before classifying.
 
 **Step 2 — Classify impact**
 
-Run the Impact Classifier table against the diff. Determine `IMPACT_LEVEL` and which layers to evaluate: `none` = all four layers SKIP; `low` = only CHECK verdicts, no CREATE; `medium` = at least one UPDATE, or a CREATE in exactly one layer; `high` = any breaking-change or security/compliance row matched, or CREATE in two or more layers. If `IMPACT_LEVEL` is `none`, emit the SKIPPED contract immediately and stop.
+Run the Impact Classifier table against the diff. Determine `IMPACT_LEVEL` and which layers to evaluate: `none` = all four layers SKIP; `low` = only the technical layer triggered and the changes are minor (rename, one-line fix); `medium` = technical layer triggered with signature changes, or one other layer triggered; `high` = multiple layers triggered, or the audit layer requires a new decision record. (Same scale `cc10x:doc-syncer` assigns — one definition in each place, same meaning.) If `IMPACT_LEVEL` is `none`, emit the SKIPPED contract immediately and stop.
 
 **Step 3 — Map changed files to doc targets**
 
