@@ -1,13 +1,5 @@
 # Integration And Live Proof
 
-## Table of Contents
-- [Choose The Right Verification Depth](#choose-the-right-verification-depth)
-- [When Unit Tests Are Enough](#when-unit-tests-are-enough)
-- [When To Escalate To Integration Tests](#when-to-escalate-to-integration-tests)
-- [When To Escalate To E2E Or Live Harness Proof](#when-to-escalate-to-e2e-or-live-harness-proof)
-- [Live-Proof Triggers](#live-proof-triggers)
-- [Coordination With CC10X Live Verification](#coordination-with-cc10x-live-verification)
-
 ## Choose The Right Verification Depth
 
 TDD starts with unit or focused behavior tests, but it does not end there when

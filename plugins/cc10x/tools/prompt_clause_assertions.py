@@ -1603,6 +1603,172 @@ ASSERTIONS = [
         and "[true if Option B]" not in text,
         "the YAML field no longer forward-references a term defined 40 lines later",
     ),
+    # --- Core/design/agent dedup (ticket #84) ---
+    # 84.1 — reference-file Tables of Contents deleted (LLMs don't scroll)
+    *[
+        A(
+            f"{skill}/{ref}: no Table of Contents",
+            SKILLS / skill / "references" / ref,
+            contains_none("## Table of Contents"),
+            "anchor-link ToC blocks steer nothing; deleted",
+        )
+        for skill, ref in (
+            ("building", "testing-patterns.md"),
+            ("building", "test-data-and-mocks.md"),
+            ("building", "integration-and-live-proof.md"),
+            ("code-review", "security-review-checklist.md"),
+            ("code-review", "review-order-and-checkpoints.md"),
+            ("code-review", "code-review-heuristics.md"),
+            ("debugging", "investigation-hygiene.md"),
+            ("debugging", "root-cause-playbooks.md"),
+        )
+    ],
+    # 84.1b — third-party attributions gone, the rules they introduced survive
+    A(
+        "investigation-hygiene: GSD attribution gone, context rule survives",
+        SKILLS / "debugging" / "references" / "investigation-hygiene.md",
+        lambda text: "GSD" not in text
+        and "Read only the files on the active failure path." in text,
+        "undefined external-framework token deleted; the context-budget rule stands alone",
+    ),
+    A(
+        "review-order: BMAD attribution gone, concern-order rule survives",
+        SKILLS / "code-review" / "references" / "review-order-and-checkpoints.md",
+        lambda text: "BMAD" not in text
+        and "Reconstruct the change in the order that builds understanding" in text,
+        "undefined external-framework token deleted; the read-by-concern rule stands alone",
+    ),
+    # 84.2 — building: Leading Words glossary deleted; single-statement slicing + behavior focus
+    A(
+        "building: Leading Words table deleted",
+        SKILLS / "building" / "SKILL.md",
+        contains_none("## Leading Words", "| Word | Means | Replaces |"),
+        "red/green/tight/seam are defined by use; deep/shallow were never used",
+    ),
+    A(
+        "building: horizontal-slicing prohibition stated once",
+        SKILLS / "building" / "SKILL.md",
+        lambda text: "or all tests first, then all implementation" in text
+        and "Don't write all tests first then all implementation" not in text,
+        "Vertical Slicing owns the prohibition; Seam Discipline no longer restates it",
+    ),
+    A(
+        "building: behavior-over-implementation stated once in-skill",
+        SKILLS / "building" / "SKILL.md",
+        lambda text: "**Behavioral focus:**" not in text
+        and "Test through the public interface, not internals" in text,
+        "the implementation-coupled anti-pattern is the single in-skill statement",
+    ),
+    A(
+        "testing-patterns: Behavior Over Internals reference survives",
+        SKILLS / "building" / "references" / "testing-patterns.md",
+        contains("Behavior Over Internals"),
+        "the reference copy of behavior-over-implementation is the surviving second source",
+    ),
+    # 84.3 — architecture: maintainer Note gone; vocabulary is a clean pointer; app rule byte-identical x2
+    A(
+        "architecture: maintainer Note deleted",
+        SKILLS / "architecture" / "SKILL.md",
+        contains_none("## Note", "deliberately repeated at its two points of use"),
+        "the maintainer changelog section is gone; file ends on Decision Framework",
+    ),
+    A(
+        "architecture: vocabulary paragraph is pointer-only",
+        SKILLS / "architecture" / "SKILL.md",
+        lambda text: "**Use those terms exactly.**" in text
+        and "don't restate them here" not in text
+        and "NOT a lines-ratio" not in text,
+        "pointer + enforcement rule only; the restated depth definition and Ousterhout clause are gone",
+    ),
+    A(
+        "architecture: application rule byte-identical at both points of use",
+        SKILLS / "architecture" / "SKILL.md",
+        lambda text: text.count(
+            "Before finalizing any component boundary, apply the **Deletion Test** and "
+            "**Two-Adapter Rule** as defined in `cc10x:codebase-design`. A component that "
+            "fails the deletion test (complexity vanishes if deleted) or fails the "
+            "two-adapter rule (it is a port with only one adapter — callers and tests "
+            "don't count as adapters) is not a real boundary yet — fold it into its "
+            "caller or defer the split until a second concrete need appears."
+        )
+        == 2,
+        "the deliberate repetition at Design Components and Architecture Vocabulary cannot drift",
+    ),
+    # 84.4 — exploration: never-ships single-sourced at Hard Wall; Doubt Pass unbraided
+    A(
+        "exploration: never-ships collapsed to Hard Wall + pointer",
+        SKILLS / "exploration" / "SKILL.md",
+        lambda text: "The spike's code does not become production by surviving." in text
+        and "<!-- scar: 2026-06-17" in text
+        and "ABSORB triggers a fresh BUILD (see Hard Wall)" in text
+        and "The prototype skill NEVER transitions itself into BUILD" not in text
+        and "re-implement the core under TDD/reviewer/verifier" not in text,
+        "Hard Wall + scar own the meaning; ABSORB points; the closer restatement is gone",
+    ),
+    A(
+        "exploration: What This Is NOT deleted, DOUBT owns artifacts-only rule",
+        SKILLS / "exploration" / "SKILL.md",
+        lambda text: "#### What This Is NOT" not in text
+        and "work from the ARTIFACT + CONTRACT only" in text,
+        "the three-negation section is gone; its load-bearing clause lives in DOUBT step 3",
+    ),
+    A(
+        "exploration: DOUBT orchestration aside is a one-line note outside the steps",
+        SKILLS / "exploration" / "SKILL.md",
+        lambda text: "has NO `Agent`/subagent tool" not in text
+        and "request router-mediated dispatch in the handoff" in text,
+        "step 3 keeps only the procedure; the router-plumbing aside is a trailing note",
+    ),
+    # 84.5 — code-reviewer: READ-ONLY, spec-independence, PLAN_DEFECT each single-sourced
+    A(
+        "code-reviewer: READ-ONLY stated once",
+        AGENTS / "code-reviewer.md",
+        lambda text: text.count("**Mode:** READ-ONLY") == 1
+        and "You do NOT have Edit tool" not in text,
+        "the opening Mode line is the single READ-ONLY statement",
+    ),
+    A(
+        "code-reviewer: spec-independence single-sourced in Output",
+        AGENTS / "code-reviewer.md",
+        lambda text: "see **SPEC_COMPLIANCE gating** under Output" in text
+        and "A FIRST-CLASS verdict, SEPARATE from code quality" not in text
+        and text.count("gates to CHANGES_REQUESTED on its own") == 1,
+        "Pass 6 points at the authoritative SPEC_COMPLIANCE gating paragraph next to the field",
+    ),
+    A(
+        "code-reviewer: PLAN_DEFECT routing single-sourced in Output",
+        AGENTS / "code-reviewer.md",
+        lambda text: "see **PLAN_DEFECT routing** under Output" in text
+        and "NOT to the implementer as a code fix" not in text
+        and text.count("routes it to the planner") == 1,
+        "Pass 5 points at the authoritative PLAN_DEFECT routing paragraph next to the field",
+    ),
+    # 84.6 — self-activation rule: one canonical sentence across the fleet
+    *[
+        A(
+            f"{name}: canonical self-activation sentence",
+            path,
+            lambda text: "Do not self-activate internal cc10x skills not passed in SKILL_HINTS"
+            in text
+            and "self-load" not in text
+            and "internal CC10X skills" not in text,
+            "agent-common's sentence is canonical; drifted variants are gone",
+        )
+        for name, path in (
+            ("agent-common", SKILLS / "agent-common" / "SKILL.md"),
+            ("code-reviewer", AGENTS / "code-reviewer.md"),
+            ("failure-hunter", AGENTS / "failure-hunter.md"),
+        )
+    ],
+    A(
+        "code-reviewer: frontend delta preserved as including-clause",
+        AGENTS / "code-reviewer.md",
+        contains_all(
+            "(including `cc10x:frontend`)",
+            "note that gap in Memory Notes and continue within the router-provided scope",
+        ),
+        "the reviewer's genuine delta (frontend example + gap procedure) survives the alignment",
+    ),
 ]
 
 

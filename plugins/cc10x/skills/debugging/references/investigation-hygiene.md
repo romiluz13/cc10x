@@ -1,17 +1,6 @@
 # Investigation Hygiene
 
-## Table of Contents
-- [Keep Context Lean](#keep-context-lean)
-- [Capture Evidence Before Fixes](#capture-evidence-before-fixes)
-- [Track Hypotheses Explicitly](#track-hypotheses-explicitly)
-- [Watch For Stalled Investigation](#watch-for-stalled-investigation)
-- [Restart Cleanly](#restart-cleanly)
-- [Escalate Architectural Problems Early](#escalate-architectural-problems-early)
-
 ## Keep Context Lean
-
-Borrow the good part of GSD's context-budget discipline without importing its
-orchestration model:
 
 - Read only the files on the active failure path.
 - Do not inline giant logs or large files into follow-up prompts when a tight

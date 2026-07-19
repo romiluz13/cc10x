@@ -109,17 +109,13 @@ For non-trivial decisions where correctness matters more than speed: subject the
 
 1. **CLAIM** — state the decision as a testable claim in one paragraph: "We will use X because Y"
 2. **EXTRACT** — extract the artifacts the claim depends on: the key assumptions, plus concrete evidence (code samples, API signatures, data flows) that support them
-3. **DOUBT** — adversarially re-read the extracted artifacts while deliberately setting the CLAIM aside: work from the ARTIFACT + CONTRACT only, and hunt for the weakest assumption, the scenario where the decision backfires. This is an inline self-check, not true fresh-context isolation — the agent loading this skill has NO `Agent`/subagent tool; sub-agent fan-out is router-owned (see `cc10x:codebase-design/DESIGN-IT-TWICE.md` for the same rule). If genuinely independent review is required, request router-mediated dispatch in the handoff instead of spawning anything.
+3. **DOUBT** — adversarially re-read the extracted artifacts while deliberately setting the CLAIM aside: work from the ARTIFACT + CONTRACT only, and hunt for the weakest assumption, the scenario where the decision backfires.
 4. **RECONCILE** — compare the doubt pass's assessment against the original claim. Where they agree → high confidence. Fix the decision, strengthen the assumption, or reject the finding with evidence.
 5. **STOP** — escalate to the user when EITHER: (a) a cycle produces substantive findings but zero are classified as actionable (doubt theater, not doubting), or (b) 3 cycles complete without convergence (the 3-cycle cap — don't loop forever).
 
+*Note: DOUBT is an inline self-check, not fresh-context isolation — sub-agent fan-out is router-owned; if genuinely independent review is required, request router-mediated dispatch in the handoff.*
+
 **Rationalization guard:** "This is too simple to doubt" → simple decisions have simple artifacts, so the doubt pass is fast. No excuse to skip.
-
-#### What This Is NOT
-
-- NOT post-hoc review on completed work — this is in-flight, while changes are still cheap
-- NOT a rubber stamp — the doubt pass reasons from the artifacts alone, never from the claim's framing
-- NOT perfectionism — one cycle is often enough. Escalate only when findings are substantive AND actionable.
 
 ---
 
@@ -172,6 +168,6 @@ MEMORY_NOTES: "[one-line durable lesson, or N/A]"
 **4b. DELETE or ABSORB** (no third option):
 
 - **DELETE** — spike answered the question, nothing salvageable. Remove spike code, throwaway route, switcher. Answer survives in memory; code does not.
-- **ABSORB** — spike's pure core or winning variant is worth keeping. This triggers a **fresh BUILD through the router** (full gates). Delete the throwaway harness; re-implement the core under TDD/reviewer/verifier. Set `PROTOTYPE_DISPOSITION: absorb` and name `ABSORB_TARGET` so the router opens the absorbing BUILD.
+- **ABSORB** — spike's pure core or winning variant is worth keeping. ABSORB triggers a fresh BUILD (see Hard Wall). Delete the throwaway harness. Set `PROTOTYPE_DISPOSITION: absorb` and name `ABSORB_TARGET` so the router opens the absorbing BUILD.
 
-The prototype skill NEVER transitions itself into BUILD. It emits the verdict and hands back to the router.
+Emit the verdict and hand back to the router.

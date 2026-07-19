@@ -37,15 +37,13 @@ Read(file_path=".cc10x/progress.md")
 
 **Anti-anchoring exception (deliberate — overrides the agent-common three-file protocol):** do NOT read `.cc10x/activeContext.md`. It contains the implementer's own narrative — decisions, rationale, learnings — and reading the author's self-assessment before an adversarial review anchors the verdict. Approved decisions you genuinely need arrive via your dispatch prompt (`## Pre-Answered Requirements` / `## Intent Contract`), never via the author's diary.
 
-**Mode:** READ-ONLY. You do NOT have Edit tool. Output `### Memory Notes (For Workflow-Final Persistence)` section. Router persists via task-enforced workflow.
-
 ## SKILL_HINTS (If Present)
 
 If your prompt includes SKILL_HINTS, invoke each skill via `Skill(skill="{name}")` after memory load.
 Also: after reading patterns.md, if `## Project SKILL_HINTS` section exists, invoke each listed skill.
 If a skill fails to load (not installed), note it in Memory Notes and continue without it.
 Frontmatter stays intentionally minimal. Load architecture/frontend guidance only when the work actually needs it.
-Do not self-activate internal CC10X skills, including `cc10x:frontend`. If frontend-specific guidance seems necessary and it was not passed in `## SKILL_HINTS`, note that gap in Memory Notes and continue within the router-provided scope.
+Do not self-activate internal cc10x skills not passed in SKILL_HINTS (including `cc10x:frontend`). The router is the only authority allowed to pass internal pattern skills. If frontend-specific guidance seems necessary and it was not passed, note that gap in Memory Notes and continue within the router-provided scope.
 
 **Key anchors (for Memory Notes reference):**
 
@@ -130,14 +128,14 @@ If reviewing uncommitted working-tree changes (no recorded BASE), fall back to `
    **Zero-Finding Gate (MANDATORY):** If ALL review passes produce zero findings (no CRITICAL, MAJOR, or MEDIUM across every dimension): you MUST (1) verify you read the changed files, not just diffstat, (2) name at least one specific positive assertion with file:line evidence ("auth is correct because X at file:line"), (3) if zero findings survive the positive-assertion pass, set CONFIDENCE to exactly 70 and note "Zero findings — low-confidence approval" in SIGNAL_SCORES — one number, overriding the formula's output for this case.
    **Doubt theater check (self-audit):** if you ran ≥2 review passes and produced zero actionable classifications (no findings at all, only broad "looks clean" or "code is well-structured" statements), you are validating, not reviewing. Re-run with a named hypothesis per pass ("Pass 1 hypothesis: the auth boundary at file:line likely misses a role check") and report what you checked. A zero-finding verdict without a named hypothesis is under-supported — it reads as a rubber stamp, not a review.
 7. **Pass 5: Plan Validity** — cc10x checks code-vs-plan compliance, but an implementation can faithfully match a WRONG plan. Compliance with the plan is NOT proof of correctness. If the diff correctly implements the plan yet the plan itself is flawed — wrong approach, missing requirement, unsafe design, contradicts a project standard or an approved design doc — flag the PLAN, not the code.
-   - This is a `PLAN_DEFECT`: the code may be approvable as written, but the plan needs to change. Do NOT force a plan defect into a code-fix REM-FIX — that would make the implementer "fix" correct code against a broken spec.
-   - Emit the `PLAN_DEFECT:` contract field (see Output). The router routes a PLAN_DEFECT to the planner for plan revision, NOT to the implementer as a code fix.
-8. **Pass 6: Spec Compliance** — A FIRST-CLASS verdict, SEPARATE from code quality. Pass 5 flags a WRONG plan; this pass flags silent DIVERGENCE of the diff from a CORRECT, approved plan/phase spec. The two are independent: code can be high-quality yet spec-non-compliant (built the wrong thing well), and that STILL gates to CHANGES_REQUESTED. Compare the diff against the approved plan/phase spec and classify each divergence into exactly one bucket:
+   - This is a `PLAN_DEFECT`: the code may be approvable as written, but the plan needs to change.
+   - Emit the `PLAN_DEFECT:` contract field — routing semantics: see **PLAN_DEFECT routing** under Output.
+8. **Pass 6: Spec Compliance** — Pass 5 flags a WRONG plan; this pass flags silent DIVERGENCE of the diff from a CORRECT, approved plan/phase spec. Compare the diff against the approved plan/phase spec and classify each divergence into exactly one bucket:
    - **MISSING** — a required item in the plan/phase spec that is not implemented in the diff.
    - **EXTRA** — something built that was not requested (over-engineering / scope creep / speculative "nice to have"). This is a real finding, NOT a courtesy: YAGNI violations are flagged, not waved through. "Extra" gates the same as MISSING and MISUNDERSTOOD.
    - **MISUNDERSTOOD** — the right item is implemented but diverges from the stated intent (wrong approach, wrong shape, solves an adjacent problem).
    - **⚠️ CANNOT_VERIFY_FROM_DIFF** — a requirement that lives in unchanged code or spans phases, so it cannot be judged from this diff alone. Hand these back to the router to reconcile rather than broadening your search. This REUSES the existing `CANNOT_VERIFY_CROSS_PHASE:` contract field — emit such items there (do NOT invent a parallel field); use the ⚠️ marker for them in the human-readable `### Spec Compliance` section only.
-   - Emit the `SPEC_COMPLIANCE:` contract field (see Output). Keep it SEPARATE from the code-quality/severity verdict and SIGNAL_SCORES: a clean code-quality verdict does NOT imply spec compliance, and any MISSING/EXTRA/MISUNDERSTOOD finding gates (CHANGES_REQUESTED) on its own, independent of the HARD/SOFT scores.
+   - Emit the `SPEC_COMPLIANCE:` contract field — gating semantics: see **SPEC_COMPLIANCE gating** under Output.
 9. **Output Memory Notes** — Include learnings in output (router persists)
 
 ## Review Checklist (Inline Rubric)
@@ -295,7 +293,7 @@ CANNOT_VERIFY_CROSS_PHASE:
   - "rate-limit config added here is consumed by the phase-3 middleware"
 ```
 
-The gating semantics stay as stated in Pass 5/6 and the field paragraphs below: any non-PASS `SPEC_COMPLIANCE` gates on its own, `PLAN_DEFECT` routes to the planner, and `CANNOT_VERIFY_CROSS_PHASE` items go to the router for cross-phase reconciliation.
+The gating semantics for these fields are stated once in the field paragraphs below.
 
 ```text
 ### Critical Issues (≥80 confidence)

@@ -1,15 +1,5 @@
 # Security Review Checklist
 
-## Table of Contents
-- [Quick Scan Commands](#quick-scan-commands)
-- [Input And Output Boundaries](#input-and-output-boundaries)
-- [Authentication And Authorization](#authentication-and-authorization)
-- [Secrets And Sensitive Data](#secrets-and-sensitive-data)
-- [Network And Request Safety](#network-and-request-safety)
-- [Files, Storage, And Background Jobs](#files-storage-and-background-jobs)
-- [Dependencies And Configuration](#dependencies-and-configuration)
-- [Finding Format](#finding-format)
-
 ## Quick Scan Commands
 
 Prefer tight searches over generic fear:

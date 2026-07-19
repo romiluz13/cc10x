@@ -1,17 +1,9 @@
 # Review Order And Checkpoints
 
-## Table of Contents
-- [Read By Concern, Not File Order](#read-by-concern-not-file-order)
-- [Recommended Review Sequence](#recommended-review-sequence)
-- [Checkpoint Questions](#checkpoint-questions)
-- [Partial-Phase Reviews](#partial-phase-reviews)
-- [Zero-Finding Halt](#zero-finding-halt)
-- [Re-Review After Fixes](#re-review-after-fixes)
-
 ## Read By Concern, Not File Order
 
-Borrow the best part of BMAD's checkpoint thinking: reconstruct the change in
-the order that builds understanding, not the order `git diff` prints files.
+Reconstruct the change in the order that builds understanding, not the order
+`git diff` prints files.
 
 Review by concern:
 - contract change

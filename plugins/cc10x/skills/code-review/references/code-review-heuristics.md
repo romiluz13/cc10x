@@ -1,15 +1,5 @@
 # Code Review Heuristics
 
-## Table of Contents
-
-- [Maintainability Scan](#maintainability-scan)
-- [Performance Scan](#performance-scan)
-- [Hidden Failure Scan](#hidden-failure-scan)
-- [Edge-Case Taxonomy](#edge-case-taxonomy)
-- [Sloppy Pattern Scan](#sloppy-pattern-scan)
-- [UI Quick Scan](#ui-quick-scan)
-- [Type Design Red Flags](#type-design-red-flags)
-
 ## Maintainability Scan
 
 Look for:

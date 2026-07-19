@@ -12,17 +12,6 @@ user-invocable: false
 
 **Iron Law:** NO PRODUCTION CODE WITHOUT A FAILING TEST FIRST.
 
-## Leading Words (compact vocabulary)
-
-| Word | Means | Replaces |
-| ------ | ------- | ---------- |
-| **red** | Failing test (behavioral, not error) | "write a test that fails because the feature is missing" |
-| **green** | Passing test after minimal code | "write just enough code to make the test pass" |
-| **tight** | Fast, deterministic, sub-second feedback loop | "build a quick repro that runs fast and is reliable" |
-| **deep** | Module with small interface, lots hidden inside | "well-abstracted module that hides complexity" |
-| **shallow** | Module with interface as complex as implementation | "thin wrapper that adds complexity without hiding any" |
-| **seam** | Place where a test can attach to exercise real behavior | "test insertion point at a module boundary" |
-
 ## Reference Files
 
 Read only what's needed:
@@ -65,11 +54,11 @@ If a safety check seems unnecessary, verify with a test that proves it's dead co
 
 ### Vertical Slicing (CRITICAL)
 
-Build in thin vertical slices that cross all layers: UI → API → logic → data → test. A horizontal slice (all UI, then all API, then all logic) defers integration risk to the end and produces untestable layers. Each slice should be independently verifiable and shippable.
+Build in thin vertical slices that cross all layers: UI → API → logic → data → test. A horizontal slice (all UI, then all API, then all logic — or all tests first, then all implementation) defers integration risk to the end and produces untestable layers. Each slice should be independently verifiable and shippable.
 
 ### Seam Discipline
 
-**One seam, one test, one minimal implementation per cycle.** Each test is a tracer bullet that responds to what the last cycle taught you. Don't write all tests first then all implementation (horizontal slicing) — work one vertical slice at a time.
+**One seam, one test, one minimal implementation per cycle.** Each test is a tracer bullet that responds to what the last cycle taught you — work one vertical slice at a time.
 
 **Test only at pre-agreed seams.** A seam is the public boundary where you observe behavior without reaching inside. Before writing any test, know which seam you're testing at. Prefer existing seams to new ones; use the highest seam possible; the fewer seams across the codebase, the better (ideal is one). If the plan provides a `### Test Seams` subsection or an Interfaces block, draw your seams from there.
 
@@ -170,8 +159,6 @@ If `coverage-thresholds.json` exists, run coverage and compare. Below thresholds
 ## Design for Testability
 
 If tests are hard to write, the code is hard to test — fix the code, not the test. Pure functions are easy to test. Side effects are hard. Isolate side effects at boundaries; keep core logic pure.
-
-**Behavioral focus:** Test what the function DOES, not how it's implemented. "returns the sum" not "calls add() then format()". Implementation tests break on refactor; behavioral tests survive.
 
 ## When Stuck
 

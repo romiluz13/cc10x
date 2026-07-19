@@ -1,13 +1,5 @@
 # Testing Patterns
 
-## Table of Contents
-- [Arrange-Act-Assert](#arrange-act-assert)
-- [Test Naming](#test-naming)
-- [Near-Miss Negative Tests](#near-miss-negative-tests)
-- [Behavior Over Internals](#behavior-over-internals)
-- [Test Smells](#test-smells)
-- [Pre-Run Sanity Check](#pre-run-sanity-check)
-
 ## Arrange-Act-Assert
 
 Keep tests readable:

@@ -55,7 +55,7 @@ For each component:
 - **State:** what it remembers (if anything)
 - **Error handling:** what can go wrong and what it does about it
 
-**Before finalizing any component boundary, apply the Deletion Test and Two-Adapter Rule (defined below under Architecture Vocabulary).** A component that fails the deletion test (complexity vanishes if deleted) or fails the two-adapter rule (it is a port with only one adapter — callers and tests don't count as adapters) is not a real boundary yet — fold it into its caller or defer the split until a second concrete need appears.
+Before finalizing any component boundary, apply the **Deletion Test** and **Two-Adapter Rule** as defined in `cc10x:codebase-design`. A component that fails the deletion test (complexity vanishes if deleted) or fails the two-adapter rule (it is a port with only one adapter — callers and tests don't count as adapters) is not a real boundary yet — fold it into its caller or defer the split until a second concrete need appears.
 
 ## Architecture Views
 
@@ -132,7 +132,7 @@ For each component:
 
 ## Architecture Vocabulary
 
-The canonical deep-module vocabulary (module, interface, depth, seam, adapter, leverage, locality, the deletion test, the two-adapter rule) lives in `cc10x:codebase-design`. **Use those terms exactly** — don't restate them here. Depth is leverage at the interface (a lot of behaviour behind a small interface), NOT a lines-ratio — `codebase-design` explicitly rejects the Ousterhout implementation-lines/interface-lines framing.
+The deep-module vocabulary (module, interface, depth, seam, adapter, leverage, locality, deletion test, two-adapter rule) is defined in `cc10x:codebase-design`. **Use those terms exactly.**
 
 Three extra terms specific to greenfield architecture (not in codebase-design):
 
@@ -140,7 +140,7 @@ Three extra terms specific to greenfield architecture (not in codebase-design):
 - **Temporal coupling** — caller must know the order of operations. Design defect — remove or document explicitly.
 - **Leaky abstraction** — interface exposes internal details callers must know. Design defect — fix the interface.
 
-Before finalizing any component boundary, apply the **Deletion Test** and **Two-Adapter Rule** as defined in `cc10x:codebase-design` — not restated here. A component that fails the deletion test (complexity vanishes if deleted) or fails the two-adapter rule (it is a port with only one adapter — callers and tests don't count as adapters) is not a real boundary yet — fold it into its caller or defer the split until a second concrete need appears.
+Before finalizing any component boundary, apply the **Deletion Test** and **Two-Adapter Rule** as defined in `cc10x:codebase-design`. A component that fails the deletion test (complexity vanishes if deleted) or fails the two-adapter rule (it is a port with only one adapter — callers and tests don't count as adapters) is not a real boundary yet — fold it into its caller or defer the split until a second concrete need appears.
 
 ## Design It Twice
 
@@ -166,7 +166,3 @@ For architectural decisions with material trade-offs:
 **Consequences:** [what this enables and prevents]
 **Reversibility:** [reversible or irreversible — irreversible decisions need more evidence]
 ```
-
-## Note
-
-Deep-module vocabulary, the Deletion Test, and the Two-Adapter Rule are defined once in `cc10x:codebase-design` and pointed to above under **Architecture Vocabulary**. The one-line application rule (a boundary that fails either test is folded into its caller or deferred) is deliberately repeated at its two points of use — Design Components and Architecture Vocabulary; the definitions themselves are not restated.
