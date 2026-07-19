@@ -12,7 +12,7 @@ allowed-tools: Read, Edit, Write, Bash, Grep, Glob
 
 ## Overview
 
-Stale documentation is worse than no documentation — it actively misleads contributors, users, and future maintainers. diff-driven-docs treats documentation as a first-class deliverable of every BUILD phase, not an afterthought. Just as test-driven-development enforces that tests must be produced as part of the code-change cycle, diff-driven-docs enforces that doc updates must accompany code changes before the workflow closes. The doc-syncer agent analyzes the actual diff, classifies documentation impact across four layers (business, technical, audit, glossary), and writes only the updates that are genuinely needed — skipping trivially low-impact changes fast.
+Stale documentation is worse than no documentation — it actively misleads contributors, users, and future maintainers. Run the Impact Classifier on the diff across the four layers (business, technical, audit, glossary); write only what a layer's verdict requires.
 
 ## Impact Classifier
 
@@ -36,8 +36,6 @@ Run this classifier before any doc work. Use it to determine which layers to eva
 | Domain term resolved or sharpened during the workflow | SKIP | SKIP | SKIP | CHECK |
 
 **SKIP business docs if:** no user-facing surface changed; only internal utils, types, or tests were modified.
-
-**SKIP audit docs if:** the diff is a routine bug fix, style change, test addition, or simple refactor with no new pattern.
 
 **ALWAYS check technical docs** when hooks, components, migrations, schema, routes, or exported library APIs changed.
 
@@ -85,7 +83,9 @@ Decision records capturing what changed, why, alternatives considered, and impac
 
 ## Audit Doc Guidance
 
-### When to Create vs. Update vs. Skip
+### When to Create vs. Update
+
+SKIP verdicts are owned by the Impact Classifier table above.
 
 **CREATE new when:**
 
@@ -99,13 +99,6 @@ Decision records capturing what changed, why, alternatives considered, and impac
 - An existing decision is amended or reversed
 - A previous tradeoff is resolved differently in a new context
 - Additional impact or context is discovered for a prior decision
-
-**SKIP when:**
-
-- Routine bug fix (correcting behavior to match existing intent)
-- Test addition with no new pattern
-- Style or formatting change
-- Dependency version bump with no API change
 
 ### Filename Pattern
 
@@ -146,7 +139,7 @@ Read the full diff output before classifying.
 
 **Step 2 — Classify impact**
 
-Run the Impact Classifier table against the diff. Determine `IMPACT_LEVEL` (none / low / medium / high) and which layers to evaluate. If `IMPACT_LEVEL` is `none`, emit the SKIPPED contract immediately and stop.
+Run the Impact Classifier table against the diff. Determine `IMPACT_LEVEL` and which layers to evaluate: `none` = all four layers SKIP; `low` = only CHECK verdicts, no CREATE; `medium` = at least one UPDATE, or a CREATE in exactly one layer; `high` = any breaking-change or security/compliance row matched, or CREATE in two or more layers. If `IMPACT_LEVEL` is `none`, emit the SKIPPED contract immediately and stop.
 
 **Step 3 — Map changed files to doc targets**
 

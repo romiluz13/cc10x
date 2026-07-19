@@ -57,7 +57,7 @@ pattern this skill exists to stop.
 
 ---
 
-## Counter (add to Rationalization Table if agent fails)
+## Counter (add to Excuses and Tells table if agent fails)
 
 | Excuse | Counter |
 |--------|---------|

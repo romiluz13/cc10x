@@ -1,13 +1,5 @@
 # Memory File Contracts
 
-## Contents
-
-- Purpose
-- Required files and sections
-- Stable anchors
-- Templates
-- Auto-heal rule
-
 ## Purpose
 
 CC10X memory files are edit anchors, not casual notes. The router and audits rely on stable

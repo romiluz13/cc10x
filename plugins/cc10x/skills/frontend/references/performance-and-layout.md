@@ -2,7 +2,6 @@
 
 ## Table of Contents
 - [Responsive Layout Checks](#responsive-layout-checks)
-- [Motion Rules](#motion-rules)
 - [Content Overflow](#content-overflow)
 - [Performance Guardrails](#performance-guardrails)
 - [URL And View State](#url-and-view-state)
@@ -17,18 +16,7 @@ Review at three widths:
 
 If a flex child should truncate, remember `min-w-0`.
 
-## Motion Rules
-
-Prefer:
-- `transform` and `opacity`
-- 150-300ms micro-interactions
-- explicit transition properties
-- honoring `prefers-reduced-motion`
-
-Avoid:
-- `transition: all`
-- layout-shifting hover effects
-- animation that blocks user action
+Motion rules live in SKILL.md `### Motion Rules`.
 
 ## Content Overflow
 

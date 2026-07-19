@@ -65,7 +65,7 @@ Use token references like `{colors.primary}` instead of duplicating values. Comp
    - high-density product UI vs editorial/marketing layout
 4. Write or update `DESIGN.md` in the stable structure below.
 5. Before frontend implementation, read `DESIGN.md` as the visual contract and preserve repo/user constraints.
-6. When Node/network tooling is available, validate with `npx @google/design.md lint DESIGN.md`; treat errors as blockers and warnings as review items.
+6. Validate with `npx @google/design.md lint DESIGN.md`; errors block, warnings are review items. Skip only when Node/network tooling is unavailable.
 
 ## Stable Structure
 
@@ -127,7 +127,7 @@ If a user asks for exact brand imitation, pause and frame it as "inspired by" un
 
 ## Validation Rules
 
-- Run `npx @google/design.md lint DESIGN.md` when practical and non-disruptive.
+- The lint gate is Workflow step 6 above.
 - Fix `broken-ref` and duplicate-section findings before implementation.
 - Review warnings for missing `primary`, low contrast, orphaned tokens, missing typography, missing optional token sections, and section-order drift.
 - Use `npx @google/design.md diff before.md after.md` for substantial revisions when both versions are available.

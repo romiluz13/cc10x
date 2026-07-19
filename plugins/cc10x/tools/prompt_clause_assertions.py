@@ -156,7 +156,7 @@ ASSERTIONS = [
             "Resolve each hunk",
             "Run the project's automated checks",
             "Finish the merge",
-            "never --abort",
+            "Never `--abort`.",
         ),
         "resolving-merge-conflicts skill has all 5 steps (incl. run checks) + never-abort rule",
     ),
@@ -1294,6 +1294,155 @@ ASSERTIONS = [
         and "If I deleted this module and inlined its code at every call site" in text
         and "apply it before accepting any new module boundary" in text,
         "canonicity lives in frontmatter; the agreement claim steered nothing — the test itself must survive the deletion",
+    ),
+    # --- Meta/process dedup (ticket #82) ---
+    # 82.1 — verification: one Excuses and Tells table owns the anti-"should" meaning
+    A(
+        "verification: single excuses-and-tells table",
+        SKILLS / "verification" / "SKILL.md",
+        lambda text: "## Excuses and Tells" in text
+        and "## Rationalization Table" not in text
+        and "## Red Flags" not in text
+        and "**Forbidden language before proof:**" not in text
+        and "## Auditor Posture" not in text
+        and '"Should" is not evidence.' in text
+        and "Weakening an assertion to make a test pass" in text,
+        "the three anti-should sites (Forbidden language, Rationalization Table, Red Flags) merged into one table; Auditor Posture folded into the opener",
+    ),
+    A(
+        "verification: authoring rule out of runtime body, opener owns auditor clause",
+        SKILLS / "verification" / "SKILL.md",
+        lambda text: "**Authoring Rule: Keep Gates High.**" not in text
+        and "<!-- Authoring rule (maintenance, not runtime)" in text
+        and "A claim is not verification." not in text
+        and "Gates are scar notes" not in text
+        and "If you cannot independently reproduce a claimed success, return FAIL."
+        in text,
+        "author-facing rule survives only as an HTML comment; decoratives deleted; the one novel Auditor Posture clause lives in the opener",
+    ),
+    # 82.2 — diff-driven-docs: Impact Classifier is the sole SKIP owner; IMPACT_LEVEL decidable
+    A(
+        "diff-driven-docs: classifier sole SKIP owner + IMPACT_LEVEL defined",
+        SKILLS / "diff-driven-docs" / "SKILL.md",
+        lambda text: "**SKIP audit docs if:**" not in text
+        and "**SKIP when:**" not in text
+        and "`low` = only CHECK verdicts, no CREATE" in text
+        and "`medium` = at least one UPDATE" in text
+        and "CREATE in two or more layers" in text
+        and "**CREATE new when:**" in text
+        and "**UPDATE existing when:**" in text,
+        "SKIP set stated once (the classifier table); low/medium/high have assignment procedures; CREATE/UPDATE detail kept",
+    ),
+    A(
+        "doc-target-heuristics: no duplicate SKIP rows or index rule",
+        SKILLS / "diff-driven-docs" / "references" / "doc-target-heuristics.md",
+        lambda text: "## CLAUDE.md Index Rule" not in text
+        and "| Routine bug fix | SKIP |" not in text
+        and "CREATE decision record" in text,
+        "reference keeps CREATE/UPDATE signal rows; SKIP rows and the CLAUDE.md index rule live only in SKILL.md",
+    ),
+    A(
+        "diff-driven-docs: SKILL.md still owns the CLAUDE.md index rule",
+        SKILLS / "diff-driven-docs" / "SKILL.md",
+        contains_all(
+            "it is indexed in the relevant `## Docs` section",
+            "No doc content was duplicated in `CLAUDE.md`",
+        ),
+        "the surviving copy of the index rule is Step 5 self-review",
+    ),
+    # 82.3 — memory-and-handoff: one ownership statement, hedge resolved, one redaction rule
+    A(
+        "memory-and-handoff: ownership single-sourced with named carve-out",
+        SKILLS / "memory-and-handoff" / "SKILL.md",
+        lambda text: "sole carve-out: bug-investigator's `[DEBUG-N]` lines" in text
+        and "Redact per `### Secret Redaction` above." in text
+        and "<redacted:pii>" in text
+        and "This closes the loop" not in text,
+        "SKILL.md ### Ownership is authoritative (absolute rule + carve-out); handoff rule 3 points at Secret Redaction which now owns the pii token",
+    ),
+    A(
+        "memory-model-and-ownership: pointer instead of duplicate ownership/surfaces",
+        SKILLS
+        / "memory-and-handoff"
+        / "references"
+        / "memory-model-and-ownership.md",
+        lambda text: "see SKILL.md `### Ownership`" in text
+        and "### WRITE Agents" not in text
+        and "## Contents" not in text
+        and "current focus" not in text,
+        "ownership section and Memory Surfaces list replaced by pointers; ToC deleted",
+    ),
+    A(
+        "memory-operations: hedge gone, pointer present",
+        SKILLS / "memory-and-handoff" / "references" / "memory-operations.md",
+        lambda text: "normally" not in text
+        and "see SKILL.md `### Ownership`" in text,
+        "the 'normally do not edit' hedge no longer contradicts the absolute ownership rule",
+    ),
+    A(
+        "memory-file-contracts: ToC deleted",
+        SKILLS / "memory-and-handoff" / "references" / "memory-file-contracts.md",
+        contains_none("## Contents"),
+        "the second reference ToC is gone",
+    ),
+    # 82.4 — frontend: motion rules single-sourced, lint modality resolved, honest-score line
+    A(
+        "frontend: motion rules single-sourced in SKILL.md",
+        SKILLS / "frontend" / "SKILL.md",
+        contains_all(
+            "### Motion Rules",
+            "No layout-shifting hover effects.",
+            "motion must not block user action",
+        ),
+        "the reference's unique motion bullets merged into the surviving SKILL.md copy",
+    ),
+    A(
+        "frontend/performance-and-layout: motion rules deleted",
+        SKILLS / "frontend" / "references" / "performance-and-layout.md",
+        lambda text: "\n## Motion Rules" not in text
+        and "Motion rules live in SKILL.md `### Motion Rules`." in text,
+        "reference points at SKILL.md instead of duplicating the four motion rules",
+    ),
+    A(
+        "frontend/design-md-authoring: one lint rule, errors block",
+        SKILLS / "frontend" / "references" / "design-md-authoring.md",
+        lambda text: "when practical and non-disruptive" not in text
+        and text.count("npx @google/design.md lint DESIGN.md") == 1
+        and "errors block, warnings are review items" in text,
+        "the lint gate is stated once with one modality: errors block; skip only when Node/network unavailable",
+    ),
+    A(
+        "frontend: anti-grade-inflation line, no 'Be honest' filler",
+        SKILLS / "frontend" / "SKILL.md",
+        lambda text: "Most real interfaces score 2; anti-grade-inflation is the job."
+        in text
+        and "Be honest." not in text,
+        "the rubric-band reminder keeps only the behavioral sentence",
+    ),
+    # 82.5 — mcp-cli: recap and transience restatements deleted
+    A(
+        "mcp-cli: no Discipline recap, transience stated once",
+        SKILLS / "mcp-cli" / "SKILL.md",
+        lambda text: "## Discipline" not in text
+        and "monthly `/mcp` review" not in text
+        and "used then released, never resident" not in text
+        and "This keeps accelerators **transient**" in text,
+        "the recap section and the second/third transience statements are gone; one statement carries it",
+    ),
+    # 82.6 — resolving-merge-conflicts: single statements, marker gate only
+    A(
+        "resolving-merge-conflicts: dedup — single never-abort/never-invent, marker gate",
+        SKILLS / "resolving-merge-conflicts" / "SKILL.md",
+        lambda text: "## Before you commit" in text
+        and "## Hard rules" not in text
+        and "Use when a git merge or rebase reports conflicts and the operation is in progress."
+        in text
+        and "Do not stop mid-rebase." not in text
+        and "it's a larger conflict" not in text
+        and text.count("Never invent new behavior") == 1
+        and text.count("`--abort` throws away") == 1
+        and "never pick one side blind" in text,
+        "intro owns never-abort with its why, step 3 owns never-invent, the commit gate owns markers; duplicates deleted",
     ),
 ]
 
