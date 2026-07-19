@@ -58,6 +58,34 @@ def matches(pattern: str):
     return lambda text: re.search(pattern, text) is not None
 
 
+def yaml_alternatives_parse(marker: str, expected_blocks: int):
+    """True when exactly expected_blocks fenced yaml blocks contain marker and each parses.
+
+    PyYAML is a dev-environment dependency, not a runtime one; if it is not
+    installed the structural contains-assertions still guard the content, so
+    the parse check degrades to pass rather than crashing the suite.
+    """
+
+    def check(text: str) -> bool:
+        try:
+            import yaml
+        except ImportError:
+            return True
+        blocks = [
+            b for b in re.findall(r"```yaml\n(.*?)```", text, re.S) if marker in b
+        ]
+        if len(blocks) != expected_blocks:
+            return False
+        for block in blocks:
+            try:
+                yaml.safe_load(block)
+            except yaml.YAMLError:
+                return False
+        return True
+
+    return check
+
+
 ASSERTIONS = [
     # building — Seam Discipline (ticket #40)
     A(
@@ -1443,6 +1471,137 @@ ASSERTIONS = [
         and text.count("`--abort` throws away") == 1
         and "never pick one side blind" in text,
         "intro owns never-abort with its why, step 3 owns never-invent, the commit gate owns markers; duplicates deleted",
+    ),
+    # --- Output-format integrity (ticket #83) ---
+    # 83.1 — code-reviewer: SPEC_COMPLIANCE / PLAN_DEFECT / CANNOT_VERIFY_CROSS_PHASE
+    # exemplified as literal valid YAML (both alternatives), prose-in-brackets gone
+    A(
+        "code-reviewer: literal YAML alternatives for spec fields",
+        AGENTS / "code-reviewer.md",
+        contains_all(
+            "SPEC_COMPLIANCE: PASS",
+            "- bucket: MISSING",
+            'item: "rate-limit guard on /login"',
+            "- bucket: EXTRA",
+            "PLAN_DEFECT: false",
+            "CANNOT_VERIFY_CROSS_PHASE: None",
+            "emit exactly ONE alternative per field",
+        ),
+        "each spec field shows the scalar alternative and the structured alternative as literal block YAML",
+    ),
+    A(
+        "code-reviewer: prose-in-brackets field examples deleted",
+        AGENTS / "code-reviewer.md",
+        contains_none(
+            "SPEC_COMPLIANCE: [PASS | list of {bucket, item}",
+            '{MISSING, "rate-limit guard on /login"}',
+            "PLAN_DEFECT: [false |",
+            "CANNOT_VERIFY_CROSS_PHASE: [None |",
+        ),
+        "the invalid-YAML prose-in-brackets examples no longer exist",
+    ),
+    A(
+        "code-reviewer: field-alternative YAML blocks parse",
+        AGENTS / "code-reviewer.md",
+        yaml_alternatives_parse("either the scalar", expected_blocks=3),
+        "the three Field-Alternatives fenced yaml blocks are valid YAML (yaml.safe_load)",
+    ),
+    # 83.15 — envelope `b` defined per status (code-reviewer + failure-hunter)
+    A(
+        "code-reviewer: envelope b rule defined",
+        AGENTS / "code-reviewer.md",
+        contains_all(
+            "`b:true` iff STATUS=CHANGES_REQUESTED with ≥1 CRITICAL finding",
+            "keeps `b:false`",
+        ),
+        "b is defined per status: true only for CHANGES_REQUESTED with >=1 CRITICAL",
+    ),
+    A(
+        "failure-hunter: envelope b rule defined",
+        AGENTS / "failure-hunter.md",
+        contains_all(
+            "`s=ISSUES_FOUND` when any CRITICAL or HIGH exists",
+            "`b=true` only when CRITICAL>0",
+            "HIGH-only findings: `s=ISSUES_FOUND`, `b=false`",
+        ),
+        "s and b defined per status; HIGH-only middle case resolved (b=false)",
+    ),
+    # 83.4f — bug-investigator: Regression:/Variant: prefixes exemplified in SCENARIOS
+    A(
+        "bug-investigator: scenario-name prefixes exemplified",
+        AGENTS / "bug-investigator.md",
+        contains_all(
+            '- name: "Regression: empty cart returns NaN total"',
+            '- name: "Variant: total stays correct with locale=de-DE"',
+            'literal prefix "Regression:"',
+            'literal prefix "Variant:"',
+        ),
+        "the SCENARIOS template shows one example row per required name prefix",
+    ),
+    A(
+        "bug-investigator: bare scenario-name placeholder gone",
+        AGENTS / "bug-investigator.md",
+        contains_none('- name: "[scenario name]"'),
+        "the unprefixed placeholder row no longer hides the prefix requirement",
+    ),
+    # 83.9 — TDD_RED_EXIT defined as the observed exit code; =1 rule kept (replay
+    # checker enforces ==1 literally, so the clarifier rides alongside, not against)
+    A(
+        "bug-investigator: TDD_RED_EXIT observed-exit-code clarifier",
+        AGENTS / "bug-investigator.md",
+        contains_all(
+            "TDD_RED_EXIT: [the observed exit code of the RED run",
+            "1 is the conventional recorded value",
+            "`TDD_RED_EXIT=1`",
+        ),
+        "field defined as observation; conventional value 1 kept for the replay gate",
+    ),
+    A(
+        "component-builder: TDD_RED_EXIT observed-exit-code clarifier",
+        AGENTS / "component-builder.md",
+        contains_all(
+            "TDD_RED_EXIT: [the observed exit code of the RED run",
+            "any non-zero exit with TDD_RED_REASON_KIND=`behavioral` qualifies as RED evidence",
+            "TDD_RED_EXIT=1",
+        ),
+        "field defined as observation, aligned to the behavioral-RED rule; =1 kept for the replay gate",
+    ),
+    # 83.8 — component-builder: seam proposal located in TEST_SEAMS; token frozen
+    A(
+        "component-builder: seam proposal lives in TEST_SEAMS, token frozen",
+        AGENTS / "component-builder.md",
+        contains_all(
+            "record the seams in TEST_SEAMS in your final contract",
+            "decide them before emitting BUILD_PREFLIGHT",
+            "The token itself stays exactly four fields — never extend it.",
+        ),
+        "the proposal location is explicit and the BUILD_PREFLIGHT token stays four fields",
+    ),
+    A(
+        "component-builder: seam gate table tense unified",
+        AGENTS / "component-builder.md",
+        lambda text: text.count("`proposed` (you proposed the seams)") == 2
+        and "(you propose at BUILD_PREFLIGHT)" not in text
+        and "(you proposed at BUILD_PREFLIGHT)" not in text,
+        "rows 2 and 3 use identical wording; the at-BUILD_PREFLIGHT location claim is gone",
+    ),
+    # 83.5 — integration-verifier: BLOCKED scenarios have a home; Option B inlined
+    A(
+        "integration-verifier: SCENARIOS_BLOCKED optional field + arithmetic",
+        AGENTS / "integration-verifier.md",
+        contains_all(
+            "SCENARIOS_BLOCKED: [count — OPTIONAL field; omit or 0 when no scenario is blocked]",
+            "SCENARIOS_TOTAL = PASSED + FAILED + BLOCKED (SCENARIOS_BLOCKED is optional and defaults to 0 when absent)",
+            "UNVERIFIED by a Test-Honesty hit, counts in SCENARIOS_BLOCKED",
+        ),
+        "BLOCKED/UNVERIFIED scenarios get a bucket; arithmetic includes it with an additive default",
+    ),
+    A(
+        "integration-verifier: Option-B forward reference inlined",
+        AGENTS / "integration-verifier.md",
+        lambda text: "REVERT_RECOMMENDED: [true if decision = revert]" in text
+        and "[true if Option B]" not in text,
+        "the YAML field no longer forward-references a term defined 40 lines later",
     ),
 ]
 

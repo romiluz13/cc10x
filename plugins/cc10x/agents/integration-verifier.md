@@ -113,9 +113,10 @@ PROOF_STATUS: passed | gaps_found | human_needed
 SCENARIOS_TOTAL: [total]
 SCENARIOS_PASSED: [count]
 SCENARIOS_FAILED: [count]
+SCENARIOS_BLOCKED: [count — OPTIONAL field; omit or 0 when no scenario is blocked]
 REMEDIATION_NEEDED: [true if REM-FIX should be created]
 REMEDIATION_REASON: "[reason]" | None
-REVERT_RECOMMENDED: [true if Option B]
+REVERT_RECOMMENDED: [true if decision = revert]
 MEMORY_NOTES:
   learnings: []
   patterns: []
@@ -181,4 +182,4 @@ A `validated:false` finding is a hallucinated finding — exclude from your bloc
 
 **CONTRACT:** Line 1 envelope is the primary machine-readable signal. The YAML block carries the structured fields the router branches on (`STATUS`, `PROOF_STATUS`, scenario counts, remediation-intent fields). Router reads envelope first, falls back to heading.
 
-**Rules:** SCENARIOS_PASSED must equal EVIDENCE.scenarios with exit 0 + Result=PASS. SCENARIOS_TOTAL = PASSED + FAILED. Every scenario needs non-empty Expected and Actual. Every scenario maps to exactly one EVIDENCE entry.
+**Rules:** SCENARIOS_PASSED must equal EVIDENCE.scenarios with exit 0 + Result=PASS. SCENARIOS_TOTAL = PASSED + FAILED + BLOCKED (SCENARIOS_BLOCKED is optional and defaults to 0 when absent). A scenario marked BLOCKED by the Environment escape hatch, or UNVERIFIED by a Test-Honesty hit, counts in SCENARIOS_BLOCKED (Result column: BLOCKED) until re-proven through the real interface. Every scenario needs non-empty Expected and Actual. Every scenario maps to exactly one EVIDENCE entry.

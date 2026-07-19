@@ -136,7 +136,7 @@ STATUS: FIXED | INVESTIGATING | BLOCKED
 VERIFICATION_RIGOR: standard | critical_path
 CONFIDENCE: [0-100]
 ROOT_CAUSE: "[one-line summary]"
-TDD_RED_EXIT: [1 if regression test failed before fix, null if missing]
+TDD_RED_EXIT: [the observed exit code of the RED run — any non-zero behavioral failure qualifies as RED, and 1 is the conventional recorded value; null if RED never ran]
 TDD_GREEN_EXIT: [0 if regression test passed after fix, null if missing]
 VARIANTS_COVERED: [count of variant cases]
 VARIANTS_NOT_APPLICABLE: null | "[reason]"
@@ -167,7 +167,18 @@ BLAST_RADIUS_SCAN:
   adjacent_scan: ["path/a"] | []
   result: "fixed_all_safe_duplicates" | "fixed_repro_only_with_deferred_duplicates" | "blocked_scope_expansion"
 SCENARIOS:
-  - name: "[scenario name]"
+  # First row = the repro loop. Its name MUST start with the literal prefix "Regression:".
+  - name: "Regression: empty cart returns NaN total"
+    given: "[state]"
+    when: "[action]"
+    then: "[result]"
+    command: "[exact command]"
+    expected: "[expected]"
+    actual: "[actual]"
+    exit_code: 0
+    status: PASS
+  # When variants apply, add a row whose name starts with the literal prefix "Variant:".
+  - name: "Variant: total stays correct with locale=de-DE"
     given: "[state]"
     when: "[action]"
     then: "[result]"
@@ -194,7 +205,7 @@ MEMORY_NOTES:
 
 **CONTRACT RULES:**
 
-- `STATUS=FIXED` requires: `VERIFICATION_RIGOR` explicit, `TDD_RED_EXIT=1`, `TDD_GREEN_EXIT=0`, non-empty `BLAST_RADIUS_SCAN`, `Regression:` scenario with non-empty `command`/`expected`/`actual`/`exit_code`. If variants apply: `VARIANTS_COVERED>=1` + `Variant:` scenario. If no variants: set `VARIANTS_NOT_APPLICABLE: "{reason}"`. Never invent a variant.
+- `STATUS=FIXED` requires: `VERIFICATION_RIGOR` explicit, `TDD_RED_EXIT=1`, `TDD_GREEN_EXIT=0`, non-empty `BLAST_RADIUS_SCAN`, `Regression:` scenario with non-empty `command`/`expected`/`actual`/`exit_code`. `TDD_RED_EXIT` records the observed exit code of the RED run — any non-zero behavioral failure qualifies as RED evidence, and 1 is the conventional recorded value the replay gate checks. If variants apply: `VARIANTS_COVERED>=1` + `Variant:` scenario. If no variants: set `VARIANTS_NOT_APPLICABLE: "{reason}"`. Never invent a variant.
 - `STATUS=FIXED` requires: `FEEDBACK_LOOP.rung != "none"` with non-null `command`, `DEBUG_CLOSEOUT.instrumentation_removed=true`, `DEBUG_CLOSEOUT.repro_no_longer_fires=true`. No loop → STATUS MUST be BLOCKED with `NO_LOOP_BLOCKED` populated.
 - `REGRESSION_SEAM.status="no_correct_seam"` → do NOT report a shallow test as proof. Set `REQUIRES_REMEDIATION: true` and document seam absence.
 - `NEEDS_EXTERNAL_RESEARCH=true` → `RESEARCH_REASON` must be non-null.

@@ -115,7 +115,7 @@ Adapt the audit grep patterns to the project's primary language. If the project 
 ## Process
 
 0. **Decide the verdict BEFORE writing the final response — then state it first.** All analysis happens in your tool-call turns (SINGLE FINAL RESPONSE RULE). Only once the verdict is SETTLED do you begin the final response, whose first two lines state the decided verdict:
-   `CONTRACT {"s":"CLEAN","b":false,"cr":0}` (clean) or `CONTRACT {"s":"ISSUES_FOUND","b":true,"cr":N}` (critical failures found)
+   `CONTRACT {"s":"CLEAN","b":false,"cr":0}` (clean) or `CONTRACT {"s":"ISSUES_FOUND","b":true,"cr":N}` (CRITICAL failures found — envelope rule in Output section)
    `## Error Handling Audit: CLEAN` or `## Error Handling Audit: ISSUES_FOUND`
    Never write a preliminary verdict intending to "revise it later in the same response" — line 1 cannot be revised after it is emitted. If you reach the final response unsure of the verdict, you are not done hunting: return to tool turns.
    The envelope at line 1 is the primary machine-readable signal; the heading is the fallback.
@@ -217,4 +217,4 @@ MEMORY_NOTES:
 - (Task completion is handled by the router. This agent does not call TaskUpdate(status: completed).)
 ```
 
-**CONTRACT:** Line 1 `CONTRACT {json}` is the primary machine-readable signal (s=STATUS, b=BLOCKING, cr=CRITICAL_ISSUES). Line 2 heading is the fallback if envelope absent. Router reads envelope first; falls back to heading scan if malformed.
+**CONTRACT:** Line 1 `CONTRACT {json}` is the primary machine-readable signal (s=STATUS, b=BLOCKING, cr=CRITICAL_ISSUES). Envelope rule: `s=ISSUES_FOUND` when any CRITICAL or HIGH exists; `b=true` only when CRITICAL>0. HIGH-only findings: `s=ISSUES_FOUND`, `b=false`. Line 2 heading is the fallback if envelope absent. Router reads envelope first; falls back to heading scan if malformed.

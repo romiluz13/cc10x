@@ -257,15 +257,45 @@ REMEDIATION_NEEDED: [true if BUILD/DEBUG should create a REM-FIX]
 REMEDIATION_REASON: "[top critical issue]" | None
 REMEDIATION_SCOPE_REQUESTED: N/A | CRITICAL_ONLY | ALL_ISSUES
 REVERT_RECOMMENDED: false
-SPEC_COMPLIANCE: [PASS | list of {bucket, item} where bucket ∈ MISSING | EXTRA | MISUNDERSTOOD — e.g. [{MISSING, "rate-limit guard on /login"}, {EXTRA, "speculative retry backoff util"}]. SEPARATE from the code-quality verdict: any non-PASS value gates (CHANGES_REQUESTED) even when SIGNAL_SCORES are clean. Cross-phase / unchanged-code requirements go in CANNOT_VERIFY_CROSS_PHASE, NOT here.]
-PLAN_DEFECT: [false | brief description of why the PLAN (not the code) is wrong — routed to planner, NOT a code fix]
-CANNOT_VERIFY_CROSS_PHASE: [None | requirement(s) wired in this phase but consumed/satisfied outside this diff — router must reconcile against the workflow artifact's cross-phase context before phase_exit_gate passes]
+SPEC_COMPLIANCE: PASS  # scalar PASS, or a bucket list — literal alternatives below
+PLAN_DEFECT: false  # false, or a brief description string — literal alternatives below
+CANNOT_VERIFY_CROSS_PHASE: None  # None, or a requirement list — literal alternatives below
 MEMORY_NOTES:
   learnings: []
   patterns: []
   verification: []
   deferred: []
 ```
+
+**Field alternatives (literal YAML — emit exactly ONE alternative per field):**
+
+```yaml
+# SPEC_COMPLIANCE — either the scalar PASS:
+SPEC_COMPLIANCE: PASS
+# or a list of {bucket, item} maps, bucket ∈ MISSING | EXTRA | MISUNDERSTOOD:
+SPEC_COMPLIANCE:
+  - bucket: MISSING
+    item: "rate-limit guard on /login"
+  - bucket: EXTRA
+    item: "speculative retry backoff util"
+```
+
+```yaml
+# PLAN_DEFECT — either the scalar false:
+PLAN_DEFECT: false
+# or a brief description of why the PLAN (not the code) is wrong:
+PLAN_DEFECT: "plan mandates polling but the approved design doc requires webhooks"
+```
+
+```yaml
+# CANNOT_VERIFY_CROSS_PHASE — either the scalar None:
+CANNOT_VERIFY_CROSS_PHASE: None
+# or a list of requirement(s) wired in this phase but consumed/satisfied outside this diff:
+CANNOT_VERIFY_CROSS_PHASE:
+  - "rate-limit config added here is consumed by the phase-3 middleware"
+```
+
+The gating semantics stay as stated in Pass 5/6 and the field paragraphs below: any non-PASS `SPEC_COMPLIANCE` gates on its own, `PLAN_DEFECT` routes to the planner, and `CANNOT_VERIFY_CROSS_PHASE` items go to the router for cross-phase reconciliation.
 
 ```text
 ### Critical Issues (≥80 confidence)
@@ -297,7 +327,7 @@ MEMORY_NOTES:
 - (Task completion is handled by the router — do NOT call TaskUpdate or create tasks directly.)
 ```
 
-**CONTRACT:** Line 1 `CONTRACT {json}` is the primary machine-readable signal (s=STATUS, b=BLOCKING, cr=CRITICAL_ISSUES). Line 2 heading `## Review: Approve/Changes Requested` is the fallback if envelope absent. The YAML block carries the structured fields the router branches on (`STATUS`, `CONFIDENCE`, `SIGNAL_SCORES`, remediation-intent fields). Router reads envelope first; falls back to heading scan if malformed.
+**CONTRACT:** Line 1 `CONTRACT {json}` is the primary machine-readable signal (s=STATUS, b=BLOCKING, cr=CRITICAL_ISSUES). Envelope `b` rule: `b:true` iff STATUS=CHANGES_REQUESTED with ≥1 CRITICAL finding; otherwise `b:false` — a CHANGES_REQUESTED verdict with no CRITICAL finding (e.g. spec-compliance-only gating) keeps `b:false`. Line 2 heading `## Review: Approve/Changes Requested` is the fallback if envelope absent. The YAML block carries the structured fields the router branches on (`STATUS`, `CONFIDENCE`, `SIGNAL_SCORES`, remediation-intent fields). Router reads envelope first; falls back to heading scan if malformed.
 
 **PLAN_DEFECT routing:** When `PLAN_DEFECT` is non-false, the router routes it to the planner for plan revision — it does NOT create a code-fix REM-FIX for it. A plan defect can coexist with an APPROVE verdict on the code as written: the code faithfully implemented a flawed plan. Keep the two signals separate.
 

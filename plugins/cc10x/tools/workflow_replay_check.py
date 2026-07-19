@@ -115,6 +115,8 @@ def validate_verifier_contract(
     total = contract["SCENARIOS_TOTAL"]
     passed = contract["SCENARIOS_PASSED"]
     failed = contract["SCENARIOS_FAILED"]
+    # SCENARIOS_BLOCKED is optional and additive (ticket #83): absent means 0.
+    blocked = contract.get("SCENARIOS_BLOCKED", 0)
     scenarios = contract["SCENARIO_ROWS"]
     if allow_invalid:
         require(
@@ -127,7 +129,9 @@ def validate_verifier_contract(
         1 for row in scenarios if row["status"] == "PASS" and row["exit_code"] == 0
     )
     mismatch = (
-        total != passed + failed or passed != actual_passed or total != len(scenarios)
+        total != passed + failed + blocked
+        or passed != actual_passed
+        or total != len(scenarios)
     )
     has_blank_expected_actual = any(
         (not row["expected"]) or (not row["actual"]) for row in scenarios
