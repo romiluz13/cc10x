@@ -55,7 +55,7 @@ For each component:
 - **State:** what it remembers (if anything)
 - **Error handling:** what can go wrong and what it does about it
 
-**Before finalizing any component boundary, apply the Deletion Test and Two-Adapter Rule (defined below under Architecture Vocabulary).** A component that fails the deletion test (complexity vanishes if deleted) or fails the two-adapter rule (only one caller/adapter exists) is not a real boundary yet — fold it into its caller or defer the split until a second concrete need appears.
+**Before finalizing any component boundary, apply the Deletion Test and Two-Adapter Rule (defined below under Architecture Vocabulary).** A component that fails the deletion test (complexity vanishes if deleted) or fails the two-adapter rule (it is a port with only one adapter — callers and tests don't count as adapters) is not a real boundary yet — fold it into its caller or defer the split until a second concrete need appears.
 
 ## Architecture Views
 
@@ -140,7 +140,7 @@ Three extra terms specific to greenfield architecture (not in codebase-design):
 - **Temporal coupling** — caller must know the order of operations. Design defect — remove or document explicitly.
 - **Leaky abstraction** — interface exposes internal details callers must know. Design defect — fix the interface.
 
-Before finalizing any component boundary, apply the **Deletion Test** and **Two-Adapter Rule** as defined in `cc10x:codebase-design` — not restated here. A component that fails the deletion test (complexity vanishes if deleted) or fails the two-adapter rule (only one caller/adapter exists) is not a real boundary yet — fold it into its caller or defer the split until a second concrete need appears.
+Before finalizing any component boundary, apply the **Deletion Test** and **Two-Adapter Rule** as defined in `cc10x:codebase-design` — not restated here. A component that fails the deletion test (complexity vanishes if deleted) or fails the two-adapter rule (it is a port with only one adapter — callers and tests don't count as adapters) is not a real boundary yet — fold it into its caller or defer the split until a second concrete need appears.
 
 ## Design It Twice
 

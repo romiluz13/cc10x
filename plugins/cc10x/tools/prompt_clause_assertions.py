@@ -1253,6 +1253,48 @@ ASSERTIONS = [
         and "cycles beyond 3 run only on explicit user go-ahead" in text,
         "matches what remediation-and-research.md and §14 already enforce: >= 3 -> human checkpoint, not a hard stop",
     ),
+    # --- Design-cluster contradiction fixes (ticket #81) ---
+    # 81.1 — architecture: two-adapter gloss matches canonical ports-only formulation, both occurrences
+    A(
+        "architecture: two-adapter gloss is ports-only, caller/adapter gloss gone",
+        SKILLS / "architecture" / "SKILL.md",
+        lambda text: "only one caller/adapter exists" not in text
+        and text.count(
+            "fails the two-adapter rule (it is a port with only one adapter — callers and tests don't count as adapters)"
+        )
+        == 2,
+        "codebase-design's canonical rule says an ordinary caller or test is NOT an adapter; the old gloss would veto nearly every single-caller module",
+    ),
+    # 81.2 — codebase-hygiene: deletion-test question uses canonical inline-at-call-site phrasing
+    A(
+        "codebase-hygiene: deletion test question canonical, CONCENTRATE/MOVE gone",
+        SKILLS / "codebase-hygiene" / "SKILL.md",
+        lambda text: "CONCENTRATE" not in text
+        and "just MOVE elsewhere" not in text
+        and "If I deleted this module and inlined its code at every call site, where does the complexity go?"
+        in text,
+        "question and its vanish/reappear answers finally share codebase-design's vocabulary; the CONCENTRATE/MOVE dichotomy contradicted its own answers",
+    ),
+    # 81.3 — codebase-hygiene: scope-before-you-scan step precedes catalog extraction
+    A(
+        "codebase-hygiene: step 0 scoping restored before catalog extraction",
+        SKILLS / "codebase-hygiene" / "SKILL.md",
+        lambda text: "**Scope before you scan**" in text
+        and "git log --oneline" in text
+        and "deepening pays off in proportion to future change" in text
+        and text.index("Scope before you scan") < text.index("Extract catalog"),
+        "restores the benchmark's YAGNI scoping and its rationale: weight recently-changed code, take a user-named target verbatim",
+    ),
+    # 81.4 — codebase-design: canonicity self-commentary deleted, canonical content intact
+    A(
+        "codebase-design: canonicity no-ops deleted, deletion test intact",
+        SKILLS / "codebase-design" / "SKILL.md",
+        lambda text: "This skill is the **canonical source**" not in text
+        and "This verdict is **canonical**" not in text
+        and "If I deleted this module and inlined its code at every call site" in text
+        and "apply it before accepting any new module boundary" in text,
+        "canonicity lives in frontmatter; the agreement claim steered nothing — the test itself must survive the deletion",
+    ),
 ]
 
 
