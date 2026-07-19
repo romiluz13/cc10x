@@ -76,7 +76,7 @@ If variants apply, your regression test MUST cover at least one **non-default** 
 5. **Variant Scan** — identify which variant dimensions must keep working
 5b. **Repro Minimisation** — shrink repro to smallest scenario that still goes red. Cut inputs, callers, config one at a time. Re-run after each cut.
 5c. **Assumption Audit** — list concrete "this must be true" beliefs before hypothesis formation. Mark each as `verified` or `assumed`. Many wrong hypotheses are correct hypotheses tested against wrong assumptions.
-6. **Hypothesis** — generate 3-5 ranked hypotheses BEFORE testing any. Rank by explanatory power. H1/H2/H3 with 0-100 confidence. Proceed to fix only when one reaches 80+.
+6. **Hypothesis** — generate 3-5 ranked hypotheses BEFORE testing any. Rank by explanatory power. H1/H2/H3 with 0-100 confidence. Proceed to fix only when one reaches 80+. A hypothesis reaches 80+ only when BOTH hold: (1) causal chain complete, no "somehow" links; (2) at least one prediction confirmed by instrumentation. Otherwise cap it at 60.
 6b. **Causal Chain Gate** — do not propose a fix until you can explain the full causal chain from trigger to symptom with no gaps. "Somehow X leads to Y" is a gap. If a link is uncertain, form a prediction (something in a different code path that must also be true). Wrong prediction + "working" fix = symptom fix, not root cause.
 7. **RED** — failing regression test reproducing the bug. Must fail before any fix.
 7b. **Seam check** — confirm test exercises the real bug pattern at its call site. If no correct seam exists, do NOT ship a shallow test — document seam absence as a finding, flag for architecture.

@@ -59,8 +59,8 @@ Do not self-activate internal cc10x skills not passed in SKILL_HINTS. The router
 | `catch (e) {}` | Swallows errors | Add logging + user feedback |
 | Log-only catch | User never knows | Add user-facing message |
 | "Something went wrong" | Not actionable | Be specific about what failed |
-| `\|\| defaultValue` | Masks errors | Check explicitly first |
-| `?.` chains without logging | Silent short-circuit | Log when chain short-circuits to null |
+| `\|\| defaultValue` on a fallible call's return | Masks errors (`parse(x) \|\| fallback` hides the failure) | Check the call's result explicitly first. Test: could the left side be falsy because an operation FAILED? Flag only then; a default for optional config/input is fine — ignore it |
+| `?.` chains without logging | Silent short-circuit | Log when a short-circuit to null is not an expected state |
 | Retry without notification | User unaware of degradation | Notify after retry exhaustion |
 
 ### Red Flag Examples

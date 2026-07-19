@@ -37,9 +37,9 @@ Deepening a module pays off by making future changes to it easier. Weight the pa
 
 Read `CONTEXT.md` and any ADRs in the area you're touching first.
 
-### 2. Explore organically
+### 2. Walk the modules
 
-Walk the codebase using the canonical deep-module vocabulary (`cc10x:codebase-design`: module, interface, depth, seam, adapter, leverage, locality). Note where you experience friction:
+Walk the codebase module by module using the canonical deep-module vocabulary (`cc10x:codebase-design`: module, interface, depth, seam, adapter, leverage, locality), asking the friction questions below of each; stop when you have 3-5 candidates or have covered the hot spots from step 1:
 
 - Where does understanding one concept require bouncing between many small modules?
 - Where are modules shallow — interface nearly as complex as implementation?
@@ -60,7 +60,7 @@ For each candidate, render a card with:
 - **Solution** — plain English description of what would change
 - **Benefits** — in terms of locality and leverage, and how tests would improve
 - **Before / After diagram** — side-by-side, illustrating the shallowness and the deepening
-- **Recommendation strength** — `Strong` | `Worth exploring` | `Speculative` (as a badge)
+- **Recommendation strength** (as a badge) — `Strong` = deletion test says "concentrates" AND the files appear in git-log hot spots; `Speculative` = single-read impression, no churn or test-pain evidence; everything else = `Worth exploring`
 
 End with a **Top recommendation** section: which candidate to tackle first and why.
 

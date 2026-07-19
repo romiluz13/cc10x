@@ -1769,6 +1769,151 @@ ASSERTIONS = [
         ),
         "the reviewer's genuine delta (frontend example + gap procedure) survives the alignment",
     ),
+    # --- Adjectives to decision procedures (ticket #85) ---
+    A(
+        "plan-review-gate: mode-fit is a threshold, not a mood",
+        SKILLS / "plan-review-gate" / "SKILL.md",
+        lambda text: "Request changes ≥3 files or any contract/schema/auth surface while mode is `direct`"
+        in text
+        and "mode is not `decision_rfc`" in text
+        and "Mode is too weak for the request" not in text,
+        "mode-fit row carries the ≥3-files/contract-surface/decision_rfc thresholds; 'too weak' is gone",
+    ),
+    A(
+        "plan-review-gate: over-engineered replaced by requirement-row mapping",
+        SKILLS / "plan-review-gate" / "SKILL.md",
+        lambda text: "The plan introduces a file, abstraction, or dependency that no requirement row maps to"
+        in text
+        and "Solution is over-engineered for the problem" not in text,
+        "complexity row is decidable via requirement-row mapping; 'over-engineered' adjective is gone",
+    ),
+    A(
+        "plan-review-gate: edge cases enumerated per input surface",
+        SKILLS / "plan-review-gate" / "SKILL.md",
+        lambda text: "For each input surface the plan touches, find its empty, invalid, and failure case"
+        in text
+        and "why none applies" in text
+        and "Obvious error paths" not in text,
+        "edge-case row enumerates empty/invalid/failure per input (or why none applies); 'Obvious' is gone",
+    ),
+    A(
+        "plan-review-gate: Checks 2 and 3 carry How-to-verify procedures",
+        SKILLS / "plan-review-gate" / "SKILL.md",
+        lambda text: text.count("| Criterion | How to verify | Blocking if |") == 3
+        and "List each sentence of the user request; cite the plan item covering it"
+        in text
+        and "For each new file, abstraction, or dependency, cite the requirement row that needs it"
+        in text,
+        "Checks 2 and 3 each have a How-to-verify column with an observation procedure per row",
+    ),
+    A(
+        "plan-review-gate: critical-path work defined in-file",
+        SKILLS / "plan-review-gate" / "SKILL.md",
+        contains(
+            "**Critical-path work** = auth, payment, data-destructive operations, migrations, or work the user labeled critical."
+        ),
+        "the rigor row's 'critical-path work' term is defined in one line",
+    ),
+    A(
+        "plan-review-gate: one independence disclosure",
+        SKILLS / "plan-review-gate" / "SKILL.md",
+        lambda text: "not reviewer isolation" in text
+        and "fake reviewer independence" not in text
+        and "Important limit" not in text,
+        "the two adjacent independence disclosures are merged into one sentence",
+    ),
+    A(
+        "plan-review-gate: hard rules carry their whys",
+        SKILLS / "plan-review-gate" / "SKILL.md",
+        contains_all(
+            "comments get ignored; FAILs get fixed",
+            "three failed revisions means the premise is wrong, not the wording",
+        ),
+        "no-APPROVED-WITH-COMMENTS and the 3-iteration escalation each state their why",
+    ),
+    A(
+        "planning: task sizing is context-window based",
+        SKILLS / "planning" / "SKILL.md",
+        lambda text: "fit a single fresh context window" in text
+        and "implement, and test it without compaction" in text
+        and "30-90 minutes" not in text,
+        "task granularity is agent-perceivable (context window), not human minutes",
+    ),
+    A(
+        "planning: risk score is a lookup, not ordinal arithmetic",
+        SKILLS / "planning" / "SKILL.md",
+        lambda text: "high/high or high/med (either order) → deterministic test required"
+        in text
+        and "med/med → deterministic or probabilistic with stated flake policy" in text
+        and "anything involving a low → manual checklist acceptable" in text
+        and "take the stricter one" in text
+        and "Score = Probability × Impact" not in text,
+        "the risk matrix maps cells directly to test requirements; the undefined Score formula is gone",
+    ),
+    A(
+        "planning: sprint-blind horizons removed",
+        SKILLS / "planning" / "SKILL.md",
+        lambda text: '"near-term-refactor" (refactor likely)' in text
+        and ">1 caller in this plan" in text
+        and "sprint" not in text
+        and "(Advisory)" not in text,
+        "Durability-Horizon and Prefactor use in-plan/near-term-refactor/stable; sprints and the softening label are gone",
+    ),
+    A(
+        "architecture-scanner: walk-the-modules procedure with stop rule",
+        AGENTS / "architecture-scanner.md",
+        lambda text: "Walk the codebase module by module" in text
+        and "stop when you have 3-5 candidates or have covered the hot spots from step 1"
+        in text
+        and "Explore organically" not in text,
+        "'Explore organically' replaced by a module walk with an explicit stop condition",
+    ),
+    A(
+        "architecture-scanner: strength badges have assignment criteria",
+        AGENTS / "architecture-scanner.md",
+        contains_all(
+            '`Strong` = deletion test says "concentrates" AND the files appear in git-log hot spots',
+            "`Speculative` = single-read impression, no churn or test-pain evidence",
+            "everything else = `Worth exploring`",
+        ),
+        "two runs badge the same candidate the same way",
+    ),
+    A(
+        "planner: gate iterations and fresh-review passes disambiguated",
+        AGENTS / "planner.md",
+        lambda text: "Gate iterations (max 3) and fresh-review passes (max 2, `PLANNING_REVIEW_RUNS`) are different counters"
+        in text
+        and "a different counter from the plan-review-gate's 3 iterations" in text,
+        "the two review counters are named as different at both mention sites; YAML fields unrenamed",
+    ),
+    A(
+        "planner: CONFIDENCE is scored, not asserted",
+        AGENTS / "planner.md",
+        lambda text: "start at 90; subtract 15 per critical assumption classified `inferred`"
+        in text
+        and "subtract 25 if RECOMMENDED_DEFAULTS is non-empty" in text
+        and "cap at the Research Quality tier (high → 90, medium → 75, low → 60, none → 50)"
+        in text
+        and "The CONFIDENCE≥50 requirement reads this computed value" in text,
+        "CONFIDENCE bound to checkables; the ≥50 gate reads the computed value",
+    ),
+    A(
+        "bug-investigator: hypothesis 80+ bound to checkables",
+        AGENTS / "bug-investigator.md",
+        lambda text: "A hypothesis reaches 80+ only when BOTH hold" in text
+        and "at least one prediction confirmed by instrumentation" in text
+        and "Otherwise cap it at 60" in text,
+        "80+ requires complete causal chain plus a confirmed prediction; otherwise capped at 60",
+    ),
+    A(
+        "failure-hunter: || defaultValue has a discrimination test",
+        AGENTS / "failure-hunter.md",
+        lambda text: "could the left side be falsy because an operation FAILED?" in text
+        and "a default for optional config/input is fine" in text
+        and "| Masks errors | Check explicitly first |" not in text
+        and "Log when a short-circuit to null is not an expected state" in text,
+        "fallible-call returns are flagged, optional-config defaults ignored; ?. logging is conditioned on unexpected state",
+    ),
 ]
 
 
