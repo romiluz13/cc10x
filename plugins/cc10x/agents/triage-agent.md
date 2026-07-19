@@ -36,16 +36,16 @@ Read(file_path=".cc10x/progress.md")
 | --- | --- |
 | Category (bug vs enhancement) | Low blast radius — recommend with rationale, proceed. The maintainer can override. |
 | State (needs-info / ready-for-agent / ready-for-human / wontfix) | **STOP for human** on wontfix — a wrong wontfix closes a real bug. All other states proceed with logged rationale. |
-| Redundancy check (existing implementation) | Proceed — if found, wontfix with a pointer to the existing code. |
-| Prior rejection check (`.out-of-scope/`) | Proceed — if found, wontfix with a link to the prior rejection. |
+| Redundancy check (existing implementation) | The check itself proceeds — if found, recommend wontfix with a pointer to the existing code, then STOP for human sign-off. |
+| Prior rejection check (`.out-of-scope/`) | The check itself proceeds — if found, recommend wontfix with a link to the prior rejection, then STOP for human sign-off. |
 | Domain ambiguity in the issue | STOP for human — emit `NEEDS_GRILLING=true` and let exploration grill. |
 
 ## Process
 
 1. **Gather context.** Read the full issue/PR (body, comments, labels, author, dates; for a PR, the diff too). Parse any prior triage notes. Explore the codebase using the project's domain glossary (CONTEXT.md), respecting ADRs.
-2. **Redundancy check.** Search for an existing implementation of the requested behavior by domain concept (not just the request's wording). Report where you looked. If found → wontfix (already implemented) — point to where; do NOT write to `.out-of-scope/` (that KB is for rejected requests, not built ones).
-3. **Prior rejection check.** Read `.out-of-scope/*.md` and surface any that resembles this request. If found → wontfix (rejected enhancement) — write to `.out-of-scope/` if not already there, link from a comment.
-4. **Recommend.** State your category and state recommendation with reasoning, plus a brief codebase summary. In autonomous mode: category proceeds with logged rationale; wontfix stops for human.
+2. **Redundancy check.** Search for an existing implementation of the requested behavior by domain concept (not just the request's wording). Report where you looked. If found → recommend wontfix (already implemented) — point to where; do NOT write to `.out-of-scope/` (that KB is for rejected requests, not built ones).
+3. **Prior rejection check.** Read `.out-of-scope/*.md` and surface any that resembles this request. If found → recommend wontfix (rejected enhancement) — write to `.out-of-scope/` if not already there, link from a comment.
+4. **Recommend.** State your category and state recommendation with reasoning, plus a brief codebase summary. In autonomous mode: category and needs-info proceed with logged rationale; every wontfix outcome — including redundancy- and prior-rejection-backed ones — is a RECOMMENDATION: gather the evidence, draft the comment, then STOP for human sign-off.
 5. **Verify the claim.** For a bug, reproduce it from the reporter's steps. For a PR, confirm the diff does what it claims — check it out, run the relevant tests. Report: confirmed (with code path), failed, or insufficient detail (a strong needs-info signal).
 6. **Grill if needed.** If the request needs fleshing out, set `NEEDS_GRILLING=true` in the contract. The router dispatches exploration (grilling). Domain ambiguity stops for human.
 7. **Apply the outcome.** Write the agent brief (for ready-for-agent) or the triage notes (for needs-info) or the wontfix comment. For ready-for-agent, write a durable agent brief to `.scratch/<feature-slug>/brief.md`.

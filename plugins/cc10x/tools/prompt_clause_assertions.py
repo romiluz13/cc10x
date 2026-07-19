@@ -1113,6 +1113,100 @@ ASSERTIONS = [
         ),
         "the long parenthetical restating the builder-side enum is gone",
     ),
+    # --- Agent-prompt contradiction fixes (ticket #79) ---
+    # 79.1 — agent-common: final-response rule agrees with TaskUpdate-owning agent bodies
+    A(
+        "agent-common: final-response rule carries the TaskUpdate carve-out",
+        SKILLS / "agent-common" / "SKILL.md",
+        contains_all(
+            "If your agent doc says to call TaskUpdate",
+            "otherwise the router completes the task for you",
+        ),
+        "SINGLE FINAL RESPONSE RULE step 2 restates the CONTRACT-Envelope carve-out instead of contradicting it",
+    ),
+    A(
+        "agent-common: unconditional auto-completion sentence removed",
+        SKILLS / "agent-common" / "SKILL.md",
+        contains_none(
+            "Stop your turn — the router handles task completion automatically",
+        ),
+        "the sentence that told TaskUpdate-owning agents the router completes for them is gone",
+    ),
+    # 79.2 — triage-agent: every wontfix outcome is a recommendation that stops
+    A(
+        "triage-agent: wontfix is a recommendation that stops for human",
+        AGENTS / "triage-agent.md",
+        contains_all(
+            "recommend wontfix",
+            "every wontfix outcome",
+            "STOP for human sign-off",
+        ),
+        "rows 3-4 and step 4 agree: evidence-gathering proceeds, the wontfix action stops",
+    ),
+    A(
+        "triage-agent: proceed-to-wontfix rows removed",
+        AGENTS / "triage-agent.md",
+        contains_none(
+            "Proceed — if found, wontfix with a pointer",
+            "Proceed — if found, wontfix with a link",
+        ),
+        "the table rows that let a wontfix proceed autonomously are gone",
+    ),
+    # 79.3 — bug-investigator: checkpoints name their STATUS per bullet
+    A(
+        "bug-investigator: checkpoints return the named STATUS",
+        AGENTS / "bug-investigator.md",
+        contains_all(
+            "stop and return the named STATUS when:",
+            ">3 files → `STATUS: BLOCKED`",
+            "public API/interface → `STATUS: BLOCKED`",
+            "→ `STATUS: INVESTIGATING`",
+        ),
+        "Decision Checkpoints header no longer promises BLOCKED for a bullet that returns INVESTIGATING",
+    ),
+    A(
+        "bug-investigator: BLOCKED-only checkpoint header removed",
+        AGENTS / "bug-investigator.md",
+        contains_none("Decision Checkpoints — return `STATUS: BLOCKED` when:"),
+        "the header that contradicted the INVESTIGATING bullet is gone",
+    ),
+    # 79.4 — code-reviewer: per-finding vs review-level confidence are named scales
+    A(
+        "code-reviewer: two confidence scales named",
+        AGENTS / "code-reviewer.md",
+        contains_all(
+            "per-finding confidence",
+            "different scale",
+            "maxes at 90 by construction",
+        ),
+        "per-finding confidence and the review-level CONFIDENCE field are explicitly different scales, cap stated",
+    ),
+    A(
+        "code-reviewer: zero-finding rule is one number",
+        AGENTS / "code-reviewer.md",
+        lambda text: "set CONFIDENCE to exactly 70" in text
+        and "min(CONFIDENCE, 70)" not in text
+        and "A zero-finding review at CONFIDENCE >= 90 is invalid" not in text,
+        "zero findings after the positive-assertion pass → CONFIDENCE exactly 70; the min()/≥90 tangle is gone",
+    ),
+    # 79.5 — doc-syncer: four-layer prose + unbraided audit step 2
+    A(
+        "doc-syncer: prose names the same four layers as the template",
+        AGENTS / "doc-syncer.md",
+        lambda text: "all four layers are SKIP" in text
+        and "business, technical, audit, glossary" in text
+        and "all three layers are SKIP" not in text,
+        "Impact Classification names business/technical/audit/glossary and counts four, matching DOC_LAYERS_EVALUATED",
+    ),
+    A(
+        "doc-syncer: audit step 2 unbraided into a checklist",
+        AGENTS / "doc-syncer.md",
+        lambda text: "If an existing doc covers this topic:\n\n   1." in text
+        and "Record the path in `AUDIT_DOCS_UPDATED` **and** `DOC_FILES_UPDATED`" in text
+        and "missing from `DOC_FILES_UPDATED` is invisible to the router" in text
+        and "**Also add the path to `DOC_FILES_UPDATED`** — the router override accepts" not in text,
+        "the mega-sentence is a numbered 3-step checklist keeping every field name and the router-reads-DOC_FILES_UPDATED why",
+    ),
 ]
 
 

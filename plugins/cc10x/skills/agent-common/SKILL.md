@@ -57,7 +57,7 @@ Router reads envelope first; falls back to heading scan if malformed. The final 
 The router receives ONLY your LAST response turn, not intermediate messages. Therefore:
 
 1. Use as many turns as needed for tool calls — output ZERO analysis text during these turns. **Single exception:** `component-builder`'s `BUILD_PREFLIGHT:` status line is the one permitted mid-run output line (a hook greps for it); no other mid-turn text is allowed for any agent.
-2. Produce ONE FINAL RESPONSE containing: heading → all sections → Memory Notes → Task Status. **Stop your turn — the router handles task completion automatically.**
+2. Produce ONE FINAL RESPONSE containing: heading → all sections → Memory Notes → Task Status. **Stop your turn. If your agent doc says to call TaskUpdate, call it in your last tool turn, BEFORE the final response; otherwise the router completes the task for you.**
 
 Do NOT write analysis in an intermediate turn and then write "done" in a final turn. The router will only see the final turn.
 

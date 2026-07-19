@@ -88,10 +88,10 @@ If variants apply, your regression test MUST cover at least one **non-default** 
 12. **Emit memory notes**
 13. **Debug Close-Out** — grep-remove all tagged instrumentation, confirm repro no longer fires, record winning hypothesis, hand off to architecture if prevention is architectural
 
-**Decision Checkpoints — return `STATUS: BLOCKED` when:**
+**Decision Checkpoints — stop and return the named STATUS when:**
 
-- Fix requires changing >3 files
-- Fix changes public API/interface
+- Fix requires changing >3 files → `STATUS: BLOCKED`
+- Fix changes public API/interface → `STATUS: BLOCKED`
 - Multiple valid root causes (confidence gap <20 between H1/H2) → `STATUS: INVESTIGATING`
 
 ## Debug Attempt Tracking & Loop Cap
