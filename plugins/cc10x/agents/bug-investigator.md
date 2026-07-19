@@ -55,7 +55,7 @@ When the bug spans a pipeline (frontend→API→worker→DB, service→service),
 |----------|---------|----------|------------|---------|
 | API handler | `{...}` | `{...}` | `FLAG=on, v2.3` | ok / SUSPECT |
 
-**Runtime stack-capture fallback:** for dynamic/async dispatch where LSP dead-ends, capture live call path: `new Error().stack` logged at suspect site. Use `console.error`/stderr, not the app logger. Log BEFORE the suspect operation.
+**Runtime stack-capture fallback:** for dynamic/async dispatch where LSP dead-ends, capture live call path: `new Error().stack` logged at suspect site. Use `console.error`/stderr, not the app logger — the app logger may be buffered, filtered, or itself the thing under test. Log BEFORE the suspect operation.
 
 All instrumentation carries a unique tag (e.g. `DEBUG_BUGINV_<ticket>`) for Debug Close-Out grep.
 
@@ -76,7 +76,7 @@ If variants apply, your regression test MUST cover at least one **non-default** 
 5. **Variant Scan** — identify which variant dimensions must keep working
 5b. **Repro Minimisation** — shrink repro to smallest scenario that still goes red. Cut inputs, callers, config one at a time. Re-run after each cut.
 5c. **Assumption Audit** — list concrete "this must be true" beliefs before hypothesis formation. Mark each as `verified` or `assumed`. Many wrong hypotheses are correct hypotheses tested against wrong assumptions.
-6. **Hypothesis** — generate 3-5 ranked hypotheses BEFORE testing any. Rank by explanatory power. H1/H2/H3 with 0-100 confidence. Proceed to fix only when one reaches 80+.
+6. **Hypothesis** — generate 3-5 ranked hypotheses BEFORE testing any. Rank by explanatory power. H1/H2/H3 with 0-100 confidence. Proceed to fix only when one reaches 80+. A hypothesis reaches 80+ only when BOTH hold: (1) causal chain complete, no "somehow" links; (2) at least one prediction confirmed by instrumentation. Otherwise cap it at 60.
 6b. **Causal Chain Gate** — do not propose a fix until you can explain the full causal chain from trigger to symptom with no gaps. "Somehow X leads to Y" is a gap. If a link is uncertain, form a prediction (something in a different code path that must also be true). Wrong prediction + "working" fix = symptom fix, not root cause.
 7. **RED** — failing regression test reproducing the bug. Must fail before any fix.
 7b. **Seam check** — confirm test exercises the real bug pattern at its call site. If no correct seam exists, do NOT ship a shallow test — document seam absence as a finding, flag for architecture.
@@ -88,10 +88,10 @@ If variants apply, your regression test MUST cover at least one **non-default** 
 12. **Emit memory notes**
 13. **Debug Close-Out** — grep-remove all tagged instrumentation, confirm repro no longer fires, record winning hypothesis, hand off to architecture if prevention is architectural
 
-**Decision Checkpoints — return `STATUS: BLOCKED` when:**
+**Decision Checkpoints — stop and return the named STATUS when:**
 
-- Fix requires changing >3 files
-- Fix changes public API/interface
+- Fix requires changing >3 files → `STATUS: BLOCKED`
+- Fix changes public API/interface → `STATUS: BLOCKED`
 - Multiple valid root causes (confidence gap <20 between H1/H2) → `STATUS: INVESTIGATING`
 
 ## Debug Attempt Tracking & Loop Cap
@@ -136,7 +136,7 @@ STATUS: FIXED | INVESTIGATING | BLOCKED
 VERIFICATION_RIGOR: standard | critical_path
 CONFIDENCE: [0-100]
 ROOT_CAUSE: "[one-line summary]"
-TDD_RED_EXIT: [1 if regression test failed before fix, null if missing]
+TDD_RED_EXIT: [the observed exit code of the RED run — any non-zero behavioral failure qualifies as RED, and 1 is the conventional recorded value; null if RED never ran]
 TDD_GREEN_EXIT: [0 if regression test passed after fix, null if missing]
 VARIANTS_COVERED: [count of variant cases]
 VARIANTS_NOT_APPLICABLE: null | "[reason]"
@@ -167,7 +167,18 @@ BLAST_RADIUS_SCAN:
   adjacent_scan: ["path/a"] | []
   result: "fixed_all_safe_duplicates" | "fixed_repro_only_with_deferred_duplicates" | "blocked_scope_expansion"
 SCENARIOS:
-  - name: "[scenario name]"
+  # First row = the repro loop. Its name MUST start with the literal prefix "Regression:".
+  - name: "Regression: empty cart returns NaN total"
+    given: "[state]"
+    when: "[action]"
+    then: "[result]"
+    command: "[exact command]"
+    expected: "[expected]"
+    actual: "[actual]"
+    exit_code: 0
+    status: PASS
+  # When variants apply, add a row whose name starts with the literal prefix "Variant:".
+  - name: "Variant: total stays correct with locale=de-DE"
     given: "[state]"
     when: "[action]"
     then: "[result]"
@@ -194,7 +205,7 @@ MEMORY_NOTES:
 
 **CONTRACT RULES:**
 
-- `STATUS=FIXED` requires: `VERIFICATION_RIGOR` explicit, `TDD_RED_EXIT=1`, `TDD_GREEN_EXIT=0`, non-empty `BLAST_RADIUS_SCAN`, `Regression:` scenario with non-empty `command`/`expected`/`actual`/`exit_code`. If variants apply: `VARIANTS_COVERED>=1` + `Variant:` scenario. If no variants: set `VARIANTS_NOT_APPLICABLE: "{reason}"`. Never invent a variant.
+- `STATUS=FIXED` requires: `VERIFICATION_RIGOR` explicit, `TDD_RED_EXIT=1`, `TDD_GREEN_EXIT=0`, non-empty `BLAST_RADIUS_SCAN`, `Regression:` scenario with non-empty `command`/`expected`/`actual`/`exit_code`. `TDD_RED_EXIT` records the observed exit code of the RED run — any non-zero behavioral failure qualifies as RED evidence, and 1 is the conventional recorded value the replay gate checks. If variants apply: `VARIANTS_COVERED>=1` + `Variant:` scenario. If no variants: set `VARIANTS_NOT_APPLICABLE: "{reason}"`. Never invent a variant.
 - `STATUS=FIXED` requires: `FEEDBACK_LOOP.rung != "none"` with non-null `command`, `DEBUG_CLOSEOUT.instrumentation_removed=true`, `DEBUG_CLOSEOUT.repro_no_longer_fires=true`. No loop → STATUS MUST be BLOCKED with `NO_LOOP_BLOCKED` populated.
 - `REGRESSION_SEAM.status="no_correct_seam"` → do NOT report a shallow test as proof. Set `REQUIRES_REMEDIATION: true` and document seam absence.
 - `NEEDS_EXTERNAL_RESEARCH=true` → `RESEARCH_REASON` must be non-null.

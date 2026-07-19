@@ -9,11 +9,11 @@ user-invocable: false
 
 ## Overview
 
-The `mcp` CLI (from `github.com/f/mcptools`) discovers and invokes MCP server capabilities on-demand, then releases them. Use it when a task needs ONE server's tool — a doc fetch, a single query, a quick lookup — instead of permanently mounting that server as an always-loaded integration.
+The `mcp` CLI (from `github.com/f/mcptools`) discovers and invokes MCP server capabilities on-demand. Use it when a task needs ONE server's tool — a doc fetch, a single query, a quick lookup — instead of permanently mounting that server as an always-loaded integration.
 
-This keeps accelerators **transient**: spun up for the task, used, and dropped. A permanently mounted MCP server costs context on every session whether you call it or not. The CLI costs nothing until you run it. This is the same context-hygiene principle behind disabling unused MCP servers in monthly `/mcp` review.
+This keeps accelerators **transient**: spun up for the task, used, and dropped. A permanently mounted MCP server costs context on every session whether you call it or not. The CLI costs nothing until you run it.
 
-Composes with `cc10x:research` (transient retrieval, used then released, never resident).
+Composes with `cc10x:research`.
 
 ## Prerequisite (install once)
 
@@ -29,7 +29,7 @@ If `go` is unavailable, report that the accelerator is missing and proceed with 
 
 ## Flow: discover → call → release
 
-**1. Discover first — always.** Never call a tool whose schema you have not seen.
+**1. Discover first — always.** Never call a tool whose schema you have not seen — guessed params fail silently or hit the wrong tool.
 
 ```bash
 mcp tools <server-command>                 # list tools
@@ -69,10 +69,3 @@ mcp alias remove <name>                 # release when done
 ```
 
 Aliases persist in `~/.mcpt/aliases.json`. Cleaning them up is part of keeping the accelerator transient.
-
-## Discipline
-
-- Discover before calling; match param signatures exactly.
-- Use JSON output when a downstream step parses the result.
-- Guard to read-only while exploring; widen only with intent.
-- Release aliases when the task is done — do not leave a transient tool resident.

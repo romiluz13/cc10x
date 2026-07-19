@@ -1,13 +1,5 @@
 # Test Data And Mocks
 
-## Table of Contents
-
-- [Factory Pattern](#factory-pattern)
-- [Mock Only Boundaries](#mock-only-boundaries)
-- [Common Boundary Mocks](#common-boundary-mocks)
-- [Environment And Time](#environment-and-time)
-- [Mock Quality Gate](#mock-quality-gate)
-
 ## Factory Pattern
 
 Prefer small factory helpers over repeated object literals:

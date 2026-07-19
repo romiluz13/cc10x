@@ -62,7 +62,7 @@ Prune a lane out once it stops being a reflex; add new families as they saturate
 
 ### Motion Rules
 
-Animate `transform`/`opacity` only — never `width`/`height`/`top`/`left`. List transition properties explicitly. 150-300ms for micro-interactions. Honor `prefers-reduced-motion`. Allow animation cancellation.
+Animate `transform`/`opacity` only — never `width`/`height`/`top`/`left`. No layout-shifting hover effects. List transition properties explicitly. 150-300ms for micro-interactions. Honor `prefers-reduced-motion`. Allow animation cancellation — motion must not block user action.
 
 ---
 
@@ -131,7 +131,7 @@ Heuristics: visual hierarchy, visual rhythm & spacing, restraint & intentionalit
 | 2 | Ship with noted follow-ups | P2 |
 | 3-4 | Ship | P3 (polish only) |
 
-Be honest. Most interfaces score mid-band (2). A 4 is rare and earned. Anti-grade-inflation is the job.
+Most real interfaces score 2; anti-grade-inflation is the job.
 
 ### AI-Slop Ban-List
 

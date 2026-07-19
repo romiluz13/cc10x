@@ -22,7 +22,7 @@
   Fail-closed gates &nbsp;·&nbsp; survives compaction &nbsp;·&nbsp; dispatch-by-reference &nbsp;·&nbsp; test honesty gates &nbsp;·&nbsp; anti-anchored review
 </p>
 
-**Current version:** 12.6.0
+**Current version:** 12.7.0
 
 ---
 
@@ -893,6 +893,6 @@ MIT License
 ---
 
 <p align="center">
-  <strong>cc10x v12.6.0</strong><br>
+  <strong>cc10x v12.7.0</strong><br>
   <em>The Intelligent Orchestrator for Claude Code</em>
 </p>

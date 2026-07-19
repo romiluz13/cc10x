@@ -60,7 +60,7 @@ enough" proves nothing about the unrun commands; one evidence entry cannot cover
 
 ---
 
-## Counter (add to Rationalization Table if agent fails)
+## Counter (add to Excuses and Tells table if agent fails)
 
 | Excuse | Counter |
 |--------|---------|

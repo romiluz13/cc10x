@@ -664,7 +664,7 @@ def main() -> int:
         "Task completion is not goal achievement",
         "A PASS without proof is a claim",
         "## Goal-Backward Lens",
-        "## Auditor Posture",
+        "If you cannot independently reproduce a claimed success, return FAIL.",
         "EVIDENCE:",
         "live-production-testing.md",
     ):

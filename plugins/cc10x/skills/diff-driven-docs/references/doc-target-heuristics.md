@@ -45,15 +45,8 @@ These patterns are language- and framework-agnostic. Projects override them with
 | Non-obvious tradeoff accepted | CREATE decision record |
 | Security or compliance impact | CREATE or UPDATE compliance doc |
 | Breaking change introduced | CREATE migration doc |
-| Routine bug fix | SKIP |
-| Style / formatting change | SKIP |
-| Test addition (no new pattern) | SKIP |
-| Dependency version bump (no API change) | SKIP |
 
-## CLAUDE.md Index Rule
-
-If a new doc file was created, add a link to the relevant `## Docs` section in CLAUDE.md.
-Never duplicate doc content in CLAUDE.md — it is an index only.
+SKIP verdicts are owned by the Impact Classifier table in SKILL.md.
 
 ## JSDoc Rule
 

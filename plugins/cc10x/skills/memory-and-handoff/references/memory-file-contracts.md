@@ -1,13 +1,5 @@
 # Memory File Contracts
 
-## Contents
-
-- Purpose
-- Required files and sections
-- Stable anchors
-- Templates
-- Auto-heal rule
-
 ## Purpose
 
 CC10X memory files are edit anchors, not casual notes. The router and audits rely on stable
@@ -133,4 +125,4 @@ If a canonical section is missing:
 - retry the intended edit only after the contract shape is restored
 
 Never rename canonical headings to make one edit easier. The headings are part of the
-durable CC10X protocol.
+durable CC10X protocol — renaming a heading silently breaks every future Edit anchored on it.

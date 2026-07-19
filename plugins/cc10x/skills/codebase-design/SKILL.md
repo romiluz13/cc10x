@@ -20,8 +20,6 @@ user-invocable: false
 
 Design **deep modules**: a lot of behaviour behind a small interface, placed at a clean seam, testable through that interface. Use this language and these principles wherever code is being designed or restructured. The aim is leverage for callers, locality for maintainers, and testability for everyone.
 
-This skill is the **canonical source** for the deep-module vocabulary. Other cc10x skills (`architecture`, `codebase-hygiene`, `building`, `planning`) reference these terms instead of restating them, so there is one source of truth.
-
 ## Glossary
 
 Use these terms exactly — don't substitute "component," "service," "API," or "boundary." Consistent language is the whole point.
@@ -79,7 +77,7 @@ For every module or abstraction, ask: **"If I deleted this module and inlined it
 - **It vanishes** → the module was a pass-through / shallow. It adds indirection without hiding complexity. Delete it or deepen its interface.
 - **It reappears across N call sites** → the module is deep. It earns its existence by hiding complexity that would otherwise be duplicated.
 
-This is a falsifiable test, not a matter of taste — apply it before accepting any new module boundary. This verdict is **canonical**: `codebase-hygiene` and `architecture` agree with it.
+This is a falsifiable test, not a matter of taste — apply it before accepting any new module boundary.
 
 ## Principles
 

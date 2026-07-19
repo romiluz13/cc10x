@@ -4,8 +4,7 @@
 
 This file records the detailed file-operation rules behind CC10X memory.
 
-Write agents normally do **not** edit `.cc10x/*.md` directly. They emit
-`MEMORY_NOTES`, and the router-owned memory-finalize step persists markdown memory.
+Ownership: see SKILL.md `### Ownership` — the authoritative statement.
 
 These patterns matter for router maintenance, template repair, and manual audits.
 

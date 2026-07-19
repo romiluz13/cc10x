@@ -18,7 +18,7 @@ Distill plans into durable, buildable artifacts. A plan is a contract, not a bra
 
 ## Bite-Sized Task Granularity
 
-Each task must be completable in one focused session (30-90 minutes). If a task takes longer, split it. Signs a task is too big: "and then...", multiple unrelated files, multiple test scenarios, more than 3 sub-steps.
+Each task must fit a single fresh context window: one builder can read the referenced files, implement, and test it without compaction. A task that outlives its window gets finished by a degraded agent — split it. Signs a task is too big: "and then...", multiple unrelated files, multiple test scenarios, more than 3 sub-steps.
 
 **Test per task:** Every task must have at least one test that verifies its completion. If you can't name the test, the task isn't specific enough.
 
@@ -74,7 +74,7 @@ List files the builder MUST read before starting:
 
 **Distillation Rule:** Reference files by path with a one-line reason. Do not paste contents. The next agent reads the file, not your summary of it.
 
-**Durability-Horizon Rule:** For each piece of the plan, state how long it's expected to last: "session-only" (throwaway), "sprint" (refactor likely), "stable" (architectural). This determines how much effort to spend on abstraction.
+**Durability-Horizon Rule:** For each piece of the plan, state how long it's expected to last: "session-only" (throwaway), "near-term-refactor" (refactor likely), "stable" (architectural). This determines how much effort to spend on abstraction.
 
 ## Validation Levels
 
@@ -87,7 +87,7 @@ Planner-specific mapping: every task must state its validation level. If manual,
 Scan the plan against these 10 checks. Fix inline.
 
 1. Every task has a test that verifies completion
-2. Every task lists exact file paths (not "the auth module" — `src/auth/handler.ts`)
+2. Every task lists exact file paths (not "the auth module" — `src/auth/handler.ts`). Exact paths are safe here because a plan is executed immediately; a spec that lives for weeks would omit them.
 3. Every task has exit criteria (not "done" — "test passes, build succeeds, type-check clean")
 4. Dependencies are explicit (task IDs, not "after the API stuff")
 5. Scope drift is named (what would pull this task off-track)
@@ -103,7 +103,7 @@ Scan the plan against these 10 checks. Fix inline.
 |------|------------|--------|---------------|
 | [what could go wrong] | [low/med/high] | [low/med/high] | [test name or "manual: checklist"] |
 
-Score = Probability × Impact. High-score risks need deterministic tests. Low-score risks can use manual validation.
+Map Probability × Impact directly to the test requirement: high/high or high/med (either order) → deterministic test required; med/med → deterministic or probabilistic with stated flake policy; anything involving a low → manual checklist acceptable. When unsure between two cells, take the stricter one.
 
 ## Test-Seam Selection Discipline
 
@@ -117,7 +117,7 @@ Prefer the highest seam that still covers the risk. A unit test that doesn't exe
 
 **Prefer existing seams to new ones.** The fewer seams across the codebase, the better — the ideal number is one. If new seams are needed, propose them at the highest point you can.
 
-**Record proposed seams in each phase.** Each phase's plan carries a `### Test Seams` line naming the seam(s) that phase will test at. These feed the builder's **enforced** seam gate: the builder records the seams it actually used in its Router Contract `TEST_SEAMS` field and sets `SEAM_GATE_STATUS` (`confirmed` when it used the plan's seams; `disagreed` when a planned seam cannot exercise the phase's real risk — the builder records the disagreement and proposes a better seam or blocks). The router validates both fields fail-closed per `build_scope` (see `cc10x:building`). Planned seams are the starting contract, not a suggestion.
+**Record proposed seams in each phase.** Each phase's plan carries a `### Test Seams` line naming the seam(s) that phase will test at. These feed the builder's **enforced** seam gate (`TEST_SEAMS` + `SEAM_GATE_STATUS`, validated fail-closed per `build_scope`). Planned seams are the starting contract, not a suggestion — the builder must confirm or formally disagree; see `cc10x:building`.
 
 ## Wide-Refactor Phasing
 
@@ -158,6 +158,6 @@ For decisions with material trade-offs (library choice, architecture pattern, da
 
 Record ADRs inline in the plan. They are durable — the next session inherits them.
 
-## Prefactor Question (Advisory)
+## Prefactor Question
 
-Before adding an abstraction: "Will this abstraction be used by >1 caller within the next 3 sprints?" If no, inline it. Abstractions without multiple callers are premature.
+Before adding an abstraction: "Will this abstraction be used by >1 caller in this plan?" If no, inline it. Abstractions without multiple callers are premature.

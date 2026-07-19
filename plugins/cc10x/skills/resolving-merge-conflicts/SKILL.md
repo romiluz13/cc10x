@@ -1,10 +1,7 @@
 ---
 name: resolving-merge-conflicts
 description: |
-  Resolve an in-progress git merge or rebase conflict hunk by hunk — see the
-  state, find the primary sources for each side's intent, resolve by intent
-  (never --abort), run the project's checks, and finish the operation. Model-
-  invoked: agents reach for it when a git operation reports conflicts.
+  Use when a git merge or rebase reports conflicts and the operation is in progress.
 allowed-tools: Read Bash Grep Glob
 user-invocable: false
 ---
@@ -42,9 +39,8 @@ For each conflict hunk, understand **why** each change was made and what its ori
 For each hunk:
 
 - **Preserve both intents where possible** — the two sides usually want different things; merge both.
-- **Where incompatible**, pick the one matching the merge's stated goal (the feature, the fix, the branch's purpose) and **note the trade-off** in the commit message — what was given up and why.
+- **Where incompatible**, pick the one matching the merge's stated goal (the feature, the fix, the branch's purpose) — never pick one side blind — and **note the trade-off** in the commit message: what was given up and why.
 - **Never invent new behavior.** A conflict resolution is not a place to add new code neither side wrote.
-- **Always resolve.** Never `--abort`, never leave markers, never pick one side blind.
 
 ### 4. Run the project's automated checks
 
@@ -56,7 +52,7 @@ Discover the project's checks and run them in order — typically typecheck, the
 # go: go build ./... && go test ./...
 ```
 
-Fix anything the merge broke. A conflict resolution that breaks the build is not a resolution — it's a larger conflict.
+Fix anything the merge broke. A conflict resolution that breaks the build is not a resolution.
 
 ### 5. Finish the merge/rebase
 
@@ -68,10 +64,8 @@ git commit   # merge: completes the merge commit
 # rebase: git rebase --continue (repeat for each conflicted commit until done)
 ```
 
-If rebasing, continue the rebase process until ALL commits are rebased. Do not stop mid-rebase.
+If rebasing, continue the rebase process until ALL commits are rebased.
 
-## Hard rules
+## Before you commit
 
-- **Never `git merge --abort` or `git rebase --abort`.** Abort throws away the work and the incompatibility.
 - **Never leave conflict markers in a committed file.** `grep -rn '^<<<<<<< \|^=======$\|^>>>>>>> ' .` must return nothing before you commit.
-- **Never invent new behavior** during a resolution — only reconcile the two existing intents.

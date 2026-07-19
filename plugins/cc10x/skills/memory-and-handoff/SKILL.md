@@ -38,7 +38,7 @@ Memory is an index, not a transcript. Distill decisions, learnings, references, 
 ### Ownership
 
 - Router loads and auto-heals memory files before routing or resume
-- WRITE agents read memory but do NOT edit `.cc10x/*.md` directly
+- WRITE agents read memory but do NOT edit `.cc10x/*.md` (sole carve-out: bug-investigator's `[DEBUG-N]` lines)
 - WRITE agents emit structured `MEMORY_NOTES` in their Router Contract
 - READ-ONLY agents emit `### Memory Notes (For Workflow-Final Persistence)`
 - Router-owned memory-finalize task is the only final writer of memory markdown files
@@ -62,7 +62,7 @@ MEMORY_NOTES:
   deferred: ["Non-blocking follow-up or risk"]
 ```
 
-Keep each entry one line. Prefer stable nouns over temporary wording. Put verification truth in `verification`, not prose. Put non-blocking work in `deferred`, not ad-hoc tasks.
+Keep each entry one line — memory reloads every session; each extra line is a recurring tax. Prefer stable nouns over temporary wording. Put verification truth in `verification`, not prose. Put non-blocking work in `deferred`, not ad-hoc tasks.
 
 **Persist only memory-worthy items:** decisions that change direction, learnings that prevent mistakes, verification evidence with commands and exit truth, deferred non-blocking issues, plan/design/research references, clarified user standards.
 
@@ -70,7 +70,7 @@ Keep each entry one line. Prefer stable nouns over temporary wording. Put verifi
 
 ### Secret Redaction (OUTWARD artifacts only)
 
-Before router persists cc10x-authored content into outward artifacts (`docs/plans/*`, `docs/research/*`, design docs, persisted memory notes): redact pasted tokens, API keys, connection-strings, credentials, PII. Replace with `<redacted:secret>`. Keep surrounding constraint intact. Does NOT apply to internal machine-owned `.cc10x/` orchestration state — that stays verbatim for resume/dedupe keys.
+Before router persists cc10x-authored content into outward artifacts (`docs/plans/*`, `docs/research/*`, design docs, persisted memory notes): redact pasted tokens, API keys, connection-strings, credentials, PII. Replace with `<redacted:secret>` (PII: `<redacted:pii>`). Keep surrounding constraint intact. When unsure, redact. Does NOT apply to internal machine-owned `.cc10x/` orchestration state — that stays verbatim for resume/dedupe keys.
 
 ### Compaction KEEP / SUMMARIZE / DROP Rubric
 
@@ -96,9 +96,9 @@ cc10x's own resume is structural (`.cc10x/` + router rehydrates). The handoff pa
 
 ### Rules
 
-1. **Write to OS temp dir, never into the repo.** `HANDOFF="${TMPDIR:-/tmp}/handoff-$(date +%Y%m%d-%H%M%S).md"`. Print the absolute path.
+1. **Write to OS temp dir, never into the repo** — a repo-committed handoff becomes a stale doc the next reader mistakes for current truth. `HANDOFF="${TMPDIR:-/tmp}/handoff-$(date +%Y%m%d-%H%M%S).md"`. Print the absolute path.
 2. **Reference artifacts by path/URL, never paste contents.** The next reader has the repo. They need a map, not a copy. Prefer behavioral descriptions over `file:line` where code may still drift.
-3. **Redact secrets and PII before writing.** Replace with `<redacted:secret>`, `<redacted:pii>`. Keep surrounding constraint intact. When unsure, redact.
+3. **Redact secrets and PII before writing.** Redact per `### Secret Redaction` above.
 
 ### Contents
 
@@ -127,8 +127,6 @@ Memory is not just for context survival — it's for system self-improvement. Af
 3. **Consolidate** — When the same gotcha appears 3+ times in `patterns.md`, promote it to a solution doc under `docs/solutions/`.
 4. **Refresh** — Periodically audit learnings and solution docs with the five-outcome model (below).
 5. **Discover** — Ensure `CLAUDE.md` or `AGENTS.md` points to `docs/solutions/` so agents can find it.
-
-This closes the loop: every solved problem makes the next problem easier.
 
 ### When to Write a Solution Doc
 

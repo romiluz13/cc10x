@@ -30,7 +30,7 @@
    - Every saved plan artifact enters that DAG, including `direct`, `execution_plan`, and `decision_rfc`.
    - If pass 1 succeeds, the router prunes the unused `re-plan` and pass 2 branch explicitly (mark `deleted`; if the host task system does not support deletion, mark `completed` with the note `pruned — unused review branch`). Pruned tasks must never leave the memory task blocked — verify its blockers all resolve after pruning.
    - If pass 1 finds blocking issues, the router keeps the pre-created `re-plan` and pass 2 branch alive.
-   - Maximum fresh-review passes: 2.
+   - Maximum fresh-review passes: 2 — pass-2 findings escalate to the human; more passes polish a wrong plan.
    - Planner remains the only plan writer.
    - The existing inline `plan-review-gate` inside planner remains the final fail-closed boundary on each planner pass.
 

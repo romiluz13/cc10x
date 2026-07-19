@@ -56,7 +56,7 @@ depend on the old truthiness behavior), and a build/typecheck error elsewhere is
 
 ---
 
-## Counter (add to Rationalization Table if agent fails)
+## Counter (add to Excuses and Tells table if agent fails)
 
 | Excuse | Counter |
 |--------|---------|

@@ -12,17 +12,6 @@ user-invocable: false
 
 **Iron Law:** NO PRODUCTION CODE WITHOUT A FAILING TEST FIRST.
 
-## Leading Words (compact vocabulary)
-
-| Word | Means | Replaces |
-| ------ | ------- | ---------- |
-| **red** | Failing test (behavioral, not error) | "write a test that fails because the feature is missing" |
-| **green** | Passing test after minimal code | "write just enough code to make the test pass" |
-| **tight** | Fast, deterministic, sub-second feedback loop | "build a quick repro that runs fast and is reliable" |
-| **deep** | Module with small interface, lots hidden inside | "well-abstracted module that hides complexity" |
-| **shallow** | Module with interface as complex as implementation | "thin wrapper that adds complexity without hiding any" |
-| **seam** | Place where a test can attach to exercise real behavior | "test insertion point at a module boundary" |
-
 ## Reference Files
 
 Read only what's needed:
@@ -33,18 +22,18 @@ Read only what's needed:
 
 ## Test Process Discipline
 
-- **Always use run mode:** `CI=true npm test`, `npx vitest run` (NOT `npx vitest`), `CI=true npx jest`
+- **Always use run mode:** `CI=true npm test`, `npx vitest run` (NOT `npx vitest`), `CI=true npx jest` — watch mode never exits, so the agent hangs waiting for a prompt that never returns
 - **Timeout guard:** `timeout 60s npx vitest run` if uncertain about CI=true
-- **After TDD cycle:** `pgrep -f "vitest|jest" || echo "Clean"`. Kill if found.
+- **After TDD cycle:** `pgrep -f "vitest|jest" || echo "Clean"`. Kill if found — orphaned watchers hold ports and re-run stale code, producing false greens in later cycles.
 - **IDE vs CLI truth:** If CLI tests pass with exit 0, trust CLI over IDE/LSP errors (stale cache)
 
 ## RED → GREEN → REFACTOR
 
 ### RED — Failing Test First
 
-Write one failing test for the current slice. Run it. **Exit 1 = RED achieved.**
+Write one failing test for the current slice. Run it. **RED = a behavioral failure** ("X is not a function", "expected 3, received undefined") — never a bare exit code.
 
-**False-RED guard (CRITICAL):** Exit 1 from import/syntax/collection ERROR is NOT a real RED. A genuine RED is a behavioral failure ("X is not a function", "expected 3, received undefined"). Record the observed failure reason verbatim. Fix the harness and re-run if false-RED.
+**False-RED guard (CRITICAL):** Exit 1 from an import/syntax/collection ERROR is a broken harness, not a RED — fix the harness and re-run. Record the observed failure reason verbatim.
 
 ### GREEN — Minimal Code
 
@@ -52,7 +41,7 @@ Write the minimum code to pass the test. No extra features, no abstractions for 
 
 ### REFACTOR — Clean Up
 
-Improve code quality while keeping tests green. If tests fail during refactor, revert. Re-run after every refactor step.
+Improve code quality while keeping tests green. If tests fail during refactor, revert — a red test proves it wasn't a refactor, and debugging forward mixes two changes. Re-run after every refactor step.
 
 **Safety-Check Guard (MANDATORY):** Never simplify away a safety check during refactoring. Safety checks include:
 
@@ -65,11 +54,11 @@ If a safety check seems unnecessary, verify with a test that proves it's dead co
 
 ### Vertical Slicing (CRITICAL)
 
-Build in thin vertical slices that cross all layers: UI → API → logic → data → test. A horizontal slice (all UI, then all API, then all logic) defers integration risk to the end and produces untestable layers. Each slice should be independently verifiable and shippable.
+Build in thin vertical slices that cross all layers: UI → API → logic → data → test. A horizontal slice (all UI, then all API, then all logic — or all tests first, then all implementation) defers integration risk to the end and produces untestable layers. Each slice should be independently verifiable and shippable.
 
 ### Seam Discipline
 
-**One seam, one test, one minimal implementation per cycle.** Each test is a tracer bullet that responds to what the last cycle taught you. Don't write all tests first then all implementation (horizontal slicing) — work one vertical slice at a time.
+**One seam, one test, one minimal implementation per cycle.** Each test is a tracer bullet that responds to what the last cycle taught you — work one vertical slice at a time.
 
 **Test only at pre-agreed seams.** A seam is the public boundary where you observe behavior without reaching inside. Before writing any test, know which seam you're testing at. Prefer existing seams to new ones; use the highest seam possible; the fewer seams across the codebase, the better (ideal is one). If the plan provides a `### Test Seams` subsection or an Interfaces block, draw your seams from there.
 
@@ -111,7 +100,7 @@ If the build scope grows beyond the approved phase — new files not in the plan
 
 ## Minimal Diffs
 
-Write minimal diffs. A bug fix doesn't need surrounding cleanup. A one-shot operation doesn't need a helper. Don't add error handling, fallbacks, or validation for scenarios that cannot happen. Trust internal code and framework guarantees. Only validate at system boundaries.
+Write minimal diffs. A bug fix doesn't need surrounding cleanup. A one-shot operation doesn't need a helper. Don't add error handling, fallbacks, or validation for scenarios that cannot happen. Trust internal code and framework guarantees in production code — no runtime re-validation for scenarios the types or the framework already exclude; only validate at system boundaries. When your feature depends on a framework behavior, pin it with a test instead: guarantees have edge cases, and the test costs less than the defensive code.
 
 ## Rationalization Table
 
@@ -123,7 +112,7 @@ Write minimal diffs. A bug fix doesn't need surrounding cleanup. A one-shot oper
 | "The existing tests cover this" | Then your new test will pass immediately — that's a false RED. |
 | "I manually tested it" | Manual testing doesn't survive the next refactor or CI run. |
 | "Adding tests would slow down delivery" | Debugging untested code takes longer than writing the test. |
-| "The framework handles this" | Verify with a test. Framework guarantees have edge cases. |
+| "The framework handles this" | Pin the depended-on behavior with a test — don't re-validate at runtime. |
 
 ## Red Flags — STOP and Reconsider
 
@@ -153,7 +142,7 @@ expect(calculateTotal([{value: 10}, {value: 20}, {value: 30}])).toBe(60);
 
 ## Loop Caps
 
-- **TDD Failure Cap:** GREEN fails 3 consecutive times on same test → FAIL with error
+- **TDD Failure Cap:** GREEN fails 3 consecutive times on same test → FAIL with error — three failures means the approach is wrong, not unlucky
 - **Build/Lint Loop Cap:** Same error recurs after 3 fix attempts → FAIL with error_code + file
 
 ## Coverage Threshold
@@ -161,6 +150,8 @@ expect(calculateTotal([{value: 10}, {value: 20}, {value: 30}])).toBe(60);
 If `coverage-thresholds.json` exists, run coverage and compare. Below thresholds → FAIL. If no thresholds file, skip coverage check.
 
 ## Test Prioritization
+
+Ranked by bugs caught per token — behavioral tests catch the most; performance tests without a stated requirement are speculative work.
 
 1. Behavioral tests (does the function do what it should?)
 2. Edge case tests (empty input, null, boundary values)
@@ -170,8 +161,6 @@ If `coverage-thresholds.json` exists, run coverage and compare. Below thresholds
 ## Design for Testability
 
 If tests are hard to write, the code is hard to test — fix the code, not the test. Pure functions are easy to test. Side effects are hard. Isolate side effects at boundaries; keep core logic pure.
-
-**Behavioral focus:** Test what the function DOES, not how it's implemented. "returns the sum" not "calls add() then format()". Implementation tests break on refactor; behavioral tests survive.
 
 ## When Stuck
 

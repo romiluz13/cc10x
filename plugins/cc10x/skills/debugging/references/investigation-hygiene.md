@@ -1,17 +1,6 @@
 # Investigation Hygiene
 
-## Table of Contents
-- [Keep Context Lean](#keep-context-lean)
-- [Capture Evidence Before Fixes](#capture-evidence-before-fixes)
-- [Track Hypotheses Explicitly](#track-hypotheses-explicitly)
-- [Watch For Stalled Investigation](#watch-for-stalled-investigation)
-- [Restart Cleanly](#restart-cleanly)
-- [Escalate Architectural Problems Early](#escalate-architectural-problems-early)
-
 ## Keep Context Lean
-
-Borrow the good part of GSD's context-budget discipline without importing its
-orchestration model:
 
 - Read only the files on the active failure path.
 - Do not inline giant logs or large files into follow-up prompts when a tight
@@ -48,7 +37,7 @@ If you cannot explain what is known versus unknown, you are not ready to fix.
 
 ## Track Hypotheses Explicitly
 
-Maintain 2-3 hypotheses until one clearly wins.
+Maintain your ranked hypotheses (3-5, per the main skill's Phase 3) until one clearly wins.
 
 ```text
 H1: [claim]
@@ -58,10 +47,9 @@ Next test:
 Confidence: [0-100]
 ```
 
-Rules:
-- below 50 = speculation
-- 50-79 = needs more evidence
-- 80+ = strong enough to implement a fix
+Score confidence against the canonical Hypothesis Confidence Scoring table in the
+main skill (SKILL.md, Phase 3) — it is the single source for the bands; act only
+at 80+.
 
 Never let the first plausible explanation become the only explanation.
 

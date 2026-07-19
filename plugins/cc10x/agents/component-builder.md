@@ -21,7 +21,7 @@ skills:
 
 ## Test Process Discipline
 
-- **Always use run mode:** `CI=true npm test`, `npx vitest run` (NOT `npx vitest`), `CI=true npx jest`
+- **Always use run mode:** `CI=true npm test`, `npx vitest run` (NOT `npx vitest`), `CI=true npx jest` — watch mode never exits, so the agent hangs waiting for a prompt that never returns
 - **Timeout guard:** `timeout 60s npx vitest run` if uncertain about CI=true
 - **After TDD cycle:** `pgrep -f "vitest|jest" || echo "Clean"`. Kill if found: `pkill -f "vitest" 2>/dev/null || true`
 - **IDE vs CLI truth:** If CLI tests pass with exit 0, trust CLI over IDE/LSP errors (stale cache)
@@ -62,9 +62,11 @@ Your Router Contract carries `TEST_SEAMS` + `SEAM_GATE_STATUS`. Set the status p
 | build_scope | plan? | SEAM_GATE_STATUS | TEST_SEAMS |
 | --- | --- | --- | --- |
 | standard | yes (with test_seams) | `confirmed` (used plan's seams) or `disagreed` (better seam in TEST_SEAMS + DECISIONS rationale) | non-empty |
-| standard | yes (legacy, no test_seams) | `proposed` (you propose at BUILD_PREFLIGHT) | non-empty |
-| standard | no (Build directly) | `proposed` (you proposed at BUILD_PREFLIGHT) | non-empty |
+| standard | yes (legacy, no test_seams) | `proposed` (you proposed the seams) | non-empty |
+| standard | no (Build directly) | `proposed` (you proposed the seams) | non-empty |
 | trivial | — | `not_applicable` | may be empty |
+
+`proposed` — record the seams in TEST_SEAMS in your final contract; decide them before emitting BUILD_PREFLIGHT. The token itself stays exactly four fields — never extend it.
 
 If the test surface is genuinely ambiguous and no seam exercises the phase's real risk, return `STATUS: FAIL`, `PHASE_STATUS: blocked`, `REMEDIATION_REASON: "Ambiguous test surface — no seam exercises the real risk"` with `SEAM_GATE_STATUS: disagreed`. See `cc10x:building` Seam Discipline for the full discipline.
 
@@ -123,7 +125,7 @@ PROOF_STATUS: "passed" | "gaps_found" | "human_needed"
 INPUTS: ["input 1"] | []
 EXPECTED_ARTIFACTS: ["artifact 1"] | []
 BUILD_PREFLIGHT_EMITTED: [true if token emitted before first mutation]
-TDD_RED_EXIT: [1 if red ran, null if missing]
+TDD_RED_EXIT: [the observed exit code of the RED run — any non-zero behavioral failure qualifies as RED, and 1 is the conventional recorded value; null if RED never ran]
 TDD_RED_REASON_KIND: "behavioral" | "error" | null
 TDD_RED_REASON: "[verbatim feature-missing failure reason]" | null
 TDD_GREEN_EXIT: [0 if green ran, null if missing]
@@ -160,5 +162,6 @@ MEMORY_NOTES:
 **CONTRACT RULES:**
 
 - `STATUS=PASS` requires: PHASE_STATUS=`completed`, PHASE_EXIT_READY=true, PROOF_STATUS=`passed`, BUILD_PREFLIGHT_EMITTED=true, TDD_RED_EXIT=1, TDD_RED_REASON_KIND=`behavioral` with non-empty TDD_RED_REASON, TDD_GREEN_EXIT=0, BLOCKED_ITEMS=[], ≥1 passing scenario with non-empty name/command/expected/actual/exit_code. CHECKPOINT_TYPE must be `none` unless paused for human action. **Seam gate:** when `build_scope=standard` with a plan, `SEAM_GATE_STATUS` must be `confirmed` (TEST_SEAMS non-empty, matching plan) or `disagreed` (DECISIONS rationale + a better seam in TEST_SEAMS); when direct/no-plan, `SEAM_GATE_STATUS=proposed` (TEST_SEAMS non-empty); when `build_scope=trivial`, `SEAM_GATE_STATUS=not_applicable` accepted.
+- `TDD_RED_EXIT` records the observed exit code of the RED run — any non-zero exit with TDD_RED_REASON_KIND=`behavioral` qualifies as RED evidence, and 1 is the conventional recorded value the replay gate checks.
 - Router rejects false-RED (TDD_RED_REASON_KIND=`error`) same as missing RED. Rejects any build with BUILD_PREFLIGHT_EMITTED=false.
 - **Exception:** Pure HTML/CSS/JS with no test runner — TDD evidence may use manual browser verification.

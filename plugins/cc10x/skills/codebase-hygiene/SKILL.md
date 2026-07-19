@@ -19,6 +19,7 @@ Semantic duplicates: functions serving the same purpose but implemented independ
 
 ### Method
 
+0. **Scope before you scan** — take the user's named target; else `git log --oneline` for hot spots and weight recently-changed code — deepening pays off in proportion to future change.
 1. **Extract catalog** — Grep/Glob for exported functions. Record `name | file:line | signature`.
 2. **Categorize by domain** (cheap tier) — validation, formatting, path manipulation, HTTP shaping, date handling. Mechanical bucketing to shrink comparison space.
 3. **Drop categories with <3 functions** — can't hide a meaningful duplication pattern.
@@ -56,7 +57,7 @@ Existing code works; the problem is **shape**, not features. LLM-grown codebases
 
 ### The Deletion Test
 
-For each candidate: **If I deleted this module, would the complexity it holds CONCENTRATE somewhere, or just MOVE elsewhere?**
+For each candidate: **If I deleted this module and inlined its code at every call site, where does the complexity go?**
 
 - Complexity **vanishes** → the module was a pass-through / shallow. It adds indirection without hiding complexity. Deepening candidate (delete it or deepen its interface).
 - Complexity **reappears across N call sites** → the module is deep. It earns its existence by hiding complexity that would otherwise be duplicated. Leave it alone.

@@ -1,16 +1,5 @@
 # Root-Cause Playbooks
 
-## Table of Contents
-- [How To Use This Reference](#how-to-use-this-reference)
-- [Build And Type Failures](#build-and-type-failures)
-- [Test Failures](#test-failures)
-- [Runtime Failures](#runtime-failures)
-- [Browser And Console Failures](#browser-and-console-failures)
-- [Intermittent And Async Failures](#intermittent-and-async-failures)
-- ["It Worked Before"](#it-worked-before)
-- [Multi-Component Boundary Tracing](#multi-component-boundary-tracing)
-- [Nearby Duplicate Scan](#nearby-duplicate-scan)
-
 ## How To Use This Reference
 
 Read only the section that matches the failure shape in front of you. Keep the main

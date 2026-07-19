@@ -31,6 +31,8 @@ Read `installed_plugins.json` → extract `cc10x@cc10x` entry. If missing → ST
 Read `known_marketplaces.json` → extract `cc10x.installLocation` → `MARKETPLACE_ROOT`.
 Verify `$MARKETPLACE_ROOT/.git` exists. If missing → STOP.
 
+On any STOP, report which prerequisite is absent (registry entry / marketplace git checkout) and that reinstalling the plugin restores it — a bare STOP leaves the user with no path forward.
+
 ## Phase 1: Discovery
 
 1. Read installed version from registry entry

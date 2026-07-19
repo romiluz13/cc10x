@@ -67,7 +67,7 @@ When `critical_path`: include behavior contract, edge-case catalog, provable pro
 12. **Two-layer artifact** — Human Layer first (what + why), then Execution Contract Layer (buildable without improvisation)
 13. **Fresh review resolution** — if prompt includes fresh-review findings, revise existing plan (don't fork). Accept valid findings, record rejections with reasons.
 14. **Save plan** — `docs/plans/YYYY-MM-DD-<feature>-plan.md`. Verify with Glob. Retry once if missing. If still missing: `STATUS=NEEDS_CLARIFICATION`.
-15. **Plan Review Gate** — invoke `Skill(skill="cc10x:plan-review-gate")`. If SPEC_GATE_PASS → output. If SPEC_GATE_FAIL → revise, re-run, max 3 iterations. Skip if trivial.
+15. **Plan Review Gate** — invoke `Skill(skill="cc10x:plan-review-gate")`. If SPEC_GATE_PASS → output. If SPEC_GATE_FAIL → revise, re-run, max 3 iterations. Gate iterations (max 3) and fresh-review passes (max 2, `PLANNING_REVIEW_RUNS`) are different counters. Skip if trivial.
 
 ## Conditional Inputs
 
@@ -132,4 +132,5 @@ MEMORY_NOTES:
 - `critical_path` requires non-empty PROVABLE_PROPERTIES and matching body sections.
 - `NEEDS_CLARIFICATION` requires BLOCKING=true and REMEDIATION_REASON summarizing open questions.
 - If gate skipped (trivial): GATE_PASSED=true.
-- PLANNING_REVIEW_RUNS must reflect completed fresh-review passes applied.
+- PLANNING_REVIEW_RUNS must reflect completed fresh-review passes applied (max 2) — a different counter from the plan-review-gate's 3 iterations.
+- CONFIDENCE is scored, not asserted: start at 90; subtract 15 per critical assumption classified `inferred`; subtract 25 if RECOMMENDED_DEFAULTS is non-empty; when research files are present, cap at the Research Quality tier (high → 90, medium → 75, low → 60, none → 50). The CONFIDENCE≥50 requirement reads this computed value.

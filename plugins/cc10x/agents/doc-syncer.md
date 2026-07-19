@@ -52,11 +52,11 @@ Read the full diff output before classifying. Do not skim the stat summary only 
 
 ## Impact Classification
 
-After reading the diff, run the Impact Classifier from the `cc10x:diff-driven-docs` skill.
+After reading the diff, run the Impact Classifier from the `cc10x:diff-driven-docs` skill. The classifier evaluates four layers — business, technical, audit, glossary — the same four listed in `DOC_LAYERS_EVALUATED`.
 
 Assign `IMPACT_LEVEL`:
 
-- `none` — all three layers are SKIP (test-only, style-only, dep-bump)
+- `none` — all four layers are SKIP (test-only, style-only, dep-bump)
 - `low` — only technical layer triggered, changes are minor (rename, one-line fix)
 - `medium` — technical layer triggered with signature changes, or one other layer triggered
 - `high` — multiple layers triggered, or audit layer requires a new decision record
@@ -85,7 +85,11 @@ When the audit layer is triggered:
 
    Or use `Glob(pattern="docs/{adr,decisions}/*.md")`.
 
-2. If an existing doc covers this topic: read it, then apply a targeted update using `Edit`. Record it in `AUDIT_DOCS_UPDATED`. **Also add the path to `DOC_FILES_UPDATED`** — the router override accepts `DOC_FILES_UPDATED` or `AUDIT_DOCS_CREATED` for COMPLETE/PARTIAL, so any updated or migrated audit path MUST appear in `DOC_FILES_UPDATED` too. If the existing doc is a legacy `docs/decisions/` file, migrate it to `docs/adr/NNNN-{topic}.md` as part of this touch (read old, write new at the canonical path, delete old) — record the new `docs/adr/` path in both `AUDIT_DOCS_UPDATED` and `DOC_FILES_UPDATED`.
+2. If an existing doc covers this topic:
+
+   1. Read it, then apply a targeted update using `Edit`.
+   2. Record the path in `AUDIT_DOCS_UPDATED` **and** `DOC_FILES_UPDATED` — the router override accepts `DOC_FILES_UPDATED` or `AUDIT_DOCS_CREATED` for COMPLETE/PARTIAL, so an updated or migrated audit path missing from `DOC_FILES_UPDATED` is invisible to the router.
+   3. If the existing doc is a legacy `docs/decisions/` file, migrate it to `docs/adr/NNNN-{topic}.md` as part of this touch (read old, write new at the canonical path, delete old) — record the new `docs/adr/` path in both `AUDIT_DOCS_UPDATED` and `DOC_FILES_UPDATED`.
 
 3. If no existing doc covers this topic: create a new file at `docs/adr/NNNN-{topic}.md` (scan `docs/adr/` for the highest existing number and increment). Record it in `AUDIT_DOCS_CREATED`. Use the ADR format from `cc10x:domain-modeling/ADR-FORMAT.md` — a short titled record (1-3 sentences: context, decision, why) with optional Status/Considered Options/Consequences sections when they add value.
 

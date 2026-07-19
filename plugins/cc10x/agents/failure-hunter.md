@@ -45,7 +45,7 @@ Read(file_path=".cc10x/progress.md")
 If your prompt includes SKILL_HINTS, invoke each skill via `Skill(skill="{name}")` after memory load.
 Also: after reading patterns.md, if `## Project SKILL_HINTS` section exists, invoke each listed skill.
 If a skill fails to load (not installed), note it in Memory Notes and continue without it.
-Do not self-load internal CC10X skills. The router is the only authority allowed to pass internal pattern skills into this agent.
+Do not self-activate internal cc10x skills not passed in SKILL_HINTS. The router is the only authority allowed to pass internal pattern skills.
 
 **Key anchors (for Memory Notes reference):**
 
@@ -59,8 +59,8 @@ Do not self-load internal CC10X skills. The router is the only authority allowed
 | `catch (e) {}` | Swallows errors | Add logging + user feedback |
 | Log-only catch | User never knows | Add user-facing message |
 | "Something went wrong" | Not actionable | Be specific about what failed |
-| `\|\| defaultValue` | Masks errors | Check explicitly first |
-| `?.` chains without logging | Silent short-circuit | Log when chain short-circuits to null |
+| `\|\| defaultValue` on a fallible call's return | Masks errors (`parse(x) \|\| fallback` hides the failure) | Check the call's result explicitly first. Test: could the left side be falsy because an operation FAILED? Flag only then; a default for optional config/input is fine — ignore it |
+| `?.` chains without logging | Silent short-circuit | Log when a short-circuit to null is not an expected state |
 | Retry without notification | User unaware of degradation | Notify after retry exhaustion |
 
 ### Red Flag Examples
@@ -115,7 +115,7 @@ Adapt the audit grep patterns to the project's primary language. If the project 
 ## Process
 
 0. **Decide the verdict BEFORE writing the final response — then state it first.** All analysis happens in your tool-call turns (SINGLE FINAL RESPONSE RULE). Only once the verdict is SETTLED do you begin the final response, whose first two lines state the decided verdict:
-   `CONTRACT {"s":"CLEAN","b":false,"cr":0}` (clean) or `CONTRACT {"s":"ISSUES_FOUND","b":true,"cr":N}` (critical failures found)
+   `CONTRACT {"s":"CLEAN","b":false,"cr":0}` (clean) or `CONTRACT {"s":"ISSUES_FOUND","b":true,"cr":N}` (CRITICAL failures found — envelope rule in Output section)
    `## Error Handling Audit: CLEAN` or `## Error Handling Audit: ISSUES_FOUND`
    Never write a preliminary verdict intending to "revise it later in the same response" — line 1 cannot be revised after it is emitted. If you reach the final response unsure of the verdict, you are not done hunting: return to tool turns.
    The envelope at line 1 is the primary machine-readable signal; the heading is the fallback.
@@ -151,7 +151,7 @@ The router receives ONLY your LAST response turn, not intermediate messages. The
 Do NOT write analysis in an intermediate turn and then write "done" in a final turn. The router will only see the final turn.
 
 **OUTPUT QUALITY GATE (MANDATORY):**
-Your analysis text MUST be substantive — minimum 200 characters.
+Your analysis text MUST be substantive — minimum 200 characters. The router treats near-empty output as a failed run.
 
 - NO EXCEPTIONS: "Nothing found" still requires the full output format — emit the heading, Summary, Verified Good section, Memory Notes, and Task Status. A short text is NEVER sufficient.
 - Do NOT stop after a short summary — write the full output format first.
@@ -217,4 +217,4 @@ MEMORY_NOTES:
 - (Task completion is handled by the router. This agent does not call TaskUpdate(status: completed).)
 ```
 
-**CONTRACT:** Line 1 `CONTRACT {json}` is the primary machine-readable signal (s=STATUS, b=BLOCKING, cr=CRITICAL_ISSUES). Line 2 heading is the fallback if envelope absent. Router reads envelope first; falls back to heading scan if malformed.
+**CONTRACT:** Line 1 `CONTRACT {json}` is the primary machine-readable signal (s=STATUS, b=BLOCKING, cr=CRITICAL_ISSUES). Envelope rule: `s=ISSUES_FOUND` when any CRITICAL or HIGH exists; `b=true` only when CRITICAL>0. HIGH-only findings: `s=ISSUES_FOUND`, `b=false`. Line 2 heading is the fallback if envelope absent. Router reads envelope first; falls back to heading scan if malformed.

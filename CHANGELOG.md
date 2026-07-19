@@ -1,5 +1,19 @@
 # Changelog
 
+## [12.7.0] - 2026-07-19
+
+### Prompt-engineering prose reconciliation (spec #77, tickets #78–#88)
+
+A prompt-engineering audit (`docs/research/2026-07-19-prompt-engineering-audit/`) drove a wording-only pass over the skills, agents, and router prose. Every change is behavior-preserving: routing and dispatcher tables are byte-identical to v12.6.0.
+
+- Resolved ~10 self-contradictions across skills, agents, and the router — all wording-only, behavior-preserving
+- Single-sourced duplicated prose (~-400 lines of restatements removed)
+- Removed author-facing prose from runtime bodies
+- Replaced undecidable gate adjectives with decision procedures
+- Added ~35 rationale clauses so the rule carries its why, plus 3 benchmark restorations (facts-vs-decisions, primary-source, paste-the-output)
+- Contract examples are now literal valid YAML
+- Prompt-clause assertions grown 122 → 253, all RED-proven
+
 ## [12.6.0] - 2026-07-18
 
 ### Integrity reconciliation — audit-seam revival, router drift, contract unification, guard hardening (spec #65, tickets #66–#75)

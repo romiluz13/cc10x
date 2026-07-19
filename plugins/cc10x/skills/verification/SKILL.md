@@ -10,7 +10,7 @@ user-invocable: false
 
 # Verification
 
-**Task completion is not goal achievement.** Verify that the phase achieved its goal, not that prior agents said it did.
+**Task completion is not goal achievement.** Verify that the phase achieved its goal, not that prior agents said it did. If you cannot independently reproduce a claimed success, return FAIL.
 
 ## Reference Files
 
@@ -26,9 +26,9 @@ COMPLETION → TRUTH → PROOF
 2. **Truth:** Is the work actually correct? (independent verification)
 3. **Proof:** Can you prove it with evidence? (exit codes, test output, screenshots)
 
-A PASS without proof is a claim. A claim is not verification.
+A PASS without proof is a claim.
 
-**Authoring Rule: Keep Gates High.** Every gate in this skill exists because a specific failure mode was observed. Removing a gate without understanding what it prevents reintroduces the failure. Gates are scar notes — they encode hard-won lessons.
+<!-- Authoring rule (maintenance, not runtime): every gate in this skill encodes an observed failure mode; understand what a gate prevents before removing it. -->
 
 ## Self-Critique Gate (BEFORE Verification Commands)
 
@@ -50,7 +50,7 @@ Before running any test, audit your own work:
 - [ ] No silent failures (empty catches, discarded errors)
 - [ ] Build succeeds, type-check passes
 
-**Self-Critique Verdict:** If any check fails, fix it BEFORE running verification. Don't run tests you know will fail on code quality issues.
+**Self-Critique Verdict:** If any check fails, fix it BEFORE running verification. Don't run tests you know will fail on code quality issues — a known-failing run produces noise evidence that then has to be explained away.
 
 ## Validation Levels
 
@@ -61,7 +61,7 @@ Before running any test, audit your own work:
 | **Manual** | Human verifies with checklist | n/a | When automation not worth the cost |
 | **Live** | Production-like environment | 0/1 | When plan requires live proof |
 
-Every verification must state its validation level. If manual, state the checklist. If deterministic, state the command + exit code. If live, state the harness command.
+Every verification must state its validation level — unlabeled evidence lets weak proof masquerade as strong. If manual, state the checklist. If deterministic, state the command + exit code. If live, state the harness command.
 
 ## Production-Like Live Proof
 
@@ -71,7 +71,7 @@ When the plan includes `### Live Verification Strategy` or a harness manifest:
 - If stress required: also run `--mode stress`
 - Do NOT silently substitute replay fixtures or unit tests for required live proof
 
-**Flaky test handling:** re-run once. Pass on re-run → mark PASS with `flaky: true`. Fail both → FAIL. Never convert flaky pass into unconditional confidence.
+**Flaky test handling:** re-run once — one retry separates environment blips from real flake; more retries launder genuine failures. Pass on re-run → mark PASS with `flaky: true`. Fail both → FAIL. Never convert flaky pass into unconditional confidence.
 
 ## Evidence Array Protocol (MANDATORY for PASS)
 
@@ -96,8 +96,6 @@ Walk backward from the goal to verify it was achieved:
 3. **Do I have that evidence?** (run the verification)
 4. **Does the evidence actually prove the goal?** (not "tests pass" but "the tests test the right thing")
 
-**Forbidden language before proof:** "should pass", "looks good", "seems fine", "builder reported success", "the tests cover this" (without showing which test), "no regressions detected" (without listing what was tested).
-
 ## Common Failures
 
 | Failure | What happens | Fix |
@@ -108,30 +106,21 @@ Walk backward from the goal to verify it was achieved:
 | **Claim without proof** | "It works" with no command/exit code | Evidence array is mandatory for PASS |
 | **Environment escape** | Test fails with env signal (command not found, ECONNREFUSED) | Classify as ENVIRONMENT not code. Mark BLOCKED. |
 
-## Auditor Posture
+## Excuses and Tells
 
-You are an independent auditor. A reviewer approval, green unit test, or builder claim is never sufficient by itself for PASS. If you cannot independently reproduce a claimed success, return FAIL.
+If you catch yourself in the left column before a PASS, do the right column first.
 
-## Rationalization Table
-
-| Excuse | Reality |
-| --------- | -------- |
-| "Should work now" | RUN the verification command. "Should" is not evidence. |
+| Excuse or tell | Reality |
+| ---------------- | -------- |
+| "Should work now" / "looks good" / "seems fine" / "probably" | RUN the verification command. "Should" is not evidence. |
 | "I'm confident it works" | Confidence is not evidence. Exit code 0 is evidence. |
-| "The agent said it passed" | Verify independently. Agents can be wrong or sycophantic. |
-| "Tests passed before" | Stale evidence. Re-run in THIS session. |
-| "It's just a typo fix" | Small changes break things too. Run the tests. |
-| "I'll verify after commit" | Verify BEFORE commit. A broken commit is harder to revert. |
+| "Builder reported success" / "the agent said it passed" | Verify independently. Agents can be wrong or sycophantic. |
+| "The tests cover this" | Name the specific test — or it isn't covered. |
+| "No regressions detected" | List what was tested — or nothing was. |
+| "Tests passed before" (another session) | Stale evidence. Re-run in THIS session. |
+| "It's just a typo fix" / "it's trivial" | Small changes break things too. Run the tests. |
+| "I'll verify after commit" / committing without fresh evidence | Verify BEFORE commit. A broken commit is harder to revert. |
 | "The build succeeded so it works" | Build success ≠ correct behavior. Run behavioral tests. |
 | "I don't need to run the full suite" | If your change touches shared code, you do. |
-
-## Red Flags — STOP and Reconsider
-
-- You're about to claim PASS without running a verification command in THIS turn
-- You're using "should", "probably", "seems", or "looks" before running tests
-- You're about to mark complete based on a builder's self-report
-- You're considering trusting a previous test run from another session
-- You're about to skip a verification step because "it's trivial"
-- You're expressing satisfaction before seeing exit code 0
-- You're about to commit without fresh verification evidence
-- You're considering weakening an assertion to make a test pass
+| Satisfaction before seeing exit code 0 | Evidence first, satisfaction after. |
+| Weakening an assertion to make a test pass | That launders the failure. Fix the code, not the test. |

@@ -9,9 +9,7 @@ user-invocable: false
 
 **Core principle:** No execution plan or decision RFC reaches the user without surviving adversarial scrutiny. No leniency. "Close enough" is FAIL. A structurally neat but repo-wrong plan is FAIL.
 
-**How it works:** This skill runs inline in the calling agent's context (no subagents). The calling LLM acts as an independent auditor, reads the saved artifact, and checks it against 3 criteria using Read/Grep/Glob. The value is fail-closed blocking and adversarial framing, not fake reviewer independence.
-
-**Important limit:** This gate is stronger wording plus hard blocking, not true reviewer isolation. Keep the auditor posture, but do not pretend fresh runtime separation exists when it does not.
+**How it works:** This skill runs inline in the calling agent's context (no subagents). The calling LLM acts as an independent auditor, reads the saved artifact, and checks it against 3 criteria using Read/Grep/Glob. The value is fail-closed blocking and adversarial framing, not reviewer isolation — keep the auditor posture, but do not claim independence the gate doesn't have.
 
 ## When to Skip
 
@@ -32,40 +30,42 @@ Run these verifications using Read/Grep/Glob:
 | Technical approach matches codebase | Read 1-2 existing files in the affected area | Proposed patterns/libs differ from what codebase actually uses |
 | No unstated infra assumptions | Read plan for external services, env vars, DBs | Plan silently assumes infra that doesn't exist |
 | No invented or unverified file/module assumptions | Compare claimed touched surfaces to repo reality | Artifact presents guessed files/modules as verified facts |
-| Plan mode fits the task | Read request + artifact: `direct`, `execution_plan`, or `decision_rfc` | Mode is too weak for the request |
+| Plan mode fits the task | Read request + artifact: `direct`, `execution_plan`, or `decision_rfc` | Request changes ≥3 files or any contract/schema/auth surface while mode is `direct`; or request asks for a decision between alternatives and mode is not `decision_rfc` |
 | Verification rigor fits risk | Check `verification_rigor` against the requested work | Critical-path work is missing `critical_path` rigor or claims proof it never defined |
+
+**Critical-path work** = auth, payment, data-destructive operations, migrations, or work the user labeled critical.
 
 ### Check 2: Completeness — Does it cover the full request?
 
 Read the user's original request and compare against the plan:
 
-| Criterion | Blocking if |
-|-----------|-------------|
-| All requirements mapped | Any user requirement has no corresponding plan item |
-| Verification steps defined | Any change has no way to verify it worked |
-| Edge cases addressed | Obvious error paths, empty states, or boundary conditions missing |
-| Cross-file integration | missing touched surfaces or integration points |
-| Plan-vs-code gaps surfaced | A non-trivial plan omits the concrete mismatch table or hides contradictions with current code |
-| Assumption ledger is honest | Important claims are not classified as `proven_by_code`, `inferred`, or `needs_user_confirmation` |
-| Phase dependency map is present | Non-trivial phases do not say what they depend on or what they enable |
-| Durable Decisions present for multi-phase plans | A multi-phase plan omits foundational decisions (routes, schema, models, auth, third-party boundaries) that all phases should reference |
-| Decision-grade content present when needed | A `decision_rfc` is missing alternatives, drawbacks, or references |
-| Critical-path spec present when needed | A `critical_path` artifact is missing behavior contract, edge-case catalog, provable properties, purity boundary, or verification strategy |
+| Criterion | How to verify | Blocking if |
+|-----------|--------------|-------------|
+| All requirements mapped | List each sentence of the user request; cite the plan item covering it | Any user requirement has no corresponding plan item |
+| Verification steps defined | For each plan item, find its named test, command, or checklist | Any change has no way to verify it worked |
+| Edge cases addressed | For each input surface the plan touches, find its empty, invalid, and failure case | An input surface's empty, invalid, or failure case is neither named nor covered by an explicit "why none applies" statement |
+| Cross-file integration | Trace each touched surface to the callers/importers the plan names | missing touched surfaces or integration points |
+| Plan-vs-code gaps surfaced | Read the artifact for the mismatch table; spot-check one claim against the code | A non-trivial plan omits the concrete mismatch table or hides contradictions with current code |
+| Assumption ledger is honest | Read each important claim for its classification tag | Important claims are not classified as `proven_by_code`, `inferred`, or `needs_user_confirmation` |
+| Phase dependency map is present | Read each phase for its depends-on/enables statements | Non-trivial phases do not say what they depend on or what they enable |
+| Durable Decisions present for multi-phase plans | For multi-phase plans, read for a foundational-decisions section | A multi-phase plan omits foundational decisions (routes, schema, models, auth, third-party boundaries) that all phases should reference |
+| Decision-grade content present when needed | For `decision_rfc`, read for alternatives, drawbacks, and references sections | A `decision_rfc` is missing alternatives, drawbacks, or references |
+| Critical-path spec present when needed | For `critical_path`, read for each of the five required sections | A `critical_path` artifact is missing behavior contract, edge-case catalog, provable properties, purity boundary, or verification strategy |
 
 ### Check 3: Scope & Alignment — Is it right-sized and faithful?
 
-| Criterion | Blocking if |
-|-----------|-------------|
-| Matches user request | Plan solves different problem or adds unrequested features |
-| No scope creep | Extra abstractions, refactoring, or features beyond the request |
-| No under-scoping | Obvious implications of the request are omitted |
-| Execution order is real | wrong execution order or missing prerequisites |
-| Complexity proportional | Solution is over-engineered for the problem |
-| Defaults are framed honestly | A recommended default is treated as approved instead of still-open |
-| Agreement fidelity holds | `Differences from agreement` is missing, hidden, or contradicted by the body |
-| Human layer matches execution contract | Top summary or recommendation contradicts the detailed plan body |
-| Hidden future work is explicit | Unscoped follow-on work is buried behind vague “later” language |
-| Architecture contradictions are surfaced | contradictions with existing architecture/patterns are hidden instead of made explicit |
+| Criterion | How to verify | Blocking if |
+|-----------|--------------|-------------|
+| Matches user request | Re-read the request; diff its ask against the plan's stated goal | Plan solves different problem or adds unrequested features |
+| No scope creep | For each plan item, name the requirement it serves | Extra abstractions, refactoring, or features beyond the request |
+| No under-scoping | List the request's direct implications; find each in the plan | Direct implications of the request are omitted |
+| Execution order is real | Walk the phases in order; check each prerequisite exists in an earlier phase | wrong execution order or missing prerequisites |
+| Complexity proportional | For each new file, abstraction, or dependency, cite the requirement row that needs it | The plan introduces a file, abstraction, or dependency that no requirement row maps to |
+| Defaults are framed honestly | Check each recommended default is listed as still-open | A recommended default is treated as approved instead of still-open |
+| Agreement fidelity holds | Read `Differences from agreement`; cross-check its claims against the body | `Differences from agreement` is missing, hidden, or contradicted by the body |
+| Human layer matches execution contract | Compare each summary claim to the detailed plan body | Top summary or recommendation contradicts the detailed plan body |
+| Hidden future work is explicit | Search the plan for "later", "follow-up", "eventually"; check each is explicit scope | Unscoped follow-on work is buried behind vague “later” language |
+| Architecture contradictions are surfaced | Compare the plan's patterns to existing ADRs and code patterns | contradictions with existing architecture/patterns are hidden instead of made explicit |
 
 ## Workflow
 
@@ -77,13 +77,13 @@ Read the user's original request and compare against the plan:
 5. Collect findings:
    - Zero BLOCKING issues across all 3 checks → SPEC_GATE_PASS
    - Any BLOCKING issue → SPEC_GATE_FAIL with specifics
-   - There is no "APPROVED WITH COMMENTS"
+   - There is no "APPROVED WITH COMMENTS" — comments get ignored; FAILs get fixed
 6. IF SPEC_GATE_FAIL and iteration < 3:
    a. Present blocking issues clearly
    b. Revise the plan to address them
    c. Re-run checks (increment iteration counter)
    <!-- CC10X-M9: iteration counter is in-context only — not persisted to memory. If compaction occurs mid-retry, counter resets to 0 and gate may retry more than 3 times. Acceptable for now (gate still converges). -->
-7. IF SPEC_GATE_FAIL after 3 iterations → ESCALATION: emit a blocking review result and stop
+7. IF SPEC_GATE_FAIL after 3 iterations → ESCALATION: emit a blocking review result and stop — three failed revisions means the premise is wrong, not the wording
 ```
 
 ## Output Format

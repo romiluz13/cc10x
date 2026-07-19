@@ -16,7 +16,7 @@ description: |
 
 ## 1. Intent Routing
 
-Route using the first matching signal. A keyword hit only NOMINATES a row — the primary-deliverable rules below decide. When keywords from more than one row match, route by the primary deliverable of the request; priority order breaks ties only between rows whose primary-deliverable conditions both genuinely hold (e.g. "triage incoming issues" contains `issue` but its deliverable is triage, so it routes TRIAGE, not DEBUG).
+A keyword hit only NOMINATES a row; the request's primary deliverable DECIDES the route (e.g. "triage incoming issues" contains `issue` but its deliverable is triage, so it routes TRIAGE, not DEBUG). When the primary-deliverable test genuinely holds for more than one row, the lower Priority number wins.
 
 | Priority | Signal | Keywords | Workflow | Chain |
 | ---------- | -------- | ---------- | ---------- | ------- |
@@ -63,7 +63,7 @@ Always run this before routing or resuming:
 4. Read(".cc10x/progress.md")
 ```
 
-Do not parallelize step 1 with reads.
+Do not parallelize step 1 with reads — the reads assume the directory exists.
 
 If a memory file is missing:
 
@@ -87,7 +87,7 @@ JUST_GO:
 
 - Read `activeContext.md ## Session Settings`.
 - If `AUTO_PROCEED: true`, set `JUST_GO=true`.
-- While `JUST_GO=true`, auto-default all non-REVERT AskUserQuestion gates to the recommended option and log the choice in `## Decisions`.
+- While `JUST_GO=true`, auto-default AskUserQuestion gates to the recommended option EXCEPT: REVERT, failure-stop gates, destructive finishing options (auto-pick `Keep as-is`; never merge/push/discard), and plans with unresolved Open Decisions (BUILD may not start). Log each auto-choice in `## Decisions`.
 
 Trust rule:
 
@@ -125,7 +125,7 @@ Rules:
 
 - ALL SEVEN metadata lines (`wf:`, `kind:`, `origin:`, `phase:`, `plan:`, `scope:`, `reason:`) are present on EVERY CC10X task — use `N/A` where a field does not apply. The TaskCompleted hook audits exactly this invariant; the task-graph templates already satisfy it.
 - `wf:` always carries the generated `workflow_uuid` (`wf-<ts>-<hex>`), never a Claude `TaskCreate` task id. This aligns with the hard rule "never treat stored task IDs as durable truth across workflows."
-- Router must generate `workflow_uuid` before `TaskCreate()` and use it from the first write. `wf:PENDING_SELF` is not used.
+- Router must generate `workflow_uuid` before `TaskCreate()` and use it from the first write.
 - `kind:` drives resume, routing, and counting logic.
 - `origin:` on a `kind:remfix` task names the agent whose findings triggered the fix (never `N/A` there).
 - `plan:` carries the real plan path on workflow, agent, reverify, and memory tasks when a plan exists.
@@ -291,11 +291,6 @@ Only create child tasks after the workflow artifact exists and the read-back pas
 
 - See `references/plan-workflow.md` and apply its `### PLAN task graph` block verbatim before creating PLAN child tasks.
 
-### Research tasks
-
-- When a workflow explicitly triggers research task creation, immediately read `references/remediation-and-research.md`.
-- Use the `## 10. Research Orchestration`, `## Research Quality`, and `## Research Files` blocks there before creating or consuming research tasks.
-
 ### Marker rules
 
 - BUILD writes `[BUILD-START: wf:{workflow_uuid}]`
@@ -325,7 +320,9 @@ Only create child tasks after the workflow artifact exists and the read-back pas
 
 ### Per-role model-tier policy
 
-The router dispatches a full agent chain per phase. Match the model tier to the role's cognitive load instead of inheriting the session model for everything. Tiers are abstract: `cheap` (small/fast), `standard` (mid), `capable` (frontier). Resolve each to the concrete model id the host exposes at dispatch time.
+Model selection comes from agent frontmatter; the router cannot set it per dispatch. Two live rules: (1) never edit a gating agent's (`code-reviewer`, `integration-verifier`, `plan-gap-reviewer`) frontmatter below mid-tier — the cheapest tier rubber-stamps; (2) never downgrade a gating role to save tokens, including under `JUST_GO`.
+
+ADVISORY — for humans tuning frontmatter; the router cannot act on this table at dispatch time. Tiers are abstract: `cheap` (small/fast), `standard` (mid), `capable` (frontier).
 
 | Role / phase | Recommended tier | Why |
 | -------------- | ------------------ | ----- |
@@ -338,11 +335,7 @@ The router dispatches a full agent chain per phase. Match the model tier to the 
 | `integration-verifier` (final phase, REVERT authority) | capable | Last line before "done"; must not miss scenario gaps. |
 | `researcher` | standard | Retrieval + synthesis. |
 
-How tiers are realized (ADVISORY — mechanism honesty): Claude Code selects a subagent's model from the agent's frontmatter `model:` field; the Task/Agent dispatch has NO per-call model parameter, so the router cannot set the model at dispatch time. cc10x therefore ships `model: haiku` on `doc-syncer` (safely mechanical) and `model: inherit` everywhere else so the user's session model choice is respected. Treat the table above as guidance for users tuning agent frontmatter (or for hosts that do expose per-dispatch model selection) — never claim a tier was applied when the mechanism cannot apply it.
-
-Reviewer FLOOR — never run a verifier or reviewer (`code-reviewer`, `integration-verifier`, `plan-gap-reviewer`) on the cheapest tier. The cheapest tier rubber-stamps. Mid-tier is the floor for anything that gates quality; bump UP, never below.
-
-Turn-count dominates price — a capable model that one-shots a phase is cheaper than a cheap model that loops three times re-reading state and re-trying. When a role tends to iterate (planner, verifier, stubborn investigation), prefer the higher tier even though its per-token cost is greater: fewer turns wins. Under `JUST_GO`, still apply this policy where the mechanism allows — never downgrade a gating role's frontmatter below the reviewer floor to save tokens.
+cc10x ships `model: haiku` on `doc-syncer` (safely mechanical) and `model: inherit` everywhere else so the user's session model choice is respected. Never claim a tier was applied when the mechanism cannot apply it. Turn-count dominates price — a capable model that one-shots a phase is cheaper than a cheap model that loops three times re-reading state and re-trying. When a role tends to iterate (planner, verifier, stubborn investigation), prefer the higher tier even though its per-token cost is greater: fewer turns wins.
 
 ### Prompt scaffold for every agent
 
@@ -393,7 +386,7 @@ Optional sections:
 - Every routed prompt must be self-contained from the workflow artifact, approved files, and the current task contract.
 - Do not rely on prior chat turns or completed-phase narrative when the same fact already exists in the workflow artifact, plan, design, or research files.
 - Include only the current-phase objective, live blockers, approved decisions, and directly relevant evidence. Omit unrelated completed-phase detail.
-- **Anti-pre-judging guard (adversarial dispatches only):** before dispatching `code-reviewer`, `failure-hunter`, or `plan-gap-reviewer`, scan the constructed prompt for bias phrases — "do not flag", "don't treat X as a defect", "at most Minor", "the plan chose", "should be fine", "no need to check". If any are present, rewrite them out: you are pre-judging the reviewer's verdict before they have seen the code. The router knows the plan, the intent contract, and the approved decisions — that knowledge can unknowingly inject bias ("the plan chose approach X, so don't flag Y"). Reviewers must form their own opinion from the diff. State approved decisions as neutral facts ("approach X was approved for reason Z"), never as instructions to suppress findings.
+- **Anti-pre-judging guard (adversarial dispatches only):** before dispatching `code-reviewer`, `failure-hunter`, or `plan-gap-reviewer`, grep the drafted prompt against the SELF-CHECK BLOCKLIST in `references/workflow-artifact-and-hook-policy.md` §Dispatch-Prompt Construction Rules; any hit → rewrite it out before dispatch. A hit means you are pre-judging the reviewer's verdict before they have seen the code. The router knows the plan, the intent contract, and the approved decisions — that knowledge can unknowingly inject bias ("the plan chose approach X, so don't flag Y"). Reviewers must form their own opinion from the diff. State approved decisions as neutral facts ("approach X was approved for reason Z"), never as instructions to suppress findings.
 
 ### Deterministic skill hints
 
@@ -453,7 +446,7 @@ Verdict extraction:
 1. Try the envelope on line 1.
 2. If envelope is missing or malformed, scan the first 5 lines for the heading.
 3. Extract `CRITICAL_ISSUES` from `### Critical Issues`.
-4. If output is too short or malformed, run inline verification rather than blindly approving.
+4. If the line-1 envelope AND the first-5-lines fallback heading are both absent, or any required contract field is missing, run inline verification rather than approving.
 5. Detect `SELF_REMEDIATED` from task state:
    - If the task remains `in_progress` and `blockedBy` is non-empty after the agent stops, treat it as self-remediated.
 6. For integration-verifier, parse scenario accounting:
@@ -520,17 +513,9 @@ Convergence rule:
 - When remediation, scope resolution, review-to-build escalation, planner clarification, investigation continuation, or the verifier REVERT gate is in play, immediately read `references/remediation-and-research.md`.
 - Use the `## 9. Remediation And Workflow Rules` block there as canonical router law.
 
-## 10. Research Orchestration
+## 10. Research (Trigger, Quality, Files)
 
-- See `references/remediation-and-research.md` and apply its `## 10. Research Orchestration`, `## Research Quality`, and `## Research Files` blocks whenever research is triggered or consumed.
-
-## Research Quality
-
-- See `references/remediation-and-research.md` and apply its `## Research Quality` block whenever research quality must be summarized or persisted.
-
-## Research Files
-
-- See `references/remediation-and-research.md` and apply its `## Research Files` block whenever research file paths are handed to planner or investigator.
+- **Research (trigger, quality, files):** whenever research is triggered (including research task creation), consumed, summarized, or handed to planner/investigator, read `references/remediation-and-research.md` and apply its `## 10. Research Orchestration`, `## Research Quality`, and `## Research Files` blocks.
 
 ## 11. Re-Review Loop
 
@@ -546,7 +531,7 @@ The harness is a loop engine. These concepts govern how the loop runs:
 | **Checkpoint** | A point where the loop pauses for human input. Only on irreversible actions, real scope changes, or input only the user can provide. Checkpoints are NOT for narration or "want me to continue?" prompts. |
 | **Push right** | Defer checkpoints as far as possible — do maximal work before involving the human. The loop should never stop on a promise or plan when it could act. If the next step is reversible and follows from the original request, proceed without asking. |
 | **Brief** | The decision-ready summary the loop produces when pausing. Not raw output, not a diary — the one thing the human needs to decide next. Outcome first, supporting detail second. |
-| **Cycle** | One complete plan → build → verify → learn iteration. The circuit breaker (single definition: `references/remediation-and-research.md` — remediation count `>= 3` → human checkpoint) caps cycles at 3. |
+| **Cycle** | One complete plan → build → verify → learn iteration. The circuit breaker pauses the loop for a human checkpoint at the 3rd remediation cycle (single definition: `references/remediation-and-research.md`); cycles beyond 3 run only on explicit user go-ahead. |
 | **Convergence** | The loop's quality signal — when `quality.convergence_state` transitions from `needs_iteration` to `converged`, the loop is complete. Never declare convergence on prose alone. |
 
 **Autonomous mode:** When the user sets a goal that spans multiple iterations (e.g., `/goal` or explicit "do this end-to-end"), the loop runs without checkpointing for reversible actions. The user is not watching in real time and cannot answer questions mid-task. Before ending a turn, check the last paragraph — if it is a plan, analysis, question, list of next steps, or a promise about work not yet done, do that work now with tool calls. End the turn only when the task is complete or blocked on input only the user can provide.
@@ -577,7 +562,7 @@ The harness is a loop engine. These concepts govern how the loop runs:
    - apply workflow rules
    - for BUILD, run `phase_exit_gate`; if the current phase is not complete, persist `phase_status={partial|blocked}` and stop
    - never advance to the next phase or workflow step on apology prose alone
-   - if two agents in the same phase return contradictory verdicts (e.g., reviewer approves but verifier fails on the same evidence), treat the stricter verdict as authoritative and do not average or reconcile the signals. Log the contradiction in `status_history`.
+   - if two agents in the same phase return contradictory verdicts (e.g., reviewer approves but verifier fails on the same evidence), treat the blocking verdict as authoritative (FAIL over PASS, CHANGES_REQUESTED over APPROVE); never average or reconcile the signals. Log the contradiction in `status_history`.
    - **Cross-reviewer agreement promotion:** if `code-reviewer` and `failure-hunter` independently flag the SAME finding (same file:line, same defect, raised from different passes), that is stronger signal than either alone — promote the merged finding's confidence by one tier (80→90, or mark it `cross-confirmed` in the merged findings summary). Agreement between two mutually-blind reviewers is independent confirmation; use it. Promotion never overrides the quote-the-line gate — a finding without a verbatim `file:line` quote cannot be promoted, only demoted.
    - doc-syncer `STATUS=SKIPPED` is a passing state; advance to Memory Update immediately
    - doc-syncer STATUS=PARTIAL: soft pass; advance to Memory Update; persist doc_sync_partial=true in workflow artifact results.doc_syncer for user review
@@ -586,28 +571,26 @@ The harness is a loop engine. These concepts govern how the loop runs:
 
 ### After every agent completion
 
-Pre-check before processing agent output:
-
-- Did the agent address the assigned scope (not a subset or superset)?
-- Did tests, builds, or checks referenced in the contract actually run (not merely described)?
-- Is follow-up work needed that the agent did not self-remediate?
-If any answer is "no" or "unknown", treat as incomplete and apply the fallback validation path below.
-
-0. Capture memory payload first, before validation or task-state mutation.
+0. Capture memory payload FIRST — before the pre-check, validation, or any task-state mutation (compaction can fire between agent return and parse; an uncaptured payload is lost).
    - READ-ONLY agents: extract `### Memory Notes (For Workflow-Final Persistence)` immediately after return.
    - WRITE agents: extract `MEMORY_NOTES` from YAML immediately after return.
-1. `TaskGet({ taskId })` or `TaskList()` to verify final task state.
-2. WRITE agents:
+1. Pre-check before processing agent output:
+   - Did the agent address the assigned scope (not a subset or superset)?
+   - Did tests, builds, or checks referenced in the contract actually run (not merely described)?
+   - Is follow-up work needed that the agent did not self-remediate?
+   If any answer is "no" or "unknown", treat as incomplete and apply the fallback validation path below.
+2. `TaskGet({ taskId })` or `TaskList()` to verify final task state.
+3. WRITE agents:
    - They should already have called `TaskUpdate(status="completed")`.
    - Parse YAML before continuing.
-3. READ-ONLY agents:
+4. READ-ONLY agents:
    - Router owns completion fallback for read-only tasks.
    - If the task is still not completed after agent return, router applies fallback `TaskUpdate(status="completed")`.
    - Blockers or findings may change workflow routing, but they never transfer orchestration ownership back to the read-only agent.
-4. Memory payload was already captured in step 0:
+5. Memory payload was already captured in step 0:
    - READ-ONLY agents: append extracted notes to the memory task description.
    - WRITE agents: append deferred or supplemental payload needed by the memory task.
-5. Update `.cc10x/workflows/{workflow_uuid}.json` with:
+6. Update `.cc10x/workflows/{workflow_uuid}.json` with:
    - intent contract fields from planner output when available
    - task ids
    - phase status
@@ -629,14 +612,14 @@ If any answer is "no" or "unknown", treat as incomplete and apply the fallback v
    - `updated_at` is set to a timestamp from THIS turn (not a prior turn)
    - `results.{agent_name}` exists and contains the agent's contract fields
    - If either check fails, rewrite the artifact immediately. Do not proceed to the next task.
-6. **Append event log entry:** For each result persisted to the artifact in step 5, append a matching entry to `.cc10x/workflows/{wf}.events.jsonl`. **Append mechanism:** the `Write` tool overwrites whole files — NEVER `Write` only the new line. Either Read the current `.events.jsonl` and Write it back with the new line added at the end, or use a Bash append (`printf '%s\n' '{...}' >> .cc10x/workflows/{wf}.events.jsonl`). Entry shape:
+7. **Append event log entry:** For each result persisted to the artifact in step 6, append a matching entry to `.cc10x/workflows/{wf}.events.jsonl`. **Append mechanism:** the `Write` tool overwrites whole files — NEVER `Write` only the new line. Either Read the current `.events.jsonl` and Write it back with the new line added at the end, or use a Bash append (`printf '%s\n' '{...}' >> .cc10x/workflows/{wf}.events.jsonl`). Entry shape:
 
    ```json
    {"ts":"<ISO>","wf":"<wf_id>","event":"result_persisted","phase":"<phase>","task_id":"<task_id>","agent":"<agent_name>","decision":"<contract_status>","reason":"<one-line summary>"}
    ```
 
    The event log MUST stay in sync with the artifact. A mutation without an event log entry is a desync that breaks the audit trail. (The PostToolUse guard auto-appends a fallback `artifact_mutated` event, but the router MUST write the semantic `result_persisted` entry with agent-specific metadata.)
-7. Persist `[cc10x-internal] memory_task_id: {memory_task_id} wf:{workflow_uuid}` only if it matches the active workflow.
+8. Persist `[cc10x-internal] memory_task_id: {memory_task_id} wf:{workflow_uuid}` only if it matches the active workflow.
 
 ### Verifier findings handoff
 
@@ -716,13 +699,13 @@ For DEBUG:
 
 ## 14. Hard Rules
 
-- Router must run in the main Claude Code session, never inside a sub-agent.
+- Router must run in the main Claude Code session, never inside a sub-agent — sub-agents cannot open user gates or spawn the phase agents.
 - Router is the only orchestration state owner. Agents may propose remediation or next actions, but only the router creates, blocks, unblocks, reuses, or completes orchestration tasks.
 - Never stop after one agent if the workflow chain has more runnable tasks.
 - Never rely on prose when `wf:`, `kind:`, `origin:`, `phase:`, or `scope:` can answer the question.
 - Never use an unscoped task lookup in critical paths.
 - Never treat stored task IDs as durable truth across workflows.
-- Never spawn Memory Update as a sub-agent.
+- Never spawn Memory Update as a sub-agent — a sub-agent lacks the captured payload and the memory files' session context.
 - Never create `CC10X TODO:` tasks. Non-blocking discoveries go into `**Deferred:**` memory notes.
 - Never let REVIEW create implementation tasks without an explicit router/user transition into BUILD.
 - Never report a workflow outcome (pass, fixed, complete) to the user without first confirming the verification evidence that supports that claim. "I believe it works" is not evidence. [EASY TO MISS: "I ran the tests and they passed" without showing command output, exit codes, or scenario evidence is also not evidence. Require concrete proof artifacts, not agent assertions.]

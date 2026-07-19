@@ -1,15 +1,5 @@
 # Memory Model And Ownership
 
-## Contents
-
-- Purpose
-- Memory surfaces
-- Ownership
-- Promotion ladder
-- What belongs where
-- Distillation standard
-- Project skill hints
-
 ## Purpose
 
 This file explains what CC10X memory is, which layer owns each part, and what kind of
@@ -17,53 +7,11 @@ information belongs where.
 
 ## Memory Surfaces
 
-- `activeContext.md`
-  - current focus
-  - recent changes
-  - decisions
-  - learnings
-  - references
-  - blockers
-- `patterns.md`
-  - durable user standards
-  - architecture and code conventions
-  - testing patterns
-  - common gotchas
-  - project skill hints
-- `progress.md`
-  - current workflow
-  - task snapshot
-  - completed items
-  - verification evidence
-- `docs/plans/*` and `docs/research/*`
-  - detailed artifacts that memory points to
-- `.cc10x/workflows/{wf}.json`
-  - canonical workflow state
-- `.cc10x/workflows/{wf}.events.jsonl`
-  - append-only event trail
+See the `### Memory Surfaces` table in SKILL.md.
 
 ## Ownership
 
-### Router
-
-- loads and auto-heals the three memory files before routing or resume
-- owns workflow artifacts and event logs
-- owns final markdown persistence during the memory-finalize step
-- owns transient workflow markers such as:
-  - `[DEBUG-RESET: wf:{...}]`
-  - `[cc10x-internal] memory_task_id: ...`
-
-### WRITE Agents
-
-- read memory at start and before key decisions
-- do not edit `.cc10x/*.md` directly
-- emit structured `MEMORY_NOTES` in their Router Contract
-
-### READ-ONLY Agents
-
-- read memory via their own prompts
-- emit `### Memory Notes (For Workflow-Final Persistence)`
-- never mutate markdown memory files
+Ownership: see SKILL.md `### Ownership` — the authoritative statement.
 
 ## Promotion Ladder
 
