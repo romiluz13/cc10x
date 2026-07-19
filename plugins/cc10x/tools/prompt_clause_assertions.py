@@ -2034,6 +2034,90 @@ ASSERTIONS = [
         ),
         "flaky re-run cap explains one retry separates blips from flake; more launders failures",
     ),
+    # --- Router prose polish (ticket #87) ---
+    A(
+        "router: consolidated research pointer section present",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        contains_all(
+            "## 10. Research (Trigger, Quality, Files)",
+            "whenever research is triggered (including research task creation), consumed, summarized, or handed to planner/investigator",
+            "apply its `## 10. Research Orchestration`, `## Research Quality`, and `## Research Files` blocks",
+        ),
+        "one consolidated research section points at remediation-and-research.md for trigger, quality, and files",
+    ),
+    A(
+        "router: duplicate research pointer headings deleted",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: all(
+            re.search(pattern, text, re.M) is None
+            for pattern in (
+                r"^## 10\. Research Orchestration$",
+                r"^## Research Quality$",
+                r"^## Research Files$",
+                r"^### Research tasks$",
+            )
+        ),
+        "the four redundant research pointer sections collapsed into the single §10 pointer",
+    ),
+    A(
+        "router: tier table marked ADVISORY with live rules separated",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        contains_all(
+            "ADVISORY — for humans tuning frontmatter; the router cannot act on this table at dispatch time.",
+            "Model selection comes from agent frontmatter; the router cannot set it per dispatch.",
+            "never edit a gating agent's",
+            "frontmatter below mid-tier — the cheapest tier rubber-stamps",
+            "never downgrade a gating role to save tokens, including under `JUST_GO`",
+        ),
+        "model-tier section: two live rules agent-facing, table prefixed as advisory-only",
+    ),
+    A(
+        "router: capture-memory-payload is literal step 0 before the pre-check",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: (
+            "0. Capture memory payload FIRST" in text
+            and "1. Pre-check" in text
+            and "compaction can fire between agent return and parse; an uncaptured payload is lost"
+            in text
+            and text.find("0. Capture memory payload FIRST")
+            < text.find("1. Pre-check")
+        ),
+        "step 0 (capture payload + compaction why) appears before step 1 pre-check on the page",
+    ),
+    A(
+        "policy: SELF-CHECK BLOCKLIST is the single source with the full union",
+        SKILLS
+        / "cc10x-router"
+        / "references"
+        / "workflow-artifact-and-hook-policy.md",
+        contains_all(
+            "SELF-CHECK BLOCKLIST",
+            "`do not flag`",
+            "`don't treat X as a defect`",
+            "`don't worry about`",
+            "`at most minor`",
+            "`the plan chose`",
+            "`already verified, just`",
+            "`should be fine`",
+            "`no need to check`",
+        ),
+        "policy blocklist holds the full union of both former phrase lists",
+    ),
+    A(
+        "router: anti-pre-judging guard points at the policy blocklist",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        contains_all(
+            "grep the drafted prompt against the SELF-CHECK BLOCKLIST in `references/workflow-artifact-and-hook-policy.md`",
+            "any hit → rewrite it out before dispatch",
+        ),
+        "SKILL.md §7 keeps the principle and defers the phrase list to the policy reference",
+    ),
+    A(
+        "router: inline bias-phrase list no longer duplicated in SKILL.md",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        contains_none('scan the constructed prompt for bias phrases — "do not flag"'),
+        "the old inline SKILL.md phrase enumeration is gone; policy file is the single source",
+    ),
 ]
 
 

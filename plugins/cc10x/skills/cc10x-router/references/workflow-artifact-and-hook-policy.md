@@ -212,9 +212,10 @@ The dispatch prompt MUST:
 - State the surface to inspect (paths, diff package, phase scope) and the contract to return, neutrally.
 - Let the agent assign its own severity and form its own verdict from primary evidence.
 
-SELF-CHECK BLOCKLIST — before dispatch, the router greps its own drafted prompt for these literal phrases:
+SELF-CHECK BLOCKLIST (single source of truth — SKILL.md §7 points here) — before dispatch, the router greps its own drafted prompt for these literal phrases (case-insensitive):
 
 - `do not flag`
+- `don't treat X as a defect`
 - `don't worry about`
 - `at most minor`
 - `the plan chose`
