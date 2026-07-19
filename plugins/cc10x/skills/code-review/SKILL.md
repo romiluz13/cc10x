@@ -71,7 +71,7 @@ Zero findings on a non-trivial change → insufficient depth, not perfect code. 
 
 ### Code Smells (Fowler Catalog)
 
-Scan for these 16 named smells during review. Each is actionable — not a style preference. "Messy" is not actionable; "Mysterious Name" is:
+Scan for these 16 named smells during review. Each is actionable — not a style preference. "Messy" is not actionable; "Mysterious Name" is. Each smell is a labelled heuristic and always a judgement call ("possible Feature Envy"), never a hard violation:
 
 | Smell | Signal | Fix |
 | ------ | ------ | ---- |

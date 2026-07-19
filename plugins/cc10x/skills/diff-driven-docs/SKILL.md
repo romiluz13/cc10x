@@ -70,7 +70,7 @@ Decision records capturing what changed, why, alternatives considered, and impac
 - Scope: `docs/adr/` (canonical, NNNN-numbered; legacy `docs/decisions/` date-named files migrated lazily on touch), compliance notes, migration guides for breaking changes
 - Update trigger: new architectural pattern, technology choice, non-obvious tradeoff, breaking change, security or compliance impact
 - What to write: structured record following the four-section format below (or a single-paragraph ADR for simple decisions, per `cc10x:domain-modeling/ADR-FORMAT.md`)
-- Dedup rule: if a decision exists in both `docs/decisions/` and `docs/adr/`, the `docs/adr/` version wins; delete the legacy duplicate
+- Dedup rule: if a decision exists in both `docs/decisions/` and `docs/adr/`, the `docs/adr/` version wins; delete the legacy duplicate — two live copies diverge, and readers can't tell which is authoritative
 
 ### Glossary Layer
 
@@ -149,7 +149,7 @@ Use the project's `## Doc Targets` from `CLAUDE.md` if present. Otherwise apply 
 
 For each doc target:
 
-1. `Read` the entire target file first
+1. `Read` the entire target file first — an unread edit duplicates sections and contradicts neighbors; the read is what makes the edit minimal
 2. Apply minimal, targeted edits using `Edit` — do not rewrite sections that are not affected by the diff
 3. `Read` the file again after writing to verify the edit landed correctly
 

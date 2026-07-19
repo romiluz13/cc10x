@@ -22,9 +22,9 @@ Read only what's needed:
 
 ## Test Process Discipline
 
-- **Always use run mode:** `CI=true npm test`, `npx vitest run` (NOT `npx vitest`), `CI=true npx jest`
+- **Always use run mode:** `CI=true npm test`, `npx vitest run` (NOT `npx vitest`), `CI=true npx jest` — watch mode never exits, so the agent hangs waiting for a prompt that never returns
 - **Timeout guard:** `timeout 60s npx vitest run` if uncertain about CI=true
-- **After TDD cycle:** `pgrep -f "vitest|jest" || echo "Clean"`. Kill if found.
+- **After TDD cycle:** `pgrep -f "vitest|jest" || echo "Clean"`. Kill if found — orphaned watchers hold ports and re-run stale code, producing false greens in later cycles.
 - **IDE vs CLI truth:** If CLI tests pass with exit 0, trust CLI over IDE/LSP errors (stale cache)
 
 ## RED → GREEN → REFACTOR
@@ -41,7 +41,7 @@ Write the minimum code to pass the test. No extra features, no abstractions for 
 
 ### REFACTOR — Clean Up
 
-Improve code quality while keeping tests green. If tests fail during refactor, revert. Re-run after every refactor step.
+Improve code quality while keeping tests green. If tests fail during refactor, revert — a red test proves it wasn't a refactor, and debugging forward mixes two changes. Re-run after every refactor step.
 
 **Safety-Check Guard (MANDATORY):** Never simplify away a safety check during refactoring. Safety checks include:
 
@@ -142,7 +142,7 @@ expect(calculateTotal([{value: 10}, {value: 20}, {value: 30}])).toBe(60);
 
 ## Loop Caps
 
-- **TDD Failure Cap:** GREEN fails 3 consecutive times on same test → FAIL with error
+- **TDD Failure Cap:** GREEN fails 3 consecutive times on same test → FAIL with error — three failures means the approach is wrong, not unlucky
 - **Build/Lint Loop Cap:** Same error recurs after 3 fix attempts → FAIL with error_code + file
 
 ## Coverage Threshold
@@ -150,6 +150,8 @@ expect(calculateTotal([{value: 10}, {value: 20}, {value: 30}])).toBe(60);
 If `coverage-thresholds.json` exists, run coverage and compare. Below thresholds → FAIL. If no thresholds file, skip coverage check.
 
 ## Test Prioritization
+
+Ranked by bugs caught per token — behavioral tests catch the most; performance tests without a stated requirement are speculative work.
 
 1. Behavioral tests (does the function do what it should?)
 2. Edge case tests (empty input, null, boundary values)

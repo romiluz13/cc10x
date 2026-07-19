@@ -29,7 +29,7 @@ If `go` is unavailable, report that the accelerator is missing and proceed with 
 
 ## Flow: discover → call → release
 
-**1. Discover first — always.** Never call a tool whose schema you have not seen.
+**1. Discover first — always.** Never call a tool whose schema you have not seen — guessed params fail silently or hit the wrong tool.
 
 ```bash
 mcp tools <server-command>                 # list tools

@@ -30,7 +30,7 @@ If the plan includes `### Live Verification Strategy` or a harness manifest:
 - If stress required: also run `--mode stress`
 - Do NOT silently substitute replay fixtures or unit tests for required live proof
 
-**Flaky test handling:** re-run once. Pass on re-run → mark PASS with `flaky: true`. Fail both → FAIL. Never convert flaky pass into unconditional confidence.
+**Flaky test handling:** re-run once — one retry separates environment blips from real flake; more retries launder genuine failures. Pass on re-run → mark PASS with `flaky: true`. Fail both → FAIL. Never convert flaky pass into unconditional confidence.
 
 ## Previous Agent Findings
 

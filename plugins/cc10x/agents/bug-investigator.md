@@ -55,7 +55,7 @@ When the bug spans a pipeline (frontend→API→worker→DB, service→service),
 |----------|---------|----------|------------|---------|
 | API handler | `{...}` | `{...}` | `FLAG=on, v2.3` | ok / SUSPECT |
 
-**Runtime stack-capture fallback:** for dynamic/async dispatch where LSP dead-ends, capture live call path: `new Error().stack` logged at suspect site. Use `console.error`/stderr, not the app logger. Log BEFORE the suspect operation.
+**Runtime stack-capture fallback:** for dynamic/async dispatch where LSP dead-ends, capture live call path: `new Error().stack` logged at suspect site. Use `console.error`/stderr, not the app logger — the app logger may be buffered, filtered, or itself the thing under test. Log BEFORE the suspect operation.
 
 All instrumentation carries a unique tag (e.g. `DEBUG_BUGINV_<ticket>`) for Debug Close-Out grep.
 

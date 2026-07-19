@@ -181,7 +181,7 @@ If reviewing uncommitted working-tree changes (no recorded BASE), fall back to `
 
 **CONFIDENCE calculation:** `min(HARD scores)` capped by `avg(SOFT scores) - 10`.
 A single HARD:0 = CONFIDENCE:0 regardless of other dimensions.
-This is the review-level `CONFIDENCE` field — a different scale from per-finding confidence (see Confidence Scoring). It maxes at 90 by construction: flawless code scores HARD 100 and SOFT 100, so the cap is 100 − 10 = 90.
+This is the review-level `CONFIDENCE` field — a different scale from per-finding confidence (see Confidence Scoring). It maxes at 90 by construction: flawless code scores HARD 100 and SOFT 100, so the cap is 100 − 10 = 90 — a deliberate honest ceiling that keeps a perfect-SOFT review from claiming perfect confidence.
 
 **In the Router Contract YAML, include the signal breakdown:**
 

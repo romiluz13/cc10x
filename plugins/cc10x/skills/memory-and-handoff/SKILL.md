@@ -62,7 +62,7 @@ MEMORY_NOTES:
   deferred: ["Non-blocking follow-up or risk"]
 ```
 
-Keep each entry one line. Prefer stable nouns over temporary wording. Put verification truth in `verification`, not prose. Put non-blocking work in `deferred`, not ad-hoc tasks.
+Keep each entry one line — memory reloads every session; each extra line is a recurring tax. Prefer stable nouns over temporary wording. Put verification truth in `verification`, not prose. Put non-blocking work in `deferred`, not ad-hoc tasks.
 
 **Persist only memory-worthy items:** decisions that change direction, learnings that prevent mistakes, verification evidence with commands and exit truth, deferred non-blocking issues, plan/design/research references, clarified user standards.
 
@@ -96,7 +96,7 @@ cc10x's own resume is structural (`.cc10x/` + router rehydrates). The handoff pa
 
 ### Rules
 
-1. **Write to OS temp dir, never into the repo.** `HANDOFF="${TMPDIR:-/tmp}/handoff-$(date +%Y%m%d-%H%M%S).md"`. Print the absolute path.
+1. **Write to OS temp dir, never into the repo** — a repo-committed handoff becomes a stale doc the next reader mistakes for current truth. `HANDOFF="${TMPDIR:-/tmp}/handoff-$(date +%Y%m%d-%H%M%S).md"`. Print the absolute path.
 2. **Reference artifacts by path/URL, never paste contents.** The next reader has the repo. They need a map, not a copy. Prefer behavioral descriptions over `file:line` where code may still drift.
 3. **Redact secrets and PII before writing.** Redact per `### Secret Redaction` above.
 

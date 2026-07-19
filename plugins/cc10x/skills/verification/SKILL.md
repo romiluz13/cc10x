@@ -50,7 +50,7 @@ Before running any test, audit your own work:
 - [ ] No silent failures (empty catches, discarded errors)
 - [ ] Build succeeds, type-check passes
 
-**Self-Critique Verdict:** If any check fails, fix it BEFORE running verification. Don't run tests you know will fail on code quality issues.
+**Self-Critique Verdict:** If any check fails, fix it BEFORE running verification. Don't run tests you know will fail on code quality issues — a known-failing run produces noise evidence that then has to be explained away.
 
 ## Validation Levels
 
@@ -61,7 +61,7 @@ Before running any test, audit your own work:
 | **Manual** | Human verifies with checklist | n/a | When automation not worth the cost |
 | **Live** | Production-like environment | 0/1 | When plan requires live proof |
 
-Every verification must state its validation level. If manual, state the checklist. If deterministic, state the command + exit code. If live, state the harness command.
+Every verification must state its validation level — unlabeled evidence lets weak proof masquerade as strong. If manual, state the checklist. If deterministic, state the command + exit code. If live, state the harness command.
 
 ## Production-Like Live Proof
 
@@ -71,7 +71,7 @@ When the plan includes `### Live Verification Strategy` or a harness manifest:
 - If stress required: also run `--mode stress`
 - Do NOT silently substitute replay fixtures or unit tests for required live proof
 
-**Flaky test handling:** re-run once. Pass on re-run → mark PASS with `flaky: true`. Fail both → FAIL. Never convert flaky pass into unconditional confidence.
+**Flaky test handling:** re-run once — one retry separates environment blips from real flake; more retries launder genuine failures. Pass on re-run → mark PASS with `flaky: true`. Fail both → FAIL. Never convert flaky pass into unconditional confidence.
 
 ## Evidence Array Protocol (MANDATORY for PASS)
 

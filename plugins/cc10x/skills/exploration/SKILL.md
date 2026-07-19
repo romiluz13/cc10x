@@ -43,7 +43,7 @@ Cover these 5 dimensions, but only ask about dimensions that are still unresolve
 
 Always ask: "What is explicitly NOT part of this?" (out-of-scope discovery).
 
-One question at a time. Multiple choice preferred. Present 2-3 approaches with trade-offs before asking which to pursue. YAGNI ruthlessly — defer what is not essential.
+One question at a time — asking several questions at once is bewildering. Multiple choice preferred. If a fact can be found by exploring the environment (filesystem, tools), look it up rather than asking; the decisions are the user's. Present 2-3 approaches with trade-offs before asking which to pursue. YAGNI ruthlessly — defer what is not essential.
 
 **Intent Completeness Gate** (before proceeding to design): (1) small enough to fit in one paragraph, (2) contradiction-free, (3) sufficiently specific that a builder could act without clarifying questions. If any fails, ask one more targeted question.
 

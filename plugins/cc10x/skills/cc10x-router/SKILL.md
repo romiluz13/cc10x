@@ -63,7 +63,7 @@ Always run this before routing or resuming:
 4. Read(".cc10x/progress.md")
 ```
 
-Do not parallelize step 1 with reads.
+Do not parallelize step 1 with reads — the reads assume the directory exists.
 
 If a memory file is missing:
 
@@ -125,7 +125,7 @@ Rules:
 
 - ALL SEVEN metadata lines (`wf:`, `kind:`, `origin:`, `phase:`, `plan:`, `scope:`, `reason:`) are present on EVERY CC10X task — use `N/A` where a field does not apply. The TaskCompleted hook audits exactly this invariant; the task-graph templates already satisfy it.
 - `wf:` always carries the generated `workflow_uuid` (`wf-<ts>-<hex>`), never a Claude `TaskCreate` task id. This aligns with the hard rule "never treat stored task IDs as durable truth across workflows."
-- Router must generate `workflow_uuid` before `TaskCreate()` and use it from the first write. `wf:PENDING_SELF` is not used.
+- Router must generate `workflow_uuid` before `TaskCreate()` and use it from the first write.
 - `kind:` drives resume, routing, and counting logic.
 - `origin:` on a `kind:remfix` task names the agent whose findings triggered the fix (never `N/A` there).
 - `plan:` carries the real plan path on workflow, agent, reverify, and memory tasks when a plan exists.
@@ -716,13 +716,13 @@ For DEBUG:
 
 ## 14. Hard Rules
 
-- Router must run in the main Claude Code session, never inside a sub-agent.
+- Router must run in the main Claude Code session, never inside a sub-agent — sub-agents cannot open user gates or spawn the phase agents.
 - Router is the only orchestration state owner. Agents may propose remediation or next actions, but only the router creates, blocks, unblocks, reuses, or completes orchestration tasks.
 - Never stop after one agent if the workflow chain has more runnable tasks.
 - Never rely on prose when `wf:`, `kind:`, `origin:`, `phase:`, or `scope:` can answer the question.
 - Never use an unscoped task lookup in critical paths.
 - Never treat stored task IDs as durable truth across workflows.
-- Never spawn Memory Update as a sub-agent.
+- Never spawn Memory Update as a sub-agent — a sub-agent lacks the captured payload and the memory files' session context.
 - Never create `CC10X TODO:` tasks. Non-blocking discoveries go into `**Deferred:**` memory notes.
 - Never let REVIEW create implementation tasks without an explicit router/user transition into BUILD.
 - Never report a workflow outcome (pass, fixed, complete) to the user without first confirming the verification evidence that supports that claim. "I believe it works" is not evidence. [EASY TO MISS: "I ran the tests and they passed" without showing command output, exit codes, or scenario evidence is also not evidence. Require concrete proof artifacts, not agent assertions.]

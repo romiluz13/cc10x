@@ -21,7 +21,7 @@ user-invocable: false
 
 A hypothesis without a repro loop is a guess. Before H1, build a fast, deterministic, agent-runnable signal that turns red on the bug.
 
-### Construction Ladder (try in rank order, stop at first that works)
+### Construction Ladder (try in rank order, stop at first that works — ordered by loop tightness: earlier rungs are faster and more deterministic)
 
 1. Failing automated test (unit/integration) — best: lives at a seam, reusable as RED
 2. `curl`/HTTP request with asserted response
@@ -41,7 +41,7 @@ A hypothesis without a repro loop is a guess. Before H1, build a fast, determini
 - **More deterministic?** Pin time, seed RNG, isolate filesystem, freeze network — same input → same red, no drift.
 A 30-second flaky loop is barely better than none; a 2-second deterministic one is a debugging superpower.
 
-**Red-capable completion criteria** — the loop is done when you can name **one command** (a script path, a test invocation, a curl) that you have **already run at least once**, and it is:
+**Red-capable completion criteria** — the loop is done when you can name **one command** (a script path, a test invocation, a curl) that you have **already run at least once** (paste the invocation and its output), and it is:
 
 - [ ] **Red-capable** — drives the actual bug code path and asserts the user's exact symptom (can go red on this bug, green once fixed). Not "runs without erroring".
 - [ ] **Deterministic** — same verdict every run (flaky bugs: a pinned, high reproduction rate).
@@ -76,9 +76,9 @@ Don't guess where a value comes from — trace it with LSP. Don't grep for a fun
 1. **Understand** — expected vs actual, when did it start?
 2. **Git History** — `git log --oneline -20 -- <files>`, `git blame`, `git diff BASE..HEAD`
 3. **Compounded knowledge** — if `docs/solutions/debugging/` exists, check for a prior write-up matching this symptom before starting fresh investigation
-4. **LOG FIRST** — collect error logs, stack traces, run failing commands
+4. **LOG FIRST** — collect error logs, stack traces, run failing commands. The error text is the highest-density evidence you will ever get; acting first destroys or masks it.
 5. **Feedback Loop** — build repro signal (construction ladder above). No loop → fail closed.
-6. **Variant Scan** — identify which variant dimensions must keep working (locale, config, env, platform, data shape, concurrency)
+6. **Variant Scan** — identify which variant dimensions must keep working (locale, config, env, platform, data shape, concurrency). A fix verified on one variant routinely breaks a sibling variant.
 
 **Repro Minimisation:** After reproducing the bug, shrink to the smallest scenario that still goes red before forming hypotheses. Cut inputs, callers, config, and environment one at a time. Re-run after each cut. Every remaining element is load-bearing — removing it should make the bug disappear.
 
@@ -128,7 +128,7 @@ Tag every debug log with a unique prefix (e.g. `[DEBUG-a4f2]`) so cleanup is a s
 2. **GREEN** — minimal fix (smallest diff, no hardcoding)
 3. **Blast Radius Scan** — search same file for identical anti-patterns, adjacent files for same signature
 4. **Verify** — regression test passes + relevant suite passes
-5. **Prevention** — recommend lint rule, test, type guard, or monitoring
+5. **Prevention** — recommend lint rule, test, type guard, or monitoring. Recommend after the fix is in, not before — you have more information now than when you started.
 6. **Cleanup** — delete throwaway harnesses/prototypes, or move them to a clearly-marked debug location. Grep-remove all `[DEBUG-...]` tagged instrumentation (must return nothing). Confirm the repro loop no longer fires.
 
 ## Scenario Playbooks

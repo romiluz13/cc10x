@@ -151,7 +151,7 @@ The router receives ONLY your LAST response turn, not intermediate messages. The
 Do NOT write analysis in an intermediate turn and then write "done" in a final turn. The router will only see the final turn.
 
 **OUTPUT QUALITY GATE (MANDATORY):**
-Your analysis text MUST be substantive — minimum 200 characters.
+Your analysis text MUST be substantive — minimum 200 characters. The router treats near-empty output as a failed run.
 
 - NO EXCEPTIONS: "Nothing found" still requires the full output format — emit the heading, Summary, Verified Good section, Memory Notes, and Task Status. A short text is NEVER sufficient.
 - Do NOT stop after a short summary — write the full output format first.

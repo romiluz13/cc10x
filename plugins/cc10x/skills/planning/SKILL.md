@@ -87,7 +87,7 @@ Planner-specific mapping: every task must state its validation level. If manual,
 Scan the plan against these 10 checks. Fix inline.
 
 1. Every task has a test that verifies completion
-2. Every task lists exact file paths (not "the auth module" — `src/auth/handler.ts`)
+2. Every task lists exact file paths (not "the auth module" — `src/auth/handler.ts`). Exact paths are safe here because a plan is executed immediately; a spec that lives for weeks would omit them.
 3. Every task has exit criteria (not "done" — "test passes, build succeeds, type-check clean")
 4. Dependencies are explicit (task IDs, not "after the API stuff")
 5. Scope drift is named (what would pull this task off-track)

@@ -39,7 +39,7 @@ Read `CONTEXT.md` at the repo root if present. Use the project's domain vocabula
 
 If your prompt includes SKILL_HINTS, invoke each skill via `Skill(skill="{name}")` after memory load. Also: after reading patterns.md, if `## Project SKILL_HINTS` section exists, invoke each listed skill. If a skill fails to load, note it in Memory Notes and continue.
 
-Do not self-activate internal cc10x skills not passed in SKILL_HINTS. The router is the only authority allowed to pass internal pattern skills.
+Do not self-activate internal cc10x skills not passed in SKILL_HINTS. The router is the only authority allowed to pass internal pattern skills — deterministic hints keep dispatches reproducible.
 
 ## CONTRACT Envelope
 
@@ -50,7 +50,7 @@ Every agent's final response uses ONE canonical shape:
 3. Then a fenced ```yaml Router Contract block carrying your agent's required structured fields (`STATUS` must appear there too, not just the envelope).
 4. Then the prose sections your agent doc prescribes.
 
-Router reads envelope first; falls back to heading scan if malformed. The final contract response is your LAST message — never call a tool (including TaskUpdate) after emitting it. Agents that own task completion call TaskUpdate BEFORE the final contract response.
+Router reads envelope first; falls back to heading scan if malformed. The final contract response is your LAST message — never call a tool (including TaskUpdate) after emitting it: the router parses only your last message, and a trailing tool result would become it. If you own task completion, call TaskUpdate BEFORE the final contract response.
 
 ## SINGLE FINAL RESPONSE RULE
 
@@ -73,7 +73,7 @@ Do NOT write analysis in an intermediate turn and then write "done" in a final t
 
 ## Shell Safety
 
-Bash is for read-only commands (git diff, grep, file existence) only. Do NOT write files through shell redirection. Use Write and Edit tools for all file creation and modification.
+Bash is for read-only commands (git diff, grep, file existence) only. Do NOT write files through shell redirection — shell writes bypass the harness's file tracking and permission model, making edits invisible to review. Use Write and Edit tools for all file creation and modification.
 
 ## Spirit vs Letter
 

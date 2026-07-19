@@ -1914,6 +1914,126 @@ ASSERTIONS = [
         and "Log when a short-circuit to null is not an expected state" in text,
         "fallible-call returns are flagged, optional-config defaults ignored; ?. logging is conditioned on unexpected state",
     ),
+    # --- Missing-WHY pass and benchmark restorations (ticket #86) ---
+    A(
+        "building: run-mode carries the watch-mode-never-exits why",
+        SKILLS / "building" / "SKILL.md",
+        contains("watch mode never exits, so the agent hangs"),
+        "CI=true/run-mode rule states that watch mode never exits so the agent hangs",
+    ),
+    A(
+        "component-builder: run-mode carries the watch-mode-never-exits why",
+        AGENTS / "component-builder.md",
+        contains("watch mode never exits, so the agent hangs"),
+        "CI=true/run-mode rule states that watch mode never exits so the agent hangs",
+    ),
+    A(
+        "debugging: LOG FIRST carries the highest-density-evidence why",
+        SKILLS / "debugging" / "SKILL.md",
+        contains_all(
+            "highest-density evidence",
+            "acting first destroys or masks it",
+        ),
+        "LOG FIRST states that error text is the highest-density evidence and acting first destroys it",
+    ),
+    A(
+        "debugging: red-capable criterion restores paste-the-output evidence",
+        SKILLS / "debugging" / "SKILL.md",
+        contains("(paste the invocation and its output)"),
+        "loop completion criterion requires pasting the invocation and its output",
+    ),
+    A(
+        "agent-common: shell-write ban carries the bypasses-file-tracking why",
+        SKILLS / "agent-common" / "SKILL.md",
+        contains_all(
+            "shell writes bypass the harness's file tracking and permission model",
+            "invisible to review",
+        ),
+        "shell-redirection ban states writes bypass file tracking/permission model and are invisible to review",
+    ),
+    A(
+        "agent-common: no-tool-after-contract carries the last-message why",
+        SKILLS / "agent-common" / "SKILL.md",
+        contains_all(
+            "the router parses only your last message",
+            "a trailing tool result would become it",
+        ),
+        "no-tool-after-contract rule explains the router parses only the last message",
+    ),
+    A(
+        "exploration: interview restores bewildering why and facts-vs-decisions",
+        SKILLS / "exploration" / "SKILL.md",
+        contains_all(
+            "asking several questions at once is bewildering",
+            "look it up rather than asking; the decisions are the user's",
+        ),
+        "one-question rule carries its why; facts are looked up, decisions go to the user",
+    ),
+    A(
+        "research: primary-source principle restored",
+        SKILLS / "research" / "SKILL.md",
+        contains_all(
+            "prefer the source that owns the claim",
+            "A secondary write-up citing a primary loses to the primary",
+        ),
+        "synthesis prefers the owning primary source over secondary write-ups",
+    ),
+    A(
+        "research: conflict-resolution bullets merged with docs-vs-code why",
+        SKILLS / "research" / "SKILL.md",
+        lambda text: "docs describe intent; code is what runs" in text
+        and "Conflict resolution (when sources disagree, prefer GitHub real code over docs)"
+        not in text,
+        "one conflict-resolution rule, carrying the docs-describe-intent / code-is-what-runs why",
+    ),
+    A(
+        "router: step-1 no-parallelize carries its why",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        contains("Do not parallelize step 1 with reads — the reads assume the directory exists."),
+        "no-parallelize rule states the reads assume the directory exists",
+    ),
+    A(
+        "router: main-session rule carries the sub-agent-gates why",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        contains("sub-agents cannot open user gates or spawn the phase agents"),
+        "router-in-main-session rule states sub-agents cannot open gates or spawn phase agents",
+    ),
+    A(
+        "router: Memory Update sub-agent ban carries the payload why",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        contains("a sub-agent lacks the captured payload and the memory files' session context"),
+        "Memory Update ban states a sub-agent lacks the payload and session context",
+    ),
+    A(
+        "router: dead wf:PENDING_SELF line removed",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        contains_none("PENDING_SELF"),
+        "the noise line about the unused wf:PENDING_SELF value is deleted",
+    ),
+    A(
+        "plan-workflow: fresh-review cap carries its why",
+        SKILLS / "cc10x-router" / "references" / "plan-workflow.md",
+        contains("pass-2 findings escalate to the human; more passes polish a wrong plan"),
+        "max-2 fresh-review passes states pass-2 escalates and more passes polish a wrong plan",
+    ),
+    A(
+        "verification: re-run-once carries the blip-vs-flake why",
+        SKILLS / "verification" / "SKILL.md",
+        contains_all(
+            "one retry separates environment blips from real flake",
+            "more retries launder genuine failures",
+        ),
+        "flaky re-run cap explains one retry separates blips from flake; more launders failures",
+    ),
+    A(
+        "integration-verifier: re-run-once carries the blip-vs-flake why",
+        AGENTS / "integration-verifier.md",
+        contains_all(
+            "one retry separates environment blips from real flake",
+            "more retries launder genuine failures",
+        ),
+        "flaky re-run cap explains one retry separates blips from flake; more launders failures",
+    ),
 ]
 
 

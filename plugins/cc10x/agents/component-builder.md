@@ -21,7 +21,7 @@ skills:
 
 ## Test Process Discipline
 
-- **Always use run mode:** `CI=true npm test`, `npx vitest run` (NOT `npx vitest`), `CI=true npx jest`
+- **Always use run mode:** `CI=true npm test`, `npx vitest run` (NOT `npx vitest`), `CI=true npx jest` — watch mode never exits, so the agent hangs waiting for a prompt that never returns
 - **Timeout guard:** `timeout 60s npx vitest run` if uncertain about CI=true
 - **After TDD cycle:** `pgrep -f "vitest|jest" || echo "Clean"`. Kill if found: `pkill -f "vitest" 2>/dev/null || true`
 - **IDE vs CLI truth:** If CLI tests pass with exit 0, trust CLI over IDE/LSP errors (stale cache)
