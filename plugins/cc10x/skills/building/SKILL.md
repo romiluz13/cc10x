@@ -42,9 +42,9 @@ Read only what's needed:
 
 ### RED — Failing Test First
 
-Write one failing test for the current slice. Run it. **Exit 1 = RED achieved.**
+Write one failing test for the current slice. Run it. **RED = a behavioral failure** ("X is not a function", "expected 3, received undefined") — never a bare exit code.
 
-**False-RED guard (CRITICAL):** Exit 1 from import/syntax/collection ERROR is NOT a real RED. A genuine RED is a behavioral failure ("X is not a function", "expected 3, received undefined"). Record the observed failure reason verbatim. Fix the harness and re-run if false-RED.
+**False-RED guard (CRITICAL):** Exit 1 from an import/syntax/collection ERROR is a broken harness, not a RED — fix the harness and re-run. Record the observed failure reason verbatim.
 
 ### GREEN — Minimal Code
 
@@ -111,7 +111,7 @@ If the build scope grows beyond the approved phase — new files not in the plan
 
 ## Minimal Diffs
 
-Write minimal diffs. A bug fix doesn't need surrounding cleanup. A one-shot operation doesn't need a helper. Don't add error handling, fallbacks, or validation for scenarios that cannot happen. Trust internal code and framework guarantees. Only validate at system boundaries.
+Write minimal diffs. A bug fix doesn't need surrounding cleanup. A one-shot operation doesn't need a helper. Don't add error handling, fallbacks, or validation for scenarios that cannot happen. Trust internal code and framework guarantees in production code — no runtime re-validation for scenarios the types or the framework already exclude; only validate at system boundaries. When your feature depends on a framework behavior, pin it with a test instead: guarantees have edge cases, and the test costs less than the defensive code.
 
 ## Rationalization Table
 
@@ -123,7 +123,7 @@ Write minimal diffs. A bug fix doesn't need surrounding cleanup. A one-shot oper
 | "The existing tests cover this" | Then your new test will pass immediately — that's a false RED. |
 | "I manually tested it" | Manual testing doesn't survive the next refactor or CI run. |
 | "Adding tests would slow down delivery" | Debugging untested code takes longer than writing the test. |
-| "The framework handles this" | Verify with a test. Framework guarantees have edge cases. |
+| "The framework handles this" | Pin the depended-on behavior with a test — don't re-validate at runtime. |
 
 ## Red Flags — STOP and Reconsider
 

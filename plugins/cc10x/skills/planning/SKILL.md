@@ -117,7 +117,7 @@ Prefer the highest seam that still covers the risk. A unit test that doesn't exe
 
 **Prefer existing seams to new ones.** The fewer seams across the codebase, the better — the ideal number is one. If new seams are needed, propose them at the highest point you can.
 
-**Record proposed seams in each phase.** Each phase's plan carries a `### Test Seams` line naming the seam(s) that phase will test at. These feed the builder's **enforced** seam gate: the builder records the seams it actually used in its Router Contract `TEST_SEAMS` field and sets `SEAM_GATE_STATUS` (`confirmed` when it used the plan's seams; `disagreed` when a planned seam cannot exercise the phase's real risk — the builder records the disagreement and proposes a better seam or blocks). The router validates both fields fail-closed per `build_scope` (see `cc10x:building`). Planned seams are the starting contract, not a suggestion.
+**Record proposed seams in each phase.** Each phase's plan carries a `### Test Seams` line naming the seam(s) that phase will test at. These feed the builder's **enforced** seam gate (`TEST_SEAMS` + `SEAM_GATE_STATUS`, validated fail-closed per `build_scope`). Planned seams are the starting contract, not a suggestion — the builder must confirm or formally disagree; see `cc10x:building`.
 
 ## Wide-Refactor Phasing
 

@@ -48,7 +48,7 @@ If you cannot explain what is known versus unknown, you are not ready to fix.
 
 ## Track Hypotheses Explicitly
 
-Maintain 2-3 hypotheses until one clearly wins.
+Maintain your ranked hypotheses (3-5, per the main skill's Phase 3) until one clearly wins.
 
 ```text
 H1: [claim]
@@ -58,10 +58,9 @@ Next test:
 Confidence: [0-100]
 ```
 
-Rules:
-- below 50 = speculation
-- 50-79 = needs more evidence
-- 80+ = strong enough to implement a fix
+Score confidence against the canonical Hypothesis Confidence Scoring table in the
+main skill (SKILL.md, Phase 3) — it is the single source for the bands; act only
+at 80+.
 
 Never let the first plausible explanation become the only explanation.
 

@@ -20,9 +20,11 @@ Read only what's needed:
 
 ---
 
+Run ADVERSARIAL when producing findings on a diff; run RECEIVING when acting on findings someone else produced. The Code Smells catalog, AI-Generated Anti-Patterns, Metric Honesty Rule, and Deferred Findings handling below apply in both modes.
+
 ## Mode: ADVERSARIAL REVIEW
 
-Only report issues with confidence ≥80. Every finding states category, impact, and why it matters. Present a recommendation, not a menu. Be opinionated.
+Only report issues with confidence ≥80 — below that, a finding is more likely noise than signal, and noise burns the fix loop's time and trust. Do not inflate a score to smuggle a hunch through; a genuine security hunch goes to the Summary as an open question (see the Security exception under Confidence Scoring). Every finding states category, impact, and why it matters. Present a recommendation, not a menu. Be opinionated.
 
 **Signal quality rule:** One finding with `file:line` evidence and a fix is worth more than ten generic observations. Never report a pattern without showing where it lives.
 
@@ -171,7 +173,3 @@ Before implementing a suggestion, grep the codebase for the pattern the reviewer
 ### Precedence
 
 Pushing back ≠ refusing. You must either fix the issue or provide evidence why it's not an issue. "I prefer my way" is not a valid push-back. "This is project convention, see patterns.md line X" is valid.
-
-## Note
-
-The Fowler Code Smells catalog, AI-Generated Anti-Patterns, Metric Honesty Rule, and Deferred Findings handling are defined once above under **Mode: ADVERSARIAL REVIEW**. There is no second copy — apply those sections during both the adversarial pass and any receiving-review triage.

@@ -947,6 +947,172 @@ ASSERTIONS = [
         lambda text: text.count("load when") >= 4,
         "each of the four references states when to load it",
     ),
+    # --- Core-workflow contradiction fixes (ticket #78) ---
+    # 78.1 — building: RED defined once as behavioral failure, never bare exit code
+    A(
+        "building: RED = behavioral failure, single statement",
+        SKILLS / "building" / "SKILL.md",
+        contains_all(
+            "RED = a behavioral failure",
+            "never a bare exit code",
+            "broken harness, not a RED",
+            "Record the observed failure reason verbatim",
+        ),
+        "RED criterion stated once: behavioral failure, exit 1 from harness error is a broken harness",
+    ),
+    A(
+        "building: exit-1-equals-RED contradiction removed",
+        SKILLS / "building" / "SKILL.md",
+        contains_none("Exit 1 = RED achieved"),
+        "the bolded exit-code rule the false-RED guard had to un-teach is gone",
+    ),
+    # 78.2 — building: framework-trust reconciled with rationalization row
+    A(
+        "building: framework trust reconciled (production code vs pin with test)",
+        SKILLS / "building" / "SKILL.md",
+        contains_all(
+            "Trust internal code and framework guarantees in production code",
+            "depends on a framework behavior, pin it with a test",
+        ),
+        "trust guarantees in production code; pin depended-on framework behavior with a test",
+    ),
+    A(
+        "building: rationalization row aligned, no contradictory verify-everything row",
+        SKILLS / "building" / "SKILL.md",
+        contains_all(
+            '| "The framework handles this" | Pin the depended-on behavior with a test',
+        ),
+        "rationalization-table row agrees with the Minimal Diffs rule",
+    ),
+    A(
+        "building: old framework-trust contradiction absent",
+        SKILLS / "building" / "SKILL.md",
+        contains_none(
+            "Verify with a test. Framework guarantees have edge cases.",
+        ),
+        "the coin-flip counter-instruction is gone",
+    ),
+    # 78.3 — debugging: Sharpen/Tighten merged under one name
+    A(
+        "debugging: single tighten-the-loop passage",
+        SKILLS / "debugging" / "SKILL.md",
+        lambda text: "Sharpen the loop" not in text
+        and "sub-second beats sub-minute" in text
+        and "same input → same red, no drift" in text,
+        "Sharpen folded into Tighten: one name, content preserved",
+    ),
+    # 78.4 — debugging: one hypothesis count, one confidence table, phase order restored
+    A(
+        "debugging: unified hypothesis count in Phase 3",
+        SKILLS / "debugging" / "SKILL.md",
+        contains_all(
+            "Generate 3-5 ranked hypotheses",
+            "fewer than 3 means you anchored",
+        ),
+        "one count (3-5, anchoring rationale) stated in Phase 3",
+    ),
+    A(
+        "debugging: drifted counts and trailing sections removed",
+        SKILLS / "debugging" / "SKILL.md",
+        contains_none(
+            "Form H1/H2/H3",
+            "## Ranked Hypotheses Before Testing",
+            "## Repro Minimisation",
+        ),
+        "H1/H2/H3 three-count and post-Phase-4 orphan sections are gone",
+    ),
+    A(
+        "debugging: repro minimisation sits before Pattern Analysis",
+        SKILLS / "debugging" / "SKILL.md",
+        lambda text: 0
+        <= text.find("Repro Minimisation")
+        < text.find("Phase 2: Pattern Analysis"),
+        "minimisation rule reads before the phase that consumes it",
+    ),
+    A(
+        "investigation-hygiene: points at canonical confidence table",
+        SKILLS / "debugging" / "references" / "investigation-hygiene.md",
+        contains_all(
+            "canonical Hypothesis Confidence Scoring table",
+            "act only",
+        ),
+        "reference defers to SKILL.md's table instead of restating bands",
+    ),
+    A(
+        "investigation-hygiene: drifted bands and count removed",
+        SKILLS / "debugging" / "references" / "investigation-hygiene.md",
+        contains_none(
+            "50-79 = needs more evidence",
+            "below 50 = speculation",
+            "Maintain 2-3 hypotheses",
+        ),
+        "the conflicting 50/80 bands and 2-3 count no longer exist",
+    ),
+    # 78.5 — debugging: ending no longer disarms the gates
+    A(
+        "debugging: ending keeps pressure questions, gates pay for themselves",
+        SKILLS / "debugging" / "SKILL.md",
+        contains_all(
+            'Would this gate hold if the user said "just fix it now"?',
+            "Would this gate hold if the bug seemed obvious?",
+            "Would this gate hold at 3am with no sleep?",
+            "pay for themselves",
+        ),
+        "three pressure questions retained; ending carries the gates' rationale",
+    ),
+    A(
+        "debugging: advisory self-disarm removed",
+        SKILLS / "debugging" / "SKILL.md",
+        contains_none(
+            "The debugging gates here are advisory",
+            "the gate is advisory, not enforced",
+        ),
+        "the final-sentence advisory framing is gone",
+    ),
+    # 78.6 — code-review: mode selector replaces maintainer Note; >=80 floor has its why
+    A(
+        "code-review: mode selector line present",
+        SKILLS / "code-review" / "SKILL.md",
+        contains_all(
+            "Run ADVERSARIAL when producing findings on a diff",
+            "run RECEIVING when acting on findings someone else produced",
+            "apply in both modes",
+        ),
+        "one-line mode selector tells a standalone reader which mode is active",
+    ),
+    A(
+        "code-review: maintainer Note removed",
+        SKILLS / "code-review" / "SKILL.md",
+        contains_none("## Note", "There is no second copy"),
+        "maintainer-facing closing Note is gone; file ends on Precedence",
+    ),
+    A(
+        "code-review: >=80 floor carries its rationale",
+        SKILLS / "code-review" / "SKILL.md",
+        contains_all(
+            "more likely noise than signal",
+            "Do not inflate a score to smuggle a hunch through",
+        ),
+        "the confidence floor states why it exists and bans score inflation",
+    ),
+    # 78.7 — planning: builder-side seam enum restated once, pointer to building
+    A(
+        "planning: seam gate is a pointer, not a restated enum",
+        SKILLS / "planning" / "SKILL.md",
+        contains_all(
+            "the builder must confirm or formally disagree; see `cc10x:building`",
+        ),
+        "planning points at building for the enum instead of duplicating it",
+    ),
+    A(
+        "planning: duplicated enum semantics removed",
+        SKILLS / "planning" / "SKILL.md",
+        contains_none(
+            "`confirmed` when it used the plan's seams",
+            "records the disagreement and proposes a better seam or blocks",
+        ),
+        "the long parenthetical restating the builder-side enum is gone",
+    ),
 ]
 
 

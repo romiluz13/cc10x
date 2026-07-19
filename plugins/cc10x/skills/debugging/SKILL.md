@@ -34,13 +34,11 @@ A hypothesis without a repro loop is a guess. Before H1, build a fast, determini
 9. Differential old-vs-new (last-good vs HEAD behavior diff)
 10. Human-in-the-loop (LAST resort: scripted manual steps)
 
-**Sharpen the loop:** sub-second beats sub-minute. Assert the exact failing fact, not a noisy superset. Same input → same red, no drift.
-
 **Tighten the loop** — treat it as a product. Once you have a loop, keep tightening:
 
-- **Faster?** Cache setup, skip unrelated init, narrow the test scope.
-- **Sharper signal?** Assert the specific symptom, not "didn't crash".
-- **More deterministic?** Pin time, seed RNG, isolate filesystem, freeze network.
+- **Faster?** Cache setup, skip unrelated init, narrow the test scope — sub-second beats sub-minute.
+- **Sharper signal?** Assert the exact failing fact, not a noisy superset — never just "didn't crash".
+- **More deterministic?** Pin time, seed RNG, isolate filesystem, freeze network — same input → same red, no drift.
 A 30-second flaky loop is barely better than none; a 2-second deterministic one is a debugging superpower.
 
 **Red-capable completion criteria** — the loop is done when you can name **one command** (a script path, a test invocation, a curl) that you have **already run at least once**, and it is:
@@ -82,6 +80,10 @@ Don't guess where a value comes from — trace it with LSP. Don't grep for a fun
 5. **Feedback Loop** — build repro signal (construction ladder above). No loop → fail closed.
 6. **Variant Scan** — identify which variant dimensions must keep working (locale, config, env, platform, data shape, concurrency)
 
+**Repro Minimisation:** After reproducing the bug, shrink to the smallest scenario that still goes red before forming hypotheses. Cut inputs, callers, config, and environment one at a time. Re-run after each cut. Every remaining element is load-bearing — removing it should make the bug disappear.
+
+**Why:** A minimal repro shrinks the hypothesis space. The fewer moving parts, the fewer places the bug could hide.
+
 ### Phase 2: Pattern Analysis
 
 1. **Read the code around the failure** — not just the failing line, the surrounding logic
@@ -91,7 +93,7 @@ Don't guess where a value comes from — trace it with LSP. Don't grep for a fun
 
 ### Phase 3: Hypothesis and Testing
 
-Form H1/H2/H3 with 0-100 confidence. Proceed to fix only when one reaches 80+.
+Generate 3-5 ranked hypotheses (H1, H2, ...) with 0-100 confidence BEFORE testing any of them — fewer than 3 means you anchored. Rank by explanatory power — which hypothesis explains the most symptoms with the fewest assumptions. Testing the first plausible hypothesis anchors you; generating multiple first prevents anchoring bias and surfaces connections between hypotheses. Proceed to fix only when one reaches 80+.
 
 **Hypothesis Quality Criteria:**
 
@@ -143,18 +145,6 @@ Read `references/root-cause-playbooks.md` for scenario-specific guidance:
 
 Track failed hypotheses: `[DEBUG-N]: {what was tried} → {result}`. After 3 failed hypotheses, set `NEEDS_EXTERNAL_RESEARCH: true`. After research files provided and still stuck, return BLOCKED.
 
-## Repro Minimisation
-
-After reproducing the bug, shrink to the smallest scenario that still goes red before forming hypotheses. Cut inputs, callers, config, and environment one at a time. Re-run after each cut. Every remaining element is load-bearing — removing it should make the bug disappear.
-
-**Why:** A minimal repro shrinks the hypothesis space. The fewer moving parts, the fewer places the bug could hide.
-
-## Ranked Hypotheses Before Testing
-
-Generate 3-5 ranked hypotheses BEFORE testing any of them. Rank by explanatory power — which hypothesis explains the most symptoms with the fewest assumptions.
-
-**Why:** Testing the first plausible hypothesis anchors you. Generating multiple first prevents anchoring bias and surfaces connections between hypotheses.
-
 ## Causal Chain Gate
 
 Do not propose a fix until you can explain the full causal chain from trigger to symptom with no gaps. "Somehow X leads to Y" is a gap, not an explanation.
@@ -189,8 +179,8 @@ Do not propose a fix until you can explain the full causal chain from trigger to
 
 The gates in this skill must hold under pressure — deadline, complexity, "obvious bug" overconfidence. Before trusting a debug cycle:
 
-- **Would this gate hold if the user said "just fix it now"?** If not, the gate is advisory, not enforced.
+- **Would this gate hold if the user said "just fix it now"?**
 - **Would this gate hold if the bug seemed obvious?** The feedback loop gate exists precisely because "obvious" bugs are often wrong diagnoses.
 - **Would this gate hold at 3am with no sleep?** Rationalization tables exist because tired engineers skip process.
 
-If a gate can be talked out of by pressure, it belongs in a hook (enforced), not in prose (advisory). The debugging gates here are advisory — the router and hooks enforce the structural ones (TDD_RED_EXIT, FEEDBACK_LOOP.rung, DEBUG_CLOSEOUT).
+Pressure is exactly when these gates pay for themselves — a gate that can be talked out of under pressure was never protecting you.
