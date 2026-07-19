@@ -1207,6 +1207,52 @@ ASSERTIONS = [
         and "**Also add the path to `DOC_FILES_UPDATED`** — the router override accepts" not in text,
         "the mega-sentence is a numbered 3-step checklist keeping every field name and the router-reads-DOC_FILES_UPDATED why",
     ),
+    # --- Router prose contradiction fixes (ticket #80) ---
+    # 80.1 — §1 opener: nominate/decide rule replaces the self-contradicting first-match sentence
+    A(
+        "router: §1 opens with nominate/decide, first-match opener gone",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: "Route using the first matching signal" not in text
+        and "the request's primary deliverable DECIDES the route" in text
+        and "the lower Priority number wins" in text,
+        "a skimming model can no longer obey the retracted first-matching-signal sentence; the tie-break is the Priority column",
+    ),
+    # 80.2 — §12 step 6: 'stricter verdict' operationalized as the blocking verdict
+    A(
+        "router: verdict contradiction resolves to the blocking verdict",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: "treat the stricter verdict as authoritative" not in text
+        and "treat the blocking verdict as authoritative (FAIL over PASS, CHANGES_REQUESTED over APPROVE)" in text
+        and "never average or reconcile" in text,
+        "'stricter' is defined by which verdict blocks advancement; contradiction still logged in status_history",
+    ),
+    # 80.3 — §2 JUST_GO: the four exceptions co-located at the definition
+    A(
+        "router: JUST_GO definition carries its four exceptions",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: "auto-default all non-REVERT AskUserQuestion gates" not in text
+        and "EXCEPT: REVERT, failure-stop gates, destructive finishing options" in text
+        and "never merge/push/discard" in text
+        and "plans with unresolved Open Decisions (BUILD may not start)" in text,
+        "all four pre-existing exceptions (Trust rule, §14, build-workflow finishing) are stated where JUST_GO is defined",
+    ),
+    # 80.4 — §8: 'too short or malformed' made checkable
+    A(
+        "router: malformed-output rule is checkable",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: "If output is too short or malformed" not in text
+        and "If the line-1 envelope AND the first-5-lines fallback heading are both absent, or any required contract field is missing" in text,
+        "inline verification triggers on concrete absence conditions, not a vibe about output length",
+    ),
+    # 80.5 — §11b Cycle row: checkpoint-at-3 semantics, not a hard cap
+    A(
+        "router: Cycle row states checkpoint-at-3, not caps-at-3",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: "caps cycles at 3" not in text
+        and "pauses the loop for a human checkpoint at the 3rd remediation cycle" in text
+        and "cycles beyond 3 run only on explicit user go-ahead" in text,
+        "matches what remediation-and-research.md and §14 already enforce: >= 3 -> human checkpoint, not a hard stop",
+    ),
 ]
 
 

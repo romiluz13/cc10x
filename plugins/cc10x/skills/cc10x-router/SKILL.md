@@ -16,7 +16,7 @@ description: |
 
 ## 1. Intent Routing
 
-Route using the first matching signal. A keyword hit only NOMINATES a row — the primary-deliverable rules below decide. When keywords from more than one row match, route by the primary deliverable of the request; priority order breaks ties only between rows whose primary-deliverable conditions both genuinely hold (e.g. "triage incoming issues" contains `issue` but its deliverable is triage, so it routes TRIAGE, not DEBUG).
+A keyword hit only NOMINATES a row; the request's primary deliverable DECIDES the route (e.g. "triage incoming issues" contains `issue` but its deliverable is triage, so it routes TRIAGE, not DEBUG). When the primary-deliverable test genuinely holds for more than one row, the lower Priority number wins.
 
 | Priority | Signal | Keywords | Workflow | Chain |
 | ---------- | -------- | ---------- | ---------- | ------- |
@@ -87,7 +87,7 @@ JUST_GO:
 
 - Read `activeContext.md ## Session Settings`.
 - If `AUTO_PROCEED: true`, set `JUST_GO=true`.
-- While `JUST_GO=true`, auto-default all non-REVERT AskUserQuestion gates to the recommended option and log the choice in `## Decisions`.
+- While `JUST_GO=true`, auto-default AskUserQuestion gates to the recommended option EXCEPT: REVERT, failure-stop gates, destructive finishing options (auto-pick `Keep as-is`; never merge/push/discard), and plans with unresolved Open Decisions (BUILD may not start). Log each auto-choice in `## Decisions`.
 
 Trust rule:
 
@@ -453,7 +453,7 @@ Verdict extraction:
 1. Try the envelope on line 1.
 2. If envelope is missing or malformed, scan the first 5 lines for the heading.
 3. Extract `CRITICAL_ISSUES` from `### Critical Issues`.
-4. If output is too short or malformed, run inline verification rather than blindly approving.
+4. If the line-1 envelope AND the first-5-lines fallback heading are both absent, or any required contract field is missing, run inline verification rather than approving.
 5. Detect `SELF_REMEDIATED` from task state:
    - If the task remains `in_progress` and `blockedBy` is non-empty after the agent stops, treat it as self-remediated.
 6. For integration-verifier, parse scenario accounting:
@@ -546,7 +546,7 @@ The harness is a loop engine. These concepts govern how the loop runs:
 | **Checkpoint** | A point where the loop pauses for human input. Only on irreversible actions, real scope changes, or input only the user can provide. Checkpoints are NOT for narration or "want me to continue?" prompts. |
 | **Push right** | Defer checkpoints as far as possible — do maximal work before involving the human. The loop should never stop on a promise or plan when it could act. If the next step is reversible and follows from the original request, proceed without asking. |
 | **Brief** | The decision-ready summary the loop produces when pausing. Not raw output, not a diary — the one thing the human needs to decide next. Outcome first, supporting detail second. |
-| **Cycle** | One complete plan → build → verify → learn iteration. The circuit breaker (single definition: `references/remediation-and-research.md` — remediation count `>= 3` → human checkpoint) caps cycles at 3. |
+| **Cycle** | One complete plan → build → verify → learn iteration. The circuit breaker pauses the loop for a human checkpoint at the 3rd remediation cycle (single definition: `references/remediation-and-research.md`); cycles beyond 3 run only on explicit user go-ahead. |
 | **Convergence** | The loop's quality signal — when `quality.convergence_state` transitions from `needs_iteration` to `converged`, the loop is complete. Never declare convergence on prose alone. |
 
 **Autonomous mode:** When the user sets a goal that spans multiple iterations (e.g., `/goal` or explicit "do this end-to-end"), the loop runs without checkpointing for reversible actions. The user is not watching in real time and cannot answer questions mid-task. Before ending a turn, check the last paragraph — if it is a plan, analysis, question, list of next steps, or a promise about work not yet done, do that work now with tool calls. End the turn only when the task is complete or blocked on input only the user can provide.
@@ -577,7 +577,7 @@ The harness is a loop engine. These concepts govern how the loop runs:
    - apply workflow rules
    - for BUILD, run `phase_exit_gate`; if the current phase is not complete, persist `phase_status={partial|blocked}` and stop
    - never advance to the next phase or workflow step on apology prose alone
-   - if two agents in the same phase return contradictory verdicts (e.g., reviewer approves but verifier fails on the same evidence), treat the stricter verdict as authoritative and do not average or reconcile the signals. Log the contradiction in `status_history`.
+   - if two agents in the same phase return contradictory verdicts (e.g., reviewer approves but verifier fails on the same evidence), treat the blocking verdict as authoritative (FAIL over PASS, CHANGES_REQUESTED over APPROVE); never average or reconcile the signals. Log the contradiction in `status_history`.
    - **Cross-reviewer agreement promotion:** if `code-reviewer` and `failure-hunter` independently flag the SAME finding (same file:line, same defect, raised from different passes), that is stronger signal than either alone — promote the merged finding's confidence by one tier (80→90, or mark it `cross-confirmed` in the merged findings summary). Agreement between two mutually-blind reviewers is independent confirmation; use it. Promotion never overrides the quote-the-line gate — a finding without a verbatim `file:line` quote cannot be promoted, only demoted.
    - doc-syncer `STATUS=SKIPPED` is a passing state; advance to Memory Update immediately
    - doc-syncer STATUS=PARTIAL: soft pass; advance to Memory Update; persist doc_sync_partial=true in workflow artifact results.doc_syncer for user review
