@@ -4,11 +4,15 @@
       "Bash(mkdir -p .cc10x)",
       "Bash(mkdir -p docs/plans)",
       "Bash(mkdir -p docs/research)",
+      "Bash(mkdir -p docs/solutions)",
       "Bash(git status)",
       "Bash(git diff:*)",
       "Bash(git log:*)",
+      "Bash(git branch:*)",
       "Bash(git blame:*)",
       "Bash(git ls-files:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(python3:*)",
       "Edit(.cc10x/*)",
       "Write(.cc10x/*)"
     ]

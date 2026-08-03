@@ -83,6 +83,29 @@ def main() -> int:
         if v != version:
             errors.append(f"README 'cc10x v{v}' contradicts plugin.json {version}")
 
+    # Marketplace manifest versions match plugin.json (the marketplace install
+    # surface silently drifted from plugin.json because nothing asserted it).
+    marketplace_path = ROOT / ".claude-plugin" / "marketplace.json"
+    marketplace = json.loads(marketplace_path.read_text(encoding="utf-8"))
+    meta_version = marketplace.get("metadata", {}).get("version")
+    if meta_version != version:
+        errors.append(
+            f"marketplace.json metadata.version={meta_version} != plugin.json {version}"
+        )
+    plugin_entries = marketplace.get("plugins", [])
+    if not plugin_entries:
+        errors.append("marketplace.json has no plugins[] entries")
+    else:
+        entry_version = plugin_entries[0].get("version")
+        if entry_version != version:
+            errors.append(
+                f"marketplace.json plugins[0].version={entry_version} != plugin.json {version}"
+            )
+    # The marketplace description embeds the version ("cc10x v12.8.0 - ...").
+    for v in set(re.findall(r"cc10x v(\d+\.\d+\.\d+)", json.dumps(marketplace))):
+        if v != version:
+            errors.append(f"marketplace.json 'cc10x v{v}' contradicts plugin.json {version}")
+
     if errors:
         print("DOC CONSISTENCY: FAIL")
         for e in errors:

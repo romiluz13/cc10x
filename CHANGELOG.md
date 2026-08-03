@@ -1,5 +1,17 @@
 # Changelog
 
+## [12.8.0] - 2026-08-03
+
+### Added: cc10x-guide skill + documentation overhaul
+
+User feedback drove a documentation-first release: the README was a reference manual instead of a landing page, and the plugin shipped no way to ask Claude about cc10x itself. Two behavioral fixes fell out of the setup-correctness audit.
+
+- **New skill: `cc10x-guide`** (19 → 20 skills) — model-invoked help desk for cc10x itself. Answers "what is cc10x", "how do I configure it", "why isn't it activating" with short authoritative answers plus pointers to the canonical on-disk files (README sections, `claude-settings-template.json`, memory contract, router references). Lean (~145 lines), pointer-based, read-only by contract — negatively scoped in its description so work requests still route to `cc10x-router` and upgrades to the `update` skill.
+- **README restructured for the <5-minute user** — Quick Start moved directly under Install; How It Works reduced to one diagram + one paragraph; all architecture content (runtime model, agents, skills, hooks, diagrams, file layout) collapsed into a `<details>` deep dive; version history collapsed; HTML explorers linked from the hero. No content deleted — everything moved or folded.
+- **Fix: setup-created `patterns.md` violated the memory contract.** The README setup flow emitted `## Architecture Patterns` / `## Code Conventions` and omitted the contract-required `## Project SKILL_HINTS` Edit anchor — agents anchoring to that heading failed against setup-created files. The setup template now emits exactly the canonical headings from `memory-file-contracts.md`.
+- **Fix: permission templates unified.** README and `claude-settings-template.json` had drifted in both directions and both missed commands every workflow runs. Both now carry the same 14-entry list, adding `Bash(git rev-parse:*)` (phase base SHAs), `Bash(python3:*)` (router-run `review_package.py` / `phase_brief.py`), `Bash(git blame:*)`, `Bash(git branch:*)`, and `Bash(mkdir -p docs/solutions)`. `Write(docs/*)` remains unprompted-by-default deliberately — outward-facing artifacts keep their approval friction.
+- **`doc_consistency_check.py` extended** — now also asserts `marketplace.json`'s `metadata.version` and `plugins[0].version` match `plugin.json`, closing the version-drift seam on the marketplace install surface.
+
 ## [12.7.0] - 2026-07-19
 
 ### Prompt-engineering prose reconciliation (spec #77, tickets #78–#88)

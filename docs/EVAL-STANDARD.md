@@ -95,6 +95,9 @@ run by hand or by an authoring agent when a discipline skill is created or mater
 | `test-driven-development` | `skills/test-driven-development/evals/` | 3 |
 | `verification-before-completion` | `skills/verification-before-completion/evals/` | 3 |
 | `cc10x-router` (routing decisions) | `skills/cc10x-router/evals/` | 3 |
+| `cc10x-guide` | reference — exempt | 0 |
 
 Highest-leverage discipline skills first. When a new discipline skill lands, add its
-`evals/` dir and a row here.
+`evals/` dir and a row here. Reference skills (like `cc10x-guide`) carry no behavioral
+contract under pressure; they are exempt from evals but listed here so the exemption is
+explicit, not forgotten.
