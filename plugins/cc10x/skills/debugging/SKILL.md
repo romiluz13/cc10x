@@ -121,7 +121,7 @@ Tag every debug log with a unique prefix (e.g. `[DEBUG-a4f2]`) so cleanup is a s
 | 60-79 | Plausible: fits some evidence but gaps remain — investigate more |
 | <60 | Speculative: do not act — gather more evidence |
 
-**When to Restart Investigation:** If 3 hypotheses fail, you're pattern-matching, not investigating. Re-read the loop output. Re-trace with LSP. Consider you're looking at the wrong layer.
+**When to Restart Investigation:** If 3 hypotheses fail, you're pattern-matching, not investigating. Re-read the loop output. Re-trace with LSP. Consider you're looking at the wrong layer. If two or more fixes that share one premise failed the same gate, write the premise down — the premise, not the next fix variant, is now the suspect. Ask what the premise predicts beyond that gate: where the failure should concentrate, which variant should stay green. Test the prediction with the repro loop before the next fix; a prediction the observation contradicts disposes of the premise, not just the fix.
 
 ### Phase 4: Implementation
 

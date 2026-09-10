@@ -34,6 +34,8 @@ Only report issues with confidence ≥80 — below that, a finding is more likel
 
 **Stage 2: Code Quality** — Is the code well-built? Check: correctness, performance, security, clarity, test coverage.
 
+**One-fact rule:** On a consequential change, find the one fact the change is safe because of — a caller invariant, a lifecycle assumption, a data-shape contract at a boundary — and spend the review proving that fact instead of enumerating maybes. The fact is usually one a breakage grep will not surface. If you cannot prove it, the change is unreviewed; the maybes you listed do not change that.
+
 ### Review Order
 
 Top-down (spec → architecture → module → function → line) for first pass. Bottom-up (line → function → module) for detail pass. See `references/review-order-and-checkpoints.md`.

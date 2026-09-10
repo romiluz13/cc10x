@@ -102,6 +102,14 @@ After identifying the breaking commit, ask:
 - what contract drifted?
 - what related call sites now need the same fix?
 
+### Fails After Restart (Or Only Works Until One)
+
+Suspect persistent state before code: config files, caches, lock files, serialized
+state. Diff or clear the state and rerun before theorizing; if bisect finds no
+guilty commit, the trigger may be state, not a change. If clearing the state
+restores correct behavior, state validation belongs in the fix, not just the
+diagnosis.
+
 ## Multi-Component Boundary Tracing
 
 When a bug crosses components or services, instrument boundaries once to learn

@@ -26,7 +26,7 @@ COMPLETION → TRUTH → PROOF
 2. **Truth:** Is the work actually correct? (independent verification)
 3. **Proof:** Can you prove it with evidence? (exit codes, test output, screenshots)
 
-A PASS without proof is a claim.
+A PASS without proof is a claim. When a result surprises you in either direction — a pass that came too easily, or a failure you cannot explain — suspect the observation method before the system: confirm the check runs the right command against the current build and exercises the real code path before theorizing about the code.
 
 <!-- Authoring rule (maintenance, not runtime): every gate in this skill encodes an observed failure mode; understand what a gate prevents before removing it. -->
 
