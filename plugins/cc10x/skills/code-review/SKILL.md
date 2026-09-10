@@ -176,11 +176,15 @@ Feedback arrives through `gh` or pasted text; both misbehave in known ways. Symp
 
 | Symptom | Detection | Fallback |
 | --------- | ---------- | -------- |
-| Comments predate your latest push (stale review state) | Compare comment timestamps to your push: `gh pr view --json comments --jq '.comments[].createdAt'` vs latest commit date | Treat pre-push comments as already-addressed candidates; verify each against current HEAD before acting |
+| Comments predate your latest push (stale review state) | Compare comment `updatedAt`, not `createdAt` — an edited comment keeps its old creation time: `gh pr view --json comments --jq '.comments[].updatedAt'` vs the latest push; reviews and inline comments are feedback too, not just issue comments | Treat pre-push comments as already-addressed candidates; verify each against current HEAD before acting |
 | `gh` returns 401 / "To get started with GitHub CLI" | `gh auth status` | Report BLOCKED on auth and ask the user; never retry the call in a loop |
 | "API rate limit exceeded" | `gh api rate_limit --jq .rate` | Wait until the reset time once, or ask the user to fetch; never tight-loop retries |
 | Pasted line numbers no longer match (rebased/squashed diff) | Compare the comment's referenced hunk against the current file | Map by content, not line number; if ambiguous, ask the reviewer — never guess which line was meant |
 
+When the user explicitly requests repeated review cycles, name the iteration limit before the first cycle; at the limit, stop and report, resolving each remaining finding by fixing it or rebutting it with stated grounds. A single requested review starts no score loop.
+
 ### Precedence
 
 Pushing back ≠ refusing. You must either fix the issue or provide evidence why it's not an issue. "I prefer my way" is not a valid push-back. "This is project convention, see patterns.md line X" is valid.
+
+Never perform agreement. "You're absolutely right!" commits you to unverified feedback. Verify before implementing: restate the technical requirement, push back with reasoning, or just do the work and show the fix.
