@@ -170,6 +170,17 @@ Before implementing a suggestion, grep the codebase for the pattern the reviewer
 | Suggestion is correct but out of scope | Acknowledge, defer to a follow-up |
 | Suggestion is a style preference | Acknowledge, apply only if it matches project conventions |
 
+### Known misbehaviors (external review surfaces)
+
+Feedback arrives through `gh` or pasted text; both misbehave in known ways. Symptom → detection → fallback. Do not burn the fix loop retrying a misbehaving surface.
+
+| Symptom | Detection | Fallback |
+| --------- | ---------- | -------- |
+| Comments predate your latest push (stale review state) | Compare comment timestamps to your push: `gh pr view --json comments --jq '.comments[].createdAt'` vs latest commit date | Treat pre-push comments as already-addressed candidates; verify each against current HEAD before acting |
+| `gh` returns 401 / "To get started with GitHub CLI" | `gh auth status` | Report BLOCKED on auth and ask the user; never retry the call in a loop |
+| "API rate limit exceeded" | `gh api rate_limit --jq .rate` | Wait until the reset time once, or ask the user to fetch; never tight-loop retries |
+| Pasted line numbers no longer match (rebased/squashed diff) | Compare the comment's referenced hunk against the current file | Map by content, not line number; if ambiguous, ask the reviewer — never guess which line was meant |
+
 ### Precedence
 
 Pushing back ≠ refusing. You must either fix the issue or provide evidence why it's not an issue. "I prefer my way" is not a valid push-back. "This is project convention, see patterns.md line X" is valid.

@@ -180,6 +180,14 @@ Safety rules:
 - If a task has `status=in_progress` and no blockers, ask the user whether to resume, delete, or mark complete.
 - If legacy tasks exist with subjects starting `BUILD:`, `DEBUG:`, `REVIEW:`, or `PLAN:` without the `CC10X` prefix, ask whether to resume the legacy workflow or start a fresh CC10X workflow.
 
+Known misbehaviors (resume/poll surfaces). Symptom → detection → fallback. Do not burn chain cycles retrying a misbehaving surface, and name the exit bound (max attempts or time) before starting any poll; on timeout, stop and report the state.
+
+| Symptom | Detection | Fallback |
+| --------- | ---------- | -------- |
+| Sub-agent reported "completed" but no output arrived | Check the task's result payload directly (TaskGet / TaskOutput with block=false) before trusting status | Retrieve once more; still empty → treat as failed and re-dispatch. Never mark a phase PASS on a missing result |
+| Background task hangs (alive, no progress) | Elapsed time far past expected duration; log unchanged between checks | Stop the task and relaunch with narrower scope; do not extend the wait past the named bound |
+| Stop-state hint contradicts task metadata | Compare `.cc10x/stop-state.json` hint to `wf:` scope and `phase_cursor` | Discard the hint — task metadata and the workflow artifact stay authoritative |
+
 ## 5. Workflow Preparation
 
 ### Shared preparation
@@ -719,6 +727,9 @@ For DEBUG:
 - Workspace isolation and branch finishing are router-owned, optional, and gated — never auto-run. At BUILD/PLAN start the router MAY offer worktree isolation, deferring to a native worktree primitive (e.g. EnterWorktree) when one exists and skipping silently when none does — cc10x never hard-requires git worktrees. After the final phase verifies PASS, the router MAY offer a finishing menu (merge / open-PR / keep / discard) via a single AskUserQuestion; it must never execute a destructive git operation (merge into a base branch, branch delete, force-push, discard) without the user's explicit menu choice, and JUST_GO auto-defaults this gate to the non-destructive `keep as-is` option. Both offers are skipped for `build_scope=trivial`. See references/build-workflow.md `### BUILD-DONE finishing (optional)` for the canonical wording.
 - A terse imperative specifies the GOAL, not the METHOD. "just add the endpoint", "quickly fix X", "simply wire Y" name a destination; they do NOT waive `phase_exit_gate`, the TDD/verifier chain, the complexity gradient's trivial→full escalation, or any governing workflow. Terseness lowers ceremony, never rigor. Treat "just"/"quickly"/"simply" as urgency cues, not as permission to skip routing or gates.
 - Route-and-load the governing workflow BEFORE asking clarifications or exploring. The workflow reference (`references/build-workflow.md`, `references/debug-workflow.md`, `references/review-workflow.md`, `references/plan-workflow.md`) tells you HOW to ask and what readiness it needs; do not freelance clarifying questions or broad exploration ahead of loading it.
+- Every mandated step ends with its sanctioned exit. If a step cannot complete — tool unavailable, dependency missing, result stale — STOP and report the state; never continue the chain on stale or missing results. A step skipped silently is a gate defeated silently. [EASY TO MISS: "degraded but kept going" is the failure mode this rule exists for — a blocked step reported honestly is recoverable; a chain continued on missing evidence is not.]
+- All human-facing output (Briefs, PR bodies, commit messages, final reports) gets a writing-for-humans pass: plain words over fancy synonyms, active voice with the actor named, filler cut ("in order to" → "to"), at most one hedge, the mechanism or the number rather than the feeling. A sentence that could appear unchanged in any project's report says nothing about this one — cut it. No decorative emoji, straight quotes. Apply the pass to text you write or change; leave prose you did not touch alone.
+- Worktrees isolate files, not the machine. When agents share a host: confirm a dev-server port answers the process this task started before trusting what it serves — a green check served by another agent's process is not this task's evidence. Resolve lockfile conflicts by regenerating, never hand-merging. Never run schema experiments against a shared database.
 
 ### Capability-offer interaction principle
 

@@ -87,6 +87,13 @@ EVIDENCE:
 
 Every scenario needs non-empty Expected and Actual. Every scenario maps to exactly one EVIDENCE entry. SCENARIOS_PASSED must equal EVIDENCE.scenarios with exit 0 + Result=PASS.
 
+**Evidence integrity pass (run before citing anything as PASS):**
+
+- Re-open each cited artifact and confirm it shows the claimed content. A file path is a pointer, not a check; "look at the screen before choosing PASS."
+- A timestamp records when the claim was made, not that it was true.
+- Evidence produced by another session or another process is stale until re-run here.
+- If the artifact does not show the claim, downgrade the claim or re-run the check. Never cite it as PASS.
+
 ## Goal-Backward Lens
 
 Walk backward from the goal to verify it was achieved:
