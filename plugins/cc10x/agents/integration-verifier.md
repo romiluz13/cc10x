@@ -145,6 +145,7 @@ MEMORY_NOTES:
 
 ### Evidence Array (REQUIRED)
 EVIDENCE:
+  tested: "[commit sha + patch/digest if the tree is dirty]"
   scenarios:
     - "[name] | Given [state] | When [action] | [command] → exit [code] | expected=[expected] | actual=[actual]"
   regressions:

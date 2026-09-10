@@ -85,7 +85,7 @@ EVIDENCE:
     - "[case]: [command] → exit [code]: [result]"
 ```
 
-Every scenario needs non-empty Expected and Actual. Every scenario maps to exactly one EVIDENCE entry. SCENARIOS_PASSED must equal EVIDENCE.scenarios with exit 0 + Result=PASS. Run each check against the revision being verified; if the code changes after a check, re-run the affected scenarios before citing them.
+Every scenario needs non-empty Expected and Actual. Every scenario maps to exactly one EVIDENCE entry. SCENARIOS_PASSED must equal EVIDENCE.scenarios with exit 0 + Result=PASS. Run each check against the revision being verified; if the code changes after a check, re-run the affected scenarios before citing them. Record the tested identity with the evidence: the commit SHA, plus a patch or digest when the tree is dirty; evidence that does not identify the revision it was produced from is unverified, not PASS.
 
 ## Goal-Backward Lens
 
@@ -101,7 +101,7 @@ Walk backward from the goal to verify it was achieved:
 | Failure | What happens | Fix |
 | --------- | ------------- | ----- |
 | **False green** | Test passes without exercising the real code path | Test Honesty Gates (see integration-verifier) |
-| **Tautological check** | Expected value recomputed the way the code computes it — passes by construction | Expected values come from an independent source of truth: a known-good literal, a worked example, the spec |
+| **Tautological check** | Expected value recomputed the way the code computes it, e.g. `expect(add(a, b)).toBe(a + b)` — passes by construction | Expected values come from an independent source of truth: a known-good literal, a worked example, the spec |
 | **Scope skip** | "All tests pass" but untested scenarios exist | Goal-backward lens: name every scenario, verify each |
 | **Stale evidence** | "Tests pass" but you didn't run them this session | Re-run. Evidence must be from THIS session. |
 | **Claim without proof** | "It works" with no command/exit code | Evidence array is mandatory for PASS |

@@ -176,12 +176,12 @@ Feedback arrives through `gh` or pasted text; both misbehave in known ways. Symp
 
 | Symptom | Detection | Fallback |
 | --------- | ---------- | -------- |
-| Comments predate your latest push (stale review state) | Compare comment `updatedAt`, not `createdAt` — an edited comment keeps its old creation time: `gh pr view --json comments --jq '.comments[].updatedAt'` vs the latest push; reviews and inline comments are feedback too, not just issue comments | Treat pre-push comments as already-addressed candidates; verify each against current HEAD before acting |
+| Comments predate your latest push (stale review state) | Compare comment `updated_at`, not `created_at` — an edited comment keeps its old creation time. `gh pr view --json` does not expose `updatedAt`; use `gh api repos/{owner}/{repo}/issues/<n>/comments --jq '.[].updated_at'` for issue comments and `gh api repos/{owner}/{repo}/pulls/<n>/comments --jq '.[].updated_at'` for inline comments, and `gh pr view --json reviews --jq '.reviews[].submittedAt'` for review bodies (reviews expose submission time only), all vs the latest push | Treat pre-push comments as already-addressed candidates; verify each against current HEAD before acting |
 | `gh` returns 401 / "To get started with GitHub CLI" | `gh auth status` | Report BLOCKED on auth and ask the user; never retry the call in a loop |
 | "API rate limit exceeded" | `gh api rate_limit --jq .rate` | Wait until the reset time once, or ask the user to fetch; never tight-loop retries |
 | Pasted line numbers no longer match (rebased/squashed diff) | Compare the comment's referenced hunk against the current file | Map by content, not line number; if ambiguous, ask the reviewer — never guess which line was meant |
 
-When the user explicitly requests repeated review cycles, name the iteration limit before the first cycle; at the limit, stop and report, resolving each remaining finding by fixing it or rebutting it with stated grounds. A single requested review starts no score loop.
+When the user explicitly requests repeated review cycles, name the iteration cap before the first cycle; at the cap, stop and report, resolving each remaining finding by fixing it or rebutting it with stated grounds. A single requested review starts no score loop.
 
 ### Precedence
 

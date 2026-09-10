@@ -184,7 +184,7 @@ Known misbehaviors (resume/poll surfaces). Symptom → detection → fallback. D
 
 | Symptom | Detection | Fallback |
 | --------- | ---------- | -------- |
-| Sub-agent reported "completed" but no output arrived | Check the task's result payload directly (TaskGet / TaskOutput with block=false) before trusting status | Retrieve once more; still empty → inspect the workflow artifact and events log before declaring the output lost, then treat the task as failed through the existing resume/retry gate — any re-dispatch obeys the changed-input rule (never re-dispatch the same agent on unchanged input). Never mark a phase PASS on a missing result |
+| Sub-agent reported "completed" but no output arrived | Check the task's result payload directly (TaskGet / TaskOutput with block=false) before trusting status | Retrieve once more; still empty → inspect the workflow artifact and events log before declaring the output lost, then treat the task as failed through the existing resume/retry gate — any re-dispatch carries changed input (never re-dispatch the same agent on unchanged input). Never mark a phase PASS on a missing result |
 | Background task hangs (alive, no progress) | Elapsed time far past expected duration; log unchanged between checks | At the named bound, stop the poll and route the task through the existing resume checkpoint (resume, delete, or mark complete with the user); do not silently relaunch past the gate |
 | Stop-state hint contradicts task metadata | Compare `.cc10x/stop-state.json` hint to `wf:` scope and `phase_cursor` | Discard the hint — task metadata and the workflow artifact stay authoritative |
 
