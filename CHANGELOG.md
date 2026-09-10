@@ -1,5 +1,17 @@
 # Changelog
 
+## [12.8.1] - 2026-09-11
+
+### Adversarially-validated prompt-craft refinements
+
+Surgical instruction imports (persona, mattpocock-skills, superpowers techniques) refined across three passes, each audited by two independent devil's-advocate reviewers; every confirmed finding applied. Wording-level only — no routing, gate, hook, or contract changes; orchestration machinery untouched.
+
+- **verification:** evidence-integrity rules folded into the Common Failures table (pointer-as-proof, untested claim, tautological check with its recognizing example); checks bind to the revision being verified with affected-scenario reruns; evidence records the tested identity (commit SHA + patch/digest when the tree is dirty) — unbound evidence is unverified, not PASS.
+- **integration-verifier:** Evidence Array template gains a `tested:` field so revision identity survives handoff.
+- **code-review:** stale-feedback detection repaired — `gh pr view --json comments` exposes no `updatedAt` (the old selector returned blank); now uses REST `updated_at` for issue and inline comments and `submittedAt` for reviews; explicit iteration cap for user-requested repeated review cycles; non-performative-agreement guard on review feedback.
+- **debugging:** step-5 bridge clause connecting the confirmed root cause to the fix decision.
+- **router:** sanctioned-exit row applies documented fallbacks before STOP; recovery-table rows route through the existing resume/retry gates; the changed-input rule is stated inline instead of name-dropped (rule unchanged).
+
 ## [12.8.0] - 2026-08-03
 
 ### Added: cc10x-guide skill + documentation overhaul
