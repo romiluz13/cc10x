@@ -1,5 +1,16 @@
 # Changelog
 
+## [12.8.2] - 2026-09-11
+
+### pstack evidence-discipline imports
+
+Surgical wording imports from cursor-plugins/pstack (MIT, Lauren Tan), overlap-screened against every host skill and validated by two independent adversarial reviewers at both plan and implementation stages. Wording-level only — no routing, gate, hook, or contract changes.
+
+- **code-review:** one-fact rule — on a consequential change, find the one fact the change is safe because of and spend the review proving that fact instead of enumerating maybes; an unproven fact leaves the change unreviewed.
+- **verification:** observation-method suspicion — when a result surprises in either direction, confirm the check runs the right command against the current build and exercises the real code path before theorizing about the code.
+- **debugging:** premise prediction-testing — when fixes sharing one premise fail the same gate, test the premise's predictions (failure concentration, which variant stays green) with the repro loop before the next fix.
+- **debugging references:** "Fails After Restart" playbook — suspect persistent state before code; when clearing state restores behavior, state validation belongs in the fix.
+
 ## [12.8.1] - 2026-09-11
 
 ### Adversarially-validated prompt-craft refinements
