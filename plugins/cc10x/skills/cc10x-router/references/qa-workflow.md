@@ -1,10 +1,18 @@
 ### QA preparation
 
-**Status: DRAFT.** Sections marked `PLACEHOLDER` are agreed in shape but not yet specified. See `docs/plans/2026-08-10-qa-route-rfc.md` for the governing design and open decisions.
+**Status: active.** This file *is* the governing design for the QA route; there is no separate design document to consult.
 
 **Target repo (`CC10X_REPO_DIR`).** Same rule as BUILD: when set, every git command, dependency install, service start, and test run in this workflow operates on that absolute path; `.cc10x/` state stays at the session cwd. Record the resolved target under `results.target_repo`.
 
-0. **Workspace isolation offer.** Same policy as BUILD step 0 — prefer a native worktree primitive when one exists, skip silently when none does, never shell out to `git worktree add`. QA builds real files (harness scripts, tests), so isolation is warranted for `qa_scope=standard`. Skip for `qa_scope=probe`.
+**QA runs in the tree it was pointed at, and does not offer to move it.** BUILD step 0 offers to
+isolate the workspace because BUILD *authors* the change it isolates. QA does not author it: QA is
+most often invoked on work that is not yet committed, so a dirty tree is not an accident here — the
+uncommitted code is frequently *the system under test*. And a worktree is a different checkout, so
+accepting such an offer would not isolate the run, it would silently substitute what is being
+measured, and the harness would then be built and executed against a clean checkout of the parent
+branch. The absence of the offer is therefore deliberate and argued, not an omission — see ADR-2.
+Restoring it would require a QA finishing gate (merge/discard menu, cleanup provenance, post-merge
+verification, a git-approval token path) to come with it, and QA has none of that.
 
 0a. **Capability discovery (READ-ONLY, runs once, before any QA agent dispatch).**
 
@@ -306,9 +314,6 @@ harmless but redundant; keeping the three and *not* adding preflight orphans the
 build would run before anything measured the environment, which is the whole failure this phase
 exists to prevent. Do not re-add them.
 
-```text
-```
-
 **Extra rounds when the mutation floor is unmet (`phase:re-qa-build`).**
 
 The harness builder returns `gaps_found`, not `passed`, when the mutation floor is unmet. The floor's
@@ -327,7 +332,7 @@ TaskUpdate({ taskId: qa_rebuild_task_id, addBlockedBy: [qa_build_task_id] })
 ```
 
 - **`origin:qa-harness-builder`. Do not "simplify" this to `origin:router`.** The `kind:remfix`
-  dispatcher row in SKILL.md §7 (HEAD `:341`) matches `origin:router`, `origin:code-reviewer` and
+  dispatcher row in SKILL.md §7 matches `origin:router`, `origin:code-reviewer` and
   `origin:integration-verifier` and sends them to `component-builder` — a product builder dispatched
   into a QA phase, with a licence to edit product code that this phase spends a hard boundary
   forbidding. `qa-harness-builder` is not a member of that row's origin set, so the row cannot fire,
@@ -370,14 +375,14 @@ Reuses `code-reviewer` and `failure-hunter` unchanged, in parallel, in one messa
 ```text
 TaskCreate({
   subject: "CC10X code-reviewer: Review test harness",
-  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:qa-review\nplan:.cc10x/qa/{workflow_uuid}/test-plan.md\nscope:N/A\nreason:Review harness code quality\n\nReview the harness code. Judge it as production code — it is.",
+  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:qa-review\nplan:.cc10x/qa/{workflow_uuid}/test-plan.md\nscope:N/A\nreason:Review harness code quality\n\nReview the harness code at the paths listed in the harness builder's `ARTIFACTS_CREATED`, and the manifest at its `HARNESS_MANIFEST`. Judge it as production code — it is.",
   activeForm: "Reviewing test harness"
 }) -> qa_reviewer_task_id
 TaskUpdate({ taskId: qa_reviewer_task_id, addBlockedBy: [qa_build_task_id] })
 
 TaskCreate({
   subject: "CC10X failure-hunter: Hunt silent failures in harness",
-  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:qa-hunt\nplan:.cc10x/qa/{workflow_uuid}/test-plan.md\nscope:N/A\nreason:Audit harness for silently-passing tests\n\nHunt for the harness-specific failure mode: assertions that cannot fail, swallowed errors in setup, teardown that ignores its own exit code, waits that mask races, and skipped tests that report as passed.",
+  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:qa-hunt\nplan:.cc10x/qa/{workflow_uuid}/test-plan.md\nscope:N/A\nreason:Audit harness for silently-passing tests\n\nThe surface is the harness code at the paths listed in the harness builder's `ARTIFACTS_CREATED`, and the manifest at its `HARNESS_MANIFEST`. Hunt for the harness-specific failure mode: assertions that cannot fail, swallowed errors in setup, teardown that ignores its own exit code, waits that mask races, and skipped tests that report as passed.",
   activeForm: "Hunting harness failures"
 }) -> qa_hunter_task_id
 TaskUpdate({ taskId: qa_hunter_task_id, addBlockedBy: [qa_build_task_id] })

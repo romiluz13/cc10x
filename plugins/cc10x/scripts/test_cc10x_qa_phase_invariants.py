@@ -113,6 +113,27 @@ PP-28 a defect found at any QA phase reaches the sink the DEBUG offer reads:
       `qa.preflight` into `qa.bug_candidates` on PREFLIGHT return, not only on
       the executor's. Both keys verbatim -- a merge with one key misspelled is
       the drift PP-21(a) already caught once in this same file
+PP-29 every filesystem path the QA law NAMES resolves on disk: backticked
+      path-shaped tokens from qa-workflow.md and SKILL.md's QA LINES (a frozen
+      regex, not prose), resolved against FOUR bases -- repo root,
+      plugins/cc10x/, ${CLAUDE_PLUGIN_ROOT}, and the directory of the file that
+      named the token. The fourth base is not optional: `references/qa-workflow.md`
+      resolves under none of the other three. Templated (`{...}`) and
+      glob-bearing (`*`) tokens are excluded, frozen, and both exclusions were
+      measured rather than assumed. P10 was one dangling RFC pointer; this is
+      that correction made mechanical, so the next one is caught the day it is
+      written
+PP-30 the two surface corrections ADR-2 and ADR-3 part 3 decide: (a) QA offers
+      no workspace isolation AND SAYS WHY -- a negative half over the offer's
+      vocabulary and a positive half over the rationale block, BOTH required,
+      because a negative alone rewards silent deletion and ADR-2's whole point
+      is that the absence is argued; (b) both harness-review dispatches NAME
+      their review surface (`ARTIFACTS_CREATED`, `HARNESS_MANIFEST`), asserted
+      inside each dispatch's OWN window -- the two blocks share one ```text
+      fence and both tokens live in qa-harness-builder.md, so anything wider is
+      trivially satisfied. (b) is dispatch text ONLY; that the fields are
+      required is PP-23(b)'s job, and the contrast run below is the measurement
+      of why the split is not redundancy
 PP-22 every agent file SPECIFIES the line-1 `CONTRACT {` envelope inside its
       OUTPUT SPECIFICATION -- the window from the last
       Output/Router Contract/Phase Contract heading before the file's first
@@ -566,6 +587,90 @@ is a before/after comparison of exactly these numbers:
 PP-27(a)'s windows are measured over `_decommented()` text and PP-28's over
 `_normative()`; only the two marked as measurements sit after the deletion point
 and can move at all.
+
+Negative controls for PP-29 and PP-30 (six runs, all red, each naming the
+injected thing; two of the six are the runs that carry the design and neither
+tests the property so much as justifies its shape):
+  I-39 a worktree-offer sentence re-added above the rationale block
+                                          -> PP-30(a) red on the NEGATIVE half
+                                             alone, naming all four forbidden
+                                             offer patterns with their line
+                                             numbers, while the same detail
+                                             string reports the rationale block
+                                             green at 866B.
+  I-40 THE ONE THAT PROVES THE PROPERTY DOES NOT REWARD SILENT DELETION, AND IT
+       IS MANDATORY. The 866-byte rationale block deleted whole, the offer left
+       absent -- i.e. M6 "fixed" by deleting step 0 and saying nothing
+                                          -> PP-30(a) red on the POSITIVE half,
+                                             "0/4 forbidden offer patterns ...
+                                             the absence is then UNARGUED".
+       A purely negative property -- which is the obvious way to write this --
+       is GREEN against this, and green is exactly wrong: the next reader finds
+       an unexplained absence, reads BUILD's step 0, and puts the offer back.
+       ADR-2's argument is the artifact, not the deletion.
+  I-41 `references/qa-mutation-floor.md` cited in qa-workflow.md, no such file
+                                          -> PP-29 red naming the token and the
+                                             file that names it, 5/6 resolving.
+       This reproduces P10's defect in its own class rather than restoring the
+       RFC line, so the property is shown to catch the CLASS and not one string.
+  I-42 `HARNESS_MANIFEST` deleted from the `qa-hunt` dispatch ONLY
+                                          -> PP-30(b) red naming `qa-hunt`
+                                             (window 679B -> 635B) with
+                                             `qa-review` reported green at 479B
+                                             in the same detail string.
+       CONTRAST: under the injection `grep -c HARNESS_MANIFEST qa-workflow.md`
+       still returns 1, and both dispatch blocks live inside ONE ```text fence,
+       so a whole-file test and a whole-fence test are both green. PP-18's
+       recorded I-2 shape, now one nesting level in from PP-23(b)'s whole-ROW
+       version of it.
+  I-43 THE CONTRAST PP-23(b)'s OWN PHASE COULD NOT RUN, AND IT IS THE
+       MEASUREMENT THAT JUSTIFIES SPLITTING M7 ACROSS TWO PHASES. With the
+       dispatch text landed, `ARTIFACTS_CREATED` was deleted from the
+       `MODE: harness` required-field slice of the hook-policy row (I-29 again)
+                                          -> PP-23(b) red on the slice (435B ->
+                                             414B) while PP-30(b) stayed GREEN.
+       So a dispatch-text-only property is perfectly green while the field it
+       promises the reviewer is OPTIONAL -- a prompt pointing at nothing, which
+       is the same failure as BUILD's empty diff package one authority over.
+       Neither half can be "improved" into the other: PP-30(b) cannot see an
+       optional field, and PP-23(b) cannot see a dispatch that never points at
+       it. The earlier phase recorded that this run was owed; this is it.
+  I-44 the glob entry removed from PP29_EXCLUDE, i.e. the exclusion set written
+       the way revision 1 of the property specified it
+                                          -> PP-29 red naming
+                                             `.cc10x/workflows/*.json`.
+       MANDATORY: it proves the exclusion is LOAD-BEARING rather than defensive
+       decoration. A glob names a runtime family under a state root absent from
+       a clean checkout, so the property would have been red at HEAD, forever,
+       on a token that is not a defect.
+
+The M12 fence deletion, and the measurement that cleared it (Phase 8). The
+stray empty ```text/``` pair was deleted from qa-workflow.md. `_normative()`
+consumes fenced blocks in sequential non-greedy pairs, so a deletion that broke
+parity would silently re-pair every later fence and leave every window-anchored
+property green OVER DIFFERENT TEXT. The fence was located dynamically (its line
+number had moved three times across earlier phases: 290 -> 296 -> 309 -> 317)
+and confirmed to be the ONLY empty pair; the fence-line count was 36 before and
+34 after, even on both sides. Every quantity below was re-measured immediately
+before the deletion and again immediately after, and the deletion was made in
+ISOLATION -- no other edit in the same step -- because an earlier edit in this
+same phase (deleting a stale `:341` line reference) had already moved the
+re-qa-build window from 3640B to 3626B, and a confounded comparison measures
+nothing:
+  PP-18(a) window                      2187B -> 2187B  (control: upstream)
+  PP-18(b) body                        1907B -> 1907B  (control: upstream)
+  PP-18(c) scope                       2046B -> 2046B  (control: upstream)
+  PP-25(a) preflight window            3023B -> 3023B  (control: upstream)
+  PP-25(a)/(b) re-qa-build window      3626B -> 3626B  (MEASUREMENT: downstream,
+                                                        and it CONTAINS a fence)
+  PP-27(a) QA-specific-rules bullet    1157B -> 1157B  (MEASUREMENT: downstream)
+  PP-28 *Persist first* window          959B ->  959B  (MEASUREMENT: downstream)
+  PP-30(b) qa-review / qa-hunt windows  479B/679B -> 479B/679B (downstream;
+                                                        established this phase)
+The four controls sit before the deletion point and `re.sub` scans left to
+right, so they CANNOT move -- reporting them as evidence would be claiming
+measurement where only control is held. The three genuine measurements are the
+ones that clear the risk.
 """
 
 import importlib.util
@@ -1158,6 +1263,143 @@ PP28_TOKENS = ("`qa.preflight`", "`qa.bug_candidates`")
 # Without this token the window is satisfied by the pre-existing executor
 # sentence, which already names both keys' file and one of the keys.
 PP28_PREFLIGHT_RETURN = "On `qa-harness-builder` preflight return"
+
+# PP-29. P10, generalised. Every filesystem path the QA law NAMES must resolve
+# on disk. P10 was one dangling pointer -- `docs/plans/2026-08-10-qa-route-rfc.md`,
+# cited by both qa-workflow.md's status line and SKILL.md's QA note, and absent
+# from the repo since before either line was written. A pointer to a document
+# that does not exist is worse than no pointer: it sends the reader looking for
+# a governing design and tells them nothing when they fail to find it. This
+# property is that one-shot correction made mechanical, so the next one is
+# caught the day it is written rather than by an audit.
+#
+# SCOPE, frozen and argued. Two surfaces: the whole of `qa-workflow.md`, and the
+# QA LINES of SKILL.md. "SKILL.md's QA lines" is undefined prose unless it is
+# pinned to a regex, so it is: every line matching PP29_SKILL_QA_LINE below
+# (33 lines at HEAD). SKILL.md is a route-neutral file and the closed file set
+# of this change covers only its QA-related lines; extracting from the whole
+# file would make this property red on a BUILD or PLAN path defect it has no
+# mandate to fix, in a file it may not edit.
+#
+# FOUR resolution bases, and the fourth is the one that took a review pass to
+# find. `references/qa-workflow.md` (SKILL.md :235, :312, :420) resolves under
+# NONE of repo-root, `plugins/cc10x/`, or `${CLAUDE_PLUGIN_ROOT}` --
+# `plugins/cc10x/references/` does not exist. It is relative to the directory of
+# the file that names it, `plugins/cc10x/skills/cc10x-router/`. Without that
+# base this property is RED AT HEAD on a path that exists, which is red for the
+# wrong reason from a property that is otherwise right. `${CLAUDE_PLUGIN_ROOT}`
+# resolves to PLUGIN at runtime, so it is the same base and is not listed twice.
+PP29_SKILL_QA_LINE = re.compile(r"\bQA\b|\bqa[-_]")
+# Path-shaped: a backticked token containing a `/` and a file extension. The
+# `/` requirement is what keeps bare filenames and code identifiers out; the
+# extension is what keeps `.cc10x/qa/` style directory prefixes out.
+PP29_PATH_TOKEN = re.compile(r"`([^`\s]*/[^`\s]*\.[A-Za-z0-9]+)`")
+# The exclusion set is FROZEN and covers TWO kinds of token, not one. Revision 1
+# of this property excluded only (a) and would have been red at HEAD on the glob.
+#   (a) TEMPLATED -- any `{...}` segment (`{workflow_uuid}`, `{env_key}`). These
+#       resolve only at runtime, against a workflow that has already started.
+#   (b) GLOB-BEARING -- any `*`. `.cc10x/workflows/*.json` is the only member
+#       today. A glob names a runtime FAMILY under a state root that does not
+#       exist in a clean checkout, so `os.path.exists` on it is meaningless, and
+#       resolving it AS a glob would assert that a workflow has already run --
+#       turning a static document property into a test of session state.
+# Both exclusions are load-bearing and both were measured: control (v) removes
+# (b) and the property goes red naming the glob.
+PP29_EXCLUDE = (re.compile(r"\{[^}]*\}"), re.compile(r"\*"))
+# Two anti-vacuity floors, each grounded on a census taken against this tree
+# rather than rounded: 8 path-shaped tokens at HEAD, 7 after the RFC pointer is
+# removed, of which 5 survive the exclusions and all 5 resolve. A floor set just
+# under the complete count silently does the membership half's job (PP-21(b)'s
+# recorded mistake), so both floors sit clear of it: their only duty is proving
+# the extraction and the exclusion set still produce a non-empty set to ask the
+# existence question about.
+PP29_MIN_EXTRACTED = 6
+PP29_MIN_RESOLVED = 4
+
+# PP-30(a). M6 / ADR-2. QA offers no workspace isolation, AND SAYS WHY.
+#
+# `qa-workflow.md` step 0 was a verbatim copy of BUILD's worktree offer ("Same
+# policy as BUILD step 0"). BUILD's offer is safe because BUILD *authors* the
+# change it isolates. QA does not author it: P3 establishes that QA's tree is
+# dirty BY CONSTRUCTION, because the uncommitted work is frequently the system
+# under test. A worktree is a DIFFERENT CHECKOUT, so accepting the offer does
+# not isolate the run -- it silently substitutes what is being measured. The
+# offer was copied without its precondition.
+#
+# BOTH HALVES ARE REQUIRED, and that is the property's whole design. A purely
+# negative assertion ("no offer phrasing") rewards SILENT DELETION: the next
+# reader finds an unexplained absence, reads BUILD's step 0, and puts it back.
+# ADR-2's point is that the absence is ARGUED. Control (ii) deletes the
+# rationale while leaving the offer absent and this property must go red -- it
+# is the run that separates this construction from the cheap one.
+#
+# ASYMMETRIC NORMALISATION, deliberately. The NEGATIVE half reads the
+# de-commented text, fences INCLUDED: an offer re-parked into a dispatch fence
+# is a real offer, because dispatch text is the normative surface for a dispatch
+# (PP-21(a) and PP-27(a) take the same position). The POSITIVE half reads
+# `_normative()`: a rationale inside <!-- --> or inside a fence is not law, and
+# a gutted argument parked in a code block is exactly PP-18's recorded I-1/I-4
+# shape.
+#
+# The forbidden patterns are the OFFER's vocabulary, never the bare word
+# "worktree" -- the rationale block itself must say "a worktree is a different
+# checkout", so a property forbidding the word would forbid its own fix. That is
+# the negative-assertion trap PP-15(c) and PP-24 both record: a scope containing
+# a legitimate use fails forever.
+PP30A_FORBIDDEN = (
+    re.compile(r"(?i)workspace isolation"),
+    re.compile(r"(?i)native worktree primitive"),
+    re.compile(r"(?i)git worktree add"),
+    re.compile(r"(?i)isolation is warranted"),
+)
+PP30A_RATIONALE = re.compile(
+    r"(?m)^\*\*QA runs in the tree it was pointed at, and does not offer to move it\.\*\*"
+)
+# The three clauses that make the absence an ARGUMENT rather than a note: what
+# QA does instead, why a worktree cannot serve it, and the decision record a
+# reader who disagrees must argue with.
+PP30A_TOKENS = (
+    "the system under test",
+    "a worktree is a different checkout",
+    "ADR-2",
+)
+
+# PP-30(b). M7 / ADR-3 part 3. Both harness-review dispatches NAME their surface.
+#
+# `qa-review` and `qa-hunt` were dispatched with `scope:N/A` and no named
+# surface, so each read-only agent chose its own. The correct surface is the
+# harness builder's own enumeration: `ARTIFACTS_CREATED` (every path it wrote)
+# and `HARNESS_MANIFEST`. BUILD's instrument -- `git_base_sha` plus a
+# `BASE..HEAD` diff package -- is wrong here: `qa-harness-builder` never
+# commits, so the diff is empty by construction and an empty diff package reads
+# as "nothing changed".
+#
+# SCOPE IS THE DISPATCH TEXT ONLY, and the division is deliberate. That these
+# two fields are REQUIRED, non-empty and non-null in `MODE: harness` is
+# PP-23(b)'s assertion, over the hook-policy rows and the agent's declaration
+# line. This property asserts only that the two dispatch prompts NAME them.
+# Neither should later be "improved" into the other's job: a dispatch-text-only
+# property stays GREEN while the field it names is optional (measured -- see the
+# contrast recorded in the docstring), and a contract-only property stays green
+# while no prompt ever points the reviewer at the field.
+#
+# WINDOW-ANCHORED PER DISPATCH, never whole-file and never whole-fence. Both
+# tokens appear in `qa-harness-builder.md`'s contract block, so a repo-wide
+# search is trivially satisfied; and both dispatch blocks share one ```text
+# fence, so a fence-wide search lets `qa-review` satisfy `qa-hunt`'s half --
+# PP-18's recorded I-2 shape, and exactly what control (iv) injects. Anchored
+# the way PP-27(a)'s dispatch windows are: on the unique task-id terminator
+# line, walked BACK to the opening `TaskCreate({`, because the opening line is
+# identical in every dispatch block in the file while the terminator is unique.
+#
+# Read over `_decommented()` for PP-27(a)'s reason: the dispatch lives inside a
+# ```text fence, which is its normative surface.
+PP30B_DISPATCHES = (
+    ("qa-review", "qa_reviewer_task_id"),
+    ("qa-hunt", "qa_hunter_task_id"),
+)
+PP30B_TOKENS = ("`ARTIFACTS_CREATED`", "`HARNESS_MANIFEST`")
+
 
 
 # PP-15(a). Branch currency on the measuring agent. One token per structural
@@ -2653,6 +2895,156 @@ def main() -> int:
             + ("" if pp28_ok else f" — missing {pp28_missing}")
         )
     check("PP-28", pp28_ok, pp28_detail)
+
+    # PP-29 -- every filesystem path the QA law NAMES resolves on disk. See
+    # PP29_PATH_TOKEN for the frozen scope ("SKILL.md's QA lines" is a regex,
+    # not prose), the FOUR resolution bases, and why the exclusion set covers
+    # glob-bearing tokens as well as templated ones.
+    repo_root = PLUGIN.parent.parent
+    pp29_sources = {
+        QA_WORKFLOW: QA_WORKFLOW.read_text(encoding="utf-8"),
+        SKILL_MD: "\n".join(
+            ln
+            for ln in SKILL_MD.read_text(encoding="utf-8").splitlines()
+            if PP29_SKILL_QA_LINE.search(ln)
+        ),
+    }
+    # token -> the file that NAMES it; the naming file's own directory is one of
+    # the four bases, so the provenance has to survive extraction.
+    pp29_extracted: dict[str, Path] = {}
+    for _src, _text in pp29_sources.items():
+        for _tok in PP29_PATH_TOKEN.findall(_text):
+            pp29_extracted.setdefault(_tok, _src)
+    pp29_excluded = sorted(
+        t for t in pp29_extracted if any(x.search(t) for x in PP29_EXCLUDE)
+    )
+    pp29_resolvable = {
+        t: s for t, s in pp29_extracted.items() if t not in pp29_excluded
+    }
+    if len(pp29_extracted) < PP29_MIN_EXTRACTED:
+        pp29_ok = False
+        pp29_detail = (
+            f"PRECONDITION failed: extracted only {len(pp29_extracted)} "
+            f"path-shaped tokens from {QA_WORKFLOW.name} + {SKILL_MD.name}'s QA "
+            f"lines (expected >= {PP29_MIN_EXTRACTED}) — the token regex or the "
+            f"QA-line filter has stopped matching, so any existence result "
+            f"below would be vacuous"
+        )
+    elif len(pp29_resolvable) < PP29_MIN_RESOLVED:
+        pp29_ok = False
+        pp29_detail = (
+            f"PRECONDITION failed: only {len(pp29_resolvable)} of "
+            f"{len(pp29_extracted)} extracted tokens survive the exclusion set "
+            f"(expected >= {PP29_MIN_RESOLVED}) — the exclusions have widened "
+            f"until nothing is left to resolve; excluded: {pp29_excluded}"
+        )
+    else:
+        pp29_dangling = []
+        for _tok, _src in sorted(pp29_resolvable.items()):
+            _bases = (repo_root, PLUGIN, _src.parent)
+            if not any((b / _tok).exists() for b in _bases):
+                pp29_dangling.append(
+                    f"`{_tok}` (named in {_src.name}; resolves under none of "
+                    f"repo root, {PLUGIN.name}/, or {_src.parent.name}/)"
+                )
+        pp29_ok = not pp29_dangling
+        pp29_detail = (
+            f"{len(pp29_extracted)} path-shaped tokens named by the QA law, "
+            f"{len(pp29_excluded)} excluded as templated or glob-bearing "
+            f"({pp29_excluded}), {len(pp29_resolvable) - len(pp29_dangling)}/"
+            f"{len(pp29_resolvable)} of the rest resolve on disk"
+            + ("" if pp29_ok else " — dangling: " + "; ".join(pp29_dangling))
+        )
+    check("PP-29", pp29_ok, pp29_detail)
+
+    # PP-30(a) -- QA offers no workspace isolation, AND SAYS WHY. Both halves.
+    # See PP30A_FORBIDDEN for why the negative half reads the de-commented text
+    # (fences included) while the positive half reads _normative(), and why the
+    # forbidden vocabulary is the OFFER's rather than the word "worktree".
+    pp30a_faults: list[str] = []
+    pp30a_hits: list[str] = []
+    for _pat in PP30A_FORBIDDEN:
+        for _m in _pat.finditer(dag_text):
+            _ln = dag_text.count("\n", 0, _m.start()) + 1
+            pp30a_hits.append(f"`{_m.group(0)}` at {QA_WORKFLOW.name}:~{_ln}")
+    if pp30a_hits:
+        pp30a_faults.append(
+            "the workspace-isolation offer is back in "
+            f"{QA_WORKFLOW.name}: " + "; ".join(pp30a_hits)
+        )
+    _rat = list(PP30A_RATIONALE.finditer(qa_norm))
+    if len(_rat) != 1:
+        rat_window = ""
+        pp30a_faults.append(
+            f"the ADR-2 rationale block is not present exactly once in the "
+            f"NORMATIVE text of {QA_WORKFLOW.name} ({len(_rat)} matches) — the "
+            f"offer may well be absent, but the absence is then UNARGUED, which "
+            f"is the silent-deletion outcome this half exists to forbid"
+        )
+    else:
+        _end = qa_norm.find("\n\n", _rat[0].end())
+        rat_window = qa_norm[_rat[0].start() : _end if _end != -1 else len(qa_norm)]
+        _miss = [t for t in PP30A_TOKENS if t not in rat_window]
+        if _miss:
+            pp30a_faults.append(
+                f"the ADR-2 rationale block is present but does not argue the "
+                f"absence: missing {_miss} (block={len(rat_window)}B)"
+            )
+    pp30a_ok = not pp30a_faults
+    pp30a_detail = (
+        f"{QA_WORKFLOW.name} offers no workspace isolation "
+        f"(0/{len(PP30A_FORBIDDEN)} forbidden offer patterns) and argues the "
+        f"absence in place (block={len(rat_window)}B)"
+        + ("" if pp30a_ok else " — " + "; ".join(pp30a_faults))
+    )
+    check("PP-30(a)", pp30a_ok, pp30a_detail)
+
+    # PP-30(b) -- both harness-review dispatches NAME their review surface.
+    # Window-anchored PER DISPATCH: both blocks share one ```text fence, so a
+    # fence-wide test lets `qa-review` satisfy `qa-hunt`'s half. Scope is the
+    # dispatch text only; that the fields are REQUIRED is PP-23(b)'s assertion.
+    pp30b_precondition: list[str] = []
+    pp30b_gaps: list[str] = []
+    pp30b_sizes: list[str] = []
+    for _label, _task_var in PP30B_DISPATCHES:
+        _ends = list(re.finditer(rf"(?m)^\}}\) -> {re.escape(_task_var)}$", dag_text))
+        if len(_ends) != 1:
+            pp30b_precondition.append(
+                f"{QA_WORKFLOW.name} ({_label} dispatch): the terminator "
+                f"`}}) -> {_task_var}` matched {len(_ends)} times, expected "
+                f"exactly 1 — any result over the window would be vacuous"
+            )
+            continue
+        _open = dag_text.rfind("TaskCreate({", 0, _ends[0].start())
+        if _open == -1:
+            pp30b_precondition.append(
+                f"{QA_WORKFLOW.name} ({_label} dispatch): no opening "
+                f"`TaskCreate({{` precedes the terminator"
+            )
+            continue
+        _win = dag_text[_open : _ends[0].end()]
+        pp30b_sizes.append(f"{_label}={len(_win)}B")
+        _miss = [t for t in PP30B_TOKENS if t not in _win]
+        if _miss:
+            pp30b_gaps.append(
+                f"the `{_label}` dispatch does not name the review surface the "
+                f"harness builder's contract guarantees: missing {_miss} "
+                f"(window={len(_win)}B)"
+            )
+    if pp30b_precondition:
+        pp30b_ok = False
+        pp30b_detail = "PRECONDITION failed: " + "; ".join(pp30b_precondition)
+    else:
+        pp30b_ok = not pp30b_gaps
+        pp30b_detail = (
+            "both harness-review dispatches name `ARTIFACTS_CREATED` and "
+            "`HARNESS_MANIFEST` as the surface to inspect ("
+            + "; ".join(pp30b_sizes)
+            + ")"
+            + ("" if pp30b_ok else " — " + "; ".join(pp30b_gaps))
+        )
+    check("PP-30(b)", pp30b_ok, pp30b_detail)
+
 
     check(
         "PP-19(b)",

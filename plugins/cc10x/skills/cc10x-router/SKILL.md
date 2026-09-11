@@ -234,7 +234,7 @@ Router-owned interface fields:
 
 - Before any QA-specific readiness decision or child-task creation, immediately read `references/qa-workflow.md`.
 - Use the `### QA preparation` and `### QA task graph` blocks in that file as the canonical QA law.
-- QA is DRAFT status; `references/qa-workflow.md` carries `PLACEHOLDER` markers for unresolved deep-dives. See `docs/plans/2026-08-10-qa-route-rfc.md` for the governing design and open decisions.
+- QA's governing design is `references/qa-workflow.md` itself; there is no separate design document.
 
 ### PLAN preparation
 
