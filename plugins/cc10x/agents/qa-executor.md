@@ -65,52 +65,18 @@ A run that leaves orphaned containers, test databases, or cloud resources is a p
 
 ## Report
 
-Write `.cc10x/qa/{workflow_uuid}/report.md`:
+`.cc10x/qa/{workflow_uuid}/report.md` has already been seeded from
+`templates/qa-report.template.md` before you were dispatched. **Read that file and fill it in
+place.** Do not compose a shape of your own and do not drop a heading because its answer is
+`None` — an omitted section reads as one that was considered and came back clean, and those are
+different claims.
 
-```markdown
-# QA Report: {feature}
+The template is the single source of the report's shape. It is a file rather than a block of this
+prompt for the same reason the test plan and env plan are: a shape that lives only in an agent's
+instructions cannot be diffed against the artifact that was supposed to follow it.
 
-**Verdict:** PASS | FAIL | BLOCKED
-**Run:** {timestamp} · **Environment:** {env mode} · **Duration:** {seconds}s
+Two of its sections carry rules that outrank convenience:
 
-## Failure classes
-| Class | Count |
-| ----- | ----- |
-| missing-input | {n} |
-| wrong-guess | {n} |
-| defect | {n} |
-| unconfirmed | {n} |
-<!-- every count in FAILURE_CLASS_COUNTS gets a row, including the zeros -->
-<!-- unconfirmed is the count of candidates capped by a stale measurement baseline.
-     It is a confidence floor, not an impact level: it says how much of the wall of
-     red rests on a revision nobody re-checked. -->
-
-## Summary
-| Tier | Total | Passed | Failed | Blocked | Flaky |
-| ---- | ----- | ------ | ------ | ------- | ----- |
-
-## Scenario Results
-### {scenario} — PASS | FAIL | BLOCKED
-**Class:** happy-path | error-handling | edge-case
-**Command:** `{exact command}`
-**Observation points:**
-| Point | Expected | Actual | Result |
-| ----- | -------- | ------ | ------ |
-| UI    | | | |
-| API   | | | |
-| DB    | | | |
-| Queue | | | |
-| Logs  | | | |
-
-## Failures
-<!-- per failure: what broke, the evidence, and the narrowest repro -->
-
-## Environment
-<!-- what was provisioned, what was stubbed, readiness times, teardown result -->
-
-## Coverage Gaps
-<!-- what the plan named but this run could not exercise, and why -->
-```
 
 **Failure classes is the first section, and it is mandatory even when every count is zero.** Every
 count in `FAILURE_CLASS_COUNTS` gets a row — the block is a table of the counts the contract emits,
@@ -259,7 +225,7 @@ MEMORY_NOTES:
 - **The `FAILURE_CLASS` vocabulary did NOT grow a fourth value.** `unconfirmed` is a `severity`, and a count in `FAILURE_CLASS_COUNTS`. It is never a `failure_class`. Those stay exactly three: `missing-input`, `wrong-guess`, `defect`. Confidence and class are different dimensions and collapsing them loses both.
 - **The branch axis of the sweep.** When the defect **is** a cross-repo contract mismatch, re-read the contract on the `default_branch` of **both** repos before reporting, and state **both readings** in `siblings_swept.branch_axis`. **A cross-repo contract mismatch reporting only the checked-out reading is invalid output.** Two `git show origin/{default}:{path}` calls against code you are already holding.
 - **Three independent confirmations are worth nothing when all three share a baseline.** This is the non-obvious half, so it is stated beside the rule rather than left to be inferred. A cross-repo mismatch was once confirmed three separate ways inside one run, and all three agreed because all three re-read the same stale file. The mismatch had been fixed upstream twelve days earlier. **Redundancy is not independence unless the baseline varies** — which is what `branch_axis` makes it do.
-- **`FAILURE_CLASS_COUNTS` reconciles with the report.** Every count in `FAILURE_CLASS_COUNTS` appears as a row in `report.md`'s `## Failure classes` block, zeros included. The router persists the block into `results.qa_executor.failure_class_counts` — a sub-key of a `results` key that already exists, so no new top-level artifact key is introduced.
+- **`FAILURE_CLASS_COUNTS` reconciles with the report.** Every count in `FAILURE_CLASS_COUNTS` appears as a row in `report.md`'s `## 1. Failure classes` block, zeros included. The router persists the block into `results.qa_executor.failure_class_counts` — a sub-key of a `results` key that already exists, so no new top-level artifact key is introduced.
 
 ## Why the sibling sweep is yours and not a reviewer's
 
