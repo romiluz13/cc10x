@@ -61,6 +61,15 @@ PP-18 the measure-before-you-ask law holds and is NORMATIVE, in three parts:
       Every assertion runs over a NORMALISED copy with HTML comments and fenced
       blocks removed: a law inside <!-- --> is not law, and the first draft of
       this property was green with the whole rule commented out.
+PP-19 the report spec in qa-executor.md still LEADS with the
+      `## Failure classes` block that the reconciliation rule one screen below
+      it names, and that block still carries a row for every value the rule
+      reconciles. Asserted INSIDE the fenced report spec, never against the
+      file: the heading also appears in that rule and in the rationale
+      paragraph, so a whole-file search is satisfied with the report shape gone.
+      The report is the one QA artifact with no template -- it has one writer
+      and one human reader, where the four templates exist to make two agents
+      agree -- so the fence is the only place its shape is written down.
 
 Negative control (run and recorded when this file was written): temporarily
 adding "qa-preflight" to PLAN_PHASES turns PP-1, PP-3 and PP-6 case (c) red.
@@ -162,6 +171,23 @@ Only I-3 and I-6/I-7 were red against the first draft. I-1, I-2, I-4, I-5 and I-
 all shipped GREEN there: the first draft tested whole-file substrings and two
 offsets, which proves a label exists somewhere, not that a gate is in force.
 
+Negative controls for PP-19 (four runs, recorded when PP-19 was added). Before it
+existed, the first of these was GREEN at 29/29 -- the block could be deleted whole
+with the rule that cites it left standing, which is the same shape as a gate
+placed after the work it governs:
+  I-9  the block deleted outright, all prose naming it left in place
+                                    -> red: not a heading inside the report spec
+  I-10 the `defect` row removed, block and heading intact
+                                    -> red: no `| defect |` row in the block
+  I-11 the block moved below `## Summary`, contents untouched -- position is
+       load-bearing, since a zero count read after the scenario table is a
+       footnote rather than the frame
+                                    -> red: present but not first
+  I-12 the spec re-parked in a ```text fence, every byte preserved
+                                    -> red: no fenced spec found under `## Report`
+I-9 is the scope proof: one mention of the heading survives outside the fence, so
+a file-wide assertion would have stayed green through it.
+
 Negative control for PP-16 (three runs, recorded when PP-16 was added; all three
 are mandatory because a set-membership assertion has a vacuity shape the token
 checks do not):
@@ -250,6 +276,35 @@ PP14_UNQUALIFIED = re.compile(r"\b(?:reviewed|approved)\b")
 PP14_QUALIFIER = "@r"
 
 EXECUTOR_AGENT = PLUGIN / "agents" / "qa-executor.md"
+
+# PP-19. The report spec is the one QA artifact with no template file, because it
+# has one writer and one human reader — the four templates exist to make two
+# AGENTS agree on a shape, and nothing hands the report onward. That is a fine
+# reason not to ship a template and a bad reason to ship no guard: `:262` states
+# that every FAILURE_CLASS_COUNTS entry "appears as a row in report.md's
+# `## Failure classes` block", and until this property existed the block could be
+# deleted whole with that rule left standing and the suite still green at 29/29.
+# A rule pointing at a section that is not there is the same defect shape as a
+# gate standing after the work it governs; PP-18 catches that one in the law, and
+# this catches it in the artifact the law produces.
+#
+# SCOPE IS THE FENCED BLOCK, NEVER THE FILE. `## Failure classes` appears in
+# qa-executor.md outside the spec — the `:262` reconciliation rule and the
+# rationale paragraph under the fence both name it. A file-wide search is
+# satisfied by either and stays green with the report shape gone, which is
+# precisely the failure this property exists to catch. Injection I-12 is that
+# exact edit.
+PP19_REPORT_BLOCK = re.compile(
+    r"^## Report\b.*?^```markdown\n(.*?)^```", re.DOTALL | re.MULTILINE
+)
+PP19_HEADING = "## Failure classes"
+# The three-valued FAILURE_CLASS vocabulary PP-15(c) pins, plus `unconfirmed`.
+# `unconfirmed` is NOT a fourth class — it is the severity floor a stale baseline
+# imposes — but it is a mandatory row, because a reader who cannot see how much of
+# the red rests on an unchecked revision cannot price the verdict. Listing it here
+# rather than deriving it keeps the two concepts from collapsing into one.
+PP19_ROWS = ("missing-input", "wrong-guess", "defect", "unconfirmed")
+
 
 # PP-15(a). Branch currency on the measuring agent. One token per structural
 # piece: the list, the gate that carries the ask, the number, and the axis the
@@ -1075,6 +1130,44 @@ def main() -> int:
         f"the lane-split paragraph routes through step 0b and neither it nor "
         f"the paragraph after it defers to a later gate "
         f"(scope={len(scope_c)}B, deferrals={deferrals_found or 'none'})",
+    )
+
+
+    # PP-19 — the report spec still carries the block the reconciliation rule names.
+    m_report = PP19_REPORT_BLOCK.search(executor_text)
+    report_spec = m_report.group(1) if m_report else ""
+    spec_headings = re.findall(r"(?m)^## .+$", report_spec)
+    pp19_faults = []
+    if not m_report:
+        pp19_faults.append("no fenced ```markdown report spec found under `## Report`")
+    elif PP19_HEADING not in spec_headings:
+        pp19_faults.append(
+            f"`{PP19_HEADING}` is not a heading inside the report spec "
+            f"(spec has {spec_headings or 'no ## headings'})"
+        )
+    elif spec_headings[0] != PP19_HEADING:
+        # Position is load-bearing, not cosmetic: the spec calls this the first
+        # section so a zero count is read before the scenario table, not after it.
+        pp19_faults.append(
+            f"`{PP19_HEADING}` is present but not first — the spec's first "
+            f"section is `{spec_headings[0]}`"
+        )
+    else:
+        idx = report_spec.index(PP19_HEADING)
+        nxt = report_spec.find("\n## ", idx + 1)
+        section = report_spec[idx : nxt if nxt != -1 else len(report_spec)]
+        pp19_faults += [
+            f"no `| {row} |` row in the block"
+            for row in PP19_ROWS
+            if not re.search(r"(?m)^\|\s*" + re.escape(row) + r"\s*\|", section)
+        ]
+    check(
+        "PP-19",
+        not pp19_faults,
+        f"the report spec leads with a `{PP19_HEADING}` block carrying a row for "
+        f"each of {{{', '.join(PP19_ROWS)}}}, asserted inside the fenced spec and "
+        f"not against the file"
+        + ("" if not pp19_faults else " — " + "; ".join(pp19_faults)),
     )
 
     print(f"\nproperties checked: {', '.join(checked)}")
