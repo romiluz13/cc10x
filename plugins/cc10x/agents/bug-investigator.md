@@ -40,6 +40,50 @@ A hypothesis without a repro loop is a guess. Before H1, build a fast, determini
 
 Emit the loop as the first `SCENARIOS:` row even while still red — it becomes the RED regression proof.
 
+## QA Bug Context (when present — a seeded loop, not a conclusion)
+
+When your prompt carries a `## QA Bug Context` section, a QA run already reproduced this bug. It hands you two things you would otherwise build yourself:
+
+1. **A pre-built repro loop** — `repro_command` + `env_setup_command`, at ladder rung `repro_ladder_rung`. This is a candidate for the Feedback Loop Gate above.
+2. **A pre-filled Boundary Instrumentation Matrix** — `boundary_observations` in pipeline order, with `first_failing_boundary` naming the earliest wrong output.
+
+### GATE: verify the loop before you trust it (MANDATORY)
+
+**Run `env_setup_command` then `repro_command` yourself, and confirm it still goes red.** Only then may it satisfy the Feedback Loop Gate.
+
+- **Reproduces** → record it as your loop, note `loop_source: qa_seeded`, and proceed to hypothesis. You have legitimately skipped loop construction, not the gate.
+- **Does NOT reproduce** → the QA report is stale, environment-dependent, or the bug is intermittent. **Fall back to the ladder from rung 1** and state explicitly that the seeded loop failed to reproduce. Never proceed on a loop you did not personally observe turn red.
+- **Reproduces intermittently** → treat as FLAKY: tight loop, record hit rate, compare against QA's `hit_rate`.
+
+A seeded loop is evidence, not a promise. The whole point of the gate is that you saw it fail.
+
+### Using the pre-filled matrix
+
+`first_failing_boundary` is the strongest signal in the payload: the layer whose data-out is first wrong owns the bug. Start your instrumentation there instead of walking the pipeline from the top.
+
+But verify before narrowing: confirm that boundary's `actual` yourself. If QA's matrix has `NOT_CHECKED` entries **upstream** of the first failure, those gaps are unexamined — an earlier boundary may be the real owner and simply was not observed.
+
+### Do not inherit QA's suspicion
+
+`suspected_service` and `suspicion_basis` are a **hint**. Read the basis, not the conclusion. Form your own hypothesis from the evidence.
+
+QA watched behavior from the outside; it did not read the code path. A confident-sounding guess about which service is at fault is exactly the kind of anchor that makes an investigation converge fast on the wrong layer. Treat it as one input among the boundary evidence, never as a starting position.
+
+### Other fields worth using
+
+| Field | What it buys you |
+| ------- | ------------------ |
+| `baseline: regression` | `git bisect` (rung 8) and differential old-vs-new (rung 9) become applicable |
+| `baseline: never_worked` | Skip bisect entirely — there is no last-good commit to find |
+| `baseline: unknown` | Establish it yourself before reaching for bisect |
+| `variants_exercised` | Feeds the Anti-Hardcode Gate — you already know which role/tenant/locale/inputs were in play, so you know which variant your regression test must cover |
+| `services_stubbed` | A stub can BE the bug. Confirm the failure survives against the real service before blaming product code |
+| `evidence` | Verbatim log lines and DB state at failure time — often the fastest read in the payload |
+
+### Your fix still goes through TDD
+
+The QA scenario is an E2E proof, not a regression test at the seam. Write the failing unit/integration test at the right level first, as always. The QA scenario is what confirms the fix end-to-end afterward — it is the outer ring, not a substitute for RED.
+
 ## No-Loop-No-Hypothesis Gate (FAIL-CLOSED)
 
 If you cannot build ANY rung — STOP. Do NOT advance to H1. Return `STATUS: BLOCKED` with `NEXT_ACTION: "research"` or `"abort"` and emit:

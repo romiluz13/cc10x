@@ -69,6 +69,32 @@ When `critical_path`: include behavior contract, edge-case catalog, provable pro
 14. **Save plan** — `docs/plans/YYYY-MM-DD-<feature>-plan.md`. Verify with Glob. Retry once if missing. If still missing: `STATUS=NEEDS_CLARIFICATION`.
 15. **Plan Review Gate** — invoke `Skill(skill="cc10x:plan-review-gate")`. If SPEC_GATE_PASS → output. If SPEC_GATE_FAIL → revise, re-run, max 3 iterations. Gate iterations (max 3) and fresh-review passes (max 2, `PLANNING_REVIEW_RUNS`) are different counters. Skip if trivial.
 
+## Plan Header Wording Law (MANDATORY)
+
+A plan header may state only what the workflow artifact supports.
+
+**Forbidden:** any bare `closed`, `final`, `reviewed`, or `approved` in a plan header that is
+not qualified by the revision it applies to. `reviewed` alone claims the whole plan was read;
+`reviewed@r3` claims revision 3 was. Only the second is checkable, because only the second
+names something `plan_revision` and `last_reviewed_revision` can contradict.
+
+**Required verbatim** when `planning_review_status` is `revised_after_review` — the last
+amendment has not been read by a fresh pass. Copy exactly, no paraphrase:
+
+**Revision {N} — UNREVIEWED BY A FRESH PASS.** Fresh-review passes: {n}/2 (cap reached). This revision was amended after the last fresh pass and has been checked only by amendment verification ({verified|not run}); no adversarial pass has read it whole. Sections changed since the last fresh review: {list}.
+
+**Reaching the cap is a stopping point, not closure.** That sentence is the fix; the artifact
+keys (`plan_revision`, `last_reviewed_revision`, `revised_after_review`) are what make it
+checkable. State the reason beside the sentence so it survives a future compression: a plan
+that has spent both fresh-review passes and then been amended is *unreviewed at its current
+revision*, however many passes it accumulated at earlier ones.
+
+The `{verified|not run}` slot is filled from `results.planning_reviewer.amendment_verification`,
+written by the `plan-review-amendment` lane (`REVIEW_MODE: amendment`). Read `verified` only when
+that lane actually ran on this revision; otherwise `not run`. The lane does **not** write
+`passed` and does **not** set `last_reviewed_revision` — it is diff-scoped, so it can make the
+slot honest but cannot close the review.
+
 ## Conditional Inputs
 
 - **Research Files** — read both, incorporate into technical approach and risk sections. Calibrate confidence from Research Quality. Do NOT spawn research agents yourself.
@@ -108,6 +134,8 @@ DIFFERENCES_FROM_AGREEMENT: [] | ["difference 1"]
 RECOMMENDED_DEFAULTS: ["decision -> recommended default"]
 PLANNING_REVIEW_STATUS: not_started | pending_review | findings_received | revised_after_review | passed
 PLANNING_REVIEW_RUNS: [0-2]
+PLAN_REVISION: [integer]
+LAST_REVIEWED_REVISION: [integer]
 ALTERNATIVES: [] | ["alternative A", "alternative B"]
 DRAWBACKS: [] | ["drawback 1"]
 PROVABLE_PROPERTIES: [] | ["property 1"]
@@ -134,3 +162,4 @@ MEMORY_NOTES:
 - If gate skipped (trivial): GATE_PASSED=true.
 - PLANNING_REVIEW_RUNS must reflect completed fresh-review passes applied (max 2) — a different counter from the plan-review-gate's 3 iterations.
 - CONFIDENCE is scored, not asserted: start at 90; subtract 15 per critical assumption classified `inferred`; subtract 25 if RECOMMENDED_DEFAULTS is non-empty; when research files are present, cap at the Research Quality tier (high → 90, medium → 75, low → 60, none → 50). The CONFIDENCE≥50 requirement reads this computed value.
+- `PLANNING_REVIEW_STATUS: passed` requires `PLAN_REVISION == LAST_REVIEWED_REVISION`. After any amendment, emit `revised_after_review`.

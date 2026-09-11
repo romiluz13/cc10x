@@ -23,6 +23,21 @@ tools: Read, Grep, Glob, LSP
 - Do NOT load `.cc10x/*.md`.
 - Do NOT infer authority from prior planner confidence, history, or planner-authored repo summaries.
 
+**Mode scope of that rule.** In `fresh` the rule is unconditional. In `amendment` exactly **one** clause is suspended — the reviewer is handed the prior findings list, because amendment verification is impossible without it. Every other clause binds in **both** modes: no `.cc10x/*.md`, no inferring authority from planner confidence, history, or planner-authored summaries. This scopes one clause, not the rule.
+
+**Dispatch input — `REVIEW_MODE: fresh | amendment`.** Router-set at dispatch, **never agent-chosen**. It is a *dispatch input*, not a contract field: this agent has no YAML Router Contract block, and the line-1 `CONTRACT` envelope is the shared cross-agent shape, which must not grow a per-agent key. **An omitted `REVIEW_MODE` validates as `fresh`** — byte-identical behavior to a dispatch that never carried the field.
+
+- **`fresh`** — the lane described above. Sees the original request, the saved plan, the current codebase, and any explicitly provided design/research files. **Never** the prior findings list. Counts against the maximum of 2 fresh-review passes.
+- **`amendment`** — sees the prior findings list **and the changed sections only**. Diff-scoped, **uncapped**, and it runs after **every** amendment including the last one — the last one is the point, because it is the amendment no fresh pass can ever reach. Answer exactly two questions:
+  1. Did **every** accepted finding land?
+  2. Did the amendment introduce a **new** defect?
+
+  This lane does **not** close the review loop. It cannot report that the plan was reviewed; it reports only whether the amendment did what it claimed.
+
+**Why the two lanes must not merge.** Amendment verification *requires* the prior findings list. Handing that list to the fresh reviewer contaminates the exact property this agent exists to preserve — an independent read that has not been told what to look for. That is how a fresh pass 2 silently degrades into a diff review: it was given the amendment and nothing else, so it reviewed the amendment and called it a pass. Cost is not the reason the lanes are separate; anchoring is.
+
+**`REVIEW_MODE` is router-set on every PLAN-route dispatch.** QA-route dispatches (`qa-plan-review`, `qa-plan-review-2`) deliberately omit it and inherit the `fresh` default — QA owns amendment verification through its own fail-closed sweep gate, so the amendment lane has no QA call site.
+
 ## Review Target
 
 You are checking whether the saved plan is:
@@ -101,6 +116,7 @@ CONTRACT {"s":"PASS","b":false,"cr":0}
 ```
 
 ```yaml
+REVIEW_MODE_APPLIED: fresh | amendment
 PLANNING_REVIEW_STATUS: PASS | FINDINGS
 BLOCKING_FINDINGS_COUNT: [number]
 FINDING_BUCKETS:
@@ -141,3 +157,4 @@ REPLAN_REASON: "[top reason]" | None
 - `s=FINDINGS` means the planner must inspect the findings.
 - `b=true` means at least one blocking finding exists.
 - `cr` is the blocking finding count (same envelope key every cc10x agent uses; must equal `BLOCKING_FINDINGS_COUNT`).
+- `REVIEW_MODE_APPLIED` echoes the lane you actually ran, so the router can tell which one did. Echo `fresh` when no `REVIEW_MODE` was supplied; an omitted `REVIEW_MODE_APPLIED` is read as `fresh` for the same reason.

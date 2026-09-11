@@ -22,6 +22,17 @@
             "statusMessage": "CC10X git guardrails"
           }
         ]
+      },
+      {
+        "matcher": "Read|Grep|Glob|Edit|Write|NotebookEdit|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/cc10x_qa_isolation_guard.py\"",
+            "timeout": 10,
+            "statusMessage": "CC10X QA isolation guard"
+          }
+        ]
       }
     ],
     "SessionStart": [

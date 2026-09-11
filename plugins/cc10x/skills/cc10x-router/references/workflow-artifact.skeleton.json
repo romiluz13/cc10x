@@ -70,6 +70,10 @@
     "verifier": null,
     "planner": null,
     "planning_reviewer": null,
+    "qa_researchers": [],
+    "qa_plan": null,
+    "qa_harness_builder": null,
+    "qa_executor": null,
     "doc_syncer": null,
     "finishing": null,
     "final_branch_review": null,
@@ -85,7 +89,42 @@
     "reviewer": [],
     "hunter": [],
     "verifier": [],
-    "planning_reviewer": []
+    "planning_reviewer": [],
+    "qa_executor": []
+  },
+  "source_wf": null,
+  "source_bug_candidate": null,
+  "qa": {
+    "qa_scope": null,
+    "qa_sources": {},
+    "qa_env_preflight": {},
+    "env_mode": null,
+    "artifacts": {
+      "feature_map": null,
+      "test_plan": null,
+      "env_plan": null,
+      "report": null,
+      "setup_record": null
+    },
+    "bug_candidates": [],
+    "isolation": {
+      "denied_reads": [],
+      "denied_read_reason": null,
+      "plan_phase_readonly": true,
+      "mutation_allowlist": [
+        ".cc10x/"
+      ]
+    },
+    "env_key": null,
+    "preflight": {
+      "status": null,
+      "cost_tier_reached": null,
+      "checks": [],
+      "human_prerequisites": [],
+      "env_plan_corrections": [],
+      "setup_record_stale": false,
+      "last_run_wf": null
+    }
   },
   "telemetry": {
     "task_metrics_available": "unknown",
@@ -125,6 +164,8 @@
   "planning_review_runs": 0,
   "planning_review_findings": [],
   "planning_review_status": "not_started",
+  "plan_revision": 0,
+  "last_reviewed_revision": 0,
   "memory_notes": [],
   "pending_gate": null,
   "status_history": [

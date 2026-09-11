@@ -4,6 +4,19 @@
 2. Immediately write `[DEBUG-RESET: wf:{workflow_uuid}]` once the workflow id exists.
 3. Preserve failed attempt counting semantics: the investigator counts `[DEBUG-N]:` entries after the most recent reset marker.
 
+### QA-seeded DEBUG preparation
+
+When this DEBUG was started from a QA `BUG_CANDIDATE` (the user accepted the offer in `qa-workflow.md` §Bug handoff):
+
+1. This is a **new workflow**, not a QA phase — QA may not edit product code and DEBUG must. Generate a fresh `workflow_uuid` and run the standard DEBUG task graph unchanged.
+2. Link it: set `source_wf` to the QA `workflow_uuid` and `source_bug_candidate` to the candidate `title` in the DEBUG artifact.
+3. `[DEBUG-RESET: wf:{new_uuid}]` as normal. **QA's run is not a failed debug attempt** — attempt counting starts at zero. Seeding the counter would trip the 3-cycle human checkpoint early on a bug nobody has actually attempted yet.
+4. Read the candidate from the QA artifact at `qa.bug_candidates`, not from conversation history. It was persisted precisely so this handoff survives compaction and a fresh session.
+5. Build the `## QA Bug Context` section per `qa-workflow.md` §4 and add it to the `bug-investigator` dispatch. Apply the anti-anchoring rule in §5 there: `suspected_service` travels only with its `suspicion_basis`, labelled a hint, or is omitted entirely.
+6. Everything else about DEBUG is unchanged — the investigator still owns its Feedback Loop Gate, and the seeded loop only satisfies that gate **after the investigator personally observes it go red**.
+
+**On completion**, the router MAY offer to re-run the originating QA scenario via `re-qa-execute` against the harness from `source_wf` (see `qa-workflow.md` §6). A unit regression test proves the root cause is fixed; re-running the E2E scenario proves the user-visible symptom is gone. Only the second closes what QA opened.
+
 ### DEBUG task graph
 
 ```text
