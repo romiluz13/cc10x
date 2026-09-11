@@ -73,7 +73,7 @@ opposite of what the run found. -->
 **Stub reach:** <!-- `none`, or name each stub this scenario's verdict depended on. A scenario whose
 green rests on a stub derived from the traced repo's own belief about the wire is `unproven by
 stub`: such a stub cannot disagree with the repo it came from, so it cannot fail. Say so here and
-carry it into §6. -->
+carry it into §7. -->
 
 ## 4. Failures
 
@@ -87,10 +87,28 @@ carry it into §6. -->
 **Measured on:** <!-- per repo the finding spans: branch, short sha, commits_behind, dirty y/n.
                      MEASURED at report time, never copied from setup.md. -->
 **Siblings swept:** <!-- the set you compared against, and a finding for every member you listed. -->
-**Repro:** `{command}`
+**Siblings swept — branch axis:** <!-- required when the defect IS a cross-repo
+contract mismatch: the reading on BOTH repos' default branches, not just the checked-out
+one. A cross-repo mismatch reported from one side is invalid output. `n/a` otherwise. -->
+**Sibling set:** <!-- the set_name you compared within. A defect with no sibling set says
+so here rather than leaving the field off. -->
+**Env setup:** `{command that brings the environment to the reproducing state}`
+**Repro:** `{command, runnable as written}`
 **Evidence:** <!-- exact output, log line, or diff. Quote it; do not summarise it. -->
 
-## 5. Environment
+## 5. Harness issues
+
+<!-- Defects in the TEST SYSTEM, not the product: a teardown that ignores its own exit
+     code, a fixture that leaks between scenarios, an assertion that cannot fail. These
+     are kept apart from §4 because they say something different — a harness issue means
+     the run's own evidence is weaker than it looks, and it is what sends the workflow
+     back to qa-build rather than to DEBUG. `None` if the harness held. -->
+
+| Issue | What it undermines | Rebuild needed |
+| ----- | ------------------ | -------------- |
+| | | |
+
+## 6. Environment
 
 <!-- What was provisioned, what was stubbed, readiness times, and the teardown result. A leaked
      container or a surviving volume is stated here even when every scenario passed. -->
@@ -101,10 +119,12 @@ carry it into §6. -->
 | Services stubbed | |
 | Readiness wait | |
 | Teardown status | clean \| leaked |
+| Teardown evidence | <!-- what was CHECKED and what it showed, not "teardown ran" --> |
+| Leaked resources | <!-- `None`, or name each one. A leak forces FAIL even if every scenario passed, so an unnamed leak is an unexplained FAIL. --> |
 | Product code touched | false <!-- any other value invalidates the run --> |
 | Test code touched | false <!-- any other value invalidates the run --> |
 
-## 6. Coverage gaps
+## 7. Coverage gaps
 
 <!-- Mandatory, even when empty. A report that lists only what ran reads as complete coverage;
      naming what did not run is how the reader prices the PASS.
@@ -116,7 +136,7 @@ carry it into §6. -->
 | --- | ---------------------- | ------------------- |
 | | | |
 
-## 7. Bug candidates
+## 8. Bug candidates
 
 <!-- The machine-readable handoff to DEBUG, one entry per candidate, matching the executor's
      BUG_CANDIDATES contract. `None` if the run produced none. -->
