@@ -253,6 +253,18 @@ On resolution the router re-dispatches a fresh `qa-preflight` task. There is no 
 phase: `re-qa-build` and `re-qa-execute` exist because remediation arrives from a *downstream*
 phase, whereas preflight's retry arrives from the user, in place.
 
+**Cap: 2 re-dispatches, then a `human_action` checkpoint.** Not a silent third, and the reason this
+loop needs the cap more than its siblings do is where the retry comes from: `re-qa-build` and
+`re-qa-execute` are re-dispatched on a *downstream agent's* finding, but preflight's retry arrives
+**from the user**, so an uncapped loop is a loop the user is inside — every turn re-asks a question
+they have already answered, and a prerequisite that resolves and re-breaks turns the batched ask
+into a treadmill. When two resolved gates have still not produced a runnable environment, the router
+stops and raises a `human_action` checkpoint carrying the last preflight's measured
+`HUMAN_PREREQUISITES` and `CURRENCY_GATE` lists verbatim — **not a third dispatch**. Two unresolved
+preflights is an environment the user must fix outside this workflow; re-measuring it a third time
+is the router asserting that the third measurement will differ from the first two, which it has no
+evidence for.
+
 **Four rules specific to this phase:**
 
 - **The T4 ceiling.** Preflight never boots a service. `SERVICES_PROVISIONED: []` is the
@@ -331,6 +343,17 @@ TaskUpdate({ taskId: qa_rebuild_task_id, addBlockedBy: [qa_build_task_id] })
   `qa-harness-builder`. Only the origin vocabulary was short.
 - **Cap: 2 extra rounds, then a user checkpoint.** Not a silent third. When two rounds have not
   floored the suite, the router stops and asks — an unprovable suite is a decision, not a retry.
+- **Append `remediation_history` on creation — MANDATORY, and it is the only counter a hook can
+  see.** Immediately after the `TaskCreate` above, append an entry to the workflow artifact's
+  `remediation_history` array in the shape `{ts, phase, reason, cycle_number}`, `cycle_number` being
+  this workflow's running REM-FIX count starting at 1 — exactly what the *Circuit breaker* section of
+  `remediation-and-research.md` mandates for **every** `kind:remfix` task, this one included. The
+  `TaskCompleted` guard independently counts those entries on every `kind:remfix` completion and is
+  the hook-enforced backstop for the 3-cycle breaker; skip the append and it counts zero forever, so
+  the breaker is inert for the entire QA route and the cap above is LLM-counted with nothing behind
+  it. The QA-local cap of 2 and the artifact's entry count are therefore **two independent counters
+  that must agree**: the first bounds the loop, the second proves it was bounded, and where they
+  disagree the artifact is authoritative.
 - **Every round carries changed input**: the named unfloored properties or tiers, plus **every**
   `blocked_reason` from the round before. Never "try again". `remediation-and-research.md` already
   forbids re-dispatching a task with unchanged input, and this is that rule instantiated — the changed

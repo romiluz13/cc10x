@@ -87,6 +87,14 @@ PP-24 the currency gate's axis is `commits_behind` and a dirty tree is not on
       it: the commits_behind-only phrasing in all three sites that state the
       trigger, the coupling phrase in none of them, and `dirty` still a
       REPO_CURRENCY field so the fix cannot be "delete the measurement"
+PP-25 the QA route's two re-dispatch loops are BOUNDED and COUNTED: (a) each
+      loop states a numeric cap AND a named exhaustion state, asserted inside
+      that loop's own bold-lead-in-anchored window, because the word "cap"
+      appears in both and a file-wide test lets one satisfy the other;
+      (b) the `kind:remfix` block mandates the `remediation_history` append, in
+      the `{ts, phase, reason, cycle_number}` shape the hook-enforced circuit
+      breaker counts. Without (b) the breaker counts 0 forever and QA's cap of
+      2 is LLM-counted with no backstop at all
 PP-22 every agent file SPECIFIES the line-1 `CONTRACT {` envelope inside its
       OUTPUT SPECIFICATION -- the window from the last
       Output/Router Contract/Phase Contract heading before the file's first
@@ -404,6 +412,58 @@ PP-30(b) nor its subject exists -- qa-workflow.md does not name either field
 until the dispatch text is written -- so such a property would be red for the
 absence of its subject, not green. The contrast is a real measurement only once
 the dispatch text lands, and it belongs to that change.
+
+Negative controls for PP-25 (three runs, all red, plus one CONTRAST run that is
+the argument for the property rather than a test of it). The two defects are the
+two ways a retry loop goes wrong -- unbounded, and uncounted:
+  I-32 the `remediation_history` bullet deleted whole from the `re-qa-build`
+       block -- the M3 defect itself, restored
+                                          -> PP-25(b) red: "0/2 tokens ...
+                                             missing ['`remediation_history`',
+                                             '`{ts, phase, reason,
+                                             cycle_number}`']", window 3640B ->
+                                             2609B, with PP-25(a) and the other
+                                             39 checks green.
+  I-33 THE CONTRAST, AND IT IS THE ONE THAT MATTERS. With I-32 still in place,
+       the shipped skeleton was loaded, given a `wf`, written into a temp
+       project, and the task-completed guard invoked as a subprocess on a
+       `kind:remfix` completion under `taskMetadata: block`
+                                          -> the artifact re-reads as valid
+                                             JSON, `remediation_history` is
+                                             `[]`, and the guard exits **0**
+                                             with EMPTY stderr.
+       So NO EXISTING CHECK CATCHES THIS, and that is the whole argument for
+       PP-25(b)'s scope. The auditor's stated mechanism -- the guard "faults
+       when remediation_history is not a list" -- is wrong twice over: the
+       branch logs an audit event and `return 0` rather than faulting, and it is
+       UNREACHABLE anyway because the skeleton ships `[]`, which IS a list. An
+       invariant over the array's TYPE would therefore be green at HEAD *and*
+       green against the defect. Only an invariant over the APPEND DUTY IN THE
+       LAW can see it, which is why PP-25(b) has the scope it has.
+  I-34 the numeric cap removed from the PREFLIGHT window ONLY (`**Cap: 2
+       re-dispatches...` -> `**Cap the re-dispatches...`), leaving the
+       `re-qa-build` block's `**Cap: 2 extra rounds` untouched
+                                          -> PP-25(a) red naming the PREFLIGHT
+                                             window alone ("the qa-preflight
+                                             re-dispatch loop states 0 numeric
+                                             caps (none) ... window=3024B")
+                                             while reporting the re-qa-build
+                                             window GREEN at cap=['2'] in the
+                                             same detail string.
+       MANDATORY: it is the run that proves the WINDOWING. Both blocks contain
+       the word "cap", so a whole-file test -- the obvious way to write this
+       property -- is GREEN against this injection, the surviving sibling
+       satisfying the deleted one's half. That is PP-18's recorded I-2 shape in
+       a fourth file, and it is why each loop is bracketed by its own pair of
+       bold lead-ins rather than searched for in the file. It also shows why the
+       cap is matched as a NUMBER: the injected wording still claims a cap.
+Window sizes at the green state, recorded because a later phase deletes a fenced
+block from this same file and its only mitigation is a before/after comparison
+of exactly these numbers: PP-25(a) preflight window = 3023B; PP-25(a) and (b)
+re-qa-build window = 3640B. Both are measured over `_normative()` text, and the
+re-qa-build window CONTAINS a fenced block -- which is precisely why it is a
+measurement there and a control for the preflight window, which sits earlier in
+the file than any deletion and cannot move.
 """
 
 import importlib.util
@@ -773,6 +833,92 @@ PP24_DIRTY_TRIGGER = "or a dirty tree"
 # and a file-wide search could not tell the two apart.
 PP24_REPO_CURRENCY_BLOCK = "REPO_CURRENCY:"
 PP24_DIRTY_FIELD = re.compile(r"^\s+dirty:", re.M)
+
+
+# PP-25. The two re-dispatch loops in the QA law: bound them, and COUNT them
+# where a hook can see the count.
+#
+# (a) M2. The preflight re-dispatch ran uncapped while its own sibling three
+# hundred lines down capped at 2 with a checkpoint. An uncapped retry is worse
+# HERE than anywhere else in the route because preflight's retry arrives FROM
+# THE USER, in place -- so an uncapped loop is a loop the user is inside, and
+# each turn re-asks a question they have already answered.
+#
+# WINDOW-ANCHORED PER LOOP, and that is the load-bearing decision. The word
+# "cap" appears in BOTH blocks, so a file-wide search lets one block satisfy
+# the other's half of the assertion -- PP-18's recorded I-2 failure, in a third
+# shape. Control (iii) is the run that proves the windowing: the cap deleted
+# from the preflight window ONLY, with the re-qa-build window left green.
+#
+# ANCHORED ON BOLD LEAD-INS, not on headings, because NEITHER loop sits under
+# one. The preflight loop lives between `**The batched ask...` and `**Four rules
+# specific to this phase:**`, both inside `#### Environment preflight`; the
+# re-qa-build loop lives between `**Extra rounds when the mutation floor is
+# unmet...` and `**Hard boundary...`, both inside `#### Harness build`. Each of
+# the four is a UNIQUE line-anchored match in the normalised text, and exactly-
+# one-match is asserted as a PRECONDITION -- an anchor that stops matching must
+# fail loudly, never yield an empty window that satisfies everything.
+#
+# Read over _normative() -- the same normalised copy PP-18 uses -- for two
+# reasons. A law inside <!-- --> or re-parked into a ```fence``` is not law
+# (PP-18's I-1/I-4). And the re-qa-build window CONTAINS a ```text fence, so its
+# normalised size is exactly the quantity a later fence deletion elsewhere in
+# this file could disturb: printing the sizes is what makes that a measurement
+# instead of an argument.
+#
+# The cap is matched as a NUMBER, not as the word "cap": a block that says "this
+# loop is capped" without saying at what states no bound. Exactly one numeric
+# cap per window, so a second one cannot be added without deciding which binds.
+PP25_LOOPS = (
+    (
+        "qa-preflight re-dispatch",
+        re.compile(r"(?m)^\*\*The batched ask"),
+        re.compile(r"(?m)^\*\*Four rules specific to this phase:\*\*"),
+        # The exhaustion state is a checkpoint, not a third dispatch: two
+        # unresolved preflights is an environment the user must fix OUTSIDE the
+        # workflow. Both tokens are required -- naming the state without ruling
+        # out the retry is the wording that let this loop run unbounded.
+        ("`human_action` checkpoint", "not a third dispatch"),
+    ),
+    (
+        "re-qa-build extra rounds",
+        re.compile(r"(?m)^\*\*Extra rounds when the mutation floor is unmet"),
+        re.compile(r"(?m)^\*\*Hard boundary"),
+        ("the router stops and asks",),
+    ),
+)
+PP25_CAP = re.compile(r"\*\*Cap: (\d+) ")
+
+# (b) M3. The auditor said `cc10x_task_completed_guard.py` "faults when
+# remediation_history is not a list". Measured: it logs an audit event, writes a
+# stderr warning and `return 0` -- and the branch is UNREACHABLE anyway, because
+# the shipped skeleton initialises `remediation_history: []`, which IS a list.
+#
+# That measurement is what decides this property's scope, and the scope is the
+# whole point. An invariant asserting "the array is a list" would be green at
+# HEAD *and* green against the defect. The real defect is one level down:
+# `remediation-and-research.md`'s Circuit-breaker section makes appending
+# `{ts, phase, reason, cycle_number}` MANDATORY on every `kind:remfix` creation,
+# and the guard counts those entries as the hook-enforced backstop for the
+# 3-cycle breaker -- while `qa-workflow.md` creates a `kind:remfix` task
+# (`re-qa-build`) and contained the token `remediation_history` ZERO times. So
+# the count stayed 0 for every QA workflow, the breaker could never fire, and
+# QA's "cap: 2 extra rounds" was LLM-counted with no backstop at all: the
+# precise condition that mandate exists to remove.
+#
+# The property therefore asserts the APPEND DUTY IS STATED IN THE QA LAW, and
+# its negative control is the deletion of that duty. Control (ii) is the run
+# that justifies the property existing: with the duty deleted the artifact is
+# still valid JSON with `remediation_history: []` and the task-completed guard
+# still exits 0 -- no existing check anywhere catches this.
+#
+# Asserted inside the re-qa-build window for PP-25(a)'s reason, and the SHAPE is
+# asserted alongside the token: an append of the wrong shape is not the entry
+# the guard's consumers read, and Phase 6 consumes this exact quadruple.
+PP25_REMHIST_TOKENS = (
+    "`remediation_history`",
+    "`{ts, phase, reason, cycle_number}`",
+)
 
 
 # PP-15(a). Branch currency on the measuring agent. One token per structural
@@ -2057,6 +2203,86 @@ def main() -> int:
             + ("" if pp24_ok else " — " + "; ".join(pp24_gaps))
         )
     check("PP-24", pp24_ok, pp24_detail)
+
+    # PP-25(a) -- every re-dispatch loop in the QA law states a numeric cap AND
+    # its exhaustion behaviour, asserted INSIDE that loop's own window. See
+    # PP25_LOOPS for why the windows are bold-lead-in-anchored (neither loop
+    # sits under a heading) and why a whole-file test would let one loop satisfy
+    # the other.
+    pp25_windows: dict[str, str] = {}
+    pp25_caps: dict[str, list[str]] = {}
+    pp25a_precondition: list[str] = []
+    pp25a_gaps: list[str] = []
+    for label, start_re, end_re, exhaustion in PP25_LOOPS:
+        starts = list(start_re.finditer(qa_norm))
+        ends = list(end_re.finditer(qa_norm))
+        if len(starts) != 1 or len(ends) != 1 or not starts[0].end() < ends[0].start():
+            pp25a_precondition.append(
+                f"could not bracket the {label} loop in {QA_WORKFLOW.name}: "
+                f"{len(starts)} opening and {len(ends)} closing bold lead-ins "
+                f"(expected exactly 1 of each, in that order) — the anchor has "
+                f"stopped matching, so any result over the window would be vacuous"
+            )
+            continue
+        win = qa_norm[starts[0].end() : ends[0].start()]
+        pp25_windows[label] = win
+        caps = PP25_CAP.findall(win)
+        pp25_caps[label] = caps
+        if len(caps) != 1:
+            pp25a_gaps.append(
+                f"the {label} loop states {len(caps)} numeric caps "
+                f"({caps or 'none'}), expected exactly 1 (window={len(win)}B)"
+            )
+        missing = [tok for tok in exhaustion if tok not in win]
+        if missing:
+            pp25a_gaps.append(
+                f"the {label} loop does not state its exhaustion behaviour: "
+                f"missing {missing} (window={len(win)}B)"
+            )
+
+    if pp25a_precondition:
+        pp25a_ok = False
+        pp25a_detail = "PRECONDITION failed: " + "; ".join(pp25a_precondition)
+    else:
+        pp25a_ok = not pp25a_gaps
+        pp25a_detail = (
+            "both re-dispatch loops state a numeric cap and a named exhaustion "
+            "state, each inside its own window ("
+            + "; ".join(
+                f"{label}: cap={pp25_caps[label] or 'none'} "
+                f"window={len(pp25_windows[label])}B"
+                for label, *_ in PP25_LOOPS
+                if label in pp25_windows
+            )
+            + ")"
+            + ("" if pp25a_ok else " — " + "; ".join(pp25a_gaps))
+        )
+    check("PP-25(a)", pp25a_ok, pp25a_detail)
+
+    # PP-25(b) -- the `kind:remfix` block appends `remediation_history`, in the
+    # shape the circuit-breaker mandate specifies. See PP25_REMHIST_TOKENS for
+    # why this asserts the APPEND DUTY IN THE LAW rather than the array's type:
+    # the type assertion is green at HEAD and green against the defect.
+    PP25B_WINDOW = "re-qa-build extra rounds"
+    rebuild_win = pp25_windows.get(PP25B_WINDOW)
+    if rebuild_win is None:
+        pp25b_ok = False
+        pp25b_detail = (
+            f"PRECONDITION failed: the {PP25B_WINDOW} window was not located "
+            f"(see PP-25(a)); the append duty is therefore unscoped"
+        )
+    else:
+        pp25b_missing = [tok for tok in PP25_REMHIST_TOKENS if tok not in rebuild_win]
+        pp25b_ok = not pp25b_missing
+        pp25b_detail = (
+            f"the `kind:remfix` block mandates the `remediation_history` append "
+            f"in the shape the hook-enforced breaker counts "
+            f"(window={len(rebuild_win)}B, "
+            f"{len(PP25_REMHIST_TOKENS) - len(pp25b_missing)}/"
+            f"{len(PP25_REMHIST_TOKENS)} tokens)"
+            + ("" if pp25b_ok else f" — missing {pp25b_missing}")
+        )
+    check("PP-25(b)", pp25b_ok, pp25b_detail)
 
     check(
         "PP-19(b)",
