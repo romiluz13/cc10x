@@ -283,7 +283,7 @@ Use `Edit(replace_all=true)` for `__WORKFLOW_UUID__` and `__ISO_TIMESTAMP__` sin
 ```text
 Write(
   file_path=".cc10x/workflows/{workflow_uuid}.events.jsonl",
-  content="{\"ts\":\"{iso_timestamp}\",\"wf\":\"{workflow_uuid}\",\"event\":\"workflow_started\",\"phase\":\"{build|debug|review|plan}\",\"task_id\":\"{parent_task_id}\",\"agent\":\"router\",\"decision\":\"start\",\"reason\":\"User request\"}\n"
+  content="{\"ts\":\"{iso_timestamp}\",\"wf\":\"{workflow_uuid}\",\"event\":\"workflow_started\",\"phase\":\"{build|debug|review|plan|qa}\",\"task_id\":\"{parent_task_id}\",\"agent\":\"router\",\"decision\":\"start\",\"reason\":\"User request\"}\n"
 )
 ```
 

@@ -70,8 +70,10 @@
     "verifier": null,
     "planner": null,
     "planning_reviewer": null,
+    "qa_repo_set": [],
     "qa_researchers": [],
     "qa_plan": null,
+    "qa_preflight": null,
     "qa_harness_builder": null,
     "qa_executor": null,
     "doc_syncer": null,
@@ -122,6 +124,7 @@
       "checks": [],
       "human_prerequisites": [],
       "env_plan_corrections": [],
+      "currency_gate": [],
       "setup_record_stale": false,
       "last_run_wf": null
     }

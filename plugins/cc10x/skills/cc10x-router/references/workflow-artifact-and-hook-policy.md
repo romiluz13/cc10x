@@ -10,7 +10,7 @@ Artifact schema must include:
 
 - `workflow_uuid`
 - `workflow_id`
-- `workflow_type` — one of `BUILD`, `DEBUG`, `PLAN`, `REVIEW`, `ORIENT`, `TRIAGE`, `CODEBASE-HEALTH`, or `pending` (transitional value before routing resolves)
+- `workflow_type` — one of `BUILD`, `DEBUG`, `PLAN`, `REVIEW`, `QA`, `ORIENT`, `TRIAGE`, `CODEBASE-HEALTH`, or `pending` (transitional value before routing resolves)
 - `state_root`
 - `user_request`
 - `plan_file`
@@ -18,6 +18,10 @@ Artifact schema must include:
 - `research_files`
 - `approved_decisions`
 - `plan_mode`
+- `build_scope`
+- `worktree`
+- `execution_mode`
+- `inline_fallback_reason`
 - `verification_rigor`
 - `proof_status`
 - `traceability`
@@ -33,6 +37,9 @@ Artifact schema must include:
 - `results`
 - `deferred_findings`
 - `evidence`
+- `source_wf`
+- `source_bug_candidate`
+- `qa`
 - `telemetry`
 - `quality`
 - `planning_review_runs`
@@ -89,6 +96,7 @@ Rules:
   - `reviewer`
   - `hunter` (ACTIVE — the standalone failure-hunter agent's evidence)
   - `verifier`
+  - `qa_executor` (ACTIVE — the QA route's executor evidence)
 - `quality` stores convergence state:
   - `confidence`
   - `evidence_complete`
@@ -132,7 +140,7 @@ Rules:
   - `scan`
   - `reconcile`
   - `reasoning`
-- `pending_gate` is required whenever BUILD/PLAN/DEBUG/TRIAGE/CODEBASE-HEALTH is waiting on user clarification, scope selection, or persistence repair.
+- `pending_gate` is required whenever BUILD/PLAN/DEBUG/QA/TRIAGE/CODEBASE-HEALTH is waiting on user clarification, scope selection, or persistence repair. QA sets exactly two: `qa_preflight_human_prerequisites` (the batched preflight ask) and `qa_source_contradiction` (consolidation found sources that disagree about what to test).
 - `status_history` and `remediation_history` are append-only summaries of major router decisions.
 
 Router gates (operational definitions — a gate name without these semantics is meaningless):

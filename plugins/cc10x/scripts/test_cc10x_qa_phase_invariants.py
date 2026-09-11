@@ -69,6 +69,14 @@ PP-19 the report is produced by a TEMPLATE ON DISK like the other four QA
       into place and the agent must NAME it. A template nothing copies is worse
       than no template: it looks like a governed artifact while governing
       nothing.
+PP-21 the workflow artifact's three authorities agree: (a) every backticked
+      `results.*` / `qa.*` literal the QA law names resolves SEGMENT BY SEGMENT
+      to FULL DEPTH in the shipped skeleton; (b) every top-level key the
+      skeleton ships is documented in the hook policy's artifact schema list;
+      (c) QA is a member of the three enums the guard and the router read --
+      the `workflow_type` enum LINE, the `evidence` agent list, and SKILL.md's
+      event-log phase template -- each asserted on its anchored line, never
+      whole-file.
 
 Negative control (run and recorded when this file was written): temporarily
 adding "qa-preflight" to PLAN_PHASES turns PP-1, PP-3 and PP-6 case (c) red.
@@ -226,6 +234,56 @@ checks do not):
       len(found) >= N PRECONDITION, not on membership. An empty extracted set
       must fail loudly instead of passing trivially — that is the whole reason
       the precondition is asserted first.
+
+Negative controls for PP-21 (six runs, all red, each naming the injected thing;
+the depth contrast under I-21 is the one that carries the property's weight).
+Before this property the three authorities had drifted in all three directions
+at once and the suite was green at 32: the law named `results.qa_env_preflight`
+where the skeleton said `qa.`, named `results.qa_repo_set` and
+`qa.preflight.currency_gate` which the skeleton did not ship at all, the hook
+policy's schema list was short by seven top-level keys, and QA was absent from
+every one of the three enums:
+  I-18 `results.qa_repo_set` deleted from the skeleton's `results` block
+                                          -> (a) red: "named by the law, absent
+                                             from the skeleton: results.qa_repo_set",
+                                             naming the one key rather than a count.
+  I-19 `source_wf` deleted from the hook policy's top-level list, leaving the
+       skeleton shipping it       -> (b) red: 44/45, naming `source_wf`.
+       The direction matters: the list is the thing that goes stale, because a
+       key is added to the skeleton by the code that needs it and to the list by
+       nobody.
+  I-20 `QA` removed from the `workflow_type` enum LINE only, leaving all four
+       other occurrences of the token "QA" in the file standing
+                                          -> (c) red naming the enum line and
+                                             printing its eight surviving members.
+       MANDATORY, and it is the run that proves the anchoring: a whole-file
+       substring test for `QA` is GREEN against this injection, which is PP-14's
+       recorded trap in a second file.
+  I-21 `currency_gate` deleted from the skeleton's `qa.preflight` block
+                                          -> (a) red naming
+                                             `qa.preflight.currency_gate`.
+       Then, with the injection STILL IN PLACE, the resolver was truncated to
+       depth=1 and re-run: GREEN. Truncated to depth=2: GREEN. Both truncations
+       pass because `qa` and `qa.preflight` exist and only the LEAF is missing.
+       Full-depth resolution is therefore not a stylistic choice — it is the
+       only construction of this property that can see the defect, and the two
+       shallower ones would have shipped green over a live gap.
+  I-22 the backtick anchor of PP21_KEY_LITERAL changed to `@` so it matches
+       nothing                            -> (a) red on the PRECONDITION,
+                                             "extracted only 0 ... vacuous".
+       Mandatory for the same reason as I-16: with no floor, an empty literal
+       set makes "every literal resolves" vacuously true forever.
+  I-23 the schema-list section heading reworded to "Artifact schema shall
+       include:"                          -> (b) red on the PRECONDITION,
+                                             naming the anchors that stopped
+                                             bracketing a section.
+A note on the (b) floor, because getting it wrong once is what produced this
+comment. It was first written as `>= 40`, one short of the post-fix 45. Against
+the pre-fix tree (38 entries) that floor fired the PRECONDITION and the red never
+named the seven missing keys — red for the wrong reason, from a property that
+was otherwise correct. A floor set just under the complete count silently does
+the membership half's job and hides it. The floor is now 30: its only duty is
+proving the slice still finds a list.
 """
 
 import importlib.util
@@ -361,6 +419,89 @@ QA_DAG_ROOTS = frozenset({"researcher_task_id"})
 # token the extraction can actually produce; SF-1 was a ROOTS member that
 # `\w+` could never emit, which would have made the root read as unrouted.
 PP20_TEMPLATE_SUFFIX = re.compile(r"_?\{[a-z_]+\}$")
+
+
+# PP-21 -- artifact schema truth, in three directions. The defect class is the
+# one this file already guards twice elsewhere (PP-12, PP-15(d)): two authorities
+# describing the same thing, drifting apart with the suite green. Here the thing
+# is the workflow artifact, and the authorities are the QA law, the shipped
+# skeleton, and the hook policy's schema lists.
+#
+# (a) LAW -> SKELETON, resolved to FULL DEPTH. Every backticked `results.<...>`
+# / `qa.<...>` literal in qa-workflow.md names a place in
+# workflow-artifact.skeleton.json, and a rule that names a place in another file
+# is only a rule if the place exists. DEPTH is the load-bearing decision, not an
+# implementation detail: `qa.preflight.currency_gate` was missing its LEAF while
+# `qa` and `qa.preflight` both existed, so a first-segment resolver is green on
+# it and so is a two-segment one. Only full depth sees it. Measured before this
+# phase: 9 distinct literals, 6 resolve, 3 miss -- `results.qa_env_preflight`,
+# `results.qa_repo_set`, `qa.preflight.currency_gate` -- which were exactly this
+# phase's three edits. Control I-21 is the run that proves depth is doing the work.
+#
+# Direction is law -> skeleton ONLY, deliberately. The reverse (every skeleton
+# key is named by the law) is FALSE by design: the skeleton ships BUILD/DEBUG
+# slots QA never writes, so a symmetric assertion would be red at HEAD for a
+# reason that is not a defect.
+#
+# Read over _decommented() text for the same reason PP-20 is: a key named inside
+# <!-- --> is not named. Not _normative(): several of these literals are inside
+# ```text dispatch fences, which are the normative surface here, and the fenced
+# `qa.isolation`/`qa.preflight` mentions are exactly the ones a reader trusts.
+PP21_KEY_LITERAL = re.compile(r"`((?:results|qa)\.[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)*)`")
+# Anti-vacuity floor, asserted BEFORE resolution: a regex that stopped matching
+# yields an empty set and "every literal resolves" is vacuously true forever.
+# That is PP-16(c)'s recorded shape. 9 at HEAD.
+PP21_MIN_LITERALS = 6
+
+# (b) SKELETON -> HOOK POLICY, all top-level keys. Scoped to top level because
+# nesting is documented selectively by design and a recursive assertion would be
+# red at HEAD for the wrong reason.
+#
+# Measured when this property was written: the skeleton ships 45 top-level keys
+# and the policy list carried 38. The SEVEN absent from the list were absent from
+# the whole policy file: build_scope, worktree, execution_mode,
+# inline_fallback_reason, source_wf, source_bug_candidate, qa. Only three of the
+# seven are QA's; the four BUILD-era omissions (build_scope, worktree,
+# execution_mode, inline_fallback_reason) were closed here DELIBERATELY, not
+# incidentally. The alternative -- scoping this property to the QA-introduced
+# keys -- would have shipped an invariant that cannot see the defect class it
+# exists for, and would have left `build_scope`, a key the BUILD route branches
+# on, undocumented in the document whose job is documenting it.
+#
+# `worktree` being on this list does NOT give QA a worktree: ADR-2 keeps
+# `worktree` and `results.finishing` BUILD-only, and documenting a key the
+# skeleton already ships for BUILD is a different act from offering QA one.
+PP21_SCHEMA_LIST_START = re.compile(r"^Artifact schema must include:$", re.M)
+PP21_SCHEMA_LIST_END = re.compile(r"^Rules:$", re.M)
+PP21_LIST_ENTRY = re.compile(r"^- `([a-z_]+)`", re.M)
+# The floor's ONLY job is proving the section slice still finds a list; the
+# membership half is what proves the list is complete, and a floor set just under
+# the complete count silently does the membership half's work instead. Set to 30
+# for exactly that reason: at 40 the pre-fix tree (38 entries) failed the
+# PRECONDITION and never reached membership, so the red never named the seven
+# missing keys -- red for the wrong reason, the shape step 4 of the protocol
+# exists to catch. 45 after this phase; a broken anchor yields ~0.
+PP21_MIN_LISTED = 30
+
+# (c) QA is a member of the enums the PostToolUse guard and the router actually
+# read. Every assertion here is on the SINGLE anchored line that carries the
+# enum, never a whole-file search: `QA` appears in prose throughout both files
+# (and `qa` appears in dozens of phase tokens), so a file-wide test is satisfied
+# by prose while the enum stays short. That is PP-14's recorded trap, and
+# control I-20 is the run that proves the anchoring here.
+PP21_WORKFLOW_TYPE_LINE = re.compile(r"^- `workflow_type`(.*)$", re.M)
+PP21_ENUM_TOKEN = re.compile(r"`([A-Za-z_-]+)`")
+PP21_EVIDENCE_HEAD = re.compile(
+    r"^- `evidence` stores proof-of-work grouped by agent:$", re.M
+)
+PP21_EVIDENCE_ENTRY = re.compile(r"^  - `([a-z_]+)`")
+PP21_EVENT_LOG_LINE = "workflow_started"
+# The event-log template line carries four brace expansions ({iso_timestamp},
+# {workflow_uuid}, {parent_task_id} and the phase enum). Requiring at least one
+# `|` is what picks out the enum without hard-coding its membership -- a
+# substring test for "qa" on this line would be satisfied by the word appearing
+# anywhere on it, including inside a future task-id template.
+PP21_PHASE_ENUM = re.compile(r"\{([a-z-]+(?:\|[a-z-]+)+)\}")
 
 
 # PP-15(a). Branch currency on the measuring agent. One token per structural
@@ -1268,6 +1409,154 @@ def main() -> int:
             )
         )
     check("PP-20", pp20_ok, pp20_detail)
+
+    # PP-21(a) -- every artifact key the QA law names exists in the skeleton it
+    # names, resolved segment by segment to FULL DEPTH.
+    skeleton = json.loads(SKELETON.read_text(encoding="utf-8"))
+
+    def _resolve(path: str, depth: int | None = None) -> bool:
+        """Walk `path` through the skeleton. depth=None means full depth."""
+        segments = path.split(".")
+        if depth is not None:
+            segments = segments[:depth]
+        node = skeleton
+        for segment in segments:
+            if not isinstance(node, dict) or segment not in node:
+                return False
+            node = node[segment]
+        return True
+
+    key_literals = sorted(set(PP21_KEY_LITERAL.findall(dag_text)))
+    if len(key_literals) < PP21_MIN_LITERALS:
+        pp21a_ok = False
+        pp21a_detail = (
+            f"PRECONDITION failed: extracted only {len(key_literals)} artifact-key "
+            f"literals from {QA_WORKFLOW.name} (expected >= {PP21_MIN_LITERALS}) — "
+            f"the literal regex has stopped matching, so any resolution result "
+            f"below is vacuous"
+        )
+    else:
+        unresolved = [k for k in key_literals if not _resolve(k)]
+        pp21a_ok = not unresolved
+        pp21a_detail = (
+            f"{len(key_literals)} artifact-key literals in {QA_WORKFLOW.name}, "
+            f"{len(key_literals) - len(unresolved)} resolve at full depth in "
+            f"{SKELETON.name}"
+            + (
+                ""
+                if pp21a_ok
+                else " — named by the law, absent from the skeleton: "
+                + ", ".join(unresolved)
+            )
+        )
+    check("PP-21(a)", pp21a_ok, pp21a_detail)
+
+    # PP-21(b) -- every top-level key the skeleton ships is documented in the
+    # hook policy's artifact schema list.
+    policy_text = HOOK_POLICY.read_text(encoding="utf-8")
+    start = PP21_SCHEMA_LIST_START.search(policy_text)
+    end = PP21_SCHEMA_LIST_END.search(policy_text, start.end()) if start else None
+    if start is None or end is None:
+        pp21b_ok = False
+        pp21b_detail = (
+            f"PRECONDITION failed: could not slice the artifact schema list out of "
+            f"{HOOK_POLICY.name} — the 'Artifact schema must include:' / 'Rules:' "
+            f"anchors no longer bracket a section, so any membership result is vacuous"
+        )
+    else:
+        listed = PP21_LIST_ENTRY.findall(policy_text[start.end() : end.start()])
+        if len(listed) < PP21_MIN_LISTED:
+            pp21b_ok = False
+            pp21b_detail = (
+                f"PRECONDITION failed: the schema list slice yielded only "
+                f"{len(listed)} entries (expected >= {PP21_MIN_LISTED})"
+            )
+        else:
+            undocumented = [k for k in skeleton if k not in set(listed)]
+            pp21b_ok = not undocumented
+            pp21b_detail = (
+                f"{len(skeleton) - len(undocumented)}/{len(skeleton)} skeleton "
+                f"top-level keys documented in {HOOK_POLICY.name}"
+                + (
+                    ""
+                    if pp21b_ok
+                    else " — shipped by the skeleton, undocumented by the policy: "
+                    + ", ".join(undocumented)
+                )
+            )
+    check("PP-21(b)", pp21b_ok, pp21b_detail)
+
+    # PP-21(c) -- QA is a member of the three enums the guard and the router read.
+    # Anchored per line; each half fails loudly if its anchor stops matching.
+    pp21c_gaps: list[str] = []
+
+    wt_lines = PP21_WORKFLOW_TYPE_LINE.findall(policy_text)
+    if len(wt_lines) != 1:
+        pp21c_gaps.append(
+            f"PRECONDITION: expected exactly 1 `workflow_type` line in "
+            f"{HOOK_POLICY.name}, found {len(wt_lines)}"
+        )
+    elif "QA" not in PP21_ENUM_TOKEN.findall(wt_lines[0]):
+        pp21c_gaps.append(
+            f"`QA` is not a member of the `workflow_type` enum LINE in "
+            f"{HOOK_POLICY.name} (members: "
+            f"{', '.join(PP21_ENUM_TOKEN.findall(wt_lines[0]))})"
+        )
+
+    ev_head = PP21_EVIDENCE_HEAD.search(policy_text)
+    if ev_head is None:
+        pp21c_gaps.append(
+            f"PRECONDITION: the `evidence` sub-list heading is gone from "
+            f"{HOOK_POLICY.name}"
+        )
+    else:
+        ev_agents = []
+        for line in policy_text[ev_head.end() :].splitlines()[1:]:
+            m = PP21_EVIDENCE_ENTRY.match(line)
+            if not m:
+                break
+            ev_agents.append(m.group(1))
+        if len(ev_agents) < 5:
+            pp21c_gaps.append(
+                f"PRECONDITION: the `evidence` sub-list yielded only "
+                f"{len(ev_agents)} agents (expected >= 5)"
+            )
+        elif "qa_executor" not in ev_agents:
+            pp21c_gaps.append(
+                f"`qa_executor` is missing from the `evidence` sub-list in "
+                f"{HOOK_POLICY.name} (members: {', '.join(ev_agents)})"
+            )
+
+    event_lines = [
+        line
+        for line in SKILL_MD.read_text(encoding="utf-8").splitlines()
+        if PP21_EVENT_LOG_LINE in line
+    ]
+    if len(event_lines) != 1:
+        pp21c_gaps.append(
+            f"PRECONDITION: expected exactly 1 `{PP21_EVENT_LOG_LINE}` line in "
+            f"{SKILL_MD.name}, found {len(event_lines)}"
+        )
+    else:
+        enums = PP21_PHASE_ENUM.findall(event_lines[0])
+        if len(enums) != 1:
+            pp21c_gaps.append(
+                f"PRECONDITION: expected exactly 1 pipe-separated enum on "
+                f"{SKILL_MD.name}'s event-log template line, found {len(enums)}"
+            )
+        elif "qa" not in enums[0].split("|"):
+            pp21c_gaps.append(
+                f"`qa` is missing from the event-log phase enum in "
+                f"{SKILL_MD.name} (members: {enums[0]})"
+            )
+
+    check(
+        "PP-21(c)",
+        not pp21c_gaps,
+        "QA is a member of the `workflow_type` enum line, the `evidence` list and "
+        "the event-log phase template"
+        + ("" if not pp21c_gaps else " — " + "; ".join(pp21c_gaps)),
+    )
 
     check(
         "PP-19(b)",

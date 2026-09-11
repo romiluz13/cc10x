@@ -8,7 +8,7 @@
 
 0a. **Capability discovery (READ-ONLY, runs once, before any QA agent dispatch).**
 
-- This is a read-only orientation pass. Record results under `results.qa_env_preflight`; the env-plan step consumes them.
+- This is a read-only orientation pass. Record results under `qa.qa_env_preflight`; the env-plan step consumes them.
 - **Inventory the session's own tooling FIRST.** Before deciding anything is unavailable, enumerate what this session actually has — MCP servers, skills, plugins, and agents — and plan to use it. Ticket/spec access, log access, and UI driving frequently come from tooling rather than from the repo. Discover this at runtime; never hardcode a list, because it differs per user and grows over time.
 - **Nothing is "unavailable" until a check that could have found it came back empty.** This applies to every kind of thing this step records — a tool, an MCP server, a repo, a path, a credential file. **Never ask the user whether something exists on their machine.** "Do you have that repo cloned?" is the router outsourcing a measurement it can take in one command, and the answer it gets back is a *belief* where `ls` would have produced a *fact*. Measure first, then ask what to do about what you measured. This is the same discipline the setup record enforces on preflight — record only what was observed — applied one phase earlier, where the cost of guessing is an entire lane.
 - Then detect what the machine can do, and record each as available / unavailable:
@@ -232,7 +232,10 @@ stale checkout is not something the human must *acquire*, it is a decision they 
 entry with no `acquisition` recipe is invalid output. Take the question text verbatim from the entry:
 
 1. Persist the list verbatim to `qa.preflight.human_prerequisites`, the gate entries to
-   `qa.preflight.currency_gate`, and the rest of the contract to `qa.preflight`.
+   `qa.preflight.currency_gate`, and the rest of the contract to `qa.preflight`. The agent's own
+   return goes to `results.qa_preflight` — its own slot, not `results.qa_harness_builder`: one agent
+   runs both phases, and a shared slot means the build's return silently overwrites the measurement
+   the build was gated on.
 2. Append a `preflight_blocked` event to the event log.
 3. Set `pending_gate="qa_preflight_human_prerequisites"`.
 4. Raise **exactly one** `AskUserQuestion`, in its own message, listing every prerequisite with its
@@ -281,6 +284,9 @@ TaskCreate({
 }) -> qa_build_task_id
 TaskUpdate({ taskId: qa_build_task_id, addBlockedBy: [qa_preflight_task_id] })
 ```
+
+On return, record the harness builder's contract under `results.qa_harness_builder`. Preflight's
+return lives in `results.qa_preflight` and is never overwritten by this phase.
 
 **Exactly one blocker, and that is deliberate.** Preflight already inherits the three plan-review
 blockers, so the transitive ordering is identical. Keeping the three *and* adding preflight would be
