@@ -9,7 +9,7 @@ The goal is not to weaken verification. The goal is to separate:
 - duplicated work that may be narrowed only with evidence
 - deeper audit work that can eventually become trigger-based
 
-This model complements [router-invariants.md](/Users/rom.iluz/Dev/cc10x_v5/cc10x/docs/router-invariants.md). It does not replace it.
+This model complements [router-invariants.md](~/Dev/cc10x_v5/cc10x/docs/router-invariants.md). It does not replace it.
 
 ## Non-Negotiable Invariants
 

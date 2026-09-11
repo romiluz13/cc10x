@@ -1,12 +1,12 @@
 # Prompt-Engineering Audit — CC10x Core Workflow Skills vs mattpocock-skills Benchmark
 
-Scope: `building/`, `debugging/`, `planning/`, `code-review/` under `/Users/rom.iluz/Dev/cc10x/plugins/cc10x/skills/`, audited purely as LLM instructions. Orchestration (router contracts, hooks, dispatch) is out of scope and graded only where its *placement or wording* affects how the model reads the rest of the file.
+Scope: `building/`, `debugging/`, `planning/`, `code-review/` under `~/Dev/cc10x/plugins/cc10x/skills/`, audited purely as LLM instructions. Orchestration (router contracts, hooks, dispatch) is out of scope and graded only where its *placement or wording* affects how the model reads the rest of the file.
 
 ---
 
 ## STEP 1 — The rubric, extracted from the benchmark
 
-Source files: `/Users/rom.iluz/Dev/mattpocock-skills/skills/productivity/writing-great-skills/SKILL.md`, `CLAUDE.md`/`AGENTS.md`, and the six engineering skills.
+Source files: `~/Dev/mattpocock-skills/skills/productivity/writing-great-skills/SKILL.md`, `CLAUDE.md`/`AGENTS.md`, and the six engineering skills.
 
 ### R1. No-op hunting / sentence economy
 > "Hunt **no-ops** sentence by sentence … The test: does it change behaviour versus the default? … most prose that fails should go, not be rewritten." (writing-great-skills)
