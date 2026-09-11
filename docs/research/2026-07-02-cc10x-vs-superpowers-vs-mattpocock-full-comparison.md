@@ -8,9 +8,9 @@
 
 | Project | Location | Type | Files Analyzed |
 | --------- | ---------- | ------ | ---------------- |
-| **cc10x** | `/Users/rom.iluz/Dev/cc10x/` | Claude Code plugin (v12.2.0) | 17 skills, 9 agents, 9 hook scripts, 8 tools, router + 6 references |
-| **Superpowers** | `/Users/rom.iluz/Dev/superpowers/` | Multi-harness plugin (v6.1.1) | 14 skills, hooks, tests, 9 harness manifests |
-| **Matt Pocock** | `/Users/rom.iluz/Dev/pi-optimize/mattpocock-skills/` | Skills repo | 15+ skills across engineering/productivity/personal categories |
+| **cc10x** | `~/Dev/cc10x/` | Claude Code plugin (v12.2.0) | 17 skills, 9 agents, 9 hook scripts, 8 tools, router + 6 references |
+| **Superpowers** | `~/Dev/superpowers/` | Multi-harness plugin (v6.1.1) | 14 skills, hooks, tests, 9 harness manifests |
+| **Matt Pocock** | `~/Dev/pi-optimize/mattpocock-skills/` | Skills repo | 15+ skills across engineering/productivity/personal categories |
 
 ## Final Score Card
 
@@ -415,8 +415,8 @@
 
 All 10 subagent reports are at:
 
-- `/Users/rom.iluz/Dev/cc10x/.pi-subagents/artifacts/94c57dfa_scout_{0-4}_output.md` (batch 1: dimensions 1-5)
-- `/Users/rom.iluz/Dev/cc10x/.pi-subagents/artifacts/cf3397b3_scout_{0-4}_output.md` (batch 2: dimensions 6-10)
+- `~/Dev/cc10x/.pi-subagents/artifacts/94c57dfa_scout_{0-4}_output.md` (batch 1: dimensions 1-5)
+- `~/Dev/cc10x/.pi-subagents/artifacts/cf3397b3_scout_{0-4}_output.md` (batch 2: dimensions 6-10)
 
 ## Current cc10x State
 

@@ -1,6 +1,6 @@
 # Prompt-Engineering Audit — cc10x Agent Prompts (11 agents + agent-common)
 
-Audit date: 2026-07-19. Lens: prompt engineering / LLM-instruction quality only. Rubric built from `/Users/rom.iluz/Dev/mattpocock-skills/` (writing-great-skills, tdd, code-review, diagnosing-bugs, implement). Functional files only; no historical audits consulted.
+Audit date: 2026-07-19. Lens: prompt engineering / LLM-instruction quality only. Rubric built from `~/Dev/mattpocock-skills/` (writing-great-skills, tdd, code-review, diagnosing-bugs, implement). Functional files only; no historical audits consulted.
 
 ---
 

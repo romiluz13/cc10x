@@ -1,6 +1,6 @@
 # Prompt-Engineering Audit — CC10x Design/Knowledge Skills vs mattpocock-skills Benchmark
 
-Scope: prompt-engineering / LLM-instruction quality ONLY. Orchestration (routing, hooks, state plumbing) ignored except where it corrupts the prose an executing agent must read. Files audited from `/Users/rom.iluz/Dev/cc10x/plugins/cc10x/skills/`; benchmark from `/Users/rom.iluz/Dev/mattpocock-skills/`.
+Scope: prompt-engineering / LLM-instruction quality ONLY. Orchestration (routing, hooks, state plumbing) ignored except where it corrupts the prose an executing agent must read. Files audited from `~/Dev/cc10x/plugins/cc10x/skills/`; benchmark from `~/Dev/mattpocock-skills/`.
 
 ---
 

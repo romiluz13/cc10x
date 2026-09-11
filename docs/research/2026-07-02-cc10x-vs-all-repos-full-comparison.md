@@ -8,12 +8,12 @@
 
 | Project | Location | Type | Key Focus |
 | --------- | ---------- | ------ | ----------- |
-| **cc10x** | `/Users/rom.iluz/Dev/cc10x/` | Claude Code plugin (v12.2.0) | Orchestration + enforcement + memory |
-| **Superpowers** | `/Users/rom.iluz/Dev/superpowers/` | Multi-harness plugin (v6.1.1) | Discipline skills + anti-rationalization |
-| **Matt Pocock** | `/Users/rom.iluz/Dev/pi-optimize/mattpocock-skills/` | Skills repo | Architecture vocabulary + planning |
-| **addyosmani/agent-skills** | `/Users/rom.iluz/Dev/addyosmani-agent-skills/` | Claude Code plugin | Domain expertise + doubt-driven dev |
-| **EveryInc/compound** | `/Users/rom.iluz/Dev/everyinc-compound-engineering/` | Multi-harness plugin (TS) | Knowledge compounding loop |
-| **multica/karpathy** | `/Users/rom.iluz/Dev/multica-karpathy-skills/` | CLAUDE.md guidelines | Minimal advisory principles |
+| **cc10x** | `~/Dev/cc10x/` | Claude Code plugin (v12.2.0) | Orchestration + enforcement + memory |
+| **Superpowers** | `~/Dev/superpowers/` | Multi-harness plugin (v6.1.1) | Discipline skills + anti-rationalization |
+| **Matt Pocock** | `~/Dev/pi-optimize/mattpocock-skills/` | Skills repo | Architecture vocabulary + planning |
+| **addyosmani/agent-skills** | `~/Dev/addyosmani-agent-skills/` | Claude Code plugin | Domain expertise + doubt-driven dev |
+| **EveryInc/compound** | `~/Dev/everyinc-compound-engineering/` | Multi-harness plugin (TS) | Knowledge compounding loop |
+| **multica/karpathy** | `~/Dev/multica-karpathy-skills/` | CLAUDE.md guidelines | Minimal advisory principles |
 
 ## Master Score Card
 
@@ -203,7 +203,7 @@ These are cc10x's unique competitive advantages — things nobody else does:
 
 All reports at:
 
-- Batch 1 (Superpowers/Matt Pocock, dims 1-5): `/Users/rom.iluz/Dev/cc10x/.pi-subagents/artifacts/94c57dfa_scout_{0-4}_output.md`
-- Batch 2 (Superpowers/Matt Pocock, dims 6-10): `/Users/rom.iluz/Dev/cc10x/.pi-subagents/artifacts/cf3397b3_scout_{0-4}_output.md`
-- Batch 3 (addyosmani agents/hooks, EveryInc infra): `/Users/rom.iluz/Dev/cc10x/.pi-subagents/artifacts/99888eba_scout_{1,3}_output.md`
-- Batch 4 (EveryInc core skills, Karpathy, EveryInc remaining): `/Users/rom.iluz/Dev/cc10x/.pi-subagents/artifacts/6e8be0c9_scout_{1,2,3}_output.md`
+- Batch 1 (Superpowers/Matt Pocock, dims 1-5): `~/Dev/cc10x/.pi-subagents/artifacts/94c57dfa_scout_{0-4}_output.md`
+- Batch 2 (Superpowers/Matt Pocock, dims 6-10): `~/Dev/cc10x/.pi-subagents/artifacts/cf3397b3_scout_{0-4}_output.md`
+- Batch 3 (addyosmani agents/hooks, EveryInc infra): `~/Dev/cc10x/.pi-subagents/artifacts/99888eba_scout_{1,3}_output.md`
+- Batch 4 (EveryInc core skills, Karpathy, EveryInc remaining): `~/Dev/cc10x/.pi-subagents/artifacts/6e8be0c9_scout_{1,2,3}_output.md`

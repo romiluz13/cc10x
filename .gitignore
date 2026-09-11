@@ -244,3 +244,9 @@ plugins/cc10x/tools/__pycache__/
 # ========================================
 Live Coding Prep/
 .pi-subagents/
+
+# Local keynote working copies (never publish)
+keynote copy*.html
+# Local research deep-dives (kept locally, never published)
+docs/research/2026-07-06-ecc-wshobson-deep-dive.md
+docs/research/2026-07-30-anthropic-guide-comparison/

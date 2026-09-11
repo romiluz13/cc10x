@@ -2,9 +2,9 @@
 
 Lens: prompt engineering / LLM-instruction quality ONLY. Orchestration (routing, hooks, state plumbing) is out of scope and not judged. All findings are from functional files read this session; no historical audit docs consulted.
 
-Benchmark corpus: `/Users/rom.iluz/Dev/mattpocock-skills/` (writing-great-skills, handoff, teach, grill-me, resolving-merge-conflicts, triage, setup-pre-commit, git-guardrails-claude-code).
+Benchmark corpus: `~/Dev/mattpocock-skills/` (writing-great-skills, handoff, teach, grill-me, resolving-merge-conflicts, triage, setup-pre-commit, git-guardrails-claude-code).
 
-Audited corpus: `/Users/rom.iluz/Dev/cc10x/plugins/cc10x/skills/` — verification, memory-and-handoff, diff-driven-docs, plan-review-gate, update, agent-common, frontend, mcp-cli, resolving-merge-conflicts (all SKILL.md + every references/ file).
+Audited corpus: `~/Dev/cc10x/plugins/cc10x/skills/` — verification, memory-and-handoff, diff-driven-docs, plan-review-gate, update, agent-common, frontend, mcp-cli, resolving-merge-conflicts (all SKILL.md + every references/ file).
 
 ---
 

@@ -1,6 +1,6 @@
 # Prompt-Engineering Audit — cc10x-router prose
 
-**Scope:** `/Users/rom.iluz/Dev/cc10x/plugins/cc10x/skills/cc10x-router/SKILL.md` + all 8 reference `.md` files (skeleton JSON excluded — data, not prose). `/Users/rom.iluz/Dev/cc10x/plugins/cc10x/commands/` **does not exist** (plugin root contains `agents config hooks scripts skills templates tests tools`); nothing to audit there.
+**Scope:** `~/Dev/cc10x/plugins/cc10x/skills/cc10x-router/SKILL.md` + all 8 reference `.md` files (skeleton JSON excluded — data, not prose). `~/Dev/cc10x/plugins/cc10x/commands/` **does not exist** (plugin root contains `agents config hooks scripts skills templates tests tools`); nothing to audit there.
 **Lens:** instruction quality only. Design is treated as fixed. All rewrites are behavior-preserving.
 
 ---

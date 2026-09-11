@@ -58,6 +58,6 @@ All three emit `### Memory Notes (For Workflow-Final Persistence)` instead of YA
 
 ## Related Sources
 
-- [cc10x-router/SKILL.md](/Users/rom.iluz/Dev/cc10x_v5/cc10x/plugins/cc10x/skills/cc10x-router/SKILL.md)
-- [router-invariants.md](/Users/rom.iluz/Dev/cc10x_v5/cc10x/docs/router-invariants.md)
-- [prompt-invariants.md](/Users/rom.iluz/Dev/cc10x_v5/cc10x/docs/prompt-invariants.md)
+- [cc10x-router/SKILL.md](~/Dev/cc10x_v5/cc10x/plugins/cc10x/skills/cc10x-router/SKILL.md)
+- [router-invariants.md](~/Dev/cc10x_v5/cc10x/docs/router-invariants.md)
+- [prompt-invariants.md](~/Dev/cc10x_v5/cc10x/docs/prompt-invariants.md)

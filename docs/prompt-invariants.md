@@ -7,7 +7,7 @@
 This file maps each load-bearing prompt behavior to the failure it prevents.
 If a Tier 1 or Tier 2 prompt contract changes, the matching invariant must be reviewed in the same change.
 
-This registry complements, but does not replace, [router-invariants.md](/Users/rom.iluz/Dev/cc10x_v5/cc10x/docs/router-invariants.md).
+This registry complements, but does not replace, [router-invariants.md](~/Dev/cc10x_v5/cc10x/docs/router-invariants.md).
 
 `cc10x-router` itself is not treated as a prompt-only surface here. The router
 kernel and its mandatory references are orchestration-sensitive and must stay in
