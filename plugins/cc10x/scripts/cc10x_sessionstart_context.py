@@ -21,14 +21,27 @@ def main() -> int:
         for name, status in phase_status.items()
         if status not in {"completed", "skipped"}
     ]
-    overall_quality = (payload.get("research_quality") or {}).get("overall", "none")
+    # `research_quality` records EXTERNAL research (web/github via the researcher
+    # agent). The QA route never writes it — QA's own lanes land in
+    # `results.qa_researchers`. Reporting `research_quality=none` on a QA workflow
+    # therefore reads as "research never ran" when eight lanes may be on disk, and a
+    # resuming agent cannot tell a real gap from a field that does not apply. Report
+    # what the route actually populates.
+    workflow_type = payload.get("workflow_type")
+    if workflow_type == "QA":
+        lanes = (payload.get("results") or {}).get("qa_researchers")
+        n = len(lanes) if isinstance(lanes, (list, dict)) else (1 if lanes else 0)
+        research_field = f"qa_research_lanes={n or 'none'}"
+    else:
+        overall_quality = (payload.get("research_quality") or {}).get("overall", "none")
+        research_field = f"research_quality={overall_quality}"
     workflow_uuid = payload.get("workflow_uuid") or payload.get("workflow_id")
     message = (
         f"CC10X workflow context ({source}): "
         f"wf={workflow_uuid} type={payload.get('workflow_type')} "
         f"plan={payload.get('plan_file') or 'N/A'} design={payload.get('design_file') or 'N/A'} "
         f"phase_cursor={payload.get('phase_cursor') or 'none'} "
-        f"research_quality={overall_quality} pending_gate={pending} "
+        f"{research_field} pending_gate={pending} "
         f"incomplete_phases={', '.join(incomplete) if incomplete else 'none'}."
     )
     log_event(
