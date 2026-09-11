@@ -142,6 +142,23 @@ PP-22 every agent file SPECIFIES the line-1 `CONTRACT {` envelope inside its
       specifies no envelope leaves SKILL.md §8's verdict extraction with a
       heading scan that finds nothing, so the router trips inline verification
       on every lane of that agent.
+PP-31 the QA phase-token spellings are FROZEN and the freeze CITES ITS REASON:
+      the QA slice of the SKILL.md §3 phase enum equals a module-level frozen
+      set, AND the ADR-1 naming-rationale block is anchored in qa-workflow.md
+      carrying every clause of the argument. It is a TRIPWIRE, not a
+      behavioural proof: its value is the argument it forces a future editor to
+      read before renaming. The asymmetry (`qa-re-plan` prefixed where
+      `re-qa-build`/`re-qa-execute` are infixed) is deliberate and PRICED, and
+      editing the frozen constant to make a rename green is the WHOLE COST of
+      the rename, not a formality -- see the constant's comment, and control
+      I-45, which measures that cost
+PP-32 EVERY DELIBERATE OMISSION IN THE QA LAW CARRIES ITS RATIONALE IN THE SAME
+      BLOCK: three omissions -- probe drops plan review, no amendment lane, no
+      `re-qa-preflight` -- each window-anchored to the block that makes it,
+      because a file-wide test lets any one satisfy the others. This encodes
+      something the route already does well and converts a culture into a
+      check. The FOURTH omission (no workspace isolation) is PP-30(a)'s
+      positive half and is deliberately NOT re-asserted here
 
 Negative control (run and recorded when this file was written): temporarily
 adding "qa-preflight" to PLAN_PHASES turns PP-1, PP-3 and PP-6 case (c) red.
@@ -671,6 +688,99 @@ The four controls sit before the deletion point and `re.sub` scans left to
 right, so they CANNOT move -- reporting them as evidence would be claiming
 measurement where only control is held. The three genuine measurements are the
 ones that clear the risk.
+
+Negative controls for PP-31 and PP-32 (four runs: three red and naming the
+injected thing, plus I-48, which is a control on the SPLIT between PP-32 and
+PP-30(a) and whose correct result is PP-32 GREEN. I-45 is run in two STAGES and
+the second stage is the evidence for ADR-1's central claim rather than a test of
+PP-31):
+  I-45 THE RENAME, PERFORMED THE WAY A RENAMER WOULD PERFORM IT. Stage (a):
+       `qa-re-plan` -> `re-qa-plan` in the SKILL.md §3 phase enum ONLY
+                                          -> PP-31 red naming BOTH sides of the
+                                             drift ("unexpected
+                                             ['re-qa-plan'], missing
+                                             ['qa-re-plan']") and pointing the
+                                             reader at ADR-1, with PP-4 red
+                                             sympathetically because
+                                             qa-workflow.md still writes
+                                             `phase:qa-re-plan`. PP-2 stays
+                                             GREEN at this stage, and that is a
+                                             measurement, not an omission: PP-2
+                                             reads
+                                             `cc10x_qa_isolation_guard.PLAN_PHASES`,
+                                             which a SKILL.md edit does not
+                                             touch.
+       Stage (b): the rename COMPLETED -- `phase:qa-re-plan` rewritten in
+       qa-workflow.md and `"qa-re-plan"` rewritten in the guard's PLAN_PHASES,
+       which a real rename MUST do or the renamed phase silently stops being
+       read-only
+                                          -> PP-31 red as before AND PP-2 red:
+                                             "no plan phase lost from
+                                             PLAN_PHASES (missing:
+                                             ['qa-re-plan'])". PP-4 returns to
+                                             green, so the pair PP-31 + PP-2 is
+                                             the whole signal.
+       THE SYMPATHETIC RED IS THE ARGUMENT. The only way to make PP-2 green
+       again is to edit EXPECTED_PLAN_PHASES -- the constant PP-2 asserts
+       against -- which is indistinguishable from defeating the property. That
+       is ADR-1's central claim, and it is recorded here as a measurement rather
+       than an assertion because the brief for this property specified only
+       stage (a), under which PP-2 does NOT move. A one-stage control would have
+       recorded ADR-1's strongest argument as unproven.
+       Also observed under the injection: PP-5 stays green, because it filters
+       enum members with `startswith("qa")` and `re-qa-plan` no longer matches.
+       So the dispatcher-row property goes BLIND to a token the moment it is
+       renamed out of the `qa` prefix -- a fourth surface the rename would
+       quietly unguard, and one nobody had enumerated.
+  I-46 the ADR-1 rationale block absent, the frozen set correct -- i.e. PP-31
+       written as a token freeze with no anchored argument, which is how it
+       would have shipped if the second half had been left out
+                                          -> PP-31 red on the RATIONALE half
+                                             ("not present exactly once in the
+                                             NORMATIVE text ... 0 matches"),
+                                             observed at the RED step of this
+                                             phase before the block was written.
+       The two halves are asserted in ONE check id on purpose: a freeze whose
+       reason has been deleted is a rule with no reason attached, and that is
+       precisely the "tidy it up" invitation the property exists to refuse.
+  I-47 the P9 justification paragraph deleted whole from the reduced-task-graph
+       block, the omission itself left in place -- i.e. probe drops plan review
+       and says nothing, the pre-fix state
+                                          -> PP-32 red naming the probe window
+                                             alone: "the `probe drops plan
+                                             review` omission is made but NOT
+                                             argued in place: missing
+                                             ['`build_scope=trivial`',
+                                             'anti-anchoring'] (window=1526B)",
+                                             with `no amendment lane` (722B) and
+                                             ``no `re-qa-preflight``` (260B)
+                                             reported green in the same detail
+                                             string and no other check
+                                             disturbed. Window 2754B -> 1526B.
+       CONTRAST, and it is why the property is windowed per omission rather than
+       written as a file-wide token test. Under the injection
+       `grep -c anti-anchoring qa-workflow.md` still returns 2 and
+       `grep -c SCOPE_INCREASES` still returns 4, so a whole-file test over
+       three of the four tokens is GREEN against this injection; only
+       `build_scope=trivial` is unique to the block. PP-18's recorded I-2 shape,
+       and PP-25(a)'s I-34 in this same file, for a third time.
+  I-48 the ADR-2 rationale block deleted -- the fourth omission, the one PP-32
+       deliberately does NOT assert
+                                          -> PP-30(a) red on its positive half
+                                             (this is I-40, re-run at this phase
+                                             to confirm the division of labour
+                                             still holds) and PP-32 GREEN.
+       Recorded as a control on the SPLIT rather than on either property: PP-32
+       staying green here is correct, not a gap, because two properties owning
+       one fact is the duplication that made the byte-duplicated PASS rule a
+       trap. If PP-30(a) is ever narrowed to its negative half, PP32_OMISSIONS'
+       comment is where the missing fourth omission is recorded.
+Window sizes at the green state: PP-31 rationale block = 1687B; PP-32 probe
+window = 2754B, amendment-lane window = 722B, `re-qa-preflight` window = 260B.
+These are established AFTER Phase 8's fence deletion, so none of them has a
+pre-deletion value to compare against and none is offered as one -- I-47 is
+their validation instead, which is the right instrument for a window that was
+never measured on the other side of that change.
 """
 
 import importlib.util
@@ -1400,6 +1510,149 @@ PP30B_DISPATCHES = (
 )
 PP30B_TOKENS = ("`ARTIFACTS_CREATED`", "`HARNESS_MANIFEST`")
 
+# PP-31. M5 / ADR-1. The QA phase-token spellings are FROZEN, and the freeze
+# cites its reason.
+#
+# WHAT THIS PROPERTY IS, AND WHAT IT IS NOT. It is a TRIPWIRE. Its value is not
+# that it proves anything about behaviour — it proves nothing about behaviour —
+# but that it forces a future editor who reaches for these tokens to read the
+# argument before changing them. The asymmetry it freezes is real and is
+# deliberately left in place: `qa-re-plan` is prefixed where its siblings
+# `re-qa-build` / `re-qa-execute` are infixed, and `qa-plan-review` /
+# `qa-plan-review-2` do not match PLAN's `plan-review-gap-1` / `-2`. ADR-1
+# prices that asymmetry and keeps it.
+#
+# EDITING THIS CONSTANT TO MAKE A RENAME GREEN IS THE WHOLE COST OF THE RENAME,
+# NOT A FORMALITY. That sentence is the property. Three measured reasons:
+#   1. `re-qa-build` / `re-qa-execute` follow the route-wide `re-` prefix
+#      already in the enum (`re-review`, `re-hunt`, `re-verify`, `re-plan`).
+#      They are the CONFORMING names; `qa-re-plan` is the single outlier. A
+#      rename is a five-surface change to fix one token.
+#   2. A rename must reach `cc10x_qa_isolation_guard.PLAN_PHASES` — a live
+#      security-relevant constant that literally contains `"qa-re-plan"` — or
+#      the renamed phase silently stops being read-only. Reaching it turns PP-2
+#      red, and the only repair is editing `EXPECTED_PLAN_PHASES`, the constant
+#      PP-2 asserts against. A change whose completion criterion is "edit the
+#      guard until it stops complaining" is INDISTINGUISHABLE FROM DEFEATING THE
+#      PROPERTY. Control (i) below runs exactly that and records the sympathetic
+#      red; it is the evidence for ADR-1's central claim, not a side effect.
+#   3. SKILL.md §4 reconstructs runnable tasks from `wf:` + `kind:` + `phase:`.
+#      An in-flight task carrying `phase:qa-re-plan` becomes unroutable after a
+#      rename and — worse — stops matching `PLAN_PHASES`, so the isolation guard
+#      stops treating it as read-only. The rename opens the exact mutation hole
+#      PP-1 and PP-3 exist to close, for every workflow spanning the change.
+# And `plan-review-gap-N`'s `-gap-` infix is a fossil of `plan-gap-reviewer`'s
+# older name, so aligning QA's clearer `qa-plan-review-N` down to it would be
+# aligning to legacy.
+#
+# TWO HALVES, and the second is what stops the constant and the argument from
+# drifting apart. A frozen set with no anchored rationale is a rule with no
+# reason attached, which is precisely the "tidy it up" invitation this exists to
+# refuse. So the rationale block in qa-workflow.md is asserted here, in the same
+# check, over `_normative()` text — an argument inside `<!-- -->` or parked in a
+# fence is not law (PP-18's recorded I-1/I-4 shape).
+#
+# Membership is by hyphen SEGMENT (`"qa" in token.split("-")`), never substring:
+# a substring test would sweep in any future token merely containing the letters
+# and quietly widen a set whose whole point is that it is closed.
+PP31_QA_TOKENS = frozenset(
+    {
+        "qa",
+        "qa-research",
+        "qa-plan",
+        "qa-plan-review",
+        "qa-re-plan",
+        "qa-plan-review-2",
+        "qa-preflight",
+        "qa-build",
+        "qa-review",
+        "qa-hunt",
+        "qa-execute",
+        "re-qa-build",
+        "re-qa-execute",
+    }
+)
+PP31_ENUM_LINE = re.compile(r"(?m)^phase:\{([^}]+)\}")
+# Anti-vacuity floor on the WHOLE enum, not the QA slice: if the §3 line stops
+# parsing, the QA slice is empty and `set() == frozenset(...)` is False, which
+# would be red for the wrong reason with a message about missing tokens rather
+# than about a dead anchor. 39 members at HEAD; the floor's only duty is proving
+# the line still parses as an enum.
+PP31_MIN_ENUM_MEMBERS = 30
+PP31_RATIONALE = re.compile(
+    r"(?m)^\*\*The QA phase tokens are asymmetric, and the asymmetry is priced\.\*\*"
+)
+# One token per clause of ADR-1 that a future editor must actually read. Not
+# decoration: each is a distinct cost of the rename, and a block that dropped
+# any one of them would read as a style note.
+PP31_RATIONALE_TOKENS = (
+    "ADR-1",
+    "`PLAN_PHASES`",
+    "`EXPECTED_PLAN_PHASES`",
+    "in-flight",
+    "`re-`",
+)
+
+# PP-32. P9 and its siblings. EVERY DELIBERATE OMISSION IN THE QA LAW CARRIES
+# ITS RATIONALE IN THE SAME BLOCK.
+#
+# This property encodes something the route ALREADY DOES WELL and converts a
+# culture into a check. The audit's own *Confirmed aligned* list credits QA
+# three times for arguing an omission rather than asserting it. A culture
+# survives exactly as long as the people who hold it; a check outlives them.
+# What it forbids is the cheap kind of divergence — dropping a sibling route's
+# lane and saying nothing — which reads to the next maintainer as an oversight
+# and gets "fixed" back in.
+#
+# THREE omissions, each WINDOW-ANCHORED to the block that makes it, because the
+# vocabulary of one omission's argument occurs in the others' neighbourhoods and
+# a file-wide test lets any one satisfy all three (PP-18's recorded I-2 shape,
+# and PP-25(a)'s I-34 in this same file):
+#   (1) probe drops plan review     — the reduced-task-graph block
+#   (2) no amendment lane           — the one-owner-per-route paragraph
+#   (3) no `re-qa-preflight` phase  — the retry-source paragraph
+#
+# THE FOURTH OMISSION IS DELIBERATELY NOT HERE. "QA offers no workspace
+# isolation" (ADR-2) is already asserted by PP-30(a)'s POSITIVE half, which
+# requires the rationale block and its three argument clauses. Asserting it
+# again here would be two properties owning one fact — the duplication that made
+# the byte-duplicated PASS rule a trap, and the thing PP-30(b)/PP-23(b)'s split
+# is comment-guarded against in the other direction. If PP-30(a) is ever
+# narrowed to its negative half, THIS is the comment that says where the
+# positive half went.
+#
+# On (1)'s tokens: the sibling named must be `build_scope=trivial`, not PLAN.
+# PLAN mandates the fresh-review DAG for every saved plan, so measured against
+# PLAN the omission is simply a violation; the sibling for a REDUCED TASK GRAPH
+# is BUILD-trivial, which drops the separate reviewer and folds a review pass
+# into the verifier — exactly what probe does by folding a harness sanity pass
+# into the executor. Naming the wrong comparand is how a justification ends up
+# arguing for the thing it was written to justify away.
+PP32_OMISSIONS = (
+    (
+        "probe drops plan review",
+        re.compile(r"(?m)^#### Reduced task graph \(`qa_scope=probe`\)$"),
+        re.compile(r"(?m)^### Isolation and phase discipline \(ENFORCED\)$"),
+        (
+            "`build_scope=trivial`",
+            "anti-anchoring",
+            "`SCOPE_INCREASES`",
+            "evidence protocol",
+        ),
+    ),
+    (
+        "no amendment lane",
+        re.compile(r"(?m)^\*\*One owner per route,"),
+        re.compile(r"(?m)^\*\*A correction believed in one artifact"),
+        ("`phase:plan-review-amendment`", "PLAN-only", "no QA call site"),
+    ),
+    (
+        "no `re-qa-preflight`",
+        re.compile(r"(?m)^On resolution the router re-dispatches"),
+        re.compile(r"(?m)^\*\*Cap: 2 re-dispatches"),
+        ("`re-qa-preflight`", "`re-qa-build`", "downstream", "from the user"),
+    ),
+)
 
 
 # PP-15(a). Branch currency on the measuring agent. One token per structural
@@ -3045,6 +3298,107 @@ def main() -> int:
         )
     check("PP-30(b)", pp30b_ok, pp30b_detail)
 
+    # PP-31 -- the QA phase-token spellings are frozen, and the freeze cites its
+    # reason. See PP31_QA_TOKENS for what this property is and is NOT, and for
+    # why editing that constant is the whole cost of a rename rather than a
+    # formality.
+    pp31_faults: list[str] = []
+    pp31_enum_line = SKILL_MD.read_text(encoding="utf-8")
+    pp31_hits = list(PP31_ENUM_LINE.finditer(pp31_enum_line))
+    pp31_found: set[str] = set()
+    if len(pp31_hits) != 1:
+        pp31_faults.append(
+            f"PRECONDITION failed: the SKILL.md §3 `phase:{{...}}` enum line "
+            f"matched {len(pp31_hits)} times, expected exactly 1 — the anchor "
+            f"has stopped matching, so the extracted QA slice would be empty "
+            f"and any comparison over it red for the wrong reason"
+        )
+    else:
+        members = [m.strip() for m in pp31_hits[0].group(1).split("|")]
+        if len(members) < PP31_MIN_ENUM_MEMBERS:
+            pp31_faults.append(
+                f"PRECONDITION failed: the §3 enum parsed only {len(members)} "
+                f"members (expected >= {PP31_MIN_ENUM_MEMBERS}) — the line is no "
+                f"longer an enum"
+            )
+        else:
+            pp31_found = {m for m in members if "qa" in m.split("-")}
+            _added = sorted(pp31_found - PP31_QA_TOKENS)
+            _lost = sorted(PP31_QA_TOKENS - pp31_found)
+            if _added or _lost:
+                pp31_faults.append(
+                    f"the QA phase-token spellings have DRIFTED from the frozen "
+                    f"set: unexpected {_added or 'none'}, missing "
+                    f"{_lost or 'none'} — if this is a deliberate rename, read "
+                    f"ADR-1 in the constant's comment first: editing "
+                    f"PP31_QA_TOKENS is the whole cost of the rename, and the "
+                    f"rename must also reach "
+                    f"cc10x_qa_isolation_guard.PLAN_PHASES (which turns PP-2 "
+                    f"red) and every in-flight `phase:` token"
+                )
+    _p31r = list(PP31_RATIONALE.finditer(qa_norm))
+    pp31_rat_window = ""
+    if len(_p31r) != 1:
+        pp31_faults.append(
+            f"the ADR-1 naming-rationale block is not present exactly once in "
+            f"the NORMATIVE text of {QA_WORKFLOW.name} ({len(_p31r)} matches) — "
+            f"the frozen set and the argument that justifies it must not drift "
+            f"apart, or the freeze is a rule with no reason attached"
+        )
+    else:
+        _end = qa_norm.find("\n\n", _p31r[0].end())
+        pp31_rat_window = qa_norm[
+            _p31r[0].start() : _end if _end != -1 else len(qa_norm)
+        ]
+        _miss = [t for t in PP31_RATIONALE_TOKENS if t not in pp31_rat_window]
+        if _miss:
+            pp31_faults.append(
+                f"the ADR-1 rationale block is present but does not carry the "
+                f"argument: missing {_miss} (block={len(pp31_rat_window)}B)"
+            )
+    pp31_ok = not pp31_faults
+    check(
+        "PP-31",
+        pp31_ok,
+        f"the {len(pp31_found)} QA phase tokens in the SKILL.md §3 enum match "
+        f"the frozen set, and the ADR-1 rationale is anchored in "
+        f"{QA_WORKFLOW.name} (block={len(pp31_rat_window)}B)"
+        + ("" if pp31_ok else " — " + "; ".join(pp31_faults)),
+    )
+
+    # PP-32 -- every deliberate omission in the QA law carries its rationale in
+    # the same block. Three omissions, window-anchored per omission; the fourth
+    # (no workspace isolation) is PP-30(a)'s positive half and is deliberately
+    # NOT re-asserted here. See PP32_OMISSIONS.
+    pp32_faults: list[str] = []
+    pp32_sizes: list[str] = []
+    for _label, _start_re, _end_re, _tokens in PP32_OMISSIONS:
+        _s = list(_start_re.finditer(qa_norm))
+        _e = list(_end_re.finditer(qa_norm))
+        if len(_s) != 1 or len(_e) != 1 or not _s[0].end() < _e[0].start():
+            pp32_faults.append(
+                f"PRECONDITION failed for `{_label}`: {len(_s)} opening and "
+                f"{len(_e)} closing anchors in {QA_WORKFLOW.name} (expected "
+                f"exactly 1 of each, in that order) — any result over this "
+                f"window would be vacuous"
+            )
+            continue
+        _win = qa_norm[_s[0].start() : _e[0].start()]
+        pp32_sizes.append(f"{_label}={len(_win)}B")
+        _miss = [t for t in _tokens if t not in _win]
+        if _miss:
+            pp32_faults.append(
+                f"the `{_label}` omission is made but NOT argued in place: "
+                f"missing {_miss} (window={len(_win)}B)"
+            )
+    pp32_ok = not pp32_faults
+    check(
+        "PP-32",
+        pp32_ok,
+        f"all {len(PP32_OMISSIONS)} deliberate omissions in the QA law argue "
+        f"themselves in place (" + "; ".join(pp32_sizes) + ")"
+        + ("" if pp32_ok else " — " + "; ".join(pp32_faults)),
+    )
 
     check(
         "PP-19(b)",

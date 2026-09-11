@@ -96,6 +96,7 @@ Rules:
   - `reviewer`
   - `hunter` (ACTIVE — the standalone failure-hunter agent's evidence)
   - `verifier`
+  - `planning_reviewer` (ACTIVE — the plan-gap-reviewer's evidence, on PLAN and QA alike)
   - `qa_executor` (ACTIVE — the QA route's executor evidence)
 - `quality` stores convergence state:
   - `confidence`
