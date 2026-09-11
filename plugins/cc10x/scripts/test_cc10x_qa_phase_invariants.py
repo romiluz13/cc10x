@@ -73,10 +73,11 @@ PP-21 the workflow artifact's three authorities agree: (a) every backticked
       `results.*` / `qa.*` literal the QA law names resolves SEGMENT BY SEGMENT
       to FULL DEPTH in the shipped skeleton; (b) every top-level key the
       skeleton ships is documented in the hook policy's artifact schema list;
-      (c) QA is a member of the three enums the guard and the router read --
-      the `workflow_type` enum LINE, the `evidence` agent list, and SKILL.md's
-      event-log phase template -- each asserted on its anchored line, never
-      whole-file.
+      (c) QA is a member of the five enums the guard and the router read --
+      the `workflow_type` enum LINE, the `evidence` agent list, and all THREE
+      of SKILL.md's phase-enum lines (the event-log template, the
+      parent-workflow `TaskCreate` template, and the `__PHASE__` substitution
+      list) -- each asserted on its anchored line, never whole-file.
 PP-23 the harness contract cannot pass while proving or enumerating nothing:
       (a) the mutation floor is never VACUOUS -- the floor minimum binds every
       branch and branch 2 names its fall-through, in BOTH byte-duplicated
@@ -95,6 +96,23 @@ PP-25 the QA route's two re-dispatch loops are BOUNDED and COUNTED: (a) each
       the `{ts, phase, reason, cycle_number}` shape the hook-enforced circuit
       breaker counts. Without (b) the breaker counts 0 forever and QA's cap of
       2 is LLM-counted with no backstop at all
+PP-27 no QA phase holds a write tool without a stated product-code boundary,
+      and every QA phase runs under the gate that governs phase exit:
+      (a) all THREE statements of the no-product-code rule are exhaustive IN
+      FACT -- each names the planner alongside the researcher, harness builder
+      and executor, because `cc10x:planner` runs `qa-plan`/`qa-re-plan` holding
+      `Edit, Write, Bash` -- and both plan-phase dispatch windows carry the
+      boundary. Per SITE and per FILE, bullet-anchored: `planner` occurs 16x in
+      SKILL.md alone, so a whole-file test is green against every injection this
+      exists to catch;
+      (b) `phase_exit_gate` names QA where it is INVOKED, anchored on the
+      per-agent loop's `for <routes>, run` line -- never whole-file, and never
+      the route-neutral inline-fallback invocation
+PP-28 a defect found at any QA phase reaches the sink the DEBUG offer reads:
+      the *Persist first* window merges preflight's `BUG_CANDIDATES` from
+      `qa.preflight` into `qa.bug_candidates` on PREFLIGHT return, not only on
+      the executor's. Both keys verbatim -- a merge with one key misspelled is
+      the drift PP-21(a) already caught once in this same file
 PP-22 every agent file SPECIFIES the line-1 `CONTRACT {` envelope inside its
       OUTPUT SPECIFICATION -- the window from the last
       Output/Router Contract/Phase Contract heading before the file's first
@@ -464,6 +482,90 @@ re-qa-build window = 3640B. Both are measured over `_normative()` text, and the
 re-qa-build window CONTAINS a fenced block -- which is precisely why it is a
 measurement there and a control for the preflight window, which sits earlier in
 the file than any deletion and cannot move.
+
+Negative controls for PP-27, PP-28 and the PP-21(c) extension (four runs, all
+red, each naming the injected thing; two of the four carry a CONTRAST that is
+the argument for the anchoring rather than a test of it):
+  I-35 `planner` deleted from the SKILL.md statement of the no-product-code rule
+       ONLY, leaving both qa-workflow.md statements corrected
+                                          -> PP-27(a) red naming `SKILL.md
+                                             (Never let QA edit product code)`
+                                             ALONE: "enumerates 3/4 agents
+                                             holding write tools in QA: missing
+                                             ['planner'] (bullet=303B)", with
+                                             the other two sites and both
+                                             dispatch windows reported green in
+                                             the same detail string. Bullet
+                                             404B -> 303B.
+       PER-FILE, PER-SITE naming is the point, not a nicety: the rule is stated
+       three times across two files, and a red that says "some site omits the
+       planner" sends the next reader to grep three windows in two files.
+       CONTRAST, and it is why the property is bullet-anchored rather than
+       file-scoped: with the injection in place `grep -c planner SKILL.md` still
+       returns 16. A whole-file substring test -- the obvious way to write this
+       -- is GREEN against this injection sixteen times over. PP-14's recorded
+       trap, in a fifth file.
+  I-36 the `phase_exit_gate` invocation line moved back to BUILD-only
+       (`- for BUILD and QA, run` -> `- for BUILD, run`)
+                                          -> PP-27(b) red: "the per-agent loop
+                                             runs `phase_exit_gate` for BUILD
+                                             ... missing ['QA']" (line 45B ->
+                                             38B).
+       CONTRAST, MANDATORY, and it is the whole reason the property is anchored
+       on one line. With the injection in place `phase_exit_gate` still occurs
+       FIVE times in SKILL.md -- the router-owned gates list (:105), this line
+       (:602), the phase-cursor rule (:636), the inline-fallback section (:700)
+       and the terse-imperative rule (:763) -- and `"phase_exit_gate" in text
+       and "QA" in text` evaluates True. Every file-wide construction of this
+       property is GREEN against the defect, which is PP-14's trap exactly. The
+       `for <routes>, run` shape in the anchor is also what keeps the property
+       off :700, whose route-neutrality ("exactly as in the default loop step
+       6") is deliberate and must not be narrowed to a route list.
+  I-37 the preflight merge paragraph deleted whole from the *Persist first*
+       block, leaving the executor sentence -- which already names
+       `qa.bug_candidates` -- standing
+                                          -> PP-28 red: "missing
+                                             ['`qa.preflight`', 'On
+                                             `qa-harness-builder` preflight
+                                             return']", window 959B -> 317B.
+       The surviving executor sentence is why the SOURCE key and the
+       preflight-return lead-in are asserted alongside the destination: a
+       property asserting only `qa.bug_candidates` is GREEN at the pre-fix state,
+       because the sink was always named -- what was missing was the second
+       writer into it. CONTRAST: `grep -c 'qa\\.preflight'` on the file still
+       returns 3 under the injection, so a whole-file key test is green too.
+  I-38 `qa` removed from the `__PHASE__` substitution list -- ONE of the three
+       anchored SKILL.md phase-enum lines, leaving the event-log template and
+       the parent-workflow `TaskCreate` template correct
+                                          -> PP-21(c) red naming that line
+                                             specifically ("`qa` is missing from
+                                             the `__PHASE__` substitution list
+                                             phase enum ... members:
+                                             build|debug|review|plan|orient|
+                                             triage|codebase-health") with the
+                                             other two halves green and no other
+                                             check disturbed.
+       This is the run that justifies EXTENDING PP-21(c) over three lines rather
+       than adding a fourth check id. The three lines are one fact stated three
+       times; when the property guarded only the event-log template, the other
+       two drifted for a whole revision with the suite green at 41. A property
+       that blesses one of three sites is the defect this phase closes, so
+       reproducing that shape in the property closing it would have been a
+       strange choice. The check-id count is unchanged by the extension.
+Window sizes at the green state, recorded for the same reason PP-25's are -- a
+later phase deletes a fenced block from qa-workflow.md and its only mitigation
+is a before/after comparison of exactly these numbers:
+  PP-27(a) SKILL.md bullet                = 404B   (control: other file)
+  PP-27(a) QA-specific-rules bullet       = 1157B  (measurement: downstream)
+  PP-27(a) qa-build-rules bullet          = 192B   (control: upstream of the
+                                                    fence, cannot move)
+  PP-27(a) qa-plan dispatch window        = 1873B  (control: upstream)
+  PP-27(a) qa-re-plan dispatch window     = 1188B  (control: upstream)
+  PP-27(b) invocation line                = 45B    (control: other file)
+  PP-28  *Persist first* window           = 959B   (measurement: downstream)
+PP-27(a)'s windows are measured over `_decommented()` text and PP-28's over
+`_normative()`; only the two marked as measurements sit after the deletion point
+and can move at all.
 """
 
 import importlib.util
@@ -698,7 +800,26 @@ PP21_EVIDENCE_HEAD = re.compile(
     r"^- `evidence` stores proof-of-work grouped by agent:$", re.M
 )
 PP21_EVIDENCE_ENTRY = re.compile(r"^  - `([a-z_]+)`")
-PP21_EVENT_LOG_LINE = "workflow_started"
+# THREE anchored SKILL.md enum lines, not one. The event-log template was the
+# only one this property guarded when it was written (M10b); re-measurement
+# found two siblings still omitting `qa`, both one-token additions:
+#   - the parent-workflow `TaskCreate` template, which stamps a QA parent task
+#     with a `phase:` token outside the enum it is copied from;
+#   - the `__PHASE__` substitution list, which ALREADY carries the advisory
+#     routes (orient, triage, codebase-health), so QA's absence there is an
+#     omission rather than a scoping decision.
+# Extending the existing check rather than adding a sibling half, deliberately:
+# the three lines are one fact stated three times, they fail for the same reason
+# and they are fixed by the same edit. A property that blesses one of three
+# sites while the other two drift is the defect this phase is closing, so it
+# would be a strange shape to reproduce in the property that closes it. The
+# check-id count is therefore unchanged by this extension; the detail string
+# names the failing LINE, which is what makes it actionable at three sites.
+PP21_SKILL_ENUM_LINES = (
+    ("event-log phase template", "workflow_started"),
+    ("parent-workflow TaskCreate template", "kind:workflow"),
+    ("`__PHASE__` substitution list", "- `__PHASE__` →"),
+)
 # The event-log template line carries four brace expansions ({iso_timestamp},
 # {workflow_uuid}, {parent_task_id} and the phase enum). Requiring at least one
 # `|` is what picks out the enum without hard-coding its membership -- a
@@ -919,6 +1040,124 @@ PP25_REMHIST_TOKENS = (
     "`remediation_history`",
     "`{ts, phase, reason, cycle_number}`",
 )
+
+
+# PP-27(a). P4 + S-5. The no-product-code rule is stated three times, and all
+# three statements are EXHAUSTIVE ENUMERATIONS of three agents -- researcher,
+# harness builder, executor. `cc10x:planner` runs `qa-plan` and `qa-re-plan`
+# holding `Edit, Write, Bash` (planner.md:7), so the set is wrong by one at
+# every site.
+#
+# The hole is narrower than the sentence is wrong, and saying which is which is
+# the substance of the fix: `cc10x_qa_isolation_guard.PLAN_PHASES` carries
+# `qa-plan` and `qa-re-plan`, so the filesystem outside `.cc10x/` is already
+# ENFORCED shut for both. The sentence is the NOTICE. A rule that enumerates
+# three agents and omits the fourth still teaches the reader the wrong set, and
+# the reader is the router.
+#
+# Deliberately NOT fixed by adding `PRODUCT_CODE_TOUCHED` to the planner
+# contract: the planner is shared with the PLAN route, so a QA-motivated
+# required field would make every PLAN run emit it. That is why this property
+# asserts a SENTENCE and a GUARD NAME rather than a contract field.
+#
+# PER SITE, PER FILE, and that is the load-bearing decision. Two of the three
+# sentences live in the same file; a property reporting "some site omits the
+# planner" over three sites sends the next reader to grep three windows. Control
+# (i) deletes the token from the SKILL.md site alone and the red must name
+# SKILL.md alone.
+#
+# Anchored per bullet -- the matched line plus its indented continuation lines --
+# never whole-file. `planner` appears dozens of times in both files (it is an
+# agent name, a phase prefix and a skill id), so a file-wide substring test is
+# GREEN against every injection this property exists to catch. PP-14's recorded
+# trap, in a fifth file pair.
+#
+# Read over _decommented() rather than _normative() because the DISPATCH half
+# lives inside ```text fences, which are the normative surface for a dispatch
+# (PP-21(a) takes the same position for the same reason). N-3: _decommented() is
+# a NO-OP on qa-workflow.md -- zero HTML comments at HEAD -- so the helper is
+# not what makes this property sound; control (i) is.
+PP27A_SITES = (
+    # (file-key, human label, line-anchored regex opening the bullet)
+    ("SKILL.md", "Never let QA edit product code", r"^- Never let QA edit product code\."),
+    (
+        "qa-workflow.md",
+        "QA-specific rules: QA never edits product code",
+        r"^- \*\*QA never edits product code\.\*\*",
+    ),
+    (
+        "qa-workflow.md",
+        "qa-build rules: Never edit product code",
+        r"^- \*\*Never edit product code\.\*\*",
+    ),
+)
+# Four agents, because four agents hold write tools inside the QA route. The
+# tokens are the spellings the prose already uses for the first three; `planner`
+# is the addition.
+PP27A_AGENTS = ("researcher", "harness builder", "executor", "planner")
+# The ENFORCEMENT/NOTICE distinction is asserted at exactly one site -- the
+# QA-specific rules block -- rather than at all three. Requiring the guard name
+# in every sentence would push an implementation detail into SKILL.md's
+# never-list, which is a list of rules, not of mechanisms.
+PP27A_ENFORCEMENT_SITE = "QA-specific rules: QA never edits product code"
+PP27A_ENFORCEMENT_TOKENS = ("PLAN_PHASES", "ENFORCEMENT", "NOTICE")
+# The two plan-phase dispatch windows. Anchored on the unique task-id
+# terminator line and walked BACK to the opening `TaskCreate({`, because the
+# opening line is identical in all nine dispatch blocks in the file while the
+# terminator is unique per node.
+PP27A_DISPATCHES = (
+    ("qa-plan", "qa_plan_task_id"),
+    ("qa-re-plan", "qa_replan_task_id"),
+)
+PP27A_DISPATCH_TOKEN = "Never edit product code"
+
+# PP-27(b). P6. `phase_exit_gate` is defined route-neutrally (hook policy
+# "a phase task may complete only when its agent contract validates") but the
+# per-agent loop INVOKES it "for BUILD" only. QA added seven phases under a loop
+# that never runs the gate on any of them.
+#
+# ANCHORED ON THE INVOCATION LINE, never whole-file, and this is the property's
+# whole point. `phase_exit_gate` occurs five times in SKILL.md: the router-owned
+# gates list, this line, the phase-cursor rule, the inline-fallback section, and
+# the terse-imperative rule -- plus once more in the hook policy's definitions.
+# A file-wide search for the token is GREEN against the exact injection this
+# property exists to catch, which is PP-14's recorded trap verbatim. Control
+# (ii) runs the contrast: with the routes reverted to BUILD-only, `grep -c
+# phase_exit_gate` on SKILL.md still returns 5.
+#
+# The inline-fallback invocation is route-neutral BY DESIGN ("at each phase
+# boundary exactly as in the default loop step 6") and this property must not
+# touch it -- hence the `for <routes>, run` shape in the anchor, which only the
+# per-agent loop line has.
+#
+# Scope is deliberately BUILD + QA and not "every route". P6's premise -- the
+# gate's definition is route-neutral -- makes widening tempting; widening is a
+# behavioural change to DEBUG, REVIEW and PLAN that no finding in this set
+# audited.
+PP27B_INVOCATION = re.compile(r"(?m)^\s*- for (.+?), run `phase_exit_gate`;")
+PP27B_ROUTES = ("BUILD", "QA")
+
+# PP-28. P5. Preflight-mode `BUG_CANDIDATES` are persisted under `qa.preflight`
+# (the law's step 1: "the rest of the contract to `qa.preflight`") and were never
+# merged into `qa.bug_candidates`, which is the ONLY key the DEBUG offer reads.
+# A preflight BLOCK is terminal for that run -- the executor is never reached --
+# so a real defect found at T1-T4 died in a sub-key nothing consumes.
+#
+# Both keys are asserted VERBATIM, because a merge stated with one key spelled
+# wrong is precisely the `results.` / `qa.` drift M9 already caught once in this
+# same file. They are also the two keys PP-21(a) resolves full-depth into the
+# skeleton, so a typo here is caught twice, from two directions.
+#
+# Window-anchored to the *Persist first* section, read over _normative(). The
+# section sits DOWNSTREAM of the stray fence a later phase deletes, so its
+# printed size is a genuine measurement rather than a control.
+PP28_START = re.compile(r"(?m)^#### 1\. Persist first$")
+PP28_END = re.compile(r"(?m)^#### 2\. Offer, do not start$")
+PP28_TOKENS = ("`qa.preflight`", "`qa.bug_candidates`")
+# The merge must be stated on the PREFLIGHT return, not only the executor's.
+# Without this token the window is satisfied by the pre-existing executor
+# sentence, which already names both keys' file and one of the keys.
+PP28_PREFLIGHT_RETURN = "On `qa-harness-builder` preflight return"
 
 
 # PP-15(a). Branch currency on the measuring agent. One token per structural
@@ -1944,26 +2183,24 @@ def main() -> int:
                 f"{HOOK_POLICY.name} (members: {', '.join(ev_agents)})"
             )
 
-    event_lines = [
-        line
-        for line in SKILL_MD.read_text(encoding="utf-8").splitlines()
-        if PP21_EVENT_LOG_LINE in line
-    ]
-    if len(event_lines) != 1:
-        pp21c_gaps.append(
-            f"PRECONDITION: expected exactly 1 `{PP21_EVENT_LOG_LINE}` line in "
-            f"{SKILL_MD.name}, found {len(event_lines)}"
-        )
-    else:
-        enums = PP21_PHASE_ENUM.findall(event_lines[0])
+    skill_lines = SKILL_MD.read_text(encoding="utf-8").splitlines()
+    for enum_label, enum_anchor in PP21_SKILL_ENUM_LINES:
+        hits = [line for line in skill_lines if enum_anchor in line]
+        if len(hits) != 1:
+            pp21c_gaps.append(
+                f"PRECONDITION: expected exactly 1 `{enum_anchor}` line in "
+                f"{SKILL_MD.name} ({enum_label}), found {len(hits)}"
+            )
+            continue
+        enums = PP21_PHASE_ENUM.findall(hits[0])
         if len(enums) != 1:
             pp21c_gaps.append(
                 f"PRECONDITION: expected exactly 1 pipe-separated enum on "
-                f"{SKILL_MD.name}'s event-log template line, found {len(enums)}"
+                f"{SKILL_MD.name}'s {enum_label} line, found {len(enums)}"
             )
         elif "qa" not in enums[0].split("|"):
             pp21c_gaps.append(
-                f"`qa` is missing from the event-log phase enum in "
+                f"`qa` is missing from the {enum_label} phase enum in "
                 f"{SKILL_MD.name} (members: {enums[0]})"
             )
 
@@ -1971,7 +2208,7 @@ def main() -> int:
         "PP-21(c)",
         not pp21c_gaps,
         "QA is a member of the `workflow_type` enum line, the `evidence` list and "
-        "the event-log phase template"
+        f"all {len(PP21_SKILL_ENUM_LINES)} anchored {SKILL_MD.name} phase-enum lines"
         + ("" if not pp21c_gaps else " — " + "; ".join(pp21c_gaps)),
     )
 
@@ -2283,6 +2520,139 @@ def main() -> int:
             + ("" if pp25b_ok else f" — missing {pp25b_missing}")
         )
     check("PP-25(b)", pp25b_ok, pp25b_detail)
+
+    # PP-27(a) -- the no-product-code rule is exhaustive IN FACT, at all three
+    # sites, and the two plan-phase dispatches carry the boundary. Per-site,
+    # per-file. See PP27A_SITES for why the anchoring and the per-site naming
+    # are load-bearing.
+    pp27a_texts = {
+        "SKILL.md": _decommented(SKILL_MD.read_text(encoding="utf-8")),
+        "qa-workflow.md": dag_text,
+    }
+    pp27a_precondition: list[str] = []
+    pp27a_gaps: list[str] = []
+    pp27a_sizes: list[str] = []
+    for fname, label, pattern in PP27A_SITES:
+        text = pp27a_texts[fname]
+        hits = list(re.finditer(pattern, text, re.M))
+        if len(hits) != 1:
+            pp27a_precondition.append(
+                f"{fname} ({label}): the bullet anchor matched {len(hits)} times, "
+                f"expected exactly 1 — any result over the window would be vacuous"
+            )
+            continue
+        start = hits[0].start()
+        lines = text[start:].splitlines()
+        bullet = [lines[0]]
+        for line in lines[1:]:
+            if line.startswith("  ") and line.strip():
+                bullet.append(line)
+            else:
+                break
+        window = "\n".join(bullet)
+        pp27a_sizes.append(f"{fname} ({label}) bullet={len(window)}B")
+        missing = [a for a in PP27A_AGENTS if a not in window]
+        if missing:
+            pp27a_gaps.append(
+                f"{fname} ({label}) enumerates {len(PP27A_AGENTS) - len(missing)}/"
+                f"{len(PP27A_AGENTS)} agents holding write tools in QA: missing "
+                f"{missing} (bullet={len(window)}B)"
+            )
+        if label == PP27A_ENFORCEMENT_SITE:
+            miss_e = [t for t in PP27A_ENFORCEMENT_TOKENS if t not in window]
+            if miss_e:
+                pp27a_gaps.append(
+                    f"{fname} ({label}) does not say which half is the guard and "
+                    f"which is the notice: missing {miss_e} (bullet={len(window)}B)"
+                )
+    for phase_token, task_var in PP27A_DISPATCHES:
+        wf = pp27a_texts["qa-workflow.md"]
+        ends = list(re.finditer(rf"(?m)^\}}\) -> {re.escape(task_var)}$", wf))
+        if len(ends) != 1:
+            pp27a_precondition.append(
+                f"qa-workflow.md ({phase_token} dispatch): the terminator "
+                f"`}}) -> {task_var}` matched {len(ends)} times, expected exactly 1"
+            )
+            continue
+        open_at = wf.rfind("TaskCreate({", 0, ends[0].start())
+        if open_at == -1:
+            pp27a_precondition.append(
+                f"qa-workflow.md ({phase_token} dispatch): no opening "
+                f"`TaskCreate({{` precedes the terminator"
+            )
+            continue
+        window = wf[open_at : ends[0].end()]
+        pp27a_sizes.append(f"qa-workflow.md ({phase_token} dispatch)={len(window)}B")
+        if PP27A_DISPATCH_TOKEN not in window:
+            pp27a_gaps.append(
+                f"qa-workflow.md ({phase_token} dispatch) does not state the "
+                f"product-code boundary: missing '{PP27A_DISPATCH_TOKEN}' "
+                f"(window={len(window)}B)"
+            )
+    if pp27a_precondition:
+        pp27a_ok = False
+        pp27a_detail = "PRECONDITION failed: " + "; ".join(pp27a_precondition)
+    else:
+        pp27a_ok = not pp27a_gaps
+        pp27a_detail = (
+            "all three statements of the no-product-code rule name every agent "
+            "that holds write tools in QA, and both plan-phase dispatches carry "
+            "the boundary (" + "; ".join(pp27a_sizes) + ")"
+            + ("" if pp27a_ok else " — " + "; ".join(pp27a_gaps))
+        )
+    check("PP-27(a)", pp27a_ok, pp27a_detail)
+
+    # PP-27(b) -- `phase_exit_gate` names QA where it is INVOKED. Anchored on
+    # the per-agent loop's invocation line; see PP27B_INVOCATION for why a
+    # whole-file search is green against the injection this exists to catch.
+    skill_text = pp27a_texts["SKILL.md"]
+    inv = list(PP27B_INVOCATION.finditer(skill_text))
+    if len(inv) != 1:
+        pp27b_ok = False
+        pp27b_detail = (
+            f"PRECONDITION failed: the per-agent loop's `phase_exit_gate` "
+            f"invocation line matched {len(inv)} times in {SKILL_MD.name}, "
+            f"expected exactly 1 — the anchor has stopped matching, so any "
+            f"result over it would be vacuous (whole-file occurrences of the "
+            f"token: {skill_text.count('phase_exit_gate')})"
+        )
+    else:
+        routes = inv[0].group(1)
+        pp27b_missing = [r for r in PP27B_ROUTES if r not in routes]
+        pp27b_ok = not pp27b_missing
+        pp27b_detail = (
+            f"the per-agent loop runs `phase_exit_gate` for {routes} "
+            f"(line={len(inv[0].group(0))}B, whole-file occurrences of the "
+            f"token: {skill_text.count('phase_exit_gate')})"
+            + ("" if pp27b_ok else f" — missing {pp27b_missing}")
+        )
+    check("PP-27(b)", pp27b_ok, pp27b_detail)
+
+    # PP-28 -- preflight bug candidates reach the sink the DEBUG offer reads.
+    # See PP28_START for why both keys are asserted verbatim and why this
+    # window's printed size is a measurement rather than a control.
+    p28s = list(PP28_START.finditer(qa_norm))
+    p28e = list(PP28_END.finditer(qa_norm))
+    if len(p28s) != 1 or len(p28e) != 1 or not p28s[0].end() < p28e[0].start():
+        pp28_ok = False
+        pp28_detail = (
+            f"PRECONDITION failed: could not bracket the *Persist first* section "
+            f"in {QA_WORKFLOW.name}: {len(p28s)} opening and {len(p28e)} closing "
+            f"headings (expected exactly 1 of each, in that order)"
+        )
+    else:
+        win = qa_norm[p28s[0].end() : p28e[0].start()]
+        pp28_missing = [
+            t for t in (*PP28_TOKENS, PP28_PREFLIGHT_RETURN) if t not in win
+        ]
+        pp28_ok = not pp28_missing
+        pp28_detail = (
+            f"the *Persist first* block merges preflight's `BUG_CANDIDATES` from "
+            f"`qa.preflight` into `qa.bug_candidates` on preflight return "
+            f"(window={len(win)}B)"
+            + ("" if pp28_ok else f" — missing {pp28_missing}")
+        )
+    check("PP-28", pp28_ok, pp28_detail)
 
     check(
         "PP-19(b)",

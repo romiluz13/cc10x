@@ -259,7 +259,7 @@ workflow_uuid = "wf-" + UTC timestamp + "-" + 8 hex chars
 ```text
 TaskCreate({
   subject: "CC10X {WORKFLOW}: {summary}",
-  description: "wf:{workflow_uuid}\nkind:workflow\norigin:router\nphase:{build|debug|review|plan}\nplan:{plan_file or 'N/A'}\nscope:N/A\nreason:User request\n\nUser request: {request}\nChain: {chain description}",
+  description: "wf:{workflow_uuid}\nkind:workflow\norigin:router\nphase:{build|debug|review|plan|qa}\nplan:{plan_file or 'N/A'}\nscope:N/A\nreason:User request\n\nUser request: {request}\nChain: {chain description}",
   activeForm: "{workflow active form}"
 })
 ```
@@ -275,7 +275,7 @@ Then `Edit` the copied file, replacing each placeholder token with the live valu
 - `__WORKFLOW_UUID__` → `{workflow_uuid}` (appears twice: `workflow_uuid` and `workflow_id`)
 - `__WORKFLOW_TYPE__` → `{WORKFLOW}` (BUILD | DEBUG | REVIEW | PLAN | ORIENT | TRIAGE | CODEBASE-HEALTH) — **if routing (§5) has not yet determined the workflow type, use `pending` and update it after §5 resolves.** Never hardcode BUILD before routing completes. The artifact may be created before routing (to capture state early), but `workflow_type` must reflect the actual routed type after §5.
 - `__USER_REQUEST__` → the user request (JSON-escape quotes/newlines)
-- `__PHASE__` → `{build|debug|review|plan|orient|triage|codebase-health}`
+- `__PHASE__` → `{build|debug|review|plan|qa|orient|triage|codebase-health}`
 - `__ISO_TIMESTAMP__` → the current UTC ISO timestamp (appears 3×: `status_history[0].ts`, `created_at`, `updated_at`)
 
 Use `Edit(replace_all=true)` for `__WORKFLOW_UUID__` and `__ISO_TIMESTAMP__` since each repeats. Then write the event log:
@@ -599,7 +599,7 @@ The harness is a loop engine. These concepts govern how the loop runs:
    - persist task-state side effects
    - if BUILD review and hunt are both complete for the current phase, write one router-owned merged findings summary into the existing workflow results before verifier handoff
    - apply workflow rules
-   - for BUILD, run `phase_exit_gate`; if the current phase is not complete, persist `phase_status={partial|blocked}` and stop
+   - for BUILD and QA, run `phase_exit_gate`; if the current phase is not complete, persist `phase_status={partial|blocked}` and stop
    - never advance to the next phase or workflow step on apology prose alone
    - if two agents in the same phase return contradictory verdicts (e.g., reviewer approves but verifier fails on the same evidence), treat the blocking verdict as authoritative (FAIL over PASS, CHANGES_REQUESTED over APPROVE); never average or reconcile the signals. Log the contradiction in `status_history`.
    - **Cross-reviewer agreement promotion:** if `code-reviewer` and `failure-hunter` independently flag the SAME finding (same file:line, same defect, raised from different passes), that is stronger signal than either alone — promote the merged finding's confidence by one tier (80→90, or mark it `cross-confirmed` in the merged findings summary). Agreement between two mutually-blind reviewers is independent confirmation; use it. Promotion never overrides the quote-the-line gate — a finding without a verbatim `file:line` quote cannot be promoted, only demoted.
@@ -748,7 +748,7 @@ For DEBUG:
 - Never create `CC10X TODO:` tasks. Non-blocking discoveries go into `**Deferred:**` memory notes.
 - Never let REVIEW create implementation tasks without an explicit router/user transition into BUILD.
 - A QA-seeded DEBUG never inherits QA's verdict about *where* the bug is. Pass QA's boundary evidence; pass its suspicion only as a labelled hint with its basis. `bug-investigator` still owns its Feedback Loop Gate — a pre-built repro loop satisfies that gate only after the investigator personally observes it turn red. A seeded loop that no longer reproduces sends the investigator back to rung 1, never forward on trust. [EASY TO MISS: a stale QA report will happily send a debugger hunting a bug that was already fixed.]
-- Never let QA edit product code. Not the researcher, not the harness builder, not the executor. QA proves behavior; DEBUG repairs it. A route that can fix what it measures cannot be believed about what it measured. QA reports `BUG_CANDIDATES` and may OFFER a DEBUG follow-up — it never auto-starts one.
+- Never let QA edit product code. Not the researcher, not the harness builder, not the executor, and not the planner that runs `qa-plan`/`qa-re-plan` — it holds `Edit`/`Write`/`Bash` like the rest. QA proves behavior; DEBUG repairs it. A route that can fix what it measures cannot be believed about what it measured. QA reports `BUG_CANDIDATES` and may OFFER a DEBUG follow-up — it never auto-starts one.
 - Never let `qa-executor` edit test or harness code to turn a red run green. A harness defect routes to `re-qa-build`; a product defect routes to a DEBUG offer. [EASY TO MISS: this is the QA route's most damaging failure mode — it silently destroys the only thing QA produces, which is a trustworthy answer.]
 - Never report a QA verdict of PASS while any scenario is BLOCKED, teardown leaked, or the report artifact is absent from disk. Blocked is never rounded up to PASS.
 - Never report a workflow outcome (pass, fixed, complete) to the user without first confirming the verification evidence that supports that claim. "I believe it works" is not evidence. [EASY TO MISS: "I ran the tests and they passed" without showing command output, exit codes, or scenario evidence is also not evidence. Require concrete proof artifacts, not agent assertions.]
