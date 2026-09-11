@@ -91,6 +91,13 @@ input cannot tell a clean run from an unexamined one.
 
 ### Router Contract (MACHINE-READABLE)
 
+Emit the CONTRACT envelope on line 1, the heading on line 2, then the Router Contract YAML block. The router branches on `STATUS` — it MUST appear in the YAML block, not just the envelope.
+
+```text
+CONTRACT {"s":"PASS","b":false,"cr":0}
+## QA Execution: [PASS/FAIL/BLOCKED]
+```
+
 ```yaml
 STATUS: PASS | FAIL | BLOCKED
 CONFIDENCE: [0-100]

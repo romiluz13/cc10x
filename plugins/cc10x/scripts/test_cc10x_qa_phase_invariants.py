@@ -77,6 +77,14 @@ PP-21 the workflow artifact's three authorities agree: (a) every backticked
       the `workflow_type` enum LINE, the `evidence` agent list, and SKILL.md's
       event-log phase template -- each asserted on its anchored line, never
       whole-file.
+PP-22 every agent file SPECIFIES the line-1 `CONTRACT {` envelope inside its
+      OUTPUT SPECIFICATION -- the window from the last
+      Output/Router Contract/Phase Contract heading before the file's first
+      ```yaml fence, up to that fence. Unconditional over
+      `plugins/cc10x/agents/*.md`: 11/14 at HEAD, 14/14 after. An agent that
+      specifies no envelope leaves SKILL.md §8's verdict extraction with a
+      heading scan that finds nothing, so the router trips inline verification
+      on every lane of that agent.
 
 Negative control (run and recorded when this file was written): temporarily
 adding "qa-preflight" to PLAN_PHASES turns PP-1, PP-3 and PP-6 case (c) red.
@@ -284,6 +292,33 @@ named the seven missing keys — red for the wrong reason, from a property that
 was otherwise correct. A floor set just under the complete count silently does
 the membership half's job and hides it. The floor is now 30: its only duty is
 proving the slice still finds a list.
+
+Negative controls for PP-22 (two runs, both red, each naming ONE file). The
+property is a membership test over a glob, so it has both vacuity shapes this
+file has been bitten by, and each control closes one:
+  I-24 the newly added envelope line deleted from `qa-researcher.md` ONLY
+                                          -> red: "13/14 ... no envelope in the
+                                             output specification of:
+                                             qa-researcher.md (window=271B)",
+                                             with `qa-harness-builder.md` and
+                                             `qa-executor.md` still counted
+                                             green.
+       Per-FILE naming is the point of the control, not a nicety. A property
+       that reports "some agent is missing its envelope" over a 14-file glob
+       sends the next reader to grep; this one sends them to a line.
+  I-25 `code-reviewer.md:241` -- the envelope line inside the output
+       specification -- deleted, with `:83` (a Process-step restatement) and
+       `:328` (a prose CONTRACT rule) LEFT INTACT
+                                          -> red naming `code-reviewer.md`
+                                             alone, window 339B -> 297B, while
+                                             `grep -c "CONTRACT {"` on the same
+                                             file still returns 2.
+       MANDATORY, and deliberately not run on a QA file: it is the only run that
+       proves the ANCHORING rather than the membership. A whole-file substring
+       test -- which is what this property would have been written as -- is
+       GREEN against this injection, twice over. That is PP-18's recorded I-2
+       shape in a third file, and `code-reviewer.md` is the file that can
+       exhibit it because it is the one carrying three copies of the token.
 """
 
 import importlib.util
@@ -502,6 +537,53 @@ PP21_EVENT_LOG_LINE = "workflow_started"
 # substring test for "qa" on this line would be satisfied by the word appearing
 # anywhere on it, including inside a future task-id template.
 PP21_PHASE_ENUM = re.compile(r"\{([a-z-]+(?:\|[a-z-]+)+)\}")
+
+
+# PP-22 -- every agent file SPECIFIES the line-1 `CONTRACT {` envelope in its
+# output specification. SKILL.md §8's verdict extraction reads the envelope
+# first and falls back to a heading scan; an agent that specifies neither leaves
+# the router with prose, so it trips inline verification on every lane. M4 named
+# `qa-researcher`; re-measurement found all three QA agents lacked it and all
+# eleven non-QA agents had it -- 11/14 at HEAD, 14/14 after this phase.
+#
+# UNCONDITIONAL over the glob, deliberately. An earlier draft gated the property
+# on "the file declares a Router Contract block", which is fragile: the heading
+# exists in three spellings across two levels (`## Router Contract
+# (MACHINE-READABLE)` x3, `## Router Contract (REQUIRED)` x1, `### Router
+# Contract (MACHINE-READABLE)` x4) in only 8 of the 14 files, so the conditional
+# shrinks the denominator to 8 and buys nothing -- the property is true and
+# wanted for all 14.
+#
+# WINDOW-ANCHORED, and that is the load-bearing decision. A whole-file
+# `CONTRACT {` substring is the PP-18 I-2 shape: `code-reviewer.md` carries the
+# token three times (:83 a Process-step restatement, :241 the output
+# specification, :328 a prose CONTRACT rule), so deleting the SPECIFICATION
+# leaves two copies standing and a naive check is green over a live gap. The
+# window is the text from the LAST heading matching
+# `^#{1,4} (Output|Router Contract|Phase Contract)` that precedes the file's
+# FIRST ```yaml fence, up to that fence. Measured: the window exists in all 14
+# files, is 202-368B in the 11 that pass and 39-85B in the three QA files.
+# Control I-25 is the run that proves the anchoring.
+#
+# `integration-verifier.md` is EXCLUDED from this PR's file set (P-F7), and an
+# unconditional property could in principle force an edit to it. Verified safe
+# before widening: its envelope is already at :106 inside its :101->:110 window,
+# so no edit is forced. The trade-off is priced and recorded here rather than
+# discovered: a NEW agent added without an envelope turns this red, and if that
+# agent is out of the editing set, closing it means widening the set. That is
+# the intended cost -- an agent the router cannot parse is a defect wherever it
+# lives.
+AGENTS_DIR = PLUGIN / "agents"
+PP22_WINDOW_HEADING = re.compile(
+    r"^#{1,4} (?:Output|Router Contract|Phase Contract)\b.*$", re.M
+)
+PP22_YAML_FENCE = re.compile(r"^```yaml\s*$", re.M)
+PP22_ENVELOPE = "CONTRACT {"
+# Anti-vacuity floor, asserted BEFORE membership: a glob that stops matching
+# yields an empty file list and "every file specifies it" is vacuously true.
+# 14 at HEAD. A window that stops matching is the same shape one level down, so
+# an empty or absent window is a PRECONDITION failure, never a pass.
+PP22_MIN_AGENTS = 14
 
 
 # PP-15(a). Branch currency on the measuring agent. One token per structural
@@ -1557,6 +1639,64 @@ def main() -> int:
         "the event-log phase template"
         + ("" if not pp21c_gaps else " — " + "; ".join(pp21c_gaps)),
     )
+
+    # PP-22 -- every agent file specifies the line-1 envelope inside its
+    # output-specification window (never a whole-file substring; see I-23).
+    agent_files = sorted(AGENTS_DIR.glob("*.md"))
+    pp22_precondition = []
+    pp22_missing = []
+    pp22_sizes = []
+    if len(agent_files) < PP22_MIN_AGENTS:
+        pp22_precondition.append(
+            f"extracted only {len(agent_files)} agent files from "
+            f"{AGENTS_DIR.name}/ (expected >= {PP22_MIN_AGENTS}) — the glob has "
+            f"stopped matching, so any result below is vacuous"
+        )
+    else:
+        for agent in agent_files:
+            text = agent.read_text(encoding="utf-8")
+            fence = PP22_YAML_FENCE.search(text)
+            if fence is None:
+                pp22_precondition.append(f"{agent.name}: no ```yaml fence")
+                continue
+            headings = [
+                m
+                for m in PP22_WINDOW_HEADING.finditer(text)
+                if m.end() <= fence.start()
+            ]
+            if not headings:
+                pp22_precondition.append(
+                    f"{agent.name}: no Output/Router Contract/Phase Contract "
+                    f"heading before the first ```yaml fence — the anchor has "
+                    f"stopped matching, so this file's result would be vacuous"
+                )
+                continue
+            # The window INCLUDES its own heading line: the boundary is the
+            # heading's start, not its end, so a printed window size names a
+            # slice a reader can find by eye. Measured at HEAD: 213-369B in the
+            # 11 that pass, 40B in the three QA files.
+            window = text[headings[-1].start() : fence.start()]
+            pp22_sizes.append(len(window))
+            if PP22_ENVELOPE not in window:
+                pp22_missing.append(f"{agent.name} (window={len(window)}B)")
+    if pp22_precondition:
+        pp22_ok = False
+        pp22_detail = "PRECONDITION failed: " + "; ".join(pp22_precondition)
+    else:
+        pp22_ok = not pp22_missing
+        pp22_detail = (
+            f"{len(agent_files) - len(pp22_missing)}/{len(agent_files)} agent files "
+            f"specify a line-1 `{PP22_ENVELOPE}...}}` envelope inside their "
+            f"output-specification window (windows "
+            f"{min(pp22_sizes)}-{max(pp22_sizes)}B)"
+            + (
+                ""
+                if pp22_ok
+                else " — no envelope in the output specification of: "
+                + ", ".join(pp22_missing)
+            )
+        )
+    check("PP-22", pp22_ok, pp22_detail)
 
     check(
         "PP-19(b)",

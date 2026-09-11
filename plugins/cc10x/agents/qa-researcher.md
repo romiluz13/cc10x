@@ -110,6 +110,13 @@ Human-readable findings, then the contract.
 
 ### Router Contract (MACHINE-READABLE)
 
+Emit the CONTRACT envelope on line 1, the heading on line 2, then the Router Contract YAML block. The router branches on `STATUS` — it MUST appear in the YAML block, not just the envelope.
+
+```text
+CONTRACT {"s":"PASS","b":false,"cr":0}
+## QA Research: [PASS/FAIL]
+```
+
 ```yaml
 STATUS: PASS | FAIL
 CONFIDENCE: [0-100]
