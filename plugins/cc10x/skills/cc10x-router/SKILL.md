@@ -24,9 +24,10 @@ A keyword hit only NOMINATES a row; the request's primary deliverable DECIDES th
 | 2 | PLAN | plan, design, architect, roadmap, strategy, spec, brainstorm | PLAN | exploration -> planner -> bounded fresh review loop |
 | 3 | REVIEW | review, audit, analyze, assess, "is this good" | REVIEW | code-reviewer |
 | 4 | ORIENT | zoom out, explain, understand, "how does X work", unfamiliar, "map this", "walk me through", "where is", "what does this do" | ORIENT | advisory orientation (no agents) |
-| 5 | TRIAGE | triage, "incoming issues", "look at #", "triage #" | TRIAGE | triage-agent → optional exploration → agent-ready brief |
-| 6 | CODEBASE-HEALTH | "codebase health", "improve architecture", "deepening", "ball of mud", "shallow modules", "architecture audit" | CODEBASE-HEALTH | architecture-scanner → HTML report → human picks → exploration (grilling) → feeds PLAN |
-| 7 | DEFAULT | Everything else | BUILD | component-builder → [code-reviewer ‖ failure-hunter] → integration-verifier |
+| 5 | QA | test, QA, e2e, end-to-end, integration test, test plan, test coverage, regression, smoke test, "verify my feature", "prove it works" | QA | qa-researcher (fan-out) → qa-plan → plan-gap-reviewer → qa-preflight → qa-harness-builder → [code-reviewer ‖ failure-hunter] → qa-executor |
+| 6 | TRIAGE | triage, "incoming issues", "look at #", "triage #" | TRIAGE | triage-agent → optional exploration → agent-ready brief |
+| 7 | CODEBASE-HEALTH | "codebase health", "improve architecture", "deepening", "ball of mud", "shallow modules", "architecture audit" | CODEBASE-HEALTH | architecture-scanner → HTML report → human picks → exploration (grilling) → feeds PLAN |
+| 8 | DEFAULT | Everything else | BUILD | component-builder → [code-reviewer ‖ failure-hunter] → integration-verifier |
 
 Rules:
 
@@ -34,6 +35,7 @@ Rules:
 - ERROR always wins over BUILD, but route on the PRIMARY DELIVERABLE, not the first keyword hit: "add a dark-mode toggle and fix the button alignment" is a BUILD whose scope includes a small fix, not a DEBUG. Use DEBUG when diagnosing/repairing broken behavior IS the deliverable; use BUILD when the deliverable is new/changed functionality that happens to mention fixing something along the way.
 - REVIEW is advisory only. Never let REVIEW create code-changing tasks.
 - ORIENT is read-only and advisory. It precedes DEFAULT/BUILD: a "help me understand this code" request must never fall through to BUILD and spawn a write builder. ORIENT spawns NO write agents and creates NO phase graph. If the user follows an orientation with a change request, re-route the new request (BUILD/DEBUG/PLAN) from scratch.
+- QA is entered when **testing the code is the deliverable** — designing, building, and running integration tests, backend E2E across services, and simulated manual QA in the UI. Disambiguation, in order: **DEBUG beats QA** ("the E2E test is failing" → repairing broken behavior is the deliverable); **QA beats BUILD** ("write E2E tests for checkout" → QA designs a test *system* for code that already exists, whereas BUILD's inner TDD writes unit tests *for code being written*); **QA beats REVIEW** when the ask is "prove it works" rather than "tell me what's wrong with it" ("audit coverage and fill the gaps" → QA; "is our suite any good?" → REVIEW). QA never edits product code — it reports defects and may OFFER a DEBUG follow-up, exactly as REVIEW may offer BUILD. BUILD's TDD contract is untouched; QA is the outer confidence ring over it.
 - TRIAGE is advisory-only. It categorizes, verifies, and writes agent-ready briefs for incoming issues/PRs. It never writes code. A triaged issue routes to BUILD or DEBUG only on a fresh user request — TRIAGE never auto-routes into a code-writing workflow. Category and wontfix decisions are high-blast-radius: stop for human input (do not auto-decide). **Primary-deliverable rule:** TRIAGE applies only when triage/categorization/briefing IS the deliverable (the request contains `triage` or `incoming issues` or `look at #` / `triage #`). A request that mentions a bug/issue/feature but asks to implement/fix/change it is BUILD or DEBUG — the primary deliverable is the change, not the triage. Do not route to TRIAGE unless the user explicitly asks to triage.
 - CODEBASE-HEALTH is advisory-only upkeep. It surfaces deepening candidates and grills the chosen one. It never writes code. A chosen candidate routes to PLAN only on a fresh user request. The scanner writes a single HTML report to the OS temp dir (not the repo). **Primary-deliverable rule:** CODEBASE-HEALTH applies only when discovery/advice IS the deliverable (the request contains `codebase health`, `improve architecture`, `deepening`, `ball of mud`, `shallow modules`, or `architecture audit`). A request that asks to refactor/fix/change specific code is BUILD — the primary deliverable is the change, not the audit.
 - BUILD uses a complexity gradient (see `references/build-workflow.md`): trivial scope (1-2 files, single change, one testable outcome, no cross-module wiring) runs a reduced builder → verifier → memory graph; everything else, and all planned work, runs the full builder → [reviewer || hunter] → verifier → doc-sync → memory chain. The reviewer and hunter run in parallel (two read-only agents in the same message) and the router merges their findings before verifier handoff. The builder escalates trivial → full on any scope increase. The router is still the sole entry point for every BUILD — the gradient scales the graph to the work, it does not bypass routing.
@@ -114,8 +116,8 @@ Every CC10X task description starts with normalized metadata lines:
 ```text
 wf:{workflow_uuid}
 kind:{workflow|agent|remfix|memory|reverify|research}
-origin:{router|component-builder|bug-investigator|code-reviewer|integration-verifier|planner}
-phase:{build|build-implement|build-review|build-hunt|build-verify|build-doc-sync|build-finish|debug|debug-investigate|debug-review|debug-verify|review|review-audit|plan|plan-create|plan-review-gap-1|plan-review-gap-2|triage|codebase-health|memory-finalize|re-review|re-hunt|re-verify|re-plan|research-web|research-github}
+origin:{router|component-builder|bug-investigator|code-reviewer|integration-verifier|planner|qa-harness-builder|qa-executor}
+phase:{build|build-implement|build-review|build-hunt|build-verify|build-doc-sync|build-finish|debug|debug-investigate|debug-review|debug-verify|review|review-audit|plan|plan-create|plan-review-gap-1|plan-review-gap-2|plan-review-amendment|qa|qa-research|qa-plan|qa-plan-review|qa-re-plan|qa-plan-review-2|qa-preflight|qa-build|qa-review|qa-hunt|qa-execute|memory-finalize|re-review|re-hunt|re-verify|re-plan|re-qa-build|re-qa-execute|research-web|research-github|triage|codebase-health}
 plan:{path|N/A}
 scope:{ALL_ISSUES|CRITICAL_ONLY|N/A}
 reason:{short reason or N/A}
@@ -142,7 +144,7 @@ TaskList()
 
 Hydration rules:
 
-- Find active parent workflow tasks by subject prefix `CC10X BUILD:`, `CC10X DEBUG:`, `CC10X REVIEW:`, `CC10X PLAN:`.
+- Find active parent workflow tasks by subject prefix `CC10X BUILD:`, `CC10X DEBUG:`, `CC10X REVIEW:`, `CC10X PLAN:`, `CC10X QA:`.
 - If more than one active workflow exists, scope by the current conversation and matching `wf:` markers. Do not resume a workflow you cannot scope confidently.
 - Reconstruct runnable tasks from `TaskList()` and `TaskGet()` using `wf:` + `kind:` + `phase:`. Do not rely on stored task IDs for correctness.
 - Read and write only the `.cc10x/` state namespace (memory `.cc10x/*.md`, workflows `.cc10x/workflows/*`). Ignore any legacy version-segmented layout such as `.cc10x/v10/*` or `.claude/cc10x/*` left over from older installs during hydration.
@@ -228,6 +230,12 @@ Router-owned interface fields:
 - Before any REVIEW-specific readiness decision or child-task creation, immediately read `references/review-workflow.md`.
 - Use the `### REVIEW preparation` and `### REVIEW task graph` blocks in that file as the canonical REVIEW law.
 
+### QA preparation
+
+- Before any QA-specific readiness decision or child-task creation, immediately read `references/qa-workflow.md`.
+- Use the `### QA preparation` and `### QA task graph` blocks in that file as the canonical QA law.
+- QA is DRAFT status; `references/qa-workflow.md` carries `PLACEHOLDER` markers for unresolved deep-dives. See `docs/plans/2026-08-10-qa-route-rfc.md` for the governing design and open decisions.
+
 ### PLAN preparation
 
 - Before any PLAN-specific readiness decision or child-task creation, immediately read `references/plan-workflow.md`.
@@ -299,11 +307,16 @@ Only create child tasks after the workflow artifact exists and the read-back pas
 
 - See `references/plan-workflow.md` and apply its `### PLAN task graph` block verbatim before creating PLAN child tasks.
 
+### QA task graph
+
+- See `references/qa-workflow.md` and apply its `### QA task graph` block verbatim before creating QA child tasks.
+
 ### Marker rules
 
 - BUILD writes `[BUILD-START: wf:{workflow_uuid}]`
 - DEBUG writes `[DEBUG-RESET: wf:{workflow_uuid}]`
 - PLAN writes `[PLAN-START: wf:{workflow_uuid}]`
+- QA writes `[QA-START: wf:{workflow_uuid}]`
 
 ## 7. Dispatcher And Agent Prompt Contract
 
@@ -317,7 +330,18 @@ Only create child tasks after the workflow artifact exists and the read-back pas
 | `build-hunt`, `re-hunt` | `cc10x:failure-hunter` |
 | `build-verify`, `debug-verify`, `re-verify` | `cc10x:integration-verifier` |
 | `plan-create`, `re-plan` | `cc10x:planner` |
-| `plan-review-gap-1`, `plan-review-gap-2` | `cc10x:plan-gap-reviewer` |
+| `plan-review-gap-1`, `plan-review-gap-2` | `cc10x:plan-gap-reviewer` (**`REVIEW_MODE: fresh`** — never sees the prior findings; each pass counts against the maximum of 2) |
+| `plan-review-amendment` | `cc10x:plan-gap-reviewer` (**`REVIEW_MODE: amendment`** — diff-scoped, uncapped, does not count against the fresh-pass cap; returns no closure) |
+| `qa-research` | `cc10x:qa-researcher` |
+| `qa-plan` | `cc10x:planner` (with `cc10x:qa-strategy` in SKILL_HINTS) |
+| `qa-plan-review` | `cc10x:plan-gap-reviewer` (with `cc10x:qa-strategy` in SKILL_HINTS for the coverage lens) |
+| `qa-re-plan` | `cc10x:planner` (with `cc10x:qa-strategy` in SKILL_HINTS) — amends the saved artifacts after pass-1 findings; must report `AMENDED_FILES` / `STALE_SWEEP` / `RECONCILIATION_RERUN` |
+| `qa-plan-review-2` | `cc10x:plan-gap-reviewer` (same lens) — runs only after `qa-re-plan`, and is MANDATORY when the workflow stops at the plan phase |
+| `qa-preflight` | `cc10x:qa-harness-builder` (**`MODE: preflight`** — measures the environment, classifies every failure `missing-input`/`wrong-guess`/`defect`, and never boots a service) |
+| `qa-build`, `re-qa-build` | `cc10x:qa-harness-builder` (`MODE: harness`) |
+| `qa-review` | `cc10x:code-reviewer` |
+| `qa-hunt` | `cc10x:failure-hunter` |
+| `qa-execute`, `re-qa-execute` | `cc10x:qa-executor` |
 | `research-web` | `cc10x:researcher` |
 | `research-github` | `cc10x:researcher` |
 | `triage` | `cc10x:triage-agent` |
@@ -341,9 +365,14 @@ ADVISORY — for humans tuning frontmatter; the router cannot act on this table 
 | `bug-investigator` | standard | Hypothesis search; escalate to capable on a stubborn root cause. |
 | `planner`, `plan-gap-reviewer` | capable | Architecture and decomposition; cheap planning poisons the whole chain. |
 | `integration-verifier` (final phase, REVERT authority) | capable | Last line before "done"; must not miss scenario gaps. |
-| `researcher` | standard | Retrieval + synthesis. |
+| `researcher`, `qa-researcher` | standard | Retrieval + synthesis. |
+| `qa-harness-builder` | standard | Real wiring across services and environments; needs coherence. |
+| `qa-harness-builder` (`MODE: preflight`) | standard | Measurement, not design — but it must never round a `BLOCKED` up to a `PASS`, so not `cheap`. **Guidance only:** the agent ships one `model:` for both modes and the router cannot set a model per dispatch (see the mechanism note below), so no tier is actually applied here. |
+| `qa-executor` (produces the QA verdict) | capable | Last line before "the feature works"; must not round BLOCKED up to PASS. |
 
 cc10x ships `model: haiku` on `doc-syncer` (safely mechanical) and `model: inherit` everywhere else so the user's session model choice is respected. Never claim a tier was applied when the mechanism cannot apply it. Turn-count dominates price — a capable model that one-shots a phase is cheaper than a cheap model that loops three times re-reading state and re-trying. When a role tends to iterate (planner, verifier, stubborn investigation), prefer the higher tier even though its per-token cost is greater: fewer turns wins.
+
+Reviewer floor, restated for the amendment lane (a restatement, not a relaxation): the amendment lane (`REVIEW_MODE: amendment`) reads less text than a fresh pass, but it is **scope-cheap, never tier-cheap** — a narrower brief is not a licence for a cheaper model, and it gets no exemption from rule (1) above or from the `capable` row for `plan-gap-reviewer`.
 
 ### Prompt scaffold for every agent
 
@@ -388,6 +417,7 @@ Optional sections:
 - `## Original User Request` only for `plan-gap-reviewer`.
 - `## Approved Context Files` only for `plan-gap-reviewer`.
 - `## Previous Agent Findings` only for integration-verifier and only after a review phase ran.
+- `## QA Bug Context` only for `bug-investigator`, and only when this DEBUG was seeded from a QA `BUG_CANDIDATE`. Built per `references/qa-workflow.md` §4; its anti-anchoring rule (§5) is mandatory — `suspected_service` travels only with `suspicion_basis` and only labelled as a hint, or the suspicion block is omitted entirely.
 
 ### Prompt assembly rule
 
@@ -405,6 +435,7 @@ Optional sections:
 - Include `cc10x:research` only when planner or investigator receives `## Research Files`.
 - Include `cc10x:exploration` only on an explicit de-risk/spike intent ("spike", "try out", "what should this look like", "prototype", "throwaway") — never as the default for a real build. The skill has two modes: design (brainstorm a design) and spike (throwaway prototype). Absorbing a spike's answer is a fresh gated BUILD, not promotion.
 - Include `cc10x:codebase-hygiene` only when (a) the code-reviewer is asked for a reuse/consolidation audit or the request targets semantic duplication, OR (b) the request targets retrofitting/deepening shallow modules in EXISTING code (not greenfield architecture, which stays `cc10x:architecture`). The skill has two modes: duplicate detection and module deepening.
+- Include `cc10x:qa-strategy` only on QA-route dispatches (`qa-researcher`, `qa-plan`, `qa-plan-review`, `qa-re-plan`, `qa-plan-review-2`, `qa-preflight`, `qa-harness-builder`, `qa-executor`). On `qa-plan-review` it supplies the coverage lens that lets the domain-agnostic `plan-gap-reviewer` ask "is this plan thorough?" instead of only "is this plan buildable?". It is the test-system design discipline — tier selection, scenario matrices, environment topology, flake sources. Do NOT inject it into BUILD's `component-builder`: BUILD's inner TDD is governed by `cc10x:building`, and mixing the two blurs "write a failing test for the code I am writing" with "design a test system for code that exists."
 - Include `cc10x:mcp-cli` only when a researcher needs a one-off MCP capability that is not already mounted.
 - Include `cc10x:code-review` only when a human/external reviewer's feedback (pasted PR comments, review notes, "can you change X") must be acted on — it governs verify-before-agreeing in the MAIN session, not the internal reviewer→router→fix loop.
 - Include `cc10x:memory-and-handoff` only when work is being handed to a coworker, a different tool, or a fresh non-cc10x session.
@@ -716,6 +747,10 @@ For DEBUG:
 - Never spawn Memory Update as a sub-agent — a sub-agent lacks the captured payload and the memory files' session context.
 - Never create `CC10X TODO:` tasks. Non-blocking discoveries go into `**Deferred:**` memory notes.
 - Never let REVIEW create implementation tasks without an explicit router/user transition into BUILD.
+- A QA-seeded DEBUG never inherits QA's verdict about *where* the bug is. Pass QA's boundary evidence; pass its suspicion only as a labelled hint with its basis. `bug-investigator` still owns its Feedback Loop Gate — a pre-built repro loop satisfies that gate only after the investigator personally observes it turn red. A seeded loop that no longer reproduces sends the investigator back to rung 1, never forward on trust. [EASY TO MISS: a stale QA report will happily send a debugger hunting a bug that was already fixed.]
+- Never let QA edit product code. Not the researcher, not the harness builder, not the executor. QA proves behavior; DEBUG repairs it. A route that can fix what it measures cannot be believed about what it measured. QA reports `BUG_CANDIDATES` and may OFFER a DEBUG follow-up — it never auto-starts one.
+- Never let `qa-executor` edit test or harness code to turn a red run green. A harness defect routes to `re-qa-build`; a product defect routes to a DEBUG offer. [EASY TO MISS: this is the QA route's most damaging failure mode — it silently destroys the only thing QA produces, which is a trustworthy answer.]
+- Never report a QA verdict of PASS while any scenario is BLOCKED, teardown leaked, or the report artifact is absent from disk. Blocked is never rounded up to PASS.
 - Never report a workflow outcome (pass, fixed, complete) to the user without first confirming the verification evidence that supports that claim. "I believe it works" is not evidence. [EASY TO MISS: "I ran the tests and they passed" without showing command output, exit codes, or scenario evidence is also not evidence. Require concrete proof artifacts, not agent assertions.]
 - Never let a remediation loop reach 3 cycles without a human checkpoint (the `>= 3` circuit breaker in `references/remediation-and-research.md` is the single definition). Drift accumulates silently in long chains.
 - Only parallelize agents whose file-write surfaces do not overlap. Reviewer and hunter are read-only and safe to parallelize. Two write agents on overlapping files must be serialized. [EASY TO MISS: Each parallel agent must have a distinct phase value and unique task description. Identical prompts cause agents to duplicate work or silently clobber each other's output.]

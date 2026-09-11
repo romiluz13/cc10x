@@ -43,6 +43,28 @@ REQUIRED_WORKFLOW_KEYS = (
 )
 
 
+def review_closure_reason(payload: dict) -> str | None:
+    """Return a blocking reason when the artifact claims more review than it has.
+
+    `planning_review_status: passed` asserts that a review read the CURRENT plan
+    revision. If plan_revision has moved past last_reviewed_revision, the plan
+    was amended after the review and the claim is false.
+
+    Conditional by design: absent keys mean a legacy or half-migrated artifact,
+    which MUST pass. Adding these two keys to REQUIRED_WORKFLOW_KEYS instead
+    would block every artifact written before this check existed.
+    """
+    if payload.get("planning_review_status") != "passed":
+        return None
+    current = payload.get("plan_revision")
+    reviewed = payload.get("last_reviewed_revision")
+    if current is None or reviewed is None:
+        return None  # legacy or half-migrated artifact
+    if current != reviewed:
+        return f"review-closure:plan_revision={current},last_reviewed_revision={reviewed}"
+    return None
+
+
 def is_workflow_artifact(path: Path) -> bool:
     if path.suffix != ".json" or path.name.endswith(".events.jsonl"):
         return False
@@ -87,6 +109,17 @@ def main() -> int:
 
         if not workflow_event_log_exists(payload, artifact_path):
             reasons.append("missing-event-log")
+
+        # Value-level, not key-presence. Consequence, accepted deliberately:
+        # appending here makes `reasons` non-empty, so a closure mismatch SKIPS
+        # the `artifact_mutated` auto-append below. That is correct in block
+        # mode — the write is rejected, so logging a successful mutation would
+        # be false — and in audit mode the write survives but the reason is
+        # still recorded by the log_event call further down, which runs on
+        # every reason path.
+        closure = review_closure_reason(payload)
+        if closure:
+            reasons.append(closure)
 
         if target_is_artifact:
             if not payload.get("updated_at"):
@@ -145,16 +178,35 @@ def main() -> int:
     # artifact itself — never to unrelated files — and only for hard-corruption
     # reasons; the soft reasons (missing-event-log, stale write) stay audit-only.
     blocking_reasons = [
-        r for r in reasons if r.startswith(("artifact-json:", "missing-keys:"))
+        r
+        for r in reasons
+        if r.startswith(("artifact-json:", "missing-keys:", "review-closure:"))
     ]
     if decision == "block" and target_is_artifact and blocking_reasons:
-        print(
-            "CC10X artifact integrity guard: the workflow artifact "
-            f"{artifact_path.name} is invalid ({';'.join(blocking_reasons)}). "
-            "Rewrite it from references/workflow-artifact.skeleton.json before "
-            "creating child tasks.",
-            file=sys.stderr,
-        )
+        closure_reasons = [r for r in blocking_reasons if r.startswith("review-closure:")]
+        corruption = [r for r in blocking_reasons if not r.startswith("review-closure:")]
+        if corruption:
+            print(
+                "CC10X artifact integrity guard: the workflow artifact "
+                f"{artifact_path.name} is invalid ({';'.join(corruption)}). "
+                "Rewrite it from references/workflow-artifact.skeleton.json before "
+                "creating child tasks.",
+                file=sys.stderr,
+            )
+        for reason in closure_reasons:
+            # A blocking message that does not say how to proceed turns a gate
+            # into a wall, so both exits are named.
+            print(
+                "CC10X artifact integrity guard: the workflow artifact "
+                f"{artifact_path.name} is blocked ({reason}). It claims "
+                "planning_review_status=passed, but the plan was amended after the "
+                "last review, so no review has read the current revision. Two ways "
+                "forward: run a fresh planning review, which sets "
+                "last_reviewed_revision = plan_revision, or set "
+                "planning_review_status=revised_after_review to record the "
+                "amendment honestly.",
+                file=sys.stderr,
+            )
         return 2
 
     return 0

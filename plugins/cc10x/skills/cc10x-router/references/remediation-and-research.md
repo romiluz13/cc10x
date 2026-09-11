@@ -109,7 +109,8 @@ When planner returns `STATUS=PLAN_CREATED` or `STATUS=DECISION_RFC_CREATED`:
 When `plan-gap-reviewer` pass 1 returns `PASS`:
 
 - Increment `planning_review_runs += 1`
-- Set `planning_review_status=passed`
+- Set `last_reviewed_revision = plan_revision`, so that the precondition `plan_revision == last_reviewed_revision` holds
+- **Then**, and only then, set `planning_review_status=passed`
 - Persist findings summary into `results.planning_reviewer`
 - Mark the pre-created `re-plan` and `plan-review-gap-2` tasks as `deleted` (same fallback as above: if deletion is unsupported, mark them `completed` with the note `pruned — unused review branch`, and confirm the memory task unblocks)
 - Continue to memory finalization
@@ -126,9 +127,32 @@ When `plan-gap-reviewer` pass 1 returns `FINDINGS`:
 When `plan-gap-reviewer` pass 2 returns `PASS`:
 
 - Increment `planning_review_runs += 1`
-- Set `planning_review_status=passed`
+- Set `last_reviewed_revision = plan_revision`, so that the precondition `plan_revision == last_reviewed_revision` holds
+- **Then**, and only then, set `planning_review_status=passed`
 - Persist findings summary into `results.planning_reviewer`
 - Continue to memory finalization
+
+When the planner amends a saved plan after last_reviewed_revision was set:
+
+- Applies to a router amendment, an accepted-finding revision, or any edit to `PLAN_FILE` made while the review status is already terminal.
+- Increment `plan_revision += 1`
+- Set `planning_review_status=revised_after_review`
+- Do **not** set `last_reviewed_revision`
+- `planning_review_runs` is **unchanged** — an amendment is not a fresh pass
+
+Reaching the fresh-review cap is a stopping point, not closure. `revised_after_review` is the status after any amendment, and `passed` is unreachable while `plan_revision` and `last_reviewed_revision` differ.
+
+`revised_after_review` is terminal. An amendment-lane pass does not lift it. Such a lane is diff-scoped, so setting `last_reviewed_revision = plan_revision` on its verdict would claim revision *N* was reviewed when only its diff was. What a lane changes is the *evidence available about* the amendment, persisted to `results.planning_reviewer.amendment_verification`; the status is unchanged.
+
+When plan-gap-reviewer returns from phase:plan-review-amendment:
+
+- `planning_review_runs` is **unchanged**. An amendment pass is not a fresh pass, and the cap of 2 counts only fresh passes.
+- `last_reviewed_revision` is **not** set. The lane is diff-scoped; setting it would claim the whole revision was reviewed when only its diff was.
+- `planning_review_status` is **unchanged** and remains `revised_after_review`.
+- Persist the verdict to `results.planning_reviewer.amendment_verification` as `{verdict, blocking_findings_count, plan_revision, ts}`. No new top-level artifact key — `results.planning_reviewer` already exists and is already written by both fresh passes.
+- The planner reads that key to fill the `{verified | not run}` slot in the plan header's required sentence.
+- On `FINDINGS`, the same three non-writes apply and the findings are recorded under the same key. Do **not** auto-create a `re-plan` task: the fresh-review cap may already be spent, and the router owns that decision.
+- **Why this transition writes no status.** An amendment lane that could write a terminal status would be the forbidden closure claim wearing a verification badge. What the lane buys is one honest word in the plan header's sentence, and that is the entire deliverable.
 
 When `plan-gap-reviewer` pass 2 returns `FINDINGS`:
 

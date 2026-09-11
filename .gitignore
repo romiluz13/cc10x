@@ -136,6 +136,18 @@ docs/
 !docs/
 !docs/benchmarks/
 docs/benchmarks/*
+# `plans/` (above) also matches docs/plans/, which silently blocked NEW plan
+# artifacts while three older ones stayed tracked — the same class of bug as the
+# `*test*.md` note below. This negation must come AFTER both the `plans/` rule and
+# the `docs/` / `!docs/` pair; placed before either, it has no effect.
+!docs/plans/
+# ...and the directory negation alone is not enough: `*-PLAN.md` (line 13) is a
+# FILE-level rule, and on a case-insensitive filesystem (core.ignorecase=true,
+# the macOS default) it also matches lowercase `-plan.md`. A re-included
+# directory does not override a file pattern, so the files need their own
+# negation. Same class as the `*test*.md` note below — a shouty-scratch-file
+# pattern silently eating a real deliverable.
+!docs/plans/*.md
 !docs/benchmarks/2026-03-12-first-place-strategy.md
 !docs/benchmarks/2026-03-12-prompt-engineering-round-2-head-to-head.md
 !docs/benchmarks/2026-03-12-session-learnings.md
@@ -152,6 +164,11 @@ docs/benchmarks/*
 *AUDIT*.md
 *test*.md
 *audit*.md
+!plugins/cc10x/skills/cc10x-orchestrator/workflows/*.md
+# Shipped plugin templates are product, not development scratch. Without this,
+# `*test*.md` silently swallows qa-test-plan.template.md — it went uncommitted
+# through the entire QA route build and only surfaced on a `git status` audit.
+!plugins/cc10x/templates/*.md
 # Dev-note patterns (and the workspace-junk block above, e.g. planning/) must
 # never shadow shipped plugin content — scar: 2026-07-18, the entire
 # skills/planning skill plus 5 *test*.md references/evals were silently
