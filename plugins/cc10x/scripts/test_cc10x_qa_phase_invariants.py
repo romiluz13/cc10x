@@ -188,6 +188,29 @@ tested whether each file MENTIONED the template, and I-12 shipped GREEN against 
 the dispatch text still said report.md "has been seeded from" a template that
 nothing put on disk. A name is not a mechanism.
 
+Negative controls for PP-20 (three runs, all red, all with the right message).
+The property guards the task graph, where a missing edge means an agent is
+dispatched before the artifact it is told to read has been written:
+  I-15 the `qa-plan` addBlockedBy deleted -- the M1 defect itself
+                                          -> red: "dispatched with no incoming
+                                             edge: qa_plan_task_id", naming the
+                                             one node rather than "some node"
+  I-16 the node regex `->` changed to `=>` so it matches nothing
+                                          -> red on the PRECONDITION, not on
+                                             membership. Mandatory: without it a
+                                             dead regex yields an empty set and
+                                             `set() - set() <= ROOTS` is
+                                             vacuously TRUE forever, which is
+                                             PP-16(c)'s recorded shape.
+  I-17 _decommented() swapped for _normative() -- i.e. PP-20 written the way it
+       was first specified                 -> red: 0 nodes extracted.
+I-17 is the reason the helper exists. _normative() strips fenced blocks, and the
+whole task graph is authored inside ```text fences, so that draft of PP-20 was
+red at HEAD on its own precondition and no edit to the LAW could ever have made
+it green. It was caught by review before it was written, and the control is
+recorded here so the next person to reach for the shared normaliser sees the
+measurement: 12 nodes raw, 12 de-commented, 0 normative.
+
 Negative control for PP-16 (three runs, recorded when PP-16 was added; all three
 are mandatory because a set-membership assertion has a vacuity shape the token
 checks do not):
@@ -305,6 +328,39 @@ PP19_ROWS = ("missing-input", "wrong-guess", "defect", "unconfirmed")
 # which is the defect this half exists to catch. The law must carry the COPY; the
 # agent need only name the file it is told to fill.
 PP19_COPY = re.compile(r"Bash\(command=.*cp .*qa-report\.template\.md.*report\.md")
+
+# PP-20 -- the QA task graph. Every node the law creates must have an incoming
+# edge, or it is dispatched before the thing it reads has been written. M1 was
+# exactly that: `qa-plan` ran in parallel with the researchers whose output is
+# the feature map it is told to read.
+#
+# SCOPE, and why this is the one property that must NOT reuse _normative():
+# _normative() strips fenced blocks, on the argument that law re-parked into an
+# example is not law. That argument is right for prose and wrong here. The task
+# graph is AUTHORED inside ```text fences -- they are code blocks, and the fence
+# IS the normative surface. Measured on the shipped file: 12 nodes / 10 edges
+# raw, 12 / 10 de-commented, and 0 / 0 through _normative(). A PP-20 built on
+# _normative() would be red at HEAD on its own precondition and could never go
+# green. _decommented() drops HTML comments only -- a graph inside <!-- --> is
+# genuinely not a graph.
+#
+# _decommented() is currently a NO-OP on qa-workflow.md: the file carries zero
+# HTML comments at HEAD. It is here so a future commented-out node cannot count,
+# not because it does work today. Control I-17 is what actually proves PP-20.
+PP20_NODE = re.compile(r"->\s*(\S+_task_id\S*)")
+PP20_EDGE = re.compile(r"TaskUpdate\(\{\s*taskId:\s*(\w+),\s*addBlockedBy:")
+# The fan-out lanes are the only nodes with no predecessor, and that is a
+# property of the route, not an oversight: consolidation after the lanes is
+# deliberately INLINE (qa-workflow.md argues it), so there is no task between
+# the researchers and qa-plan. Adding a name here asserts a new ENTRY POINT to
+# the QA graph -- it is not a way to quiet a node that lost its edge.
+QA_DAG_ROOTS = frozenset({"researcher_task_id"})
+# The lane variable is written `researcher_task_id_{source}` -- `{source}` is a
+# template expansion the router substitutes per lane, not part of the name the
+# graph refers to. Both sides are canonicalised so the frozen constant is a
+# token the extraction can actually produce; SF-1 was a ROOTS member that
+# `\w+` could never emit, which would have made the root read as unrouted.
+PP20_TEMPLATE_SUFFIX = re.compile(r"_?\{[a-z_]+\}$")
 
 
 # PP-15(a). Branch currency on the measuring agent. One token per structural
@@ -1178,6 +1234,41 @@ def main() -> int:
         )
     if PP19_TPL.name not in EXECUTOR_AGENT.read_text(encoding="utf-8"):
         pp19b_missing.append("qa-executor.md does not name the template it must fill")
+    # PP-20 -- every QA DAG node except a declared root has an incoming edge.
+    def _decommented(text: str) -> str:
+        """Drop HTML comments ONLY. Fences are the graph's normative surface."""
+        return re.sub(r"<!--.*?-->", "", text, flags=re.DOTALL)
+
+    def _canonical_node(token: str) -> str:
+        return PP20_TEMPLATE_SUFFIX.sub("", token)
+
+    dag_text = _decommented(QA_WORKFLOW.read_text(encoding="utf-8"))
+    created = {_canonical_node(m) for m in PP20_NODE.findall(dag_text)}
+    blocked = {_canonical_node(m) for m in PP20_EDGE.findall(dag_text)}
+    # Anti-vacuity, asserted BEFORE membership: a regex that stopped matching
+    # yields an empty `created`, and `set() - set() <= ROOTS` is vacuously true.
+    # PP-16(c) shipped green in exactly that shape. 12 nodes at HEAD.
+    if len(created) < 8:
+        pp20_detail = (
+            f"PRECONDITION failed: extracted only {len(created)} nodes from "
+            f"{QA_WORKFLOW.name} (expected >= 8) — the node regex has stopped "
+            f"matching, so any membership result below is vacuous"
+        )
+        pp20_ok = False
+    else:
+        unrouted = sorted(created - blocked - QA_DAG_ROOTS)
+        pp20_ok = not unrouted
+        pp20_detail = (
+            f"{len(created)} nodes / {len(blocked)} edges / "
+            f"{len(created & QA_DAG_ROOTS)} declared root"
+            + (
+                ""
+                if pp20_ok
+                else " — dispatched with no incoming edge: " + ", ".join(unrouted)
+            )
+        )
+    check("PP-20", pp20_ok, pp20_detail)
+
     check(
         "PP-19(b)",
         not pp19b_missing,
