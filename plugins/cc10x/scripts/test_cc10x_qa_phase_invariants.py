@@ -77,6 +77,16 @@ PP-21 the workflow artifact's three authorities agree: (a) every backticked
       the `workflow_type` enum LINE, the `evidence` agent list, and SKILL.md's
       event-log phase template -- each asserted on its anchored line, never
       whole-file.
+PP-23 the harness contract cannot pass while proving or enumerating nothing:
+      (a) the mutation floor is never VACUOUS -- the floor minimum binds every
+      branch and branch 2 names its fall-through, in BOTH byte-duplicated
+      statements of the rule; (b) `ARTIFACTS_CREATED` and `HARNESS_MANIFEST` are
+      REQUIRED, non-empty and non-null, in the `MODE: harness` slice of the rows
+      that decide validity -- row-anchored AND mode-anchored, never whole-file
+PP-24 the currency gate's axis is `commits_behind` and a dirty tree is not on
+      it: the commits_behind-only phrasing in all three sites that state the
+      trigger, the coupling phrase in none of them, and `dirty` still a
+      REPO_CURRENCY field so the fix cannot be "delete the measurement"
 PP-22 every agent file SPECIFIES the line-1 `CONTRACT {` envelope inside its
       OUTPUT SPECIFICATION -- the window from the last
       Output/Router Contract/Phase Contract heading before the file's first
@@ -319,6 +329,81 @@ file has been bitten by, and each control closes one:
        GREEN against this injection, twice over. That is PP-18's recorded I-2
        shape in a third file, and `code-reviewer.md` is the file that can
        exhibit it because it is the one carrying three copies of the token.
+
+Negative controls for PP-23 and PP-24 (six runs, all red, each naming the
+injected thing). The three defects share one agent file and two hook-policy
+rows, so they were landed and controlled together:
+  I-26 "or a dirty tree" re-inserted into the qa-preflight DISPATCH TEXT only,
+       leaving the agent and the policy row corrected
+                                          -> PP-24 red naming
+                                             `qa-workflow.md (qa-preflight
+                                             dispatch text)` on BOTH halves: the
+                                             axis phrasing absent AND the
+                                             coupling phrase present.
+       MANDATORY, and it is the run that proves the SPELLING of the forbidden
+       token. A negative assertion has two failure modes a positive one does not
+       -- a misspelled token passes forever, and a legitimate use inside scope
+       fails forever -- so the token must be demonstrated to still match
+       something, and the scope must be frozen to the three sites that state the
+       trigger. This is PP-15(c)'s recorded discipline, applied to a second
+       negative assertion.
+  I-27 the floor-minimum sentence deleted from the hook-policy ROW only, leaving
+       qa-harness-builder.md's copy standing
+                                          -> PP-12(a) red naming the token and
+                                             the hook-policy file, and PP-23(a)
+                                             red on the same token.
+       This is the byte-duplication trap in the direction it historically drifts
+       (PP-12's original control, I-26's predecessor, is the same shape), and it
+       is the run that justifies PP-12(a) staying a WHOLE-FILE substring while
+       nearly everything else here is window-anchored: the divergence it exists
+       to catch is CROSS-FILE, and no stray copy in one file can conjure the
+       other file's copy. Both properties going red is expected and not
+       redundancy to remove: PP-12(a) reports it as a duplication failure,
+       PP-23(a) as a vacuity failure, and the two failure messages send a reader
+       to different places.
+  I-28 the `dirty:` field deleted from the agent's REPO_CURRENCY block
+                                          -> PP-24 red: "`dirty` is no longer a
+                                             REPO_CURRENCY field ...
+                                             (block=460B)".
+       MANDATORY. Without this half the property REWARDS THE WRONG FIX: deleting
+       `dirty` outright satisfies "a dirty tree is not a trigger" perfectly while
+       losing a measurement the route needs. Demoting a trigger to a fact and
+       deleting the fact are indistinguishable to a purely negative assertion.
+       The block anchor also matters -- `dirty:` appears again on the
+       CURRENCY_GATE entry, so a file-wide search is GREEN against this
+       injection.
+  I-29 `ARTIFACTS_CREATED` deleted from the `MODE: harness` required-field slice
+       of the `:287` row ONLY -- not from the agent, not from any dispatch text
+                                          -> PP-23(b) red naming the slice
+                                             (slice 435B -> 414B).
+  I-30 THE ONE THAT PROVES THE MODE ANCHORING. Both tokens moved out of the
+       harness sub-list and into the `MODE: preflight` sub-list of the SAME
+       physical line -- the two enumerations are separated only by `<br>`
+                                          -> PP-23(b) still red, naming both
+                                             tokens and the harness slice
+                                             (394B), while `grep -c
+                                             ARTIFACTS_CREATED` on the file
+                                             still returns 2.
+       A row-anchored-but-not-mode-anchored property is GREEN against this, and
+       preflight is precisely the mode where `HARNESS_MANIFEST: null` stays
+       legal -- so the green would have blessed a contract that requires the
+       review surface in the one mode that does not produce it. PP-18's I-2
+       shape, one nesting level further in: the whole-file trap reappears as a
+       whole-ROW trap once two enumerations share a line.
+  I-31 `HARNESS_MANIFEST` set back to unconditional `| null` at the agent's
+       declaration line, both policy halves left correct
+                                          -> PP-23(b) red on the nullability
+                                             half ALONE, quoting the offending
+                                             line, with the slice and overrides
+                                             halves green.
+       The three halves are asserted independently; any one alone is satisfiable
+       by a contract that is two-thirds wired.
+A control this phase deliberately did NOT run: the contrast showing that a
+dispatch-text-only property stays green under I-29. At this point neither
+PP-30(b) nor its subject exists -- qa-workflow.md does not name either field
+until the dispatch text is written -- so such a property would be red for the
+absence of its subject, not green. The contrast is a real measurement only once
+the dispatch text lands, and it belongs to that change.
 """
 
 import importlib.util
@@ -359,9 +444,32 @@ PP16_MIN_PHASES = 5
 # PP-12. One token per structural property of the mutation schema:
 # assertion_falsified = the only outcome that satisfies the floor,
 # survived            = the automatic-FAIL outcome,
-# LIVENESS_PROBES     = the separate list that cannot satisfy the floor.
+# LIVENESS_PROBES     = the separate list that cannot satisfy the floor,
+# the floor minimum   = no branch of the selector may floor at zero,
+# MUTATION_CHECKS empty = the backstop for an empty entry set. This one lived in
+#                       qa-harness-builder.md alone while the router's validation
+#                       row said nothing, so the router-side authority resolved
+#                       OPTIMISTICALLY on the exact shape the agent forbade —
+#                       which is finding P2 in miniature.
 # A restatement missing any one of them permits a verdict the other site forbids.
-MUTATION_PASS_TOKENS = ("assertion_falsified", "survived", "LIVENESS_PROBES")
+#
+# Why a WHOLE-FILE substring is the right scope HERE and nowhere else. This suite
+# window-anchors almost everything (PP-14, PP-18, PP-21(c), PP-22) because a
+# second copy of a token elsewhere in the same file satisfies a file-wide search
+# and hides the defect. That failure mode cannot apply to this property: the
+# assertion is PER TOKEN PER FILE across two files that are meant to be
+# byte-duplicates of one rule, and the only divergence it is about is a
+# CROSS-FILE one. A stray copy inside qa-harness-builder.md cannot make the
+# hook policy's copy appear. Control (ii) — deleting the floor-minimum sentence
+# from the policy row only, leaving the agent's — is the run that demonstrates
+# it, and it is recorded in the docstring above.
+MUTATION_PASS_TOKENS = (
+    "assertion_falsified",
+    "survived",
+    "LIVENESS_PROBES",
+    "at least one `assertion_falsified` is required regardless of which branch applies",
+    "`MUTATION_CHECKS` empty means no assertion was ever observed failing",
+)
 
 # PP-12(b). The SHAPE tokens above say nothing about the floor's MAGNITUDE, and
 # that blindness is how the two byte-duplicated PASS rules came to disagree by a
@@ -584,6 +692,87 @@ PP22_ENVELOPE = "CONTRACT {"
 # 14 at HEAD. A window that stops matching is the same shape one level down, so
 # an empty or absent window is a PRECONDITION failure, never a pass.
 PP22_MIN_AGENTS = 14
+
+# PP-23(a). The mutation floor is never VACUOUS. PP-12(a) pins the floor's
+# vocabulary and PP-12(b) its magnitude; NEITHER can see a branch whose selected
+# UNIT SET is empty. Branch 2 floored only the rows a plan flags
+# `At risk of appearing proven: yes`, so a §2c declaring more than 8 properties
+# and flagging none selected no units at all, and an empty `MUTATION_CHECKS` met
+# the floor. The file already BELIEVED otherwise: its anti-gaming paragraph
+# asserts that a plan which "declares them and flags none `at risk`" buys branch
+# 3's per-tier-and-per-wave floor. First-matching-branch-wins meant it bought
+# branch 2 and nothing. The prose was right and the selector did not implement
+# it, so the repair is to the selector.
+# Two tokens, one per half of that repair, asserted PER TOKEN PER FILE with a
+# per-token message — never one alternation, for PP-12(a)'s recorded reason: a
+# single `a|b` search returns >= 1 while one of the two is missing.
+PP23A_TOKENS = (
+    "at least one `assertion_falsified` is required regardless of which branch applies",
+    "falls through to branch 3",
+)
+
+# PP-23(b). The review surface is a REQUIRED field, in the rows that decide
+# validity. ADR-3 names `ARTIFACTS_CREATED` + `HARNESS_MANIFEST` as the surface
+# `qa-review` is dispatched at, in place of BUILD's `git_base_sha` diff package
+# (empty by construction, because qa-harness-builder never commits). Measured
+# before the fix: NEITHER token appeared anywhere in the hook policy, the
+# `MODE: harness` required-field row ended "Every other field in the block stays
+# optional", and the agent typed `HARNESS_MANIFEST: "[path]" | null`. Naming two
+# absent-or-null fields as a review surface reproduces the empty-diff failure one
+# authority over — a dispatch pointing at nothing.
+#
+# This property exists because a DISPATCH-TEXT-ONLY assertion is green against
+# its own defect: a property that only reads the `qa-review` prompt stays green
+# while the builder emits neither field. Splitting the claim in two — the
+# contract here, the dispatch wording in PP-30(b) — is what makes either half
+# falsifiable.
+#
+# ROW-ANCHORED, never whole-file, in both directions: both tokens appear in the
+# agent's own contract block, so a whole-file search over the agent is satisfied
+# by the field DECLARATION rather than by the requirement.
+# The row anchors are CONJUNCTIONS and the conjunction is load-bearing: the bold
+# phrase alone also matches the row immediately below it (`qa-executor` restates
+# both), so `| qa-harness-builder |` must be required on the same line.
+PP23B_ROW_REQUIRED = ("| qa-harness-builder |", "**`MODE` selects the set.**")
+PP23B_ROW_OVERRIDES = ("| qa-harness-builder |", "**This row is a deliberate TIGHTENING.**")
+# MODE-ANCHORED inside the row, and this is the subtlest defence here. The
+# required-fields row carries the `MODE: harness` AND `MODE: preflight`
+# enumerations on ONE physical line separated by `<br>`. "Assert inside the
+# located row" is therefore satisfied by the tokens landing in the PREFLIGHT
+# sub-list — precisely the mode where `HARNESS_MANIFEST: null` stays legal, so
+# the injection that proves the property matters is the one that puts them
+# there. The row is sliced at the `MODE: preflight` boundary and only the
+# harness slice is searched.
+PP23B_HARNESS_MARK = "`MODE: harness` →"
+PP23B_PREFLIGHT_MARK = "`MODE: preflight` →"
+PP23B_SURFACE_TOKENS = ("`ARTIFACTS_CREATED`", "`HARNESS_MANIFEST`")
+PP23B_OVERRIDE_TOKENS = ("non-empty `ARTIFACTS_CREATED`", "non-null `HARNESS_MANIFEST`")
+# The nullability half, asserted on the agent's single anchored declaration line
+# rather than file-wide: the phrase would otherwise be satisfiable by prose.
+PP23B_MANIFEST_LINE = re.compile(r"^HARNESS_MANIFEST:", re.M)
+PP23B_MANIFEST_QUALIFIER = "null ONLY in MODE: preflight"
+
+# PP-24. The currency gate's axis is `commits_behind`, and a dirty tree is not on
+# it. The gate emitted on `commits_behind > 0` OR a dirty tree and forced
+# BLOCKED — and QA over freshly built work has a dirty tree BY CONSTRUCTION, so
+# the gate fired on the route's most common trigger. The same agent calls a
+# slightly-behind checkout "the ordinary state of a working tree".
+#
+# The negative half has TWO failure modes, not one — a misspelled forbidden
+# token passes forever, and a legitimate use of the phrase inside scope fails
+# forever — so, exactly as PP-15(c)'s comment prescribes, the scope is FROZEN to
+# the three sites that state the trigger (the agent, the router's validation
+# row, and the qa-preflight dispatch text, which restates it verbatim) and the
+# spelling is proven by the mandatory re-insertion injection recorded above.
+PP24_AXIS_TOKEN = "commits_behind > 0 and for no other reason"
+PP24_DIRTY_TRIGGER = "or a dirty tree"
+# The POSITIVE field half. Without it the property rewards the wrong fix:
+# deleting the `dirty` field outright satisfies "dirty is not a trigger" while
+# losing a measurement the route needs. Anchored to the REPO_CURRENCY block of
+# the agent's contract, because `dirty:` also appears on the CURRENCY_GATE entry
+# and a file-wide search could not tell the two apart.
+PP24_REPO_CURRENCY_BLOCK = "REPO_CURRENCY:"
+PP24_DIRTY_FIELD = re.compile(r"^\s+dirty:", re.M)
 
 
 # PP-15(a). Branch currency on the measuring agent. One token per structural
@@ -1697,6 +1886,177 @@ def main() -> int:
             )
         )
     check("PP-22", pp22_ok, pp22_detail)
+
+    # PP-23(a) -- the mutation floor is never vacuous. Per token, per file, with
+    # a per-token message; see PP23A_TOKENS for why an alternation would not do.
+    pp23a_missing: list[str] = []
+    for token in PP23A_TOKENS:
+        for path in (HARNESS_AGENT, HOOK_POLICY):
+            if token not in path.read_text(encoding="utf-8"):
+                pp23a_missing.append(f"`{token}` missing from {path.name}")
+    check(
+        "PP-23(a)",
+        not pp23a_missing,
+        "the floor minimum binds every branch and branch 2 names its fall-through, "
+        "in BOTH qa-harness-builder.md and workflow-artifact-and-hook-policy.md"
+        + ("" if not pp23a_missing else " — " + "; ".join(pp23a_missing)),
+    )
+
+    # PP-23(b) -- the review surface is required where validity is decided.
+    # Three separately named assertions; the row anchors fail on the PRECONDITION
+    # rather than passing over an empty row (PP-18's discipline).
+    policy_lines = HOOK_POLICY.read_text(encoding="utf-8").splitlines()
+    pp23b_precondition: list[str] = []
+    pp23b_gaps: list[str] = []
+
+    def _locate_row(anchors: tuple, label: str):
+        hits = [ln for ln in policy_lines if all(a in ln for a in anchors)]
+        if len(hits) != 1:
+            pp23b_precondition.append(
+                f"expected exactly 1 {label} row in {HOOK_POLICY.name} matching "
+                f"{anchors!r}, found {len(hits)} — the row anchor has stopped "
+                f"matching, so any result over it would be vacuous"
+            )
+            return None
+        return hits[0]
+
+    required_row = _locate_row(PP23B_ROW_REQUIRED, "qa-harness-builder required-fields")
+    overrides_row = _locate_row(PP23B_ROW_OVERRIDES, "qa-harness-builder overrides")
+
+    harness_slice = ""
+    if required_row is not None:
+        h = required_row.find(PP23B_HARNESS_MARK)
+        f = required_row.find(PP23B_PREFLIGHT_MARK)
+        if h < 0 or f < 0 or not h < f:
+            pp23b_precondition.append(
+                f"could not slice the required-fields row at the `MODE: preflight` "
+                f"boundary (harness mark at {h}, preflight mark at {f}) — without "
+                f"the slice the tokens could satisfy this check from the PREFLIGHT "
+                f"sub-list, which is the one mode where a null manifest is legal"
+            )
+        else:
+            harness_slice = required_row[h:f]
+            for token in PP23B_SURFACE_TOKENS:
+                if token not in harness_slice:
+                    pp23b_gaps.append(
+                        f"{token} is not in the `MODE: harness` required-field slice "
+                        f"of {HOOK_POLICY.name} (slice={len(harness_slice)}B)"
+                    )
+
+    if overrides_row is not None:
+        for token in PP23B_OVERRIDE_TOKENS:
+            if token not in overrides_row:
+                pp23b_gaps.append(
+                    f"the qa-harness-builder overrides row of {HOOK_POLICY.name} "
+                    f"does not require {token} for STATUS=PASS"
+                )
+
+    manifest_lines = [
+        ln
+        for ln in HARNESS_AGENT.read_text(encoding="utf-8").splitlines()
+        if PP23B_MANIFEST_LINE.match(ln)
+    ]
+    if len(manifest_lines) != 1:
+        pp23b_precondition.append(
+            f"expected exactly 1 `HARNESS_MANIFEST:` declaration line in "
+            f"{HARNESS_AGENT.name}, found {len(manifest_lines)}"
+        )
+    elif PP23B_MANIFEST_QUALIFIER not in manifest_lines[0]:
+        pp23b_gaps.append(
+            f"{HARNESS_AGENT.name}'s HARNESS_MANIFEST declaration does not restrict "
+            f"`null` to MODE: preflight (line: {manifest_lines[0].strip()!r})"
+        )
+
+    if pp23b_precondition:
+        pp23b_ok = False
+        pp23b_detail = "PRECONDITION failed: " + "; ".join(pp23b_precondition)
+    else:
+        pp23b_ok = not pp23b_gaps
+        pp23b_detail = (
+            f"ARTIFACTS_CREATED and HARNESS_MANIFEST are required in the "
+            f"`MODE: harness` slice of the required-fields row "
+            f"(slice={len(harness_slice)}B), non-empty/non-null for STATUS=PASS in "
+            f"the overrides row, and `null` is restricted to MODE: preflight in "
+            f"{HARNESS_AGENT.name}"
+            + ("" if pp23b_ok else " — " + "; ".join(pp23b_gaps))
+        )
+    check("PP-23(b)", pp23b_ok, pp23b_detail)
+
+    # PP-24 -- the currency gate's axis is commits_behind; a dirty tree is a
+    # measured fact, never a trigger. Positive phrasing in all three sites,
+    # forbidden coupling in none of them, and `dirty` still a REPO_CURRENCY field.
+    qa_law_lines = QA_WORKFLOW.read_text(encoding="utf-8").splitlines()
+    dispatch_hits = [
+        ln
+        for ln in qa_law_lines
+        if "phase:qa-preflight" in ln and 'description: "' in ln
+    ]
+    pp24_precondition: list[str] = []
+    pp24_gaps: list[str] = []
+    if len(dispatch_hits) != 1:
+        pp24_precondition.append(
+            f"expected exactly 1 qa-preflight dispatch `description:` line in "
+            f"{QA_WORKFLOW.name}, found {len(dispatch_hits)} — the anchor has "
+            f"stopped matching"
+        )
+    if overrides_row is None:
+        pp24_precondition.append(
+            f"the qa-harness-builder overrides row of {HOOK_POLICY.name} was not "
+            f"located (see PP-23(b)); PP-24's policy site is therefore unscoped"
+        )
+
+    if not pp24_precondition:
+        harness_text_now = HARNESS_AGENT.read_text(encoding="utf-8")
+        sites = (
+            (HARNESS_AGENT.name, harness_text_now),
+            (f"{HOOK_POLICY.name} (qa-harness-builder overrides row)", overrides_row),
+            (f"{QA_WORKFLOW.name} (qa-preflight dispatch text)", dispatch_hits[0]),
+        )
+        for label, text in sites:
+            if PP24_AXIS_TOKEN not in text:
+                pp24_gaps.append(
+                    f"{label} does not state the gate's axis "
+                    f"(`{PP24_AXIS_TOKEN}` absent)"
+                )
+            if PP24_DIRTY_TRIGGER in text:
+                pp24_gaps.append(
+                    f"{label} still couples a dirty tree to the gate trigger "
+                    f"(`{PP24_DIRTY_TRIGGER}` present)"
+                )
+        # the positive field half, block-anchored
+        start = harness_text_now.find(PP24_REPO_CURRENCY_BLOCK)
+        if start < 0:
+            pp24_precondition.append(
+                f"no `{PP24_REPO_CURRENCY_BLOCK}` block found in "
+                f"{HARNESS_AGENT.name}"
+            )
+        else:
+            # scan from the line AFTER the block heading: position 0 of a slice
+            # always matches `^` under re.M, which silently yields a 1-byte
+            # "block" that no `dirty:` line can be inside. Observed once, here.
+            body_at = harness_text_now.index("\n", start) + 1
+            nxt = re.search(r"^\S", harness_text_now[body_at:], re.M)
+            block = harness_text_now[
+                start : (body_at + nxt.start()) if nxt else len(harness_text_now)
+            ]
+            if not PP24_DIRTY_FIELD.search(block):
+                pp24_gaps.append(
+                    f"`dirty` is no longer a REPO_CURRENCY field in "
+                    f"{HARNESS_AGENT.name} (block={len(block)}B) — demoting the "
+                    f"trigger must not delete the measurement"
+                )
+
+    if pp24_precondition:
+        pp24_ok = False
+        pp24_detail = "PRECONDITION failed: " + "; ".join(pp24_precondition)
+    else:
+        pp24_ok = not pp24_gaps
+        pp24_detail = (
+            "all three sites gate on commits_behind alone, none couples a dirty "
+            "tree to the trigger, and `dirty` is still a REPO_CURRENCY field"
+            + ("" if pp24_ok else " — " + "; ".join(pp24_gaps))
+        )
+    check("PP-24", pp24_ok, pp24_detail)
 
     check(
         "PP-19(b)",

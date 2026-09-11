@@ -229,7 +229,7 @@ PHASE_STATUS: "completed" | "partial" | "blocked"
 PHASE_EXIT_READY: [true only when every planned scenario has a runnable implementation]
 PROOF_STATUS: "passed" | "gaps_found" | "human_needed"
 ARTIFACTS_CREATED: ["path 1"]
-HARNESS_MANIFEST: "[path]" | null
+HARNESS_MANIFEST: "[path]" | null   # null ONLY in MODE: preflight — a harness build owes a manifest
 ENV_MODE: "local" | "compose" | "testcontainers" | "cloud_ephemeral" | "manual_instructions"
 SERVICES_PROVISIONED: ["service-a"]
 SERVICES_STUBBED:
@@ -298,12 +298,13 @@ REPO_CURRENCY:
     default_branch: "[origin/main | origin/development — the integration branch, named]"
     commits_behind: [n]        # git rev-list --count HEAD..{default_branch}
     dirty: [true if git status --porcelain is non-empty]
-CURRENCY_GATE:            # derived from REPO_CURRENCY; one entry per repo needing a decision
+CURRENCY_GATE:            # derived from REPO_CURRENCY: one entry per repo with
+                          # commits_behind > 0 and for no other reason
   - repo: "[name]"
     commits_behind: [n]
     dirty: [bool]
     failure_class: "wrong-guess"     # the class travels on the gate entry, not on a failed CHECKS row
-    question: "measure against {branch} as checked out, or pull forward to {default_branch}?"
+    question: "the uncommitted work is the system under test — measure as checked out and record the tree state; or measure against {branch} as checked out; or pull forward to {default_branch}?"
 SETUP_RECORD: "[path to .cc10x/qa/env/{env_key}/setup.md]" | null
 SETUP_RECORD_STALE: [true if any stable row's re-probe disagreed with its recorded output]
 BUG_CANDIDATES:
@@ -359,7 +360,7 @@ so nothing already written or in flight starts failing.
 
 *`MODE: harness` only:*
 
-- `STATUS=PASS` requires: `PHASE_STATUS=completed`, `PHASE_EXIT_READY=true`, `PRODUCT_CODE_TOUCHED=false`, `SCENARIOS_IMPLEMENTED == SCENARIOS_PLANNED` (or every gap listed in `SCENARIOS_UNIMPLEMENTED` with a reason), `RERUN_CLEAN=true`, `TEARDOWN_VERIFIED=true`, **the mutation floor met on every unit the floor selects** (see *The mutation floor* below — every satisfying entry is a `MUTATION_CHECKS` entry with `outcome: assertion_falsified` and a non-empty `failing_assertion`), and `BLOCKED_ITEMS=[]`.
+- `STATUS=PASS` requires: `PHASE_STATUS=completed`, `PHASE_EXIT_READY=true`, `PRODUCT_CODE_TOUCHED=false`, `SCENARIOS_IMPLEMENTED == SCENARIOS_PLANNED` (or every gap listed in `SCENARIOS_UNIMPLEMENTED` with a reason), `RERUN_CLEAN=true`, `TEARDOWN_VERIFIED=true`, **the mutation floor met on every unit the floor selects** (see *The mutation floor* below — every satisfying entry is a `MUTATION_CHECKS` entry with `outcome: assertion_falsified` and a non-empty `failing_assertion`), a **non-empty `ARTIFACTS_CREATED`**, a **non-null `HARNESS_MANIFEST`**, and `BLOCKED_ITEMS=[]`.
 - Any `MUTATION_CHECKS` entry with `outcome: survived` is an **automatic `STATUS: FAIL`**, regardless of everything else. A test that passes while the thing it asserts on is sabotaged is a fake test.
 - `outcome: not_applied` is **invalid output** — the same standing as a failed check with no `classification`. An unapplied mutation is a claim, not a check; either apply it and record `applied_evidence`, or record it as `blocked` with a reason.
 - `outcome: blocked` counts **zero** toward the mutation floor and MUST carry both `failing_assertion` (the assertion it intended to falsify) and `blocked_reason`. A legible gap, never laundered proof.
@@ -372,13 +373,20 @@ properties` section and take the first branch that matches:
 1. **§2c is present and non-empty, and declares 8 or fewer provable properties** → the floor is **one
    `assertion_falsified` per provable property**. Any scenario listed in that property's row may
    satisfy it; the property is the unit, not the scenario.
-2. **§2c is present and declares more than 8 provable properties** → the floor is one
-   `assertion_falsified` per property **for the rows marked `At risk of appearing proven: yes` only**.
-   The unflagged rows are unfloored.
+2. **§2c is present, declares more than 8 provable properties, and marks at least one row
+   `At risk of appearing proven: yes`** → the floor is one `assertion_falsified` per property **for
+   the flagged rows only**. The unflagged rows are unfloored. **If §2c declares more than 8
+   properties and flags none, this branch does not match and the plan falls through to branch 3** —
+   a plan that flags nothing selects no unit, and a floor over an empty unit set is met by an empty
+   `MUTATION_CHECKS`, which is the shape this floor exists to forbid.
 3. **§2c is absent, or present and empty** → the floor is one `assertion_falsified`
    **per tier and per wave** — both, not either. Every tier in `TIER_COVERAGE` with a non-zero count needs one, and every
    wave in the test plan's build order needs one, and an entry may satisfy both at once only when its
    scenario genuinely belongs to that tier and that wave.
+
+**A floor of zero is not a floor.** Under every branch above,
+at least one `assertion_falsified` is required regardless of which branch applies,
+and a selected unit set that came out empty is itself the evidence the branch was mis-selected.
 
 A property whose scenario column is `—` cannot be floored. It falls back to branch 3's floor for its
 tier, and it MUST appear in `TESTABILITY_BLOCKERS` naming the seam that is missing. Two properties
@@ -386,9 +394,9 @@ mapped to the same scenario need two separate mutations of that scenario, each n
 `failing_assertion`; one sabotage cannot show two assertions independently go false.
 
 **The anti-gaming property, stated so it is not discovered by accident.** Branch 3 is the fallback and
-it is the **expensive** one. A plan that declines to declare its provable properties, or declares them
-and flags none `at risk`, does not buy a cheaper run — it buys per tier and per wave, which in most
-plan shapes is strictly more mutation work than the per-property floor it avoided. The cost gradient
+it is the **expensive** one. A plan that declines to declare its provable properties, or declares
+more than 8 and flags none `at risk`, does not buy a cheaper run — it buys per tier and per
+wave, which in most plan shapes is strictly more mutation work than the per-property floor it avoided. The cost gradient
 points toward honest self-flagging. Do not report a shortfall as met because the plan was vague about
 its units; a vague plan raises the floor, it does not remove it.
 - Non-empty `BLOCKED_ITEMS` escalates `qa_scope=probe` to `standard`. **Harness mode only** — see the preflight rule below for why.
@@ -402,6 +410,7 @@ its units; a vague plan raises the floor, it does not remove it.
 - **`REPO_CURRENCY` covers every repo in the topology, not every repo preflight touches.** Enumerate the repo set from the feature map and the env plan **first**, then measure each one. A `REPO_CURRENCY` list shorter than that set is **invalid output** — the same standing as a failed check with no `classification`. This is a *coverage* rule, and the word is the whole point: measuring the repos you happened to touch is what produces one current side and one stale side. A repo with a detached HEAD or no resolvable default is still emitted, with `default_branch: null`, `commits_behind: null` and the reason — an unmeasurable repo is recorded as unmeasured, never omitted, because omission is indistinguishable from current.
 - **`CURRENCY_GATE` is derived from `REPO_CURRENCY`, and non-empty `CURRENCY_GATE` forces `STATUS: BLOCKED` with `NEXT_ACTION: gate`. Never `PASS`, never `FAIL`** — the same reason the prerequisite rule above gives: a stale checkout is an environment fact, and rounding it to either verdict destroys the distinction preflight exists to draw. The router raises the one batched question; **you never ask, and you never pull forward.**
 - **`REPO_CURRENCY` rows are not `CHECKS` rows.** Branch currency never produces a failed `CHECKS` entry, so the PASS rule below is untouched and a fully current topology still reaches `PASS` exactly as it did before this field existed. The `wrong-guess` class travels on the `CURRENCY_GATE` entry itself, which is what lets the failure vocabulary stay three-valued without needing a failing check to hang it on.
+- **The gate's axis is `commits_behind`, and a dirty tree is not on it.** A `CURRENCY_GATE` entry is emitted for every repo with commits_behind > 0 and for no other reason. `dirty` remains a measured fact on the `REPO_CURRENCY` row — reported always, a trigger never. QA is most often pointed at freshly built, uncommitted work, so a modified tree is this route's *ordinary* state and gating on it would block the common case by construction. That is also why the gate's question carries a **third** option, and why it is usually the right answer for QA: **the uncommitted work IS the system under test** — measure as checked out and record the tree state, rather than moving the checkout away from the code the user asked about.
 - **`CURRENCY_GATE` does NOT escalate `qa_scope`** — the same reason `BLOCKED_ITEMS` does not. A checkout a few commits behind is the ordinary state of a working tree, not evidence the scope was wrong.
 - `STATUS=PASS` requires: `PHASE_STATUS=completed`, `PRODUCT_CODE_TOUCHED=false`, `SERVICES_PROVISIONED=[]`, `BLOCKED_ITEMS=[]`, `HUMAN_PREREQUISITES=[]`, `CURRENCY_GATE=[]`, and every `CHECKS` entry `result: pass`. The harness-mode scenario, mutation and teardown requirements do not apply — preflight builds no suite, so demanding them would make a clean preflight structurally unable to pass.
 - Every `CHECKS` entry carries `tier`, `command`, `expected`, `actual`, `result`, and — when `result != pass` — a `classification`. A failed check with no classification is invalid output: the three-way split is the whole deliverable.
