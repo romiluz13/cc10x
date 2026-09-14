@@ -89,7 +89,7 @@ Rules:
 - `approved_decisions` stores decisions explicitly approved by the user or already fixed in the saved plan.
 - `plan_mode`, `verification_rigor`, and `proof_status` mirror the router-owned interface fields from workflow preparation (`direct|execution_plan|decision_rfc`, `standard|critical_path`, `passed|gaps_found|human_needed`).
 - `traceability` stores requirement→phase→verification→remediation linkage arrays (`requirements`, `phases`, `verification`, `remediation`).
-- `deferred_findings` accumulates non-blocking Minor findings across phases (each entry: `source`, `phase_id`, `finding`, `severity:minor`); surfaced once at BUILD-DONE triage, never consumed mid-flight. See `build-workflow.md` §Deferred Minor findings roll-up.
+- `deferred_findings` accumulates non-blocking Minor findings across phases (each entry: `source`, `phase_id`, `finding`, `severity:minor`); never consumed mid-flight, and surfaced once — at BUILD-DONE triage on the BUILD route, and on the QA route with the report, alongside the DEBUG offer, because QA has no BUILD-DONE triage to surface it at. See `build-workflow.md` §Deferred Minor findings roll-up and `qa-workflow.md` *Harness review*.
 - `evidence` stores proof-of-work grouped by agent:
   - `builder`
   - `investigator`

@@ -559,6 +559,7 @@ Convergence rule:
 ## 11. Re-Review Loop
 
 - See `references/remediation-and-research.md` and apply its `## 11. Re-Review Loop` block whenever a `kind:remfix` task completes.
+- **QA-route exception.** A completed `phase:re-qa-build` does NOT enter that loop: no `integration-verifier` re-verify and no `re-review`/`re-hunt`. QA re-enters with a fresh `qa-review`/`qa-hunt` pair on the rebuilt harness, and its proof-of-exercise is `MUTATION_CHECKS`/`RERUN_CLEAN`/`TEARDOWN_VERIFIED`, not the loop's `COVERING_TESTS`/`TEST_COMMAND`/`TEST_OUTPUT` — which `qa-harness-builder` does not emit, so the precondition gate would fail closed on a correct QA remfix. Rules and rationale: `references/qa-workflow.md`, *Harness review*.
 
 ## 11b. Loop Discipline (Vocabulary)
 

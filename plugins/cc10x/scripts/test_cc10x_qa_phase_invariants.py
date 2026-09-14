@@ -96,6 +96,22 @@ PP-25 the QA route's two re-dispatch loops are BOUNDED and COUNTED: (a) each
       the `{ts, phase, reason, cycle_number}` shape the hook-enforced circuit
       breaker counts. Without (b) the breaker counts 0 forever and QA's cap of
       2 is LLM-counted with no backstop at all
+PP-26 no QA finding reaches the executor unconsumed and no Minor evaporates,
+      and the carve-out that makes that possible names its parent BOTH WAYS:
+      (a) the QA remediation block is uniquely line-anchored and, INSIDE ITS OWN
+      window, names the triggering verdicts, the halted phase, the target phase
+      `re-qa-build`, the `origin:` value and the `deferred_findings` sink --
+      plus, in the same check id, the sink's own schema entry in the hook policy
+      names QA's surfacing point, without which the route writes to an array
+      whose documented reader is a BUILD-DONE triage ADR-2 removed;
+      (b) TWO SEPARATELY-FAILING halves -- the QA block cites
+      `remediation-and-research.md`'s rule matrix and re-review loop by section,
+      AND SKILL.md's own `## 11.` section (the line a router actually executes
+      when a `kind:remfix` completes) carries the reciprocal QA exception. One
+      direction is not enough: a carve-out stated only in qa-workflow.md is
+      invisible from the point of execution, and unqualified §11 re-reviews a
+      completed `re-qa-build` through a precondition gate `qa-harness-builder`
+      cannot satisfy -- it fails CLOSED on a correct QA remfix and hangs the run
 PP-27 no QA phase holds a write tool without a stated product-code boundary,
       and every QA phase runs under the gate that governs phase exit:
       (a) all THREE statements of the no-product-code rule are exhaustive IN
@@ -689,6 +705,111 @@ right, so they CANNOT move -- reporting them as evidence would be claiming
 measurement where only control is held. The three genuine measurements are the
 ones that clear the risk.
 
+Negative controls for PP-26 (five runs; four red and each naming the injected
+thing, plus I-52, whose subject is a PRE-EXISTING property and whose red is the
+evidence for a decision rather than for PP-26. I-50 is recorded with the run
+that FAILED to go red, because that failure is what shaped the property):
+  I-49 the `deferred_findings` bullet deleted whole from the QA remediation
+       block, the rest of the block intact -- i.e. P8 left open while P1 and M8
+       are closed
+                                          -> PP-26(a) red naming the missing
+                                             token and the file: "qa-workflow.md:
+                                             the QA remediation block does not
+                                             name ['`deferred_findings`']
+                                             (window=4293B)", window 4961B ->
+                                             4293B, with the hook-policy sink
+                                             bullet reported green at 442B in
+                                             the same detail string and PP-26(b)
+                                             undisturbed.
+  I-50 THE RUN THAT WENT GREEN FIRST, AND IT IS WHY THE TOKEN TUPLE HAS FOUR
+       MEMBERS INSTEAD OF THREE. The §11 citation deleted from the carve-out
+       sentence only, leaving the rule-matrix citation in place
+                                          -> first attempt: PP-26(b) GREEN. The
+                                             block ALSO names
+                                             `## 11. Re-Review Loop` in its
+                                             closing pointer at SKILL.md's
+                                             section of that name, and a
+                                             substring test cannot tell a
+                                             citation of the kernel's §11 from a
+                                             pointer at SKILL.md's §11. PP-18's
+                                             recorded I-2 shape one more time,
+                                             and it survived inside a 4.9KB
+                                             WINDOW, which is the part worth
+                                             recording: windowing is not by
+                                             itself a defence when the window is
+                                             large enough to hold both mentions.
+       `### Re-review precondition gate` was then added to PP26B_QA_TOKENS -- it
+       is the sub-block of the KERNEL's §11 that actually fails closed on a QA
+       remfix, it occurs exactly once, and SKILL.md's pointer has no reason to
+       name it. Re-run of the same injection
+                                          -> PP-26(b) red on DIRECTION 1 alone:
+                                             "direction 1 (qa-workflow.md ->
+                                             kernel): the QA carve-out does not
+                                             cite what it carves out of --
+                                             missing ['### Re-review
+                                             precondition gate']
+                                             (window=4867B)", with the SKILL.md
+                                             §11 section reported green at 684B
+                                             and PP-26(a) green.
+  I-51 SF-7's control, and the pair I-50/I-51 is what makes "both directions" a
+       measurement rather than a sentence. The QA exception clause deleted from
+       SKILL.md's `## 11.` section ONLY, the QA block left whole -- i.e. ADR-4
+       implemented exactly as ADR-4 was written, before SF-7 found the kernel
+       side
+                                          -> PP-26(b) red on DIRECTION 2 alone:
+                                             "direction 2 (SKILL.md §11 -> QA):
+                                             the kernel line a router executes
+                                             on a completed `kind:remfix`
+                                             carries no QA exception -- missing
+                                             ['re-qa-build', 'qa-workflow.md',
+                                             'exception'] (section=135B)",
+                                             section 684B -> 135B, with
+                                             direction 1 green at 4961B and
+                                             PP-26(a) green.
+       The two directions therefore fail independently and neither can mask the
+       other. A single-direction property would have shipped green over the
+       exact state that hangs a run.
+  I-52 THE VOCABULARY CONTROL, and its subject is PP-16, not PP-26. The origin
+       rationale in the new block rewritten from "`failure-hunter` is not a
+       member of the §3 `origin:` enum" to "`origin:failure-hunter` is not a
+       member ..." -- i.e. the rejected alternative written out as a concrete
+       dispatch value
+                                          -> PP-16 red: "origin:failure-hunter
+                                             is written but not declared in the
+                                             origin enum", extracted origins
+                                             5 -> 6, with PP-4 and PP-5 green
+                                             (no phase token was invented) and
+                                             both PP-26 checks green.
+       This is stronger evidence for the origin decision than the prose is: the
+       guard that would have caught the enum extension is shown catching it, and
+       it also fixes the wording rule for this block -- the rejected value may be
+       discussed by AGENT NAME but never written as `origin:<value>`, because
+       PP-16 reads concrete values out of every file in references/.
+  I-53 SF-8's control. The QA surfacing point deleted from the
+       `deferred_findings` schema bullet in the hook policy, restoring its HEAD
+       text ("surfaced once at BUILD-DONE triage, never consumed mid-flight"),
+       with the QA block still writing to the array
+                                          -> PP-26(a) red on the SF-8 half
+                                             alone: "the `deferred_findings`
+                                             schema bullet does not name QA's
+                                             surfacing point -- missing ['QA',
+                                             'DEBUG offer', 'report']
+                                             (bullet=261B); as written the
+                                             array's only documented reader is a
+                                             BUILD-DONE triage this route does
+                                             not run", bullet 442B -> 261B, with
+                                             the qa-workflow.md window half
+                                             green at 4961B and PP-26(b) green.
+       MANDATORY, and not decoration: without this half PP-26(a) is green over a
+       route that appends Minors to a sink its own schema says nobody on this
+       route reads -- P8 closed in appearance and open in fact.
+Window sizes at the green state: PP-26(a)/(b) qa-workflow.md block = 4961B;
+PP-26(a) hook-policy sink bullet = 442B; PP-26(b) SKILL.md §11 section = 684B.
+The QA block sits DOWNSTREAM of the point where Phase 8's stray fence used to
+be, but that deletion has already happened, so 4961B has no pre-deletion value
+to compare against and none is offered as one -- I-49 and I-50 are its
+validation instead, each moving it by the exact size of the text removed.
+
 Negative controls for PP-31 and PP-32 (four runs: three red and naming the
 injected thing, plus I-48, which is a control on the SPLIT between PP-32 and
 PP-30(a) and whose correct result is PP-32 GREEN. I-45 is run in two STAGES and
@@ -1256,6 +1377,113 @@ PP25_REMHIST_TOKENS = (
     "`{ts, phase, reason, cycle_number}`",
 )
 
+
+# PP-26. P1 + M8 + M1b + M8b + P8, and the two surfaces (SF-7, SF-8) a gap
+# review found after the phase was written. `qa-review` and `qa-hunt` run, and
+# at HEAD NOTHING consumes their verdicts: `code-reviewer` emits
+# `APPROVE`/`CHANGES_REQUESTED`, `failure_stop_gate` halts on `FAIL`/`BLOCKED`
+# only, and `re-qa-build` existed solely for an unmet mutation floor. So a
+# harness the reviewers rejected reached `qa-executor` and could PASS -- the
+# route's own silently-green-suite failure mode, one level up, in the route
+# that exists to catch it.
+#
+# (a) THE CONSEQUENCE IS NAMED, AND THE SINK ADMITS QA. Two halves, one check
+# id, each named separately in the detail so a red sends the reader to one file:
+#
+#   half 1, qa-workflow.md -- the QA remediation block exists, is uniquely
+#   line-anchored, and INSIDE ITS OWN WINDOW names the triggering verdicts, the
+#   phase it halts, the target phase, the origin value, and the sink. Window-
+#   scoped for PP-18's recorded reason and not merely for symmetry:
+#   `deferred_findings`, `re-qa-build` and `CHANGES_REQUESTED` are all tokens
+#   that plausibly appear elsewhere in a 600-line route law -- `re-qa-build`
+#   already occurs in the mutation-floor block 80 lines above -- so a whole-file
+#   test is satisfied by text that says nothing about a review finding.
+#
+#   half 2, workflow-artifact-and-hook-policy.md (SF-8) -- the `deferred_findings`
+#   schema entry NAMES QA's surfacing point. Without this half the property
+#   asserts that QA writes to an array whose own schema entry says it is
+#   "surfaced once at BUILD-DONE triage, never consumed mid-flight" -- and
+#   ADR-2 removed the finishing menu that would give QA a BUILD-DONE triage. A
+#   sink whose schema documents no reader on this route is a Minor evaporating
+#   with extra steps, which is the exact defect P8 is. Asserted on the
+#   `deferred_findings` bullet ALONE, not the whole schema list: "QA" occurs
+#   throughout that file and the bullet is the only place the array's readers
+#   are enumerated.
+PP26A_START = re.compile(r"(?m)^\*\*A harness review finding has a consequence")
+PP26A_END = re.compile(r"(?m)^#### Execute \(`phase:qa-execute`\)$")
+# The five things the block must name. Each is here because its absence is a
+# distinct live defect, not because it rounds the list out:
+#   the two verdicts   -- P1: neither is a value failure_stop_gate recognises,
+#                         so the block that names them IS the gate;
+#   `qa-execute`       -- the advancement being halted; a consequence that does
+#                         not say what stops is a note, not a rule;
+#   `re-qa-build`      -- M8: the target phase, chosen so no phase token is
+#                         invented (PP-4/PP-5 are the guards on that decision);
+#   the origin value   -- M8/M8b: the whole dispatch turns on it. `origin:` set
+#                         to `code-reviewer` matches the SKILL.md §7 row that
+#                         sends kind:remfix to `component-builder`, a product
+#                         builder with a product-code licence dropped into the
+#                         one phase that spends a hard boundary forbidding it;
+#   `deferred_findings`-- P8: the sink, without which a QA Minor evaporates.
+PP26A_TOKENS = (
+    "`CHANGES_REQUESTED`",
+    "`qa-hunt`",
+    "`qa-execute`",
+    "`re-qa-build`",
+    "`origin:qa-harness-builder`",
+    "`deferred_findings`",
+)
+# SF-8's half. The bullet is located by its own line anchor in the hook policy's
+# artifact schema list; the tokens are QA's presence and the surfacing point the
+# QA block promises, so the two files cannot drift into naming different points.
+PP26A_SINK_BULLET = re.compile(r"(?m)^- `deferred_findings` accumulates .*$")
+PP26A_SINK_TOKENS = ("QA", "DEBUG offer", "report")
+
+# (b) THE CARVE-OUT NAMES WHAT IT CARVES OUT OF, IN BOTH DIRECTIONS, and the two
+# directions are asserted as SEPARATELY FAILING halves because they protect
+# against opposite mistakes.
+#
+# ADR-4 keeps `remediation-and-research.md` read-only and lands QA's remediation
+# rules in `qa-workflow.md` instead. The stated cost was that a reader of the
+# kernel file cannot see the QA exception, mitigated by making the QA block cite
+# the kernel by section -- that is half 1.
+#
+# SF-7 found the cost is larger than ADR-4 priced it. `SKILL.md`'s `## 11.
+# Re-Review Loop` says to apply the kernel's §11 block "whenever a `kind:remfix`
+# task completes", unqualified. THAT is the line a router actually executes when
+# a `re-qa-build` completes -- and §11 then creates a `code-reviewer` re-review
+# and an `integration-verifier` re-verify, while its own precondition gate
+# demands COVERING_TESTS / TEST_COMMAND / TEST_OUTPUT that `qa-harness-builder`
+# does not emit. So it FAILS CLOSED on a correct QA remfix: the half that hangs
+# a run. A carve-out that exists only in `qa-workflow.md` is invisible from the
+# point of execution, so half 2 asserts the exception is stated at the kernel
+# line too.
+#
+# Controls (ii) and (iii) delete one citation each and are what make "both
+# directions" a measurement instead of a sentence.
+# `### Re-review precondition gate` is in this tuple because of a control run,
+# not for completeness. Control I-50 deleted the §11 citation from the carve-out
+# sentence and half 1 stayed GREEN: the block ALSO names `## 11. Re-Review Loop`
+# in its closing pointer at SKILL.md's own section of that name, and a substring
+# test cannot tell the two citations apart. The precondition gate is the sub-block
+# of the KERNEL's §11 that actually fails closed on a QA remfix (it demands
+# COVERING_TESTS / TEST_COMMAND / TEST_OUTPUT), it occurs exactly once, and the
+# SKILL.md pointer has no reason to name it. So it is the token that makes the
+# citation half fail when the citation is what was removed.
+PP26B_QA_TOKENS = (
+    "remediation-and-research.md",
+    "### Rule matrix",
+    "## 11. Re-Review Loop",
+    "### Re-review precondition gate",
+)
+# Half 2's window: the SKILL.md `## 11.` section, heading to next `## `. Anchored
+# and exactly-one-match, never whole-file -- `re-qa-build` and `qa-workflow.md`
+# both occur elsewhere in SKILL.md (the §7 dispatcher table names both), so a
+# file-wide test for them is green with the kernel line still unqualified, which
+# is precisely the state SF-7 found and this half exists to end.
+PP26B_SKILL_START = re.compile(r"(?m)^## 11\. Re-Review Loop$")
+PP26B_SKILL_END = re.compile(r"(?m)^## ")
+PP26B_SKILL_TOKENS = ("re-qa-build", "qa-workflow.md", "exception")
 
 # PP-27(a). P4 + S-5. The no-product-code rule is stated three times, and all
 # three statements are EXHAUSTIVE ENUMERATIONS of three agents -- researcher,
@@ -3015,6 +3243,121 @@ def main() -> int:
             + ("" if pp25b_ok else f" — missing {pp25b_missing}")
         )
     check("PP-25(b)", pp25b_ok, pp25b_detail)
+
+    # PP-26(a) -- the QA remediation block names its consequence, and the sink
+    # admits QA. See PP26A_START for why the block is window-anchored and why
+    # SF-8's hook-policy half is part of the same check id.
+    p26s = list(PP26A_START.finditer(qa_norm))
+    p26e = list(PP26A_END.finditer(qa_norm))
+    pp26a_parts: list[str] = []
+    pp26a_gaps: list[str] = []
+    pp26a_precondition: list[str] = []
+    if len(p26s) != 1 or len(p26e) != 1 or not p26s[0].end() < p26e[0].start():
+        pp26a_precondition.append(
+            f"could not bracket the QA remediation block in {QA_WORKFLOW.name}: "
+            f"{len(p26s)} opening bold lead-ins and {len(p26e)} closing "
+            f"`#### Execute` headings (expected exactly 1 of each, in that "
+            f"order) — the anchor has stopped matching, so any result over the "
+            f"window would be vacuous"
+        )
+        pp26a_window = ""
+    else:
+        pp26a_window = qa_norm[p26s[0].end() : p26e[0].start()]
+        missing = [t for t in PP26A_TOKENS if t not in pp26a_window]
+        pp26a_parts.append(f"{QA_WORKFLOW.name} block window={len(pp26a_window)}B")
+        if missing:
+            pp26a_gaps.append(
+                f"{QA_WORKFLOW.name}: the QA remediation block does not name "
+                f"{missing} (window={len(pp26a_window)}B)"
+            )
+    policy_text = HOOK_POLICY.read_text(encoding="utf-8")
+    sink = list(PP26A_SINK_BULLET.finditer(policy_text))
+    if len(sink) != 1:
+        pp26a_precondition.append(
+            f"the `deferred_findings` schema bullet matched {len(sink)} times in "
+            f"{HOOK_POLICY.name}, expected exactly 1 (whole-file occurrences of "
+            f"the token: {policy_text.count('deferred_findings')})"
+        )
+    else:
+        bullet = sink[0].group(0)
+        pp26a_parts.append(f"{HOOK_POLICY.name} sink bullet={len(bullet)}B")
+        miss_sink = [t for t in PP26A_SINK_TOKENS if t not in bullet]
+        if miss_sink:
+            pp26a_gaps.append(
+                f"{HOOK_POLICY.name}: the `deferred_findings` schema bullet does "
+                f"not name QA's surfacing point — missing {miss_sink} "
+                f"(bullet={len(bullet)}B); as written the array's only "
+                f"documented reader is a BUILD-DONE triage this route does not run"
+            )
+    if pp26a_precondition:
+        pp26a_ok = False
+        pp26a_detail = "PRECONDITION failed: " + "; ".join(pp26a_precondition)
+    else:
+        pp26a_ok = not pp26a_gaps
+        pp26a_detail = (
+            "the QA remediation block names the triggering verdicts, the halted "
+            "phase, `re-qa-build`, the origin value and the `deferred_findings` "
+            "sink, and the sink's schema entry names QA's surfacing point ("
+            + "; ".join(pp26a_parts) + ")"
+            + ("" if pp26a_ok else " — " + "; ".join(pp26a_gaps))
+        )
+    check("PP-26(a)", pp26a_ok, pp26a_detail)
+
+    # PP-26(b) -- the carve-out names its parent AND the parent names the
+    # carve-out. Two separately-named halves; see PP26B_QA_TOKENS for why one
+    # direction is not enough and which control measures each.
+    pp26b_parts: list[str] = []
+    pp26b_gaps: list[str] = []
+    pp26b_precondition: list[str] = []
+    if not pp26a_window:
+        pp26b_precondition.append(
+            f"the QA remediation block window was not located in "
+            f"{QA_WORKFLOW.name} (see PP-26(a)); the citation half is therefore "
+            f"unscoped"
+        )
+    else:
+        pp26b_parts.append(f"{QA_WORKFLOW.name} block window={len(pp26a_window)}B")
+        miss_qa = [t for t in PP26B_QA_TOKENS if t not in pp26a_window]
+        if miss_qa:
+            pp26b_gaps.append(
+                f"direction 1 ({QA_WORKFLOW.name} -> kernel): the QA carve-out "
+                f"does not cite what it carves out of — missing {miss_qa} "
+                f"(window={len(pp26a_window)}B)"
+            )
+    skill_full = SKILL_MD.read_text(encoding="utf-8")
+    s11 = list(PP26B_SKILL_START.finditer(skill_full))
+    if len(s11) != 1:
+        pp26b_precondition.append(
+            f"the `## 11. Re-Review Loop` heading matched {len(s11)} times in "
+            f"{SKILL_MD.name}, expected exactly 1 — the anchor has stopped "
+            f"matching, so any result over the section would be vacuous"
+        )
+    else:
+        nxt = PP26B_SKILL_END.search(skill_full, s11[0].end())
+        s11_win = skill_full[s11[0].end() : nxt.start() if nxt else len(skill_full)]
+        pp26b_parts.append(f"{SKILL_MD.name} §11 section={len(s11_win)}B")
+        miss_skill = [t for t in PP26B_SKILL_TOKENS if t not in s11_win]
+        if miss_skill:
+            pp26b_gaps.append(
+                f"direction 2 ({SKILL_MD.name} §11 -> QA): the kernel line a "
+                f"router executes on a completed `kind:remfix` carries no QA "
+                f"exception — missing {miss_skill} (section={len(s11_win)}B); "
+                f"unqualified, it re-reviews a `re-qa-build` through a "
+                f"precondition gate `qa-harness-builder` cannot satisfy"
+            )
+    if pp26b_precondition:
+        pp26b_ok = False
+        pp26b_detail = "PRECONDITION failed: " + "; ".join(pp26b_precondition)
+    else:
+        pp26b_ok = not pp26b_gaps
+        pp26b_detail = (
+            "the QA carve-out cites the shared rules by section and those rules' "
+            "execution point carries the reciprocal QA exception ("
+            + "; ".join(pp26b_parts) + ")"
+            + ("" if pp26b_ok else " — " + "; ".join(pp26b_gaps))
+        )
+    check("PP-26(b)", pp26b_ok, pp26b_detail)
+
 
     # PP-27(a) -- the no-product-code rule is exhaustive IN FACT, at all three
     # sites, and the two plan-phase dispatches carry the boundary. Per-site,

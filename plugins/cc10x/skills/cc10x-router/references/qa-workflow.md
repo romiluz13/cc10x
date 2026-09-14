@@ -392,6 +392,64 @@ TaskUpdate({ taskId: qa_hunter_task_id, addBlockedBy: [qa_build_task_id] })
 
 > **Why the hunter is non-negotiable here.** A test harness that swallows errors does not merely fail — it reports PASS while proving nothing. A silently-green suite is strictly worse than no suite, because it converts an unknown into a false certainty. This is `failure-hunter`'s exact remit, applied to the one codebase where the failure mode is most dangerous.
 
+**A harness review finding has a consequence, and this block is it.** At HEAD there was none, and the
+gap is not cosmetic: `code-reviewer` returns `APPROVE` or `CHANGES_REQUESTED` and `failure-hunter`
+returns a clean or non-clean verdict, while `failure_stop_gate` halts only on `FAIL` or `BLOCKED`.
+Neither reviewer can produce a value that gate recognises. So without the rules below a harness both
+reviewers rejected reaches `qa-executor` and can PASS — a silently-green suite blessed by a review
+that found the silence, which is the one outcome the hunter is dispatched here to prevent.
+
+- **A blocking finding halts advancement to `qa-execute`.** A `qa-review` verdict of
+  `CHANGES_REQUESTED`, or a `qa-hunt` non-clean verdict carrying a blocking finding — an assertion
+  that cannot fail, a swallowed setup error, a teardown that ignores its own exit code, a skipped
+  test reported as passed — stops the route at this phase. Do not create `qa_execute_task_id` until
+  the finding is closed. This is a router-owned stop, stated here because `failure_stop_gate` cannot
+  see either verdict.
+- **The consequence is a `re-qa-build`, created from the dispatch template above** and scoped to the
+  finding: `kind:remfix`, `phase:re-qa-build`, `origin:qa-harness-builder`, `scope:` the named
+  finding, and `reason:` naming the **true finding source** — `code-reviewer` or `failure-hunter` —
+  which is the fact `origin:` cannot carry here and which SKILL.md §3 requires to be meaningful on a
+  remediation task anyway. Append `remediation_history` on creation exactly as the mutation-floor
+  round above does; these rounds are counted by the same cap of 2 and the same hook-enforced circuit
+  breaker. **This adds no phase token and no dispatcher row** — `re-qa-build` is already in the §3
+  enum and the `qa-build, re-qa-build` §7 row already routes it to `qa-harness-builder`.
+- **Why the origin is the harness builder and not the agent that found it.** SKILL.md §3 binds
+  `origin:` on a `kind:remfix` to the agent whose findings triggered the fix, which argues for the
+  reviewer. It cannot be honoured here. `origin:code-reviewer` is a member of the §7 row that sends
+  `kind:remfix` to `component-builder` — a product builder, holding a product-code licence, dropped
+  into the one phase that spends a hard boundary forbidding exactly that — and `failure-hunter` is
+  not a member of the §3 `origin:` enum at all. Adding it there was considered and **rejected**: it
+  would make the existing `origin:code-reviewer` → `component-builder` row ambiguous for QA without
+  also adding a workflow-type discriminator the dispatcher does not have. So this follows the
+  precedent the mutation-floor round already set, for the same measured reason, and the true source
+  travels in `reason:`.
+- **A non-blocking Minor does not evaporate — it goes to `deferred_findings`.** Minors from
+  `qa-review` or `qa-hunt`, and `HARNESS_ISSUES` that do not warrant a re-build, append to the
+  workflow artifact's `deferred_findings` array in BUILD's entry shape (`source`, `phase_id`,
+  `finding`, `severity:minor`). **QA's surfacing point is the report**, and it has to be named
+  because QA has no BUILD-DONE triage — ADR-2 removed the finishing menu that would carry one. Surface
+  the accumulated array with `report.md`, alongside the DEBUG offer of *Bug handoff to DEBUG* below,
+  in the same turn. The schema entry for the array says so too; the two must not drift.
+- **A completed `re-qa-build` does NOT enter the shared re-review loop.** No `integration-verifier`
+  re-verify, no `re-review`, no `re-hunt`. QA's re-entry is a **fresh `qa-review` / `qa-hunt` pair on
+  the rebuilt harness**, blocked on the re-build task exactly as the first pair was blocked on
+  `qa-build`. The proof-of-exercise that admits the re-build is the `MUTATION_CHECKS` / `RERUN_CLEAN`
+  / `TEARDOWN_VERIFIED` evidence `qa-harness-builder` already emits — **not**
+  `COVERING_TESTS` / `TEST_COMMAND` / `TEST_OUTPUT`. The reason is structural, not a preference: that
+  triple is shaped for a product fix that must be covered by a test, and QA's remfix **is** the test.
+  Demanded of a harness rebuild it can never be satisfied, so the shared precondition gate would fail
+  closed on a correct QA remfix and hang the run.
+
+**What this block carves out of, named in both directions so a reader of either file finds the
+other.** These rules are QA-owned and live here (ADR-4); `remediation-and-research.md` is
+route-neutral and is not edited by this route. The two blocks carved out of are its
+`### Rule matrix` under `## 9. Remediation And Workflow Rules`, whose `kind:remfix` rows are
+BUILD/DEBUG/REVIEW-scoped, and its `## 11. Re-Review Loop` together with the
+`### Re-review precondition gate` inside it. The reciprocal clause lives at SKILL.md's own
+`## 11. Re-Review Loop`, which is the line a router actually executes when a `kind:remfix` completes;
+a carve-out stated only here would be invisible from the point of execution.
+
+
 #### Execute (`phase:qa-execute`)
 
 Lay the report shape down before the executor runs, exactly as the plan phase does for the test plan and env plan. The copy happens **here** rather than with those two because a report skeleton sitting on disk from plan time reads as a run that produced nothing:
