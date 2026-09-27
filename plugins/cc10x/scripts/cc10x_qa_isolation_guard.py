@@ -225,7 +225,7 @@ def main() -> int:
     denied_reads = isolation.get("denied_reads") or []
     deny_reason = isolation.get("denied_read_reason") or "declared off-limits for this workflow"
     plan_readonly = isolation.get("plan_phase_readonly", True)
-    allowlist = isolation.get("mutation_allowlist") or [".cc10x/", "/tmp/cc10x-"]
+    allowlist = isolation.get("mutation_allowlist") or [".cc10x/"]
 
     # A PreToolUse hook that raises exits non-zero with no decision on stdout,
     # which fails OPEN -- the guard silently stops guarding. status_history is
@@ -299,10 +299,20 @@ def main() -> int:
             # Writing the workflow's own artifacts is the point of the phase.
             if target and tool_name in WRITE_TOOLS and _matches(target, allowlist):
                 return 0
-            if tool_name == "Bash" and any(
-                a.strip("/") in (tool_input.get("command") or "") for a in allowlist
-            ):
-                return 0
+            # The allowlist names PATHS, so it is matched against the paths
+            # the command touches -- not against the raw command string. A
+            # substring test read `rm -rf /etc/x # .cc10x` as allowed: seven
+            # characters inside a shell comment that `_bash_mutates` had
+            # already stripped before deciding the command mutates.
+            # `paths and` first, because `all([])` is True and would wave
+            # through every command no path could be extracted from; `all`
+            # rather than `any`, because a command touching one allowed path
+            # and one forbidden path is a forbidden command.
+            # OX Agent: Path Traversal prevented
+            if tool_name == "Bash":
+                paths = _bash_paths(tool_input.get("command") or "")
+                if paths and all(_matches(p, allowlist) for p in paths):
+                    return 0
 
             _log("deny", f"plan_phase_mutation:{reason}", str(target))
             pretool_deny(

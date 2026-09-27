@@ -1083,8 +1083,96 @@ discriminates between the two candidate fixes.
        the `isinstance(history[-1], dict)` guard reds on five instead of two and
        is red whichever fix is shipped -- it cannot tell them apart, which is
        this control's entire job.
+
+Negative controls for PP-35 and PP-36 (each restored and re-greened before the
+next; the target file was copied to a backup and restored with `cp`, never
+`git checkout --`).
+  I-57 the path-extracting Bash test at cc10x_qa_isolation_guard.py reverted to
+       the substring escape it replaced:
+           if tool_name == "Bash" and any(
+               a.strip("/") in (tool_input.get("command") or "") for a in allowlist
+           ):
+                                          -> EXACTLY TWO reds, with (c)(e)
+                                             green:
+                                             PP-35(a) "got rc=0 deny=False"
+                                             PP-35(b) "got rc=0 deny=False"
+                                             (c) and (e) STAYING GREEN is what
+                                             makes this a property about path
+                                             semantics and not about denial.
+  I-57b the Bash allow escape DELETED outright (the "deny everything" guard)
+                                          -> PP-35(c) "got rc=0 deny=True".
+       This is why (c) is in the table. Without it, I-57's fix could be
+       "remove the escape", which reds nothing in the DENY rows and breaks
+       every legitimate `.cc10x/` write the QA route depends on.
+  I-57c the WRITE allow escape deleted (`if target and tool_name in
+       WRITE_TOOLS and _matches(target, allowlist)`)
+                                          -> PP-35(e) "got rc=0 deny=True".
+       (e)'s counterpart to I-57b, on the branch this phase did not rewrite.
+  I-57d the plan-phase branch disabled (`if False and plan_readonly and ...`)
+                                          -> FOUR PP-35 reds, (a)(b)(d)(f),
+                                             with (c)(e) green. This is the
+                                             control for row (f), which no
+                                             other injection reaches: (f)
+                                             differs from (a) only by the
+                                             appended `# .cc10x`, so (f) going
+                                             red here is what proves (a)'s
+                                             green is about the comment and
+                                             not about the rig.
+  I-58 `/tmp/cc10x-` restored to the line-228 default, path-aware Bash test
+       LEFT IN PLACE
+                                          -> ONE red, PP-36. **The plan
+                                             predicted two (PP-35(d) as well)
+                                             and the plan is wrong.** Measured:
+                                             `_matches("/tmp/cc10x-pp35",
+                                             ["/tmp/cc10x-"])` is None. The
+                                             entry has no wildcard, so it takes
+                                             the bare-path branch, which
+                                             resolves it to
+                                             `/private/tmp/cc10x-` and then
+                                             requires either equality or a
+                                             `/`-separated descendant. A
+                                             PREFIX like `cc10x-pp35` is
+                                             neither. So once the Bash branch
+                                             stops being a substring test, the
+                                             `/tmp/cc10x-` entry is genuinely
+                                             dead -- it was live ONLY through
+                                             the escape this phase removed.
+                                             PP-35(d) is therefore held by the
+                                             CONJUNCTION, not by either half.
+  I-58b BOTH halves reverted (the pre-phase state at c82d562): the substring
+       escape AND `/tmp/cc10x-` in the default
+                                          -> FOUR reds, PP-35(a)(b)(d) and
+                                             PP-36. (d) reds here and only
+                                             here, because the substring
+                                             `tmp/cc10x-` does occur in
+                                             `mkdir -p /tmp/cc10x-pp35`. This
+                                             is the control I-58 was meant to
+                                             be, and it is the one that shows
+                                             the ALLOW measured in R3 was real.
+  I-59(i) PP-36's site-1 regex broken (`mutation_allowlist` ->
+       `mutation_ALLOWLIST`) so it parses nothing
+                                          -> PP-36 red on the PRECONDITION,
+                                             not a vacuous green: "1 code ...
+                                             pattern matched 0 times, expected
+                                             exactly 1; PRECONDITION failed:
+                                             ... parsed an empty list -- an
+                                             empty parse makes the
+                                             set-equality vacuous".
+  I-59(ii) PP-36's site 5 switched from `_decommented()` to `_normative()`
+                                          -> PP-36 red on the same
+                                             precondition, naming site 5. This
+                                             is the half worth running: site 5
+                                             lives inside a fenced JSON block,
+                                             `_normative()` strips fences, and
+                                             without the precondition this is a
+                                             FOUR-site property that prints
+                                             "5" and passes.
+Parsed state at green: all five declarations = ['.cc10x/'] -- code line 228,
+the guard's own module docstring, workflow-artifact.skeleton.json
+qa.isolation.mutation_allowlist, qa-workflow.md prose, qa-workflow.md fence.
 """
 
+import ast
 import importlib.util
 import json
 import re
@@ -2238,9 +2326,15 @@ EXPECTED_PLAN_PHASES = {
     "qa-plan-review-2",
 }
 
-# Deliberately outside the guard's default mutation_allowlist
-# ([".cc10x/", "/tmp/cc10x-"]) — a target inside it is allowed regardless of
-# phase, which would make the deny cases pass for the wrong reason.
+# Deliberately outside the guard's default mutation_allowlist ([".cc10x/"]) —
+# a target inside it is allowed regardless of phase, which would make the deny
+# cases pass for the wrong reason. On the Bash branch the allowlist is now
+# matched against the paths `_bash_paths` extracts from the command, resolved
+# and compared as paths; `/tmp/pp6-probe-<pid>` matches no entry under that
+# rule. NOTE: the ledger's claim that this comment was false is REFUTED — the
+# comment was accurate for the Bash branch even under the old substring test,
+# because the substring `.cc10x` does not occur in `mkdir -p /tmp/pp6-probe-N`.
+# What was wrong here was only the list it cited.
 PROBE_TARGET = f"/tmp/pp6-probe-{os.getpid()}"
 
 # PP-13. Same one-artifact-at-a-time discipline as PP-6, for the same reason
@@ -4282,6 +4376,198 @@ def main() -> int:
                     f"stderr={stderr_tail!r}"
                 ),
             )
+
+    # ---- PP-35: the plan-phase mutation allowlist is path-aware on BOTH -----
+    # branches. The Bash branch was a bare substring test over the RAW command
+    # string, so `.cc10x` appearing anywhere -- inside a shell comment, after a
+    # `;`, in an unrelated argument -- bought arbitrary destruction at a phase
+    # whose entire purpose is to mutate nothing. `_bash_mutates` splits with
+    # `comments=True`, so the comment was stripped for PARSING and kept for the
+    # escape test: the two halves of the same branch disagreed about what the
+    # command said.
+    #
+    # The DENY rows alone are NOT a property. Delete the escape outright and
+    # (a)(b)(d)(f) all pass while every legitimate `.cc10x/` write the QA route
+    # depends on starts failing. (c) and (e) are the positive controls that
+    # make this a property about path semantics rather than about denial.
+    pp35_deny = "/etc/pp35-probe"
+    pp35_allowed = ".cc10x/qa/pp35"
+    pp35_cases: list[tuple[str, dict, bool, str]] = [
+        (
+            "a",
+            {
+                "tool_name": "Bash",
+                "tool_input": {"command": f"rm -rf {pp35_deny} # .cc10x"},
+            },
+            True,
+            f"Bash `rm -rf {pp35_deny} # .cc10x` (the comment-mention bypass)",
+        ),
+        (
+            "b",
+            {
+                "tool_name": "Bash",
+                "tool_input": {"command": f"rm -rf {pp35_deny}; echo .cc10x"},
+            },
+            True,
+            f"Bash `rm -rf {pp35_deny}; echo .cc10x` (the trailing-mention bypass)",
+        ),
+        (
+            "c",
+            {
+                "tool_name": "Bash",
+                "tool_input": {"command": f"mkdir -p {pp35_allowed}"},
+            },
+            False,
+            f"Bash `mkdir -p {pp35_allowed}` (the escape still works for real)",
+        ),
+        (
+            "d",
+            {
+                "tool_name": "Bash",
+                "tool_input": {"command": "mkdir -p /tmp/cc10x-pp35"},
+            },
+            True,
+            "Bash `mkdir -p /tmp/cc10x-pp35` (the dropped `/tmp/cc10x-` entry)",
+        ),
+        (
+            "e",
+            {
+                "tool_name": "Write",
+                "tool_input": {"file_path": f"{pp35_allowed}.md", "content": "x"},
+            },
+            False,
+            f"Write `{pp35_allowed}.md` (the Write branch unregressed)",
+        ),
+        (
+            "f",
+            {"tool_name": "Bash", "tool_input": {"command": f"rm -rf {pp35_deny}"}},
+            True,
+            f"Bash `rm -rf {pp35_deny}` (the control)",
+        ),
+    ]
+    # Every probe path is under /etc/pp35-probe, /tmp/cc10x-pp35 or .cc10x/qa/
+    # and NONE of them is ever executed: the guard is a PreToolUse hook invoked
+    # as a subprocess over stdin, and it inspects the command string only.
+    with tempfile.TemporaryDirectory() as tmp:
+        pp35_dir = Path(tmp)
+        for tag, tool_payload, want_deny, label in pp35_cases:
+            r = run_guard_raw(pp35_dir, artifact("qa-plan"), tool_payload)
+            got_deny = '"permissionDecision": "deny"' in r.stdout
+            stderr_tail = (r.stderr.strip().splitlines() or [""])[-1]
+            ok = r.returncode == 0 and r.stderr == "" and got_deny == want_deny
+            verb = "denies" if want_deny else "allows"
+            check(
+                f"PP-35({tag})",
+                ok,
+                f"rc=0 stderr='' and guard {verb} {label} at phase_cursor=qa-plan"
+                + (
+                    ""
+                    if ok
+                    else f" -- got rc={r.returncode} deny={got_deny} "
+                    f"stderr={stderr_tail!r}"
+                ),
+            )
+
+    # ---- PP-36: all five declarations of the default mutation_allowlist -----
+    # agree. The entry `/tmp/cc10x-` survived nine commits because the CODE was
+    # the lone dissenter among five sites: the skeleton, the route law twice,
+    # and the guard's own module docstring 193 lines above the wrong line all
+    # said [".cc10x/"]. Every document a reader consulted agreed with every
+    # other document, so nothing a reader could read would have caught it.
+    pp36_guard_text = GUARD.read_text(encoding="utf-8")
+    pp36_wf_raw = QA_WORKFLOW.read_text(encoding="utf-8")
+
+    def _pp36_parse(site: str, text: str, pattern: str) -> tuple[str, list]:
+        """Extract exactly one bracketed literal and parse it, or explain why not."""
+        found = re.findall(pattern, text)
+        if len(found) != 1:
+            return (
+                f"{site}: pattern matched {len(found)} times, expected exactly 1",
+                [],
+            )
+        try:
+            val = ast.literal_eval(found[0])
+        except (ValueError, SyntaxError) as exc:
+            return (f"{site}: `{found[0]}` did not parse ({exc})", [])
+        if not isinstance(val, list):
+            return (f"{site}: parsed a {type(val).__name__}, not a list", [])
+        return ("", val)
+
+    # Site 5 lives INSIDE a fenced JSON block, so its basis must be
+    # _decommented(): _normative() strips fences and the site silently
+    # vanishes, leaving a four-site property that prints "5". That is the
+    # second half of I-59.
+    pp36_sites: list[tuple[str, str, str]] = [
+        (
+            f"1 code {GUARD.name} `isolation.get(...) or [...]`",
+            pp36_guard_text,
+            r'isolation\.get\("mutation_allowlist"\)\s*or\s*(\[[^\]]*\])',
+        ),
+        (
+            f"2 docstring {GUARD.name}",
+            pp36_guard_text,
+            r'"mutation_allowlist":\s*(\[[^\]]*\])',
+        ),
+        (
+            f"4 law prose {QA_WORKFLOW.name} (_normative)",
+            _normative(pp36_wf_raw),
+            r"`mutation_allowlist`:\s*`(\[[^\]]*\])`",
+        ),
+        (
+            f"5 law fence {QA_WORKFLOW.name} (_decommented)",
+            _decommented(pp36_wf_raw),
+            r'"mutation_allowlist":\s*(\[[^\]]*\])',
+        ),
+    ]
+    pp36_problems: list[str] = []
+    pp36_values: list[tuple[str, list]] = []
+    for site, text, pattern in pp36_sites:
+        err, val = _pp36_parse(site, text, pattern)
+        if err:
+            pp36_problems.append(err)
+        pp36_values.append((site, val))
+
+    # Site 3 is the one site parsed with json.load rather than a regex,
+    # precisely because the skeleton is pretty-printed -- the key is on one
+    # line and the value on the next, so any line-keyed parse of it is wrong.
+    pp36_skel = json.loads(SKELETON.read_text(encoding="utf-8"))
+    pp36_skel_val = ((pp36_skel.get("qa") or {}).get("isolation") or {}).get(
+        "mutation_allowlist"
+    )
+    if not isinstance(pp36_skel_val, list):
+        pp36_problems.append(
+            f"3 skeleton {SKELETON.name} qa.isolation.mutation_allowlist: "
+            f"got {type(pp36_skel_val).__name__}, not a list"
+        )
+        pp36_skel_val = []
+    pp36_values.insert(2, (f"3 skeleton {SKELETON.name}", pp36_skel_val))
+
+    # Anti-vacuity, asserted BEFORE the comparison: five failed parses give
+    # set() == set() == set() == set() == set(), which is vacuously true. Four
+    # of the five parses are regexes over text that gets reformatted, so this
+    # is the likeliest way the property rots.
+    pp36_empty = [site for site, val in pp36_values if not val]
+    if pp36_empty:
+        pp36_problems.append(
+            "PRECONDITION failed: "
+            + "; ".join(f"{site} parsed an empty list" for site in pp36_empty)
+            + " -- an empty parse makes the set-equality vacuous"
+        )
+    pp36_printed = "; ".join(f"{site} = {val!r}" for site, val in pp36_values)
+    if not pp36_problems:
+        pp36_distinct = {tuple(sorted(set(val))) for _, val in pp36_values}
+        if len(pp36_distinct) != 1:
+            pp36_problems.append(
+                "the five declarations disagree -- the values are printed "
+                "above, and the site that differs is the one to fix"
+            )
+    check(
+        "PP-36",
+        not pp36_problems,
+        "all five declarations of the default `mutation_allowlist` parse "
+        f"non-empty and agree -- {pp36_printed}"
+        + ("" if not pp36_problems else " -- " + "; ".join(pp36_problems)),
+    )
 
     print(f"\nproperties checked: {', '.join(checked)}")
     if failures:
