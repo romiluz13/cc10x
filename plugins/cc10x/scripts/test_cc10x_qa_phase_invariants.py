@@ -186,6 +186,18 @@ PP-33 QA IS A MEMBER OF EVERY ENUMERATION OF WORKFLOW TYPES, and the
       still yielded members, the routing table still has rows, and the stamping
       SHAPE is proved live on the two sibling route files that already carry it
 
+PP-34 THE GUARD RESOLVES A PHASE FROM EVERY status_history SHAPE WITHOUT
+      CRASHING, and rc/stderr are part of the verdict. A PreToolUse hook that
+      raises exits non-zero with no decision on stdout, and a hook that emits
+      no decision FAILS OPEN -- so a crash is indistinguishable from a
+      deliberate allow to any property that reads the decision alone. Six
+      shapes, each asserted as the triple (rc == 0, stderr == "", decision),
+      all with `phase_cursor` absent because that is the only state in which
+      status_history is consulted at all. (d) is the positive control: five of
+      the six expect ALLOW and a guard that crashes on everything also allows
+      everything, so without a case that must DENY the property is green on a
+      wholly broken guard.
+
 Negative control (run and recorded when this file was written): temporarily
 adding "qa-preflight" to PLAN_PHASES turns PP-1, PP-3 and PP-6 case (c) red.
 A test never observed failing is unproven.
@@ -1028,6 +1040,49 @@ Parsed state at green: S1 cc10x-router/SKILL.md:276 and S2
 memory-file-contracts.md:103 and S3 cc10x-guide/SKILL.md:38 each list the same
 8 members; S4 README.md:18 count=8; SKILL.md section 1 routing table = 8
 distinct workflows.
+
+Negative controls for PP-34 (two runs, each restored and re-greened before the
+next). Both inject into cc10x_qa_isolation_guard.py's phase-resolution
+expression. The pair exists because ONE injection cannot prove this property:
+the first shows PP-34 catches the crash at all, the second shows it
+discriminates between the two candidate fixes.
+  I-56 the whole four-line narrowed form reverted to the original one-liner
+       `phase = (workflow.get("phase_cursor") or
+                 workflow.get("status_history", [{}])[-1].get("phase") or "")`
+                                          -> FIVE reds, one per crashing shape,
+                                             with (d) GREEN and all four PP-6
+                                             checks green:
+                                             PP-34(a) "got rc=1 deny=False
+                                               stderr='IndexError: list index
+                                               out of range'"
+                                             PP-34(b) "AttributeError: 'str'
+                                               object has no attribute 'get'"
+                                             PP-34(c) "TypeError: 'NoneType'
+                                               object is not subscriptable"
+                                             PP-34(e) "KeyError: -1"
+                                             PP-34(f) "TypeError: 'int' object
+                                               is not subscriptable"
+                                             (d) STAYING GREEN IS THE POINT: it
+                                             shows the five reds are about the
+                                             crash and not about the rig.
+  I-88 the SHIPPED form replaced by the `or []` form -- `isinstance(history,
+       list)` swapped for `or []` and nothing else changed:
+           history = workflow.get("status_history") or []
+           prev_phase = history[-1].get("phase") if history and isinstance(
+                        history[-1], dict) else ""
+           phase = (workflow.get("phase_cursor") or prev_phase or "")
+                                          -> EXACTLY TWO reds, (e) "KeyError:
+                                             -1" and (f) "TypeError: 'int'
+                                             object is not subscriptable", with
+                                             (a)(b)(c)(d) green.
+       THIS IS THE CONTROL THAT PICKS THE FIX. `or []` looks like it closes the
+       hole and closes only four of six: `{"a": 1}` and `5` are both TRUTHY, so
+       `or []` never fires and `history[-1]` still raises. Only
+       `isinstance(history, list)` closes all six. Note the shape of the
+       injection: the two-line abbreviation "revision 1 used `or []`" WITHOUT
+       the `isinstance(history[-1], dict)` guard reds on five instead of two and
+       is red whichever fix is shipped -- it cannot tell them apart, which is
+       this control's entire job.
 """
 
 import importlib.util
@@ -2234,13 +2289,22 @@ def artifact(phase: str | None, *, history_phase: str | None = None) -> dict:
     return payload
 
 
-def run_guard(project_dir: Path, payload: dict) -> bool:
-    """Write ONE artifact, invoke the guard, return True if it denied.
+def run_guard_raw(
+    project_dir: Path, payload: dict, tool_payload: dict
+) -> subprocess.CompletedProcess:
+    """Write ONE artifact, invoke the guard, return the CompletedProcess.
 
     One artifact at a time is load-bearing: cc10x_hooklib.latest_workflow_file()
     sorts .cc10x/workflows/*.json by mtime and returns only the newest, so
     several artifacts in one directory would all resolve to the same file and
     every case but the last would assert against the wrong one.
+
+    Returns rc and stderr as well as the decision, because a CRASHING guard
+    emits no decision on stdout and therefore reads as ALLOW. A property that
+    asserts only the decision cannot tell a deliberate allow from a traceback
+    -- which is the exact defect PP-34 exists to catch. `tool_payload` is a
+    parameter rather than a constant so a property can probe a tool other than
+    the Bash mkdir probe PP-6 uses.
     """
     wf_dir = project_dir / ".cc10x" / "workflows"
     wf_dir.mkdir(parents=True, exist_ok=True)
@@ -2248,18 +2312,29 @@ def run_guard(project_dir: Path, payload: dict) -> bool:
     wf_file.write_text(json.dumps(payload))
     try:
         env = dict(os.environ, CLAUDE_PROJECT_DIR=str(project_dir))
-        result = subprocess.run(
+        return subprocess.run(
             [sys.executable, str(GUARD)],
-            input=json.dumps(
-                {"tool_name": "Bash", "tool_input": {"command": f"mkdir -p {PROBE_TARGET}"}}
-            ),
+            input=json.dumps(tool_payload),
             capture_output=True,
             text=True,
             env=env,
         )
-        return '"permissionDecision": "deny"' in result.stdout
     finally:
         wf_file.unlink(missing_ok=True)
+
+
+def run_guard(project_dir: Path, payload: dict) -> bool:
+    """Write ONE artifact, invoke the guard, return True if it denied.
+
+    Thin wrapper over run_guard_raw preserving PP-6's exact probe. PP-6's four
+    detail strings are byte-identical across this refactor.
+    """
+    result = run_guard_raw(
+        project_dir,
+        payload,
+        {"tool_name": "Bash", "tool_input": {"command": f"mkdir -p {PROBE_TARGET}"}},
+    )
+    return '"permissionDecision": "deny"' in result.stdout
 
 
 def closure_artifact(**overrides) -> dict:
@@ -4138,6 +4213,75 @@ def main() -> int:
         f"`workflow_type: QA` like both its siblings"
         + ("" if pp33_b_ok else " -- " + "; ".join(pp33_bad)),
     )
+
+    # PP-34 -- the guard resolves a phase from every artifact shape without
+    # crashing, and rc/stderr are part of the verdict.
+    #
+    # A PreToolUse hook that raises exits non-zero with NOTHING on stdout, and
+    # a hook that emits no decision FAILS OPEN: the tool call proceeds. So a
+    # crash is indistinguishable from a deliberate allow if the property reads
+    # only the decision. Every case below asserts the triple
+    # (rc == 0, stderr == "", decision) -- never the decision alone.
+    #
+    # All six cases leave `phase_cursor` absent, because status_history is only
+    # consulted when the cursor is falsy; with a cursor set, no shape of
+    # status_history is reachable at all.
+    #
+    # (d) is the POSITIVE CONTROL and is not optional. (a)(b)(c)(e)(f) all
+    # expect ALLOW, and a guard that crashes on everything also allows
+    # everything -- without (d) the property is green on a totally broken
+    # guard. (d) proves the guard is still engaged and still denying.
+    #
+    # `{}` and `"qa-plan"` also crash at HEAD, but they take the same branch as
+    # (e) and (b) respectively and are covered by the edge-case catalog rather
+    # than by their own checks.
+    pp34_cases = [
+        ("a", "[]", [], False),
+        ("b", '["qa-plan"] (list of strings)', ["qa-plan"], False),
+        ("c", "null", None, False),
+        (
+            "d",
+            '[{"event":"s","phase":"qa-plan"}] (the fallback that must NOT regress)',
+            [{"event": "s", "phase": "qa-plan"}],
+            True,
+        ),
+        ("e", '{"a": 1} (a dict, not a list)', {"a": 1}, False),
+        ("f", "5 (a bare int)", 5, False),
+    ]
+    with tempfile.TemporaryDirectory() as tmp:
+        pp34_dir = Path(tmp)
+        for tag, label, history, want_deny in pp34_cases:
+            pp34_payload = {
+                "workflow_uuid": "wf-test-pp34",
+                "workflow_id": "wf-test-pp34",
+                "workflow_type": "QA",
+                "qa": {"isolation": {"plan_phase_readonly": True}},
+                "status_history": history,
+            }
+            r = run_guard_raw(
+                pp34_dir,
+                pp34_payload,
+                {
+                    "tool_name": "Bash",
+                    "tool_input": {"command": f"mkdir -p {PROBE_TARGET}"},
+                },
+            )
+            got_deny = '"permissionDecision": "deny"' in r.stdout
+            stderr_tail = (r.stderr.strip().splitlines() or [""])[-1]
+            ok = r.returncode == 0 and r.stderr == "" and got_deny == want_deny
+            verb = "denies" if want_deny else "allows"
+            check(
+                f"PP-34({tag})",
+                ok,
+                f"rc=0 stderr='' and guard {verb} `mkdir {PROBE_TARGET}` when "
+                f"status_history is {label} and phase_cursor is absent"
+                + (
+                    ""
+                    if ok
+                    else f" -- got rc={r.returncode} deny={got_deny} "
+                    f"stderr={stderr_tail!r}"
+                ),
+            )
 
     print(f"\nproperties checked: {', '.join(checked)}")
     if failures:

@@ -227,7 +227,17 @@ def main() -> int:
     plan_readonly = isolation.get("plan_phase_readonly", True)
     allowlist = isolation.get("mutation_allowlist") or [".cc10x/", "/tmp/cc10x-"]
 
-    phase = (workflow.get("phase_cursor") or workflow.get("status_history", [{}])[-1].get("phase") or "")
+    # A PreToolUse hook that raises exits non-zero with no decision on stdout,
+    # which fails OPEN -- the guard silently stops guarding. status_history is
+    # attacker-adjacent state read off disk, so every shape is narrowed before
+    # it is indexed: `isinstance(history, list)` absorbs null, a bare scalar and
+    # an object; `history and` absorbs `[]`; the inner isinstance absorbs a list
+    # whose last entry is not a dict.
+    # OX Agent: Improper Input Validation prevented
+    history = workflow.get("status_history")
+    history = history if isinstance(history, list) else []
+    prev_phase = history[-1].get("phase") if history and isinstance(history[-1], dict) else ""
+    phase = (workflow.get("phase_cursor") or prev_phase or "")
     wf_id = workflow.get("workflow_uuid") or workflow.get("workflow_id")
 
     def _log(decision: str, reason: str, target: str) -> None:
