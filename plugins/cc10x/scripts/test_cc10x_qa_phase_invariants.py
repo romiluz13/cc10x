@@ -1513,6 +1513,148 @@ Measured state at green, all five windows over `_decommented()` and all sizes
 1459B (1104B before), W3 = 107B (unchanged -- the enum already had all three
 values), W7 = 6955B (6530B before), W2 = 4024B (3424B before). The four
 pre-edit numbers reproduce the plan's R11 table exactly at e45b600.
+
+Negative controls for PP-42 (each restored with `cp` from a backup and
+re-greened before the next; never `git checkout --`). Two of the three
+sub-checks read a DIFFERENT basis from their neighbours, and both departures
+are measured rather than assumed:
+  (a) W6 `^### The failure vocabulary` -> next `^### ` over `_normative()`.
+      Anchor match counts at this commit: raw 1 / decommented 1 / normative 1,
+      and the window is 1952 B under all three -- qa-workflow.md's fences do
+      not span it. It was 1794 B before this commit's edit 3, which is the
+      number the plan's R11 table records at c3ea86f.
+      The W5 anchor `^### QA-specific rules` also matches once under all three
+      bases (2226 B at HEAD) and is the WRONG window: the authority sentence
+      is not in it. PP-42(a) anchored at W5 could never see the claim it
+      asserts on.
+  (b) RAW `QA_WORKFLOW.read_text()`, the same basis PP-19(b) uses. Measured:
+      the `cp` line matches once in raw and once in `_decommented()`, and
+      ZERO times in `_normative()` -- it sits inside a ```text fence. A
+      PP-42(b) over `_normative()` would be red on a correct file.
+  (c) `_decommented()` over templates/qa-*.template.md. The template carries
+      no fences at all (measured: 0), so decommented and normative differ
+      only in the rebuttal HTML comment -- which is exactly why the rebuttal
+      is NOT where the cross-route sentence lives.
+  I-77 `one authority: qa-harness-builder.md` restored at qa-executor.md, with
+       the pointer left in place
+                                          -> ONE red, PP-42(a): "2 file(s)
+                                             claim authority over FAILURE_CLASS
+                                             ['qa-executor.md',
+                                             'qa-workflow.md'], want exactly 1
+                                             (qa-workflow.md)". The count is
+                                             asserted as EXACTLY 1 for this
+                                             reason: the injected file still
+                                             carries a correct pointer, so a
+                                             `>= 1` or containment test is
+                                             GREEN on the two-owner state that
+                                             is the whole defect.
+  I-77b the harness builder's pointer paragraph deleted (the OTHER half of (a),
+       which I-77 cannot reach)
+                                          -> ONE red, PP-42(a):
+                                             "qa-harness-builder.md carries no
+                                             pointer naming qa-workflow.md -- a
+                                             non-owner that names no owner
+                                             leaves the reader to guess".
+                                             Recorded because the pointer half
+                                             is satisfied by the whole file and
+                                             would otherwise never be observed
+                                             failing.
+  I-78 the router's `cp` of qa-report.template.md into report.md deleted from
+       qa-workflow.md (raw line 460 at this commit)
+                                          -> TWO reds, both expected: PP-42(b)
+                                             "0 router `cp` ..., want exactly
+                                             1" and PP-19(b) "qa-workflow.md
+                                             has no Bash cp of the template
+                                             into report.md". PP-19(b) going
+                                             red too is the point: it asserts
+                                             only that the `cp` EXISTS, so with
+                                             deliverable 9 dropped it is the
+                                             single remaining writer and PP-42(b)
+                                             is what notices there is now none.
+  I-78b a report-producing row re-added to the deliverables table under a
+       DIFFERENT name (`| 9 | Report skeleton | writes the report shape ...`)
+                                          -> ONE red, PP-42(b), on BOTH
+                                             clauses: "9 deliverable rows, want
+                                             8" and "1 deliverable row(s) still
+                                             claim the report shape". The row
+                                             regex is keyed on the SHAPE
+                                             (`report shape|emitter|skeleton`),
+                                             not the literal "Report emitter":
+                                             a test for the old row's title is
+                                             green against the same defect
+                                             spelled differently.
+  I-78c the router-seeded disclaimer reworded so its anchor phrase is gone
+                                          -> ONE red, PP-42(b):
+                                             "qa-harness-builder.md does not
+                                             state that the report shape is
+                                             router-seeded". The positive half
+                                             exists because a negative alone
+                                             rewards silent deletion: with the
+                                             row gone and no sentence saying
+                                             why, the next editor reads an
+                                             omission and puts the row back.
+  I-79 the ORIGINAL blockquote line restored verbatim: `> The last two fields
+       exist because cc10x's `plan_trust_gate` reads them.`
+                                          -> ONE red, PP-42(c), on
+                                             sub-assertion (iii) and BOTH its
+                                             halves: "its line carries no other
+                                             route's name" and "its line claims
+                                             it applies to THIS artifact via
+                                             ['reads them']". NOT a membership
+                                             red -- the token is still excluded
+                                             by name, and that is the point.
+                                             C4's defect was never the presence
+                                             of the token; it was the sentence
+                                             shape, and the sentence shape is
+                                             what this injects.
+  I-80 vacuity control, both halves:
+       (first)  the `*_gate` regex broken to `..._gateXX`
+                                          -> ONE red, PP-42(c) PRECONDITION:
+                                             "extracted 0 `*_gate` tokens ...
+                                             (expected >= 2) -- the gate-token
+                                             regex has stopped matching, so
+                                             every membership result below is
+                                             vacuous". Without the floor,
+                                             `set() <= anything` is True and
+                                             the property is green on a dead
+                                             regex -- vacuity shape (a).
+       (second) `"never_gate"` added to PP42C_CROSS_ROUTE_GATES
+                                          -> ONE red, PP-42(c): "exclusion
+                                             names ['never_gate'], absent from
+                                             the extracted set
+                                             ['phase_exit_gate',
+                                             'plan_trust_gate'] -- an exclusion
+                                             list has outlived its subject".
+                                             The assertion is `<=`, NOT `<`:
+                                             after this commit the two sets are
+                                             EQUAL, and `set(a) < set(a)` is
+                                             False in Python, so a
+                                             proper-subset assertion is red on
+                                             a correct tree and this control
+                                             would have proved nothing.
+  I-81 `qa_wave_gate` -- a gate name no route defines -- cited in
+       qa-test-plan.template.md
+                                          -> ONE red, PP-42(c) sub-assertion
+                                             (iv): "['qa_wave_gate'] named in
+                                             templates/qa-*.template.md but
+                                             absent from qa-workflow.md".
+                                             Recorded because the plan
+                                             disclosed (iv) as UNPROVABLE --
+                                             "there is no live example to prove
+                                             that branch on". There is no live
+                                             example; there is an injection,
+                                             and it fires. (iv) is reachable.
+Measured state at green: 3 files in the FAILURE_CLASS ownership triangle, 1
+claim (qa-workflow.md, inside W6) and 2 pointers; 1 router `cp` and 8
+deliverable rows; extracted gate tokens = {phase_exit_gate, plan_trust_gate},
+BOTH excluded by name with their reasons carried in PP-42(c)'s own check line
+on every run -- in the detail string rather than a side channel, so a reader of
+the pass line cannot miss what was excluded or why. 0 live members.
+The membership half of PP-42(c) is therefore INERT BY CONSTRUCTION at this
+commit -- stated plainly here and in the check's own comment, because `<=`
+against a full exclusion set looks stronger than it is. Its enforcement is (i)
+the floor, (ii) the no-rot subset, (iii) the per-line route-attribution test,
+and (iv) proven reachable by I-81.
 """
 
 import ast
@@ -2928,6 +3070,86 @@ PP41_CARVE_OUT_FIELDS = (
     "`failure_class`",
     "`surface_tier`",
 )
+
+# ---------------------------------------------------------------- PP-42
+# Each of three contested rules has exactly ONE declared owner. Three
+# ownership defects, one shape: two documents each answering "who owns this?"
+# with "I do", or one document citing an owner that never runs.
+#
+# (a) FAILURE_CLASS authority. qa-executor.md said "one authority:
+#     qa-harness-builder.md" while qa-workflow.md said "Declared here, once,
+#     at route level" -- two files, two answers. The count is asserted as
+#     EXACTLY 1, never >= 1: the defect IS two claims, and a containment test
+#     is green on two.
+#
+#     BASIS -- `_normative()`, window-anchored to W6
+#     (`^### The failure vocabulary` -> next `^### `). NOT `### QA-specific
+#     rules` (W5): measured, the authority sentence is not in W5 at all, it is
+#     in the FOLLOWING section, so a property anchored at W5 could never see
+#     the claim it asserts on. W6 is not inside any fence -- qa-workflow.md's
+#     fences do not span it -- so `_normative()` is safe here and the window
+#     is byte-identical under all three bases at this commit. The window is
+#     needed because the token `failure_class` occurs on 4 lines of that file
+#     case-insensitively; a whole-file test is vacuity shape (b).
+#
+# (b) One writer of the report shape. Dropping the harness builder's
+#     "Report emitter" deliverable is only half: delete it AND the router's
+#     `cp` and the route has no writer at all, and PP-19(b) -- which only
+#     asserts the `cp` exists -- would stay green while the builder's
+#     deliverable silently became the sole producer again. Both directions
+#     asserted.
+#
+#     BASIS -- RAW `QA_WORKFLOW.read_text()`, as PP-19(b) does. The `cp` line
+#     sits inside a ```text fence; `_normative()` deletes it and this check
+#     would be red on a correct file.
+#
+# (c) No QA artifact cites a gate the QA route does not run, except by name.
+#     See PP42C_CROSS_ROUTE_GATES for the two named exclusions and their
+#     reasons, which are PRINTED on every run.
+PP42_AUTHORITY_PHRASES = ("one authority", "Declared here, once")
+PP42A_W6_START = re.compile(r"(?m)^### The failure vocabulary")
+PP42A_W6_END = re.compile(r"(?m)^### ")
+# Floor, not equality: the section is prose and will be edited. 1794 B
+# measured at this commit under all three bases; a window that collapses
+# below this has lost its end anchor or its body.
+PP42A_W6_MIN_BYTES = 1200
+PP42A_OWNER_NAME = "qa-workflow.md"
+PP42A_POINTERS = ("qa-executor.md", "qa-harness-builder.md")
+
+# PP-42(b). The `cp` is the router seeding report.md from the template; the
+# harness builder must claim no row that writes that shape.
+PP42B_CP_LINE = re.compile(r"cp [^\n]*qa-report\.template\.md[^\n]*report\.md")
+PP42B_TABLE_START = re.compile(r"(?m)^## What you build")
+PP42B_TABLE_END = re.compile(r"(?m)^### ")
+PP42B_TABLE_ROW = re.compile(r"(?m)^\| \d+ \| ")
+PP42B_EXPECTED_ROWS = 8
+# A re-added row need not be spelled "Report emitter" to be the same defect.
+PP42B_REPORT_PRODUCER = re.compile(r"report (?:shape|emitter|skeleton)", re.I)
+PP42B_DISCLAIMER = "The report shape is not a deliverable here"
+
+# PP-42(c). Backtick-agnostic on purpose: a gate named in prose is as much a
+# claim as one named in code voice.
+PP42C_GATE_TOKEN = re.compile(r"(?<![A-Za-z0-9_])([a-z][a-z0-9_]*_gate)\b")
+PP42C_CROSS_ROUTE_GATES = {
+    "phase_exit_gate":
+        "qa-test-plan.template.md cites it as something the BUILD route does, in an "
+        "argument for ordered waves -- not as a gate applied to this artifact. C4's "
+        "defect was the opposite shape: a gate claimed to read THIS artifact's fields.",
+    "plan_trust_gate":
+        "qa-test-plan.template.md cites it as the BUILD-route gate that reads the SAME "
+        "two fields this template requires for its own review. That sentence IS the "
+        "PR-#91 rebuttal: the gate is real, it does read both fields "
+        "(build-workflow.md:32-36), and the QA route never runs it. Deleting the token "
+        "would delete the rebuttal; moving it into the <!-- --> note would hide it from "
+        "_normative() and from anyone reading the rendered template.",
+}
+# Positive: an excluded token's own physical line must attribute it to another route.
+PP42C_ROUTE_ATTRIBUTION = re.compile(r"\bBUILD\b")
+# Negative: and must not claim the gate applies to THIS artifact.
+PP42C_FIRST_PERSON = ("reads them", "requires this plan", "this plan's fields",
+                      "gates this artifact")
+PP42C_MIN_GATE_TOKENS = 2  # measured at this commit -- re-measure
+
 
 failures: list[str] = []
 checked: list[str] = []
@@ -5897,6 +6119,212 @@ def main() -> int:
         f"W2={len(w2.encode('utf-8'))}B decommented)"
         + ("" if not pp41c_faults else " — " + "; ".join(pp41c_faults)),
     )
+
+    # ---------------------------------------------------------------- PP-42
+    # PP-42(a) -- FAILURE_CLASS has exactly one declared owner, and the other
+    # two files point at it. Window-anchored to W6 over `_normative()`; see
+    # the PP-42 constant block for why W5 cannot be used.
+    pp42a_faults: list[str] = []
+    wf_norm_42 = _normative(QA_WORKFLOW.read_text(encoding="utf-8"))
+    w6, w6_fault = _pp41_window(
+        wf_norm_42, PP42A_W6_START, PP42A_W6_END, "W6 (the failure vocabulary)"
+    )
+    w6_bytes = len(w6.encode("utf-8"))
+    claim_files: list[str] = []
+    if w6_fault:
+        pp42a_faults.append(w6_fault)
+    else:
+        if w6_bytes < PP42A_W6_MIN_BYTES:
+            pp42a_faults.append(
+                f"PRECONDITION failed: W6 is {w6_bytes}B, below the "
+                f"{PP42A_W6_MIN_BYTES}B floor -- the section has been gutted "
+                f"and every assertion over it is vacuous"
+            )
+        else:
+            if any(ph in w6 for ph in PP42_AUTHORITY_PHRASES):
+                claim_files.append(QA_WORKFLOW.name)
+            # A claim that migrated OUT of the owning section is still a
+            # claim, and W6 alone cannot see it.
+            stray = sum(
+                wf_norm_42.count(ph) - w6.count(ph) for ph in PP42_AUTHORITY_PHRASES
+            )
+            if stray:
+                pp42a_faults.append(
+                    f"{stray} authority phrase(s) in {QA_WORKFLOW.name} outside "
+                    f"W6 -- the claim has left the section that owns it"
+                )
+    agent_texts = {
+        EXECUTOR_AGENT.name: _normative(EXECUTOR_AGENT.read_text(encoding="utf-8")),
+        HARNESS_AGENT.name: _normative(HARNESS_AGENT.read_text(encoding="utf-8")),
+    }
+    for name, text in agent_texts.items():
+        if any(ph in text for ph in PP42_AUTHORITY_PHRASES):
+            claim_files.append(name)
+        if PP42A_OWNER_NAME not in text:
+            pp42a_faults.append(
+                f"{name} carries no pointer naming {PP42A_OWNER_NAME} -- a "
+                f"non-owner that names no owner leaves the reader to guess"
+            )
+    # EXACTLY 1, not >= 1. The defect was two claims; containment is green on
+    # two, which is the state this property exists to forbid.
+    if len(claim_files) != 1:
+        pp42a_faults.append(
+            f"{len(claim_files)} file(s) claim authority over FAILURE_CLASS "
+            f"{sorted(claim_files)}, want exactly 1 ({QA_WORKFLOW.name})"
+        )
+    elif claim_files[0] != QA_WORKFLOW.name:
+        pp42a_faults.append(
+            f"the sole authority claim is in {claim_files[0]}, not "
+            f"{QA_WORKFLOW.name} -- the vocabulary's home is the route law"
+        )
+    check(
+        "PP-42(a)",
+        not pp42a_faults,
+        f"FAILURE_CLASS is claimed by exactly 1 file ({', '.join(sorted(claim_files)) or 'none'}) "
+        f"and pointed at by {len(PP42A_POINTERS)} (W6={w6_bytes}B normative)"
+        + ("" if not pp42a_faults else " -- " + "; ".join(pp42a_faults)),
+    )
+
+    # PP-42(b) -- one writer of the report shape, asserted in BOTH directions.
+    # RAW text for the `cp`: it lives inside a ```text fence and `_normative()`
+    # deletes it. Precedent is PP-19(b), which reads the same line raw.
+    pp42b_faults: list[str] = []
+    wf_raw_42 = QA_WORKFLOW.read_text(encoding="utf-8")
+    n_cp = len(PP42B_CP_LINE.findall(wf_raw_42))
+    if n_cp != 1:
+        pp42b_faults.append(
+            f"{n_cp} router `cp` of {PP19_TPL.name} into report.md in "
+            f"{QA_WORKFLOW.name}, want exactly 1 -- with the builder's "
+            f"deliverable dropped, deleting this line leaves the report shape "
+            f"with no writer at all"
+        )
+    harness_raw_42 = HARNESS_AGENT.read_text(encoding="utf-8")
+    tbl, tbl_fault = _pp41_window(
+        harness_raw_42, PP42B_TABLE_START, PP42B_TABLE_END, "the deliverables table"
+    )
+    n_rows = -1
+    if tbl_fault:
+        pp42b_faults.append(tbl_fault)
+    else:
+        rows = [ln for ln in tbl.splitlines() if PP42B_TABLE_ROW.match(ln)]
+        n_rows = len(rows)
+        if n_rows != PP42B_EXPECTED_ROWS:
+            pp42b_faults.append(
+                f"{n_rows} deliverable rows, want {PP42B_EXPECTED_ROWS} -- the "
+                f"table grew or shrank and the renumbering was not reviewed"
+            )
+        producers = [ln for ln in rows if PP42B_REPORT_PRODUCER.search(ln)]
+        if producers:
+            pp42b_faults.append(
+                f"{len(producers)} deliverable row(s) still claim the report "
+                f"shape: {[ln.strip()[:60] for ln in producers]} -- two writers "
+                f"of one shape, and the builder's is the one that gets "
+                f"overwritten"
+            )
+    if PP42B_DISCLAIMER not in harness_raw_42:
+        pp42b_faults.append(
+            f"{HARNESS_AGENT.name} does not state that the report shape is "
+            f"router-seeded -- without it the dropped row reads as an omission "
+            f"and the next editor puts it back"
+        )
+    check(
+        "PP-42(b)",
+        not pp42b_faults,
+        f"one writer of the report shape: {n_cp} router `cp` (raw) and "
+        f"{n_rows} deliverable rows, none of them a report producer"
+        + ("" if not pp42b_faults else " -- " + "; ".join(pp42b_faults)),
+    )
+
+    # PP-42(c) -- no QA template cites a gate the QA route does not run,
+    # except the two named, reasoned exclusions printed below.
+    #
+    # STATED PLAINLY, because `<=` plus a full exclusion set looks stronger
+    # than it is: after this phase EVERY extracted gate token is excluded, so
+    # the membership half (iv) has ZERO live members and cannot fail. All of
+    # this property's enforcement power is in (i) the floor, (ii) the no-rot
+    # subset, and (iii) the per-line sentence-shape test. (iii) is exactly the
+    # assertion that C4's defect -- a gate claimed to read THIS artifact's
+    # fields -- cannot reappear, and I-79 injects precisely that. What this
+    # does NOT prove is the (iv) branch on a genuinely-missing QA gate; there
+    # is no live example to prove it on. Named here rather than discovered.
+    pp42c_faults: list[str] = []
+    # Every exclusion is REPORTED with its reason on every run -- carried in
+    # this check's own detail string rather than a side channel, so a reader
+    # of the pass line cannot miss what was excluded and why.
+    pp42c_reasons = " | ".join(
+        f"EXCLUDED `{gate}`: {reason}"
+        for gate, reason in sorted(PP42C_CROSS_ROUTE_GATES.items())
+    )
+    extracted: set[str] = set()
+    gate_lines: dict[str, list[str]] = {}
+    for tpl in sorted(PLUGIN.glob("templates/qa-*.template.md")):
+        tpl_dec = _decommented(tpl.read_text(encoding="utf-8"))
+        for line in tpl_dec.splitlines():
+            for tok in PP42C_GATE_TOKEN.findall(line):
+                extracted.add(tok)
+                gate_lines.setdefault(tok, []).append(f"{tpl.name}: {line.strip()}")
+    # (i) floor FIRST. A regex that stopped matching gives `set() <= anything`,
+    # vacuously true -- vacuity shape (a), and precisely how C4 comes back.
+    if len(extracted) < PP42C_MIN_GATE_TOKENS:
+        check(
+            "PP-42(c)",
+            False,
+            f"PRECONDITION failed: extracted {len(extracted)} `*_gate` tokens "
+            f"from templates/qa-*.template.md (expected >= "
+            f"{PP42C_MIN_GATE_TOKENS}) -- the gate-token regex has stopped "
+            f"matching, so every membership result below is vacuous. "
+            + pp42c_reasons,
+        )
+    else:
+        # (ii) `<=`, NOT `<`. After this phase the two sets are EQUAL, and
+        # `set(a) < set(a)` is False in Python -- a proper-subset assertion is
+        # red on a correct tree. The property wanted is "no exclusion names a
+        # token the templates no longer contain", which is `<=`.
+        orphaned = sorted(set(PP42C_CROSS_ROUTE_GATES) - extracted)
+        if orphaned:
+            pp42c_faults.append(
+                f"exclusion names {orphaned}, absent from the extracted set "
+                f"{sorted(extracted)} -- an exclusion list has outlived its "
+                f"subject"
+            )
+        # (iii) each excluded token's OWN physical line attributes it to
+        # another route and does not claim it applies to this artifact.
+        for gate in sorted(set(PP42C_CROSS_ROUTE_GATES) & extracted):
+            for cited in gate_lines[gate]:
+                if not PP42C_ROUTE_ATTRIBUTION.search(cited):
+                    pp42c_faults.append(
+                        f"`{gate}` is excluded, but its line carries no other "
+                        f"route's name: {cited[:120]!r} -- the distinguishing "
+                        f"feature of a legitimate cross-route citation is "
+                        f"naming the other route"
+                    )
+                claimed = [ph for ph in PP42C_FIRST_PERSON if ph in cited]
+                if claimed:
+                    pp42c_faults.append(
+                        f"`{gate}` is excluded, but its line claims it applies "
+                        f"to THIS artifact via {claimed}: {cited[:120]!r} -- "
+                        f"that phrase IS C4's defect stated in four words"
+                    )
+        # (iv) everything not excluded must actually exist on the QA route.
+        live = sorted(extracted - set(PP42C_CROSS_ROUTE_GATES))
+        dangling = [g for g in live if g not in wf_raw_42]
+        if dangling:
+            pp42c_faults.append(
+                f"{dangling} named in templates/qa-*.template.md but absent "
+                f"from {QA_WORKFLOW.name} -- a QA artifact citing a gate the "
+                f"QA route does not run"
+            )
+        check(
+            "PP-42(c)",
+            not pp42c_faults,
+            f"extracted = {sorted(extracted)} (len {len(extracted)} >= "
+            f"{PP42C_MIN_GATE_TOKENS}); {len(PP42C_CROSS_ROUTE_GATES)} named "
+            f"exclusions, each route-attributed on its own line; "
+            f"{len(live)} live token(s) -- the membership half is inert by "
+            f"construction and (i)/(ii)/(iii) carry this property. "
+            + pp42c_reasons
+            + ("" if not pp42c_faults else " -- " + "; ".join(pp42c_faults)),
+        )
 
     print(f"\nproperties checked: {', '.join(checked)}")
     if failures:

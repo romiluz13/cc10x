@@ -51,7 +51,12 @@ You may **not** edit application source, migrations that ship to production, or 
 | 6 | Observability probes | can read and assert on each service's logs, per the plan's observation points |
 | 7 | Harness manifest | consumed by `tools/live_harness_runner.py --manifest` |
 | 8 | Teardown | destroys what was created, **and verifies destruction** |
-| 9 | Report emitter | writes the report shape `qa-executor` must produce |
+
+**The report shape is not a deliverable here.** The router `cp`s
+`${CLAUDE_PLUGIN_ROOT}/templates/qa-report.template.md` into `report.md` at `qa-execute`, immediately
+before dispatching the executor, and `qa-executor` is bound to that seeded shape. A skeleton written
+by this agent would be either overwritten or divergent — this row was dropped for that reason, not
+forgotten.
 
 ### Manifest schema (item 7) — extend the existing one, never invent a parallel one
 
@@ -119,6 +124,10 @@ just wrote was measured on the wrong revision.
 
 A failing check is worthless until it is one of three things. Put the `classification` on every
 `CHECKS` entry whose `result != pass`:
+
+**This agent does not own these three values.** They are the `FAILURE_CLASS` vocabulary, declared at
+route level in `skills/cc10x-router/references/qa-workflow.md`; `classification` is the field name
+this surface carries it in. Add a fourth value there or nowhere.
 
 | Classification | Means | What the user should feel |
 | ---------------- | ------- | --------------------------- |

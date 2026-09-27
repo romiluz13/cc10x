@@ -12,9 +12,26 @@
 **verification_rigor:** standard | critical_path
 **Differences from agreement:** <!-- how this plan departs from what was requested/confirmed; "none" is a valid answer, absence is not -->
 
-> The last two fields exist because cc10x's `plan_trust_gate` reads them. `Differences from
-> agreement` must be present even when empty — a silent departure from what the user agreed to
-> is the failure it is there to catch.
+> The last two fields are read on this route by `cc10x:plan-review-gate`, the fail-closed review
+> `cc10x:planner` runs on every plan it writes — including `qa-plan` and `qa-re-plan`. It checks
+> `verification_rigor` against the risk of the work, and cross-checks `Differences from agreement`
+> against the body.
+> `plan_trust_gate` reads the same two fields on the BUILD route; the QA route never runs it.
+> `Differences from agreement` must be present even when empty — a silent departure from what the
+> user agreed to is the failure it is there to catch.
+
+<!-- PR #91 raised `plan_trust_gate` here as a dangling reference and asked for the two fields to be
+     demoted to convention-only. Both stated reasons were checked and are FALSE: (1) the gate does
+     read both fields — `skills/cc10x-router/references/build-workflow.md:32-36` names
+     `Differences from agreement` and `verification_rigor` verbatim; (2) the string is not orphaned —
+     it appears in four files, including `skills/plan-review-gate/SKILL.md:65`. The surviving defect
+     was weaker and real: `plan_trust_gate` is a BUILD-route gate and `grep -c plan_trust
+     qa-workflow.md` returns 0, so the old sentence told a QA reader that a gate this route never
+     runs is why these fields exist. The rewording above names the gate that DOES read them here and
+     attributes `plan_trust_gate` to BUILD. Do not "fix" this back by deleting the token: the
+     cross-route sentence is the rebuttal, and `PP42C_CROSS_ROUTE_GATES` in
+     `scripts/test_cc10x_qa_phase_invariants.py` excludes it BY NAME, with this reason printed on
+     every run. -->
 
 ---
 

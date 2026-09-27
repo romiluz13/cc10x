@@ -540,7 +540,7 @@ The user rules on the disposition. The router does not absolve itself of a conta
 ### QA-specific rules
 
 - **QA never edits product code.** Not the researcher, not the harness builder, not the executor, and not the planner — `cc10x:planner` runs `qa-plan` and `qa-re-plan` holding `Edit`, `Write` and `Bash`, so the rule binds four agents, not three. Product defects are reported, never repaired inside QA. This is what keeps QA's verdict trustworthy: a route that can fix what it measures cannot be believed about what it measured.
-  **Which half is the guard and which is the notice.** For the four planning phases the ENFORCEMENT is mechanical: `qa-plan` and `qa-re-plan` are members of `cc10x_qa_isolation_guard.PLAN_PHASES`, and the guard denies any write outside `.cc10x/` while the `phase_cursor` names one of them (Rule 1 below states the same boundary from the route's side). This sentence is the NOTICE — it is what stops a reader from concluding that the planner is exempt because the enumeration forgot it. Do not close the gap by adding a `PRODUCT_CODE_TOUCHED` field to the planner's contract: that contract is shared with the PLAN route, so a QA-motivated required field would be levied on every PLAN run for a boundary the guard already enforces.
+  **Which half is the guard and which is the notice.** For the four planning phases the ENFORCEMENT is mechanical: `qa-plan` and `qa-re-plan` are members of `cc10x_qa_isolation_guard.PLAN_PHASES`, and the guard denies any write outside `.cc10x/` while the `phase_cursor` names one of them (Rule 1 above states the same boundary from the route's side). This sentence is the NOTICE — it is what stops a reader from concluding that the planner is exempt because the enumeration forgot it. Do not close the gap by adding a `PRODUCT_CODE_TOUCHED` field to the planner's contract: that contract is shared with the PLAN route, so a QA-motivated required field would be levied on every PLAN run for a boundary the guard already enforces.
 - **The executor may not edit tests.** Making a red run green by touching the test is the design's worst failure mode. A harness bug routes to `re-qa-build`; a product bug routes to DEBUG (offered, never automatic).
 - **Teardown failure is a workflow failure.** A run that leaves orphaned containers, databases, or cloud resources is not a passing run — it is a passing run plus a leak. The executor reports teardown as a scenario with its own evidence.
 - **`qa-execute` is independently re-runnable.** Given a saved test plan and a built harness, the router may run `qa-execute` alone as a fresh workflow (regression run) without repeating research, planning, or build.
@@ -550,7 +550,9 @@ The user rules on the disposition. The router does not absolve itself of a conta
 ### The failure vocabulary — one name, three surfaces
 
 **`FAILURE_CLASS` is `missing-input` | `wrong-guess` | `defect`. Declared here, once, at route
-level.** Every QA surface that sorts a failure uses this vocabulary and no other:
+level.** `agents/qa-executor.md` and `agents/qa-harness-builder.md` both point here and neither
+claims it; a fourth value is added in this section or it is not added. Every QA surface that sorts a
+failure uses this vocabulary and no other:
 
 | Surface | Field it travels in | Emitted by |
 | --------- | --------------------- | ------------ |
