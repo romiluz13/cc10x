@@ -60,7 +60,7 @@ forgotten.
 
 ### Manifest schema (item 7) — extend the existing one, never invent a parallel one
 
-**Start from `${CLAUDE_PLUGIN_ROOT}/templates/live-harness.template.json`** — the canonical skeleton, parsed by `tools/live_harness_runner.py`. A minimal worked example is `tests/live/manifests/cc10x-bootstrap.json`.
+**Start from `${CLAUDE_PLUGIN_ROOT}/templates/live-harness.template.json`** — the canonical skeleton, parsed by `${CLAUDE_PLUGIN_ROOT}/tools/live_harness_runner.py`. A minimal worked example is `${CLAUDE_PLUGIN_ROOT}/tests/live/manifests/cc10x-bootstrap.json`.
 
 The schema already covers the whole environment lifecycle, and it maps 1:1 onto the env plan:
 

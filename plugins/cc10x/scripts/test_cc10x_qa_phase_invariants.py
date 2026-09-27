@@ -1655,6 +1655,150 @@ commit -- stated plainly here and in the check's own comment, because `<=`
 against a full exclusion set looks stronger than it is. Its enforcement is (i)
 the floor, (ii) the no-rot subset, (iii) the per-line route-attribution test,
 and (iv) proven reachable by I-81.
+
+Negative controls for PP-43 and for PP-38(f)'s second clause (each restored with
+`cp` from a backup and re-greened before the next; never `git checkout --`).
+
+ID NOTE, recorded rather than smoothed. Phase 10 was specified to produce
+I-81..I-84 and I-91. By the time it ran, **I-81 was already taken** (Phase 9's
+PP-42(c)(iv) control) and **I-83, I-90, I-92, I-93** were taken (Phase 7's PP-40
+controls). The plan allocated Phase 10's ids against a draft that predated those
+two phases' own allocations. The two colliding ids are renumbered here --
+plan I-81 -> I-94, plan I-83 -> I-95 -- and I-82, I-84, I-91 keep their planned
+numbers because they were still free. Nothing is dropped and nothing is reused.
+
+The first four were observed against the LIVE DEFECT rather than a simulation of
+it: PP-43 was written and run BEFORE any of Phase 10's six repo edits, so the
+state that produced each red is the state the branch was actually in at b966c52,
+byte for byte. That is strictly stronger than an injection, which can only
+approximate the defect.
+  I-94 (plan I-81) the C1 row as it stood: `| `report.md` | skeleton in
+       `agents/qa-executor.md` |`
+                                          -> ONE red, PP-43(a): "`report.md` ->
+                                             'skeleton in
+                                             `agents/qa-executor.md`' is not a
+                                             templates/ path". The row count
+                                             stays 6 and the window stays 805B,
+                                             so the precondition is not what
+                                             fires -- the membership half is.
+  I-82 both path tokens on qa-harness-builder.md's manifest line reverted to
+       their bare forms (the state at b966c52)
+                                          -> TWO reds, PP-43(b), BOTH from the
+                                             prefix-consistency clause:
+                                             "qa-harness-builder.md:63 names
+                                             `tools/live_harness_runner.py` bare
+                                             beside
+                                             `${CLAUDE_PLUGIN_ROOT}/templates/
+                                             live-harness.template.json`" and
+                                             the sibling line for
+                                             `tests/live/manifests/
+                                             cc10x-bootstrap.json`.
+                                             NEITHER is a resolution failure,
+                                             and that is the point: both paths
+                                             EXIST and resolve under PP-29's
+                                             bases. A red saying the path "does
+                                             not resolve" would mean the wrong
+                                             clause was built and the control
+                                             had failed. See ADR-5. The site is
+                                             :63, not the plan's :58 -- Phase 9
+                                             dropped a deliverable row above it.
+  I-95 (plan I-83) the C7 DRAFT header sentence as it stood
+                                          -> TWO reds, PP-43(c): "SKILL.md claims
+                                             `live-verification-strategy.md` does
+                                             not exist; resolves at
+                                             skills/planning/references/
+                                             live-verification-strategy.md", and
+                                             the sibling for
+                                             `live-production-testing.md` at
+                                             skills/verification/references/.
+                                             Exactly two. ZERO reds would mean
+                                             plugin-root resolution was built
+                                             instead of basename resolution --
+                                             both claims are BARE BASENAMES and
+                                             resolve nowhere from the plugin
+                                             root. A THIRD red naming
+                                             `integration-and-live-proof.md`
+                                             would mean the candidates were
+                                             scoped to the whole sentence
+                                             instead of to the object of the
+                                             do-not-exist clause, flagging a
+                                             CORRECT citation. Both are failed
+                                             controls; neither occurred.
+  I-91 `and proof commands` present at integration-and-live-proof.md:60 (the
+       state at b966c52)
+                                          -> ONE red, PP-43(d): "'proof command'
+                                             promised by
+                                             integration-and-live-proof.md:60,
+                                             absent from qa-strategy/SKILL.md".
+                                             C5 is PARTIAL: only this half is a
+                                             defect. The `harness-manifest.md`
+                                             half sits under an explicit
+                                             **PLACEHOLDER** banner with three
+                                             siblings in the same state, and a
+                                             declared placeholder is not a broken
+                                             link -- it is PP-43(b)'s NAMED,
+                                             banner-anchored, printed exclusion.
+  I-84 vacuity control. PP43A_ROW keyed on a leading `` | ` `` -- the regex the
+       prose invites
+                                          -> ONE red, PP-43(a), on the ROW-COUNT
+                                             PRECONDITION and not on membership:
+                                             "5 data rows in the 890B (raw)
+                                             artifact-template window of SKILL.md
+                                             (expected >= 6)". The `harness
+                                             manifest` row's first cell is
+                                             UNBACKTICKED where the other five
+                                             are backticked, so the backtick-keyed
+                                             regex finds 5. This is why the floor
+                                             is 6 and why the row regex is keyed
+                                             on the separator's absence instead.
+                                             A floor of 7 -- which two earlier
+                                             drafts of the plan carried -- would
+                                             have been red on day one for a reason
+                                             having nothing to do with C1.
+  I-96 (new) `NotebookRead` deleted from the PROSE copy of the matcher at
+       qa-workflow.md's Rule 1 paragraph ONLY, hooks.json left intact
+                                          -> ONE red, PP-38(f)'s second clause:
+                                             "qa-workflow.md restates the matcher
+                                             as 'Read|Grep|Glob|Edit|Write|
+                                             NotebookEdit|Bash', hooks.json
+                                             declares 'Read|Grep|Glob|
+                                             NotebookRead|Edit|Write|
+                                             NotebookEdit|Bash' -- a second
+                                             declaration of one value, drifted".
+                                             This is the byte-duplication trap in
+                                             the direction it has ALREADY drifted
+                                             once on this branch: Phase 5 found
+                                             the prose copy stale and synced it by
+                                             hand, and nothing then held it.
+Measured state at green: 6 data rows in an 890B artifact-template window, all
+six naming a `templates/` path; 19 path-shaped tokens across four QA sources, 5
+templated/glob-bearing, 4 PLACEHOLDER-excluded by NAME and printed with the
+banner's site (SKILL.md:267) on every run, 10 candidates all resolving, 9 lines
+carrying `${CLAUDE_PLUGIN_ROOT}/` and no bare sibling on any of them; PP-43(c)'s
+pinned fixture yielding exactly its two expected candidates against a real corpus
+whose do-not-exist hit count is now 0 and will stay 0 -- which is precisely why
+the fixture exists, since a permanently empty candidate set makes a corpus-only
+assertion prove nothing; one promised capability (`harness manifest`), present in
+the file the promise points at.
+
+TWO ITEMS THE PLAN LEFT HELD BY NO PROPERTY; Phase 10 decided both.
+  PINNED -- qa-workflow.md's prose copy of the hooks.json matcher. It is a
+    verbatim second declaration of a value with one owner, it has already gone
+    stale once on this branch, and PP-38(f) ALREADY loads the authoritative
+    string, so the pin costs one assertion and no new check. The prose copy is
+    kept rather than deleted: the paragraph states which tools the isolation rule
+    covers at the point where the rule is stated. Control I-96.
+  NOT PINNED -- the QA guard's own enumeration bullet in the hook policy ("blocks
+    three things: reads of denylisted paths, file writes during a planning phase,
+    and Bash mutations during a planning phase"). Unlike the matcher there is no
+    independent owner to compare it against: the guard's three blocks are three
+    code paths, not a named set, so any property would have to hard-code the three
+    nouns in the test -- manufacturing a THIRD declaration of the very thing being
+    checked, and comparing a literal to a literal. That is the tautological-check
+    shape, and it is weaker than the absence it replaces. PP-39(a) and PP-39(b)
+    already pin that paragraph's load-bearing claims (which scripts block, and
+    which of them are unconditional); the residual "three things" is a summary
+    whose only machine referent would be a count the test itself invented.
 """
 
 import ast
@@ -3149,6 +3293,116 @@ PP42C_ROUTE_ATTRIBUTION = re.compile(r"\bBUILD\b")
 PP42C_FIRST_PERSON = ("reads them", "requires this plan", "this plan's fields",
                       "gates this artifact")
 PP42C_MIN_GATE_TOKENS = 2  # measured at this commit -- re-measure
+
+# PP-38(f), second clause -- added in Phase 10, closing one of the two edits the
+# plan left "held by no property". The PreToolUse matcher is declared a SECOND
+# time, in prose, in qa-workflow.md's Rule 1 paragraph. Phase 5 found that copy
+# STALE and synced it by hand; nothing then held it, so the next hooks.json
+# change re-opens the same drift. It is pinned here rather than as a new
+# property because PP-38(f) already holds the authoritative matcher string --
+# the comparison costs one assertion and adds no check. The prose copy is not
+# deleted: the paragraph states which tools the isolation rule covers at the
+# point where the rule is stated, and is unreadable without them.
+PP38F_PROSE_MATCHER = re.compile(r"matcher `([A-Za-z|]+)`")
+
+# ---- PP-43. Phase 10. Pointers that name something that is not there. ----
+#
+# Four defect classes, one property each, all of the same shape: a reference
+# whose target does not exist, is the wrong file, or does not say what the
+# pointer claims.
+#   (a) C1  -- the template table's `report.md` row pointed at
+#              `agents/qa-executor.md`, which contains no skeleton and says the
+#              OPPOSITE ("The template is the single source of the report's
+#              shape"). Five of six rows pointed at `templates/`; one did not.
+#   (b) A3  -- prefix consistency (ADR-5). NOT a dangling-pointer check: both
+#              bare tokens on qa-harness-builder.md's manifest line RESOLVE.
+#              The defect is that the line already demonstrates the
+#              ${CLAUDE_PLUGIN_ROOT}/ convention on a sibling token.
+#   (c) C7  -- the DRAFT header claimed two files do not exist. Both do, and
+#              both are asserted by tools/harness_audit.py:46,53,669,674, so a
+#              reader who acted on the header would turn that tool red.
+#   (d) C5  -- "use the harness manifest and proof commands defined there"
+#              promised a capability the target file does not have.
+
+# --- PP-43(a): the template table (C1) ---
+# Window-anchored: `templates/` occurs throughout SKILL.md, so a whole-file
+# test is vacuity shape (b). The start anchor is asserted to match exactly once
+# before slicing (shape (c)), and R9 window semantics apply -- the end anchor is
+# searched from AFTER the start-anchor line, never from its own offset.
+PP43A_WINDOW_START = re.compile(r"(?m)^\| Artifact \| Template \|")
+PP43A_WINDOW_END = re.compile(r"(?m)^\*\*Why deletion is forbidden")
+# A data row is any pipe-delimited line in the window that is neither the header
+# nor the `| --- |` separator. Deliberately NOT keyed on a leading `` | ` ``:
+# the `harness manifest` row's first cell is UNBACKTICKED where the other five
+# are backticked, so a backtick-keyed regex finds 5 and makes a floor of 6
+# permanently unreachable -- red on day one for a reason having nothing to do
+# with C1. That is R9's recorded floor mistake in the other direction.
+PP43A_ROW = re.compile(r"(?m)^\|([^|]+)\|([^|]+)\|\s*$")
+PP43A_MIN_ROWS = 6  # measured 6 data rows at b966c52 (hdr 254, rows 256-261, end 263)
+PP43A_TEMPLATE_DIR = "templates/"
+
+# --- PP-43(b): path reachability + prefix consistency (A3 / ADR-5) ---
+# Sources: the raw text of every agents/qa-*.md plus skills/qa-strategy/SKILL.md.
+# RAW, as PP-29 reads raw -- fenced output shapes name real paths too.
+PP43B_AGENT_GLOB = "qa-*.md"
+# Identical to PP29_PATH_TOKEN: a backticked token with a `/` and a file extension.
+PP43B_PATH_TOKEN = re.compile(r"`([^`\s]*/[^`\s]*\.[A-Za-z0-9]+)`")
+PP43B_ROOT_PREFIX = "${CLAUDE_PLUGIN_ROOT}/"
+# Applied AFTER stripping PP43B_ROOT_PREFIX -- otherwise every prefixed token is
+# excluded as "templated", because ${...} matches the templated regex. PP-29
+# never hit this because no ${CLAUDE_PLUGIN_ROOT} token is in its frozen scope.
+PP43B_EXCLUDE = (re.compile(r"\{[^}]*\}"), re.compile(r"\*"))
+PP43B_MIN_EXTRACTED = 16  # measured 20 at b966c52 -- re-measured, unchanged from c3ea86f
+PP43B_MIN_RESOLVED = 8  # measured 11 at b966c52 -- re-measured, unchanged from c3ea86f
+# Declared-future files under an explicit **PLACEHOLDER** banner. NAMED, not
+# line-ranged: `tools/live_harness_runner.py` shares the fourth bullet's line and
+# DOES exist, so a line-range drop would swallow a live token. A declared
+# placeholder is not a broken link; an UNdeclared one is. The exclusion is a
+# loan against the banner and dies with it -- see the three assertions in the
+# check body.
+PP43B_PLACEHOLDER_EXCLUSIONS = {
+    "references/environment-topologies.md",
+    "references/observability-assertions.md",
+    "references/ui-qa-automation.md",
+    "references/harness-manifest.md",
+}
+PP43B_PLACEHOLDER_BANNER = "**PLACEHOLDER**"
+# Anti-vacuity for the prefix clause: the clause fires only on lines that
+# already carry a prefixed token, so zero such lines makes it inert.
+PP43B_MIN_PREFIXED_LINES = 4  # measured 8 at b966c52
+
+# --- PP-43(c): no document claims a file does not exist when it does (C7) ---
+PP43C_ABSENCE_PHRASES = (
+    "which do not exist",
+    "that do not exist",
+    "do not exist",
+    "does not exist",
+)
+# Sentence split: a terminator followed by whitespace and an opening character.
+# `.md` inside a token is immune because no whitespace follows its period.
+PP43C_SENTENCE_SPLIT = re.compile(r"(?<=[.!?])\s+(?=[A-Z*`#(])")
+# Backticked token with a file extension. Unlike PP43B_PATH_TOKEN this does NOT
+# require a `/`: C7's two false claims are BARE BASENAMES, which is exactly why
+# a plugin-root-relative existence test read them as missing and stayed green.
+PP43C_TOKEN = re.compile(r"`([^`\s]+\.[A-Za-z0-9]+)`")
+# A pinned positive fixture the property runs on EVERY invocation, independent of
+# corpus state. After Phase 10's own fix the real corpus matches the phrase list
+# ZERO times, forever -- so without this fixture PP-43(c) is a green whose only
+# evidence it ever worked is one-shot (I-95) and gone the moment I-95 stops being
+# re-run. If the extractor silently stops working this goes red on the next run
+# rather than at the next review.
+PP43C_SELF_TEST = (
+    "This skill fills the two paths `skills/building/references/"
+    "integration-and-live-proof.md` already points at but that do not exist "
+    "(`live-verification-strategy.md`, `live-production-testing.md`)."
+)
+PP43C_SELF_TEST_EXPECTED = {"live-verification-strategy.md", "live-production-testing.md"}
+PP43C_MIN_FILES_SCANNED = 4  # measured 4 at b966c52
+
+# --- PP-43(d): a pointer does not promise a capability its target lacks (C5) ---
+# The edited file lies outside PP-43(b)'s declared scope, so C5 gets its own
+# cheap property rather than no property at all.
+PP43D_CLAUSE = re.compile(r"(?m)^- use the (.+) defined there\s*$")
 
 
 failures: list[str] = []
@@ -5666,16 +5920,40 @@ def main() -> int:
         pp38_matcher = pp38_entries[0].get("matcher") or ""
         pp38_declared = {t for t in pp38_matcher.split("|") if t}
         pp38_missing = sorted(pp38_required - pp38_declared)
-        pp38f_ok = not pp38_missing
-        pp38f_detail = (
-            f"hooks.json matcher declares all {len(pp38_required)} tools the "
-            f"guard handles (READ_TOOLS | WRITE_TOOLS | {{Bash}})"
-            if pp38f_ok
-            else (
+        # Second clause: the prose restatement in qa-workflow.md must be the
+        # same string. Exactly-one asserted before comparing -- a regex that
+        # stopped matching would compare nothing and pass.
+        pp38f_prose = PP38F_PROSE_MATCHER.findall(
+            QA_WORKFLOW.read_text(encoding="utf-8")
+        )
+        pp38f_faults = (
+            [
                 f"matcher {pp38_matcher!r} never fires for {pp38_missing} -- "
                 f"the guard is not invoked for them at all, so the key fix "
                 f"above is unreachable in production"
+            ]
+            if pp38_missing
+            else []
+        )
+        if len(pp38f_prose) != 1:
+            pp38f_faults.append(
+                f"PRECONDITION failed: {QA_WORKFLOW.name} states a `matcher "
+                f"`...`` {len(pp38f_prose)} times, expected exactly 1 -- the "
+                f"prose restatement cannot be compared and its drift is unheld"
             )
+        elif pp38f_prose[0] != pp38_matcher:
+            pp38f_faults.append(
+                f"{QA_WORKFLOW.name} restates the matcher as "
+                f"{pp38f_prose[0]!r}, hooks.json declares {pp38_matcher!r} -- "
+                f"a second declaration of one value, drifted"
+            )
+        pp38f_ok = not pp38f_faults
+        pp38f_detail = (
+            f"hooks.json matcher declares all {len(pp38_required)} tools the "
+            f"guard handles (READ_TOOLS | WRITE_TOOLS | {{Bash}}), and "
+            f"{QA_WORKFLOW.name}'s prose restatement is byte-identical to it"
+            if pp38f_ok
+            else "; ".join(pp38f_faults)
         )
     check("PP-38(f)", pp38f_ok, pp38f_detail)
 
@@ -6325,6 +6603,308 @@ def main() -> int:
             + pp42c_reasons
             + ("" if not pp42c_faults else " -- " + "; ".join(pp42c_faults)),
         )
+
+    # ---- PP-43: pointers that name something that is not there. ----
+    # See the PP43* constants for the four defect classes and why (b) is a
+    # prefix-consistency clause rather than a resolution clause.
+
+    qa_strategy_md = PLUGIN / "skills" / "qa-strategy" / "SKILL.md"
+
+    # --- PP-43(a). The template table points every artifact at templates/. ---
+    pp43a_text = qa_strategy_md.read_text(encoding="utf-8")
+    pp43a_starts = PP43A_WINDOW_START.findall(pp43a_text)
+    if len(pp43a_starts) != 1:
+        check(
+            "PP-43(a)",
+            False,
+            f"PRECONDITION failed: the table anchor matched {len(pp43a_starts)} "
+            f"times in {qa_strategy_md.name}, expected exactly 1 -- an anchor "
+            f"that stopped matching yields an empty window and every row test "
+            f"below passes vacuously",
+        )
+    else:
+        _m = PP43A_WINDOW_START.search(pp43a_text)
+        # R9 window semantics: search the end anchor from AFTER the start line.
+        _tail = pp43a_text[_m.end():]
+        _e = PP43A_WINDOW_END.search(_tail)
+        pp43a_window = pp43a_text[_m.start(): _m.end() + (_e.start() if _e else len(_tail))]
+        pp43a_rows = []
+        for _c1, _c2 in PP43A_ROW.findall(pp43a_window):
+            if _c1.strip() == "Artifact" and _c2.strip() == "Template":
+                continue  # header
+            if set(_c1.strip()) <= {"-"} or set(_c2.strip()) <= {"-"}:
+                continue  # separator
+            pp43a_rows.append((_c1.strip(), _c2.strip()))
+        # Anti-vacuity FIRST: a row regex that stopped matching iterates zero
+        # rows and passes. 6 data rows measured; the floor is 6, not 7 -- R9
+        # records 7 as the measured-wrong floor.
+        if len(pp43a_rows) < PP43A_MIN_ROWS:
+            check(
+                "PP-43(a)",
+                False,
+                f"PRECONDITION failed: {len(pp43a_rows)} data rows in the "
+                f"{len(pp43a_window.encode('utf-8'))}B (raw) artifact-template "
+                f"window of {qa_strategy_md.name} (expected >= "
+                f"{PP43A_MIN_ROWS}) -- the row regex has stopped matching, so "
+                f"every templates/ test below is vacuous",
+            )
+        else:
+            pp43a_bad = [
+                f"{_a} -> {_b!r} is not a {PP43A_TEMPLATE_DIR} path"
+                for _a, _b in pp43a_rows
+                if PP43A_TEMPLATE_DIR not in _b
+            ]
+            check(
+                "PP-43(a)",
+                not pp43a_bad,
+                f"{len(pp43a_rows)} data rows (>= {PP43A_MIN_ROWS}) in the "
+                f"{len(pp43a_window.encode('utf-8'))}B (raw) artifact-template "
+                f"window, anchor matched exactly once; every row names a "
+                f"{PP43A_TEMPLATE_DIR} path"
+                + ("" if not pp43a_bad else " -- " + "; ".join(pp43a_bad)),
+            )
+
+    # --- PP-43(b). Path reachability, plus the ADR-5 prefix-consistency clause. ---
+    pp43b_sources = sorted((PLUGIN / "agents").glob(PP43B_AGENT_GLOB)) + [qa_strategy_md]
+    # token -> naming source; plus the per-line record the prefix clause needs.
+    pp43b_extracted: dict[str, Path] = {}
+    pp43b_sites: list[tuple[Path, int, str, str, bool]] = []
+    pp43b_banner_lines: list[str] = []
+    pp43b_allowed_placeholder_lines: set[tuple[Path, int]] = set()
+    for _src in pp43b_sources:
+        _lines = _src.read_text(encoding="utf-8").splitlines()
+        for _i, _line in enumerate(_lines, 1):
+            for _raw in PP43B_PATH_TOKEN.findall(_line):
+                _pref = _raw.startswith(PP43B_ROOT_PREFIX)
+                _tok = _raw[len(PP43B_ROOT_PREFIX):] if _pref else _raw
+                pp43b_extracted.setdefault(_tok, _src)
+                pp43b_sites.append((_src, _i, _raw, _tok, _pref))
+            # The PLACEHOLDER exclusion is a loan against the banner: record
+            # the contiguous `- ` bullet block that follows each banner (at most
+            # one blank line between). Delete the banner and the four tokens
+            # become live candidates -- red until the four files are written.
+            if PP43B_PLACEHOLDER_BANNER in _line:
+                pp43b_banner_lines.append(f"{_src.name}:{_i}")
+                _j = _i  # 0-based index of the NEXT line
+                if _j < len(_lines) and not _lines[_j].strip():
+                    _j += 1
+                while _j < len(_lines) and _lines[_j].startswith("- "):
+                    pp43b_allowed_placeholder_lines.add((_src, _j + 1))
+                    _j += 1
+    pp43b_templated = sorted(
+        _t for _t in pp43b_extracted if any(_x.search(_t) for _x in PP43B_EXCLUDE)
+    )
+    pp43b_candidates = {
+        _t: _s
+        for _t, _s in pp43b_extracted.items()
+        if _t not in pp43b_templated and _t not in PP43B_PLACEHOLDER_EXCLUSIONS
+    }
+    pp43b_prefixed_lines = {(_s, _i) for _s, _i, _r, _t, _p in pp43b_sites if _p}
+    # Every run prints the four excluded names WITH the banner's file and line.
+    pp43b_report = (
+        f"PLACEHOLDER exclusions (banner {PP43B_PLACEHOLDER_BANNER} at "
+        f"{pp43b_banner_lines or 'NOWHERE'}): "
+        f"{sorted(PP43B_PLACEHOLDER_EXCLUSIONS)}"
+    )
+    pp43b_faults: list[str] = []
+    if len(pp43b_extracted) < PP43B_MIN_EXTRACTED:
+        check(
+            "PP-43(b)",
+            False,
+            f"PRECONDITION failed: extracted {len(pp43b_extracted)} path-shaped "
+            f"tokens from {len(pp43b_sources)} sources (expected >= "
+            f"{PP43B_MIN_EXTRACTED}) -- the token regex has stopped matching, so "
+            f"every resolution and prefix result below is vacuous. "
+            + pp43b_report,
+        )
+    elif len(pp43b_candidates) < PP43B_MIN_RESOLVED:
+        check(
+            "PP-43(b)",
+            False,
+            f"PRECONDITION failed: only {len(pp43b_candidates)} of "
+            f"{len(pp43b_extracted)} tokens survive the exclusions (expected >= "
+            f"{PP43B_MIN_RESOLVED}) -- the exclusions have widened until nothing "
+            f"is left to resolve. " + pp43b_report,
+        )
+    elif len(pp43b_prefixed_lines) < PP43B_MIN_PREFIXED_LINES:
+        check(
+            "PP-43(b)",
+            False,
+            f"PRECONDITION failed: {len(pp43b_prefixed_lines)} source lines carry "
+            f"a {PP43B_ROOT_PREFIX} token (expected >= "
+            f"{PP43B_MIN_PREFIXED_LINES}) -- the prefix-consistency clause fires "
+            f"only on such lines, so it is inert. " + pp43b_report,
+        )
+    else:
+        # (1) An exclusion naming a token the corpus no longer contains is red.
+        #     `<=`, not `<`, for the reason spelled out in PP-42(c)(ii).
+        _orphaned = sorted(PP43B_PLACEHOLDER_EXCLUSIONS - set(pp43b_extracted))
+        if _orphaned:
+            pp43b_faults.append(
+                f"PLACEHOLDER exclusion names {_orphaned}, absent from the "
+                f"extracted set -- an exclusion list has outlived its subject"
+            )
+        # (2) Every excluded token must sit inside a banner's bullet block.
+        for _s, _i, _raw, _tok, _p in pp43b_sites:
+            if _tok in PP43B_PLACEHOLDER_EXCLUSIONS and (_s, _i) not in pp43b_allowed_placeholder_lines:
+                pp43b_faults.append(
+                    f"{_s.name}:{_i} names PLACEHOLDER-excluded `{_tok}` outside "
+                    f"any {PP43B_PLACEHOLDER_BANNER} bullet block -- the "
+                    f"exclusion is a loan against the banner and the banner is gone"
+                )
+        # (3) Resolution, against PP-29's three bases.
+        pp43b_dangling = []
+        for _tok, _s in sorted(pp43b_candidates.items()):
+            if not any((_b / _tok).exists() for _b in (repo_root, PLUGIN, _s.parent)):
+                pp43b_dangling.append(
+                    f"`{_tok}` (named in {_s.name}; resolves under none of repo "
+                    f"root, {PLUGIN.name}/, or {_s.parent.name}/)"
+                )
+        pp43b_faults.extend(pp43b_dangling)
+        # (4) ADR-5. Where a line already demonstrates the convention, every
+        #     other live token on it must too. Narrow by construction: it never
+        #     asks a line with no opinion to acquire one.
+        for _s, _i, _raw, _tok, _p in pp43b_sites:
+            if _p or (_s, _i) not in pp43b_prefixed_lines:
+                continue
+            if _tok in pp43b_templated or _tok in PP43B_PLACEHOLDER_EXCLUSIONS:
+                continue
+            _sib = next(r for (s2, i2, r, t2, p2) in pp43b_sites if p2 and (s2, i2) == (_s, _i))
+            pp43b_faults.append(
+                f"{_s.name}:{_i} names `{_tok}` bare beside `{_sib}`"
+            )
+        check(
+            "PP-43(b)",
+            not pp43b_faults,
+            f"{len(pp43b_extracted)} path-shaped tokens from "
+            f"{[s.name for s in pp43b_sources]}; {len(pp43b_templated)} templated/"
+            f"glob-bearing ({pp43b_templated}); "
+            f"{len(PP43B_PLACEHOLDER_EXCLUSIONS)} PLACEHOLDER-excluded, all inside "
+            f"the banner block; {len(pp43b_candidates)} candidates all resolve; "
+            f"{len(pp43b_prefixed_lines)} lines carry {PP43B_ROOT_PREFIX} and no "
+            f"sibling on them is bare. " + pp43b_report
+            + ("" if not pp43b_faults else " -- " + "; ".join(pp43b_faults)),
+        )
+
+    # --- PP-43(c). No document claims a file does not exist when it does. ---
+    # Resolution is by BASENAME via PLUGIN.rglob. Revision 2's plugin-root
+    # relative test read C7's two bare basenames as missing and stayed GREEN on
+    # the live defect; a CWD-relative Path("plugins/cc10x") would do the same
+    # from any directory but the repo root, and this suite is run from three.
+    def _pp43c_candidates(text: str) -> list[tuple[str, str]]:
+        """-> [(token, sentence)] for tokens in the OBJECT of a do-not-exist clause.
+
+        Scoped to the span AFTER the absence phrase, to the end of its sentence.
+        The subject -- the file doing the pointing -- is never a candidate;
+        without that scoping a correct citation in the same sentence is flagged.
+        """
+        out: list[tuple[str, str]] = []
+        for _sent in PP43C_SENTENCE_SPLIT.split(text):
+            _low = _sent.lower()
+            _at = -1
+            for _ph in PP43C_ABSENCE_PHRASES:
+                _k = _low.find(_ph)
+                if _k >= 0:
+                    _at = max(_at, _k + len(_ph))
+            if _at < 0:
+                continue
+            for _tok in PP43C_TOKEN.findall(_sent[_at:]):
+                out.append((_tok, _sent))
+        return out
+
+    pp43c_faults: list[str] = []
+    # (1) The pinned fixture, run every invocation, EXACT set equality.
+    pp43c_fixture = {tok for tok, _ in _pp43c_candidates(PP43C_SELF_TEST)}
+    if pp43c_fixture != PP43C_SELF_TEST_EXPECTED:
+        pp43c_faults.append(
+            f"SELF-TEST failed: fixture yielded {sorted(pp43c_fixture)}, expected "
+            f"{sorted(PP43C_SELF_TEST_EXPECTED)} -- "
+            + (
+                "candidates were scoped to the whole sentence instead of the "
+                "do-not-exist clause"
+                if len(pp43c_fixture) > len(PP43C_SELF_TEST_EXPECTED)
+                else "the phrase detector or the clause-scoped extractor has "
+                "stopped working"
+            )
+        )
+    # (2) Coverage.
+    pp43c_bytes = 0
+    pp43c_hits = 0
+    for _src in pp43b_sources:
+        _txt = _src.read_text(encoding="utf-8")
+        pp43c_bytes += len(_txt.encode("utf-8"))
+        for _tok, _sent in _pp43c_candidates(_txt):
+            pp43c_hits += 1
+            _base = _tok.rsplit("/", 1)[-1]
+            _found = list(PLUGIN.rglob(_base))
+            if _found:
+                pp43c_faults.append(
+                    f"{_src.name} claims `{_tok}` does not exist; resolves at "
+                    + ", ".join(
+                        str(f.relative_to(PLUGIN)) for f in sorted(_found)[:3]
+                    )
+                )
+    if len(pp43b_sources) < PP43C_MIN_FILES_SCANNED:
+        pp43c_faults.append(
+            f"PRECONDITION failed: scanned {len(pp43b_sources)} files, expected "
+            f">= {PP43C_MIN_FILES_SCANNED} -- the scan has gone quiet"
+        )
+    check(
+        "PP-43(c)",
+        not pp43c_faults,
+        f"pinned fixture yields exactly {sorted(PP43C_SELF_TEST_EXPECTED)} "
+        f"(2 candidates, the subject citation correctly not among them); real "
+        f"corpus: {len(pp43b_sources)} files / {pp43c_bytes}B scanned, "
+        f"{pp43c_hits} do-not-exist candidate(s) found"
+        + ("" if not pp43c_faults else " -- " + "; ".join(pp43c_faults)),
+    )
+
+    # --- PP-43(d). A pointer does not promise a capability its target lacks. ---
+    pp43d_src = PLUGIN / "skills" / "building" / "references" / "integration-and-live-proof.md"
+    pp43d_txt = pp43d_src.read_text(encoding="utf-8")
+    pp43d_m = PP43D_CLAUSE.findall(pp43d_txt)
+    if len(pp43d_m) != 1:
+        check(
+            "PP-43(d)",
+            False,
+            f"PRECONDITION failed: the 'use the ... defined there' clause matched "
+            f"{len(pp43d_m)} times in {pp43d_src.name}, expected exactly 1 -- a "
+            f"clause that stopped matching promises nothing and passes vacuously",
+        )
+    else:
+        pp43d_nouns = [
+            _n.strip()
+            for _n in re.split(r",\s*| and ", pp43d_m[0])
+            if _n.strip()
+        ]
+        pp43d_keys = [
+            _n[:-1] if _n.endswith("s") and not _n.endswith("ss") else _n
+            for _n in pp43d_nouns
+        ]
+        pp43d_target = qa_strategy_md.read_text(encoding="utf-8")
+        if not pp43d_keys:
+            check(
+                "PP-43(d)",
+                False,
+                f"PRECONDITION failed: the clause {pp43d_m[0]!r} yielded an empty "
+                f"noun list -- nothing is promised, so nothing is checked",
+            )
+        else:
+            pp43d_bad = [
+                f"'{_k}' promised by {pp43d_src.name}:"
+                f"{pp43d_txt[:pp43d_txt.index(pp43d_m[0])].count(chr(10)) + 1}, "
+                f"absent from {qa_strategy_md.parent.name}/{qa_strategy_md.name}"
+                for _k in pp43d_keys
+                if _k not in pp43d_target
+            ]
+            check(
+                "PP-43(d)",
+                not pp43d_bad,
+                f"{len(pp43d_keys)} promised capability/ies {pp43d_keys} in "
+                f"{pp43d_src.name}'s 'defined there' list, each present in "
+                f"{qa_strategy_md.parent.name}/{qa_strategy_md.name}"
+                + ("" if not pp43d_bad else " -- " + "; ".join(pp43d_bad)),
+            )
 
     print(f"\nproperties checked: {', '.join(checked)}")
     if failures:
