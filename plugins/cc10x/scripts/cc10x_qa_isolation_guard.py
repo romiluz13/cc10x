@@ -90,22 +90,34 @@ MUTATING_COMMANDS = {
 # Tools that both inspect and mutate. Anything NOT in the read-only set is
 # treated as a mutation. Capability discovery (step 0a) depends on the
 # read-only members staying allowed — `docker info` must not be blocked.
+#
+# THE RULE THAT GOVERNS THIS DICT: a subcommand belongs here only if EVERY
+# invocation of it is read-only REGARDLESS OF FLAGS. The parser below discards
+# flags deliberately (`if arg.startswith("-"): continue`), so a subcommand
+# whose read/write character depends on its flags cannot be expressed here at
+# all — `git config --get` reads and `git config user.email x` writes, and this
+# dict sees the same token for both. Thirteen mutating invocations were allowed
+# at plan phases because `branch`, `config`, `remote`, `tag` and `fmt` were
+# entered wholesale; `terraform fmt` needed no flag at all to rewrite files.
+# The cost of the rule is that the read-only halves go with them: prefer the
+# workflow's `mutation_allowlist` to re-widening this set.
+# OX Agent: least-privilege command classification prevented flag-blind fail-open
 SUBCOMMAND_TOOLS: dict[str, set[str]] = {
     "docker": {"info", "ps", "images", "version", "inspect", "logs", "port", "top", "stats", "diff", "history"},
     "docker-compose": {"config", "ps", "logs", "images", "version", "top"},
     "podman": {"info", "ps", "images", "version", "inspect", "logs"},
-    "kubectl": {"get", "describe", "logs", "explain", "version", "api-resources", "config", "top", "cluster-info"},
+    "kubectl": {"get", "describe", "logs", "explain", "version", "api-resources", "top", "cluster-info"},
     "helm": {"list", "status", "get", "show", "version", "search", "template", "lint"},
-    "terraform": {"show", "output", "validate", "version", "providers", "graph", "fmt"},
-    "npm": {"ls", "list", "view", "info", "config", "outdated", "why", "ping", "version", "root", "prefix", "search"},
-    "pnpm": {"ls", "list", "view", "info", "config", "outdated", "why", "root"},
-    "yarn": {"list", "info", "config", "why", "versions"},
-    "pip": {"list", "show", "freeze", "check", "config", "index"},
-    "pip3": {"list", "show", "freeze", "check", "config", "index"},
+    "terraform": {"show", "output", "validate", "version", "providers", "graph"},
+    "npm": {"ls", "list", "view", "info", "outdated", "why", "ping", "version", "root", "prefix", "search"},
+    "pnpm": {"ls", "list", "view", "info", "outdated", "why", "root"},
+    "yarn": {"list", "info", "why", "versions"},
+    "pip": {"list", "show", "freeze", "check", "index"},
+    "pip3": {"list", "show", "freeze", "check", "index"},
     "git": {
-        "log", "show", "status", "diff", "rev-parse", "rev-list", "branch", "ls-files",
-        "ls-remote", "cat-file", "describe", "blame", "shortlog", "config", "remote",
-        "tag", "merge-base", "grep", "count-objects", "for-each-ref", "symbolic-ref",
+        "log", "show", "status", "diff", "rev-parse", "rev-list", "ls-files",
+        "ls-remote", "cat-file", "describe", "blame", "shortlog",
+        "merge-base", "grep", "count-objects", "for-each-ref", "symbolic-ref",
     },
 }
 

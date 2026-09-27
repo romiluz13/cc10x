@@ -1170,6 +1170,67 @@ next; the target file was copied to a backup and restored with `cp`, never
 Parsed state at green: all five declarations = ['.cc10x/'] -- code line 228,
 the guard's own module docstring, workflow-artifact.skeleton.json
 qa.isolation.mutation_allowlist, qa-workflow.md prose, qa-workflow.md fence.
+
+Negative controls for PP-37 (each restored and re-greened before the next; the
+guard was copied to a backup and restored with `cp`, never `git checkout --`).
+The last two are a PAIR and they red OPPOSITE halves of the table; recording
+them side by side is what makes PP-37 two-sided rather than a catalogue of
+denials.
+  I-60 `"config"` restored to the `git` set
+                                          -> ONE red, PP-37(a):
+                                             "`git config user.email x@y.z` ->
+                                             ALLOW, want DENY".
+  I-61 `"fmt"` restored to `terraform`    -> ONE red, PP-37(a), naming BOTH
+                                             terraform rows: "`terraform fmt
+                                             -write=true` -> ALLOW, want DENY;
+                                             `terraform fmt` -> ALLOW, want
+                                             DENY". The flagless row is the
+                                             point: `terraform fmt` rewrites
+                                             files with no flag at all, so no
+                                             amount of flag-awareness in the
+                                             parser would have saved it.
+  I-62 SUBCOMMAND_TOOLS = {k: set() for k in SUBCOMMAND_TOOLS}
+       (the VALUES emptied)               -> the OVER-denial control. All 7
+                                             ALLOW rows red, all 13 DENY rows
+                                             green: "`git log --oneline -1` ->
+                                             DENY, want ALLOW; `git status
+                                             --porcelain` -> DENY, want ALLOW;
+                                             `docker info` ...". This is the
+                                             control that prices ADR-1's blast
+                                             radius: an over-fix that denied
+                                             every capability probe step 0a
+                                             runs would pass a deny-only
+                                             property.
+                                             It also settles, by execution, the
+                                             claim that `git log --oneline -1`
+                                             and `git status --porcelain` never
+                                             reach the membership test because
+                                             line 201 consumes every argument.
+                                             They do reach it: both can only
+                                             flip to DENY through it.
+  I-89 SUBCOMMAND_TOOLS = {} (the whole DICT emptied)
+                                          -> the UNDER-denial control, and the
+                                             exact opposite red: all 13 DENY
+                                             rows red, all 7 ALLOW rows green.
+                                             `argv0 in SUBCOMMAND_TOOLS` is
+                                             False, control falls through to
+                                             MUTATING_COMMANDS where none of
+                                             git/docker/kubectl/terraform
+                                             appears, `_bash_mutates` returns
+                                             None, and everything is allowed.
+                                             "Someone deletes the dict" and
+                                             "someone empties a tool's set" are
+                                             distinct regressions with opposite
+                                             signatures; one injection cannot
+                                             stand for both.
+Measured state at green: the 13 mutating invocations DENY and the 7 read-only
+probes ALLOW at phase_cursor=qa-plan. Priced and accepted (ADR-1): the bare
+read forms `git config --get user.email`, `npm config get registry` and
+`kubectl config view` are DENIED too, because every argument after the
+subcommand is a flag and the parser is flag-blind by design. Step 0a's
+documented probes were re-measured against the fixed guard and all ALLOW --
+`docker info`, `podman info`, the file-presence checks, the dependency-manifest
+reads and the `which`/`command -v` lookups.
 """
 
 import ast
@@ -4567,6 +4628,114 @@ def main() -> int:
         "all five declarations of the default `mutation_allowlist` parse "
         f"non-empty and agree -- {pp36_printed}"
         + ("" if not pp36_problems else " -- " + "; ".join(pp36_problems)),
+    )
+
+    # ---- PP-37: a subcommand is read-only only if EVERY invocation of it ----
+    # is read-only REGARDLESS OF FLAGS. `SUBCOMMAND_TOOLS` classified whole
+    # subcommands, and the parser discards flags by design
+    # (`if arg.startswith("-"): continue`), so a subcommand-granular allowlist
+    # cannot express `git config --get` (read) vs `git config user.email x`
+    # (write). Thirteen mutating invocations were therefore ALLOWED at a phase
+    # whose entire purpose is to mutate nothing -- `terraform fmt` worst of
+    # all, since it rewrites files with no flag at all.
+    #
+    # The DENY rows alone are NOT a property. Empty every value of
+    # SUBCOMMAND_TOOLS and all thirteen go green while every capability probe
+    # step 0a depends on (`docker info`, `kubectl get pods`, `terraform show`)
+    # starts being denied. The ALLOW set is what makes this a property about
+    # the rule rather than about denial; I-62 and I-89 are the two injections
+    # that red the two sides separately.
+    #
+    # The cost of the flag-blind fix (inline ADR-1) is that only the BARE read
+    # forms survive: `git config --get` is now denied too, because every
+    # argument is a flag and `sub` resolves to "". That is priced, not missed.
+    pp37_deny_set = [
+        "git branch -D feature-x",
+        "git config user.email x@y.z",
+        "git tag -d v1",
+        "git remote add evil https://e.example",
+        "git branch -m old new",
+        "terraform fmt -write=true",
+        "terraform fmt",
+        "npm config set registry https://e.example",
+        "pip config set global.index-url https://e.example",
+        "kubectl config use-context prod",
+        "pnpm config set registry https://e.example",
+        "yarn config set registry https://e.example",
+        "kubectl config set-context prod",
+    ]
+    pp37_allow_set = [
+        "git log --oneline -1",
+        "git status --porcelain",
+        "docker info",
+        "kubectl get pods",
+        "terraform show",
+        "git show HEAD",
+        "git rev-parse HEAD",
+    ]
+    # Anti-vacuity, asserted BEFORE the loop: a table emptied by a bad edit
+    # iterates zero times and reports nothing wrong. Both floors are checked,
+    # and both are reported through (a) so a truncated ALLOW set cannot hide
+    # behind a green (b).
+    pp37_pre: list[str] = []
+    if len(pp37_deny_set) < 13:
+        pp37_pre.append(
+            f"DENY set holds {len(pp37_deny_set)} rows, expected >= 13"
+        )
+    if len(pp37_allow_set) < 7:
+        pp37_pre.append(
+            f"ALLOW set holds {len(pp37_allow_set)} rows, expected >= 7"
+        )
+    # None of these 20 command strings is ever executed: the guard is a
+    # PreToolUse hook invoked as a subprocess over stdin and it inspects the
+    # command string only. They are built here in the test source rather than
+    # typed into a shell because cc10x_git_guard.py blocks some of them --
+    # a second, independent line of defence that has nothing to say about
+    # what this guard decides.
+    pp37_wrong_deny: list[str] = []
+    pp37_wrong_allow: list[str] = []
+    with tempfile.TemporaryDirectory() as tmp:
+        pp37_dir = Path(tmp)
+        for command, want_deny in [(c, True) for c in pp37_deny_set] + [
+            (c, False) for c in pp37_allow_set
+        ]:
+            r = run_guard_raw(
+                pp37_dir,
+                artifact("qa-plan"),
+                {"tool_name": "Bash", "tool_input": {"command": command}},
+            )
+            got_deny = '"permissionDecision": "deny"' in r.stdout
+            stderr_tail = (r.stderr.strip().splitlines() or [""])[-1]
+            if r.returncode == 0 and r.stderr == "" and got_deny == want_deny:
+                continue
+            problem = (
+                f"`{command}` -> {'DENY' if got_deny else 'ALLOW'}, "
+                f"want {'DENY' if want_deny else 'ALLOW'}"
+            )
+            if r.returncode != 0 or r.stderr != "":
+                problem += f" (rc={r.returncode} stderr={stderr_tail!r})"
+            (pp37_wrong_deny if want_deny else pp37_wrong_allow).append(problem)
+    check(
+        "PP-37(a)",
+        not pp37_pre and not pp37_wrong_deny,
+        f"rc=0 stderr='' and all {len(pp37_deny_set)} mutating invocations "
+        "are DENIED at phase_cursor=qa-plan"
+        + (
+            ""
+            if not pp37_pre and not pp37_wrong_deny
+            else " -- " + "; ".join(pp37_pre + pp37_wrong_deny)
+        ),
+    )
+    check(
+        "PP-37(b)",
+        not pp37_pre and not pp37_wrong_allow,
+        f"rc=0 stderr='' and all {len(pp37_allow_set)} read-only capability "
+        "probes are still ALLOWED at phase_cursor=qa-plan"
+        + (
+            ""
+            if not pp37_pre and not pp37_wrong_allow
+            else " -- " + "; ".join(pp37_pre + pp37_wrong_allow)
+        ),
     )
 
     print(f"\nproperties checked: {', '.join(checked)}")
