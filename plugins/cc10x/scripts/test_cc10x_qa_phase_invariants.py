@@ -175,6 +175,16 @@ PP-32 EVERY DELIBERATE OMISSION IN THE QA LAW CARRIES ITS RATIONALE IN THE SAME
       something the route already does well and converts a culture into a
       check. The FOURTH omission (no workspace isolation) is PP-30(a)'s
       positive half and is deliberately NOT re-asserted here
+PP-33 QA IS A MEMBER OF EVERY ENUMERATION OF WORKFLOW TYPES, and the
+      extractors that find those enumerations still find them. Four sites in
+      four syntactic shapes (parens+pipes, SQUARE+pipes, parens+COMMAS, and a
+      bare marquee count) read under the normaliser each one's fence position
+      demands. The guard returns 0 unless `workflow_type == "QA"`, so a router
+      that never stamps QA makes every rule in qa-workflow.md unreachable in
+      production -- fail-open by omission rather than by logic. (a) is the
+      anti-vacuity half: every anchor matched exactly once, every extractor
+      still yielded members, the routing table still has rows, and the stamping
+      SHAPE is proved live on the two sibling route files that already carry it
 
 Negative control (run and recorded when this file was written): temporarily
 adding "qa-preflight" to PLAN_PHASES turns PP-1, PP-3 and PP-6 case (c) red.
@@ -902,6 +912,122 @@ These are established AFTER Phase 8's fence deletion, so none of them has a
 pre-deletion value to compare against and none is offered as one -- I-47 is
 their validation instead, which is the right instrument for a window that was
 never measured on the other side of that change.
+
+Negative controls for PP-33 (eight runs, each restored and re-greened before
+the next). The first four are one per SITE, because four shapes need four
+injections: revision 1 of this property was a single paren regex with a single
+injection, under which three of the four sites could have been reverted with
+the property still green:
+  I-54 ` QA |` deleted from the paren enum at cc10x-router/SKILL.md:276
+                                          -> PP-33(b) red naming the site and
+                                             printing what it did parse: "S1
+                                             cc10x-router/SKILL.md paren enum
+                                             omits QA (members=['BUILD',
+                                             'DEBUG', 'REVIEW', 'PLAN',
+                                             'ORIENT', 'TRIAGE',
+                                             'CODEBASE-HEALTH'])", PP-33(a)
+                                             green.
+  I-85 ` QA |` deleted from the bracket enum at memory-file-contracts.md:103
+                                          -> PP-33(b) red: "S2
+                                             memory-file-contracts.md bracket
+                                             enum omits QA". THE SQUARE
+                                             BRACKETS ARE THE WHOLE POINT: the
+                                             paren regex that catches S1 never
+                                             reaches this line, so before the
+                                             site table this site had no
+                                             control at all.
+  I-86 cc10x-guide/SKILL.md reverted to `4 workflows (BUILD, DEBUG, REVIEW,
+       PLAN)`                             -> PP-33(b) red on the membership
+                                             half ALONE: "S3
+                                             cc10x-guide/SKILL.md paren+comma
+                                             enum omits QA".
+       ONE RED, NOT TWO, and the difference is recorded rather than smoothed
+       over. The brief for this control predicted two -- membership AND the
+       count/len mismatch -- but a revert of the WHOLE site moves the integer
+       and the member list together, so 4 == len([4 members]) and the
+       cardinality clause is satisfied by the defect. A prediction measured
+       against a different expression than the one shipped is the same defect
+       class this property exists to catch, so the clause got its own
+       injection rather than a rewritten expectation:
+  I-86b the integer alone reverted, `4 workflows (BUILD, DEBUG, REVIEW, PLAN,
+       QA, ORIENT, TRIAGE, CODEBASE-HEALTH)`
+                                          -> PP-33(b) red on the cardinality
+                                             half alone: "S3
+                                             cc10x-guide/SKILL.md says 4
+                                             workflows but lists 8", membership
+                                             green. Without this run the
+                                             count/len clause would be a green
+                                             nobody had ever seen go red.
+  I-87 README.md reverted to `<strong>4 workflows</strong>`
+                                          -> PP-33(b) red: "S4 README.md says 4
+                                             workflows, routing table has 8".
+                                             The expected value is DERIVED from
+                                             the SKILL.md section 1 table in the
+                                             same run, so this red cannot be
+                                             silenced by editing a literal in
+                                             this file.
+  I-54b the `**Workflow type.**` paragraph deleted whole from qa-workflow.md
+                                          -> PP-33(b) red: "qa-workflow.md's
+                                             stamping line is [] (expected
+                                             exactly ['QA'])", and PP-18(a),
+                                             (b), (c), (d) ALL GREEN. That
+                                             second half is the measurement
+                                             that justifies the paragraph's
+                                             placement: PP-18 anchors on `^0a.`,
+                                             `^0b.` and `^1. **Resolve QA
+                                             scope` with exactly-one-match
+                                             semantics, so adding the line to
+                                             the opening step list -- the
+                                             obvious place, and where both
+                                             siblings carry it -- would have
+                                             renumbered four green checks red.
+                                             It is prose for that reason.
+The last two are the ANTI-VACUITY controls, and there are two of them because
+two shapes fail independently; a single control does not cover both. A third
+proves the normaliser column:
+  I-55(i)  S1's paren extractor broken, `[A-Z]` -> `[0-9]`
+                                          -> PP-33(a) red on the S1
+                                             PRECONDITION -- "the paren enum
+                                             extractor matched NOTHING on its
+                                             own anchor line" -- NOT a green.
+                                             An extractor that stops matching
+                                             yields [] and `"QA" in []` is
+                                             False for the wrong reason, which
+                                             is why (a) is asserted first and
+                                             names the site.
+  I-55(ii) S2's bracket extractor broken the same way
+                                          -> PP-33(a) red on the S2
+                                             precondition, S1/S3/S4 still
+                                             printing their parsed members in
+                                             the same detail string.
+  I-55(iii) S2's basis changed from `_decommented()` to `_normative()` -- i.e.
+       the property written with one normaliser for the whole corpus, which is
+       how it would have shipped
+                                          -> PP-33(a) red: "its anchor matched
+                                             0 lines under `_normative()`".
+       THIS IS THE MEASUREMENT BEHIND THE NORMALISER COLUMN.
+       memory-file-contracts.md's enum is at 103, inside the fence pair
+       (98, 117); `_normative()` deletes fenced blocks, so a corpus-wide
+       normaliser makes PP-33 red on a CORRECTLY EDITED repo. The column is not
+       symmetry -- it is the difference between a property that can be green and
+       one that cannot.
+  I-54c the stamping SHAPE drifted on a SIBLING: triage-workflow.md:8 rewritten
+       to "The router stamps the artifact TRIAGE."
+                                          -> PP-33(a) red: "the stamping regex
+                                             matched [] in triage-workflow.md
+                                             (expected exactly ['TRIAGE']) --
+                                             the shape has drifted, so its
+                                             absence from qa-workflow.md would
+                                             prove nothing". The siblings are
+                                             the live proof that the regex still
+                                             reaches anything; without them the
+                                             QA assertion could pass or fail for
+                                             reasons having nothing to do with
+                                             QA.
+Parsed state at green: S1 cc10x-router/SKILL.md:276 and S2
+memory-file-contracts.md:103 and S3 cc10x-guide/SKILL.md:38 each list the same
+8 members; S4 README.md:18 count=8; SKILL.md section 1 routing table = 8
+distinct workflows.
 """
 
 import importlib.util
@@ -1881,6 +2007,131 @@ PP32_OMISSIONS = (
         ("`re-qa-preflight`", "`re-qa-build`", "downstream", "from the user"),
     ),
 )
+
+
+# PP-33 -- QA is a member of every enumeration of workflow types, and the
+# extractors that look for those enumerations still find them.
+#
+# The defect: the `__WORKFLOW_TYPE__` enum in cc10x-router/SKILL.md was written
+# before the QA route existed and was never extended. The isolation guard
+# returns 0 immediately unless `workflow_type == "QA"`
+# (cc10x_qa_isolation_guard.py:220), so every QA isolation rule is unreachable
+# in production if the router never stamps QA. Hardening a guard behind an
+# unreachable predicate is the same fail-open in a new costume.
+#
+# FOUR SITES, FOUR SYNTACTIC SHAPES -- which is why this is a table and not one
+# regex. A single corpus-wide regex reaches exactly ONE of them:
+#
+#   S1  cc10x-router/SKILL.md      (BUILD | DEBUG | ...)          parens + pipes
+#   S2  memory-file-contracts.md   [PLAN | BUILD | ...]           SQUARE + pipes
+#   S3  cc10x-guide/SKILL.md       N workflows (A, B, C)          parens + COMMAS
+#   S4  README.md                  <strong>N workflows</strong>   COUNT ONLY
+#
+# FOUR NORMALISERS, and that is the second reason this is a table. Measured:
+# memory-file-contracts.md has fence pairs at (42, 75), (79, 94) and (98, 117)
+# and the enum sits at 103 -- strictly INSIDE the third. `_normative()` deletes
+# fenced blocks, so under `_normative()` S2's anchor matches ZERO times and
+# PP-33(a) would be red on the precondition against a CORRECTLY EDITED repo.
+# S2 is therefore read through `_decommented()`. The other three were measured
+# the same way and are clean: cc10x-router/SKILL.md:276 sits BETWEEN the fence
+# pairs at 269-271 and 283-288; cc10x-guide/SKILL.md:37 precedes that file's
+# first fence at 45; README.md:18 is raw HTML with no fence or HTML comment
+# above line 30. The normaliser is a per-site property recorded next to the
+# measurement that forced it, never a file-wide default.
+#
+# S4 carries no member list, so it asserts the only thing it does carry: the
+# count -- DERIVED from the SKILL.md section 1 Intent Routing table, not frozen
+# as a literal. A literal would have to be edited by the same hand that adds a
+# route, and that is precisely the hand that forgets.
+#
+# Anchoring is PER LINE, never whole-file. The bare token `QA` occurs dozens of
+# times in each of these files, so `"QA" in text` is satisfied by any of them.
+# Membership is asserted against the PARSED MEMBER LIST of the anchored line.
+#
+# Fields: (id, display, path, basis, anchor, extractor, split, count, label).
+# `split` is None for a count-only site; `count` is a second regex for a site
+# that states its own cardinality alongside its members.
+PP33_SITES = (
+    (
+        "S1",
+        "cc10x-router/SKILL.md",
+        ROUTER / "SKILL.md",
+        "normative",
+        re.compile(r"(?m)^- `__WORKFLOW_TYPE__`.*$"),
+        re.compile(r"\(([A-Z][A-Z-]*(?:\s*\|\s*[A-Z][A-Z-]*)+)\)"),
+        "|",
+        None,
+        "paren enum",
+    ),
+    (
+        "S2",
+        "memory-file-contracts.md",
+        PLUGIN
+        / "skills"
+        / "memory-and-handoff"
+        / "references"
+        / "memory-file-contracts.md",
+        "decommented",
+        re.compile(r"(?m)^\[PLAN \| BUILD.*$"),
+        re.compile(r"\[([A-Z][A-Z-]*(?:\s*\|\s*[A-Z][A-Z-]*)+)\]"),
+        "|",
+        None,
+        "bracket enum",
+    ),
+    (
+        "S3",
+        "cc10x-guide/SKILL.md",
+        PLUGIN / "skills" / "cc10x-guide" / "SKILL.md",
+        "normative",
+        re.compile(r"(?m)^.*[0-9]+ workflows \(.*$"),
+        re.compile(r"\(([A-Z][A-Z-]*(?:,\s*[A-Z][A-Z-]*)+)\)"),
+        ",",
+        re.compile(r"([0-9]+) workflows \("),
+        "paren+comma enum",
+    ),
+    (
+        "S4",
+        "README.md",
+        PLUGIN.parent.parent / "README.md",
+        "normative",
+        re.compile(r"(?m)^.*<strong>[0-9]+ workflows</strong>.*$"),
+        re.compile(r"<strong>([0-9]+) workflows</strong>"),
+        None,
+        None,
+        "marquee count",
+    ),
+)
+
+# The Workflow column of the SKILL.md section 1 Intent Routing table. This is
+# the source of truth S4 is measured against, so it gets its own floor: eight
+# rows over eight distinct workflows at the time PP-33 was written.
+PP33_ROUTING_ROW = re.compile(r"(?m)^\|\s*\d+\s*\|[^|]*\|[^|]*\|\s*([A-Z][A-Z-]*)\s*\|")
+PP33_MIN_ROUTES = 8
+
+# The stamping line. Its SHAPE is proved live by the two sibling route files
+# that already carry it -- which is what makes the QA assertion a consistency
+# claim across three files rather than three files each proved alone. If the
+# shape drifts, the siblings stop matching and PP-33(a) reds on the
+# precondition instead of PP-33(b) passing over a regex that reaches nothing.
+PP33_STAMP = re.compile(
+    r"The router creates the workflow artifact with `workflow_type: ([A-Z][A-Z-]*)`"
+)
+PP33_STAMP_SIBLINGS = (
+    ("triage-workflow.md", "TRIAGE"),
+    ("codebase-health-workflow.md", "CODEBASE-HEALTH"),
+)
+
+
+def _pp33_raw_lineno(raw: str, line: str) -> int:
+    """Raw-file line number of an anchor matched in NORMALISED text.
+
+    Line numbers inside normalised text are not file line numbers; a property
+    that reports one is reporting a number no human can open the file to.
+    """
+    for _i, _l in enumerate(raw.splitlines(), 1):
+        if _l == line:
+            return _i
+    return -1
 
 
 # PP-15(a). Branch currency on the measuring agent. One token per structural
@@ -3748,6 +3999,144 @@ def main() -> int:
         not pp19b_missing,
         f"the law COPIES `{PP19_TPL.name}` into place and the agent NAMES it"
         + ("" if not pp19b_missing else " — " + "; ".join(pp19b_missing)),
+    )
+
+    # PP-33 -- QA is a member of every workflow-type enumeration, and the
+    # per-site extractors still find enums. Four sites, four shapes, four
+    # normalisers; see PP33_SITES for the fence measurement that forced S2's.
+    _pp33_basis = {"normative": _normative, "decommented": _decommented}
+    pp33_pre: list[str] = []
+    pp33_bad: list[str] = []
+    pp33_report: list[str] = []
+    pp33_members: dict[str, list[str]] = {}
+    pp33_counts: dict[str, int] = {}
+
+    if len(PP33_SITES) != 4:
+        pp33_pre.append(
+            f"PRECONDITION failed: PP33_SITES has {len(PP33_SITES)} entries, "
+            f"expected 4 -- one per syntactic shape"
+        )
+
+    for _sid, _disp, _spath, _sbasis, _anchor, _extract, _split, _count, _label in (
+        PP33_SITES
+    ):
+        _raw = _spath.read_text(encoding="utf-8")
+        _hits = _anchor.findall(_pp33_basis[_sbasis](_raw))
+        if len(_hits) != 1:
+            pp33_pre.append(
+                f"PRECONDITION failed for {_sid} {_disp}: its anchor matched "
+                f"{len(_hits)} lines under `_{_sbasis}()` (expected exactly 1) "
+                f"-- any membership result over this site would be vacuous"
+            )
+            pp33_bad.append(f"{_sid} {_disp} was never parsed (see PP-33(a))")
+            continue
+        _line = _hits[0]
+        _no = _pp33_raw_lineno(_raw, _line)
+        _got = _extract.findall(_line)
+        if not _got:
+            pp33_pre.append(
+                f"PRECONDITION failed for {_sid} {_disp}:{_no}: the {_label} "
+                f"extractor matched NOTHING on its own anchor line -- an empty "
+                f"member list makes `'QA' in members` False for the wrong reason"
+            )
+            pp33_bad.append(f"{_sid} {_disp} was never parsed (see PP-33(a))")
+            continue
+        if _split is None:
+            pp33_counts[_sid] = int(_got[0])
+            pp33_report.append(f"{_sid} {_disp}:{_no} count={_got[0]}")
+            continue
+        _members = [_m.strip() for _m in _got[0].split(_split)]
+        pp33_members[_sid] = _members
+        pp33_report.append(f"{_sid} {_disp}:{_no} {_members}")
+        if _count is not None:
+            _cm = _count.findall(_line)
+            if not _cm:
+                pp33_pre.append(
+                    f"PRECONDITION failed for {_sid} {_disp}:{_no}: the site "
+                    f"declares a cardinality but the count regex matched nothing"
+                )
+                continue
+            pp33_counts[_sid] = int(_cm[0])
+
+    # The source of truth S4 is measured against, with its own floor.
+    pp33_routes = sorted(set(PP33_ROUTING_ROW.findall(_normative(SKILL_MD.read_text(
+        encoding="utf-8")))))
+    if len(pp33_routes) < PP33_MIN_ROUTES:
+        pp33_pre.append(
+            f"PRECONDITION failed: the SKILL.md section 1 Intent Routing table "
+            f"yielded {len(pp33_routes)} distinct workflows (expected >= "
+            f"{PP33_MIN_ROUTES}) -- the row regex has stopped matching, so S4's "
+            f"count comparison below is vacuous"
+        )
+
+    # The stamping line's shape, proved live on the two siblings that carry it.
+    pp33_stamp_report: list[str] = []
+    for _fname, _expect in PP33_STAMP_SIBLINGS:
+        _sm = PP33_STAMP.findall(_normative((REFERENCES / _fname).read_text(
+            encoding="utf-8")))
+        if _sm != [_expect]:
+            pp33_pre.append(
+                f"PRECONDITION failed: the stamping regex matched {_sm} in "
+                f"{_fname} (expected exactly ['{_expect}']) -- the shape has "
+                f"drifted, so its absence from qa-workflow.md would prove nothing"
+            )
+        else:
+            pp33_stamp_report.append(f"{_fname}={_expect}")
+
+    pp33_a_ok = not pp33_pre
+    check(
+        "PP-33(a)",
+        pp33_a_ok,
+        f"all {len(PP33_SITES)} workflow-type enum sites anchor exactly once "
+        f"and still parse ("
+        + "; ".join(pp33_report)
+        + f"); the stamping shape is live on "
+        + ", ".join(pp33_stamp_report)
+        + f"; routing table = {len(pp33_routes)} workflows {pp33_routes}"
+        + ("" if pp33_a_ok else " -- " + "; ".join(pp33_pre)),
+    )
+
+    # (b) membership. Asserted on the PARSED MEMBERS of the anchored line, never
+    # on the file: `QA` as a bare token occurs dozens of times in each file.
+    for _sid, _disp, _spath, _sbasis, _anchor, _extract, _split, _count, _label in (
+        PP33_SITES
+    ):
+        if _split is not None and _sid in pp33_members:
+            if "QA" not in pp33_members[_sid]:
+                pp33_bad.append(
+                    f"{_sid} {_disp} {_label} omits QA "
+                    f"(members={pp33_members[_sid]})"
+                )
+            if _count is not None and _sid in pp33_counts:
+                if pp33_counts[_sid] != len(pp33_members[_sid]):
+                    pp33_bad.append(
+                        f"{_sid} {_disp} says {pp33_counts[_sid]} workflows but "
+                        f"lists {len(pp33_members[_sid])}"
+                    )
+        elif _split is None and _sid in pp33_counts:
+            if pp33_counts[_sid] != len(pp33_routes):
+                pp33_bad.append(
+                    f"{_sid} {_disp} says {pp33_counts[_sid]} workflows, "
+                    f"routing table has {len(pp33_routes)}"
+                )
+
+    pp33_qa_stamp = PP33_STAMP.findall(qa_norm)
+    if pp33_qa_stamp != ["QA"]:
+        pp33_bad.append(
+            f"qa-workflow.md's stamping line is {pp33_qa_stamp} (expected "
+            f"exactly ['QA']) -- the guard returns 0 on any other value, so an "
+            f"unstamped route leaves every rule in this file unenforced, and "
+            f"both sibling route files state theirs"
+        )
+
+    pp33_b_ok = not pp33_bad
+    check(
+        "PP-33(b)",
+        pp33_b_ok,
+        f"QA is a member of all {len(pp33_members)} workflow-type enums, the "
+        f"marquee count matches the routing table, and the QA law stamps "
+        f"`workflow_type: QA` like both its siblings"
+        + ("" if pp33_b_ok else " -- " + "; ".join(pp33_bad)),
     )
 
     print(f"\nproperties checked: {', '.join(checked)}")

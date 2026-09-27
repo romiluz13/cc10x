@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  <strong>1 router</strong> &nbsp;·&nbsp; <strong>11 specialist agents</strong> &nbsp;·&nbsp; <strong>20 skills</strong> &nbsp;·&nbsp; <strong>4 workflows</strong>
+  <strong>1 router</strong> &nbsp;·&nbsp; <strong>11 specialist agents</strong> &nbsp;·&nbsp; <strong>20 skills</strong> &nbsp;·&nbsp; <strong>8 workflows</strong>
 </p>
 
 <p align="center">

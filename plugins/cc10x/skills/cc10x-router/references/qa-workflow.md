@@ -4,6 +4,8 @@
 
 **Target repo (`CC10X_REPO_DIR`).** Same rule as BUILD: when set, every git command, dependency install, service start, and test run in this workflow operates on that absolute path; `.cc10x/` state stays at the session cwd. Record the resolved target under `results.target_repo`.
 
+**Workflow type.** The router creates the workflow artifact with `workflow_type: QA`. This is stated here, as the two sibling advisory routes state it, because the QA isolation guard returns immediately on any other value: an artifact left at `pending`, or stamped BUILD by a router that never resolved the route, leaves every isolation rule in this file unenforced while looking enforced.
+
 **QA runs in the tree it was pointed at, and does not offer to move it.** BUILD step 0 offers to
 isolate the workspace because BUILD *authors* the change it isolates. QA does not author it: QA is
 most often invoked on work that is not yet committed, so a dirty tree is not an accident here — the

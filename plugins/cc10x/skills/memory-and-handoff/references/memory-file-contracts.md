@@ -100,7 +100,7 @@ Do not anchor on:
 <!-- CC10X: Do not rename headings. Used as Edit anchors. -->
 
 ## Current Workflow
-[PLAN | BUILD | REVIEW | DEBUG]
+[PLAN | BUILD | REVIEW | DEBUG | QA | ORIENT | TRIAGE | CODEBASE-HEALTH]
 
 ## Tasks
 - [ ] Task 1

@@ -34,8 +34,9 @@ requests belong to `cc10x-router`, upgrades belong to the `update` skill.
 
 cc10x ("The Loop Engine") is a Claude Code plugin: one router skill (`cc10x-router`)
 that owns every development request, 11 specialist agents it delegates to, 20 skills
-that carry the discipline, and 4 workflows (BUILD, DEBUG, REVIEW, PLAN). State persists
-on disk in `.cc10x/` so work survives compaction; hooks enforce guardrails
+that carry the discipline, and
+8 workflows (BUILD, DEBUG, REVIEW, PLAN, QA, ORIENT, TRIAGE, CODEBASE-HEALTH).
+State persists on disk in `.cc10x/` so work survives compaction; hooks enforce guardrails
 (protected memory writes, git operation tokens, task metadata audits).
 
 For the pitch and the pain-to-feature table, read README.md → "Why cc10x".

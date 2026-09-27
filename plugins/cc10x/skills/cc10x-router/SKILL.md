@@ -273,7 +273,7 @@ Bash(command="mkdir -p .cc10x/workflows && cp \"${CLAUDE_PLUGIN_ROOT}/skills/cc1
 Then `Edit` the copied file, replacing each placeholder token with the live value (the skeleton ships every required key already populated with safe defaults — you only fill these):
 
 - `__WORKFLOW_UUID__` → `{workflow_uuid}` (appears twice: `workflow_uuid` and `workflow_id`)
-- `__WORKFLOW_TYPE__` → `{WORKFLOW}` (BUILD | DEBUG | REVIEW | PLAN | ORIENT | TRIAGE | CODEBASE-HEALTH) — **if routing (§5) has not yet determined the workflow type, use `pending` and update it after §5 resolves.** Never hardcode BUILD before routing completes. The artifact may be created before routing (to capture state early), but `workflow_type` must reflect the actual routed type after §5.
+- `__WORKFLOW_TYPE__` → `{WORKFLOW}` (BUILD | DEBUG | REVIEW | PLAN | QA | ORIENT | TRIAGE | CODEBASE-HEALTH) — **if routing (§5) has not yet determined the workflow type, use `pending` and update it after §5 resolves.** Never hardcode BUILD before routing completes. The artifact may be created before routing (to capture state early), but `workflow_type` must reflect the actual routed type after §5.
 - `__USER_REQUEST__` → the user request (JSON-escape quotes/newlines)
 - `__PHASE__` → `{build|debug|review|plan|qa|orient|triage|codebase-health}`
 - `__ISO_TIMESTAMP__` → the current UTC ISO timestamp (appears 3×: `status_history[0].ts`, `created_at`, `updated_at`)
