@@ -149,7 +149,7 @@ OBSERVABILITY_POINTS:
     level: "info" | "warn" | "error" | "debug"
     message: "[log message or pattern]"
     fields: ["field1"]
-    verbatim: [true if quoted from source, false if inferred]
+    provenance: "V" | "Vp" | "I"   # V quoted in full; Vp verbatim-but-partial (name the quoted fragment); I inferred
 TESTABILITY_FINDINGS: [] | ["no health endpoint on service-b"]
 GAPS: [] | ["this source does not say what happens on payment timeout"]
 CLAIMS:
@@ -169,7 +169,7 @@ MEMORY_NOTES:
 
 - `STATUS=PASS` requires: `SOURCE_COVERAGE` set, and either non-empty `USER_FLOW`/`SYSTEM_FLOW` **or** `SOURCE_COVERAGE` of `empty`/`unavailable` with a reason. An empty source honestly reported is a PASS.
 - Every entry in `CLAIMS` MUST carry `evidence`. A claim without a locatable source is not a claim, it is a guess — drop it or move it to `GAPS`.
-- `OBSERVABILITY_POINTS` entries MUST set `verbatim`. An inferred log line presented as real produces a test that asserts on a string that was never logged.
+- `OBSERVABILITY_POINTS` entries MUST set `provenance` to exactly one of `V` (quoted from source in full), `Vp` (verbatim but partial — part of the line is quoted and part was elided) or `I` (inferred). A `Vp` entry MUST name which fragment is the quoted one, in `message`. Two values cannot carry this: an inferred log line presented as real produces a test that asserts on a string that was never logged, and a partially-quoted line forced to pick a side produces one that asserts on the half nobody quoted.
 - Every `USER_ACTION_INVENTORY` entry MUST set `enumerated_from` and `complete`. `complete: true` with `enumerated_from: code` is almost always wrong — dropdown contents are usually data-driven, and role- or flag-gated options do not appear in the component. Marking an incomplete enumeration complete silently shrinks the entire downstream test plan.
 - Do NOT pre-reduce `USER_ACTION_INVENTORY`. Reduction belongs to `qa-plan`, which must apply a named technique against the full space.
 - Reading outside your assigned `SOURCE` is a contract violation: `STATUS: FAIL`.

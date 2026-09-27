@@ -211,6 +211,7 @@ MEMORY_NOTES:
 - An `observation_points` entry with `result: NOT_CHECKED` prevents that scenario from being `PASS`. An unchecked observation point is an untested assertion.
 - `SCENARIOS_BLOCKED > 0` forces `STATUS: BLOCKED`. Blocked is never rounded to PASS.
 - `TEARDOWN_STATUS=leaked` forces `STATUS: FAIL` even when every scenario passed, and `LEAKED_RESOURCES` must name what leaked.
+- `TEARDOWN_STATUS=not_run` forces `STATUS: FAIL` too, and `TEARDOWN_EVIDENCE` must say why teardown never ran. Teardown that did not run is not teardown that found nothing: the environment's state is unknown, and an unknown state is a leak nobody looked for. Stated here rather than left to be inferred from the `STATUS=PASS` conjunction above, because an unadjudicated third value is how `not_run` gets rounded to `clean`.
 - `TEST_CODE_TOUCHED=true` or `PRODUCT_CODE_TOUCHED=true` is an automatic `STATUS: FAIL`. You witness; you do not repair.
 - `BUG_CANDIDATES` entries require `repro`, `repro_command`, `env_setup_command`, and `evidence`. A bug report a debugger cannot start from is noise.
 - `boundary_observations` MUST be listed in **pipeline order** with `order` set, and `first_failing_boundary` MUST name the earliest `FAIL`. This is what lets `bug-investigator` skip rebuilding its Boundary Instrumentation Matrix: the layer whose output is first wrong is the layer that owns the bug.

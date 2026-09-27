@@ -118,7 +118,7 @@ so here rather than leaving the field off. -->
 | Services provisioned | |
 | Services stubbed | |
 | Readiness wait | |
-| Teardown status | clean \| leaked |
+| Teardown status | clean \| leaked \| not_run |
 | Teardown evidence | <!-- what was CHECKED and what it showed, not "teardown ran" --> |
 | Leaked resources | <!-- `None`, or name each one. A leak forces FAIL even if every scenario passed, so an unnamed leak is an unexplained FAIL. --> |
 | Product code touched | false <!-- any other value invalidates the run --> |

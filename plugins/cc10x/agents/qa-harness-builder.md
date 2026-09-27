@@ -322,6 +322,14 @@ BUG_CANDIDATES:
   # `branch_axis` and `failure_class`. A T1-T4 probe is not holding a validation
   # chain or a cross-repo contract the way an executing scenario is, so an
   # enumerate-first sweep would demand context preflight structurally lacks.
+  #
+  # NOT SHARED and NOT THE SAME FIELD: `surface_tier` below. It is the harness
+  # tier at which the defect would surface (`integration` | `e2e_backend` |
+  # `ui`), which is a different axis from the T0-T4 COST tier a CHECKS entry
+  # above carries — and a candidate cross-references one of those entries by
+  # `scenario` one line up. Both were called `tier` in this one output block,
+  # which is how a reader comes to read `"T1"` as a harness and `"ui"` as a
+  # cost. The executor's field keeps its own name on its own side.
   - title: "[one line]"
     severity: "critical" | "high" | "medium" | "low" | "unconfirmed"
     measured_on:
@@ -332,7 +340,7 @@ BUG_CANDIDATES:
         sha: "[short sha]"
         commits_behind: [n]
     scenario: "[the CHECKS entry that surfaced it]"
-    tier: "integration" | "e2e_backend" | "ui"
+    surface_tier: "integration" | "e2e_backend" | "ui"   # the harness tier at which this defect would surface
     expected: "[expected]"
     actual: "[actual]"
     repro: "[narrowest reproduction, in prose]"

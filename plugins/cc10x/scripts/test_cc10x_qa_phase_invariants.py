@@ -1430,6 +1430,89 @@ is untouched and prints `0 bad, 49 unresolved-and-skipped` before and after the
 `§6` -> `§7` edit: it is a SIBLING of PP-40, not its predecessor, and resolves
 only `env plan`-prefixed citations, so the digit it never resolved is a digit it
 still never resolves.
+
+Negative controls for PP-41 (each restored with `cp` from a backup and
+re-greened before the next; never `git checkout --`). All five windows are
+sliced from `_decommented()`, never `_normative()`: `_normative()` deletes
+fenced blocks, and three of the four anchors sit inside ```yaml fences.
+Measured at this commit, anchor match counts under the two normalisers --
+  W4 `^OBSERVABILITY_POINTS:`      decommented 1 / normative 0
+  W3 `^TEARDOWN_STATUS:`           decommented 1 / normative 0
+  W2 `^# --- preflight mode only`  decommented 1 / normative 0
+  W2 `^# --- end preflight-only`   decommented 1 / normative 0
+  W9 `^**CONTRACT RULES:**` (researcher)  decommented 1 / NORMATIVE 1
+  W7 `^**CONTRACT RULES:**` (executor)    decommented 1 / NORMATIVE 1
+-- so a PP-41 written over `_normative()` would go red on its own
+exactly-one-anchor precondition for (a)'s W4 half, (b)'s W3 half and all of
+(c), which is PP-20's trap (lines 1571-1572, "0/0 through _normative()") in
+three new places. W9 and W7 are the two that survive `_normative()`, because
+both CONTRACT RULES regions sit AFTER their file's closing fence. They read
+`_decommented()` anyway, so each sub-check has one basis rather than two.
+  I-73a line 152 reverted to `verbatim: [true|false]`, the MUST rule left fixed
+                                          -> ONE red, PP-41(a), on the W4 half
+                                             ONLY (W4 184B, W9 1459B): "W4
+                                             declares no `provenance:` field
+                                             ...; W4's provenance enum omits
+                                             ['V', 'Vp', 'I'] ...; W4 still
+                                             carries a `verbatim:` field".
+  I-73b the MUST rule at 172 reverted ALONE, line 152 left fixed
+                                          -> ONE red, PP-41(a), on the W9 half
+                                             ONLY (W4 275B, W9 1104B): "the
+                                             CONTRACT RULES region (W9) never
+                                             names `provenance` ...; the
+                                             CONTRACT RULES region (W9) still
+                                             names `verbatim` as a field -- the
+                                             MUST rule points at a field that no
+                                             longer exists". This is the control
+                                             that earns W9: line 172 is OUTSIDE
+                                             the yaml fence (120-166) and
+                                             therefore outside W4, so without a
+                                             second window a builder edits 152,
+                                             leaves 172, and this property is
+                                             green on a contract whose MUST rule
+                                             names a deleted field. The two
+                                             halves red independently, which is
+                                             what proves there are two of them.
+  I-74 the report template's teardown row reverted to `clean | leaked` (the
+       cell's literal text, escaped `\\|` in the markdown table)
+                                          -> ONE red, PP-41(b): "executor
+                                             ['clean', 'leaked', 'not_run'] !=
+                                             template ['clean', 'leaked'] -- the
+                                             report template offers no cell for
+                                             a status the contract requires the
+                                             executor to emit". SET equality,
+                                             not containment: containment in
+                                             either direction is green while one
+                                             side quietly grows a value.
+  I-75 `surface_tier:` renamed back to `tier:`
+                                          -> ONE red, PP-41(c): "2 bare `tier:`
+                                             fields in the preflight block, want
+                                             1 ...; 0 `surface_tier:` fields
+                                             ..., want 1" (W2 3960B). The count
+                                             MUST use `(?<![A-Za-z0-9_])tier:`.
+                                             Measured at green on the fixed
+                                             file: the lookbehind counts 1, the
+                                             bare substring `tier:` still counts
+                                             2, because `surface_tier:` contains
+                                             `tier:` -- a bare-substring check
+                                             is red before AND after the fix,
+                                             which is a control that cannot tell
+                                             the defect from its repair.
+  I-76 the `# --- end preflight-only` marker deleted (window control)
+                                          -> ONE red, PP-41(c) PRECONDITION: "W2
+                                             (preflight-only block) end anchor
+                                             ... never matches after the start
+                                             anchor -- the window runs to EOF,
+                                             which is a runaway window, not a
+                                             measurement". Without it the window
+                                             swallows MEMORY_NOTES and every
+                                             count below is measured over prose
+                                             the block does not own.
+Measured state at green, all five windows over `_decommented()` and all sizes
+`len(w.encode("utf-8"))`: W4 = 275B (219B before this commit's edit), W9 =
+1459B (1104B before), W3 = 107B (unchanged -- the enum already had all three
+values), W7 = 6955B (6530B before), W2 = 4024B (3424B before). The four
+pre-edit numbers reproduce the plan's R11 table exactly at e45b600.
 """
 
 import ast
@@ -2785,6 +2868,66 @@ PP39_MIN_HOOKS = 5
 # window in which every `not in` passes.
 PP39_W8_START = re.compile(r"(?m)^- Default mode is audit-only")
 PP39_W8_END = re.compile(r"(?m)^- Repo-local")
+
+# ---------------------------------------------------------------- PP-41
+# Every producer enum covers the values its consumers require. Three
+# sub-checks over three different producers, one defect shape: the enum at
+# the emitter is narrower than the contract downstream of it, so a
+# conforming emitter has to lie or improvise.
+#
+# BASIS — all five windows read `_decommented()`, NEVER `_normative()`.
+# Measured at this commit: `^OBSERVABILITY_POINTS:` (W4), `^TEARDOWN_STATUS:`
+# (W3) and the two preflight markers (W2) match ONCE through
+# `_decommented()` and ZERO times through `_normative()`, because all three
+# sit inside ```yaml fences that `_normative()` deletes. This is PP-20's
+# trap (lines 1571-1572, "0/0 through _normative()") in three new places.
+#
+# MEASURED CORRECTION to the plan's R11 table: W9 -- qa-researcher.md's
+# `**CONTRACT RULES:**` region -- is claimed there to also vanish under
+# `_normative()`. It does not. The researcher's yaml fence runs 120-166 and
+# CONTRACT RULES starts at 168, so the anchor matches ONCE under both
+# normalisers and the window is 1104 B under both. `_decommented()` is still
+# the right basis (it is the basis its three siblings need and the window is
+# byte-identical), but the fence-containment argument does not apply to W9.
+RESEARCHER_AGENT = PLUGIN / "agents" / "qa-researcher.md"
+QA_FEATURE_MAP_TPL = PLUGIN / "templates" / "qa-feature-map.template.md"
+# The three provenance values, in the vocabulary both consumers already use.
+PP41_PROVENANCE = ("V", "Vp", "I")
+PP41_W4_START = re.compile(r"(?m)^OBSERVABILITY_POINTS:")
+# R9 semantics: searched from AFTER the start-anchor line. `^[A-Z_]+:`
+# searched from the start anchor's own offset matches the start anchor
+# itself and yields a 0-byte window in which every `not in` passes.
+PP41_W4_END = re.compile(r"(?m)^[A-Z_]+:")
+PP41_CONTRACT_RULES = re.compile(r"(?m)^\*\*CONTRACT RULES:\*\*")
+PP41_SECTION_END = re.compile(r"(?m)^#+ |^\*\*[A-Z]")
+# The FIELD, not the English word. "verbatim" occurs 40+ times across the
+# plugin as ordinary prose, and the rewritten MUST rule is allowed to say
+# "verbatim but partial" — what it may not do is name a field that no
+# longer exists. Hence the backticked-identifier form for W9 and the
+# `name:` form for W4.
+PP41_VERBATIM_FIELD = re.compile(r"(?<![A-Za-z0-9_])verbatim:")
+PP41_PROVENANCE_FIELD = re.compile(r"(?<![A-Za-z0-9_])provenance:")
+PP41_W3_START = re.compile(r"(?m)^TEARDOWN_STATUS:")
+PP41_W3_END = re.compile(r"(?m)^LEAKED_RESOURCES")
+PP41_ENUM_VALUE = re.compile(r'"([a-z_]+)"')
+PP41_TEARDOWN_ROW = re.compile(r"(?m)^\| Teardown status \|(.+?)\|\s*$")
+PP41_W2_START = re.compile(r"(?m)^# --- preflight mode only")
+PP41_W2_END = re.compile(r"(?m)^# --- end preflight-only")
+# Negative lookbehind, NOT the bare substring. `surface_tier:` CONTAINS
+# `tier:`, so a bare-substring count reads 2 both before and after the fix
+# and the check would stay red on a correct file — a control that cannot
+# distinguish the defect from the fix is not a control.
+PP41_TIER_FIELD = re.compile(r"(?<![A-Za-z0-9_])tier:")
+PP41_SURFACE_TIER_FIELD = re.compile(r"(?<![A-Za-z0-9_])surface_tier:")
+# The carve-out comment named three omitted executor fields and missed the
+# fourth distinction — that preflight's surface tier is a DIFFERENT field
+# from the CHECKS cost tier sharing the block with it.
+PP41_CARVE_OUT_FIELDS = (
+    "`siblings_swept`",
+    "`branch_axis`",
+    "`failure_class`",
+    "`surface_tier`",
+)
 
 failures: list[str] = []
 checked: list[str] = []
@@ -5534,6 +5677,225 @@ def main() -> int:
         f"= {pp40_matched + pp40_fallback + len(pp40_undescriptive) + pp40_noprefix + len(pp40_mismatches)} "
         f"§N seen; undescriptive={sorted(pp40_undescriptive)})"
         + ("" if not pp40_faults else " — " + "; ".join(pp40_faults)),
+    )
+
+    # ---------------------------------------------------------------- PP-41
+    # Every producer enum covers the values its consumers require.
+    # All three sub-checks slice `_decommented()`; see the PP-41 constant
+    # block for why `_normative()` would delete four of the five anchors.
+    def _pp41_window(
+        text: str,
+        start_re: "re.Pattern[str]",
+        end_re: "re.Pattern[str]",
+        label: str,
+        *,
+        end_optional: bool = False,
+    ) -> tuple[str, str | None]:
+        """Slice one window under R9 semantics, or explain why it is vacuous.
+
+        Anti-vacuity shape (c): the start anchor must match EXACTLY once over
+        the whole text, and the end anchor is searched from AFTER the
+        start-anchor match, never from its start offset — an end regex that
+        matches its own start line yields a 0-byte window in which every
+        `not in` test passes.
+        """
+        starts = list(start_re.finditer(text))
+        if len(starts) != 1:
+            return "", (
+                f"PRECONDITION failed: {label} start anchor "
+                f"{start_re.pattern!r} matched {len(starts)} times (expected "
+                f"exactly 1) — the window has moved, been reworded, or been "
+                f"normalised away, and every assertion over it would be vacuous"
+            )
+        s = starts[0]
+        end = end_re.search(text, s.end())
+        if end is None:
+            if not end_optional:
+                return "", (
+                    f"PRECONDITION failed: {label} end anchor "
+                    f"{end_re.pattern!r} never matches after the start anchor "
+                    f"— the window runs to EOF, which is a runaway window, not "
+                    f"a measurement"
+                )
+            return text[s.start() :], None
+        return text[s.start() : end.start()], None
+
+    researcher_dec = _decommented(RESEARCHER_AGENT.read_text(encoding="utf-8"))
+    executor_dec = _decommented(EXECUTOR_AGENT.read_text(encoding="utf-8"))
+    harness_dec = _decommented(HARNESS_AGENT.read_text(encoding="utf-8"))
+
+    # PP-41(a) — provenance. Binary `verbatim` cannot express `Vp`, the value
+    # both consumers mandate and the one the middle case needs.
+    pp41a_faults: list[str] = []
+    w4, w4_fault = _pp41_window(
+        researcher_dec, PP41_W4_START, PP41_W4_END, "W4 (OBSERVABILITY_POINTS)"
+    )
+    w9, w9_fault = _pp41_window(
+        researcher_dec,
+        PP41_CONTRACT_RULES,
+        PP41_SECTION_END,
+        "W9 (qa-researcher CONTRACT RULES)",
+        end_optional=True,  # CONTRACT RULES is the last section of the file
+    )
+    for f in (w4_fault, w9_fault):
+        if f:
+            pp41a_faults.append(f)
+    if not w4_fault:
+        if not PP41_PROVENANCE_FIELD.search(w4):
+            pp41a_faults.append(
+                "W4 declares no `provenance:` field — the OBSERVABILITY_POINTS "
+                "block still cannot say which of V/Vp/I a log line is"
+            )
+        missing_vals = [v for v in PP41_PROVENANCE if f'"{v}"' not in w4]
+        if missing_vals:
+            pp41a_faults.append(
+                f"W4's provenance enum omits {missing_vals} — the consumers "
+                f"mandate all three, and the omitted value is the one a "
+                f"conforming researcher has to lie about"
+            )
+        if PP41_VERBATIM_FIELD.search(w4):
+            pp41a_faults.append(
+                "W4 still carries a `verbatim:` field — a three-valued field "
+                "called `verbatim` holding `I` is its own next bug"
+            )
+    if not w9_fault:
+        # The MUST rule lives OUTSIDE the yaml fence and outside W4. Change
+        # 152 and forget 172 and the contract rule points at a deleted field
+        # while the W4 half of this property is green.
+        if "`provenance`" not in w9:
+            pp41a_faults.append(
+                "the CONTRACT RULES region (W9) never names `provenance` — the "
+                "MUST rule does not mandate the field the block declares"
+            )
+        if "`verbatim`" in w9:
+            pp41a_faults.append(
+                "the CONTRACT RULES region (W9) still names `verbatim` as a "
+                "field — the MUST rule points at a field that no longer exists"
+            )
+    # End-to-end: the vocabulary must reach both documents that consume it.
+    for tpl in (QA_TEST_PLAN_TPL, QA_FEATURE_MAP_TPL):
+        tpl_dec = _decommented(tpl.read_text(encoding="utf-8"))
+        absent = [v for v in PP41_PROVENANCE if f"`{v}`" not in tpl_dec]
+        if absent:
+            pp41a_faults.append(
+                f"{tpl.name} does not name {absent} — the producer and its "
+                f"consumer would be speaking different vocabularies"
+            )
+    check(
+        "PP-41(a)",
+        not pp41a_faults,
+        f"qa-researcher's OBSERVABILITY_POINTS declares provenance V/Vp/I and "
+        f"its CONTRACT RULES mandate the same field "
+        f"(W4={len(w4.encode('utf-8'))}B, W9={len(w9.encode('utf-8'))}B, both "
+        f"decommented)"
+        + ("" if not pp41a_faults else " — " + "; ".join(pp41a_faults)),
+    )
+
+    # PP-41(b) — teardown. The template enumerated two of the contract's three.
+    pp41b_faults: list[str] = []
+    w3, w3_fault = _pp41_window(
+        executor_dec, PP41_W3_START, PP41_W3_END, "W3 (TEARDOWN_STATUS enum)"
+    )
+    w7, w7_fault = _pp41_window(
+        executor_dec,
+        PP41_CONTRACT_RULES,
+        PP41_SECTION_END,
+        "W7 (qa-executor CONTRACT RULES)",
+    )
+    for f in (w3_fault, w7_fault):
+        if f:
+            pp41b_faults.append(f)
+    contract_vals: set[str] = set()
+    tpl_vals: set[str] = set()
+    if not w3_fault:
+        contract_vals = set(PP41_ENUM_VALUE.findall(w3.splitlines()[0]))
+        if len(contract_vals) < 2:
+            pp41b_faults.append(
+                f"PRECONDITION: parsed only {sorted(contract_vals)} from the "
+                f"TEARDOWN_STATUS enum line — the value regex has stopped "
+                f"matching and a set equality between two empty sets holds"
+            )
+    rows = PP41_TEARDOWN_ROW.findall(PP19_TPL.read_text(encoding="utf-8"))
+    if len(rows) != 1:
+        pp41b_faults.append(
+            f"PRECONDITION: {PP19_TPL.name} has {len(rows)} `| Teardown status |` "
+            f"rows (expected exactly 1) — the row has been renamed and the "
+            f"comparison below has nothing to compare"
+        )
+    else:
+        tpl_vals = {v.strip() for v in rows[0].split(r"\|") if v.strip()}
+    if contract_vals and tpl_vals:
+        # SET EQUALITY, not containment. Containment in either direction
+        # passes while one side quietly grows a value the other never learned.
+        if contract_vals != tpl_vals:
+            pp41b_faults.append(
+                f"executor {sorted(contract_vals)} != template "
+                f"{sorted(tpl_vals)} — the report template offers no cell for "
+                f"a status the contract requires the executor to emit"
+            )
+    if not w7_fault and contract_vals:
+        # Every value needs a stated PASS/FAIL consequence, not one inferred
+        # from the PASS conjunction. `not_run` had none.
+        unstated = sorted(
+            v for v in contract_vals if f"TEARDOWN_STATUS={v}" not in w7
+        )
+        if unstated:
+            pp41b_faults.append(
+                f"the executor's CONTRACT RULES state no PASS/FAIL consequence "
+                f"for TEARDOWN_STATUS={unstated} — a value the contract can "
+                f"emit and the contract rules never adjudicate"
+            )
+    check(
+        "PP-41(b)",
+        not pp41b_faults,
+        f"the teardown enum, its report row and its verdict rules agree on "
+        f"{sorted(contract_vals) or 'nothing'} "
+        f"(W3={len(w3.encode('utf-8'))}B, W7={len(w7.encode('utf-8'))}B, both "
+        f"decommented)"
+        + ("" if not pp41b_faults else " — " + "; ".join(pp41b_faults)),
+    )
+
+    # PP-41(c) — tier disambiguation. `tier` meant a T0-T4 cost tier on a
+    # CHECKS entry and a harness tier on a BUG_CANDIDATES entry that
+    # cross-references that very CHECKS entry, inside ONE output block.
+    pp41c_faults: list[str] = []
+    w2, w2_fault = _pp41_window(
+        harness_dec, PP41_W2_START, PP41_W2_END, "W2 (preflight-only block)"
+    )
+    n_tier = n_surface = n_carve = -1
+    if w2_fault:
+        pp41c_faults.append(w2_fault)
+    else:
+        n_tier = len(PP41_TIER_FIELD.findall(w2))
+        n_surface = len(PP41_SURFACE_TIER_FIELD.findall(w2))
+        if n_tier != 1:
+            pp41c_faults.append(
+                f"{n_tier} bare `tier:` fields in the preflight block, want 1 "
+                f"— two fields named `tier` in one output block, one holding "
+                f"`\"T1\"` and one holding `\"ui\"`, is the defect"
+            )
+        if n_surface != 1:
+            pp41c_faults.append(
+                f"{n_surface} `surface_tier:` fields in the preflight block, "
+                f"want 1 — the harness tier at which a defect surfaces has no "
+                f"name of its own"
+            )
+        missing_carve = [f for f in PP41_CARVE_OUT_FIELDS if f not in w2]
+        n_carve = len(PP41_CARVE_OUT_FIELDS) - len(missing_carve)
+        if missing_carve:
+            pp41c_faults.append(
+                f"the executor-field carve-out comment does not name "
+                f"{missing_carve} — the comment that exists to enumerate what "
+                f"preflight deliberately does not share is incomplete"
+            )
+    check(
+        "PP-41(c)",
+        not pp41c_faults,
+        f"the preflight block names its cost tier and its surface tier "
+        f"differently ({n_tier} `tier:` / {n_surface} `surface_tier:`, "
+        f"{n_carve}/{len(PP41_CARVE_OUT_FIELDS)} carve-out fields named; "
+        f"W2={len(w2.encode('utf-8'))}B decommented)"
+        + ("" if not pp41c_faults else " — " + "; ".join(pp41c_faults)),
     )
 
     print(f"\nproperties checked: {', '.join(checked)}")
