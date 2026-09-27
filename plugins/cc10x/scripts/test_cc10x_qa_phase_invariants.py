@@ -1281,6 +1281,76 @@ other two's checks.
 Measured state at green: NotebookRead of a denylisted path DENIES, NotebookEdit
 into the allowlist ALLOWS, NotebookEdit outside it still DENIES, and the matcher
 is exactly READ_TOOLS | WRITE_TOOLS | {"Bash"} (8 tools).
+
+Negative controls for PP-39 (each restored with `cp` from a backup and
+re-greened before the next; never `git checkout --`). TWO of the three planned
+injections did not red as planned, and both are recorded here with the
+measurement rather than smoothed away.
+  I-67 `load_mode,` restored to the guard's
+       import AND called once
+       (`_ = load_mode()`)                -> ONE red, PP-39(b): "the mode
+                                             paragraph calls
+                                             ['cc10x_qa_isolation_guard.py']
+                                             unconditional, but it calls
+                                             load_mode -- the claim is false in
+                                             the other direction".
+                                             FIRST ATTEMPT WAS GREEN. PP-39(b)
+                                             was written as the plan words it
+                                             ("names every member of
+                                             unconditional"), i.e. one-sided
+                                             containment. I-67 SHRINKS
+                                             `unconditional` from 2 to 1, and
+                                             containment cannot see a paragraph
+                                             that names one hook too many. Per
+                                             the injection protocol -- an
+                                             injection that does not red means
+                                             the property is wrong, not the
+                                             injection -- (b) was strengthened
+                                             to SET EQUALITY between the `.py`
+                                             basenames inside W8 and the
+                                             computed set. Both directions are
+                                             now held.
+  I-68 the `PreToolUse` QA-isolation bullet deleted from the enumeration
+                                          -> NO RED. Recorded as measured, not
+                                             repaired. The plan predicted
+                                             "[FAIL] PP-39(a)", but PP-39(a) is
+                                             specified whole-file and edit 2
+                                             names `cc10x_qa_isolation_guard.py`
+                                             a SECOND time inside the mode
+                                             paragraph -- so deleting the
+                                             enumeration bullet leaves the
+                                             basename present. The prediction
+                                             was computed against the revision
+                                             where edit 2 named the two hooks in
+                                             PROSE; correcting that to basenames
+                                             (finding A5) is what made this
+                                             injection unfireable. CONSEQUENCE,
+                                             disclosed: the QA guard's own
+                                             enumeration bullet -- and only that
+                                             bullet -- is held by no property.
+                                             Each of the other four basenames
+                                             occurs exactly once, so their
+                                             bullets ARE held (see I-68b).
+  I-68b `TaskCompleted` bullet's `(`cc10x_task_completed_guard.py`)` removed
+                                          -> ONE red, PP-39(a):
+                                             "workflow-artifact-and-hook-policy
+                                             .md never names
+                                             ['cc10x_task_completed_guard.py']".
+                                             The substitute control, chosen
+                                             because that basename occurs once.
+  I-69 the mode paragraph's lead-in reworded to `- Hook mode defaults to
+       audit-only ...` (vacuity control for the window)
+                                          -> ONE red, PP-39(b) PRECONDITION:
+                                             "W8 has 0 opening and 1 closing
+                                             anchors ... any result over this
+                                             window would be vacuous". Without
+                                             the exactly-one-match assertion the
+                                             window would be 0B and the set
+                                             equality would compare two empty
+                                             sets.
+Measured state at green: 5 blocking hooks / 3 mode-aware / 2 unconditional
+({cc10x_git_guard.py, cc10x_qa_isolation_guard.py}); W8 = 1249B normative
+(962B before this commit's edit 2), carrying exactly those two `.py` tokens.
 """
 
 import ast
@@ -2453,6 +2523,43 @@ PROBE_TARGET = f"/tmp/pp6-probe-{os.getpid()}"
 # (latest_workflow_file() resolves by mtime). The pid keeps two concurrent runs
 # of this suite from colliding on one workflow id.
 PP13_WF_ID = f"wf-test-pp13-{os.getpid()}"
+
+# PP-39. The BLOCKING hook set, derived rather than transcribed.
+#
+# Revision 1 of this property demanded the policy name all 8 scripts
+# hooks.json references and computed `unconditional = 8 - 3 = 5`. Both halves
+# were wrong: `cc10x_event_logger.py` and `cc10x_state_persist.py` block
+# nothing, and `cc10x_sessionstart_context.py` runs at an event that cannot
+# block. A policy that omits a hook which never denies omits nothing. So the
+# scope is the set reachable from hooks.json at an event that CAN deny, whose
+# source carries a block path.
+#
+# Measured at this commit — 5 blocking scripts, 3 of them mode-aware:
+#   cc10x_pretooluse_guard.py            PreToolUse     load_mode: 1
+#   cc10x_git_guard.py                   PreToolUse     load_mode: 0  UNCOND
+#   cc10x_qa_isolation_guard.py          PreToolUse     load_mode: 0  UNCOND
+#   cc10x_posttooluse_artifact_guard.py  PostToolUse    load_mode: 1
+#   cc10x_task_completed_guard.py        TaskCompleted  load_mode: 1
+PP39_EVENTS = ("PreToolUse", "PostToolUse", "TaskCompleted")
+PP39_SCRIPT_REF = re.compile(r"([A-Za-z0-9_]+\.py)")
+PP39_BLOCK_PATH = re.compile(r"pretool_deny\s*\(|sys\.exit\(2\)|return 2\b")
+# The CALL, not the import. `cc10x_qa_isolation_guard.py` carried a dead
+# `load_mode,` import line with no parenthesis; an importing-but-never-calling
+# script is unconditional, and this regex is what makes that distinction.
+PP39_LOAD_MODE_CALL = re.compile(r"load_mode\s*\(")
+# Anti-vacuity floor, shape (a). `set() - set()` is empty and every membership
+# test over an empty set passes. 5 measured at this commit; if the block-path
+# regex stops matching the set shrinks and this floor is what notices.
+PP39_MIN_HOOKS = 5
+# W8 — the policy's mode paragraph. Window-anchored rather than whole-file
+# (vacuity shape (b)): the hook enumeration above it now carries the same
+# basenames, so `name in policy_text` would be satisfied by the enumeration
+# and would never see a false mode claim. R9 semantics: the end anchor is
+# searched over the whole text and required to match exactly once, AFTER the
+# start anchor — an end regex that matches its own start line yields a 0-byte
+# window in which every `not in` passes.
+PP39_W8_START = re.compile(r"(?m)^- Default mode is audit-only")
+PP39_W8_END = re.compile(r"(?m)^- Repo-local")
 
 failures: list[str] = []
 checked: list[str] = []
@@ -4981,6 +5088,133 @@ def main() -> int:
             )
         )
     check("PP-38(f)", pp38f_ok, pp38f_detail)
+
+    # ---- PP-39: every BLOCKING hook is enumerated in the policy, and the ----
+    # ---- policy's mode claim matches which of them call load_mode.       ----
+    #
+    # Both halves are computed from source. The enumeration is read out of the
+    # parsed hooks.json, never out of a literal list in this file: a hook added
+    # to hooks.json and not to the policy must be red here, and a transcribed
+    # list would stay green forever while the two drifted apart.
+    pp39_hooks = json.loads(HOOKS_JSON.read_text(encoding="utf-8"))
+    pp39_candidates: dict[str, Path] = {}
+    for _event in PP39_EVENTS:
+        for _entry in pp39_hooks.get("hooks", {}).get(_event, []):
+            for _h in _entry.get("hooks", []):
+                for _name in PP39_SCRIPT_REF.findall(_h.get("command") or ""):
+                    pp39_candidates[_name] = SCRIPTS / _name
+
+    pp39_blocking: dict[str, str] = {}
+    pp39_no_block: list[str] = []
+    for _name, _path in sorted(pp39_candidates.items()):
+        if not _path.exists():
+            pp39_no_block.append(f"{_name} (no such script)")
+            continue
+        _src = _path.read_text(encoding="utf-8")
+        if PP39_BLOCK_PATH.search(_src):
+            pp39_blocking[_name] = _src
+        else:
+            pp39_no_block.append(f"{_name} (no block path)")
+
+    pp39_mode_aware = sorted(
+        n for n, s in pp39_blocking.items() if PP39_LOAD_MODE_CALL.search(s)
+    )
+    pp39_unconditional = sorted(set(pp39_blocking) - set(pp39_mode_aware))
+    pp39_census = (
+        f"{len(pp39_blocking)} blocking / {len(pp39_mode_aware)} mode-aware / "
+        f"{len(pp39_unconditional)} unconditional {pp39_unconditional}"
+    )
+    # Anti-vacuity, asserted BEFORE either membership loop: an empty blocking
+    # set makes (a) iterate nothing and makes (b)'s `unconditional` empty, and
+    # both would pass while checking nothing.
+    pp39_precondition = (
+        ""
+        if len(pp39_blocking) >= PP39_MIN_HOOKS
+        else (
+            f"PRECONDITION failed: {len(pp39_blocking)} blocking hooks derived "
+            f"from {HOOKS_JSON.name} at {PP39_EVENTS}, expected >= "
+            f"{PP39_MIN_HOOKS} — the block-path regex has stopped matching "
+            f"(rejected: {pp39_no_block or 'none'}), so every membership "
+            f"result below is vacuous"
+        )
+    )
+
+    policy_norm = _normative(HOOK_POLICY.read_text(encoding="utf-8"))
+
+    # (a) enumeration completeness. A hook the policy never names is a hook
+    # nobody reading the policy knows can deny their tool call.
+    pp39a_unnamed = [n for n in sorted(pp39_blocking) if n not in policy_norm]
+    pp39a_ok = not pp39_precondition and not pp39a_unnamed
+    check(
+        "PP-39(a)",
+        pp39a_ok,
+        pp39_precondition
+        or (
+            f"{HOOK_POLICY.name} names all {len(pp39_blocking)} blocking hook "
+            f"scripts by basename ({pp39_census})"
+            if pp39a_ok
+            else (
+                f"{HOOK_POLICY.name} never names {pp39a_unnamed} — the policy "
+                f"enumerates hooks by event and purpose, so a reader cannot "
+                f"tell which file denies their call ({pp39_census})"
+            )
+        ),
+    )
+
+    # (b) the mode claim is arithmetically true, INSIDE the mode paragraph.
+    pp39_w8_s = list(PP39_W8_START.finditer(policy_norm))
+    pp39_w8_e = list(PP39_W8_END.finditer(policy_norm))
+    pp39b_fault = pp39_precondition
+    pp39_w8 = ""
+    if not pp39b_fault and (
+        len(pp39_w8_s) != 1
+        or len(pp39_w8_e) != 1
+        or not pp39_w8_s[0].end() < pp39_w8_e[0].start()
+    ):
+        pp39b_fault = (
+            f"PRECONDITION failed: W8 has {len(pp39_w8_s)} opening and "
+            f"{len(pp39_w8_e)} closing anchors in {HOOK_POLICY.name} (expected "
+            f"exactly 1 of each, in that order) — the mode paragraph's lead-in "
+            f"has moved or been reworded, and any result over this window "
+            f"would be vacuous"
+        )
+    elif not pp39b_fault:
+        pp39_w8 = policy_norm[pp39_w8_s[0].start() : pp39_w8_e[0].start()]
+        # SET EQUALITY, not containment. Containment is one-sided and misses
+        # the defect in the direction this phase actually travels: if a hook
+        # starts calling load_mode, it leaves `unconditional` while the
+        # paragraph still lists it, and a `names every member` test stays
+        # green on a paragraph that is now false. I-67 injects exactly that.
+        _declared = set(re.findall(r"[A-Za-z0-9_]+\.py", pp39_w8))
+        _unnamed = sorted(set(pp39_unconditional) - _declared)
+        _overnamed = sorted(_declared - set(pp39_unconditional))
+        if _unnamed or _overnamed:
+            pp39b_fault = (
+                (
+                    f"the mode paragraph does not name {_unnamed} — these "
+                    f"scripts never call load_mode and block whatever the mode "
+                    f"says, so a paragraph that omits them tells the reader the "
+                    f"mode switch covers hooks it does not cover. "
+                    if _unnamed
+                    else ""
+                )
+                + (
+                    f"the mode paragraph calls {_overnamed} unconditional, but "
+                    f"{'it calls' if len(_overnamed) == 1 else 'they call'} "
+                    f"load_mode — the claim is false in the other direction"
+                    if _overnamed
+                    else ""
+                )
+            ).strip()
+    pp39_w8_py = sorted(set(re.findall(r"[A-Za-z0-9_]+\.py", pp39_w8)))
+    check(
+        "PP-39(b)",
+        not pp39b_fault,
+        f"the mode paragraph declares unconditional exactly the hooks that do not call load_mode "
+        f"({pp39_census}; W8={len(pp39_w8.encode('utf-8'))}B normative, "
+        f".py tokens in window: {pp39_w8_py or 'none'})"
+        + ("" if not pp39b_fault else " — " + pp39b_fault),
+    )
 
     print(f"\nproperties checked: {', '.join(checked)}")
     if failures:

@@ -190,17 +190,19 @@ Workflow event log:
 Hook policy:
 
 - CC10X plugin hooks live in the plugin bundle under `hooks/hooks.json` and should stay minimal:
-  - `PreToolUse` for protected writes
+  - `PreToolUse` for protected writes (`cc10x_pretooluse_guard.py`)
+  - `PreToolUse` for git guardrails (`cc10x_git_guard.py`)
+  - `PreToolUse` for QA isolation (`cc10x_qa_isolation_guard.py`) — engages only when the active workflow's `workflow_type` is `QA`, and then blocks three things: reads of denylisted paths, file writes during a planning phase, and Bash mutations during a planning phase. Outside a QA workflow it decides nothing.
   - `SessionStart` for resume context (fires on startup|resume|compact)
-  - `PostToolUse` for workflow artifact integrity audit
-  - `TaskCompleted` for task metadata checks
+  - `PostToolUse` for workflow artifact integrity audit (`cc10x_posttooluse_artifact_guard.py`)
+  - `TaskCompleted` for task metadata checks (`cc10x_task_completed_guard.py`)
   - `PostCompact` for compaction event capture in workflow event log (audit only)
   - `SubagentStop` for agent contract presence audit (telemetry only)
   - `PreCompact` for workflow state snapshot before compaction (persistence only)
   - `Stop` for workflow state snapshot on session stop (persistence only, never blocks)
 - `StopFailure` for API error logging to workflow event log (async, telemetry only)
 - `InstructionsLoaded` for instruction file load audit trail (async, telemetry only)
-- Default mode is audit-only, with ONE exception: `artifactIntegrity` ships in `block` mode — the PostToolUse guard rejects (exit 2) a write to a workflow artifact that is malformed JSON or missing required keys. It blocks only writes to the artifact itself; writes to other files are audited, never blocked. Do not rely on hooks as the only source of truth; the router still owns orchestration decisions.
+- Default mode is audit-only for the hooks that consult `hook-mode.json`, with one exception there: `artifactIntegrity` ships in `block` mode — the PostToolUse guard rejects (exit 2) a write to a workflow artifact that is malformed JSON or missing required keys. It blocks only writes to the artifact itself; writes to other files are audited, never blocked. Two blocking hooks do not consult `hook-mode.json` at all and block unconditionally whatever the mode says: the PreToolUse git guard `cc10x_git_guard.py` (next bullet) and the PreToolUse QA isolation guard `cc10x_qa_isolation_guard.py`. Do not rely on hooks as the only source of truth; the router still owns orchestration decisions.
 - Git-guard approval token: the PreToolUse git guard blocks `git push` and `git branch -D` unconditionally UNLESS a fresh single-use token exists at `.cc10x/state/git-approval.json` (`{"wf", "operations": ["push"|"branch-delete"], "expires_at"}`, ≤10 min). Only the BUILD-DONE finishing gate writes this token, and only immediately after the user's explicit menu choice (see `build-workflow.md` §BUILD-DONE finishing). The guard consumes the token on first use. `git reset --hard`, `git clean -f`, force-push, and `git checkout .` have no token path.
 - Repo-local `.claude/settings.json` is not part of the shipped CC10X product.
 - Optional accelerator MCPs are user-configured in Claude Code. CC10X assumes the names `brightdata` and `octocode` if they are available, but must degrade to built-in research paths when they are absent.

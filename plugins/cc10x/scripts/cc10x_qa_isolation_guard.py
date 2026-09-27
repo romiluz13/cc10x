@@ -53,7 +53,6 @@ from pathlib import Path
 from cc10x_hooklib import (
     latest_workflow_payload,
     load_input,
-    load_mode,
     log_event,
     pretool_deny,
 )
