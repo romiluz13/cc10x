@@ -140,7 +140,7 @@ Dispatches the existing `cc10x:planner` with `cc10x:qa-strategy` in `SKILL_HINTS
 Bash(command="mkdir -p .cc10x/qa/{workflow_uuid} && cp \"${CLAUDE_PLUGIN_ROOT}/templates/qa-test-plan.template.md\" .cc10x/qa/{workflow_uuid}/test-plan.md && cp \"${CLAUDE_PLUGIN_ROOT}/templates/qa-env-plan.template.md\" .cc10x/qa/{workflow_uuid}/env-plan.md")
 ```
 
-Then fill them in place. A section that does not apply is marked `N/A` with a reason — **never deleted**. The mandatory sections (test plan §2 coverage table, §6 known gaps; env plan §9 teardown verification, §10 re-runnability) exist because they are exactly what a plan omits when it is optimistic, and an omitted section is invisible while an `N/A` is arguable.
+Then fill them in place. A section that does not apply is marked `N/A` with a reason — **never deleted**. The mandatory sections (test plan §2 coverage table, §7 known gaps; env plan §9 teardown verification, §10 re-runnability) exist because they are exactly what a plan omits when it is optimistic, and an omitted section is invisible while an `N/A` is arguable.
 
 **Environment topology gate — ask, detect, SHOW, confirm.** Before the plan agent writes `env-plan.md`:
 

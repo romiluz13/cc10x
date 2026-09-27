@@ -1351,6 +1351,85 @@ measurement rather than smoothed away.
 Measured state at green: 5 blocking hooks / 3 mode-aware / 2 unconditional
 ({cc10x_git_guard.py, cc10x_qa_isolation_guard.py}); W8 = 1249B normative
 (962B before this commit's edit 2), carrying exactly those two `.py` tokens.
+
+Negative controls for PP-40 (each restored with `cp` from a backup and
+re-greened before the next; never `git checkout --`). Four of the six defend a
+BRANCH of the verdict rule rather than the defect, because the risk here is not
+that the property misses B2 -- it is that a stricter rule reds correct prose.
+I-90 is the measurement of exactly that: the rule this property replaced.
+  I-70 `§7 known gaps` reverted to `§6` on qa-workflow.md's `Then fill them in
+       place.` line (the live defect, B2)
+                                          -> ONE red, PP-40: "qa-workflow.md:143
+                                             §6 'known gaps' names '## 7. Known
+                                             gaps', not '## 6. Test data'".
+  I-71 prefix inheritance deleted -- `_pp40_prefix` restricted to the 15
+       characters immediately before the citation, so only DIRECTLY prefixed
+       `§N` resolve       -> TWO reds in one line, both expected. Resolved drops
+                             10 -> 6 (below the floor of 8) and the
+                             undescriptive class empties, because both its
+                             members are inherited: "PRECONDITION: only 6
+                             citations resolved, floor is 8 ...; the
+                             undescriptive class is not PP40_UNDESCRIPTIVE:
+                             joined [], left [('qa-workflow.md', 119, 2),
+                             ('qa-workflow.md', 119, 4)]". The four citations
+                             lost are :119 §4, :119 §2, :143 §7 and :143 §10 --
+                             B2's OWN citation is inherited, so without
+                             inheritance this property is green on the live
+                             defect.
+  I-72 token overlap replaced by case-folded equality of the whole trailing
+       phrase against the title (the over-strict control)
+                                          -> ZERO mismatches and ONE
+                                             set-equality red. The undescriptive
+                                             class grows 2 -> 6: joined
+                                             [('qa-harness-builder.md', 137, 11),
+                                             ('qa-workflow.md', 119, 7),
+                                             ('qa-workflow.md', 143, 2),
+                                             ('qa-workflow.md', 143, 9)], every
+                                             one a CORRECT citation. Recorded in
+                                             full because the prediction this
+                                             control shipped with was "six
+                                             mismatches": under a four-branch
+                                             rule an over-strict branch 2 falls
+                                             through to branch 3, finds no OTHER
+                                             title it equals either, and lands in
+                                             branch 4. An over-strict matcher
+                                             does not produce mismatches here --
+                                             it produces silence, and the set
+                                             equality is the only thing that
+                                             hears it.
+  I-90 branches 1, 3 and 4 collapsed into "zero token overlap = MISMATCH" -- the
+       rule this property replaced     -> THREE mismatches, every one a correct
+                                          citation: `qa-env-plan.template.md:71
+                                          §3 ""`, `qa-workflow.md:119 §4 "wave
+                                          count and in the"`, `:119 §2 "id
+                                          rollups"`. Plus the set-equality red
+                                          (the class empties) and the floor
+                                          (7 < 8, because the three left the
+                                          resolved side). This is the injection
+                                          that reproduces what a one-comparison
+                                          rule would ship: it asserts that every
+                                          citation's trailing words paraphrase
+                                          its heading, which is not how prose is
+                                          written.
+  I-92 `re.split(r"[^0-9A-Za-z-]+")` -- hyphens no longer split
+                                          -> ONE set-equality red, naming one
+                                             citation: joined
+                                             [('qa-workflow.md', 119, 7)].
+                                             `known-gaps table` stops overlapping
+                                             `## 7. Known gaps`. No mismatch at
+                                             all -- as a printed-only list this
+                                             regression would have been silent.
+  I-93 the trailing-`s` stem dropped -> ONE set-equality red, naming one
+                                        citation: joined
+                                        [('qa-harness-builder.md', 137, 11)].
+                                        `blocker` stops matching `Blockers`.
+                                        Silent for the same reason as I-92.
+Measured state at green: 10 prefixed citations over the three files -- 7 matched
+/ 1 fallback / 2 undescriptive -- plus 43 no-prefix, 53 `§N` seen in total. PP-9
+is untouched and prints `0 bad, 49 unresolved-and-skipped` before and after the
+`§6` -> `§7` edit: it is a SIBLING of PP-40, not its predecessor, and resolves
+only `env plan`-prefixed citations, so the digit it never resolved is a digit it
+still never resolves.
 """
 
 import ast
@@ -2445,6 +2524,152 @@ PP33_STAMP_SIBLINGS = (
     ("triage-workflow.md", "TRIAGE"),
     ("codebase-health-workflow.md", "CODEBASE-HEALTH"),
 )
+
+
+# PP-40. A `§N` citation whose trailing words name a section must not name a
+# DIFFERENT section than the number does. Sibling of PP-9, not a rewrite of it:
+# PP-9 asks whether the cited number EXISTS, which is why B2 -- `test plan §6
+# known gaps` against a template whose `## 6.` is `Test data` and whose `## 7.`
+# is `Known gaps` -- was green for as long as the digit was wrong. Existence is
+# not resolution.
+#
+# The verdict rule is FOUR branches, and each one was forced by a measured false
+# red on a CORRECT citation:
+#   1. no trailing content tokens      -> RESOLVED (fallback). A citation that
+#      names no words cannot contradict a title. (`qa-env-plan.template.md:71`,
+#      `see test plan §3.`)
+#   2. tokens overlap the cited title  -> RESOLVED.
+#   3. tokens overlap a DIFFERENT title in the same template -> MISMATCH. This
+#      branch is the whole property: it fires only when the words name another
+#      section that actually EXISTS, which is exactly what a wrong digit looks
+#      like, and is exactly B2.
+#   4. tokens overlap no heading at all -> RESOLVED-UNDESCRIPTIVE. The trailing
+#      words describe the CITING sentence rather than the cited section, so the
+#      citation makes no title claim to check. `qa-workflow.md:119` cites `§4
+#      wave count` and `§2 id rollups`; no tokeniser makes `wave count` overlap
+#      `Scenarios`. A rule that reds these asserts that every citation
+#      paraphrases its heading, which is not how prose is written. I-90 injects
+#      exactly that rule and reds three correct citations.
+#   5. the number is not a heading at all -> MISMATCH (`no such heading`).
+PP40_MIN_CITATIONS = 8
+# Matches `test plan`, `test-plan`, `test-plan.md` -- and the same for env.
+# Deliberately as wide as PP-9's own rule (`"env plan" in prefix or "env-plan"`):
+# a PP-40 narrower than PP-9 would leave a citation that PP-9 resolves by
+# EXISTENCE and that nobody ever title-checks, which is the hole this property
+# exists to close.
+PP40_PREFIX_VOCAB = {
+    "test": re.compile(r"test[-\s]plan"),
+    "env": re.compile(r"env[-\s]plan"),
+}
+PP40_STOPWORDS = {
+    "the", "a", "an", "and", "or", "of", "to", "in", "for", "its", "it", "s",
+    "this", "that", "see", "plan", "table", "list",
+}
+# Trailing words end at the first of these. `§` is in the set because
+# `qa-workflow.md:119` reads `...the §4 wave count and in the §2 id rollups**`:
+# without it the trailing words of §4 run past §2 and pick up unrelated prose.
+# The 6-word cap is the same defence for lines with no terminator nearby.
+PP40_TERMINATORS = (",", ";", ")", "|", ".", "—", "§", "**")
+PP40_WORD_CAP = 6
+PP40_CITATION = re.compile(r"§(\d+)")
+PP40_HEADING = re.compile(r"^## (\d+)\. (.+)$", re.M)
+# Citations whose trailing words describe the citing sentence rather than the
+# cited section. Measured; both are correct citations. SET EQUALITY, not
+# containment: a citation that JOINS this class is a tokeniser regression, and
+# one that LEAVES it is a prose edit nobody recorded. Either way, red. I-92 and
+# I-93 are both silent unless this is an equality -- each moves exactly one
+# correct citation INTO the class and produces no mismatch at all.
+PP40_UNDESCRIPTIVE = {
+    ("qa-workflow.md", 119, 4),   # "wave count and in the"  vs  ## 4. Scenarios
+    ("qa-workflow.md", 119, 2),   # "id rollups"             vs  ## 2. Coverage plan
+}
+# There is no exclusion list. The seven unprefixed `§N` in
+# `qa-harness-builder.md`'s 64-71 table fall into the NO-PREFIX branch already --
+# the bucket PP-9's unresolved contract owns -- and never reach the title
+# comparison. A line-range exclusion over 64-71 would additionally drop `:70`,
+# the one row in that table carrying an in-cell `test plan` prefix, which DOES
+# resolve. An exclusion that only restates what the no-prefix branch does is a
+# rule with nothing to do and a line range to rot.
+
+
+def _pp40_tokens(text: str) -> set[str]:
+    """Split on every non-alphanumeric run (hyphens INCLUDED), case-fold, drop
+    stopwords, then stem a single trailing `s` from any token of length >= 4.
+
+    Both halves close a measured false red on a correct citation:
+      hyphens -- `qa-workflow.md:119` cites `§7 known-gaps table` against
+                 `## 7. Known gaps`; unsplit, `known-gaps` is one token and the
+                 overlap is 0. Control I-92.
+      stem    -- `qa-harness-builder.md:137` cites `env-plan.md §11's predicted
+                 blocker list` against `## 11. Blockers and open decisions`;
+                 `blocker` != `blockers` and the overlap is 0. Control I-93.
+    """
+    out: set[str] = set()
+    for tok in re.split(r"[^0-9A-Za-z]+", text):
+        tok = tok.casefold()
+        if not tok or tok in PP40_STOPWORDS:
+            continue
+        if len(tok) >= 4 and tok.endswith("s"):
+            tok = tok[:-1]
+        out.add(tok)
+    return out
+
+
+def _pp40_headings(path: Path) -> dict[int, str]:
+    return {
+        int(m.group(1)): m.group(2).strip()
+        for m in PP40_HEADING.finditer(path.read_text(encoding="utf-8"))
+    }
+
+
+def _pp40_normative_lines(text: str) -> set[int]:
+    """1-based line numbers inside spans `_normative()` deletes.
+
+    PP-40 iterates the RAW file and skips these, rather than slicing
+    `_normative(text)` and iterating that: line numbers in normalised text are
+    not file line numbers, and every number this property prints must be one a
+    human can open the file to.
+    """
+    skipped: set[int] = set()
+    for pattern, flags in (
+        (r"<!--.*?-->", re.DOTALL),
+        (r"^```.*?^```", re.DOTALL | re.MULTILINE),
+    ):
+        for m in re.finditer(pattern, text, flags):
+            first = text.count("\n", 0, m.start()) + 1
+            last = text.count("\n", 0, m.end()) + 1
+            skipped.update(range(first, last + 1))
+    return skipped
+
+
+def _pp40_trailing(rest: str) -> str:
+    """Trailing words of a citation: drop a leading `'s`, cut at the first
+    terminator, cap at PP40_WORD_CAP words."""
+    if rest.startswith("'s"):
+        rest = rest[2:]
+    cut = len(rest)
+    for term in PP40_TERMINATORS:
+        found = rest.find(term)
+        if found != -1:
+            cut = min(cut, found)
+    return " ".join(rest[:cut].split()[:PP40_WORD_CAP])
+
+
+def _pp40_prefix(line: str, upto: int) -> str | None:
+    """Most recent prefix-vocabulary match on this LINE before `upto`.
+
+    Inheritance is line-scoped: `test plan §2 coverage table, §6 known gaps`
+    resolves BOTH numbers against the test-plan template. Without it, resolved
+    drops 10 -> 6 and B2's own citation stops being checked (control I-71).
+    Where both vocabularies match, the later one wins: `... test plan §2 ...;
+    env plan §9 ...` switches template mid-line.
+    """
+    best, prefix = -1, None
+    for key, rx in PP40_PREFIX_VOCAB.items():
+        for m in rx.finditer(line[:upto]):
+            if m.start() >= best:
+                best, prefix = m.start(), key
+    return prefix
 
 
 def _pp33_raw_lineno(raw: str, line: str) -> int:
@@ -5214,6 +5439,101 @@ def main() -> int:
         f"({pp39_census}; W8={len(pp39_w8.encode('utf-8'))}B normative, "
         f".py tokens in window: {pp39_w8_py or 'none'})"
         + ("" if not pp39b_fault else " — " + pp39b_fault),
+    )
+
+    # ---------------------------------------------------------------- PP-40
+    # Sibling of PP-9. PP-9 asks whether `§N` EXISTS; PP-40 asks whether the
+    # words next to it name the section the number points at. B2 lived in the
+    # gap: `test plan §6 known gaps` is a citation whose number exists and whose
+    # words name `## 7. Known gaps`. See the constants block for the four-branch
+    # verdict rule and why each branch exists.
+    pp40_titles = {
+        "test": _pp40_headings(QA_TEST_PLAN_TPL),
+        "env": _pp40_headings(ENV_PLAN_TPL),
+    }
+    pp40_title_tokens = {
+        vocab: {num: _pp40_tokens(title) for num, title in titles.items()}
+        for vocab, titles in pp40_titles.items()
+    }
+    pp40_mismatches: list[str] = []
+    pp40_undescriptive: set[tuple[str, int, int]] = set()
+    pp40_matched = pp40_fallback = pp40_noprefix = 0
+    pp40_hits: dict[str, int] = {}
+    for pp40_path in (ENV_PLAN_TPL, HARNESS_AGENT, QA_WORKFLOW):
+        pp40_text = pp40_path.read_text(encoding="utf-8")
+        pp40_skip = _pp40_normative_lines(pp40_text)
+        pp40_hits[pp40_path.name] = 0
+        for pp40_lineno, pp40_line in enumerate(pp40_text.splitlines(), 1):
+            if pp40_lineno in pp40_skip:
+                continue
+            for cite in PP40_CITATION.finditer(pp40_line):
+                pp40_hits[pp40_path.name] += 1
+                num = int(cite.group(1))
+                vocab = _pp40_prefix(pp40_line, cite.start())
+                if vocab is None:
+                    pp40_noprefix += 1          # SKILL.md / RFC / bare / ambiguous
+                    continue
+                titles = pp40_titles[vocab]
+                title_tokens = pp40_title_tokens[vocab]
+                words = _pp40_trailing(pp40_line[cite.end():])
+                cited = _pp40_tokens(words)
+                where = f"{pp40_path.name}:{pp40_lineno}"
+                if num not in titles:           # branch 5
+                    pp40_mismatches.append(
+                        f'{where} §{num} "{words}" — no such heading in the '
+                        f"{vocab}-plan template"
+                    )
+                elif not cited:                 # branch 1
+                    pp40_fallback += 1
+                elif cited & title_tokens[num]:  # branch 2
+                    pp40_matched += 1
+                else:
+                    other = [
+                        m for m in sorted(titles) if m != num and cited & title_tokens[m]
+                    ]
+                    if other:                   # branch 3 -- the whole property
+                        named = other[0]
+                        pp40_mismatches.append(
+                            f'{where} §{num} "{words}" names '
+                            f'"## {named}. {titles[named]}", not '
+                            f'"## {num}. {titles[num]}"'
+                        )
+                    else:                       # branch 4
+                        pp40_undescriptive.add((pp40_path.name, pp40_lineno, num))
+    pp40_resolved = pp40_matched + pp40_fallback + len(pp40_undescriptive)
+    # Anti-vacuity, asserted BEFORE the mismatch list. (a) a floor on the
+    # enumerated corpus -- a resolver that silently stops resolving reports zero
+    # mismatches and is indistinguishable from a clean tree. The floor sits clear
+    # of the true count (10) so it does not do the membership half's job.
+    # (c) the citation regex matched in every file scanned.
+    pp40_faults: list[str] = []
+    if pp40_resolved < PP40_MIN_CITATIONS:
+        pp40_faults.append(
+            f"PRECONDITION: only {pp40_resolved} citations resolved, floor is "
+            f"{PP40_MIN_CITATIONS} — the resolver stopped resolving and a "
+            f"resolver that resolves nothing reports no mismatches"
+        )
+    pp40_dead = sorted(name for name, n in pp40_hits.items() if n == 0)
+    if pp40_dead:
+        pp40_faults.append(
+            f"PRECONDITION: the §N regex matched nothing in {pp40_dead}"
+        )
+    if pp40_undescriptive != PP40_UNDESCRIPTIVE:
+        pp40_faults.append(
+            "the undescriptive class is not PP40_UNDESCRIPTIVE: joined "
+            f"{sorted(pp40_undescriptive - PP40_UNDESCRIPTIVE)}, left "
+            f"{sorted(PP40_UNDESCRIPTIVE - pp40_undescriptive)}"
+        )
+    pp40_faults.extend(pp40_mismatches)
+    check(
+        "PP-40",
+        not pp40_faults,
+        f"every prefixed §N citation's trailing words name the section its "
+        f"number names ({pp40_matched} matched / {pp40_fallback} fallback / "
+        f"{len(pp40_undescriptive)} undescriptive / {pp40_noprefix} no-prefix "
+        f"= {pp40_matched + pp40_fallback + len(pp40_undescriptive) + pp40_noprefix + len(pp40_mismatches)} "
+        f"§N seen; undescriptive={sorted(pp40_undescriptive)})"
+        + ("" if not pp40_faults else " — " + "; ".join(pp40_faults)),
     )
 
     print(f"\nproperties checked: {', '.join(checked)}")
