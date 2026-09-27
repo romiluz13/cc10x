@@ -272,7 +272,15 @@ def main() -> int:
     if denied_reads:
         candidates: list[str] = []
         if tool_name in READ_TOOLS:
-            for key in ("file_path", "path", "pattern"):
+            # `notebook_path` is the key the Notebook tools pass; every other
+            # read tool passes file_path/path/pattern. Omitting it collected no
+            # candidates for NotebookRead, so the loop below never ran and a
+            # quarantined notebook was ALLOWED. The new key is appended to the
+            # same candidate list and is matched by the same `_matches`, so it
+            # inherits the resolve-and-compare semantics rather than bypassing
+            # them.
+            # OX Agent: Improper Access Control prevented
+            for key in ("file_path", "path", "pattern", "notebook_path"):
                 val = tool_input.get(key)
                 if isinstance(val, str):
                     candidates.append(val)
@@ -298,7 +306,15 @@ def main() -> int:
         reason = None
 
         if tool_name in WRITE_TOOLS:
-            target = tool_input.get("file_path") or ""
+            # Same missing key, opposite defect. NotebookEdit passes
+            # `notebook_path`, so `target` was always "" and the allowlist
+            # escape below (`if target and ...`) was unreachable: a notebook
+            # write INTO the allowlist was wrongly denied. The fallback chain
+            # ends in `or ""` and NOT in an unconditional allow -- a notebook
+            # path outside the allowlist still reaches `_matches` and is still
+            # denied.
+            # OX Agent: Improper Access Control prevented
+            target = tool_input.get("file_path") or tool_input.get("notebook_path") or ""
             reason = f"{tool_name} writes a file"
         elif tool_name == "Bash":
             command = tool_input.get("command") or ""

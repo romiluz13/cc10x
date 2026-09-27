@@ -1231,6 +1231,56 @@ subcommand is a flag and the parser is flag-blind by design. Step 0a's
 documented probes were re-measured against the fixed guard and all ALLOW --
 `docker info`, `podman info`, the file-presence checks, the dependency-manifest
 reads and the `which`/`command -v` lookups.
+
+Negative controls for PP-38 (each restored with `cp` from a backup and
+re-greened before the next; never `git checkout --`). Four injections because
+the three edits are independently necessary and one of them is invisible to the
+other two's checks.
+  I-63 `for key in ("file_path", "path", "pattern"):`
+       (the denylist tuple reverted)      -> ONE red, PP-38(a): "NotebookRead
+                                             '/tmp/pp38-secret.ipynb' -> ALLOW,
+                                             want DENY". (b) stays green, which
+                                             localises the red to the key
+                                             lookup and not to `_matches`.
+  I-64 `target = tool_input.get("file_path") or ""`
+       (the write-branch fallback reverted)
+                                          -> ONE red, PP-38(c): "NotebookEdit
+                                             '.cc10x/qa/pp38.ipynb' -> DENY,
+                                             want ALLOW". This is the FALSE-DENY
+                                             half, and it was live at HEAD:
+                                             NotebookEdit was already in the
+                                             matcher, so a notebook write into
+                                             the workflow's own directory was
+                                             being blocked in production.
+                                             (d) and (e) stay green.
+  I-65 `NotebookRead` removed from the hooks.json matcher
+                                          -> ONE red, PP-38(f). Note what does
+                                             NOT go red: PP-38(a) stays GREEN
+                                             throughout, because (a)-(e) invoke
+                                             the guard as a subprocess over
+                                             stdin and never consult the
+                                             PreToolUse matcher. A guard that
+                                             decides correctly and is never
+                                             invoked is indistinguishable from
+                                             a correct guard at the subprocess
+                                             seam. That is the whole reason (f)
+                                             exists as a separate check rather
+                                             than as an assertion inside (a).
+  I-66 `READ_TOOLS = {..., "Sparkle"}` (a tool added to the guard but not to
+       the matcher)                       -> ONE red, PP-38(f): "matcher
+                                             'Read|Grep|Glob|NotebookRead|Edit|
+                                             Write|NotebookEdit|Bash' never
+                                             fires for ['Sparkle']". This is the
+                                             frozen-copy control: (f) imports
+                                             READ_TOOLS/WRITE_TOOLS from the
+                                             live guard module via load_guard()
+                                             rather than transcribing them, so
+                                             the two sets cannot drift apart
+                                             silently. A hard-coded copy of the
+                                             sets would stay green here forever.
+Measured state at green: NotebookRead of a denylisted path DENIES, NotebookEdit
+into the allowlist ALLOWS, NotebookEdit outside it still DENIES, and the matcher
+is exactly READ_TOOLS | WRITE_TOOLS | {"Bash"} (8 tools).
 """
 
 import ast
@@ -1256,6 +1306,7 @@ PLAN_WORKFLOW = ROUTER / "references" / "plan-workflow.md"
 REMEDIATION = ROUTER / "references" / "remediation-and-research.md"
 PLANNER_AGENT = PLUGIN / "agents" / "planner.md"
 ARTIFACT_GUARD = SCRIPTS / "cc10x_posttooluse_artifact_guard.py"
+HOOKS_JSON = PLUGIN / "hooks" / "hooks.json"
 SKELETON = ROUTER / "references" / "workflow-artifact.skeleton.json"
 REFERENCES = ROUTER / "references"
 
@@ -4737,6 +4788,199 @@ def main() -> int:
             else " -- " + "; ".join(pp37_pre + pp37_wrong_allow)
         ),
     )
+
+    # ---- PP-38: the guard reads the key each tool actually passes, and the ---
+    # matcher invokes it for every tool it handles.
+    #
+    # Claude Code's notebook tools pass `notebook_path`, not `file_path`. The
+    # guard's denylist branch read only ("file_path", "path", "pattern") and its
+    # plan-phase write branch read only `file_path`, so ONE missing key produced
+    # two opposite defects:
+    #   (a) a denylisted notebook was ALLOWED -- the quarantine was unreachable;
+    #   (c) `target` was always "" for NotebookEdit, so the allowlist escape
+    #       (`if target and ... _matches(target, allowlist)`) could not fire and
+    #       a notebook write INTO `.cc10x/` was wrongly DENIED. That one is live
+    #       today: NotebookEdit is already in the matcher.
+    # (b) and (d) are the non-notebook controls: they pin that the denylist and
+    # the allowlist themselves still behave, so a red on (a)/(c) localises to
+    # the key lookup rather than to the matching semantics.
+    #
+    # (e) is not redundant with (c). The cheap way to "fix" the false-deny is to
+    # make NotebookEdit's target unconditionally allowed, which passes (c) and
+    # (d) and installs a NEW fail-open: notebook writes anywhere on disk during
+    # a planning phase. (e) is the probe that refuses that fix.
+    #
+    # (f) is a separate check because (a)-(e) invoke the guard directly over
+    # stdin and therefore BYPASS the PreToolUse matcher entirely. Every one of
+    # them stays green while `NotebookRead` is absent from `hooks.json` and the
+    # guard is consequently never invoked for it in production. The key fix and
+    # the matcher fix are independently necessary, so they need independent
+    # checks.
+    pp38_denylist = ["/tmp/pp38-secret*"]
+
+    def pp38_artifact(denied: list[str] | None = None) -> dict:
+        payload = artifact("qa-plan")
+        payload["qa"]["isolation"]["denied_reads"] = denied or []
+        return payload
+
+    # want=True means DENY. Each row is (id, artifact, tool payload, want_deny).
+    pp38_cases = [
+        (
+            "a",
+            pp38_artifact(pp38_denylist),
+            {
+                "tool_name": "NotebookRead",
+                "tool_input": {"notebook_path": "/tmp/pp38-secret.ipynb"},
+            },
+            True,
+        ),
+        (
+            "b",
+            pp38_artifact(pp38_denylist),
+            {
+                "tool_name": "Read",
+                "tool_input": {"file_path": "/tmp/pp38-secret.md"},
+            },
+            True,
+        ),
+        (
+            "c",
+            pp38_artifact(),
+            {
+                "tool_name": "NotebookEdit",
+                "tool_input": {"notebook_path": ".cc10x/qa/pp38.ipynb"},
+            },
+            False,
+        ),
+        (
+            "d",
+            pp38_artifact(),
+            {
+                "tool_name": "Write",
+                "tool_input": {"file_path": ".cc10x/qa/pp38.md"},
+            },
+            False,
+        ),
+        (
+            "e",
+            pp38_artifact(),
+            {
+                "tool_name": "NotebookEdit",
+                "tool_input": {"notebook_path": "/tmp/pp38-out.ipynb"},
+            },
+            True,
+        ),
+    ]
+    # None of these paths is created, read or written: the guard is a PreToolUse
+    # hook that inspects the tool input and returns a decision on stdout.
+    pp38_results: dict[str, str] = {}
+    with tempfile.TemporaryDirectory() as tmp:
+        pp38_dir = Path(tmp)
+        for case_id, payload, tool_payload, want_deny in pp38_cases:
+            r = run_guard_raw(pp38_dir, payload, tool_payload)
+            got_deny = '"permissionDecision": "deny"' in r.stdout
+            stderr_tail = (r.stderr.strip().splitlines() or [""])[-1]
+            if r.returncode != 0 or r.stderr != "":
+                pp38_results[case_id] = (
+                    f"{tool_payload['tool_name']} -> rc={r.returncode} "
+                    f"stderr={stderr_tail!r} (a crashing guard emits no decision "
+                    f"and reads as ALLOW)"
+                )
+            elif got_deny != want_deny:
+                pp38_results[case_id] = (
+                    f"{tool_payload['tool_name']} "
+                    f"{sorted(tool_payload['tool_input'].values())[0]!r} -> "
+                    f"{'DENY' if got_deny else 'ALLOW'}, "
+                    f"want {'DENY' if want_deny else 'ALLOW'}"
+                )
+
+    check(
+        "PP-38(a)",
+        "a" not in pp38_results,
+        "NotebookRead of a denylisted notebook_path is DENIED"
+        + ("" if "a" not in pp38_results else " -- " + pp38_results["a"]),
+    )
+    check(
+        "PP-38(b)",
+        "b" not in pp38_results,
+        "control: Read of a denylisted file_path is DENIED"
+        + ("" if "b" not in pp38_results else " -- " + pp38_results["b"]),
+    )
+    check(
+        "PP-38(c)",
+        "c" not in pp38_results,
+        "NotebookEdit of an allowlisted notebook_path is ALLOWED at qa-plan"
+        + ("" if "c" not in pp38_results else " -- " + pp38_results["c"]),
+    )
+    check(
+        "PP-38(d)",
+        "d" not in pp38_results,
+        "control: Write of an allowlisted file_path is ALLOWED at qa-plan"
+        + ("" if "d" not in pp38_results else " -- " + pp38_results["d"]),
+    )
+    check(
+        "PP-38(e)",
+        "e" not in pp38_results,
+        "NotebookEdit OUTSIDE the allowlist is still DENIED at qa-plan -- (c) "
+        "is the allowlist working, not the notebook branch going silent"
+        + ("" if "e" not in pp38_results else " -- " + pp38_results["e"]),
+    )
+
+    # PP-38(f). hooks.json is parsed as JSON and the QA guard's own entry is
+    # located by its command string. A whole-file grep for "NotebookRead" is
+    # satisfied by ANY other hook's matcher in the same file -- vacuity shape
+    # (b). The required set is IMPORTED from the live guard module rather than
+    # transcribed, so adding a tool to READ_TOOLS/WRITE_TOOLS without adding it
+    # to the matcher is red (I-66); a hard-coded copy would stay green forever
+    # while the real sets drift.
+    pp38f_guard = load_guard()
+    pp38_required = (
+        set(pp38f_guard.READ_TOOLS) | set(pp38f_guard.WRITE_TOOLS) | {"Bash"}
+    )
+    pp38_hooks = json.loads(HOOKS_JSON.read_text(encoding="utf-8"))
+    pp38_entries = [
+        entry
+        for matchers in pp38_hooks.get("hooks", {}).values()
+        for entry in matchers
+        if any(
+            "cc10x_qa_isolation_guard.py" in (h.get("command") or "")
+            for h in entry.get("hooks", [])
+        )
+    ]
+    pp38f_detail = ""
+    # Anti-vacuity, asserted BEFORE the containment test: zero entries makes the
+    # loop iterate nothing, and an empty required set makes containment
+    # vacuously true. 1 entry and 8 required tools measured at this commit.
+    if len(pp38_entries) != 1:
+        pp38f_ok = False
+        pp38f_detail = (
+            f"PRECONDITION failed: {len(pp38_entries)} hooks.json entries invoke "
+            f"cc10x_qa_isolation_guard.py, expected exactly 1 -- any matcher "
+            f"result below is vacuous"
+        )
+    elif len(pp38_required) < 8:
+        pp38f_ok = False
+        pp38f_detail = (
+            f"PRECONDITION failed: READ_TOOLS | WRITE_TOOLS | {{Bash}} holds "
+            f"{len(pp38_required)} tools, expected >= 8 -- the guard's tool sets "
+            f"have been emptied, so any containment result below is vacuous"
+        )
+    else:
+        pp38_matcher = pp38_entries[0].get("matcher") or ""
+        pp38_declared = {t for t in pp38_matcher.split("|") if t}
+        pp38_missing = sorted(pp38_required - pp38_declared)
+        pp38f_ok = not pp38_missing
+        pp38f_detail = (
+            f"hooks.json matcher declares all {len(pp38_required)} tools the "
+            f"guard handles (READ_TOOLS | WRITE_TOOLS | {{Bash}})"
+            if pp38f_ok
+            else (
+                f"matcher {pp38_matcher!r} never fires for {pp38_missing} -- "
+                f"the guard is not invoked for them at all, so the key fix "
+                f"above is unreachable in production"
+            )
+        )
+    check("PP-38(f)", pp38f_ok, pp38f_detail)
 
     print(f"\nproperties checked: {', '.join(checked)}")
     if failures:
