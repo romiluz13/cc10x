@@ -135,10 +135,12 @@ When `plan-gap-reviewer` pass 2 returns `PASS`:
 When the planner amends a saved plan after last_reviewed_revision was set:
 
 - Applies to a router amendment, an accepted-finding revision, or any edit to `PLAN_FILE` made while the review status is already terminal.
-- Increment `plan_revision += 1`
 - Set `planning_review_status=revised_after_review`
+- **Then** increment `plan_revision += 1`
 - Do **not** set `last_reviewed_revision`
 - `planning_review_runs` is **unchanged** — an amendment is not a fresh pass
+
+The order of the first two is load-bearing, not stylistic: incrementing `plan_revision` while the status still reads `passed` creates a transitional state where a `passed` status coexists with `plan_revision != last_reviewed_revision` — the exact pairing the PostToolUse closure check treats as a defect. Set the status first, so the artifact is never caught mid-amendment with a closed status over mismatched revisions.
 
 Reaching the fresh-review cap is a stopping point, not closure. `revised_after_review` is the status after any amendment, and `passed` is unreachable while `plan_revision` and `last_reviewed_revision` differ.
 

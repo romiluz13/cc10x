@@ -605,7 +605,7 @@ WORKFLOW STATE (.cc10x/workflows/)
 | **researcher** | Web + GitHub research (Bright Data / Octocode MCP accelerators, built-in fallbacks) | Saves findings to file |
 | **triage-agent** | Triages incoming issues/PRs | Read-only; categorizes, verifies, checks redundancy + prior rejection, writes agent-ready briefs |
 | **architecture-scanner** | Codebase health audit | Read-only; scans for shallow modules + deepening candidates, produces HTML report with before/after diagrams |
-| **qa-researcher** | QA route: surveys the system under test | Read-only; produces the feature map and the test plan's scenario matrix with pipeline-wide observation points |
+| **qa-researcher** | QA route: surveys ONE source (code, spec docs, tickets, or cc10x artifacts) | Read-only; produces a per-source report (user flow, system flow, user action inventory, observation points) that the router consolidates into the feature map — it does not write the test plan |
 | **qa-harness-builder** | QA route: builds the test environment | Provisions services, isolation and fixtures; extends the existing live-harness manifest, never forks it |
 | **qa-executor** | QA route: runs the plan and reports | Fills the router-seeded `qa-report.template.md` in place; teardown is verified, not assumed |
 
@@ -634,7 +634,7 @@ Skills are **loaded automatically by agents**. You never invoke them directly.
 | **codebase-design** | planner, builder, investigator, reviewer (router-gated) | Canonical deep-module vocabulary: module, interface, depth, seam, adapter, leverage, locality |
 | **domain-modeling** | planner, doc-syncer (active); builder, investigator (read-only) | Active glossary discipline: challenge terms, sharpen language, write CONTEXT.md + ADRs |
 | **mcp-cli** | researcher | On-demand MCP server use without permanent context pollution |
-| **qa-strategy** | qa-researcher, qa-harness-builder, qa-executor | Test-system design: tier selection, scenario matrices, environment topology, fixture lifecycle, flake sources |
+| **qa-strategy** | qa-researcher, qa-harness-builder, qa-executor (and read as a coverage lens by plan-gap-reviewer on QA plan reviews) | Test-system design: tier selection, scenario matrices, environment topology, fixture lifecycle, flake sources |
 | **update** | maintainers | Maintenance meta-skill for updating cc10x itself |
 | **cc10x-guide** | users asking about cc10x (model-invoked) | Answers questions about cc10x itself: install, setup, workflows, memory, troubleshooting; never executes work |
 | **resolving-merge-conflicts** | any agent hitting a git conflict (model-invoked) | Resolve merge/rebase conflicts hunk by hunk by intent; never --abort |

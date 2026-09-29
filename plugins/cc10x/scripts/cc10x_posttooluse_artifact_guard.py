@@ -60,7 +60,18 @@ def review_closure_reason(payload: dict) -> str | None:
     reviewed = payload.get("last_reviewed_revision")
     if current is None or reviewed is None:
         return None  # legacy or half-migrated artifact
-    if current != reviewed:
+    # Coerce to int defensively: a hand-edited or half-migrated artifact can
+    # carry "2" (string) against 2 (int). The raw `!=` would then report a
+    # closure defect on values that are numerically equal, so compare the
+    # coerced pair and fall back to the raw comparison when either side is
+    # not coercible (a truly non-numeric revision IS a mismatch worth naming).
+    try:
+        current_i, reviewed_i = int(current), int(reviewed)
+    except (TypeError, ValueError):
+        if current != reviewed:
+            return f"review-closure:plan_revision={current},last_reviewed_revision={reviewed}"
+        return None
+    if current_i != reviewed_i:
         return f"review-closure:plan_revision={current},last_reviewed_revision={reviewed}"
     return None
 

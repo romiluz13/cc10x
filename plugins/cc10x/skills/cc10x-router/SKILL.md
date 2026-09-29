@@ -119,7 +119,7 @@ kind:{workflow|agent|remfix|memory|reverify|research}
 origin:{router|component-builder|bug-investigator|code-reviewer|integration-verifier|planner|qa-harness-builder|qa-executor}
 phase:{build|build-implement|build-review|build-hunt|build-verify|build-doc-sync|build-finish|debug|debug-investigate|debug-review|debug-verify|review|review-audit|plan|plan-create|plan-review-gap-1|plan-review-gap-2|plan-review-amendment|qa|qa-research|qa-plan|qa-plan-review|qa-re-plan|qa-plan-review-2|qa-preflight|qa-build|qa-review|qa-hunt|qa-execute|memory-finalize|re-review|re-hunt|re-verify|re-plan|re-qa-build|re-qa-execute|research-web|research-github|triage|codebase-health}
 plan:{path|N/A}
-scope:{ALL_ISSUES|CRITICAL_ONLY|N/A}
+scope:{ALL_ISSUES|CRITICAL_ONLY|N/A|{source}|code:{repo}}
 reason:{short reason or N/A}
 ```
 
@@ -334,9 +334,9 @@ Only create child tasks after the workflow artifact exists and the read-back pas
 | `plan-review-amendment` | `cc10x:plan-gap-reviewer` (**`REVIEW_MODE: amendment`** — diff-scoped, uncapped, does not count against the fresh-pass cap; returns no closure) |
 | `qa-research` | `cc10x:qa-researcher` |
 | `qa-plan` | `cc10x:planner` (with `cc10x:qa-strategy` in SKILL_HINTS) |
-| `qa-plan-review` | `cc10x:plan-gap-reviewer` (with `cc10x:qa-strategy` in SKILL_HINTS for the coverage lens) |
+| `qa-plan-review` | `cc10x:plan-gap-reviewer` (coverage lens = a scaffold Read of `skills/qa-strategy/SKILL.md`; the reviewer loads no skills and has no Skill tool, so the discipline is named as a file to Read, never a SKILL_HINTS entry) |
 | `qa-re-plan` | `cc10x:planner` (with `cc10x:qa-strategy` in SKILL_HINTS) — amends the saved artifacts after pass-1 findings; must report `AMENDED_FILES` / `STALE_SWEEP` / `RECONCILIATION_RERUN` |
-| `qa-plan-review-2` | `cc10x:plan-gap-reviewer` (same lens) — runs only after `qa-re-plan`, and is MANDATORY when the workflow stops at the plan phase |
+| `qa-plan-review-2` | `cc10x:plan-gap-reviewer` (same scaffold Read of the coverage lens) — runs only after `qa-re-plan`, and is MANDATORY when the workflow stops at the plan phase |
 | `qa-preflight` | `cc10x:qa-harness-builder` (**`MODE: preflight`** — measures the environment, classifies every failure `missing-input`/`wrong-guess`/`defect`, and never boots a service) |
 | `qa-build`, `re-qa-build` | `cc10x:qa-harness-builder` (`MODE: harness`) |
 | `qa-review` | `cc10x:code-reviewer` |
@@ -435,7 +435,7 @@ Optional sections:
 - Include `cc10x:research` only when planner or investigator receives `## Research Files`.
 - Include `cc10x:exploration` only on an explicit de-risk/spike intent ("spike", "try out", "what should this look like", "prototype", "throwaway") — never as the default for a real build. The skill has two modes: design (brainstorm a design) and spike (throwaway prototype). Absorbing a spike's answer is a fresh gated BUILD, not promotion.
 - Include `cc10x:codebase-hygiene` only when (a) the code-reviewer is asked for a reuse/consolidation audit or the request targets semantic duplication, OR (b) the request targets retrofitting/deepening shallow modules in EXISTING code (not greenfield architecture, which stays `cc10x:architecture`). The skill has two modes: duplicate detection and module deepening.
-- Include `cc10x:qa-strategy` only on QA-route dispatches (`qa-researcher`, `qa-plan`, `qa-plan-review`, `qa-re-plan`, `qa-plan-review-2`, `qa-preflight`, `qa-harness-builder`, `qa-executor`). On `qa-plan-review` it supplies the coverage lens that lets the domain-agnostic `plan-gap-reviewer` ask "is this plan thorough?" instead of only "is this plan buildable?". It is the test-system design discipline — tier selection, scenario matrices, environment topology, flake sources. Do NOT inject it into BUILD's `component-builder`: BUILD's inner TDD is governed by `cc10x:building`, and mixing the two blurs "write a failing test for the code I am writing" with "design a test system for code that exists."
+- Include `cc10x:qa-strategy` only on QA-route dispatches whose agent loads skills (`qa-researcher`, `qa-plan`, `qa-re-plan`, `qa-preflight`, `qa-harness-builder`, `qa-executor`). `qa-plan-review` and `qa-plan-review-2` dispatch `plan-gap-reviewer`, which loads no skills and has no Skill tool — a SKILL_HINTS entry cannot reach it, so there the coverage lens is a scaffold Read of `skills/qa-strategy/SKILL.md`, named in the dispatch itself (§7). It is the test-system design discipline — tier selection, scenario matrices, environment topology, flake sources. Do NOT inject it into BUILD's `component-builder`: BUILD's inner TDD is governed by `cc10x:building`, and mixing the two blurs "write a failing test for the code I am writing" with "design a test system for code that exists."
 - Include `cc10x:mcp-cli` only when a researcher needs a one-off MCP capability that is not already mounted.
 - Include `cc10x:code-review` only when a human/external reviewer's feedback (pasted PR comments, review notes, "can you change X") must be acted on — it governs verify-before-agreeing in the MAIN session, not the internal reviewer→router→fix loop.
 - Include `cc10x:memory-and-handoff` only when work is being handed to a coworker, a different tool, or a fresh non-cc10x session.
@@ -479,6 +479,9 @@ Fallback heading on line 2:
 - `## Review: Approve|Changes Requested`
 - `## Verification: PASS|FAIL`
 - `## Planning Review: Pass|Findings`
+- `## QA Research: PASS|FAIL`
+- `## QA Harness: PASS|FAIL|BLOCKED`
+- `## QA Execution: PASS|FAIL|BLOCKED`
 
 Verdict extraction:
 
@@ -585,6 +588,7 @@ The harness is a loop engine. These concepts govern how the loop runs:
    - blockedBy is empty or all blockers are completed
 3. If the runnable task kind is memory:
    - execute inline in the main context
+   - set `phase_cursor="memory-finalize"` in the workflow artifact BEFORE any other memory-side write, and on completion append a `memory_finalized` entry to the artifact's `status_history`. This is what disengages the QA isolation guard when the workflow ends: the guard keys on the newest artifact and treats `phase_cursor` in `{memory-finalize}` or a last `status_history` event in `{memory_finalized, workflow_completed, workflow_failed}` as terminal. A QA workflow whose cursor is left on a plan phase keeps the guard engaged after the work is over, locking all later sessions — cc10x or not — out of Write, Edit, and mutating Bash, including the router's own next-workflow bootstrap
    - persist workflow artifact results + Memory Notes from the task description
    - append `memory_finalized` to `.cc10x/workflows/{wf}.events.jsonl`
    - clean up the matching [cc10x-internal] memory_task_id entry
@@ -762,7 +766,7 @@ For DEBUG:
 - Native plan mode (EnterPlanMode) is not the planning substrate — the CC10x PLAN workflow is, because it carries orchestration state, workflow artifacts, intent contracts, and the bounded fresh review. But a plan the user produced via native plan mode is an acceptable input: ingest it as the `plan_file` and run the fresh-review gate over it rather than rejecting it outright.
 - Workspace isolation and branch finishing are router-owned, optional, and gated — never auto-run. At BUILD/PLAN start the router MAY offer worktree isolation, deferring to a native worktree primitive (e.g. EnterWorktree) when one exists and skipping silently when none does — cc10x never hard-requires git worktrees. After the final phase verifies PASS, the router MAY offer a finishing menu (merge / open-PR / keep / discard) via a single AskUserQuestion; it must never execute a destructive git operation (merge into a base branch, branch delete, force-push, discard) without the user's explicit menu choice, and JUST_GO auto-defaults this gate to the non-destructive `keep as-is` option. Both offers are skipped for `build_scope=trivial`. See references/build-workflow.md `### BUILD-DONE finishing (optional)` for the canonical wording.
 - A terse imperative specifies the GOAL, not the METHOD. "just add the endpoint", "quickly fix X", "simply wire Y" name a destination; they do NOT waive `phase_exit_gate`, the TDD/verifier chain, the complexity gradient's trivial→full escalation, or any governing workflow. Terseness lowers ceremony, never rigor. Treat "just"/"quickly"/"simply" as urgency cues, not as permission to skip routing or gates.
-- Route-and-load the governing workflow BEFORE asking clarifications or exploring. The workflow reference (`references/build-workflow.md`, `references/debug-workflow.md`, `references/review-workflow.md`, `references/plan-workflow.md`) tells you HOW to ask and what readiness it needs; do not freelance clarifying questions or broad exploration ahead of loading it.
+- Route-and-load the governing workflow BEFORE asking clarifications or exploring. The workflow reference (`references/build-workflow.md`, `references/debug-workflow.md`, `references/review-workflow.md`, `references/plan-workflow.md`, `references/qa-workflow.md`) tells you HOW to ask and what readiness it needs; do not freelance clarifying questions or broad exploration ahead of loading it.
 - Every mandated step ends with its sanctioned exit. If a step cannot complete — tool unavailable, dependency missing, result stale — apply the documented fallback for that primitive first (sequential dispatch when parallelism is unavailable, inline fallback when the dispatch primitive is missing); a sanctioned degrade is not a failure. When no sanctioned path can produce the required result, STOP and report the state; never continue the chain on stale or missing results. A step skipped silently is a gate defeated silently. [EASY TO MISS: "degraded but kept going" without a sanctioned fallback is the failure mode this rule exists for — a blocked step reported honestly is recoverable; a chain continued on missing evidence is not.]
 - All human-facing output (Briefs, PR bodies, commit messages, final reports) gets a writing-for-humans pass: plain words over fancy synonyms, active voice with the actor named, filler cut ("in order to" → "to"), at most one hedge, the mechanism or the number rather than the feeling. A sentence that could appear unchanged in any project's report says nothing about this one — cut it. No decorative emoji, straight quotes. Apply the pass to text you write or change; leave prose you did not touch alone.
 - Worktrees isolate files, not the machine. When agents share a host: confirm a dev-server port answers the process this task started before trusting what it serves — a green check served by another agent's process is not this task's evidence. Resolve lockfile conflicts by regenerating, never hand-merging. Never run schema experiments against a shared database.

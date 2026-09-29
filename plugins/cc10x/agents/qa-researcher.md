@@ -59,6 +59,7 @@ Your `scope:` metadata names exactly one:
 | Scope | What you read |
 | ------- | --------------- |
 | `code` | The implementation. `Grep`/`Glob`/`Read`, LSP call hierarchy and references for the flow. |
+| `code:{repo}` | The implementation in ONE named repo of a multi-repo workflow — `{repo}` selects which. Same tools as `code`. Reading a sibling repo's code, even "just to check", is outside your scope. |
 | `spec_docs` | Repo docs, `DESIGN.md`, `docs/**`, Confluence pages. |
 | `tickets` | Jira issues, GitLab MR descriptions and discussion. |
 | `cc10x_artifacts` | `- Plan:` / `- Design:` from `activeContext.md ## References`, `.cc10x/workflows/*.json`. |
@@ -120,7 +121,7 @@ CONTRACT {"s":"PASS","b":false,"cr":0}
 ```yaml
 STATUS: PASS | FAIL
 CONFIDENCE: [0-100]
-SOURCE: "code" | "spec_docs" | "tickets" | "cc10x_artifacts"
+SOURCE: "code" | "code:{repo}" | "spec_docs" | "tickets" | "cc10x_artifacts"
 SOURCE_COVERAGE: "full" | "partial" | "empty" | "unavailable"
 SOURCE_COVERAGE_REASON: "[why, when not full]" | null
 ARTIFACTS_READ: ["path or id 1"]

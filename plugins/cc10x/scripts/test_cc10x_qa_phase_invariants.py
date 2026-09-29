@@ -1947,12 +1947,17 @@ PP19_COPY = re.compile(r"Bash\(command=.*cp .*qa-report\.template\.md.*report\.m
 # not because it does work today. Control I-17 is what actually proves PP-20.
 PP20_NODE = re.compile(r"->\s*(\S+_task_id\S*)")
 PP20_EDGE = re.compile(r"TaskUpdate\(\{\s*taskId:\s*(\w+),\s*addBlockedBy:")
-# The fan-out lanes are the only nodes with no predecessor, and that is a
-# property of the route, not an oversight: consolidation after the lanes is
-# deliberately INLINE (qa-workflow.md argues it), so there is no task between
-# the researchers and qa-plan. Adding a name here asserts a new ENTRY POINT to
-# the QA graph -- it is not a way to quiet a node that lost its edge.
-QA_DAG_ROOTS = frozenset({"researcher_task_id"})
+# The fan-out lanes are the only in-workflow nodes with no predecessor, and
+# that is a property of the route, not an oversight: consolidation after the
+# lanes is deliberately INLINE (qa-workflow.md argues it), so there is no task
+# between the researchers and qa-plan. `re_qa_execute_task_id` is a SECOND kind
+# of entry point: the closing-loop regression run lives in its own NEW QA
+# workflow (the original one is memory-finalized and closed), so within that
+# graph it has no predecessor by construction — the DEBUG task that precedes it
+# chronologically belongs to a different workflow and a different task graph.
+# Adding a name here asserts a new ENTRY POINT to the QA graph -- it is not a
+# way to quiet a node that lost its edge.
+QA_DAG_ROOTS = frozenset({"researcher_task_id", "re_qa_execute_task_id"})
 # The lane variable is written `researcher_task_id_{source}` -- `{source}` is a
 # template expansion the router substitutes per lane, not part of the name the
 # graph refers to. Both sides are canonicalised so the frozen constant is a
@@ -2914,9 +2919,9 @@ PP33_STAMP_SIBLINGS = (
 #      like, and is exactly B2.
 #   4. tokens overlap no heading at all -> RESOLVED-UNDESCRIPTIVE. The trailing
 #      words describe the CITING sentence rather than the cited section, so the
-#      citation makes no title claim to check. `qa-workflow.md:119` cites `§4
+#      citation makes no title claim to check. `qa-workflow.md:119` cites `§3
 #      wave count` and `§2 id rollups`; no tokeniser makes `wave count` overlap
-#      `Scenarios`. A rule that reds these asserts that every citation
+#      `Build order`. A rule that reds these asserts that every citation
 #      paraphrases its heading, which is not how prose is written. I-90 injects
 #      exactly that rule and reds three correct citations.
 #   5. the number is not a heading at all -> MISMATCH (`no such heading`).
@@ -2949,7 +2954,7 @@ PP40_HEADING = re.compile(r"^## (\d+)\. (.+)$", re.M)
 # I-93 are both silent unless this is an equality -- each moves exactly one
 # correct citation INTO the class and produces no mismatch at all.
 PP40_UNDESCRIPTIVE = {
-    ("qa-workflow.md", 119, 4),   # "wave count and in the"  vs  ## 4. Scenarios
+    ("qa-workflow.md", 119, 3),   # "wave count and in the"  vs  ## 3. Build order
     ("qa-workflow.md", 119, 2),   # "id rollups"             vs  ## 2. Coverage plan
 }
 # There is no exclusion list. The seven unprefixed `§N` in
@@ -3618,7 +3623,15 @@ def main() -> int:
 
     dispatch_rows = re.findall(r"^\|\s*((?:`[a-z0-9-]+`(?:,\s*)?)+)\s*\|", skill_text, re.M)
     dispatchable = {p for p in re.findall(r"`([a-z0-9-]+)`", " ".join(dispatch_rows))}
-    qa_enum = {p for p in enum if p.startswith("qa")} - NON_DISPATCHABLE
+    # `re-` prefixed too: `re-qa-build` / `re-qa-execute` are QA phases that do
+    # not START with "qa", and a filter keyed on the "qa" prefix alone never
+    # checked them -- deleting `re-qa-execute` from its §7 row left PP-5 green
+    # (mutation M3, recorded in the PR-#91 review). The route-wide re- phases
+    # (`re-review`, `re-hunt`, ...) do not carry the "re-qa" infix and stay out.
+    qa_enum = (
+        {p for p in enum if p.startswith("qa") or p.startswith("re-qa")}
+        - NON_DISPATCHABLE
+    )
     unrouted = sorted(qa_enum - dispatchable)
     check(
         "PP-5",
@@ -5956,6 +5969,258 @@ def main() -> int:
             else "; ".join(pp38f_faults)
         )
     check("PP-38(f)", pp38f_ok, pp38f_detail)
+
+    # ---- PP-44: a FINISHED workflow disengages the guard entirely. ----------
+    #
+    # PR-#91 P1-1. A QA workflow scoped to the plan phase, or abandoned mid-
+    # plan, leaves `phase_cursor` on a planning value forever. The guard keyed
+    # ONLY on that cursor, so for as long as the abandoned artifact remained
+    # the newest on disk it denied every Write and every mutating Bash call in
+    # the repo -- including work that had nothing to do with the workflow, and
+    # including the router's own documented way of starting the next workflow.
+    # A quarantine and a read-only phase belong to a LIVE workflow; a finished
+    # one must take both with it.
+    #
+    # (a) covers the cursor form the router is required to leave behind
+    # (SKILL.md §12 step 3 sets `phase_cursor=memory-finalize`). (b) covers
+    # every terminal status_history event, parametrised, with the cursor
+    # REMOVED so the history fallback -- not the cursor -- is what disengages.
+    # (c) is the control that keeps (a)/(b) a property about terminal state
+    # rather than about a guard that stopped denying: same artifact, same
+    # probe, last event non-terminal -> still DENY.
+    pp44_probes = "/tmp/pp44-probe"
+    pp44_cases: list[tuple[str, dict, bool]] = [
+        (
+            "a",
+            {"phase_cursor": "memory-finalize"},
+            False,
+        ),
+        *[
+            (
+                f"b-{evt}",
+                {
+                    "phase_cursor": None,
+                    "status_history": [
+                        {"event": "started", "phase": "qa"},
+                        {"event": evt, "phase": "qa-plan"},
+                    ],
+                },
+                False,
+            )
+            for evt in ("memory_finalized", "workflow_completed", "workflow_failed")
+        ],
+        (
+            "c",
+            {
+                "phase_cursor": None,
+                "status_history": [
+                    {"event": "started", "phase": "qa"},
+                    {"event": "result_persisted", "phase": "qa-plan"},
+                ],
+            },
+            True,
+        ),
+    ]
+    pp44_faults: list[str] = []
+    with tempfile.TemporaryDirectory() as tmp:
+        pp44_dir = Path(tmp)
+        for tag, overrides, want_deny in pp44_cases:
+            pp44_payload = artifact(None)
+            for key, val in overrides.items():
+                if val is None:
+                    pp44_payload.pop(key, None)
+                else:
+                    pp44_payload[key] = val
+            r = run_guard_raw(
+                pp44_dir,
+                pp44_payload,
+                {"tool_name": "Bash", "tool_input": {"command": f"mkdir -p {pp44_probes}"}},
+            )
+            got_deny = '"permissionDecision": "deny"' in r.stdout
+            ok = r.returncode == 0 and r.stderr == "" and got_deny == want_deny
+            if not ok:
+                pp44_faults.append(
+                    f"({tag}) -> deny={got_deny} want {want_deny} "
+                    f"(rc={r.returncode} stderr={(r.stderr.strip().splitlines() or [''])[-1]!r})"
+                )
+    check(
+        "PP-44",
+        not pp44_faults,
+        f"a terminal cursor or terminal last status_history event disengages the "
+        f"guard ({len(pp44_cases)} cases incl. the non-terminal control), and a "
+        f"non-terminal last event does not"
+        + ("" if not pp44_faults else " -- " + "; ".join(pp44_faults)),
+    )
+
+    # ---- PP-45: the guard's Bash surface -- parser, router commands, --------
+    # ---- redirects. PR-#91 P1-2 / P2-1 / P2-5.                              --
+    #
+    # Three defects in one function family, landed together because they are
+    # one surface:
+    #
+    # P1-2 -- the guard denied commands the ROUTER is required to run during
+    #         plan phases: the mandatory template copy (SKILL.md route law,
+    #         qa-workflow.md `#### Plan`) and the event-log append (SKILL.md
+    #         §12 step 7). Both write only into `.cc10x/`; the copy was denied
+    #         because its SOURCE (the plugin root) is outside every allowlist
+    #         and the old escape tested read operands as writes, the append
+    #         because a redirect was denied before its target was ever matched
+    #         against the allowlist. (a) and (b) are the LITERAL commands from
+    #         the two documents, not paraphrases -- a paraphrase tests the
+    #         paraphrase. (c) is the control: the escape is path-aware, not a
+    #         blanket allow on the router's vocabulary.
+    #
+    # P2-1 -- the parser saw only whitespace-separated operators, so
+    #         `echo hi;mkdir x`, `echo hi\nmkdir x`, `sudo rm -rf x`,
+    #         `bash -c "mkdir y"` and `xargs rm` all reached the classifier as
+    #         one innocent command. (d)-(i) pin each bypass closed, and (j) is
+    #         the benign control that the tokenizer did not become
+    #         operator-blind: quoted operators and redirects inside quotes are
+    #         data, not commands.
+    #
+    # P2-5 -- redirect detection existed but had NO test (mutation M6: disable
+    #         it and the suite stayed green), and it missed `2>file` because
+    #         the digit-lookbehind that excludes `2>&1` excludes it too.
+    #         (k)-(n) pin the four sides: /dev/null exempt (step 0a's
+    #         `docker info >/dev/null` probe), allowlisted target allowed,
+    #         non-allowlisted target denied, `2>file` detected.
+    pp45_uuid = "2f9a8c4d"
+    pp45_router_copy = (
+        f'mkdir -p .cc10x/qa/{pp45_uuid} && cp "${{CLAUDE_PLUGIN_ROOT}}/templates/qa-test-plan.template.md" '
+        f'.cc10x/qa/{pp45_uuid}/test-plan.md && cp "${{CLAUDE_PLUGIN_ROOT}}/templates/qa-env-plan.template.md" '
+        f'.cc10x/qa/{pp45_uuid}/env-plan.md'
+    )
+    pp45_router_append = (
+        'printf \'%s\\n\' \'{"ts":"2026-01-01T00:00:00Z","wf":"wf-pp45","event":"result_persisted",'
+        '"phase":"qa-plan","agent":"qa-plan","decision":"ok","reason":"plan written"}\' '
+        '>> .cc10x/workflows/wf-pp45.events.jsonl'
+    )
+    pp45_cases: list[tuple[str, str, bool]] = [
+        ("a", pp45_router_copy, False),
+        ("b", pp45_router_append, False),
+        ("c", "mkdir -p /tmp/pp45-outside", True),
+        ("d", f"echo hi\nmkdir -p {pp44_probes}-nl", True),
+        ("e", f"echo hi;mkdir -p {pp44_probes}-semi", True),
+        ("f", f"echo hi&&mkdir -p {pp44_probes}-and", True),
+        ("g", f"sudo rm -rf {pp44_probes}-sudo", True),
+        ("h", 'bash -c "mkdir -p %s-bashc"' % f"{pp44_probes}", True),
+        ("i", f"echo x | xargs rm -rf {pp44_probes}-xargs", True),
+        ("j", "echo 'a;b' && printf '%s' hi", False),
+        ("k", "docker info >/dev/null", False),
+        ("l", "echo done >> .cc10x/qa/progress.md", False),
+        ("m", "echo done >> /tmp/pp45-redirect", True),
+        ("n", f"grep pat f.md 2>{pp44_probes}-err", True),
+    ]
+    pp45_faults: list[str] = []
+    with tempfile.TemporaryDirectory() as tmp:
+        pp45_dir = Path(tmp)
+        for tag, command, want_deny in pp45_cases:
+            r = run_guard_raw(
+                pp45_dir,
+                artifact("qa-plan"),
+                {"tool_name": "Bash", "tool_input": {"command": command}},
+            )
+            got_deny = '"permissionDecision": "deny"' in r.stdout
+            ok = r.returncode == 0 and r.stderr == "" and got_deny == want_deny
+            if not ok:
+                pp45_faults.append(
+                    f"({tag}) `{command[:60]}` -> deny={got_deny} want {want_deny} "
+                    f"(rc={r.returncode} stderr={(r.stderr.strip().splitlines() or [''])[-1]!r})"
+                )
+    check(
+        "PP-45",
+        not pp45_faults,
+        f"router-mandated commands pass the plan-phase allowlist, parser bypasses "
+        f"(newline / unspaced operators / sudo / bash -c / xargs) are denied, and "
+        f"redirect detection is pinned on all four sides ({len(pp45_cases)} cases)"
+        + ("" if not pp45_faults else " -- " + "; ".join(pp45_faults)),
+    )
+
+    # ---- PP-46: the denylist is ROOT-AWARE. PR-#91 P2-2. --------------------
+    #
+    # The denylist matched a tool that NAMED a quarantined path. A tool whose
+    # search ROOT contains one -- Grep over the project, Grep over an ancestor
+    # directory, a Bash `grep -r` from an ancestor -- reads the quarantined
+    # content as surely as a Read of the file, and passed. The quarantine is
+    # a refusal, not a request; a refusal with a recursive hole in it is a
+    # request.
+    #
+    # (a) Grep over an ancestor of a quarantined absolute path. (b) Grep with
+    # NO path -- Claude Code searches the whole project -- where the quarantine
+    # lives inside the project: the absent root is the project root, not "no
+    # root". (c) is the counter-control for (b): a quarantine OUTSIDE the
+    # project does not make a pathless Grep deny. (d) the Bash recursive
+    # reader from an ancestor. (e) the non-recursive control: `grep` without
+    # -r reads only the files it names, and a file it names that is not
+    # quarantined passes. (f) a `cp` whose SOURCE is quarantined: the read
+    # operand is checked against the denylist even though the plan-phase
+    # escape deliberately ignores read operands -- the two branches ask
+    # different questions of the same token stream.
+    pp46_denied_abs = "/tmp/pp46-denied/answers.md"
+    pp46_cases: list[tuple[str, dict, dict, bool]] = [
+        (
+            "a",
+            {"denied_reads": [pp46_denied_abs]},
+            {"tool_name": "Grep", "tool_input": {"pattern": "answers", "path": "/tmp"}},
+            True,
+        ),
+        (
+            "b",
+            {"denied_reads": [".cc10x/qa/answer-sheet.md"]},
+            {"tool_name": "Grep", "tool_input": {"pattern": "answers"}},
+            True,
+        ),
+        (
+            "c",
+            {"denied_reads": [pp46_denied_abs]},
+            {"tool_name": "Grep", "tool_input": {"pattern": "answers"}},
+            False,
+        ),
+        (
+            "d",
+            {"denied_reads": [pp46_denied_abs]},
+            {"tool_name": "Bash", "tool_input": {"command": "grep -r answers /tmp"}},
+            True,
+        ),
+        (
+            "e",
+            {"denied_reads": [pp46_denied_abs]},
+            {"tool_name": "Bash", "tool_input": {"command": "grep answers /etc/hosts"}},
+            False,
+        ),
+        (
+            "f",
+            {"denied_reads": [pp46_denied_abs]},
+            {
+                "tool_name": "Bash",
+                "tool_input": {"command": f"cp {pp46_denied_abs} .cc10x/qa/x.md"},
+            },
+            True,
+        ),
+    ]
+    pp46_faults: list[str] = []
+    with tempfile.TemporaryDirectory() as tmp:
+        pp46_dir = Path(tmp)
+        for tag, isolation_extra, tool_payload, want_deny in pp46_cases:
+            pp46_payload = artifact("qa-plan")
+            pp46_payload["qa"]["isolation"].update(isolation_extra)
+            r = run_guard_raw(pp46_dir, pp46_payload, tool_payload)
+            got_deny = '"permissionDecision": "deny"' in r.stdout
+            ok = r.returncode == 0 and r.stderr == "" and got_deny == want_deny
+            if not ok:
+                pp46_faults.append(
+                    f"({tag}) {tool_payload['tool_name']} -> deny={got_deny} "
+                    f"want {want_deny} "
+                    f"(rc={r.returncode} stderr={(r.stderr.strip().splitlines() or [''])[-1]!r})"
+                )
+    check(
+        "PP-46",
+        not pp46_faults,
+        f"a search root that CONTAINS a quarantined path is denied, for Grep "
+        f"(with and without a path) and for Bash recursive readers, without "
+        f"denying non-recursive reads or out-of-project roots ({len(pp46_cases)} cases)"
+        + ("" if not pp46_faults else " -- " + "; ".join(pp46_faults)),
+    )
 
     # ---- PP-39: every BLOCKING hook is enumerated in the policy, and the ----
     # ---- policy's mode claim matches which of them call load_mode.       ----

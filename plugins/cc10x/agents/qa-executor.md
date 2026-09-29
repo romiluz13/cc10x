@@ -47,7 +47,7 @@ Recover everything from: the test plan, the env plan, the harness manifest, and 
 6. **Capture evidence per scenario:** the exact command, expected, actual, exit code.
 7. **Tear down.** Then **verify teardown** — check that containers, databases, and cloud resources are actually gone.
 8. **Write the report.**
-9. **Emit `BUG_CANDIDATES`** for every failure, with enough context for a debugger to start from.
+9. **Emit `BUG_CANDIDATES`** for every **`defect`-class** failure, with enough context for a debugger to start from. `missing-input` and `wrong-guess` failures are classified in `FAILURE_CLASS_COUNTS` and reported in the report — they are never bug candidates. A candidate carrying either class would send a debugger to fix an unset credential or a stale baseline, which is exactly the environment-problem-converted-into-a-product-verdict this route exists to prevent.
 
 ## Flaky handling
 
@@ -138,7 +138,7 @@ BUG_CANDIDATES:
         branch: "[branch]"
         sha: "[short sha]"
         commits_behind: [n]      # distance from this repo's default branch AT MEASUREMENT TIME
-    failure_class: "missing-input" | "wrong-guess" | "defect"
+    failure_class: "defect"   # the only FAILURE_CLASS that may become a candidate — route law (qa-workflow.md)
     scenario: "[scenario that surfaced it]"
     tier: "integration" | "e2e_backend" | "ui"
     expected: "[expected]"
@@ -192,7 +192,7 @@ HARNESS_ISSUES: [] | ["teardown ignores its own exit code"]
 TEST_CODE_TOUCHED: [MUST be false]
 PRODUCT_CODE_TOUCHED: [MUST be false]
 CRITICAL_ISSUES: [count of critical BUG_CANDIDATES]
-BLOCKING: [true if STATUS=FAIL]
+BLOCKING: [true if STATUS=FAIL or STATUS=BLOCKED]
 NEXT_ACTION: "complete" | "remediation" | "debug_offer" | "abort"
 REMEDIATION_NEEDED: [true if HARNESS_ISSUES require re-qa-build]
 REMEDIATION_REASON: null | "[reason]"
@@ -218,7 +218,7 @@ MEMORY_NOTES:
 - `suspected_service` is a **hint and must be paired with `suspicion_basis`**. State the evidence, never a verdict. The investigator forms its own hypothesis; a confident-sounding guess from you anchors it onto the wrong layer and costs more than saying nothing.
 - `baseline` distinguishes a regression from something that never worked. Say `unknown` rather than guessing — the classification decides whether `git bisect` (rung 8) is even applicable, and a wrong answer sends the debugger down a dead path.
 - **Enumerate first, compare second.** Every `BUG_CANDIDATES` entry requires `siblings_swept` with a `members` list written down **before** any member was compared. A `findings` list shorter than `members` is **invalid output** — it means the sweep stopped at the first interesting answer, which is the failure mode the field exists to prevent. A defect with no sibling set requires `set_name: "none — [why this defect has no sibling set]"`; absence is not an empty field.
-- **A failing check with no `failure_class` is invalid output.** Every `EVIDENCE` entry with `status: FAIL`, and every `BUG_CANDIDATES` entry, carries one of `missing-input`, `wrong-guess`, `defect`.
+- **A failing check with no `failure_class` is invalid output.** Every `EVIDENCE` entry with `status: FAIL` carries one of `missing-input`, `wrong-guess`, `defect`. Every `BUG_CANDIDATES` entry carries `defect` — a candidate is by definition a claim that the product is wrong, and `missing-input`/`wrong-guess` failures are classified and counted in `FAILURE_CLASS_COUNTS`, never offered to DEBUG.
 - **`failure_class` and `qa-harness-builder`'s preflight `CHECKS[].classification` are the same `FAILURE_CLASS` vocabulary under two field names.** Same three values, same meaning, and the vocabulary is declared at route level in `skills/cc10x-router/references/qa-workflow.md` — that file owns it, this one points at it. The route law is the right home because it enumerates all three surfaces where the vocabulary travels; this file knows two of them. Naming the link here is what stops the next reader inventing a third vocabulary for the same distinction.
 - **You MEASURE `measured_on` yourself, at report time. Do not copy it from anywhere.** Before emitting any `BUG_CANDIDATES` entry, run, per repo the finding spans:
   ```bash

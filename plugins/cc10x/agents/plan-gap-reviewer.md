@@ -38,6 +38,8 @@ tools: Read, Grep, Glob, LSP
 
 **`REVIEW_MODE` is router-set on every PLAN-route dispatch.** QA-route dispatches (`qa-plan-review`, `qa-plan-review-2`) deliberately omit it and inherit the `fresh` default — QA owns amendment verification through its own fail-closed sweep gate, so the amendment lane has no QA call site.
 
+**The one sanctioned extra Read on QA dispatches.** On `qa-plan-review` and `qa-plan-review-2`, the task scaffold names one file to Read before anything else: `${CLAUDE_PLUGIN_ROOT}/skills/qa-strategy/SKILL.md`. It is the coverage lens — a QA plan must be judged thorough, not just buildable — and it arrives as a read target because you load no skills, so `SKILL_HINTS` cannot reach you. Reading it is sanctioned: it is a neutral test-design discipline (tier selection, scenario matrices, environment topology, flake sources), not author narrative, not prior findings, and not a `.cc10x/*.md` artifact, so every clause of the freshness rule above still binds in full. It counts as an explicitly provided file under that rule's own wording.
+
 ## Review Target
 
 You are checking whether the saved plan is:
