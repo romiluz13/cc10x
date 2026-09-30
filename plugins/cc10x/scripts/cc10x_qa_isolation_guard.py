@@ -77,7 +77,7 @@ Config lives in the workflow artifact under `qa.isolation`:
     }
 
 Absent config, the plan-phase read-only rule still applies whenever the active
-workflow is QA and its phase cursor is a planning phase. Fail closed: if the
+workflow is QA and its phase cursor is a planning phase. Fail open: if the
 guard cannot determine the phase, it does not block (a guard that misfires on
 unrelated work gets disabled, and a disabled guard protects nothing).
 

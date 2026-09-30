@@ -28,8 +28,8 @@ If any answer is “yes” and the change is not intentionally designed and docu
 ## 3. Tier-Based Review Requirements
 
 ### Tier 1 changed
-- Run `python3 plugins/cc10x/scripts/cc10x_harness_audit.py`
-- Run `python3 plugins/cc10x/scripts/cc10x_workflow_replay_check.py`
+- Run `python3 plugins/cc10x/tools/harness_audit.py`
+- Run `python3 plugins/cc10x/tools/workflow_replay_check.py`
 - Perform manual semantic review
 - Perform prompt diff review against the prior version
 - Write/update a benchmark note

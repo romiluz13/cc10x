@@ -1,13 +1,13 @@
 # CC10X Prompt Behavioral Invariant Registry
 
-> **Status note:** This registry is aligned to the live prompt stack in `plugins/cc10x/agents/` and `plugins/cc10x/skills/` as of 2026-06-17 (`v11.0.0`). Invariants last changed on 2026-04-12 (`v10.1.19`); `v11.0.0` de-versions the state root from `.cc10x/v10/` to `.cc10x/` (version lives only in `plugin.json`/GitHub) with no invariant changes. `v11.1.0` adds execution-engine deltas and 4 net-new skills — additive, no invariant changes. `v12.5.0` adds the enforced seam gate, resolving-merge-conflicts skill, CONTEXT.md/docs/adr/ canonical artifacts, and 2 advisory on-ramp workflows (TRIAGE, CODEBASE-HEALTH) — additive, no invariant changes to existing agent contracts. **v12.6.0** is an integrity reconciliation (spec #65): audit-seam revival, router-kernel drift fixes (phase enum + dispatcher rows for triage/codebase-health, tie-break stated, gates operationally defined, single circuit-breaker source), unified agent contract dialect (envelope + fenced YAML, per-agent fields unchanged), guard fail-open fixes, and skills reconciliation — behavior-preserving; no routing, gate-semantic, or hook-mode changes. **v12.7.0** is a prompt-engineering prose reconciliation (spec #77): wording-only edits across skills/agents/router prose — contradictions resolved, restatements single-sourced, undecidable gate adjectives replaced with decision procedures, rationale clauses added; no invariant or agent-contract changes; routing and dispatcher tables byte-identical to v12.6.0. **v12.8.0** adds cc10x-guide skill (reference, model-invoked, read-only — no agent contract or invariant changes), README restructure, setup-template fix, permission-list unification, marketplace.json version assertion; no invariant, routing, or contract changes. **v12.8.1** is an adversarially-validated instruction refinement (verification evidence identity, working gh feedback timestamps, review-cycle cap wording); no invariant or agent-contract changes. **v12.8.2:** imports pstack evidence-discipline wording into four skill/reference files (one-fact review rule, observation-method suspicion, premise prediction-testing, restart-state playbook); wording-level only, no orchestration, routing, gate, or contract changes.
+> **Status note:** This registry is aligned to the live prompt stack in `plugins/cc10x/agents/` and `plugins/cc10x/skills/` as of 2026-06-17 (`v11.0.0`). Invariants last changed on 2026-04-12 (`v10.1.19`); `v11.0.0` de-versions the state root from `.cc10x/v10/` to `.cc10x/` (version lives only in `plugin.json`/GitHub) with no invariant changes. `v11.1.0` adds execution-engine deltas and 4 net-new skills — additive, no invariant changes. `v12.5.0` adds the enforced seam gate, resolving-merge-conflicts skill, CONTEXT.md/docs/adr/ canonical artifacts, and 2 advisory on-ramp workflows (TRIAGE, CODEBASE-HEALTH) — additive, no invariant changes to existing agent contracts. **v12.6.0** is an integrity reconciliation (spec #65): audit-seam revival, router-kernel drift fixes (phase enum + dispatcher rows for triage/codebase-health, tie-break stated, gates operationally defined, single circuit-breaker source), unified agent contract dialect (envelope + fenced YAML, per-agent fields unchanged), guard fail-open fixes, and skills reconciliation — behavior-preserving; no routing, gate-semantic, or hook-mode changes. **v12.7.0** is a prompt-engineering prose reconciliation (spec #77): wording-only edits across skills/agents/router prose — contradictions resolved, restatements single-sourced, undecidable gate adjectives replaced with decision procedures, rationale clauses added; no invariant or agent-contract changes; routing and dispatcher tables byte-identical to v12.6.0. **v12.8.0** adds cc10x-guide skill (reference, model-invoked, read-only — no agent contract or invariant changes), README restructure, setup-template fix, permission-list unification, marketplace.json version assertion; no invariant, routing, or contract changes. **v12.8.1** is an adversarially-validated instruction refinement (verification evidence identity, working gh feedback timestamps, review-cycle cap wording); no invariant or agent-contract changes. **v12.8.2:** imports pstack evidence-discipline wording into four skill/reference files (one-fact review rule, observation-method suspicion, premise prediction-testing, restart-state playbook); wording-level only, no orchestration, routing, gate, or contract changes. **v12.9.0:** adds the QA route (3 agents, `qa-strategy` skill, QA isolation guard); this registry's references re-anchored to current skill/agent names (`failure-hunter`, `frontend`, `debugging`, `planning`, `memory-and-handoff`, `verification`) and current tooling paths — reference fixes only, no invariant semantics changed. QA-route invariants are not yet registered here (known gap, recorded in the CHANGELOG). The companion registry `router-invariants.md` still carries pre-rename names (INV-017 `frontend-patterns`/`debugging-patterns`) and `v10 namespace` wording (INV-001, INV-018); those are unchanged in this release and tracked as known-stale.
 
 ## Purpose
 
 This file maps each load-bearing prompt behavior to the failure it prevents.
 If a Tier 1 or Tier 2 prompt contract changes, the matching invariant must be reviewed in the same change.
 
-This registry complements, but does not replace, [router-invariants.md](~/Dev/cc10x_v5/cc10x/docs/router-invariants.md).
+This registry complements, but does not replace, [router-invariants.md](router-invariants.md).
 
 `cc10x-router` itself is not treated as a prompt-only surface here. The router
 kernel and its mandatory references are orchestration-sensitive and must stay in
@@ -19,10 +19,10 @@ Validated against the live prompt surface:
 
 - planner, component-builder, integration-verifier
 - plan-gap-reviewer
-- plan-review-gate, verification-before-completion
-- bug-investigator, code-reviewer, silent-failure-hunter
-- session-memory
-- advisory skill descriptions for frontend/debugging patterns
+- plan-review-gate, verification
+- bug-investigator, code-reviewer, failure-hunter
+- memory-and-handoff
+- advisory skill descriptions for frontend/debugging skills
 
 ## Current Invariants
 
@@ -64,7 +64,7 @@ Validated against the live prompt surface:
 
 ### PINV-005: Verification-before-completion preserves fresh-evidence discipline
 
-**Covers:** `plugins/cc10x/skills/verification-before-completion/SKILL.md`
+**Covers:** `plugins/cc10x/skills/verification/SKILL.md`
 **Enforces:** No completion/fix/pass claim without fresh verification evidence from the current session.
 **Failure prevented:** False completion, stale-evidence claims, and “should pass” rationalization.
 **Wording drift that breaks it:** Softening “no completion claims” or allowing inferred success language.
@@ -73,7 +73,7 @@ Validated against the live prompt surface:
 
 ### PINV-006: Internal skills remain advisory under explicit user/project authority
 
-**Covers:** planner, component-builder, integration-verifier, bug-investigator, `frontend-patterns`, `debugging-patterns`
+**Covers:** planner, component-builder, integration-verifier, bug-investigator, `frontend`, `debugging`
 **Enforces:** User prompt, `CLAUDE.md`, repo standards, and approved plans outrank internal CC10X skills.
 **Failure prevented:** Internal patterns silently competing with explicit project direction.
 **Wording drift that breaks it:** Skill descriptions or agent wording that sound authoritative or self-authorizing.
@@ -82,7 +82,7 @@ Validated against the live prompt surface:
 
 ### PINV-007: Skill descriptions describe when to use, not workflow summaries
 
-**Covers:** `frontend-patterns`, `debugging-patterns`, `plan-review-gate`, `verification-before-completion`
+**Covers:** `frontend`, `debugging`, `plan-review-gate`, `verification`
 **Enforces:** Descriptions stay trigger-oriented and do not summarize workflow steps that Claude may follow instead of reading the body.
 **Failure prevented:** Trigger false positives and workflow shortcuts caused by over-descriptive metadata.
 **Wording drift that breaks it:** Descriptions that explain process details instead of symptoms/conditions for invocation.
@@ -91,7 +91,7 @@ Validated against the live prompt surface:
 
 ### PINV-008: Goal-backward verification framing remains intact
 
-**Covers:** `integration-verifier`, `verification-before-completion`
+**Covers:** `integration-verifier`, `verification`
 **Enforces:** Verification still reasons over truths, artifacts, and wiring, not only exit codes or file presence.
 **Failure prevented:** Stubs, unwired implementations, and local illusions passing as complete.
 **Wording drift that breaks it:** Removing truths/artifacts/wiring or collapsing them into generic “tests passed.”
@@ -118,7 +118,7 @@ Validated against the live prompt surface:
 
 ### PINV-011: Live-proof requirements cannot silently downgrade
 
-**Covers:** `plugins/cc10x/agents/planner.md`, `plugins/cc10x/skills/planning-patterns/SKILL.md`, `plugins/cc10x/agents/integration-verifier.md`, `plugins/cc10x/skills/verification-before-completion/SKILL.md`
+**Covers:** `plugins/cc10x/agents/planner.md`, `plugins/cc10x/skills/planning/SKILL.md`, `plugins/cc10x/agents/integration-verifier.md`, `plugins/cc10x/skills/verification/SKILL.md`
 **Enforces:** When the request or accepted plan requires real, seeded, production-like verification, the plan must keep that requirement explicit and the verifier must not substitute replay-only, unit-only, or manual-only checks as equivalent proof.
 **Failure prevented:** CC10X reporting trust-grade verification while only exercising deterministic fixtures or lightweight local checks.
 **Wording drift that breaks it:** Framing live verification as optional when the plan made it required, or describing replay/unit/manual checks as interchangeable with live-system proof.
@@ -127,12 +127,12 @@ Validated against the live prompt surface:
 
 ### PINV-012: Session memory stays router-subordinate and distilled
 
-**Covers:** `plugins/cc10x/skills/session-memory/SKILL.md`
+**Covers:** `plugins/cc10x/skills/memory-and-handoff/SKILL.md`
 **Enforces:** Agents load versioned memory early, emit distilled memory notes, and do not bypass router-owned final markdown persistence.
 **Failure prevented:** Duplicate memory write paths, bloated memory notes, and durable-state drift between workflow artifacts and markdown memory.
-**Wording drift that breaks it:** Telling write agents to edit `.cc10x/v10/*.md` directly, weakening the distillation rule, or implying chat history can substitute for durable memory.
+**Wording drift that breaks it:** Telling write agents to edit `.cc10x/*.md` directly, weakening the distillation rule, or implying chat history can substitute for durable memory.
 **Safe to weaken:** Never.
-**Safe to strengthen:** Yes, if router-owned persistence and the v10 namespace remain unchanged.
+**Safe to strengthen:** Yes, if router-owned persistence and the `.cc10x/` state root remain unchanged.
 
 ## Change Policy
 

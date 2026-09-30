@@ -176,11 +176,11 @@ Repo-local `.claude/settings.json` is not part of the shipped plugin contract.
 
 The current main branch includes two non-runtime but load-bearing safety tools:
 
-- `plugins/cc10x/scripts/cc10x_harness_audit.py`
+- `plugins/cc10x/tools/harness_audit.py`
   - validates manifest/docs/marketplace drift
   - validates shipped hooks and MCP references
   - validates router-consumed agent contract fields
-- `plugins/cc10x/scripts/cc10x_workflow_replay_check.py`
+- `plugins/cc10x/tools/workflow_replay_check.py`
   - validates deterministic workflow-routing and contract scenarios from fixtures
   - covers PLAN / BUILD / DEBUG / REVIEW / VERIFY regression paths without a live Claude session
 

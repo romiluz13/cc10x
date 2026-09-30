@@ -9,8 +9,8 @@ When behavior conflicts, trust sources in this order:
 1. `plugins/cc10x/skills/cc10x-router/SKILL.md` plus `plugins/cc10x/skills/cc10x-router/references/*.md`
 2. `plugins/cc10x/agents/*.md`
 3. `plugins/cc10x/hooks/hooks.json`
-4. `plugins/cc10x/scripts/cc10x_harness_audit.py`
-5. `plugins/cc10x/scripts/cc10x_workflow_replay_check.py`
+4. `plugins/cc10x/tools/harness_audit.py`
+5. `plugins/cc10x/tools/workflow_replay_check.py`
 6. `docs/router-invariants.md`
 7. `docs/cc10x-orchestration-bible.md`
 8. this document
@@ -72,8 +72,8 @@ memory persistence itself.
 Run all of these:
 
 ```bash
-python3 plugins/cc10x/scripts/cc10x_harness_audit.py
-python3 plugins/cc10x/scripts/cc10x_workflow_replay_check.py
+python3 plugins/cc10x/tools/harness_audit.py
+python3 plugins/cc10x/tools/workflow_replay_check.py
 python3 -m py_compile plugins/cc10x/scripts/*.py
 git diff --check
 ```

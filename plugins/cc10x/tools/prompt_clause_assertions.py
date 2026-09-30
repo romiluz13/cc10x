@@ -193,7 +193,7 @@ ASSERTIONS = [
         "router: TRIAGE route row anchored",
         PLUGIN / "skills" / "cc10x-router" / "SKILL.md",
         contains_all(
-            "| 5 | TRIAGE | triage, \"incoming issues\", \"look at #\", \"triage #\" | TRIAGE | triage-agent",
+            "| 6 | TRIAGE | triage, \"incoming issues\", \"look at #\", \"triage #\" | TRIAGE | triage-agent",
         ),
         "TRIAGE row anchored with non-colliding keywords + chain",
     ),
@@ -201,7 +201,7 @@ ASSERTIONS = [
         "router: CODEBASE-HEALTH route row anchored",
         PLUGIN / "skills" / "cc10x-router" / "SKILL.md",
         contains_all(
-            "| 6 | CODEBASE-HEALTH | \"codebase health\", \"improve architecture\", \"deepening\", \"ball of mud\", \"shallow modules\", \"architecture audit\" | CODEBASE-HEALTH | architecture-scanner",
+            "| 7 | CODEBASE-HEALTH | \"codebase health\", \"improve architecture\", \"deepening\", \"ball of mud\", \"shallow modules\", \"architecture audit\" | CODEBASE-HEALTH | architecture-scanner",
         ),
         "CODEBASE-HEALTH row anchored with non-colliding keywords + chain",
     ),
@@ -229,12 +229,12 @@ ASSERTIONS = [
         "priority 1-4 rows byte-for-byte anchored (ERROR/PLAN/REVIEW/ORIENT unchanged)",
     ),
     A(
-        "router: DEFAULT row anchored at priority 7",
+        "router: DEFAULT row anchored at priority 8",
         PLUGIN / "skills" / "cc10x-router" / "SKILL.md",
         contains_all(
-            "| 7 | DEFAULT | Everything else | BUILD | component-builder",
+            "| 8 | DEFAULT | Everything else | BUILD | component-builder",
         ),
-        "DEFAULT row at priority 7 with BUILD chain unchanged",
+        "DEFAULT row at priority 8 with BUILD chain unchanged",
     ),
     A(
         "router: TRIAGE primary-deliverable rule",
@@ -568,7 +568,7 @@ ASSERTIONS = [
     A(
         "router: phase enum covers triage + codebase-health",
         SKILLS / "cc10x-router" / "SKILL.md",
-        contains("|triage|codebase-health|"),
+        contains("research-github|triage|codebase-health}"),
         "task-metadata phase enum includes the TRIAGE and CODEBASE-HEALTH phases their workflows create",
     ),
     A(
