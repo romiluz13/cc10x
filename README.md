@@ -26,7 +26,7 @@
   <strong>Explore interactively:</strong> <a href="cc10x-explorer.html">cc10x Explorer</a> &nbsp;·&nbsp; <a href="cc10x-architecture-explorer.html">Architecture Explorer</a>
 </p>
 
-**Current version:** 12.9.0
+**Current version:** 12.9.1
 
 ---
 
@@ -173,11 +173,12 @@ This section is written for Claude Code to follow when the user says "set up cc1
 ```markdown
 # CC10x Orchestration (Always On)
 
-IMPORTANT: ALWAYS invoke cc10x-router on ANY development task. First action, no exceptions.
-IMPORTANT: Do only minimal orientation if needed, then invoke the router immediately.
+IMPORTANT: For multi-step development work (build, debug, review, plan), do minimal orientation first, then invoke cc10x-router before planning, implementation, review, or code changes.
+IMPORTANT: Minimal orientation means only the nearest project instructions, manifest, and immediate target surface. Do not do broad exploration before routing.
 IMPORTANT: Prefer retrieval-led reasoning over pre-training-led reasoning for orchestration decisions.
-IMPORTANT: Never bypass the router. It is the system.
-IMPORTANT: NEVER use Edit, Write, or Bash (for code changes) without first invoking cc10x-router.
+IMPORTANT: The router is the default for multi-step development work. Route write-heavy BUILD/DEBUG work through it; the router's fail-closed gates and durable artifacts are the value. A single trivial one-line edit need not pay full routing, but anything that spans files, has separable concerns, or changes a contract should route.
+
+Precedence (highest first): explicit user instructions > project standards (CLAUDE.md / repo conventions) > approved plans and design docs > domain-specific skills > cc10x internal skills > router defaults. The router enforces quality; it does not override the user.
 
 **Skip CC10x ONLY when:**
 - User EXPLICITLY says "don't use cc10x", "without cc10x", or "skip cc10x"
@@ -830,7 +831,7 @@ If you need to understand or evolve the harness, start there after reading `cc10
 ## Version History
 
 <details>
-<summary><strong>Release history (v5.3 → v12.9.0)</strong></summary>
+<summary><strong>Release history (v5.3 → v12.9.1)</strong></summary>
 
 | Version | Highlights |
 | --------- | ------------ |
@@ -932,6 +933,6 @@ MIT License
 ---
 
 <p align="center">
-  <strong>cc10x v12.9.0</strong><br>
+  <strong>cc10x v12.9.1</strong><br>
   <em>The Intelligent Orchestrator for Claude Code</em>
 </p>

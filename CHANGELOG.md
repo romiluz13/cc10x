@@ -1,5 +1,28 @@
 # Changelog
 
+## [12.9.1] - 2026-09-30
+
+### Instruction-layer harmony
+
+- **Install template harmonized (P0-1, explicit user decision).** The `~/.claude/CLAUDE.md` template in the README setup section is now byte-identical to this repo's own CLAUDE.md routing block (the four IMPORTANT lines plus the Precedence line), keeping the plugin-form entry line. Dropped: "ALWAYS invoke cc10x-router on ANY development task. First action, no exceptions", "Never bypass the router. It is the system", and "NEVER use Edit, Write, or Bash (for code changes) without first invoking cc10x-router". Users now get the same trivial-edit carve-out the maintainers run: a single trivial one-line edit need not pay full routing, but anything that spans files, has separable concerns, or changes a contract should route. The routing obligation was weakened **on purpose**, as the user's decision; the rigid entry posture itself stays (P2-8, also the user's decision).
+
+Benchmark note (docs/prompt-change-checklist.md §5, all seven items):
+- **What changed:** the routing-obligation text of the shipped install template only (README.md setup section). No plugin prompt surface (router, skills, agents, hooks) changed.
+- **Why it is safe:** the new text is the exact rule this repo's maintainers already run; the change removes a contradiction between two context sources rather than loosening any enforced gate. The exact-phrase opt-out block is untouched.
+- **Prior pattern:** `docs/2026-06-17-cc10x-revitalization-plan.md` softened CLAUDE.md the same way but the shipped template was never updated; this closes that gap.
+- **Prompt surfaces changed:** README install template (a user-facing paste). No prompt file under `plugins/cc10x/` changed; the only additions there are a read-only tool and its test (both ship inside the plugin, so installed users receive them), plus the plugin.json version bump.
+- **Copied:** wording, verbatim from `CLAUDE.md:3-9` — not structure or principle alone.
+- **Invariants intentionally untouched:** the exact-phrase skip rule (eval-03 posture, P2-8), every router kernel rule, every hook, every agent contract. INV-017 is strengthened: the Precedence line now reaches users.
+- **Honest claim boundary:** only fresh installs/pastes get the new text — existing users keep the stricter text until they re-paste the template; no automated behavior test covers the template (verified: no clause assertion, gate, or test pins its text).
+
+### Tooling
+
+- **New read-only token measurement tool** `tools/token_usage_report.py`: aggregates **measured** usage (input / output / cache-read / cache-creation) from Claude Code session transcripts, deduplicated per assistant message id; honors `$CLAUDE_CONFIG_DIR`; cc10x-active detection is a marker heuristic; covers main-session transcripts, subagent usage not verified. Informational only per INV-025: it may inform context-diet work, never routing, approval, remediation, or phase-advance decisions. Complements `claude plugin details cc10x` (projected per-component costs) with the measured side. Test: `scripts/test_cc10x_token_usage_report.py`, 25 checks, run explicitly (pytest does not collect script-style suites).
+
+### Claim boundary
+
+- Verified by: `tools/harness_audit.py` (12.9.1), `tools/doc_consistency_check.py`, `tools/prompt_clause_assertions.py` (253), `tools/workflow_replay_check.py` (28 fixtures), the guard test suite (40 tests), the QA phase-invariant suite, the review-package tests, `scripts/test_cc10x_token_usage_report.py` (25 checks), and `claude plugin validate plugins/cc10x` (passed). These prove contract shape and internal consistency; the template change carries no automated behavior coverage (see benchmark note).
+
 ## [12.9.0] - 2026-09-30
 
 ### QA route — test-system design, build, and execution
