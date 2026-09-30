@@ -1,5 +1,43 @@
 # Changelog
 
+## [12.9.0] - 2026-09-30
+
+### QA route — test-system design, build, and execution
+
+A sixth router route for when testing the code is the deliverable. It ships together with the plan-review, debug-handoff and hook changes it depends on. These 26 commits were already on `main` after v12.8.2; this entry is their release record.
+
+Route: `qa-research` (fan-out, one source per researcher) → `qa-plan` → `qa-plan-review` → `qa-preflight` → `qa-build` → `[qa-review ‖ qa-hunt]` → `qa-execute`.
+
+- **Routing (user-visible):** QA is routing priority 5. TRIAGE moves to 6, CODEBASE-HEALTH to 7, DEFAULT (BUILD) to 8. Requests nominated by `test`, `QA`, `e2e`, `integration test`, `test plan`, `test coverage`, `regression`, `smoke test`, "verify my feature", "prove it works" can now route to QA; the primary-deliverable rule still decides (a request whose deliverable is a code change stays BUILD/DEBUG). Priorities 1-4 are unchanged.
+- **3 new agents** (14 total): `qa-researcher`, `qa-harness-builder`, `qa-executor`. QA never edits product code; `qa-executor` may not edit test code; both are blocking contract signals. Preflight measures and never boots a service.
+- **New skill** `qa-strategy` (21 skills total), marked **DRAFT**: some sections are explicit PLACEHOLDERs (e.g. log-access strategy).
+- **5 templates:** feature map, env plan, setup, test plan, report.
+- **Evidence honesty:** scenarios that pass only because an adjacent service was stubbed from the traced repo's own belief are reported `unproven by stub`, never as covered. Bug candidates carry the commit they were measured on.
+- **QA isolation guard (new PreToolUse hook)** registered on `Read|Grep|Glob|NotebookRead|Edit|Write|NotebookEdit|Bash`. It only acts while a QA workflow is active: it blocks reads of quarantined material and, during planning phases, mutations outside the allowlist (default `.cc10x/`). Otherwise it exits silently. A finished QA workflow disengages it. Known, documented gap: interpreter runners (`python -c`, `node -e`) are not classified by body.
+- **Artifact guard** (PostToolUse) extended: review-closure check rejects `planning_review_status: passed` when the plan was amended after the last reviewed revision. **SessionStart** context reports `qa_research_lanes` for QA workflows instead of `research_quality`.
+
+### Changes to existing routes
+
+- **PLAN:** `plan-gap-reviewer` gains a dispatch input `REVIEW_MODE: fresh | amendment` (router-set, never agent-chosen). The `fresh` lane is unchanged (max 2 passes, never sees prior findings). A new diff-scoped **amendment-verification** task is created on demand after every amendment, including one made after the fresh-review cap; it cannot close the review loop. `planner` now emits `PLAN_REVISION`/`LAST_REVIEWED_REVISION` and `plan-gap-reviewer` echoes `REVIEW_MODE_APPLIED`; the workflow artifact gains `plan_revision`/`last_reviewed_revision`, and `PLANNING_REVIEW_STATUS: passed` now requires the two revisions to match — the PostToolUse artifact guard blocks (exit 2) with `revised_after_review` otherwise. `planner` gains a Plan Header Wording Law: no bare `closed/final/reviewed/approved`; an unreviewed last revision must say so verbatim.
+- **DEBUG:** QA-seeded DEBUG. A user-accepted QA `BUG_CANDIDATE` starts a new DEBUG workflow (attempt counter starts at zero) with a `## QA Bug Context`; `bug-investigator` must re-run the seeded loop and see it fail before it may satisfy its Feedback Loop Gate.
+- **BUILD:** the live-proof reference now sends a BUILD phase to `qa-strategy` for environment topology and tells the builder to report, not build, a missing test environment (that is QA's job). It no longer points BUILD at `planning/references/live-verification-strategy.md` and `verification/references/live-production-testing.md` (both files still ship and remain referenced by the planning skill).
+- Router and hook-policy references gain the QA phases, contract rows and enums; workflow-artifact skeleton gains QA and revision fields.
+
+### Docs and repo hygiene
+
+- README counts and tables updated (14 agents, 21 skills, 8 workflows); local paths redacted in tracked docs; `.gitignore` fixes so plan docs and shipped templates are no longer silently ignored.
+- Validation tooling and registries re-anchored to the post-QA-route tree (clause-assertion anchors for the 6/7/8 routing rows and the phase enum, tooling paths, stale skill/agent names); QA isolation guard docstring fail-open label corrected. Classification: metadata_only; no invariant semantics changed.
+
+### Claim boundary
+
+- Verified by: `tools/harness_audit.py`, `tools/workflow_replay_check.py` (28 fixtures), the guard test suite (40 tests), the QA phase-invariant suite, `tools/prompt_clause_assertions.py` (253), `tools/doc_consistency_check.py`, and `claude plugin validate plugins/cc10x` (passed). These prove contract shape, guard behavior and internal consistency of the route law; they do not prove model behavior on real codebases.
+- Design provenance: the route's five design choices are recorded in commit 8a6d313 as coming from live runs against a real codebase. The number of runs and their coverage were not logged, so this entry claims design provenance, not measured outcomes.
+- `qa-strategy` is a draft. QA route invariants are not yet in `docs/router-invariants.md` / `docs/prompt-invariants.md`. `INV-026`'s wording ("pre-creates … bounded review chain") predates the on-demand amendment task (both registries now carry a v12.9.0 status note saying so).
+
+### Getting this update
+
+Third-party marketplaces do not auto-update by default. Use `claude plugin update cc10x@cc10x` (or "Update now" on the plugin's page in the `/plugin` Installed tab) to pick up v12.9.0; a running session keeps the versions it already loaded, so the new version applies on your next session or after `/reload-plugins`. A manifest `version` pins the plugin until it changes, and the manifest's version overrides the marketplace entry's — both are bumped in this release. Fresh marketplace adds already receive `main` HEAD, so the QA route was reachable before this tag; the release governs who is pinned where, not whether the code is public.
+
 ## [12.8.2] - 2026-09-11
 
 ### pstack evidence-discipline imports

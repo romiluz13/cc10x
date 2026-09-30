@@ -26,7 +26,7 @@
   <strong>Explore interactively:</strong> <a href="cc10x-explorer.html">cc10x Explorer</a> &nbsp;·&nbsp; <a href="cc10x-architecture-explorer.html">Architecture Explorer</a>
 </p>
 
-**Current version:** 12.8.2
+**Current version:** 12.9.0
 
 ---
 
@@ -830,7 +830,7 @@ If you need to understand or evolve the harness, start there after reading `cc10
 ## Version History
 
 <details>
-<summary><strong>Release history (v5.3 → v12.8.2)</strong></summary>
+<summary><strong>Release history (v5.3 → v12.9.0)</strong></summary>
 
 | Version | Highlights |
 | --------- | ------------ |
@@ -932,6 +932,6 @@ MIT License
 ---
 
 <p align="center">
-  <strong>cc10x v12.8.2</strong><br>
+  <strong>cc10x v12.9.0</strong><br>
   <em>The Intelligent Orchestrator for Claude Code</em>
 </p>
