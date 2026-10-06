@@ -18,6 +18,8 @@ import re
 import sys
 from pathlib import Path
 
+from harness_audit import FrontmatterError, parse_frontmatter
+
 ROOT = Path(__file__).resolve().parents[3]
 PLUGIN = ROOT / "plugins" / "cc10x"
 SKILLS = PLUGIN / "skills"
@@ -58,6 +60,18 @@ def contains_none(*needles):
 
 def matches(pattern: str):
     return lambda text: re.search(pattern, text) is not None
+
+
+def frontmatter_is(key: str, value: str):
+    """True only when the frontmatter block has `key: value` as a real key; malformed frontmatter is False."""
+
+    def check(text: str) -> bool:
+        try:
+            return parse_frontmatter(text).get(key, (None, []))[0] == value
+        except FrontmatterError:
+            return False
+
+    return check
 
 
 def yaml_alternatives_parse(marker: str, expected_blocks: int):
@@ -404,7 +418,7 @@ ASSERTIONS = [
     A(
         "agent-common: user-invocable false so agent preload delivers it",
         SKILLS / "agent-common" / "SKILL.md",
-        lambda t: "user-invocable: false" in t.split("---", 2)[1],
+        frontmatter_is("user-invocable", "false"),
         "frontmatter must hide the skill instead of disable-model-invocation (agent skills: preload skips disabled skills)",
     ),
     # agent-common — read-only glossary, no mutation (ticket #39)

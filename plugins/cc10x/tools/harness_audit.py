@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -159,41 +160,165 @@ def fail(errors: list[str]) -> int:
     return 1
 
 
-def frontmatter(text: str) -> list[str]:
-    parts = text.split("---", 2)
-    return parts[1].splitlines() if text.startswith("---") and len(parts) > 2 else []
+class FrontmatterError(ValueError):
+    pass
 
 
-def check_preloaded_skills_invocable() -> list[str]:
-    errors: list[str] = []
-    for agent in sorted((PLUGIN_ROOT / "agents").glob("*.md")):
-        lines = frontmatter(read(agent))
-        if "skills:" not in lines:
+_KEY = re.compile(r"^([A-Za-z0-9_-]+):(.*)$")
+_BOOLS = {"true": True, "True": True, "TRUE": True, "false": False, "False": False, "FALSE": False}
+
+
+def _strip_comment(value: str) -> str:
+    quote = ""
+    for i, ch in enumerate(value):
+        if quote:
+            quote = "" if ch == quote else quote
+        elif ch in "\"'":
+            quote = ch
+        elif ch == "#" and (i == 0 or value[i - 1] in " \t"):
+            return value[:i].strip()
+    return value.strip()
+
+
+def _unquote(value: str) -> str:
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
+        return value[1:-1]
+    return value
+
+
+def parse_frontmatter(text: str) -> dict[str, tuple[str, list[str]]]:
+    """Map each top-level key to (inline value without comment, indented body lines).
+
+    Raises FrontmatterError instead of guessing when the block is not delimited.
+    """
+    lines = text.lstrip("\ufeff").replace("\r\n", "\n").replace("\r", "\n").split("\n")
+    if lines[0].rstrip() != "---":
+        raise FrontmatterError("frontmatter must start with a '---' line")
+    close = next((i for i in range(1, len(lines)) if lines[i].rstrip() == "---"), None)
+    if close is None:
+        raise FrontmatterError("frontmatter has no closing '---' line")
+    fields: dict[str, tuple[str, list[str]]] = {}
+    key = ""
+    for raw in lines[1:close]:
+        if not raw.strip() or raw.lstrip(" ").startswith("#"):
             continue
-        for line in lines[lines.index("skills:") + 1 :]:
-            if not line.startswith("  - "):
-                break
-            name = line[4:].strip().removeprefix("cc10x:")
-            skill = PLUGIN_ROOT / "skills" / name / "SKILL.md"
+        if raw[0] in " \t":
+            if not key:
+                raise FrontmatterError(f"indented line before any key: {raw.strip()!r}")
+            fields[key][1].append(raw)
+            continue
+        match = _KEY.match(raw)
+        if not match:
+            raise FrontmatterError(f"cannot parse frontmatter line: {raw.strip()!r}")
+        key = match.group(1)
+        fields[key] = (_strip_comment(match.group(2)), [])
+    return fields
+
+
+def fm_scalar(fields: dict, key: str) -> str | None:
+    if key not in fields:
+        return None
+    inline, body = fields[key]
+    if not inline or body or inline[0] in "[{|>":
+        raise FrontmatterError(f"{key} must be a single-line scalar")
+    return _unquote(inline)
+
+
+def fm_bool(fields: dict, key: str) -> bool | None:
+    value = fm_scalar(fields, key)
+    if value is None:
+        return None
+    if value not in _BOOLS:
+        raise FrontmatterError(f"{key} must be a boolean, got {value!r}")
+    return _BOOLS[value]
+
+
+def fm_list(fields: dict, key: str) -> list[str] | None:
+    if key not in fields:
+        return None
+    inline, body = fields[key]
+    if inline and body:
+        raise FrontmatterError(f"{key} mixes an inline value with indented lines")
+    if inline:
+        if not (inline.startswith("[") and inline.endswith("]")):
+            raise FrontmatterError(f"{key} must be a list, got {inline!r}")
+        inner = inline[1:-1]
+        if any(ch in inner for ch in "[]{}"):
+            raise FrontmatterError(f"{key} flow list is too complex to read")
+        items = [_unquote(part.strip()) for part in inner.split(",")]
+    else:
+        items = []
+        for raw in body:
+            indent = raw[: len(raw) - len(raw.lstrip(" \t"))]
+            if "\t" in indent:
+                raise FrontmatterError(f"{key} list uses tab indentation")
+            if raw.lstrip().startswith("#"):
+                continue
+            stripped = raw.strip()
+            if stripped != "-" and not stripped.startswith("- "):
+                raise FrontmatterError(f"{key} list has a non-item line: {stripped!r}")
+            items.append(_unquote(_strip_comment(stripped[1:])))
+    if not items or any(not item for item in items):
+        raise FrontmatterError(f"{key} has an empty list or an empty item")
+    return items
+
+
+def check_preloaded_skills_invocable(
+    agents_dir: Path = PLUGIN_ROOT / "agents",
+    skills_dir: Path = PLUGIN_ROOT / "skills",
+) -> list[str]:
+    errors: list[str] = []
+    inspected = 0
+    declared = 0
+    for agent in sorted(agents_dir.glob("*.md")):
+        text = read(agent)
+        head = re.split(r"^---[ \t]*$", text.replace("\ufeff", ""), maxsplit=2, flags=re.M)
+        if re.search(r"^[ \t]*skills[ \t]*:", head[1] if len(head) > 2 else text, re.M):
+            declared += 1
+        try:
+            skills = fm_list(parse_frontmatter(text), "skills")
+        except FrontmatterError as exc:
+            errors.append(f"{agent.name}: {exc}")
+            continue
+        if skills is None:
+            continue
+        inspected += 1
+        for name in skills:
+            name = name.removeprefix("cc10x:")
+            skill = skills_dir / name / "SKILL.md"
             if not skill.exists():
                 errors.append(f"{agent.name} preloads missing skill {name}")
-            elif "disable-model-invocation: true" in frontmatter(read(skill)):
+                continue
+            try:
+                disabled = fm_bool(parse_frontmatter(read(skill)), "disable-model-invocation")
+            except FrontmatterError as exc:
+                errors.append(f"{name}/SKILL.md: {exc}")
+                continue
+            if disabled:
                 errors.append(
                     f"{agent.name} preloads {name}, which sets disable-model-invocation: true (agent preload skips it)"
                 )
+    if inspected == 0:
+        errors.append(f"no agents with a skills: list were inspected under {agents_dir.name}/")
+    elif inspected < declared:
+        errors.append(
+            f"only {inspected} of {declared} agents declaring skills: were inspected (a skills: key was not read)"
+        )
     return errors
 
 
-def check_researcher_mcp_lanes() -> list[str]:
-    tools_line = next(
-        (
-            line
-            for line in frontmatter(read(PLUGIN_ROOT / "agents" / "researcher.md"))
-            if line.startswith("tools:")
-        ),
-        "",
-    )
-    granted = {t.strip() for t in tools_line.removeprefix("tools:").split(",")}
+def check_researcher_mcp_lanes(agents_dir: Path = PLUGIN_ROOT / "agents") -> list[str]:
+    path = agents_dir / "researcher.md"
+    if not path.exists():
+        return [f"{path.name} not found under {agents_dir.name}/"]
+    try:
+        fields = parse_frontmatter(read(path))
+        if fields.get("tools", ("", []))[1]:
+            granted = set(fm_list(fields, "tools") or [])
+        else:
+            granted = {t.strip() for t in (fm_scalar(fields, "tools") or "").split(",")}
+    except FrontmatterError as exc:
+        return [f"{path.name}: {exc}"]
     return [
         f"researcher.md tools: missing {name} (a tools allowlist excludes MCP tools unless named)"
         for name in ("mcp__brightdata", "mcp__octocode")
@@ -213,16 +338,19 @@ DOCUMENTED_AGENT_COLORS = {
 }
 
 
-def check_agent_colors() -> list[str]:
+def check_agent_colors(agents_dir: Path = PLUGIN_ROOT / "agents") -> list[str]:
     errors: list[str] = []
-    for agent in sorted((PLUGIN_ROOT / "agents").glob("*.md")):
-        for line in frontmatter(read(agent)):
-            if line.startswith("color:"):
-                color = line.removeprefix("color:").strip()
-                if color not in DOCUMENTED_AGENT_COLORS:
-                    errors.append(
-                        f"{agent.name} color {color!r} is not a documented agent color"
-                    )
+    agents = sorted(agents_dir.glob("*.md"))
+    if not agents:
+        return [f"no agents found under {agents_dir.name}/"]
+    for agent in agents:
+        try:
+            color = fm_scalar(parse_frontmatter(read(agent)), "color")
+        except FrontmatterError as exc:
+            errors.append(f"{agent.name}: {exc}")
+            continue
+        if color is not None and color not in DOCUMENTED_AGENT_COLORS:
+            errors.append(f"{agent.name} color {color!r} is not a documented agent color")
     return errors
 
 
