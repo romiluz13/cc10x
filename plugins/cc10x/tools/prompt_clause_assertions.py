@@ -922,7 +922,7 @@ ASSERTIONS = [
         SKILLS / "update" / "SKILL.md",
         lambda text: "patch --forward" in text
         and 'git apply --3way "$BACKUP_DIR' not in text,
-        "Phase 4 uses patch with an explicit target; broken in-cache git apply --3way removed",
+        "Phase 6 uses patch with an explicit target; broken in-cache git apply --3way removed",
     ),
     A(
         "memory-and-handoff: single knowledge compounding loop",
@@ -2141,6 +2141,36 @@ ASSERTIONS = [
             "/reload-plugins",
         ),
         "update flow must be CLI-driven: list, refresh marketplace, update per scope, then restart or reload",
+    ),
+    A(
+        "update skill: marketplace located, then patches captured, before the refresh",
+        SKILLS / "update" / "SKILL.md",
+        lambda t: 0
+        < t.find("## Phase 2: Locate The Marketplace")
+        < t.find("## Phase 3: Capture Local Patches")
+        < t.find("## Phase 4: Refresh The Marketplace")
+        < t.find("## Phase 5: Update Each Scope"),
+        "carry-over must read the old version before `marketplace update` moves the checkout to the new one",
+    ),
+    A(
+        "update skill: carry-over baseline is a pinned git commit or an abort",
+        SKILLS / "update" / "SKILL.md",
+        contains_all(
+            "log --format=%H -S",
+            "tail -1",
+            'show "$SHA:plugins/cc10x/',
+            "ABORT carry-over",
+        ),
+        "pristine baseline = file at the commit that set the old version; unresolvable baseline aborts instead of guessing",
+    ),
+    A(
+        "update skill: refresh failure and vanished projectPath are handled",
+        SKILLS / "update" / "SKILL.md",
+        contains_all(
+            "exits non-zero",
+            "no longer exists",
+        ),
+        "a failed marketplace refresh must not read as success; a deleted project is skipped with a note",
     ),
     A(
         "update skill: no registry hand-editing or hard-coded cache root",
