@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: route-precedence
+description: "REGRESSION GUARD (green at baseline). Guards B4 - routing precedence stated three ways in SKILL.md (primary deliverable, lower number wins, ORIENT preferred over REVIEW); converts the intent of skills/cc10x-router/evals/eval-01..03 into a run. Guards the P4.T1.5a rewrite."
+tags: [route, regression, guards-B4]
+context:
+  scaffold_script: fixture.sh

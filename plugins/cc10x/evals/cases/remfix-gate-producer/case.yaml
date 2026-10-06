@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: remfix-gate-producer
+description: "EXPECTED RED at baseline. Guards B1 - REM-FIX proof fields (COVERING_TESTS, TEST_COMMAND, TEST_OUTPUT) have no producer in any agent contract, so the re-review precondition gate cannot be satisfied. Probabilistic, needs the review to raise a HIGH finding."
+tags: [remfix, expected-red, guards-B1]
+context:
+  scaffold_script: fixture.sh

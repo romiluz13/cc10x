@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: two-workflow-resume
+description: "EXPECTED RED at baseline. Guards B14 - with two active workflows the router must scope resume by wf marker, while hooks key on the newest-mtime artifact (cc10x_hooklib.py latest_workflow_file)."
+tags: [two, expected-red, guards-B14]
+context:
+  scaffold_script: fixture.sh

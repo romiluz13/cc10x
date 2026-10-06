@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: build-trivial-happy
-description: Regression guard. A trivial one-file change routed through the cc10x router reaches a finished BUILD workflow.
-tags: [build, regression]
+description: "REGRESSION GUARD (green at baseline). Guards trivial-build - A trivial one-file change routed through the cc10x router reaches a finished BUILD workflow."
+tags: [build, regression, guards-trivial-build]
 context:
   scaffold_script: fixture.sh

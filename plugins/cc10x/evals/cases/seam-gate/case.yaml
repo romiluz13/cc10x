@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: seam-gate
+description: "REGRESSION GUARD (green at baseline). Guards C9 - behavioral replacement for tests/live/seam_eval.py, which only greps skill text: a planned BUILD whose phase names a test seam must report SEAM_GATE_STATUS=confirmed with non-empty TEST_SEAMS."
+tags: [seam, regression, guards-C9]
+context:
+  scaffold_script: fixture.sh

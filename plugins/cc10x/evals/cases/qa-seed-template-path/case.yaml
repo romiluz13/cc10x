@@ -1,0 +1,6 @@
+schema_version: "1.1"
+name: qa-seed-template-path
+description: "EXPECTED RED at baseline. Guards B11 - references/qa-workflow.md seeds the test plan with a literal plugin-root variable path that is empty in the Bash tool, so the first cp fails with an empty prefix (P1.T6 spike: 6 of 6 first attempts failed)."
+tags: [qa, expected-red, guards-B11]
+context:
+  scaffold_script: fixture.sh
