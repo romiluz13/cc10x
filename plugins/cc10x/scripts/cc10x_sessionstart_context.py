@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+from __future__ import annotations
+
 from cc10x_hooklib import (
     latest_workflow_payload,
     load_input,

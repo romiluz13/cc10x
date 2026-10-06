@@ -9,6 +9,8 @@ marquee and the "## The N Agents" / "## The M Skills" headings):
 The version string everywhere must equal plugins/cc10x/.claude-plugin/plugin.json.
 """
 
+from __future__ import annotations
+
 import json
 import re
 import sys

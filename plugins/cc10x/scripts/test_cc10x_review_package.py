@@ -9,6 +9,8 @@ Lives in scripts/ because the repo's .gitignore tracks .py only under scripts/.
 Run:  python3 test_cc10x_review_package.py    (exit 0 = pass)
 """
 
+from __future__ import annotations
+
 import os
 import re
 import subprocess

@@ -17,6 +17,8 @@ runs from the matched phase heading to the next sibling phase heading (a
 heading at the same '#' depth).
 """
 
+from __future__ import annotations
+
 import argparse
 import os
 import re

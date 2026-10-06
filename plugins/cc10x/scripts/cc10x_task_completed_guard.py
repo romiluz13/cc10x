@@ -13,6 +13,8 @@ Validates:
    correctly, only on remediation_history being an accurate array in the artifact.
 """
 
+from __future__ import annotations
+
 import re
 import sys
 from datetime import datetime, timezone

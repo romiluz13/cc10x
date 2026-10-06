@@ -22,6 +22,8 @@ history/worktree operations (reset --hard, clean -f, checkout ., force-push)
 have NO token path and stay blocked unconditionally.
 """
 
+from __future__ import annotations
+
 import contextlib
 import json
 import re

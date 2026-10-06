@@ -17,6 +17,8 @@ HEAD~1 silently drops all but the last commit of a multi-commit phase, so the
 reviewer sees a partial diff and approves work it never read.
 """
 
+from __future__ import annotations
+
 import argparse
 import os
 import subprocess

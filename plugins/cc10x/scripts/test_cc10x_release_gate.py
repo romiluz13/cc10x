@@ -7,6 +7,8 @@ the failure path, through an in-process main(argv) with a patched GATE_STEPS.
 Run:  python3 test_cc10x_release_gate.py    (exit 0 = pass)
 """
 
+from __future__ import annotations
+
 import contextlib
 import importlib.util
 import io

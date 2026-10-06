@@ -15,6 +15,8 @@ locks in today's behavior, including audit-mode defaults. Bug-reproduction
 tests for the known fail-open paths land with their fixes in T8/#73.
 """
 
+from __future__ import annotations
+
 import json
 import subprocess
 import sys

@@ -10,6 +10,8 @@ Scope discipline (prevents the stale-artifact footgun):
   not veto unrelated writes elsewhere in the project.
 """
 
+from __future__ import annotations
+
 import sys
 from pathlib import Path
 

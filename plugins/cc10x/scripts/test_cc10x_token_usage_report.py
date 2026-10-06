@@ -19,6 +19,8 @@ Lives in scripts/ because the repo's .gitignore tracks .py only under scripts/.
 Run:  python3 test_cc10x_token_usage_report.py    (exit 0 = pass)
 """
 
+from __future__ import annotations
+
 import json
 import os
 import subprocess

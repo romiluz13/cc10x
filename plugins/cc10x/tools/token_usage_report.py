@@ -23,6 +23,8 @@ Usage:
   python3 token_usage_report.py --limit 50 --json   # machine-readable
 """
 
+from __future__ import annotations
+
 import argparse
 import json
 import os

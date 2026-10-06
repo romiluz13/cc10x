@@ -8,6 +8,8 @@ closes the other direction: a fixture file that exists on disk but is not
 registered here is an error, so new fixtures cannot ship unguarded.
 """
 
+from __future__ import annotations
+
 from pathlib import Path
 
 PLUGIN_ROOT = Path(__file__).resolve().parents[1]

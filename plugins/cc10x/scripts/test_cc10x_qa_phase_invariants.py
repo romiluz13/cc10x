@@ -1801,6 +1801,8 @@ TWO ITEMS THE PLAN LEFT HELD BY NO PROPERTY; Phase 10 decided both.
     whose only machine referent would be a count the test itself invented.
 """
 
+from __future__ import annotations
+
 import ast
 import importlib.util
 import json

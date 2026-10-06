@@ -5,6 +5,8 @@ Takes the event name as argv[1], reads stdin JSON, appends a structured
 log line to .cc10x/events.jsonl and the hook-events log.
 """
 
+from __future__ import annotations
+
 import sys
 
 from cc10x_hooklib import load_input, log_event

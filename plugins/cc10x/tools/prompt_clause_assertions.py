@@ -12,6 +12,8 @@ Deterministic — no network, no agent load.
 Usage: python3 plugins/cc10x/tools/prompt_clause_assertions.py
 """
 
+from __future__ import annotations
+
 import re
 import sys
 from pathlib import Path

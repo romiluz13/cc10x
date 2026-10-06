@@ -5,6 +5,8 @@ Replaces cc10x_precompact_state.py and cc10x_stop_persist.py.
 Takes event type as argv[1].
 """
 
+from __future__ import annotations
+
 import json
 import sys
 
