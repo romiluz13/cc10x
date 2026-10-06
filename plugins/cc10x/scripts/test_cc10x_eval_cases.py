@@ -130,3 +130,14 @@ def test_fixture_scaffolds_a_git_repo_in_an_empty_directory(case, tmp_path):
     head = subprocess.run(["git", "log", "--oneline"], cwd=tmp_path, env=env, capture_output=True, text=True)
     assert head.returncode == 0 and head.stdout.strip()
 
+
+
+def test_baseline_lists_every_case_and_every_red_case_names_its_p4_task():
+    text = BASELINE.read_text(encoding="utf-8")
+    rows = {line.split("|")[1].strip().strip("`"): line for line in text.splitlines() if line.startswith("| `")}
+    assert sorted(rows) == EXPECTED_CASE_IDS
+    for case_id, (finding, red, _) in CASES.items():
+        assert finding in rows[case_id]
+        if red:
+            assert re.search(r"P4\.T\d", rows[case_id]), case_id
+    assert "L2 baseline: NOT RUN" in text
