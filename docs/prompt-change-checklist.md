@@ -72,3 +72,36 @@ Do not merge a prompt-only change unless:
 - manual review is complete for all changed Tier 1 prompts
 - the change classification is recorded
 - the benchmark note exists when required
+
+## 7. Release Gate
+
+Run the gate from the repo root before any merge or release:
+
+```
+python3 plugins/cc10x/tools/release_gate.py
+```
+
+It runs these nine steps in order; `--list` prints the ids, `--only <step-id>` (repeatable) runs a subset, `--strict` is forwarded to `harness_audit`, and `--allow-no-pytest` / `--allow-no-claude` skip those steps loudly instead of failing:
+
+1. `harness_audit`: `python3 plugins/cc10x/tools/harness_audit.py`
+2. `doc_consistency_check`: `python3 plugins/cc10x/tools/doc_consistency_check.py`
+3. `prompt_clause_assertions`: `python3 plugins/cc10x/tools/prompt_clause_assertions.py`
+4. `workflow_replay_check`: `python3 plugins/cc10x/tools/workflow_replay_check.py`
+5. `pytest`: `uv run --no-project --with pytest python -m pytest plugins/cc10x/scripts -q`
+6. `suite_qa_phase_invariants`: `python3 plugins/cc10x/scripts/test_cc10x_qa_phase_invariants.py`
+7. `suite_review_package`: `python3 plugins/cc10x/scripts/test_cc10x_review_package.py`
+8. `suite_token_usage_report`: `python3 plugins/cc10x/scripts/test_cc10x_token_usage_report.py`
+9. `plugin_validate`: `claude plugin validate plugins/cc10x`
+
+Pytest limitation: plain `python3 -m pytest` fails with ModuleNotFoundError when pytest is not installed, so the runner tries it first and falls back to `uv run --no-project --with pytest`. Pytest meaningfully collects only `test_cc10x_guards.py`; the three script-style suites run on `__main__`, which is why they are separate steps.
+
+Fast loop per task: `--only harness_audit --only prompt_clause_assertions --only workflow_replay_check --only pytest`.
+
+`plugins/cc10x/tools/worldclass_benchmark.py` is never a gate and is never run as part of it.
+
+Version-bump surfaces to update together on a release:
+- `plugins/cc10x/.claude-plugin/plugin.json`
+- `.claude-plugin/marketplace.json`
+- README version references
+- `CHANGELOG.md`
+- registry status lines
