@@ -362,16 +362,50 @@ def check_agent_colors(agents_dir: Path = PLUGIN_ROOT / "agents") -> list[str]:
 
 
 _HOOK_SCRIPT = re.compile(r"scripts/([A-Za-z0-9_.-]+)")
-REQUIRED_HOOK_SCRIPTS = ("cc10x_git_guard.py", "cc10x_qa_isolation_guard.py", "cc10x_preflight.sh")
+_MAIN_GUARD = re.compile(r"^if __name__ == [\"']__main__[\"']:", re.M)
+CORE_HOOK_SCRIPTS = (
+    "cc10x_pretooluse_guard.py",
+    "cc10x_git_guard.py",
+    "cc10x_qa_isolation_guard.py",
+    "cc10x_posttooluse_artifact_guard.py",
+    "cc10x_sessionstart_context.py",
+    "cc10x_preflight.sh",
+    "cc10x_task_completed_guard.py",
+    "cc10x_event_logger.py",
+    "cc10x_state_persist.py",
+)
+
+
+def hook_entry_points(plugin_root: Path) -> set[str]:
+    """Hook scripts on disk: every scripts/*.sh and every scripts/cc10x_*.py that main-guards (libraries do not)."""
+    scripts = plugin_root / "scripts"
+    found = {p.name for p in scripts.glob("*.sh")}
+    found.update(p.name for p in scripts.glob("cc10x_*.py") if _MAIN_GUARD.search(read(p)))
+    return found
 
 
 def check_hook_registration(plugin_root: Path = PLUGIN_ROOT) -> list[str]:
-    registered = set(_HOOK_SCRIPT.findall(read(plugin_root / "hooks" / "hooks.json")))
-    errors = [
-        f"hooks.json does not register {script}"
-        for script in REQUIRED_HOOK_SCRIPTS
-        if script not in registered
-    ]
+    try:
+        hooks = json.loads(read(plugin_root / "hooks" / "hooks.json"))["hooks"]
+    except (json.JSONDecodeError, KeyError, TypeError) as exc:
+        return [f"hooks.json is not valid JSON with a top-level 'hooks' object: {exc!r}"]
+    errors: list[str] = []
+    registered: set[str] = set()
+    for event, groups in sorted(hooks.items()):
+        commands = [
+            hook.get("command", "")
+            for group in groups
+            for hook in group.get("hooks", [])
+            if isinstance(hook, dict)
+        ]
+        if not commands:
+            errors.append(f"hooks.json event {event} registers no hook command")
+        for command in commands:
+            registered.update(_HOOK_SCRIPT.findall(command))
+    required = set(CORE_HOOK_SCRIPTS) | hook_entry_points(plugin_root)
+    errors.extend(
+        f"hooks.json does not register {script}" for script in sorted(required - registered)
+    )
     errors.extend(
         f"hooks.json references missing script {script}"
         for script in sorted(registered)

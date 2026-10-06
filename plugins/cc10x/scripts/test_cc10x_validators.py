@@ -355,6 +355,83 @@ def test_a_dropped_preflight_and_git_guard_registration_are_named(tmp_path):
     assert "hooks.json does not register cc10x_git_guard.py" in stderr
 
 
+def edit_hooks(root: Path, mutate) -> None:
+    edit_json(root / HOOKS_REL, mutate)
+
+
+def drop_hook_script(data: dict, script: str) -> None:
+    for event, groups in data["hooks"].items():
+        for group in groups:
+            group["hooks"] = [h for h in group["hooks"] if script not in h["command"]]
+
+
+@pytest.mark.parametrize(
+    "script",
+    [
+        "cc10x_pretooluse_guard.py",
+        "cc10x_posttooluse_artifact_guard.py",
+        "cc10x_sessionstart_context.py",
+        "cc10x_task_completed_guard.py",
+        "cc10x_event_logger.py",
+        "cc10x_state_persist.py",
+    ],
+)
+def test_dropping_any_registered_core_hook_script_is_named(script, tmp_path):
+    root = make_tree(tmp_path)
+    edit_hooks(root, lambda d: drop_hook_script(d, script))
+    result = run_tool("harness_audit.py", root)
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert f"hooks.json does not register {script}" in result.stderr
+
+
+def test_an_emptied_task_completed_hook_list_is_named(tmp_path):
+    root = make_tree(tmp_path)
+    edit_hooks(root, lambda d: d["hooks"]["TaskCompleted"][0].update(hooks=[]))
+    result = run_tool("harness_audit.py", root)
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert "hooks.json event TaskCompleted registers no hook command" in result.stderr
+    assert "hooks.json does not register cc10x_task_completed_guard.py" in result.stderr
+
+
+def test_an_event_with_no_groups_registers_no_command(tmp_path):
+    root = make_tree(tmp_path)
+    edit_hooks(root, lambda d: d["hooks"].update(Stop=[]))
+    errors = harness_audit.check_hook_registration(root / "plugins" / "cc10x")
+    assert "hooks.json event Stop registers no hook command" in errors
+
+
+def test_a_hook_script_on_disk_but_not_registered_is_named(tmp_path):
+    root = make_tree(tmp_path)
+    scripts = root / "plugins/cc10x/scripts"
+    (scripts / "cc10x_newhook.py").write_text('if __name__ == "__main__":\n    pass\n', encoding="utf-8")
+    (scripts / "cc10x_newhook.sh").write_text("#!/bin/sh\n", encoding="utf-8")
+    (scripts / "cc10x_helperlib.py").write_text("VALUE = 1\n", encoding="utf-8")
+    errors = harness_audit.check_hook_registration(root / "plugins" / "cc10x")
+    assert "hooks.json does not register cc10x_newhook.py" in errors
+    assert "hooks.json does not register cc10x_newhook.sh" in errors
+    assert not any("cc10x_helperlib.py" in e for e in errors)
+
+
+def test_a_script_named_only_in_prose_is_not_registered(tmp_path):
+    root = make_tree(tmp_path)
+
+    def mutate(data):
+        group = data["hooks"]["PreToolUse"][0]
+        group["hooks"][0]["command"] = 'python3 "${CLAUDE_PLUGIN_ROOT}/scripts/cc10x_git_guard.py"'
+        group["hooks"][0]["statusMessage"] = "see scripts/cc10x_pretooluse_guard.py"
+
+    edit_hooks(root, mutate)
+    errors = harness_audit.check_hook_registration(root / "plugins" / "cc10x")
+    assert "hooks.json does not register cc10x_pretooluse_guard.py" in errors
+
+
+def test_unparseable_hooks_json_is_one_clear_error(tmp_path):
+    root = make_tree(tmp_path)
+    (root / HOOKS_REL).write_text("{not json", encoding="utf-8")
+    errors = harness_audit.check_hook_registration(root / "plugins" / "cc10x")
+    assert len(errors) == 1 and errors[0].startswith("hooks.json is not valid JSON")
+
+
 def test_the_hard_coded_hook_script_tuple_is_gone():
     source = (TOOLS / "harness_audit.py").read_text(encoding="utf-8")
     assert '"cc10x_task_completed_guard.py",\n        "cc10x_event_logger.py",\n        "",' not in source
