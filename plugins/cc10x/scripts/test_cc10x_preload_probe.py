@@ -136,3 +136,28 @@ def test_runs_under_python_OO(tmp_path):
     assert run.returncode == 1
     assert "unknown agent" in run.stdout
     assert "Traceback" not in run.stderr
+
+
+def test_stderr_note_does_not_redact_a_root_home(monkeypatch):
+    monkeypatch.setattr(preload_probe.Path, "home", classmethod(lambda cls: Path("/")))
+    run = subprocess.CompletedProcess([], 1, stdout="", stderr="open /var/log/x failed")
+    assert "/var/log/x" in preload_probe.stderr_note(run)
+
+
+def test_stderr_note_redacts_a_real_home(monkeypatch):
+    monkeypatch.setattr(preload_probe.Path, "home", classmethod(lambda cls: Path("/Users/someone")))
+    run = subprocess.CompletedProcess([], 1, stdout="", stderr="open /Users/someone/x failed")
+    note = preload_probe.stderr_note(run)
+    assert "~/x" in note and "someone" not in note
+
+
+def test_timeout_reports_stderr_tail(tmp_path, monkeypatch):
+    plugin = make_plugin(tmp_path, {"a": "---\nname: a\n---\n"})
+    monkeypatch.setattr(preload_probe.shutil, "which", lambda name: "/fake/claude")
+
+    def run(cmd, **kwargs):
+        raise subprocess.TimeoutExpired(cmd, 1, stderr=b"rate limited, retrying\n")
+
+    monkeypatch.setattr(preload_probe.subprocess, "run", run)
+    ok, detail = preload_probe.probe("a", plugin, "haiku")
+    assert not ok and "timed out" in detail and "rate limited, retrying" in detail

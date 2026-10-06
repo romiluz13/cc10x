@@ -53,10 +53,17 @@ def judge(log: str, agent: str) -> tuple[bool, str]:
     return True, f"Preloaded skill '{SKILL}'"
 
 
+def stderr_tail(stderr: str | bytes | None) -> str:
+    if isinstance(stderr, bytes):
+        stderr = stderr.decode("utf-8", errors="replace")
+    home = str(Path.home())
+    text = (stderr or "").replace(home, "~") if len(home) > 1 else (stderr or "")
+    tail = text.strip().splitlines()[-STDERR_TAIL_LINES:]
+    return "\n".join(f"    {line}" for line in tail) or "    (empty)"
+
+
 def stderr_note(run: subprocess.CompletedProcess) -> str:
-    tail = (run.stderr or "").replace(str(Path.home()), "~").strip().splitlines()[-STDERR_TAIL_LINES:]
-    body = "\n".join(f"    {line}" for line in tail) or "    (empty)"
-    return f"\n  claude exit {run.returncode}; last stderr lines:\n{body}"
+    return f"\n  claude exit {run.returncode}; last stderr lines:\n{stderr_tail(run.stderr)}"
 
 
 def probe(agent: str, plugin_dir: Path, model: str) -> tuple[bool, str]:
@@ -87,8 +94,8 @@ def probe(agent: str, plugin_dir: Path, model: str) -> tuple[bool, str]:
             run = subprocess.run(
                 cmd, cwd=tmp, capture_output=True, text=True, timeout=TIMEOUT_S
             )
-        except subprocess.TimeoutExpired:
-            return False, f"claude timed out after {TIMEOUT_S}s"
+        except subprocess.TimeoutExpired as exc:
+            return False, f"claude timed out after {TIMEOUT_S}s; last stderr lines:\n{stderr_tail(exc.stderr)}"
         if not debug_file.exists():
             return False, "no debug log written" + stderr_note(run)
         ok, detail = judge(debug_file.read_text(encoding="utf-8", errors="replace"), agent)
