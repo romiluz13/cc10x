@@ -17,23 +17,31 @@ SCRIPT_STYLE_SUITES = (
     "test_cc10x_token_usage_report.py",
 )
 
+# Python steps use sys.executable so the gate exercises the interpreter that invoked it.
 # argv None means the step has a dedicated resolver (pytest, plugin_validate).
 GATE_STEPS = (
-    ("harness_audit", ["python3", f"{TOOLS}/harness_audit.py"]),
-    ("doc_consistency_check", ["python3", f"{TOOLS}/doc_consistency_check.py"]),
-    ("prompt_clause_assertions", ["python3", f"{TOOLS}/prompt_clause_assertions.py"]),
-    ("workflow_replay_check", ["python3", f"{TOOLS}/workflow_replay_check.py"]),
+    ("harness_audit", [sys.executable, f"{TOOLS}/harness_audit.py"]),
+    ("doc_consistency_check", [sys.executable, f"{TOOLS}/doc_consistency_check.py"]),
+    ("prompt_clause_assertions", [sys.executable, f"{TOOLS}/prompt_clause_assertions.py"]),
+    ("workflow_replay_check", [sys.executable, f"{TOOLS}/workflow_replay_check.py"]),
     ("pytest", None),
-    ("suite_qa_phase_invariants", ["python3", f"{SCRIPTS}/{SCRIPT_STYLE_SUITES[0]}"]),
-    ("suite_review_package", ["python3", f"{SCRIPTS}/{SCRIPT_STYLE_SUITES[1]}"]),
-    ("suite_token_usage_report", ["python3", f"{SCRIPTS}/{SCRIPT_STYLE_SUITES[2]}"]),
+    ("suite_qa_phase_invariants", [sys.executable, f"{SCRIPTS}/{SCRIPT_STYLE_SUITES[0]}"]),
+    ("suite_review_package", [sys.executable, f"{SCRIPTS}/{SCRIPT_STYLE_SUITES[1]}"]),
+    ("suite_token_usage_report", [sys.executable, f"{SCRIPTS}/{SCRIPT_STYLE_SUITES[2]}"]),
     ("plugin_validate", None),
 )
 
 
 def run(argv: list[str]) -> int:
     print("$ " + " ".join(argv), flush=True)
-    return subprocess.run(argv, cwd=ROOT).returncode
+    try:
+        return subprocess.run(argv, cwd=ROOT).returncode
+    except OSError as exc:
+        print(f"FAIL: cannot execute {argv[0]}: {exc}", flush=True)
+        return 1
+
+
+SKIPPED_RC = -1000
 
 
 def run_pytest(allow_missing: bool) -> int:
@@ -47,7 +55,7 @@ def run_pytest(allow_missing: bool) -> int:
         )
     if allow_missing:
         print("SKIPPED pytest: no importable pytest and no uv on PATH (--allow-no-pytest)", flush=True)
-        return 0
+        return SKIPPED_RC
     print("FAIL pytest: no importable pytest and no uv on PATH (use --allow-no-pytest to skip)", flush=True)
     return 1
 
@@ -57,7 +65,7 @@ def run_plugin_validate(allow_missing: bool) -> int:
         return run(["claude", "plugin", "validate", "plugins/cc10x"])
     if allow_missing:
         print("SKIPPED plugin_validate: claude not on PATH (--allow-no-claude)", flush=True)
-        return 0
+        return SKIPPED_RC
     print("FAIL plugin_validate: claude not on PATH (use --allow-no-claude to skip)", flush=True)
     return 1
 
@@ -81,23 +89,34 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     failed = []
+    skipped = []
+    ran = 0
     for step_id, cmd in GATE_STEPS:
         if args.only and step_id not in args.only:
             continue
         print(f"== {step_id}", flush=True)
+        ran += 1
         if step_id == "pytest":
             rc = run_pytest(args.allow_no_pytest)
         elif step_id == "plugin_validate":
             rc = run_plugin_validate(args.allow_no_claude)
         else:
+            # harness_audit has no argument parsing yet, so --strict is a silent no-op until P2 adds it.
             rc = run(cmd + (["--strict"] if args.strict and step_id == "harness_audit" else []))
-        if rc != 0:
+        if rc == SKIPPED_RC:
+            skipped.append(step_id)
+        elif rc != 0:
             failed.append(step_id)
 
     if failed:
         print(f"RELEASE GATE: FAIL ({', '.join(failed)})")
         return 1
-    print("RELEASE GATE: OK")
+    qualifiers = []
+    if skipped:
+        qualifiers.append(f"SKIPPED: {', '.join(skipped)}")
+    if args.only:
+        qualifiers.append(f"PARTIAL: {ran} of {len(ids)} steps")
+    print("RELEASE GATE: OK" + (f" ({'; '.join(qualifiers)})" if qualifiers else ""))
     return 0
 
 

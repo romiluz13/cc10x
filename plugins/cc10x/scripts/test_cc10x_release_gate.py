@@ -7,7 +7,9 @@ the failure path, through an in-process main(argv) with a patched GATE_STEPS.
 Run:  python3 test_cc10x_release_gate.py    (exit 0 = pass)
 """
 
+import contextlib
 import importlib.util
+import io
 import subprocess
 import sys
 from pathlib import Path
@@ -47,7 +49,15 @@ def load_runner():
     return mod
 
 
+def run_main(rg, *argv: str):
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        rc = rg.main(list(argv))
+    return rc, buf.getvalue()
+
+
 def main() -> int:
+    FAILURES.clear()
     r = cli("--list")
     check("--list exits 0", r.returncode == 0, f"rc={r.returncode} err={r.stderr.strip()}")
     check(
@@ -82,16 +92,59 @@ def main() -> int:
     rg.GATE_STEPS = (("always_fails", [sys.executable, "-c", "raise SystemExit(3)"]),)
     check(
         "a failing step makes the runner exit non-zero",
-        rg.main(["--only", "always_fails"]) != 0,
+        rg.main(["--only", "always_fails"]) == 1,
     )
     rg.GATE_STEPS = (("always_ok", [sys.executable, "-c", "pass"]),)
     check("a passing step makes the runner exit 0", rg.main(["--only", "always_ok"]) == 0)
+
+    rc, out = run_main(rg, "--only", "always_ok")
+    check("partial run banner is qualified", "RELEASE GATE: OK (PARTIAL: 1 of 1 steps)" in out, out)
+    rg.GATE_STEPS = (
+        ("a_ok", [sys.executable, "-c", "pass"]),
+        ("b_ok", [sys.executable, "-c", "pass"]),
+    )
+    rc, out = run_main(rg)
+    check("full run prints the plain OK banner", rc == 0 and out.strip().endswith("RELEASE GATE: OK"), out)
+    rc, out = run_main(rg, "--only", "a_ok", "--only", "b_ok")
+    check("--only repeats run both steps", rc == 0 and "== a_ok" in out and "== b_ok" in out, out)
+    rc, out = run_main(rg, "--only", "a_ok")
+    check("--only a single step runs only it", "== b_ok" not in out and "PARTIAL: 1 of 2" in out, out)
+
+    rg.GATE_STEPS = (("missing_exe", ["/nonexistent/definitely-not-here"]), ("after", [sys.executable, "-c", "pass"]))
+    rc, out = run_main(rg)
+    check(
+        "a missing executable is a step FAIL and later steps still run",
+        rc == 1 and "== after" in out and "RELEASE GATE: FAIL (missing_exe)" in out,
+        f"rc={rc} out={out}",
+    )
+
+    rg = load_runner()
+    real_find_spec, real_which = rg.importlib.util.find_spec, rg.shutil.which
+    rg.importlib.util.find_spec = lambda name, *a, **k: None if name == "pytest" else real_find_spec(name, *a, **k)
+    rg.shutil.which = lambda name, *a, **k: None
+    try:
+        rc, out = run_main(rg, "--only", "pytest", "--only", "plugin_validate", "--allow-no-pytest", "--allow-no-claude")
+        check(
+            "skipped steps are named in the banner",
+            rc == 0 and "RELEASE GATE: OK (SKIPPED: pytest, plugin_validate; PARTIAL: 2 of 9 steps)" in out,
+            out,
+        )
+        rc, out = run_main(rg, "--only", "pytest", "--allow-no-pytest")
+        check("skip-only banner has no partial text when full", "SKIPPED: pytest" in out, out)
+        rc, out = run_main(rg, "--only", "pytest")
+        check("skip without the allow flag fails", rc == 1, f"rc={rc}")
+    finally:
+        rg.importlib.util.find_spec, rg.shutil.which = real_find_spec, real_which
 
     if FAILURES:
         print(f"\nFAILED: {FAILURES}")
         return 1
     print("\nALL PASS")
     return 0
+
+
+def test_release_gate_runner() -> None:
+    assert main() == 0, f"release gate runner checks failed: {FAILURES}"
 
 
 if __name__ == "__main__":
