@@ -187,6 +187,8 @@ push_v3.1.py
 !plugins/cc10x/scripts/*.sh
 !plugins/cc10x/scripts/*.py
 !plugins/cc10x/tools/*.py
+!plugins/cc10x/evals/cases/*/fixture.sh
+plugins/cc10x/evals/results/
 
 # ========================================
 # BACKUP & ARCHIVE FILES
