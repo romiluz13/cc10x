@@ -184,6 +184,23 @@ def check_preloaded_skills_invocable() -> list[str]:
     return errors
 
 
+def check_researcher_mcp_lanes() -> list[str]:
+    tools_line = next(
+        (
+            line
+            for line in frontmatter(read(PLUGIN_ROOT / "agents" / "researcher.md"))
+            if line.startswith("tools:")
+        ),
+        "",
+    )
+    granted = {t.strip() for t in tools_line.removeprefix("tools:").split(",")}
+    return [
+        f"researcher.md tools: missing {name} (a tools allowlist excludes MCP tools unless named)"
+        for name in ("mcp__brightdata", "mcp__octocode")
+        if name not in granted
+    ]
+
+
 def main() -> int:
     errors: list[str] = []
 
@@ -842,6 +859,7 @@ def main() -> int:
             )
 
     errors.extend(check_preloaded_skills_invocable())
+    errors.extend(check_researcher_mcp_lanes())
 
     if errors:
         return fail(errors)

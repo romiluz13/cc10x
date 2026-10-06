@@ -4,7 +4,7 @@ description: "Execute web and GitHub research using Bright Data MCP, Octocode MC
 model: inherit
 color: orange
 effort: medium
-tools: Read, Write, Edit, Bash, WebFetch, WebSearch, TaskUpdate
+tools: Read, Write, Edit, Bash, WebFetch, WebSearch, TaskUpdate, mcp__brightdata, mcp__octocode
 skills:
   - cc10x:agent-common
   - cc10x:mcp-cli
