@@ -1,0 +1,354 @@
+{
+  "entries": [
+    {
+      "key": "inventory-path:plugins/cc10x/agents/silent-failure-hunter.md",
+      "owner": "P6.T2",
+      "reason": "inventory names a path that no longer exists (stale pre-v12 skill name); P6.T2 rewrites the inventory against disk"
+    },
+    {
+      "key": "inventory-path:plugins/cc10x/skills/architecture-patterns/SKILL.md",
+      "owner": "P6.T2",
+      "reason": "inventory names a path that no longer exists (stale pre-v12 skill name); P6.T2 rewrites the inventory against disk"
+    },
+    {
+      "key": "inventory-path:plugins/cc10x/skills/brainstorming/SKILL.md",
+      "owner": "P6.T2",
+      "reason": "inventory names a path that no longer exists (stale pre-v12 skill name); P6.T2 rewrites the inventory against disk"
+    },
+    {
+      "key": "inventory-path:plugins/cc10x/skills/code-review-patterns/SKILL.md",
+      "owner": "P6.T2",
+      "reason": "inventory names a path that no longer exists (stale pre-v12 skill name); P6.T2 rewrites the inventory against disk"
+    },
+    {
+      "key": "inventory-path:plugins/cc10x/skills/codebase-deepening/SKILL.md",
+      "owner": "P6.T2",
+      "reason": "inventory names a path that no longer exists (stale pre-v12 skill name); P6.T2 rewrites the inventory against disk"
+    },
+    {
+      "key": "inventory-path:plugins/cc10x/skills/debugging-patterns/SKILL.md",
+      "owner": "P6.T2",
+      "reason": "inventory names a path that no longer exists (stale pre-v12 skill name); P6.T2 rewrites the inventory against disk"
+    },
+    {
+      "key": "inventory-path:plugins/cc10x/skills/finding-duplicate-functions/SKILL.md",
+      "owner": "P6.T2",
+      "reason": "inventory names a path that no longer exists (stale pre-v12 skill name); P6.T2 rewrites the inventory against disk"
+    },
+    {
+      "key": "inventory-path:plugins/cc10x/skills/frontend-design-critique/SKILL.md",
+      "owner": "P6.T2",
+      "reason": "inventory names a path that no longer exists (stale pre-v12 skill name); P6.T2 rewrites the inventory against disk"
+    },
+    {
+      "key": "inventory-path:plugins/cc10x/skills/frontend-patterns/SKILL.md",
+      "owner": "P6.T2",
+      "reason": "inventory names a path that no longer exists (stale pre-v12 skill name); P6.T2 rewrites the inventory against disk"
+    },
+    {
+      "key": "inventory-path:plugins/cc10x/skills/handoff-package/SKILL.md",
+      "owner": "P6.T2",
+      "reason": "inventory names a path that no longer exists (stale pre-v12 skill name); P6.T2 rewrites the inventory against disk"
+    },
+    {
+      "key": "inventory-path:plugins/cc10x/skills/planning-patterns/SKILL.md",
+      "owner": "P6.T2",
+      "reason": "inventory names a path that no longer exists (stale pre-v12 skill name); P6.T2 rewrites the inventory against disk"
+    },
+    {
+      "key": "inventory-path:plugins/cc10x/skills/prototyping/SKILL.md",
+      "owner": "P6.T2",
+      "reason": "inventory names a path that no longer exists (stale pre-v12 skill name); P6.T2 rewrites the inventory against disk"
+    },
+    {
+      "key": "inventory-path:plugins/cc10x/skills/receiving-code-review/SKILL.md",
+      "owner": "P6.T2",
+      "reason": "inventory names a path that no longer exists (stale pre-v12 skill name); P6.T2 rewrites the inventory against disk"
+    },
+    {
+      "key": "inventory-path:plugins/cc10x/skills/session-memory/SKILL.md",
+      "owner": "P6.T2",
+      "reason": "inventory names a path that no longer exists (stale pre-v12 skill name); P6.T2 rewrites the inventory against disk"
+    },
+    {
+      "key": "inventory-path:plugins/cc10x/skills/test-driven-development/SKILL.md",
+      "owner": "P6.T2",
+      "reason": "inventory names a path that no longer exists (stale pre-v12 skill name); P6.T2 rewrites the inventory against disk"
+    },
+    {
+      "key": "inventory-path:plugins/cc10x/skills/verification-before-completion/SKILL.md",
+      "owner": "P6.T2",
+      "reason": "inventory names a path that no longer exists (stale pre-v12 skill name); P6.T2 rewrites the inventory against disk"
+    },
+    {
+      "key": "inventory-missing-entry:agent-common",
+      "owner": "P6.T2",
+      "reason": "agent or skill on disk has no inventory entry; P6.T2 writes one entry per agent and skill"
+    },
+    {
+      "key": "inventory-missing-entry:architecture",
+      "owner": "P6.T2",
+      "reason": "agent or skill on disk has no inventory entry; P6.T2 writes one entry per agent and skill"
+    },
+    {
+      "key": "inventory-missing-entry:architecture-scanner",
+      "owner": "P6.T2",
+      "reason": "agent or skill on disk has no inventory entry; P6.T2 writes one entry per agent and skill"
+    },
+    {
+      "key": "inventory-missing-entry:building",
+      "owner": "P6.T2",
+      "reason": "agent or skill on disk has no inventory entry; P6.T2 writes one entry per agent and skill"
+    },
+    {
+      "key": "inventory-missing-entry:cc10x-guide",
+      "owner": "P6.T2",
+      "reason": "agent or skill on disk has no inventory entry; P6.T2 writes one entry per agent and skill"
+    },
+    {
+      "key": "inventory-missing-entry:cc10x-router",
+      "owner": "P6.T2",
+      "reason": "agent or skill on disk has no inventory entry; P6.T2 writes one entry per agent and skill"
+    },
+    {
+      "key": "inventory-missing-entry:code-review",
+      "owner": "P6.T2",
+      "reason": "agent or skill on disk has no inventory entry; P6.T2 writes one entry per agent and skill"
+    },
+    {
+      "key": "inventory-missing-entry:codebase-design",
+      "owner": "P6.T2",
+      "reason": "agent or skill on disk has no inventory entry; P6.T2 writes one entry per agent and skill"
+    },
+    {
+      "key": "inventory-missing-entry:codebase-hygiene",
+      "owner": "P6.T2",
+      "reason": "agent or skill on disk has no inventory entry; P6.T2 writes one entry per agent and skill"
+    },
+    {
+      "key": "inventory-missing-entry:debugging",
+      "owner": "P6.T2",
+      "reason": "agent or skill on disk has no inventory entry; P6.T2 writes one entry per agent and skill"
+    },
+    {
+      "key": "inventory-missing-entry:diff-driven-docs",
+      "owner": "P6.T2",
+      "reason": "agent or skill on disk has no inventory entry; P6.T2 writes one entry per agent and skill"
+    },
+    {
+      "key": "inventory-missing-entry:doc-syncer",
+      "owner": "P6.T2",
+      "reason": "agent or skill on disk has no inventory entry; P6.T2 writes one entry per agent and skill"
+    },
+    {
+      "key": "inventory-missing-entry:domain-modeling",
+      "owner": "P6.T2",
+      "reason": "agent or skill on disk has no inventory entry; P6.T2 writes one entry per agent and skill"
+    },
+    {
+      "key": "inventory-missing-entry:exploration",
+      "owner": "P6.T2",
+      "reason": "agent or skill on disk has no inventory entry; P6.T2 writes one entry per agent and skill"
+    },
+    {
+      "key": "inventory-missing-entry:failure-hunter",
+      "owner": "P6.T2",
+      "reason": "agent or skill on disk has no inventory entry; P6.T2 writes one entry per agent and skill"
+    },
+    {
+      "key": "inventory-missing-entry:frontend",
+      "owner": "P6.T2",
+      "reason": "agent or skill on disk has no inventory entry; P6.T2 writes one entry per agent and skill"
+    },
+    {
+      "key": "inventory-missing-entry:planning",
+      "owner": "P6.T2",
+      "reason": "agent or skill on disk has no inventory entry; P6.T2 writes one entry per agent and skill"
+    },
+    {
+      "key": "inventory-missing-entry:qa-executor",
+      "owner": "P6.T2",
+      "reason": "agent or skill on disk has no inventory entry; P6.T2 writes one entry per agent and skill"
+    },
+    {
+      "key": "inventory-missing-entry:qa-harness-builder",
+      "owner": "P6.T2",
+      "reason": "agent or skill on disk has no inventory entry; P6.T2 writes one entry per agent and skill"
+    },
+    {
+      "key": "inventory-missing-entry:qa-researcher",
+      "owner": "P6.T2",
+      "reason": "agent or skill on disk has no inventory entry; P6.T2 writes one entry per agent and skill"
+    },
+    {
+      "key": "inventory-missing-entry:qa-strategy",
+      "owner": "P6.T2",
+      "reason": "agent or skill on disk has no inventory entry; P6.T2 writes one entry per agent and skill"
+    },
+    {
+      "key": "inventory-missing-entry:research",
+      "owner": "P6.T2",
+      "reason": "agent or skill on disk has no inventory entry; P6.T2 writes one entry per agent and skill"
+    },
+    {
+      "key": "inventory-missing-entry:researcher",
+      "owner": "P6.T2",
+      "reason": "agent or skill on disk has no inventory entry; P6.T2 writes one entry per agent and skill"
+    },
+    {
+      "key": "inventory-missing-entry:resolving-merge-conflicts",
+      "owner": "P6.T2",
+      "reason": "agent or skill on disk has no inventory entry; P6.T2 writes one entry per agent and skill"
+    },
+    {
+      "key": "inventory-missing-entry:triage-agent",
+      "owner": "P6.T2",
+      "reason": "agent or skill on disk has no inventory entry; P6.T2 writes one entry per agent and skill"
+    },
+    {
+      "key": "inventory-missing-entry:update",
+      "owner": "P6.T2",
+      "reason": "agent or skill on disk has no inventory entry; P6.T2 writes one entry per agent and skill"
+    },
+    {
+      "key": "inventory-missing-entry:verification",
+      "owner": "P6.T2",
+      "reason": "agent or skill on disk has no inventory entry; P6.T2 writes one entry per agent and skill"
+    },
+    {
+      "key": "inventory-phantom-entry:architecture-patterns",
+      "owner": "P6.T2",
+      "reason": "inventory entry for an agent or skill that no longer exists under that name; P6.T2 removes or renames it"
+    },
+    {
+      "key": "inventory-phantom-entry:brainstorming",
+      "owner": "P6.T2",
+      "reason": "inventory entry for an agent or skill that no longer exists under that name; P6.T2 removes or renames it"
+    },
+    {
+      "key": "inventory-phantom-entry:code-review-patterns",
+      "owner": "P6.T2",
+      "reason": "inventory entry for an agent or skill that no longer exists under that name; P6.T2 removes or renames it"
+    },
+    {
+      "key": "inventory-phantom-entry:codebase-deepening",
+      "owner": "P6.T2",
+      "reason": "inventory entry for an agent or skill that no longer exists under that name; P6.T2 removes or renames it"
+    },
+    {
+      "key": "inventory-phantom-entry:debugging-patterns",
+      "owner": "P6.T2",
+      "reason": "inventory entry for an agent or skill that no longer exists under that name; P6.T2 removes or renames it"
+    },
+    {
+      "key": "inventory-phantom-entry:finding-duplicate-functions",
+      "owner": "P6.T2",
+      "reason": "inventory entry for an agent or skill that no longer exists under that name; P6.T2 removes or renames it"
+    },
+    {
+      "key": "inventory-phantom-entry:frontend-design-critique",
+      "owner": "P6.T2",
+      "reason": "inventory entry for an agent or skill that no longer exists under that name; P6.T2 removes or renames it"
+    },
+    {
+      "key": "inventory-phantom-entry:frontend-patterns",
+      "owner": "P6.T2",
+      "reason": "inventory entry for an agent or skill that no longer exists under that name; P6.T2 removes or renames it"
+    },
+    {
+      "key": "inventory-phantom-entry:handoff-package",
+      "owner": "P6.T2",
+      "reason": "inventory entry for an agent or skill that no longer exists under that name; P6.T2 removes or renames it"
+    },
+    {
+      "key": "inventory-phantom-entry:planning-patterns",
+      "owner": "P6.T2",
+      "reason": "inventory entry for an agent or skill that no longer exists under that name; P6.T2 removes or renames it"
+    },
+    {
+      "key": "inventory-phantom-entry:prototyping",
+      "owner": "P6.T2",
+      "reason": "inventory entry for an agent or skill that no longer exists under that name; P6.T2 removes or renames it"
+    },
+    {
+      "key": "inventory-phantom-entry:receiving-code-review",
+      "owner": "P6.T2",
+      "reason": "inventory entry for an agent or skill that no longer exists under that name; P6.T2 removes or renames it"
+    },
+    {
+      "key": "inventory-phantom-entry:session-memory",
+      "owner": "P6.T2",
+      "reason": "inventory entry for an agent or skill that no longer exists under that name; P6.T2 removes or renames it"
+    },
+    {
+      "key": "inventory-phantom-entry:silent-failure-hunter",
+      "owner": "P6.T2",
+      "reason": "inventory entry for an agent or skill that no longer exists under that name; P6.T2 removes or renames it"
+    },
+    {
+      "key": "inventory-phantom-entry:test-driven-development",
+      "owner": "P6.T2",
+      "reason": "inventory entry for an agent or skill that no longer exists under that name; P6.T2 removes or renames it"
+    },
+    {
+      "key": "inventory-phantom-entry:verification-before-completion",
+      "owner": "P6.T2",
+      "reason": "inventory entry for an agent or skill that no longer exists under that name; P6.T2 removes or renames it"
+    },
+    {
+      "key": "registry-missing-row:architecture-scanner",
+      "owner": "P6.T3",
+      "reason": "agent on disk has no row in the contract registry; P6.T3 rewrites the registry from agent frontmatter"
+    },
+    {
+      "key": "registry-missing-row:failure-hunter",
+      "owner": "P6.T3",
+      "reason": "agent on disk has no row in the contract registry; P6.T3 rewrites the registry from agent frontmatter"
+    },
+    {
+      "key": "registry-missing-row:qa-executor",
+      "owner": "P6.T3",
+      "reason": "agent on disk has no row in the contract registry; P6.T3 rewrites the registry from agent frontmatter"
+    },
+    {
+      "key": "registry-missing-row:qa-harness-builder",
+      "owner": "P6.T3",
+      "reason": "agent on disk has no row in the contract registry; P6.T3 rewrites the registry from agent frontmatter"
+    },
+    {
+      "key": "registry-missing-row:qa-researcher",
+      "owner": "P6.T3",
+      "reason": "agent on disk has no row in the contract registry; P6.T3 rewrites the registry from agent frontmatter"
+    },
+    {
+      "key": "registry-missing-row:researcher",
+      "owner": "P6.T3",
+      "reason": "agent on disk has no row in the contract registry; P6.T3 rewrites the registry from agent frontmatter"
+    },
+    {
+      "key": "registry-missing-row:triage-agent",
+      "owner": "P6.T3",
+      "reason": "agent on disk has no row in the contract registry; P6.T3 rewrites the registry from agent frontmatter"
+    },
+    {
+      "key": "registry-phantom-row:github-researcher",
+      "owner": "P6.T3",
+      "reason": "registry row for an agent that does not exist; P6.T3 rewrites the registry from agent frontmatter"
+    },
+    {
+      "key": "registry-phantom-row:silent-failure-hunter",
+      "owner": "P6.T3",
+      "reason": "registry row for an agent that does not exist; P6.T3 rewrites the registry from agent frontmatter"
+    },
+    {
+      "key": "registry-phantom-row:web-researcher",
+      "owner": "P6.T3",
+      "reason": "registry row for an agent that does not exist; P6.T3 rewrites the registry from agent frontmatter"
+    },
+    {
+      "key": "registry-banner-stale:docs/router-invariants.md",
+      "owner": "P6.T4",
+      "reason": "status banner claims a product line older than the current minor; P6.T4 rewrites the banner"
+    }
+  ]
+}

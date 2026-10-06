@@ -102,7 +102,7 @@ def main(argv: list[str] | None = None) -> int:
         elif step_id == "plugin_validate":
             rc = run_plugin_validate(args.allow_no_claude)
         else:
-            # harness_audit has no argument parsing yet, so --strict is a silent no-op until P2 adds it.
+            # harness_audit parses --strict itself: it fails while the docs-rot baseline is non-empty.
             rc = run(cmd + (["--strict"] if args.strict and step_id == "harness_audit" else []))
         if rc == SKIPPED_RC:
             skipped.append(step_id)

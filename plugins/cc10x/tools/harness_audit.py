@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import re
@@ -359,7 +360,94 @@ def check_agent_colors(agents_dir: Path = PLUGIN_ROOT / "agents") -> list[str]:
     return errors
 
 
-def main() -> int:
+DOCS_ROT_BASELINE = PLUGIN_ROOT / "tools" / "docs_rot_baseline.json"
+_INVENTORY_PATH = re.compile(r"`((?:plugins|docs|\.claude-plugin)/[^`\s*]+)`")
+_INVENTORY_ENTRY = re.compile(r"^### (\S+)[ \t]*$", re.M)
+_REGISTRY_ROW = re.compile(r"^\|[ \t]*`([A-Za-z0-9_-]+)`[ \t]*\|", re.M)
+_PRODUCT_LINE = re.compile(r"Current product line is `v(\d+)\.(\d+)\.\d+`")
+PRODUCT_LINE_DOCS = (
+    "router-invariants.md",
+    "prompt-invariants.md",
+    "agent-contract-registry.md",
+    "prompt-surface-inventory.md",
+)
+
+
+def check_living_docs(root: Path = ROOT) -> dict[str, str]:
+    """Map each rot key (`<check>:<subject>`) to its message; the ratchet decides what fails."""
+    plugin = root / "plugins" / "cc10x"
+    docs = root / "docs"
+    agents = {p.stem for p in (plugin / "agents").glob("*.md")}
+    skills = {p.name for p in (plugin / "skills").iterdir() if p.is_dir()}
+    failures: dict[str, str] = {}
+
+    inventory = read(docs / "prompt-surface-inventory.md")
+    for path in sorted(set(_INVENTORY_PATH.findall(inventory))):
+        if not (root / path.rstrip("/")).exists():
+            failures[f"inventory-path:{path}"] = f"prompt-surface-inventory.md names {path}, which does not exist"
+    entries = set(_INVENTORY_ENTRY.findall(inventory))
+    for name in sorted((agents | skills) - entries):
+        failures[f"inventory-missing-entry:{name}"] = f"prompt-surface-inventory.md has no '### {name}' entry"
+    for name in sorted(entries - (agents | skills)):
+        failures[f"inventory-phantom-entry:{name}"] = (
+            f"prompt-surface-inventory.md has an entry '### {name}' for a nonexistent agent or skill"
+        )
+
+    rows = set(_REGISTRY_ROW.findall(read(docs / "agent-contract-registry.md")))
+    for name in sorted(agents - rows):
+        failures[f"registry-missing-row:{name}"] = f"agent-contract-registry.md has no row for agent {name}"
+    for name in sorted(rows - agents):
+        failures[f"registry-phantom-row:{name}"] = f"agent-contract-registry.md has a row for nonexistent agent {name}"
+
+    version = json.loads(read(plugin / ".claude-plugin" / "plugin.json")).get("version", "")
+    current = tuple(int(part) for part in version.split(".")[:2])
+    for doc in PRODUCT_LINE_DOCS:
+        path = docs / doc
+        match = _PRODUCT_LINE.search(read(path)) if path.exists() else None
+        if match and (int(match.group(1)), int(match.group(2))) < current:
+            failures[f"registry-banner-stale:docs/{doc}"] = (
+                f"docs/{doc} claims product line v{match.group(1)}.{match.group(2)}.x, older than the current {version}"
+            )
+    return failures
+
+
+def load_rot_baseline(path: Path = DOCS_ROT_BASELINE) -> list[dict]:
+    return json.loads(read(path)).get("entries", []) if path.exists() else []
+
+
+def apply_rot_ratchet(
+    failures: dict[str, str], baseline: list[dict], strict: bool = False
+) -> tuple[list[str], list[str]]:
+    errors: list[str] = []
+    known: dict[str, dict] = {}
+    for item in baseline:
+        if not item.get("key") or not item.get("owner") or not item.get("reason"):
+            errors.append(f"docs rot baseline entry needs a key, an owner and a reason: {item}")
+        if item.get("key"):
+            known[item["key"]] = item
+    for key in sorted(set(failures) - set(known)):
+        errors.append(f"new rot: {key}: {failures[key]}")
+    for key in sorted(set(known) - set(failures)):
+        errors.append(f"stale baseline entry (no longer fails, remove it from docs_rot_baseline.json): {key}")
+    warnings: list[str] = []
+    remaining = [known[key] for key in sorted(set(known) & set(failures))]
+    if remaining:
+        owners: dict[str, int] = {}
+        for item in remaining:
+            owners[item.get("owner", "?")] = owners.get(item.get("owner", "?"), 0) + 1
+        summary = f"{len(remaining)} docs rot baseline entries remain (owners: " + ", ".join(
+            f"{owner} x{count}" for owner, count in sorted(owners.items())
+        ) + ")"
+        warnings.append(summary)
+        if strict:
+            errors.append(f"--strict: {summary}")
+    return errors, warnings
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="cc10x harness audit")
+    parser.add_argument("--strict", action="store_true", help="fail while the docs rot baseline is non-empty")
+    args = parser.parse_args(argv)
     errors: list[str] = []
 
     plugin = json.loads(read(PLUGIN_JSON))
@@ -706,11 +794,6 @@ def main() -> int:
 
     if "### memory-and-handoff" not in prompt_surface_inventory:
         errors.append("prompt surface inventory missing memory-and-handoff entry")
-    for required_surface in ("### planning", "### brainstorming"):
-        if required_surface not in prompt_surface_inventory:
-            errors.append(
-                f"prompt surface inventory missing required entry {required_surface}"
-            )
     if "PINV-012" not in prompt_invariants:
         errors.append("prompt invariants missing memory-and-handoff invariant")
 
@@ -1019,6 +1102,13 @@ def main() -> int:
     errors.extend(check_preloaded_skills_invocable())
     errors.extend(check_researcher_mcp_lanes())
     errors.extend(check_agent_colors())
+
+    rot_errors, rot_warnings = apply_rot_ratchet(
+        check_living_docs(), load_rot_baseline(), strict=args.strict
+    )
+    errors.extend(rot_errors)
+    for warning in rot_warnings:
+        print(f"WARN: {warning}")
 
     if errors:
         return fail(errors)
