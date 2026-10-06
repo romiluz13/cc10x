@@ -2,13 +2,16 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import sys
 from pathlib import Path
 
 
-ROOT = Path(__file__).resolve().parents[3]
-PLUGIN_ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(os.environ.get("CC10X_REPO_ROOT") or Path(__file__).resolve().parents[3])
+if not (ROOT / "plugins" / "cc10x").is_dir():
+    raise SystemExit(f"CC10X_REPO_ROOT is not a cc10x repo (no plugins/cc10x): {ROOT}")
+PLUGIN_ROOT = ROOT / "plugins" / "cc10x"
 ROUTER = PLUGIN_ROOT / "skills" / "cc10x-router" / "SKILL.md"
 ROUTER_REFERENCES_DIR = PLUGIN_ROOT / "skills" / "cc10x-router" / "references"
 ROUTER_ARTIFACT_POLICY_REFERENCE = (

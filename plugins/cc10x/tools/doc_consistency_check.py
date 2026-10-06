@@ -12,11 +12,14 @@ The version string everywhere must equal plugins/cc10x/.claude-plugin/plugin.jso
 from __future__ import annotations
 
 import json
+import os
 import re
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = Path(os.environ.get("CC10X_REPO_ROOT") or Path(__file__).resolve().parents[3])
+if not (ROOT / "plugins" / "cc10x").is_dir():
+    raise SystemExit(f"CC10X_REPO_ROOT is not a cc10x repo (no plugins/cc10x): {ROOT}")
 PLUGIN = ROOT / "plugins" / "cc10x"
 
 EXCLUDED_FROM_SKILL_COUNT = {"cc10x-router"}

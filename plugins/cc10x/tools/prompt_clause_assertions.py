@@ -14,13 +14,16 @@ Usage: python3 plugins/cc10x/tools/prompt_clause_assertions.py
 
 from __future__ import annotations
 
+import os
 import re
 import sys
 from pathlib import Path
 
 from harness_audit import FrontmatterError, parse_frontmatter
 
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = Path(os.environ.get("CC10X_REPO_ROOT") or Path(__file__).resolve().parents[3])
+if not (ROOT / "plugins" / "cc10x").is_dir():
+    raise SystemExit(f"CC10X_REPO_ROOT is not a cc10x repo (no plugins/cc10x): {ROOT}")
 PLUGIN = ROOT / "plugins" / "cc10x"
 SKILLS = PLUGIN / "skills"
 AGENTS = PLUGIN / "agents"

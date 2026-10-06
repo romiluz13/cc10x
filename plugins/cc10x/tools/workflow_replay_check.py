@@ -2,13 +2,16 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Any
 
 
-ROOT = Path(__file__).resolve().parents[3]
-PLUGIN_ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(os.environ.get("CC10X_REPO_ROOT") or Path(__file__).resolve().parents[3])
+if not (ROOT / "plugins" / "cc10x").is_dir():
+    raise SystemExit(f"CC10X_REPO_ROOT is not a cc10x repo (no plugins/cc10x): {ROOT}")
+PLUGIN_ROOT = ROOT / "plugins" / "cc10x"
 FIXTURES_DIR = PLUGIN_ROOT / "tests" / "fixtures"
 PLANNER_PROMPT = PLUGIN_ROOT / "agents" / "planner.md"
 PLAN_REVIEW_GATE = PLUGIN_ROOT / "skills" / "plan-review-gate" / "SKILL.md"
