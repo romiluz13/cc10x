@@ -2,7 +2,7 @@
 name: qa-harness-builder
 description: "Build the test environment and test suites described by an approved QA test plan — provisioning scripts, integration tests, backend E2E, UI automation, observability probes, and the harness manifest. Never modifies product code."
 model: inherit
-color: teal
+color: pink
 effort: high
 tools: Read, Edit, Write, Bash, Grep, Glob, Skill, LSP, WebFetch, TaskUpdate
 skills:

@@ -201,6 +201,31 @@ def check_researcher_mcp_lanes() -> list[str]:
     ]
 
 
+DOCUMENTED_AGENT_COLORS = {
+    "red",
+    "blue",
+    "green",
+    "yellow",
+    "purple",
+    "orange",
+    "pink",
+    "cyan",
+}
+
+
+def check_agent_colors() -> list[str]:
+    errors: list[str] = []
+    for agent in sorted((PLUGIN_ROOT / "agents").glob("*.md")):
+        for line in frontmatter(read(agent)):
+            if line.startswith("color:"):
+                color = line.removeprefix("color:").strip()
+                if color not in DOCUMENTED_AGENT_COLORS:
+                    errors.append(
+                        f"{agent.name} color {color!r} is not a documented agent color"
+                    )
+    return errors
+
+
 def main() -> int:
     errors: list[str] = []
 
@@ -860,6 +885,7 @@ def main() -> int:
 
     errors.extend(check_preloaded_skills_invocable())
     errors.extend(check_researcher_mcp_lanes())
+    errors.extend(check_agent_colors())
 
     if errors:
         return fail(errors)
