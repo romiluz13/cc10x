@@ -20,6 +20,12 @@ This directory now serves two different purposes:
 When CC10X is installed as a Claude Code plugin, Claude Code reads `hooks/hooks.json`
 from the plugin bundle and runs the referenced scripts from `${CLAUDE_PLUGIN_ROOT}/scripts`.
 
+**Python requirement:** every hook except the preflight is a `python3` script,
+so CC10X needs Python 3.9 or newer on `PATH` (3.13 recommended). If `python3`
+is missing or older, the guards fail silently. The POSIX-sh
+`scripts/cc10x_preflight.sh` SessionStart hook detects this and tells the agent
+to ask you to install or upgrade Python; it always exits 0.
+
 The shipped runtime hooks are intentionally minimal and audit-first. Be
 precise about what blocks and what only logs (`config/hook-mode.json`):
 

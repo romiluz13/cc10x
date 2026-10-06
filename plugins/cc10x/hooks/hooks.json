@@ -41,6 +41,12 @@
         "hooks": [
           {
             "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/scripts/cc10x_preflight.sh\"",
+            "timeout": 5,
+            "statusMessage": "CC10X Python preflight"
+          },
+          {
+            "type": "command",
             "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/cc10x_sessionstart_context.py\"",
             "timeout": 10,
             "statusMessage": "CC10X workflow resume context"
