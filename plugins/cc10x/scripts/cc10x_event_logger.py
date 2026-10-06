@@ -2,7 +2,8 @@
 """Unified event logger — replaces 4 separate log-only hook scripts.
 
 Takes the event name as argv[1], reads stdin JSON, appends a structured
-log line to .cc10x/events.jsonl and the hook-events log.
+log line to the hook-events log (.cc10x/cc10x-hook-events.log); the
+postcompact event also appends to the workflow's <wf>.events.jsonl.
 """
 
 from __future__ import annotations

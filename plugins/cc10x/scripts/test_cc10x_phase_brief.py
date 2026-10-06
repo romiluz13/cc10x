@@ -199,6 +199,53 @@ def test_state_root_falls_back_to_cwd_outside_a_repo(tmp_path):
     assert (work / ".cc10x" / "phase-1-brief.md").is_file()
 
 
+def run_tool_file(name: str, *args: str) -> subprocess.CompletedProcess:
+    return subprocess.run(
+        [sys.executable, str(PLUGIN_ROOT / "tools" / name), *args],
+        capture_output=True,
+        text=True,
+        env={"PATH": "/usr/bin:/bin"},
+        timeout=30,
+    )
+
+
+def source_head(path: Path, lines: int = 25) -> str:
+    return "\n".join(path.read_text(encoding="utf-8").splitlines()[:lines])
+
+
+# P2.T5: usage strings name the real tool files, not the retired cc10x_ names.
+
+
+def test_phase_brief_usage_names_the_real_tool(tmp_path):
+    r = run_tool_file("phase_brief.py", "--help")
+    assert r.returncode == 0
+    assert "usage: phase_brief.py" in r.stdout
+    assert "cc10x_phase_brief" not in r.stdout
+    head = source_head(TOOL)
+    assert "Usage: phase_brief.py PLAN_FILE PHASE" in head
+
+
+def test_review_package_usage_names_the_real_tool(tmp_path):
+    r = run_tool_file("review_package.py", "--help")
+    assert r.returncode == 0
+    assert "usage: review_package.py" in r.stdout
+    assert "cc10x_review_package" not in r.stdout
+    head = source_head(PLUGIN_ROOT / "tools" / "review_package.py")
+    assert "Usage: review_package.py BASE [HEAD]" in head
+
+
+def test_latency_audit_banner_names_the_real_tool(tmp_path):
+    r = run_tool_file("latency_audit.py", "--fixtures")
+    assert r.returncode == 0
+    assert r.stdout.splitlines()[0] == "latency_audit"
+
+
+def test_event_logger_docstring_names_the_real_log_file(tmp_path):
+    head = source_head(SCRIPTS_DIR / "cc10x_event_logger.py", 8)
+    assert ".cc10x/events.jsonl" not in head
+    assert "cc10x-hook-events.log" in head
+
+
 def main() -> int:
     tests = [
         (name, fn)

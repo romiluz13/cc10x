@@ -89,10 +89,10 @@ def main() -> int:
 
     artifacts = discover_artifacts(use_fixtures=args.fixtures)
     if not artifacts:
-        print("cc10x_latency_audit: no workflow artifacts found")
+        print("latency_audit: no workflow artifacts found")
         return 0
 
-    print("cc10x_latency_audit")
+    print("latency_audit")
     print(f"source={'fixtures' if args.fixtures else 'runtime'}")
     print(f"workflows={len(artifacts)}")
     for name, artifact in artifacts:

@@ -4,7 +4,7 @@ reads in one call, so the phase text never has to be pasted through the
 router's context. cc10x's analog of superpowers' task-brief, at PHASE
 granularity (cc10x's build unit is the phase).
 
-Usage: cc10x_phase_brief.py PLAN_FILE PHASE
+Usage: phase_brief.py PLAN_FILE PHASE
   PLAN_FILE  path to the implementation plan markdown
   PHASE      phase number or id (matched against '## Phase <PHASE>' headings)
 
@@ -93,7 +93,7 @@ def slice_phase(text: str, phase: str) -> str | None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        prog="cc10x_phase_brief.py",
+        prog="phase_brief.py",
         description="Slice one phase out of a plan file into a .cc10x brief.",
     )
     parser.add_argument("plan_file", help="path to the implementation plan markdown")

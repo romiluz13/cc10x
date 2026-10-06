@@ -4,7 +4,7 @@ extended context, written to one file the reviewer reads in a single call, so
 the diff never has to be pasted through the router's context. cc10x's analog of
 superpowers' review-package.
 
-Usage: cc10x_review_package.py BASE [HEAD]
+Usage: review_package.py BASE [HEAD]
   BASE   the sha/ref recorded BEFORE the phase started
   HEAD   end ref (default HEAD)
 
@@ -79,7 +79,7 @@ def resolve(ref: str) -> str | None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        prog="cc10x_review_package.py",
+        prog="review_package.py",
         description="Write a BASE..HEAD review package to one .cc10x diff file.",
     )
     parser.add_argument("base", help="sha/ref recorded BEFORE the phase started")
