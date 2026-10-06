@@ -23,10 +23,10 @@ from pathlib import Path
 
 PLUGIN_ROOT = Path(__file__).resolve().parents[1]
 SKILL = "cc10x:agent-common"
-PRELOADED = re.compile(r"Preloaded skill '" + re.escape(SKILL) + r"'")
 WARNING = re.compile(
     r"Warning: Skill '" + re.escape(SKILL) + r"'.*(not found|disabled)", re.I
 )
+STDERR_TAIL_LINES = 10
 MAX_BUDGET_USD = "0.60"
 TIMEOUT_S = 300
 
@@ -40,13 +40,23 @@ def agent_names(plugin_dir: Path) -> list[str]:
     return names
 
 
-def judge(log: str) -> tuple[bool, str]:
+def judge(log: str, agent: str) -> tuple[bool, str]:
     warning = WARNING.search(log)
     if warning:
         return False, warning.group(0)
-    if not PRELOADED.search(log):
-        return False, f"no 'Preloaded skill {SKILL}' line in debug log"
+    # claude 2.1.292 logs "[Agent: <agentType>] Preloaded skill '<name>'"; plugin agentTypes are namespaced.
+    preloaded = re.compile(
+        r"\[Agent: (?:cc10x:)?" + re.escape(agent) + r"\] Preloaded skill '" + re.escape(SKILL) + r"'"
+    )
+    if not preloaded.search(log):
+        return False, f"no '[Agent: cc10x:{agent}] Preloaded skill {SKILL}' line in debug log"
     return True, f"Preloaded skill '{SKILL}'"
+
+
+def stderr_note(run: subprocess.CompletedProcess) -> str:
+    tail = (run.stderr or "").replace(str(Path.home()), "~").strip().splitlines()[-STDERR_TAIL_LINES:]
+    body = "\n".join(f"    {line}" for line in tail) or "    (empty)"
+    return f"\n  claude exit {run.returncode}; last stderr lines:\n{body}"
 
 
 def probe(agent: str, plugin_dir: Path, model: str) -> tuple[bool, str]:
@@ -80,12 +90,13 @@ def probe(agent: str, plugin_dir: Path, model: str) -> tuple[bool, str]:
         except subprocess.TimeoutExpired:
             return False, f"claude timed out after {TIMEOUT_S}s"
         if not debug_file.exists():
-            return False, f"no debug log written (claude exit {run.returncode})"
-        return judge(debug_file.read_text(encoding="utf-8", errors="replace"))
+            return False, "no debug log written" + stderr_note(run)
+        ok, detail = judge(debug_file.read_text(encoding="utf-8", errors="replace"), agent)
+        return ok, detail if ok else detail + stderr_note(run)
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser = argparse.ArgumentParser(description="Live probe: does cc10x:agent-common reach a dispatched cc10x agent?")
     target = parser.add_mutually_exclusive_group(required=True)
     target.add_argument("--agent")
     target.add_argument("--all", action="store_true")
@@ -95,6 +106,9 @@ def main(argv: list[str] | None = None) -> int:
 
     plugin_dir = args.plugin_dir.resolve()
     agents = agent_names(plugin_dir) if args.all else [args.agent]
+    if not agents:
+        print(f"FAIL: no agents preloading {SKILL} found under {plugin_dir / 'agents'}")
+        return 1
     failed = 0
     for agent in agents:
         ok, detail = probe(agent, plugin_dir, args.model)
