@@ -211,6 +211,8 @@ def parse_frontmatter(text: str) -> dict[str, tuple[str, list[str]]]:
         if not match:
             raise FrontmatterError(f"cannot parse frontmatter line: {raw.strip()!r}")
         key = match.group(1)
+        if key in fields:
+            raise FrontmatterError(f"duplicate frontmatter key: {key}")
         fields[key] = (_strip_comment(match.group(2)), [])
     return fields
 

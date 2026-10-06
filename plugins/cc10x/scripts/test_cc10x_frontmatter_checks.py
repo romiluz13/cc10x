@@ -257,3 +257,58 @@ def test_assertion_runner_reports_malformed_file_as_failure(tmp_path):
     bad.write_text("no frontmatter at all", encoding="utf-8")
     pin = agent_common_pin()
     assert pca.A(pin.name, bad, pin.check, pin.description).eval() is False
+
+
+def test_duplicate_skills_key_fails_loudly(tmp_path):
+    errors = preload_errors(tmp_path, agent("skills:\n  - cc10x:good\nskills:\n  - cc10x:good\n"))
+    assert any("duplicate" in e for e in errors), errors
+
+
+def test_duplicate_disable_flag_fails_loudly(tmp_path):
+    text = "---\nname: s\ndisable-model-invocation: true\ndisable-model-invocation: false\n---\nbody\n"
+    errors = preload_errors(tmp_path, agent("skills:\n  - cc10x:s\n"), {"s": text})
+    assert any("duplicate" in e for e in errors), errors
+
+
+def two_agent_errors(tmp_path, hidden_text):
+    agents_dir, skills_dir = tree(
+        tmp_path,
+        {"a": agent("skills:\n  - cc10x:good\n"), "b": hidden_text},
+        {"good": GOOD_SKILL.format(name="good")},
+    )
+    return harness_audit.check_preloaded_skills_invocable(agents_dir, skills_dir)
+
+
+def test_skills_hidden_in_block_scalar_trips_coverage_cross_check(tmp_path):
+    hidden = "---\nname: b\ndescription: |\n  skills:\n    - cc10x:ghost\n---\nbody\n"
+    errors = two_agent_errors(tmp_path, hidden)
+    assert any("1 of 2" in e for e in errors), errors
+
+
+def test_bom_agent_with_skills_text_only_in_body_is_not_declared(tmp_path):
+    body_only = "﻿---\nname: b\n---\nskills: not frontmatter\n"
+    assert two_agent_errors(tmp_path, body_only) == []
+
+
+def test_scalar_guard_rejects_block_scalar_indicators():
+    for line in ("color: |", "color: >"):
+        with pytest.raises(harness_audit.FrontmatterError):
+            harness_audit.fm_scalar(harness_audit.parse_frontmatter(f"---\n{line}\n---\n"), "color")
+
+
+@pytest.mark.parametrize("inline", ["[a, [b]]", "[a, {b: c}]"])
+def test_flow_list_complexity_guard(inline):
+    fields = harness_audit.parse_frontmatter(f"---\nskills: {inline}\n---\n")
+    with pytest.raises(harness_audit.FrontmatterError, match="too complex"):
+        harness_audit.fm_list(fields, "skills")
+
+
+def test_mixed_inline_and_indented_list_guard():
+    fields = harness_audit.parse_frontmatter("---\nskills: [a]\n  - b\n---\n")
+    with pytest.raises(harness_audit.FrontmatterError, match="mixes"):
+        harness_audit.fm_list(fields, "skills")
+
+
+def test_frontmatter_must_open_on_first_line():
+    with pytest.raises(harness_audit.FrontmatterError, match="must start"):
+        harness_audit.parse_frontmatter("junk\n---\nname: a\n---\n")
