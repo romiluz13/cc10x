@@ -89,6 +89,14 @@ def main() -> int:
         ),
     )
 
+    pristine = rg.GATE_STEPS
+    py_argv0 = [step[1][0] for step in pristine if step[1] is not None]
+    check(
+        "every python step runs under sys.executable",
+        bool(py_argv0) and all(a == sys.executable for a in py_argv0),
+        repr(py_argv0),
+    )
+
     rg.GATE_STEPS = (("always_fails", [sys.executable, "-c", "raise SystemExit(3)"]),)
     check(
         "a failing step makes the runner exit non-zero",
@@ -123,16 +131,51 @@ def main() -> int:
     rg.importlib.util.find_spec = lambda name, *a, **k: None if name == "pytest" else real_find_spec(name, *a, **k)
     rg.shutil.which = lambda name, *a, **k: None
     try:
-        rc, out = run_main(rg, "--only", "pytest", "--only", "plugin_validate", "--allow-no-pytest", "--allow-no-claude")
+        rg.GATE_STEPS = (
+            ("a_ok", [sys.executable, "-c", "pass"]),
+            ("b_ok", [sys.executable, "-c", "pass"]),
+            ("pytest", None),
+            ("plugin_validate", None),
+        )
+        rc, out = run_main(
+            rg, "--only", "a_ok", "--only", "pytest", "--only", "plugin_validate", "--allow-no-pytest", "--allow-no-claude"
+        )
         check(
             "skipped steps are named in the banner",
-            rc == 0 and "RELEASE GATE: OK (SKIPPED: pytest, plugin_validate; PARTIAL: 2 of 9 steps)" in out,
+            rc == 0 and "RELEASE GATE: OK (SKIPPED: pytest, plugin_validate; PARTIAL: 3 of 4 steps)" in out,
             out,
         )
         rc, out = run_main(rg, "--only", "pytest", "--allow-no-pytest")
-        check("skip-only banner has no partial text when full", "SKIPPED: pytest" in out, out)
+        check("a run where every selected step was skipped exits 1 as NOTHING RAN", rc == 1 and "NOTHING RAN (SKIPPED: pytest)" in out, out)
         rc, out = run_main(rg, "--only", "pytest")
         check("skip without the allow flag fails", rc == 1, f"rc={rc}")
+        rg.GATE_STEPS = (
+            ("a_ok", [sys.executable, "-c", "pass"]),
+            ("pytest", None),
+        )
+        rc, out = run_main(rg, "--allow-no-pytest")
+        check(
+            "full run with a skip prints SKIPPED and no PARTIAL",
+            rc == 0 and out.strip().endswith("RELEASE GATE: OK (SKIPPED: pytest)") and "PARTIAL" not in out,
+            out,
+        )
+
+        # uv fallback argv: hermetic, run() captured, find_spec/which patched
+        rg.shutil.which = lambda name, *a, **k: "/fake/uv" if name == "uv" else None
+        captured = []
+        rg.run = lambda argv: captured.append(argv) or 0
+        rc, out = run_main(rg, "--only", "pytest")
+        argv = captured[0] if captured else []
+        check(
+            "uv fallback pins the invoking interpreter",
+            "--python" in argv and argv[argv.index("--python") + 1] == sys.executable,
+            repr(argv),
+        )
+        check(
+            "uv resolution line prints the interpreter version",
+            f"{sys.version_info.major}.{sys.version_info.minor}" in out and "uv run" in out,
+            out,
+        )
     finally:
         rg.importlib.util.find_spec, rg.shutil.which = real_find_spec, real_which
 

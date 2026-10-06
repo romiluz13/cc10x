@@ -49,9 +49,10 @@ def run_pytest(allow_missing: bool) -> int:
         print("pytest resolution: python3 -m pytest", flush=True)
         return run([sys.executable, "-m", "pytest", f"{SCRIPTS}", "-q"])
     if shutil.which("uv"):
-        print("pytest resolution: uv run --no-project --with pytest", flush=True)
+        version = ".".join(map(str, sys.version_info[:3]))
+        print(f"pytest resolution: uv run --no-project --python {sys.executable} (Python {version}) --with pytest", flush=True)
         return run(
-            ["uv", "run", "--no-project", "--with", "pytest", "python", "-m", "pytest", f"{SCRIPTS}", "-q"]
+            ["uv", "run", "--no-project", "--python", sys.executable, "--with", "pytest", "python", "-m", "pytest", f"{SCRIPTS}", "-q"]
         )
     if allow_missing:
         print("SKIPPED pytest: no importable pytest and no uv on PATH (--allow-no-pytest)", flush=True)
@@ -110,6 +111,9 @@ def main(argv: list[str] | None = None) -> int:
 
     if failed:
         print(f"RELEASE GATE: FAIL ({', '.join(failed)})")
+        return 1
+    if skipped and len(skipped) == ran:
+        print(f"RELEASE GATE: NOTHING RAN (SKIPPED: {', '.join(skipped)})")
         return 1
     qualifiers = []
     if skipped:
