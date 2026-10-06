@@ -9,6 +9,8 @@ import sys
 from pathlib import Path
 
 
+if os.environ.get("CC10X_REPO_ROOT") == "":
+    raise SystemExit("CC10X_REPO_ROOT is set but empty: unset it or point it at a cc10x repo")
 ROOT = Path(os.environ.get("CC10X_REPO_ROOT") or Path(__file__).resolve().parents[3])
 if not (ROOT / "plugins" / "cc10x").is_dir():
     raise SystemExit(f"CC10X_REPO_ROOT is not a cc10x repo (no plugins/cc10x): {ROOT}")
@@ -418,7 +420,8 @@ DOCS_ROT_BASELINE = PLUGIN_ROOT / "tools" / "docs_rot_baseline.json"
 _INVENTORY_PATH = re.compile(r"`((?:plugins|docs|\.claude-plugin)/[^`\s*]+)`")
 _INVENTORY_ENTRY = re.compile(r"^### (\S+)[ \t]*$", re.M)
 _REGISTRY_ROW = re.compile(r"^\|[ \t]*`([A-Za-z0-9_-]+)`[ \t]*\|", re.M)
-_PRODUCT_LINE = re.compile(r"Current product line is `v(\d+)\.(\d+)\.\d+`")
+_STATUS_NOTE = re.compile(r"^> \*\*Status note:\*\*.*$", re.M)
+_BANNER_VERSION = re.compile(r"`v(\d+)\.(\d+)\.\d+`")
 PRODUCT_LINE_DOCS = (
     "router-invariants.md",
     "prompt-invariants.md",
@@ -457,8 +460,13 @@ def check_living_docs(root: Path = ROOT) -> dict[str, str]:
     current = tuple(int(part) for part in version.split(".")[:2])
     for doc in PRODUCT_LINE_DOCS:
         path = docs / doc
-        match = _PRODUCT_LINE.search(read(path)) if path.exists() else None
-        if match and (int(match.group(1)), int(match.group(2))) < current:
+        note = _STATUS_NOTE.search(read(path)) if path.exists() else None
+        match = _BANNER_VERSION.search(note.group(0)) if note else None
+        if not match:
+            failures[f"registry-banner-unparseable:docs/{doc}"] = (
+                f"docs/{doc} is missing or its leading status note names no `vX.Y.Z` product line"
+            )
+        elif (int(match.group(1)), int(match.group(2))) < current:
             failures[f"registry-banner-stale:docs/{doc}"] = (
                 f"docs/{doc} claims product line v{match.group(1)}.{match.group(2)}.x, older than the current {version}"
             )
@@ -466,8 +474,22 @@ def check_living_docs(root: Path = ROOT) -> dict[str, str]:
     return failures
 
 
-def load_rot_baseline(path: Path = DOCS_ROT_BASELINE) -> list[dict]:
-    return json.loads(read(path)).get("entries", []) if path.exists() else []
+_OWNER = re.compile(r"P6\.T\d+")
+
+
+def load_rot_baseline(path: Path = DOCS_ROT_BASELINE) -> tuple[list[dict], list[str]]:
+    """Return (entries, errors); a missing or malformed file is an error, never a traceback."""
+    if not path.exists():
+        return [], [f"docs rot baseline is missing: {path.name} (an empty baseline is {{\"entries\": []}})"]
+    try:
+        data = json.loads(read(path))
+    except json.JSONDecodeError as exc:
+        return [], [f"docs rot baseline {path.name} is not valid JSON: {exc}"]
+    entries = data.get("entries") if isinstance(data, dict) else None
+    if not isinstance(entries, list):
+        return [], [f"docs rot baseline {path.name} must be an object with an 'entries' list"]
+    errors = [f"docs rot baseline entry is not an object: {item!r}" for item in entries if not isinstance(item, dict)]
+    return [item for item in entries if isinstance(item, dict)], errors
 
 
 def apply_rot_ratchet(
@@ -476,20 +498,30 @@ def apply_rot_ratchet(
     errors: list[str] = []
     known: dict[str, dict] = {}
     for item in baseline:
-        if not item.get("key") or not item.get("owner") or not item.get("reason"):
-            errors.append(f"docs rot baseline entry needs a key, an owner and a reason: {item}")
-        if item.get("key"):
-            known[item["key"]] = item
+        key = item.get("key")
+        if not all(isinstance(item.get(f), str) and item[f].strip() for f in ("key", "owner", "reason", "message")):
+            errors.append(f"docs rot baseline entry needs a key, an owner, a reason and a message (all non-empty strings): {item}")
+            continue
+        if not _OWNER.fullmatch(item["owner"]):
+            errors.append(f"docs rot baseline owner must match P6.T<n>: {key}: {item['owner']!r}")
+        if key in known:
+            errors.append(f"duplicate baseline key: {key}")
+        known[key] = item
     for key in sorted(set(failures) - set(known)):
         errors.append(f"new rot: {key}: {failures[key]}")
     for key in sorted(set(known) - set(failures)):
         errors.append(f"stale baseline entry (no longer fails, remove it from docs_rot_baseline.json): {key}")
+    for key in sorted(set(known) & set(failures)):
+        if known[key]["message"] != failures[key]:
+            errors.append(
+                f"baseline message drifted: {key} (baseline: {known[key]['message']!r}; live: {failures[key]!r})"
+            )
     warnings: list[str] = []
     remaining = [known[key] for key in sorted(set(known) & set(failures))]
     if remaining:
         owners: dict[str, int] = {}
         for item in remaining:
-            owners[item.get("owner", "?")] = owners.get(item.get("owner", "?"), 0) + 1
+            owners[item["owner"]] = owners.get(item["owner"], 0) + 1
         summary = f"{len(remaining)} docs rot baseline entries remain (owners: " + ", ".join(
             f"{owner} x{count}" for owner, count in sorted(owners.items())
         ) + ")"
@@ -1142,8 +1174,10 @@ def main(argv: list[str] | None = None) -> int:
     errors.extend(check_researcher_mcp_lanes())
     errors.extend(check_agent_colors())
 
+    baseline, baseline_errors = load_rot_baseline()
+    errors.extend(baseline_errors)
     rot_errors, rot_warnings = apply_rot_ratchet(
-        check_living_docs(), load_rot_baseline(), strict=args.strict
+        check_living_docs(), baseline, strict=args.strict
     )
     errors.extend(rot_errors)
     for warning in rot_warnings:

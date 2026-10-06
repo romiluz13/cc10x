@@ -13,6 +13,8 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+if os.environ.get("CC10X_REPO_ROOT") == "":
+    raise SystemExit("CC10X_REPO_ROOT is set but empty: unset it or point it at a cc10x repo")
 ROOT = Path(os.environ.get("CC10X_REPO_ROOT") or Path(__file__).resolve().parents[3])
 if not (ROOT / "plugins" / "cc10x").is_dir():
     raise SystemExit(f"CC10X_REPO_ROOT is not a cc10x repo (no plugins/cc10x): {ROOT}")

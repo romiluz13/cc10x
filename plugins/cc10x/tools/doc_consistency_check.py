@@ -17,6 +17,8 @@ import re
 import sys
 from pathlib import Path
 
+if os.environ.get("CC10X_REPO_ROOT") == "":
+    raise SystemExit("CC10X_REPO_ROOT is set but empty: unset it or point it at a cc10x repo")
 ROOT = Path(os.environ.get("CC10X_REPO_ROOT") or Path(__file__).resolve().parents[3])
 if not (ROOT / "plugins" / "cc10x").is_dir():
     raise SystemExit(f"CC10X_REPO_ROOT is not a cc10x repo (no plugins/cc10x): {ROOT}")
@@ -171,10 +173,14 @@ def main() -> int:
         if v != version:
             errors.append(f"marketplace.json 'cc10x v{v}' contradicts plugin.json {version}")
 
-    baselined = {
-        item.get("key")
-        for item in json.loads((PLUGIN / "tools" / "docs_rot_baseline.json").read_text(encoding="utf-8")).get("entries", [])
-    }
+    baseline_path = PLUGIN / "tools" / "docs_rot_baseline.json"
+    if baseline_path.exists():
+        baselined = {
+            item.get("key") for item in json.loads(baseline_path.read_text(encoding="utf-8")).get("entries", [])
+        }
+    else:
+        baselined = set()
+        errors.append(f"docs rot baseline is missing: {baseline_path.name} (an empty baseline is {{\"entries\": []}})")
     for key, message in check_claims().items():
         if key not in baselined:
             errors.append(f"new rot: {key}: {message}")

@@ -22,6 +22,8 @@ from pathlib import Path
 
 from harness_audit import FrontmatterError, parse_frontmatter
 
+if os.environ.get("CC10X_REPO_ROOT") == "":
+    raise SystemExit("CC10X_REPO_ROOT is set but empty: unset it or point it at a cc10x repo")
 ROOT = Path(os.environ.get("CC10X_REPO_ROOT") or Path(__file__).resolve().parents[3])
 if not (ROOT / "plugins" / "cc10x").is_dir():
     raise SystemExit(f"CC10X_REPO_ROOT is not a cc10x repo (no plugins/cc10x): {ROOT}")
@@ -79,6 +81,7 @@ def frontmatter_is(key: str, value: str):
 
 
 ALLOW_NO_YAML = False
+YAML_SKIPS = [0]
 YAML_HINT = (
     "PyYAML is not importable: install it (pip install pyyaml, or run through "
     "`uv run --no-project --with pyyaml`) or pass --allow-no-yaml to skip the YAML parse check"
@@ -97,6 +100,7 @@ def yaml_alternatives_parse(marker: str, expected_blocks: int):
             import yaml
         except ImportError:
             if ALLOW_NO_YAML:
+                YAML_SKIPS[0] += 1
                 return True
             print(YAML_HINT)
             return False
@@ -2223,18 +2227,26 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--allow-no-yaml", action="store_true", help="skip the YAML parse check when PyYAML is missing")
     ALLOW_NO_YAML = parser.parse_args(argv).allow_no_yaml
     failures = []
+    skipped = []
     for a in ASSERTIONS:
+        before = YAML_SKIPS[0]
         if not a.eval():
             failures.append(
                 f"  - {a.name} [{a.path.relative_to(ROOT)}]: {a.description}"
             )
+        elif YAML_SKIPS[0] > before:
+            skipped.append(a.name)
+    for name in skipped:
+        print(f"SKIPPED-YAML {name}: PyYAML is not importable (--allow-no-yaml)")
 
     if failures:
         print(f"PROMPT CLAUSE ASSERTIONS: FAIL ({len(failures)} failure(s))")
         for f in failures:
             print(f)
         return 1
-    print(f"PROMPT CLAUSE ASSERTIONS: OK ({len(ASSERTIONS)} assertions passed)")
+    passed = len(ASSERTIONS) - len(skipped)
+    suffix = f", {len(skipped)} skipped" if skipped else ""
+    print(f"PROMPT CLAUSE ASSERTIONS: OK ({passed} assertions passed{suffix})")
     return 0
 
 

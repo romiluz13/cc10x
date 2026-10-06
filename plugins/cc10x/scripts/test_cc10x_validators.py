@@ -109,6 +109,15 @@ def test_non_repo_root_fails_clearly(script, tmp_path):
     assert "Traceback" not in result.stderr
 
 
+@pytest.mark.parametrize("script", FIVE_FILES)
+def test_an_empty_repo_root_override_is_an_error_not_a_silent_fallback(script):
+    env = {**os.environ, "CC10X_REPO_ROOT": ""}
+    result = subprocess.run([sys.executable, str(TOOLS / script)], capture_output=True, text=True, env=env)
+    assert result.returncode != 0, result.stdout + result.stderr
+    assert "CC10X_REPO_ROOT is set but empty" in result.stderr
+    assert "Traceback" not in result.stderr
+
+
 # --- living-doc checks and the docs-rot ratchet -----------------------------------------------
 
 sys.path.insert(0, str(TOOLS))
@@ -125,8 +134,12 @@ def write_baseline(root: Path, entries: list) -> None:
     (root / BASELINE_REL).write_text(json.dumps({"entries": entries}), encoding="utf-8")
 
 
-def entry(key: str, owner: str = "P6.T2") -> dict:
-    return {"key": key, "owner": owner, "reason": "test"}
+def entry(key: str, owner: str = "P6.T2", message: str = "msg") -> dict:
+    return {"key": key, "owner": owner, "reason": "test", "message": message}
+
+
+def baseline_for(root: Path, owner: str = "P6.T2") -> list:
+    return [entry(key, owner, message) for key, message in harness_audit.check_living_docs(root).items()]
 
 
 def drop_section(path: Path, heading: str) -> None:
@@ -137,15 +150,17 @@ def drop_section(path: Path, heading: str) -> None:
     path.write_text(text[:start] + text[end:], encoding="utf-8")
 
 
-def set_banner(root: Path, version: str) -> None:
-    path = root / "docs" / "router-invariants.md"
+BANNER_DOCS = ("router-invariants.md", "prompt-invariants.md", "agent-contract-registry.md", "prompt-surface-inventory.md")
+
+
+def set_banner(root: Path, version: str, doc: str = "router-invariants.md") -> None:
+    """Point the first backticked version in the doc's status-note line at `version`."""
+    path = root / "docs" / doc
     text = path.read_text(encoding="utf-8")
-    banner = f"Current product line is `v{version}`"
-    if "Current product line is `v" in text:
-        text = re.sub(r"Current product line is `v[^`]*`", banner, text, count=1)
-    else:
-        text = f"> **Status note:** {banner}.\n\n" + text
-    path.write_text(text, encoding="utf-8")
+    start = text.index("> **Status note:**")
+    end = text.index("\n", start)
+    line = re.sub(r"`v\d+\.\d+\.\d+`", f"`v{version}`", text[start:end], count=1)
+    path.write_text(text[:start] + line + text[end:], encoding="utf-8")
 
 
 def plugin_version(root: Path) -> str:
@@ -159,12 +174,74 @@ def test_real_tree_passes_and_warns_while_the_baseline_is_non_empty():
         assert "WARN" in result.stdout and "baseline" in result.stdout
 
 
+PLAN = REPO / "docs" / "plans" / "2026-10-06-cc10x-remediation-plan.md"
+
+
 def test_baseline_entries_are_owned_by_a_p6_task_and_all_still_fail():
     entries = load_baseline(REPO)
+    live = harness_audit.check_living_docs()
     for item in entries:
-        assert item["owner"].startswith("P6.T"), item
+        assert re.fullmatch(r"P6\.T\d+", item["owner"]), item
         assert item["reason"].strip(), item
-    assert {e["key"] for e in entries} == set(harness_audit.check_living_docs())
+    assert {e["key"]: e["message"] for e in entries} == live
+    if PLAN.exists():
+        phase6 = PLAN.read_text(encoding="utf-8").split("## Phase 6:", 1)[1].split("\n## Phase 7:", 1)[0]
+        for item in entries:
+            assert f"**{item['owner']} " in phase6, item
+
+
+def test_baselined_banner_rot_is_owned_by_the_doc_rewrite_task():
+    expected = {
+        "registry-banner-stale:docs/prompt-surface-inventory.md": "P6.T2",
+        "registry-banner-stale:docs/agent-contract-registry.md": "P6.T3",
+        "registry-banner-stale:docs/prompt-invariants.md": "P6.T4",
+        "registry-banner-stale:docs/router-invariants.md": "P6.T4",
+    }
+    for item in load_baseline(REPO):
+        if item["key"] in expected:
+            assert item["owner"] == expected[item["key"]], item
+
+
+def test_a_baselined_failure_that_gets_worse_fails_with_message_drift(tmp_path):
+    errors, _ = harness_audit.apply_rot_ratchet({"k:1": "now 14 agents"}, [entry("k:1", message="then 11 agents")])
+    assert errors == ["baseline message drifted: k:1 (baseline: 'then 11 agents'; live: 'now 14 agents')"]
+    root = make_tree(tmp_path)
+    set_guide_count(root, "specialist agents", 11)
+    write_baseline(root, baseline_for(root, "P6.T9"))
+    assert run_tool("harness_audit.py", root).returncode == 0
+    set_guide_count(root, "specialist agents", 3)
+    result = run_tool("harness_audit.py", root)
+    assert result.returncode == 1
+    assert "baseline message drifted: guide-agent-count" in result.stderr
+
+
+def test_ratchet_rejects_duplicate_keys_bad_owners_and_missing_messages():
+    errors, _ = harness_audit.apply_rot_ratchet(
+        {"a:1": "x"}, [entry("a:1", message="x"), entry("a:1", message="x")]
+    )
+    assert any("duplicate baseline key: a:1" in e for e in errors)
+    for owner in ("P6.T", "P7.T1", "P6.T2b", "later", " P6.T2"):
+        errors, _ = harness_audit.apply_rot_ratchet({"a:1": "x"}, [entry("a:1", owner, "x")])
+        assert any("owner" in e and "P6.T<n>" in e for e in errors), owner
+    bare = {"key": "a:1", "owner": "P6.T2", "reason": "r"}
+    errors, _ = harness_audit.apply_rot_ratchet({"a:1": "x"}, [bare])
+    assert any("message" in e for e in errors)
+
+
+@pytest.mark.parametrize(
+    "content",
+    ["{not json", "[]", '{"entries": "x"}', '{"entries": [1]}', '{"entries": [{"key": 3}]}', None],
+)
+def test_a_malformed_or_missing_baseline_is_a_clear_error_not_a_traceback(content, tmp_path):
+    root = make_tree(tmp_path)
+    if content is None:
+        (root / BASELINE_REL).unlink()
+    else:
+        (root / BASELINE_REL).write_text(content, encoding="utf-8")
+    result = run_tool("harness_audit.py", root)
+    assert result.returncode == 1
+    assert "docs rot baseline" in result.stderr
+    assert "Traceback" not in result.stderr
 
 
 def test_phantom_registry_row_is_a_new_failure(tmp_path):
@@ -204,22 +281,38 @@ def test_agent_missing_from_the_registry_is_a_new_failure(tmp_path):
     assert "registry-phantom-row:planner-renamed" in found
 
 
-def test_stale_product_line_banner_is_detected_and_a_current_one_is_not(tmp_path):
+@pytest.mark.parametrize("doc", BANNER_DOCS)
+def test_stale_product_line_banner_is_detected_and_a_current_one_is_not(doc, tmp_path):
     root = make_tree(tmp_path)
-    key = "registry-banner-stale:docs/router-invariants.md"
-    set_banner(root, "11.0.0")
+    key = f"registry-banner-stale:docs/{doc}"
+    set_banner(root, "11.0.0", doc)
     assert key in harness_audit.check_living_docs(root)
-    set_banner(root, plugin_version(root))
+    set_banner(root, plugin_version(root), doc)
     assert key not in harness_audit.check_living_docs(root)
-    set_banner(root, "12.0.0")
+    set_banner(root, "12.0.0", doc)
     assert key in harness_audit.check_living_docs(root)
+
+
+@pytest.mark.parametrize("doc", BANNER_DOCS)
+def test_a_banner_that_cannot_be_parsed_is_a_failure_not_a_skip(doc, tmp_path):
+    root = make_tree(tmp_path)
+    path = root / "docs" / doc
+    rewrite(path, "> **Status note:**", "> **Note:**")
+    assert f"registry-banner-unparseable:docs/{doc}" in harness_audit.check_living_docs(root)
+
+
+@pytest.mark.parametrize("doc", ("router-invariants.md", "prompt-invariants.md"))
+def test_a_missing_banner_doc_is_a_failure_not_a_skip(doc, tmp_path):
+    root = make_tree(tmp_path)
+    (root / "docs" / doc).unlink()
+    assert f"registry-banner-unparseable:docs/{doc}" in harness_audit.check_living_docs(root)
 
 
 def test_a_fixed_baseline_entry_must_be_removed(tmp_path):
     root = make_tree(tmp_path)
     key = "registry-banner-stale:docs/router-invariants.md"
     set_banner(root, "11.0.0")
-    write_baseline(root, [entry(k, "P6.T4") for k in harness_audit.check_living_docs(root)])
+    write_baseline(root, baseline_for(root, "P6.T4"))
     assert run_tool("harness_audit.py", root).returncode == 0
     set_banner(root, plugin_version(root))
     result = run_tool("harness_audit.py", root)
@@ -258,7 +351,7 @@ def test_ratchet_a_baseline_key_that_no_longer_fails_is_an_error():
 def test_ratchet_a_non_empty_baseline_warns_with_count_and_owners():
     errors, warnings = harness_audit.apply_rot_ratchet(
         {"a:1": "x", "b:2": "y", "c:3": "z"},
-        [entry("a:1", "P6.T2"), entry("b:2", "P6.T2"), entry("c:3", "P6.T3")],
+        [entry("a:1", "P6.T2", "x"), entry("b:2", "P6.T2", "y"), entry("c:3", "P6.T3", "z")],
     )
     assert errors == []
     assert len(warnings) == 1
@@ -266,7 +359,7 @@ def test_ratchet_a_non_empty_baseline_warns_with_count_and_owners():
 
 
 def test_ratchet_strict_fails_on_any_baseline_entry():
-    errors, _ = harness_audit.apply_rot_ratchet({"a:1": "x"}, [entry("a:1")], strict=True)
+    errors, _ = harness_audit.apply_rot_ratchet({"a:1": "x"}, [entry("a:1", message="x")], strict=True)
     assert errors and "--strict" in errors[0]
     assert harness_audit.apply_rot_ratchet({}, [], strict=True) == ([], [])
 
@@ -280,7 +373,7 @@ def ghost_tree_with_matching_baseline(tmp_path: Path) -> Path:
     root = make_tree(tmp_path)
     registry = root / "docs" / "agent-contract-registry.md"
     rewrite(registry, "## Read-Only Review Agents", "| `ghost-agent` | YAML | `PASS` | x | `MEMORY_NOTES` |\n\n## Read-Only Review Agents")
-    write_baseline(root, [entry(key) for key in harness_audit.check_living_docs(root)])
+    write_baseline(root, baseline_for(root))
     return root
 
 
@@ -471,6 +564,16 @@ def test_missing_pyyaml_passes_with_the_explicit_flag():
     assert result.returncode == 0, result.stdout + result.stderr
 
 
+def test_the_skipped_yaml_assertion_is_reported_and_not_counted_as_passed():
+    import prompt_clause_assertions
+
+    total = len(prompt_clause_assertions.ASSERTIONS)
+    result = run_clauses_without_yaml("--allow-no-yaml")
+    assert "SKIPPED-YAML" in result.stdout
+    assert f"OK ({total - 1} assertions passed, 1 skipped)" in result.stdout
+    assert f"OK ({total} assertions passed)" not in result.stdout
+
+
 def test_clause_assertions_reject_unknown_arguments():
     result = run_tool("prompt_clause_assertions.py", None, "--bogus")
     assert result.returncode == 2
@@ -485,13 +588,22 @@ README_REL = "README.md"
 GUIDE_REL = "plugins/cc10x/skills/cc10x-guide/SKILL.md"
 PLUGIN_JSON_REL = "plugins/cc10x/.claude-plugin/plugin.json"
 MARKETPLACE_REL = ".claude-plugin/marketplace.json"
-CLAIM_KEYS = {
-    "guide-agent-count",
-    "guide-skill-count",
-    "manifest-unverifiable-claim:plugin.json",
-    "manifest-description-mismatch",
-    "manifest-keywords-mismatch",
-}
+
+
+def set_guide_count(root: Path, noun: str, count: int) -> None:
+    """Set the guide's `<N> <noun>` claim to `count`, whatever it says today (asserts the claim exists)."""
+    path = root / GUIDE_REL
+    text = path.read_text(encoding="utf-8")
+    new, hits = re.subn(rf"\d+ {re.escape(noun)}", f"{count} {noun}", text, count=1)
+    assert hits == 1, f"guide has no '<N> {noun}' claim"
+    path.write_text(new, encoding="utf-8")
+
+
+def disk_counts() -> tuple:
+    plugin = REPO / "plugins" / "cc10x"
+    agents = len(list((plugin / "agents").glob("*.md")))
+    skills = len([p for p in (plugin / "skills").iterdir() if p.is_dir() and p.name != "cc10x-router"])
+    return agents, skills
 
 
 def claims(root: Path = REPO) -> dict:
@@ -502,10 +614,6 @@ def edit_json(path: Path, mutate) -> None:
     data = json.loads(path.read_text(encoding="utf-8"))
     mutate(data)
     path.write_text(json.dumps(data), encoding="utf-8")
-
-
-def test_real_tree_claim_failures_are_exactly_the_known_rot():
-    assert set(claims()) == CLAIM_KEYS
 
 
 def test_readme_workflow_count_must_equal_the_router_table(tmp_path):
@@ -538,14 +646,15 @@ def test_readme_numeric_hook_claim_must_equal_the_registered_hook_events(tmp_pat
 
 def test_guide_counts_must_equal_disk(tmp_path):
     root = make_tree(tmp_path)
-    guide = root / GUIDE_REL
-    text = guide.read_text(encoding="utf-8")
-    guide.write_text(text.replace("11 specialist agents", "14 specialist agents").replace("20 skills", "21 skills"), encoding="utf-8")
+    agents, skills = disk_counts()
+    set_guide_count(root, "specialist agents", agents)
+    set_guide_count(root, "skills", skills)
     fixed = claims(root)
     assert "guide-agent-count" not in fixed and "guide-skill-count" not in fixed
-    assert {"guide-agent-count", "guide-skill-count"} <= set(claims())
-    guide.write_text(text.replace("11 specialist agents", "15 specialist agents"), encoding="utf-8")
-    assert "guide-agent-count" in claims(root)
+    set_guide_count(root, "specialist agents", agents + 1)
+    set_guide_count(root, "skills", skills + 1)
+    broken = claims(root)
+    assert "guide-agent-count" in broken and "guide-skill-count" in broken
 
 
 def test_unverifiable_percentage_claims_are_rejected_in_both_manifests(tmp_path):
@@ -588,11 +697,23 @@ def test_doc_consistency_fails_on_a_new_claim_failure_and_warns_on_baselined_one
 
 def test_a_fixed_claim_baseline_entry_must_be_removed_by_harness_audit(tmp_path):
     root = make_tree(tmp_path)
-    guide = root / GUIDE_REL
-    guide.write_text(guide.read_text(encoding="utf-8").replace("11 specialist agents", "14 specialist agents"), encoding="utf-8")
+    agents, _ = disk_counts()
+    set_guide_count(root, "specialist agents", agents + 3)
+    write_baseline(root, baseline_for(root, "P6.T9"))
+    assert run_tool("harness_audit.py", root).returncode == 0
+    set_guide_count(root, "specialist agents", agents)
     result = run_tool("harness_audit.py", root)
     assert result.returncode == 1
     assert "stale baseline entry" in result.stderr and "guide-agent-count" in result.stderr
+
+
+def test_doc_consistency_reports_a_missing_baseline_file_clearly(tmp_path):
+    root = make_tree(tmp_path)
+    (root / BASELINE_REL).unlink()
+    result = run_tool("doc_consistency_check.py", root)
+    assert result.returncode == 1
+    assert "docs rot baseline is missing" in result.stdout
+    assert "Traceback" not in result.stderr
 
 
 def test_the_qa_routing_row_is_pinned(tmp_path):
