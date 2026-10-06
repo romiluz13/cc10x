@@ -1,8 +1,9 @@
 ---
 name: update
 description: |
-  Safe cc10x upgrade that preserves local modifications.
-  Stashes diffs, pulls upstream, rebuilds cache, rebases patches.
+  Safe cc10x upgrade through the Claude Code plugin CLI.
+  Lists every installed scope, refreshes the marketplace, updates each scope,
+  and optionally carries local patches over to the new install.
 
   Use this skill when: updating cc10x, upgrading, pulling latest cc10x,
   syncing plugin, refreshing cache, or checking for new versions.
@@ -14,71 +15,72 @@ allowed-tools: Read, Bash, AskUserQuestion
 
 # cc10x Update
 
-Safe upgrade that preserves your local modifications to cached skill files.
+Upgrade cc10x with the `claude plugin` CLI. The CLI owns the plugin registry and the install cache; this skill never edits either one directly and never assumes where they live.
 
-**Workflow:** Discover versions → Stash local diffs → Pull upstream → Rebuild cache → Rebase patches → Verify.
-
-## Paths (Resolve Once)
-
-```bash
-REGISTRY="$HOME/.claude/plugins/installed_plugins.json"
-KNOWN_MARKETPLACES="$HOME/.claude/plugins/known_marketplaces.json"
-CACHE_ROOT="$HOME/.claude/plugins/cache/cc10x/cc10x"
-BACKUP_DIR="$HOME/.claude/plugins/cache/cc10x/_backup_$(date +%Y%m%d_%H%M%S)"
-```
-
-Read `installed_plugins.json` → extract `cc10x@cc10x` entry. If missing → STOP.
-Read `known_marketplaces.json` → extract `cc10x.installLocation` → `MARKETPLACE_ROOT`.
-Verify `$MARKETPLACE_ROOT/.git` exists. If missing → STOP.
-
-On any STOP, report which prerequisite is absent (registry entry / marketplace git checkout) and that reinstalling the plugin restores it — a bare STOP leaves the user with no path forward.
+**Workflow:** Discover installs → Refresh marketplace → (optional) Capture local patches → Update each scope → Re-apply patches → Restart or reload.
 
 ## Phase 1: Discovery
 
-1. Read installed version from registry entry
-2. Read marketplace version from `$MARKETPLACE_ROOT/plugins/cc10x/.claude-plugin/plugin.json`
-3. Check upstream: `cd "$MARKETPLACE_ROOT" && git fetch origin && git log HEAD..origin/HEAD --oneline`
-4. Display: installed version, marketplace version, commits behind
-5. Gate: if no updates → STOP. If updates available → ask user to proceed.
+```bash
+claude plugin list --json
+```
 
-## Phase 2: Stash Local Modifications
+The output is a JSON array. Keep only entries whose `id` is `cc10x@cc10x`. Each entry has `version`, `scope` (`user`, `project`, `local`, or `managed`), `enabled`, `installPath`, and, for `project` and `local` scopes, `projectPath`.
 
-1. Enumerate cache files: `find "$CACHE_ROOT" -type f \( -name "*.md" -o -name "*.json" -o -name "*.py" \) | sort`
-2. For each cached file, diff against marketplace source (pristine → locally-modified, so applying the patch later re-adds your changes):
+The same plugin can appear several times: once per scope, and once per project for `project` and `local` scopes. Different entries may point at different versions and different `installPath` values. Show the user one row per entry (scope, `projectPath` if present, version, `installPath`).
+
+If no `cc10x@cc10x` entry exists → STOP and tell the user cc10x is not installed (install it with `claude plugin install cc10x@cc10x`).
+
+## Phase 2: Refresh The Marketplace
+
+```bash
+claude plugin marketplace update cc10x
+```
+
+Installed versions only change in Phase 4. To learn the available version, read `.claude-plugin/plugin.json` under the marketplace plugin directory (locate it as in Phase 3, step 1). If every entry already matches that version → report "already up to date" and STOP.
+
+**Gate:** show installed versus available versions and ask the user which scopes to update.
+
+## Phase 3: Capture Local Patches (Optional)
+
+Skip this phase if the user has not modified cached files.
+
+1. Locate the marketplace source: `claude plugin marketplace list --json`, take the entry named `cc10x`, and use its `installLocation`. The plugin source is `<installLocation>/plugins/cc10x`. If that directory is missing, skip patch carry-over and say so.
+2. For each entry being updated, list the differing files between the marketplace source and its old `installPath`: `diff -rq "<installLocation>/plugins/cc10x" "<old installPath>"`. Entries that share an `installPath` share one result; capture it once. Ignore differences that exist only because the old version is older than the marketplace version; local patches are the files the user edited, so compare against the marketplace source at the old version when the versions differ (`git -C "<installLocation>" log` can locate it) or ask the user which files they changed.
+3. For each locally modified file, save a per-file patch (pristine to locally modified, so applying it later re-adds the user's changes):
 
    ```bash
-   diff -u "$MARKETPLACE_ROOT/plugins/cc10x/$file" "$CACHE_ROOT/$file"
+   diff -u "<pristine file>" "<old installPath>/<file>" > "<backup dir>/<file with / replaced by __>.patch"
    ```
 
-3. If diffs found → save to `$BACKUP_DIR/patches/` as `.patch` files. Report which files have local modifications.
-4. Also check for user-added files (in cache but not in marketplace): `comm -23 <(cd "$CACHE_ROOT" && find . -type f | sort) <(cd "$MARKETPLACE_ROOT/plugins/cc10x" && find . -type f | sort)`
-5. Copy user-added files to `$BACKUP_DIR/user-files/`
+   Use a backup directory the user approves (for example a `cc10x-update-backup-<date>` directory under the system temp directory). Report which files were modified, and list files present only in the old `installPath`.
 
-**Gate:** If local modifications found, ask user: "Stash and continue? Your changes will be rebased after the pull."
+**Gate:** if local modifications exist, ask: "Save these patches and carry them over after the update?"
 
-## Phase 3: Pull & Rebuild Cache
+## Phase 4: Update Each Scope
 
-1. Git pull: `cd "$MARKETPLACE_ROOT" && git pull origin main`
-2. Read new version from updated `plugin.json`
-3. Create new cache: `mkdir -p "$CACHE_ROOT.new"` then copy all files from marketplace
-4. Swap: `mv "$CACHE_ROOT" "$CACHE_ROOT.old" && mv "$CACHE_ROOT.new" "$CACHE_ROOT"`
-5. Update registry only after the swap succeeded: update `cc10x@cc10x` version to new version (a failed swap must not leave the registry claiming the new version)
-6. Gate: Ask user before cleaning old cache: "Remove $CACHE_ROOT.old? (your patches are safely in $BACKUP_DIR)"
+For each selected entry:
 
-## Phase 4: Rebase Patches
+```bash
+claude plugin update cc10x@cc10x --scope <scope>
+```
 
-For each `.patch` file in `$BACKUP_DIR/patches/`:
+For `project` and `local` entries, run the command from the entry's `projectPath` so the CLI resolves the right project. Do not run it for `managed` scope; tell the user managed installs are updated by whoever administers them.
 
-1. Try: `patch --forward "$CACHE_ROOT/$file" "$BACKUP_DIR/patches/$file.patch"` — the explicit target file makes header paths irrelevant, and `patch` works in `$CACHE_ROOT`, which is NOT a git repository (so `git apply --3way`, which needs a repo index, is unavailable there). Fallback: if `patch` rejects a hunk (`.rej` file), reapply manually — open the `.rej` and the rebuilt file, re-edit, then delete the `.rej`.
-2. If conflict: report the conflict, show both versions, ask user to resolve
-3. If clean: confirm applied
+If a command fails, report its output and continue with the remaining scopes; do not retry with other flags.
 
-Restore user-added files from `$BACKUP_DIR/user-files/` to `$CACHE_ROOT/`.
+## Phase 5: Re-apply Patches
 
-## Phase 5: Verify & Report
+Run `claude plugin list --json` again and read the new `installPath` for each updated entry. For each saved patch, apply it to the same file under the new `installPath` (the explicit target file makes header paths irrelevant):
 
-1. Verify cache structure: `find "$CACHE_ROOT" -type f | wc -l` matches expected count
-2. Verify registry: read `installed_plugins.json` → confirm version updated
-3. Run `python3 "$CACHE_ROOT/tools/doc_consistency_check.py"` if available
-4. Report: old version → new version, patches rebased (N clean, M conflicts), user files restored (N)
-5. Clean up: `rm -rf "$CACHE_ROOT.old"` (only after user confirms)
+```bash
+patch --forward "<new installPath>/<file>" "<patch file>"
+```
+
+If a hunk is rejected (a `.rej` file), show both versions and ask the user how to resolve it. Copy files that existed only in the old `installPath` into the new one. Report patches applied clean, conflicts, and files restored.
+
+## Phase 6: Restart Or Reload
+
+Updates apply only to a fresh session. Tell the user to restart Claude Code or run `/reload-plugins`. Report old version → new version for each scope updated.
+
+You cannot restart or reload the session yourself, and you cannot verify the new version is active until the user does.

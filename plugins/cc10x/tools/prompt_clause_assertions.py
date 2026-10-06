@@ -911,18 +911,6 @@ ASSERTIONS = [
         "Phase 4 uses patch with an explicit target; broken in-cache git apply --3way removed",
     ),
     A(
-        "update: find predicates parenthesized",
-        SKILLS / "update" / "SKILL.md",
-        contains('-type f \\( -name "*.md" -o -name "*.json" -o -name "*.py" \\)'),
-        "Phase 2 find applies -type f to all three name predicates",
-    ),
-    A(
-        "update: registry updated after swap",
-        SKILLS / "update" / "SKILL.md",
-        contains("Update registry only after the swap succeeded"),
-        "Phase 3 records the new version only once the cache swap has happened",
-    ),
-    A(
         "memory-and-handoff: single knowledge compounding loop",
         SKILLS / "memory-and-handoff" / "SKILL.md",
         lambda text: text.count("## Knowledge Compounding Loop") == 1,
@@ -2128,6 +2116,28 @@ ASSERTIONS = [
         SKILLS / "cc10x-router" / "SKILL.md",
         contains_none('scan the constructed prompt for bias phrases — "do not flag"'),
         "the old inline SKILL.md phrase enumeration is gone; policy file is the single source",
+    ),
+    A(
+        "update skill: discovers installs through the plugin CLI",
+        SKILLS / "update" / "SKILL.md",
+        contains_all(
+            "claude plugin list --json",
+            "claude plugin marketplace update cc10x",
+            "claude plugin update cc10x@cc10x --scope",
+            "/reload-plugins",
+        ),
+        "update flow must be CLI-driven: list, refresh marketplace, update per scope, then restart or reload",
+    ),
+    A(
+        "update skill: no registry hand-editing or hard-coded cache root",
+        SKILLS / "update" / "SKILL.md",
+        contains_none(
+            "installed_plugins.json",
+            "known_marketplaces.json",
+            "cache/cc10x/cc10x",
+            "$HOME/.claude",
+        ),
+        "the skill must not edit the registry or assume a cache path; installPath comes from the CLI",
     ),
 ]
 
