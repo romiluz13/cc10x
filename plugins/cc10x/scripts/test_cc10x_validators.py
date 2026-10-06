@@ -525,9 +525,101 @@ def test_unparseable_hooks_json_is_one_clear_error(tmp_path):
     assert len(errors) == 1 and errors[0].startswith("hooks.json is not valid JSON")
 
 
-def test_the_hard_coded_hook_script_tuple_is_gone():
-    source = (TOOLS / "harness_audit.py").read_text(encoding="utf-8")
-    assert '"cc10x_task_completed_guard.py",\n        "cc10x_event_logger.py",\n        "",' not in source
+CORE_SCRIPTS = (
+    "cc10x_pretooluse_guard.py",
+    "cc10x_git_guard.py",
+    "cc10x_qa_isolation_guard.py",
+    "cc10x_posttooluse_artifact_guard.py",
+    "cc10x_sessionstart_context.py",
+    "cc10x_preflight.sh",
+    "cc10x_task_completed_guard.py",
+    "cc10x_event_logger.py",
+    "cc10x_state_persist.py",
+)
+
+
+@pytest.mark.parametrize("script", CORE_SCRIPTS)
+def test_the_pinned_floor_catches_a_core_script_deleted_from_disk_and_hooks_json(script, tmp_path):
+    root = make_tree(tmp_path)
+    (root / "plugins/cc10x/scripts" / script).unlink()
+    edit_hooks(root, lambda d: drop_hook_script(d, script))
+    errors = harness_audit.check_hook_registration(root / "plugins" / "cc10x")
+    assert f"hooks.json does not register {script}" in errors
+
+
+def hook_errors(root: Path) -> list[str]:
+    return harness_audit.check_hook_registration(root / "plugins" / "cc10x")
+
+
+def first_hook(data: dict, event: str) -> dict:
+    return data["hooks"][event][0]["hooks"][0]
+
+
+@pytest.mark.parametrize(
+    "event, mutate, expected",
+    [
+        ("PostCompact", lambda h: h.update(comand=h.pop("command")), "hooks.json event PostCompact hook has no non-empty string command"),
+        ("PostCompact", lambda h: h.update(type="prompt"), "hooks.json event PostCompact hook type is 'prompt', expected 'command'"),
+        ("PostCompact", lambda h: h.update(command=7), "hooks.json event PostCompact hook has no non-empty string command"),
+        ("PostCompact", lambda h: h.update(command="  "), "hooks.json event PostCompact hook has no non-empty string command"),
+        ("PostCompact", lambda h: h.update(command='python3 "${CLAUDE_PLUGIN_ROOT}/scrips/cc10x_event_logger.py" postcompact'), "hooks.json event PostCompact command is not"),
+        ("PostCompact", lambda h: h.update(command="echo scripts/cc10x_event_logger.py"), "hooks.json event PostCompact command is not"),
+        ("PostCompact", lambda h: h.update(command=h["command"] + " || true"), "hooks.json event PostCompact command is not"),
+        ("PostCompact", lambda h: h.update(command=h["command"] + "; true"), "hooks.json event PostCompact command is not"),
+        ("PostCompact", lambda h: h.update(command=h["command"] + " && true"), "hooks.json event PostCompact command is not"),
+        ("PostCompact", lambda h: h.update(command='python3 -c pass'), "hooks.json event PostCompact command is not"),
+        ("PostCompact", lambda h: h.update(command=h["command"].replace("python3", "sh")), "hooks.json event PostCompact command runs cc10x_event_logger.py with sh, expected python3"),
+        ("PostCompact", lambda h: h.update(command=h["command"].replace("event_logger.py", "nonesuch.py")), "hooks.json references missing script cc10x_nonesuch.py"),
+        ("PreCompact", lambda h: h.update(command=h["command"].replace("state_persist", "event_logger")), "hooks.json does not register cc10x_state_persist.py on event PreCompact"),
+    ],
+)
+def test_a_malformed_or_retargeted_hook_entry_is_named(event, mutate, expected, tmp_path):
+    root = make_tree(tmp_path)
+    edit_hooks(root, lambda d: mutate(first_hook(d, event)))
+    errors = hook_errors(root)
+    assert any(expected in e for e in errors), errors
+
+
+@pytest.mark.parametrize("script", ["cc10x_git_guard.py", "cc10x_qa_isolation_guard.py", "cc10x_pretooluse_guard.py"])
+def test_a_pretooluse_guard_must_keep_its_matcher(script, tmp_path):
+    root = make_tree(tmp_path)
+
+    def drop_matcher(data):
+        for group in data["hooks"]["PreToolUse"]:
+            if script in json.dumps(group):
+                del group["matcher"]
+
+    edit_hooks(root, drop_matcher)
+    assert f"hooks.json PreToolUse hook for {script} has no matcher" in hook_errors(root)
+
+
+@pytest.mark.parametrize(
+    "mutate, expected",
+    [
+        (lambda d: d["hooks"].update(Stop={"hooks": []}), "hooks.json event Stop must be a list of hook groups"),
+        (lambda d: d["hooks"].update(Stop=["x"]), "hooks.json event Stop has a group that is not an object with a 'hooks' list"),
+        (lambda d: d["hooks"].update(Stop=[{"hooks": "x"}]), "hooks.json event Stop has a group that is not an object with a 'hooks' list"),
+        (lambda d: d["hooks"]["Stop"][0].update(hooks=["x"]), "hooks.json event Stop has a hook entry that is not an object"),
+        (lambda d: d.update(hooks=[]), "hooks.json top-level 'hooks' must be an object keyed by event"),
+    ],
+)
+def test_malformed_hooks_json_shapes_give_a_clear_error_not_a_traceback(mutate, expected, tmp_path):
+    root = make_tree(tmp_path)
+    edit_hooks(root, mutate)
+    errors = hook_errors(root)
+    assert any(expected in e for e in errors), errors
+    result = run_tool("harness_audit.py", root)
+    assert result.returncode == 1 and "Traceback" not in result.stderr, result.stderr
+
+
+def test_a_top_level_list_or_missing_hooks_json_is_one_clear_error(tmp_path):
+    root = make_tree(tmp_path)
+    (root / HOOKS_REL).write_text("[]", encoding="utf-8")
+    errors = hook_errors(root)
+    assert len(errors) == 1 and errors[0].startswith("hooks.json is not valid JSON")
+    (root / HOOKS_REL).unlink()
+    errors = hook_errors(root)
+    assert len(errors) == 1 and errors[0].startswith("hooks.json is not valid JSON")
 
 
 # --- PyYAML-dependent clause check ------------------------------------------------------------

@@ -363,18 +363,28 @@ def check_agent_colors(agents_dir: Path = PLUGIN_ROOT / "agents") -> list[str]:
     return errors
 
 
-_HOOK_SCRIPT = re.compile(r"scripts/([A-Za-z0-9_.-]+)")
+_HOOK_COMMAND = re.compile(r'(python3|sh) "\$\{CLAUDE_PLUGIN_ROOT\}/scripts/([A-Za-z0-9_.-]+)"(?: [a-z_]+)*')
 _MAIN_GUARD = re.compile(r"^if __name__ == [\"']__main__[\"']:", re.M)
-CORE_HOOK_SCRIPTS = (
-    "cc10x_pretooluse_guard.py",
-    "cc10x_git_guard.py",
-    "cc10x_qa_isolation_guard.py",
-    "cc10x_posttooluse_artifact_guard.py",
-    "cc10x_sessionstart_context.py",
-    "cc10x_preflight.sh",
-    "cc10x_task_completed_guard.py",
-    "cc10x_event_logger.py",
-    "cc10x_state_persist.py",
+CORE_HOOK_PAIRS = (
+    ("PreToolUse", "cc10x_pretooluse_guard.py"),
+    ("PreToolUse", "cc10x_git_guard.py"),
+    ("PreToolUse", "cc10x_qa_isolation_guard.py"),
+    ("PostToolUse", "cc10x_posttooluse_artifact_guard.py"),
+    ("SessionStart", "cc10x_sessionstart_context.py"),
+    ("SessionStart", "cc10x_preflight.sh"),
+    ("TaskCompleted", "cc10x_task_completed_guard.py"),
+    ("PostCompact", "cc10x_event_logger.py"),
+    ("SubagentStop", "cc10x_event_logger.py"),
+    ("StopFailure", "cc10x_event_logger.py"),
+    ("InstructionsLoaded", "cc10x_event_logger.py"),
+    ("PreCompact", "cc10x_state_persist.py"),
+    ("Stop", "cc10x_state_persist.py"),
+)
+CORE_HOOK_SCRIPTS = tuple(dict.fromkeys(script for _, script in CORE_HOOK_PAIRS))
+MATCHER_REQUIRED = (
+    ("PreToolUse", "cc10x_pretooluse_guard.py"),
+    ("PreToolUse", "cc10x_git_guard.py"),
+    ("PreToolUse", "cc10x_qa_isolation_guard.py"),
 )
 
 
@@ -389,29 +399,59 @@ def hook_entry_points(plugin_root: Path) -> set[str]:
 def check_hook_registration(plugin_root: Path = PLUGIN_ROOT) -> list[str]:
     try:
         hooks = json.loads(read(plugin_root / "hooks" / "hooks.json"))["hooks"]
-    except (json.JSONDecodeError, KeyError, TypeError) as exc:
+    except (OSError, json.JSONDecodeError, KeyError, TypeError) as exc:
         return [f"hooks.json is not valid JSON with a top-level 'hooks' object: {exc!r}"]
+    if not isinstance(hooks, dict):
+        return ["hooks.json top-level 'hooks' must be an object keyed by event"]
     errors: list[str] = []
-    registered: set[str] = set()
+    registered: dict[tuple[str, str], list[bool]] = {}
     for event, groups in sorted(hooks.items()):
-        commands = [
-            hook.get("command", "")
-            for group in groups
-            for hook in group.get("hooks", [])
-            if isinstance(hook, dict)
-        ]
+        if not isinstance(groups, list):
+            errors.append(f"hooks.json event {event} must be a list of hook groups")
+            continue
+        commands = 0
+        for group in groups:
+            if not isinstance(group, dict) or not isinstance(group.get("hooks"), list):
+                errors.append(f"hooks.json event {event} has a group that is not an object with a 'hooks' list")
+                continue
+            has_matcher = isinstance(group.get("matcher"), str) and bool(group["matcher"].strip())
+            for hook in group["hooks"]:
+                if not isinstance(hook, dict):
+                    errors.append(f"hooks.json event {event} has a hook entry that is not an object")
+                elif hook.get("type") != "command":
+                    errors.append(f"hooks.json event {event} hook type is {hook.get('type')!r}, expected 'command'")
+                elif not isinstance(hook.get("command"), str) or not hook["command"].strip():
+                    errors.append(f"hooks.json event {event} hook has no non-empty string command")
+                else:
+                    commands += 1
+                    parsed = _HOOK_COMMAND.fullmatch(hook["command"])
+                    if not parsed:
+                        errors.append(
+                            f"hooks.json event {event} command is not 'python3|sh \"${{CLAUDE_PLUGIN_ROOT}}/scripts/<name>\" [args]': "
+                            f"{hook['command']!r}"
+                        )
+                        continue
+                    interpreter, script = parsed.groups()
+                    expected = "sh" if script.endswith(".sh") else "python3"
+                    if interpreter != expected:
+                        errors.append(f"hooks.json event {event} command runs {script} with {interpreter}, expected {expected}")
+                    if not (plugin_root / "scripts" / script).exists():
+                        errors.append(f"hooks.json references missing script {script}")
+                    registered.setdefault((event, script), []).append(has_matcher)
         if not commands:
             errors.append(f"hooks.json event {event} registers no hook command")
-        for command in commands:
-            registered.update(_HOOK_SCRIPT.findall(command))
+    scripts = {script for _, script in registered}
     required = set(CORE_HOOK_SCRIPTS) | hook_entry_points(plugin_root)
+    errors.extend(f"hooks.json does not register {script}" for script in sorted(required - scripts))
     errors.extend(
-        f"hooks.json does not register {script}" for script in sorted(required - registered)
+        f"hooks.json does not register {script} on event {event}"
+        for event, script in CORE_HOOK_PAIRS
+        if script in scripts and (event, script) not in registered
     )
     errors.extend(
-        f"hooks.json references missing script {script}"
-        for script in sorted(registered)
-        if not (plugin_root / "scripts" / script).exists()
+        f"hooks.json {event} hook for {script} has no matcher"
+        for event, script in MATCHER_REQUIRED
+        if (event, script) in registered and not any(registered[(event, script)])
     )
     return errors
 
