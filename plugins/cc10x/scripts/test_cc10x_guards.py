@@ -715,6 +715,441 @@ def test_task_guard_freshness_compares_against_task_creation(tmp_path):
     assert "stale" not in r.stderr
 
 
+# --- P2.T4 characterization tests (pin CURRENT behavior; P5 updates them) ----
+#
+# These lock what the hooks do today so the P5 hook cleanup changes behavior
+# deliberately. Where a test pins something P5 plans to change, the comment
+# says which task.
+
+
+MEMORY_TASK_SUBJECT = "CC10X Memory Update: persist phase 1"
+MEMORY_TASK_DESCRIPTION = (
+    "ROUTER ONLY: execute inline.\n"
+    + CC10X_METADATA.replace("kind:agent", "kind:memory")
+)
+
+
+def memory_task_payload(**overrides) -> dict:
+    payload = {
+        "task_subject": MEMORY_TASK_SUBJECT,
+        "task_description": MEMORY_TASK_DESCRIPTION,
+        "task_id": "m1",
+    }
+    payload.update(overrides)
+    return payload
+
+
+def finalize_event_log(project_dir: Path, wf: str = "wf-test") -> None:
+    log = project_dir / ".cc10x" / "workflows" / f"{wf}.events.jsonl"
+    log.write_text(json.dumps({"wf": wf, "event": "memory_finalized"}) + "\n")
+
+
+def memory_guard_reasons(project_dir: Path) -> list[str]:
+    events = [
+        e
+        for e in hook_log_lines(project_dir)
+        if e["event"] == "task_completed_memory_finalize_guard"
+    ]
+    assert len(events) == 1, events
+    return events[0]["reason"].split(",")
+
+
+def test_task_guard_memory_task_without_finalized_event_audits_in_shipped_mode(tmp_path):
+    write_artifact(tmp_path)
+    r = run_guard("cc10x_task_completed_guard.py", memory_task_payload(), tmp_path)
+    assert r.returncode == 0  # shipped taskMetadata=audit: logged, not blocked
+    assert memory_guard_reasons(tmp_path) == ["missing-memory-finalized-event"]
+    event = hook_log_lines(tmp_path)[0]
+    assert event["decision"] == "audit"
+    assert event["wf"] == "wf-test"
+
+
+def test_task_guard_memory_task_without_finalized_event_blocks_in_block_mode(tmp_path):
+    root = mode_root(tmp_path, {"taskMetadata": "block"})
+    write_artifact(tmp_path)
+    r = run_guard(
+        "cc10x_task_completed_guard.py",
+        memory_task_payload(),
+        tmp_path,
+        plugin_root=root,
+    )
+    assert r.returncode == 2
+    assert "memory-task completion blocked" in r.stderr
+    assert "missing-memory-finalized-event" in r.stderr
+    assert hook_log_lines(tmp_path)[0]["decision"] == "block"
+
+
+def test_task_guard_memory_task_with_finalized_event_passes_silently(tmp_path):
+    root = mode_root(tmp_path, {"taskMetadata": "block"})
+    write_artifact(tmp_path)
+    finalize_event_log(tmp_path)
+    r = run_guard(
+        "cc10x_task_completed_guard.py",
+        memory_task_payload(),
+        tmp_path,
+        plugin_root=root,
+    )
+    assert r.returncode == 0
+    assert r.stderr == ""
+    assert hook_log_lines(tmp_path) == []
+
+
+def test_task_guard_memory_event_is_a_substring_match_on_the_log(tmp_path):
+    # Current behavior: the needle is searched as raw text anywhere in the
+    # event log, so any line mentioning the string satisfies the guard.
+    write_artifact(tmp_path)
+    log = tmp_path / ".cc10x" / "workflows" / "wf-test.events.jsonl"
+    log.write_text('{"event": "note", "reason": "not yet memory_finalized"}\n')
+    r = run_guard("cc10x_task_completed_guard.py", memory_task_payload(), tmp_path)
+    assert r.returncode == 0
+    assert hook_log_lines(tmp_path) == []
+
+
+def test_task_guard_memory_task_reports_every_ownership_reason(tmp_path):
+    # No artifact on disk, wrong origin, no marker, subject not router-owned.
+    (tmp_path / ".cc10x").mkdir()
+    description = CC10X_METADATA.replace("kind:agent", "kind:memory").replace(
+        "origin:router", "origin:agent"
+    )
+    r = run_guard(
+        "cc10x_task_completed_guard.py",
+        {
+            "task_subject": "CC10X Memory: persist",
+            "task_description": description,
+            "task_id": "m2",
+        },
+        tmp_path,
+    )
+    assert r.returncode == 0
+    assert memory_guard_reasons(tmp_path) == [
+        "memory-task-origin-not-router",
+        "memory-task-missing-router-only-marker",
+        "memory-task-subject-not-router-owned",
+        "missing-workflow-artifact",
+        "missing-memory-finalized-event",
+    ]
+
+
+def test_task_guard_memory_task_flags_artifact_workflow_mismatch(tmp_path):
+    path = write_artifact(tmp_path)
+    data = json.loads(path.read_text())
+    data["workflow_uuid"] = "wf-other"
+    path.write_text(json.dumps(data))
+    finalize_event_log(tmp_path)
+    r = run_guard("cc10x_task_completed_guard.py", memory_task_payload(), tmp_path)
+    assert r.returncode == 0
+    assert memory_guard_reasons(tmp_path) == ["workflow-artifact-mismatch"]
+
+
+def test_task_guard_memory_task_flags_unparseable_artifact(tmp_path):
+    path = write_artifact(tmp_path)
+    path.write_text("{not json")
+    finalize_event_log(tmp_path)
+    r = run_guard("cc10x_task_completed_guard.py", memory_task_payload(), tmp_path)
+    assert r.returncode == 0
+    assert memory_guard_reasons(tmp_path) == ["artifact-json:JSONDecodeError"]
+
+
+def test_task_guard_validator_only_applies_to_kind_memory(tmp_path):
+    # A non-memory task with no finalized event is not a memory violation.
+    write_artifact(tmp_path)
+    r = run_guard(
+        "cc10x_task_completed_guard.py",
+        {
+            "task_subject": "CC10X component-builder: Execute phase 1",
+            "task_description": CC10X_METADATA,
+            "task_id": "t5",
+        },
+        tmp_path,
+    )
+    assert r.returncode == 0
+    assert not any(
+        e["event"] == "task_completed_memory_finalize_guard"
+        for e in hook_log_lines(tmp_path)
+    )
+
+
+def test_task_guard_stale_artifact_is_audit_only_even_in_block_mode(tmp_path):
+    import os
+    import time
+
+    root = mode_root(tmp_path, {"taskMetadata": "block"})
+    path = write_artifact(tmp_path)
+    old = time.time() - 600
+    os.utime(path, (old, old))
+    created = time.strftime("%Y-%m-%dT%H:%M:%S+00:00", time.gmtime(old + 300))
+    r = run_guard(
+        "cc10x_task_completed_guard.py",
+        {
+            "task_subject": "CC10X component-builder: Execute phase 1",
+            "task_description": CC10X_METADATA,
+            "task_id": "t6",
+            "task_created_at": created,  # task started AFTER the last artifact write
+        },
+        tmp_path,
+        plugin_root=root,
+    )
+    assert r.returncode == 0
+    assert "appears stale" in r.stderr
+    events = hook_log_lines(tmp_path)
+    assert any(
+        e["event"] == "task_completed_stale_artifact" and e["decision"] == "audit"
+        for e in events
+    )
+
+
+def test_task_guard_stale_artifact_falls_back_to_300s_window_without_created_at(tmp_path):
+    import os
+    import time
+
+    path = write_artifact(tmp_path)
+    old = time.time() - 600
+    os.utime(path, (old, old))
+    r = run_guard(
+        "cc10x_task_completed_guard.py",
+        {
+            "task_subject": "CC10X component-builder: Execute phase 1",
+            "task_description": CC10X_METADATA,
+            "task_id": "t7",
+        },
+        tmp_path,
+    )
+    assert r.returncode == 0
+    assert "appears stale" in r.stderr
+
+
+def test_task_guard_circuit_breaker_allows_exactly_the_limit(tmp_path):
+    root = mode_root(tmp_path, {"taskMetadata": "block"})
+    write_artifact(tmp_path, remediation_history=[{"cycle": i} for i in range(3)])
+    r = run_guard(
+        "cc10x_task_completed_guard.py",
+        {
+            "task_subject": "CC10X component-builder: remediation fix",
+            "task_description": CC10X_METADATA.replace("kind:agent", "kind:remfix"),
+            "task_id": "t8",
+        },
+        tmp_path,
+        plugin_root=root,
+    )
+    assert r.returncode == 0
+    assert "circuit breaker" not in r.stderr
+
+
+def posttool_reasons(project_dir: Path) -> list[str]:
+    events = [
+        e for e in hook_log_lines(project_dir) if e["event"] == "posttool_artifact_guard"
+    ]
+    assert len(events) == 1, events
+    return events[0]["reason"].split(";")
+
+
+def run_posttool(project_dir: Path, path: Path, **kwargs) -> subprocess.CompletedProcess:
+    return run_guard(
+        "cc10x_posttooluse_artifact_guard.py",
+        {"tool_name": "Write", "tool_input": {"file_path": str(path)}},
+        project_dir,
+        **kwargs,
+    )
+
+
+def test_artifact_guard_missing_event_log_is_audit_only_in_block_mode(tmp_path):
+    path = write_artifact(tmp_path)
+    (path.parent / "wf-test.events.jsonl").unlink()
+    r = run_posttool(tmp_path, path)  # shipped artifactIntegrity=block
+    assert r.returncode == 0  # soft reason: never blocks
+    assert posttool_reasons(tmp_path) == ["missing-event-log"]
+    assert hook_log_lines(tmp_path)[0]["decision"] == "block"  # the mode, not an exit
+    # A non-empty reason list skips the artifact_mutated auto-append.
+    assert not (path.parent / "wf-test.events.jsonl").exists()
+
+
+def test_artifact_guard_missing_updated_at_is_audit_only_in_block_mode(tmp_path):
+    path = write_artifact(tmp_path, updated_at="")
+    r = run_posttool(tmp_path, path)
+    assert r.returncode == 0
+    assert posttool_reasons(tmp_path) == ["missing-updated-at"]
+
+
+def test_artifact_guard_stale_artifact_write_is_audit_only_in_block_mode(tmp_path):
+    import os
+    import time
+
+    path = write_artifact(tmp_path)
+    old = time.time() - 600  # freshness window is 60s
+    os.utime(path, (old, old))
+    r = run_posttool(tmp_path, path)
+    assert r.returncode == 0
+    assert posttool_reasons(tmp_path) == ["stale-artifact-write"]
+
+
+def test_artifact_guard_updated_at_checks_apply_only_to_the_written_artifact(tmp_path):
+    # Writing an unrelated file never evaluates updated_at/staleness of the
+    # latest artifact, even when that artifact lacks updated_at.
+    write_artifact(tmp_path, updated_at="")
+    r = run_posttool(tmp_path, tmp_path / "src.py")
+    assert r.returncode == 0
+    assert hook_log_lines(tmp_path) == []
+
+
+def test_artifact_guard_blocks_review_closure_mismatch(tmp_path):
+    path = write_artifact(
+        tmp_path,
+        planning_review_status="passed",
+        plan_revision=2,
+        last_reviewed_revision=1,
+    )
+    r = run_posttool(tmp_path, path)
+    assert r.returncode == 2
+    assert "review-closure:plan_revision=2,last_reviewed_revision=1" in r.stderr
+    assert "revised_after_review" in r.stderr
+
+
+def test_artifact_guard_hard_corruption_is_audit_when_mode_is_audit(tmp_path):
+    root = mode_root(tmp_path, {"artifactIntegrity": "audit"})
+    workflows = tmp_path / ".cc10x" / "workflows"
+    workflows.mkdir(parents=True)
+    bad = workflows / "wf-bad.json"
+    bad.write_text("{not json")
+    r = run_posttool(tmp_path, bad, plugin_root=root)
+    assert r.returncode == 0
+    assert hook_log_lines(tmp_path)[0]["decision"] == "audit"
+
+
+def test_artifact_guard_mode_file_without_the_key_silently_means_audit(tmp_path):
+    # Current behavior (P5.T3 changes it): load_mode returns the file verbatim,
+    # so a hook-mode.json lacking artifactIntegrity downgrades block to audit.
+    root = mode_root(tmp_path, {"memoryWrites": "block"})
+    workflows = tmp_path / ".cc10x" / "workflows"
+    workflows.mkdir(parents=True)
+    bad = workflows / "wf-bad.json"
+    bad.write_text(json.dumps({"workflow_uuid": "wf-bad"}))
+    r = run_posttool(tmp_path, bad, plugin_root=root)
+    assert r.returncode == 0
+    assert hook_log_lines(tmp_path)[0]["decision"] == "audit"
+
+
+def write_git_token(project_dir: Path, operations, expires_at: str | None) -> Path:
+    state = project_dir / ".cc10x" / "state"
+    state.mkdir(parents=True, exist_ok=True)
+    token = state / "git-approval.json"
+    body: dict[str, object] = {"wf": "wf-test", "operations": operations}
+    if expires_at is not None:
+        body["expires_at"] = expires_at
+    token.write_text(json.dumps(body))
+    return token
+
+
+def run_branch_delete(project_dir: Path) -> subprocess.CompletedProcess:
+    return run_guard(
+        "cc10x_git_guard.py",
+        {"tool_input": {"command": "git branch -D feature/old"}},
+        project_dir,
+    )
+
+
+def assert_denied(r: subprocess.CompletedProcess) -> None:
+    assert r.returncode == 0
+    out = json.loads(r.stdout)
+    assert out["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert "git branch -D" in out["hookSpecificOutput"]["permissionDecisionReason"]
+
+
+def test_git_guard_branch_delete_denied_without_token(tmp_path):
+    r = run_branch_delete(tmp_path)
+    assert_denied(r)
+    assert "approval token" in json.loads(r.stdout)["hookSpecificOutput"][
+        "permissionDecisionReason"
+    ]
+
+
+def test_git_guard_branch_delete_fresh_token_allows_once_and_logs(tmp_path):
+    (tmp_path / ".cc10x").mkdir()
+    token = write_git_token(tmp_path, ["branch-delete"], "2099-01-01T00:00:00+00:00")
+    r = run_branch_delete(tmp_path)
+    assert r.returncode == 0
+    assert r.stdout.strip() == ""
+    assert not token.exists()  # single-use
+    events = hook_log_lines(tmp_path)
+    assert any(
+        e["event"] == "git_guard_token_consumed"
+        and e["decision"] == "allow"
+        and e["wf"] == "wf-test"
+        and "branch-delete" in e["reason"]
+        for e in events
+    )
+    assert_denied(run_branch_delete(tmp_path))  # consumed: second use denied
+
+
+def test_git_guard_branch_delete_expired_token_denied_and_consumed(tmp_path):
+    token = write_git_token(tmp_path, ["branch-delete"], "2000-01-01T00:00:00+00:00")
+    assert_denied(run_branch_delete(tmp_path))
+    assert not token.exists()
+
+
+def test_git_guard_branch_delete_wrong_operation_token_denied_and_consumed(tmp_path):
+    token = write_git_token(tmp_path, ["push"], "2099-01-01T00:00:00+00:00")
+    assert_denied(run_branch_delete(tmp_path))
+    assert not token.exists()  # a mismatched token must not linger
+
+
+def test_git_guard_push_token_does_not_cover_branch_delete_but_both_ops_can(tmp_path):
+    write_git_token(
+        tmp_path, ["push", "branch-delete"], "2099-01-01T00:00:00+00:00"
+    )
+    r = run_branch_delete(tmp_path)
+    assert r.returncode == 0
+    assert r.stdout.strip() == ""
+
+
+def test_git_guard_branch_delete_token_older_than_backstop_is_stale(tmp_path):
+    import os
+    import time
+
+    token = write_git_token(tmp_path, ["branch-delete"], "2099-01-01T00:00:00+00:00")
+    old = time.time() - 3600  # MAX_TOKEN_AGE_SECONDS is 600
+    os.utime(token, (old, old))
+    assert_denied(run_branch_delete(tmp_path))
+    assert not token.exists()
+
+
+def test_git_guard_branch_delete_token_without_expiry_is_never_fresh(tmp_path):
+    token = write_git_token(tmp_path, ["branch-delete"], None)
+    assert_denied(run_branch_delete(tmp_path))
+    assert not token.exists()
+
+
+def test_git_guard_branch_delete_corrupt_token_denied_and_removed(tmp_path):
+    state = tmp_path / ".cc10x" / "state"
+    state.mkdir(parents=True)
+    token = state / "git-approval.json"
+    token.write_text("{not json")
+    assert_denied(run_branch_delete(tmp_path))
+    assert not token.exists()
+
+
+def test_git_guard_lowercase_branch_delete_is_not_blocked(tmp_path):
+    # Safe delete (-d) refuses unmerged branches; only -D is guarded.
+    r = run_guard(
+        "cc10x_git_guard.py",
+        {"tool_input": {"command": "git branch -d feature/merged"}},
+        tmp_path,
+    )
+    assert r.returncode == 0
+    assert r.stdout.strip() == ""
+
+
+def test_git_guard_long_form_force_delete_is_not_blocked_today(tmp_path):
+    # Documented current gap: the pattern only matches the short `-D`.
+    # P5.T4's classifier deliberately closes it; update this test then.
+    r = run_guard(
+        "cc10x_git_guard.py",
+        {"tool_input": {"command": "git branch --delete --force feature/old"}},
+        tmp_path,
+    )
+    assert r.returncode == 0
+    assert r.stdout.strip() == ""
+
+
 def run_precommit_with_pytest_exit(tmp_path: Path, exit_code: int) -> int:
     """Run hooks/pre-commit in a Python project whose `python -m pytest`
     exits with `exit_code` (hermetic shim — no real pytest dependency)."""
