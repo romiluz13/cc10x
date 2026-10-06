@@ -247,6 +247,15 @@ def test_pretooluse_guard_denies_memory_write_in_block_mode(tmp_path):
 # --- cc10x_posttooluse_artifact_guard.py ------------------------------------
 
 
+def assert_repair_now_message(stderr: str) -> None:
+    # Exit 2 feeds stderr to the model but cannot undo the write: the message
+    # must say so and tell the model to repair the artifact now.
+    assert "already written" in stderr
+    assert "still on disk" in stderr
+    assert "repair it now" in stderr.lower()
+    assert "rejected" not in stderr.lower()
+
+
 def test_artifact_guard_passes_valid_artifact_and_auto_appends_event(tmp_path):
     path = write_artifact(tmp_path)
     # Freshness window is 60s; rewrite so mtime is now.
@@ -275,6 +284,7 @@ def test_artifact_guard_blocks_artifact_missing_required_keys(tmp_path):
     )
     assert r.returncode == 2
     assert "missing-keys" in r.stderr
+    assert_repair_now_message(r.stderr)
 
 
 def test_artifact_guard_blocks_malformed_artifact_json(tmp_path):
@@ -289,6 +299,7 @@ def test_artifact_guard_blocks_malformed_artifact_json(tmp_path):
     )
     assert r.returncode == 2
     assert "artifact-json" in r.stderr
+    assert_repair_now_message(r.stderr)
 
 
 def test_artifact_guard_never_blocks_unrelated_writes(tmp_path):

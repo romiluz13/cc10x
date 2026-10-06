@@ -4,7 +4,9 @@
 Scope discipline (prevents the stale-artifact footgun):
 - When the written file IS a workflow artifact (.cc10x/workflows/*.json,
   not *.events.jsonl), validate THAT file — this is the only case that may
-  block (exit 2) in `artifactIntegrity: block` mode.
+  signal (exit 2) in `artifactIntegrity: block` mode. PostToolUse runs after
+  the write: exit 2 feeds stderr to the model, it cannot undo the write, so a
+  malformed artifact stays on disk until the model repairs it.
 - For any other Edit/Write, audit the latest workflow artifact for telemetry
   but NEVER block: a malformed or legacy artifact from an old workflow must
   not veto unrelated writes elsewhere in the project.
@@ -126,10 +128,10 @@ def main() -> int:
         # Value-level, not key-presence. Consequence, accepted deliberately:
         # appending here makes `reasons` non-empty, so a closure mismatch SKIPS
         # the `artifact_mutated` auto-append below. That is correct in block
-        # mode — the write is rejected, so logging a successful mutation would
-        # be false — and in audit mode the write survives but the reason is
-        # still recorded by the log_event call further down, which runs on
-        # every reason path.
+        # mode — the model is told to repair the artifact, so logging a clean
+        # mutation would be false — and in audit mode the reason is still
+        # recorded by the log_event call further down, which runs on every
+        # reason path.
         closure = review_closure_reason(payload)
         if closure:
             reasons.append(closure)
@@ -186,10 +188,10 @@ def main() -> int:
 
     # Close the loop in block mode: a corrupt or key-missing artifact (the cases
     # that silently break resume/verifier handoff) must surface to the model, not
-    # just the log. Exit code 2 is the PostToolUse blocking signal Claude Code
-    # shows back to the model. Blocking applies ONLY when the write target is the
-    # artifact itself — never to unrelated files — and only for hard-corruption
-    # reasons; the soft reasons (missing-event-log, stale write) stay audit-only.
+    # just the log. Exit code 2 makes Claude Code show stderr to the model; the
+    # write has already happened and the file stays as written. The signal
+    # applies ONLY when the write target is the artifact itself — never to
+    # unrelated files — and only for hard-corruption reasons; the soft reasons (missing-event-log, stale write) stay audit-only.
     blocking_reasons = [
         r
         for r in reasons
@@ -202,16 +204,19 @@ def main() -> int:
             print(
                 "CC10X artifact integrity guard: the workflow artifact "
                 f"{artifact_path.name} is invalid ({';'.join(corruption)}). "
-                "Rewrite it from references/workflow-artifact.skeleton.json before "
-                "creating child tasks.",
+                "The file is already written and the malformed artifact is "
+                "still on disk. Repair it now: rewrite it from "
+                "references/workflow-artifact.skeleton.json before creating "
+                "child tasks.",
                 file=sys.stderr,
             )
         for reason in closure_reasons:
-            # A blocking message that does not say how to proceed turns a gate
-            # into a wall, so both exits are named.
+            # A message that does not say how to proceed turns a gate into a
+            # wall, so both exits are named.
             print(
                 "CC10X artifact integrity guard: the workflow artifact "
-                f"{artifact_path.name} is blocked ({reason}). It claims "
+                f"{artifact_path.name} is inconsistent ({reason}). The file is "
+                "already written and still on disk; repair it now. It claims "
                 "planning_review_status=passed, but the plan was amended after the "
                 "last review, so no review has read the current revision. Two ways "
                 "forward: run a fresh planning review, which sets "

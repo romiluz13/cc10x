@@ -31,7 +31,10 @@ precise about what blocks and what only logs (`config/hook-mode.json`):
 
 **Blocking** (the only two enforcement points):
 - workflow-artifact integrity after writes — a malformed or key-missing
-  artifact write exits 2 (`artifactIntegrity: "block"`)
+  artifact write makes the PostToolUse hook exit 2 (`artifactIntegrity:
+  "block"`). Exit 2 feeds stderr to the model; it cannot undo the write, so the
+  malformed artifact stays on disk and the message tells the model to repair it
+  now
 - git guardrails — push/reset-hard/clean/branch-D/checkout-dot are denied
   unless a fresh single-use approval token covers the operation
 
