@@ -1,5 +1,6 @@
 {
   "id": "multi-phase-memory-finalize",
+  "description": "Forward-looking end-state shape: memory finalizes exactly once, after the last phase, blocked only by the last phase's verifier. The exactly-once rule is the P4.T1.3 target, not a current router contract; the router does not yet forbid per-phase memory-finalize tasks.",
   "workflow_type": "BUILD",
   "starting_artifact": {
     "workflow_uuid": "wf-20261007T110000Z-multiphase",
@@ -50,11 +51,11 @@
     "remediation_history": [],
     "normalized_phases": [
       {
-        "id": "phase-1",
+        "phase_id": "phase-1",
         "title": "Data model"
       },
       {
-        "id": "phase-2",
+        "phase_id": "phase-2",
         "title": "Profile page"
       }
     ],

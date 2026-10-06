@@ -895,6 +895,27 @@ def _empty_remfix_field(field):
     return lambda d: d["agent_outputs"]["remfix_report"].update({field: []})
 
 
+def _set_remfix_field(field, value):
+    return lambda d: d["agent_outputs"]["remfix_report"].update({field: value})
+
+
+def _remfix_in_progress(d):
+    d["relevant_tasks"]["completed_remfix"]["status"] = "in_progress"
+
+
+def _memory_blocked_by_early_task_only(d):
+    d["relevant_tasks"]["memory_finalize"]["blockedBy"] = ["verifier_phase_1"]
+
+
+def _memory_blocked_by_last_and_early_task(d):
+    d["relevant_tasks"]["memory_finalize"]["blockedBy"] = ["verifier_phase_2", "builder_phase_1"]
+
+
+def _legacy_phase_id_key(d):
+    for phase in d["starting_artifact"]["normalized_phases"]:
+        phase["id"] = phase.pop("phase_id")
+
+
 def _qa_open_isolation(d):
     d["starting_artifact"]["qa"]["isolation"]["plan_phase_readonly"] = False
 
@@ -930,6 +951,18 @@ L1_MUTATIONS = [
     ("remfix-gate.json", _empty_remfix_field("COVERING_TESTS"), "REM-FIX report empty COVERING_TESTS"),
     ("remfix-gate.json", _pop_remfix_field("TEST_COMMAND"), "REM-FIX report missing TEST_COMMAND"),
     ("remfix-gate.json", _pop_remfix_field("TEST_OUTPUT"), "REM-FIX report missing TEST_OUTPUT"),
+    ("remfix-gate.json", _set_remfix_field("COVERING_TESTS", [""]), "blank entry in COVERING_TESTS"),
+    ("remfix-gate.json", _set_remfix_field("COVERING_TESTS", [None]), "blank entry in COVERING_TESTS"),
+    ("remfix-gate.json", _set_remfix_field("COVERING_TESTS", ["  "]), "blank entry in COVERING_TESTS"),
+    ("remfix-gate.json", _set_remfix_field("COVERING_TESTS", "tests/a.py"), "REM-FIX report empty COVERING_TESTS"),
+    ("remfix-gate.json", _set_remfix_field("TEST_COMMAND", " "), "REM-FIX report empty TEST_COMMAND"),
+    ("remfix-gate.json", _set_remfix_field("TEST_COMMAND", 7), "REM-FIX report empty TEST_COMMAND"),
+    ("remfix-gate.json", _set_remfix_field("TEST_OUTPUT", " \n"), "REM-FIX report empty TEST_OUTPUT"),
+    ("remfix-gate.json", _set_remfix_field("TEST_OUTPUT", ["x"]), "REM-FIX report empty TEST_OUTPUT"),
+    ("remfix-gate.json", _remfix_in_progress, "completed_remfix must be completed"),
+    ("multi-phase-memory-finalize.json", _memory_blocked_by_early_task_only, "must be blocked by the last phase's verifier"),
+    ("multi-phase-memory-finalize.json", _memory_blocked_by_last_and_early_task, "blocked by an earlier-phase task"),
+    ("multi-phase-memory-finalize.json", _legacy_phase_id_key, "phase_id"),
     ("multi-phase-memory-finalize.json", _dup_memory_finalized, "memory_finalized appears 2 times"),
     ("multi-phase-memory-finalize.json", _unfinalized_memory, "memory_finalized appears 0 times"),
     ("multi-phase-memory-finalize.json", _second_memory_task, "exactly one memory-finalize task"),
@@ -990,3 +1023,62 @@ def test_artifact_mode_rejects_an_unreadable_or_missing_file(tmp_path):
     result = run_tool("workflow_replay_check.py", None, "--artifact", str(tmp_path / "nope.json"))
     assert result.returncode == 1 and "Traceback" not in result.stderr
     assert "nope.json" in result.stderr
+
+
+# --- P3-REMFIX1: --artifact mode counts memory_finalized in status_history AND the sibling events.jsonl ---
+
+def _write_events(artifact, *events):
+    sibling = artifact.with_name(artifact.stem + ".events.jsonl")
+    sibling.write_text("".join(json.dumps(e) + "\n" for e in events), encoding="utf-8")
+
+
+FINALIZED = {"event": "memory_finalized", "ts": "2026-10-07T09:30:00Z", "phase": "memory-finalize"}
+STARTED = {"event": "workflow_started", "ts": "2026-10-07T09:00:00Z", "phase": "build"}
+
+
+def test_artifact_mode_counts_a_finalize_recorded_only_in_events_jsonl(tmp_path):
+    artifact = skeleton_artifact(tmp_path, "BUILD")
+    _write_events(artifact, STARTED, FINALIZED, FINALIZED)
+    result = run_tool("workflow_replay_check.py", None, "--artifact", str(artifact))
+    assert result.returncode == 1 and "memory_finalized appears 2 times in events.jsonl" in result.stderr, result.stderr
+
+
+def test_artifact_mode_accepts_one_finalize_recorded_in_both_sources(tmp_path):
+    artifact = skeleton_artifact(tmp_path, "BUILD", phase_cursor="memory-finalize", status_history=[STARTED, FINALIZED])
+    _write_events(artifact, STARTED, FINALIZED)
+    result = run_tool("workflow_replay_check.py", None, "--artifact", str(artifact))
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_artifact_mode_requires_phase_cursor_when_only_events_jsonl_has_the_finalize(tmp_path):
+    artifact = skeleton_artifact(tmp_path, "BUILD")
+    _write_events(artifact, STARTED, FINALIZED)
+    result = run_tool("workflow_replay_check.py", None, "--artifact", str(artifact))
+    assert result.returncode == 1 and "phase_cursor is not memory-finalize" in result.stderr, result.stderr
+
+
+def test_artifact_mode_rejects_a_completed_workflow_that_never_finalized_memory(tmp_path):
+    done = {"event": "workflow_completed", "ts": "2026-10-07T09:40:00Z", "phase": "memory-finalize"}
+    artifact = skeleton_artifact(tmp_path, "BUILD", status_history=[STARTED, done])
+    result = run_tool("workflow_replay_check.py", None, "--artifact", str(artifact))
+    assert result.returncode == 1 and "completed but memory_finalized is recorded in neither" in result.stderr, result.stderr
+
+    artifact = skeleton_artifact(tmp_path, "PLAN", status_history=[STARTED])
+    _write_events(artifact, STARTED, done)
+    result = run_tool("workflow_replay_check.py", None, "--artifact", str(artifact))
+    assert result.returncode == 1 and "completed but memory_finalized is recorded in neither" in result.stderr, result.stderr
+
+
+def test_artifact_mode_rejects_a_malformed_events_jsonl(tmp_path):
+    artifact = skeleton_artifact(tmp_path, "BUILD")
+    artifact.with_name(artifact.stem + ".events.jsonl").write_text("not json\n", encoding="utf-8")
+    result = run_tool("workflow_replay_check.py", None, "--artifact", str(artifact))
+    assert result.returncode == 1 and "events.jsonl" in result.stderr and "Traceback" not in result.stderr
+
+
+@pytest.mark.parametrize("payload", ["null", "7", "[]"])
+def test_artifact_mode_names_a_non_object_artifact(payload, tmp_path):
+    path = tmp_path / "x.json"
+    path.write_text(payload, encoding="utf-8")
+    result = run_tool("workflow_replay_check.py", None, "--artifact", str(path))
+    assert result.returncode == 1 and "must be a JSON object" in result.stderr, result.stderr

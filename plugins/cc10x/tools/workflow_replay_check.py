@@ -1326,14 +1326,19 @@ def check_remfix_gate(fixture: dict[str, Any]) -> None:
     remfix = fixture["relevant_tasks"]["completed_remfix"]
     require(remfix["kind"] == "remfix", f"{label}: wrong task kind")
     require(remfix["wf"] == artifact["workflow_id"], f"{label}: remfix task carries a foreign wf")
+    require(remfix["status"] == "completed", f"{label}: completed_remfix must be completed, got {remfix['status']!r}")
     report = fixture["agent_outputs"]["remfix_report"]
     for field in ("COVERING_TESTS", "TEST_COMMAND", "TEST_OUTPUT"):
         require(field in report, f"{label}: REM-FIX report missing {field}")
-        require(bool(report[field]), f"{label}: REM-FIX report empty {field}")
+    covering = report["COVERING_TESTS"]
+    require(isinstance(covering, list) and bool(covering), f"{label}: REM-FIX report empty COVERING_TESTS (a non-empty list of test file names)")
     require(
-        isinstance(report["COVERING_TESTS"], list),
-        f"{label}: COVERING_TESTS must be a list of test file names",
+        all(isinstance(item, str) and item.strip() for item in covering),
+        f"{label}: REM-FIX report has a blank entry in COVERING_TESTS",
     )
+    for field in ("TEST_COMMAND", "TEST_OUTPUT"):
+        value = report[field]
+        require(isinstance(value, str) and bool(value.strip()), f"{label}: REM-FIX report empty {field} (a non-blank string)")
     history = artifact["remediation_history"]
     cycles = [entry.get("cycle_number") for entry in history]
     require(
@@ -1350,11 +1355,13 @@ def check_multi_phase_memory_finalize(fixture: dict[str, Any]) -> None:
     label = "multi-phase-memory-finalize"
     artifact = fixture["starting_artifact"]
     validate_finalized_once(label, artifact)
-    require(len(artifact["normalized_phases"]) >= 2, f"{label}: expected a multi-phase workflow")
-    for phase in artifact["normalized_phases"]:
+    phases = artifact["normalized_phases"]
+    require(len(phases) >= 2, f"{label}: expected a multi-phase workflow")
+    for phase in phases:
+        require("phase_id" in phase, f"{label}: normalized_phases entries carry phase_id, got keys {sorted(phase)}")
         require(
-            artifact["phase_status"].get(phase["id"]) == "completed",
-            f"{label}: phase {phase['id']} must be completed before memory finalizes",
+            artifact["phase_status"].get(phase["phase_id"]) == "completed",
+            f"{label}: phase {phase['phase_id']} must be completed before memory finalizes",
         )
     memory_tasks = [
         key
@@ -1367,6 +1374,20 @@ def check_multi_phase_memory_finalize(fixture: dict[str, Any]) -> None:
     )
     logged = fixture["expected"]["event_log_events"].count("memory_finalized")
     require(logged == 1, f"{label}: event log memory_finalized appears {logged} times")
+    tasks = fixture["relevant_tasks"]
+    verifiers = [key for key, task in tasks.items() if task["phase"] == "build-verify"]
+    require(len(verifiers) == len(phases), f"{label}: expected one build-verify task per phase, got {verifiers}")
+    blocked_by = tasks[memory_tasks[0]]["blockedBy"]
+    require(
+        verifiers[-1] in blocked_by,
+        f"{label}: memory_finalize must be blocked by the last phase's verifier {verifiers[-1]}, got {blocked_by}",
+    )
+    implementers = [key for key, task in tasks.items() if task["phase"] == "build-implement"]
+    earlier = set(verifiers[:-1]) | set(implementers[:-1])
+    require(
+        not earlier & set(blocked_by),
+        f"{label}: memory_finalize is blocked by an earlier-phase task {sorted(earlier & set(blocked_by))}",
+    )
 
 
 def check_two_workflow_resume(fixture: dict[str, Any]) -> None:
@@ -1431,10 +1452,51 @@ CHECKS = {
 }
 
 
+def read_events_jsonl(path: Path) -> list[dict[str, Any]]:
+    events: list[dict[str, Any]] = []
+    for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+        if not line.strip():
+            continue
+        try:
+            event = json.loads(line)
+        except ValueError as exc:
+            raise AssertionError(f"{path.name} line {number} is not JSON: {exc}") from exc
+        require(isinstance(event, dict) and "event" in event, f"{path.name} line {number} must be an object with an event")
+        events.append(event)
+    return events
+
+
+def validate_artifact_file(path: Path, artifact: Any) -> None:
+    """Shape invariants for one real artifact plus its sibling `<stem>.events.jsonl` when present.
+
+    The router records memory finalization in status_history AND the events log, but real runs have
+    left it in only one of them, so each source is counted on its own: a source holding more than one
+    memory_finalized is a double finalize, while one in each source is the same single finalization.
+    """
+    require(isinstance(artifact, dict), f"{path.name}: artifact must be a JSON object, got {type(artifact).__name__}")
+    validate_end_state(path.name, artifact)
+    sibling = path.with_name(path.stem + ".events.jsonl")
+    events = read_events_jsonl(sibling) if sibling.is_file() else []
+    in_history = count_memory_finalized(path.name, artifact)
+    in_events = sum(1 for e in events if e["event"] == "memory_finalized")
+    require(in_events <= 1, f"{path.name}: memory_finalized appears {in_events} times in events.jsonl")
+    if in_events:
+        require(
+            artifact["phase_cursor"] == "memory-finalize",
+            f"{path.name}: memory_finalized recorded but phase_cursor is not memory-finalize",
+        )
+    last_events = [artifact["status_history"][-1]["event"]] if artifact["status_history"] else []
+    last_events += [events[-1]["event"]] if events else []
+    if "workflow_completed" in last_events:
+        require(
+            in_history + in_events >= 1,
+            f"{path.name}: workflow completed but memory_finalized is recorded in neither status_history nor events.jsonl",
+        )
+
+
 def check_artifact_file(path: Path) -> int:
     try:
-        artifact = json.loads(path.read_text(encoding="utf-8"))
-        validate_end_state(path.name, artifact)
+        validate_artifact_file(path, json.loads(path.read_text(encoding="utf-8")))
     except (OSError, ValueError, AssertionError, KeyError, TypeError) as exc:
         print(f"FAIL: {path}: {exc}", file=sys.stderr)
         return 1
