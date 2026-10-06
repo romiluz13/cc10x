@@ -54,8 +54,9 @@ def run_tool(
     *,
     cwd: Path | None = None,
     with_project_dir: bool = True,
+    extra_env: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess:
-    env = {"PATH": "/usr/bin:/bin"}
+    env = {"PATH": "/usr/bin:/bin", **(extra_env or {})}
     if with_project_dir:
         env["CLAUDE_PROJECT_DIR"] = str(project_dir)
     return subprocess.run(
@@ -167,6 +168,7 @@ def hooklib_project_dir(cwd: Path) -> str:
 
 
 def test_state_root_resolution_differs_from_the_docstring_claim(tmp_path):
+    # P5.T1 changes this: state_root() gains the git-checkout precedence.
     # KNOWN DOC DEFECT, pinned as current behavior (the tool is not changed
     # here): the module docstring says the state root is "resolved like the
     # hooklib: CLAUDE_PROJECT_DIR env, else git toplevel, else cwd". The
@@ -191,12 +193,18 @@ def test_state_root_resolution_differs_from_the_docstring_claim(tmp_path):
 
 
 def test_state_root_falls_back_to_cwd_outside_a_repo(tmp_path):
+    # P5.T1 changes this: state_root() gains the git-checkout precedence.
     work = tmp_path / "plain"
     work.mkdir()
     plan = write_plan(work)
-    r = run_tool(work, plan, "1", cwd=work, with_project_dir=False)
+    # The ceiling keeps git from finding a checkout above tmp_path when TMPDIR sits inside one.
+    r = run_tool(
+        work, plan, "1", cwd=work, with_project_dir=False,
+        extra_env={"GIT_CEILING_DIRECTORIES": str(tmp_path)},
+    )
     assert r.returncode == 0, r.stderr
     assert (work / ".cc10x" / "phase-1-brief.md").is_file()
+    assert not (tmp_path / ".cc10x").exists()
 
 
 def run_tool_file(name: str, *args: str) -> subprocess.CompletedProcess:

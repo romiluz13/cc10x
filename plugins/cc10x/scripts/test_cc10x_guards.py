@@ -689,6 +689,7 @@ def test_task_guard_metadata_keys_must_anchor_line_starts(tmp_path):
 
 
 def test_task_guard_freshness_compares_against_task_creation(tmp_path):
+    # P5.T2 changes this: the guard stops reading the undocumented task_created_at.
     # The check warned whenever the artifact mtime was >300s old — pure
     # wall-clock recency. An artifact updated AFTER the task was created is
     # fresh, however long ago that was.
@@ -795,6 +796,8 @@ def test_task_guard_memory_task_with_finalized_event_passes_silently(tmp_path):
 
 
 def test_task_guard_memory_event_is_a_substring_match_on_the_log(tmp_path):
+    # UNOWNED defect: no P5 task changes the raw-text needle (hooklib workflow event check);
+    # recorded as deferred, so fixing it means updating this test deliberately.
     # Current behavior: the needle is searched as raw text anywhere in the
     # event log, so any line mentioning the string satisfies the guard.
     write_artifact(tmp_path)
@@ -870,6 +873,8 @@ def test_task_guard_validator_only_applies_to_kind_memory(tmp_path):
 
 
 def test_task_guard_stale_artifact_is_audit_only_even_in_block_mode(tmp_path):
+    # P5.T2 changes this: the exit-0 stderr warning moves to a log event or documented channel,
+    # and the guard stops reading the undocumented task_created_at.
     import os
     import time
 
@@ -899,6 +904,7 @@ def test_task_guard_stale_artifact_is_audit_only_even_in_block_mode(tmp_path):
 
 
 def test_task_guard_stale_artifact_falls_back_to_300s_window_without_created_at(tmp_path):
+    # P5.T2 changes this: the exit-0 stderr warning moves to a log event or documented channel.
     import os
     import time
 
@@ -958,6 +964,7 @@ def test_artifact_guard_missing_event_log_is_audit_only_in_block_mode(tmp_path):
     r = run_posttool(tmp_path, path)  # shipped artifactIntegrity=block
     assert r.returncode == 0  # soft reason: never blocks
     assert posttool_reasons(tmp_path) == ["missing-event-log"]
+    # UNOWNED defect: no P5 task changes this; the log says "block" on a path that exits 0.
     assert hook_log_lines(tmp_path)[0]["decision"] == "block"  # the mode, not an exit
     # A non-empty reason list skips the artifact_mutated auto-append.
     assert not (path.parent / "wf-test.events.jsonl").exists()
@@ -1092,7 +1099,7 @@ def test_git_guard_branch_delete_wrong_operation_token_denied_and_consumed(tmp_p
     assert not token.exists()  # a mismatched token must not linger
 
 
-def test_git_guard_push_token_does_not_cover_branch_delete_but_both_ops_can(tmp_path):
+def test_git_guard_token_listing_both_operations_allows_branch_delete(tmp_path):
     write_git_token(
         tmp_path, ["push", "branch-delete"], "2099-01-01T00:00:00+00:00"
     )
