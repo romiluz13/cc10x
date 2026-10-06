@@ -349,6 +349,31 @@
       "key": "registry-banner-stale:docs/router-invariants.md",
       "owner": "P6.T4",
       "reason": "status banner claims a product line older than the current minor; P6.T4 rewrites the banner"
+    },
+    {
+      "key": "guide-agent-count",
+      "owner": "P6.T9",
+      "reason": "cc10x-guide states 11 agents but 14 exist; P6.T9 corrects the counts"
+    },
+    {
+      "key": "guide-skill-count",
+      "owner": "P6.T9",
+      "reason": "cc10x-guide states 20 skills but 21 exist besides the router; P6.T9 corrects the counts"
+    },
+    {
+      "key": "manifest-unverifiable-claim:plugin.json",
+      "owner": "P6.T12",
+      "reason": "plugin.json description says '73% leaner', which nothing verifies; P6.T12 removes it"
+    },
+    {
+      "key": "manifest-description-mismatch",
+      "owner": "P6.T12",
+      "reason": "plugin.json and marketplace.json plugins[0] descriptions differ; P6.T12 aligns them"
+    },
+    {
+      "key": "manifest-keywords-mismatch",
+      "owner": "P6.T12",
+      "reason": "plugin.json and marketplace.json plugins[0] keywords differ (QA missing); P6.T12 aligns them"
     }
   ]
 }

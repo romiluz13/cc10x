@@ -116,6 +116,14 @@ def yaml_alternatives_parse(marker: str, expected_blocks: int):
 
 
 ASSERTIONS = [
+    A(
+        "router routing table: priority-5 QA row",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        contains(
+            '| 5 | QA | test, QA, e2e, end-to-end, integration test, test plan, test coverage, regression, smoke test, "verify my feature", "prove it works" | QA | qa-researcher (fan-out) → qa-plan → plan-gap-reviewer → qa-preflight → qa-harness-builder → [code-reviewer ‖ failure-hunter] → qa-executor |'
+        ),
+        "the QA workflow keeps priority 5, its trigger keywords and its full agent chain in the routing table",
+    ),
     # building — Seam Discipline (ticket #40)
     A(
         "building: one-seam-one-test cycle",

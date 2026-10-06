@@ -25,6 +25,66 @@ PLUGIN = ROOT / "plugins" / "cc10x"
 EXCLUDED_FROM_SKILL_COUNT = {"cc10x-router"}
 
 
+_ROUTER_ROW = re.compile(r"^\| \d+ \| ", re.M)
+_HOOK_EVENT_ROW = re.compile(r"^\| `([A-Za-z]+)` \|", re.M)
+_HOOK_CLAIM = re.compile(r"^(?!\|).*?\b(\d+) (?:\w+-)?hooks\b", re.M)
+_PERCENT_LEANER = re.compile(r"\d+\s*%\s*leaner", re.I)
+
+
+def check_claims(root: Path = ROOT) -> dict[str, str]:
+    """Count and claim failures as `<check>:<subject>` keys; harness_audit's ratchet decides what fails."""
+    plugin = root / "plugins" / "cc10x"
+    failures: dict[str, str] = {}
+    readme = (root / "README.md").read_text(encoding="utf-8")
+
+    router = (plugin / "skills" / "cc10x-router" / "SKILL.md").read_text(encoding="utf-8")
+    table = router.split("## 1. Intent Routing", 1)[-1].split("\n---", 1)[0]
+    rows = len(_ROUTER_ROW.findall(table))
+    match = re.search(r"<strong>(\d+) workflows</strong>", readme)
+    if not match or int(match.group(1)) != rows:
+        claimed = match.group(1) if match else "no"
+        failures["readme-workflow-count"] = f"README claims {claimed} workflows but the router routing table has {rows} rows"
+
+    hooks = json.loads((plugin / "hooks" / "hooks.json").read_text(encoding="utf-8"))["hooks"]
+    section = readme.split("### Hooks", 1)[-1].split("\n### ", 1)[0]
+    documented = set(_HOOK_EVENT_ROW.findall(section))
+    if documented != set(hooks):
+        failures["readme-hook-count"] = (
+            f"README hook table lists {len(documented)} events ({', '.join(sorted(documented ^ set(hooks)))} differ) "
+            f"but hooks.json registers {len(hooks)}"
+        )
+    for claim in _HOOK_CLAIM.findall(readme):
+        if int(claim) != len(hooks):
+            failures["readme-hook-count"] = f"README claims {claim} hooks but hooks.json registers {len(hooks)} events"
+
+    guide = (plugin / "skills" / "cc10x-guide" / "SKILL.md").read_text(encoding="utf-8")
+    n_agents = len(list((plugin / "agents").glob("*.md")))
+    n_skills = len([p for p in (plugin / "skills").iterdir() if p.is_dir() and p.name not in EXCLUDED_FROM_SKILL_COUNT])
+    for label, found, disk in (
+        ("agent", re.search(r"(\d+) specialist agents", guide), n_agents),
+        ("skill", re.search(r"(\d+) skills", guide), n_skills),
+    ):
+        if not found or int(found.group(1)) != disk:
+            claimed = found.group(1) if found else "no"
+            failures[f"guide-{label}-count"] = f"cc10x-guide claims {claimed} {label}s but disk has {disk}"
+
+    plugin_json = json.loads((plugin / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8"))
+    marketplace = json.loads((root / ".claude-plugin" / "marketplace.json").read_text(encoding="utf-8"))
+    entry = (marketplace.get("plugins") or [{}])[0]
+    descriptions = {
+        "plugin.json": [plugin_json.get("description", "")],
+        "marketplace.json": [marketplace.get("metadata", {}).get("description", ""), entry.get("description", "")],
+    }
+    for name, texts in descriptions.items():
+        if any(_PERCENT_LEANER.search(text) for text in texts):
+            failures[f"manifest-unverifiable-claim:{name}"] = f"{name} description carries an unverifiable '<N>% leaner' claim"
+    if plugin_json.get("description") != entry.get("description"):
+        failures["manifest-description-mismatch"] = "plugin.json description differs from marketplace.json plugins[0].description"
+    if set(plugin_json.get("keywords", [])) != set(entry.get("keywords", [])):
+        failures["manifest-keywords-mismatch"] = "plugin.json keywords differ from marketplace.json plugins[0].keywords"
+    return failures
+
+
 def main() -> int:
     errors = []
 
@@ -110,6 +170,14 @@ def main() -> int:
     for v in set(re.findall(r"cc10x v(\d+\.\d+\.\d+)", json.dumps(marketplace))):
         if v != version:
             errors.append(f"marketplace.json 'cc10x v{v}' contradicts plugin.json {version}")
+
+    baselined = {
+        item.get("key")
+        for item in json.loads((PLUGIN / "tools" / "docs_rot_baseline.json").read_text(encoding="utf-8")).get("entries", [])
+    }
+    for key, message in check_claims().items():
+        if key not in baselined:
+            errors.append(f"new rot: {key}: {message}")
 
     if errors:
         print("DOC CONSISTENCY: FAIL")

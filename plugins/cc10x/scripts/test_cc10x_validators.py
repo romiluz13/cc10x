@@ -398,3 +398,131 @@ def test_clause_assertions_reject_unknown_arguments():
     result = run_tool("prompt_clause_assertions.py", None, "--bogus")
     assert result.returncode == 2
     assert "--bogus" in result.stderr
+
+
+# --- count and claim checks (doc_consistency_check) -------------------------------------------
+
+import doc_consistency_check  # noqa: E402
+
+README_REL = "README.md"
+GUIDE_REL = "plugins/cc10x/skills/cc10x-guide/SKILL.md"
+PLUGIN_JSON_REL = "plugins/cc10x/.claude-plugin/plugin.json"
+MARKETPLACE_REL = ".claude-plugin/marketplace.json"
+CLAIM_KEYS = {
+    "guide-agent-count",
+    "guide-skill-count",
+    "manifest-unverifiable-claim:plugin.json",
+    "manifest-description-mismatch",
+    "manifest-keywords-mismatch",
+}
+
+
+def claims(root: Path = REPO) -> dict:
+    return doc_consistency_check.check_claims(root)
+
+
+def edit_json(path: Path, mutate) -> None:
+    data = json.loads(path.read_text(encoding="utf-8"))
+    mutate(data)
+    path.write_text(json.dumps(data), encoding="utf-8")
+
+
+def test_real_tree_claim_failures_are_exactly_the_known_rot():
+    assert set(claims()) == CLAIM_KEYS
+
+
+def test_readme_workflow_count_must_equal_the_router_table(tmp_path):
+    root = make_tree(tmp_path)
+    rewrite(root / README_REL, "<strong>8 workflows</strong>", "<strong>9 workflows</strong>")
+    assert "readme-workflow-count" in claims(root)
+    assert "readme-workflow-count" not in claims()
+
+
+def test_router_table_row_count_is_read_from_the_router(tmp_path):
+    root = make_tree(tmp_path)
+    router = root / "plugins/cc10x/skills/cc10x-router/SKILL.md"
+    text = router.read_text(encoding="utf-8")
+    router.write_text(re.sub(r"^\| 7 \| CODEBASE-HEALTH .*\n", "", text, count=1, flags=re.M), encoding="utf-8")
+    assert "readme-workflow-count" in claims(root)
+
+
+def test_readme_hook_table_must_equal_the_registered_hook_events(tmp_path):
+    root = make_tree(tmp_path)
+    rewrite(root / README_REL, "| `StopFailure` | Log API failure telemetry asynchronously |\n", "")
+    assert "readme-hook-count" in claims(root)
+    assert "readme-hook-count" not in claims()
+
+
+def test_readme_numeric_hook_claim_must_equal_the_registered_hook_events(tmp_path):
+    root = make_tree(tmp_path)
+    rewrite(root / README_REL, "These hooks are intentionally minimal.", "These 4 hooks are intentionally minimal.")
+    assert "readme-hook-count" in claims(root)
+
+
+def test_guide_counts_must_equal_disk(tmp_path):
+    root = make_tree(tmp_path)
+    guide = root / GUIDE_REL
+    text = guide.read_text(encoding="utf-8")
+    guide.write_text(text.replace("11 specialist agents", "14 specialist agents").replace("20 skills", "21 skills"), encoding="utf-8")
+    fixed = claims(root)
+    assert "guide-agent-count" not in fixed and "guide-skill-count" not in fixed
+    assert {"guide-agent-count", "guide-skill-count"} <= set(claims())
+    guide.write_text(text.replace("11 specialist agents", "15 specialist agents"), encoding="utf-8")
+    assert "guide-agent-count" in claims(root)
+
+
+def test_unverifiable_percentage_claims_are_rejected_in_both_manifests(tmp_path):
+    root = make_tree(tmp_path)
+    edit_json(root / PLUGIN_JSON_REL, lambda d: d.update(description="A plugin. 40% leaner than before."))
+    edit_json(root / MARKETPLACE_REL, lambda d: d["plugins"][0].update(description="Now 12 % leaner."))
+    found = claims(root)
+    assert "manifest-unverifiable-claim:plugin.json" in found
+    assert "manifest-unverifiable-claim:marketplace.json" in found
+    edit_json(root / PLUGIN_JSON_REL, lambda d: d.update(description="A plugin."))
+    assert "manifest-unverifiable-claim:plugin.json" not in claims(root)
+
+
+def test_manifest_description_and_keywords_must_agree(tmp_path):
+    root = make_tree(tmp_path)
+    plugin = json.loads((root / PLUGIN_JSON_REL).read_text(encoding="utf-8"))
+
+    def align(data):
+        data["plugins"][0]["description"] = plugin["description"]
+        data["plugins"][0]["keywords"] = list(reversed(plugin["keywords"]))
+
+    edit_json(root / MARKETPLACE_REL, align)
+    found = claims(root)
+    assert "manifest-description-mismatch" not in found
+    assert "manifest-keywords-mismatch" not in found
+    edit_json(root / MARKETPLACE_REL, lambda d: d["plugins"][0]["keywords"].append("extra"))
+    assert "manifest-keywords-mismatch" in claims(root)
+
+
+def test_doc_consistency_fails_on_a_new_claim_failure_and_warns_on_baselined_ones(tmp_path):
+    ok = run_tool("doc_consistency_check.py")
+    assert ok.returncode == 0, ok.stdout + ok.stderr
+    root = make_tree(tmp_path)
+    rewrite(root / README_REL, "<strong>8 workflows</strong>", "<strong>9 workflows</strong>")
+    bad = run_tool("doc_consistency_check.py", root)
+    assert bad.returncode == 1
+    assert "readme-workflow-count" in bad.stdout
+    assert "guide-agent-count" not in bad.stdout
+
+
+def test_a_fixed_claim_baseline_entry_must_be_removed_by_harness_audit(tmp_path):
+    root = make_tree(tmp_path)
+    guide = root / GUIDE_REL
+    guide.write_text(guide.read_text(encoding="utf-8").replace("11 specialist agents", "14 specialist agents"), encoding="utf-8")
+    result = run_tool("harness_audit.py", root)
+    assert result.returncode == 1
+    assert "stale baseline entry" in result.stderr and "guide-agent-count" in result.stderr
+
+
+def test_the_qa_routing_row_is_pinned(tmp_path):
+    root = make_tree(tmp_path)
+    assert run_tool("prompt_clause_assertions.py", None, "--allow-no-yaml").returncode == 0
+    router = root / "plugins/cc10x/skills/cc10x-router/SKILL.md"
+    rewrite(router, "| 5 | QA | test, QA, e2e,", "| 5 | QA | test, e2e,")
+    bad = run_tool("prompt_clause_assertions.py", root, "--allow-no-yaml")
+    assert bad.returncode == 1
+    assert "router routing table: priority-5 QA row" in bad.stdout

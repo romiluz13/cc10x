@@ -144,6 +144,7 @@ SESSION_MEMORY_CONTEXT_BUDGET_REFERENCE = (
 FIRST_PLACE_STRATEGY = (
     ROOT / "docs" / "benchmarks" / "2026-03-12-first-place-strategy.md"
 )
+import doc_consistency_check  # noqa: E402 count and claim checks share the docs-rot ratchet
 from fixture_registry import REQUIRED_FIXTURES  # noqa: E402 shared with workflow_replay_check
 
 PROMPT_STEAL_NOTE = (
@@ -427,6 +428,7 @@ def check_living_docs(root: Path = ROOT) -> dict[str, str]:
             failures[f"registry-banner-stale:docs/{doc}"] = (
                 f"docs/{doc} claims product line v{match.group(1)}.{match.group(2)}.x, older than the current {version}"
             )
+    failures.update(doc_consistency_check.check_claims(root))
     return failures
 
 
