@@ -50,6 +50,10 @@ REQUIRED_FIXTURES = (
     "review-advisory.json",
     "verify-fail-closed.json",
     "latency-telemetry.json",
+    "qa-route-happy-path.json",
+    "remfix-gate.json",
+    "multi-phase-memory-finalize.json",
+    "two-workflow-resume.json",
 )
 
 

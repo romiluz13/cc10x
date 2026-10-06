@@ -1,0 +1,77 @@
+{
+  "id": "remfix-gate",
+  "workflow_type": "BUILD",
+  "starting_artifact": {
+    "workflow_uuid": "wf-20261007T100000Z-remfix-gate",
+    "workflow_id": "wf-20261007T100000Z-remfix-gate",
+    "workflow_type": "BUILD",
+    "state_root": ".cc10x",
+    "plan_mode": "execution_plan",
+    "verification_rigor": "standard",
+    "proof_status": "gaps_found",
+    "traceability": {
+      "requirements": [],
+      "phases": [],
+      "verification": [],
+      "remediation": []
+    },
+    "phase_cursor": "phase-1",
+    "task_ids": {},
+    "results": {},
+    "intent": {
+      "goal": "Build team settings page"
+    },
+    "evidence": {},
+    "quality": {
+      "convergence_state": "needs_iteration"
+    },
+    "status_history": [
+      {
+        "event": "workflow_started",
+        "phase": "build",
+        "ts": "2026-10-07T10:00:00Z"
+      },
+      {
+        "event": "remediation_created",
+        "phase": "build-review",
+        "ts": "2026-10-07T10:20:00Z"
+      }
+    ],
+    "remediation_history": [
+      {
+        "ts": "2026-10-07T10:20:00Z",
+        "phase": "build-review",
+        "reason": "Fix critical review findings",
+        "cycle_number": 1
+      }
+    ]
+  },
+  "relevant_tasks": {
+    "completed_remfix": {
+      "wf": "wf-20261007T100000Z-remfix-gate",
+      "kind": "remfix",
+      "origin": "code-reviewer",
+      "phase": "build-review",
+      "scope": "ALL_ISSUES",
+      "reason": "Fix critical review findings",
+      "status": "completed"
+    }
+  },
+  "agent_outputs": {
+    "remfix_report": {
+      "COVERING_TESTS": [
+        "tests/team_settings.test.ts"
+      ],
+      "TEST_COMMAND": "npm test -- team_settings",
+      "TEST_OUTPUT": "PASS tests/team_settings.test.ts (6 tests)"
+    }
+  },
+  "expected": {
+    "next_action": "spawn_recheck_tasks",
+    "follow_up_tasks": [
+      "re-review",
+      "re-hunt",
+      "re-verify"
+    ]
+  }
+}

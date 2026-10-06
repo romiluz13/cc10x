@@ -1,0 +1,117 @@
+{
+  "id": "multi-phase-memory-finalize",
+  "workflow_type": "BUILD",
+  "starting_artifact": {
+    "workflow_uuid": "wf-20261007T110000Z-multiphase",
+    "workflow_id": "wf-20261007T110000Z-multiphase",
+    "workflow_type": "BUILD",
+    "state_root": ".cc10x",
+    "plan_mode": "execution_plan",
+    "verification_rigor": "standard",
+    "proof_status": "passed",
+    "traceability": {
+      "requirements": [],
+      "phases": [],
+      "verification": [],
+      "remediation": []
+    },
+    "phase_cursor": "memory-finalize",
+    "task_ids": {},
+    "results": {},
+    "intent": {
+      "goal": "Two-phase profile feature"
+    },
+    "evidence": {},
+    "quality": {
+      "convergence_state": "stable"
+    },
+    "status_history": [
+      {
+        "event": "workflow_started",
+        "phase": "build",
+        "ts": "2026-10-07T11:00:00Z"
+      },
+      {
+        "event": "phase_completed",
+        "phase": "phase-1",
+        "ts": "2026-10-07T11:30:00Z"
+      },
+      {
+        "event": "phase_completed",
+        "phase": "phase-2",
+        "ts": "2026-10-07T12:00:00Z"
+      },
+      {
+        "event": "memory_finalized",
+        "phase": "memory-finalize",
+        "ts": "2026-10-07T12:05:00Z"
+      }
+    ],
+    "remediation_history": [],
+    "normalized_phases": [
+      {
+        "id": "phase-1",
+        "title": "Data model"
+      },
+      {
+        "id": "phase-2",
+        "title": "Profile page"
+      }
+    ],
+    "phase_status": {
+      "phase-1": "completed",
+      "phase-2": "completed"
+    }
+  },
+  "relevant_tasks": {
+    "builder_phase_1": {
+      "wf": "wf-20261007T110000Z-multiphase",
+      "phase": "build-implement",
+      "status": "completed",
+      "blockedBy": []
+    },
+    "verifier_phase_1": {
+      "wf": "wf-20261007T110000Z-multiphase",
+      "phase": "build-verify",
+      "status": "completed",
+      "blockedBy": [
+        "builder_phase_1"
+      ]
+    },
+    "builder_phase_2": {
+      "wf": "wf-20261007T110000Z-multiphase",
+      "phase": "build-implement",
+      "status": "completed",
+      "blockedBy": [
+        "verifier_phase_1"
+      ]
+    },
+    "verifier_phase_2": {
+      "wf": "wf-20261007T110000Z-multiphase",
+      "phase": "build-verify",
+      "status": "completed",
+      "blockedBy": [
+        "builder_phase_2"
+      ]
+    },
+    "memory_finalize": {
+      "wf": "wf-20261007T110000Z-multiphase",
+      "kind": "memory",
+      "phase": "memory-finalize",
+      "status": "completed",
+      "blockedBy": [
+        "verifier_phase_2"
+      ]
+    }
+  },
+  "agent_outputs": {},
+  "expected": {
+    "next_action": "workflow_complete",
+    "event_log_events": [
+      "workflow_started",
+      "phase_completed",
+      "phase_completed",
+      "memory_finalized"
+    ]
+  }
+}

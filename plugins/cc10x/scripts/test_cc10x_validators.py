@@ -866,3 +866,127 @@ def test_the_suite_ignores_a_poisoned_outer_repo_root():
         env=env,
     )
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+# --- P3.T2: end-state shape fixtures and the single-artifact mode of the replay checker ---
+
+FIXTURES_REL = "plugins/cc10x/tests/fixtures"
+SKELETON = REPO / "plugins/cc10x/skills/cc10x-router/references/workflow-artifact.skeleton.json"
+
+
+def _drop_task(name):
+    return lambda d: d["relevant_tasks"].pop(name)
+
+
+def _dup_memory_finalized(d):
+    d["starting_artifact"]["status_history"].append({"event": "memory_finalized", "ts": "2026-10-07T09:20:00Z", "phase": "memory-finalize"})
+
+
+def _share_workflow_id(d):
+    d["other_artifact"]["workflow_id"] = d["starting_artifact"]["workflow_id"]
+    d["other_artifact"]["workflow_uuid"] = d["starting_artifact"]["workflow_id"]
+
+
+def _pop_remfix_field(field):
+    return lambda d: d["agent_outputs"]["remfix_report"].pop(field)
+
+
+def _empty_remfix_field(field):
+    return lambda d: d["agent_outputs"]["remfix_report"].update({field: []})
+
+
+def _qa_open_isolation(d):
+    d["starting_artifact"]["qa"]["isolation"]["plan_phase_readonly"] = False
+
+
+def _qa_unfinalized(d):
+    d["starting_artifact"]["status_history"].pop()
+
+
+def _foreign_task(d):
+    d["relevant_tasks"]["a_builder"]["wf"] = d["other_artifact"]["workflow_id"]
+
+
+def _qa_foreign_wf(d):
+    d["relevant_tasks"]["qa_hunt"]["wf"] = "wf-other"
+
+
+def _unfinalized_memory(d):
+    d["starting_artifact"]["status_history"] = [
+        e for e in d["starting_artifact"]["status_history"] if e["event"] != "memory_finalized"
+    ]
+
+
+def _second_memory_task(d):
+    d["relevant_tasks"]["memory_finalize_again"] = dict(d["relevant_tasks"]["memory_finalize"])
+
+
+L1_MUTATIONS = [
+    ("qa-route-happy-path.json", _drop_task("qa_hunt"), "QA route phases"),
+    ("qa-route-happy-path.json", _qa_open_isolation, "plan_phase_readonly"),
+    ("qa-route-happy-path.json", _qa_unfinalized, "memory_finalized"),
+    ("qa-route-happy-path.json", _qa_foreign_wf, "qa_hunt carries wf"),
+    ("remfix-gate.json", _pop_remfix_field("COVERING_TESTS"), "REM-FIX report missing COVERING_TESTS"),
+    ("remfix-gate.json", _empty_remfix_field("COVERING_TESTS"), "REM-FIX report empty COVERING_TESTS"),
+    ("remfix-gate.json", _pop_remfix_field("TEST_COMMAND"), "REM-FIX report missing TEST_COMMAND"),
+    ("remfix-gate.json", _pop_remfix_field("TEST_OUTPUT"), "REM-FIX report missing TEST_OUTPUT"),
+    ("multi-phase-memory-finalize.json", _dup_memory_finalized, "memory_finalized appears 2 times"),
+    ("multi-phase-memory-finalize.json", _unfinalized_memory, "memory_finalized appears 0 times"),
+    ("multi-phase-memory-finalize.json", _second_memory_task, "exactly one memory-finalize task"),
+    ("two-workflow-resume.json", _share_workflow_id, "distinct workflow_id"),
+    ("two-workflow-resume.json", _foreign_task, "resumed task a_builder carries wf"),
+]
+
+
+def test_replay_registers_the_four_p3_fixtures():
+    result = run_tool("workflow_replay_check.py")
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "fixtures=32" in result.stdout
+
+
+@pytest.mark.parametrize("name,mutate,message", L1_MUTATIONS, ids=lambda v: getattr(v, "__name__", str(v)))
+def test_a_mutated_p3_fixture_fails_with_a_specific_message(name, mutate, message, tmp_path):
+    root = make_tree(tmp_path)
+    edit_json(root / FIXTURES_REL / name, mutate)
+    result = run_tool("workflow_replay_check.py", root)
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert name in result.stderr and message in result.stderr, result.stderr
+
+
+def skeleton_artifact(tmp_path, workflow_type, **overrides):
+    text = SKELETON.read_text(encoding="utf-8")
+    text = text.replace("__WORKFLOW_UUID__", "wf-20261007T090000Z-aaaaaaaa").replace("__WORKFLOW_TYPE__", workflow_type)
+    text = text.replace("__USER_REQUEST__", "x").replace("__ISO_TIMESTAMP__", "2026-10-07T09:00:00Z")
+    data = json.loads(text.replace("__PHASE__", workflow_type.lower()))
+    data.update(overrides)
+    path = tmp_path / f"{workflow_type}.json"
+    path.write_text(json.dumps(data), encoding="utf-8")
+    return path
+
+
+@pytest.mark.parametrize("workflow_type", ["PLAN", "BUILD"])
+def test_artifact_mode_accepts_a_fresh_skeleton_artifact(workflow_type, tmp_path):
+    artifact = skeleton_artifact(tmp_path, workflow_type)
+    result = run_tool("workflow_replay_check.py", None, "--artifact", str(artifact))
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "artifact OK" in result.stdout
+
+
+def test_artifact_mode_rejects_a_missing_key_and_a_double_memory_finalize(tmp_path):
+    artifact = skeleton_artifact(tmp_path, "BUILD")
+    data = json.loads(artifact.read_text(encoding="utf-8"))
+    del data["traceability"]
+    artifact.write_text(json.dumps(data), encoding="utf-8")
+    missing = run_tool("workflow_replay_check.py", None, "--artifact", str(artifact))
+    assert missing.returncode == 1 and "missing keys ['traceability']" in missing.stderr, missing.stderr
+
+    twice = {"event": "memory_finalized", "ts": "2026-10-07T09:30:00Z", "phase": "memory-finalize"}
+    artifact = skeleton_artifact(tmp_path, "PLAN", phase_cursor="memory-finalize", status_history=[twice, twice])
+    result = run_tool("workflow_replay_check.py", None, "--artifact", str(artifact))
+    assert result.returncode == 1 and "memory_finalized appears 2 times" in result.stderr, result.stderr
+
+
+def test_artifact_mode_rejects_an_unreadable_or_missing_file(tmp_path):
+    result = run_tool("workflow_replay_check.py", None, "--artifact", str(tmp_path / "nope.json"))
+    assert result.returncode == 1 and "Traceback" not in result.stderr
+    assert "nope.json" in result.stderr

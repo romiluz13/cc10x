@@ -1,0 +1,105 @@
+{
+  "id": "two-workflow-resume",
+  "workflow_type": "BUILD",
+  "starting_artifact": {
+    "workflow_uuid": "wf-20261007T130000Z-resume-a",
+    "workflow_id": "wf-20261007T130000Z-resume-a",
+    "workflow_type": "BUILD",
+    "state_root": ".cc10x",
+    "plan_mode": "execution_plan",
+    "verification_rigor": "standard",
+    "proof_status": "gaps_found",
+    "traceability": {
+      "requirements": [],
+      "phases": [],
+      "verification": [],
+      "remediation": []
+    },
+    "phase_cursor": "phase-1",
+    "task_ids": {},
+    "results": {},
+    "intent": {
+      "goal": "Build invoice export"
+    },
+    "evidence": {},
+    "quality": {
+      "convergence_state": "pending"
+    },
+    "status_history": [
+      {
+        "event": "workflow_started",
+        "phase": "build",
+        "ts": "2026-10-07T13:00:00Z"
+      }
+    ],
+    "remediation_history": []
+  },
+  "other_artifact": {
+    "workflow_uuid": "wf-20261007T130500Z-resume-b",
+    "workflow_id": "wf-20261007T130500Z-resume-b",
+    "workflow_type": "PLAN",
+    "state_root": ".cc10x",
+    "plan_mode": "execution_plan",
+    "verification_rigor": "standard",
+    "proof_status": "gaps_found",
+    "traceability": {
+      "requirements": [],
+      "phases": [],
+      "verification": [],
+      "remediation": []
+    },
+    "phase_cursor": "plan-create",
+    "task_ids": {},
+    "results": {},
+    "intent": {
+      "goal": "Plan notification rework"
+    },
+    "evidence": {},
+    "quality": {
+      "convergence_state": "pending"
+    },
+    "status_history": [
+      {
+        "event": "workflow_started",
+        "phase": "plan",
+        "ts": "2026-10-07T13:05:00Z"
+      }
+    ],
+    "remediation_history": []
+  },
+  "relevant_tasks": {
+    "a_builder": {
+      "wf": "wf-20261007T130000Z-resume-a",
+      "phase": "build-implement",
+      "status": "in_progress",
+      "blockedBy": []
+    },
+    "a_verifier": {
+      "wf": "wf-20261007T130000Z-resume-a",
+      "phase": "build-verify",
+      "status": "pending",
+      "blockedBy": [
+        "a_builder"
+      ]
+    },
+    "b_planner": {
+      "wf": "wf-20261007T130500Z-resume-b",
+      "phase": "plan-create",
+      "status": "in_progress",
+      "blockedBy": []
+    }
+  },
+  "agent_outputs": {},
+  "expected": {
+    "next_action": "resume_scoped",
+    "resume_wf": "wf-20261007T130000Z-resume-a",
+    "resumed_tasks": [
+      "a_builder",
+      "a_verifier"
+    ],
+    "ignored_tasks": [
+      "b_planner"
+    ],
+    "unscoped_fallback_used": false
+  }
+}

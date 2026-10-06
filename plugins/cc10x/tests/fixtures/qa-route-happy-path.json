@@ -1,0 +1,148 @@
+{
+  "id": "qa-route-happy-path",
+  "workflow_type": "QA",
+  "starting_artifact": {
+    "workflow_uuid": "wf-20261007T090000Z-qa-happy",
+    "workflow_id": "wf-20261007T090000Z-qa-happy",
+    "workflow_type": "QA",
+    "state_root": ".cc10x",
+    "plan_mode": null,
+    "verification_rigor": "standard",
+    "proof_status": "passed",
+    "traceability": {
+      "requirements": [],
+      "phases": [],
+      "verification": [],
+      "remediation": []
+    },
+    "phase_cursor": "memory-finalize",
+    "task_ids": {},
+    "results": {},
+    "intent": {
+      "goal": "QA the checkout flow"
+    },
+    "evidence": {},
+    "quality": {
+      "convergence_state": "stable"
+    },
+    "status_history": [
+      {
+        "event": "workflow_started",
+        "phase": "qa",
+        "ts": "2026-10-07T09:00:00Z"
+      },
+      {
+        "event": "agent_completed",
+        "phase": "qa-execute",
+        "ts": "2026-10-07T09:40:00Z"
+      },
+      {
+        "event": "memory_finalized",
+        "phase": "memory-finalize",
+        "ts": "2026-10-07T09:45:00Z"
+      }
+    ],
+    "remediation_history": [],
+    "qa": {
+      "qa_scope": "standard",
+      "qa_sources": {
+        "code": "available"
+      },
+      "env_mode": "local",
+      "artifacts": {
+        "feature_map": ".cc10x/qa/wf-20261007T090000Z-qa-happy/feature-map.md",
+        "test_plan": ".cc10x/qa/wf-20261007T090000Z-qa-happy/test-plan.md",
+        "env_plan": ".cc10x/qa/wf-20261007T090000Z-qa-happy/env-plan.md",
+        "report": ".cc10x/qa/wf-20261007T090000Z-qa-happy/report.md",
+        "setup_record": null
+      },
+      "bug_candidates": [],
+      "isolation": {
+        "denied_reads": [],
+        "denied_read_reason": null,
+        "plan_phase_readonly": true,
+        "mutation_allowlist": [
+          ".cc10x/"
+        ]
+      }
+    }
+  },
+  "relevant_tasks": {
+    "qa_research": {
+      "wf": "wf-20261007T090000Z-qa-happy",
+      "phase": "qa-research",
+      "status": "completed",
+      "blockedBy": []
+    },
+    "qa_plan": {
+      "wf": "wf-20261007T090000Z-qa-happy",
+      "phase": "qa-plan",
+      "status": "completed",
+      "blockedBy": [
+        "qa_research"
+      ]
+    },
+    "qa_plan_review": {
+      "wf": "wf-20261007T090000Z-qa-happy",
+      "phase": "qa-plan-review",
+      "status": "completed",
+      "blockedBy": [
+        "qa_plan"
+      ]
+    },
+    "qa_preflight": {
+      "wf": "wf-20261007T090000Z-qa-happy",
+      "phase": "qa-preflight",
+      "status": "completed",
+      "blockedBy": [
+        "qa_plan_review"
+      ]
+    },
+    "qa_build": {
+      "wf": "wf-20261007T090000Z-qa-happy",
+      "phase": "qa-build",
+      "status": "completed",
+      "blockedBy": [
+        "qa_preflight"
+      ]
+    },
+    "qa_review": {
+      "wf": "wf-20261007T090000Z-qa-happy",
+      "phase": "qa-review",
+      "status": "completed",
+      "blockedBy": [
+        "qa_build"
+      ]
+    },
+    "qa_hunt": {
+      "wf": "wf-20261007T090000Z-qa-happy",
+      "phase": "qa-hunt",
+      "status": "completed",
+      "blockedBy": [
+        "qa_build"
+      ]
+    },
+    "qa_execute": {
+      "wf": "wf-20261007T090000Z-qa-happy",
+      "phase": "qa-execute",
+      "status": "completed",
+      "blockedBy": [
+        "qa_review",
+        "qa_hunt"
+      ]
+    },
+    "memory_finalize": {
+      "wf": "wf-20261007T090000Z-qa-happy",
+      "phase": "memory-finalize",
+      "status": "completed",
+      "blockedBy": [
+        "qa_execute"
+      ]
+    }
+  },
+  "agent_outputs": {},
+  "expected": {
+    "next_action": "workflow_complete",
+    "pending_gate": null
+  }
+}

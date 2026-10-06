@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import sys
@@ -37,6 +38,31 @@ REQUIRED_ARTIFACT_KEYS = (
     "quality",
     "status_history",
     "remediation_history",
+)
+
+WORKFLOW_TYPES = ("BUILD", "DEBUG", "PLAN", "REVIEW", "QA", "ORIENT", "TRIAGE", "CODEBASE-HEALTH", "pending")
+
+QA_ROUTE_BLOCKERS = {
+    "qa_research": [],
+    "qa_plan": ["qa_research"],
+    "qa_plan_review": ["qa_plan"],
+    "qa_preflight": ["qa_plan_review"],
+    "qa_build": ["qa_preflight"],
+    "qa_review": ["qa_build"],
+    "qa_hunt": ["qa_build"],
+    "qa_execute": ["qa_review", "qa_hunt"],
+    "memory_finalize": ["qa_execute"],
+}
+QA_ROUTE_PHASES = (
+    "qa-research",
+    "qa-plan",
+    "qa-plan-review",
+    "qa-preflight",
+    "qa-build",
+    "qa-review",
+    "qa-hunt",
+    "qa-execute",
+    "memory-finalize",
 )
 
 REQUIRED_SCENARIO_KEYS = (
@@ -83,17 +109,56 @@ def require(condition: bool, message: str) -> None:
         fail(message)
 
 
-def validate_artifact_shape(fixture: dict[str, Any]) -> None:
-    artifact = fixture["starting_artifact"]
+def validate_artifact_keys(label: str, artifact: dict[str, Any]) -> None:
     missing = [key for key in REQUIRED_ARTIFACT_KEYS if key not in artifact]
-    require(not missing, f"{fixture['id']}: artifact missing keys {missing}")
+    require(not missing, f"{label}: artifact missing keys {missing}")
     require(
         artifact["workflow_uuid"] == artifact["workflow_id"],
-        f"{fixture['id']}: workflow_uuid and workflow_id must match in v10 fixtures",
+        f"{label}: workflow_uuid and workflow_id must match in v10 fixtures",
     )
     require(
         artifact["state_root"] == ".cc10x",
-        f"{fixture['id']}: state_root must point to the .cc10x namespace",
+        f"{label}: state_root must point to the .cc10x namespace",
+    )
+
+
+def validate_artifact_shape(fixture: dict[str, Any]) -> None:
+    validate_artifact_keys(fixture["id"], fixture["starting_artifact"])
+
+
+def count_memory_finalized(label: str, artifact: dict[str, Any]) -> int:
+    history = artifact["status_history"]
+    require(
+        isinstance(history, list)
+        and all(isinstance(e, dict) and "event" in e for e in history),
+        f"{label}: status_history must be a list of objects with an event",
+    )
+    return sum(1 for e in history if e["event"] == "memory_finalized")
+
+
+def validate_end_state(label: str, artifact: dict[str, Any]) -> None:
+    """Invariants any workflow artifact must keep, at any point in its life."""
+    validate_artifact_keys(label, artifact)
+    require(
+        artifact["workflow_type"] in WORKFLOW_TYPES,
+        f"{label}: unknown workflow_type '{artifact['workflow_type']}'",
+    )
+    finalized = count_memory_finalized(label, artifact)
+    require(finalized <= 1, f"{label}: memory_finalized appears {finalized} times")
+    if finalized:
+        require(
+            artifact["phase_cursor"] == "memory-finalize",
+            f"{label}: memory_finalized recorded but phase_cursor is not memory-finalize",
+        )
+
+
+def validate_finalized_once(label: str, artifact: dict[str, Any]) -> None:
+    validate_end_state(label, artifact)
+    finalized = count_memory_finalized(label, artifact)
+    require(finalized == 1, f"{label}: memory_finalized appears {finalized} times")
+    require(
+        artifact["status_history"][-1]["event"] == "memory_finalized",
+        f"{label}: memory_finalized must be the last status_history event",
     )
 
 
@@ -1221,6 +1286,115 @@ def check_latency_telemetry(fixture: dict[str, Any]) -> None:
     )
 
 
+def check_qa_route_happy_path(fixture: dict[str, Any]) -> None:
+    label = "qa-route-happy-path"
+    artifact = fixture["starting_artifact"]
+    tasks = fixture["relevant_tasks"]
+    require(artifact["workflow_type"] == "QA", f"{label}: wrong workflow type")
+    validate_finalized_once(label, artifact)
+    require(artifact["proof_status"] == "passed", f"{label}: finished QA must record proof_status passed")
+    phases = [t["phase"] for t in tasks.values()]
+    require(
+        phases == list(QA_ROUTE_PHASES),
+        f"{label}: QA route phases {phases} != {list(QA_ROUTE_PHASES)}",
+    )
+    for key, task in tasks.items():
+        require(
+            task["wf"] == artifact["workflow_id"],
+            f"{label}: {key} carries wf {task['wf']}, expected {artifact['workflow_id']}",
+        )
+        require(task["status"] == "completed", f"{label}: {key} must be completed")
+        require(
+            task["blockedBy"] == QA_ROUTE_BLOCKERS[key],
+            f"{label}: {key} blockedBy {task['blockedBy']} != {QA_ROUTE_BLOCKERS[key]}",
+        )
+    qa = artifact["qa"]
+    require(qa["qa_scope"] in {"probe", "standard"}, f"{label}: qa_scope must be probe|standard")
+    require(
+        strict_bool(qa["isolation"]["plan_phase_readonly"], True),
+        f"{label}: qa.isolation.plan_phase_readonly must be true",
+    )
+    require(
+        qa["isolation"]["mutation_allowlist"] == [".cc10x/"],
+        f"{label}: qa.isolation.mutation_allowlist must be ['.cc10x/']",
+    )
+
+
+def check_remfix_gate(fixture: dict[str, Any]) -> None:
+    label = "remfix-gate"
+    artifact = fixture["starting_artifact"]
+    remfix = fixture["relevant_tasks"]["completed_remfix"]
+    require(remfix["kind"] == "remfix", f"{label}: wrong task kind")
+    require(remfix["wf"] == artifact["workflow_id"], f"{label}: remfix task carries a foreign wf")
+    report = fixture["agent_outputs"]["remfix_report"]
+    for field in ("COVERING_TESTS", "TEST_COMMAND", "TEST_OUTPUT"):
+        require(field in report, f"{label}: REM-FIX report missing {field}")
+        require(bool(report[field]), f"{label}: REM-FIX report empty {field}")
+    require(
+        isinstance(report["COVERING_TESTS"], list),
+        f"{label}: COVERING_TESTS must be a list of test file names",
+    )
+    history = artifact["remediation_history"]
+    cycles = [entry.get("cycle_number") for entry in history]
+    require(
+        cycles == list(range(1, len(history) + 1)) and 1 <= len(history) <= 3,
+        f"{label}: remediation_history cycle_number must run 1..n with n <= 3, got {cycles}",
+    )
+    require(
+        fixture["expected"]["follow_up_tasks"] == ["re-review", "re-hunt", "re-verify"],
+        f"{label}: gate proof present, so re-review, re-hunt and re-verify must be created",
+    )
+
+
+def check_multi_phase_memory_finalize(fixture: dict[str, Any]) -> None:
+    label = "multi-phase-memory-finalize"
+    artifact = fixture["starting_artifact"]
+    validate_finalized_once(label, artifact)
+    require(len(artifact["normalized_phases"]) >= 2, f"{label}: expected a multi-phase workflow")
+    for phase in artifact["normalized_phases"]:
+        require(
+            artifact["phase_status"].get(phase["id"]) == "completed",
+            f"{label}: phase {phase['id']} must be completed before memory finalizes",
+        )
+    memory_tasks = [
+        key
+        for key, task in fixture["relevant_tasks"].items()
+        if task["phase"] == "memory-finalize"
+    ]
+    require(
+        len(memory_tasks) == 1,
+        f"{label}: exactly one memory-finalize task expected, got {memory_tasks}",
+    )
+    logged = fixture["expected"]["event_log_events"].count("memory_finalized")
+    require(logged == 1, f"{label}: event log memory_finalized appears {logged} times")
+
+
+def check_two_workflow_resume(fixture: dict[str, Any]) -> None:
+    label = "two-workflow-resume"
+    first = fixture["starting_artifact"]
+    second = fixture["other_artifact"]
+    validate_end_state(label, first)
+    validate_end_state(f"{label} other_artifact", second)
+    require(
+        first["workflow_id"] != second["workflow_id"],
+        f"{label}: concurrent workflows need distinct workflow_id",
+    )
+    expected = fixture["expected"]
+    wf = expected["resume_wf"]
+    require(wf == first["workflow_id"], f"{label}: resume must be scoped to the conversation's workflow")
+    require(
+        strict_bool(expected["unscoped_fallback_used"], False),
+        f"{label}: unscoped fallback resume is forbidden",
+    )
+    tasks = fixture["relevant_tasks"]
+    for key in expected["resumed_tasks"]:
+        require(tasks[key]["wf"] == wf, f"{label}: resumed task {key} carries wf {tasks[key]['wf']}, expected {wf}")
+    for key in expected["ignored_tasks"]:
+        require(tasks[key]["wf"] != wf, f"{label}: ignored task {key} carries the resumed wf")
+    covered = set(expected["resumed_tasks"]) | set(expected["ignored_tasks"])
+    require(covered == set(tasks), f"{label}: every task must be either resumed or ignored")
+
+
 CHECKS = {
     "plan-direct.json": check_plan_direct,
     "plan-decision-rfc.json": check_plan_decision_rfc,
@@ -1250,10 +1424,31 @@ CHECKS = {
     "review-advisory.json": check_review_advisory,
     "verify-fail-closed.json": check_verify_fail_closed,
     "latency-telemetry.json": check_latency_telemetry,
+    "qa-route-happy-path.json": check_qa_route_happy_path,
+    "remfix-gate.json": check_remfix_gate,
+    "multi-phase-memory-finalize.json": check_multi_phase_memory_finalize,
+    "two-workflow-resume.json": check_two_workflow_resume,
 }
 
 
+def check_artifact_file(path: Path) -> int:
+    try:
+        artifact = json.loads(path.read_text(encoding="utf-8"))
+        validate_end_state(path.name, artifact)
+    except (OSError, ValueError, AssertionError, KeyError, TypeError) as exc:
+        print(f"FAIL: {path}: {exc}", file=sys.stderr)
+        return 1
+    print(f"cc10x_workflow_replay_check: artifact OK ({path.name})")
+    return 0
+
+
 def main() -> int:
+    parser = argparse.ArgumentParser(description="Replay the workflow fixtures, or validate one artifact file.")
+    parser.add_argument("--artifact", type=Path, help="validate a real workflow artifact JSON against the shape invariants")
+    args = parser.parse_args()
+    if args.artifact is not None:
+        return check_artifact_file(args.artifact)
+
     if not FIXTURES_DIR.exists():
         print("FAIL: fixtures directory missing", file=sys.stderr)
         return 1
