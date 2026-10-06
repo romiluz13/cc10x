@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """Structural seam-discipline evaluator for the 5 BUILD scenarios (ticket #49).
 
+This is a TEXT check: it greps the building skill, agent and workflow files for the
+Seam Discipline clauses. It does not run a builder and proves nothing about behavior.
+Behavioral coverage is the `seam-gate` eval case under plugins/cc10x/evals/cases/.
+
 Live agent evals (dispatching a real cc10x builder) require the cc10x plugin
 active in Claude Code. This script does what can be verified structurally in
 any environment: for each scenario, it asserts the building skill's Seam

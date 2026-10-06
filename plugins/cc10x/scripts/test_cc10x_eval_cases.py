@@ -141,3 +141,10 @@ def test_baseline_lists_every_case_and_every_red_case_names_its_p4_task():
         if red:
             assert re.search(r"P4\.T\d", rows[case_id]), case_id
     assert "L2 baseline: NOT RUN" in text
+
+
+def test_seam_eval_docstring_calls_itself_a_text_check_and_points_at_the_behavioral_case():
+    source = (PLUGIN_ROOT / "tests" / "live" / "seam_eval.py").read_text(encoding="utf-8")
+    docstring = source.split('"""')[1]
+    assert "TEXT check" in docstring
+    assert "seam-gate" in docstring

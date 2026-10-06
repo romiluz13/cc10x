@@ -31,7 +31,7 @@ Red cases: 5 of 8 (B1, B2, B3, B11, B14). Green regression guards: 3 of 8. Each 
 ## L1 baseline (measured at the P3-b tree)
 
 - Replay fixtures: `fixtures=32` (28 existing plus the four shape fixtures from P3.T2).
-- Pytest: 378 passed (`plugins/cc10x/scripts`, 58 of them structural eval-case checks).
+- Pytest: 379 passed (`plugins/cc10x/scripts`, 59 of them structural eval-case checks).
 - Prompt clause assertions: 259 passed.
 
 ## Visibility
