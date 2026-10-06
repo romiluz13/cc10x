@@ -418,7 +418,7 @@
       "key": "registry-banner-stale:docs/router-invariants.md",
       "owner": "P6.T4",
       "reason": "status banner claims a product line older than the current minor; P6.T4 rewrites the banner",
-      "message": "docs/router-invariants.md claims product line v11.0.x, older than the current 12.9.1"
+      "message": "docs/router-invariants.md claims product line v11.0.x, older than the current minor"
     },
     {
       "key": "guide-agent-count",
@@ -454,19 +454,19 @@
       "key": "registry-banner-stale:docs/prompt-invariants.md",
       "owner": "P6.T4",
       "reason": "status banner claims a product line older than the current minor; P6.T4 rewrites the banner",
-      "message": "docs/prompt-invariants.md claims product line v11.0.x, older than the current 12.9.1"
+      "message": "docs/prompt-invariants.md claims product line v11.0.x, older than the current minor"
     },
     {
       "key": "registry-banner-stale:docs/agent-contract-registry.md",
       "owner": "P6.T3",
       "reason": "status banner claims a product line older than the current minor; P6.T3 rewrites the registry header",
-      "message": "docs/agent-contract-registry.md claims product line v11.0.x, older than the current 12.9.1"
+      "message": "docs/agent-contract-registry.md claims product line v11.0.x, older than the current minor"
     },
     {
       "key": "registry-banner-stale:docs/prompt-surface-inventory.md",
       "owner": "P6.T2",
       "reason": "status banner claims a product line older than the current minor; P6.T2 rewrites the inventory",
-      "message": "docs/prompt-surface-inventory.md claims product line v10.1.x, older than the current 12.9.1"
+      "message": "docs/prompt-surface-inventory.md claims product line v10.1.x, older than the current minor"
     }
   ]
 }

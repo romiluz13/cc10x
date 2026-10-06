@@ -147,6 +147,7 @@ FIRST_PLACE_STRATEGY = (
     ROOT / "docs" / "benchmarks" / "2026-03-12-first-place-strategy.md"
 )
 import doc_consistency_check  # noqa: E402 count and claim checks share the docs-rot ratchet
+from doc_consistency_check import load_rot_baseline  # noqa: E402 the one baseline loader
 from fixture_registry import REQUIRED_FIXTURES  # noqa: E402 shared with workflow_replay_check
 
 PROMPT_STEAL_NOTE = (
@@ -456,7 +457,6 @@ def check_hook_registration(plugin_root: Path = PLUGIN_ROOT) -> list[str]:
     return errors
 
 
-DOCS_ROT_BASELINE = PLUGIN_ROOT / "tools" / "docs_rot_baseline.json"
 _INVENTORY_PATH = re.compile(r"`((?:plugins|docs|\.claude-plugin)/[^`\s*]+)`")
 _INVENTORY_ENTRY = re.compile(r"^### (\S+)[ \t]*$", re.M)
 _REGISTRY_ROW = re.compile(r"^\|[ \t]*`([A-Za-z0-9_-]+)`[ \t]*\|", re.M)
@@ -508,28 +508,13 @@ def check_living_docs(root: Path = ROOT) -> dict[str, str]:
             )
         elif (int(match.group(1)), int(match.group(2))) < current:
             failures[f"registry-banner-stale:docs/{doc}"] = (
-                f"docs/{doc} claims product line v{match.group(1)}.{match.group(2)}.x, older than the current {version}"
+                f"docs/{doc} claims product line v{match.group(1)}.{match.group(2)}.x, older than the current minor"
             )
     failures.update(doc_consistency_check.check_claims(root))
     return failures
 
 
 _OWNER = re.compile(r"P6\.T\d+")
-
-
-def load_rot_baseline(path: Path = DOCS_ROT_BASELINE) -> tuple[list[dict], list[str]]:
-    """Return (entries, errors); a missing or malformed file is an error, never a traceback."""
-    if not path.exists():
-        return [], [f"docs rot baseline is missing: {path.name} (an empty baseline is {{\"entries\": []}})"]
-    try:
-        data = json.loads(read(path))
-    except json.JSONDecodeError as exc:
-        return [], [f"docs rot baseline {path.name} is not valid JSON: {exc}"]
-    entries = data.get("entries") if isinstance(data, dict) else None
-    if not isinstance(entries, list):
-        return [], [f"docs rot baseline {path.name} must be an object with an 'entries' list"]
-    errors = [f"docs rot baseline entry is not an object: {item!r}" for item in entries if not isinstance(item, dict)]
-    return [item for item in entries if isinstance(item, dict)], errors
 
 
 def apply_rot_ratchet(
@@ -547,15 +532,9 @@ def apply_rot_ratchet(
         if key in known:
             errors.append(f"duplicate baseline key: {key}")
         known[key] = item
-    for key in sorted(set(failures) - set(known)):
-        errors.append(f"new rot: {key}: {failures[key]}")
     for key in sorted(set(known) - set(failures)):
         errors.append(f"stale baseline entry (no longer fails, remove it from docs_rot_baseline.json): {key}")
-    for key in sorted(set(known) & set(failures)):
-        if known[key]["message"] != failures[key]:
-            errors.append(
-                f"baseline message drifted: {key} (baseline: {known[key]['message']!r}; live: {failures[key]!r})"
-            )
+    errors.extend(doc_consistency_check.rot_errors(failures, known))
     warnings: list[str] = []
     remaining = [known[key] for key in sorted(set(known) & set(failures))]
     if remaining:

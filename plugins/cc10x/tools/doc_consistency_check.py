@@ -25,6 +25,7 @@ if not (ROOT / "plugins" / "cc10x").is_dir():
 PLUGIN = ROOT / "plugins" / "cc10x"
 
 EXCLUDED_FROM_SKILL_COUNT = {"cc10x-router"}
+DOCS_ROT_BASELINE = PLUGIN / "tools" / "docs_rot_baseline.json"
 
 
 _ROUTER_ROW = re.compile(r"^\| \d+ \| ", re.M)
@@ -85,6 +86,32 @@ def check_claims(root: Path = ROOT) -> dict[str, str]:
     if set(plugin_json.get("keywords", [])) != set(entry.get("keywords", [])):
         failures["manifest-keywords-mismatch"] = "plugin.json keywords differ from marketplace.json plugins[0].keywords"
     return failures
+
+
+def load_rot_baseline(path: Path = DOCS_ROT_BASELINE) -> tuple[list[dict], list[str]]:
+    """Return (entries, errors); a missing or malformed file is an error, never a traceback."""
+    if not path.exists():
+        return [], [f"docs rot baseline is missing: {path.name} (an empty baseline is {{\"entries\": []}})"]
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        return [], [f"docs rot baseline {path.name} is not valid JSON: {exc}"]
+    entries = data.get("entries") if isinstance(data, dict) else None
+    if not isinstance(entries, list):
+        return [], [f"docs rot baseline {path.name} must be an object with an 'entries' list"]
+    errors = [f"docs rot baseline entry is not an object: {item!r}" for item in entries if not isinstance(item, dict)]
+    return [item for item in entries if isinstance(item, dict)], errors
+
+
+def rot_errors(failures: dict[str, str], known: dict[str, dict]) -> list[str]:
+    """Failures absent from the baseline are new rot; a baselined failure whose message changed got worse."""
+    errors = [f"new rot: {key}: {failures[key]}" for key in sorted(set(failures) - set(known))]
+    errors.extend(
+        f"baseline message drifted: {key} (baseline: {known[key].get('message')!r}; live: {failures[key]!r})"
+        for key in sorted(set(known) & set(failures))
+        if known[key].get("message") != failures[key]
+    )
+    return errors
 
 
 def main() -> int:
@@ -173,17 +200,10 @@ def main() -> int:
         if v != version:
             errors.append(f"marketplace.json 'cc10x v{v}' contradicts plugin.json {version}")
 
-    baseline_path = PLUGIN / "tools" / "docs_rot_baseline.json"
-    if baseline_path.exists():
-        baselined = {
-            item.get("key") for item in json.loads(baseline_path.read_text(encoding="utf-8")).get("entries", [])
-        }
-    else:
-        baselined = set()
-        errors.append(f"docs rot baseline is missing: {baseline_path.name} (an empty baseline is {{\"entries\": []}})")
-    for key, message in check_claims().items():
-        if key not in baselined:
-            errors.append(f"new rot: {key}: {message}")
+    baseline, baseline_errors = load_rot_baseline()
+    errors.extend(baseline_errors)
+    known = {item["key"]: item for item in baseline if isinstance(item.get("key"), str)}
+    errors.extend(rot_errors(check_claims(), known))
 
     if errors:
         print("DOC CONSISTENCY: FAIL")

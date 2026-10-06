@@ -15,6 +15,8 @@ from pathlib import Path
 
 import pytest
 
+os.environ.pop("CC10X_REPO_ROOT", None)  # in-process imports below must not inherit a host-set root
+
 REPO = Path(__file__).resolve().parents[3]
 TOOLS = REPO / "plugins" / "cc10x" / "tools"
 COPIED = ("plugins", "docs", ".claude-plugin", "README.md", "CHANGELOG.md")
@@ -816,3 +818,51 @@ def test_the_qa_routing_row_is_pinned(tmp_path):
     bad = run_tool("prompt_clause_assertions.py", root, "--allow-no-yaml")
     assert bad.returncode == 1
     assert "router routing table: priority-5 QA row" in bad.stdout
+
+
+def test_a_worsened_baselined_failure_fails_the_standalone_doc_consistency_run(tmp_path):
+    root = make_tree(tmp_path)
+    set_guide_count(root, "specialist agents", 11)
+    write_baseline(root, baseline_for(root, "P6.T9"))
+    assert run_tool("doc_consistency_check.py", root).returncode == 0
+    set_guide_count(root, "specialist agents", 3)
+    result = run_tool("doc_consistency_check.py", root)
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert "baseline message drifted: guide-agent-count" in result.stdout
+
+
+@pytest.mark.parametrize("content", ["[]", '{"entries": [1]}', '{"entries": "x"}', "{not json"])
+def test_doc_consistency_reports_a_malformed_baseline_clearly(content, tmp_path):
+    root = make_tree(tmp_path)
+    (root / BASELINE_REL).write_text(content, encoding="utf-8")
+    result = run_tool("doc_consistency_check.py", root)
+    assert result.returncode == 1
+    assert "docs rot baseline" in result.stdout
+    assert "Traceback" not in result.stderr
+
+
+def test_there_is_one_baseline_loader():
+    import doc_consistency_check
+
+    assert harness_audit.load_rot_baseline is doc_consistency_check.load_rot_baseline
+
+
+def test_a_plugin_version_bump_does_not_drift_the_baselined_banner_messages(tmp_path):
+    root = make_tree(tmp_path)
+    edit_json(root / "plugins/cc10x/.claude-plugin/plugin.json", lambda d: d.update(version="12.10.0"))
+    live = harness_audit.check_living_docs(root)
+    for item in load_baseline(REPO):
+        if item["key"].startswith("registry-banner-stale:"):
+            assert live[item["key"]] == item["message"], item["key"]
+            assert "12.9.1" not in item["message"] and "12.10.0" not in item["message"]
+
+
+def test_the_suite_ignores_a_poisoned_outer_repo_root():
+    env = {**os.environ, "CC10X_REPO_ROOT": "/nonexistent-poisoned-root"}
+    result = subprocess.run(
+        [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", str(Path(__file__)), "-k", "test_hook_registration_passes_on_the_real_tree"],
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
