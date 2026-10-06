@@ -401,6 +401,12 @@ ASSERTIONS = [
         contains("ADR Format"),
         "ADR-FORMAT companion ported",
     ),
+    A(
+        "agent-common: user-invocable false so agent preload delivers it",
+        SKILLS / "agent-common" / "SKILL.md",
+        lambda t: "user-invocable: false" in t.split("---", 2)[1],
+        "frontmatter must hide the skill instead of disable-model-invocation (agent skills: preload skips disabled skills)",
+    ),
     # agent-common — read-only glossary, no mutation (ticket #39)
     A(
         "agent-common: read CONTEXT.md rule",

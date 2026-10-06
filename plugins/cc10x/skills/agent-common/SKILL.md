@@ -1,7 +1,7 @@
 ---
 name: agent-common
 description: "Shared preamble loaded by all cc10x agents — memory protocol, contract format, output rules."
-disable-model-invocation: true
+user-invocable: false
 ---
 
 # Agent Common (Shared Preamble)

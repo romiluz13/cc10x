@@ -159,6 +159,31 @@ def fail(errors: list[str]) -> int:
     return 1
 
 
+def frontmatter(text: str) -> list[str]:
+    parts = text.split("---", 2)
+    return parts[1].splitlines() if text.startswith("---") and len(parts) > 2 else []
+
+
+def check_preloaded_skills_invocable() -> list[str]:
+    errors: list[str] = []
+    for agent in sorted((PLUGIN_ROOT / "agents").glob("*.md")):
+        lines = frontmatter(read(agent))
+        if "skills:" not in lines:
+            continue
+        for line in lines[lines.index("skills:") + 1 :]:
+            if not line.startswith("  - "):
+                break
+            name = line[4:].strip().removeprefix("cc10x:")
+            skill = PLUGIN_ROOT / "skills" / name / "SKILL.md"
+            if not skill.exists():
+                errors.append(f"{agent.name} preloads missing skill {name}")
+            elif "disable-model-invocation: true" in frontmatter(read(skill)):
+                errors.append(
+                    f"{agent.name} preloads {name}, which sets disable-model-invocation: true (agent preload skips it)"
+                )
+    return errors
+
+
 def main() -> int:
     errors: list[str] = []
 
@@ -815,6 +840,8 @@ def main() -> int:
             errors.append(
                 f"{script.name} still references the legacy .claude/cc10x state root"
             )
+
+    errors.extend(check_preloaded_skills_invocable())
 
     if errors:
         return fail(errors)
