@@ -2164,6 +2164,16 @@ ASSERTIONS = [
         "pristine baseline = file at the commit that set the old version; unresolvable baseline aborts instead of guessing",
     ),
     A(
+        "update skill: carry-over limits stated honestly",
+        SKILLS / "update" / "SKILL.md",
+        lambda t: "can no longer be read" not in t
+        and "checkout depth" in t
+        and "carry-over is unavailable" in t
+        and "Ask the user whether they have modified" in t
+        and "every discovered entry" in t,
+        "carry-over needs a resolvable baseline (checkout depth is the real limit); capture covers every discovered entry; modification is asked, not assumed",
+    ),
+    A(
         "update skill: refresh failure and vanished projectPath are handled",
         SKILLS / "update" / "SKILL.md",
         contains_all(

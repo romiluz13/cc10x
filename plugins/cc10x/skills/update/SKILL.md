@@ -19,7 +19,7 @@ Upgrade cc10x with the `claude plugin` CLI. The CLI owns the plugin registry and
 
 **Workflow:** Discover installs → Locate the marketplace → (optional) Capture local patches → Refresh marketplace → Update each scope → Re-apply patches → Restart or reload.
 
-Capture comes before the refresh on purpose: `marketplace update` moves the marketplace checkout to the new version, so afterwards the old version can no longer be read from it as a baseline.
+Capture comes before the refresh on purpose: `marketplace update` moves the marketplace checkout to the new version, and the pristine baseline is read from that checkout. The marketplace checkout is often a shallow clone, so the baseline for an installed version is resolvable only when that version's commit is within the checkout depth; for an older install it usually is not. Carry-over is best-effort, and the skill says so plainly when it cannot run.
 
 ## Phase 1: Discovery
 
@@ -45,16 +45,16 @@ Take the entry named `cc10x` and set `LOC` to its `installLocation`. The plugin 
 
 ## Phase 3: Capture Local Patches (Optional)
 
-Skip this phase if the user has not modified cached files. Run it before Phase 4.
+Ask the user whether they have modified cached cc10x files. Skip this phase only if they say no. Run it before Phase 4.
 
-For each distinct old `version` among the entries to update, pin the pristine baseline: the commit that set that version in the marketplace checkout.
+The scope gate comes later (Phase 4), so capture covers every discovered entry, not only those chosen afterwards. For each distinct old `version` among them, pin the pristine baseline: the commit that set that version in the marketplace checkout.
 
 ```bash
 SHA=$(git -C "$LOC" log --format=%H -S"\"version\": \"<old>\"" -- plugins/cc10x/.claude-plugin/plugin.json | tail -1)
 git -C "$LOC" show "$SHA:plugins/cc10x/.claude-plugin/plugin.json"
 ```
 
-`tail -1` takes the oldest match, the commit that introduced the version string. The `show` output must contain `"version": "<old>"`. If `SHA` is empty or the `show` output does not match (a shallow checkout or pruned history is the usual cause) → ABORT carry-over: tell the user local modifications cannot be separated from upstream content for that version, and ask whether to continue the update without carry-over or stop so they can back up their changes by hand. Do not guess a baseline from the new marketplace version.
+`tail -1` takes the oldest match, the commit that introduced the version string. The `show` output must contain `"version": "<old>"`. The baseline is resolvable only if `SHA` is non-empty and the `show` output contains the old version string. If not (checkout depth is the usual cause: a one-commit shallow clone only resolves the version it currently holds) → ABORT carry-over: say plainly that carry-over is unavailable for that version because local modifications cannot be separated from upstream content, then offer the two safe choices: continue the update without carry-over, or stop so the user can save their edits by hand first. Do not guess a baseline from the new marketplace version.
 
 With a pinned `SHA`, for each file in `git -C "$LOC" ls-tree -r --name-only "$SHA" -- plugins/cc10x`, save a per-file patch (pristine to locally modified, so applying it later re-adds the user's changes). A file that differs exits 1 from `diff`; a file missing from the install, or any exit 2, is reported rather than patched:
 
