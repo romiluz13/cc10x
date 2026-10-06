@@ -360,6 +360,25 @@ def check_agent_colors(agents_dir: Path = PLUGIN_ROOT / "agents") -> list[str]:
     return errors
 
 
+_HOOK_SCRIPT = re.compile(r"scripts/([A-Za-z0-9_.-]+)")
+REQUIRED_HOOK_SCRIPTS = ("cc10x_git_guard.py", "cc10x_qa_isolation_guard.py", "cc10x_preflight.sh")
+
+
+def check_hook_registration(plugin_root: Path = PLUGIN_ROOT) -> list[str]:
+    registered = set(_HOOK_SCRIPT.findall(read(plugin_root / "hooks" / "hooks.json")))
+    errors = [
+        f"hooks.json does not register {script}"
+        for script in REQUIRED_HOOK_SCRIPTS
+        if script not in registered
+    ]
+    errors.extend(
+        f"hooks.json references missing script {script}"
+        for script in sorted(registered)
+        if not (plugin_root / "scripts" / script).exists()
+    )
+    return errors
+
+
 DOCS_ROT_BASELINE = PLUGIN_ROOT / "tools" / "docs_rot_baseline.json"
 _INVENTORY_PATH = re.compile(r"`((?:plugins|docs|\.claude-plugin)/[^`\s*]+)`")
 _INVENTORY_ENTRY = re.compile(r"^### (\S+)[ \t]*$", re.M)
@@ -519,23 +538,7 @@ def main(argv: list[str] | None = None) -> int:
                     f"marketplace.json plugin source changed unexpectedly ({plugin_entry.get('source')})"
                 )
 
-    hook_commands = json.dumps(hooks)
-    for script in (
-        "cc10x_pretooluse_guard.py",
-        "cc10x_posttooluse_artifact_guard.py",
-        "cc10x_sessionstart_context.py",
-        "cc10x_task_completed_guard.py",
-        "cc10x_event_logger.py",
-        "",
-        "cc10x_state_persist.py",
-        "cc10x_state_persist.py",
-        "cc10x_event_logger.py",
-        "cc10x_event_logger.py",
-    ):
-        if script not in hook_commands:
-            errors.append(f"hooks.json does not reference {script}")
-        if not (PLUGIN_ROOT / "scripts" / script).exists():
-            errors.append(f"missing plugin hook script {script}")
+    errors.extend(check_hook_registration())
 
     if not REPLAY_CHECK.exists():
         errors.append("missing workflow replay checker script")

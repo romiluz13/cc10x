@@ -18,11 +18,11 @@ SCRIPT_STYLE_SUITES = (
 )
 
 # Python steps use sys.executable so the gate exercises the interpreter that invoked it.
-# argv None means the step has a dedicated resolver (pytest, plugin_validate).
+# argv None means the step has a dedicated resolver (prompt_clause_assertions, pytest, plugin_validate).
 GATE_STEPS = (
     ("harness_audit", [sys.executable, f"{TOOLS}/harness_audit.py"]),
     ("doc_consistency_check", [sys.executable, f"{TOOLS}/doc_consistency_check.py"]),
-    ("prompt_clause_assertions", [sys.executable, f"{TOOLS}/prompt_clause_assertions.py"]),
+    ("prompt_clause_assertions", None),
     ("workflow_replay_check", [sys.executable, f"{TOOLS}/workflow_replay_check.py"]),
     ("pytest", None),
     ("suite_qa_phase_invariants", [sys.executable, f"{SCRIPTS}/{SCRIPT_STYLE_SUITES[0]}"]),
@@ -42,6 +42,25 @@ def run(argv: list[str]) -> int:
 
 
 SKIPPED_RC = -1000
+PASSED_NO_YAML_RC = -1001
+CLAUSE_SCRIPT = f"{TOOLS}/prompt_clause_assertions.py"
+
+
+def run_prompt_clauses(allow_missing: bool) -> int:
+    if importlib.util.find_spec("yaml") is not None:
+        print("yaml resolution: python3", flush=True)
+        return run([sys.executable, CLAUSE_SCRIPT])
+    if shutil.which("uv"):
+        version = ".".join(map(str, sys.version_info[:3]))
+        print(f"yaml resolution: uv run --no-project --python {sys.executable} (Python {version}) --with pyyaml", flush=True)
+        return run(
+            ["uv", "run", "--no-project", "--with", "pyyaml", "--python", sys.executable, "python", CLAUSE_SCRIPT]
+        )
+    if allow_missing:
+        print("SKIPPED-YAML prompt_clause_assertions: no importable PyYAML and no uv on PATH (--allow-no-yaml)", flush=True)
+        return PASSED_NO_YAML_RC if run([sys.executable, CLAUSE_SCRIPT, "--allow-no-yaml"]) == 0 else 1
+    print("FAIL prompt_clause_assertions: no importable PyYAML and no uv on PATH (use --allow-no-yaml to skip the YAML parse check)", flush=True)
+    return 1
 
 
 def run_pytest(allow_missing: bool) -> int:
@@ -77,6 +96,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--only", action="append", default=[], metavar="STEP", help="run only this step id (repeatable)")
     parser.add_argument("--strict", action="store_true", help="pass --strict to harness_audit")
     parser.add_argument("--allow-no-pytest", action="store_true")
+    parser.add_argument("--allow-no-yaml", action="store_true")
     parser.add_argument("--allow-no-claude", action="store_true")
     args = parser.parse_args(argv)
 
@@ -91,13 +111,18 @@ def main(argv: list[str] | None = None) -> int:
 
     failed = []
     skipped = []
+    yaml_skipped = False
     ran = 0
     for step_id, cmd in GATE_STEPS:
         if args.only and step_id not in args.only:
             continue
         print(f"== {step_id}", flush=True)
         ran += 1
-        if step_id == "pytest":
+        if step_id == "prompt_clause_assertions":
+            rc = run_prompt_clauses(args.allow_no_yaml)
+            if rc == PASSED_NO_YAML_RC:
+                yaml_skipped, rc = True, 0
+        elif step_id == "pytest":
             rc = run_pytest(args.allow_no_pytest)
         elif step_id == "plugin_validate":
             rc = run_plugin_validate(args.allow_no_claude)
@@ -118,6 +143,8 @@ def main(argv: list[str] | None = None) -> int:
     qualifiers = []
     if skipped:
         qualifiers.append(f"SKIPPED: {', '.join(skipped)}")
+    if yaml_skipped:
+        qualifiers.append("SKIPPED-YAML")
     if args.only:
         qualifiers.append(f"PARTIAL: {ran} of {len(ids)} steps")
     print("RELEASE GATE: OK" + (f" ({'; '.join(qualifiers)})" if qualifiers else ""))

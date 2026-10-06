@@ -9,11 +9,12 @@ cannot pass silently with wrong or missing content.
 Exit 0 only when all assertions pass; exit 1 with a named failure on any miss.
 Deterministic — no network, no agent load.
 
-Usage: python3 plugins/cc10x/tools/prompt_clause_assertions.py
+Usage: python3 plugins/cc10x/tools/prompt_clause_assertions.py [--allow-no-yaml]
 """
 
 from __future__ import annotations
 
+import argparse
 import os
 import re
 import sys
@@ -77,19 +78,28 @@ def frontmatter_is(key: str, value: str):
     return check
 
 
+ALLOW_NO_YAML = False
+YAML_HINT = (
+    "PyYAML is not importable: install it (pip install pyyaml, or run through "
+    "`uv run --no-project --with pyyaml`) or pass --allow-no-yaml to skip the YAML parse check"
+)
+
+
 def yaml_alternatives_parse(marker: str, expected_blocks: int):
     """True when exactly expected_blocks fenced yaml blocks contain marker and each parses.
 
-    PyYAML is a dev-environment dependency, not a runtime one; if it is not
-    installed the structural contains-assertions still guard the content, so
-    the parse check degrades to pass rather than crashing the suite.
+    Without PyYAML the parse cannot run: that is a FAIL with an install hint, because a
+    silent pass hid broken yaml on interpreters that lack it. --allow-no-yaml opts out.
     """
 
     def check(text: str) -> bool:
         try:
             import yaml
         except ImportError:
-            return True
+            if ALLOW_NO_YAML:
+                return True
+            print(YAML_HINT)
+            return False
         blocks = [
             b for b in re.findall(r"```yaml\n(.*?)```", text, re.S) if marker in b
         ]
@@ -2199,7 +2209,11 @@ ASSERTIONS = [
 ]
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    global ALLOW_NO_YAML
+    parser = argparse.ArgumentParser(description="cc10x prompt clause assertions")
+    parser.add_argument("--allow-no-yaml", action="store_true", help="skip the YAML parse check when PyYAML is missing")
+    ALLOW_NO_YAML = parser.parse_args(argv).allow_no_yaml
     failures = []
     for a in ASSERTIONS:
         if not a.eval():

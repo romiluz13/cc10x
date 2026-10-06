@@ -178,6 +178,55 @@ def main() -> int:
             f"{sys.version_info.major}.{sys.version_info.minor}" in out and "uv run" in out,
             out,
         )
+
+        # PyYAML resolution for prompt_clause_assertions: hermetic, run() captured
+        rg = load_runner()
+        rg.GATE_STEPS = (("prompt_clause_assertions", None),)
+        have = {"yaml": True}
+        rg.importlib.util.find_spec = lambda name, *a, **k: object() if name == "yaml" and have["yaml"] else (
+            None if name == "yaml" else real_find_spec(name, *a, **k)
+        )
+        captured = []
+        rg.run = lambda argv: captured.append(argv) or 0
+        script = "plugins/cc10x/tools/prompt_clause_assertions.py"
+        rc, out = run_main(rg)
+        check(
+            "yaml importable: the step runs plainly under sys.executable",
+            rc == 0 and captured == [[sys.executable, script]] and "yaml resolution: python3" in out,
+            f"{captured} {out}",
+        )
+        have["yaml"] = False
+        rg.shutil.which = lambda name, *a, **k: "/fake/uv" if name == "uv" else None
+        captured.clear()
+        rc, out = run_main(rg)
+        argv = captured[0] if captured else []
+        check(
+            "yaml missing with uv: runs through uv with pyyaml pinned to the invoking interpreter",
+            argv[:3] == ["uv", "run", "--no-project"]
+            and "--with" in argv
+            and argv[argv.index("--with") + 1] == "pyyaml"
+            and argv[argv.index("--python") + 1] == sys.executable
+            and argv[-2:] == ["python", script]
+            and "yaml resolution: uv run" in out
+            and "--allow-no-yaml" not in argv,
+            f"{argv} {out}",
+        )
+        rg.shutil.which = lambda name, *a, **k: None
+        captured.clear()
+        rc, out = run_main(rg)
+        check(
+            "yaml missing and no uv: the step FAILS and names the flag",
+            rc == 1 and not captured and "FAIL prompt_clause_assertions" in out and "--allow-no-yaml" in out,
+            f"rc={rc} {captured} {out}",
+        )
+        rc, out = run_main(rg, "--allow-no-yaml")
+        check(
+            "yaml missing, no uv, --allow-no-yaml: flag passes through and the banner says SKIPPED-YAML",
+            rc == 0
+            and captured == [[sys.executable, script, "--allow-no-yaml"]]
+            and out.strip().endswith("RELEASE GATE: OK (SKIPPED-YAML)"),
+            f"rc={rc} {captured} {out}",
+        )
     finally:
         rg.importlib.util.find_spec, rg.shutil.which = real_find_spec, real_which
 

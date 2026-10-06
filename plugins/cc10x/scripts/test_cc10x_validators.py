@@ -66,8 +66,8 @@ def test_replay_check_reads_the_overridden_root(tmp_path):
 def test_clause_assertions_read_the_overridden_root(tmp_path):
     root = make_tree(tmp_path)
     rewrite(root / "plugins/cc10x/skills/building/SKILL.md", "seam, one test", "seam, one xxxx")
-    assert run_tool("prompt_clause_assertions.py").returncode == 0
-    bad = run_tool("prompt_clause_assertions.py", root)
+    assert run_tool("prompt_clause_assertions.py", None, "--allow-no-yaml").returncode == 0
+    bad = run_tool("prompt_clause_assertions.py", root, "--allow-no-yaml")
     assert bad.returncode != 0, bad.stdout + bad.stderr
     assert "building: one-seam-one-test cycle" in bad.stdout
 
@@ -312,3 +312,89 @@ def test_release_gate_strict_is_forwarded_to_harness_audit(tmp_path):
     strict = gate_run("--strict")
     assert strict.returncode == 1, strict.stdout + strict.stderr
     assert "RELEASE GATE: FAIL (harness_audit)" in strict.stdout
+
+
+# --- hook registration derived from hooks.json ------------------------------------------------
+
+HOOKS_REL = "plugins/cc10x/hooks/hooks.json"
+
+
+def test_hook_registration_passes_on_the_real_tree():
+    assert harness_audit.check_hook_registration() == []
+
+
+def test_a_removed_hook_script_is_named(tmp_path):
+    root = make_tree(tmp_path)
+    (root / "plugins/cc10x/scripts/cc10x_state_persist.py").unlink()
+    result = run_tool("harness_audit.py", root)
+    assert result.returncode == 1
+    assert "hooks.json references missing script cc10x_state_persist.py" in result.stderr
+
+
+def test_a_dropped_qa_isolation_registration_is_named(tmp_path):
+    root = make_tree(tmp_path)
+    hooks = json.loads((root / HOOKS_REL).read_text(encoding="utf-8"))
+    hooks["hooks"]["PreToolUse"] = [
+        group
+        for group in hooks["hooks"]["PreToolUse"]
+        if "cc10x_qa_isolation_guard.py" not in json.dumps(group)
+    ]
+    (root / HOOKS_REL).write_text(json.dumps(hooks), encoding="utf-8")
+    result = run_tool("harness_audit.py", root)
+    assert result.returncode == 1
+    assert "hooks.json does not register cc10x_qa_isolation_guard.py" in result.stderr
+
+
+def test_a_dropped_preflight_and_git_guard_registration_are_named(tmp_path):
+    root = make_tree(tmp_path)
+    text = (root / HOOKS_REL).read_text(encoding="utf-8")
+    text = text.replace("cc10x_preflight.sh", "cc10x_state_persist.py").replace("cc10x_git_guard.py", "cc10x_state_persist.py")
+    (root / HOOKS_REL).write_text(text, encoding="utf-8")
+    stderr = run_tool("harness_audit.py", root).stderr
+    assert "hooks.json does not register cc10x_preflight.sh" in stderr
+    assert "hooks.json does not register cc10x_git_guard.py" in stderr
+
+
+def test_the_hard_coded_hook_script_tuple_is_gone():
+    source = (TOOLS / "harness_audit.py").read_text(encoding="utf-8")
+    assert '"cc10x_task_completed_guard.py",\n        "cc10x_event_logger.py",\n        "",' not in source
+
+
+# --- PyYAML-dependent clause check ------------------------------------------------------------
+
+NO_YAML_RUNNER = (
+    "import os, runpy, sys\n"
+    "sys.modules['yaml'] = None\n"
+    "sys.argv = sys.argv[1:]\n"
+    "sys.path.insert(0, os.path.dirname(sys.argv[0]))\n"
+    "runpy.run_path(sys.argv[0], run_name='__main__')\n"
+)
+
+
+def run_clauses_without_yaml(*args: str) -> subprocess.CompletedProcess:
+    env = {k: v for k, v in os.environ.items() if k != "CC10X_REPO_ROOT"}
+    return subprocess.run(
+        [sys.executable, "-c", NO_YAML_RUNNER, str(TOOLS / "prompt_clause_assertions.py"), *args],
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+
+
+def test_missing_pyyaml_fails_with_an_install_hint():
+    result = run_clauses_without_yaml()
+    assert result.returncode == 1, result.stdout + result.stderr
+    assert "PyYAML" in result.stdout and "pip install pyyaml" in result.stdout
+    assert "--allow-no-yaml" in result.stdout
+    assert "(1 failure(s))" in result.stdout
+
+
+def test_missing_pyyaml_passes_with_the_explicit_flag():
+    result = run_clauses_without_yaml("--allow-no-yaml")
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_clause_assertions_reject_unknown_arguments():
+    result = run_tool("prompt_clause_assertions.py", None, "--bogus")
+    assert result.returncode == 2
+    assert "--bogus" in result.stderr
