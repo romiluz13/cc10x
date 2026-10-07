@@ -1,47 +1,92 @@
 # CC10X Agent Contract Registry
 
-> **Status note:** Aligned to the live agent and router prompt stack as of 2026-06-17 (`v11.0.0`; last structural sync `v10.1.19` on 2026-04-12; `v11.0.0` de-versions the state root from `.cc10x/v10/` to `.cc10x/`, version held only in `plugin.json`/GitHub; `v11.1.0` adds the SPEC_COMPLIANCE reviewer verdict split + recorded-BASE diffing, additive).
-> **v12.5.0:** adds TEST_SEAMS + SEAM_GATE_STATUS to the component-builder contract; FEEDBACK_LOOP + DEBUG_CLOSEOUT enforcement to bug-investigator; ALTERNATIVES ≥2 for decision_rfc; 2 new read-only agents (triage-agent, architecture-scanner) with router-owned completion; resolving-merge-conflicts skill; CONTEXT.md/docs/adr/ canonical artifacts. Additive — no existing agent contract schema changed. **v12.6.0:** all 11 agents unified on one return dialect — line-1 CONTRACT envelope + fenced YAML Router Contract; per-agent required fields and override rules unchanged; planner gains the explicit NEEDS_CLARIFICATION path for non-empty OPEN_DECISIONS; triage-agent gains Write scoped to .scratch/. **v12.7.0:** wording-only prompt-engineering prose reconciliation (spec #77) — agent-prompt contradictions resolved, contract examples made literal valid YAML, rationale clauses added; no contract schema, required-field, or override-rule changes. **v12.8.0:** adds cc10x-guide skill (reference, model-invoked, answers questions about cc10x itself); no agent contract changes. **v12.8.1:** integration-verifier's Evidence Array template gains a `tested:` field (revision identity); no contract schema, required-field, or override-rule changes. **v12.8.2:** imports pstack evidence-discipline wording into four skill/reference files (one-fact review rule, observation-method suspicion, premise prediction-testing, restart-state playbook); wording-level only, no orchestration, routing, gate, or contract changes. **v12.9.0:** adds 3 QA agents (qa-researcher, qa-harness-builder, qa-executor — QA never edits product code, qa-executor may not edit test code, both blocking contract signals; 14 agents total); plan-gap-reviewer gains the router-set REVIEW_MODE input (fresh | amendment); additive contract fields: planner `PLAN_REVISION`/`LAST_REVIEWED_REVISION` (`PLANNING_REVIEW_STATUS: passed` requires the two to match, otherwise `revised_after_review`) and plan-gap-reviewer `REVIEW_MODE_APPLIED`; the workflow artifact gains `plan_revision`/`last_reviewed_revision`; no existing field removed or renamed. **v12.9.1:** no agent contract changes — README install-template harmonization (user-facing paste) and a read-only token measurement tool (informational per INV-025).
-> **Purpose:** Quick contract map for maintainers. This document summarizes what the live prompts already enforce; it does not add new behavior.
+> **Status note:** Aligned to the `v12.10.0` remediation tree on 2026-10-07 (last released line `v12.9.1`); one row per agent in `plugins/cc10x/agents/` (14), and `harness_audit.py` fails when a row drifts from disk.
+> **Purpose:** Quick contract map for maintainers. It summarizes what the agent prompts enforce; the prompts are the source of truth and this file adds no behavior.
 
-## Write Agents
+## Return Format
+
+Every agent returns the same shape:
+
+1. Line 1: `CONTRACT {"s":"<STATUS>","b":<true|false>,"cr":<N>}`, the fast-path envelope.
+2. Line 2: a stable heading (`## Build: PASS`, `## Review: Approve`, ...), the fallback when the YAML block is absent.
+3. A fenced `yaml` Router Contract. Its `STATUS` decides; the router branches on it, not on the envelope.
+4. Prose sections.
+
+Envelope keys are `s` (STATUS), `b` (BLOCKING) and `cr` (CRITICAL_ISSUES). There is no `bf` key. `plan-gap-reviewer` uses the same keys: `b` means at least one blocking finding exists and `cr` is the blocking finding count (`BLOCKING_FINDINGS_COUNT`).
+
+No agent calls `TaskUpdate` or creates tasks. The router completes each task after it validates the contract.
+
+## Build, Debug, Plan And Docs Agents
 
 | Agent | Contract type | Completion states | Key blocking signal | Memory payload |
 | ------ | --------------- | ------------------- | --------------------- | ---------------- |
-| `component-builder` | YAML `### Router Contract` | `PASS`, `FAIL` | `BLOCKING=true`, `PHASE_STATUS!=completed`, or `PROOF_STATUS!=passed` | `MEMORY_NOTES` |
-| `bug-investigator` | YAML `### Router Contract` | `FIXED`, `INVESTIGATING`, `BLOCKED` | `STATUS!=FIXED` or research escalation | `MEMORY_NOTES` |
-| `planner` | YAML `### Router Contract` | `PLAN_CREATED`, `DECISION_RFC_CREATED`, `NEEDS_CLARIFICATION` | open decisions, failed spec gate, or blocking clarification need | `MEMORY_NOTES` |
-| `web-researcher` | YAML result block | `COMPLETE`, `PARTIAL`, `DEGRADED`, `UNAVAILABLE` | degraded or unavailable backend | `MEMORY_NOTES` |
-| `github-researcher` | YAML result block | `COMPLETE`, `PARTIAL`, `DEGRADED`, `UNAVAILABLE` | degraded or unavailable backend | `MEMORY_NOTES` |
-| `doc-syncer` | YAML `### Router Contract` | `COMPLETE`, `SKIPPED`, `PARTIAL`, `FAIL` | `STATUS=FAIL` or `STATUS=PARTIAL` with missing required layers | `MEMORY_NOTES` |
+| `component-builder` | YAML Router Contract | `PASS`, `FAIL` | `BLOCKING=true`, `PHASE_STATUS!=completed`, or `PROOF_STATUS!=passed`; `PASS` also needs TDD evidence and the seam fields (`TEST_SEAMS`, `SEAM_GATE_STATUS`) | YAML `MEMORY_NOTES` |
+| `bug-investigator` | YAML Router Contract | `FIXED`, `INVESTIGATING`, `BLOCKED` | `STATUS!=FIXED`, or research escalation (`NEEDS_EXTERNAL_RESEARCH`); `FIXED` needs `FEEDBACK_LOOP` and `DEBUG_CLOSEOUT` | YAML `MEMORY_NOTES` |
+| `planner` | YAML Router Contract | `PLAN_CREATED`, `DECISION_RFC_CREATED`, `NEEDS_CLARIFICATION` | non-empty `OPEN_DECISIONS` forces `NEEDS_CLARIFICATION` with `BLOCKING=true` | YAML `MEMORY_NOTES` |
+| `doc-syncer` | YAML Router Contract | `COMPLETE`, `SKIPPED`, `PARTIAL`, `FAIL` | `FAIL`, or `PARTIAL` with required layers missing | YAML `MEMORY_NOTES` |
+| `researcher` | YAML Router Contract | `COMPLETE`, `PARTIAL`, `DEGRADED`, `UNAVAILABLE` | `BLOCKING` is `false`; the router reads `STATUS` and `QUALITY_LEVEL` | YAML `MEMORY_NOTES` |
+
+### REM-FIX executors and disputes
+
+`component-builder` and `bug-investigator` are the only executors of a `kind:remfix` task. The router picks one by the task's `origin:` (see its executor table).
+
+- On a REM-FIX, `PASS` or `FIXED` also needs `COVERING_TESTS`, `TEST_COMMAND` and `TEST_OUTPUT` for every finding applied.
+- An executor that can disprove a finding reports `FINDING_DISPUTED`, `VERIFY_COMMAND` and `VERIFY_OUTPUT` (same order in all three lists) instead of applying it. It never rules on its own dispute.
+- `integration-verifier` is the only adjudicator: it re-runs `VERIFY_COMMAND` and lists 1-based positions of `FINDING_DISPUTED` in `DISPUTE_UPHELD` or `DISPUTE_REJECTED`. `code-reviewer` and `failure-hunter` never rule on a dispute.
+
+## QA Agents
+
+| Agent | Contract type | Completion states | Key blocking signal | Memory payload |
+| ------ | --------------- | ------------------- | --------------------- | ---------------- |
+| `qa-researcher` | YAML Router Contract | `PASS`, `FAIL` | reading outside the assigned `SOURCE` is `FAIL`; an empty or unavailable source reported honestly is `PASS` | YAML `MEMORY_NOTES` |
+| `qa-harness-builder` | YAML Router Contract | `PASS`, `FAIL`, `BLOCKED` | `PRODUCT_CODE_TOUCHED=true`, a survived `MUTATION_CHECKS` entry, or non-empty `SERVICES_PROVISIONED` in preflight is `FAIL`; non-empty `BLOCKED_ITEMS`, `HUMAN_PREREQUISITES` or `CURRENCY_GATE` is `BLOCKED` with `NEXT_ACTION: gate` | YAML `MEMORY_NOTES` |
+| `qa-executor` | YAML Router Contract | `PASS`, `FAIL`, `BLOCKED` | `TEST_CODE_TOUCHED` or `PRODUCT_CODE_TOUCHED` is `FAIL`; `TEARDOWN_STATUS` of `leaked` or `not_run` is `FAIL`; `SCENARIOS_BLOCKED>0` is `BLOCKED` | YAML `MEMORY_NOTES` |
 
 ## Read-Only Review Agents
 
 | Agent | Primary machine signal | Heading fallback | Completion states |
 | ------ | ------------------------- | ------------------ | ------------------- |
-| `code-reviewer` | `CONTRACT {"s":"APPROVE | CHANGES_REQUESTED","b":...,"cr":...}` | `## Review: Approve` / `## Review: Changes Requested` | `APPROVE`, `CHANGES_REQUESTED` |
-| `silent-failure-hunter` | `CONTRACT {"s":"CLEAN | ISSUES_FOUND","b":...,"cr":...}` | `## Error Handling Audit: CLEAN` / `## Error Handling Audit: ISSUES_FOUND` | `CLEAN`, `ISSUES_FOUND` |
-| `integration-verifier` | `CONTRACT {"s":"PASS | FAIL","b":...,"cr":...}` | `## Verification: PASS` / `## Verification: FAIL` | `PASS`, `FAIL` |
+| `code-reviewer` | `CONTRACT {"s":"APPROVE\|CHANGES_REQUESTED","b":...,"cr":...}`; `b:true` only for `CHANGES_REQUESTED` with at least one CRITICAL finding | `## Review: Approve` / `## Review: Changes Requested` | `APPROVE`, `CHANGES_REQUESTED` |
+| `failure-hunter` | `CONTRACT {"s":"CLEAN\|ISSUES_FOUND","b":...,"cr":...}`; `s=ISSUES_FOUND` for any CRITICAL or HIGH, `b:true` only when CRITICAL>0 | `## Error Handling Audit: CLEAN` / `## Error Handling Audit: ISSUES_FOUND` | `CLEAN`, `ISSUES_FOUND` |
+| `integration-verifier` | `CONTRACT {"s":"PASS\|FAIL","b":...,"cr":...}` plus `PROOF_STATUS` in the YAML | `## Verification: PASS` / `## Verification: FAIL` | `PASS`, `FAIL` |
+| `plan-gap-reviewer` | `CONTRACT {"s":"PASS\|FINDINGS","b":...,"cr":...}`; the YAML verdict key is `PLANNING_REVIEW_STATUS` | `## Planning Review: Pass` | `PASS`, `FINDINGS` |
 
-All three emit `### Memory Notes (For Workflow-Final Persistence)` instead of YAML
-`MEMORY_NOTES`.
+`plan-gap-reviewer` has no `### Router Contract` heading; the router anchors on the first fenced `yaml` block after the line-2 heading. It echoes the lane it ran in `REVIEW_MODE_APPLIED` (`fresh` or `amendment`) and emits no memory notes.
 
-## Fresh Planning Review Agent
+## Advisory On-Ramp Agents
 
-| Agent | Primary machine signal | Meaning |
-|------|-------------------------|---------|
-| `plan-gap-reviewer` | `CONTRACT {"s":"PASS|FINDINGS","b":...,"bf":...}` | fresh read-only challenge pass over a saved plan |
+| Agent | Contract type | Completion states | Key blocking signal | Memory payload |
+| ------ | --------------- | ------------------- | --------------------- | ---------------- |
+| `triage-agent` | YAML Router Contract | `TRIAGED`, `NEEDS_INFO`, `WONTFIX` | `BLOCKING` is true when the run stops for human input (`NEEDS_INFO`, `WONTFIX`, or `NEEDS_GRILLING`); `cr` is always 0 | YAML `MEMORY_NOTES` and prose Memory Notes |
+| `architecture-scanner` | YAML Router Contract | `CANDIDATES_FOUND`, `NO_CANDIDATES` | none: `b` and `cr` are always 0 (advisory) | YAML `MEMORY_NOTES` and prose Memory Notes |
 
-`b` means at least one blocking finding exists.
-`bf` is the blocking finding count.
+## Skill Preload
+
+Each agent's `skills:` frontmatter preloads these skills.
+
+| Agent | Preloaded skills |
+| ------ | ------------------ |
+| architecture-scanner | `agent-common`, `codebase-hygiene`, `codebase-design` |
+| bug-investigator | `agent-common`, `debugging`, `building`, `verification`, `codebase-design` |
+| code-reviewer | `agent-common`, `code-review`, `verification`, `codebase-design` |
+| component-builder | `agent-common`, `building`, `verification`, `codebase-design`, `domain-modeling` |
+| doc-syncer | `agent-common`, `diff-driven-docs`, `verification`, `domain-modeling` |
+| failure-hunter | `agent-common`, `code-review` |
+| integration-verifier | `agent-common`, `verification` |
+| plan-gap-reviewer | none (reads no memory and loads no skills, by design) |
+| planner | `agent-common`, `planning`, `codebase-design`, `domain-modeling` |
+| qa-executor | `agent-common`, `qa-strategy`, `verification` |
+| qa-harness-builder | `agent-common`, `qa-strategy`, `verification` |
+| qa-researcher | `agent-common`, `qa-strategy` |
+| researcher | `agent-common`; its tools include `Skill` |
+| triage-agent | `agent-common`, `domain-modeling` |
 
 ## Router Expectations
 
-- Router reads line-1 envelopes first for read-only agents.
+- Router reads line-1 envelopes first.
 - Router falls back to stable headings if an envelope is malformed or absent.
 - Router interprets contracts and owns every workflow decision after the agent returns.
-- Router kernel may point to mandatory workflow/reference playbooks, but those
-  reads remain router-owned orchestration behavior.
+- Router kernel may point to mandatory workflow/reference playbooks; those reads remain router-owned orchestration behavior.
 - Router remains the only orchestration owner for:
   - task creation
   - blocking / unblocking
@@ -51,13 +96,13 @@ All three emit `### Memory Notes (For Workflow-Final Persistence)` instead of YA
 
 ## Memory Handoff Rules
 
-- WRITE agents never edit `.cc10x/*.md` directly.
-- WRITE agents emit YAML `MEMORY_NOTES`.
-- READ-ONLY agents emit `### Memory Notes (For Workflow-Final Persistence)`.
-- Router persists both shapes into workflow artifacts first, then final markdown memory.
+- No agent edits `.cc10x/*.md` directly.
+- Build, debug, plan, docs, research and QA agents carry `MEMORY_NOTES` in their YAML Router Contract.
+- Read-only agents emit `### Memory Notes (For Workflow-Final Persistence)`; `code-reviewer`, `failure-hunter`, `integration-verifier`, `triage-agent` and `architecture-scanner` also carry the YAML key.
+- Router persists the notes into workflow artifacts first, then final markdown memory.
 
 ## Related Sources
 
-- [cc10x-router/SKILL.md](~/Dev/cc10x_v5/cc10x/plugins/cc10x/skills/cc10x-router/SKILL.md)
-- [router-invariants.md](~/Dev/cc10x_v5/cc10x/docs/router-invariants.md)
-- [prompt-invariants.md](~/Dev/cc10x_v5/cc10x/docs/prompt-invariants.md)
+- [cc10x-router/SKILL.md](../plugins/cc10x/skills/cc10x-router/SKILL.md)
+- [router-invariants.md](router-invariants.md)
+- [prompt-invariants.md](prompt-invariants.md)
