@@ -127,6 +127,23 @@ Flips expected by P4B: `remfix-gate-producer` loses its "lower confidence" quali
 
 What this does NOT show: no live agent was run, so no builder was seen emitting the six fields and no verifier was seen ruling on a dispute. The agent-common preload is the one P4B claim that was measured live (13 of 13 agents PASS in the preload probe, `--model haiku`); everything else here is analytical.
 
+## post-P4C expected (analytical, not measured)
+
+Read from the skill texts after P4.T7.1 to P4.T7.3 (`SKILL.md` of the router untouched, 783 lines). This column is derived by reading the edited text; it is analytical, not a measurement. No paid eval, no `claude plugin eval`, no live L2 run was made (AD-2). Only the cases P4C could touch are restated; "needs Task tools" carries over.
+
+| case id | post-P4B | post-P4C (analytical, not measured) | reason (edited text) |
+| --- | --- | --- | --- |
+| build-trivial-happy | green (needs Task tools) | green (needs Task tools) | the `building` skill's no-test-runner rule now says what `component-builder` already said since P4B (a scripted check with real exit codes is evidence; never fabricate the TDD exits; require a runner or block). The case builds a one-line text file, so the builder's own scripted check (for example a `test`/`grep` command with a real exit code) satisfies the rule; the one residual risk is a builder that reads "require a runner or block" as blocking on a text file, which the agent text already allowed before P4C. The skill text no longer tells it to set `TDD_RED_EXIT=1` from a manual check |
+| seam-gate | green (needs Task tools) | green (needs Task tools) | the `SEAM_GATE_STATUS` rules in `building` and `component-builder` are unchanged; only the one-sentence definition of a seam moved to the `codebase-design` wording |
+| qa-seed-template-path | green with lower confidence | green with lower confidence | `qa-strategy` lost only its DRAFT and placeholder markers and the four dead reference pointers; its template table (`${CLAUDE_PLUGIN_ROOT}/templates/...` rows) is byte-identical, and the reference lines in `qa-workflow.md` are untouched |
+| build-multiphase-memory-finalize, triage-loads-reference, remfix-gate-producer, two-workflow-resume, route-precedence | unchanged | unchanged | no P4C edit touches the router, its references, the routing table, the REM-FIX contracts or the resume text; skill prose, descriptions and pins only |
+
+Flips expected by P4C: none (no case guards a P4C finding; E-series findings are guarded by prompt-clause pins and the QA invariant script). No case newly red by reading.
+
+What this does NOT show: no skill was loaded in a live run, so nothing here proves a router or agent behaves differently after the description rewrites or the code-review wording; the description pins and the cross-file pins (code-review merge rule equals router step 6; the three no-runner sites equal) are the measured part, and they are text pins.
+
+L1 and pin counts at the end of P4C (measured): replay fixtures `fixtures=35`; pytest 631 passed; prompt clause assertions 572 (546 at the start of P4C, plus 26 added: 6 in T7.1, 5 in T7.2, 15 in T7.3; one pin was renamed in T7.3, so no assertion count was lowered); QA phase invariants all hold.
+
 ## Visibility
 
 Every tracked path under `evals/cases/` and this file must report `git check-ignore -q` exit 1; `evals/results/x.json` must report exit 0. Grader file names avoid the substrings `test` and `audit` because `.gitignore` globs `*test*.md` and `*audit*.md` would silently untrack them.
