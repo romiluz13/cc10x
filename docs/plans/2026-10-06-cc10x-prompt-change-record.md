@@ -603,3 +603,39 @@ Why safe, and why anti-anchoring is intact: the verifier is still not a reviewer
 Pins: three new (remediation reference hand-off clauses, `SKILL.md` sentence, verifier sub-block and re-check clauses). RED before the edits: 3 failures, each a missing clause. Each pin was shown to fail on a scratch-copy mutation of its decisive clause (5 mutations: "a reference, not pasted bodies", the template sentence, the `SKILL.md` `results.builder` reference, "read that key only", "you are not a reviewer"; each exit 1).
 
 Claim boundary: now true: the three texts agree on how the REM-FIX report reaches the verifier. Not claimed: no live agent run; the two texts for dispute handling (router hand-off, verifier adjudication) are contract text only. Deferred, pinned by an existing pin so not edited: the sentence in the producers section "Until the agent files declare these producers (agent-file work, P4B), the gates fail closed" is now stale in its first clause (the producers are declared); its pin ("stated plainly for P4B") names it, so it is left for a named task. Classification: `orchestration_sensitive` (ASM-7).
+
+## P4.T4.6 Sweep and gate (P4B closing task; also records the P4C carry-over)
+
+Findings: closes A1, A3 (part), A5, A6, A7, B12, E1, E2 for P4B. No prompt text changed in this task: it confirms anchors, counts pins, runs the gates and records the claim boundary.
+
+New anchors confirmed present (each is an `ASSERTIONS` entry that passes):
+- no `TaskUpdate` in any agent's `tools:` line (14 table-driven pins over `agents/*.md`, so a new agent file is covered automatically) and the five router-owned-completion body pins;
+- `agent-common: qa-researcher is on the narrower-protocol list` and `qa-researcher: the mkdir and file-creation prohibition stays`;
+- the agent-common clauses (reconciliation with Memory First, one Test Process Discipline, YAML-first contract, canonical run-mode why);
+- the preload table pins (one row per agent, plus the pin that fails when an agent file has no row);
+- the three P4B-4a hand-off pins.
+
+Assertion count: 259 at the P4 start (eff8505), 477 now, so 218 net new (221 added names, 3 retired names; floor 253 plus additions holds with 224 to spare). Retired or re-pointed names, each justified:
+- `researcher: TaskUpdate before final contract response` and `doc-syncer: TaskUpdate before final contract response` (deleted in P4.T4.5b: they required the agent to call `TaskUpdate` before the final contract; their still-valid half, no tool call after the contract, moved into the router-owned-completion pin);
+- `component-builder: run-mode carries the watch-mode-never-exits why` (re-pointed in P4.T4.1 to the canonical copy in agent-common, same clause; the `building` skill and agent-common pins still carry it).
+No other pin was deleted or weakened in P4B.
+
+Gates: full release gate plain `RELEASE GATE: OK` under `python3` and under `/usr/bin/python3` (no SKIPPED or PARTIAL qualifier); fast loop green.
+
+Live preload probe (`preload_probe.py --all --model haiku`, exit 0): 13 of 13 PASS, each line `Preloaded skill 'cc10x:agent-common'`: architecture-scanner, bug-investigator, code-reviewer, component-builder, doc-syncer, failure-hunter, integration-verifier, planner, qa-executor, qa-harness-builder, qa-researcher, researcher, triage-agent. `plan-gap-reviewer` is not in the probe, by design (the one agent that does not preload agent-common). The probe proves the preload mechanism for these agents, not that any agent follows the clauses.
+
+`evals/BASELINE.md`: new section "post-P4B expected", analytical not measured: `remfix-gate-producer` is expected green now that the builder and verifier declare the fields; no other case changes.
+
+Claim boundary (honest): now true: agent and router texts agree on who produces and consumes the REM-FIX gate fields, on router-owned completion, on the preload table, and on the narrower-protocol rule; every one of those is pinned. Not claimed: no live agent run emits the producer fields (builder `COVERING_TESTS` and dispute fields, planner amendment-lane fields, verifier `DISPUTE_*`); the router hand-off text and the verifier adjudication text for disputes are contract text only; no L2 eval was run (AD-2).
+
+Deferred, still open after P4B: the sentence "Until the agent files declare these producers (agent-file work, P4B), the gates fail closed" in `remediation-and-research.md` is stale in its first clause but pinned (needs a named task); the scanner write boundary (F3) is not enforced; P4.T1.4b (reference rewrite contingency) skipped per AD-2; L2 spot-checks for P4A and P4B all unrun; doc-syncer legacy ADR removal is a `USER_RUN` hand-off, not an action.
+
+P4C carry-over (next group; NOT done here, listed so the record carries them):
+- `skills/building/SKILL.md`: manual-browser exception (about line 171) and its Test Process Discipline copy (the fourth copy deferred in P4.T4.1);
+- `skills/code-review/SKILL.md`: the "before reporting CLEAN" wording and the three-citation rule;
+- `skills/diff-driven-docs/SKILL.md`: the opt-out location (about line 171);
+- `qa-strategy` and `codebase-design` items;
+- `memory-and-handoff`, `mcp-cli` and `research` skill items;
+- README and docs wording (P6), including the README skills table that says agent-common loads into "ALL agents".
+
+Classification: `orchestration_sensitive` for the sweep (no text change; evidence only).

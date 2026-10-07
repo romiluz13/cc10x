@@ -112,6 +112,21 @@ Read from the router text and references after the P4A remediation 3 commits (`S
 
 Measured in this remediation: replay fixtures `fixtures=35`; pytest and prompt clause counts are in the prompt change record. No red case newly appears by reading.
 
+## post-P4B expected (analytical, not measured)
+
+Read from the agent and router texts after P4B (P4.T4.1 to P4.T4.6 and the router hand-off fix). Still no L2 run (AD-2): this column is derived by reading the edited text, never a measurement. Only the cases P4B touches are restated; the rest carry over from the post-P4A remediation 3 column. "Needs Task tools" carries over.
+
+| case id | post-P4A remediation 3 | post-P4B (analytical, not measured) | reason (edited text) |
+| --- | --- | --- | --- |
+| remfix-gate-producer | green with lower confidence (needs Task tools; probabilistic) | green (needs Task tools; still probabilistic: the run must also produce a HIGH finding) | `component-builder` now declares `COVERING_TESTS`, `TEST_COMMAND`, `TEST_OUTPUT`, `FINDING_DISPUTED`, `VERIFY_COMMAND`, `VERIFY_OUTPUT` in its YAML contract and its `kind:remfix` section, and the REM-FIX `TaskCreate` body asks for them; the missing-producer cause the baseline named is gone. `integration-verifier` produces `DISPUTE_UPHELD` / `DISPUTE_REJECTED`, and the router now hands it the REM-FIX report by reference |
+| build-trivial-happy | green | green (needs Task tools) | write agents no longer hold `TaskUpdate`; the router applies its documented fallback `TaskUpdate` after the contract validates, so the reduced graph still completes. Analytical: a live run is the only proof that the router actually issues that call |
+| seam-gate | green (needs Task tools) | green (needs Task tools) | the builder's seam-gate clauses are word for word unchanged; only the `TDD_RED_EXIT` wording moved to "a non-zero exit, conventionally 1" |
+| build-multiphase-memory-finalize, triage-loads-reference, two-workflow-resume, qa-seed-template-path, route-precedence | unchanged | unchanged | no P4B edit touches the router graph, routing table, plugin-root line or resume text; agent files only |
+
+Flips expected by P4B: `remfix-gate-producer` loses its "lower confidence" qualifier (producers are now declared on the agent side). No case newly red by reading.
+
+What this does NOT show: no live agent was run, so no builder was seen emitting the six fields and no verifier was seen ruling on a dispute. The agent-common preload is the one P4B claim that was measured live (13 of 13 agents PASS in the preload probe, `--model haiku`); everything else here is analytical.
+
 ## Visibility
 
 Every tracked path under `evals/cases/` and this file must report `git check-ignore -q` exit 1; `evals/results/x.json` must report exit 0. Grader file names avoid the substrings `test` and `audit` because `.gitignore` globs `*test*.md` and `*audit*.md` would silently untrack them.
