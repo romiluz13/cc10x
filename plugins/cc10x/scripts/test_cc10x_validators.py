@@ -1658,6 +1658,18 @@ def test_readme_local_links_resolve():
     assert missing == []
 
 
+def test_adr_0001_says_pre_seam_fixtures_are_rejected_now():
+    text = " ".join((REPO / "docs/adr/0001-enforced-seam-gate.md").read_text(encoding="utf-8").split())
+    assert "fixtures predating the fields are rejected" in text
+    assert "still accepted" not in text
+
+
+def test_adr_0002_records_the_current_route_priorities():
+    text = (REPO / "docs/adr/0002-advisory-onramp-workflows.md").read_text(encoding="utf-8")
+    assert "## Amendment" in text
+    assert "QA=5, TRIAGE=6, CODEBASE-HEALTH=7, DEFAULT=8" in text.split("## Amendment", 1)[1]
+
+
 @pytest.mark.parametrize("name", ["DESIGN.md", "PRODUCT.md"])
 def test_keynote_deck_docs_state_their_scope(name):
     text = (REPO / name).read_text(encoding="utf-8")

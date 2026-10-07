@@ -52,7 +52,8 @@ builder from rubber-stamping `disagreed` to skip the gate.
 - Pre-2a saved plans whose phases omit `test_seams` are accepted via the
   `proposed` legacy fallback; the next plan-save backfills `test_seams`.
 - The `build-happy-path` and `build-phase-blocked` fixtures now carry the new
-  fields; `validate_builder_contract` enforces them (backward-compat: fixtures
-  predating the fields are still accepted when the fields are absent).
+  fields; `validate_builder_contract` enforces them (fixtures predating the
+  fields are rejected now; the validator no longer accepts a builder PASS
+  contract that omits them).
 - The `disagreed` + empty + FAIL + ambiguity-reason path is the ONLY way to
   block on seam ambiguity; any other empty-seam disagreed is rejected.

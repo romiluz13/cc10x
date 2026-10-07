@@ -50,3 +50,10 @@ code-writing workflow.
   `phase_cursor`, no phases) — simpler artifacts than BUILD/DEBUG/PLAN.
 - Category/wontfix decisions in TRIAGE are high-blast-radius: stop for human.
 - CODEBASE-HEALTH writes a single HTML report to the OS temp dir, not the repo.
+
+## Amendment (v12.10.0)
+
+A later QA workflow joined the routing table, so the priorities recorded above
+are superseded: QA=5, TRIAGE=6, CODEBASE-HEALTH=7, DEFAULT=8 (the table has
+eight workflows). TRIAGE and CODEBASE-HEALTH stay advisory-only; DEFAULT→BUILD
+is still last.
