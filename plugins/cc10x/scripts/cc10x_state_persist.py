@@ -13,8 +13,9 @@ import sys
 from cc10x_hooklib import (
     load_input,
     log_event,
+    log_unreadable_artifact,
     now_iso,
-    read_latest_workflow_state,
+    read_live_workflow_state,
     state_root,
 )
 
@@ -31,7 +32,9 @@ def main() -> int:
     if event_type == "stop" and data.get("stop_hook_active"):
         return 0
 
-    payload, _, parse_error = read_latest_workflow_state()
+    payload, path, parse_error = read_live_workflow_state()
+    if parse_error and path is not None:
+        log_unreadable_artifact(path, parse_error)
     if not payload or parse_error:
         return 0
 

@@ -447,15 +447,22 @@ def test_sessionstart_injects_context_for_active_workflow(tmp_path):
     assert "phase-1" in context
 
 
-def test_sessionstart_silent_on_corrupt_artifact(tmp_path):
-    # Violation path (also locks cc10x_hooklib.read_latest_workflow_state's
-    # never-raise contract): a corrupt artifact yields no context injection.
+def test_sessionstart_tells_the_model_when_the_newest_artifact_is_unreadable(tmp_path):
+    # Never-raise contract of read_latest_workflow_state, and no silent skip:
+    # the model gets one line saying the newest artifact cannot be read, and
+    # the log gets a workflow_artifact_unreadable event.
     workflows = tmp_path / ".cc10x" / "workflows"
     workflows.mkdir(parents=True)
     (workflows / "wf-corrupt.json").write_text("{not json")
     r = run_guard("cc10x_sessionstart_context.py", {"source": "startup"}, tmp_path)
     assert r.returncode == 0
-    assert r.stdout.strip() == ""
+    context = json.loads(r.stdout)["hookSpecificOutput"]["additionalContext"]
+    assert "wf-corrupt.json" in context and "unreadable" in context
+    assert "\n" not in context
+    events = [e for e in hook_log_lines(tmp_path) if e["event"] == "workflow_artifact_unreadable"]
+    assert len(events) == 1
+    assert events[0]["reason"] == "JSONDecodeError"
+    assert events[0]["path"].endswith("wf-corrupt.json")
 
 
 # --- cc10x_hooklib.py (mode resolution, exercised through the artifact guard) --
@@ -1273,7 +1280,7 @@ def sessionstart_wf(project_dir: Path, cwd: Path | None, source: str = "startup"
 def test_state_root_follows_hook_cwd_into_a_worktree(tmp_path):
     main = make_checkout(tmp_path / "main")
     write_artifact(main, "wf-main")
-    wt = make_checkout(tmp_path / "wt", kind="file")
+    wt = make_worktree(tmp_path / "wt", main)
     write_artifact(wt, "wf-wt")
     deep = wt / "src" / "deep"
     deep.mkdir(parents=True)
@@ -1299,22 +1306,52 @@ def test_state_root_without_any_git_entry_uses_claude_project_dir(tmp_path):
     assert sessionstart_wf(proj, elsewhere) == "wf-proj"
 
 
-def test_state_root_uses_the_nearest_git_entry_file_or_directory(tmp_path):
+def test_state_root_ignores_an_unrelated_checkout_around_the_hook_cwd(tmp_path):
     outer = make_checkout(tmp_path / "outer")
     write_artifact(outer, "wf-outer")
-    wt = make_checkout(outer / "wt", kind="file")  # no .cc10x of its own
+    wt = make_checkout(outer / "wt", kind="file")  # a .git file that links nowhere
     cwd = wt / "x"
     cwd.mkdir()
     proj = tmp_path / "proj"
     write_artifact(proj, "wf-proj")
-    # The worktree's .git FILE ends the walk: the outer checkout's .cc10x is
-    # not an ancestor to borrow, so resolution falls to CLAUDE_PROJECT_DIR.
     assert sessionstart_wf(proj, cwd) == "wf-proj"
-    # The same layout with a .git DIRECTORY at the worktree root selects it.
+    # A .git DIRECTORY at that root is another repository, not this project's.
     (wt / ".git").unlink()
     (wt / ".git").mkdir()
+    write_artifact(wt, "wf-stale")
+    assert sessionstart_wf(proj, cwd) == "wf-proj"
+
+
+def test_state_root_never_picks_a_nested_repos_stale_cc10x(tmp_path):
+    proj = make_checkout(tmp_path / "proj")
+    write_artifact(proj, "wf-proj")
+    nested = make_checkout(proj / "vendor" / "lib")
+    write_artifact(nested, "wf-stale")
+    cwd = nested / "src"
+    cwd.mkdir()
+    assert sessionstart_wf(proj, cwd) == "wf-proj"
+
+
+def test_state_root_never_picks_a_home_repo_above_a_project_without_git(tmp_path):
+    home = make_checkout(tmp_path / "home")
+    write_artifact(home, "wf-home")
+    proj = home / "work" / "proj"
+    write_artifact(proj, "wf-proj")
+    cwd = proj / "sub"
+    cwd.mkdir()
+    assert sessionstart_wf(proj, cwd) == "wf-proj"
+
+
+def test_state_root_accepts_the_project_checkout_itself_and_its_worktree_both_ways(tmp_path):
+    main = make_checkout(tmp_path / "main")
+    write_artifact(main, "wf-main")
+    sub = main / "pkg"
+    sub.mkdir()
+    assert sessionstart_wf(main, sub) == "wf-main"
+    wt = make_worktree(tmp_path / "wt", main)
     write_artifact(wt, "wf-wt")
-    assert sessionstart_wf(proj, cwd) == "wf-wt"
+    # The session may also have been launched inside the linked worktree.
+    assert sessionstart_wf(wt, main) == "wf-main"
 
 
 def test_state_root_falls_back_to_project_dir_without_cwd(tmp_path):
@@ -1838,49 +1875,49 @@ FINISHED_EVENTS = ("memory_finalized", "workflow_completed", "workflow_failed")
 
 def test_hooks_pick_the_live_workflow_over_a_newer_finished_one(tmp_path):
     for event in FINISHED_EVENTS:
-        live = write_artifact(tmp_path, "wf-live")
+        live = write_artifact(tmp_path, "wf-aaa")
         done = write_artifact(
             tmp_path,
-            "wf-done",
+            "wf-bbb",
             status_history=[{"event": "started"}, {"event": event}],
         )
         set_age(live, 300)
         set_age(done, 10)  # the finished one is the newest by mtime
-        assert sessionstart_wf(tmp_path, None) == "wf-live", event
+        assert sessionstart_wf(tmp_path, None) == "wf-aaa", event
 
 
 def test_a_workflow_that_resumed_after_a_terminal_event_is_live(tmp_path):
-    live = write_artifact(tmp_path, "wf-live")
+    live = write_artifact(tmp_path, "wf-aaa")
     resumed = write_artifact(
         tmp_path,
-        "wf-resumed",
+        "wf-ccc",
         status_history=[{"event": "memory_finalized"}, {"event": "resumed"}],
     )
     set_age(live, 300)
     set_age(resumed, 10)
-    assert sessionstart_wf(tmp_path, None) == "wf-resumed"
+    assert sessionstart_wf(tmp_path, None) == "wf-ccc"
 
 
 def test_a_finalizing_workflow_without_the_finalized_event_is_still_live(tmp_path):
     write_artifact(
         tmp_path,
-        "wf-fin",
+        "wf-ddd",
         phase_cursor="memory-finalize",
         status_history=[{"event": "started"}],
     )
-    assert sessionstart_wf(tmp_path, None) == "wf-fin"
+    assert sessionstart_wf(tmp_path, None) == "wf-ddd"
 
 
 def test_only_finished_workflows_means_no_resume_context(tmp_path):
     write_artifact(
-        tmp_path, "wf-done", status_history=[{"event": "memory_finalized"}]
+        tmp_path, "wf-bbb", status_history=[{"event": "memory_finalized"}]
     )
     assert sessionstart_wf(tmp_path, None) is None
 
 
 def test_a_corrupt_newest_artifact_is_surfaced_not_skipped_by_latest_selection(tmp_path):
-    live = write_artifact(tmp_path, "wf-live")
-    corrupt = tmp_path / ".cc10x" / "workflows" / "wf-corrupt.json"
+    live = write_artifact(tmp_path, "wf-aaa")
+    corrupt = tmp_path / ".cc10x" / "workflows" / "wf-zzz.json"
     corrupt.write_text("{not json")
     set_age(live, 300)
     set_age(corrupt, 10)
@@ -1896,16 +1933,147 @@ def test_a_corrupt_newest_artifact_is_surfaced_not_skipped_by_latest_selection(t
 
 
 def test_state_snapshots_follow_the_live_workflow_not_the_newest_file(tmp_path):
-    live = write_artifact(tmp_path, "wf-live")
+    live = write_artifact(tmp_path, "wf-aaa")
     done = write_artifact(
-        tmp_path, "wf-done", status_history=[{"event": "workflow_completed"}]
+        tmp_path, "wf-bbb", status_history=[{"event": "workflow_completed"}]
     )
     set_age(live, 300)
     set_age(done, 10)
     r = run_guard("cc10x_state_persist.py", {}, tmp_path, argv=["stop"])
     assert r.returncode == 0
     snapshot = json.loads((tmp_path / ".cc10x" / "stop-state.json").read_text())
-    assert snapshot["workflow_uuid"] == "wf-live"
+    assert snapshot["workflow_uuid"] == "wf-aaa"
+
+
+def qa_workflow(project: Path, wf: str, age: float, **overrides) -> Path:
+    secret = project / "secret" / "answer.md"
+    fields = {
+        "workflow_type": "QA",
+        "phase_cursor": "qa-plan",
+        "qa": {"isolation": {"denied_reads": [str(secret)], "plan_phase_readonly": True}},
+    }
+    fields.update(overrides)
+    path = write_artifact(project, wf, **fields)
+    set_age(path, age)
+    return path
+
+
+def qa_guard_decisions(project: Path) -> dict[str, str]:
+    probes = {
+        "write": {"tool_name": "Write", "tool_input": {"file_path": str(project / "src" / "app.py")}},
+        "bash": {"tool_name": "Bash", "tool_input": {"command": "mkdir build"}},
+        "read": {"tool_name": "Read", "tool_input": {"file_path": str(project / "secret" / "answer.md")}},
+    }
+    out = {}
+    for name, payload in probes.items():
+        r = run_guard("cc10x_qa_isolation_guard.py", payload, project)
+        assert r.returncode == 0, r.stderr
+        out[name] = "deny" if '"permissionDecision": "deny"' in r.stdout else "allow"
+    return out
+
+
+def test_qa_guard_stays_off_when_a_newer_build_finished_after_an_abandoned_qa(tmp_path):
+    qa_workflow(tmp_path, "wf-a1", 3000)
+    newer = write_artifact(
+        tmp_path, "wf-b2", status_history=[{"event": "started"}, {"event": "memory_finalized"}]
+    )
+    set_age(newer, 10)
+    assert qa_guard_decisions(tmp_path) == {"write": "allow", "bash": "allow", "read": "allow"}
+
+
+def test_qa_guard_stays_off_for_a_newer_build_finished_by_cursor_alone(tmp_path):
+    qa_workflow(tmp_path, "wf-a1", 3000)
+    newer = write_artifact(tmp_path, "wf-b2", phase_cursor="memory-finalize")
+    set_age(newer, 10)
+    assert qa_guard_decisions(tmp_path) == {"write": "allow", "bash": "allow", "read": "allow"}
+
+
+def test_qa_guard_stays_off_for_a_newest_qa_whose_cursor_is_the_only_finish_signal(tmp_path):
+    qa_workflow(tmp_path, "wf-a1", 10, phase_cursor="memory-finalize")
+    assert qa_guard_decisions(tmp_path) == {"write": "allow", "bash": "allow", "read": "allow"}
+
+
+def test_qa_guard_engages_for_the_newest_live_qa_workflow(tmp_path):
+    older = write_artifact(tmp_path, "wf-b2", status_history=[{"event": "memory_finalized"}])
+    set_age(older, 3000)
+    qa_workflow(tmp_path, "wf-a1", 10)
+    assert qa_guard_decisions(tmp_path) == {"write": "deny", "bash": "deny", "read": "deny"}
+
+
+def test_resume_consumers_skip_a_workflow_finished_by_cursor_and_completed_phase(tmp_path):
+    live = write_artifact(tmp_path, "wf-aaa")
+    done = write_artifact(
+        tmp_path,
+        "wf-bbb",
+        phase_cursor="memory-finalize",
+        phase_status={"memory-finalize": "completed"},
+    )
+    set_age(live, 300)
+    set_age(done, 10)
+    assert sessionstart_wf(tmp_path, None) == "wf-aaa"
+
+
+def append_events(project: Path, wf: str, *records: dict) -> None:
+    log = project / ".cc10x" / "workflows" / f"{wf}.events.jsonl"
+    with log.open("a") as fh:
+        for record in records:
+            fh.write(json.dumps(record) + "\n")
+
+
+def test_resume_consumers_read_a_terminal_event_from_the_events_log(tmp_path):
+    live = write_artifact(tmp_path, "wf-aaa")
+    done = write_artifact(tmp_path, "wf-bbb", status_history=[{"event": "started"}])
+    append_events(
+        tmp_path,
+        "wf-bbb",
+        {"event": "memory_finalized", "agent": "router"},
+        {"event": "artifact_mutated", "agent": "hook"},
+    )
+    set_age(live, 300)
+    set_age(done, 10)
+    assert sessionstart_wf(tmp_path, None) == "wf-aaa"
+
+
+def test_a_workflow_resumed_after_a_terminal_events_log_record_is_live(tmp_path):
+    live = write_artifact(tmp_path, "wf-aaa")
+    resumed = write_artifact(tmp_path, "wf-bbb", status_history=[{"event": "started"}])
+    append_events(
+        tmp_path,
+        "wf-bbb",
+        {"event": "memory_finalized", "agent": "router"},
+        {"event": "phase_started", "agent": "router"},
+    )
+    set_age(live, 300)
+    set_age(resumed, 10)
+    assert sessionstart_wf(tmp_path, None) == "wf-bbb"
+
+
+def test_an_unreadable_newest_artifact_is_logged_by_every_consumer(tmp_path):
+    older = write_artifact(tmp_path, "wf-aaa")
+    set_age(older, 300)
+    bad = tmp_path / ".cc10x" / "workflows" / "wf-zzz.json"
+    bad.write_text("{not json")
+    runs = [
+        ("cc10x_state_persist.py", {}, ["stop"]),
+        ("cc10x_event_logger.py", {"trigger": "auto"}, ["postcompact"]),
+        (
+            "cc10x_qa_isolation_guard.py",
+            {"tool_name": "Write", "tool_input": {"file_path": "a.txt"}},
+            [],
+        ),
+        (
+            "cc10x_pretooluse_guard.py",
+            {"tool_name": "Write", "tool_input": {"file_path": str(tmp_path / ".cc10x" / "patterns.md")}},
+            [],
+        ),
+    ]
+    for script, payload, argv in runs:
+        before = len(hook_log_lines(tmp_path))
+        r = run_guard(script, payload, tmp_path, argv=argv)
+        assert r.returncode == 0, (script, r.stderr)
+        new = hook_log_lines(tmp_path)[before:]
+        assert any(e["event"] == "workflow_artifact_unreadable" for e in new), script
+
 
 
 # --- cc10x_git_guard.py: classify_git_command (P5.T4, finding C5) -------------

@@ -2,9 +2,10 @@
 from __future__ import annotations
 
 from cc10x_hooklib import (
-    latest_workflow_payload,
     load_input,
     log_event,
+    log_unreadable_artifact,
+    read_live_workflow_state,
     session_context,
 )
 
@@ -12,7 +13,15 @@ from cc10x_hooklib import (
 def main() -> int:
     data = load_input()
     source = data.get("source", "startup")
-    payload = latest_workflow_payload()
+    payload, path, parse_error = read_live_workflow_state()
+    if parse_error and path is not None:
+        log_unreadable_artifact(path, parse_error)
+        session_context(
+            f"CC10X workflow context ({source}): the newest workflow artifact "
+            f"{path.name} is unreadable ({parse_error}); its state cannot be "
+            "trusted, so inspect or repair that file before resuming."
+        )
+        return 0
     if not payload:
         return 0
 
