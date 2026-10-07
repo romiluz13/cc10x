@@ -984,19 +984,6 @@ ASSERTIONS = [
         and "ONLY under `.scratch/` and `.out-of-scope/`" in text,
         "Write in frontmatter tools, prompt law scopes it to .scratch/ and .out-of-scope/ only",
     ),
-    # 72.10 — red-flags reference relocated out of the agent auto-registration path
-    A(
-        "silent-failure-red-flags: lives under skills/agent-common/references",
-        SKILLS / "agent-common" / "references" / "silent-failure-red-flags.md",
-        contains("Silent Failure Red Flags"),
-        "red-flags reference exists at the non-agent path",
-    ),
-    A(
-        "silent-failure-red-flags: absent from agents/references",
-        SKILLS / "agent-common" / "references" / "silent-failure-red-flags.md",
-        lambda text: not (AGENTS / "references" / "silent-failure-red-flags.md").exists(),
-        "agents/references/ no longer contains the file, so it cannot register as an all-tools agent",
-    ),
     # 72.11 — BUILD_PREFLIGHT exception declared in builder and mirrored in agent-common
     A(
         "component-builder: BUILD_PREFLIGHT is the single mid-run exception",

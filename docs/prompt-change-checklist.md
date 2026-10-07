@@ -102,8 +102,6 @@ Pytest limitation: plain `python3 -m pytest` fails with ModuleNotFoundError when
 
 Fast loop per task: `--only harness_audit --only prompt_clause_assertions --only workflow_replay_check --only pytest`.
 
-`plugins/cc10x/tools/worldclass_benchmark.py` is never a gate and is never run as part of it.
-
 Version-bump surfaces to update together on a release:
 - `plugins/cc10x/.claude-plugin/plugin.json`
 - `.claude-plugin/marketplace.json`

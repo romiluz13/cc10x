@@ -781,7 +781,7 @@ plugins/cc10x/
 │   ├── cc10x_{event_logger,git_guard,hooklib,posttooluse_artifact_guard,pretooluse_guard,qa_isolation_guard,sessionstart_context,state_persist,task_completed_guard}.py
 │   └── cc10x_preflight.sh
 ├── tools/
-│   ├── {doc_consistency_check,fixture_registry,harness_audit,latency_audit,live_harness_runner,phase_brief,preload_probe,prompt_clause_assertions,release_gate,review_package,token_usage_report,workflow_replay_check,worldclass_benchmark}.py
+│   ├── {doc_consistency_check,fixture_registry,harness_audit,latency_audit,live_harness_runner,phase_brief,preload_probe,prompt_clause_assertions,release_gate,review_package,token_usage_report,workflow_replay_check}.py
 │   └── docs_rot_baseline.json
 ├── templates/
 │   ├── {coverage-thresholds,live-harness.template}.json
