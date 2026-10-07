@@ -35,11 +35,13 @@ def run_guard(
     *,
     argv: list[str] | None = None,
     plugin_root: Path | None = None,
+    extra_env: dict[str, str] | None = None,
 ) -> subprocess.CompletedProcess:
     env = {
         "CLAUDE_PROJECT_DIR": str(project_dir),
         "CLAUDE_PLUGIN_ROOT": str(plugin_root or PLUGIN_ROOT),
         "PATH": "/usr/bin:/bin",
+        **(extra_env or {}),
     }
     return subprocess.run(
         [sys.executable, str(SCRIPTS_DIR / script), *(argv or [])],
@@ -1224,6 +1226,180 @@ def test_qa_isolation_guard_denies_the_bare_mkdir_so_agent_common_must_not_presc
 def test_qa_isolation_guard_allows_the_router_skeleton_copy_form(tmp_path):
     command = 'mkdir -p .cc10x/workflows && cp "/p/skills/cc10x-router/references/workflow-artifact.skeleton.json" .cc10x/workflows/wf-x.json'
     assert not _qa_plan_phase_mkdir_denied(tmp_path, command)
+
+
+# --- P5.T1: state_root precedence, Bash-written artifacts, QA matcher -------
+
+
+def make_checkout(path: Path, kind: str = "dir") -> Path:
+    path.mkdir(parents=True, exist_ok=True)
+    if kind == "dir":
+        (path / ".git").mkdir()
+    else:
+        (path / ".git").write_text("gitdir: ../elsewhere/.git/worktrees/wt\n")
+    return path
+
+
+def sessionstart_wf(project_dir: Path, cwd: Path | None, source: str = "startup"):
+    payload: dict = {"source": source}
+    if cwd is not None:
+        payload["cwd"] = str(cwd)
+    r = run_guard("cc10x_sessionstart_context.py", payload, project_dir)
+    assert r.returncode == 0, r.stderr
+    if not r.stdout.strip():
+        return None
+    context = json.loads(r.stdout)["hookSpecificOutput"]["additionalContext"]
+    return context.split("wf=", 1)[1].split()[0]
+
+
+def test_state_root_follows_hook_cwd_into_a_worktree(tmp_path):
+    main = make_checkout(tmp_path / "main")
+    write_artifact(main, "wf-main")
+    wt = make_checkout(tmp_path / "wt", kind="file")
+    write_artifact(wt, "wf-wt")
+    deep = wt / "src" / "deep"
+    deep.mkdir(parents=True)
+    # CLAUDE_PROJECT_DIR stays on the main checkout; cwd follows Claude.
+    assert sessionstart_wf(main, deep) == "wf-wt"
+
+
+def test_state_root_never_selects_a_nested_cc10x(tmp_path):
+    repo = make_checkout(tmp_path / "repo")
+    write_artifact(repo, "wf-root")
+    nested = repo / "plugins" / "cc10x"
+    nested.mkdir(parents=True)
+    write_artifact(nested, "wf-nested")
+    assert sessionstart_wf(repo, nested) == "wf-root"
+
+
+def test_state_root_without_any_git_entry_uses_claude_project_dir(tmp_path):
+    proj = tmp_path / "proj"
+    write_artifact(proj, "wf-proj")
+    elsewhere = tmp_path / "elsewhere" / "sub"
+    elsewhere.mkdir(parents=True)
+    write_artifact(elsewhere, "wf-decoy")
+    assert sessionstart_wf(proj, elsewhere) == "wf-proj"
+
+
+def test_state_root_uses_the_nearest_git_entry_file_or_directory(tmp_path):
+    outer = make_checkout(tmp_path / "outer")
+    write_artifact(outer, "wf-outer")
+    wt = make_checkout(outer / "wt", kind="file")  # no .cc10x of its own
+    cwd = wt / "x"
+    cwd.mkdir()
+    proj = tmp_path / "proj"
+    write_artifact(proj, "wf-proj")
+    # The worktree's .git FILE ends the walk: the outer checkout's .cc10x is
+    # not an ancestor to borrow, so resolution falls to CLAUDE_PROJECT_DIR.
+    assert sessionstart_wf(proj, cwd) == "wf-proj"
+    # The same layout with a .git DIRECTORY at the worktree root selects it.
+    (wt / ".git").unlink()
+    (wt / ".git").mkdir()
+    write_artifact(wt, "wf-wt")
+    assert sessionstart_wf(proj, cwd) == "wf-wt"
+
+
+def test_state_root_falls_back_to_project_dir_without_cwd(tmp_path):
+    proj = make_checkout(tmp_path / "proj")
+    write_artifact(proj, "wf-proj")
+    assert sessionstart_wf(proj, None) == "wf-proj"
+
+
+def test_state_root_never_creates_a_directory(tmp_path):
+    checkout = make_checkout(tmp_path / "co")
+    proj = tmp_path / "proj"
+    proj.mkdir()
+    cwd = checkout / "src"
+    cwd.mkdir()
+    runs = [
+        ("cc10x_sessionstart_context.py", {"source": "startup"}, []),
+        ("cc10x_state_persist.py", {}, ["stop"]),
+        ("cc10x_state_persist.py", {}, ["precompact"]),
+        ("cc10x_event_logger.py", {"agent_type": "cc10x:planner"}, ["subagent_stop"]),
+        ("cc10x_git_guard.py", {"tool_input": {"command": "git status"}}, []),
+        (
+            "cc10x_posttooluse_artifact_guard.py",
+            {"tool_name": "Write", "tool_input": {"file_path": "a.txt"}},
+            [],
+        ),
+        (
+            "cc10x_pretooluse_guard.py",
+            {"tool_name": "Write", "tool_input": {"file_path": "a.txt"}},
+            [],
+        ),
+    ]
+    for script, payload, argv in runs:
+        r = run_guard(script, {**payload, "cwd": str(cwd)}, proj, argv=argv)
+        assert r.returncode == 0, (script, r.stderr)
+    assert not (checkout / ".cc10x").exists()
+    assert not (proj / ".cc10x").exists()
+
+
+def bash_posttool(project_dir: Path, command: str) -> subprocess.CompletedProcess:
+    return run_guard(
+        "cc10x_posttooluse_artifact_guard.py",
+        {"tool_name": "Bash", "tool_input": {"command": command}},
+        project_dir,
+    )
+
+
+def test_bash_command_writing_into_workflows_is_audited_never_blocked(tmp_path):
+    (tmp_path / ".cc10x").mkdir()
+    commands = [
+        "cp skeleton.json .cc10x/workflows/wf-x.json",
+        "cat > .cc10x/workflows/wf-x.json <<'EOF'\n{}\nEOF",
+        "echo '{}' >> .cc10x/workflows/wf-x.events.jsonl",
+        "printf x | tee .cc10x/workflows/wf-x.json",
+        "mv /tmp/a.json .cc10x/workflows/wf-x.json",
+        "sed -i 's/a/b/' .cc10x/workflows/wf-x.json",
+    ]
+    for command in commands:
+        r = bash_posttool(tmp_path, command)
+        assert r.returncode == 0, (command, r.stderr)
+        assert r.stderr == "" and r.stdout == "", command
+    events = [
+        e for e in hook_log_lines(tmp_path) if e["event"] == "bash_workflow_write"
+    ]
+    assert len(events) == len(commands)
+    assert all(e["decision"] == "audit" for e in events)
+
+
+def test_bash_reads_and_unrelated_writes_do_not_trip_the_workflow_audit(tmp_path):
+    (tmp_path / ".cc10x").mkdir()
+    for command in [
+        "cat .cc10x/workflows/wf-x.json",
+        "ls .cc10x/workflows/",
+        "grep wf .cc10x/workflows/wf-x.json > /tmp/out.txt",
+        "echo hi > notes.txt",
+        "mkdir -p .cc10x/workflows",
+    ]:
+        r = bash_posttool(tmp_path, command)
+        assert r.returncode == 0, (command, r.stderr)
+    assert not [
+        e for e in hook_log_lines(tmp_path) if e["event"] == "bash_workflow_write"
+    ]
+
+
+def hooks_json_matcher(event: str, script: str) -> str:
+    hooks = json.loads((PLUGIN_ROOT / "hooks" / "hooks.json").read_text())["hooks"]
+    matchers = [
+        group["matcher"]
+        for group in hooks[event]
+        if any(script in h["command"] for h in group["hooks"])
+    ]
+    assert len(matchers) == 1, matchers
+    return matchers[0]
+
+
+def test_posttool_artifact_guard_matcher_covers_bash(tmp_path):
+    assert "Bash" in hooks_json_matcher(
+        "PostToolUse", "cc10x_posttooluse_artifact_guard.py"
+    ).split("|")
+
+
+def test_qa_isolation_matcher_lists_only_documented_tools(tmp_path):
+    matcher = hooks_json_matcher("PreToolUse", "cc10x_qa_isolation_guard.py")
+    assert "NotebookRead" not in matcher.split("|")  # not in the tools reference
 
 
 def main() -> int:

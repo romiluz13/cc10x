@@ -14,6 +14,7 @@ Scope discipline (prevents the stale-artifact footgun):
 
 from __future__ import annotations
 
+import re
 import sys
 from pathlib import Path
 
@@ -89,10 +90,42 @@ def is_workflow_artifact(path: Path) -> bool:
         return False
 
 
+_WORKFLOWS_PATH = r"\.cc10x/workflows/"
+_BASH_WORKFLOW_WRITE = re.compile(
+    r">>?\s*[\"']?[^\s;&|]*" + _WORKFLOWS_PATH
+    + r"|\b(?:tee|cp|mv|install|touch|ln|rsync|dd|sed\s+-\S*i\S*)\b[^;&|\n]*"
+    + _WORKFLOWS_PATH
+    + r"|\bopen\([^)]*" + _WORKFLOWS_PATH + r"[^)]*[\"'][wax]"
+)
+
+
+def bash_writes_into_workflows(command: str) -> bool:
+    """Heuristic, audit-only: does a Bash command write into .cc10x/workflows/?
+    The router itself creates the artifact through Bash, so this never blocks."""
+    return bool(_BASH_WORKFLOW_WRITE.search(command))
+
+
 def main() -> int:
     data = load_input()
     mode = load_mode()
     tool_input = data.get("tool_input") or {}
+    if data.get("tool_name") == "Bash":
+        command = tool_input.get("command")
+        if isinstance(command, str) and bash_writes_into_workflows(command):
+            log_event(
+                "plugin_posttooluse_bash_workflow_write",
+                {
+                    "wf": None,
+                    "phase": "unknown",
+                    "task_id": None,
+                    "agent": "router",
+                    "tool_name": "Bash",
+                    "event": "bash_workflow_write",
+                    "decision": "audit",
+                    "reason": "bash-command-writes-into-workflows",
+                },
+            )
+        return 0
     file_path = tool_input.get("file_path")
     if not file_path:
         return 0

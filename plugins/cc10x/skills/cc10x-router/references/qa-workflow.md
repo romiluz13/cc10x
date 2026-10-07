@@ -505,7 +505,7 @@ Escalate to the full graph when the harness builder reports non-empty `SCOPE_INC
 
 ### Isolation and phase discipline (ENFORCED)
 
-These are enforced by `scripts/cc10x_qa_isolation_guard.py` (PreToolUse, matcher `Read|Grep|Glob|NotebookRead|Edit|Write|NotebookEdit|Bash`). Prompt text alone was proven insufficient — a prior run installed global skill fixtures onto the user's machine during a planning phase, via `Bash`, which the `Edit|Write` guards never saw.
+These are enforced by `scripts/cc10x_qa_isolation_guard.py` (PreToolUse, matcher `Read|Grep|Glob|Edit|Write|NotebookEdit|Bash`). Prompt text alone was proven insufficient — a prior run installed global skill fixtures onto the user's machine during a planning phase, via `Bash`, which the `Edit|Write` guards never saw.
 
 **Rule 1 — planning phases mutate nothing.** During `qa` (the bare parent value), `qa-research`, `qa-plan`, `qa-plan-review`, `qa-re-plan`, and `qa-plan-review-2`, no agent creates files outside `.cc10x/`, installs fixtures, provisions services, or runs setup. Planning produces documents. Building the environment is `qa-build`; running it is `qa-execute`. Write what the environment SHOULD be into `env-plan.md` — do not build it.
 

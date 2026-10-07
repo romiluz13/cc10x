@@ -10,6 +10,8 @@ from typing import Any
 
 STATE_VERSION = "v11"
 
+_input_cwd: str | None = None
+
 
 def project_dir() -> Path:
     value = os.environ.get("CLAUDE_PROJECT_DIR")
@@ -29,10 +31,32 @@ def plugin_config_dir() -> Path:
     return plugin_root() / "config"
 
 
+def git_checkout_root(start: Path) -> Path | None:
+    """Nearest ancestor of `start` (itself included) holding a `.git` entry,
+    file (worktree) or directory."""
+    for candidate in (start, *start.parents):
+        if (candidate / ".git").exists():
+            return candidate
+    return None
+
+
 def state_root() -> Path:
     """The project's .cc10x dir. Never creates it — guards must not litter
     state dirs into repos that never opted into CC10x. Callers that write
-    into an opted-in project use ensure_state_root()."""
+    into an opted-in project use ensure_state_root().
+
+    Precedence: the .cc10x of the git checkout or worktree containing the hook
+    input `cwd` (CLAUDE_PROJECT_DIR stays on the main checkout while `cwd`
+    follows Claude into a worktree), then CLAUDE_PROJECT_DIR/.cc10x, then
+    project_dir()/.cc10x. No other walk-up: a stray nested .cc10x is never
+    selected."""
+    if _input_cwd:
+        root = git_checkout_root(Path(_input_cwd))
+        if root is not None and (root / ".cc10x").is_dir():
+            return root / ".cc10x"
+    env_dir = os.environ.get("CLAUDE_PROJECT_DIR")
+    if env_dir and (Path(env_dir) / ".cc10x").is_dir():
+        return Path(env_dir) / ".cc10x"
     return project_dir() / ".cc10x"
 
 
@@ -51,13 +75,17 @@ def logs_dir() -> Path:
 
 
 def load_input() -> dict[str, Any]:
+    global _input_cwd
     raw = sys.stdin.read()
     if not raw.strip():
         return {}
     try:
-        return json.loads(raw)
+        data = json.loads(raw)
     except (ValueError, TypeError):
         return {}
+    if isinstance(data, dict) and isinstance(data.get("cwd"), str):
+        _input_cwd = data["cwd"]
+    return data
 
 
 def load_mode() -> dict[str, str]:

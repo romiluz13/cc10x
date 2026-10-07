@@ -105,7 +105,7 @@ from cc10x_hooklib import (
     project_dir,
 )
 
-READ_TOOLS = {"Read", "Grep", "Glob", "NotebookRead"}
+READ_TOOLS = {"Read", "Grep", "Glob"}
 WRITE_TOOLS = {"Edit", "Write", "NotebookEdit"}
 
 PLAN_PHASES = {

@@ -5791,15 +5791,6 @@ def main() -> int:
     # want=True means DENY. Each row is (id, artifact, tool payload, want_deny).
     pp38_cases = [
         (
-            "a",
-            pp38_artifact(pp38_denylist),
-            {
-                "tool_name": "NotebookRead",
-                "tool_input": {"notebook_path": "/tmp/pp38-secret.ipynb"},
-            },
-            True,
-        ),
-        (
             "b",
             pp38_artifact(pp38_denylist),
             {
@@ -5859,11 +5850,12 @@ def main() -> int:
                     f"want {'DENY' if want_deny else 'ALLOW'}"
                 )
 
+    # P5.T1 retired the NotebookRead probe: the tools reference documents no such
+    # tool (Read handles notebooks), so it left READ_TOOLS and the matcher.
     check(
         "PP-38(a)",
-        "a" not in pp38_results,
-        "NotebookRead of a denylisted notebook_path is DENIED"
-        + ("" if "a" not in pp38_results else " -- " + pp38_results["a"]),
+        "NotebookRead" not in load_guard().READ_TOOLS,
+        "NotebookRead (not a documented tool) is not a READ_TOOLS member",
     )
     check(
         "PP-38(b)",
@@ -5915,7 +5907,7 @@ def main() -> int:
     pp38f_detail = ""
     # Anti-vacuity, asserted BEFORE the containment test: zero entries makes the
     # loop iterate nothing, and an empty required set makes containment
-    # vacuously true. 1 entry and 8 required tools measured at this commit.
+    # vacuously true. 1 entry and 7 required tools measured at this commit.
     if len(pp38_entries) != 1:
         pp38f_ok = False
         pp38f_detail = (
@@ -5923,11 +5915,11 @@ def main() -> int:
             f"cc10x_qa_isolation_guard.py, expected exactly 1 -- any matcher "
             f"result below is vacuous"
         )
-    elif len(pp38_required) < 8:
+    elif len(pp38_required) < 7:
         pp38f_ok = False
         pp38f_detail = (
             f"PRECONDITION failed: READ_TOOLS | WRITE_TOOLS | {{Bash}} holds "
-            f"{len(pp38_required)} tools, expected >= 8 -- the guard's tool sets "
+            f"{len(pp38_required)} tools, expected >= 7 -- the guard's tool sets "
             f"have been emptied, so any containment result below is vacuous"
         )
     else:
