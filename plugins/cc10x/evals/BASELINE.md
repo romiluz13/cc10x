@@ -86,6 +86,19 @@ Read from the router text and references after the P4A remediation 1 commits (`S
 
 Measured in this remediation: replay fixtures `fixtures=34` (two new paused-advisory fixtures), pytest and prompt clause counts are in the prompt change record. No red case newly appears by reading.
 
+## post-P4A remediation 2 expected (analytical, not measured)
+
+Read from the router text and references after the P4A remediation 2 commits (`SKILL.md` 783 lines). Still no L2 run (AD-2). Only the cases the remediation touches are restated.
+
+| case id | post-remediation 1 | post-remediation 2 (analytical, not measured) | reason (edited text) |
+| --- | --- | --- | --- |
+| build-trivial-happy | green | green | the artifact-only scaffold now passes `Task ID: N/A` and tells write agents to skip `TaskUpdate`; the reduced graph is unchanged |
+| build-multiphase-memory-finalize | green (needs Task tools) | green (needs Task tools) | the template for phases after the first carries the previous phase's last-task block; in artifact-only mode step completion reads the phase-keyed events log, so phase 2 or a second REM-FIX cycle does not look done from the flat `results` slots (fixture `multi-phase-resume-events`) |
+| two-workflow-resume | green | green | resume drops terminal workflows first, answers and clears `pending_gate`, starts a new workflow on zero non-terminal matches and asks on more than one; `wf:` scoping is unchanged |
+| triage-loads-reference | green | green | the advisory references gain a failure and abandonment section (`failure_stop_gate`, no Memory Update, an unanswered pause stays open); captured notes go to the artifact `memory_notes` |
+
+Measured in this remediation: replay fixtures `fixtures=35`; pytest and prompt clause counts are in the prompt change record. No red case newly appears by reading.
+
 ## Visibility
 
 Every tracked path under `evals/cases/` and this file must report `git check-ignore -q` exit 1; `evals/results/x.json` must report exit 0. Grader file names avoid the substrings `test` and `audit` because `.gitignore` globs `*test*.md` and `*audit*.md` would silently untrack them.

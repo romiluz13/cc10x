@@ -1024,6 +1024,30 @@ def _resume_boundary_after_results(d):
     case["events"].insert(5, boundary)
 
 
+def _triage_pause_wrong_gate(d):
+    d["starting_artifact"]["pending_gate"] = "needs_grilling"
+
+
+def _health_pause_wrong_gate(d):
+    d["starting_artifact"]["pending_gate"] = "needs_info"
+
+
+def _advisory_converged(d):
+    d["starting_artifact"]["quality"]["convergence_state"] = "converged"
+
+
+def _advisory_four_remediations(d):
+    d["starting_artifact"]["remediation_history"] = [
+        {"ts": "2026-10-07T13:00:00Z", "phase": "triage", "reason": "x", "cycle_number": n} for n in range(1, 5)
+    ]
+
+
+def _triage_wontfix_with_grilling(d):
+    contract = d["agent_outputs"]["triage_agent_contract"]
+    contract["STATUS"] = "WONTFIX"
+    contract["NEEDS_GRILLING"] = True
+
+
 def _builder2_blocked_by_verifier_only(d):
     d["relevant_tasks"]["builder_phase_2"]["blockedBy"] = ["verifier_phase_1"]
 
@@ -1084,6 +1108,14 @@ L1_MUTATIONS = [
     ("multi-phase-resume-events.json", _resume_expect_flat_results, "runnable steps"),
     ("multi-phase-resume-events.json", _resume_stale_slots_empty, "stale slot"),
     ("multi-phase-resume-events.json", _resume_boundary_after_results, "runnable steps"),
+    ("triage-needs-info-pause.json", _triage_pause_wrong_gate, "pending_gate must be 'needs_info'"),
+    ("codebase-health-candidate-pause.json", _health_pause_wrong_gate, "pending_gate must be 'candidate_choice'"),
+    ("triage-needs-info-pause.json", _advisory_converged, "advisory workflow must carry convergence_state N/A"),
+    ("codebase-health-candidate-pause.json", _advisory_converged, "advisory workflow must carry convergence_state N/A"),
+    ("triage-happy-path.json", _advisory_converged, "advisory workflow must carry convergence_state N/A"),
+    ("triage-needs-info-pause.json", _advisory_four_remediations, "advisory workflow must carry no remediation_history"),
+    ("codebase-health-happy-path.json", _advisory_four_remediations, "advisory workflow must carry no remediation_history"),
+    ("triage-happy-path.json", _triage_wontfix_with_grilling, "expected TRIAGED"),
     ("two-workflow-resume.json", _share_workflow_id, "distinct workflow_id"),
     ("two-workflow-resume.json", _foreign_task, "resumed task a_builder carries wf"),
 ]

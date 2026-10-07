@@ -3157,6 +3157,54 @@ ASSERTIONS = [
         lambda text: re.search(r"post-verifier finding validation, `SKILL\.md` §12\)", text) is not None and "`SKILL.md` §13)" not in text,
         "same section-number fix in the policy reference",
     ),
+    # --- P4A remediation 2, commit 3: survivors of the hunt that are cheap to pin ---
+    A(
+        "remediation: the backstop append names artifact-only and inline mode, where no task exists and the hook does not run",
+        SKILLS / "cc10x-router" / "references" / "remediation-and-research.md",
+        lambda text: "when the router records the REM-FIX step in artifact-only mode or inline mode (no task exists then, and the hook below does not run)" in text,
+        "without this clause the append rule reads as task-bound and the artifact count goes stale in those modes",
+    ),
+    A(
+        "router: artifact-only mode is recorded once in status_history",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: "Record the mode once in `status_history`." in text,
+        "resume and audit need to see which mode produced the graph",
+    ),
+    A(
+        "router: a paused advisory workflow's pending_gate names the open question",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: "its artifact `pending_gate` names the open question" in text,
+        "a paused workflow has no task, so the gate is its only locator of the question",
+    ),
+    A(
+        "router: inline mode appends remediation_history entries too",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: "inline mode appends `remediation_history` entries too" in text,
+        "the breaker count must exist in inline mode",
+    ),
+    A(
+        "build-workflow: Memory Update is created once per workflow with the LAST phase's graph, never an earlier one",
+        ROUTER_REFS / "build-workflow.md",
+        lambda text: re.search(
+            r"Memory Update is created once per workflow, with the LAST phase's graph, blocked on the LAST phase's `integration-verifier`[^\n]{0,80}It is never created with an earlier phase's graph and never finalized after an earlier phase",
+            text,
+        )
+        is not None,
+        "phase 1 of a multi-phase plan must not write memory",
+    ),
+    A(
+        "triage-workflow: a NEEDS_GRILLING pause ends in Memory Update only after a second pass returns a terminal state",
+        ROUTER_REFS / "triage-workflow.md",
+        lambda text: re.search(r"`pending_gate: needs_grilling`\) with no Memory Update task until the grilled result has fed a second triage-agent pass that returns a terminal state", text) is not None
+        and re.search(r"On a terminal result it then creates the Memory Update task \(blocked by that triage task\)", text) is not None,
+        "the grill result must reach a terminal pass before memory finalizes",
+    ),
+    A(
+        "triage-workflow: WONTFIX is terminal regardless of NEEDS_GRILLING, matching the replay checker",
+        ROUTER_REFS / "triage-workflow.md",
+        lambda text: re.search(r"terminal states are `STATUS=TRIAGED` with `NEEDS_GRILLING` not true, and `STATUS=WONTFIX`\. On `STATUS=NEEDS_INFO`", text) is not None,
+        "the checker's triage_is_terminal and this sentence must stay the same rule",
+    ),
 ]
 
 
