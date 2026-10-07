@@ -1516,3 +1516,65 @@ def test_artifact_mode_names_a_non_object_artifact(payload, tmp_path):
     path.write_text(payload, encoding="utf-8")
     result = run_tool("workflow_replay_check.py", None, "--artifact", str(path))
     assert result.returncode == 1 and "must be a JSON object" in result.stderr, result.stderr
+
+
+HOOKS_README_REL = "plugins/cc10x/hooks/README.md"
+
+
+def readme_errors(root: Path) -> list[str]:
+    return harness_audit.check_hooks_readme(root / "plugins" / "cc10x")
+
+
+def test_hooks_readme_lists_every_registered_hook_exactly_once_on_the_real_tree():
+    assert harness_audit.check_hooks_readme() == []
+
+
+def test_a_hook_missing_from_the_hooks_readme_is_named(tmp_path):
+    root = make_tree(tmp_path)
+    readme = root / HOOKS_README_REL
+    readme.write_text(
+        readme.read_text(encoding="utf-8").replace("`cc10x_qa_isolation_guard.py`", "the QA guard"),
+        encoding="utf-8",
+    )
+    assert any("cc10x_qa_isolation_guard.py" in e and "0 times" in e for e in readme_errors(root))
+    result = run_tool("harness_audit.py", root)
+    assert result.returncode == 1 and "hooks README" in result.stderr
+
+
+def test_each_event_logger_registration_must_be_listed_by_its_argument(tmp_path):
+    root = make_tree(tmp_path)
+    readme = root / HOOKS_README_REL
+    readme.write_text(
+        readme.read_text(encoding="utf-8").replace("`cc10x_event_logger.py stop_failure`", "the failure logger"),
+        encoding="utf-8",
+    )
+    assert any("cc10x_event_logger.py stop_failure" in e for e in readme_errors(root))
+
+
+def test_a_hook_listed_twice_in_the_hooks_readme_is_named(tmp_path):
+    root = make_tree(tmp_path)
+    readme = root / HOOKS_README_REL
+    readme.write_text(readme.read_text(encoding="utf-8") + "\nAgain: `cc10x_git_guard.py`.\n", encoding="utf-8")
+    assert any("cc10x_git_guard.py" in e and "2 times" in e for e in readme_errors(root))
+
+
+def test_a_phantom_hook_script_in_the_hooks_readme_is_named(tmp_path):
+    root = make_tree(tmp_path)
+    readme = root / HOOKS_README_REL
+    readme.write_text(readme.read_text(encoding="utf-8") + "\nAlso `cc10x_ghost_guard.py`.\n", encoding="utf-8")
+    assert any("cc10x_ghost_guard.py" in e for e in readme_errors(root))
+
+
+@pytest.mark.parametrize(
+    "phrase",
+    ["the only two enforcement points", "only 2 enforcement points", "the only three blocking hooks", "Only one enforcement point"],
+)
+@pytest.mark.parametrize(
+    "rel",
+    [HOOKS_README_REL, "README.md", "plugins/cc10x/skills/cc10x-router/references/workflow-artifact-and-hook-policy.md"],
+)
+def test_the_only_n_enforcement_points_claim_is_rejected_wherever_it_appears(phrase, rel, tmp_path):
+    root = make_tree(tmp_path)
+    path = root / rel
+    path.write_text(path.read_text(encoding="utf-8") + f"\n**Blocking** ({phrase}):\n", encoding="utf-8")
+    assert any("enforcement" in e and rel in e for e in readme_errors(root))

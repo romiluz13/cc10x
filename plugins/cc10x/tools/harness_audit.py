@@ -457,6 +457,49 @@ def check_hook_registration(plugin_root: Path = PLUGIN_ROOT) -> list[str]:
     return errors
 
 
+_HOOK_README_SCRIPT = re.compile(r"`(cc10x_[A-Za-z0-9_]+\.(?:py|sh))(?: [^`]*)?`")
+_ENFORCEMENT_COUNT_CLAIM = re.compile(
+    r"\bonly\s+(?:\w+\s+)?(?:enforcement|blocking)\s+(?:points?|hooks?)\b", re.I
+)
+
+
+def check_hooks_readme(plugin_root: Path = PLUGIN_ROOT) -> list[str]:
+    """hooks/README.md names every hook in hooks.json once, names no other hook
+    script, and no doc claims a fixed number of enforcement points (the count
+    changed before and the claim went stale)."""
+    errors: list[str] = []
+    readme = read(plugin_root / "hooks" / "README.md")
+    try:
+        hooks = json.loads(read(plugin_root / "hooks" / "hooks.json"))["hooks"]
+    except (ValueError, KeyError):
+        hooks = {}
+    keys: list[str] = []
+    for groups in hooks.values() if isinstance(hooks, dict) else ():
+        for group in groups if isinstance(groups, list) else ():
+            for hook in group.get("hooks", []) if isinstance(group, dict) else ():
+                parsed = _HOOK_COMMAND.fullmatch(hook.get("command", "")) if isinstance(hook, dict) else None
+                if parsed:
+                    keys.append(parsed.group(2) + hook["command"].split('"')[-1].rstrip())
+    for key in dict.fromkeys(keys):
+        count = readme.count(f"`{key}`")
+        if count != 1:
+            errors.append(f"hooks README lists `{key}` {count} times, expected exactly once")
+    registered = {key.split()[0] for key in keys}
+    errors.extend(
+        f"hooks README names `{script}`, which hooks.json does not register"
+        for script in sorted(set(_HOOK_README_SCRIPT.findall(readme)) - registered)
+    )
+    root = plugin_root.parent.parent
+    for path in (
+        plugin_root / "hooks" / "README.md",
+        root / "README.md",
+        plugin_root / "skills" / "cc10x-router" / "references" / "workflow-artifact-and-hook-policy.md",
+    ):
+        if path.exists() and _ENFORCEMENT_COUNT_CLAIM.search(read(path)):
+            errors.append(f"{path.relative_to(root)} claims a fixed count of enforcement points; list them instead")
+    return errors
+
+
 _INVENTORY_PATH = re.compile(r"`((?:plugins|docs|\.claude-plugin)/[^`\s*]+)`")
 _INVENTORY_ENTRY = re.compile(r"^### (\S+)[ \t]*$", re.M)
 _REGISTRY_ROW = re.compile(r"^\|[ \t]*`([A-Za-z0-9_-]+)`[ \t]*\|", re.M)
@@ -626,6 +669,7 @@ def main(argv: list[str] | None = None) -> int:
                 )
 
     errors.extend(check_hook_registration())
+    errors.extend(check_hooks_readme())
 
     if not REPLAY_CHECK.exists():
         errors.append("missing workflow replay checker script")
