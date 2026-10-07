@@ -43,7 +43,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import NamedTuple
 
-from cc10x_hooklib import log_event, pretool_deny, state_root
+from cc10x_hooklib import load_input, log_event, pretool_deny, state_root
 
 MAX_TOKEN_AGE_SECONDS = 600  # backstop even if expires_at is missing/garbled
 
@@ -97,6 +97,22 @@ BLOCKED_PATTERNS = [
 ]
 
 
+def _log_token(event: str, reason: str, **extra: str) -> None:
+    log_event(
+        f"plugin_{event}",
+        {
+            "wf": None,
+            "phase": "build-finish",
+            "task_id": None,
+            "agent": "router",
+            "event": event,
+            "decision": "deny",
+            "reason": reason,
+            **extra,
+        },
+    )
+
+
 def approval_token_path() -> Path:
     return state_root() / "state" / "git-approval.json"
 
@@ -114,8 +130,12 @@ def consume_approval(operation: str) -> str | None:
     try:
         token = json.loads(path.read_text(encoding="utf-8"))
     except Exception:
+        token = None
+    if not isinstance(token, dict):
+        # Truncated, corrupt or valid JSON that is not an object: no token.
         with contextlib.suppress(OSError):
             path.unlink()
+        _log_token("git_guard_token_invalid", "unparseable-or-not-an-object")
         return None
 
     now = datetime.now(timezone.utc)
@@ -209,10 +229,18 @@ MSG_CHECKOUT = BLOCKED_PATTERNS[5][1]
 MSG_RESTORE = BLOCKED_PATTERNS[8][1]
 MSG_CHECKOUT_FORCE = "git checkout -f — discards uncommitted changes."
 MSG_STASH_CLEAR = "git stash clear — permanently discards every stash."
+MSG_CLASSIFIER_ERROR = (
+    "the git guard classifier failed on this command, so it cannot be cleared."
+)
 
 SHELLS = {"bash", "sh", "zsh", "dash", "ksh"}
 # Their quoted arguments are text, not commands (unless a shell reads them).
 DATA_COMMANDS = {"echo", "printf", "grep", "egrep", "fgrep"}
+# A data command's quoted text is exempt only while every member of its
+# pipeline is a pure text filter (or another data command) and none of them
+# redirects output: anything else may execute or store what it reads.
+TEXT_FILTERS = {"grep", "egrep", "fgrep", "cat", "head", "tail", "wc", "sort", "uniq", "tr", "cut"}
+REDIRECT = re.compile(r"(>>|>&|>|<<<|<<-?|<)(.*)$")
 # Zero-argument prefixes that only continue into the real command.
 KEYWORDS = {
     "if", "then", "else", "elif", "do", "while", "until", "!", "{", "}",
@@ -323,6 +351,12 @@ def _lex(command: str) -> list[_Tok] | None:
             flush()
             toks.append(_Tok("\n", op=True))
             i += 1
+        elif char == "&" and (
+            (state["word"] and buf and buf[-1] in "<>") or command.startswith(">", i + 1)
+        ):
+            buf.append(char)  # `2>&1`, `&>file`: part of a redirection word
+            state["word"] = True
+            i += 1
         elif char in ";&|()":
             flush()
             pair = command[i : i + 2]
@@ -337,6 +371,33 @@ def _lex(command: str) -> list[_Tok] | None:
                 buf.append(command[i + 1])
                 state["word"] = state["quoted"] = True
             i += 2
+        elif char == "#" and not state["word"]:
+            end = command.find("\n", i)
+            i = n if end < 0 else end
+        elif char == "$" and command.startswith("'", i + 1):
+            escapes = {"n": "\n", "t": "\t", "r": "\r"}
+            decoded: list[str] = []
+            j = i + 2
+            while j < n and command[j] != "'":
+                if command[j] == "\\" and j + 1 < n:
+                    decoded.append(escapes.get(command[j + 1], command[j + 1]))
+                    j += 2
+                else:
+                    decoded.append(command[j])
+                    j += 1
+            if j >= n:
+                return None
+            buf.append("".join(decoded))
+            state["word"] = state["quoted"] = True
+            i = j + 1
+        elif char in "<>" and command.startswith("(", i + 1):
+            captured = _capture_paren(command, i + 2)
+            if captured is None:
+                return None
+            subst.append(captured[0])
+            buf.append(char + "(" + captured[0] + ")")
+            state["word"] = True
+            i = captured[1]
         elif char == "'":
             end = command.find("'", i + 1)
             if end < 0:
@@ -494,7 +555,7 @@ def _git(args: list[str], depth: int) -> list[tuple[str, str]]:
     if value is not None:
         tail = " ".join(rest)
         script = value[1:] if value.startswith("!") else "git " + value
-        found += _scan(f"{script} {tail}", depth + 1)
+        found += _scan(f"{script} {tail}", depth + 1, False)
     return found
 
 
@@ -535,34 +596,75 @@ def _shell_script_arg(words: list[_Tok]) -> int | None:
     return None
 
 
-def _reads_stdin_script(words: list[_Tok]) -> bool:
-    return (
-        bool(words)
-        and words[0].text.rsplit("/", 1)[-1] in SHELLS
-        and _shell_script_arg(words) is None
+def _redirects(segment: list[_Tok]) -> bool:
+    """True when an unquoted word redirects output (or feeds a here-string or
+    heredoc) anywhere but /dev/null and file-descriptor duplication."""
+    for idx, tok in enumerate(segment):
+        if tok.quoted or tok.op:
+            continue
+        match = REDIRECT.search(tok.text)
+        if match is None:
+            continue
+        op, target = match.groups()
+        if not target and idx + 1 < len(segment):
+            target = segment[idx + 1].text
+        if op.startswith("<<"):
+            return True
+        if op == "<":
+            continue
+        if target == "/dev/null" or (
+            op in (">", ">&") and re.fullmatch(r"&?(\d+|-)", target)
+        ):
+            continue
+        return True
+    return False
+
+
+def _name(words: list[_Tok]) -> str:
+    return words[0].text.rsplit("/", 1)[-1] if words else ""
+
+
+def _text_only(pipeline: list[list[_Tok]], words: list[list[_Tok]]) -> bool:
+    """Every member is a text filter or data command and none redirects."""
+    return all(
+        _name(member_words) in TEXT_FILTERS | DATA_COMMANDS
+        and not _redirects(member)
+        for member, member_words in zip(pipeline, words)
     )
 
 
 def _segment(
-    segment: list[_Tok], words: list[_Tok], stdin_exec: bool, depth: int
+    segment: list[_Tok],
+    words: list[_Tok],
+    exempt: bool,
+    inner_data_ok: bool,
+    depth: int,
 ) -> list[tuple[str, str]]:
-    name = words[0].text.rsplit("/", 1)[-1] if words else ""
-    if name in DATA_COMMANDS and not stdin_exec:
-        return _floor(" ".join(tok.text for tok in segment if not tok.quoted))
+    name = _name(words)
+    if name in DATA_COMMANDS and exempt:
+        # A quoted word with a newline is not one word of data: it is read
+        # line by line, as executable text.
+        multiline = [tok for tok in segment if tok.quoted and "\n" in tok.text]
+        found = _floor(
+            " ".join(tok.text for tok in segment if not tok.quoted or tok in multiline)
+        )
+        for tok in multiline:
+            found += _scan(tok.text, depth + 1, False)
+        return found
     found = _floor(" ".join(tok.text for tok in segment))
     args = [tok.text for tok in words[1:]]
     if name in DATA_COMMANDS:
         for tok in words[1:]:
             if tok.quoted:
-                found += _scan(tok.text, depth + 1)
+                found += _scan(tok.text, depth + 1, False)
     elif name == "git":
         found += _git(args, depth)
     elif name in SHELLS:
         idx = _shell_script_arg(words)
         if idx is not None and idx < len(words):
-            found += _scan(words[idx].text, depth + 1)
+            found += _scan(words[idx].text, depth + 1, inner_data_ok)
     elif name == "eval":
-        found += _scan(" ".join(args), depth + 1)
+        found += _scan(" ".join(args), depth + 1, inner_data_ok)
     return found
 
 
@@ -579,7 +681,10 @@ def _groups(toks: list[_Tok]) -> list[list[list[_Tok]]]:
     return groups
 
 
-def _scan(command: str, depth: int) -> list[tuple[str, str]]:
+def _scan(command: str, depth: int, data_ok: bool = True) -> list[tuple[str, str]]:
+    """`data_ok` is False where the output of the scanned text is consumed by
+    something else (a substitution body, a script handed to a shell): there a
+    quoted echo/grep/printf argument is not known to be inert data."""
     if depth > MAX_DEPTH:
         return _floor(command)
     found: list[tuple[str, str]] = []
@@ -594,12 +699,13 @@ def _scan(command: str, depth: int) -> list[tuple[str, str]]:
             toks += line_toks + [_Tok("\n", op=True)]
     for pipeline in _groups(toks):
         words = [_command_words(segment) for segment in pipeline]
-        stdin_exec = any(_reads_stdin_script(w) for w in words)
+        exempt = data_ok and _text_only(pipeline, words)
         for segment, segment_words in zip(pipeline, words):
             for tok in segment:
                 for body in tok.subst:
-                    found += _scan(body, depth + 1)
-            found += _segment(segment, segment_words, stdin_exec, depth)
+                    found += _scan(body, depth + 1, False)
+            inner_ok = data_ok and len(pipeline) == 1 and not _redirects(segment)
+            found += _segment(segment, segment_words, exempt, inner_ok, depth)
     return found
 
 
@@ -619,9 +725,25 @@ def classify_git_command(command: str) -> tuple[str, str] | None:
     return _pick(_scan(command, 0))
 
 
+def _log_classifier_failure(exc: Exception, command: str) -> None:
+    log_event(
+        "plugin_git_guard_classifier_failed",
+        {
+            "wf": None,
+            "phase": "unknown",
+            "task_id": None,
+            "agent": "unknown",
+            "event": "git_guard_classifier_failed",
+            "decision": "deny" if "git" in command.lower() else "allow",
+            "reason": "classifier-error",
+            "error": exc.__class__.__name__,
+        },
+    )
+
+
 def main() -> int:
     try:
-        data = json.load(sys.stdin)
+        data = load_input()
     except Exception:
         return 0
 
@@ -632,15 +754,26 @@ def main() -> int:
 
     try:
         verdict = classify_git_command(command)
-    except Exception:
-        verdict = _pick(_floor(command))
+    except Exception as exc:
+        # Fail closed when the text names git: a silent fallback to the floor
+        # would be weaker than the classifier it replaces.
+        _log_classifier_failure(exc, command)
+        verdict = (
+            ("classifier-error", MSG_CLASSIFIER_ERROR)
+            if "git" in command.lower()
+            else None
+        )
     if verdict is None:
         return 0
 
     key, reason = verdict
     operation = APPROVABLE.get(key)
     if operation is not None:
-        wf = consume_approval(operation)
+        try:
+            wf = consume_approval(operation)
+        except Exception as exc:
+            _log_token("git_guard_token_check_failed", exc.__class__.__name__)
+            wf = None
         if wf is not None:
             log_event(
                 "plugin_git_guard_approved",

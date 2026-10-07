@@ -2033,6 +2033,48 @@ EXECUTED_TEMPLATES = (
     "git -C . log && {}",
 )
 
+# Lexer bypass shapes: every one must be denied for every destructive command.
+LEXER_TEMPLATES = (
+    # A quote inside a shell comment must not open a quoted span that swallows
+    # the next line, and ANSI-C quoting has its own escape rules.
+    "echo \"x\" # model's note\n{} # it's ready",
+    "echo ok # don't\n{}",
+    "grep -q x f # say \"hi\n{} # and \"bye",
+    "echo $'it\\'s'\n{} # it's ready",
+    "printf '%s' $'a\\'b'\n{}\necho 'c' # it's",
+    "echo $'it\\'s' ; {} ; echo # don't",
+    # Quoted text spanning lines is not a single word of data.
+    "echo 'first line\n{}\nlast line'",
+)
+
+# Destructive text in an echo/printf/grep quote whose output is consumed by
+# something that executes it or writes it to a file. `@@` marks the text.
+PIPE_EXECUTED_TEMPLATES = (
+    "echo '@@' | xargs -I{} sh -c {}",
+    "echo '@@' | xargs bash -c",
+    "echo '@@' | while read c; do $c; done",
+    "echo '@@' | source /dev/stdin",
+    "echo '@@' | . /dev/stdin",
+    "printf '%s' '@@' | python3 -c 'import os, sys; os.system(sys.stdin.read())'",
+    "echo '@@' | perl -e 'system(<STDIN>)'",
+    "echo '@@' | sed 's/a/b/' | sh",
+    "echo '@@' |\nsh",
+    "echo '@@' | tee run.sh",
+    "echo '@@' | cat > run.sh",
+    "echo '@@' > f.sh && sh f.sh",
+    "echo '@@' >> .git/hooks/pre-commit",
+    "printf '%s' '@@' > x.sh; sh x.sh",
+    "grep '@@' notes > out.sh && sh out.sh",
+    "echo a>b '@@'",
+    "echo '@@' >(sh)",
+    "bash <(echo '@@')",
+    "echo \"$(echo '@@')\"",
+    "sh -c \"$(echo '@@')\"",
+    "bash -c \"echo '@@'\" | sh",
+    "eval \"$(printf '%s' '@@')\"",
+    "echo 'echo \"@@\"' | sh",
+)
+
 # Reviewed quoted-data shapes: the destructive text is one quoted argument of
 # echo, grep or printf and is never executed. The legacy list denies them all;
 # the classifier is allowed to differ on exactly these.
@@ -2042,6 +2084,11 @@ QUOTED_DATA_TEMPLATES = (
     'grep "{}" notes.txt',
     "grep -rn '{}' docs/",
     "printf '%s\\n' \"{}\"",
+    "echo '{}' | cat",
+    "cat notes | grep \"{}\" | head -5",
+    "grep '{}' f 2>/dev/null",
+    "grep -c '{}' f 2>&1 | tail -1",
+    "printf '%s\\n' '{}' | sort | uniq -c",
 )
 # Copied verbatim from cc10x_git_guard.py at BASE (64b74ee) before the rewrite.
 LEGACY_BLOCKED_PATTERNS = [
@@ -2121,6 +2168,14 @@ QUOTED_DATA_EXCEPTIONS = frozenset(
     )
     if legacy_denies(command)
 )
+
+
+def pipe_executed_corpus() -> dict[str, str]:
+    return {
+        template.replace("@@", git(*words)): template
+        for words in DESTRUCTIVE
+        for template in PIPE_EXECUTED_TEMPLATES
+    }
 
 
 def verdict(command: str) -> str:
@@ -2292,8 +2347,9 @@ def test_legacy_denied_corpus_stays_denied_except_reviewed_quoted_data(tmp_path)
         **{
             template.format(git(*words)): template
             for words in DESTRUCTIVE
-            for template in EXECUTED_TEMPLATES + QUOTED_DATA_TEMPLATES
+            for template in EXECUTED_TEMPLATES + LEXER_TEMPLATES + QUOTED_DATA_TEMPLATES
         },
+        **pipe_executed_corpus(),
     }
     legacy_denied = {
         c for c in corpus if legacy_denies(c)
@@ -2307,10 +2363,17 @@ def test_legacy_denied_corpus_stays_denied_except_reviewed_quoted_data(tmp_path)
     assert not lost, f"{len(lost)} denials lost, first: {lost[:5]}"
 
 
+TEXT_FILTERS = ("grep", "egrep", "fgrep", "cat", "head", "tail", "wc", "sort", "uniq", "tr", "cut")
+
+
 def test_quoted_data_exceptions_are_real_and_narrow(tmp_path):
     assert len(QUOTED_DATA_EXCEPTIONS) > 50
     for command in sorted(QUOTED_DATA_EXCEPTIONS):
-        assert command.split()[0] in ("echo", "grep", "printf"), command
+        assert command.split()[0] in ("echo", "grep", "printf", "cat"), command
+        for member in command.split("|"):
+            assert member.split()[0] in ("echo", "printf") + TEXT_FILTERS, command
+        stripped = re.sub(r"\d?>(&\d|/dev/null)", "", command)
+        assert not re.search(r"[<>]|\$\(|`", stripped), f"redirect or subst: {command!r}"
         assert legacy_denies(command), f"not a legacy denial, stale entry: {command!r}"
         assert classify(command) is None, f"still denied: {command!r}"
 
@@ -2414,6 +2477,190 @@ def test_git_guard_unterminated_quote_with_destructive_text_is_still_denied(tmp_
     r = run_guard("cc10x_git_guard.py", {"tool_input": {"command": command}}, tmp_path)
     assert r.returncode in (0, 2)
     assert json.loads(r.stdout)["hookSpecificOutput"]["permissionDecision"] == "deny"
+
+
+def test_classifier_denies_every_executed_text_shape(tmp_path):
+    corpus = {
+        template.format(git(*words)): template
+        for words in DESTRUCTIVE
+        for template in LEXER_TEMPLATES
+    }
+    corpus.update(pipe_executed_corpus())
+    assert len(corpus) > 500
+    undenied = [f"{c!r}" for c in sorted(corpus) if classify(c) is None]
+    assert not undenied, f"{len(undenied)} undenied, first: {undenied[:6]}"
+
+
+def test_classifier_denies_after_a_comment_holding_a_quote_character(tmp_path):
+    push = git("push", "origin", "main")
+    reset = git("reset", "--hard")
+    clean = git("clean", "-fd")
+    shapes = [
+        'echo "x" # model\'s note\n' + push + " # it's ready",
+        'echo "x" # model\'s note\n' + reset + " # it's ready",
+        'echo "x" # model\'s note\n' + clean + " # it's ready",
+        'echo "x" # say "hi\n' + push + ' # and "bye',
+        "echo $'it\\'s'\n" + push + " # it's ready",
+        "echo ok # don't\n" + reset,
+    ]
+    for command in shapes:
+        assert classify(command) is not None, command
+        r = run_guard("cc10x_git_guard.py", {"tool_input": {"command": command}}, tmp_path)
+        assert json.loads(r.stdout)["hookSpecificOutput"]["permissionDecision"] == "deny"
+
+
+def test_classifier_reads_comments_and_ansi_c_quotes_like_the_shell(tmp_path):
+    assert classify("echo hi # " + git("push")) is None
+    assert classify("echo hi;# " + git("push")) is None
+    assert classify("echo a#b && " + git("push")) is not None
+    assert classify("$'" + "git" + "' push origin main") is not None
+    assert classify("echo $'it\\'s' && " + git("reset", "--hard")) is not None
+
+
+def test_classifier_denies_quoted_text_spanning_lines(tmp_path):
+    command = "echo 'notes\n" + git("push", "origin", "main") + "\nmore'"
+    assert classify(command) is not None
+    assert classify("echo 'one line " + git("push") + "'") is None
+
+
+def test_classifier_allows_quoted_text_only_through_text_filter_pipes(tmp_path):
+    allowed = [
+        "grep -rn \"" + git("push", "origin", "main") + "\" plugins/ 2>/dev/null",
+        "cat f | grep '" + git("reset", "--hard") + "' | head -3",
+        "grep -c \"" + git("clean", "-fd") + "\" f 2>&1 | tail -1",
+        "echo '" + git("push") + "' | wc -l",
+    ]
+    wrongly_denied = [c for c in allowed if classify(c) is not None]
+    assert not wrongly_denied, wrongly_denied
+    denied = [
+        "grep '" + git("push") + "' f | xargs sh -c",
+        "git log | grep '" + git("push") + "'",
+        "grep '" + git("push") + "' f > out.sh",
+        "echo '" + git("push") + "' <<< x",
+    ]
+    undenied = [c for c in denied if classify(c) is None]
+    assert not undenied, undenied
+
+
+def run_git_guard_in_process(project_dir: Path, command: str, patches=()):
+    import contextlib
+    import io
+    from unittest import mock
+
+    import cc10x_hooklib
+
+    cc10x_hooklib._input_cwd = None
+    stdout = io.StringIO()
+    payload = json.dumps({"tool_input": {"command": command}})
+    with contextlib.ExitStack() as stack:
+        stack.enter_context(mock.patch.dict(os.environ, {"CLAUDE_PROJECT_DIR": str(project_dir)}))
+        stack.enter_context(mock.patch.object(sys, "stdin", io.StringIO(payload)))
+        stack.enter_context(contextlib.redirect_stdout(stdout))
+        for target, name, value in patches:
+            stack.enter_context(mock.patch.object(target, name, value))
+        code = git_guard.main()
+    return code, stdout.getvalue()
+
+
+def _boom(*_args, **_kwargs):
+    raise RuntimeError("simulated classifier bug")
+
+
+def test_git_guard_classifier_crash_fails_closed_for_git_text_and_logs(tmp_path):
+    (tmp_path / ".cc10x").mkdir()
+    patches = [(git_guard, "classify_git_command", _boom)]
+    code, out = run_git_guard_in_process(tmp_path, git("status"), patches)
+    assert code == 0
+    decision = json.loads(out)["hookSpecificOutput"]
+    assert decision["permissionDecision"] == "deny"
+    assert "classifier" in decision["permissionDecisionReason"]
+    events = [e for e in hook_log_lines(tmp_path) if e["event"] == "git_guard_classifier_failed"]
+    assert len(events) == 1
+    assert events[0]["reason"] == "classifier-error" and events[0]["error"] == "RuntimeError"
+
+
+def test_git_guard_classifier_crash_allows_commands_without_git_text(tmp_path):
+    (tmp_path / ".cc10x").mkdir()
+    patches = [(git_guard, "classify_git_command", _boom)]
+    code, out = run_git_guard_in_process(tmp_path, "ls -la", patches)
+    assert code == 0 and out.strip() == ""
+    assert any(
+        e["event"] == "git_guard_classifier_failed" for e in hook_log_lines(tmp_path)
+    )
+
+
+def test_git_guard_classifier_error_is_not_unlockable_by_a_token(tmp_path):
+    (tmp_path / ".cc10x").mkdir()
+    write_git_token(tmp_path, ["push", "branch-delete"], "2099-01-01T00:00:00+00:00")
+    patches = [(git_guard, "classify_git_command", _boom)]
+    code, out = run_git_guard_in_process(tmp_path, git("push"), patches)
+    assert json.loads(out)["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert (tmp_path / ".cc10x" / "state" / "git-approval.json").exists()
+
+
+def make_worktree(path: Path, main: Path, name: str = "wt") -> Path:
+    gitdir = main / ".git" / "worktrees" / name
+    gitdir.mkdir(parents=True, exist_ok=True)
+    (gitdir / "commondir").write_text("../..\n")
+    (gitdir / "gitdir").write_text(str(path / ".git") + "\n")
+    path.mkdir(parents=True, exist_ok=True)
+    (path / ".git").write_text(f"gitdir: {gitdir}\n")
+    return path
+
+
+def test_git_guard_honors_a_token_and_logs_in_the_linked_worktree(tmp_path):
+    main = make_checkout(tmp_path / "main")
+    (main / ".cc10x").mkdir()
+    wt = make_worktree(tmp_path / "wt", main)
+    token = write_git_token(wt, ["push"], "2099-01-01T00:00:00+00:00")
+    r = run_guard(
+        "cc10x_git_guard.py",
+        {"tool_input": {"command": git("push", "origin", "feature")}, "cwd": str(wt)},
+        main,
+    )
+    assert r.returncode == 0
+    assert r.stdout.strip() == ""
+    assert not token.exists()
+    assert any(e["event"] == "git_guard_token_consumed" for e in hook_log_lines(wt))
+    assert hook_log_lines(main) == []
+
+
+def test_git_guard_non_object_tokens_are_invalid_removed_and_deny(tmp_path):
+    for body in ("[]", "null", '"x"', "7", "true"):
+        proj = tmp_path / f"proj-{abs(hash(body))}"
+        state = proj / ".cc10x" / "state"
+        state.mkdir(parents=True)
+        token = state / "git-approval.json"
+        token.write_text(body)
+        r = run_guard(
+            "cc10x_git_guard.py", {"tool_input": {"command": git("push", "origin", "main")}}, proj
+        )
+        assert r.returncode == 0, (body, r.stderr[-200:])
+        assert json.loads(r.stdout)["hookSpecificOutput"]["permissionDecision"] == "deny", body
+        assert not token.exists(), body
+        assert any(
+            e["event"] == "git_guard_token_invalid" for e in hook_log_lines(proj)
+        ), body
+
+
+def test_git_guard_a_crash_in_token_consumption_denies_and_logs(tmp_path):
+    (tmp_path / ".cc10x").mkdir()
+    patches = [(git_guard, "consume_approval", _boom)]
+    code, out = run_git_guard_in_process(tmp_path, git("push", "origin", "main"), patches)
+    assert code == 0
+    assert json.loads(out)["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert any(
+        e["event"] == "git_guard_token_check_failed" for e in hook_log_lines(tmp_path)
+    )
+
+
+def test_git_guard_floor_tables_stay_aligned(tmp_path):
+    assert len(git_guard.BLOCKED_PATTERNS) == len(git_guard.FLOOR_KEYS)
+    for (pattern, _reason, operation), key in zip(
+        git_guard.BLOCKED_PATTERNS, git_guard.FLOOR_KEYS
+    ):
+        assert git_guard.APPROVABLE.get(key) == operation, (pattern, key)
+        assert key in git_guard.PRIORITY, key
 
 
 def main() -> int:
