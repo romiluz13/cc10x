@@ -3978,8 +3978,11 @@ ASSERTIONS = [
             "Run it only when it is read-only and bounded",
             "compare `git status --short` before and after",
             "rule it `DISPUTE_REJECTED` as unverifiable and never run it a second time",
+            "Refuse, without running it, any command that uses the network, writes or redirects output to a file, installs packages, runs a mutating git verb, or chains shell steps beyond a single pipeline of read-only tools",
+            "say which of these it breaks",
+            "If the status changed, report exactly what changed in the verdict text",
         ),
-        "the verifier is read-only; re-running another agent's command verbatim could mutate the tree",
+        "the verifier is read-only; re-running another agent's command verbatim could mutate the tree (prompt-level guard only: nothing but this text stops a run)",
     ),
     A(
         "integration-verifier: a dispute-only report is expected to carry null TDD exits",
@@ -4240,6 +4243,19 @@ ASSERTIONS = [
             "(both `null` on a `kind:remfix` dispute-only return, REM-FIX section item 5)",
         ),
         "the dispute-only return left rung and closeout to be invented, which the FIXED requirements could only satisfy with fabricated values",
+    ),
+    # --- P4B remediation 2, commit 3: verifier command guard, both hand-off keys, rejection reason ---
+    A(
+        "integration-verifier: the REM-FIX hand-off names both results.builder and results.investigator",
+        AGENTS / "integration-verifier.md",
+        contains("(`results.builder`, or `results.investigator` when `bug-investigator` executed the REM-FIX); read that key only"),
+        "the verifier read only results.builder, so an investigator-executed REM-FIX report was invisible to it",
+    ),
+    A(
+        "integration-verifier: each DISPUTE_REJECTED position carries a stated reason for the router to pass on",
+        AGENTS / "integration-verifier.md",
+        contains("State the rejection reason for each rejected position in the verdict text; the router passes it to the executor."),
+        "the router's REM-FIX from a rejected dispute carries the verifier's reason, so the verifier must produce one",
     ),
     # --- P4B remediation 1, commit 3: stale text and the pins the hunt showed unprotected ---
     A(
