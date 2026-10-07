@@ -47,7 +47,9 @@ Each hook in `hooks.json` appears exactly once in this table (a validator in
   `${CLAUDE_PLUGIN_DATA}` to change a mode without editing the plugin; it survives
   plugin updates. Each key falls back on its own: a missing key, a value other than
   `block` or `audit`, or a corrupt file leaves the shipped value for that key (an
-  `invalid_hook_mode` event is logged for invalid input). The resolver never raises
+  `invalid_hook_mode` event is logged for invalid input, once per problem and state of
+  the file, tracked by a marker under `.cc10x/state/`; if the marker cannot be written
+  the event is logged on every call). The resolver never raises
   and always yields all three keys, so a damaged file cannot silently turn
   `artifactIntegrity` off.
 - **Unconditional blockers:** the git guard and the QA isolation guard deny
@@ -58,7 +60,9 @@ Each hook in `hooks.json` appears exactly once in this table (a validator in
 - **Fail-open by design:** a hook that crashes, times out or cannot parse its
   input lets the tool call proceed. The hooks log the decisions they make and
   the failures they notice (an unreadable artifact, an invalid mode file, a
-  failed snapshot write, a classifier error), but a hook that dies before it
+  failed snapshot write, a classifier error, a workflow event dropped because its
+  id is unsafe (`workflow_id_unsafe`) or its append failed
+  (`workflow_event_append_failed`)), but a hook that dies before it
   logs leaves only a trace in Claude Code's debug output.
 
 ### Git guard limits

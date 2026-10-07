@@ -21,9 +21,11 @@ import sys
 from cc10x_hooklib import (
     load_input,
     load_mode,
+    log_dropped_workflow_event,
     log_event,
     parse_metadata,
     read_workflow_state,
+    safe_workflow_id,
     workflow_artifact_is_fresh,
     workflow_event_log_contains,
 )
@@ -116,6 +118,8 @@ def check_artifact_freshness(data: dict, metadata: dict, mode: dict) -> int:
 
     payload, artifact_path, parse_error = read_workflow_state(workflow_id)
     if artifact_path is None or parse_error:
+        if safe_workflow_id(workflow_id) is None:
+            log_dropped_workflow_event("task_completed_guard", workflow_id, "freshness-not-checked")
         return 0  # don't compound errors — the main validator catches missing artifacts
 
     # TaskCompleted carries no task-creation timestamp (hooks reference), so
@@ -165,6 +169,8 @@ def check_circuit_breaker(data: dict, metadata: dict, mode: dict) -> int:
 
     payload, artifact_path, parse_error = read_workflow_state(workflow_id)
     if artifact_path is None or parse_error:
+        if safe_workflow_id(workflow_id) is None:
+            log_dropped_workflow_event("task_completed_guard", workflow_id, "circuit-breaker-not-checked")
         return 0  # can't evaluate without a readable artifact — don't compound errors
 
     remediation_history = payload.get("remediation_history")

@@ -21,6 +21,7 @@ from pathlib import Path
 from cc10x_hooklib import (
     load_input,
     load_mode,
+    log_dropped_workflow_event,
     log_event,
     now_iso,
     read_latest_workflow_state,
@@ -183,7 +184,7 @@ def main() -> int:
         if target_is_artifact and payload:
             wf_id = payload.get("workflow_uuid") or payload.get("workflow_id")
             if wf_id:
-                workflow_event_log_append(
+                appended = workflow_event_log_append(
                     wf_id,
                     {
                         "ts": now_iso(),
@@ -196,6 +197,10 @@ def main() -> int:
                         "reason": "posttool_guard_auto_append",
                     },
                 )
+                if not appended:
+                    log_dropped_workflow_event(
+                        "posttool_artifact_mutated", wf_id, "auto-append-not-written"
+                    )
         return 0
 
     decision = mode.get("artifactIntegrity", "audit")

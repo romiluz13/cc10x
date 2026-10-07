@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -175,15 +176,34 @@ def _read_mode_layer(path: Path) -> Any:
         return _MODE_CORRUPT
 
 
-_reported_mode_problems: set[tuple[str, ...]] = set()
+def _mode_source_path(source: str) -> Path | None:
+    if source == "shipped":
+        return plugin_config_dir() / "hook-mode.json"
+    data_dir = os.environ.get("CLAUDE_PLUGIN_DATA")
+    if source == "override" and data_dir:
+        return Path(data_dir) / "hook-mode.json"
+    return None
 
 
 def _report_mode_problem(problem: dict[str, str]) -> None:
-    """Log one invalid_hook_mode event per distinct problem and project."""
-    key = (str(logs_dir()), *(f"{k}={v}" for k, v in sorted(problem.items())))
-    if key in _reported_mode_problems:
-        return
-    _reported_mode_problems.add(key)
+    """Log one invalid_hook_mode event per distinct problem, project and
+    state of the offending file (path, mtime, size). A marker file under
+    .cc10x/state/ carries the dedupe across hook processes; when it cannot be
+    read or written the event is simply logged every time."""
+    marker: Path | None = None
+    try:
+        source = _mode_source_path(problem.get("source", ""))
+        stamp = ""
+        if source is not None:
+            info = source.stat()
+            stamp = f"{source}|{info.st_mtime_ns}|{info.st_size}"
+        fingerprint = "|".join([stamp, *(f"{k}={v}" for k, v in sorted(problem.items()))])
+        digest = hashlib.sha1(fingerprint.encode("utf-8", "replace")).hexdigest()[:16]
+        marker = state_root() / "state" / f"hook-mode-reported-{digest}"
+        if marker.exists():
+            return
+    except OSError:
+        pass
     log_event(
         "invalid_hook_mode",
         {
@@ -194,6 +214,13 @@ def _report_mode_problem(problem: dict[str, str]) -> None:
             "decision": "fallback",
         },
     )
+    if marker is not None:
+        try:
+            if logs_dir().is_dir():
+                marker.parent.mkdir(exist_ok=True)
+                marker.touch()
+        except OSError:
+            pass
 
 
 def load_mode() -> dict[str, str]:
@@ -459,6 +486,27 @@ def workflow_event_log_contains(workflow_id: str | None, needle: str) -> bool:
         return needle in path.read_text(encoding="utf-8")
     except Exception:
         return False
+
+
+def log_dropped_workflow_event(source: str, workflow_id: Any, reason: str) -> None:
+    """Say that an event for `workflow_id` was not written. An id that fails
+    safe_workflow_id is refused on purpose (it came from artifact or task
+    content and must not become a path); the refusal is logged, not silent."""
+    unsafe = safe_workflow_id(workflow_id) is None
+    name = "workflow_id_unsafe" if unsafe else "workflow_event_append_failed"
+    log_event(
+        f"plugin_{name}",
+        {
+            "wf": str(workflow_id)[:80],
+            "phase": "unknown",
+            "task_id": None,
+            "agent": "hook",
+            "event": name,
+            "decision": "audit",
+            "reason": reason,
+            "source": source,
+        },
+    )
 
 
 def workflow_event_log_append(workflow_id: str | None, event: dict[str, Any]) -> bool:

@@ -3519,6 +3519,124 @@ def test_the_last_signal_in_time_decides_whether_a_workflow_is_finished(tmp_path
     assert sessionstart_wf(tmp_path, None) == "wf-bbb"
 
 
+# --- P5 remediation 2, group C: visibility and test gaps ----------------------
+
+
+def _run_write_guard(project: Path, env: dict) -> subprocess.CompletedProcess:
+    return run_guard(
+        "cc10x_posttooluse_artifact_guard.py",
+        {"tool_name": "Write", "tool_input": {"file_path": str(project / "a.txt")}},
+        project,
+        extra_env=env,
+    )
+
+
+def test_invalid_hook_mode_is_logged_once_across_processes_until_the_file_changes(tmp_path):
+    (tmp_path / ".cc10x").mkdir()
+    data = tmp_path / "plugin-data"
+    data.mkdir()
+    override = data / "hook-mode.json"
+    override.write_text('{"artifactIntegrity": "Audit"}')
+    env = {"CLAUDE_PLUGIN_DATA": str(data)}
+    for _ in range(10):
+        assert _run_write_guard(tmp_path, env).returncode == 0
+    assert len(invalid_mode_events(tmp_path)) == 1
+    override.write_text('{"artifactIntegrity": "Audit", "memoryWrites": "nope"}')
+    for _ in range(3):
+        assert _run_write_guard(tmp_path, env).returncode == 0
+    assert len(invalid_mode_events(tmp_path)) == 3
+
+
+def test_invalid_hook_mode_logging_survives_an_unwritable_marker_location(tmp_path):
+    (tmp_path / ".cc10x").mkdir()
+    (tmp_path / ".cc10x" / "state").write_text("a file where the marker dir would go")
+    data = tmp_path / "plugin-data"
+    data.mkdir()
+    (data / "hook-mode.json").write_text('{"artifactIntegrity": "Audit"}')
+    env = {"CLAUDE_PLUGIN_DATA": str(data)}
+    for _ in range(2):
+        r = _run_write_guard(tmp_path, env)
+        assert r.returncode == 0 and "Traceback" not in r.stderr, r.stderr[-300:]
+    assert len(invalid_mode_events(tmp_path)) == 2
+
+
+def test_an_unsafe_workflow_id_in_an_artifact_is_logged_when_its_event_is_dropped(tmp_path):
+    path = write_artifact(tmp_path, "wf-aaa", workflow_uuid="../../escape", workflow_id="../../escape")
+    r = run_guard(
+        "cc10x_posttooluse_artifact_guard.py",
+        {"tool_name": "Write", "tool_input": {"file_path": str(path)}},
+        tmp_path,
+    )
+    assert r.returncode == 0, r.stderr
+    events = [e for e in hook_log_lines(tmp_path) if e["event"] == "workflow_id_unsafe"]
+    assert len(events) == 1
+    assert events[0]["source"] == "posttool_artifact_mutated"
+    assert not (tmp_path / "escape.events.jsonl").exists()
+
+
+def test_a_failed_artifact_mutated_append_is_logged(tmp_path):
+    path = write_artifact(tmp_path, "wf-aaa")
+    log = path.with_name("wf-aaa.events.jsonl")
+    log.unlink()
+    log.mkdir()
+    r = run_guard(
+        "cc10x_posttooluse_artifact_guard.py",
+        {"tool_name": "Write", "tool_input": {"file_path": str(path)}},
+        tmp_path,
+    )
+    assert r.returncode == 0, r.stderr
+    events = [e for e in hook_log_lines(tmp_path) if e["event"] == "workflow_event_append_failed"]
+    assert len(events) == 1 and events[0]["wf"] == "wf-aaa"
+
+
+def test_the_task_guard_logs_an_unsafe_workflow_id_instead_of_going_silent(tmp_path):
+    (tmp_path / ".cc10x" / "workflows").mkdir(parents=True)
+    for kind in ("agent", "remfix"):
+        before = len(hook_log_lines(tmp_path))
+        r = run_guard(
+            "cc10x_task_completed_guard.py",
+            {
+                "task_subject": "CC10X component-builder: x",
+                "task_description": CC10X_METADATA.replace("wf:wf-test", "wf:../../x").replace(
+                    "kind:agent", f"kind:{kind}"
+                ),
+                "task_id": "t1",
+            },
+            tmp_path,
+        )
+        assert r.returncode == 0, r.stderr
+        events = [
+            e for e in hook_log_lines(tmp_path)[before:] if e["event"] == "workflow_id_unsafe"
+        ]
+        expected = {"freshness-not-checked"}
+        if kind == "remfix":
+            expected.add("circuit-breaker-not-checked")
+        assert {e["reason"] for e in events} == expected, kind
+        assert all(e["source"] == "task_completed_guard" for e in events)
+
+
+def test_a_memory_finalize_cursor_that_is_still_in_progress_is_live(tmp_path):
+    write_artifact(
+        tmp_path,
+        "wf-aaa",
+        phase_cursor="memory-finalize",
+        phase_status={"memory-finalize": "in_progress"},
+        status_history=[{"event": "started"}],
+    )
+    assert sessionstart_wf(tmp_path, None) == "wf-aaa"
+    write_artifact(
+        tmp_path,
+        "wf-bbb",
+        phase_cursor="memory-finalize",
+        phase_status={"memory-finalize": "completed"},
+        status_history=[{"event": "started"}],
+    )
+    newer = tmp_path / ".cc10x" / "workflows" / "wf-bbb.json"
+    set_age(newer, 1)
+    set_age(tmp_path / ".cc10x" / "workflows" / "wf-aaa.json", 100)
+    assert sessionstart_wf(tmp_path, None) == "wf-aaa"
+
+
 def main() -> int:
     """Dependency-free runner (repo convention: tests run on bare python3).
 
