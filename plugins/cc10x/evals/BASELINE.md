@@ -52,6 +52,25 @@ Red cases: 4 of 8 (B1, B2, B3, B11). Green regression guards: 4 of 8. Each red c
 - After P4.T1.5b: `qa-seed-template-path` (B11) is expected to flip red to green, analytical only (no L2 run, AD-2). `SKILL.md` section 2a now carries one body line that Claude Code substitutes to the absolute plugin root and that tells the router a literal plugin-root placeholder in `references/qa-workflow.md:140` or `:464` means that path, so the seeding `cp` should no longer start with the empty prefix measured in R-B11. The reference lines are unchanged; if a live run still fails, contingency P4.T1.4b applies.
 - After P4.T1.5b: `build-trivial-happy` and `two-workflow-resume` are expected to stay green; the task-tools-optional paragraph and the "may have called" completion wording add a fallback path and do not change the tools-present path.
 
+## post-P4A expected (analytical, not measured)
+
+Read from the router text and references as they stand after P4.T1.6 (`SKILL.md` 781 lines). No L2 run was made (AD-2): this column states what the edited text should produce, never a measurement. "Needs Task tools" carries over from the prerequisites above.
+
+| case id | baseline (analytical) | post-P4A expected (analytical, not measured) | reason (edited text) |
+| --- | --- | --- | --- |
+| build-trivial-happy | green | green | the reduced graph is unchanged; T1.5b added a task-tools-absent fallback and "may have called" completion wording that do not alter the tools-present path |
+| build-multiphase-memory-finalize | red (needs Task tools) | green (needs Task tools) | P4.T1.3 added `#### Multi-phase iteration` in `build-workflow.md` (next graph only after `phase_exit_gate`; one Memory Update after the last phase), written to match the `multi-phase-memory-finalize` fixture |
+| triage-loads-reference | red | green | P4.T1.4 added the Memory Update task to the TRIAGE graph; P4.T1.5a added the route-and-load pointers and the hydration bullet for the advisory routes |
+| remfix-gate-producer | red (needs Task tools) | green with lower confidence (needs Task tools; probabilistic) | P4.T1.1 added the REM-FIX `TaskCreate` template and named the producers of `COVERING_TESTS`/`TEST_COMMAND`/`TEST_OUTPUT`; the agent contracts themselves still do not carry the fields until P4.T4.2, so a run that ignores the template can still miss them |
+| two-workflow-resume | green | green | resume scoping by `wf:` is unchanged; the task-tools-optional paragraph only adds an artifact-based path when the tools are absent |
+| qa-seed-template-path | red | green with lower confidence | P4.T1.5b item (e): one body line resolves the plugin-root placeholder for reference commands; the reference lines are unchanged (P4.T1.4b skipped), so a live run could still fail and would then trigger that contingency |
+| route-precedence | green | green | routing-table rows are byte-identical; precedence has one tie-break statement; T1.5c changed only the description wording and prose, not routing |
+| seam-gate | green | green (needs Task tools) | no change in this sub-phase touches the builder contract or the seam text |
+
+Flips expected: 4 red cases (B1, B2, B3, B11) to green by reading; none stays red without a recorded reason (B1 and B11 keep a lower-confidence note). B4 stays green; B14 wording is not part of these cases (owned by P5.T5).
+
+Trigger sanity (T1.5c): the router `description` keeps every trigger verb, so activation is expected to be unchanged. Over-triggering is NOT assessed: no trigger eval was run.
+
 ## Visibility
 
 Every tracked path under `evals/cases/` and this file must report `git check-ignore -q` exit 1; `evals/results/x.json` must report exit 0. Grader file names avoid the substrings `test` and `audit` because `.gitignore` globs `*test*.md` and `*audit*.md` would silently untrack them.

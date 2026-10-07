@@ -203,3 +203,25 @@ Claim boundary: now true: the router evals teach the rule `SKILL.md` states and 
 Pins and fixtures: five new pins (the amendment-lane anchor, eval-01, eval-02, eval-03, README path); no existing pin edited or removed; no fixture changed.
 
 Classification: `orchestration_sensitive` (the evals are doc-only; the pins protect router-adjacent contract text).
+
+## P4.T1.7 Sub-phase gate (P4A)
+
+Findings: none new; closes P4.T1.1 to P4.T1.6.
+
+Files: `plugins/cc10x/evals/BASELINE.md` (new "post-P4A expected (analytical, not measured)" section); this record.
+
+Gate results (final tree of this task):
+- Full `release_gate.py` under `python3` (3.13) and under `/usr/bin/python3` (3.9.6): both end with the plain `RELEASE GATE: OK` banner, no SKIPPED or PARTIAL qualifier. Pytest 528 passed; prompt clause assertions 306; replay fixtures 32; QA phase invariants all hold; `doc_consistency_check.py` OK.
+- Pin floor: 298 assertions at the start of T1.5c, 306 now; no pin was retired in P4A, so the floor (253 plus additions) holds with 53 to spare.
+- Router size: `SKILL.md` is 781 lines, equal to the AD-6 budget; the T1.5b overrun (787) was recovered in T1.5c only through audit-named prose, no gate text trimmed.
+- `SKILL.md` single writer: `git log --stat` since the P4 base shows `SKILL.md` changed only by the T1.5a commit (b754498), the T1.5b commit (3405c9a) and the T1.5c commit (b3785b5).
+
+Pin text edits in P4A (none weakened): T1.4 re-pointed two QA invariant tokens ("ADR-2" and "ADR-1" now "this paragraph is the decision record", because the cited ADRs never existed; the pinned property, that the rationale block carries its decision record, is kept) and the wording "hook-enforced" to "audit-backstopped" in two comments/messages; T1.5b re-pointed two clause pins (the main-session sub-agent rule and the tier-table advisory tokens) after correcting claims the docs contradict, each still required verbatim with the new tokens. Every other change was an addition.
+
+L2: not run (AD-2). The plan's "L2 re-run" is replaced by the analytical column in `BASELINE.md`, which states the expected post-P4A status per case from the edited text: B1 (`remfix-gate-producer`), B2 (`triage-loads-reference`), B3 (`build-multiphase-memory-finalize`) and B11 (`qa-seed-template-path`) expected to flip to green (B1 and B11 with lower confidence and a stated reason); B4 (`route-precedence`) stays green; B14 wording is outside these cases. These are readings of text, not measurements.
+
+Record completeness: the record holds a section for each of P4.T1.1 to P4.T1.7, including T1.5a, T1.5b and T1.5c. Gaps found while re-reading and fixed: none needed beyond this section; the T1.5c and T1.6 sections were appended in their own tasks.
+
+Open items carried forward: root `CLAUDE.md` and `eval-03` still say a single trivial one-line edit may skip routing (P6.T11); `docs/EVAL-STANDARD.md` still names the old checker file (docs phase); the T1.5c trigger-verb deviation (over-trigger risk unmeasured); the `[DEBUG-RESET]-equivalent: none` line in the TRIAGE reference.
+
+Classification: `orchestration_sensitive`.
