@@ -98,6 +98,7 @@ import shlex
 from pathlib import Path
 
 from cc10x_hooklib import (
+    TERMINAL_EVENTS,
     latest_workflow_payload,
     load_input,
     log_event,
@@ -132,7 +133,6 @@ PROVISIONING_PHASES = {
 # and the status_history event names are the router's vocabulary (SKILL.md §12
 # step 3 and the workflow skeleton); this set must not invent its own.
 TERMINAL_PHASES = {"memory-finalize"}
-TERMINAL_EVENTS = {"memory_finalized", "workflow_completed", "workflow_failed"}
 
 # Commands that mutate state outside the process, regardless of arguments.
 # `rsync`/`scp` are unconditional copiers — their source/dest split is handled

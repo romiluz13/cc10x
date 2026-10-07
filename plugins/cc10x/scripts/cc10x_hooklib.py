@@ -186,7 +186,26 @@ def latest_workflow_payload() -> dict[str, Any]:
     return payload
 
 
+# The router's own vocabulary for a finished workflow (SKILL.md memory-finalize
+# step, workflow skeleton status_history).
+TERMINAL_EVENTS = {"memory_finalized", "workflow_completed", "workflow_failed"}
+
+
+def workflow_is_finished(payload: Any) -> bool:
+    history = payload.get("status_history") if isinstance(payload, dict) else None
+    if not isinstance(history, list) or not history:
+        return False
+    last = history[-1]
+    return (
+        isinstance(last, dict)
+        and isinstance(last.get("event"), str)
+        and last["event"] in TERMINAL_EVENTS
+    )
+
+
 def latest_workflow_file() -> Path | None:
+    """Newest-mtime workflow artifact that is not finished; None when every
+    artifact is finished, so a completed workflow never shadows a live one."""
     def mtime_or_none(path: Path) -> float | None:
         try:
             return path.stat().st_mtime
@@ -198,9 +217,14 @@ def latest_workflow_file() -> Path | None:
         for p in workflows_dir().glob("*.json")
         if (mtime := mtime_or_none(p)) is not None
     ]
-    if not stamped:
-        return None
-    return max(stamped)[1]
+    for _, path in sorted(stamped, reverse=True):
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            return path  # a corrupt artifact is still surfaced, never skipped
+        if not workflow_is_finished(payload):
+            return path
+    return None
 
 
 def read_latest_workflow_state() -> tuple[dict[str, Any], Path | None, str | None]:

@@ -1801,6 +1801,112 @@ def test_user_override_file_downgrades_the_artifact_guard_end_to_end(tmp_path):
     assert r.returncode == 2
 
 
+# --- P5.T5: SessionStart coverage and terminal-artifact selection (B14) -------
+
+
+def set_age(path: Path, seconds_ago: float) -> None:
+    stamp = time.time() - seconds_ago
+    os.utime(path, (stamp, stamp))
+
+
+def test_sessionstart_matcher_covers_every_documented_source(tmp_path):
+    matcher = hooks_json_matcher("SessionStart", "cc10x_sessionstart_context.py")
+    assert set(matcher.split("|")) == {"startup", "resume", "clear", "compact", "fork"}
+    assert hooks_json_matcher("SessionStart", "cc10x_preflight.sh") == matcher
+
+
+def test_sessionstart_handler_tolerates_clear_and_fork_payloads(tmp_path):
+    write_artifact(tmp_path, phase_status={"phase-1": "in_progress"})
+    for source in ("clear", "fork"):
+        payload = {
+            "hook_event_name": "SessionStart",
+            "source": source,
+            "session_title": "t",
+            "seconds_since_last_response": 12,
+            "prompt_cache_likely_expired": False,
+        }
+        r = run_guard("cc10x_sessionstart_context.py", payload, tmp_path)
+        assert r.returncode == 0, r.stderr
+        assert r.stderr == ""
+        context = json.loads(r.stdout)["hookSpecificOutput"]["additionalContext"]
+        assert f"({source})" in context and "wf=wf-test" in context
+
+
+FINISHED_EVENTS = ("memory_finalized", "workflow_completed", "workflow_failed")
+
+
+def test_hooks_pick_the_live_workflow_over_a_newer_finished_one(tmp_path):
+    for event in FINISHED_EVENTS:
+        live = write_artifact(tmp_path, "wf-live")
+        done = write_artifact(
+            tmp_path,
+            "wf-done",
+            status_history=[{"event": "started"}, {"event": event}],
+        )
+        set_age(live, 300)
+        set_age(done, 10)  # the finished one is the newest by mtime
+        assert sessionstart_wf(tmp_path, None) == "wf-live", event
+
+
+def test_a_workflow_that_resumed_after_a_terminal_event_is_live(tmp_path):
+    live = write_artifact(tmp_path, "wf-live")
+    resumed = write_artifact(
+        tmp_path,
+        "wf-resumed",
+        status_history=[{"event": "memory_finalized"}, {"event": "resumed"}],
+    )
+    set_age(live, 300)
+    set_age(resumed, 10)
+    assert sessionstart_wf(tmp_path, None) == "wf-resumed"
+
+
+def test_a_finalizing_workflow_without_the_finalized_event_is_still_live(tmp_path):
+    write_artifact(
+        tmp_path,
+        "wf-fin",
+        phase_cursor="memory-finalize",
+        status_history=[{"event": "started"}],
+    )
+    assert sessionstart_wf(tmp_path, None) == "wf-fin"
+
+
+def test_only_finished_workflows_means_no_resume_context(tmp_path):
+    write_artifact(
+        tmp_path, "wf-done", status_history=[{"event": "memory_finalized"}]
+    )
+    assert sessionstart_wf(tmp_path, None) is None
+
+
+def test_a_corrupt_newest_artifact_is_surfaced_not_skipped_by_latest_selection(tmp_path):
+    live = write_artifact(tmp_path, "wf-live")
+    corrupt = tmp_path / ".cc10x" / "workflows" / "wf-corrupt.json"
+    corrupt.write_text("{not json")
+    set_age(live, 300)
+    set_age(corrupt, 10)
+    r = run_guard(
+        "cc10x_posttooluse_artifact_guard.py",
+        {"tool_name": "Write", "tool_input": {"file_path": str(tmp_path / "src.py")}},
+        tmp_path,
+    )
+    assert r.returncode == 0
+    assert any(
+        "artifact-json:" in e["reason"] for e in hook_log_lines(tmp_path)
+    )
+
+
+def test_state_snapshots_follow_the_live_workflow_not_the_newest_file(tmp_path):
+    live = write_artifact(tmp_path, "wf-live")
+    done = write_artifact(
+        tmp_path, "wf-done", status_history=[{"event": "workflow_completed"}]
+    )
+    set_age(live, 300)
+    set_age(done, 10)
+    r = run_guard("cc10x_state_persist.py", {}, tmp_path, argv=["stop"])
+    assert r.returncode == 0
+    snapshot = json.loads((tmp_path / ".cc10x" / "stop-state.json").read_text())
+    assert snapshot["workflow_uuid"] == "wf-live"
+
+
 def main() -> int:
     """Dependency-free runner (repo convention: tests run on bare python3).
 
