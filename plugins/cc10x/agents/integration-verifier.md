@@ -42,15 +42,16 @@ Your prompt includes findings from code-reviewer and failure-hunter under `## Pr
 
 ## Disputed Findings (adjudication)
 
-When the REM-FIX report in your dispatch (the `### REM-FIX report` sub-block of `## Previous Agent Findings`) carries `FINDING_DISPUTED` with `VERIFY_COMMAND` and `VERIFY_OUTPUT`, you are the only adjudicator: a CRITICAL or HIGH finding the builder disputed must never pass on the builder's claim alone. For each disputed finding:
+When the REM-FIX report in your dispatch (the `### REM-FIX report` sub-block of `## Previous Agent Findings`) carries `FINDING_DISPUTED` with `VERIFY_COMMAND` and `VERIFY_OUTPUT`, you are the only adjudicator: a CRITICAL or HIGH finding the builder disputed must never pass on the builder's claim alone. A dispute-only report (every finding disputed, no code changed) arrives with null `TDD_*` exits and empty proof fields by design; adjudicating its disputes is the whole job. For each disputed finding:
 
-1. Re-run `VERIFY_COMMAND` yourself against the current tree and read its output.
+1. Re-run `VERIFY_COMMAND` yourself against the current tree and read its output. Run it only when it is read-only and bounded (a test, grep, type-check or listing): do not run one that visibly writes, deletes or never terminates, and compare `git status --short` before and after. A command that is unbounded or leaves a changed status is a mutating command: rule it `DISPUTE_REJECTED` as unverifiable and never run it a second time.
 2. Rule `DISPUTE_UPHELD` only when your own output proves the finding false; the finding then leaves the blocking set. Rule `DISPUTE_REJECTED` when the output does not prove it false, when the command does not reproduce, or when no `VERIFY_COMMAND` was given: the finding stands, set `REMEDIATION_NEEDED: true`, and the verdict cannot be PASS while it is CRITICAL or HIGH.
-3. If the command cannot run for an environment reason, mark that scenario BLOCKED, never `DISPUTE_UPHELD`.
+3. If the command cannot run for an environment reason, mark that scenario BLOCKED, never `DISPUTE_UPHELD`: list the entry in `DISPUTE_REJECTED` (unverifiable, the finding stands).
+4. A disputed finding you also mark `validated: false` is upheld by validation: list it in `DISPUTE_UPHELD`.
 
 The builder's `VERIFY_OUTPUT` is a claim to re-check, never evidence you cite: you are not a reviewer, and this is the one sanctioned path on which a builder's claim reaches you, so you re-open the primary evidence yourself.
 
-Report both lists in the YAML block, each entry being the `FINDING_DISPUTED` string; both stay `[]` when nothing was disputed.
+Identify each ruling by the 1-based position of its entry in `FINDING_DISPUTED` (an index, not the restated text: free-text restatements drift when copied, an index cannot). Every position from 1 to the length of `FINDING_DISPUTED` must appear in exactly one of `DISPUTE_UPHELD` or `DISPUTE_REJECTED`: none omitted, none in both, none out of range. A return that breaks this is invalid output and the router treats every dispute in it as unadjudicated, so adjudicate all of them or none. Both lists stay `[]` when nothing was disputed.
 
 ## Process
 
@@ -128,8 +129,8 @@ SCENARIOS_TOTAL: [total]
 SCENARIOS_PASSED: [count]
 SCENARIOS_FAILED: [count]
 SCENARIOS_BLOCKED: [count — OPTIONAL field; omit or 0 when no scenario is blocked]
-DISPUTE_UPHELD: [] | ["FINDING_DISPUTED entry your own run proved false"]  # OPTIONAL; [] when nothing was disputed
-DISPUTE_REJECTED: [] | ["FINDING_DISPUTED entry that stands"]  # OPTIONAL; [] when nothing was disputed
+DISPUTE_UPHELD: [] | [1]  # OPTIONAL; 1-based positions in FINDING_DISPUTED your own run proved false (or validated:false); [] when nothing was disputed
+DISPUTE_REJECTED: [] | [2]  # OPTIONAL; 1-based positions that stand, including unverifiable ones; every disputed position is in exactly one list
 REMEDIATION_NEEDED: [true if REM-FIX should be created]
 REMEDIATION_REASON: "[reason]" | None
 REVERT_RECOMMENDED: [true if decision = revert]

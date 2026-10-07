@@ -920,6 +920,37 @@ def _remfix_in_progress(d):
     d["relevant_tasks"]["completed_remfix"]["status"] = "in_progress"
 
 
+def _case(name, mutate):
+    def apply(d):
+        mutate(next(c for c in d["additional_cases"] if c["name"] == name))
+
+    return apply
+
+
+def _case_adjudication(name, **fields):
+    return _case(name, lambda c: c["verifier_adjudication"].update(fields))
+
+
+def _case_contract(name, **fields):
+    return _case(name, lambda c: c["executor_contract"].update(fields))
+
+
+def _case_task(name, **fields):
+    return _case(name, lambda c: c["task"].update(fields))
+
+
+def _dispute_only_undispute_one(c):
+    c["remfix_report"]["FINDING_DISPUTED"] = c["remfix_report"]["FINDING_DISPUTED"][:1]
+    c["remfix_report"]["VERIFY_COMMAND"] = c["remfix_report"]["VERIFY_COMMAND"][:1]
+    c["remfix_report"]["VERIFY_OUTPUT"] = c["remfix_report"]["VERIFY_OUTPUT"][:1]
+    c["verifier_adjudication"] = {"DISPUTE_UPHELD": [1], "DISPUTE_REJECTED": []}
+    c["dispute_outcomes"] = ["finding_dropped: dispute upheld"]
+
+
+def _dispute_only_drop_contract(c):
+    c.pop("executor_contract")
+
+
 def _memory_blocked_by_early_task_only(d):
     d["relevant_tasks"]["memory_finalize"]["blockedBy"] = ["verifier_phase_1"]
 
@@ -1143,6 +1174,22 @@ L1_MUTATIONS = [
     ("remfix-gate.json", _builder_self_adjudicates, "DISPUTE_UPHELD is produced by integration-verifier"),
     ("remfix-gate.json", _set_remfix_field("VERIFY_COMMAND", [" "]), "blank entry in VERIFY_COMMAND"),
     ("remfix-gate.json", _set_remfix_field("VERIFY_OUTPUT", []), "must be equal-length lists"),
+    ("remfix-gate.json", _case_adjudication("dispute-only", DISPUTE_REJECTED=[]), "needs exactly one verifier adjudication"),
+    ("remfix-gate.json", _case_adjudication("dispute-only", DISPUTE_REJECTED=[1, 2]), "needs exactly one verifier adjudication"),
+    ("remfix-gate.json", _case_adjudication("dispute-only", DISPUTE_UPHELD=[], DISPUTE_REJECTED=[]), "needs exactly one verifier adjudication"),
+    ("remfix-gate.json", _case_adjudication("dispute-only", DISPUTE_REJECTED=[3]), "indexes into FINDING_DISPUTED"),
+    ("remfix-gate.json", _case_adjudication("dispute-only", DISPUTE_UPHELD=["F1 (HIGH): save handler swallows a timeout"]), "indexes into FINDING_DISPUTED"),
+    ("remfix-gate.json", _case_adjudication("dispute-only", validated_false=[2]), "validated:false"),
+    ("remfix-gate.json", _case_contract("dispute-only", TDD_RED_EXIT=1), "dispute-only report must leave TDD_RED_EXIT"),
+    ("remfix-gate.json", _case_contract("dispute-only", TDD_GREEN_EXIT=0), "dispute-only report must leave TDD_GREEN_EXIT"),
+    ("remfix-gate.json", _case_contract("dispute-only", PHASE_EXIT_READY=True), "dispute-only report must carry PHASE_EXIT_READY false"),
+    ("remfix-gate.json", _case_contract("dispute-only", STATUS="FIXED"), "dispute-only STATUS"),
+    ("remfix-gate.json", _case("dispute-only", _dispute_only_drop_contract), "dispute-only report needs the executor contract"),
+    ("remfix-gate.json", _case("dispute-only", _dispute_only_undispute_one), "REM-FIX report empty COVERING_TESTS"),
+    ("remfix-gate.json", _case_task("bug-investigator-origin", subject="CC10X component-builder: REM-FIX x"), "must name its executor bug-investigator"),
+    ("remfix-gate.json", _case_task("bug-investigator-origin", executor="component-builder"), "executor must be bug-investigator"),
+    ("remfix-gate.json", _case("bug-investigator-origin", lambda c: c.update({"verifier_handoff_key": "results.builder"})), "hands the verifier results.investigator"),
+    ("remfix-gate.json", _case("dispute-only", lambda c: c.update({"dispute_outcomes": ["remfix_created", "remfix_created"]})), "dispute_outcomes"),
     ("multi-phase-memory-finalize.json", _memory_blocked_by_early_task_only, "must be blocked by the last phase's verifier"),
     ("multi-phase-memory-finalize.json", _memory_blocked_by_last_and_early_task, "blocked by an earlier-phase task"),
     ("multi-phase-memory-finalize.json", _memory_blocked_by_doc_sync_of_wrong_verifier, "last phase's verifier"),
@@ -1199,6 +1246,14 @@ L1_MUTATIONS = [
 def test_multi_phase_fixture_accepts_memory_blocked_by_the_last_phase_doc_sync_task(tmp_path):
     root = make_tree(tmp_path)
     edit_json(root / FIXTURES_REL / "multi-phase-memory-finalize.json", _memory_blocked_by_doc_sync)
+    result = run_tool("workflow_replay_check.py", root)
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_remfix_gate_accepts_a_multiline_block_scalar_proof(tmp_path):
+    root = make_tree(tmp_path)
+    block = "PASS tests/team_settings.test.ts\n  saves the team id\n  rejects a non-admin\nTests: 2 passed"
+    edit_json(root / FIXTURES_REL / "remfix-gate.json", _set_remfix_field("TEST_OUTPUT", block))
     result = run_tool("workflow_replay_check.py", root)
     assert result.returncode == 0, result.stdout + result.stderr
 

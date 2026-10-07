@@ -1432,26 +1432,57 @@ def check_qa_route_happy_path(fixture: dict[str, Any]) -> None:
     )
 
 
-def check_remfix_gate(fixture: dict[str, Any]) -> None:
-    label = "remfix-gate"
-    artifact = fixture["starting_artifact"]
-    remfix = fixture["relevant_tasks"]["completed_remfix"]
-    require(remfix["kind"] == "remfix", f"{label}: wrong task kind")
-    require(remfix["wf"] == artifact["workflow_id"], f"{label}: remfix task carries a foreign wf")
-    require(remfix["status"] == "completed", f"{label}: completed_remfix must be completed, got {remfix['status']!r}")
-    report = fixture["agent_outputs"]["remfix_report"]
-    for field in ("COVERING_TESTS", "TEST_COMMAND", "TEST_OUTPUT"):
-        require(field in report, f"{label}: REM-FIX report missing {field}")
-    covering = report["COVERING_TESTS"]
-    require(isinstance(covering, list) and bool(covering), f"{label}: REM-FIX report empty COVERING_TESTS (a non-empty list of test file names)")
-    require(
-        all(isinstance(item, str) and item.strip() for item in covering),
-        f"{label}: REM-FIX report has a blank entry in COVERING_TESTS",
-    )
-    for field in ("TEST_COMMAND", "TEST_OUTPUT"):
-        value = report[field]
-        require(isinstance(value, str) and bool(value.strip()), f"{label}: REM-FIX report empty {field} (a non-blank string)")
-    disputed = report.get("FINDING_DISPUTED")
+REMFIX_EXECUTOR_STATUS = {"component-builder": "PASS", "bug-investigator": "FIXED"}
+
+
+def check_remfix_case(
+    label: str,
+    artifact: dict[str, Any],
+    task: dict[str, Any],
+    report: dict[str, Any],
+    adjudication: dict[str, Any],
+    handoff_key: str,
+    executor_contract: dict[str, Any] | None,
+    dispute_outcomes: Any,
+) -> None:
+    require(task["kind"] == "remfix", f"{label}: wrong task kind")
+    require(task["wf"] == artifact["workflow_id"], f"{label}: remfix task carries a foreign wf")
+    require(task["status"] == "completed", f"{label}: completed_remfix must be completed, got {task['status']!r}")
+    executor = "bug-investigator" if task["origin"] == "bug-investigator" else "component-builder"
+    require(task.get("executor") == executor, f"{label}: executor must be {executor} for origin {task['origin']!r}")
+    require(executor in task["subject"], f"{label}: the REM-FIX subject must name its executor {executor}")
+    expected_key = "results.investigator" if executor == "bug-investigator" else "results.builder"
+    require(handoff_key == expected_key, f"{label}: the REM-FIX origin {task['origin']!r} hands the verifier {expected_key}, got {handoff_key!r}")
+    findings = task["findings"]
+    require(isinstance(findings, list) and bool(findings), f"{label}: the REM-FIX task carries its findings")
+    disputed = report.get("FINDING_DISPUTED") or []
+    require(len(disputed) <= len(findings), f"{label}: more disputed findings than dispatched findings")
+    dispute_only = bool(disputed) and len(disputed) == len(findings)
+    if dispute_only:
+        require(executor_contract is not None, f"{label}: a dispute-only report needs the executor contract")
+        require(
+            executor_contract["STATUS"] == REMFIX_EXECUTOR_STATUS[executor],
+            f"{label}: dispute-only STATUS must be {REMFIX_EXECUTOR_STATUS[executor]} for {executor}",
+        )
+        for field in ("TDD_RED_EXIT", "TDD_GREEN_EXIT"):
+            require(executor_contract.get(field) is None, f"{label}: a dispute-only report must leave {field} null (no code changed, nothing to observe)")
+        if executor == "component-builder":
+            require(
+                strict_bool(executor_contract.get("PHASE_EXIT_READY"), False),
+                f"{label}: a dispute-only report must carry PHASE_EXIT_READY false until the verifier adjudicates",
+            )
+    else:
+        for field in ("COVERING_TESTS", "TEST_COMMAND", "TEST_OUTPUT"):
+            require(field in report, f"{label}: REM-FIX report missing {field}")
+        covering = report["COVERING_TESTS"]
+        require(isinstance(covering, list) and bool(covering), f"{label}: REM-FIX report empty COVERING_TESTS (a non-empty list of test file names)")
+        require(
+            all(isinstance(item, str) and item.strip() for item in covering),
+            f"{label}: REM-FIX report has a blank entry in COVERING_TESTS",
+        )
+        for field in ("TEST_COMMAND", "TEST_OUTPUT"):
+            value = report[field]
+            require(isinstance(value, str) and bool(value.strip()), f"{label}: REM-FIX report empty {field} (a non-blank string)")
     if disputed:
         for field in ("DISPUTE_UPHELD", "DISPUTE_REJECTED"):
             require(field not in report, f"{label}: {field} is produced by integration-verifier, not by the REM-FIX report")
@@ -1462,13 +1493,53 @@ def check_remfix_gate(fixture: dict[str, Any]) -> None:
         )
         for field, values in (("FINDING_DISPUTED", disputed), ("VERIFY_COMMAND", commands), ("VERIFY_OUTPUT", outputs)):
             require(all(isinstance(v, str) and v.strip() for v in values), f"{label}: blank entry in {field}")
-        verdicts = fixture["agent_outputs"].get("verifier_adjudication", {})
-        upheld, rejected = verdicts.get("DISPUTE_UPHELD") or [], verdicts.get("DISPUTE_REJECTED") or []
-        for finding in disputed:
+        upheld, rejected = adjudication.get("DISPUTE_UPHELD") or [], adjudication.get("DISPUTE_REJECTED") or []
+        valid_indexes = range(1, len(disputed) + 1)
+        require(
+            all(type(i) is int and i in valid_indexes for i in upheld + rejected),
+            f"{label}: DISPUTE_UPHELD and DISPUTE_REJECTED entries are 1-based indexes into FINDING_DISPUTED (1..{len(disputed)})",
+        )
+        for index in valid_indexes:
             require(
-                (finding in upheld) != (finding in rejected),
-                f"{label}: disputed finding {finding!r} needs exactly one verifier adjudication (DISPUTE_UPHELD or DISPUTE_REJECTED)",
+                (index in upheld) != (index in rejected),
+                f"{label}: disputed finding {index} ({disputed[index - 1]!r}) needs exactly one verifier adjudication (DISPUTE_UPHELD or DISPUTE_REJECTED)",
             )
+        require(
+            all(i in upheld for i in adjudication.get("validated_false") or []),
+            f"{label}: a disputed finding the verifier marks validated:false is upheld-by-validation and belongs in DISPUTE_UPHELD",
+        )
+        if dispute_outcomes is not None:
+            require(
+                dispute_outcomes
+                == ["finding_dropped: dispute upheld" if i in upheld else "remfix_created" for i in valid_indexes],
+                f"{label}: dispute_outcomes must drop an upheld finding and create a REM-FIX for a rejected one, in FINDING_DISPUTED order",
+            )
+
+
+def check_remfix_gate(fixture: dict[str, Any]) -> None:
+    label = "remfix-gate"
+    artifact = fixture["starting_artifact"]
+    check_remfix_case(
+        label,
+        artifact,
+        fixture["relevant_tasks"]["completed_remfix"],
+        fixture["agent_outputs"]["remfix_report"],
+        fixture["agent_outputs"].get("verifier_adjudication", {}),
+        fixture["agent_outputs"].get("verifier_handoff_key"),
+        None,
+        fixture["expected"].get("dispute_outcomes"),
+    )
+    for case in fixture.get("additional_cases", []):
+        check_remfix_case(
+            f"{label}[{case['name']}]",
+            artifact,
+            case["task"],
+            case["remfix_report"],
+            case.get("verifier_adjudication", {}),
+            case.get("verifier_handoff_key"),
+            case.get("executor_contract"),
+            case.get("dispute_outcomes"),
+        )
     history = artifact["remediation_history"]
     cycles = [entry.get("cycle_number") for entry in history]
     require(

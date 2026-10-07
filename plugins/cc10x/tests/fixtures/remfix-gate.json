@@ -54,7 +54,13 @@
       "phase": "build-review",
       "scope": "ALL_ISSUES",
       "reason": "Fix critical review findings",
-      "status": "completed"
+      "status": "completed",
+      "subject": "CC10X component-builder: REM-FIX Fix critical review findings",
+      "executor": "component-builder",
+      "findings": [
+        "F1 (CRITICAL): team settings save drops the team id",
+        "F2 (HIGH): team settings route lacks an admin guard"
+      ]
     }
   },
   "agent_outputs": {
@@ -76,10 +82,11 @@
     },
     "verifier_adjudication": {
       "DISPUTE_UPHELD": [
-        "F2 (HIGH): team settings route lacks an admin guard"
+        1
       ],
       "DISPUTE_REJECTED": []
-    }
+    },
+    "verifier_handoff_key": "results.builder"
   },
   "expected": {
     "next_action": "spawn_recheck_tasks",
@@ -87,6 +94,102 @@
       "re-review",
       "re-hunt",
       "re-verify"
+    ],
+    "dispute_outcomes": [
+      "finding_dropped: dispute upheld"
     ]
-  }
+  },
+  "additional_cases": [
+    {
+      "name": "bug-investigator-origin",
+      "task": {
+        "wf": "wf-20261007T100000Z-remfix-gate",
+        "kind": "remfix",
+        "origin": "bug-investigator",
+        "phase": "debug-review",
+        "scope": "ALL_ISSUES",
+        "reason": "Fix review findings on the debug fix",
+        "status": "completed",
+        "subject": "CC10X bug-investigator: REM-FIX Fix review findings on the debug fix",
+        "executor": "bug-investigator",
+        "findings": [
+          "F1 (HIGH): the regression test asserts a stubbed path"
+        ]
+      },
+      "remfix_report": {
+        "COVERING_TESTS": [
+          "tests/cart_total.test.ts"
+        ],
+        "TEST_COMMAND": "npm test -- cart_total",
+        "TEST_OUTPUT": "PASS tests/cart_total.test.ts\n  empty cart returns 0\n  locale de-DE total\nTests: 2 passed",
+        "FINDING_DISPUTED": [],
+        "VERIFY_COMMAND": [],
+        "VERIFY_OUTPUT": []
+      },
+      "verifier_adjudication": {
+        "DISPUTE_UPHELD": [],
+        "DISPUTE_REJECTED": []
+      },
+      "verifier_handoff_key": "results.investigator"
+    },
+    {
+      "name": "dispute-only",
+      "task": {
+        "wf": "wf-20261007T100000Z-remfix-gate",
+        "kind": "remfix",
+        "origin": "failure-hunter",
+        "phase": "build-review",
+        "scope": "ALL_ISSUES",
+        "reason": "Fix hunter findings",
+        "status": "completed",
+        "subject": "CC10X component-builder: REM-FIX Fix hunter findings",
+        "executor": "component-builder",
+        "findings": [
+          "F1 (HIGH): save handler swallows a timeout",
+          "F2 (HIGH): retry loop has no cap"
+        ]
+      },
+      "remfix_report": {
+        "COVERING_TESTS": [],
+        "TEST_COMMAND": null,
+        "TEST_OUTPUT": null,
+        "FINDING_DISPUTED": [
+          "F1 (HIGH): save handler swallows a timeout",
+          "F2 (HIGH): retry loop has no cap"
+        ],
+        "VERIFY_COMMAND": [
+          "grep -n 'throw err' src/save.ts",
+          "grep -n 'MAX_RETRIES' src/retry.ts"
+        ],
+        "VERIFY_OUTPUT": [
+          "31:    throw err",
+          "4:const MAX_RETRIES = 3"
+        ]
+      },
+      "executor_contract": {
+        "STATUS": "PASS",
+        "PHASE_STATUS": "partial",
+        "PHASE_EXIT_READY": false,
+        "PROOF_STATUS": "gaps_found",
+        "TDD_RED_EXIT": null,
+        "TDD_RED_REASON_KIND": null,
+        "TDD_RED_REASON": null,
+        "TDD_GREEN_EXIT": null
+      },
+      "verifier_adjudication": {
+        "DISPUTE_UPHELD": [
+          1
+        ],
+        "DISPUTE_REJECTED": [
+          2
+        ],
+        "validated_false": []
+      },
+      "verifier_handoff_key": "results.builder",
+      "dispute_outcomes": [
+        "finding_dropped: dispute upheld",
+        "remfix_created"
+      ]
+    }
+  ]
 }

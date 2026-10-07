@@ -16,23 +16,23 @@ reason:{short remediation reason}
 
 ### REM-FIX TaskCreate template
 
-The router creates every REM-FIX with this call. The subject names the agent the dispatch table assigns for the `origin:` value. `phase:` carries the originating phase from the metadata enum (for example `build-review`).
+The router creates every REM-FIX with this call. The subject names the executing agent the dispatch table assigns for the `origin:` value: `component-builder`, or `bug-investigator` when `origin:bug-investigator`. `phase:` carries the originating phase from the metadata enum (for example `build-review`).
 
 ```text
 TaskCreate({
-  subject: "CC10X component-builder: REM-FIX {short reason}",
-  description: "wf:{workflow_uuid}\nkind:remfix\norigin:{originating agent}\nphase:{originating phase}\nplan:{plan_file or 'N/A'}\nscope:{ALL_ISSUES|CRITICAL_ONLY|N/A}\nreason:{short remediation reason}\n\nFix the findings below as ONE batch. Verify each finding against the code before changing it. When done, report COVERING_TESTS, TEST_COMMAND and TEST_OUTPUT for the tests that exercise the fixed behavior. For a finding you can disprove, report FINDING_DISPUTED, VERIFY_COMMAND and VERIFY_OUTPUT instead of applying it.\n\nFindings:\n{findings}",
+  subject: "CC10X {executing agent: component-builder | bug-investigator}: REM-FIX {short reason}",
+  description: "wf:{workflow_uuid}\nkind:remfix\norigin:{originating agent}\nphase:{originating phase}\nplan:{plan_file or 'N/A'}\nscope:{ALL_ISSUES|CRITICAL_ONLY|N/A}\nreason:{short remediation reason}\n\nFix the findings below as ONE batch. Verify each finding against the code before changing it. When done, report COVERING_TESTS, TEST_COMMAND and TEST_OUTPUT for the tests that exercise the fixed behavior. For a finding you can disprove, report FINDING_DISPUTED, VERIFY_COMMAND and VERIFY_OUTPUT instead of applying it. When every finding is disproved and no code changed, return the dispute-only report.\n\nFindings:\n{findings}",
   activeForm: "Fixing review findings"
 })
 ```
 
 ### Producers of the REM-FIX gate fields
 
-- `COVERING_TESTS`, `TEST_COMMAND` and `TEST_OUTPUT` are produced by the remediating builder: the contract of the agent that executes a `kind:remfix` task (`component-builder`; the template body above is how the router asks for them).
-- `FINDING_DISPUTED`, `VERIFY_COMMAND` and `VERIFY_OUTPUT` are produced by the remediating builder, per disputed finding (see Verify-before-implement).
-- `DISPUTE_UPHELD` and `DISPUTE_REJECTED` are produced by `integration-verifier`, the only adjudicator.
+- `COVERING_TESTS`, `TEST_COMMAND` and `TEST_OUTPUT` are produced by the remediating builder: the contract of the agent that executes a `kind:remfix` task (`component-builder`, or `bug-investigator` when `origin:bug-investigator`; both declare them; the template body above is how the router asks for them).
+- `FINDING_DISPUTED`, `VERIFY_COMMAND` and `VERIFY_OUTPUT` are produced by the remediating builder (either executor), per disputed finding (see Verify-before-implement).
+- `DISPUTE_UPHELD` and `DISPUTE_REJECTED` are produced by `integration-verifier`, the only adjudicator, as 1-based positions in the builder's `FINDING_DISPUTED` list.
 - `AMENDED_FILES`, `STALE_SWEEP` and `RECONCILIATION_RERUN` are produced by `planner` on a `phase:qa-re-plan` return (see `qa-workflow.md`).
-- The Re-review precondition gate (Section 11) consumes the first group; the router never fills these fields itself. Until the agent files declare these producers (agent-file work, P4B), the gates fail closed: a REM-FIX report without the fields goes back, and a `qa-re-plan` return without the three sweep fields creates no pass-2 task.
+- The Re-review precondition gate (Section 11) consumes the first group; the router never fills these fields itself. The producers are declared in the agent contracts, and the gates still fail closed when an agent omits them: a REM-FIX report without the fields goes back, and a `qa-re-plan` return without the three sweep fields creates no pass-2 task.
 
 ### Circuit breaker
 
@@ -384,6 +384,8 @@ TEST_OUTPUT: {its output}
 
 - Name only the COVERING tests — the files that exercise the changed behavior — not the whole suite. "Ran all tests, green" is not sufficient; the report must point at the tests that would fail if this fix were wrong.
 - If `COVERING_TESTS`, `TEST_COMMAND`, and `TEST_OUTPUT` are missing or empty, the gate fails closed: do NOT create the re-review task. Send the REM-FIX back (or block the task) until the proof is supplied.
-- A `FINDING_DISPUTED` entry satisfies this gate for that finding via its `VERIFY_COMMAND`/`VERIFY_OUTPUT` pair (adjudicated by integration-verifier per Section 9), since the dispute itself carries the proving evidence.
+- A `FINDING_DISPUTED` entry satisfies this gate for that finding via its `VERIFY_COMMAND`/`VERIFY_OUTPUT` pair (adjudicated by integration-verifier per Section 9), since the dispute itself carries the proving evidence. When EVERY finding dispatched in the REM-FIX is disputed (the count of `FINDING_DISPUTED` entries equals the count of findings in the task) the report is dispute-only: empty `COVERING_TESTS`, null `TEST_COMMAND`/`TEST_OUTPUT` and null `TDD_*` exits are accepted, because no code changed. A report with any applied finding keeps the full proof requirement.
+- Dispute consumption (the verifier's ruling is binding, and nothing else adjudicates). While a `FINDING_DISPUTED` entry is unadjudicated, the finding stays in the blocking set, the phase cannot pass, and a re-review or re-hunt that re-raises it creates NO new REM-FIX: it is the finding already in flight, and the verifier decides it. After the verifier returns, for each entry position: `DISPUTE_UPHELD` drops the finding exactly as `validated: false` does, before any REM-FIX scope is computed, and logs it in `status_history` (`finding_dropped: dispute upheld`); a later re-raise of an upheld finding is dropped the same way, and the stricter-verdict rule of the default loop does not override it, because the ruling rests on the verifier's own re-run. `DISPUTE_REJECTED` keeps the finding in the blocking set and the router creates the REM-FIX for it (a new cycle, counted by the Circuit breaker). A disputed finding the verifier marked `validated: false` is listed `DISPUTE_UPHELD` (upheld by validation).
+- Adjudication validity: every position 1..N of `FINDING_DISPUTED` must appear in exactly one of `DISPUTE_UPHELD` or `DISPUTE_REJECTED`. A verifier return that omits a position, lists one in both, or lists an out-of-range or non-integer entry is invalid output: every dispute in it stays unadjudicated and the router fails closed (no REM-FIX created from it, no phase advance). When the verifier is absent, blocked or unavailable, the disputes stay unadjudicated and the gate stays closed: no phase advance, no workflow completion and no new REM-FIX for a disputed finding until a valid verifier return adjudicates it or the user decides.
 - Verifier hand-off: the re-verify dispatch (including a pending original verifier that takes its slot) adds a `### REM-FIX report` sub-block to `## Previous Agent Findings`, after the Code Reviewer and Failure Hunter blocks. It names `results.builder` (`results.investigator` when the REM-FIX origin is `bug-investigator`) of the workflow artifact, where the router persisted the report, and lists the proof and dispute field names it carries: a reference, not pasted bodies. Without it the only adjudicator never sees `FINDING_DISPUTED`, and a disputed CRITICAL or HIGH finding could never leave the blocking set. Anti-anchoring is intact: the verifier is not a reviewer, and it re-runs `VERIFY_COMMAND` itself and rules on its own output, so the builder's claim is re-checked primary evidence, never a verdict.
 - This precondition is independent of the circuit breaker, which is checked when a REM-FIX is created (see `### Circuit breaker`); both must pass before the remediation loop continues.

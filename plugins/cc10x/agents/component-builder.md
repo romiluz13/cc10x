@@ -103,7 +103,9 @@ When your Task Context description carries `kind:remfix`, the findings in it are
 1. Restate each finding in one line and confirm the defect exists in the cited code before changing anything.
 2. Apply the fix, then run the tests that exercise the fixed behavior. Report `COVERING_TESTS` (only the files that would fail if the fix were wrong, not the whole suite), `TEST_COMMAND` and `TEST_OUTPUT`. The router's re-review gate fails closed without all three and sends the REM-FIX back.
 3. A finding you can disprove takes the dispute path instead of being applied: report `FINDING_DISPUTED`, `VERIFY_COMMAND` and `VERIFY_OUTPUT`, one entry per disputed finding, in the same order in all three lists. A dispute is valid only when `VERIFY_COMMAND` is a reproducible command whose output proves the finding false. "Looks fine to me" or "the plan said so" is not a dispute: apply the finding.
-4. You never adjudicate your own dispute. `integration-verifier` re-runs `VERIFY_COMMAND` and rules `DISPUTE_UPHELD` or `DISPUTE_REJECTED`; on `DISPUTE_REJECTED` the finding stands and you apply it.
+4. You never adjudicate your own dispute. `integration-verifier` re-runs `VERIFY_COMMAND` and rules `DISPUTE_UPHELD` or `DISPUTE_REJECTED` by the 1-based position of each entry in `FINDING_DISPUTED`; on `DISPUTE_REJECTED` the finding stands and you apply it.
+5. **Dispute-only return.** When EVERY finding in the task is disputed under item 3 and you changed no code, there is no RED to observe and none to invent. Return `STATUS: PASS` with `TDD_RED_EXIT`, `TDD_RED_REASON_KIND`, `TDD_RED_REASON` and `TDD_GREEN_EXIT` all `null`, `COVERING_TESTS: []`, `TEST_COMMAND: null`, `TEST_OUTPUT: null`, `PHASE_STATUS: partial`, `PHASE_EXIT_READY: false` and `PROOF_STATUS: gaps_found`, with one `SCENARIOS` row per dispute (its `command` is the `VERIFY_COMMAND`). The phase does not exit until the verifier adjudicates, so `PHASE_EXIT_READY` stays false; the router completes the task and hands the report to the verifier. A report where even one finding was applied is not dispute-only: it keeps every requirement above, including a real RED and GREEN. Never fabricate a RED to fill the gap.
+6. `TEST_OUTPUT` and `VERIFY_OUTPUT` hold raw command output: write each as a YAML block scalar (`|`), or as the last 20 lines with newlines escaped inside one single-line scalar. Never paste multi-line output into a quoted scalar: a stray quote or colon breaks the contract the router parses.
 
 On any other task leave these six fields empty or omit them.
 
@@ -160,12 +162,12 @@ NEXT_ACTION: "review" | "remediation" | "abort"
 REMEDIATION_NEEDED: [true if router should create remediation]
 REQUIRES_REMEDIATION: [true if TDD evidence missing]
 REMEDIATION_REASON: null | "Missing TDD evidence"
-COVERING_TESTS: [] | ["test file that covers the fixed behavior"]  # kind:remfix only
-TEST_COMMAND: null | "[exact command run]"  # kind:remfix only
-TEST_OUTPUT: null | "[its output]"  # kind:remfix only
+COVERING_TESTS: [] | ["test file that covers the fixed behavior"]  # kind:remfix only; [] on a dispute-only return
+TEST_COMMAND: null | "[exact command run]"  # kind:remfix only; null on a dispute-only return
+TEST_OUTPUT: null | "[last lines of its output: a YAML block scalar or single-line-escaped]"  # kind:remfix only; null on a dispute-only return
 FINDING_DISPUTED: [] | ["finding id or one-line restatement"]  # kind:remfix only, when a finding is disproved
 VERIFY_COMMAND: [] | ["exact command whose output proves the finding false"]  # same order as FINDING_DISPUTED
-VERIFY_OUTPUT: [] | ["that output"]  # same order as FINDING_DISPUTED
+VERIFY_OUTPUT: [] | ["that output, as a YAML block scalar or single-line-escaped"]  # same order as FINDING_DISPUTED
 MEMORY_NOTES:
   learnings: ["What was built and key patterns"]
   patterns: ["New conventions discovered"]
@@ -179,4 +181,4 @@ MEMORY_NOTES:
 - `TDD_RED_EXIT` records the observed exit code of the RED run — any non-zero exit with TDD_RED_REASON_KIND=`behavioral` qualifies as RED evidence, and 1 is the conventional recorded value.
 - Router rejects false-RED (TDD_RED_REASON_KIND=`error`) same as missing RED. Rejects any build with BUILD_PREFLIGHT_EMITTED=false.
 - **No test runner:** a scripted check with real exit codes is TDD evidence; manual browser verification is not. Never fabricate `TDD_RED_EXIT` or `TDD_GREEN_EXIT`: leave both `null`. For a Pure HTML/CSS/JS project with no runner and no scripted check, return `STATUS: FAIL`, `PHASE_STATUS: blocked`, `CHECKPOINT_TYPE: human_verify`, `PROOF_STATUS: human_needed`, with the manual checklist and what was observed in `SCENARIOS` (the `command` names the manual step). The contract has no PASS value for manual-only evidence, so the rule is: require a runner or block.
-- **REM-FIX:** on a `kind:remfix` task, `STATUS=PASS` also requires non-empty `COVERING_TESTS`, `TEST_COMMAND` and `TEST_OUTPUT` (or a dispute per the REM-FIX section).
+- **REM-FIX:** on a `kind:remfix` task, `STATUS=PASS` also requires non-empty `COVERING_TESTS`, `TEST_COMMAND` and `TEST_OUTPUT` for every finding you applied, or a dispute per the REM-FIX section. The one exception is the dispute-only return (REM-FIX section, item 5): every finding disputed, no code changed, `TDD_RED_EXIT` and `TDD_GREEN_EXIT` null, `PHASE_EXIT_READY: false`.

@@ -226,7 +226,7 @@ Provide your final output (see SINGLE FINAL RESPONSE RULE above), then **stop yo
 - BUILD review: request `REMEDIATION_SCOPE_REQUESTED: N/A` so the router can decide `CRITICAL_ONLY` vs `ALL_ISSUES` after combining your findings with the failure-hunter's parallel findings.
 - DEBUG review: request `REMEDIATION_SCOPE_REQUESTED: ALL_ISSUES`.
 - Re-review: reuse the scope passed in prompt context if present; otherwise request `N/A`.
-- Disputed findings: `integration-verifier` rules on a finding the builder disputed (`FINDING_DISPUTED`), never you. On re-review do not drop a finding because it was disputed, and do not rule `DISPUTE_UPHELD` or `DISPUTE_REJECTED` yourself.
+- Disputed findings: `integration-verifier` rules on a finding the builder disputed (`FINDING_DISPUTED`), never you. On re-review do not drop a finding because it was disputed, and do not rule `DISPUTE_UPHELD` or `DISPUTE_REJECTED` yourself. Report a still-present disputed finding as you find it; the router applies the verifier's ruling to a re-raised disputed finding, so your report never decides the dispute.
 - Your job is to describe the issue precisely enough for the router to create the remediation task. Do not create or block tasks directly.
 
 **If HIGH/MEDIUM/LOW issues found worth tracking (but no CRITICAL ones):**

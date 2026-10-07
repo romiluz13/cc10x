@@ -2973,11 +2973,13 @@ ASSERTIONS = [
         "a pre-filled default makes plan_trust_gate's must-be-explicit check unable to fire",
     ),
     A(
-        "remediation: producers of the gate fields are named per agent and the gates fail closed until agent files declare them",
+        "remediation: producers of the gate fields are named per agent, declared in the contracts, and the gates still fail closed",
         SKILLS / "cc10x-router" / "references" / "remediation-and-research.md",
         lambda text: re.search(r"`AMENDED_FILES`, `STALE_SWEEP` and `RECONCILIATION_RERUN` are produced by `planner` on a `phase:qa-re-plan` return", text) is not None
-        and re.search(r"Until the agent files declare these producers[^\n]{0,200}the gates fail closed", text) is not None,
-        "H3: the producer is stated plainly for P4B, and the router does not paper over missing fields",
+        and re.search(r"The producers are declared in the agent contracts, and the gates still fail closed when an agent omits them[^\n]{0,200}a `qa-re-plan` return without the three sweep fields creates no pass-2 task", text) is not None
+        and "Until the agent files declare these producers" not in text
+        and "agent-file work, P4B" not in text,
+        "H3: the present state is stated (the producers exist), the router does not paper over a missing field, and the stale future-tense clause is gone",
     ),
     # --- P4A remediation 2, commit 1: resume, step completion, notes sink, terminal state, advisory failure ---
     A(
@@ -3832,6 +3834,169 @@ ASSERTIONS = [
             "you are not a reviewer",
         ),
         "the verifier is the sanctioned adjudication path; anti-anchoring holds because it re-runs the command and rules on its own output",
+    ),
+    # --- P4B remediation 1, commit 1: REM-FIX producers for both executors, dispute consumption, dispute-only return, proof format ---
+    A(
+        "bug-investigator: REM-FIX section and the six gate fields, same wording as the builder",
+        AGENTS / "bug-investigator.md",
+        lambda text: yaml_has_keys("COVERING_TESTS", "TEST_COMMAND", "TEST_OUTPUT", "FINDING_DISPUTED", "VERIFY_COMMAND", "VERIFY_OUTPUT")(text)
+        and contains_all(
+            "## REM-FIX Tasks (`kind:remfix`)",
+            "dispatches a `kind:remfix` task with `origin:bug-investigator` to you",
+            "only the files that would fail if the fix were wrong",
+            "fails closed without all three",
+            "in the same order in all three lists",
+            "is valid only when `VERIFY_COMMAND` is a reproducible command whose output proves the finding false",
+            "You never adjudicate your own dispute",
+        )(text),
+        "the router dispatches kind:remfix origin:bug-investigator to the investigator, so it must declare the gate fields the router's re-review gate and dispute path read",
+    ),
+    *[
+        A(
+            f"{name}: dispute-only return is defined, no fabricated RED, a mixed report keeps full proof",
+            AGENTS / f"{name}.md",
+            contains_all(
+                "**Dispute-only return.**",
+                "When EVERY finding in the task is disputed",
+                "there is no RED to observe and none to invent",
+                "Never fabricate a RED to fill the gap",
+                "A report where even one finding was applied is not dispute-only",
+                "`TEST_COMMAND: null`",
+            ),
+            "an all-disputed REM-FIX changes no code, so the builder-PASS requirement of a RED would force fabricated TDD evidence; the return is defined instead",
+        )
+        for name in ("component-builder", "bug-investigator")
+    ],
+    A(
+        "component-builder: dispute-only PASS keeps PHASE_EXIT_READY false until the verifier adjudicates",
+        AGENTS / "component-builder.md",
+        contains_all("`PHASE_STATUS: partial`, `PHASE_EXIT_READY: false` and `PROOF_STATUS: gaps_found`", "The phase does not exit until the verifier adjudicates, so `PHASE_EXIT_READY` stays false"),
+        "the only PASS with PHASE_EXIT_READY false; the router forwards it to the verifier instead of advancing the phase",
+    ),
+    *[
+        A(
+            f"{name}: raw proof output is a YAML block scalar or single-line-escaped, never a quoted multi-line scalar",
+            AGENTS / f"{name}.md",
+            contains_all(
+                "write each as a YAML block scalar (`|`)",
+                "the last 20 lines with newlines escaped inside one single-line scalar",
+                "Never paste multi-line output into a quoted scalar",
+            ),
+            "raw command output in a quoted YAML scalar breaks the contract on a stray quote or colon; the proof fields use a block scalar",
+        )
+        for name in ("component-builder", "bug-investigator")
+    ],
+    A(
+        "remediation: the REM-FIX subject names the executing agent per origin",
+        SKILLS / "cc10x-router" / "references" / "remediation-and-research.md",
+        lambda text: "{executing agent: component-builder | bug-investigator}: REM-FIX {short reason}" in text
+        and "`bug-investigator` when `origin:bug-investigator`" in text
+        and 'subject: "CC10X component-builder: REM-FIX' not in text
+        and "`component-builder`, or `bug-investigator` when `origin:bug-investigator`; both declare them" in text,
+        "the template hard-coded component-builder while the dispatch table sends origin bug-investigator to the investigator",
+    ),
+    A(
+        "remediation: dispute consumption, the verifier ruling is binding and nothing else adjudicates",
+        SKILLS / "cc10x-router" / "references" / "remediation-and-research.md",
+        contains_all(
+            "Dispute consumption",
+            "a re-review or re-hunt that re-raises it creates NO new REM-FIX",
+            "`DISPUTE_UPHELD` drops the finding exactly as `validated: false` does",
+            "`finding_dropped: dispute upheld`",
+            "the stricter-verdict rule of the default loop does not override it",
+            "`DISPUTE_REJECTED` keeps the finding in the blocking set and the router creates the REM-FIX for it",
+            "listed `DISPUTE_UPHELD` (upheld by validation)",
+        ),
+        "DISPUTE_UPHELD and DISPUTE_REJECTED had no consumer: a re-raise by the reviewer or hunter beat an upheld dispute and nothing created the REM-FIX for a rejected one",
+    ),
+    A(
+        "remediation: adjudication validity fails closed, an absent verifier leaves the gate closed",
+        SKILLS / "cc10x-router" / "references" / "remediation-and-research.md",
+        contains_all(
+            "every position 1..N of `FINDING_DISPUTED` must appear in exactly one of `DISPUTE_UPHELD` or `DISPUTE_REJECTED`",
+            "is invalid output: every dispute in it stays unadjudicated",
+            "When the verifier is absent, blocked or unavailable, the disputes stay unadjudicated and the gate stays closed",
+        ),
+        "partial, doubled or out-of-range adjudication, or no verifier at all, must never remove a finding or advance the phase",
+    ),
+    A(
+        "remediation: a dispute-only report satisfies the re-review gate without covering tests",
+        SKILLS / "cc10x-router" / "references" / "remediation-and-research.md",
+        contains_all(
+            "the report is dispute-only",
+            "the count of `FINDING_DISPUTED` entries equals the count of findings in the task",
+            "A report with any applied finding keeps the full proof requirement",
+        ),
+        "the gate required non-empty COVERING_TESTS even when every finding was disputed and no code changed",
+    ),
+    A(
+        "router: step 6 contradictory-verdict rule excepts an upheld dispute",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        contains_all(
+            "(FAIL over PASS, CHANGES_REQUESTED over APPROVE), except that a re-raised finding whose dispute the verifier upheld is dropped per the Re-review precondition gate",
+        ),
+        "without the exception the stricter verdict beats an UPHELD dispute",
+    ),
+    A(
+        "integration-verifier: every disputed position is adjudicated exactly once, by index",
+        AGENTS / "integration-verifier.md",
+        contains_all(
+            "1-based position of its entry in `FINDING_DISPUTED`",
+            "an index, not the restated text",
+            "must appear in exactly one of `DISPUTE_UPHELD` or `DISPUTE_REJECTED`: none omitted, none in both, none out of range",
+            "invalid output and the router treats every dispute in it as unadjudicated",
+            "A disputed finding you also mark `validated: false` is upheld by validation: list it in `DISPUTE_UPHELD`",
+            "list the entry in `DISPUTE_REJECTED` (unverifiable, the finding stands)",
+        ),
+        "write-only rulings: with no identity rule and no exactly-once rule a dispute could be in neither list, both, or restated so the router cannot match it",
+    ),
+    A(
+        "integration-verifier: re-runs VERIFY_COMMAND only when read-only and bounded, and checks the tree afterwards",
+        AGENTS / "integration-verifier.md",
+        contains_all(
+            "Run it only when it is read-only and bounded",
+            "compare `git status --short` before and after",
+            "rule it `DISPUTE_REJECTED` as unverifiable and never run it a second time",
+        ),
+        "the verifier is read-only; re-running another agent's command verbatim could mutate the tree",
+    ),
+    A(
+        "integration-verifier: a dispute-only report is expected to carry null TDD exits",
+        AGENTS / "integration-verifier.md",
+        contains_all("A dispute-only report (every finding disputed, no code changed) arrives with null `TDD_*` exits and empty proof fields by design"),
+        "the verifier does not read the missing RED of a dispute-only return as a defect of its own",
+    ),
+    *[
+        A(
+            f"{name}: the router applies the verifier's ruling to a re-raised disputed finding",
+            AGENTS / f"{name}.md",
+            contains("the router applies the verifier's ruling to a re-raised disputed finding, so your report never decides the dispute"),
+            "the agent keeps reporting the finding; the verifier's ruling, applied by the router, decides it",
+        )
+        for name in ("code-reviewer", "failure-hunter")
+    ],
+    A(
+        "policy: builder and investigator rows define the dispute-only return",
+        POLICY_REF,
+        lambda text: "**`kind:remfix` proof:**" in text
+        and "the **dispute-only return**: every dispatched finding is in `FINDING_DISPUTED` (equal count)" in text
+        and "the only `PASS` accepted with `PHASE_EXIT_READY=false`" in text
+        and "`PHASE_STATUS=partial`, `PROOF_STATUS=gaps_found`" in text
+        and "A fabricated RED or GREEN on a dispute-only return is invalid output" in text
+        and "**`kind:remfix`:** `STATUS=FIXED` also requires" in text
+        and "A fabricated RED or GREEN there is invalid output" in text,
+        "the override rows required a RED for every PASS and every FIXED, which an all-disputed REM-FIX cannot honestly satisfy",
+    ),
+    A(
+        "policy: integration-verifier row requires every dispute adjudicated exactly once and fails closed",
+        POLICY_REF,
+        contains_all(
+            "every 1-based position of that list must appear in exactly one of `DISPUTE_UPHELD` or `DISPUTE_REJECTED`",
+            "makes the whole return invalid output and every dispute in it stays unadjudicated (fail closed)",
+            "upheld by validation and is listed in `DISPUTE_UPHELD`",
+            "A verifier that is absent, blocked or unavailable leaves the disputes unadjudicated and the gate closed",
+        ),
+        "the router-side validity rule for the verifier's adjudication lists",
     ),
 ]
 

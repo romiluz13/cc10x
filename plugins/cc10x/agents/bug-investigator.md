@@ -162,6 +162,19 @@ Write the regression test only at a **seam** that exercises the real bug pattern
 
 If stuck during investigation: set `NEEDS_EXTERNAL_RESEARCH: true` with `RESEARCH_REASON: "[specific error/pattern]"`. Router spawns `cc10x:researcher` in parallel and re-invokes you with research file paths. Do NOT call `Skill(skill="cc10x:research")` directly.
 
+## REM-FIX Tasks (`kind:remfix`)
+
+The router dispatches a `kind:remfix` task with `origin:bug-investigator` to you, because the findings are about your own fix. When your Task Context description carries `kind:remfix`, the findings in it are inputs to check, not orders:
+
+1. Restate each finding in one line and confirm the defect exists in the cited code before changing anything. The Regression Seam Discipline applies to every fix: the covering test lives at a seam that runs the real bug pattern, never a shallow one.
+2. Apply the fix, then run the tests that exercise the fixed behavior. Report `COVERING_TESTS` (only the files that would fail if the fix were wrong, not the whole suite), `TEST_COMMAND` and `TEST_OUTPUT`. The router's re-review gate fails closed without all three and sends the REM-FIX back.
+3. A finding you can disprove takes the dispute path instead of being applied: report `FINDING_DISPUTED`, `VERIFY_COMMAND` and `VERIFY_OUTPUT`, one entry per disputed finding, in the same order in all three lists. A dispute is valid only when `VERIFY_COMMAND` is a reproducible command whose output proves the finding false. "Looks fine to me" is not a dispute: apply the finding.
+4. You never adjudicate your own dispute. `integration-verifier` re-runs `VERIFY_COMMAND` and rules `DISPUTE_UPHELD` or `DISPUTE_REJECTED` by the 1-based position of each entry in `FINDING_DISPUTED`; on `DISPUTE_REJECTED` the finding stands and you apply it.
+5. **Dispute-only return.** When EVERY finding in the task is disputed under item 3 and you changed no code, there is no RED to observe and none to invent. Return `STATUS: FIXED` (nothing is left open on your side) with `TDD_RED_EXIT` and `TDD_GREEN_EXIT` both `null`, `COVERING_TESTS: []`, `TEST_COMMAND: null`, `TEST_OUTPUT: null`, a `Regression:` scenario per dispute whose `command` is the `VERIFY_COMMAND`, `BLAST_RADIUS_SCAN.same_file` stating `no code changed (dispute-only)`, and `FEEDBACK_LOOP.command` set to the first `VERIFY_COMMAND`. The verifier still adjudicates before the phase can pass. A report where even one finding was applied is not dispute-only: it keeps every requirement above, including a real RED and GREEN. Never fabricate a RED to fill the gap.
+6. `TEST_OUTPUT` and `VERIFY_OUTPUT` hold raw command output: write each as a YAML block scalar (`|`), or as the last 20 lines with newlines escaped inside one single-line scalar. Never paste multi-line output into a quoted scalar: a stray quote or colon breaks the contract the router parses.
+
+On any other task leave these six fields empty or omit them.
+
 ## Task Completion
 
 Task completion is handled by the router. Do NOT call TaskUpdate directly.
@@ -238,6 +251,12 @@ NEXT_ACTION: "review" | "research" | "investigate" | "abort"
 REMEDIATION_NEEDED: [true if router should create remediation]
 REQUIRES_REMEDIATION: [true if TDD evidence missing, or VARIANTS_COVERED=0 without VARIANTS_NOT_APPLICABLE]
 REMEDIATION_REASON: null | "Add regression test (RED→GREEN) + variant coverage"
+COVERING_TESTS: [] | ["test file that covers the fixed behavior"]  # kind:remfix only; [] on a dispute-only return
+TEST_COMMAND: null | "[exact command run]"  # kind:remfix only; null on a dispute-only return
+TEST_OUTPUT: null | "[last lines of its output: a YAML block scalar or single-line-escaped]"  # kind:remfix only; null on a dispute-only return
+FINDING_DISPUTED: [] | ["finding id or one-line restatement"]  # kind:remfix only, when a finding is disproved
+VERIFY_COMMAND: [] | ["exact command whose output proves the finding false"]  # same order as FINDING_DISPUTED
+VERIFY_OUTPUT: [] | ["that output, as a YAML block scalar or single-line-escaped"]  # same order as FINDING_DISPUTED
 NEEDS_EXTERNAL_RESEARCH: [true if local investigation exhausted]
 RESEARCH_REASON: null | "[specific error/pattern]"
 MEMORY_NOTES:
@@ -253,4 +272,5 @@ MEMORY_NOTES:
 - `STATUS=FIXED` requires: `FEEDBACK_LOOP.rung != "none"` with non-null `command`, `DEBUG_CLOSEOUT.instrumentation_removed=true`, `DEBUG_CLOSEOUT.repro_no_longer_fires=true`. No loop → STATUS MUST be BLOCKED with `NO_LOOP_BLOCKED` populated.
 - `REGRESSION_SEAM.status="no_correct_seam"` → do NOT report a shallow test as proof. Set `REQUIRES_REMEDIATION: true` and document seam absence.
 - `NEEDS_EXTERNAL_RESEARCH=true` → `RESEARCH_REASON` must be non-null.
+- **REM-FIX:** on a `kind:remfix` task, `STATUS=FIXED` also requires non-empty `COVERING_TESTS`, `TEST_COMMAND` and `TEST_OUTPUT` for every finding you applied, or a dispute per the REM-FIX section. The one exception is the dispute-only return (REM-FIX section, item 5): every finding disputed, no code changed, `TDD_RED_EXIT` and `TDD_GREEN_EXIT` null.
 - **No test runner:** a scripted loop with real exit codes (the `headless_browser` rung, for example) is TDD evidence; a manual browser check is not. Never fabricate `TDD_RED_EXIT` or `TDD_GREEN_EXIT`: leave both `null`. For a Pure HTML/CSS/JS project with no runner and no scripted loop, return `STATUS: BLOCKED`, name the missing runner or the human check in `NO_LOOP_BLOCKED.ask` and what was tried in `NO_LOOP_BLOCKED.tried`. The contract has no FIXED value for manual-only evidence, so the rule is: require a runner or block.
