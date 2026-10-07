@@ -38,6 +38,12 @@ After the architecture-scanner emits its contract:
 - If `STATUS=NO_CANDIDATES`: the router reports the codebase is healthy; the workflow ends.
 - If the user picks a candidate: dispatch `exploration` in DESIGN mode to grill the deepening design. Domain ambiguity stops for human. The workflow stays paused through the grill; its terminal state, and Memory Update, come when the grill completes. The grilled design feeds the PLAN workflow on a fresh user request — CODEBASE-HEALTH does NOT auto-dispatch to PLAN.
 
+### CODEBASE-HEALTH failure and abandonment
+
+A scanner error or a malformed contract sets `failure_stop_gate` (the existing gate) with `pending_gate` `architecture_scanner_failed`; the router persists any captured notes to the artifact `memory_notes`, creates NO Memory Update, and reports the failure to the user. The workflow stays open until the user retries (a new `phase:codebase-health` task with changed input) or ends it; ending it is recorded as `workflow_failed` in `status_history` and clears `pending_gate`.
+
+Only the user's decline or end finalizes a pause (a fresh request that picks no candidate counts as that); an unanswered pause stays open (nothing finalizes it, and its notes stay in the artifact `memory_notes`).
+
 ### CODEBASE-HEALTH completion
 
 The router owns task completion for the architecture-scanner (read-only agents use the router-owned completion fallback). The architecture-scanner emits its contract and stops its turn — the router marks the task completed. At the terminal state it then creates the Memory Update task (blocked by the scanner task) and runs it inline to persist the memory notes; while the workflow is paused it does neither. No BUILD/DONE finishing menu — the workflow ends when the report is presented and (optionally) a candidate is grilled.

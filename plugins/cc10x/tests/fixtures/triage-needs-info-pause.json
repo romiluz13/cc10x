@@ -28,7 +28,20 @@
       "convergence_state": "N/A"
     },
     "remediation_history": [],
-    "pending_gate": "needs_info"
+    "pending_gate": "needs_info",
+    "memory_notes": [
+      {
+        "source": "triage-agent",
+        "learnings": [
+          "Bug #101 lacks reproduction steps; asked the reporter"
+        ],
+        "patterns": [],
+        "verification": [
+          "Triage: STATUS=NEEDS_INFO, waiting on reporter"
+        ],
+        "deferred": []
+      }
+    ]
   },
   "agent_outputs": {
     "triage_agent_contract": {

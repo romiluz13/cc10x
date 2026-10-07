@@ -1245,7 +1245,19 @@ def health_is_terminal(contract: dict[str, Any], expected: dict[str, Any]) -> bo
     return contract["STATUS"] == "NO_CANDIDATES" or expected.get("candidate_choice") in {"declined", "grill_completed"}
 
 
-def validate_advisory_memory_task(label: str, fixture: dict[str, Any], agent_phase: str, terminal: bool) -> None:
+def note_strings(node: Any) -> list[str]:
+    if isinstance(node, str):
+        return [node]
+    if isinstance(node, dict):
+        return [text for value in node.values() for text in note_strings(value)]
+    if isinstance(node, list):
+        return [text for value in node for text in note_strings(value)]
+    return []
+
+
+def validate_advisory_memory_task(
+    label: str, fixture: dict[str, Any], agent_phase: str, terminal: bool, contract: dict[str, Any]
+) -> None:
     """Memory Update exists, blocked on the agent task, only at the terminal state; a paused workflow has none."""
     tasks = fixture["relevant_tasks"]
     artifact = fixture["starting_artifact"]
@@ -1269,11 +1281,14 @@ def validate_advisory_memory_task(label: str, fixture: dict[str, Any], agent_pha
         f"{label}: memory_finalized recorded before the terminal state",
     )
     require(bool(artifact.get("pending_gate")), f"{label}: a paused advisory workflow must carry a pending_gate")
+    sink = set(note_strings(artifact.get("memory_notes", [])))
+    missing = [note for note in note_strings(contract.get("MEMORY_NOTES", {})) if note not in sink]
+    require(not missing, f"{label}: paused artifact memory_notes is missing the captured notes {missing}")
 
 
 def check_triage_happy_path(fixture: dict[str, Any]) -> None:
     ta = fixture["agent_outputs"]["triage_agent_contract"]
-    validate_advisory_memory_task("triage-happy-path", fixture, "triage", triage_is_terminal(ta))
+    validate_advisory_memory_task("triage-happy-path", fixture, "triage", triage_is_terminal(ta), ta)
     validate_triage_contract("triage-happy-path", ta)
     require(ta["STATUS"] == "TRIAGED", "triage-happy-path: expected TRIAGED")
     require(ta["CATEGORY"] == "bug", "triage-happy-path: expected bug")
@@ -1311,7 +1326,7 @@ def validate_architecture_scanner_contract(
 def check_codebase_health_happy_path(fixture: dict[str, Any]) -> None:
     asc = fixture["agent_outputs"]["architecture_scanner_contract"]
     validate_advisory_memory_task(
-        "codebase-health-happy-path", fixture, "codebase-health", health_is_terminal(asc, fixture["expected"])
+        "codebase-health-happy-path", fixture, "codebase-health", health_is_terminal(asc, fixture["expected"]), asc
     )
     validate_architecture_scanner_contract("codebase-health-happy-path", asc)
     require(
@@ -1332,7 +1347,7 @@ def check_triage_needs_info_pause(fixture: dict[str, Any]) -> None:
     ta = fixture["agent_outputs"]["triage_agent_contract"]
     validate_triage_contract("triage-needs-info-pause", ta)
     require(ta["STATUS"] == "NEEDS_INFO", "triage-needs-info-pause: expected NEEDS_INFO")
-    validate_advisory_memory_task("triage-needs-info-pause", fixture, "triage", triage_is_terminal(ta))
+    validate_advisory_memory_task("triage-needs-info-pause", fixture, "triage", triage_is_terminal(ta), ta)
 
 
 def check_codebase_health_candidate_pause(fixture: dict[str, Any]) -> None:
@@ -1343,7 +1358,7 @@ def check_codebase_health_candidate_pause(fixture: dict[str, Any]) -> None:
         "codebase-health-candidate-pause: expected CANDIDATES_FOUND",
     )
     validate_advisory_memory_task(
-        "codebase-health-candidate-pause", fixture, "codebase-health", health_is_terminal(asc, fixture["expected"])
+        "codebase-health-candidate-pause", fixture, "codebase-health", health_is_terminal(asc, fixture["expected"]), asc
     )
 
 
@@ -1488,6 +1503,44 @@ def check_multi_phase_memory_finalize(fixture: dict[str, Any]) -> None:
         )
 
 
+def runnable_steps_from_events(events: list[dict[str, Any]], phase_id: str, graph: list[dict[str, Any]]) -> list[str]:
+    """SKILL.md section 4 rule: a step is complete only if its result_persisted event for this phase_id is newer than the latest phase_started or remediation_created event for that phase_id (workflow_started when neither exists)."""
+    boundary = -1
+    for index, event in enumerate(events):
+        if event["event"] in {"phase_started", "remediation_created"} and event.get("details", {}).get("phase_id") == phase_id:
+            boundary = index
+    if boundary < 0:
+        boundary = max((i for i, e in enumerate(events) if e["event"] == "workflow_started"), default=-1)
+    complete = {
+        (event["agent"], event["phase"])
+        for event in events[boundary + 1 :]
+        if event["event"] == "result_persisted" and event.get("details", {}).get("phase_id") == phase_id
+    }
+    done_phases = {phase for _, phase in complete}
+    return sorted(
+        step["phase"]
+        for step in graph
+        if (step["agent"], step["phase"]) not in complete and set(step["after"]) <= done_phases
+    )
+
+
+def check_multi_phase_resume_events(fixture: dict[str, Any]) -> None:
+    label = "multi-phase-resume-events"
+    results = fixture["starting_artifact"]["results"]
+    require(bool(fixture["cases"]), f"{label}: no cases")
+    for case in fixture["cases"]:
+        for slot in case["stale_slots"]:
+            require(
+                results.get(slot) is not None,
+                f"{label}: stale slot results.{slot} must hold an earlier value, or the case no longer shows the flat-slot trap",
+            )
+        runnable = runnable_steps_from_events(case["events"], case["phase_id"], case["graph"])
+        require(
+            runnable == sorted(case["expected_runnable"]),
+            f"{label}: runnable steps for '{case['name']}' are {runnable}, expected {sorted(case['expected_runnable'])}",
+        )
+
+
 def check_two_workflow_resume(fixture: dict[str, Any]) -> None:
     label = "two-workflow-resume"
     first = fixture["starting_artifact"]
@@ -1548,6 +1601,7 @@ CHECKS = {
     "qa-route-happy-path.json": check_qa_route_happy_path,
     "remfix-gate.json": check_remfix_gate,
     "multi-phase-memory-finalize.json": check_multi_phase_memory_finalize,
+    "multi-phase-resume-events.json": check_multi_phase_resume_events,
     "two-workflow-resume.json": check_two_workflow_resume,
 }
 

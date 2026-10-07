@@ -183,7 +183,9 @@ Workflow event log:
   - `details`
 - Event types the router appends:
   - `workflow_started` (at workflow bootstrap)
-  - `result_persisted` (each agent result persisted to the artifact)
+  - `result_persisted` (each agent result persisted to the artifact; `phase` is the task phase and `details.phase_id` is the `phase_cursor` value, `N/A` on routes without phases)
+  - `phase_started` (BUILD step 11a, once per phase; `details.phase_id` is the `phase_cursor` value)
+  - `remediation_created` (one per remediation round, appended with its `remediation_history` entry; `details.phase_id` as above)
   - `memory_finalized` (Memory Update)
   - `inline_fallback_entered` (inline no-subagent mode)
   - `inline_fallback_exited` (the router resumes subagent dispatch)
@@ -196,7 +198,6 @@ Workflow event log:
   - `agent_started`
   - `agent_completed`
   - `contract_parsed`
-  - `remediation_created`
   - `scope_decision_requested`
   - `scope_decision_resolved`
 - `workflow_completed` and `workflow_failed` are not appended by any router step either; the QA isolation guard accepts them, with `memory_finalized`, as terminal markers when one is present as the last `status_history` event.

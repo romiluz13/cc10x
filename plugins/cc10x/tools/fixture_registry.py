@@ -55,6 +55,7 @@ REQUIRED_FIXTURES = (
     "qa-route-happy-path.json",
     "remfix-gate.json",
     "multi-phase-memory-finalize.json",
+    "multi-phase-resume-events.json",
     "two-workflow-resume.json",
 )
 

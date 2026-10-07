@@ -1,0 +1,379 @@
+{
+  "id": "multi-phase-resume-events",
+  "description": "Artifact-only resume rule (SKILL.md section 4): a graph step of the current phase_cursor is complete only if a result_persisted event for its agent and task phase carries details.phase_id equal to the phase_cursor and sits AFTER the latest phase_started or remediation_created event for that phase id (file order). The flat results slots hold the latest value of an EARLIER phase or REM-FIX cycle in both cases below, so a results-based check would wrongly skip the reviewer, the hunter and the verifier.",
+  "workflow_type": "BUILD",
+  "starting_artifact": {
+    "workflow_uuid": "wf-20261007T140000Z-resume-events",
+    "workflow_id": "wf-20261007T140000Z-resume-events",
+    "workflow_type": "BUILD",
+    "state_root": ".cc10x",
+    "plan_mode": "execution_plan",
+    "verification_rigor": "standard",
+    "proof_status": "gaps_found",
+    "traceability": {
+      "requirements": [],
+      "phases": [],
+      "verification": [],
+      "remediation": []
+    },
+    "phase_cursor": "phase-2",
+    "task_ids": {},
+    "results": {
+      "builder": {
+        "STATUS": "PASS"
+      },
+      "reviewer": {
+        "STATUS": "APPROVE"
+      },
+      "hunter": {
+        "STATUS": "PASS"
+      },
+      "verifier": {
+        "STATUS": "PASS"
+      }
+    },
+    "intent": {
+      "goal": "Two-phase profile feature"
+    },
+    "evidence": {},
+    "quality": {
+      "convergence_state": "needs_iteration"
+    },
+    "status_history": [
+      {
+        "event": "workflow_started",
+        "phase": "build",
+        "ts": "2026-10-07T14:00:00Z"
+      }
+    ],
+    "remediation_history": [],
+    "normalized_phases": [
+      {
+        "phase_id": "phase-1",
+        "title": "Data model"
+      },
+      {
+        "phase_id": "phase-2",
+        "title": "Profile page"
+      }
+    ],
+    "phase_status": {
+      "phase-1": "completed",
+      "phase-2": "in_progress"
+    }
+  },
+  "relevant_tasks": {},
+  "agent_outputs": {},
+  "cases": [
+    {
+      "name": "second phase opens with the first phase's results still in the flat slots",
+      "phase_id": "phase-2",
+      "stale_slots": [
+        "reviewer",
+        "hunter",
+        "verifier"
+      ],
+      "events": [
+        {
+          "ts": "2026-10-07T14:00:00Z",
+          "wf": "wf-20261007T140000Z-resume-events",
+          "event": "workflow_started",
+          "phase": "build",
+          "task_id": "N/A",
+          "agent": "router",
+          "decision": "start",
+          "reason": "fixture"
+        },
+        {
+          "ts": "2026-10-07T14:01:00Z",
+          "wf": "wf-20261007T140000Z-resume-events",
+          "event": "phase_started",
+          "phase": "build-implement",
+          "task_id": "N/A",
+          "agent": "router",
+          "decision": "",
+          "reason": "fixture",
+          "details": {
+            "phase_id": "phase-1"
+          }
+        },
+        {
+          "ts": "2026-10-07T14:02:00Z",
+          "wf": "wf-20261007T140000Z-resume-events",
+          "event": "result_persisted",
+          "phase": "build-implement",
+          "task_id": "N/A",
+          "agent": "component-builder",
+          "decision": "PASS",
+          "reason": "fixture",
+          "details": {
+            "phase_id": "phase-1"
+          }
+        },
+        {
+          "ts": "2026-10-07T14:03:00Z",
+          "wf": "wf-20261007T140000Z-resume-events",
+          "event": "result_persisted",
+          "phase": "build-review",
+          "task_id": "N/A",
+          "agent": "code-reviewer",
+          "decision": "APPROVE",
+          "reason": "fixture",
+          "details": {
+            "phase_id": "phase-1"
+          }
+        },
+        {
+          "ts": "2026-10-07T14:04:00Z",
+          "wf": "wf-20261007T140000Z-resume-events",
+          "event": "result_persisted",
+          "phase": "build-hunt",
+          "task_id": "N/A",
+          "agent": "failure-hunter",
+          "decision": "PASS",
+          "reason": "fixture",
+          "details": {
+            "phase_id": "phase-1"
+          }
+        },
+        {
+          "ts": "2026-10-07T14:05:00Z",
+          "wf": "wf-20261007T140000Z-resume-events",
+          "event": "result_persisted",
+          "phase": "build-verify",
+          "task_id": "N/A",
+          "agent": "integration-verifier",
+          "decision": "PASS",
+          "reason": "fixture",
+          "details": {
+            "phase_id": "phase-1"
+          }
+        },
+        {
+          "ts": "2026-10-07T14:06:00Z",
+          "wf": "wf-20261007T140000Z-resume-events",
+          "event": "phase_started",
+          "phase": "build-implement",
+          "task_id": "N/A",
+          "agent": "router",
+          "decision": "",
+          "reason": "fixture",
+          "details": {
+            "phase_id": "phase-2"
+          }
+        },
+        {
+          "ts": "2026-10-07T14:07:00Z",
+          "wf": "wf-20261007T140000Z-resume-events",
+          "event": "result_persisted",
+          "phase": "build-implement",
+          "task_id": "N/A",
+          "agent": "component-builder",
+          "decision": "PASS",
+          "reason": "fixture",
+          "details": {
+            "phase_id": "phase-2"
+          }
+        }
+      ],
+      "graph": [
+        {
+          "agent": "component-builder",
+          "phase": "build-implement",
+          "after": []
+        },
+        {
+          "agent": "code-reviewer",
+          "phase": "build-review",
+          "after": [
+            "build-implement"
+          ]
+        },
+        {
+          "agent": "failure-hunter",
+          "phase": "build-hunt",
+          "after": [
+            "build-implement"
+          ]
+        },
+        {
+          "agent": "integration-verifier",
+          "phase": "build-verify",
+          "after": [
+            "build-review",
+            "build-hunt"
+          ]
+        }
+      ],
+      "expected_runnable": [
+        "build-review",
+        "build-hunt"
+      ]
+    },
+    {
+      "name": "second remediation cycle opens with the first cycle's re-review, re-hunt and re-verify events behind it",
+      "phase_id": "phase-1",
+      "stale_slots": [
+        "reviewer",
+        "hunter",
+        "verifier"
+      ],
+      "events": [
+        {
+          "ts": "2026-10-07T14:00:00Z",
+          "wf": "wf-20261007T140000Z-resume-events",
+          "event": "workflow_started",
+          "phase": "build",
+          "task_id": "N/A",
+          "agent": "router",
+          "decision": "start",
+          "reason": "fixture"
+        },
+        {
+          "ts": "2026-10-07T14:01:00Z",
+          "wf": "wf-20261007T140000Z-resume-events",
+          "event": "phase_started",
+          "phase": "build-implement",
+          "task_id": "N/A",
+          "agent": "router",
+          "decision": "",
+          "reason": "fixture",
+          "details": {
+            "phase_id": "phase-1"
+          }
+        },
+        {
+          "ts": "2026-10-07T14:02:00Z",
+          "wf": "wf-20261007T140000Z-resume-events",
+          "event": "result_persisted",
+          "phase": "build-implement",
+          "task_id": "N/A",
+          "agent": "component-builder",
+          "decision": "PASS",
+          "reason": "fixture",
+          "details": {
+            "phase_id": "phase-1"
+          }
+        },
+        {
+          "ts": "2026-10-07T14:03:00Z",
+          "wf": "wf-20261007T140000Z-resume-events",
+          "event": "result_persisted",
+          "phase": "build-review",
+          "task_id": "N/A",
+          "agent": "code-reviewer",
+          "decision": "CHANGES_REQUESTED",
+          "reason": "fixture",
+          "details": {
+            "phase_id": "phase-1"
+          }
+        },
+        {
+          "ts": "2026-10-07T14:04:00Z",
+          "wf": "wf-20261007T140000Z-resume-events",
+          "event": "result_persisted",
+          "phase": "build-hunt",
+          "task_id": "N/A",
+          "agent": "failure-hunter",
+          "decision": "PASS",
+          "reason": "fixture",
+          "details": {
+            "phase_id": "phase-1"
+          }
+        },
+        {
+          "ts": "2026-10-07T14:05:00Z",
+          "wf": "wf-20261007T140000Z-resume-events",
+          "event": "remediation_created",
+          "phase": "build-review",
+          "task_id": "N/A",
+          "agent": "router",
+          "decision": "cycle 1",
+          "reason": "fixture",
+          "details": {
+            "phase_id": "phase-1"
+          }
+        },
+        {
+          "ts": "2026-10-07T14:06:00Z",
+          "wf": "wf-20261007T140000Z-resume-events",
+          "event": "result_persisted",
+          "phase": "re-review",
+          "task_id": "N/A",
+          "agent": "code-reviewer",
+          "decision": "APPROVE",
+          "reason": "fixture",
+          "details": {
+            "phase_id": "phase-1"
+          }
+        },
+        {
+          "ts": "2026-10-07T14:07:00Z",
+          "wf": "wf-20261007T140000Z-resume-events",
+          "event": "result_persisted",
+          "phase": "re-hunt",
+          "task_id": "N/A",
+          "agent": "failure-hunter",
+          "decision": "PASS",
+          "reason": "fixture",
+          "details": {
+            "phase_id": "phase-1"
+          }
+        },
+        {
+          "ts": "2026-10-07T14:08:00Z",
+          "wf": "wf-20261007T140000Z-resume-events",
+          "event": "result_persisted",
+          "phase": "re-verify",
+          "task_id": "N/A",
+          "agent": "integration-verifier",
+          "decision": "FAIL",
+          "reason": "fixture",
+          "details": {
+            "phase_id": "phase-1"
+          }
+        },
+        {
+          "ts": "2026-10-07T14:09:00Z",
+          "wf": "wf-20261007T140000Z-resume-events",
+          "event": "remediation_created",
+          "phase": "re-verify",
+          "task_id": "N/A",
+          "agent": "router",
+          "decision": "cycle 2",
+          "reason": "fixture",
+          "details": {
+            "phase_id": "phase-1"
+          }
+        }
+      ],
+      "graph": [
+        {
+          "agent": "code-reviewer",
+          "phase": "re-review",
+          "after": []
+        },
+        {
+          "agent": "failure-hunter",
+          "phase": "re-hunt",
+          "after": []
+        },
+        {
+          "agent": "integration-verifier",
+          "phase": "re-verify",
+          "after": [
+            "re-review",
+            "re-hunt"
+          ]
+        }
+      ],
+      "expected_runnable": [
+        "re-hunt",
+        "re-review"
+      ]
+    }
+  ],
+  "expected": {
+    "next_action": "resume_runnable_steps"
+  }
+}

@@ -991,6 +991,39 @@ def _terminal_keeps_gate(d):
     d["starting_artifact"]["pending_gate"] = "needs_info"
 
 
+def _paused_drop_notes(d):
+    d["starting_artifact"]["memory_notes"] = []
+
+
+def _paused_drop_one_note(d):
+    d["starting_artifact"]["memory_notes"][0]["learnings"] = []
+
+
+def _resume_drop_boundary(d):
+    case = d["cases"][1]
+    case["events"] = [e for e in case["events"] if not (e["event"] == "remediation_created" and e["decision"] == "cycle 2")]
+
+
+def _resume_stale_phase_id(d):
+    case = d["cases"][0]
+    case["events"][-1]["details"]["phase_id"] = "phase-1"
+
+
+def _resume_expect_flat_results(d):
+    d["cases"][0]["expected_runnable"] = ["build-verify"]
+
+
+def _resume_stale_slots_empty(d):
+    d["starting_artifact"]["results"]["reviewer"] = None
+
+
+def _resume_boundary_after_results(d):
+    case = d["cases"][1]
+    boundary = next(e for e in case["events"] if e["event"] == "remediation_created" and e["decision"] == "cycle 2")
+    case["events"].remove(boundary)
+    case["events"].insert(5, boundary)
+
+
 def _builder2_blocked_by_verifier_only(d):
     d["relevant_tasks"]["builder_phase_2"]["blockedBy"] = ["verifier_phase_1"]
 
@@ -1042,6 +1075,15 @@ L1_MUTATIONS = [
     ("codebase-health-candidate-pause.json", _paused_add_memory_task, "Memory Update must not exist before the terminal state"),
     ("codebase-health-candidate-pause.json", _paused_finalized, "memory_finalized recorded before the terminal state"),
     ("codebase-health-candidate-pause.json", _paused_no_gate, "must carry a pending_gate"),
+    ("triage-needs-info-pause.json", _paused_drop_notes, "paused artifact memory_notes is missing"),
+    ("triage-needs-info-pause.json", _paused_drop_one_note, "paused artifact memory_notes is missing"),
+    ("codebase-health-candidate-pause.json", _paused_drop_notes, "paused artifact memory_notes is missing"),
+    ("codebase-health-candidate-pause.json", _paused_drop_one_note, "paused artifact memory_notes is missing"),
+    ("multi-phase-resume-events.json", _resume_drop_boundary, "runnable steps"),
+    ("multi-phase-resume-events.json", _resume_stale_phase_id, "runnable steps"),
+    ("multi-phase-resume-events.json", _resume_expect_flat_results, "runnable steps"),
+    ("multi-phase-resume-events.json", _resume_stale_slots_empty, "stale slot"),
+    ("multi-phase-resume-events.json", _resume_boundary_after_results, "runnable steps"),
     ("two-workflow-resume.json", _share_workflow_id, "distinct workflow_id"),
     ("two-workflow-resume.json", _foreign_task, "resumed task a_builder carries wf"),
 ]
@@ -1057,7 +1099,7 @@ def test_multi_phase_fixture_accepts_memory_blocked_by_the_last_phase_doc_sync_t
 def test_replay_registers_the_p3_fixtures_and_the_two_advisory_pause_fixtures():
     result = run_tool("workflow_replay_check.py")
     assert result.returncode == 0, result.stdout + result.stderr
-    assert "fixtures=34" in result.stdout
+    assert "fixtures=35" in result.stdout
 
 
 @pytest.mark.parametrize("name,mutate,message", L1_MUTATIONS, ids=lambda v: getattr(v, "__name__", str(v)))

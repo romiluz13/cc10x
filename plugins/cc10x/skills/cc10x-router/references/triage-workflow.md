@@ -41,6 +41,12 @@ After the triage-agent emits its contract:
 - If `STATUS=WONTFIX`: the router presents the wontfix reason. For a rejected enhancement, the agent writes to `.out-of-scope/`; for an already-implemented feature, it points to the existing implementation.
 - If the issue needed fleshing out (`triage-agent` set `NEEDS_GRILLING=true`): dispatch `exploration` in DESIGN mode to grill the issue into shape. Domain ambiguity stops for human input. The workflow pauses (`pending_gate: needs_grilling`) with no Memory Update task until the grilled result has fed a second triage-agent pass that returns a terminal state.
 
+### TRIAGE failure and abandonment
+
+A triage-agent error or a malformed contract sets `failure_stop_gate` (the existing gate) with `pending_gate` `triage_agent_failed`; the router persists any captured notes to the artifact `memory_notes`, creates NO Memory Update, and reports the failure to the user. The workflow stays open until the user retries (a new `phase:triage` task with changed input) or ends it; ending it is recorded as `workflow_failed` in `status_history` and clears `pending_gate`.
+
+Only the user's decline or end finalizes a pause; an unanswered pause stays open (nothing finalizes it, and its notes stay in the artifact `memory_notes`). If the user ends a `needs_info` or `needs_grilling` pause instead of answering, that is the terminal state and the router creates Memory Update as above.
+
 ### TRIAGE completion
 
 The router owns task completion for the triage-agent (read-only agents use the router-owned completion fallback). The triage-agent emits its contract and stops its turn — the router marks the task completed. On a terminal result it then creates the Memory Update task (blocked by that triage task) and runs it inline to persist the memory notes after the brief is presented; on a pause it does neither. No BUILD/DONE finishing menu — the workflow ends when the brief is presented.

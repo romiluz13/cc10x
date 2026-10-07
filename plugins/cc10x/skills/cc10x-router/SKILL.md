@@ -144,11 +144,11 @@ After memory load:
 TaskList()
 ```
 
-Task tools are optional. Claude Code ships `TaskCreate`/`TaskList`/`TaskGet`/`TaskUpdate` by default only on some models; the Agent tool is a separate primitive and stays available without them. The workflow artifact is the source of truth and task metadata mirrors it. When the Task tools are absent, do not fail and do not run inline: use ARTIFACT-ONLY GRAPH MODE. Phase state, task ids and ordering are tracked in the artifact (`task_ids`, `phase_status`, `phase_cursor`, `results`) and the events log; every agent is still dispatched through the Agent tool with fresh context; completion, validation and every gate are unchanged. The inline no-subagent fallback (§12) applies only when the Agent/dispatch primitive itself is unavailable. `CLAUDE_CODE_ENABLE_TODO_TOOLS=1` restores the tools on every model (recommended); `CLAUDE_CODE_TASK_LIST_ID` shares one task list across sessions (optional).
+Task tools are optional. Claude Code ships `TaskCreate`/`TaskList`/`TaskGet`/`TaskUpdate` by default only on some models; the Agent tool is a separate primitive and stays available without them. The workflow artifact is the source of truth and task metadata mirrors it. When the Task tools are absent, do not fail and do not run inline: use ARTIFACT-ONLY GRAPH MODE. Phase state, task ids and ordering are tracked in the artifact (`task_ids`, `phase_status`, `phase_cursor`, `results`) and the events log; every agent is still dispatched through the Agent tool with fresh context; validation and every gate apply as written; completion is recorded by the router in the artifact, and the write agents' own `TaskUpdate` instruction is suppressed through the dispatch scaffold (§7) until the agent files drop it. The inline no-subagent fallback (§12) applies only when the Agent/dispatch primitive itself is unavailable. `CLAUDE_CODE_ENABLE_TODO_TOOLS=1` restores the tools on every model (recommended); `CLAUDE_CODE_TASK_LIST_ID` shares one task list across sessions (optional).
 
 Hydration rules:
 
-- Find active parent workflow tasks by subject prefix `CC10X BUILD:`, `CC10X DEBUG:`, `CC10X REVIEW:`, `CC10X PLAN:`, `CC10X QA:`. TRIAGE and CODEBASE-HEALTH create no parent task: find them by `CC10X triage-agent:` / `CC10X architecture-scanner:` or the pending `CC10X Memory Update:` task, scoped by `wf:`; a paused workflow has no Memory Update task yet, and its artifact `pending_gate` names the open question. ORIENT creates no task.
+- Find active parent workflow tasks by subject prefix `CC10X BUILD:`, `CC10X DEBUG:`, `CC10X REVIEW:`, `CC10X PLAN:`, `CC10X QA:`. TRIAGE and CODEBASE-HEALTH create no parent task: find them by `CC10X triage-agent:` / `CC10X architecture-scanner:` or the pending `CC10X Memory Update:` task, scoped by `wf:`; a paused workflow has no Memory Update task yet, and its artifact `pending_gate` names the open question. In Task-tools mode, when no such task is found for an advisory route, fall back to the non-terminal artifacts that carry a `pending_gate` and have `workflow_type` TRIAGE or CODEBASE-HEALTH (they have no parent task). ORIENT creates no task.
 - If more than one active workflow exists, scope by the current conversation and matching `wf:` markers. Do not resume a workflow you cannot scope confidently.
 - Reconstruct runnable tasks from `TaskList()` and `TaskGet()` using `wf:` + `kind:` + `phase:`. Do not rely on stored task IDs for correctness.
 - Read and write only the `.cc10x/` state namespace (memory `.cc10x/*.md`, workflows `.cc10x/workflows/*`). Ignore any legacy version-segmented layout such as `.cc10x/v10/*` or `.claude/cc10x/*` left over from older installs during hydration.
@@ -158,12 +158,16 @@ Hydration rules:
 Resume algorithm:
 
 0. If `.cc10x/stop-state.json` or `.cc10x/precompact-state.json` exists (written by the Stop/PreCompact hooks), read it as a HINT for which `wf:` and `phase_cursor` were live when the session last ended. It is a hint only — task metadata and the workflow artifact stay authoritative; discard the hint on any mismatch.
-1. Identify the active parent workflow.
+1. Identify the active parent workflow, dropping every terminal workflow first (Terminal test below).
 2. Extract `workflow_uuid` from the `wf:` line.
 3. Read all CC10X tasks whose descriptions contain that `wf:`.
 4. Derive runnable tasks from `status` and `blockedBy`.
 5. Reconstruct the memory task as the unique pending/in_progress `kind:memory` task in the same `wf:`.
-6. Artifact-only resume (no Task tools; replaces steps 1 and 3-5): (a) list `.cc10x/workflows/*.json` and keep the artifacts whose `workflow_uuid` the user named or whose `user_request` matches the current conversation, never by modification time alone; if more than one remains, ask which; (b) read `pending_gate` first and answer it, then `phase_cursor`, `phase_status` and `results`; (c) the next step is the first step of that route's graph with no completed `results` entry, and a `partial` or `blocked` step is re-entered only through its remediation or clarification gate.
+6. Artifact-only resume (no Task tools; replaces steps 1 and 3-5): (a) list `.cc10x/workflows/*.json`, drop the terminal ones, and keep the artifacts whose `workflow_uuid` the user named or whose `user_request` matches the current conversation, never by modification time alone; zero non-terminal matches start a new workflow (say so), more than one, ask which; (b) read `pending_gate` first and answer it, then `phase_cursor`, `phase_status` and `results`; (c) a graph step is complete only if the events log holds a `result_persisted` event for its agent and task phase with `details.phase_id` equal to the current `phase_cursor`, appended after the latest `phase_started` or `remediation_created` event for that phase_id (file order decides; the workflow start event is the boundary when neither exists, and after a `remediation_created` the current graph is the remediation graph: REM-FIX, re-review, re-hunt, re-verify); `results.*` holds only the latest value and never proves a step done; the next step is the first step of that route's graph that is not complete, and a `partial` or `blocked` step is re-entered only through its remediation or clarification gate.
+
+Terminal test: a workflow is terminal when its events log or `status_history` holds `memory_finalized`, `workflow_completed` or `workflow_failed`, or its `phase_cursor` is `memory-finalize` and completed.
+
+Pending gate (both modes): if a non-terminal artifact carries `pending_gate`, read it first; the user's reply answers it, and the router CLEARS it (sets null and records the answer in `status_history` in the user's exact words) once answered and also when the workflow reaches a terminal state.
 
 Scope-decision resume:
 
@@ -487,7 +491,7 @@ Verdict extraction:
 1. Read the YAML block and take the verdict from its `STATUS` (`PLANNING_REVIEW_STATUS` for `plan-gap-reviewer`).
 2. If the YAML block is absent, the envelope on line 1, else the heading in the first 5 lines, only names the verdict to re-check.
 3. Extract `CRITICAL_ISSUES` from `### Critical Issues`.
-4. If the YAML block is absent or any required contract field is missing, whatever the envelope and heading say, run inline verification rather than approving.
+4. If the YAML block is absent or any required contract field is missing, whatever the envelope and heading say, run inline verification rather than approving; for TRIAGE and CODEBASE-HEALTH there is nothing to verify inline, so the router sets `failure_stop_gate` instead (see their workflow references; no Memory Update).
 5. Detect `SELF_REMEDIATED` from task state:
    - If the task remains `in_progress` and `blockedBy` is non-empty after the agent stops, treat it as self-remediated.
 6. For integration-verifier, parse scenario accounting:
@@ -588,7 +592,7 @@ The harness is a loop engine. These concepts govern how the loop runs:
 3. If the runnable task kind is memory:
    - execute inline in the main context
    - set `phase_cursor="memory-finalize"` in the workflow artifact BEFORE any other memory-side write, and on completion append a `memory_finalized` entry to the artifact's `status_history`. This is what disengages the QA isolation guard when the workflow ends: the guard keys on the newest artifact and treats `phase_cursor` in `{memory-finalize}` or a last `status_history` event in `{memory_finalized, workflow_completed, workflow_failed}` as terminal. A QA workflow whose cursor is left on a plan phase keeps the guard engaged after the work is over, locking all later sessions — cc10x or not — out of Write, Edit, and mutating Bash, including the router's own next-workflow bootstrap
-   - persist workflow artifact results + Memory Notes from the task description
+   - persist workflow artifact results + Memory Notes from the artifact `memory_notes` and the task description (§13), and set `pending_gate` to null
    - set `quality.convergence_state=converged` when the workflow's final gate has passed (BUILD and QA: the final phase's `phase_exit_gate`; every other route: its last gate) and memory is finalized; the advisory routes (TRIAGE, CODEBASE-HEALTH) carry `N/A`, set before the first agent dispatch
    - append `memory_finalized` to `.cc10x/workflows/{wf}.events.jsonl`
    - clean up the matching [cc10x-internal] memory_task_id entry
@@ -613,7 +617,7 @@ The harness is a loop engine. These concepts govern how the loop runs:
 7. Repeat until all tasks in the active `wf:` are completed.
 ```
 
-Artifact-only graph mode: read "task" in this loop as a graph step recorded in the artifact. Blockers are the ordering rules of the route's `references/*-workflow.md` graph, evaluated from `results` and `phase_status`; "mark in_progress/completed" is an artifact write plus an event-log entry instead of a `TaskUpdate`; a REM-FIX is a recorded step with the same metadata fields, dispatched to `component-builder` through the Agent tool. Record the mode once in `status_history`.
+Artifact-only graph mode: read "task" in this loop as a graph step recorded in the artifact. Blockers are the ordering rules of the route's `references/*-workflow.md` graph, evaluated with the events-log completion rule of §4 (never from a bare `results.*` slot); "mark in_progress/completed" is an artifact write plus an event-log entry instead of a `TaskUpdate`; a REM-FIX is a recorded step with the same metadata fields, dispatched to `component-builder` through the Agent tool, and its `remediation_history` entry comes with a `remediation_created` event. Record the mode once in `status_history`.
 
 ### After every agent completion
 
@@ -622,6 +626,7 @@ Claude Code may run a dispatched agent in the background and deliver its result 
 0. Capture memory payload FIRST — before the pre-check, validation, or any task-state mutation (compaction can fire between agent return and parse; an uncaptured payload is lost).
    - READ-ONLY agents: extract `### Memory Notes (For Workflow-Final Persistence)` immediately after return.
    - WRITE agents: extract `MEMORY_NOTES` from YAML immediately after return.
+   - Append the captured notes to the artifact `memory_notes` at once, always, even when no memory task exists (an advisory pause has none).
 1. Pre-check before processing agent output:
    - Did the agent address the assigned scope (not a subset or superset)?
    - Did tests, builds, or checks referenced in the contract actually run (not merely described)?
@@ -636,8 +641,8 @@ Claude Code may run a dispatched agent in the background and deliver its result 
    - If the task is still not completed after agent return, router applies fallback `TaskUpdate(status="completed")`.
    - Blockers or findings may change workflow routing, but they never transfer orchestration ownership back to the read-only agent.
 5. Memory payload was already captured in step 0:
-   - READ-ONLY agents: append extracted notes to the memory task description.
-   - WRITE agents: append deferred or supplemental payload needed by the memory task.
+   - READ-ONLY agents: append the extracted notes to the artifact `memory_notes`, and to the memory task description when one exists (the artifact write is the one step 0 made; never twice).
+   - WRITE agents: their `MEMORY_NOTES` go the same way; append deferred or supplemental payload needed by the memory task.
 6. Update `.cc10x/workflows/{workflow_uuid}.json` with:
    - intent contract fields from planner output when available
    - task ids
@@ -663,8 +668,10 @@ Claude Code may run a dispatched agent in the background and deliver its result 
 7. **Append event log entry:** For each result persisted to the artifact in step 6, append a matching entry to `.cc10x/workflows/{wf}.events.jsonl`. **Append mechanism:** the `Write` tool overwrites whole files — NEVER `Write` only the new line. Either Read the current `.events.jsonl` and Write it back with the new line added at the end, or use a Bash append (`printf '%s\n' '{...}' >> .cc10x/workflows/{wf}.events.jsonl`). Entry shape:
 
    ```json
-   {"ts":"<ISO>","wf":"<wf_id>","event":"result_persisted","phase":"<phase>","task_id":"<task_id>","agent":"<agent_name>","decision":"<contract_status>","reason":"<one-line summary>"}
+   {"ts":"<ISO>","wf":"<wf_id>","event":"result_persisted","phase":"<phase>","task_id":"<task_id>","agent":"<agent_name>","decision":"<contract_status>","reason":"<one-line summary>","details":{"phase_id":"<phase_cursor>"}}
    ```
+
+   `phase` is the task phase (e.g. `build-review`); `details.phase_id` is the `phase_cursor` value (`N/A` on routes without phases).
 
    The event log MUST stay in sync with the artifact. A mutation without an event log entry is a desync that breaks the audit trail. (The PostToolUse guard auto-appends a fallback `artifact_mutated` event, but the router MUST write the semantic `result_persisted` entry with agent-specific metadata.)
 8. Persist `[cc10x-internal] memory_task_id: {memory_task_id} wf:{workflow_uuid}` only if it matches the active workflow.
@@ -722,7 +729,7 @@ The memory task executes inline only. Never spawn it as a sub-agent.
 
 The memory task:
 
-- Reads the workflow artifact plus its own description payload, not conversation history.
+- Reads the workflow artifact plus its own description payload, not conversation history: the Memory Notes are the artifact `memory_notes` plus any task description payload (deduplicated). Leave `memory_notes` untouched until every persistence write has succeeded.
 - Persists learnings to:
   - `activeContext.md ## Learnings`
   - `patterns.md ## Common Gotchas`

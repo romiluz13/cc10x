@@ -2943,6 +2943,125 @@ ASSERTIONS = [
         and re.search(r"Until the agent files declare these producers[^\n]{0,200}the gates fail closed", text) is not None,
         "H3: the producer is stated plainly for P4B, and the router does not paper over missing fields",
     ),
+    # --- P4A remediation 2, commit 1: resume, step completion, notes sink, terminal state, advisory failure ---
+    A(
+        "router: artifact-only step completion comes from the phase-keyed events log, newer than the phase boundary event, never from a results slot",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: re.search(
+            r"a graph step is complete only if the events log holds a `result_persisted` event for its agent and task phase with `details\.phase_id` equal to the current `phase_cursor`, appended after the latest `phase_started` or `remediation_created` event for that phase_id",
+            text,
+        )
+        is not None
+        and re.search(r"`results\.\*` holds only the latest value and never proves a step done", text) is not None
+        and "the next step is the first step of that route's graph with no completed `results` entry" not in text,
+        "flat results slots from an earlier phase or REM-FIX cycle must not make a step of the current phase look done",
+    ),
+    A(
+        "router: the artifact-only ordering text and the chain-loop paragraph use the same events-log completion rule",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: re.search(r"Blockers are the ordering rules of the route's `references/\*-workflow\.md` graph, evaluated with the events-log completion rule of §4", text) is not None
+        and "evaluated from `results` and `phase_status`" not in text,
+        "section 12 must not restate completion from the flat results slots",
+    ),
+    A(
+        "router: result_persisted events carry details.phase_id so the completion rule can key on the phase",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: re.search(r'"event":"result_persisted","phase":"<phase>","task_id":"<task_id>","agent":"<agent_name>"[^\n]{0,160}"details":\{"phase_id":"<phase_cursor>"\}', text) is not None,
+        "an event without the plan phase id cannot be matched to the current phase_cursor",
+    ),
+    A(
+        "build-workflow: step 11a appends a phase_started event with details.phase_id when it re-records the BASE",
+        ROUTER_REFS / "build-workflow.md",
+        lambda text: re.search(r"11a\..{0,1800}append a `phase_started` event[^\n]{0,200}`details\.phase_id`", text, re.S) is not None,
+        "the boundary event exists because a router step appends it",
+    ),
+    A(
+        "policy: event lists add phase_started and remediation_created as router-appended, with details.phase_id",
+        POLICY_REF,
+        lambda text: re.search(r"  - `phase_started` \(", text) is not None
+        and re.search(r"  - `remediation_created` \(", text) is not None
+        and not re.search(r"Not emitted by any router step or hook[^\n]*\n(  - `[a-z_]+`\n)*  - `remediation_created`\n", text)
+        and "`details.phase_id`" in text,
+        "the two boundary events moved from not-emitted to emitted together with the steps that append them",
+    ),
+    A(
+        "remediation: the audit-backstop append also appends a remediation_created event with details.phase_id",
+        SKILLS / "cc10x-router" / "references" / "remediation-and-research.md",
+        lambda text: re.search(r"append a `remediation_created` event[^\n]{0,160}`details\.phase_id`", text) is not None,
+        "the REM-FIX boundary is written where the remediation_history entry is written",
+    ),
+    A(
+        "router: captured Memory Notes always append to artifact memory_notes, and also to the memory task description when one exists",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: re.search(r"Append the captured notes to the artifact `memory_notes` at once, always,[^\n]{0,200}no memory task exists", text) is not None
+        and re.search(r"append the extracted notes to the artifact `memory_notes`, and to the memory task description when one exists", text) is not None,
+        "notes captured during an advisory pause have no memory task and must still have a sink",
+    ),
+    A(
+        "router: Memory Update reads memory_notes from the artifact plus any task payload and clears nothing before persistence succeeds",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: re.search(r"artifact `memory_notes` plus any task description payload[^\n]{0,200}(Leave|leave)[^\n]{0,120}`memory_notes`[^\n]{0,120}every (persistence )?write has succeeded", text) is not None,
+        "a failed memory write must not lose the notes",
+    ),
+    A(
+        "router: resume drops terminal workflows first and defines the terminal test",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: re.search(
+            r"Terminal test: a workflow is terminal when its events log or `status_history` holds `memory_finalized`, `workflow_completed` or `workflow_failed`, or its `phase_cursor` is `memory-finalize` and completed",
+            text,
+        )
+        is not None
+        and re.search(r"1\. Identify the active parent workflow, dropping every terminal workflow first", text) is not None,
+        "a finished advisory workflow must not capture a fresh request",
+    ),
+    A(
+        "router: a non-terminal artifact's pending_gate is answered by the user's reply and then cleared with the exact words recorded",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: re.search(
+            r"the user's reply answers it[^\n]{0,300}CLEARS it \(sets null and records the answer in `status_history` in the user's exact words\)[^\n]{0,200}reaches a terminal state",
+            text,
+        )
+        is not None,
+        "nothing else clears pending_gate, so a terminal advisory workflow would keep it",
+    ),
+    A(
+        "router: zero non-terminal matches starts a new workflow, more than one asks which, advisory routes fall back to artifacts with a pending_gate",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: re.search(r"zero non-terminal matches start a new workflow \(say so\)", text) is not None
+        and re.search(r"more than one,? ask which", text) is not None
+        and re.search(r"fall back to the non-terminal artifacts that carry a `pending_gate` and have `workflow_type` TRIAGE or CODEBASE-HEALTH", text) is not None,
+        "the paused advisory workflow has no parent task and needs a locator in Task-tools mode",
+    ),
+    A(
+        "router: memory finalization clears pending_gate",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: re.search(r"persist workflow artifact results \+ Memory Notes[^\n]{0,300}set `pending_gate` to null", text) is not None,
+        "a terminal advisory artifact carries no pending_gate",
+    ),
+    A(
+        "triage-workflow: agent failure sets failure_stop_gate with a naming pending_gate, creates no Memory Update, only the user's decline finalizes a pause",
+        ROUTER_REFS / "triage-workflow.md",
+        lambda text: re.search(r"### TRIAGE failure and abandonment", text) is not None
+        and re.search(r"error or a malformed contract sets `failure_stop_gate`[^\n]{0,200}`pending_gate` `triage_agent_failed`", text) is not None
+        and re.search(r"creates NO Memory Update", text) is not None
+        and re.search(r"Only the user's decline or end finalizes a pause[^\n]{0,300}stays open", text) is not None,
+        "an advisory failure has a stated state and an unanswered pause is honestly open",
+    ),
+    A(
+        "codebase-health-workflow: scanner failure sets failure_stop_gate with a naming pending_gate, creates no Memory Update, only the user's decline finalizes a pause",
+        ROUTER_REFS / "codebase-health-workflow.md",
+        lambda text: re.search(r"### CODEBASE-HEALTH failure and abandonment", text) is not None
+        and re.search(r"error or a malformed contract sets `failure_stop_gate`[^\n]{0,200}`pending_gate` `architecture_scanner_failed`", text) is not None
+        and re.search(r"creates NO Memory Update", text) is not None
+        and re.search(r"Only the user's decline or end finalizes a pause[^\n]{0,300}stays open", text) is not None,
+        "an advisory failure has a stated state and an unanswered pause is honestly open",
+    ),
+    A(
+        "router: advisory agent error or malformed contract sets failure_stop_gate instead of inline verification",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: re.search(r"for TRIAGE and CODEBASE-HEALTH[^\n]{0,200}sets `failure_stop_gate`[^\n]{0,160}no Memory Update", text) is not None,
+        "inline verification means nothing for an advisory route",
+    ),
 ]
 
 

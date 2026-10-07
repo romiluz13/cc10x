@@ -28,7 +28,20 @@
       "convergence_state": "N/A"
     },
     "remediation_history": [],
-    "pending_gate": "candidate_choice"
+    "pending_gate": "candidate_choice",
+    "memory_notes": [
+      {
+        "source": "architecture-scanner",
+        "learnings": [
+          "Router module is shallow (deletion test: complexity just moves)"
+        ],
+        "patterns": [],
+        "verification": [
+          "Codebase health: 1 candidate found, report presented"
+        ],
+        "deferred": []
+      }
+    ]
   },
   "agent_outputs": {
     "architecture_scanner_contract": {
