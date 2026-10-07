@@ -15,7 +15,7 @@ user-invocable: false
 Read only what's needed:
 
 - `references/review-order-and-checkpoints.md` — review order, checkpoint discipline; load when starting a review that spans multiple files or needs a checkpointed pass
-- `references/code-review-heuristics.md` — heuristics, pattern recognition, false-positive prevention; load when the diff is non-trivial or before reporting CLEAN (Zero-Finding Halt re-scan)
+- `references/code-review-heuristics.md` — heuristics, pattern recognition, false-positive prevention; load when the diff is non-trivial or before reporting zero findings (Zero-Finding Halt re-scan)
 - `references/security-review-checklist.md` — security review checklist; load whenever the diff touches auth, input handling, network, secrets, or data access
 
 ---
@@ -65,11 +65,11 @@ When `code-reviewer` and `failure-hunter` run in parallel (BUILD workflow):
 
 - **code-reviewer** (Assessment A): correctness, performance, spec compliance. Forms opinion WITHOUT seeing the hunter's scan.
 - **failure-hunter** (Assessment B): silent failure scan using red-flags table. Does NOT see the reviewer's findings.
-- **Router-owned merge:** after both complete, the router writes a merged findings summary into the workflow artifact before verifier handoff. Where both agree → high confidence. Where the hunter caught what the reviewer missed → keep. Where the hunter finding is a false positive → drop with reason. Contradictory verdicts: stricter verdict wins, logged in `status_history`.
+- **Router-owned merge:** after both complete, the router writes a merged findings summary into the workflow artifact before verifier handoff. Where both agree → high confidence. Where the hunter caught what the reviewer missed → keep. Where the hunter finding is a false positive → drop with reason. Contradictory verdicts: the blocking verdict is authoritative (`CHANGES_REQUESTED` over `APPROVE`, `FAIL` over `PASS`) and is logged in `status_history`, except that a re-raised finding whose dispute the verifier upheld (`DISPUTE_UPHELD`) is dropped by the router and one whose dispute is still in flight continues to the verifier.
 
 ### Zero-Finding Halt
 
-Zero findings on a non-trivial change → insufficient depth, not perfect code. Re-scan against heuristics and security checklist before reporting CLEAN.
+Zero findings on a non-trivial change → insufficient depth, not perfect code. Re-scan against heuristics and security checklist before reporting zero findings: `APPROVE` for `code-reviewer`, `CLEAN` for `failure-hunter`. A zero-finding `APPROVE` also needs at least three positive assertions with file:line evidence, the router's validity check, which triggers fallback inline verification when they are missing.
 
 ### Code Smells (Fowler Catalog)
 
@@ -122,7 +122,7 @@ State what you CAN verify from code. Tag anything else as "potential impact, not
 
 ### Deferred Findings (Not "Residual" — Already Wired)
 
-Minor/Medium findings you don't fix in this pass are NOT dropped, but you do NOT need a separate file or a separate CONTRACT field for them. Just report them normally with severity and file:line in your output. **The router already handles persistence**: it reads your findings, appends every non-blocking Minor item to the workflow artifact's `deferred_findings` array (source, phase, finding, severity), and surfaces the accumulated list for explicit user triage at BUILD-DONE finishing. Nothing is silently discarded — this is automatic on the router side, not something you need to engineer in your response.
+MEDIUM and LOW findings you don't fix in this pass (the router's non-blocking "Minor" class) are NOT dropped, but you do NOT need a separate file or a separate CONTRACT field for them. Just report them normally with severity and file:line in your output. **The router already handles persistence**: it reads your findings, appends every non-blocking MEDIUM or LOW item to the workflow artifact's `deferred_findings` array (source, phase, finding, severity), and surfaces the accumulated list for explicit user triage at BUILD-DONE finishing. Nothing is silently discarded — this is automatic on the router side, not something you need to engineer in your response.
 
 ### False Positive Prevention
 
@@ -143,7 +143,7 @@ Discipline for acting on external/human review feedback (pasted PR comments, rev
 ### The 6-Step Loop
 
 1. **Read all feedback** before responding to any item
-2. **Categorize** each item: CRITICAL (must fix), IMPORTANT (should fix), MINOR (optional), REJECT (with reason)
+2. **Categorize** each item: CRITICAL (must fix), IMPORTANT (should fix), MINOR (optional), REJECT (with reason) — triage labels for received feedback, not the review severities above
 3. **Verify before agreeing** — don't blindly accept. Check if the feedback is correct against the code.
 4. **Fix accepted items** — CRITICAL first, then IMPORTANT
 5. **Push back on rejected items** — with evidence, not opinion

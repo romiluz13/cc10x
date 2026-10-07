@@ -168,4 +168,4 @@ If tests are hard to write, the code is hard to test — fix the code, not the t
 - GREEN won't pass: re-read the test, check if the assertion matches the requirement
 - Existing tests break: your change has a side effect you didn't expect — revert and isolate
 
-**Pure HTML/CSS/JS exception:** If no test runner exists, TDD evidence may use manual browser verification. Set TDD_RED_EXIT=1, TDD_GREEN_EXIT=0 with manual check evidence.
+**No test runner:** a scripted check with real exit codes is TDD evidence; manual browser verification is not. Never fabricate `TDD_RED_EXIT` or `TDD_GREEN_EXIT`: leave both `null`. For a Pure HTML/CSS/JS project with no runner and no scripted check, the rule is: require a runner or block (`component-builder` and `bug-investigator` define the exact return).

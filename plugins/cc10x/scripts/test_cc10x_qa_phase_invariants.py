@@ -7127,51 +7127,25 @@ def main() -> int:
     )
 
     # --- PP-43(d). A pointer does not promise a capability its target lacks. ---
+    # P4.T7.1 removed the pointer: the router forbids loading qa-strategy outside
+    # the QA route, so the BUILD reference no longer sends a builder there. The
+    # property that remains is that neither the pointer nor a "use the ... defined
+    # there" promise comes back; a returning clause would again name a target the
+    # reader does not load.
     pp43d_src = PLUGIN / "skills" / "building" / "references" / "integration-and-live-proof.md"
     pp43d_txt = pp43d_src.read_text(encoding="utf-8")
     pp43d_m = PP43D_CLAUSE.findall(pp43d_txt)
-    if len(pp43d_m) != 1:
-        check(
-            "PP-43(d)",
-            False,
-            f"PRECONDITION failed: the 'use the ... defined there' clause matched "
-            f"{len(pp43d_m)} times in {pp43d_src.name}, expected exactly 1 -- a "
-            f"clause that stopped matching promises nothing and passes vacuously",
-        )
-    else:
-        pp43d_nouns = [
-            _n.strip()
-            for _n in re.split(r",\s*| and ", pp43d_m[0])
-            if _n.strip()
-        ]
-        pp43d_keys = [
-            _n[:-1] if _n.endswith("s") and not _n.endswith("ss") else _n
-            for _n in pp43d_nouns
-        ]
-        pp43d_target = qa_strategy_md.read_text(encoding="utf-8")
-        if not pp43d_keys:
-            check(
-                "PP-43(d)",
-                False,
-                f"PRECONDITION failed: the clause {pp43d_m[0]!r} yielded an empty "
-                f"noun list -- nothing is promised, so nothing is checked",
-            )
-        else:
-            pp43d_bad = [
-                f"'{_k}' promised by {pp43d_src.name}:"
-                f"{pp43d_txt[:pp43d_txt.index(pp43d_m[0])].count(chr(10)) + 1}, "
-                f"absent from {qa_strategy_md.parent.name}/{qa_strategy_md.name}"
-                for _k in pp43d_keys
-                if _k not in pp43d_target
-            ]
-            check(
-                "PP-43(d)",
-                not pp43d_bad,
-                f"{len(pp43d_keys)} promised capability/ies {pp43d_keys} in "
-                f"{pp43d_src.name}'s 'defined there' list, each present in "
-                f"{qa_strategy_md.parent.name}/{qa_strategy_md.name}"
-                + ("" if not pp43d_bad else " -- " + "; ".join(pp43d_bad)),
-            )
+    pp43d_bad = []
+    if pp43d_m:
+        pp43d_bad.append(f"'use the ... defined there' clause {pp43d_m!r} is back")
+    if "qa-strategy" in pp43d_txt:
+        pp43d_bad.append("the file names qa-strategy again")
+    check(
+        "PP-43(d)",
+        not pp43d_bad,
+        f"{pp43d_src.name} carries no 'defined there' promise and no qa-strategy pointer"
+        + ("" if not pp43d_bad else " -- " + "; ".join(pp43d_bad)),
+    )
 
     print(f"\nproperties checked: {', '.join(checked)}")
     if failures:

@@ -56,8 +56,7 @@ When these appear, do not claim the work is verified with unit tests alone.
 ## Coordination With CC10X Live Verification
 
 If the plan requires live proof:
-- read `"${CLAUDE_PLUGIN_ROOT}/skills/qa-strategy/SKILL.md"` for test-environment topology, observation points, and flake sources
-- use the harness manifest defined there
+- follow the plan's `### Live Verification Strategy` and the harness manifest it names
 
 Building the harness itself is NOT this agent's job. When a change needs a test
 environment that does not yet exist — services provisioned, isolated data, E2E

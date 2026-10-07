@@ -61,7 +61,7 @@ Before running any test, audit your own work:
 | **Manual** | Human verifies with checklist | n/a | When automation not worth the cost |
 | **Live** | Production-like environment | 0/1 | When plan requires live proof |
 
-Every verification must state its validation level — unlabeled evidence lets weak proof masquerade as strong. If manual, state the checklist. If deterministic, state the command + exit code. If live, state the harness command.
+Every verification must state its validation level — unlabeled evidence lets weak proof masquerade as strong. If manual, state the checklist. Manual evidence is a validation level for verification, never a substitute for a TDD RED or GREEN exit code: with no test runner and no scripted check, require a runner or block. If deterministic, state the command + exit code. If live, state the harness command.
 
 ## Production-Like Live Proof
 

@@ -4352,6 +4352,73 @@ ASSERTIONS = [
         )
         for path in sorted(AGENTS.glob("*.md"))
     ],
+    # --- P4.T7.1: code-review, verification and building skills (E1, E2, E3 part; C4.2 floor unchanged) ---
+    A(
+        "code-review: one vocabulary, MINOR is defined, zero-finding verdict words and the three-citation rule are stated",
+        SKILLS / "code-review" / "SKILL.md",
+        lambda text: "before reporting zero findings (Zero-Finding Halt re-scan)" in text
+        and "`APPROVE` for `code-reviewer`, `CLEAN` for `failure-hunter`" in text
+        and "at least three positive assertions with file:line evidence" in text
+        and "MEDIUM and LOW findings you don't fix in this pass (the router's non-blocking \"Minor\" class)" in text
+        and "every non-blocking MEDIUM or LOW item" in text
+        and "triage labels for received feedback, not the review severities above" in text
+        and "before reporting CLEAN" not in text
+        and "Minor/Medium findings" not in text
+        and "non-blocking Minor item" not in text,
+        "the skill said CLEAN for a reviewer who says APPROVE, used Minor without defining it, and never named the router's three-citation validity check",
+    ),
+    A(
+        "code-review: the router-merge verdict rule agrees with router step 6, including the upheld-dispute exception",
+        SKILLS / "code-review" / "SKILL.md",
+        lambda text: "the blocking verdict is authoritative (`CHANGES_REQUESTED` over `APPROVE`, `FAIL` over `PASS`)" in text
+        and "except that a re-raised finding whose dispute the verifier upheld (`DISPUTE_UPHELD`) is dropped by the router" in text
+        and "one whose dispute is still in flight continues to the verifier" in text
+        and "stricter verdict wins" not in text
+        and "treat the blocking verdict as authoritative (FAIL over PASS, CHANGES_REQUESTED over APPROVE), except that a re-raised finding whose dispute the verifier upheld is dropped"
+        in read(SKILLS / "cc10x-router" / "SKILL.md"),
+        "the skill said the stricter verdict wins with no exception, while step 6 (as amended in P4B) exempts an upheld dispute; both texts now say the same",
+    ),
+    A(
+        "code-review: the >=80 floor is unchanged (C4.2)",
+        SKILLS / "code-review" / "SKILL.md",
+        contains_all(
+            "Only report issues with confidence ≥80",
+            "| <80 | Do not report — insufficient evidence |",
+            "a security-category finding below 80 confidence is NOT silently dropped",
+        ),
+        "C4.2: the P4C vocabulary edits must not move the confidence floor or the security exception",
+    ),
+    A(
+        "verification: manual evidence is a validation level, never a TDD exit code (E2)",
+        SKILLS / "verification" / "SKILL.md",
+        lambda text: "Manual evidence is a validation level for verification, never a substitute for a TDD RED or GREEN exit code: with no test runner and no scripted check, require a runner or block." in text,
+        "the Manual row alone would let a builder pass on a human checklist; the verification skill now says the same single rule as the agents",
+    ),
+    A(
+        "building: the no-runner exception is the same single rule as the two agents (E2, three sites)",
+        SKILLS / "building" / "SKILL.md",
+        lambda text: all(
+            "Never fabricate `TDD_RED_EXIT` or `TDD_GREEN_EXIT`: leave both `null`." in body
+            and "the rule is: require a runner or block" in body
+            for body in (
+                text,
+                read(AGENTS / "component-builder.md"),
+                read(AGENTS / "bug-investigator.md"),
+            )
+        )
+        and "a scripted check with real exit codes is TDD evidence; manual browser verification is not" in text
+        and "TDD evidence may use manual browser verification" not in text
+        and "Set TDD_RED_EXIT=1" not in text,
+        "the skill still told the builder to set TDD_RED_EXIT=1 and TDD_GREEN_EXIT=0 from a manual check, contradicting its own RED rule and both agents",
+    ),
+    A(
+        "building reference: live proof does not send a BUILD agent to qa-strategy (E3)",
+        SKILLS / "building" / "references" / "integration-and-live-proof.md",
+        lambda text: "qa-strategy" not in text
+        and "defined there" not in text
+        and "the plan's `### Live Verification Strategy`" in text,
+        "the router forbids loading qa-strategy outside the QA route; the reference now points at the plan's own live-verification section",
+    ),
 ]
 
 
