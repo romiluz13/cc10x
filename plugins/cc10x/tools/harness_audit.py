@@ -653,9 +653,9 @@ def main(argv: list[str] | None = None) -> int:
             errors.append("marketplace.json has no plugins entries")
         else:
             plugin_entry = plugins[0]
-            if plugin_entry.get("version") != version:
+            if "version" in plugin_entry:
                 errors.append(
-                    f"marketplace.json plugin entry version ({plugin_entry.get('version')}) does not match plugin.json ({version})"
+                    "marketplace.json plugin entry must not duplicate the version: plugin.json owns it"
                 )
             if plugin_entry.get("source") != "./plugins/cc10x":
                 errors.append(

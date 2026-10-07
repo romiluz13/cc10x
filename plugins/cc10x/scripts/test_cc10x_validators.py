@@ -1874,3 +1874,27 @@ def test_guide_describes_hooks_and_allowed_tools_as_they_behave():
     assert "pre-approves" in text and "does not restrict" in text
     assert "docs/cc10x-orchestration-bible.md" not in text.replace("docs/history/cc10x-orchestration-bible.md", "")
     assert (REPO / "docs/history/cc10x-orchestration-bible.md").exists()
+
+
+def test_marketplace_plugin_entry_carries_no_version_of_its_own(tmp_path):
+    manifest = json.loads((REPO / MARKETPLACE_REL).read_text(encoding="utf-8"))
+    assert "version" not in manifest["plugins"][0]
+    root = make_tree(tmp_path)
+    for tool in ("harness_audit.py", "doc_consistency_check.py"):
+        result = run_tool(tool, root)
+        assert result.returncode == 0, tool + result.stdout + result.stderr
+    version = json.loads((root / PLUGIN_JSON_REL).read_text(encoding="utf-8"))["version"]
+    edit_json(root / MARKETPLACE_REL, lambda d: d["plugins"][0].update(version=version))
+    for tool in ("harness_audit.py", "doc_consistency_check.py"):
+        result = run_tool(tool, root)
+        assert result.returncode == 1, tool
+        assert "must not duplicate the version" in result.stdout + result.stderr, tool
+
+
+def test_manifest_descriptions_have_no_unverifiable_claim_and_keywords_name_qa():
+    plugin = json.loads((REPO / PLUGIN_JSON_REL).read_text(encoding="utf-8"))
+    marketplace = json.loads((REPO / MARKETPLACE_REL).read_text(encoding="utf-8"))
+    assert "leaner" not in json.dumps(plugin) + json.dumps(marketplace)
+    assert plugin["description"] == marketplace["plugins"][0]["description"]
+    assert set(plugin["keywords"]) == set(marketplace["plugins"][0]["keywords"])
+    assert "qa" in plugin["keywords"]

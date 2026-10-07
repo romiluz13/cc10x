@@ -190,10 +190,9 @@ def main() -> int:
     if not plugin_entries:
         errors.append("marketplace.json has no plugins[] entries")
     else:
-        entry_version = plugin_entries[0].get("version")
-        if entry_version != version:
+        if "version" in plugin_entries[0]:
             errors.append(
-                f"marketplace.json plugins[0].version={entry_version} != plugin.json {version}"
+                "marketplace.json plugins[0] must not duplicate the version: plugin.json owns it"
             )
     # The marketplace description embeds the version ("cc10x v12.8.0 - ...").
     for v in set(re.findall(r"cc10x v(\d+\.\d+\.\d+)", json.dumps(marketplace))):
