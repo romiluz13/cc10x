@@ -66,8 +66,9 @@ A run that leaves orphaned containers, test databases, or cloud resources is a p
 ## Report
 
 `.cc10x/qa/{workflow_uuid}/report.md` has already been seeded from
-`templates/qa-report.template.md` before you were dispatched. **Read that file and fill it in
-place.** Do not compose a shape of your own and do not drop a heading because its answer is
+`templates/qa-report.template.md` before you were dispatched. **Read that file, then rewrite the whole file with `Write`**
+(you have no `Edit` tool): keep every heading and table from the seeded shape and fill in the answers.
+Do not compose a shape of your own and do not drop a heading because its answer is
 `None` — an omitted section reads as one that was considered and came back clean, and those are
 different claims.
 

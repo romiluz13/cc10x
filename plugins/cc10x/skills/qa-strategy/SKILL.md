@@ -259,7 +259,7 @@ Every QA artifact has a shipped skeleton. **Copy it and fill in place** — do n
 | `env-plan.md` | `${CLAUDE_PLUGIN_ROOT}/templates/qa-env-plan.template.md` |
 | `feature-map.md` | `${CLAUDE_PLUGIN_ROOT}/templates/qa-feature-map.template.md` (router-owned, inline consolidation) |
 | `setup.md` | `${CLAUDE_PLUGIN_ROOT}/templates/qa-setup.template.md` — **environment-scoped, not per-run.** Lives at `.cc10x/qa/env/{env_key}/setup.md`, append-only, and records only MEASURED facts. It is the counterpart to `env-plan.md`: the plan predicts the environment from source, this records what the machine actually said |
-| `report.md` | `${CLAUDE_PLUGIN_ROOT}/templates/qa-report.template.md` (router-seeded at `qa-execute`; `qa-executor` fills it in place) |
+| `report.md` | `${CLAUDE_PLUGIN_ROOT}/templates/qa-report.template.md` (router-seeded at `qa-execute`; `qa-executor` rewrites it whole with `Write`) |
 | harness manifest | `${CLAUDE_PLUGIN_ROOT}/templates/live-harness.template.json` |
 
 **Why deletion is forbidden.** The sections most often dropped are the ones that record what the plan does *not* do — the coverage-reduction table, known gaps, teardown verification, re-runnability. Those are precisely the sections an optimistic plan omits. A missing section reads as "nothing to report"; an `N/A` with a reason reads as a claim someone can challenge.

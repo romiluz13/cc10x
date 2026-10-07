@@ -544,3 +544,21 @@ Fixture: `triage-needs-info-pause.json` records `BLOCKING: true` for a `NEEDS_IN
 Claim boundary: now true: the planner's contract text carries the amendment-lane fields and the QA write rule; the gap reviewer, doc-syncer, triage-agent and scanner texts no longer contradict their tools or contracts. Not claimed: no live agent run happened. The planner amendment-lane fields are contract text only: nobody has seen a live planner emit them on a `qa-re-plan` return. The scanner's boundary is still not enforced (F3 deferred).
 
 Pins and mutation proof: 8 new clause pins (planner amendment-lane fields; planner QA write rule; planner gate alignment; gap-reviewer YAML statement and position anchor; doc-syncer propose-only; triage no-source-code-writes; triage `BLOCKING` derivation; scanner prompt-rule sentence). Before the text edits all 9 failed (8 new plus the policy-table pin, which failed because the planner YAML lacked the three keys once the exemption was removed). A scratch-copy mutation run (decisive clause deleted from a copy of the plugin, assertion tool run against the copy) was caught for each of the 8. Classification: `orchestration_sensitive` (ASM-7).
+
+## P4.T4.5a `qa-executor` report rule and QA agent checks (A5, A7)
+
+Findings: A5, A7.
+
+Files: `agents/qa-executor.md`, `skills/qa-strategy/SKILL.md` (one table cell); `tools/prompt_clause_assertions.py` (2 new pins).
+
+What changed:
+- `qa-executor` said to "read that file and fill it in place" but its tools are `Read, Write, Bash, Grep, Glob, Skill, WebFetch`: no `Edit`. The sentence now reads "Read that file, then rewrite the whole file with `Write` (you have no `Edit` tool): keep every heading and table from the seeded shape and fill in the answers." The default from the plan was taken (change the instruction; the router seeds `report.md`, the executor rewrites it whole). The template-is-the-shape law, the no-dropped-heading rule and the router-seeded claim are untouched.
+- `skills/qa-strategy/SKILL.md` artifact-skeleton table said "`qa-executor` fills it in place" for `report.md`; the executor loads that skill, so the cell now says it rewrites it whole with `Write`. The general "copy it and fill in place" sentence above the table stays: the planner and harness builder have `Edit`.
+- `qa-researcher`: no change. Its read-only prohibition (incident note, mkdir ban) is unchanged, and the isolation-guard pins and the QA phase-invariants script were run and hold.
+- `qa-harness-builder`: read for the same class of mismatch. Its tools (`Read, Edit, Write, Bash, ...`) cover everything the body asks (create and edit test and harness files; the report shape is router-seeded and explicitly not its deliverable). No mismatch, no change.
+
+Why safe: no gate or boundary moved. Write to a path under `.cc10x/qa/` was already allowed for QA agents by the isolation guard; the executor was already told to produce `report.md`.
+
+Claim boundary: now true: the executor's report instruction can be carried out with the tools it has. Not claimed: no live executor run; a rewrite-whole can still drop a heading, which the existing report-shape check (PP-19) and the executor's own no-dropped-heading rule address, unchanged.
+
+Pins and mutation proof: 2 new pins (executor Write-only rule plus tools line; skill table cell); both failed before the edit and each was caught by a scratch-copy mutation. `test_cc10x_qa_phase_invariants.py` (all invariants hold), the isolation-guard tests inside pytest (576 passed) and the replay fixtures stay green. Classification: `orchestration_sensitive` (ASM-7).

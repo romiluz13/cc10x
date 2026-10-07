@@ -3763,6 +3763,22 @@ ASSERTIONS = [
         lambda text: "temp-directory-only Write is a prompt rule: no hook or tool restriction enforces it" in text,
         "F3 (path guard) stays deferred; the agent file now says plainly that the boundary is prose",
     ),
+    # --- P4.T4.5a: qa-executor report rule satisfiable with Write only (A5, A7) ---
+    A(
+        "qa-executor: the report is rewritten whole with Write (no Edit tool)",
+        AGENTS / "qa-executor.md",
+        lambda text: "Read that file, then rewrite the whole file with `Write`" in text
+        and "you have no `Edit` tool" in text
+        and "fill it in\nplace" not in text
+        and "tools: Read, Write, Bash, Grep, Glob, Skill, WebFetch" in text,
+        "the body said to fill report.md in place but the agent has no Edit; the router seeds, the executor rewrites it whole (A5)",
+    ),
+    A(
+        "qa-strategy: report.md row matches the executor's Write-only rewrite",
+        SKILLS / "qa-strategy" / "SKILL.md",
+        lambda text: "`qa-executor` rewrites it whole with `Write`" in text and "`qa-executor` fills it in place" not in text,
+        "the skill table said the executor fills report.md in place, contradicting the Write-only rule (A5)",
+    ),
 ]
 
 
