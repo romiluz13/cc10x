@@ -21,7 +21,7 @@ import re
 import sys
 from pathlib import Path
 
-from harness_audit import FrontmatterError, parse_frontmatter
+from harness_audit import FrontmatterError, fm_scalar, parse_frontmatter
 
 if os.environ.get("CC10X_REPO_ROOT") == "":
     raise SystemExit("CC10X_REPO_ROOT is set but empty: unset it or point it at a cc10x repo")
@@ -90,6 +90,19 @@ def frontmatter_skills_are(*expected: str):
         except FrontmatterError:
             return False
         return sorted(item.strip().lstrip("- ").strip() for item in listed) == sorted(expected)
+
+    return check
+
+
+def frontmatter_tools_exclude(tool: str):
+    """True only when frontmatter has a parseable `tools:` scalar and `tool` is not one of its entries."""
+
+    def check(text: str) -> bool:
+        try:
+            listed = fm_scalar(parse_frontmatter(text), "tools")
+        except FrontmatterError:
+            return False
+        return listed is not None and tool not in [item.strip() for item in listed.split(",")]
 
     return check
 
@@ -876,22 +889,6 @@ ASSERTIONS = [
         "worked example emits the CONTRACT envelope before the Router Contract YAML",
     ),
     # 71.3 — no agent instructs tool calls after the final contract response
-    A(
-        "researcher: TaskUpdate before final contract response",
-        AGENTS / "researcher.md",
-        lambda text: "Before emitting your final response" in text
-        and "no tool calls after it" in text
-        and "After outputting Router Contract" not in text,
-        "TaskUpdate ordered before the final contract response, never after",
-    ),
-    A(
-        "doc-syncer: TaskUpdate before final contract response",
-        AGENTS / "doc-syncer.md",
-        lambda text: "Before emitting your final response" in text
-        and "no tool calls after it" in text
-        and "After emitting the Router Contract" not in text,
-        "TaskUpdate ordered before the final contract response, never after",
-    ),
     # 71.4 — verifier per-finding validation is a single merged paragraph
     A(
         "integration-verifier: single per-finding validation paragraph",
@@ -3779,6 +3776,29 @@ ASSERTIONS = [
         lambda text: "`qa-executor` rewrites it whole with `Write`" in text and "`qa-executor` fills it in place" not in text,
         "the skill table said the executor fills report.md in place, contradicting the Write-only rule (A5)",
     ),
+    # --- P4.T4.5b: the router completes tasks; no agent lists or calls TaskUpdate (A3 part, ASM-A1, C4.1 c) ---
+    *[
+        A(
+            f"{path.stem}: tools line does not list TaskUpdate",
+            path,
+            frontmatter_tools_exclude("TaskUpdate"),
+            "the router completes tasks after contract validation; an agent that holds TaskUpdate can complete its own task before the contract is checked",
+        )
+        for path in sorted(AGENTS.glob("*.md"))
+    ],
+    *[
+        A(
+            f"{name}: task completion is router-owned, no TaskUpdate call instruction",
+            AGENTS / f"{name}.md",
+            lambda text: "Task completion is handled by the router. Do NOT call TaskUpdate directly." in text
+            and "TaskUpdate({" not in text
+            and "no tool calls after it" not in text
+            and "After outputting Router Contract" not in text
+            and "After emitting the Router Contract" not in text,
+            "replaces the 'call TaskUpdate before the final response' instruction; also keeps the 71.3 rule that no instruction asks for a tool call after the contract",
+        )
+        for name in ("component-builder", "bug-investigator", "doc-syncer", "planner", "researcher")
+    ],
 ]
 
 

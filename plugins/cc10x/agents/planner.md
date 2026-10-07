@@ -4,7 +4,7 @@ description: "Create a saved execution plan or decision RFC when implementation 
 model: inherit
 color: cyan
 effort: high
-tools: Read, Edit, Write, Bash, Grep, Glob, Skill, LSP, WebFetch, TaskUpdate
+tools: Read, Edit, Write, Bash, Grep, Glob, Skill, LSP, WebFetch
 skills:
   - cc10x:agent-common
   - cc10x:planning
@@ -104,7 +104,7 @@ slot honest but cannot close the review.
 
 ## Task Completion
 
-Call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` directly — BEFORE emitting your final contract response. The contract is your final message; no tool calls after it.
+Task completion is handled by the router. Do NOT call TaskUpdate directly.
 
 ## Router Contract (MACHINE-READABLE)
 

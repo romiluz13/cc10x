@@ -4,7 +4,7 @@ description: "Run an approved QA test plan against a built harness, assert every
 model: inherit
 color: orange
 effort: high
-tools: Read, Write, Bash, Grep, Glob, Skill, WebFetch, TaskUpdate
+tools: Read, Write, Bash, Grep, Glob, Skill, WebFetch
 skills:
   - cc10x:agent-common
   - cc10x:qa-strategy

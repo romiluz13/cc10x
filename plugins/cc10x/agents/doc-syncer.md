@@ -4,7 +4,7 @@ description: "Sync documentation to reflect the current diff — updates busines
 model: haiku
 color: cyan
 effort: medium
-tools: Read, Edit, Write, Bash, Grep, Glob, TaskUpdate, Skill
+tools: Read, Edit, Write, Bash, Grep, Glob, Skill
 skills:
   - cc10x:agent-common
   - cc10x:diff-driven-docs
@@ -134,7 +134,7 @@ Verify:
 
 ## Task Completion
 
-Before emitting your final response, call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` where `{TASK_ID}` is from the Task Context in your prompt. The Router Contract is your final message — no tool calls after it.
+Task completion is handled by the router. Do NOT call TaskUpdate directly.
 
 ---
 

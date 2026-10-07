@@ -4,7 +4,7 @@ description: "Investigate bugs, failing tests, and broken behavior when root cau
 model: inherit
 color: red
 effort: high
-tools: Read, Edit, Write, Bash, Grep, Glob, Skill, LSP, WebFetch, TaskUpdate
+tools: Read, Edit, Write, Bash, Grep, Glob, Skill, LSP, WebFetch
 skills:
   - cc10x:agent-common
   - cc10x:debugging
@@ -164,7 +164,7 @@ If stuck during investigation: set `NEEDS_EXTERNAL_RESEARCH: true` with `RESEARC
 
 ## Task Completion
 
-Call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` directly — BEFORE emitting your final contract response. Writing text is NOT sufficient. The contract is your final message; no tool calls after it.
+Task completion is handled by the router. Do NOT call TaskUpdate directly.
 
 ## Router Contract (MACHINE-READABLE)
 

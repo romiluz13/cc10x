@@ -4,7 +4,7 @@ description: "Execute the current approved build phase with TDD when implementat
 model: inherit
 color: green
 effort: medium
-tools: Read, Edit, Write, Bash, Grep, Glob, Skill, LSP, WebFetch, TaskUpdate
+tools: Read, Edit, Write, Bash, Grep, Glob, Skill, LSP, WebFetch
 skills:
   - cc10x:agent-common
   - cc10x:building
@@ -109,7 +109,7 @@ On any other task leave these six fields empty or omit them.
 
 ## Task Completion
 
-Call `TaskUpdate({ taskId: "{TASK_ID}", status: "completed" })` directly — BEFORE emitting your final contract response. **Writing text is NOT sufficient.** The contract is your final message; no tool calls after it.
+Task completion is handled by the router. Do NOT call TaskUpdate directly.
 
 **Coverage gate:** If `coverage-thresholds.json` exists, run coverage and compare. Below thresholds → `STATUS: FAIL`.
 

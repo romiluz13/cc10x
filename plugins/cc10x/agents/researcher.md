@@ -4,7 +4,7 @@ description: "Execute web and GitHub research using Bright Data MCP, Octocode MC
 model: inherit
 color: orange
 effort: medium
-tools: Read, Write, Edit, Bash, WebFetch, WebSearch, TaskUpdate, mcp__brightdata, mcp__octocode
+tools: Read, Write, Edit, Bash, WebFetch, WebSearch, mcp__brightdata, mcp__octocode
 skills:
   - cc10x:agent-common
 ---
@@ -98,13 +98,7 @@ Write(file_path="{File from prompt}", content="# {Web|GitHub} Research: {topic}
 
 ## Task Completion
 
-Before emitting your final response, call:
-
-```
-TaskUpdate({ taskId: "{Task ID from prompt}", status: "completed" })
-```
-
-The Router Contract is your final message — no tool calls after it.
+Task completion is handled by the router. Do NOT call TaskUpdate directly.
 
 ## Router Contract (REQUIRED)
 

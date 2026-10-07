@@ -4,7 +4,7 @@ description: "Build the test environment and test suites described by an approve
 model: inherit
 color: pink
 effort: high
-tools: Read, Edit, Write, Bash, Grep, Glob, Skill, LSP, WebFetch, TaskUpdate
+tools: Read, Edit, Write, Bash, Grep, Glob, Skill, LSP, WebFetch
 skills:
   - cc10x:agent-common
   - cc10x:qa-strategy
