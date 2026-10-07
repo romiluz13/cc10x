@@ -40,6 +40,8 @@ REQUIRED_ARTIFACT_KEYS = (
     "remediation_history",
 )
 
+MEMORY_TASK_WORKFLOW_TYPES = ("BUILD", "DEBUG", "REVIEW", "PLAN", "QA")
+
 WORKFLOW_TYPES = ("BUILD", "DEBUG", "PLAN", "REVIEW", "QA", "ORIENT", "TRIAGE", "CODEBASE-HEALTH", "pending")
 
 QA_ROUTE_BLOCKERS = {
@@ -1378,9 +1380,15 @@ def check_multi_phase_memory_finalize(fixture: dict[str, Any]) -> None:
     verifiers = [key for key, task in tasks.items() if task["phase"] == "build-verify"]
     require(len(verifiers) == len(phases), f"{label}: expected one build-verify task per phase, got {verifiers}")
     blocked_by = tasks[memory_tasks[0]]["blockedBy"]
+    last_verifier = verifiers[-1]
+    doc_syncs = [
+        key
+        for key in blocked_by
+        if tasks.get(key, {}).get("phase") == "build-doc-sync" and last_verifier in tasks[key]["blockedBy"]
+    ]
     require(
-        verifiers[-1] in blocked_by,
-        f"{label}: memory_finalize must be blocked by the last phase's verifier {verifiers[-1]}, got {blocked_by}",
+        last_verifier in blocked_by or bool(doc_syncs),
+        f"{label}: memory_finalize must be blocked by the last phase's verifier {last_verifier} or by its doc-sync task, got {blocked_by}",
     )
     implementers = [key for key, task in tasks.items() if task["phase"] == "build-implement"]
     earlier = set(verifiers[:-1]) | set(implementers[:-1])
@@ -1472,6 +1480,11 @@ def validate_artifact_file(path: Path, artifact: Any) -> None:
     The router records memory finalization in status_history AND the events log, but real runs have
     left it in only one of them, so each source is counted on its own: a source holding more than one
     memory_finalized is a double finalize, while one in each source is the same single finalization.
+
+    The completed-implies-finalized rule covers only the workflow types whose router graph creates a
+    Memory Update task (MEMORY_TASK_WORKFLOW_TYPES). TRIAGE and CODEBASE-HEALTH create a single agent task
+    and ORIENT creates none, so they may complete without a finalize; they join the set if the router later
+    adds Memory Update tasks to them (finding B2, plan P4.T1.4).
     """
     require(isinstance(artifact, dict), f"{path.name}: artifact must be a JSON object, got {type(artifact).__name__}")
     validate_end_state(path.name, artifact)
@@ -1485,9 +1498,14 @@ def validate_artifact_file(path: Path, artifact: Any) -> None:
             artifact["phase_cursor"] == "memory-finalize",
             f"{path.name}: memory_finalized recorded but phase_cursor is not memory-finalize",
         )
-    last_events = [artifact["status_history"][-1]["event"]] if artifact["status_history"] else []
-    last_events += [events[-1]["event"]] if events else []
-    if "workflow_completed" in last_events:
+    uuid = artifact["workflow_uuid"]
+    for event in events:
+        require(
+            event.get("wf", uuid) == uuid,
+            f"{path.name}: events.jsonl event {event['event']} carries a foreign wf {event.get('wf')}",
+        )
+    completed = any(e["event"] == "workflow_completed" for e in artifact["status_history"] + events)
+    if completed and artifact["workflow_type"] in MEMORY_TASK_WORKFLOW_TYPES:
         require(
             in_history + in_events >= 1,
             f"{path.name}: workflow completed but memory_finalized is recorded in neither status_history nor events.jsonl",

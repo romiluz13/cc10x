@@ -938,6 +938,23 @@ def _unfinalized_memory(d):
     ]
 
 
+def _memory_blocked_by_doc_sync(d):
+    tasks = d["relevant_tasks"]
+    tasks["doc_sync"] = {"wf": tasks["memory_finalize"]["wf"], "phase": "build-doc-sync", "status": "completed", "blockedBy": ["verifier_phase_2"]}
+    tasks["memory_finalize"]["blockedBy"] = ["doc_sync"]
+
+
+def _memory_blocked_by_doc_sync_of_wrong_verifier(d):
+    _memory_blocked_by_doc_sync(d)
+    d["relevant_tasks"]["doc_sync"]["blockedBy"] = ["verifier_phase_1"]
+
+
+def _memory_blocked_by_early_doc_sync_only(d):
+    _memory_blocked_by_doc_sync(d)
+    d["relevant_tasks"]["doc_sync"]["blockedBy"] = ["verifier_phase_1"]
+    d["relevant_tasks"]["memory_finalize"]["blockedBy"] = ["doc_sync"]
+
+
 def _second_memory_task(d):
     d["relevant_tasks"]["memory_finalize_again"] = dict(d["relevant_tasks"]["memory_finalize"])
 
@@ -962,6 +979,8 @@ L1_MUTATIONS = [
     ("remfix-gate.json", _remfix_in_progress, "completed_remfix must be completed"),
     ("multi-phase-memory-finalize.json", _memory_blocked_by_early_task_only, "must be blocked by the last phase's verifier"),
     ("multi-phase-memory-finalize.json", _memory_blocked_by_last_and_early_task, "blocked by an earlier-phase task"),
+    ("multi-phase-memory-finalize.json", _memory_blocked_by_doc_sync_of_wrong_verifier, "last phase's verifier"),
+    ("multi-phase-memory-finalize.json", _memory_blocked_by_early_doc_sync_only, "last phase's verifier"),
     ("multi-phase-memory-finalize.json", _legacy_phase_id_key, "phase_id"),
     ("multi-phase-memory-finalize.json", _dup_memory_finalized, "memory_finalized appears 2 times"),
     ("multi-phase-memory-finalize.json", _unfinalized_memory, "memory_finalized appears 0 times"),
@@ -969,6 +988,13 @@ L1_MUTATIONS = [
     ("two-workflow-resume.json", _share_workflow_id, "distinct workflow_id"),
     ("two-workflow-resume.json", _foreign_task, "resumed task a_builder carries wf"),
 ]
+
+
+def test_multi_phase_fixture_accepts_memory_blocked_by_the_last_phase_doc_sync_task(tmp_path):
+    root = make_tree(tmp_path)
+    edit_json(root / FIXTURES_REL / "multi-phase-memory-finalize.json", _memory_blocked_by_doc_sync)
+    result = run_tool("workflow_replay_check.py", root)
+    assert result.returncode == 0, result.stdout + result.stderr
 
 
 def test_replay_registers_the_four_p3_fixtures():
@@ -1067,6 +1093,51 @@ def test_artifact_mode_rejects_a_completed_workflow_that_never_finalized_memory(
     _write_events(artifact, STARTED, done)
     result = run_tool("workflow_replay_check.py", None, "--artifact", str(artifact))
     assert result.returncode == 1 and "completed but memory_finalized is recorded in neither" in result.stderr, result.stderr
+
+
+DONE = {"event": "workflow_completed", "ts": "2026-10-07T09:40:00Z", "phase": "memory-finalize"}
+
+
+@pytest.mark.parametrize("workflow_type", ["TRIAGE", "ORIENT", "CODEBASE-HEALTH", "pending"])
+def test_artifact_mode_accepts_a_completed_workflow_type_without_a_memory_task(workflow_type, tmp_path):
+    artifact = skeleton_artifact(tmp_path, workflow_type, status_history=[STARTED, DONE])
+    result = run_tool("workflow_replay_check.py", None, "--artifact", str(artifact))
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
+@pytest.mark.parametrize("workflow_type", ["BUILD", "DEBUG", "REVIEW", "PLAN", "QA"])
+def test_artifact_mode_still_requires_a_finalize_for_memory_workflow_types(workflow_type, tmp_path):
+    artifact = skeleton_artifact(tmp_path, workflow_type, status_history=[STARTED, DONE])
+    result = run_tool("workflow_replay_check.py", None, "--artifact", str(artifact))
+    assert result.returncode == 1 and "completed but memory_finalized is recorded in neither" in result.stderr, result.stderr
+
+
+@pytest.mark.parametrize("history", [[STARTED, DONE, {"event": "note", "ts": "t"}], [DONE, STARTED]])
+def test_artifact_mode_sees_workflow_completed_anywhere_in_status_history(history, tmp_path):
+    artifact = skeleton_artifact(tmp_path, "BUILD", status_history=history)
+    result = run_tool("workflow_replay_check.py", None, "--artifact", str(artifact))
+    assert result.returncode == 1 and "completed but memory_finalized is recorded in neither" in result.stderr, result.stderr
+
+
+def test_artifact_mode_sees_workflow_completed_anywhere_in_events(tmp_path):
+    artifact = skeleton_artifact(tmp_path, "BUILD", status_history=[STARTED])
+    _write_events(artifact, STARTED, DONE, {"event": "build_finished"})
+    result = run_tool("workflow_replay_check.py", None, "--artifact", str(artifact))
+    assert result.returncode == 1 and "completed but memory_finalized is recorded in neither" in result.stderr, result.stderr
+
+
+def test_artifact_mode_rejects_an_event_from_a_foreign_workflow(tmp_path):
+    artifact = skeleton_artifact(tmp_path, "BUILD", phase_cursor="memory-finalize")
+    _write_events(artifact, dict(STARTED, wf="wf-20261007T090000Z-aaaaaaaa"), dict(FINALIZED, wf="wf-other"))
+    result = run_tool("workflow_replay_check.py", None, "--artifact", str(artifact))
+    assert result.returncode == 1 and "foreign wf" in result.stderr, result.stderr
+
+
+def test_artifact_mode_accepts_events_carrying_the_matching_wf(tmp_path):
+    artifact = skeleton_artifact(tmp_path, "BUILD", phase_cursor="memory-finalize", status_history=[STARTED, FINALIZED])
+    _write_events(artifact, dict(STARTED, wf="wf-20261007T090000Z-aaaaaaaa"))
+    result = run_tool("workflow_replay_check.py", None, "--artifact", str(artifact))
+    assert result.returncode == 0, result.stdout + result.stderr
 
 
 def test_artifact_mode_rejects_a_malformed_events_jsonl(tmp_path):
