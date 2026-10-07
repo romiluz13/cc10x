@@ -1843,6 +1843,16 @@ def test_settings_template_and_readme_setup_step_carry_the_same_rules():
     assert readme_setup_rules() == template["permissions"]["allow"]
 
 
+def test_settings_template_allows_every_mkdir_form_the_prompts_and_readme_run():
+    allow = json.loads((REPO / "claude-settings-template.json").read_text(encoding="utf-8"))["permissions"]["allow"]
+    # Agents and the router run the trailing-slash form (the QA guard denies the bare one);
+    # the README wizard's user-standards step still runs the bare form.
+    assert "Bash(mkdir -p .cc10x/)" in allow
+    assert "Bash(mkdir -p .cc10x)" in allow
+    assert 'Bash(command="mkdir -p .cc10x")' in readme_text()
+    assert "Bash(mkdir -p .cc10x/)" in readme_setup_rules()
+
+
 def test_memory_permission_rule_uses_the_edit_form_that_covers_nested_paths():
     template = json.loads((REPO / "claude-settings-template.json").read_text(encoding="utf-8"))
     allow = template["permissions"]["allow"]

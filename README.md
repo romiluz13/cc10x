@@ -257,6 +257,7 @@ The router is the plugin skill `cc10x:cc10x-router`.
 
 ```json
 "Bash(mkdir -p .cc10x)",
+"Bash(mkdir -p .cc10x/)",
 "Bash(mkdir -p docs/plans)",
 "Bash(mkdir -p docs/research)",
 "Bash(mkdir -p docs/solutions)",
@@ -273,7 +274,7 @@ The router is the plugin skill `cc10x:cc10x-router`.
 
 > **What `Edit(.cc10x/**)` does.** It pre-approves file edits under `.cc10x/` at any depth, so memory files, workflow artifacts and QA files stop prompting on every write. Claude Code applies an `Edit(...)` rule to every file-editing tool, `Write` included, so one rule covers both; a `Write(.cc10x/*)` allow rule does nothing (Claude Code warns that only `Edit(...)` rules are matched), which is why this template no longer has one. Claude Code drops a project's `permissions.allow` entries until you trust the workspace, so put the rule in your user settings or trust the folder first.
 
-> **What the `Bash` rules do.** The `mkdir -p` rules create fixed directories and the `git` rules read repository state (`git branch:*` also lets Claude create branches; the git guard hook still denies pushes and forced deletes). `Bash(python3:*)` is broad: it approves any `python3` command, not just cc10x's tools. It is in the template because every BUILD phase records its base SHA (`git rev-parse HEAD`) and the router builds review diff packages and phase briefs by running plugin tools via `python3`; without it, every phase prompts mid-workflow. If you do not want to pre-approve every `python3` command, drop that rule and approve the plugin's `python3` calls when prompted.
+> **What the `Bash` rules do.** The `mkdir -p` rules create fixed directories (a rule matches the command text exactly, so `.cc10x` and `.cc10x/` are two rules) and the `git` rules read repository state (`git branch:*` also lets Claude create branches; the git guard hook still denies pushes and forced deletes). `Bash(python3:*)` is broad: it approves any `python3` command, not just cc10x's tools. It is in the template because every BUILD phase records its base SHA (`git rev-parse HEAD`) and the router builds review diff packages and phase briefs by running plugin tools via `python3`; without it, every phase prompts mid-workflow. If you do not want to pre-approve every `python3` command, drop that rule and approve the plugin's `python3` calls when prompted.
 
 ### Step 4: Set User Standards (Optional)
 
