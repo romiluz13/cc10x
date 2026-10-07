@@ -3,6 +3,7 @@
 1. If the user explicitly asks for research or the bug clearly depends on external post-2024 behavior, allow a research round before the first investigator run.
 2. Immediately write `[DEBUG-RESET: wf:{workflow_uuid}]` once the workflow id exists.
 3. Preserve failed attempt counting semantics: the investigator counts `[DEBUG-N]:` entries after the most recent reset marker.
+4. **Record the BASE sha (runs once, at the start of the investigation phase, before the first investigator is dispatched).** Capture current `HEAD` (`git rev-parse HEAD`, or `git -C "$CC10X_REPO_DIR" rev-parse HEAD` when a target repo is set) into the workflow artifact under `results.git_base_sha`. This is the same producer rule as BUILD step 11a (`build-workflow.md`): the recorded BASE is exactly what the reviewer and verifier diff against (`BASE..HEAD`), and recording it BEFORE the investigator runs guarantees the diff captures only this fix. A follow-up investigation or a fan-out lane does not re-record it: the BASE stays the sha before the first fix commit. If `git rev-parse` fails, record `git_base_sha=unavailable` and continue; downstream agents then fall back to the working-tree diff and say so explicitly.
 
 ### QA-seeded DEBUG preparation
 

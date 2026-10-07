@@ -1193,6 +1193,34 @@ def test_precommit_still_blocks_on_real_test_failure(tmp_path):
     assert run_precommit_with_pytest_exit(tmp_path, 1) == 1
 
 
+def _qa_plan_phase_mkdir_denied(tmp_path: Path, command: str) -> bool:
+    workflows = tmp_path / ".cc10x" / "workflows"
+    workflows.mkdir(parents=True)
+    (workflows / "wf-qa.json").write_text(
+        json.dumps(
+            {
+                "workflow_uuid": "wf-qa",
+                "workflow_id": "wf-qa",
+                "workflow_type": "QA",
+                "phase_cursor": "qa-plan",
+                "qa": {"isolation": {"plan_phase_readonly": True}},
+                "status_history": [{"event": "started", "phase": "qa-plan"}],
+            }
+        )
+    )
+    result = run_guard("cc10x_qa_isolation_guard.py", {"tool_name": "Bash", "tool_input": {"command": command}}, tmp_path)
+    assert result.returncode == 0, result.stderr
+    return '"permissionDecision": "deny"' in result.stdout
+
+
+def test_qa_isolation_guard_allows_the_trailing_slash_mkdir_agent_common_prescribes(tmp_path):
+    assert not _qa_plan_phase_mkdir_denied(tmp_path, "mkdir -p .cc10x/")
+
+
+def test_qa_isolation_guard_denies_the_bare_mkdir_so_agent_common_must_not_prescribe_it(tmp_path):
+    assert _qa_plan_phase_mkdir_denied(tmp_path, "mkdir -p .cc10x")
+
+
 def main() -> int:
     """Dependency-free runner (repo convention: tests run on bare python3).
 

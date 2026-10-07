@@ -13,7 +13,7 @@ Preloaded into every agent except `plan-gap-reviewer` (it loads no skills and re
 Read memory before any work:
 
 ```
-Bash(command="mkdir -p .cc10x")
+Bash(command="mkdir -p .cc10x/")
 Read(file_path=".cc10x/activeContext.md")
 Read(file_path=".cc10x/patterns.md")
 Read(file_path=".cc10x/progress.md")
@@ -21,7 +21,7 @@ Read(file_path=".cc10x/progress.md")
 
 Memory contains prior decisions, known gotchas, and current context. Without it, you work blind.
 
-Run the `mkdir -p .cc10x` step unless your agent doc is read-only; the router creates `.cc10x/` and `.cc10x/qa/<workflow>/` for you.
+Run the `mkdir -p .cc10x/` step unless your agent doc is read-only; the router creates `.cc10x/` and `.cc10x/qa/<workflow>/` for you, so the step is a no-op safety net. Keep the trailing slash: the QA isolation guard's allowlist is the prefix `.cc10x/`, and it denies the bare form `mkdir -p .cc10x` in QA plan phases.
 
 **Narrower agent protocols win:** if your agent doc deliberately narrows this protocol (anti-anchoring reviewers such as `code-reviewer` skip `activeContext.md`; `plan-gap-reviewer` reads no memory at all; `qa-researcher` creates no files and runs no `mkdir`), follow the agent doc — the narrowing is intentional, not an omission.
 
@@ -79,7 +79,7 @@ Read-only agents emit this block (the router extracts `### Memory Notes (For Wor
 
 ## Shell Safety
 
-Read-only agents use Bash for inspection only (git diff, grep, file existence). Agents that build, test, or provision (component-builder, bug-investigator, qa-harness-builder, qa-executor) also run what their agent doc names: test runners, builds, docker, `mkdir`, `open`. No agent writes file content through shell redirection or heredoc — shell writes bypass the harness's file tracking and permission model, making edits invisible to review. Use Write and Edit tools for all file creation and modification.
+Bash is for what your own agent doc names. Every agent may inspect (git diff, grep, file existence); an agent whose doc names test runners, builds, the harness runner, scripts, docker, `mkdir` or `open` may run them, read-only agents included, but a read-only agent never writes file content. No agent writes file content through shell redirection or heredoc — shell writes bypass the harness's file tracking and permission model, making edits invisible to review. Use Write and Edit tools for all file creation and modification.
 
 ## Test Process Discipline
 

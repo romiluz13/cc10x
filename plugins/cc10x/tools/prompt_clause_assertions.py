@@ -107,6 +107,19 @@ def frontmatter_tools_exclude(tool: str):
     return check
 
 
+def frontmatter_tools_include(*tools: str):
+    """True only when frontmatter has a parseable `tools:` scalar naming every one of `tools`."""
+
+    def check(text: str) -> bool:
+        try:
+            listed = fm_scalar(parse_frontmatter(text), "tools")
+        except FrontmatterError:
+            return False
+        return listed is not None and set(tools) <= {item.strip() for item in listed.split(",")}
+
+    return check
+
+
 def router_description(text: str) -> str:
     return text.split("\n---", 1)[0].split("description:", 1)[1] if text.startswith("---") and "description:" in text else ""
 
@@ -3352,13 +3365,16 @@ ASSERTIONS = [
         "agent-common narrowing does not loosen the QA read-only prohibition",
     ),
     A(
-        "agent-common: Shell Safety carves out writers and test-running agents, never redirection",
+        "agent-common: Shell Safety is a rule over the agent's own doc, not a name list, and keeps the redirection ban",
         SKILLS / "agent-common" / "SKILL.md",
-        lambda text: "component-builder, bug-investigator, qa-harness-builder, qa-executor" in text
-        and "test runners, builds, docker, `mkdir`, `open`" in text
+        lambda text: "Bash is for what your own agent doc names" in text
+        and "test runners, builds, the harness runner, scripts, docker, `mkdir` or `open`" in text
+        and "read-only agents included, but a read-only agent never writes file content" in text
         and "No agent writes file content through shell redirection or heredoc" in text
+        and "component-builder, bug-investigator, qa-harness-builder, qa-executor" not in text
+        and "Read-only agents use Bash for inspection only" not in text
         and "Bash is for read-only commands (git diff, grep, file existence) only" not in text,
-        "the shell rule matches what the writing agents actually run and keeps the redirection ban",
+        "three read-only agents run tests, builds and scripts their docs name; the old inspection-only line contradicted them; the redirection ban stays",
     ),
     A(
         "agent-common: memory-file ban names the three files, the DEBUG carve-out, and the QA and router paths",
@@ -3997,6 +4013,73 @@ ASSERTIONS = [
             "A verifier that is absent, blocked or unavailable leaves the disputes unadjudicated and the gate closed",
         ),
         "the router-side validity rule for the verifier's adjudication lists",
+    ),
+    # --- P4B remediation 1, commit 2: researcher Skill, docs-only TDD path, DEBUG BASE, mkdir form, Shell Safety ---
+    A(
+        "researcher: Skill is a tool (the mcp-cli SKILL_HINT needs it) and the MCP lanes stay",
+        AGENTS / "researcher.md",
+        frontmatter_tools_include("Skill", "mcp__brightdata", "mcp__octocode", "WebSearch", "WebFetch"),
+        "the router may add cc10x:mcp-cli as a SKILL_HINT for the researcher and agent-common says hints are invoked via Skill; without the tool the hint is dead",
+    ),
+    *[
+        A(
+            f"{name}: documentation, prompt and config-only work has a scripted RED",
+            AGENTS / f"{name}.md",
+            contains_all(
+                "**Documentation, prompt and config-only phases:**",
+                "a validator, grep or replay check with a real exit code",
+                "failing before the edit and passing after",
+                "`behavioral` when it asserts content",
+            ),
+            "the manual-browser rule left a Markdown-only phase with no stated way to produce a RED; the scripted check is named",
+        )
+        for name in ("component-builder", "bug-investigator")
+    ],
+    A(
+        "policy: documentation, prompt and config-only phases state the scripted RED in both write-agent rows",
+        POLICY_REF,
+        contains_all(
+            "**Documentation, prompt and config-only phases** have the same RED/GREEN requirement",
+            "RED is that check failing before the edit and passing after",
+            "`behavioral` when it asserts content, `error` when it only failed to run",
+            "For a bug in a documentation, prompt or config file the loop is a validator, grep or replay check with a real exit code",
+        ),
+        "the router table agrees with the agents: a docs/prompt/config phase is not exempt from RED/GREEN",
+    ),
+    A(
+        "failure-hunter: a site in a prompt or doc diff is a gate, contract, field or fail-closed clause, and zero sites still bounces",
+        AGENTS / "failure-hunter.md",
+        contains_all(
+            "**Sites in a prompt, doc or config diff:**",
+            "a gate, a contract, a field or a fail-closed clause",
+            "A Markdown-only diff has sites to inspect",
+            "Zero sites and zero files scanned stays a bounce (step 9)",
+            "sites as defined in step 1: gates, contracts, fields and fail-closed clauses",
+            "makes the router run fallback inline verification",
+        ),
+        "'Nothing found is a valid result' conflicted with the router's bounce of a CLEAN that states zero sites on a Markdown-only diff; the diff now has sites",
+    ),
+    A(
+        "debug-workflow: the DEBUG preparation records results.git_base_sha before the first investigator",
+        ROUTER_REFS / "debug-workflow.md",
+        contains_all(
+            "**Record the BASE sha (runs once, at the start of the investigation phase, before the first investigator is dispatched).**",
+            "`results.git_base_sha`",
+            "the same producer rule as BUILD step 11a",
+            "does not re-record it",
+            "`git_base_sha=unavailable`",
+        ),
+        "the BASE tamper clauses in the verifier and reviewer had no DEBUG producer, so DEBUG always fell back to git diff HEAD",
+    ),
+    A(
+        "agent-common: Memory First mkdir keeps the trailing slash the QA isolation guard allows, and is a no-op safety net",
+        SKILLS / "agent-common" / "SKILL.md",
+        lambda text: 'Bash(command="mkdir -p .cc10x/")' in text
+        and 'Bash(command="mkdir -p .cc10x")' not in text
+        and "so the step is a no-op safety net" in text
+        and "Keep the trailing slash" in text
+        and "denies the bare form `mkdir -p .cc10x` in QA plan phases" in text,
+        "the guard's allowlist is the prefix `.cc10x/`, so the bare form was denied for the planner in QA plan phases (a behavioral guard test pins both forms)",
     ),
 ]
 
