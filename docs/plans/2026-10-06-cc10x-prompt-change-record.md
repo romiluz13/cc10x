@@ -939,3 +939,31 @@ Still a text heuristic and not a shell parser, and no live `claude -p` run prove
 - PostToolUse audit false negatives (M9), and L5, L6, L7 from remediation 1.
 - The QA isolation guard does not read the events log (finished-ness there comes from the artifact only).
 - Found this cycle, not fixed: the legacy force-push pattern keeps its greedy `.*`, so a single segment holding tens of thousands of `git push` words (about 20000, 180 KB) takes seconds to scan; the hook timeout then fails open. Fixing it means changing a legacy pattern the plan keeps verbatim.
+
+### P5 remediation 3 (cycle 3 of 3, the last: final review and phase verifier)
+
+Hook code, hook tests and the hooks README only; no prompt surface. Two code commits plus this record. Every fix has a test that failed on the previous code with a behavioral reason and a scratch-copy mutation proof (list below).
+
+#### What each fix closes and why it is safe
+- H1 (plan invariant). The allowance's remainder replaced A's quoted regions with the word character `Q`, which destroyed word boundaries: `echo "x"` + `git push`, `echo git push"x"`, `echo git clean -f"d"`, `printf git branch -D"x"`, `grep -r git push"origin" --force` and `echo -e git clean -f'd'` (git word and operation unquoted, glued to a quote) were allowed although the legacy list denies each. The placeholder is now a space. Safe because the remainder only feeds the floor: a space can only split words, and text that was quoted data (`echo "git push"`) stays allowed since its quotes still collapse to blanks. The six shapes are denied tests and sit in the differential corpus; the two scratch differential fuzzers (quote-glue model and noise-token model; seeds 1-3, 20000 cases each) report zero allowed-while-legacy-denied commands unexplained by quote removal and zero lost denials.
+- H2. `--attr-source` takes a separate value and was missing from `GIT_VALUE_FLAGS`, so its value was read as the subcommand. Added. The other separated-value global options in the git manual (`-C`, `--git-dir`, `--work-tree`, `--namespace`, `--super-prefix`, `--config-env`, `-c`) were already handled; `--exec-path` and `--list-cmds` take only an attached value. A test runs every such flag with a value in front of three destructive subcommands. Safe: the set only controls which word is the subcommand.
+- H3. `env -S`/`--split-string` (separate, attached, `=`, abbreviated, inside a short-flag cluster) values are now scanned as a script like `bash -c` text, not skipped: `env "-Sgit push"`, `env -S "g'i't push"`, `env -i "-Sgit reset --hard"` and the attached forms. Safe: it only adds a scan; a benign `env -S "ls -la"` still passes.
+- H4 (performance). The legacy force-push pattern is quadratic in the number of push words (110 KB took 4.9 s against the 5 s hook timeout that fails open). A command over 65,536 characters whose text names `git` as a word is denied as `command-too-large` (non-unlockable, before any regex runs); a larger command without the word is not scanned, and a 60 KB command still takes the normal path (tested under 2 s). Safe: a commit message or script that large is not a use case; the deny is explicit and logged. The legacy pattern is left verbatim (a pre-existing quadratic, now bounded by the cap).
+- H5. A git command word or subcommand word built by brace expansion, a glob that could match `git` (or a destructive subcommand), or a `$(...)`/backtick substitution is denied: `git {push,} origin`, `git pu{sh,} origin`, `{git,} push`, `/usr/bin/gi? push`, `/usr/bin/gi[t] push`, `$(echo git) push`, `"$(which git)" push`. A built command word is classified as git (so the real operation, token-unlockable for push, is reported); a built subcommand word is `classifier-error`. False-positive cost is nil: a built word only matters when the other word is a destructive git subcommand or the command word is `git`. Plain variables (`$G push`, `${DOCKER} push`) are not expanded and stay allowed; the README lists that limit.
+- H6. The README said nesting beyond 8 levels is denied, but a quoted argument of echo/printf/grep is scanned twice, so `echo "$(...)"` hits the cap at five levels. The README states both figures (8 plain, 4 for the quoted form) and a test pins them.
+- V1 (phase verifier S8). Valid non-object JSON on stdin (`[]`, `null`, `5`, `"s"`, `true`) crashed six scripts with a traceback (exit 1). `load_input()` now returns `{}` for any non-object JSON, like it already did for empty or invalid input. One test runs all 13 registered hook commands against the five shapes under the real interpreter and requires exit 0 or 2 with no traceback.
+
+#### Mutation proofs (scratch copies outside the repo; each makes named tests fail)
+Placeholder `Q` back for the space (denied-shapes test and the differential corpus test fail); `--attr-source` removed; the `env -S` scan removed; the size cap disabled; the built command word check removed; the built subcommand check removed; the brace test removed; the glob test removed; the non-object return removed from `load_input` (the 13-command test fails for six scripts).
+
+#### Claim boundary
+Still a text heuristic and not a shell parser; no live `claude -p` run proves any of it beyond the tests and the scratch fuzz. Variables, `$IFS`, scripts written then run, `git config` aliases set earlier and interpreter bodies stay unseen. The approval token remains a plain file a model could write.
+
+#### Final P5 deferred list (recorded, not fixed)
+- A push token also approving a bundled branch delete (pre-existing).
+- `_name()` basename matching in the extra scan.
+- Destructive text quoted for `rg`, `sed` and similar read-only commands is denied (only the strict allowance is exempt).
+- PostToolUse Bash workflow-write audit false negatives (M9), and L5, L6, L7 from remediation 1.
+- The QA isolation guard does not read the events log.
+- Echo with a comment tail (`echo hi # ...` naming a destructive operation) is denied.
+- The legacy force-push pattern keeps its greedy `.*` (quadratic); bounded by the 64 KB cap instead of edited.
