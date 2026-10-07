@@ -2703,7 +2703,7 @@ ASSERTIONS = [
         "router: artifact-only resume reads the artifact by scope, pending_gate first, never newest-by-mtime alone",
         SKILLS / "cc10x-router" / "SKILL.md",
         lambda text: re.search(
-            r"Artifact-only resume.{0,300}never by modification time alone.{0,400}`pending_gate` first.{0,300}`phase_cursor`.{0,60}`phase_status`.{0,60}`results`",
+            r"Artifact-only resume.{0,300}never by modification time alone.{0,900}`pending_gate` first.{0,300}`phase_cursor`.{0,60}`phase_status`.{0,60}`results`",
             text,
             re.S,
         )
@@ -3027,7 +3027,7 @@ ASSERTIONS = [
     A(
         "router: zero non-terminal matches starts a new workflow, more than one asks which, advisory routes fall back to artifacts with a pending_gate",
         SKILLS / "cc10x-router" / "SKILL.md",
-        lambda text: re.search(r"zero non-terminal matches start a new workflow \(say so\)", text) is not None
+        lambda text: re.search(r"none starts a new workflow \(say so\)", text) is not None
         and re.search(r"more than one,? ask which", text) is not None
         and re.search(r"fall back to the non-terminal artifacts that carry a `pending_gate` and have `workflow_type` TRIAGE or CODEBASE-HEALTH", text) is not None,
         "the paused advisory workflow has no parent task and needs a locator in Task-tools mode",
@@ -3204,6 +3204,78 @@ ASSERTIONS = [
         ROUTER_REFS / "triage-workflow.md",
         lambda text: re.search(r"terminal states are `STATUS=TRIAGED` with `NEEDS_GRILLING` not true, and `STATUS=WONTFIX`\. On `STATUS=NEEDS_INFO`", text) is not None,
         "the checker's triage_is_terminal and this sentence must stay the same rule",
+    ),
+    # --- P4A remediation 3, commit 1: pending-gate locator, pause results, remediation graph, N/A phase id ---
+    A(
+        "router: artifact-only resume with no scope match looks up non-terminal artifacts carrying a pending_gate; exactly one answers, more than one asks which, none starts a new workflow",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: re.search(
+            r"never by modification time alone; one match resumes it, more than one, ask which; when none matches, look up the paused workflow a bare reply answers: the candidates are the non-terminal artifacts with a non-null `pending_gate`",
+            text,
+        )
+        is not None
+        and re.search(r"exactly one candidate means the reply is the answer to its `pending_gate`", text) is not None
+        and re.search(r"more than one, ask which \(list each gate name and `user_request`\), none starts a new workflow \(say so\)", text) is not None,
+        "a new session's bare reply to a paused question matches no uuid and no user_request, and would orphan the paused artifact",
+    ),
+    A(
+        "router: the step 0 stop-state hint is a candidate source for the pending-gate lookup",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: re.search(r"the `wf` the step 0 hint names counts when its artifact is non-terminal and has one", text) is not None,
+        "the hint is already described as a locator of the live wf; the lookup must be allowed to use it",
+    ),
+    A(
+        "router: a result_persisted whose decision is NEEDS_INFO or NEEDS_GRILLING does not complete its step, only a terminal-status result does",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: re.search(
+            r"a `result_persisted` whose `decision` is `NEEDS_INFO` or `NEEDS_GRILLING` is the pause of a pass that a second pass of the same agent and task phase follows, so it does not complete its step and only a terminal-status result does",
+            text,
+        )
+        is not None,
+        "the advisory second pass reuses (agent, task phase); pass 1's event must not make resume jump to Memory Update",
+    ),
+    A(
+        "router: CANDIDATES_FOUND completes the scanner step because no second scanner pass follows",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: re.search(r"`CANDIDATES_FOUND` completes the scanner step: no second pass follows and `pending_gate` carries the pause", text) is not None,
+        "treating CANDIDATES_FOUND as a pause would re-dispatch the scanner after the user answered",
+    ),
+    A(
+        "router: the event decision is NEEDS_GRILLING when a TRIAGED result sets NEEDS_GRILLING=true, in the router and the policy",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: re.search(r"`decision` is the contract status, written `NEEDS_GRILLING` when a TRIAGED result sets `NEEDS_GRILLING=true`", text) is not None
+        and re.search(r"`decision` is the contract status, written `NEEDS_GRILLING` when a TRIAGED result sets `NEEDS_GRILLING=true`", POLICY_REF.read_text(encoding="utf-8")) is not None,
+        "the pause rule keys on decision, and TRIAGED alone cannot tell a grilling pause from a terminal result",
+    ),
+    A(
+        "router: the artifact-only remediation graph names the REM-FIX agent and phase, the pending verifier slot, and doc-sync after the verifier",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: re.search(
+            r"the remediation graph: REM-FIX, re-review, re-hunt, re-verify \(REM-FIX is the `component-builder` step with the originating task phase; a pending original verifier that has not run takes the re-verify slot and keeps its task phase; doc-sync follows the verifier on the BUILD route as usual\)",
+            text,
+        )
+        is not None,
+        "Task-tools mode reuses the pending verifier and keeps doc-sync after it; artifact-only mode must match",
+    ),
+    A(
+        "router: phase_id is the literal N/A when phase_cursor is null, and resume compares null, missing and N/A as equal",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: re.search(r"`details\.phase_id` is the `phase_cursor` value, written as the literal `N/A` when `phase_cursor` is null", text) is not None
+        and re.search(r"null, missing and `N/A` `phase_id` values compare equal", text) is not None,
+        "a no-plan BUILD keeps phase_cursor null; a model writing null, N/A or phase-1 would break the completion key after compaction",
+    ),
+    A(
+        "policy: result_persisted phase_id is the literal N/A when phase_cursor is null",
+        POLICY_REF,
+        lambda text: re.search(r"`details\.phase_id` is the `phase_cursor` value, written as the literal `N/A` when `phase_cursor` is null", text) is not None,
+        "the policy event list must match the router's event template",
+    ),
+    A(
+        "build-workflow: a BUILD with no plan phases has a null phase_cursor and writes N/A as the phase_id",
+        ROUTER_REFS / "build-workflow.md",
+        lambda text: re.search(r"initialize `phase_cursor` to the first incomplete phase \(null when there are no plan phases; the events then carry the literal `N/A` as `phase_id`\)", text) is not None
+        and re.search(r"`details\.phase_id` set to the `phase_cursor` value \(the literal `N/A` when it is null\)", text) is not None,
+        "the phase_started boundary and the result events must use the same phase_id value for a no-plan BUILD",
     ),
 ]
 

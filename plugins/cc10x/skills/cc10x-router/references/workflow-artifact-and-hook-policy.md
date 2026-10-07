@@ -183,7 +183,7 @@ Workflow event log:
   - `details`
 - Event types the router appends:
   - `workflow_started` (at workflow bootstrap)
-  - `result_persisted` (each agent result persisted to the artifact; `phase` is the task phase and `details.phase_id` is the `phase_cursor` value, `N/A` on routes without phases)
+  - `result_persisted` (each agent result persisted to the artifact; `phase` is the task phase and `details.phase_id` is the `phase_cursor` value, written as the literal `N/A` when `phase_cursor` is null (routes without phases, a BUILD with no plan phases); `decision` is the contract status, written `NEEDS_GRILLING` when a TRIAGED result sets `NEEDS_GRILLING=true`)
   - `phase_started` (BUILD step 11a, once per phase; `details.phase_id` is the `phase_cursor` value)
   - `remediation_created` (one per remediation round, appended with its `remediation_history` entry; `details.phase_id` as above)
   - `memory_finalized` (Memory Update)
