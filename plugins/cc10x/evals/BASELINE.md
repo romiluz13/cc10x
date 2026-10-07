@@ -144,6 +144,12 @@ What this does NOT show: no skill was loaded in a live run, so nothing here prov
 
 L1 and pin counts at the end of P4C (measured): replay fixtures `fixtures=35`; pytest 631 passed; prompt clause assertions 572 (546 at the start of P4C, plus 26 added: 6 in T7.1, 5 in T7.2, 15 in T7.3; one pin was renamed in T7.3, so no assertion count was lowered); QA phase invariants all hold.
 
+## v12.10.0 release tree
+
+Measured (L1, `release_gate.py --strict` on the release tree under Python 3.13 and under `/usr/bin/python3` 3.9.6): replay fixtures `fixtures=35`; pytest 802 passed; prompt clause assertions 573; QA phase invariants all hold. The L1 figures in "L1 baseline (measured at the P3-b tree)" above (379, 259, 32) are history, not current.
+
+L2 at release: NOT RUN (AD-2). No case was measured at any point in this remediation, so every status in this file, including the post-P4A, post-P4B and post-P4C columns, is an analytical reading of the text. P5 (hooks) and P6 (docs) edited no router, agent or skill prompt except one matcher string in `qa-workflow.md`, one policy-reference sentence and the wording-only `cc10x-guide` skill edits (none of them touches a router route or a REM-FIX contract), so the post-P4C column is the last analytical expectation and nothing at release changes it. The only live measurement of a prompt-delivery claim is the preload probe (`preload_probe.py --all --model haiku`: 13 of 13 PASS on the release tree).
+
 ## Visibility
 
 Every tracked path under `evals/cases/` and this file must report `git check-ignore -q` exit 1; `evals/results/x.json` must report exit 0. Grader file names avoid the substrings `test` and `audit` because `.gitignore` globs `*test*.md` and `*audit*.md` would silently untrack them.
