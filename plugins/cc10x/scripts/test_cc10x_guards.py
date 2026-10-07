@@ -19,6 +19,8 @@ from __future__ import annotations
 
 import json
 import os
+import re
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -1164,16 +1166,15 @@ def test_git_guard_lowercase_branch_delete_is_not_blocked(tmp_path):
     assert r.stdout.strip() == ""
 
 
-def test_git_guard_long_form_force_delete_is_not_blocked_today(tmp_path):
-    # Documented current gap: the pattern only matches the short `-D`.
-    # P5.T4's classifier deliberately closes it; update this test then.
+def test_git_guard_long_form_force_delete_is_denied_like_short_form(tmp_path):
+    # The pre-P5.T4 pattern only matched the short `-D`; the classifier closes
+    # the gap and keeps the same approval-token operation (branch-delete).
     r = run_guard(
         "cc10x_git_guard.py",
         {"tool_input": {"command": "git branch --delete --force feature/old"}},
         tmp_path,
     )
-    assert r.returncode == 0
-    assert r.stdout.strip() == ""
+    assert_denied(r)
 
 
 def run_precommit_with_pytest_exit(tmp_path: Path, exit_code: int) -> int:
@@ -1905,6 +1906,514 @@ def test_state_snapshots_follow_the_live_workflow_not_the_newest_file(tmp_path):
     assert r.returncode == 0
     snapshot = json.loads((tmp_path / ".cc10x" / "stop-state.json").read_text())
     assert snapshot["workflow_uuid"] == "wf-live"
+
+
+# --- cc10x_git_guard.py: classify_git_command (P5.T4, finding C5) -------------
+#
+# Seams: the pure classifier (imported) and the hook process (stdin JSON).
+# Corpus strings are assembled from fragments so no destructive command is
+# spelled out as one literal.
+
+if str(SCRIPTS_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS_DIR))
+import cc10x_git_guard as git_guard  # noqa: E402
+
+
+def classify(command):
+    return git_guard.classify_git_command(command)
+
+
+def git(*words: str) -> str:
+    return " ".join(("git",) + words)
+
+
+# Destructive set D, as the words after `git`.
+DESTRUCTIVE = (
+    ("clean", "--force"),
+    ("clean", "-f"),
+    ("clean", "-fd"),
+    ("clean", "-df"),
+    ("clean", "-xfd"),
+    ("checkout", "-f"),
+    ("checkout", "."),
+    ("checkout", "--", "."),
+    ("checkout", "*"),
+    ("checkout", "HEAD", "--", "."),
+    ("restore", "."),
+    ("restore", "--", "."),
+    ("branch", "-D", "old"),
+    ("branch", "--delete", "--force", "old"),
+    ("branch", "-d", "-f", "old"),
+    ("stash", "clear"),
+    ("reset", "--hard"),
+    ("reset", "--hard", "HEAD~1"),
+    ("push", "origin", "main"),
+    ("push", "--force", "origin", "main"),
+    ("push", "-f", "origin", "main"),
+    ("push", "--force-with-lease", "origin", "main"),
+    ("push", "origin", "+main"),
+)
+
+# Wrapper shapes applied to a whole command string.
+PREFIX_WRAPPERS = {
+    "bare": lambda c: c,
+    "env": lambda c: "env VAR=1 " + c,
+    "env-clean": lambda c: "env -i HOME=x " + c,
+    "assignment": lambda c: "VAR=1 " + c,
+    "command": lambda c: "command " + c,
+    "nohup": lambda c: "nohup " + c,
+    "xargs": lambda c: "xargs " + c,
+    "xargs-flags": lambda c: "xargs -I {} -n 1 " + c,
+    "sudo": lambda c: "sudo " + c,
+    "sudo-user": lambda c: "sudo -u root " + c,
+    "time": lambda c: "time " + c,
+    "bash-c": lambda c: "bash -c " + shlex.quote(c),
+    "bash-lc": lambda c: "bash -lc " + shlex.quote(c),
+    "sh-c-dq": lambda c: 'sh -c "' + c + '"',
+    "zsh-c": lambda c: "zsh -c " + shlex.quote(c),
+    "eval-dq": lambda c: 'eval "' + c + '"',
+    "eval-bare": lambda c: "eval " + c,
+    "subst": lambda c: "echo $(" + c + ")",
+    "subst-dq": lambda c: 'echo "$(' + c + ')"',
+    "backtick": lambda c: "echo `" + c + "`",
+    "and": lambda c: "true && " + c,
+    "or": lambda c: "false || " + c,
+    "semi": lambda c: "true; " + c,
+    "pipe": lambda c: "true | " + c,
+    "newline": lambda c: "true\n" + c,
+    "and-after": lambda c: c + " && echo done",
+    "semi-after": lambda c: c + "; ls",
+    "newline-after": lambda c: c + "\nls",
+    "heredoc-sh": lambda c: "sh <<EOF\n" + c + "\nEOF",
+    "heredoc-bash": lambda c: "bash <<'EOF'\n" + c + "\nEOF",
+    "subshell": lambda c: "(" + c + ")",
+    "if-then": lambda c: "if true; then " + c + "; fi",
+    "nested": lambda c: "bash -c " + shlex.quote("sudo env X=1 " + c),
+    "nested-eval": lambda c: "sh -c " + shlex.quote("eval " + shlex.quote(c)),
+}
+
+# Wrapper shapes that rewrite the git invocation itself.
+GIT_SHAPES = {
+    "git-C": lambda w: git("-C", "/some/dir", *w),
+    "git-no-pager": lambda w: git("--no-pager", *w),
+    "git-c-other": lambda w: git("-c", "core.pager=cat", *w),
+    "alias-plain": lambda w: "git -c "
+    + shlex.quote("alias.zz=" + " ".join(w))
+    + " zz",
+    "alias-shell": lambda w: "git -c "
+    + shlex.quote("alias.zz=!" + git(*w))
+    + " zz",
+}
+
+
+def prefix_corpus() -> dict[str, str]:
+    out = {}
+    for words in DESTRUCTIVE:
+        for name, wrap in PREFIX_WRAPPERS.items():
+            out[f"{name} | {git(*words)}"] = wrap(git(*words))
+    return out
+
+
+def git_shape_corpus() -> dict[str, str]:
+    out = {}
+    for words in DESTRUCTIVE:
+        for name, shape in GIT_SHAPES.items():
+            out[f"{name} | {git(*words)}"] = shape(words)
+    return out
+
+
+# Destructive text the model runs through something that is not git itself,
+# or as an argument that is not echo/grep/printf data: still denied.
+EXECUTED_TEMPLATES = (
+    "git commit -m '{}'",
+    "ssh host '{}'",
+    "python3 -c \"import os; os.system('{}')\"",
+    "echo {}",
+    "{} # tidy",
+    "git -C . log && {}",
+)
+
+# Reviewed quoted-data shapes: the destructive text is one quoted argument of
+# echo, grep or printf and is never executed. The legacy list denies them all;
+# the classifier is allowed to differ on exactly these.
+QUOTED_DATA_TEMPLATES = (
+    "echo '{}'",
+    'echo "{}"',
+    'grep "{}" notes.txt',
+    "grep -rn '{}' docs/",
+    "printf '%s\\n' \"{}\"",
+)
+# Copied verbatim from cc10x_git_guard.py at BASE (64b74ee) before the rewrite.
+LEGACY_BLOCKED_PATTERNS = [
+    (
+        r"\bgit\s+push\b.*(--force\b|-f\b|--force-with-lease\b)",
+        "git push --force — force-pushing rewrites remote history.",
+        None,  # force-push is never token-approvable
+    ),
+    (
+        r"\bgit\s+push\b",
+        "git push — pushing to remote. Use a branch and PR instead.",
+        "push",
+    ),
+    (
+        r"\bgit\s+reset\s+--hard\b",
+        "git reset --hard — destroys uncommitted changes.",
+        None,
+    ),
+    (
+        r"\bgit\s+clean\s+-[a-z]*f[a-z]*\b",
+        "git clean -f — removes untracked files permanently.",
+        None,
+    ),
+    (
+        r"\bgit\s+branch\s+-D\b",
+        "git branch -D — force-deletes a branch.",
+        "branch-delete",
+    ),
+    (
+        r"\bgit\s+checkout\s+\.\s*$",
+        "git checkout . — discards all uncommitted changes.",
+        None,
+    ),
+    (
+        r"\bgit\s+checkout\s+--\s+\.\s*$",
+        "git checkout -- . — discards all uncommitted changes.",
+        None,
+    ),
+    (
+        r"\bgit\s+checkout\s+\*\s*$",
+        "git checkout * — discards all uncommitted changes.",
+        None,
+    ),
+    (
+        r"\bgit\s+restore\s+\.\s*$",
+        "git restore . — discards all uncommitted changes (same as checkout .).",
+        None,
+    ),
+]
+LEGACY_GLOBAL_FLAGS = (
+    r"\bgit\s+((-C\s+\S+|-c\s+\S+|--git-dir(=|\s+)\S+|--work-tree(=|\s+)\S+"
+    r"|-P|--no-pager|--paginate)\s+)+"
+)
+
+
+def legacy_denies(command: str) -> bool:
+    """The pre-rewrite guard's verdict: any pattern on any normalized segment."""
+    parts = re.split(r"\n|;|\|\||&&|\|", command)
+    segments = []
+    for part in parts:
+        if part.strip():
+            seg = re.sub(r"\s+#.*$", "", part.strip())
+            segments.append(re.sub(LEGACY_GLOBAL_FLAGS, "git ", seg))
+    return any(
+        re.search(pattern, seg)
+        for pattern, _reason, _op in LEGACY_BLOCKED_PATTERNS
+        for seg in segments
+    )
+
+
+QUOTED_DATA_EXCEPTIONS = frozenset(
+    command
+    for command in (
+        template.format(git(*words))
+        for words in DESTRUCTIVE
+        for template in QUOTED_DATA_TEMPLATES
+    )
+    if legacy_denies(command)
+)
+
+
+def verdict(command: str) -> str:
+    result = classify(command)
+    return "allow" if result is None else f"deny({result[0]})"
+
+
+def test_classifier_denies_every_destructive_command_in_every_wrapper_shape(tmp_path):
+    corpus = {**prefix_corpus(), **git_shape_corpus()}
+    assert len(corpus) > 800
+    missed = [
+        f"{label!r} -> {command!r}"
+        for label, command in corpus.items()
+        if classify(command) is None
+    ]
+    assert not missed, f"{len(missed)} undenied, first: {missed[:5]}"
+
+
+def test_classifier_returns_reason_key_and_message(tmp_path):
+    key, message = classify(git("push", "origin", "main"))
+    assert key == "push"
+    assert message.startswith("git push")
+    assert classify(git("branch", "-D", "x"))[0] == "branch-delete"
+    assert classify(git("branch", "--delete", "--force", "x"))[0] == "branch-delete"
+    for words in DESTRUCTIVE:
+        key = classify(git(*words))[0]
+        if words == ("push", "origin", "main"):
+            assert key == "push"
+        elif words[0] == "branch":
+            assert key == "branch-delete"
+        else:
+            assert key not in ("push", "branch-delete"), (words, key)
+
+
+def test_classifier_allows_the_safe_set(tmp_path):
+    safe = [
+        git("status"),
+        git("diff"),
+        git("diff", "."),
+        git("log", "--oneline", "-5"),
+        git("add", "."),
+        git("commit", "-m", "'tidy'"),
+        git("checkout", "main"),
+        git("checkout", "-b", "feature/x"),
+        git("checkout", "--", "file.txt"),
+        git("restore", "--staged", "."),
+        git("restore", "file.txt"),
+        git("branch", "-d", "merged"),
+        git("branch", "-m", "new"),
+        git("stash"),
+        git("stash", "list"),
+        git("stash", "pop"),
+        git("clean", "-n"),
+        git("clean", "--dry-run", "-d"),
+        git("reset", "--soft", "HEAD~1"),
+        git("reset", "HEAD", "file.txt"),
+        git("fetch", "origin"),
+        git("pull", "--ff-only"),
+        git("-C", "/some/dir", "status"),
+        "bash run.sh",
+        "ls -la && true",
+        "",
+        "   ",
+    ]
+    wrongly_denied = [c for c in safe if classify(c) is not None]
+    assert not wrongly_denied, wrongly_denied
+
+
+def test_classifier_allows_quoted_destructive_text_as_echo_grep_printf_data(tmp_path):
+    allowed_shapes = [
+        "grep \"" + git("push", "origin", "main") + "\" docs/notes.md",
+        "echo '" + git("reset", "--hard") + "'",
+        "printf '%s\\n' \"" + git("clean", "-fd") + "\"",
+        "grep -rn \"" + git("push", "--force") + "\" plugins/",
+        "egrep '" + git("checkout", ".") + "' docs",
+        "echo \"" + git("branch", "-D", "x") + "\" | cat",
+        "cat notes | grep \"" + git("clean", "-f") + "\"",
+        "sudo grep \"" + git("push") + "\" file",
+        "echo '$(" + git("push") + ")'",
+        "bash run.sh && grep \"" + git("push") + "\" log.txt",
+    ]
+    wrongly_denied = [
+        f"{c!r} -> {verdict(c)}" for c in allowed_shapes if classify(c) is not None
+    ]
+    assert not wrongly_denied, wrongly_denied
+
+
+def test_classifier_still_denies_quoted_text_that_is_executed(tmp_path):
+    executed = [
+        "echo '" + git("reset", "--hard") + "' | sh",
+        "printf '%s' \"" + git("clean", "-fd") + "\" | bash",
+        "echo '" + git("push") + "' | sudo sh",
+        "echo \"$(" + git("push") + ")\"",
+        "echo `" + git("push") + "`",
+        "grep \"x\" f; " + git("push"),
+        "grep \"x\" f && " + git("reset", "--hard"),
+        "echo hi | xargs " + git("clean", "-fd"),
+        "echo " + git("reset", "--hard"),
+    ]
+    undenied = [c for c in executed if classify(c) is None]
+    assert not undenied, undenied
+
+
+def test_classifier_denies_forced_remote_publish_forms_non_approvably(tmp_path):
+    for words in (
+        ("push", "--force", "origin", "main"),
+        ("push", "-f", "origin", "main"),
+        ("push", "-fu", "origin", "main"),
+        ("push", "--force-with-lease", "origin", "main"),
+        ("push", "origin", "+main"),
+    ):
+        assert classify(git(*words))[0] == "push-force", words
+
+
+def test_classifier_picks_the_non_approvable_reason_in_a_mixed_command(tmp_path):
+    mixed = git("push", "origin", "main") + " && " + git("reset", "--hard")
+    key = classify(mixed)[0]
+    assert key not in ("push", "branch-delete")
+
+
+def test_classifier_never_raises_and_returns_none_or_a_pair(tmp_path):
+    odd = [
+        "",
+        "\x00",
+        "'",
+        '"',
+        "`",
+        "$(",
+        "((((",
+        "))))",
+        "$(" * 40,
+        "bash -c " * 20 + "'" + git("push") + "'",
+        "git",
+        "git -c",
+        "git -C",
+        "git -c alias.x= x",
+        "git -c alias.x=x x",
+        "git -c alias.x=!x x",
+        "xargs",
+        "sudo -u",
+        "bash -c",
+        "eval",
+        "\\",
+        "echo \\",
+        "a" * 100000,
+        "&&;;||||",
+        git("push", '"unterminated'),
+    ]
+    for command in odd:
+        result = classify(command)
+        assert result is None or (
+            isinstance(result, tuple)
+            and len(result) == 2
+            and all(isinstance(part, str) for part in result)
+        ), (command[:40], result)
+
+
+def test_classifier_alias_smuggling_is_resolved_not_trusted(tmp_path):
+    alias_cmd = git("-c", shlex.quote("alias.pp=push"), "pp")
+    assert classify(alias_cmd)[0] == "push"
+    assert classify(git("-c", shlex.quote("alias.pp=status"), "pp")) is None
+    assert classify(git("-c", shlex.quote("alias.pp=!echo hi"), "pp")) is None
+
+
+def test_legacy_denied_corpus_stays_denied_except_reviewed_quoted_data(tmp_path):
+    corpus = {
+        **prefix_corpus(),
+        **git_shape_corpus(),
+        **{
+            template.format(git(*words)): template
+            for words in DESTRUCTIVE
+            for template in EXECUTED_TEMPLATES + QUOTED_DATA_TEMPLATES
+        },
+    }
+    legacy_denied = {
+        c for c in corpus if legacy_denies(c)
+    }
+    assert len(legacy_denied) > 400
+    lost = [
+        f"{c!r}: legacy=deny, classifier={verdict(c)}"
+        for c in sorted(legacy_denied)
+        if c not in QUOTED_DATA_EXCEPTIONS and classify(c) is None
+    ]
+    assert not lost, f"{len(lost)} denials lost, first: {lost[:5]}"
+
+
+def test_quoted_data_exceptions_are_real_and_narrow(tmp_path):
+    assert len(QUOTED_DATA_EXCEPTIONS) > 50
+    for command in sorted(QUOTED_DATA_EXCEPTIONS):
+        assert command.split()[0] in ("echo", "grep", "printf"), command
+        assert legacy_denies(command), f"not a legacy denial, stale entry: {command!r}"
+        assert classify(command) is None, f"still denied: {command!r}"
+
+
+def test_newly_denied_forms_were_allowed_by_the_legacy_list(tmp_path):
+    newly = [
+        git("branch", "--delete", "--force", "old"),
+        git("branch", "-d", "-f", "old"),
+        git("checkout", "-f"),
+        git("stash", "clear"),
+        git("restore", "--", "."),
+        git("checkout", "HEAD", "--", "."),
+        git("-c", shlex.quote("alias.zz=clean --force"), "zz"),
+        "bash -c " + shlex.quote(git("branch", "--delete", "--force", "old")),
+        "env X=1 " + git("branch", "--delete", "--force", "old"),
+    ]
+    for command in newly:
+        assert not legacy_denies(command), f"legacy already denied {command!r}"
+        assert classify(command) is not None, f"not denied: {command!r}"
+
+
+def test_git_guard_planning_time_false_positive_is_allowed_by_the_hook(tmp_path):
+    command = 'grep -rn "' + git("push", "origin", "main") + '" plugins/ docs/'
+    r = run_guard("cc10x_git_guard.py", {"tool_input": {"command": command}}, tmp_path)
+    assert r.returncode == 0
+    assert r.stdout.strip() == ""
+
+
+def test_git_guard_hook_denies_wrapped_destructive_commands(tmp_path):
+    for command in (
+        "env FOO=1 " + git("branch", "--delete", "--force", "old"),
+        "sudo " + git("stash", "clear"),
+        "bash -c " + shlex.quote(git("checkout", "-f")),
+        git("-c", shlex.quote("alias.zz=clean -fd"), "zz"),
+    ):
+        r = run_guard(
+            "cc10x_git_guard.py", {"tool_input": {"command": command}}, tmp_path
+        )
+        assert r.returncode == 0, command
+        out = json.loads(r.stdout)
+        assert out["hookSpecificOutput"]["permissionDecision"] == "deny", command
+
+
+def test_git_guard_token_for_push_does_not_unlock_a_mixed_destructive_command(tmp_path):
+    state = tmp_path / ".cc10x" / "state"
+    state.mkdir(parents=True)
+    (state / "git-approval.json").write_text(
+        json.dumps(
+            {
+                "wf": "wf-test",
+                "operations": ["push"],
+                "expires_at": "2099-01-01T00:00:00+00:00",
+            }
+        )
+    )
+    command = git("push", "origin", "main") + " && " + git("reset", "--hard")
+    r = run_guard("cc10x_git_guard.py", {"tool_input": {"command": command}}, tmp_path)
+    out = json.loads(r.stdout)
+    assert out["hookSpecificOutput"]["permissionDecision"] == "deny"
+
+
+def test_git_guard_long_form_force_delete_honors_the_branch_delete_token(tmp_path):
+    write_git_token(tmp_path, ["branch-delete"], "2099-01-01T00:00:00+00:00")
+    command = git("branch", "--delete", "--force", "feature/old")
+    r = run_guard("cc10x_git_guard.py", {"tool_input": {"command": command}}, tmp_path)
+    assert r.returncode == 0
+    assert r.stdout.strip() == ""
+    assert not (tmp_path / ".cc10x" / "state" / "git-approval.json").exists()
+
+
+def test_git_guard_malformed_empty_and_non_bash_payloads_exit_0_or_2_only(tmp_path):
+    payloads = [
+        None,
+        [],
+        "text",
+        {},
+        {"tool_input": None},
+        {"tool_input": []},
+        {"tool_input": "git status"},
+        {"tool_input": {}},
+        {"tool_input": {"command": ""}},
+        {"tool_input": {"command": None}},
+        {"tool_input": {"command": 123}},
+        {"tool_input": {"command": ["git", "status"]}},
+        {"tool_name": "Write", "tool_input": {"file_path": "a.txt", "content": "x"}},
+        {"tool_name": "Read", "tool_input": {"file_path": "a.txt"}},
+        {"tool_input": {"command": 'echo "unterminated'}},
+        {"tool_input": {"command": "echo 'unterminated"}},
+        {"tool_input": {"command": "$(((("}},
+        {"tool_input": {"command": "\x00\x01"}},
+    ]
+    for payload in payloads:
+        r = run_guard("cc10x_git_guard.py", payload, tmp_path)
+        assert r.returncode in (0, 2), (payload, r.returncode, r.stderr[-300:])
+    r = run_guard("cc10x_git_guard.py", None, tmp_path, extra_env={"X": "1"})
+    assert r.returncode in (0, 2)
+
+
+def test_git_guard_unterminated_quote_with_destructive_text_is_still_denied(tmp_path):
+    command = git("push", '"origin', "main")
+    r = run_guard("cc10x_git_guard.py", {"tool_input": {"command": command}}, tmp_path)
+    assert r.returncode in (0, 2)
+    assert json.loads(r.stdout)["hookSpecificOutput"]["permissionDecision"] == "deny"
 
 
 def main() -> int:
