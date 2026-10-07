@@ -39,6 +39,7 @@ documented, not defended.
 from __future__ import annotations
 
 import contextlib
+import fnmatch
 import json
 import re
 import sys
@@ -226,6 +227,7 @@ PRIORITY = (
     "checkout-force",
     "stash-clear",
     "classifier-error",
+    "command-too-large",
     "push",
     "branch-delete",
 )
@@ -247,6 +249,15 @@ MSG_DEPTH = (
     "cannot be cleared."
 )
 
+MSG_TOO_LARGE = (
+    "the command is too large for the git guard to read in time, so it cannot "
+    "be cleared."
+)
+MSG_OPAQUE_GIT = (
+    "the git command or subcommand word is built by a brace, glob or "
+    "substitution the guard cannot resolve, so it cannot be cleared."
+)
+
 SHELLS = {"bash", "sh", "zsh", "dash", "ksh"}
 # Their quoted arguments are scanned as text that a consumer might execute.
 DATA_COMMANDS = {"echo", "printf", "grep", "egrep", "fgrep"}
@@ -265,7 +276,7 @@ KEYWORDS = {
 }
 # Wrapper -> option flags that consume the following word.
 WRAPPERS = {
-    "env": {"-u", "-C", "-S"},
+    "env": {"-u", "-C"},
     "sudo": {"-u", "-g", "-h", "-p", "-C", "-D", "-R", "-T", "-U", "-r", "-t"},
     "nice": {"-n"},
     "timeout": {"-s", "-k"},
@@ -274,7 +285,11 @@ WRAPPERS = {
 }
 GIT_VALUE_FLAGS = {
     "-C", "--git-dir", "--work-tree", "--namespace", "--super-prefix", "--config-env",
+    "--attr-source",
 }
+GIT_DESTRUCTIVE_SUBS = ("push", "reset", "clean", "branch", "checkout", "restore", "stash")
+BRACE_EXPANSION = re.compile(r"(?<!\$)\{[^{}]*(,|\.\.)[^{}]*\}")
+MAX_COMMAND_CHARS = 65536
 GROUP_OPS = {"&&", "||", ";", ";;", "&", "(", ")", "\n"}
 MAX_DEPTH = 8
 ASSIGNMENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=")
@@ -576,6 +591,8 @@ def _git(args: list[str], depth: int) -> list[tuple[str, str]]:
         return []
     sub, rest = args[i], args[i + 1 :]
     found = _git_subcommand(sub, rest)
+    if _built(sub, GIT_DESTRUCTIVE_SUBS):
+        found.append(("classifier-error", MSG_OPAQUE_GIT))
     value = aliases.get(sub.lower())
     if value is not None:
         tail = " ".join(rest)
@@ -584,9 +601,38 @@ def _git(args: list[str], depth: int) -> list[tuple[str, str]]:
     return found
 
 
-def _command_words(segment: list[_Tok]) -> list[_Tok]:
+def _built(text: str, names: tuple[str, ...]) -> bool:
+    """True when a brace expansion, a substitution or a glob in `text` could
+    build one of `names` (a word the guard cannot resolve to a literal)."""
+    if BRACE_EXPANSION.search(text) or "$(" in text or "`" in text:
+        return True
+    base = text.rsplit("/", 1)[-1]
+    return any(c in base for c in "*?[") and any(
+        fnmatch.fnmatchcase(name, base) for name in names
+    )
+
+
+def _env_split(flag: str, following: str | None) -> tuple[str, bool] | None:
+    """The `-S`/`--split-string` script in an env option word and whether it is
+    the next word, else None."""
+    if flag.startswith("--"):
+        name, equals, value = flag[2:].partition("=")
+        if not name or not "split-string".startswith(name):
+            return None
+        return (value, False) if equals else (following or "", True)
+    for pos, char in enumerate(flag[1:], 1):
+        if char in "uC":
+            return None
+        if char == "S":
+            rest = flag[pos + 1 :]
+            return (rest, False) if rest else (following or "", True)
+    return None
+
+
+def _command_words(segment: list[_Tok], scripts: list[str]) -> list[_Tok]:
     """The segment from its real command on: assignments, keywords and wrapper
-    prefixes (with their own options) skipped."""
+    prefixes (with their own options) skipped. The scripts of `env -S` are
+    appended to `scripts` for the caller to scan."""
     i = 0
     while i < len(segment):
         text = segment[i].text
@@ -601,6 +647,13 @@ def _command_words(segment: list[_Tok]) -> list[_Tok]:
                 i += 1
                 if flag == "--":
                     break
+                if name == "env":
+                    following = segment[i].text if i < len(segment) else None
+                    split = _env_split(flag, following)
+                    if split is not None:
+                        scripts.append(split[0])
+                        i += split[1]
+                        continue
                 if flag in takes:
                     i += 1
             if name == "timeout":
@@ -635,7 +688,7 @@ def _segment(
         for tok in words[1:]:
             if tok.quoted:
                 found += _scan(tok.text, depth + 1)
-    elif name == "git":
+    elif name == "git" or (words and _built(words[0].text, ("git",))):
         found += _git(args, depth)
     elif name in SHELLS:
         idx = _shell_script_arg(words)
@@ -681,7 +734,10 @@ def _scan(command: str, depth: int, comments: bool = True) -> list[tuple[str, st
     for tail in tails or ():
         found += _scan(tail, depth + 1, False)
     for pipeline in _groups(toks):
-        words = [_command_words(segment) for segment in pipeline]
+        scripts: list[str] = []
+        words = [_command_words(segment, scripts) for segment in pipeline]
+        for script in scripts:
+            found += _scan(script, depth + 1)
         for segment, segment_words in zip(pipeline, words):
             for tok in segment:
                 for body in tok.subst:
@@ -722,7 +778,7 @@ def _quoted_data_only(command: str) -> bool:
             if char == quote:
                 quote = ""
                 if len(members) == 1:
-                    kept.append("Q")
+                    kept.append(" ")
             elif quote == '"' and char in "\\$`":
                 return False
             continue
@@ -779,6 +835,8 @@ def classify_git_command(command: str) -> tuple[str, str] | None:
     has no unlock path. Everything the legacy floor denies on the raw text is
     denied, except what `_quoted_data_only` allows.
     """
+    if len(command) > MAX_COMMAND_CHARS and GIT_WORD.search(command):
+        return ("command-too-large", MSG_TOO_LARGE)
     if _quoted_data_only(command):
         return None
     return _pick(_floor(command) + _scan(command, 0))

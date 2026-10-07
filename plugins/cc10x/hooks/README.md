@@ -93,7 +93,21 @@ Each hook in `hooks.json` appears exactly once in this table (a validator in
   `while read`, `python -c`), a redirect to a file, `<<<`, and process
   substitution are denied.
 - Nesting deeper than 8 levels (`$(...)`, backticks, `bash -c`, `eval`, aliases)
-  is denied, not skimmed.
+  is denied, not skimmed. A quoted argument of `echo`, `printf` or `grep` is
+  scanned a second time, so `echo "$(...)"` costs two levels: the real figure
+  for that form is four nested levels, the fifth is denied.
+- A command longer than 64 KB (65,536 characters) whose text names `git` as a
+  word is denied (`command-too-large`) before any pattern runs: the verbatim
+  legacy force-push pattern is quadratic in the number of `git push` words, and
+  the hook times out and fails open at 5 s. A commit message that large is not
+  a use case; a command of that size without the word `git` is not scanned.
+- A git command word or subcommand word that a brace expansion, a glob that
+  could match `git`, or a `$(...)`/backtick substitution builds (`git {push,}
+  origin`, `git pu{sh,} origin`, `{git,} push`, `/usr/bin/gi? push`,
+  `$(echo git) push`) is denied without being resolved: as the real operation
+  when the command word is built, as `classifier-error` when the subcommand
+  word is. A plain variable (`$G push`) is not expanded and is not seen.
+- `env -S` / `--split-string` scripts are scanned like `bash -c` text.
 - A script written to a file and run later is not seen (the write is not a git
   command). A command whose text hides the git call (variables, `$IFS`, hex
   escapes, `git config` aliases set in an earlier command) is not seen either.

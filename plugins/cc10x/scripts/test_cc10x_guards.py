@@ -2836,6 +2836,7 @@ def test_legacy_denied_corpus_stays_denied_except_reviewed_quoted_data(tmp_path)
         },
         **pipe_executed_corpus(),
         **bypass_corpus(),
+        **glued_quote_corpus(),
     }
     legacy_denied = {
         c for c in corpus if legacy_denies(c)
@@ -3635,6 +3636,167 @@ def test_a_memory_finalize_cursor_that_is_still_in_progress_is_live(tmp_path):
     set_age(newer, 1)
     set_age(tmp_path / ".cc10x" / "workflows" / "wf-aaa.json", 100)
     assert sessionstart_wf(tmp_path, None) == "wf-aaa"
+
+
+# --- P5 remediation 3: git guard -----------------------------------------------
+
+G3 = "g" + "it"
+
+
+def glued_quote_corpus() -> dict[str, str]:
+    commands = (
+        'echo "x"' + G3 + " push",
+        "echo " + G3 + ' push"x"',
+        "echo " + G3 + ' clean -f"d"',
+        "printf " + G3 + ' branch -D"x"',
+        "grep -r " + G3 + ' push"origin" --force',
+        "echo -e " + G3 + " clean -f'd'",
+    )
+    return {command: "glued-quote" for command in commands}
+
+
+def test_quoted_region_glued_to_unquoted_destructive_text_is_denied(tmp_path):
+    corpus = glued_quote_corpus()
+    assert len(corpus) == 6
+    for command in corpus:
+        assert legacy_denies(command), f"legacy must deny {command!r}"
+        assert classify(command) is not None, f"allowed: {command!r}"
+    r = run_guard(
+        "cc10x_git_guard.py",
+        {"tool_input": {"command": 'echo "x"' + G3 + " push"}},
+        tmp_path,
+    )
+    assert json.loads(r.stdout)["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert classify('echo "' + G3 + ' push"') is None
+    assert classify("echo 'a' \"b\" c") is None
+
+
+GIT_VALUE_FLAG_FORMS = (
+    "-C", "--git-dir", "--work-tree", "--namespace", "--super-prefix",
+    "--config-env", "--attr-source",
+)
+
+
+def test_every_git_global_option_with_a_separate_value_is_skipped(tmp_path):
+    for flag in GIT_VALUE_FLAG_FORMS:
+        for words in (("push", "origin", "main"), ("reset", "--hard"), ("clean", "-fd")):
+            command = git(flag, "HEAD", *words)
+            assert classify(command) is not None, f"allowed: {command!r}"
+        assert classify(git(flag, "HEAD", "status")) is None, flag
+    assert set(GIT_VALUE_FLAG_FORMS) <= git_guard.GIT_VALUE_FLAGS
+
+
+def test_env_split_string_argument_is_scanned_as_a_script(tmp_path):
+    denied = (
+        'env "-S' + G3 + ' push"',
+        "env -S \"g'i't push\"",
+        'env -i "-S' + G3 + ' reset --hard"',
+        'env -S"' + G3 + ' push"',
+        'env -S "' + G3 + ' clean -fd"',
+        'env --split-string="' + G3 + ' push"',
+        "env --split-string '" + G3 + " reset --hard'",
+        'env -iS"' + G3 + ' push"',
+        "sudo env -S '" + G3 + " push'",
+    )
+    for command in denied:
+        assert classify(command) is not None, f"allowed: {command!r}"
+    for command in (
+        'env -S "ls -la"',
+        'env -S"' + G3 + ' status"',
+        "env -u HOME " + G3 + " status",
+        "env -i ls",
+    ):
+        assert classify(command) is None, f"denied: {command!r}"
+
+
+def _large_command(chars: int, word: str) -> str:
+    return "echo " + (word + " ") * (chars // (len(word) + 1))
+
+
+def test_commands_over_64k_that_name_git_are_denied_without_the_regex_floor(tmp_path):
+    started = time.monotonic()
+    big = _large_command(70_000, G3 + " push")
+    result = classify(big)
+    assert result is not None and result[0] == "command-too-large", result
+    assert "too large" in result[1]
+    assert time.monotonic() - started < 1.0
+    assert classify(_large_command(70_000, "ls")) is None
+    assert classify(_large_command(70_000, "digit")) is None
+    just_under = _large_command(60_000, G3 + " status") + G3 + " push origin"
+    started = time.monotonic()
+    result = classify(just_under)
+    assert result is not None and result[0] == "push", result
+    assert time.monotonic() - started < 2.0
+    assert classify(_large_command(60_000, G3 + " status")) is None
+    r = run_guard(
+        "cc10x_git_guard.py", {"tool_input": {"command": big}}, tmp_path
+    )
+    assert json.loads(r.stdout)["hookSpecificOutput"]["permissionDecision"] == "deny"
+
+
+def test_command_too_large_is_never_token_approvable(tmp_path):
+    assert git_guard.APPROVABLE.get("command-too-large") is None
+    assert "command-too-large" in git_guard.PRIORITY
+
+
+def test_built_git_command_and_subcommand_words_are_denied(tmp_path):
+    denied = (
+        G3 + " {push,} origin",
+        G3 + " pu{sh,} origin",
+        "{" + G3 + ",} push origin",
+        "{" + G3 + ",} reset --hard",
+        "/usr/bin/gi? push origin",
+        "/usr/bin/gi[t] push origin",
+        "/usr/bin/g* reset --hard",
+        G3 + " pu* origin",
+        G3 + " pus? origin",
+        G3 + " re[s]et --hard",
+        G3 + " cl{ean,} -fd",
+        "$(echo " + G3 + ") push origin",
+        '"$(which ' + G3 + ')" push origin',
+        "`echo " + G3 + "` push origin",
+        "env {" + G3 + ",} push origin",
+        G3 + " $(echo push) origin",
+        G3 + " -C . {push,}",
+    )
+    for command in denied:
+        assert classify(command) is not None, f"allowed: {command!r}"
+    allowed = (
+        G3 + " status",
+        G3 + " log --oneline {a,b}",
+        G3 + " show $(" + G3 + " rev-parse HEAD)",
+        G3 + ' commit -m "$(cat msg)"',
+        G3 + ' -C "$(' + G3 + " rev-parse --show-toplevel)\" status",
+        "ls /usr/bin/gi?",
+        "echo {a,b} " + G3,
+        "grep -r 'gi?' docs",
+        "$HOME/bin/tool push",
+        "${DOCKER} push image",
+    )
+    for command in allowed:
+        assert classify(command) is None, f"denied: {command!r}"
+
+
+def test_a_built_git_word_obeys_the_approval_token_like_a_literal_one(tmp_path):
+    assert classify(G3 + " pu{sh,} origin")[0] == "classifier-error"
+    assert classify("{" + G3 + ",} push origin")[0] == "push"
+
+
+def test_documented_nesting_figures_are_the_real_ones(tmp_path):
+    assert git_guard.MAX_DEPTH == 8
+    assert classify(nested_substitution(8, "ls")) is None
+    assert classify(nested_substitution(9, "ls"))[0] == "classifier-error"
+
+    def quoted_levels(levels: int) -> str:
+        command = "ls"
+        for _ in range(levels):
+            command = 'echo "$(' + command + ')"'
+        return command
+
+    assert classify(quoted_levels(4)) is None
+    assert classify(quoted_levels(5))[0] == "classifier-error"
+    readme = (PLUGIN_ROOT / "hooks" / "README.md").read_text()
+    assert "8 levels" in readme and "four" in readme
 
 
 def main() -> int:
