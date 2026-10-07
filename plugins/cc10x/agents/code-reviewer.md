@@ -9,7 +9,6 @@ skills:
   - cc10x:agent-common
   - cc10x:code-review
   - cc10x:verification
-  - cc10x:codebase-hygiene
   - cc10x:codebase-design
 ---
 

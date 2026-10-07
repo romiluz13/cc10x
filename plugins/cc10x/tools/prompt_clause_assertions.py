@@ -81,6 +81,19 @@ def frontmatter_is(key: str, value: str):
     return check
 
 
+def frontmatter_skills_are(*expected: str):
+    """True only when the frontmatter `skills:` list is exactly `expected` (order-free); malformed frontmatter is False."""
+
+    def check(text: str) -> bool:
+        try:
+            listed = parse_frontmatter(text).get("skills", (None, []))[1]
+        except FrontmatterError:
+            return False
+        return sorted(item.strip().lstrip("- ").strip() for item in listed) == sorted(expected)
+
+    return check
+
+
 def router_description(text: str) -> str:
     return text.split("\n---", 1)[0].split("description:", 1)[1] if text.startswith("---") and "description:" in text else ""
 
@@ -90,6 +103,22 @@ ROUTER_REFS = SKILLS / "cc10x-router" / "references"
 ROUTER_EVALS = SKILLS / "cc10x-router" / "evals"
 # Fields the router requires on a qa-re-plan return; planner.md carries them from P4.T4.4.
 POLICY_FIELDS_AGENT_SIDE_PENDING = {"AMENDED_FILES", "STALE_SWEEP", "RECONCILIATION_RERUN"}
+PRELOAD_TABLE = {
+    "architecture-scanner": ("agent-common", "codebase-hygiene", "codebase-design"),
+    "bug-investigator": ("agent-common", "debugging", "building", "verification", "codebase-design"),
+    "code-reviewer": ("agent-common", "code-review", "verification", "codebase-design"),
+    "component-builder": ("agent-common", "building", "verification", "codebase-design", "domain-modeling"),
+    "doc-syncer": ("agent-common", "diff-driven-docs", "verification", "domain-modeling"),
+    "failure-hunter": ("agent-common", "code-review"),
+    "integration-verifier": ("agent-common", "verification"),
+    "plan-gap-reviewer": (),
+    "planner": ("agent-common", "planning", "codebase-design", "domain-modeling"),
+    "qa-executor": ("agent-common", "qa-strategy", "verification"),
+    "qa-harness-builder": ("agent-common", "qa-strategy", "verification"),
+    "qa-researcher": ("agent-common", "qa-strategy"),
+    "researcher": ("agent-common",),
+    "triage-agent": ("agent-common", "domain-modeling"),
+}
 POLICY_TABLE_AGENTS = (
     "component-builder",
     "bug-investigator",
@@ -365,9 +394,9 @@ ASSERTIONS = [
             "CATEGORY:",
             "STATE:",
             "BRIEF_PATH:",
-            "cc10x:codebase-hygiene",
+            "cc10x:domain-modeling",
         ),
-        "triage-agent has read-only tools (no TaskUpdate), YAML contract with STATUS/CATEGORY/STATE/BRIEF_PATH, loads codebase-hygiene",
+        "triage-agent has read-only tools (no TaskUpdate), YAML contract with STATUS/CATEGORY/STATE/BRIEF_PATH, loads domain-modeling (codebase-hygiene preload dropped by C4.3)",
     ),
     A(
         "triage-agent: no Edit/TaskUpdate in tools line",
@@ -3392,6 +3421,22 @@ ASSERTIONS = [
         )
         for name in ("code-reviewer", "failure-hunter")
     ],
+    # --- P4.T4.1 commit 2: the C4.3 preload table, one pin per agent (A6, RD-6) ---
+    *[
+        A(
+            f"{agent}: frontmatter skills are exactly the C4.3 role-core set",
+            AGENTS / f"{agent}.md",
+            frontmatter_skills_are(*(f"cc10x:{skill}" for skill in skills)),
+            "agent-common everywhere but plan-gap-reviewer; role-core skills only; situational skills arrive through SKILL_HINTS",
+        )
+        for agent, skills in PRELOAD_TABLE.items()
+    ],
+    A(
+        "preload table covers every agent file",
+        AGENTS / "planner.md",
+        lambda text: sorted(path.stem for path in AGENTS.glob("*.md")) == sorted(PRELOAD_TABLE),
+        "a new agent file must be added to the preload table in the same change",
+    ),
 ]
 
 

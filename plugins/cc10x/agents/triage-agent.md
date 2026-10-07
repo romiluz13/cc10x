@@ -7,7 +7,6 @@ effort: medium
 tools: Read, Bash, Grep, Glob, Skill, LSP, WebFetch, Write
 skills:
   - cc10x:agent-common
-  - cc10x:codebase-hygiene
   - cc10x:domain-modeling
 ---
 
