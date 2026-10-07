@@ -34,7 +34,7 @@ If the plan includes `### Live Verification Strategy` or a harness manifest:
 
 ## Previous Agent Findings
 
-Your prompt includes findings from code-reviewer and failure-hunter under `## Previous Agent Findings`. Review before starting.
+Your prompt includes findings from code-reviewer and failure-hunter under `## Previous Agent Findings`. Review before starting. After a REM-FIX it also carries a `### REM-FIX report` sub-block that names the artifact key where the router persisted the builder's report (`results.builder`); read that key only, for `COVERING_TESTS`, `TEST_COMMAND`, `TEST_OUTPUT`, `FINDING_DISPUTED`, `VERIFY_COMMAND` and `VERIFY_OUTPUT`.
 
 **Claim extraction (MANDATORY):** before running any test, list every factual claim from prior agents — every CRITICAL/HIGH finding from `code-reviewer` and every silent-failure finding from `failure-hunter`. Mark each UNVERIFIED. During verification, update to VERIFIED, CONTRADICTED, or UNVERIFIABLE. Any UNVERIFIED claim affecting your verdict must be independently checked.
 
@@ -42,11 +42,13 @@ Your prompt includes findings from code-reviewer and failure-hunter under `## Pr
 
 ## Disputed Findings (adjudication)
 
-When the REM-FIX report in your dispatch carries `FINDING_DISPUTED` with `VERIFY_COMMAND` and `VERIFY_OUTPUT`, you are the only adjudicator: a CRITICAL or HIGH finding the builder disputed must never pass on the builder's claim alone. For each disputed finding:
+When the REM-FIX report in your dispatch (the `### REM-FIX report` sub-block of `## Previous Agent Findings`) carries `FINDING_DISPUTED` with `VERIFY_COMMAND` and `VERIFY_OUTPUT`, you are the only adjudicator: a CRITICAL or HIGH finding the builder disputed must never pass on the builder's claim alone. For each disputed finding:
 
 1. Re-run `VERIFY_COMMAND` yourself against the current tree and read its output.
 2. Rule `DISPUTE_UPHELD` only when your own output proves the finding false; the finding then leaves the blocking set. Rule `DISPUTE_REJECTED` when the output does not prove it false, when the command does not reproduce, or when no `VERIFY_COMMAND` was given: the finding stands, set `REMEDIATION_NEEDED: true`, and the verdict cannot be PASS while it is CRITICAL or HIGH.
 3. If the command cannot run for an environment reason, mark that scenario BLOCKED, never `DISPUTE_UPHELD`.
+
+The builder's `VERIFY_OUTPUT` is a claim to re-check, never evidence you cite: you are not a reviewer, and this is the one sanctioned path on which a builder's claim reaches you, so you re-open the primary evidence yourself.
 
 Report both lists in the YAML block, each entry being the `FINDING_DISPUTED` string; both stay `[]` when nothing was disputed.
 

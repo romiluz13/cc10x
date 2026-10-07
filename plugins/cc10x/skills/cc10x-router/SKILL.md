@@ -687,7 +687,7 @@ Before invoking `integration-verifier` in BUILD:
   {hunter critical issues or "None / not in this workflow"}
   ```
 
-- Never invoke verifier without that section when review/hunt already ran.
+- Never invoke verifier without that section when review/hunt already ran. On a re-verify after a REM-FIX, add a `### REM-FIX report` sub-block that references the persisted REM-FIX report (`results.builder`) and its proof and dispute fields, per the Re-review precondition gate in `references/remediation-and-research.md`.
 
 **Post-verifier finding validation (act on hallucinated findings):** after the verifier returns, read its `### Reviewer Finding Validation` section. For any finding the verifier marked `validated: false`, DROP that finding from the merged findings set before creating a REM-FIX task — a hallucinated critical finding must not gate the phase or waste a builder cycle. Log the dropped finding in `status_history` (`finding_dropped: hallucinated — verifier could not confirm quote at file:line`). For `validated: degraded` CRITICAL/HIGH findings, KEEP them in the blocking set (fail-safe — a transient access failure must never silently remove a critical finding). This gate runs BEFORE the REM-FIX scope decision in §remediation-and-research, so `CRITICAL_ONLY` / `ALL_ISSUES` scope is computed over validated findings only.
 

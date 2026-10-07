@@ -583,3 +583,23 @@ Hook behavior under router-owned completion (item 5): `cc10x_task_completed_guar
 Why safe: completion semantics for the read-only agents are untouched. For the seven write agents, the router already applies its fallback `TaskUpdate` after the contract validates, so the task still completes, now strictly after validation instead of before it.
 
 Claim boundary: now true: no agent file lists or instructs `TaskUpdate`, and a pin keeps it so. Not claimed: no live agent run; the `build-trivial-happy` L2 spot-check is not run (AD-2, no paid evals), so analytically: with the agents no longer self-completing, the router fallback described in `SKILL.md` (T1.5b item f) is the one path that completes the task. Droppable alone: this commit can be reverted without affecting T4.4 or T4.5a. Classification: `orchestration_sensitive` (ASM-7).
+
+## P4B-4a Router hand-off of the REM-FIX report to the verifier (continuation remediation of P4.T1.5; found by the P4B-2 builder)
+
+Findings: A5 (dispute adjudication), continuation of P4.T1.5 and P4.T4.2.
+
+Gap: the `reverify` task template and the section 12 "Verifier findings handoff" passed only the reviewer and hunter blocks to `integration-verifier`. The REM-FIX report (`FINDING_DISPUTED`, `VERIFY_COMMAND`, `VERIFY_OUTPUT`, and the `COVERING_TESTS` / `TEST_COMMAND` / `TEST_OUTPUT` proof) never reached the only adjudicator, so a builder-disputed CRITICAL or HIGH finding could never be ruled on, and the verifier's "when the REM-FIX report in your dispatch carries" clause could never fire.
+
+Files: `references/remediation-and-research.md`, `SKILL.md` (section 12), `agents/integration-verifier.md`, `tools/prompt_clause_assertions.py`.
+
+What changed:
+- `reverify` template description: one added sentence telling the dispatch to include the REM-FIX report's proof and dispute fields in a `### REM-FIX report` sub-block of `## Previous Agent Findings`.
+- Re-review precondition gate: one added "Verifier hand-off" bullet. The sub-block goes after the reviewer and hunter blocks, names the artifact key where the router persisted the report (`results.builder`, or `results.investigator` when the origin is `bug-investigator`) and the field names, by reference, not pasted bodies. It also covers a pending original verifier that takes the re-verify slot.
+- `SKILL.md` section 12: the matching sentence appended to the existing "Never invoke verifier without that section" bullet. Net line change: 0 (783 lines before and after, no prose trimmed; the cap of 783 holds without recovering lines).
+- `integration-verifier.md`: the Previous Agent Findings paragraph says the sub-block exists after a REM-FIX and to read that artifact key only; the Disputed Findings clause names the sub-block; one added sentence that `VERIFY_OUTPUT` is a claim to re-check, never evidence the verifier cites.
+
+Why safe, and why anti-anchoring is intact: the verifier is still not a reviewer and still re-runs `VERIFY_COMMAND` itself against the current tree and rules only on its own output (unchanged rules 1-3 of the clause). Passing the dispute to it is the sanctioned adjudication path named by the router's own Verify-before-implement text; no new field, no new gate, no change to the circuit breaker, `phase_exit_gate`, or the precondition gate. The router never fills the fields itself.
+
+Pins: three new (remediation reference hand-off clauses, `SKILL.md` sentence, verifier sub-block and re-check clauses). RED before the edits: 3 failures, each a missing clause. Each pin was shown to fail on a scratch-copy mutation of its decisive clause (5 mutations: "a reference, not pasted bodies", the template sentence, the `SKILL.md` `results.builder` reference, "read that key only", "you are not a reviewer"; each exit 1).
+
+Claim boundary: now true: the three texts agree on how the REM-FIX report reaches the verifier. Not claimed: no live agent run; the two texts for dispute handling (router hand-off, verifier adjudication) are contract text only. Deferred, pinned by an existing pin so not edited: the sentence in the producers section "Until the agent files declare these producers (agent-file work, P4B), the gates fail closed" is now stale in its first clause (the producers are declared); its pin ("stated plainly for P4B") names it, so it is left for a named task. Classification: `orchestration_sensitive` (ASM-7).

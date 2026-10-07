@@ -3799,6 +3799,40 @@ ASSERTIONS = [
         )
         for name in ("component-builder", "bug-investigator", "doc-syncer", "planner", "researcher")
     ],
+    # --- P4B-4: REM-FIX report reaches the verifier so a disputed finding can be adjudicated ---
+    A(
+        "remediation: the re-verify dispatch carries the REM-FIX report by reference",
+        SKILLS / "cc10x-router" / "references" / "remediation-and-research.md",
+        contains_all(
+            "Verifier hand-off:",
+            "`### REM-FIX report` sub-block",
+            "`results.builder`",
+            "a reference, not pasted bodies",
+            "re-runs `VERIFY_COMMAND` itself",
+            "Include the REM-FIX report's proof and dispute fields in the `### REM-FIX report` sub-block of `## Previous Agent Findings`.",
+        ),
+        "without the report the only adjudicator never sees FINDING_DISPUTED, so a disputed CRITICAL or HIGH finding could never leave the blocking set",
+    ),
+    A(
+        "router: the verifier findings handoff adds the REM-FIX report sub-block on a re-verify",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        contains_all(
+            "add a `### REM-FIX report` sub-block that references the persisted REM-FIX report (`results.builder`)",
+            "Re-review precondition gate",
+        ),
+        "the section 12 handoff is the single source of the verifier's Previous Agent Findings; it must name the REM-FIX report",
+    ),
+    A(
+        "integration-verifier: reads the REM-FIX report sub-block and re-checks primary evidence",
+        AGENTS / "integration-verifier.md",
+        contains_all(
+            "`### REM-FIX report` sub-block",
+            "read that key only",
+            "`VERIFY_OUTPUT` is a claim to re-check, never evidence you cite",
+            "you are not a reviewer",
+        ),
+        "the verifier is the sanctioned adjudication path; anti-anchoring holds because it re-runs the command and rules on its own output",
+    ),
 ]
 
 

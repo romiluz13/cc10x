@@ -360,7 +360,7 @@ TaskCreate({
 ```text
 TaskCreate({
   subject: "CC10X integration-verifier: Re-verify after REM-FIX",
-  description: "wf:{workflow_uuid}\nkind:reverify\norigin:router\nphase:re-verify\nplan:{plan_file or 'N/A'}\nscope:{scope from completed remfix}\nreason:{reason from completed remfix}\n\nRe-verify after remediation.",
+  description: "wf:{workflow_uuid}\nkind:reverify\norigin:router\nphase:re-verify\nplan:{plan_file or 'N/A'}\nscope:{scope from completed remfix}\nreason:{reason from completed remfix}\n\nRe-verify after remediation. Include the REM-FIX report's proof and dispute fields in the `### REM-FIX report` sub-block of `## Previous Agent Findings`.",
   activeForm: "Re-verifying fix"
 }) -> reverify_task_id
 ```
@@ -385,4 +385,5 @@ TEST_OUTPUT: {its output}
 - Name only the COVERING tests — the files that exercise the changed behavior — not the whole suite. "Ran all tests, green" is not sufficient; the report must point at the tests that would fail if this fix were wrong.
 - If `COVERING_TESTS`, `TEST_COMMAND`, and `TEST_OUTPUT` are missing or empty, the gate fails closed: do NOT create the re-review task. Send the REM-FIX back (or block the task) until the proof is supplied.
 - A `FINDING_DISPUTED` entry satisfies this gate for that finding via its `VERIFY_COMMAND`/`VERIFY_OUTPUT` pair (adjudicated by integration-verifier per Section 9), since the dispute itself carries the proving evidence.
+- Verifier hand-off: the re-verify dispatch (including a pending original verifier that takes its slot) adds a `### REM-FIX report` sub-block to `## Previous Agent Findings`, after the Code Reviewer and Failure Hunter blocks. It names `results.builder` (`results.investigator` when the REM-FIX origin is `bug-investigator`) of the workflow artifact, where the router persisted the report, and lists the proof and dispute field names it carries: a reference, not pasted bodies. Without it the only adjudicator never sees `FINDING_DISPUTED`, and a disputed CRITICAL or HIGH finding could never leave the blocking set. Anti-anchoring is intact: the verifier is not a reviewer, and it re-runs `VERIFY_COMMAND` itself and rules on its own output, so the builder's claim is re-checked primary evidence, never a verdict.
 - This precondition is independent of the circuit breaker, which is checked when a REM-FIX is created (see `### Circuit breaker`); both must pass before the remediation loop continues.
