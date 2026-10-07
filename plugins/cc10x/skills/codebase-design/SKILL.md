@@ -5,7 +5,7 @@ description: |
   leverage, locality) for designing a module's shape — a lot of behaviour
   behind a small interface at a clean seam, testable through that interface.
   The single source of truth for these terms; other skills (architecture,
-  codebase-hygiene, building, planning) point here instead of restating them.
+  codebase-hygiene) point here instead of restating them.
   Use when designing or improving a module's interface, finding deepening
   opportunities, deciding where a seam goes, or making code more testable.
 allowed-tools: Read Grep Glob LSP

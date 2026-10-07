@@ -60,7 +60,7 @@ Build in thin vertical slices that cross all layers: UI → API → logic → da
 
 **One seam, one test, one minimal implementation per cycle.** Each test is a tracer bullet that responds to what the last cycle taught you — work one vertical slice at a time.
 
-**Test only at pre-agreed seams.** A seam is the public boundary where you observe behavior without reaching inside. Before writing any test, know which seam you're testing at. Prefer existing seams to new ones; use the highest seam possible; the fewer seams across the codebase, the better (ideal is one). If the plan provides a `### Test Seams` subsection or an Interfaces block, draw your seams from there.
+**Test only at pre-agreed seams.** A seam is the place where a module's interface lives: where you can observe or alter behavior without editing in that place, which is how a test observes behavior without reaching inside (`cc10x:codebase-design` defines the term). Before writing any test, know which seam you're testing at. Prefer existing seams to new ones; use the highest seam possible; the fewer seams across the codebase, the better (ideal is one). If the plan provides a `### Test Seams` subsection or an Interfaces block, draw your seams from there.
 
 **Implementation-coupled anti-pattern.** A test is implementation-coupled if it mocks internal collaborators, tests private methods, or verifies through a side channel (querying the database instead of using the interface). The tell: the test breaks when you refactor but behavior hasn't changed. Test through the public interface, not internals.
 

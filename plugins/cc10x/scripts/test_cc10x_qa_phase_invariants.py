@@ -3359,7 +3359,7 @@ PP43B_ROOT_PREFIX = "${CLAUDE_PLUGIN_ROOT}/"
 # excluded as "templated", because ${...} matches the templated regex. PP-29
 # never hit this because no ${CLAUDE_PLUGIN_ROOT} token is in its frozen scope.
 PP43B_EXCLUDE = (re.compile(r"\{[^}]*\}"), re.compile(r"\*"))
-PP43B_MIN_EXTRACTED = 16  # measured 20 at b966c52 -- re-measured, unchanged from c3ea86f
+PP43B_MIN_EXTRACTED = 11  # measured 20 at b966c52; P4.T7.2 deleted 5 tokens (4 placeholder references, 1 building-reference path), measured 14, floor 16 -> 11 keeps the same headroom of 3
 PP43B_MIN_RESOLVED = 8  # measured 11 at b966c52 -- re-measured, unchanged from c3ea86f
 # Declared-future files under an explicit **PLACEHOLDER** banner. NAMED, not
 # line-ranged: `tools/live_harness_runner.py` shares the fourth bullet's line and
@@ -3367,12 +3367,11 @@ PP43B_MIN_RESOLVED = 8  # measured 11 at b966c52 -- re-measured, unchanged from 
 # placeholder is not a broken link; an UNdeclared one is. The exclusion is a
 # loan against the banner and dies with it -- see the three assertions in the
 # check body.
-PP43B_PLACEHOLDER_EXCLUSIONS = {
-    "references/environment-topologies.md",
-    "references/observability-assertions.md",
-    "references/ui-qa-automation.md",
-    "references/harness-manifest.md",
-}
+# P4.T7.2 emptied the set: the four references were deleted from qa-strategy
+# (plan: delete the pointers to files that do not exist) rather than kept as
+# declared-future files, so the loan is repaid. The machinery stays so a future
+# declared placeholder is still a named loan against its banner.
+PP43B_PLACEHOLDER_EXCLUSIONS: set[str] = set()
 PP43B_PLACEHOLDER_BANNER = "**PLACEHOLDER**"
 # Anti-vacuity for the prefix clause: the clause fires only on lines that
 # already carry a prefixed token, so zero such lines makes it inert.

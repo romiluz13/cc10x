@@ -4419,6 +4419,61 @@ ASSERTIONS = [
         and "the plan's `### Live Verification Strategy`" in text,
         "the router forbids loading qa-strategy outside the QA route; the reference now points at the plan's own live-verification section",
     ),
+    # --- P4.T7.2: qa-strategy and codebase-design (E3, E7 part) ---
+    A(
+        "qa-strategy: no DRAFT or PLACEHOLDER marker, no claim that BUILD sends readers here, and no pointer to a reference file that is not there",
+        SKILLS / "qa-strategy" / "SKILL.md",
+        lambda text: "DRAFT" not in text
+        and "PLACEHOLDER" not in text
+        and "sends a BUILD phase to" not in text
+        and "## Reference files" not in text
+        and all(
+            (SKILLS / "qa-strategy" / ref).exists()
+            for ref in re.findall(r"`(references/[^`]+\.md)`", text)
+        ),
+        "the skill carried a DRAFT status, a PLACEHOLDER header and four references/*.md pointers to files that do not exist, and said BUILD sends readers here after the router forbade it",
+    ),
+    A(
+        "qa-strategy: log access guidance stays as plain guidance",
+        SKILLS / "qa-strategy" / "SKILL.md",
+        contains(
+            "**Log access strategy.** How the harness reads logs differs sharply by environment (local stdout, container logs, a log platform); state the access method in the plan for the environment in use."
+        ),
+        "the placeholder marker is gone and the one true sentence it carried is kept",
+    ),
+    A(
+        "qa-strategy: the artifact template table and its pinned row text are byte-stable (PP-43)",
+        SKILLS / "qa-strategy" / "SKILL.md",
+        contains_all(
+            "| `test-plan.md` | `${CLAUDE_PLUGIN_ROOT}/templates/qa-test-plan.template.md` |",
+            "| `env-plan.md` | `${CLAUDE_PLUGIN_ROOT}/templates/qa-env-plan.template.md` |",
+            "| `feature-map.md` | `${CLAUDE_PLUGIN_ROOT}/templates/qa-feature-map.template.md` (router-owned, inline consolidation) |",
+            "| `report.md` | `${CLAUDE_PLUGIN_ROOT}/templates/qa-report.template.md` (router-seeded at `qa-execute`; `qa-executor` rewrites it whole with `Write`) |",
+            "| harness manifest | `${CLAUDE_PLUGIN_ROOT}/templates/live-harness.template.json` |",
+            "**Why deletion is forbidden.**",
+        ),
+        "P4C removes markers and dead pointers only; the template table that PP-43 pins is not edited",
+    ),
+    A(
+        "codebase-design: names only the skills that point at it",
+        SKILLS / "codebase-design" / "SKILL.md",
+        lambda text: re.search(r"other skills \(architecture,\s+codebase-hygiene\) point here instead of restating them", text) is not None
+        and re.search(r"codebase-hygiene,\s+building", text) is None
+        and all(
+            "cc10x:codebase-design" in read(SKILLS / name / "SKILL.md")
+            for name in ("architecture", "codebase-hygiene")
+        ),
+        "the description said building and planning point here; neither does (the agents preload it), so the claim names the two skills that do",
+    ),
+    A(
+        "building: the seam definition is the codebase-design one",
+        SKILLS / "building" / "SKILL.md",
+        lambda text: "A seam is the place where a module's interface lives" in text
+        and "(`cc10x:codebase-design` defines the term)" in text
+        and "A seam is the public boundary where you observe behavior without reaching inside" not in text
+        and "the _location_ at which a module's interface lives" in read(SKILLS / "codebase-design" / "SKILL.md"),
+        "building defined a seam as a public boundary while codebase-design defines it as where a module's interface lives; one definition, pointed at the canonical skill",
+    ),
 ]
 
 

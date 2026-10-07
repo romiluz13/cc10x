@@ -13,7 +13,7 @@ user-invocable: false
 
 # QA Strategy
 
-**Status: DRAFT.** This skill is the QA route's test-system design discipline, and it is what `skills/building/references/integration-and-live-proof.md` sends a BUILD phase to for test-environment topology, observation points, and flake sources. Sections marked PLACEHOLDER need a deep dive.
+This skill is the QA route's test-system design discipline.
 
 **Core:** A test suite's value is not how many tests it has. It is how much you would believe a green run.
 
@@ -143,7 +143,7 @@ Asserting logs also makes the suite an enforcement point for the project's loggi
 
 Assert on **level + message + structured fields**, not on a substring of a formatted line. Substring assertions on log text are among the most brittle tests it is possible to write.
 
-**PLACEHOLDER — log access strategy.** How the harness reads logs differs sharply by environment (local stdout, container logs, a log platform). Needs a deep dive, likely with a hosted log platform as one backend.
+**Log access strategy.** How the harness reads logs differs sharply by environment (local stdout, container logs, a log platform); state the access method in the plan for the environment in use.
 
 ## Test environment
 
@@ -263,12 +263,3 @@ Every QA artifact has a shipped skeleton. **Copy it and fill in place** — do n
 | harness manifest | `${CLAUDE_PLUGIN_ROOT}/templates/live-harness.template.json` |
 
 **Why deletion is forbidden.** The sections most often dropped are the ones that record what the plan does *not* do — the coverage-reduction table, known gaps, teardown verification, re-runnability. Those are precisely the sections an optimistic plan omits. A missing section reads as "nothing to report"; an `N/A` with a reason reads as a claim someone can challenge.
-
-## Reference files
-
-**PLACEHOLDER** — to be split out as this skill grows past a single file, matching the pattern in `cc10x:building` and `cc10x:frontend`:
-
-- `references/environment-topologies.md` — compose / testcontainers / cloud ephemeral, with worked setups
-- `references/observability-assertions.md` — log, metric, and trace assertions per backend
-- `references/ui-qa-automation.md` — Playwright vs. agentic browser driving, selector durability
-- `references/harness-manifest.md` — the schema `tools/live_harness_runner.py` consumes
