@@ -967,3 +967,25 @@ Still a text heuristic and not a shell parser; no live `claude -p` run proves an
 - The QA isolation guard does not read the events log.
 - Echo with a comment tail (`echo hi # ...` naming a destructive operation) is denied.
 - The legacy force-push pattern keeps its greedy `.*` (quadratic); bounded by the 64 KB cap instead of edited.
+
+## Docs reset (non-prompt) changes: P6A (P6.T1, P6.T6, P6.T10 part, P6.T13 ADR part)
+
+No prompt file (router, agent, skill), hook or registry changed. Three commits.
+
+### Files moved (`git mv`, history preserved) to `docs/history/`, each with the HISTORICAL banner
+HANDOFF, diff-driven-docs plan, upstream steal list, harmony release, latency-reduction note, orchestration bible, orchestration logic-analysis, v12 keep-inventory, v12 loop-engine plan, `cc10x-explorer.html`, `cc10x-architecture-explorer.html` and the five `playgrounds/` pages (no test or tool reads them; their README link was removed). The 2026-06-17 revitalization plan exists only as an ignored, untracked local file (the `*-PLAN.md` rule), so it was not moved. The five March benchmark notes and ADR 0002 carry the same banner in place. `.gitignore` gained `!docs/history/` plus `*.md`, `*.html` and `playgrounds` negations below the `*-PLAN.md`, `*-ANALYSIS.md`, `*test*.md` and `*audit*.md` rules; `git check-ignore -q` exits 1 for every destination (pinned by a test).
+
+### Validators relaxed, and why that is safe
+`harness_audit.py` no longer requires the bible, logic-analysis or latency-reduction note: path constants, reads, existence, malformed-title, version-tag tuple and `.cc10x/workflows` namespace checks removed. The version-tag requirement still covers the three maintained registries (router-invariants, prompt-invariants, agent-contract-registry); the namespace requirement still covers the safety doc. Safe because those three docs are archived and no longer claim to be a source of truth, and a mutation test (each of the three registries loses its tag) proves the remaining requirement still fails. New tests: the harness passes with the three docs absent; archived docs are tracked-visible, bannered with a resolving `Superseded by` path, and gone from their old locations; README local links resolve.
+
+### Baseline entries
+None of the 78 entries is owned by P6.T1, T6 or T10 (owners are T2: 60, T3: 11, T12: 3, T4: 2, T9: 2), and no entry message names a moved file, so 78 before and 78 after; the harness still reports them as a WARN and `--strict` stays red until P6C drains them.
+
+### Dangling references fixed
+README tree list (bible and logic-analysis lines) and the explorer link; the safety doc's source-of-truth list lost its bible item. Left for P6B/P6C because those files are out of this dispatch's scope: `cc10x-guide/SKILL.md` still points at the bible (P6.T9).
+
+### Other
+`DESIGN.md` and `PRODUCT.md` stay in place with a one-line scope sentence (`test/keynote-contract.test.mjs` reads only `keynote.html`). The open items of the gitignored 2026-07-30 Anthropic-comparison report are summarized in `docs/known-flaws.md`. ADR 0001 now says fixtures predating the seam fields are rejected; ADR 0002 has an amendment (QA=5, TRIAGE=6, CODEBASE-HEALTH=7, DEFAULT=8).
+
+### Claim boundary
+Docs and validator-list changes only; the full gate and the L1 suites pass, but nothing here proves any remaining doc is accurate (P6.T2 to T5, T7 to T9 do that). The 16 untracked in-flight files under `docs/plans/` were not staged or committed.
