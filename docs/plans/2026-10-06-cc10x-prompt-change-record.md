@@ -989,3 +989,26 @@ README tree list (bible and logic-analysis lines) and the explorer link; the saf
 
 ### Claim boundary
 Docs and validator-list changes only; the full gate and the L1 suites pass, but nothing here proves any remaining doc is accurate (P6.T2 to T5, T7 to T9 do that). The 16 untracked in-flight files under `docs/plans/` were not staged or committed.
+
+## Docs reset (non-prompt) changes: P6B (P6.T2, P6.T3, P6.T4, P6.T5)
+
+No prompt file (router, agent, skill), hook, README, manifest or `CLAUDE.md` changed. Four commits, one per task.
+
+### Rewrites
+- `docs/prompt-surface-inventory.md`: one entry per agent (14) and per skill (22, the router included) with path, tier and purpose; every pre-v12 name is gone. The Tier 1 / 2 / 3 split is kept; the router sits in its own orchestration section.
+- `docs/agent-contract-registry.md`: 14 rows from the final frontmatter and contract tables; envelope keys are `s`, `b`, `cr` (no `bf`); no `TaskUpdate` on agents; REM-FIX executors and the `FINDING_DISPUTED` / `DISPUTE_UPHELD` / `DISPUTE_REJECTED` dispute path; a skill preload table that matches the `skills:` frontmatter. The dead `cc10x_v5` links are relative links to the repo files.
+- `docs/router-invariants.md`: new banner; INV-001, 013, 017, 018, 020 and 026 corrected; new INV-028 to INV-030 (QA phase sets and guard, QA route enumerations, QA loops and findings), INV-031 (ORIENT), INV-032 (seam gate), INV-033 (git guard: default-deny allowance, `command-too-large`, token scope). The QA properties are named by group, not counted, because `test_cc10x_qa_phase_invariants.py` is the checker.
+- `docs/prompt-invariants.md`: new banner; PINV-013 to PINV-019 for qa-researcher, qa-harness-builder, qa-executor, triage-agent, architecture-scanner, researcher and doc-syncer. `bug-investigator`, `code-reviewer` and `failure-hunter` still have no PINV (stated in the file); their router-side gates are INV-009, INV-008 and INV-020.
+- Banners no longer carry per-release history (it lives in `CHANGELOG.md`); each names `v12.10.0` first (the unreleased target) and still contains `v12.9.1`, which `harness_audit.py` requires until the P8 bump.
+
+### Gate docs (RD-4 applied)
+The one gate list is `## 7. Release Gate` in `docs/prompt-change-checklist.md`; it now lists the nine steps, every flag of `release_gate.py` (including `--allow-no-yaml`) and the plain-banner rule. `docs/cc10x-orchestration-safety.md` and `docs/EVAL-STANDARD.md` point to it and carry no command list; checklist section 3 names steps instead of commands; section 5 is now the Prompt Change Record and says the record lives in the `CHANGELOG.md` entry, replacing the unsatisfiable benchmark-note file requirement. `harness_audit.py` still requires the five March benchmark notes to exist (unchanged). Stale items fixed in files this task edited: the safety doc's "update bible/logic docs" step, and EVAL-STANDARD's removed-skill rows and four-validator sentence.
+
+### Baseline entries
+78 before P6B; 18 after T2 (60 removed); 7 after T3 (11 removed); 5 after T4 (2 removed); 5 after T5 (T5 owns none). Remaining: P6.T9 x2 (guide counts), P6.T12 x3 (manifests). The pinning test needed no change: it checks owners and live messages, not a count.
+
+### Pins added
+Three tests in `test_cc10x_validators.py`: the gate section lists every runner step and flag (derived from `release_gate.GATE_STEPS` and `--help`); the gate heading exists in exactly one doc and the other gate docs point to it without their own command list; checklist section 5 points to the gate and names the CHANGELOG as the record.
+
+### Claim boundary
+The validators prove names, paths, row and entry sets and banner versions. They do not prove that the prose in INV-028 to INV-033 or PINV-013 to PINV-019 matches each prompt's meaning; those were written against the agent files and the hooks README read on the same day. The plan's claim that the CHANGELOG 12.9.1 entry already carries a "Prompt change record" does not hold: it carries a "Benchmark note" block with the same seven items; P8.T2 should use the new heading.
