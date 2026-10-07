@@ -16,8 +16,18 @@ Single-pass advisory workflow (no `phase_cursor`, no phases):
 TaskCreate({
   subject: "CC10X triage-agent: Triage {issue_ref}",
   description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:triage\nplan:N/A\nscope:N/A\nreason:Categorize and verify incoming issue\n\nRead the issue/PR, verify the claim, check for redundancy and prior rejection, categorize, assign state, write an agent-ready brief.",
-})
+  activeForm: "Triaging issue"
+}) -> triage_task_id
+
+TaskCreate({
+  subject: "CC10X Memory Update: Persist triage learnings",
+  description: "wf:{workflow_uuid}\nkind:memory\norigin:router\nphase:memory-finalize\nplan:N/A\nscope:N/A\nreason:Persist captured Memory Notes\n\nROUTER ONLY: execute inline. Read the workflow artifact and THIS task description payload, persist to .cc10x/*.md, then remove the matching [cc10x-internal] memory_task_id line from activeContext.md ## References. Never spawn Agent() for this task.",
+  activeForm: "Persisting triage learnings"
+}) -> memory_task_id
+TaskUpdate({ taskId: memory_task_id, addBlockedBy: [triage_task_id] })
 ```
+
+The Memory Update task is router-inline bookkeeping, not a second agent: TRIAGE stays advisory-only and still ends when the brief is presented.
 
 After the triage-agent emits its contract:
 
@@ -29,4 +39,4 @@ After the triage-agent emits its contract:
 
 ### TRIAGE completion
 
-The router owns task completion for the triage-agent (read-only agents use the router-owned completion fallback). The triage-agent emits its contract and stops its turn — the router marks the task completed and persists memory notes at workflow-final. No BUILD/DONE finishing menu — the workflow ends when the brief is presented.
+The router owns task completion for the triage-agent (read-only agents use the router-owned completion fallback). The triage-agent emits its contract and stops its turn — the router marks the task completed, then runs the Memory Update task inline to persist the memory notes (blocked by the triage task, so it runs after the brief is presented). No BUILD/DONE finishing menu — the workflow ends when the brief is presented.

@@ -2448,6 +2448,36 @@ ASSERTIONS = [
         contains_all("`SKILL.md` section \"Inline no-subagent execution\"", "inline verification pass"),
         "the phrase 'run inline verification' has one definition (B10)",
     ),
+    A(
+        "triage-workflow: Memory Update task blocked on the triage task, advisory-only unchanged",
+        ROUTER_REFS / "triage-workflow.md",
+        contains_all("phase:memory-finalize", "addBlockedBy: [triage_task_id]", "Never spawn Agent() for this task", "Advisory-only"),
+        "TRIAGE graph gains the router-inline Memory Update task (B2, ADR 0002 keeps it advisory)",
+    ),
+    A(
+        "codebase-health-workflow: Memory Update task blocked on the scanner task",
+        ROUTER_REFS / "codebase-health-workflow.md",
+        contains_all("phase:memory-finalize", "addBlockedBy: [scanner_task_id]", "Never spawn Agent() for this task", "Advisory-only"),
+        "CODEBASE-HEALTH graph gains the router-inline Memory Update task (B2)",
+    ),
+    A(
+        "qa-workflow: no citation of a decision record that does not exist",
+        ROUTER_REFS / "qa-workflow.md",
+        lambda text: not re.search(r"ADR-\d|RFC §|\(RFC", text),
+        "docs/adr holds only 0001 and 0002; the QA numbered ADR-n and RFC section citations pointed at nothing (B9)",
+    ),
+    A(
+        "qa-workflow: circuit-breaker backstop is called audit, not hook-enforced",
+        ROUTER_REFS / "qa-workflow.md",
+        lambda text: "hook-enforced" not in text and text.count("audit backstop for the 3-cycle breaker") == 1,
+        "taskMetadata ships as audit; consistent with remediation-and-research.md (B1/B9)",
+    ),
+    A(
+        "qa-workflow: qa-plan dispatch overrides the planner's docs/plans save path",
+        ROUTER_REFS / "qa-workflow.md",
+        contains_all("Do NOT save a plan under `docs/plans/`", "the two artifacts named here are the plan"),
+        "planner.md saves to docs/plans; the QA scaffold names the sole write targets (A5)",
+    ),
 ]
 
 

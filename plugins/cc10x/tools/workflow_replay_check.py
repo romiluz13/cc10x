@@ -42,7 +42,7 @@ REQUIRED_ARTIFACT_KEYS = (
 
 CONVERGENCE_STATES = ("pending", "needs_iteration", "converged", "N/A")
 
-MEMORY_TASK_WORKFLOW_TYPES = ("BUILD", "DEBUG", "REVIEW", "PLAN", "QA")
+MEMORY_TASK_WORKFLOW_TYPES = ("BUILD", "DEBUG", "REVIEW", "PLAN", "QA", "TRIAGE", "CODEBASE-HEALTH")
 
 WORKFLOW_TYPES = ("BUILD", "DEBUG", "PLAN", "REVIEW", "QA", "ORIENT", "TRIAGE", "CODEBASE-HEALTH", "pending")
 
@@ -1237,7 +1237,20 @@ def validate_triage_contract(fixture_id: str, contract: dict[str, Any]) -> None:
     )
 
 
+def validate_advisory_memory_task(label: str, fixture: dict[str, Any], agent_phase: str) -> None:
+    tasks = fixture["relevant_tasks"]
+    agents = [key for key, task in tasks.items() if task["phase"] == agent_phase]
+    memory = [key for key, task in tasks.items() if task["phase"] == "memory-finalize"]
+    require(len(agents) == 1, f"{label}: expected one {agent_phase} task, got {agents}")
+    require(len(memory) == 1, f"{label}: expected one memory-finalize task, got {memory}")
+    require(
+        tasks[memory[0]]["blockedBy"] == agents,
+        f"{label}: Memory Update must be blocked by the {agent_phase} task, got {tasks[memory[0]]['blockedBy']}",
+    )
+
+
 def check_triage_happy_path(fixture: dict[str, Any]) -> None:
+    validate_advisory_memory_task("triage-happy-path", fixture, "triage")
     ta = fixture["agent_outputs"]["triage_agent_contract"]
     validate_triage_contract("triage-happy-path", ta)
     require(ta["STATUS"] == "TRIAGED", "triage-happy-path: expected TRIAGED")
@@ -1274,6 +1287,7 @@ def validate_architecture_scanner_contract(
 
 
 def check_codebase_health_happy_path(fixture: dict[str, Any]) -> None:
+    validate_advisory_memory_task("codebase-health-happy-path", fixture, "codebase-health")
     asc = fixture["agent_outputs"]["architecture_scanner_contract"]
     validate_architecture_scanner_contract("codebase-health-happy-path", asc)
     require(
@@ -1500,9 +1514,9 @@ def validate_artifact_file(path: Path, artifact: Any) -> None:
     memory_finalized is a double finalize, while one in each source is the same single finalization.
 
     The completed-implies-finalized rule covers only the workflow types whose router graph creates a
-    Memory Update task (MEMORY_TASK_WORKFLOW_TYPES). TRIAGE and CODEBASE-HEALTH create a single agent task
-    and ORIENT creates none, so they may complete without a finalize; they join the set if the router later
-    adds Memory Update tasks to them (finding B2, plan P4.T1.4).
+    Memory Update task (MEMORY_TASK_WORKFLOW_TYPES: every route except ORIENT, which creates no task). TRIAGE
+    and CODEBASE-HEALTH joined the set when their graphs gained a Memory Update task (finding B2, plan P4.T1.4);
+    a real TRIAGE or CODEBASE-HEALTH artifact written before that change and completed without a finalize now fails.
     """
     require(isinstance(artifact, dict), f"{path.name}: artifact must be a JSON object, got {type(artifact).__name__}")
     validate_end_state(path.name, artifact)

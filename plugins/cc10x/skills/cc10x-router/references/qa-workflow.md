@@ -12,7 +12,7 @@ most often invoked on work that is not yet committed, so a dirty tree is not an 
 uncommitted code is frequently *the system under test*. And a worktree is a different checkout, so
 accepting such an offer would not isolate the run, it would silently substitute what is being
 measured, and the harness would then be built and executed against a clean checkout of the parent
-branch. The absence of the offer is therefore deliberate and argued, not an omission — see ADR-2.
+branch. The absence of the offer is therefore deliberate and argued, not an omission; this paragraph is the decision record.
 Restoring it would require a QA finishing gate (merge/discard menu, cleanup provenance, post-merge
 verification, a git-approval token path) to come with it, and QA has none of that.
 
@@ -93,7 +93,7 @@ qa-researcher × N (parallel)
   → Memory Update
 ```
 
-**The QA phase tokens are asymmetric, and the asymmetry is priced.** `qa-re-plan` is prefixed where its siblings `re-qa-build` and `re-qa-execute` are infixed, and `qa-plan-review` / `qa-plan-review-2` do not match PLAN's `plan-review-gap-1` / `-2`. The decision is **not to rename** — see ADR-1 — and the reasons are costs, not taste. `re-qa-build` / `re-qa-execute` follow the route-wide `re-` prefix already in the phase enum (`re-review`, `re-hunt`, `re-verify`, `re-plan`), so they are the *conforming* names and `qa-re-plan` is the single outlier: renaming would be a five-surface change to fix one token. That change must reach `cc10x_qa_isolation_guard.PLAN_PHASES`, a live security-relevant constant that contains `qa-re-plan` today; touching it turns `PP-2` red, and the only way to make it green again is to edit `EXPECTED_PLAN_PHASES`, the constant `PP-2` asserts against — a change whose completion criterion is "edit the guard until it stops complaining" is indistinguishable from defeating the property. It would also strand work in flight: `SKILL.md` §4 reconstructs runnable tasks from `wf:` + `kind:` + `phase:`, so any in-flight task carrying `phase:qa-re-plan` becomes unroutable *and* falls out of `PLAN_PHASES`, which is the isolation guard's read-only set — the rename opens the exact mutation hole `PP-1` and `PP-3` exist to close, for every workflow spanning it. Finally, `plan-review-gap-N`'s `-gap-` infix is a fossil of `plan-gap-reviewer`'s older name, so aligning QA's clearer `qa-plan-review-N` down to it would be aligning to legacy. The spellings are frozen by `PP-31`; that property is a tripwire whose value is this paragraph, not a proof of behaviour.
+**The QA phase tokens are asymmetric, and the asymmetry is priced.** `qa-re-plan` is prefixed where its siblings `re-qa-build` and `re-qa-execute` are infixed, and `qa-plan-review` / `qa-plan-review-2` do not match PLAN's `plan-review-gap-1` / `-2`. The decision is **not to rename** (this paragraph is the decision record), and the reasons are costs, not taste. `re-qa-build` / `re-qa-execute` follow the route-wide `re-` prefix already in the phase enum (`re-review`, `re-hunt`, `re-verify`, `re-plan`), so they are the *conforming* names and `qa-re-plan` is the single outlier: renaming would be a five-surface change to fix one token. That change must reach `cc10x_qa_isolation_guard.PLAN_PHASES`, a live security-relevant constant that contains `qa-re-plan` today; touching it turns `PP-2` red, and the only way to make it green again is to edit `EXPECTED_PLAN_PHASES`, the constant `PP-2` asserts against — a change whose completion criterion is "edit the guard until it stops complaining" is indistinguishable from defeating the property. It would also strand work in flight: `SKILL.md` §4 reconstructs runnable tasks from `wf:` + `kind:` + `phase:`, so any in-flight task carrying `phase:qa-re-plan` becomes unroutable *and* falls out of `PLAN_PHASES`, which is the isolation guard's read-only set — the rename opens the exact mutation hole `PP-1` and `PP-3` exist to close, for every workflow spanning it. Finally, `plan-review-gap-N`'s `-gap-` infix is a fossil of `plan-gap-reviewer`'s older name, so aligning QA's clearer `qa-plan-review-N` down to it would be aligning to legacy. The spellings are frozen by `PP-31`; that property is a tripwire whose value is this paragraph, not a proof of behaviour.
 
 #### Research fan-out (`phase:qa-research`)
 
@@ -132,7 +132,7 @@ If consolidation surfaces a contradiction that changes what should be tested, ha
 
 #### Plan (`phase:qa-plan`)
 
-Dispatches the existing `cc10x:planner` with `cc10x:qa-strategy` in `SKILL_HINTS` (RFC §6c — decided). Fork `qa-planner` later only if the planner repeatedly emits build phases with tests bolted on instead of a scenario matrix.
+Dispatches the existing `cc10x:planner` with `cc10x:qa-strategy` in `SKILL_HINTS` (decided). Fork `qa-planner` later only if the planner repeatedly emits build phases with tests bolted on instead of a scenario matrix.
 
 **Templates are mandatory — copy, do not improvise:**
 
@@ -154,7 +154,7 @@ A plan written to a file the user never looked at is not an approved plan. The e
 ```text
 TaskCreate({
   subject: "CC10X qa-plan: Design test plan and environment for {feature}",
-  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:qa-plan\nplan:N/A\nscope:N/A\nreason:Design test scenarios and test environment\n\nRead the feature map at .cc10x/qa/{workflow_uuid}/feature-map.md and the capability discovery results from the workflow artifact. Produce TWO artifacts: (1) .cc10x/qa/{workflow_uuid}/test-plan.md — a scenario matrix covering happy path, error handling, and edge cases, where every scenario names its observation points across UI, API, DB, queue, and logs, and where every group of controls states which reduction technique was applied (every-option-once, pairwise, boundary values, full combinatorial) and what it leaves uncovered; (2) .cc10x/qa/{workflow_uuid}/env-plan.md — how the test environment is built, wired, seeded, gated on readiness, and torn down. Cover the User Action Inventory from the feature map: reduce it deliberately, never silently. Order the scenarios into WAVES with objectives, dependencies and a stop-if condition — a flat scenario list is not a buildable plan, and every other cc10x plan carries ordered phases. Wave 1 is the thinnest slice that proves the pipeline is wired, including any probe that binds a variable later waves consume. Reconcile every rollup: the scenario ids across coverage-by-class, coverage-by-tier and the waves must all equal the total scenario count, and the total must be stated with its arithmetic shown. Both artifacts must be executable by an agent that has not read this conversation. Never edit product code, and create no file outside .cc10x/ — this phase plans the test system, it does not build or repair anything; the isolation guard enforces that boundary and this sentence is why you should not need it to.",
+  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:qa-plan\nplan:N/A\nscope:N/A\nreason:Design test scenarios and test environment\n\nRead the feature map at .cc10x/qa/{workflow_uuid}/feature-map.md and the capability discovery results from the workflow artifact. Produce TWO artifacts: (1) .cc10x/qa/{workflow_uuid}/test-plan.md — a scenario matrix covering happy path, error handling, and edge cases, where every scenario names its observation points across UI, API, DB, queue, and logs, and where every group of controls states which reduction technique was applied (every-option-once, pairwise, boundary values, full combinatorial) and what it leaves uncovered; (2) .cc10x/qa/{workflow_uuid}/env-plan.md — how the test environment is built, wired, seeded, gated on readiness, and torn down. Cover the User Action Inventory from the feature map: reduce it deliberately, never silently. Order the scenarios into WAVES with objectives, dependencies and a stop-if condition — a flat scenario list is not a buildable plan, and every other cc10x plan carries ordered phases. Wave 1 is the thinnest slice that proves the pipeline is wired, including any probe that binds a variable later waves consume. Reconcile every rollup: the scenario ids across coverage-by-class, coverage-by-tier and the waves must all equal the total scenario count, and the total must be stated with its arithmetic shown. Both artifacts must be executable by an agent that has not read this conversation. Do NOT save a plan under `docs/plans/`: the two artifacts named here are the plan, and they are your only write targets. Never edit product code, and create no file outside .cc10x/ — this phase plans the test system, it does not build or repair anything; the isolation guard enforces that boundary and this sentence is why you should not need it to.",
   activeForm: "Designing test plan"
 }) -> qa_plan_task_id
 TaskUpdate({ taskId: qa_plan_task_id, addBlockedBy: [researcher_task_id_{source}, ...] })
@@ -173,7 +173,7 @@ TaskCreate({
 TaskUpdate({ taskId: qa_plan_review_task_id, addBlockedBy: [qa_plan_task_id] })
 ```
 
-**Coverage lens via a sanctioned Read, not a new rubric (RFC §6d, amended).** `plan-gap-reviewer` natively asks "is this plan buildable?"; a QA plan needs "is this plan thorough?". The reviewer loads no skills and has no Skill tool, so `SKILL_HINTS` cannot reach it — instead the dispatch scaffold above names one discipline file for it to Read: `${CLAUDE_PLUGIN_ROOT}/skills/qa-strategy/SKILL.md`. That file is a neutral test-design discipline — tier selection, scenario matrices, environment topology, flake sources — not author narrative and not prior findings, so the fresh-context anti-anchoring design is intact. Only add a rubric section to the agent file if the discipline file proves too weak — keeping the reviewer domain-agnostic is what makes it reusable across PLAN and QA. **The discipline file's own `Status: DRAFT` is a recorded, deliberate dependency, not an oversight:** the route ships active on it because the lens value it already carries (tier selection, scenario matrices, environment topology, flake sources) is real today, the PLACEHOLDER sections it names are growth areas inside the file rather than missing pointers the route resolves, and PP-43 holds the file's pointers to the standard the route requires. If the file outgrows a single file, the split goes through the same review this route's law went through.
+**Coverage lens via a sanctioned Read, not a new rubric.** `plan-gap-reviewer` natively asks "is this plan buildable?"; a QA plan needs "is this plan thorough?". The reviewer loads no skills and has no Skill tool, so `SKILL_HINTS` cannot reach it — instead the dispatch scaffold above names one discipline file for it to Read: `${CLAUDE_PLUGIN_ROOT}/skills/qa-strategy/SKILL.md`. That file is a neutral test-design discipline — tier selection, scenario matrices, environment topology, flake sources — not author narrative and not prior findings, so the fresh-context anti-anchoring design is intact. Only add a rubric section to the agent file if the discipline file proves too weak — keeping the reviewer domain-agnostic is what makes it reusable across PLAN and QA. **The discipline file's own `Status: DRAFT` is a recorded, deliberate dependency, not an oversight:** the route ships active on it because the lens value it already carries (tier selection, scenario matrices, environment topology, flake sources) is real today, the PLACEHOLDER sections it names are growth areas inside the file rather than missing pointers the route resolves, and PP-43 holds the file's pointers to the standard the route requires. If the file outgrows a single file, the split goes through the same review this route's law went through.
 
 **One pass by default; a second whenever pass 1 finds blocking issues.** PLAN pre-creates a bounded `plan-create -> plan-review-gap-1 -> re-plan -> plan-review-gap-2` DAG and keeps the second half alive only when pass 1 returns findings. QA follows the same shape, for the same reason.
 
@@ -361,8 +361,9 @@ TaskUpdate({ taskId: qa_rebuild_task_id, addBlockedBy: [qa_build_task_id] })
   this workflow's running REM-FIX count starting at 1 — exactly what the *Circuit breaker* section of
   `remediation-and-research.md` mandates for **every** `kind:remfix` task, this one included. The
   `TaskCompleted` guard independently counts those entries on every `kind:remfix` completion and is
-  the hook-enforced backstop for the 3-cycle breaker; skip the append and it counts zero forever, so
-  the breaker is inert for the entire QA route and the cap above is LLM-counted with nothing behind
+  the audit backstop for the 3-cycle breaker (`taskMetadata` ships as `audit`: it logs and warns, and
+  blocks only when set to `block`); skip the append and it counts zero forever, so
+  the backstop is inert for the entire QA route and the cap above is LLM-counted with nothing behind
   it. The QA-local cap of 2 and the artifact's entry count are therefore **two independent counters
   that must agree**: the first bounds the loop, the second proves it was bounded, and where they
   disagree the artifact is authoritative.
@@ -416,7 +417,7 @@ that found the silence, which is the one outcome the hunter is dispatched here t
   `scope:` value would sit outside the §3 enum), and `reason:` naming the finding and the **true finding source** — `code-reviewer` or `failure-hunter` —
   which is the fact `origin:` cannot carry here and which SKILL.md §3 requires to be meaningful on a
   remediation task anyway. Append `remediation_history` on creation exactly as the mutation-floor
-  round above does; these rounds are counted by the same cap of 2 and the same hook-enforced circuit
+  round above does; these rounds are counted by the same cap of 2 and the same circuit
   breaker. **This adds no phase token and no dispatcher row** — `re-qa-build` is already in the §3
   enum and the `qa-build, re-qa-build` §7 row already routes it to `qa-harness-builder`.
 - **Why the origin is the harness builder and not the agent that found it.** SKILL.md §3 binds
@@ -433,7 +434,7 @@ that found the silence, which is the one outcome the hunter is dispatched here t
   `qa-review` or `qa-hunt`, and `HARNESS_ISSUES` that do not warrant a re-build, append to the
   workflow artifact's `deferred_findings` array in BUILD's entry shape (`source`, `phase_id`,
   `finding`, `severity:minor`). **QA's surfacing point is the report**, and it has to be named
-  because QA has no BUILD-DONE triage — ADR-2 removed the finishing menu that would carry one. Surface
+  because QA has no BUILD-DONE triage — QA has no finishing menu (step 0) to carry one. Surface
   the accumulated array with `report.md`, alongside the DEBUG offer of *Bug handoff to DEBUG* below,
   in the same turn. The schema entry for the array says so too; the two must not drift.
 - **A completed `re-qa-build` does NOT enter the shared re-review loop.** No `integration-verifier`
@@ -447,7 +448,7 @@ that found the silence, which is the one outcome the hunter is dispatched here t
   closed on a correct QA remfix and hang the run.
 
 **What this block carves out of, named in both directions so a reader of either file finds the
-other.** These rules are QA-owned and live here (ADR-4); `remediation-and-research.md` is
+other.** These rules are QA-owned and live here; `remediation-and-research.md` is
 route-neutral and is not edited by this route. The two blocks carved out of are its
 `### Rule matrix` under `## 9. Remediation And Workflow Rules`, whose `kind:remfix` rows are
 BUILD/DEBUG/REVIEW-scoped, and its `## 11. Re-Review Loop` together with the

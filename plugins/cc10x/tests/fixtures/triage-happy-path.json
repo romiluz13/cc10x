@@ -57,5 +57,22 @@
     "next_action": "present_brief",
     "artifact_delta": {}
   },
-  "relevant_tasks": {}
+  "relevant_tasks": {
+    "triage_task": {
+      "wf": "wf-20260716T100000Z-triage-001",
+      "kind": "agent",
+      "phase": "triage",
+      "status": "completed",
+      "blockedBy": []
+    },
+    "memory_finalize": {
+      "wf": "wf-20260716T100000Z-triage-001",
+      "kind": "memory",
+      "phase": "memory-finalize",
+      "status": "completed",
+      "blockedBy": [
+        "triage_task"
+      ]
+    }
+  }
 }

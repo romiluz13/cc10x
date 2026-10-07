@@ -1098,14 +1098,14 @@ def test_artifact_mode_rejects_a_completed_workflow_that_never_finalized_memory(
 DONE = {"event": "workflow_completed", "ts": "2026-10-07T09:40:00Z", "phase": "memory-finalize"}
 
 
-@pytest.mark.parametrize("workflow_type", ["TRIAGE", "ORIENT", "CODEBASE-HEALTH", "pending"])
+@pytest.mark.parametrize("workflow_type", ["ORIENT", "pending"])
 def test_artifact_mode_accepts_a_completed_workflow_type_without_a_memory_task(workflow_type, tmp_path):
     artifact = skeleton_artifact(tmp_path, workflow_type, status_history=[STARTED, DONE])
     result = run_tool("workflow_replay_check.py", None, "--artifact", str(artifact))
     assert result.returncode == 0, result.stdout + result.stderr
 
 
-@pytest.mark.parametrize("workflow_type", ["BUILD", "DEBUG", "REVIEW", "PLAN", "QA"])
+@pytest.mark.parametrize("workflow_type", ["BUILD", "DEBUG", "REVIEW", "PLAN", "QA", "TRIAGE", "CODEBASE-HEALTH"])
 def test_artifact_mode_still_requires_a_finalize_for_memory_workflow_types(workflow_type, tmp_path):
     artifact = skeleton_artifact(tmp_path, workflow_type, status_history=[STARTED, DONE])
     result = run_tool("workflow_replay_check.py", None, "--artifact", str(artifact))

@@ -93,7 +93,7 @@ PP-25 the QA route's two re-dispatch loops are BOUNDED and COUNTED: (a) each
       that loop's own bold-lead-in-anchored window, because the word "cap"
       appears in both and a file-wide test lets one satisfy the other;
       (b) the `kind:remfix` block mandates the `remediation_history` append, in
-      the `{ts, phase, reason, cycle_number}` shape the hook-enforced circuit
+      the `{ts, phase, reason, cycle_number}` shape the audit-backstopped circuit
       breaker counts. Without (b) the breaker counts 0 forever and QA's cap of
       2 is LLM-counted with no backstop at all
 PP-26 no QA finding reaches the executor unconsumed and no Minor evaporates,
@@ -2601,11 +2601,11 @@ PP30A_RATIONALE = re.compile(
 )
 # The three clauses that make the absence an ARGUMENT rather than a note: what
 # QA does instead, why a worktree cannot serve it, and the decision record a
-# reader who disagrees must argue with.
+# reader who disagrees must argue with (the paragraph itself: docs/adr holds no QA ADR).
 PP30A_TOKENS = (
     "the system under test",
     "a worktree is a different checkout",
-    "ADR-2",
+    "this paragraph is the decision record",
 )
 
 # PP-30(b). M7 / ADR-3 part 3. Both harness-review dispatches NAME their surface.
@@ -2716,11 +2716,11 @@ PP31_MIN_ENUM_MEMBERS = 30
 PP31_RATIONALE = re.compile(
     r"(?m)^\*\*The QA phase tokens are asymmetric, and the asymmetry is priced\.\*\*"
 )
-# One token per clause of ADR-1 that a future editor must actually read. Not
+# One token per clause of the ADR-1 argument (design-time name; docs/adr has no such file, the paragraph is the record) that a future editor must actually read. Not
 # decoration: each is a distinct cost of the rename, and a block that dropped
 # any one of them would read as a style note.
 PP31_RATIONALE_TOKENS = (
-    "ADR-1",
+    "this paragraph is the decision record",
     "`PLAN_PHASES`",
     "`EXPECTED_PLAN_PHASES`",
     "in-flight",
@@ -4734,7 +4734,7 @@ def main() -> int:
         pp25b_ok = not pp25b_missing
         pp25b_detail = (
             f"the `kind:remfix` block mandates the `remediation_history` append "
-            f"in the shape the hook-enforced breaker counts "
+            f"in the shape the audit-backstopped breaker counts "
             f"(window={len(rebuild_win)}B, "
             f"{len(PP25_REMHIST_TOKENS) - len(pp25b_missing)}/"
             f"{len(PP25_REMHIST_TOKENS)} tokens)"

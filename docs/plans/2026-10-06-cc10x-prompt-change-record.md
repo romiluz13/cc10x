@@ -76,3 +76,30 @@ Claim boundary: now true: the multi-phase graph/memory rule is written down once
 Pins and fixtures: four new pins (assertion count 280). No existing pin was edited, weakened or removed. No fixture changed.
 
 Classification: `orchestration_sensitive`.
+
+## P4.T1.4 `qa-workflow.md`, `triage-workflow.md`, `codebase-health-workflow.md`
+
+Findings: B2, B9 (part), A5 (part), B11 (part), plus the QA half of B1/C2 wording.
+
+Files: the three references; `plugins/cc10x/tools/workflow_replay_check.py` (`MEMORY_TASK_WORKFLOW_TYPES` extended, docstring updated, advisory-route Memory Update check); fixtures `triage-happy-path.json` and `codebase-health-happy-path.json` (now carry the agent task and the Memory Update task); `scripts/test_cc10x_validators.py` (TRIAGE and CODEBASE-HEALTH moved from "may complete without a finalize" to "must finalize"); `scripts/test_cc10x_qa_phase_invariants.py` (two pin tokens and comment wording); five new clause pins.
+
+What changed:
+- TRIAGE and CODEBASE-HEALTH graphs gain a router-inline Memory Update task (`kind:memory`, `phase:memory-finalize`, blocked by the triage or scanner task), copied from the REVIEW graph. The completion paragraphs now say the router runs it after completing the agent task. ADR 0002 is untouched: both routes stay advisory-only, with no phases, no `phase_cursor` and no auto-dispatch; the added task is router bookkeeping, not an agent.
+- Replay checker: `MEMORY_TASK_WORKFLOW_TYPES` now covers every route except ORIENT; the docstring says so, and warns that a real TRIAGE or CODEBASE-HEALTH artifact completed without a finalize under the old graph now fails the artifact check. The two advisory fixtures assert one agent task plus one Memory Update task blocked by it.
+- Dangling citations in `qa-workflow.md`: `docs/adr` holds only 0001 and 0002, so "ADR-1/2/4" and "RFC section 6c/6d" named nothing. Each was replaced by a plain statement: the worktree paragraph and the phase-token paragraph now say "this paragraph is the decision record"; the finishing-menu mention points at step 0; the QA-owned-rules sentence and the two RFC parentheticals lose their citation. Pins that required the literal tokens (`PP30A_TOKENS` "ADR-2", `PP31_RATIONALE_TOKENS` "ADR-1") now require "this paragraph is the decision record", so the property (the rationale block must carry its decision record) is kept, not weakened. Test-file comments that use the design-time ADR names were left, with one clarifying note.
+- "hook-enforced" circuit-breaker lines (two sites): now "audit backstop" with the real behavior (`taskMetadata` ships as `audit`; blocks only when set to `block`), and "the same circuit breaker", consistent with P4.T1.1. The QA-local cap of 2 and the artifact-count agreement rule are unchanged.
+- Planner write path (A5): the `qa-plan` dispatch description now says not to save a plan under `docs/plans/` and names the two `.cc10x/qa/` artifacts as the only write targets, because `planner.md` step 14 saves to `docs/plans/`. The planner-side text is P4.T5.3 (not done here). The `qa-re-plan` dispatch was not changed (not named by the task).
+- Amendment-lane fields: `qa-workflow.md` already states `AMENDED_FILES`, `STALE_SWEEP`, `RECONCILIATION_RERUN` as the pass-2 gate and the policy reference already lists them as planner return fields; no text change was needed. The producer is the planner (P4.T4.4); `planner.md` does not carry them yet.
+
+Not changed, with reason:
+- The five `${CLAUDE_PLUGIN_ROOT}` lines in `qa-workflow.md` (R-B11 verdict BROKEN, P4.T1.4b skipped and deferred): untouched.
+- B9 "ORIENT names Octocode tools no agent has": that sentence is in `SKILL.md`, not in these references; recorded for T1.5a: reword to tools available in a base install, with optional accelerators named as optional.
+- Pointers from `SKILL.md` to the triage and codebase-health references, and hydration prefixes covering both Memory Update tasks, are PENDING in T1.5a (item a). Until then the router still reads the references through the existing route-and-load text. The `[DEBUG-RESET]-equivalent: none` line in the TRIAGE preparation list is a no-op marker mention tied to the `SKILL.md` marker rules (T1.5a).
+
+Why safe: no QA protocol semantics changed (cap of 2, sweep gate, templates, windows, isolation rules); the edits are citations, one backstop label, one dispatch sentence. The Memory Update addition follows the REVIEW graph shape and the existing `memory_sync_gate` ownership (router inline).
+
+Claim boundary: now true: both advisory routes create a Memory Update task and the replay checker requires a finalize for them; no QA citation points at a missing document. Still not claimed: the router's `SKILL.md` has not yet been told about the new tasks (T1.5a); a live run of the `triage-loads-reference` and `qa-seed-template-path` cases was not performed (AD-2, no paid evals).
+
+Pins and fixtures: five new pins (assertion count 285; floor 253 plus additions holds); two pin tokens re-pointed as above; two fixtures extended. No pin deleted.
+
+Classification: `orchestration_sensitive`.

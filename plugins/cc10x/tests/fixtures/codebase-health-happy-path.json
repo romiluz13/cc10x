@@ -71,5 +71,22 @@
     "next_action": "present_report",
     "artifact_delta": {}
   },
-  "relevant_tasks": {}
+  "relevant_tasks": {
+    "scanner_task": {
+      "wf": "wf-20260716T110000Z-health-001",
+      "kind": "agent",
+      "phase": "codebase-health",
+      "status": "completed",
+      "blockedBy": []
+    },
+    "memory_finalize": {
+      "wf": "wf-20260716T110000Z-health-001",
+      "kind": "memory",
+      "phase": "memory-finalize",
+      "status": "completed",
+      "blockedBy": [
+        "scanner_task"
+      ]
+    }
+  }
 }
