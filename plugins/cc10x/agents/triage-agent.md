@@ -121,4 +121,4 @@ MEMORY_NOTES:
 - (Task completion handled by router. Do NOT call TaskUpdate directly.)
 ```
 
-**CONTRACT:** Line 1 envelope is the primary machine-readable signal. `s=TRIAGED` means categorized and briefed; `s=NEEDS_INFO` means waiting on reporter; `s=WONTFIX` means rejected/already-built. The YAML block above the prose carries the structured fields the router branches on (`STATUS`, `STATE`, `CATEGORY`, `BRIEF_PATH`, `NEEDS_GRILLING`). `b=true` only if wontfix is contested. `cr=0` always.
+**CONTRACT:** The `STATUS` in the fenced YAML block decides; the line-1 envelope is the fast-path signal and the heading the fallback only when the YAML block is absent. `s=TRIAGED` means categorized and briefed; `s=NEEDS_INFO` means waiting on reporter; `s=WONTFIX` means rejected/already-built. The YAML block above the prose carries the structured fields the router branches on (`STATUS`, `STATE`, `CATEGORY`, `BRIEF_PATH`, `NEEDS_GRILLING`). `b=true` only if wontfix is contested. `cr=0` always.

@@ -2044,8 +2044,8 @@ ASSERTIONS = [
         "CI=true/run-mode rule states that watch mode never exits so the agent hangs",
     ),
     A(
-        "component-builder: run-mode carries the watch-mode-never-exits why",
-        AGENTS / "component-builder.md",
+        "agent-common: run-mode carries the watch-mode-never-exits why (the canonical copy the agents point at)",
+        SKILLS / "agent-common" / "SKILL.md",
         contains("watch mode never exits, so the agent hangs"),
         "CI=true/run-mode rule states that watch mode never exits so the agent hangs",
     ),
@@ -3437,6 +3437,67 @@ ASSERTIONS = [
         lambda text: sorted(path.stem for path in AGENTS.glob("*.md")) == sorted(PRELOAD_TABLE),
         "a new agent file must be added to the preload table in the same change",
     ),
+    # --- P4.T4.1 commit 3: contract direction, one Test Process Discipline, git_base_sha source (A1, A6, A7) ---
+    *[
+        A(
+            f"{name}: the YAML STATUS decides; envelope is the fast path, not the primary signal",
+            AGENTS / f"{name}.md",
+            lambda text: "`STATUS` in the fenced YAML block decides" in text
+            and "primary machine-readable signal" not in text
+            and "Router reads envelope first" not in text,
+            "the agent's contract-direction sentences match the router's YAML-first rule",
+        )
+        for name in (
+            "architecture-scanner",
+            "code-reviewer",
+            "failure-hunter",
+            "integration-verifier",
+            "plan-gap-reviewer",
+            "triage-agent",
+        )
+    ],
+    A(
+        "agent-common: one canonical Test Process Discipline with the strictest semantics",
+        SKILLS / "agent-common" / "SKILL.md",
+        lambda text: "## Test Process Discipline" in text
+        and "`npx vitest run` (NOT `npx vitest`)" in text
+        and "watch mode never exits" in text
+        and "`timeout 60s npx vitest run`" in text
+        and 'pgrep -f "vitest|jest" || echo "Clean"' in text
+        and "Kill if found: `pkill -f \"vitest\" 2>/dev/null || true`" in text
+        and "trust CLI over IDE/LSP errors" in text,
+        "the strictest of the three former copies is the single canonical one",
+    ),
+    *[
+        A(
+            f"{name}: Test Process Discipline points at agent-common instead of carrying a copy",
+            AGENTS / f"{name}.md",
+            lambda text: "agent-common's Test Process Discipline" in text and "Always use run mode" not in text,
+            "the agent keeps only its role-specific lines (escape hatch, leaked containers)",
+        )
+        for name in ("component-builder", "integration-verifier", "qa-harness-builder")
+    ],
+    A(
+        "integration-verifier: environment escape hatch stays",
+        AGENTS / "integration-verifier.md",
+        contains_all("**Environment escape hatch:**", "Mark scenarios BLOCKED, not FAIL"),
+        "role-specific verifier rule survives the dedupe",
+    ),
+    A(
+        "qa-harness-builder: leaked-containers rule stays",
+        AGENTS / "qa-harness-builder.md",
+        contains("**Leaked containers:**"),
+        "role-specific harness rule survives the dedupe",
+    ),
+    *[
+        A(
+            f"{name}: git_base_sha is read from the workflow artifact named in the Task Context",
+            AGENTS / f"{name}.md",
+            contains("from the Workflow Artifact named in your Task Context"),
+            "an agent that uses results.git_base_sha is told where to read it",
+        )
+        for name in ("code-reviewer", "failure-hunter", "doc-syncer")
+    ],
 ]
 
 

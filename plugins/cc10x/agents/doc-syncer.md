@@ -42,7 +42,7 @@ Get the current diff using the appropriate command for the context:
 # Pre-commit (staged changes — preferred when commits are being staged):
 git diff --cached --stat && git diff --cached
 
-# Post-build (whole phase — use when commits exist; BASE = results.git_base_sha, the recorded sha before the phase's builder ran):
+# Post-build (whole phase — use when commits exist; BASE = results.git_base_sha, read from the Workflow Artifact named in your Task Context; the recorded sha before the phase's builder ran):
 # A phase legitimately makes MULTIPLE commits (TDD red/green/refactor), so HEAD~1 would analyze only the last commit and miss earlier doc-impacting changes.
 git diff $BASE..HEAD --stat && git diff $BASE..HEAD
 ```

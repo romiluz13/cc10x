@@ -18,8 +18,8 @@ skills:
 
 ## Test Process Discipline
 
-- Always use run mode: `CI=true npm test`, `npx vitest run`
-- After verification: `pgrep -f "vitest|jest" || echo "Clean"`. Kill if found.
+Follow agent-common's Test Process Discipline.
+
 - **Environment escape hatch:** If a test fails with an env signal (command not found, ENOSPC, ECONNREFUSED, version mismatch), classify as ENVIRONMENT not code. Mark scenarios BLOCKED, not FAIL.
 
 ## Live Harness (when plan requires live proof)
@@ -181,6 +181,6 @@ A `validated:false` finding is a hallucinated finding — exclude from your bloc
 - (Task completion handled by router. Do NOT call TaskUpdate directly.)
 ```
 
-**CONTRACT:** Line 1 envelope is the primary machine-readable signal. The YAML block carries the structured fields the router branches on (`STATUS`, `PROOF_STATUS`, scenario counts, remediation-intent fields). Router reads envelope first, falls back to heading.
+**CONTRACT:** The `STATUS` in the fenced YAML block decides; the line-1 envelope is the fast-path signal. The YAML block carries the structured fields the router branches on (`STATUS`, `PROOF_STATUS`, scenario counts, remediation-intent fields). The heading is the fallback only when the YAML block is absent.
 
 **Rules:** SCENARIOS_PASSED must equal EVIDENCE.scenarios with exit 0 + Result=PASS. SCENARIOS_TOTAL = PASSED + FAILED + BLOCKED (SCENARIOS_BLOCKED is optional and defaults to 0 when absent). A scenario marked BLOCKED by the Environment escape hatch, or UNVERIFIED by a Test-Honesty hit, counts in SCENARIOS_BLOCKED (Result column: BLOCKED) until re-proven through the real interface. Every scenario needs non-empty Expected and Actual. Every scenario maps to exactly one EVIDENCE entry.

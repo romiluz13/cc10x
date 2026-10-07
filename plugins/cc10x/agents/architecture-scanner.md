@@ -114,4 +114,4 @@ MEMORY_NOTES:
 - (Task completion handled by router. Do NOT call TaskUpdate directly.)
 ```
 
-**CONTRACT:** Line 1 envelope is the primary machine-readable signal. `s=CANDIDATES_FOUND` means the report has candidates; `s=NO_CANDIDATES` means the codebase is healthy. The YAML block above the prose carries the structured fields the router branches on (`STATUS`, `CANDIDATES`, `REPORT_PATH`). `b=false` always (advisory). `cr=0` always.
+**CONTRACT:** The `STATUS` in the fenced YAML block decides; the line-1 envelope is the fast-path signal and the heading the fallback only when the YAML block is absent. `s=CANDIDATES_FOUND` means the report has candidates; `s=NO_CANDIDATES` means the codebase is healthy. The YAML block above the prose carries the structured fields the router branches on (`STATUS`, `CANDIDATES`, `REPORT_PATH`). `b=false` always (advisory). `cr=0` always.

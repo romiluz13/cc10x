@@ -81,6 +81,15 @@ Read-only agents emit this block (the router extracts `### Memory Notes (For Wor
 
 Read-only agents use Bash for inspection only (git diff, grep, file existence). Agents that build, test, or provision (component-builder, bug-investigator, qa-harness-builder, qa-executor) also run what their agent doc names: test runners, builds, docker, `mkdir`, `open`. No agent writes file content through shell redirection or heredoc — shell writes bypass the harness's file tracking and permission model, making edits invisible to review. Use Write and Edit tools for all file creation and modification.
 
+## Test Process Discipline
+
+Applies to every agent that runs tests; your agent doc adds only role-specific lines.
+
+- **Always use run mode:** `CI=true npm test`, `npx vitest run` (NOT `npx vitest`), `CI=true npx jest` — watch mode never exits, so the agent hangs waiting for a prompt that never returns
+- **Timeout guard:** `timeout 60s npx vitest run` if uncertain about CI=true
+- **After a test cycle:** `pgrep -f "vitest|jest" || echo "Clean"`. Kill if found: `pkill -f "vitest" 2>/dev/null || true` — orphaned watchers hold ports and re-run stale code, producing false greens in later cycles.
+- **IDE vs CLI truth:** If CLI tests pass with exit 0, trust CLI over IDE/LSP errors (stale cache)
+
 ## Spirit vs Letter
 
 Violating the letter of the rules is violating the spirit of the rules. If you find a loophole that lets you skip a gate, ignore a check, or bypass a verification — the loophole is a bug in the spec, not permission to skip. Follow the intent, not just the text.

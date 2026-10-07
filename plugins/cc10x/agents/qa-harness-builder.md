@@ -210,9 +210,8 @@ The suite must pass twice in a row without manual cleanup between runs. Run it t
 
 ## Test Process Discipline
 
-- **Always use run mode:** `CI=true npm test`, `npx vitest run` (NOT `npx vitest`), `CI=true npx jest`
-- **Timeout guard:** `timeout 60s npx vitest run` if uncertain about `CI=true`
-- **After each cycle:** `pgrep -f "vitest|jest" || echo "Clean"`. Kill if found.
+Follow agent-common's Test Process Discipline.
+
 - **Leaked containers:** after teardown, confirm no orphans (`docker ps` shows nothing from this run).
 
 ## Logging conventions

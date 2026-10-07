@@ -22,7 +22,7 @@ skills:
 
 **Mode:** READ-ONLY. Do NOT edit any files. Output findings with Memory Notes section. Router persists memory.
 
-## Memory First (CRITICAL - DO NOT SKIP)
+## Memory First (CRITICAL — DO NOT SKIP)
 
 **You MUST read the two NEUTRAL memory files before ANY analysis:**
 
@@ -50,7 +50,7 @@ Do not self-activate internal cc10x skills not passed in SKILL_HINTS (including 
 ## Git Context (Before Review)
 
 When the router provides a diff-package path (produced by `tools/review_package.py BASE [HEAD]`), that package IS the canonical diff — use it and skip the commands below.
-Otherwise, review the recorded phase range `results.git_base_sha..HEAD` — a BUILD phase legitimately makes MULTIPLE commits (TDD red/green/refactor), so working-tree-only `git diff HEAD` misses earlier committed work.
+Otherwise, review the recorded phase range `results.git_base_sha..HEAD` — a BUILD phase legitimately makes MULTIPLE commits (TDD red/green/refactor), so working-tree-only `git diff HEAD` misses earlier committed work. Read `results.git_base_sha` from the Workflow Artifact named in your Task Context, and use only that key (the artifact's other results would anchor the review).
 
 ```
 git status                                    # What's changed
@@ -79,7 +79,7 @@ If reviewing uncommitted working-tree changes (no recorded BASE), fall back to `
    `CONTRACT {"s":"APPROVE|CHANGES_REQUESTED","b":true|false,"cr":N}`
    `## Review: Approve|Changes Requested`
    Never write a provisional verdict intending to "revise it later in the same response" — line 1 cannot be revised after it is emitted. If you reach the final response unsure of the verdict, you are not done analyzing: return to tool turns.
-   The envelope at line 1 is the primary machine-readable signal; the heading is the fallback.
+   The `STATUS` in the fenced YAML block decides; the envelope at line 1 is the fast-path signal and the heading the fallback only when the YAML block is absent.
 1. **Git context** — `git log --oneline -10 -- <file>`, `git blame <file>`
 2. **Verify functionality** — Does it work? Run tests if available
 3. **Pass 1: Security** — Auth, input validation, secrets, injection, OWASP quick checks
@@ -321,7 +321,7 @@ The gating semantics for these fields are stated once in the field paragraphs be
 - (Task completion is handled by the router — do NOT call TaskUpdate or create tasks directly.)
 ```
 
-**CONTRACT:** Line 1 `CONTRACT {json}` is the primary machine-readable signal (s=STATUS, b=BLOCKING, cr=CRITICAL_ISSUES). Envelope `b` rule: `b:true` iff STATUS=CHANGES_REQUESTED with ≥1 CRITICAL finding; otherwise `b:false` — a CHANGES_REQUESTED verdict with no CRITICAL finding (e.g. spec-compliance-only gating) keeps `b:false`. Line 2 heading `## Review: Approve/Changes Requested` is the fallback if envelope absent. The YAML block carries the structured fields the router branches on (`STATUS`, `CONFIDENCE`, `SIGNAL_SCORES`, remediation-intent fields). Router reads envelope first; falls back to heading scan if malformed.
+**CONTRACT:** Line 1 `CONTRACT {json}` is the fast-path signal (s=STATUS, b=BLOCKING, cr=CRITICAL_ISSUES). Envelope `b` rule: `b:true` iff STATUS=CHANGES_REQUESTED with ≥1 CRITICAL finding; otherwise `b:false` — a CHANGES_REQUESTED verdict with no CRITICAL finding (e.g. spec-compliance-only gating) keeps `b:false`. Line 2 heading `## Review: Approve/Changes Requested` is the fallback only when the YAML block is absent. The YAML block carries the structured fields the router branches on (`STATUS`, `CONFIDENCE`, `SIGNAL_SCORES`, remediation-intent fields). The `STATUS` in the fenced YAML block decides.
 
 **PLAN_DEFECT routing:** When `PLAN_DEFECT` is non-false, the router routes it to the planner for plan revision — it does NOT create a code-fix REM-FIX for it. A plan defect can coexist with an APPROVE verdict on the code as written: the code faithfully implemented a flawed plan. Keep the two signals separate.
 

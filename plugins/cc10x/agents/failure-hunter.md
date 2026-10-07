@@ -115,10 +115,10 @@ Adapt the audit grep patterns to the project's primary language. If the project 
    `CONTRACT {"s":"CLEAN","b":false,"cr":0}` (clean) or `CONTRACT {"s":"ISSUES_FOUND","b":true,"cr":N}` (CRITICAL failures found — envelope rule in Output section)
    `## Error Handling Audit: CLEAN` or `## Error Handling Audit: ISSUES_FOUND`
    Never write a preliminary verdict intending to "revise it later in the same response" — line 1 cannot be revised after it is emitted. If you reach the final response unsure of the verdict, you are not done hunting: return to tool turns.
-   The envelope at line 1 is the primary machine-readable signal; the heading is the fallback.
+   The `STATUS` in the fenced YAML block decides; the envelope at line 1 is the fast-path signal and the heading the fallback only when the YAML block is absent.
 1. **Find** - Search for: try, catch, except, .catch(, throw, error
    **Zero-results path (CRITICAL):** If grep returns 0 matches — whether because the project uses only Markdown/orchestration files, has no error handling, or search scope is empty — you MUST still continue to step 7 and emit the FULL output format with heading `## Error Handling Audit: CLEAN`. "Nothing found" is a valid audit result. It is NOT permission to skip output.
-   **Scoping heuristic:** Start with files changed in the current workflow — use the router-provided changed-file list, or `git diff --name-only BASE..HEAD` (BASE = `results.git_base_sha`, the recorded sha before the phase's builder ran). Use the recorded BASE, not `HEAD~N`: a phase legitimately makes multiple commits (TDD red/green/refactor), so a fixed offset silently drops earlier changed files. Audit those first. Expand to their direct importers only if critical patterns are found. Do not scan the entire repo unless the prompt explicitly requests a full audit.
+   **Scoping heuristic:** Start with files changed in the current workflow — use the router-provided changed-file list, or `git diff --name-only BASE..HEAD` (BASE = `results.git_base_sha`, the recorded sha before the phase's builder ran; read it from the Workflow Artifact named in your Task Context and use only that key). Use the recorded BASE, not `HEAD~N`: a phase legitimately makes multiple commits (TDD red/green/refactor), so a fixed offset silently drops earlier changed files. Audit those first. Expand to their direct importers only if critical patterns are found. Do not scan the entire repo unless the prompt explicitly requests a full audit.
 2. **Audit each** - Is error logged? Does user get feedback? Is catch specific?
 3. **Rate severity** - CRITICAL (silent), HIGH (generic), MEDIUM (could improve)
 4. **Report CRITICAL immediately** - Provide exact file:line, recommended fix, AND prevention mechanism
@@ -214,4 +214,4 @@ MEMORY_NOTES:
 - (Task completion is handled by the router. This agent does not call TaskUpdate(status: completed).)
 ```
 
-**CONTRACT:** Line 1 `CONTRACT {json}` is the primary machine-readable signal (s=STATUS, b=BLOCKING, cr=CRITICAL_ISSUES). Envelope rule: `s=ISSUES_FOUND` when any CRITICAL or HIGH exists; `b=true` only when CRITICAL>0. HIGH-only findings: `s=ISSUES_FOUND`, `b=false`. Line 2 heading is the fallback if envelope absent. Router reads envelope first; falls back to heading scan if malformed.
+**CONTRACT:** Line 1 `CONTRACT {json}` is the fast-path signal (s=STATUS, b=BLOCKING, cr=CRITICAL_ISSUES). Envelope rule: `s=ISSUES_FOUND` when any CRITICAL or HIGH exists; `b=true` only when CRITICAL>0. HIGH-only findings: `s=ISSUES_FOUND`, `b=false`. Line 2 heading is the fallback only when the YAML block is absent. The `STATUS` in the fenced YAML block decides.

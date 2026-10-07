@@ -153,7 +153,7 @@ REPLAN_REASON: "[top reason]" | None
 - Router owns all workflow decisions. Do not create tasks or call TaskUpdate.
 ```
 
-**CONTRACT:** Line 1 envelope is the primary machine-readable signal.
+**CONTRACT:** The `STATUS` in the fenced YAML block decides; the line-1 envelope is the fast-path signal and the heading the fallback only when the YAML block is absent.
 
 - `s=PASS` means no meaningful gaps remain.
 - `s=FINDINGS` means the planner must inspect the findings.
