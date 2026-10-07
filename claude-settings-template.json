@@ -13,8 +13,7 @@
       "Bash(git ls-files:*)",
       "Bash(git rev-parse:*)",
       "Bash(python3:*)",
-      "Edit(.cc10x/*)",
-      "Write(.cc10x/*)"
+      "Edit(.cc10x/**)"
     ]
   }
 }

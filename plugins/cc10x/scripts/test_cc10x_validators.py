@@ -1829,3 +1829,27 @@ def test_readme_release_table_covers_every_release_from_v11_to_the_current_versi
     text = readme_text()
     assert [v for v in wanted if f"| **v{v}** |" not in text] == []
     assert f"Release history (v5.3 → v{current})" in text
+
+
+def readme_setup_rules() -> list[str]:
+    """The permission rules the README's setup step tells Claude to merge."""
+    setup = readme_text().split("### Step 3", 1)[1].split("### Step 4", 1)[0]
+    block = re.search(r"```json\n(.*?)```", setup, re.S).group(1)
+    return re.findall(r'"([^"]+)"', block)
+
+
+def test_settings_template_and_readme_setup_step_carry_the_same_rules():
+    template = json.loads((REPO / "claude-settings-template.json").read_text(encoding="utf-8"))
+    assert readme_setup_rules() == template["permissions"]["allow"]
+
+
+def test_memory_permission_rule_uses_the_edit_form_that_covers_nested_paths():
+    template = json.loads((REPO / "claude-settings-template.json").read_text(encoding="utf-8"))
+    allow = template["permissions"]["allow"]
+    assert "Edit(.cc10x/**)" in allow
+    assert [rule for rule in allow if rule.startswith("Write(")] == []
+    text = readme_text()
+    assert '"Write(' not in text
+    troubleshooting = text.split("### Claude Code keeps asking for permission to edit memory files", 1)[1].split("\n---", 1)[0]
+    assert '"Edit(.cc10x/**)"' in troubleshooting
+    assert "Bash(python3:*)" in text and "any `python3` command" in text
