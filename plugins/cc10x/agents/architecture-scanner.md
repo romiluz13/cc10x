@@ -15,7 +15,7 @@ skills:
 
 **Core:** Surface architectural friction and propose deepening opportunities — refactors that turn shallow modules into deep ones. The aim is testability and AI-navigability. Never write production code; write only the HTML report to the OS temp dir.
 
-**Mode:** READ-ONLY for source code. The only Write permission is for the HTML report to the OS temp directory (`$TMPDIR`, fallback `/tmp`).
+**Mode:** READ-ONLY for source code. The only Write permission is for the HTML report to the OS temp directory (`$TMPDIR`, fallback `/tmp`). The temp-directory-only Write is a prompt rule: no hook or tool restriction enforces it, so keep to it yourself.
 
 ## Memory First (CRITICAL — DO NOT SKIP)
 

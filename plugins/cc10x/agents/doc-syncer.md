@@ -88,7 +88,7 @@ When the audit layer is triggered:
 
    1. Read it, then apply a targeted update using `Edit`.
    2. Record the path in `AUDIT_DOCS_UPDATED` **and** `DOC_FILES_UPDATED` — the router override accepts `DOC_FILES_UPDATED` or `AUDIT_DOCS_CREATED` for COMPLETE/PARTIAL, so an updated or migrated audit path missing from `DOC_FILES_UPDATED` is invisible to the router.
-   3. If the existing doc is a legacy `docs/decisions/` file, migrate it to `docs/adr/NNNN-{topic}.md` as part of this touch (read old, write new at the canonical path, delete old) — record the new `docs/adr/` path in both `AUDIT_DOCS_UPDATED` and `DOC_FILES_UPDATED`.
+   3. If the existing doc is a legacy `docs/decisions/` file, migrate it to `docs/adr/NNNN-{topic}.md` as part of this touch (read old, write new at the canonical path) — record the new `docs/adr/` path in both `AUDIT_DOCS_UPDATED` and `DOC_FILES_UPDATED`. Never delete a file: you have no delete tool and Bash is not for `rm`. Leave the legacy file in place and add one `MEMORY_NOTES.deferred` entry per file: `USER_RUN: remove legacy ADR docs/decisions/{file} (superseded by docs/adr/NNNN-{topic}.md)`.
 
 3. If no existing doc covers this topic: create a new file at `docs/adr/NNNN-{topic}.md` (scan `docs/adr/` for the highest existing number and increment). Record it in `AUDIT_DOCS_CREATED`. Use the ADR format from `cc10x:domain-modeling/ADR-FORMAT.md` — a short titled record (1-3 sentences: context, decision, why) with optional Status/Considered Options/Consequences sections when they add value.
 
@@ -111,7 +111,7 @@ When the audit layer is triggered:
 
 5. After creating or updating an audit doc, check whether `CLAUDE.md` has a `## Docs` or `## Decisions` index section. If yes, add a link to the new doc. Never paste doc content into CLAUDE.md — it is an index only.
 
-**Dedup rule:** if a decision exists in both `docs/decisions/` and `docs/adr/`, the `docs/adr/` version wins; delete the legacy duplicate.
+**Dedup rule:** if a decision exists in both `docs/decisions/` and `docs/adr/`, the `docs/adr/` version wins; report the legacy duplicate as a `USER_RUN: remove legacy ADR ...` proposal, never delete it.
 
 ## Self-Review (Before Emitting Contract)
 

@@ -101,8 +101,6 @@ def router_description(text: str) -> str:
 POLICY_REF = SKILLS / "cc10x-router" / "references" / "workflow-artifact-and-hook-policy.md"
 ROUTER_REFS = SKILLS / "cc10x-router" / "references"
 ROUTER_EVALS = SKILLS / "cc10x-router" / "evals"
-# Fields the router requires on a qa-re-plan return; planner.md carries them from P4.T4.4.
-POLICY_FIELDS_AGENT_SIDE_PENDING = {"AMENDED_FILES", "STALE_SWEEP", "RECONCILIATION_RERUN"}
 PRELOAD_TABLE = {
     "architecture-scanner": ("agent-common", "codebase-hygiene", "codebase-design"),
     "bug-investigator": ("agent-common", "debugging", "building", "verification", "codebase-design"),
@@ -170,7 +168,7 @@ def policy_table_matches_agents(text: str) -> bool:
     if set(POLICY_TABLE_AGENTS) - set(rows):
         return False
     for agent, cell in rows.items():
-        named = set(re.findall(r"`([A-Z][A-Z0-9_]+)`", cell)) - POLICY_FIELDS_AGENT_SIDE_PENDING
+        named = set(re.findall(r"`([A-Z][A-Z0-9_]+)`", cell))
         if not named <= agent_yaml_keys(agent):
             return False
     return True
@@ -3692,6 +3690,78 @@ ASSERTIONS = [
         lambda text: "`integration-verifier` rules on a finding the builder disputed (`FINDING_DISPUTED`), never you" in text
         and "do not drop a finding because it was disputed" in text,
         "the router: a dispute is adjudicated by the independent verifier, never by the hunter who raised it",
+    ),
+
+    # --- P4.T4.4: planner, gap reviewer, doc-syncer, triage, scanner (A5, B12, A7) ---
+    A(
+        "planner: the qa-re-plan amendment-lane fields are in its YAML contract and rules",
+        AGENTS / "planner.md",
+        lambda text: yaml_has_keys("AMENDED_FILES", "STALE_SWEEP", "RECONCILIATION_RERUN")(text)
+        and "On a `phase:qa-re-plan` dispatch, `AMENDED_FILES`, `STALE_SWEEP` and `RECONCILIATION_RERUN` are required and non-empty" in text
+        and "all three plan artifacts are in scope" in text,
+        "the router's pass-2 gate fails closed without all three; the planner is their producer (A5, addenda item 2)",
+    ),
+    A(
+        "planner: QA routes write only under .cc10x/qa/, never docs/plans",
+        AGENTS / "planner.md",
+        lambda text: "On `phase:qa-plan` the only write targets are `.cc10x/qa/{workflow_uuid}/test-plan.md` and `.cc10x/qa/{workflow_uuid}/env-plan.md`" in text
+        and "`phase:qa-re-plan` may also amend `.cc10x/qa/{workflow_uuid}/feature-map.md`" in text
+        and "Do NOT write under `docs/plans/` on a QA route" in text
+        and "create no file outside `.cc10x/`" in text,
+        "the docs/plans-only write rule contradicted the QA dispatch and the QA isolation guard (A5)",
+    ),
+    A(
+        "planner: writes what plan-review-gate checks",
+        AGENTS / "planner.md",
+        lambda text: "`## Durable Decisions` section" in text
+        and "`Depends on:` and `Enables:`" in text
+        and "`## Differences from agreement` section" in text
+        and "plan-review-gate" in text,
+        "the gate fails a multi-phase plan without Durable Decisions, enables statements or Differences from agreement (B12)",
+    ),
+    A(
+        "plan-gap-reviewer: states it emits a YAML block, anchored by position",
+        AGENTS / "plan-gap-reviewer.md",
+        lambda text: "no YAML Router Contract block" not in text
+        and "this agent emits a fenced YAML block" in text
+        and "`PLANNING_REVIEW_STATUS`" in text
+        and "never a per-agent key on the line-1 `CONTRACT` envelope" in text
+        and "the first fenced `yaml` block after the line-1 envelope and the line-2 heading" in text,
+        "the body said it had no YAML block while its Output section emits one; REVIEW_MODE stays a dispatch input (A5)",
+    ),
+    A(
+        "doc-syncer: legacy ADR cleanup is propose-only, deletes are user-run",
+        AGENTS / "doc-syncer.md",
+        lambda text: "Never delete a file: you have no delete tool and Bash is not for `rm`" in text
+        and "USER_RUN: remove legacy ADR" in text
+        and "delete old" not in text
+        and "delete the legacy duplicate" not in text,
+        "the migrate-and-delete steps had no tool that could perform the delete; the cleanup is now a reported proposal (A7)",
+    ),
+    A(
+        "triage-agent: no source-code writes, and no read-only claim",
+        AGENTS / "triage-agent.md",
+        lambda text: "No source-code writes" in text
+        and "Read-only." not in text
+        and "READ-ONLY for source code" not in text
+        and "do not switch branches or modify the working tree" in text
+        and "`.scratch/` and `.out-of-scope/`" in text,
+        "the agent writes briefs and rejection records, so 'read-only' was false (A7)",
+    ),
+    A(
+        "triage-agent: BLOCKING is derived, not hard-coded",
+        AGENTS / "triage-agent.md",
+        lambda text: "BLOCKING: false\n" not in text
+        and "BLOCKING: [true when the run stops for human input" in text
+        and "`b` mirrors `BLOCKING`" in text
+        and "b=true` only if wontfix is contested" not in text,
+        "BLOCKING true for NEEDS_INFO, WONTFIX or NEEDS_GRILLING=true, else false (A7)",
+    ),
+    A(
+        "architecture-scanner: temp-dir-only Write is a prompt rule, not enforced",
+        AGENTS / "architecture-scanner.md",
+        lambda text: "temp-directory-only Write is a prompt rule: no hook or tool restriction enforces it" in text,
+        "F3 (path guard) stays deferred; the agent file now says plainly that the boundary is prose",
     ),
 ]
 

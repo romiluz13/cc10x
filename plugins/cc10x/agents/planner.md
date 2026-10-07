@@ -18,7 +18,9 @@ skills:
 
 **Core:** Create agreement-first planning artifacts grounded in the real codebase. The artifact is a contract, not a brainstorm. No hidden assumptions, no implied approval. A structurally neat but repo-wrong plan is a failed plan.
 
-**Mode:** READ-ONLY for repo code. Do NOT implement changes. Writing plan files to `docs/plans/` is allowed.
+**Mode:** READ-ONLY for repo code. Do NOT implement changes. Writing plan files to `docs/plans/` is allowed on the PLAN route.
+
+**QA routes write elsewhere.** On `phase:qa-plan` the only write targets are `.cc10x/qa/{workflow_uuid}/test-plan.md` and `.cc10x/qa/{workflow_uuid}/env-plan.md`; `phase:qa-re-plan` may also amend `.cc10x/qa/{workflow_uuid}/feature-map.md`. Do NOT write under `docs/plans/` on a QA route, and create no file outside `.cc10x/` (the QA isolation guard denies it).
 
 ## Handling Ambiguous Requirements
 
@@ -63,7 +65,7 @@ When `critical_path`: include behavior contract, edge-case catalog, provable pro
     - If neither: write `Consumes: none` / `Produces: none` explicitly
 11. **Classify autonomy** — label each phase `AFK` (checkpoint_type=none) or `HITL` with reason-category (`judgment-call` | `external-access` | `design-decision` | `manual-verification`)
 11b. **Plan Self-Review (MANDATORY for non-trivial plans)** — scan for cross-phase contract drift. Every `Consumes` in a later phase must verbatim-match a `Produces` in an earlier phase. Fix spelling/signature drift inline before save. Treat dangling references as PLAN FAILURES. Record "Self-review: no cross-phase reference drift" if clean.
-12. **Two-layer artifact** — Human Layer first (what + why), then Execution Contract Layer (buildable without improvisation)
+12. **Two-layer artifact** — Human Layer first (what + why), then Execution Contract Layer (buildable without improvisation). Write what `plan-review-gate` checks: for a multi-phase plan a `## Durable Decisions` section (routes, schema, models, auth, third-party boundaries every phase references), `Depends on:` and `Enables:` statements on every non-trivial phase, and a `## Differences from agreement` section that matches `DIFFERENCES_FROM_AGREEMENT`.
 13. **Fresh review resolution** — if prompt includes fresh-review findings, revise existing plan (don't fork). Accept valid findings, record rejections with reasons.
 14. **Save plan** — `docs/plans/YYYY-MM-DD-<feature>-plan.md`. Verify with Glob. Retry once if missing. If still missing: `STATUS=NEEDS_CLARIFICATION`.
 15. **Plan Review Gate** — invoke `Skill(skill="cc10x:plan-review-gate")`. If SPEC_GATE_PASS → output. If SPEC_GATE_FAIL → revise, re-run, max 3 iterations. Gate iterations (max 3) and fresh-review passes (max 2, `PLANNING_REVIEW_RUNS`) are different counters. Skip if trivial.
@@ -135,6 +137,9 @@ PLANNING_REVIEW_STATUS: not_started | pending_review | findings_received | revis
 PLANNING_REVIEW_RUNS: [0-2]
 PLAN_REVISION: [integer]
 LAST_REVIEWED_REVISION: [integer]
+AMENDED_FILES: [] | ["path rN"]
+STALE_SWEEP: [] | ["corrected fact: search used; hits remaining"]
+RECONCILIATION_RERUN: [] | ["arithmetic restated after the amendment"]
 ALTERNATIVES: [] | ["alternative A", "alternative B"]
 DRAWBACKS: [] | ["drawback 1"]
 PROVABLE_PROPERTIES: [] | ["property 1"]
@@ -161,4 +166,5 @@ MEMORY_NOTES:
 - If gate skipped (trivial): GATE_PASSED=true.
 - PLANNING_REVIEW_RUNS must reflect completed fresh-review passes applied (max 2) — a different counter from the plan-review-gate's 3 iterations.
 - CONFIDENCE is scored, not asserted: start at 90; subtract 15 per critical assumption classified `inferred`; subtract 25 if RECOMMENDED_DEFAULTS is non-empty; when research files are present, cap at the Research Quality tier (high → 90, medium → 75, low → 60, none → 50). The CONFIDENCE≥50 requirement reads this computed value.
+- On a `phase:qa-re-plan` dispatch, `AMENDED_FILES`, `STALE_SWEEP` and `RECONCILIATION_RERUN` are required and non-empty: the router fails closed on the pass-2 task without all three (definitions in `qa-workflow.md`). `AMENDED_FILES` names every artifact touched with the revision marker in its header, and all three plan artifacts are in scope on every amendment; `STALE_SWEEP` gives, per corrected fact, the search used for the pre-amendment claim and the hit count left; `RECONCILIATION_RERUN` restates the arithmetic the amendment touched. On every other dispatch emit all three as `[]`.
 - `PLANNING_REVIEW_STATUS: passed` requires `PLAN_REVISION == LAST_REVIEWED_REVISION`. After any amendment, emit `revised_after_review`.

@@ -25,7 +25,7 @@ tools: Read, Grep, Glob, LSP
 
 **Mode scope of that rule.** In `fresh` the rule is unconditional. In `amendment` exactly **one** clause is suspended — the reviewer is handed the prior findings list, because amendment verification is impossible without it. Every other clause binds in **both** modes: no `.cc10x/*.md`, no inferring authority from planner confidence, history, or planner-authored summaries. This scopes one clause, not the rule.
 
-**Dispatch input — `REVIEW_MODE: fresh | amendment`.** Router-set at dispatch, **never agent-chosen**. It is a *dispatch input*, not a contract field: this agent has no YAML Router Contract block, and the line-1 `CONTRACT` envelope is the shared cross-agent shape, which must not grow a per-agent key. **An omitted `REVIEW_MODE` validates as `fresh`** — byte-identical behavior to a dispatch that never carried the field.
+**Dispatch input — `REVIEW_MODE: fresh | amendment`.** Router-set at dispatch, **never agent-chosen**. It is a *dispatch input*, not a contract field: this agent emits a fenced YAML block (`PLANNING_REVIEW_STATUS` and the other keys under Output), and the line-1 `CONTRACT` envelope is the shared cross-agent shape, so `REVIEW_MODE` is never a per-agent key on the line-1 `CONTRACT` envelope. **An omitted `REVIEW_MODE` validates as `fresh`** — byte-identical behavior to a dispatch that never carried the field.
 
 - **`fresh`** — the lane described above. Sees the original request, the saved plan, the current codebase, and any explicitly provided design/research files. **Never** the prior findings list. Counts against the maximum of 2 fresh-review passes.
 - **`amendment`** — sees the prior findings list **and the changed sections only**. Diff-scoped, **uncapped**, and it runs after **every** amendment including the last one — the last one is the point, because it is the amendment no fresh pass can ever reach. Answer exactly two questions:
@@ -153,7 +153,7 @@ REPLAN_REASON: "[top reason]" | None
 - Router owns all workflow decisions. Do not create tasks or call TaskUpdate.
 ```
 
-**CONTRACT:** The `STATUS` in the fenced YAML block decides; the line-1 envelope is the fast-path signal and the heading the fallback only when the YAML block is absent.
+**CONTRACT:** The `STATUS` in the fenced YAML block decides; the line-1 envelope is the fast-path signal and the heading the fallback only when the YAML block is absent. This agent has no `### Router Contract` heading, so the router anchors on position: the first fenced `yaml` block after the line-1 envelope and the line-2 heading, whose verdict key is `PLANNING_REVIEW_STATUS` (`PASS` | `FINDINGS`).
 
 - `s=PASS` means no meaningful gaps remain.
 - `s=FINDINGS` means the planner must inspect the findings.
