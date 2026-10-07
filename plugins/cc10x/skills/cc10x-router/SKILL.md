@@ -144,7 +144,7 @@ After memory load:
 TaskList()
 ```
 
-Task tools are optional. Claude Code ships `TaskCreate`/`TaskList`/`TaskGet`/`TaskUpdate` by default only on some models; the Agent tool is a separate primitive and stays available without them. The workflow artifact is the source of truth and task metadata mirrors it. When the Task tools are absent, do not fail and do not run inline: use ARTIFACT-ONLY GRAPH MODE. Phase state, task ids and ordering are tracked in the artifact (`task_ids`, `phase_status`, `phase_cursor`, `results`) and the events log; every agent is still dispatched through the Agent tool with fresh context; validation and every gate apply as written; completion is recorded by the router in the artifact, and the write agents' own `TaskUpdate` instruction is suppressed through the dispatch scaffold (§7) until the agent files drop it. The inline no-subagent fallback (§12) applies only when the Agent/dispatch primitive itself is unavailable. `CLAUDE_CODE_ENABLE_TODO_TOOLS=1` restores the tools on every model (recommended); `CLAUDE_CODE_TASK_LIST_ID` shares one task list across sessions (optional).
+Task tools are optional. Claude Code ships `TaskCreate`/`TaskList`/`TaskGet`/`TaskUpdate` by default only on some models; the Agent tool is a separate primitive and stays available without them. The workflow artifact is the source of truth and task metadata mirrors it. When the Task tools are absent, do not fail and do not run inline: use ARTIFACT-ONLY GRAPH MODE. Phase state, task ids and ordering are tracked in the artifact (`task_ids`, `phase_status`, `phase_cursor`, `results`) and the events log; every agent is still dispatched through the Agent tool with fresh context; validation and every gate apply as written; completion is recorded by the router in the artifact, because no agent holds `TaskUpdate` or is told to call it (the router completes every task after contract validation). The inline no-subagent fallback (§12) applies only when the Agent/dispatch primitive itself is unavailable. `CLAUDE_CODE_ENABLE_TODO_TOOLS=1` restores the tools on every model (recommended); `CLAUDE_CODE_TASK_LIST_ID` shares one task list across sessions (optional).
 
 Hydration rules:
 
@@ -405,7 +405,7 @@ Reviewer floor, restated for the amendment lane (a restatement, not a relaxation
 {router-detected skill list or "None"}
 ```
 
-Artifact-only mode (Task tools absent): pass `- Task ID: N/A` and add the line `Task tools are absent: skip TaskUpdate; the router records completion` under `## Task Context`; write agents are otherwise told to call `TaskUpdate` before their contract.
+Artifact-only mode (Task tools absent): pass `- Task ID: N/A` and add the line `Task tools are absent: skip TaskUpdate; the router records completion` under `## Task Context`; no agent holds `TaskUpdate`, so the line only keeps the dispatch text explicit.
 
 Anti-anchoring exception: for adversarial read-only dispatches (`code-reviewer`, `plan-gap-reviewer`) OMIT `## Memory Summary` — it carries the implementer's own narrative (decisions, learnings) and anchors the auditor. Keep `## Project Patterns` (user standards and gotchas are neutral law, not author narrative). Approved decisions the reviewer genuinely needs travel via `## Pre-Answered Requirements` / `## Intent Contract`, never via the memory summary.
 
@@ -610,7 +610,7 @@ The harness is a loop engine. These concepts govern how the loop runs:
 7. Repeat until all tasks in the active `wf:` are completed.
 ```
 
-Artifact-only graph mode: read "task" in this loop as a graph step recorded in the artifact. Blockers are the ordering rules of the route's `references/*-workflow.md` graph, evaluated with the events-log completion rule of §4 (never from a bare `results.*` slot); "mark in_progress/completed" is an artifact write plus an event-log entry instead of a `TaskUpdate`; a REM-FIX is a recorded step with the same metadata fields, dispatched to `component-builder` through the Agent tool, and its `remediation_history` entry comes with a `remediation_created` event. Record the mode once in `status_history`.
+Artifact-only graph mode: read "task" in this loop as a graph step recorded in the artifact. Blockers are the ordering rules of the route's `references/*-workflow.md` graph, evaluated with the events-log completion rule of §4 (never from a bare `results.*` slot); "mark in_progress/completed" is an artifact write plus an event-log entry instead of a `TaskUpdate`; a REM-FIX is a recorded step with the same metadata fields, dispatched through the Agent tool to the executing agent the dispatch table names for its `origin:` (`component-builder`, or `bug-investigator` for `origin:bug-investigator`), and its `remediation_history` entry comes with a `remediation_created` event. Record the mode once in `status_history`.
 
 ### After every agent completion
 
@@ -627,7 +627,7 @@ Claude Code may run a dispatched agent in the background and deliver its result 
    If any answer is "no" or "unknown", treat as incomplete and apply the fallback validation path below.
 2. `TaskGet({ taskId })` or `TaskList()` to verify final task state (skip when the task tools are absent; the artifact is the record).
 3. WRITE agents:
-   - They may have called `TaskUpdate(status="completed")`. If the task is still not completed after the contract validates, the router applies the fallback `TaskUpdate(status="completed")`.
+   - No write agent holds `TaskUpdate` or is told to call it. The router completes the task with `TaskUpdate(status="completed")` after the contract validates.
    - Parse YAML before continuing.
 4. READ-ONLY agents:
    - Router owns completion fallback for read-only tasks.

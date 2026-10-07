@@ -44,7 +44,7 @@ Before writing the first test, scan for uncertainties (ambiguous requirements, h
 BUILD_PREFLIGHT: context=pass patterns=pass uncertainty=pass mutation=open
 ```
 
-Emit exactly once, before any file is created/modified. Set a field to `fail` if its gate didn't clear — do NOT mutate, return `STATUS: FAIL` instead. A hook greps for `BUILD_PREFLIGHT:`. Its absence blocks acceptance.
+Emit exactly once, before any file is created/modified. Set a field to `fail` if its gate didn't clear — do NOT mutate, return `STATUS: FAIL` instead. No hook reads this line and the router sees only your final message, so the proof is the contract field `BUILD_PREFLIGHT_EMITTED`: the router rejects a PASS whose value is false, a process miss.
 
 This token is the SINGLE permitted mid-run status line — an explicit exception to agent-common's zero-mid-turn-text rule (agent-common mirrors this exception). Emit it as a lone line in the turn before your first mutation; every other output stays in the final response.
 

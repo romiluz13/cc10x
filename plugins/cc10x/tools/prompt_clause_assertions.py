@@ -1283,13 +1283,12 @@ ASSERTIONS = [
     # --- Agent-prompt contradiction fixes (ticket #79) ---
     # 79.1 — agent-common: final-response rule agrees with TaskUpdate-owning agent bodies
     A(
-        "agent-common: final-response rule carries the TaskUpdate carve-out",
+        "agent-common: final-response rule says the router completes the task and no agent calls TaskUpdate",
         SKILLS / "agent-common" / "SKILL.md",
-        contains_all(
-            "If your agent doc says to call TaskUpdate",
-            "otherwise the router completes the task for you",
-        ),
-        "SINGLE FINAL RESPONSE RULE step 2 restates the CONTRACT-Envelope carve-out instead of contradicting it",
+        lambda text: "The router completes your task after it validates the contract; do not call TaskUpdate." in text
+        and "If your agent doc says to call TaskUpdate" not in text
+        and "If you own task completion" not in text,
+        "no agent holds TaskUpdate or is told to call it, so the conditional carve-out was dead text; step 2 now states the one true rule and agrees with the CONTRACT Envelope paragraph",
     ),
     A(
         "agent-common: unconditional auto-completion sentence removed",
@@ -2612,12 +2611,15 @@ ASSERTIONS = [
         "the router tolerates absent TaskCreate/TaskList and names the opt-in variables",
     ),
     A(
-        "router: write-agent completion text true under both ownership models (A3, C4.1c)",
+        "router: write-agent completion text states the router completes every task (A3, C4.1c, remediation 1)",
         SKILLS / "cc10x-router" / "SKILL.md",
         lambda text: "should already have called" not in text
-        and "may have called `TaskUpdate(status=\"completed\")`" in text
-        and "the router applies the fallback `TaskUpdate(status=\"completed\")`" in text,
-        "write agents may complete their task; the router completes it after contract validation when they did not",
+        and "may have called `TaskUpdate" not in text
+        and "No write agent holds `TaskUpdate` or is told to call it. The router completes the task with `TaskUpdate(status=\"completed\")` after the contract validates." in text
+        and "told to call `TaskUpdate` before their contract" not in text
+        and "write agents' own `TaskUpdate` instruction is suppressed" not in text
+        and "because no agent holds `TaskUpdate` or is told to call it (the router completes every task after contract validation)" in text,
+        "no agent holds or is told to call TaskUpdate (P4.T4.5b), so the three router sentences that said write agents may complete their own task are replaced by the true one",
     ),
     A(
         "router: A4 claims corrected (TaskOutput, per-invocation model, handback channel)",
@@ -3412,10 +3414,11 @@ ASSERTIONS = [
         "the router extracts the block from read-only agents and the YAML key from write agents",
     ),
     A(
-        "agent-common: agents without the TaskUpdate tool never call it",
+        "agent-common: no agent holds TaskUpdate, the router completes every task",
         SKILLS / "agent-common" / "SKILL.md",
-        contains("An agent without the `TaskUpdate` tool never calls it"),
-        "the completion wording is true for agents that do not have the tool",
+        lambda text: "No agent holds the `TaskUpdate` tool or owns task completion: the router completes every task after it validates your contract" in text
+        and "An agent without the `TaskUpdate` tool never calls it" not in text,
+        "the conditional wording suggested some agent still owns completion; none does (a frontmatter pin keeps TaskUpdate out of every tools line)",
     ),
     A(
         "agent-common: the YAML STATUS decides, envelope is the fast path",
@@ -4081,6 +4084,101 @@ ASSERTIONS = [
         and "denies the bare form `mkdir -p .cc10x` in QA plan phases" in text,
         "the guard's allowlist is the prefix `.cc10x/`, so the bare form was denied for the planner in QA plan phases (a behavioral guard test pins both forms)",
     ),
+    # --- P4B remediation 1, commit 3: stale text and the pins the hunt showed unprotected ---
+    A(
+        "remediation: the REM-FIX report reaches the verifier from results.investigator when the origin is bug-investigator",
+        SKILLS / "cc10x-router" / "references" / "remediation-and-research.md",
+        contains_all(
+            "It names `results.builder` (`results.investigator` when the REM-FIX origin is `bug-investigator`) of the workflow artifact",
+            "where the router persisted the report",
+        ),
+        "the investigator is an executor of kind:remfix, so its report is persisted under its own key and the hand-off must name it",
+    ),
+    A(
+        "router: artifact-only REM-FIX is dispatched to the origin's executing agent, not always component-builder",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        contains("dispatched through the Agent tool to the executing agent the dispatch table names for its `origin:` (`component-builder`, or `bug-investigator` for `origin:bug-investigator`)"),
+        "the artifact-only sentence hard-coded component-builder while the dispatch table sends origin bug-investigator to the investigator",
+    ),
+    A(
+        "component-builder: BUILD_PREFLIGHT proof is the contract field, not a hook",
+        AGENTS / "component-builder.md",
+        lambda text: "A hook greps for" not in text
+        and "No hook reads this line and the router sees only your final message" in text
+        and "the router rejects a PASS whose value is false" in text,
+        "no script greps BUILD_PREFLIGHT: and the router receives only the final message, so the claim of a hook was false; the contract field carries the proof",
+    ),
+    A(
+        "agent-common: the BUILD_PREFLIGHT exception names no hook",
+        SKILLS / "agent-common" / "SKILL.md",
+        lambda text: "a hook greps for it" not in text
+        and "no hook reads it and the router sees only your last message, so the contract field `BUILD_PREFLIGHT_EMITTED` carries the proof" in text,
+        "the preamble repeated the unverified hook claim",
+    ),
+    A(
+        "component-builder: a no-runner phase never fabricates exits, a scripted check is evidence, manual is not",
+        AGENTS / "component-builder.md",
+        contains_all(
+            "a scripted check with real exit codes is TDD evidence; manual browser verification is not",
+            "Never fabricate `TDD_RED_EXIT` or `TDD_GREEN_EXIT`: leave both `null`",
+            "return `STATUS: FAIL`, `PHASE_STATUS: blocked`",
+        ),
+        "the decisive values of the no-runner rule: leave both null, FAIL and blocked, and a manual check is not evidence",
+    ),
+    A(
+        "bug-investigator: a no-runner phase returns BLOCKED, leaves both exits null, a scripted loop is evidence and a manual check is not",
+        AGENTS / "bug-investigator.md",
+        contains_all(
+            "a scripted loop with real exit codes (the `headless_browser` rung, for example) is TDD evidence; a manual browser check is not",
+            "Never fabricate `TDD_RED_EXIT` or `TDD_GREEN_EXIT`: leave both `null`",
+            "return `STATUS: BLOCKED`, name the missing runner or the human check in `NO_LOOP_BLOCKED.ask`",
+        ),
+        "the decisive values of the investigator's no-runner rule: BLOCKED, both null, and a manual check is not evidence",
+    ),
+    *[
+        A(
+            f"{name}: REM-FIX dispute lists keep one order, and the PASS rule names the dispute alternative",
+            AGENTS / f"{name}.md",
+            contains_all(
+                "one entry per disputed finding, in the same order in all three lists",
+                "`COVERING_TESTS`, `TEST_COMMAND` and `TEST_OUTPUT` for every finding you applied, or a dispute per the REM-FIX section",
+            ),
+            "positions pair a finding with its command and output (and the verifier rules by position), so order drift misattributes a ruling; a REM-FIX PASS needs proof or a dispute",
+        )
+        for name in ("component-builder", "bug-investigator")
+    ],
+    A(
+        "component-builder: the REM-FIX PASS rule sits in the contract rules and names the dispute alternative",
+        AGENTS / "component-builder.md",
+        contains("on a `kind:remfix` task, `STATUS=PASS` also requires non-empty `COVERING_TESTS`, `TEST_COMMAND` and `TEST_OUTPUT` for every finding you applied, or a dispute per the REM-FIX section"),
+        "the PASS gate for a REM-FIX builder is stated where STATUS=PASS is defined",
+    ),
+    A(
+        "integration-verifier: the fail-closed tail of DISPUTE_REJECTED",
+        AGENTS / "integration-verifier.md",
+        contains(
+            "when the command does not reproduce, or when no `VERIFY_COMMAND` was given: the finding stands, set `REMEDIATION_NEEDED: true`, and the verdict cannot be PASS while it is CRITICAL or HIGH"
+        ),
+        "a non-reproducing or missing command must never remove a CRITICAL or HIGH finding or let the verdict pass",
+    ),
+    A(
+        "planner: every non-qa-re-plan dispatch emits the three amendment-lane fields as []",
+        AGENTS / "planner.md",
+        contains("On every other dispatch emit all three as `[]`."),
+        "the router fails closed on qa-re-plan without the fields; elsewhere the fields are present and empty rather than absent or invented",
+    ),
+    *[
+        A(
+            f"{path.stem}: no instruction to call TaskUpdate anywhere in the body, every mention is a prohibition",
+            path,
+            lambda text: "TaskUpdate({" not in text
+            and re.search(r"(?i)\b(?:call|use|run|invoke)\s+`?TaskUpdate", re.sub(r"(?i)(?:do not|don't|never|not|does not|do NOT)[^.\n]{0,60}\bcall\b[^.\n]{0,30}TaskUpdate", "", text.split("\n---\n", 1)[-1])) is None
+            and "call TaskUpdate BEFORE" not in text
+            and "you own task completion" not in text,
+            "the body of every agent file, not a five-name list: no body tells an agent to call TaskUpdate (a mention is allowed only as a prohibition)",
+        )
+        for path in sorted(AGENTS.glob("*.md"))
+    ],
 ]
 
 

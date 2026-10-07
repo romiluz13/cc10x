@@ -54,14 +54,14 @@ Every agent's final response uses ONE canonical shape:
 3. Then a fenced ```yaml Router Contract block carrying your agent's required structured fields (`STATUS` must appear there too, not just the envelope).
 4. Then the prose sections your agent doc prescribes.
 
-The `STATUS` in the fenced YAML block decides; the envelope and heading are the fast path, and the fallback only when the YAML block is absent. If they disagree, the YAML decides. The final contract response is your LAST message — never call a tool (including TaskUpdate) after emitting it: the router parses only your last message, and a trailing tool result would become it. If you own task completion, call TaskUpdate BEFORE the final contract response. An agent without the `TaskUpdate` tool never calls it; the router completes its task.
+The `STATUS` in the fenced YAML block decides; the envelope and heading are the fast path, and the fallback only when the YAML block is absent. If they disagree, the YAML decides. The final contract response is your LAST message — never call a tool (including TaskUpdate) after emitting it: the router parses only your last message, and a trailing tool result would become it. No agent holds the `TaskUpdate` tool or owns task completion: the router completes every task after it validates your contract, so you never call TaskUpdate.
 
 ## SINGLE FINAL RESPONSE RULE
 
 The router receives ONLY your LAST response turn, not intermediate messages. Therefore:
 
-1. Use as many turns as needed for tool calls — output ZERO analysis text during these turns. **Single exception:** `component-builder`'s `BUILD_PREFLIGHT:` status line is the one permitted mid-run output line (a hook greps for it); no other mid-turn text is allowed for any agent.
-2. Produce ONE FINAL RESPONSE containing: heading → all sections → Memory Notes → Task Status. **Stop your turn. If your agent doc says to call TaskUpdate, call it in your last tool turn, BEFORE the final response; otherwise the router completes the task for you.**
+1. Use as many turns as needed for tool calls — output ZERO analysis text during these turns. **Single exception:** `component-builder`'s `BUILD_PREFLIGHT:` status line is the one permitted mid-run output line (no hook reads it and the router sees only your last message, so the contract field `BUILD_PREFLIGHT_EMITTED` carries the proof); no other mid-turn text is allowed for any agent.
+2. Produce ONE FINAL RESPONSE containing: heading → all sections → Memory Notes → Task Status. **Stop your turn. The router completes your task after it validates the contract; do not call TaskUpdate.**
 
 Do NOT write analysis in an intermediate turn and then write "done" in a final turn. The router will only see the final turn.
 
