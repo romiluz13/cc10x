@@ -3799,6 +3799,44 @@ def test_documented_nesting_figures_are_the_real_ones(tmp_path):
     assert "8 levels" in readme and "four" in readme
 
 
+def registered_hook_commands() -> list[list[str]]:
+    hooks = json.loads((PLUGIN_ROOT / "hooks" / "hooks.json").read_text())["hooks"]
+    commands = [
+        hook["command"]
+        for groups in hooks.values()
+        for group in groups
+        for hook in group["hooks"]
+    ]
+    argvs = []
+    for command in commands:
+        words = shlex.split(command.replace("${CLAUDE_PLUGIN_ROOT}", str(PLUGIN_ROOT)))
+        if words[0] == "python3":
+            words[0] = sys.executable
+        argvs.append(words)
+    return argvs
+
+
+def test_every_registered_hook_survives_valid_non_object_json_on_stdin(tmp_path):
+    argvs = registered_hook_commands()
+    assert len(argvs) == 13
+    env = {
+        "CLAUDE_PROJECT_DIR": str(tmp_path),
+        "CLAUDE_PLUGIN_ROOT": str(PLUGIN_ROOT),
+        "PATH": "/usr/bin:/bin",
+    }
+    bad = []
+    for argv in argvs:
+        for body in ("[]", "null", "5", '"s"', "true"):
+            r = subprocess.run(
+                argv, input=body, capture_output=True, text=True, env=env,
+                cwd=tmp_path, timeout=30,
+            )
+            if r.returncode not in (0, 2) or "Traceback" in r.stderr:
+                label = " ".join([Path(argv[1]).name, *argv[2:]])
+                bad.append(f"{label} {body}: exit {r.returncode}")
+    assert not bad, bad
+
+
 def main() -> int:
     """Dependency-free runner (repo convention: tests run on bare python3).
 

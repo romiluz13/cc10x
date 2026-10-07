@@ -125,7 +125,9 @@ def load_input() -> dict[str, Any]:
         data = json.loads(raw)
     except (ValueError, TypeError):
         return {}
-    if isinstance(data, dict) and isinstance(data.get("cwd"), str) and data["cwd"]:
+    if not isinstance(data, dict):
+        return {}
+    if isinstance(data.get("cwd"), str) and data["cwd"]:
         _input_cwd = os.path.abspath(data["cwd"])
     return data
 
