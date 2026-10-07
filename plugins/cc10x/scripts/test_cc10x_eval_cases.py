@@ -54,6 +54,19 @@ CASE_YAML_KEYS = {
     "context": {"scaffold_script", "history_file", "add_dirs"},
 }
 GRADER_REQUIRED_KEYS = {"regex": {"pattern"}, "tool_used": {"tool"}, "file_exists": {"path"}, "tool_order": {"before", "after"}}
+SCHEMA_MAX_TURNS = 200
+SCHEMA_MAX_TIMEOUT_SECONDS = 3600
+TARGET_VALUES = {"last_message", "trace", "files", "mock_calls"}
+TARGET_SUBKEYS = {"source", "path"}
+ARM_VALUES = {"with-only", "both"}
+REQUIRED_RUN_TOOLS = {"Skill", "Write", "Bash", "Edit"}
+ROUTER_SAMPLES = ('{"skill":"cc10x-router"}', '{"skill": "cc10x:cc10x-router"}')
+# Free-text proof graders: they match a copied report section, not a KEY= line the prompt requests.
+FREE_TEXT_OUTCOME_GRADERS = {
+    ("remfix-gate-producer", "covering-proof"),
+    ("remfix-gate-producer", "run-command"),
+    ("remfix-gate-producer", "output-proof"),
+}
 DISPATCH_TOOLS = {"Agent", "TaskCreate", "TaskGet", "TaskList", "TaskUpdate"}
 NO_DISPATCH_CASES = {"route-precedence"}
 KEY_LINE = re.compile(r"^([A-Za-z_]+):(?:\s+(.*))?$")
@@ -257,16 +270,90 @@ def test_every_grader_regex_compiles(case):
                     pytest.fail(f"{grader.name} {key} is not a valid regex: {exc}")
 
 
+def pattern_keys(pattern: str) -> set[str]:
+    """Every KEY= token the pattern text names, upper-cased, after expanding simple (?:a|b) groups."""
+    texts = [pattern]
+    group = re.compile(r"\(\?:([^()]*)\)")
+    while any(group.search(t) for t in texts):
+        expanded = []
+        for text in texts:
+            found = group.search(text)
+            if not found:
+                expanded.append(text)
+                continue
+            expanded += [text[: found.start()] + alt + text[found.end() :] for alt in found.group(1).split("|")]
+        texts = expanded
+    keys = set()
+    for text in texts:
+        text = re.sub(r"[()^]", "", re.sub(r"\(\?[a-z]+\)|\\[nrt]", " ", text))
+        keys |= {k.upper() for k in re.findall(r"([A-Za-z][A-Za-z0-9_]*)=", text)}
+    return keys
+
+
+def requested_keys(case: Path) -> set[str]:
+    return {k.upper() for k in re.findall(r"^\s*([A-Za-z][A-Za-z0-9_]*)=", prompt_body(case), re.M)}
+
+
+def reads_outcome(grader: Path) -> bool:
+    return any(k == "path" and yaml_scalar(v) == "outcome.txt" for _, k, v in strict_keys(frontmatter_lines(grader), grader.name))
+
+
 @pytest.mark.parametrize("case", case_dirs(), ids=lambda p: p.name)
 def test_outcome_key_graders_read_only_keys_the_prompt_requests(case):
-    lines = prompt_body(case).splitlines()
+    wanted = requested_keys(case)
     for grader in graders_of(case):
-        pattern = yaml_scalar(frontmatter(grader).get("pattern", ""))
-        match = re.match(r"\^([A-Z][A-Z0-9_]*)(=?)", pattern)
-        if not match:
+        if not reads_outcome(grader) or (case.name, grader.stem) in FREE_TEXT_OUTCOME_GRADERS:
             continue
-        wanted = match.group(1) + match.group(2)
-        assert any(line.startswith(wanted) for line in lines), f"{grader.name} reads {wanted!r}, which the prompt never asks for"
+        keys = pattern_keys(yaml_scalar(frontmatter(grader).get("pattern", "")))
+        assert keys, f"{grader.name} reads outcome.txt but names no KEY= the prompt could request"
+        assert keys <= wanted, f"{grader.name} reads {sorted(keys - wanted)}, which the prompt never asks for"
+
+
+@pytest.mark.parametrize("pattern,keys", [
+    ("^(ROUTE_9)=DEBUG", {"ROUTE_9"}),
+    ("(?m)^route_3=QA$", {"ROUTE_3"}),
+    (r"\nROUTE_77=ORIENT", {"ROUTE_77"}),
+    ("^MEMORY_(?:HISTORY|EVENTS)=1$", {"MEMORY_HISTORY", "MEMORY_EVENTS"}),
+    ("^hello$", set()),
+])
+def test_pattern_key_extraction_is_not_fooled_by_wrappers(pattern, keys):
+    assert pattern_keys(pattern) == keys
+
+
+def pinned_value(grader: Path):
+    fm = frontmatter(grader)
+    if fm.get("match"):
+        return None
+    found = re.fullmatch(r"\^([A-Z][A-Z0-9_]*)=([\w.-]+)\$", yaml_scalar(fm.get("pattern", "")))
+    return (found.group(1), found.group(2)) if found else None
+
+
+def contradictions(case: Path) -> list[str]:
+    values: dict[str, dict[str, str]] = {}
+    for grader in graders_of(case):
+        pinned = pinned_value(grader)
+        if pinned:
+            values.setdefault(pinned[0], {})[grader.stem] = pinned[1]
+    return [f"{key}: {sorted(v.items())}" for key, v in values.items() if len(set(v.values())) > 1]
+
+
+@pytest.mark.parametrize("case", case_dirs(), ids=lambda p: p.name)
+def test_graders_do_not_contradict_each_other(case):
+    assert not contradictions(case)
+    for grader in graders_of(case):
+        fm = frontmatter(grader)
+        if fm["type"] == "tool_used" and "min" in fm and "max" in fm:
+            assert int(fm["min"]) <= int(fm["max"]), f"{grader.name} has min > max"
+
+
+def test_contradiction_detector_flags_two_values_for_one_key(tmp_path):
+    case = tmp_path / "c"
+    (case / "graders").mkdir(parents=True)
+    for name, value in (("a", "BUILD"), ("b", "REVIEW")):
+        (case / "graders" / f"{name}.md").write_text(
+            f"---\ntype: regex\npattern: '^ROUTE_1={value}$'\nflags: m\ntarget:\n  source: file\n  path: outcome.txt\n---\n", encoding="utf-8"
+        )
+    assert contradictions(case)
 
 
 LEAK = re.compile(r"expected[- ]red|baseline|regression|guards-|\bB\d+\b|\bC\d+\b", re.I)
@@ -290,24 +377,148 @@ def test_dispatch_dependent_cases_grant_the_agent_and_task_tools(case):
         assert DISPATCH_TOOLS <= tools, f"{case.name} cannot dispatch: missing {sorted(DISPATCH_TOOLS - tools)}"
 
 
+def case_tools(case: Path) -> set[str]:
+    match = re.search(r"\[(.*)\]", frontmatter(case / "prompt.md")["allowed_tools"])
+    return {t.strip() for t in match.group(1).split(",")}
+
+
+def router_proof(grader: Path) -> bool:
+    fm = frontmatter(grader)
+    if fm["type"] != "tool_used" or fm["tool"] not in {"Skill", "Read"} or "cc10x-router" not in fm.get("input_match", ""):
+        return False
+    pattern = re.compile(yaml_scalar(fm["input_match"]))
+    if fm["tool"] == "Skill":
+        return all(pattern.search(sample) for sample in ROUTER_SAMPLES) and not pattern.search('{"skill":"frontend-design"}')
+    return True
+
+
 @pytest.mark.parametrize("case", case_dirs(), ids=lambda p: p.name)
 def test_case_proves_the_router_ran_not_only_the_self_written_outcome(case):
-    ran = False
+    assert any(router_proof(g) for g in graders_of(case)), f"{case.name} has no grader that fires only for the cc10x-router skill"
+
+
+@pytest.mark.parametrize("case", case_dirs(), ids=lambda p: p.name)
+def test_allowed_tools_cover_every_grader_and_the_schema_caps_hold(case):
+    tools = case_tools(case)
+    assert REQUIRED_RUN_TOOLS <= tools, f"{case.name} cannot write files or load the router: missing {sorted(REQUIRED_RUN_TOOLS - tools)}"
     for grader in graders_of(case):
         fm = frontmatter(grader)
-        if fm["type"] == "tool_used" and fm["tool"] in {"Skill", "Read"}:
-            ran = True
-    assert ran, f"{case.name} grades only what the run wrote about itself"
+        if fm["type"] == "tool_used":
+            assert fm["tool"] in tools, f"{grader.name} grades tool {fm['tool']}, which the case never allows"
+    prompt = frontmatter(case / "prompt.md")
+    assert int(prompt["max_turns"]) <= SCHEMA_MAX_TURNS
+    assert int(prompt["timeout_seconds"]) <= SCHEMA_MAX_TIMEOUT_SECONDS
 
 
-def test_baseline_lists_every_case_and_every_red_case_names_its_p4_task():
+@pytest.mark.parametrize("case", case_dirs(), ids=lambda p: p.name)
+def test_grader_nested_keys_and_values_are_in_the_schema(case):
+    for grader in graders_of(case):
+        entries = strict_keys(frontmatter_lines(grader), grader.name)
+        top = {k: yaml_scalar(v) for parent, k, v in entries if parent is None}
+        for parent, key, value in entries:
+            if parent is not None:
+                assert parent in {"target", "focus"}, f"{grader.name} nests under unknown key {parent!r}"
+                assert key in TARGET_SUBKEYS, f"{grader.name} has unknown {parent} sub-key {key!r}"
+                if key == "source":
+                    assert yaml_scalar(value) == "file", f"{grader.name} has unknown source {value!r}"
+        for key in ("target", "focus"):
+            if top.get(key):
+                assert top[key] in TARGET_VALUES, f"{grader.name} has unknown {key} {top[key]!r}"
+        if top.get("match"):
+            assert top["match"] == "not_contains" or re.fullmatch(r"count:\d+", top["match"]), f"{grader.name} has unknown match {top['match']!r}"
+        if "arm" in top:
+            assert top["arm"] in ARM_VALUES, f"{grader.name} has unknown arm {top['arm']!r}"
+        if "weight" in top:
+            assert float(top["weight"]) > 0, f"{grader.name} weight must be positive"
+        assert set(top.get("flags", "")) <= set(REGEX_FLAGS), f"{grader.name} has unknown flags"
+        if "exists" in top:
+            assert top["exists"] in {"true", "false"}
+
+
+GOOD_PROOF = {
+    "COVERING_TESTS": ["COVERING_TESTS: tests/test_stats.py::test_median", "- covering_tests: [tests/a.py]", 'COVERING_TESTS: "tests/a.py"',
+                       "COVERING_TESTS:\n  - tests/a.py"],
+    "TEST_COMMAND": ["TEST_COMMAND: python3 -m unittest", "**TEST_COMMAND**: pytest -q".replace("**", ""), "TEST_COMMAND: `pytest -q`"],
+    "TEST_OUTPUT": ["TEST_OUTPUT: Ran 3 tests OK", "TEST_OUTPUT: |\n  Ran 3 tests\n  OK"],
+}
+BAD_VALUES = ["None", "none", "NONE", "N/A", "n/a", "null", "TBD", "todo", "[]", "[ ]", "[] (nothing)", "None because nothing ran", '"none"', "", "-"]
+
+
+@pytest.mark.parametrize("field", sorted(GOOD_PROOF))
+def test_remfix_proof_graders_accept_real_proof_and_reject_placeholders(field):
+    grader = next(g for g in graders_of(CASES_DIR / "remfix-gate-producer") if f"^[ \\t>*`-]*{field}[ \\t]*:" in g.read_text(encoding="utf-8"))
+    fm = frontmatter(grader)
+    flags = 0
+    for flag in yaml_scalar(fm["flags"]):
+        flags |= REGEX_FLAGS[flag]
+    pattern = re.compile(yaml_scalar(fm["pattern"]), flags)
+    for good in GOOD_PROOF[field]:
+        assert pattern.search(good), f"{grader.name} rejects real proof {good!r}"
+    others = [f for f in GOOD_PROOF if f != field]
+    for bad in BAD_VALUES:
+        assert not pattern.search(f"{field}: {bad}"), f"{grader.name} accepts placeholder {bad!r}"
+        assert not pattern.search(f"{field}: {bad}\n{others[0]}: x"), f"{grader.name} accepts placeholder {bad!r} before the next field"
+    assert not pattern.search(f"{field}:\n{others[0]}: x")
+    assert not pattern.search(f"see the {field} section: x")
+
+
+def git_available(root: Path) -> bool:
+    result = subprocess.run(["git", "-C", str(root), "rev-parse", "--is-inside-work-tree"], capture_output=True, text=True)
+    return result.returncode == 0 and result.stdout.strip() == "true"
+
+
+def ignored(root: Path, relative: str) -> bool:
+    return subprocess.run(["git", "-C", str(root), "check-ignore", "-q", relative]).returncode == 0
+
+
+def publishable_paths() -> list[Path]:
+    files = [p for p in (PLUGIN_ROOT / "evals").rglob("*") if p.is_file() and "results" not in p.relative_to(PLUGIN_ROOT / "evals").parts]
+    fixtures = [PLUGIN_ROOT / "tests" / "fixtures" / n for n in (
+        "qa-route-happy-path.json", "remfix-gate.json", "multi-phase-memory-finalize.json", "two-workflow-resume.json")]
+    return files + fixtures
+
+
+def test_every_eval_file_and_new_fixture_is_visible_to_git():
+    root = PLUGIN_ROOT
+    if not git_available(root):
+        pytest.skip("not inside a git checkout: git check-ignore cannot judge visibility")
+    top = Path(subprocess.run(["git", "-C", str(root), "rev-parse", "--show-toplevel"], capture_output=True, text=True).stdout.strip())
+    shadowed = [str(p.relative_to(top)) for p in publishable_paths() if ignored(top, str(p.relative_to(top)))]
+    assert not shadowed, f"git ignores {shadowed}; a *test*.md or *audit*.md glob shadows file names containing those words"
+
+
+@pytest.mark.parametrize("name", ["test-plan.md", "audit-log.md", "unit-test.md", "pre-audit.md"])
+def test_visibility_check_catches_test_and_audit_named_graders(name, tmp_path):
+    gitignore = PLUGIN_ROOT.parents[1] / ".gitignore"
+    if not gitignore.is_file() or not git_available(PLUGIN_ROOT):
+        pytest.skip("no git checkout with a root .gitignore")
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True)
+    (tmp_path / ".gitignore").write_text(gitignore.read_text(encoding="utf-8"), encoding="utf-8")
+    grader = tmp_path / "plugins" / "cc10x" / "evals" / "cases" / "x" / "graders" / name
+    grader.parent.mkdir(parents=True)
+    grader.write_text("---\ntype: file_exists\npath: a\n---\n", encoding="utf-8")
+    assert ignored(tmp_path, str(grader.relative_to(tmp_path))), f"{name} is not shadowed by .gitignore, so the guard would not matter"
+    assert any(w in name for w in ("test", "audit"))
+
+
+def baseline_rows(text: str) -> list[list[str]]:
+    return [[c.strip() for c in re.split(r"(?<!\\)\|", line)[1:-1]] for line in text.splitlines() if line.startswith("| `")]
+
+
+def test_baseline_lists_every_case_once_and_every_red_case_names_its_p4_task():
     text = BASELINE.read_text(encoding="utf-8")
-    rows = {line.split("|")[1].strip().strip("`"): line for line in text.splitlines() if line.startswith("| `")}
-    assert sorted(rows) == EXPECTED_CASE_IDS
+    rows = baseline_rows(text)
+    assert sorted(r[0].strip("`") for r in rows) == EXPECTED_CASE_IDS, "a case is missing or listed twice"
+    by_id = {r[0].strip("`"): r for r in rows}
     for case_id, (finding, red, _) in CASES.items():
-        assert finding in rows[case_id]
+        row = by_id[case_id]
+        assert finding in row[1]
+        assert row[2].split(":")[0].split()[0] == ("red" if red else "green"), f"{case_id} status column disagrees with its expected-red tag"
+        assert (("expected-red" in case_tags(CASES_DIR / case_id))) == row[2].startswith("red")
         if red:
-            assert re.search(r"P4\.T\d", rows[case_id]), case_id
+            assert re.search(r"P4\.T\d", row[3]), case_id
+    reds = sum(1 for _, red, _ in CASES.values() if red)
+    assert f"Red cases: {reds} of {len(CASES)}" in text and f"Green regression guards: {len(CASES) - reds} of {len(CASES)}" in text
     assert "L2 baseline: NOT RUN" in text
 
 
