@@ -177,7 +177,7 @@ Validated against the live prompt surface:
 ### PINV-017: Architecture scanner is read-only and advisory
 
 **Covers:** `plugins/cc10x/agents/architecture-scanner.md`
-**Enforces:** The agent writes no production code; its only write is the HTML report in the OS temp directory (a prompt rule, not a tool restriction); shell use is limited to `git diff`, `grep` and existence checks; the envelope is always `b:false` and `cr:0`.
+**Enforces:** The agent writes no production code; its only write is the HTML report in the OS temp directory (a prompt rule, not a tool restriction); it has unrestricted `Bash` in its tool list and the prompt names only `git log --oneline` and `open <path>`; the envelope is always `b:false` and `cr:0`.
 **Failure prevented:** An advisory scan that edits the codebase or blocks a workflow.
 **Wording drift that breaks it:** Allowing edits, writing the report into the repo, or making candidates blocking.
 **Safe to weaken:** Never.

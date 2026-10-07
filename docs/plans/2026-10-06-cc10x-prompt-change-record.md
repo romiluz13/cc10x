@@ -1042,3 +1042,12 @@ Five entries before P6C, none after: the baseline file is exactly `{"entries": [
 
 ### Classification and invariants
 Docs, manifests, one skill (wording only) and validator edits limited to the plan's named site (the marketplace entry version rule). No router, agent, hook or gate text changed, so no orchestration-sensitive invariant is touched. The `CLAUDE.md` and README template change alters instructions users run under, which is why it is called out above; the semantic-drift questions of the checklist (authority, obligation, scope, approval, duplication) all come out the same: the opt-out phrases and the precedence line are unchanged, and the carve-out was removed, not widened.
+
+## P6 review fixes (after fresh docs review and verifier)
+
+- README Optional MCP table: the two dead GitHub links now point at the upstream octocode-mcp and brightdata-mcp repositories.
+- `docs/prompt-invariants.md` PINV-017: the architecture scanner has unrestricted `Bash`; the prompt names only two commands. The invariant no longer claims a shell restriction the prompt does not state.
+- `docs/verifier-latency-model.md`: one dead relative link now points at `router-invariants.md`.
+- `cc10x-guide` skill (`wording_only_low_risk`): the REVIEW row lists the router's actual keywords (`review, audit, analyze, assess`), and one sentence says the README, `docs/` and settings-template pointers live in the repo, not in an installed plugin.
+- Claim boundary: no validator checks markdown links in `docs/*.md`; this was fixed by hand and by a one-off link scan. A link-resolution check in `doc_consistency_check` is a candidate for a later release.
+- Left as is (low, wording only): README "12 slash commands to remember" and the "You never invoke them directly" lead-in, INV-007 section name, dead `.gitignore` negations for moved docs.
