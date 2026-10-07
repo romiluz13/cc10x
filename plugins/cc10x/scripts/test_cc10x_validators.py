@@ -1024,6 +1024,48 @@ def _resume_boundary_after_results(d):
     case["events"].insert(5, boundary)
 
 
+def _resume_omit_remfix_result(d):
+    case = d["cases"][1]
+    last = max(i for i, e in enumerate(case["events"]) if e["agent"] == "component-builder")
+    del case["events"][last]
+
+
+def _resume_no_plan_stale_phase_id(d):
+    d["cases"][2]["events"][2]["details"]["phase_id"] = "phase-1"
+
+
+def _resume_pause_decision_is_terminal(d):
+    d["cases"][3]["events"][1]["decision"] = "TRIAGED"
+
+
+def _resume_drop_pass_two(d):
+    del d["cases"][4]["events"][2]
+
+
+def _resume_grilling_pause_is_terminal(d):
+    d["cases"][6]["events"][1]["decision"] = "TRIAGED"
+
+
+def _resume_candidates_is_a_pause(d):
+    d["cases"][5]["events"][1]["decision"] = "NEEDS_INFO"
+
+
+def _locator_clear_gate(d):
+    d["locator_cases"][0]["artifacts"][0]["pending_gate"] = None
+
+
+def _locator_unterminate(d):
+    d["locator_cases"][0]["artifacts"][1]["status_history"] = [{"event": "workflow_started"}]
+
+
+def _locator_single_paused(d):
+    del d["locator_cases"][1]["artifacts"][1]
+
+
+def _locator_drop_request_match(d):
+    d["locator_cases"][3]["request_matches"] = []
+
+
 def _triage_pause_wrong_gate(d):
     d["starting_artifact"]["pending_gate"] = "needs_grilling"
 
@@ -1108,6 +1150,16 @@ L1_MUTATIONS = [
     ("multi-phase-resume-events.json", _resume_expect_flat_results, "runnable steps"),
     ("multi-phase-resume-events.json", _resume_stale_slots_empty, "stale slot"),
     ("multi-phase-resume-events.json", _resume_boundary_after_results, "runnable steps"),
+    ("multi-phase-resume-events.json", _resume_omit_remfix_result, "runnable steps"),
+    ("multi-phase-resume-events.json", _resume_no_plan_stale_phase_id, "runnable steps"),
+    ("multi-phase-resume-events.json", _resume_pause_decision_is_terminal, "runnable steps"),
+    ("multi-phase-resume-events.json", _resume_drop_pass_two, "runnable steps"),
+    ("multi-phase-resume-events.json", _resume_grilling_pause_is_terminal, "runnable steps"),
+    ("multi-phase-resume-events.json", _resume_candidates_is_a_pause, "runnable steps"),
+    ("multi-phase-resume-events.json", _locator_clear_gate, "resume locator"),
+    ("multi-phase-resume-events.json", _locator_unterminate, "resume locator"),
+    ("multi-phase-resume-events.json", _locator_single_paused, "resume locator"),
+    ("multi-phase-resume-events.json", _locator_drop_request_match, "resume locator"),
     ("triage-needs-info-pause.json", _triage_pause_wrong_gate, "pending_gate must be 'needs_info'"),
     ("codebase-health-candidate-pause.json", _health_pause_wrong_gate, "pending_gate must be 'candidate_choice'"),
     ("triage-needs-info-pause.json", _advisory_converged, "advisory workflow must carry convergence_state N/A"),

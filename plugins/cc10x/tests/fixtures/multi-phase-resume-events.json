@@ -1,6 +1,6 @@
 {
   "id": "multi-phase-resume-events",
-  "description": "Artifact-only resume rule (SKILL.md section 4): a graph step of the current phase_cursor is complete only if a result_persisted event for its agent and task phase carries details.phase_id equal to the phase_cursor and sits AFTER the latest phase_started or remediation_created event for that phase id (file order). The flat results slots hold the latest value of an EARLIER phase or REM-FIX cycle in both cases below, so a results-based check would wrongly skip the reviewer, the hunter and the verifier.",
+  "description": "Artifact-only resume rule (SKILL.md section 4): a graph step of the current phase_cursor is complete only if a result_persisted event for its agent and task phase carries details.phase_id equal to the phase_cursor and sits AFTER the latest phase_started or remediation_created event for that phase id (file order). The flat results slots hold the latest value of an EARLIER phase or REM-FIX cycle in both cases below, so a results-based check would wrongly skip the reviewer, the hunter and the verifier. Further cases: a no-plan BUILD compares null, missing and N/A phase ids as equal; an advisory pass that returned NEEDS_INFO or NEEDS_GRILLING does not complete its step (a second pass of the same agent and task phase follows), while CANDIDATES_FOUND does; locator_cases check the artifact-only lookup of a paused workflow by pending_gate for a bare reply (terminal artifacts dropped first, exactly one candidate answers its gate, more than one asks which, none starts a new workflow). The stop-state hint is not modelled: it names an artifact already in the scan.",
   "workflow_type": "BUILD",
   "starting_artifact": {
     "workflow_uuid": "wf-20261007T140000Z-resume-events",
@@ -211,7 +211,7 @@
       ]
     },
     {
-      "name": "second remediation cycle opens with the first cycle's re-review, re-hunt and re-verify events behind it",
+      "name": "second remediation cycle opens with the first cycle's REM-FIX, re-review, re-hunt and re-verify events behind it",
       "phase_id": "phase-1",
       "stale_slots": [
         "reviewer",
@@ -295,6 +295,19 @@
           }
         },
         {
+          "ts": "2026-10-07T14:05:30Z",
+          "wf": "wf-20261007T140000Z-resume-events",
+          "event": "result_persisted",
+          "phase": "build-review",
+          "task_id": "N/A",
+          "agent": "component-builder",
+          "decision": "PASS",
+          "reason": "fixture",
+          "details": {
+            "phase_id": "phase-1"
+          }
+        },
+        {
           "ts": "2026-10-07T14:06:00Z",
           "wf": "wf-20261007T140000Z-resume-events",
           "event": "result_persisted",
@@ -345,18 +358,40 @@
           "details": {
             "phase_id": "phase-1"
           }
+        },
+        {
+          "ts": "2026-10-07T14:09:30Z",
+          "wf": "wf-20261007T140000Z-resume-events",
+          "event": "result_persisted",
+          "phase": "build-review",
+          "task_id": "N/A",
+          "agent": "component-builder",
+          "decision": "PASS",
+          "reason": "fixture",
+          "details": {
+            "phase_id": "phase-1"
+          }
         }
       ],
       "graph": [
         {
+          "agent": "component-builder",
+          "phase": "build-review",
+          "after": []
+        },
+        {
           "agent": "code-reviewer",
           "phase": "re-review",
-          "after": []
+          "after": [
+            "build-review"
+          ]
         },
         {
           "agent": "failure-hunter",
           "phase": "re-hunt",
-          "after": []
+          "after": [
+            "build-review"
+          ]
         },
         {
           "agent": "integration-verifier",
@@ -371,9 +406,416 @@
         "re-hunt",
         "re-review"
       ]
+    },
+    {
+      "name": "a no-plan BUILD writes N/A, null or no phase_id and a null phase_cursor compares equal to all three",
+      "phase_id": null,
+      "stale_slots": [],
+      "events": [
+        {
+          "ts": "2026-10-07T14:00:00Z",
+          "wf": "wf-20261007T140000Z-resume-events",
+          "event": "workflow_started",
+          "phase": "build",
+          "task_id": "N/A",
+          "agent": "router",
+          "decision": "start",
+          "reason": "fixture"
+        },
+        {
+          "ts": "2026-10-07T14:01:00Z",
+          "wf": "wf-20261007T140000Z-resume-events",
+          "event": "phase_started",
+          "phase": "build-implement",
+          "task_id": "N/A",
+          "agent": "router",
+          "decision": "",
+          "reason": "fixture",
+          "details": {
+            "phase_id": "N/A"
+          }
+        },
+        {
+          "ts": "2026-10-07T14:02:00Z",
+          "wf": "wf-20261007T140000Z-resume-events",
+          "event": "result_persisted",
+          "phase": "build-implement",
+          "task_id": "N/A",
+          "agent": "component-builder",
+          "decision": "PASS",
+          "reason": "fixture",
+          "details": {
+            "phase_id": "N/A"
+          }
+        },
+        {
+          "ts": "2026-10-07T14:03:00Z",
+          "wf": "wf-20261007T140000Z-resume-events",
+          "event": "result_persisted",
+          "phase": "build-review",
+          "task_id": "N/A",
+          "agent": "code-reviewer",
+          "decision": "APPROVE",
+          "reason": "fixture",
+          "details": {
+            "phase_id": null
+          }
+        },
+        {
+          "ts": "2026-10-07T14:04:00Z",
+          "wf": "wf-20261007T140000Z-resume-events",
+          "event": "result_persisted",
+          "phase": "build-hunt",
+          "task_id": "N/A",
+          "agent": "failure-hunter",
+          "decision": "PASS",
+          "reason": "fixture"
+        }
+      ],
+      "graph": [
+        {
+          "agent": "component-builder",
+          "phase": "build-implement",
+          "after": []
+        },
+        {
+          "agent": "code-reviewer",
+          "phase": "build-review",
+          "after": [
+            "build-implement"
+          ]
+        },
+        {
+          "agent": "failure-hunter",
+          "phase": "build-hunt",
+          "after": [
+            "build-implement"
+          ]
+        },
+        {
+          "agent": "integration-verifier",
+          "phase": "build-verify",
+          "after": [
+            "build-review",
+            "build-hunt"
+          ]
+        }
+      ],
+      "expected_runnable": [
+        "build-verify"
+      ]
+    },
+    {
+      "name": "advisory pass 1 returned NEEDS_INFO and the second pass has not returned: the triage step is still runnable",
+      "phase_id": "N/A",
+      "stale_slots": [],
+      "events": [
+        {
+          "ts": "2026-10-07T14:00:00Z",
+          "wf": "wf-20261007T140000Z-resume-events",
+          "event": "workflow_started",
+          "phase": "triage",
+          "task_id": "N/A",
+          "agent": "router",
+          "decision": "start",
+          "reason": "fixture"
+        },
+        {
+          "ts": "2026-10-07T14:01:00Z",
+          "wf": "wf-20261007T140000Z-resume-events",
+          "event": "result_persisted",
+          "phase": "triage",
+          "task_id": "N/A",
+          "agent": "triage-agent",
+          "decision": "NEEDS_INFO",
+          "reason": "fixture",
+          "details": {
+            "phase_id": "N/A"
+          }
+        }
+      ],
+      "graph": [
+        {
+          "agent": "triage-agent",
+          "phase": "triage",
+          "after": []
+        }
+      ],
+      "expected_runnable": [
+        "triage"
+      ]
+    },
+    {
+      "name": "advisory pass 1 paused on NEEDS_GRILLING and pass 2 returned a terminal status: the triage step is complete",
+      "phase_id": "N/A",
+      "stale_slots": [],
+      "events": [
+        {
+          "ts": "2026-10-07T14:00:00Z",
+          "wf": "wf-20261007T140000Z-resume-events",
+          "event": "workflow_started",
+          "phase": "triage",
+          "task_id": "N/A",
+          "agent": "router",
+          "decision": "start",
+          "reason": "fixture"
+        },
+        {
+          "ts": "2026-10-07T14:01:00Z",
+          "wf": "wf-20261007T140000Z-resume-events",
+          "event": "result_persisted",
+          "phase": "triage",
+          "task_id": "N/A",
+          "agent": "triage-agent",
+          "decision": "NEEDS_GRILLING",
+          "reason": "fixture",
+          "details": {
+            "phase_id": "N/A"
+          }
+        },
+        {
+          "ts": "2026-10-07T14:02:00Z",
+          "wf": "wf-20261007T140000Z-resume-events",
+          "event": "result_persisted",
+          "phase": "triage",
+          "task_id": "N/A",
+          "agent": "triage-agent",
+          "decision": "TRIAGED",
+          "reason": "fixture",
+          "details": {
+            "phase_id": "N/A"
+          }
+        }
+      ],
+      "graph": [
+        {
+          "agent": "triage-agent",
+          "phase": "triage",
+          "after": []
+        }
+      ],
+      "expected_runnable": []
+    },
+    {
+      "name": "codebase-health CANDIDATES_FOUND completes the scanner step: no second scanner pass follows and pending_gate carries the pause",
+      "phase_id": "N/A",
+      "stale_slots": [],
+      "events": [
+        {
+          "ts": "2026-10-07T14:00:00Z",
+          "wf": "wf-20261007T140000Z-resume-events",
+          "event": "workflow_started",
+          "phase": "codebase-health",
+          "task_id": "N/A",
+          "agent": "router",
+          "decision": "start",
+          "reason": "fixture"
+        },
+        {
+          "ts": "2026-10-07T14:01:00Z",
+          "wf": "wf-20261007T140000Z-resume-events",
+          "event": "result_persisted",
+          "phase": "codebase-health",
+          "task_id": "N/A",
+          "agent": "architecture-scanner",
+          "decision": "CANDIDATES_FOUND",
+          "reason": "fixture",
+          "details": {
+            "phase_id": "N/A"
+          }
+        }
+      ],
+      "graph": [
+        {
+          "agent": "architecture-scanner",
+          "phase": "codebase-health",
+          "after": []
+        }
+      ],
+      "expected_runnable": []
+    },
+    {
+      "name": "advisory pass 1 paused on NEEDS_GRILLING and pass 2 has not returned: the triage step is still runnable",
+      "phase_id": "N/A",
+      "stale_slots": [],
+      "events": [
+        {
+          "ts": "2026-10-07T14:00:00Z",
+          "wf": "wf-20261007T140000Z-resume-events",
+          "event": "workflow_started",
+          "phase": "triage",
+          "task_id": "N/A",
+          "agent": "router",
+          "decision": "start",
+          "reason": "fixture"
+        },
+        {
+          "ts": "2026-10-07T14:01:00Z",
+          "wf": "wf-20261007T140000Z-resume-events",
+          "event": "result_persisted",
+          "phase": "triage",
+          "task_id": "N/A",
+          "agent": "triage-agent",
+          "decision": "NEEDS_GRILLING",
+          "reason": "fixture",
+          "details": {
+            "phase_id": "N/A"
+          }
+        }
+      ],
+      "graph": [
+        {
+          "agent": "triage-agent",
+          "phase": "triage",
+          "after": []
+        }
+      ],
+      "expected_runnable": [
+        "triage"
+      ]
     }
   ],
   "expected": {
     "next_action": "resume_runnable_steps"
-  }
+  },
+  "locator_cases": [
+    {
+      "name": "a bare reply in a new session answers the one paused workflow; a terminal artifact with a stale gate is dropped first",
+      "artifacts": [
+        {
+          "workflow_uuid": "wf-20261007T150000Z-triagea1",
+          "workflow_type": "TRIAGE",
+          "user_request": "triage issue 42",
+          "pending_gate": "needs_info",
+          "phase_cursor": null,
+          "status_history": [
+            {
+              "event": "workflow_started"
+            }
+          ]
+        },
+        {
+          "workflow_uuid": "wf-20261007T140000Z-doned4",
+          "workflow_type": "BUILD",
+          "user_request": "build a thing",
+          "pending_gate": "needs_info",
+          "phase_cursor": null,
+          "status_history": [
+            {
+              "event": "workflow_started"
+            },
+            {
+              "event": "memory_finalized"
+            }
+          ]
+        }
+      ],
+      "named_uuid": null,
+      "request_matches": [],
+      "expected": {
+        "action": "answer_gate",
+        "wf": "wf-20261007T150000Z-triagea1"
+      }
+    },
+    {
+      "name": "two paused workflows and a bare reply: ask which, listing both gate names",
+      "artifacts": [
+        {
+          "workflow_uuid": "wf-20261007T150000Z-triagea1",
+          "workflow_type": "TRIAGE",
+          "user_request": "triage issue 42",
+          "pending_gate": "needs_info",
+          "phase_cursor": null,
+          "status_history": [
+            {
+              "event": "workflow_started"
+            }
+          ]
+        },
+        {
+          "workflow_uuid": "wf-20261007T150100Z-healthb2",
+          "workflow_type": "CODEBASE-HEALTH",
+          "user_request": "scan the repo",
+          "pending_gate": "candidate_choice",
+          "phase_cursor": null,
+          "status_history": [
+            {
+              "event": "workflow_started"
+            }
+          ]
+        }
+      ],
+      "named_uuid": null,
+      "request_matches": [],
+      "expected": {
+        "action": "ask_which",
+        "gates": [
+          "candidate_choice",
+          "needs_info"
+        ]
+      }
+    },
+    {
+      "name": "no paused workflow, only a terminal one with a stale gate: start a new workflow",
+      "artifacts": [
+        {
+          "workflow_uuid": "wf-20261007T140000Z-doned4",
+          "workflow_type": "BUILD",
+          "user_request": "build a thing",
+          "pending_gate": "needs_info",
+          "phase_cursor": null,
+          "status_history": [
+            {
+              "event": "workflow_started"
+            },
+            {
+              "event": "workflow_completed"
+            }
+          ]
+        }
+      ],
+      "named_uuid": null,
+      "request_matches": [],
+      "expected": {
+        "action": "new_workflow"
+      }
+    },
+    {
+      "name": "a reply that matches a user_request resumes that workflow even though another one is paused",
+      "artifacts": [
+        {
+          "workflow_uuid": "wf-20261007T150000Z-triagea1",
+          "workflow_type": "TRIAGE",
+          "user_request": "triage issue 42",
+          "pending_gate": "needs_info",
+          "phase_cursor": null,
+          "status_history": [
+            {
+              "event": "workflow_started"
+            }
+          ]
+        },
+        {
+          "workflow_uuid": "wf-20261007T150200Z-buildc3",
+          "workflow_type": "BUILD",
+          "user_request": "add profile page",
+          "pending_gate": null,
+          "phase_cursor": null,
+          "status_history": [
+            {
+              "event": "workflow_started"
+            }
+          ]
+        }
+      ],
+      "named_uuid": null,
+      "request_matches": [
+        "wf-20261007T150200Z-buildc3"
+      ],
+      "expected": {
+        "action": "resume",
+        "wf": "wf-20261007T150200Z-buildc3"
+      }
+    }
+  ]
 }

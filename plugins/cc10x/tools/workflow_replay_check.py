@@ -1519,18 +1519,33 @@ def check_multi_phase_memory_finalize(fixture: dict[str, Any]) -> None:
         )
 
 
-def runnable_steps_from_events(events: list[dict[str, Any]], phase_id: str, graph: list[dict[str, Any]]) -> list[str]:
-    """SKILL.md section 4 rule: a step is complete only if its result_persisted event for this phase_id is newer than the latest phase_started or remediation_created event for that phase_id (workflow_started when neither exists)."""
+PAUSE_DECISIONS = {"NEEDS_INFO", "NEEDS_GRILLING"}
+TERMINAL_EVENTS = {"memory_finalized", "workflow_completed", "workflow_failed"}
+
+
+def normalized_phase_id(value: Any) -> Any:
+    return "N/A" if value is None else value
+
+
+def event_phase_id(event: dict[str, Any]) -> Any:
+    return normalized_phase_id((event.get("details") or {}).get("phase_id"))
+
+
+def runnable_steps_from_events(events: list[dict[str, Any]], phase_id: Any, graph: list[dict[str, Any]]) -> list[str]:
+    """SKILL.md section 4 rule: a step is complete only if its non-pause result_persisted event for this phase_id is newer than the latest phase_started or remediation_created event for that phase_id (workflow_started when neither exists); null, missing and N/A phase ids are equal."""
+    phase_id = normalized_phase_id(phase_id)
     boundary = -1
     for index, event in enumerate(events):
-        if event["event"] in {"phase_started", "remediation_created"} and event.get("details", {}).get("phase_id") == phase_id:
+        if event["event"] in {"phase_started", "remediation_created"} and event_phase_id(event) == phase_id:
             boundary = index
     if boundary < 0:
         boundary = max((i for i, e in enumerate(events) if e["event"] == "workflow_started"), default=-1)
     complete = {
         (event["agent"], event["phase"])
         for event in events[boundary + 1 :]
-        if event["event"] == "result_persisted" and event.get("details", {}).get("phase_id") == phase_id
+        if event["event"] == "result_persisted"
+        and event_phase_id(event) == phase_id
+        and event.get("decision") not in PAUSE_DECISIONS
     }
     done_phases = {phase for _, phase in complete}
     return sorted(
@@ -1538,6 +1553,26 @@ def runnable_steps_from_events(events: list[dict[str, Any]], phase_id: str, grap
         for step in graph
         if (step["agent"], step["phase"]) not in complete and set(step["after"]) <= done_phases
     )
+
+
+def locate_resume(case: dict[str, Any]) -> dict[str, Any]:
+    """SKILL.md section 4 step 6(a): drop terminal artifacts, resume on a uuid or request match, else look up non-terminal artifacts with a pending_gate."""
+    live = [
+        a
+        for a in case["artifacts"]
+        if not ({h["event"] for h in a["status_history"]} & TERMINAL_EVENTS) and a.get("phase_cursor") != "memory-finalize"
+    ]
+    matched = [a for a in live if a["workflow_uuid"] == case["named_uuid"] or a["workflow_uuid"] in case["request_matches"]]
+    if len(matched) == 1:
+        return {"action": "resume", "wf": matched[0]["workflow_uuid"]}
+    if len(matched) > 1:
+        return {"action": "ask_which"}
+    paused = {a["workflow_uuid"]: a for a in live if a.get("pending_gate")}
+    if len(paused) == 1:
+        return {"action": "answer_gate", "wf": next(iter(paused))}
+    if len(paused) > 1:
+        return {"action": "ask_which", "gates": sorted(a["pending_gate"] for a in paused.values())}
+    return {"action": "new_workflow"}
 
 
 def check_multi_phase_resume_events(fixture: dict[str, Any]) -> None:
@@ -1554,6 +1589,13 @@ def check_multi_phase_resume_events(fixture: dict[str, Any]) -> None:
         require(
             runnable == sorted(case["expected_runnable"]),
             f"{label}: runnable steps for '{case['name']}' are {runnable}, expected {sorted(case['expected_runnable'])}",
+        )
+    require(bool(fixture["locator_cases"]), f"{label}: no locator cases")
+    for case in fixture["locator_cases"]:
+        located = locate_resume(case)
+        require(
+            located == case["expected"],
+            f"{label}: resume locator for '{case['name']}' is {located}, expected {case['expected']}",
         )
 
 
