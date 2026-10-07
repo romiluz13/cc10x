@@ -9,7 +9,7 @@
 
 ### CODEBASE-HEALTH task graph
 
-Single-pass advisory workflow (no `phase_cursor`, no phases):
+Single-pass advisory workflow (no `phase_cursor`, no phases). The graph created with the workflow holds ONLY the agent task:
 
 ```text
 TaskCreate({
@@ -17,7 +17,11 @@ TaskCreate({
   description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:codebase-health\nplan:N/A\nscope:N/A\nreason:Surface shallow modules and deepening candidates\n\nWalk the codebase using the canonical deep-module vocabulary, find shallow modules / pass-throughs / semantic duplicates, apply the deletion test, produce an HTML report with before/after diagrams.",
   activeForm: "Scanning for deepening opportunities"
 }) -> scanner_task_id
+```
 
+Memory Update is created ONLY at the terminal state, never with the graph above. The terminal state is `STATUS=NO_CANDIDATES`, or `STATUS=CANDIDATES_FOUND` with the report presented and the user declined or moved on, or the chosen candidate's grill completed. While candidates wait for a choice or a grill is running, the workflow pauses on `pending_gate` (`candidate_choice`), no Memory Update task exists or is runnable, and nothing is finalized. The router creates Memory Update at the terminal state, blocked by the scanner task:
+
+```text
 TaskCreate({
   subject: "CC10X Memory Update: Persist codebase-health learnings",
   description: "wf:{workflow_uuid}\nkind:memory\norigin:router\nphase:memory-finalize\nplan:N/A\nscope:N/A\nreason:Persist captured Memory Notes\n\nROUTER ONLY: execute inline. Read the workflow artifact and THIS task description payload, persist to .cc10x/*.md, then remove the matching [cc10x-internal] memory_task_id line from activeContext.md ## References. Never spawn Agent() for this task.",
@@ -26,14 +30,14 @@ TaskCreate({
 TaskUpdate({ taskId: memory_task_id, addBlockedBy: [scanner_task_id] })
 ```
 
-The Memory Update task is router-inline bookkeeping, not a second agent: CODEBASE-HEALTH stays advisory-only and still ends when the report is presented.
+The Memory Update task is router-inline bookkeeping, not a second agent: CODEBASE-HEALTH stays advisory-only and still ends when the report is presented and any chosen candidate is grilled (a terminal state).
 
 After the architecture-scanner emits its contract:
 
-- If `STATUS=CANDIDATES_FOUND`: the router opens the HTML report for the user and presents the candidates. The user picks one (or declines).
+- If `STATUS=CANDIDATES_FOUND`: the router opens the HTML report for the user and presents the candidates. The workflow pauses on `candidate_choice`. The user picks one (or declines); a fresh request that picks none counts as declined.
 - If `STATUS=NO_CANDIDATES`: the router reports the codebase is healthy; the workflow ends.
-- If the user picks a candidate: dispatch `exploration` in DESIGN mode to grill the deepening design. Domain ambiguity stops for human. The grilled design feeds the PLAN workflow on a fresh user request — CODEBASE-HEALTH does NOT auto-dispatch to PLAN.
+- If the user picks a candidate: dispatch `exploration` in DESIGN mode to grill the deepening design. Domain ambiguity stops for human. The workflow stays paused through the grill; its terminal state, and Memory Update, come when the grill completes. The grilled design feeds the PLAN workflow on a fresh user request — CODEBASE-HEALTH does NOT auto-dispatch to PLAN.
 
 ### CODEBASE-HEALTH completion
 
-The router owns task completion for the architecture-scanner (read-only agents use the router-owned completion fallback). The architecture-scanner emits its contract and stops its turn — the router marks the task completed, then runs the Memory Update task inline to persist the memory notes (blocked by the scanner task). No BUILD/DONE finishing menu — the workflow ends when the report is presented and (optionally) a candidate is grilled.
+The router owns task completion for the architecture-scanner (read-only agents use the router-owned completion fallback). The architecture-scanner emits its contract and stops its turn — the router marks the task completed. At the terminal state it then creates the Memory Update task (blocked by the scanner task) and runs it inline to persist the memory notes; while the workflow is paused it does neither. No BUILD/DONE finishing menu — the workflow ends when the report is presented and (optionally) a candidate is grilled.

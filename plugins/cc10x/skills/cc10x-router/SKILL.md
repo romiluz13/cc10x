@@ -148,7 +148,7 @@ Task tools are optional. Claude Code ships `TaskCreate`/`TaskList`/`TaskGet`/`Ta
 
 Hydration rules:
 
-- Find active parent workflow tasks by subject prefix `CC10X BUILD:`, `CC10X DEBUG:`, `CC10X REVIEW:`, `CC10X PLAN:`, `CC10X QA:`. TRIAGE and CODEBASE-HEALTH create no parent task: find them by `CC10X triage-agent:` / `CC10X architecture-scanner:` or the pending `CC10X Memory Update:` task, scoped by `wf:`. ORIENT creates no task.
+- Find active parent workflow tasks by subject prefix `CC10X BUILD:`, `CC10X DEBUG:`, `CC10X REVIEW:`, `CC10X PLAN:`, `CC10X QA:`. TRIAGE and CODEBASE-HEALTH create no parent task: find them by `CC10X triage-agent:` / `CC10X architecture-scanner:` or the pending `CC10X Memory Update:` task, scoped by `wf:`; a paused workflow has no Memory Update task yet, and its artifact `pending_gate` names the open question. ORIENT creates no task.
 - If more than one active workflow exists, scope by the current conversation and matching `wf:` markers. Do not resume a workflow you cannot scope confidently.
 - Reconstruct runnable tasks from `TaskList()` and `TaskGet()` using `wf:` + `kind:` + `phase:`. Do not rely on stored task IDs for correctness.
 - Read and write only the `.cc10x/` state namespace (memory `.cc10x/*.md`, workflows `.cc10x/workflows/*`). Ignore any legacy version-segmented layout such as `.cc10x/v10/*` or `.claude/cc10x/*` left over from older installs during hydration.
@@ -311,7 +311,7 @@ Only create child tasks after the workflow artifact exists and the read-back pas
 ### QA task graph
 
 - See `references/qa-workflow.md` and apply its `### QA task graph` block verbatim before creating QA child tasks.
-- TRIAGE and CODEBASE-HEALTH: apply the `### TRIAGE task graph` block of `references/triage-workflow.md` or the `### CODEBASE-HEALTH task graph` block of `references/codebase-health-workflow.md` verbatim (single-pass: agent task plus router-inline Memory Update; no parent task).
+- TRIAGE and CODEBASE-HEALTH: apply the `### TRIAGE task graph` block of `references/triage-workflow.md` or the `### CODEBASE-HEALTH task graph` block of `references/codebase-health-workflow.md` verbatim (single-pass: the agent task now, the router-inline Memory Update only at the terminal state; no parent task).
 
 ### Marker rules
 

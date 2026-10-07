@@ -2752,6 +2752,33 @@ ASSERTIONS = [
         and "reach 3 cycles" not in text,
         "SKILL.md no longer restates the breaker at a different count than its single definition",
     ),
+    # --- P4A remediation 1, commit 2: advisory Memory Update only at the terminal state ---
+    A(
+        "triage-workflow: Memory Update is a kind:memory task created only at the terminal state; NEEDS_INFO and NEEDS_GRILLING pause with none runnable",
+        ROUTER_REFS / "triage-workflow.md",
+        lambda text: "Memory Update is created ONLY at the terminal state" in text
+        and re.search(r"terminal states are `STATUS=TRIAGED` with `NEEDS_GRILLING` not true, and `STATUS=WONTFIX`", text) is not None
+        and re.search(r"`STATUS=NEEDS_INFO`, or on `NEEDS_GRILLING=true`, the workflow pauses on `pending_gate`[^\n]{0,200}no Memory Update task exists or is runnable", text) is not None
+        and re.search(r"kind:memory\\norigin:router\\nphase:memory-finalize", text) is not None
+        and re.search(r"second pass.{0,300}blocked by that pass's triage task", text, re.S) is not None,
+        "a pause must not finalize memory; a re-dispatch must not land on a finalized workflow (double-finalize)",
+    ),
+    A(
+        "codebase-health-workflow: Memory Update is a kind:memory task created only after the report is presented and any chosen grill completed",
+        ROUTER_REFS / "codebase-health-workflow.md",
+        lambda text: "Memory Update is created ONLY at the terminal state" in text
+        and re.search(r"terminal state is `STATUS=NO_CANDIDATES`, or `STATUS=CANDIDATES_FOUND` with the report presented and the user declined or moved on, or the chosen candidate's grill completed", text) is not None
+        and re.search(r"`pending_gate` \(`candidate_choice`\)[^\n]{0,200}no Memory Update task exists or is runnable", text) is not None
+        and re.search(r"kind:memory\\norigin:router\\nphase:memory-finalize", text) is not None,
+        "the grill after a chosen candidate happens before memory finalizes, not after",
+    ),
+    A(
+        "router: advisory routes finalize memory only at their terminal state, pointers say so",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: re.search(r"single-pass: the agent task now, the router-inline Memory Update only at the terminal state; no parent task", text) is not None
+        and re.search(r"a paused workflow has no Memory Update task yet", text) is not None,
+        "SKILL.md pointers match the reference graphs",
+    ),
 ]
 
 

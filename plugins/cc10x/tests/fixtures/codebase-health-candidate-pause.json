@@ -1,10 +1,10 @@
 {
-  "id": "codebase-health-happy-path",
+  "id": "codebase-health-candidate-pause",
   "workflow_type": "CODEBASE-HEALTH",
-  "description": "architecture-scanner finds 2 deepening candidates and produces an HTML report",
+  "description": "architecture-scanner reports candidates and the report is presented: the workflow pauses on the candidate choice, no Memory Update task exists yet and nothing is finalized; Memory Update is created only after the user declines or the chosen candidate's grill completes",
   "starting_artifact": {
-    "workflow_uuid": "wf-20260716T110000Z-health-001",
-    "workflow_id": "wf-20260716T110000Z-health-001",
+    "workflow_uuid": "wf-20261007T131000Z-health-pause",
+    "workflow_id": "wf-20261007T131000Z-health-pause",
     "workflow_type": "CODEBASE-HEALTH",
     "state_root": ".cc10x",
     "intent": {
@@ -27,7 +27,8 @@
     "quality": {
       "convergence_state": "N/A"
     },
-    "remediation_history": []
+    "remediation_history": [],
+    "pending_gate": "candidate_choice"
   },
   "agent_outputs": {
     "architecture_scanner_contract": {
@@ -41,53 +42,35 @@
           "problem": "Router is a pass-through \u2014 1:1 mapping to handler, no logic hidden",
           "solution": "Merge router into handler; handler becomes the deep module",
           "strength": "Strong"
-        },
-        {
-          "files": [
-            "src/utils/format.ts"
-          ],
-          "problem": "Pure functions extracted for testability but bugs hide in callers",
-          "solution": "Move formatting logic into the calling module; test through its interface",
-          "strength": "Worth exploring"
         }
       ],
-      "REPORT_PATH": "/tmp/architecture-review-20260716.html",
+      "REPORT_PATH": "/tmp/architecture-review-20261007.html",
       "BLOCKING": false,
       "MEMORY_NOTES": {
         "learnings": [
           "Router module is shallow (deletion test: complexity just moves)"
         ],
-        "patterns": [
-          "Pass-through router pattern \u2014 deepening candidate"
-        ],
+        "patterns": [],
         "verification": [
-          "Codebase health: 2 candidates found, report at /tmp/"
+          "Codebase health: 1 candidate found, report presented"
         ],
         "deferred": []
       }
     }
   },
   "expected": {
-    "next_action": "present_report",
-    "candidate_choice": "declined",
+    "next_action": "await_candidate_choice",
+    "pending_gate": "candidate_choice",
+    "candidate_choice": "pending",
     "artifact_delta": {}
   },
   "relevant_tasks": {
     "scanner_task": {
-      "wf": "wf-20260716T110000Z-health-001",
+      "wf": "wf-20261007T131000Z-health-pause",
       "kind": "agent",
       "phase": "codebase-health",
       "status": "completed",
       "blockedBy": []
-    },
-    "memory_finalize": {
-      "wf": "wf-20260716T110000Z-health-001",
-      "kind": "memory",
-      "phase": "memory-finalize",
-      "status": "completed",
-      "blockedBy": [
-        "scanner_task"
-      ]
     }
   }
 }

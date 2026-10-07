@@ -959,6 +959,38 @@ def _second_memory_task(d):
     d["relevant_tasks"]["memory_finalize_again"] = dict(d["relevant_tasks"]["memory_finalize"])
 
 
+def _triage_needs_info_with_memory(d):
+    d["agent_outputs"]["triage_agent_contract"]["STATUS"] = "NEEDS_INFO"
+
+
+def _triage_needs_grilling_with_memory(d):
+    d["agent_outputs"]["triage_agent_contract"]["NEEDS_GRILLING"] = True
+
+
+def _health_choice_pending_with_memory(d):
+    d["expected"]["candidate_choice"] = "pending"
+
+
+def _paused_add_memory_task(d):
+    tasks = d["relevant_tasks"]
+    agent = next(iter(tasks))
+    tasks["memory_finalize"] = {"wf": tasks[agent]["wf"], "kind": "memory", "phase": "memory-finalize", "status": "pending", "blockedBy": [agent]}
+
+
+def _paused_finalized(d):
+    art = d["starting_artifact"]
+    art["phase_cursor"] = "memory-finalize"
+    art["status_history"] = [{"event": "memory_finalized", "phase": "memory-finalize", "ts": "2026-10-07T13:30:00Z"}]
+
+
+def _paused_no_gate(d):
+    d["starting_artifact"]["pending_gate"] = None
+
+
+def _terminal_keeps_gate(d):
+    d["starting_artifact"]["pending_gate"] = "needs_info"
+
+
 L1_MUTATIONS = [
     ("qa-route-happy-path.json", _drop_task("qa_hunt"), "QA route phases"),
     ("qa-route-happy-path.json", _qa_open_isolation, "plan_phase_readonly"),
@@ -985,6 +1017,16 @@ L1_MUTATIONS = [
     ("multi-phase-memory-finalize.json", _dup_memory_finalized, "memory_finalized appears 2 times"),
     ("multi-phase-memory-finalize.json", _unfinalized_memory, "memory_finalized appears 0 times"),
     ("multi-phase-memory-finalize.json", _second_memory_task, "exactly one memory-finalize task"),
+    ("triage-happy-path.json", _triage_needs_info_with_memory, "Memory Update must not exist before the terminal state"),
+    ("triage-happy-path.json", _triage_needs_grilling_with_memory, "Memory Update must not exist before the terminal state"),
+    ("triage-happy-path.json", _terminal_keeps_gate, "must not carry a pending_gate"),
+    ("codebase-health-happy-path.json", _health_choice_pending_with_memory, "Memory Update must not exist before the terminal state"),
+    ("triage-needs-info-pause.json", _paused_add_memory_task, "Memory Update must not exist before the terminal state"),
+    ("triage-needs-info-pause.json", _paused_finalized, "memory_finalized recorded before the terminal state"),
+    ("triage-needs-info-pause.json", _paused_no_gate, "must carry a pending_gate"),
+    ("codebase-health-candidate-pause.json", _paused_add_memory_task, "Memory Update must not exist before the terminal state"),
+    ("codebase-health-candidate-pause.json", _paused_finalized, "memory_finalized recorded before the terminal state"),
+    ("codebase-health-candidate-pause.json", _paused_no_gate, "must carry a pending_gate"),
     ("two-workflow-resume.json", _share_workflow_id, "distinct workflow_id"),
     ("two-workflow-resume.json", _foreign_task, "resumed task a_builder carries wf"),
 ]
@@ -997,10 +1039,10 @@ def test_multi_phase_fixture_accepts_memory_blocked_by_the_last_phase_doc_sync_t
     assert result.returncode == 0, result.stdout + result.stderr
 
 
-def test_replay_registers_the_four_p3_fixtures():
+def test_replay_registers_the_p3_fixtures_and_the_two_advisory_pause_fixtures():
     result = run_tool("workflow_replay_check.py")
     assert result.returncode == 0, result.stdout + result.stderr
-    assert "fixtures=32" in result.stdout
+    assert "fixtures=34" in result.stdout
 
 
 @pytest.mark.parametrize("name,mutate,message", L1_MUTATIONS, ids=lambda v: getattr(v, "__name__", str(v)))

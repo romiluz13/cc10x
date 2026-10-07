@@ -41,6 +41,8 @@ REQUIRED_FIXTURES = (
     "build-doc-sync-skipped.json",
     "triage-happy-path.json",
     "codebase-health-happy-path.json",
+    "triage-needs-info-pause.json",
+    "codebase-health-candidate-pause.json",
     "debug-fixed.json",
     "debug-fixed-no-variant.json",
     "debug-research.json",

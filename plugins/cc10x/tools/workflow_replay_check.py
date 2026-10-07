@@ -1237,21 +1237,43 @@ def validate_triage_contract(fixture_id: str, contract: dict[str, Any]) -> None:
     )
 
 
-def validate_advisory_memory_task(label: str, fixture: dict[str, Any], agent_phase: str) -> None:
+def triage_is_terminal(contract: dict[str, Any]) -> bool:
+    return contract["STATUS"] in {"TRIAGED", "WONTFIX"} and contract.get("NEEDS_GRILLING") is not True
+
+
+def health_is_terminal(contract: dict[str, Any], expected: dict[str, Any]) -> bool:
+    return contract["STATUS"] == "NO_CANDIDATES" or expected.get("candidate_choice") in {"declined", "grill_completed"}
+
+
+def validate_advisory_memory_task(label: str, fixture: dict[str, Any], agent_phase: str, terminal: bool) -> None:
+    """Memory Update exists, blocked on the agent task, only at the terminal state; a paused workflow has none."""
     tasks = fixture["relevant_tasks"]
+    artifact = fixture["starting_artifact"]
     agents = [key for key, task in tasks.items() if task["phase"] == agent_phase]
     memory = [key for key, task in tasks.items() if task["phase"] == "memory-finalize"]
     require(len(agents) == 1, f"{label}: expected one {agent_phase} task, got {agents}")
-    require(len(memory) == 1, f"{label}: expected one memory-finalize task, got {memory}")
+    if terminal:
+        require(len(memory) == 1, f"{label}: expected one memory-finalize task, got {memory}")
+        require(
+            tasks[memory[0]]["blockedBy"] == agents,
+            f"{label}: Memory Update must be blocked by the {agent_phase} task, got {tasks[memory[0]]['blockedBy']}",
+        )
+        require(
+            not artifact.get("pending_gate"),
+            f"{label}: a terminal advisory workflow must not carry a pending_gate, got {artifact.get('pending_gate')!r}",
+        )
+        return
+    require(not memory, f"{label}: Memory Update must not exist before the terminal state, got {memory}")
     require(
-        tasks[memory[0]]["blockedBy"] == agents,
-        f"{label}: Memory Update must be blocked by the {agent_phase} task, got {tasks[memory[0]]['blockedBy']}",
+        count_memory_finalized(label, artifact) == 0 and artifact["phase_cursor"] != "memory-finalize",
+        f"{label}: memory_finalized recorded before the terminal state",
     )
+    require(bool(artifact.get("pending_gate")), f"{label}: a paused advisory workflow must carry a pending_gate")
 
 
 def check_triage_happy_path(fixture: dict[str, Any]) -> None:
-    validate_advisory_memory_task("triage-happy-path", fixture, "triage")
     ta = fixture["agent_outputs"]["triage_agent_contract"]
+    validate_advisory_memory_task("triage-happy-path", fixture, "triage", triage_is_terminal(ta))
     validate_triage_contract("triage-happy-path", ta)
     require(ta["STATUS"] == "TRIAGED", "triage-happy-path: expected TRIAGED")
     require(ta["CATEGORY"] == "bug", "triage-happy-path: expected bug")
@@ -1287,8 +1309,10 @@ def validate_architecture_scanner_contract(
 
 
 def check_codebase_health_happy_path(fixture: dict[str, Any]) -> None:
-    validate_advisory_memory_task("codebase-health-happy-path", fixture, "codebase-health")
     asc = fixture["agent_outputs"]["architecture_scanner_contract"]
+    validate_advisory_memory_task(
+        "codebase-health-happy-path", fixture, "codebase-health", health_is_terminal(asc, fixture["expected"])
+    )
     validate_architecture_scanner_contract("codebase-health-happy-path", asc)
     require(
         asc["STATUS"] == "CANDIDATES_FOUND",
@@ -1301,6 +1325,25 @@ def check_codebase_health_happy_path(fixture: dict[str, Any]) -> None:
     require(
         bool(asc.get("REPORT_PATH")),
         "codebase-health-happy-path: expected non-empty REPORT_PATH",
+    )
+
+
+def check_triage_needs_info_pause(fixture: dict[str, Any]) -> None:
+    ta = fixture["agent_outputs"]["triage_agent_contract"]
+    validate_triage_contract("triage-needs-info-pause", ta)
+    require(ta["STATUS"] == "NEEDS_INFO", "triage-needs-info-pause: expected NEEDS_INFO")
+    validate_advisory_memory_task("triage-needs-info-pause", fixture, "triage", triage_is_terminal(ta))
+
+
+def check_codebase_health_candidate_pause(fixture: dict[str, Any]) -> None:
+    asc = fixture["agent_outputs"]["architecture_scanner_contract"]
+    validate_architecture_scanner_contract("codebase-health-candidate-pause", asc)
+    require(
+        asc["STATUS"] == "CANDIDATES_FOUND",
+        "codebase-health-candidate-pause: expected CANDIDATES_FOUND",
+    )
+    validate_advisory_memory_task(
+        "codebase-health-candidate-pause", fixture, "codebase-health", health_is_terminal(asc, fixture["expected"])
     )
 
 
@@ -1476,6 +1519,8 @@ CHECKS = {
     "build-doc-sync-skipped.json": check_build_doc_sync_skipped,
     "triage-happy-path.json": check_triage_happy_path,
     "codebase-health-happy-path.json": check_codebase_health_happy_path,
+    "triage-needs-info-pause.json": check_triage_needs_info_pause,
+    "codebase-health-candidate-pause.json": check_codebase_health_candidate_pause,
     "debug-fixed.json": check_debug_fixed,
     "debug-fixed-no-variant.json": check_debug_fixed_no_variant,
     "debug-research.json": check_debug_research,

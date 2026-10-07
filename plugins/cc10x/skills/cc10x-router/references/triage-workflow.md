@@ -10,7 +10,7 @@
 
 ### TRIAGE task graph
 
-Single-pass advisory workflow (no `phase_cursor`, no phases):
+Single-pass advisory workflow (no `phase_cursor`, no phases). The graph created with the workflow holds ONLY the agent task:
 
 ```text
 TaskCreate({
@@ -18,7 +18,11 @@ TaskCreate({
   description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:triage\nplan:N/A\nscope:N/A\nreason:Categorize and verify incoming issue\n\nRead the issue/PR, verify the claim, check for redundancy and prior rejection, categorize, assign state, write an agent-ready brief.",
   activeForm: "Triaging issue"
 }) -> triage_task_id
+```
 
+Memory Update is created ONLY at the terminal state, never with the graph above. The terminal states are `STATUS=TRIAGED` with `NEEDS_GRILLING` not true, and `STATUS=WONTFIX`. On `STATUS=NEEDS_INFO`, or on `NEEDS_GRILLING=true`, the workflow pauses on `pending_gate` (`needs_info` or `needs_grilling`), no Memory Update task exists or is runnable, and nothing is finalized. When the pause is answered, the router dispatches a new `phase:triage` agent task carrying the new context (the second pass). The router creates Memory Update when a pass returns a terminal state, blocked by that pass's triage task:
+
+```text
 TaskCreate({
   subject: "CC10X Memory Update: Persist triage learnings",
   description: "wf:{workflow_uuid}\nkind:memory\norigin:router\nphase:memory-finalize\nplan:N/A\nscope:N/A\nreason:Persist captured Memory Notes\n\nROUTER ONLY: execute inline. Read the workflow artifact and THIS task description payload, persist to .cc10x/*.md, then remove the matching [cc10x-internal] memory_task_id line from activeContext.md ## References. Never spawn Agent() for this task.",
@@ -27,16 +31,16 @@ TaskCreate({
 TaskUpdate({ taskId: memory_task_id, addBlockedBy: [triage_task_id] })
 ```
 
-The Memory Update task is router-inline bookkeeping, not a second agent: TRIAGE stays advisory-only and still ends when the brief is presented.
+The Memory Update task is router-inline bookkeeping, not a second agent: TRIAGE stays advisory-only and still ends when the brief is presented (a terminal state).
 
 After the triage-agent emits its contract:
 
-- If `STATUS=NEEDS_INFO`: the router presents the needs-info questions to the user. The workflow pauses (`pending_gate: needs_info`). When the reporter replies, re-dispatch the triage-agent with the updated context.
+- If `STATUS=NEEDS_INFO`: the router presents the needs-info questions to the user. The workflow pauses (`pending_gate: needs_info`) with no Memory Update task. When the reporter replies, re-dispatch the triage-agent with the updated context (a new `phase:triage` task, second pass).
 - If `STATUS=TRIAGED` and `STATE=ready-for-agent`: the router presents the brief path to the user. The user routes to BUILD or DEBUG on a fresh request — TRIAGE does NOT auto-dispatch.
 - If `STATUS=TRIAGED` and `STATE=ready-for-human`: the router presents the brief + the "why it can't be delegated" note to the user.
 - If `STATUS=WONTFIX`: the router presents the wontfix reason. For a rejected enhancement, the agent writes to `.out-of-scope/`; for an already-implemented feature, it points to the existing implementation.
-- If the issue needed fleshing out (`triage-agent` set `NEEDS_GRILLING=true`): dispatch `exploration` in DESIGN mode to grill the issue into shape. Domain ambiguity stops for human input. The grilled result feeds back into a second triage-agent pass.
+- If the issue needed fleshing out (`triage-agent` set `NEEDS_GRILLING=true`): dispatch `exploration` in DESIGN mode to grill the issue into shape. Domain ambiguity stops for human input. The workflow pauses (`pending_gate: needs_grilling`) with no Memory Update task until the grilled result has fed a second triage-agent pass that returns a terminal state.
 
 ### TRIAGE completion
 
-The router owns task completion for the triage-agent (read-only agents use the router-owned completion fallback). The triage-agent emits its contract and stops its turn — the router marks the task completed, then runs the Memory Update task inline to persist the memory notes (blocked by the triage task, so it runs after the brief is presented). No BUILD/DONE finishing menu — the workflow ends when the brief is presented.
+The router owns task completion for the triage-agent (read-only agents use the router-owned completion fallback). The triage-agent emits its contract and stops its turn — the router marks the task completed. On a terminal result it then creates the Memory Update task (blocked by that triage task) and runs it inline to persist the memory notes after the brief is presented; on a pause it does neither. No BUILD/DONE finishing menu — the workflow ends when the brief is presented.

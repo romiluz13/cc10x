@@ -1,0 +1,69 @@
+{
+  "id": "triage-needs-info-pause",
+  "workflow_type": "TRIAGE",
+  "description": "triage-agent returns NEEDS_INFO: the workflow pauses on pending_gate, no Memory Update task exists yet and nothing is finalized; Memory Update is created only when a later pass reaches a terminal state",
+  "starting_artifact": {
+    "workflow_uuid": "wf-20261007T130000Z-triage-pause",
+    "workflow_id": "wf-20261007T130000Z-triage-pause",
+    "workflow_type": "TRIAGE",
+    "state_root": ".cc10x",
+    "intent": {
+      "goal": "Triage incoming bug report #101"
+    },
+    "results": {},
+    "status_history": [],
+    "plan_mode": null,
+    "verification_rigor": "standard",
+    "proof_status": "gaps_found",
+    "traceability": {
+      "requirements": [],
+      "phases": [],
+      "verification": [],
+      "remediation": []
+    },
+    "phase_cursor": null,
+    "task_ids": {},
+    "evidence": {},
+    "quality": {
+      "convergence_state": "N/A"
+    },
+    "remediation_history": [],
+    "pending_gate": "needs_info"
+  },
+  "agent_outputs": {
+    "triage_agent_contract": {
+      "STATUS": "NEEDS_INFO",
+      "CATEGORY": "bug",
+      "STATE": "needs-info",
+      "VERIFICATION_RESULT": "not-reproduced",
+      "REDUNDANCY_CHECK": "none \u2014 searched src/api/ for an existing implementation",
+      "PRIOR_REJECTION_CHECK": "none \u2014 .out-of-scope/ empty",
+      "NEEDS_GRILLING": false,
+      "BLOCKING": false,
+      "MEMORY_NOTES": {
+        "learnings": [
+          "Bug #101 lacks reproduction steps; asked the reporter"
+        ],
+        "patterns": [],
+        "verification": [
+          "Triage: STATUS=NEEDS_INFO, waiting on reporter"
+        ],
+        "deferred": []
+      }
+    }
+  },
+  "expected": {
+    "next_action": "pause_needs_info",
+    "pending_gate": "needs_info",
+    "artifact_delta": {}
+  },
+  "relevant_tasks": {
+    "triage_task": {
+      "wf": "wf-20261007T130000Z-triage-pause",
+      "kind": "agent",
+      "phase": "triage",
+      "status": "completed",
+      "blockedBy": []
+    }
+  }
+}
