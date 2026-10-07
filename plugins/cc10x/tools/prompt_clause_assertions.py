@@ -2487,6 +2487,13 @@ ASSERTIONS = [
         "two live workflows can make a hook read the other one; no hook checks phase exit",
     ),
     A(
+        "policy: hooks skip finished workflows when choosing the newest artifact",
+        POLICY_REF,
+        lambda text: text.count("newest modification time in `.cc10x/workflows/` that is not finished") == 1
+        and "last `status_history` event is not `memory_finalized`, `workflow_completed` or `workflow_failed`" in text,
+        "P5.T5 hooks ignore artifacts whose last status_history event is terminal; the reference must say so",
+    ),
+    A(
         "policy: zero-finding bounce keeps the floor and says what it is",
         POLICY_REF,
         lambda text: text.count("fewer than 3 file:line evidence citations") == 1
