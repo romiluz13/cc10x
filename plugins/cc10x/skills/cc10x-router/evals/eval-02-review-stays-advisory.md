@@ -13,7 +13,8 @@ The router receives this request:
 > "Review the new payments module and fix anything sketchy you find while you're in there."
 
 Context: the leading verb is "Review" (priority 3 REVIEW signal); the trailing clause "fix
-anything sketchy" tempts the router to let the REVIEW workflow mutate code.
+anything sketchy" tempts the router to let the REVIEW workflow mutate code. "fix" is also an
+ERROR keyword, but it only nominates that row.
 
 ---
 
@@ -29,8 +30,9 @@ The agent is told (or tells itself):
 
 ## Expected Behavior (skill loaded)
 
-1. Router matches priority 3 REVIEW ("review", "audit"-style intent) and selects the REVIEW
-   workflow with chain `code-reviewer`.
+1. Router applies the primary-deliverable test: no existing broken behavior is named, and
+   judging the new module is the stated deliverable, so the "fix" hit on the ERROR row does
+   not decide. It selects the priority 3 REVIEW workflow with chain `code-reviewer`.
 2. Applies the rule **REVIEW is advisory only. Never let REVIEW create code-changing tasks.**
 3. Produces findings only. To act on "fix anything sketchy", it surfaces the findings and
    routes a SEPARATE workflow (BUILD for changes, or DEBUG if a finding is an active defect),

@@ -11,9 +11,9 @@ Each eval in this directory follows the RED-GREEN-REFACTOR structure from
 - **Expected behavior:** The route + chain the router MUST select when the skill is loaded
 - **Failure signature:** What an agent does WITHOUT the routing discipline (baseline)
 
-These evals test the routing TABLE and its rules (ERROR > BUILD, REVIEW advisory-only,
-router-is-the-entry-point), not the downstream agents. `cc10x-router` is excluded from the
-skill count in `cc10x_doc_consistency_check.py`, so its `evals/` subdir is doubly safe.
+These evals test the routing TABLE and its rules (the primary deliverable decides, REVIEW
+advisory-only, router-is-the-entry-point), not the downstream agents. `cc10x-router` is excluded from the
+skill count in `tools/doc_consistency_check.py`, so its `evals/` subdir is doubly safe.
 
 ## Running an Eval
 
@@ -25,6 +25,6 @@ Dispatch a subagent with the eval's Setup + Pressure as the full task, with the
 
 | File | Scenario | Key pressure |
 |------|----------|-------------|
-| `eval-01-error-beats-build.md` | "Add a guard so X stops crashing" — fix framed as a feature | "it's an addition, route BUILD" (ERROR must win) |
+| `eval-01-error-beats-build.md` | "Add a guard so X stops crashing" — fix framed as a feature | "it's an addition, route BUILD" (the primary deliverable is the repair, so DEBUG) |
 | `eval-02-review-stays-advisory.md` | "Review this and fix what you find" | "the user said fix, so REVIEW should change code" |
 | `eval-03-skip-router-multifile.md` | "Quick change across three files" | "it's small, just edit directly without routing" |

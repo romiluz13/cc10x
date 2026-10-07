@@ -86,6 +86,7 @@ def router_description(text: str) -> str:
 
 POLICY_REF = SKILLS / "cc10x-router" / "references" / "workflow-artifact-and-hook-policy.md"
 ROUTER_REFS = SKILLS / "cc10x-router" / "references"
+ROUTER_EVALS = SKILLS / "cc10x-router" / "evals"
 # Fields the router requires on a qa-re-plan return; planner.md carries them from P4.T4.4.
 POLICY_FIELDS_AGENT_SIDE_PENDING = {"AMENDED_FILES", "STALE_SWEEP", "RECONCILIATION_RERUN"}
 POLICY_TABLE_AGENTS = (
@@ -2644,6 +2645,43 @@ ASSERTIONS = [
             for ref, blk in (("build", "BUILD"), ("debug", "DEBUG"), ("review", "REVIEW"), ("qa", "QA"), ("plan", "PLAN"))
         ),
         "tightening the preparation bullets keeps the read-first instruction and both block names for the five routes",
+    ),
+    # --- P4.T1.6: amendment-lane anchors in qa-workflow.md ---
+    A(
+        "qa-workflow: amendment-lane sweep fields are defined and gate the pass-2 task (A5)",
+        ROUTER_REFS / "qa-workflow.md",
+        contains_all(
+            "- `AMENDED_FILES:` every artifact touched",
+            "**All three plan artifacts are in scope on every amendment.**",
+            "- `STALE_SWEEP:` for each corrected fact",
+            "- `RECONCILIATION_RERUN:` the arithmetic restated after the amendment",
+            "If any of the three is missing or empty, the gate fails closed: do **NOT** create the pass-2 task.",
+        ),
+        "the three sweep fields carry their definitions and the fail-closed rule in the QA reference, not only their names",
+    ),
+    A(
+        "router evals: eval-01 teaches the primary-deliverable rule and the DEFAULT row is priority 8 (B4)",
+        ROUTER_EVALS / "eval-01-error-beats-build.md",
+        lambda text: "primary deliverable" in text and "priority-8" in text and "priority-7" not in text and "first matching signal" not in text,
+        "the ERROR-vs-BUILD eval decides by deliverable, not first keyword, and names the table's real DEFAULT priority",
+    ),
+    A(
+        "router evals: eval-02 and eval-03 agree with the table (B4)",
+        ROUTER_EVALS / "eval-02-review-stays-advisory.md",
+        lambda text: "primary-deliverable test" in text and "priority 3" in text,
+        "the REVIEW eval applies the same deliverable test as eval-01 and cites the REVIEW row number",
+    ),
+    A(
+        "router evals: eval-03 names the DEFAULT row as priority 8 (B4)",
+        ROUTER_EVALS / "eval-03-skip-router-multifile.md",
+        lambda text: "priority-8 DEFAULT" in text and "priority-7" not in text,
+        "the DEFAULT row is priority 8 in the routing table",
+    ),
+    A(
+        "router evals: README names the real checker path (C12)",
+        ROUTER_EVALS / "README.md",
+        lambda text: "tools/doc_consistency_check.py" in text and "cc10x_doc_consistency_check" not in text,
+        "the README points at the checker that exists",
     ),
 ]
 

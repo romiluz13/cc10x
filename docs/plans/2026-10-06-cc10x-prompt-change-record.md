@@ -180,3 +180,26 @@ Claim boundary: now true: the description is third person, unshouted, and routes
 Pins and fixtures: three new pins (description shape and hand-off; audit-named sentences gone; preparation blocks still named for all five routes; assertion count 301). No existing pin edited, weakened or deleted; no fixture changed. `doc_consistency_check.py` OK.
 
 Classification: `orchestration_sensitive`.
+
+## P4.T1.6 Sweep, new anchors, router evals README
+
+Findings: B4, B9, C12, C9 (part).
+
+Files: `plugins/cc10x/tools/prompt_clause_assertions.py` (five new pins); `plugins/cc10x/skills/cc10x-router/evals/README.md`, `eval-01-error-beats-build.md`, `eval-02-review-stays-advisory.md`, `eval-03-skip-router-multifile.md`. No `SKILL.md` edit.
+
+What changed:
+- New anchors (i): `qa-workflow.md` pin for the amendment-lane gate: the three field definitions (`AMENDED_FILES`, `STALE_SWEEP`, `RECONCILIATION_RERUN`), the "all three plan artifacts are in scope" sentence and the fail-closed "do NOT create the pass-2 task" rule. The text already existed (T1.4 found no edit needed), so there was no behavioral RED for this pin; instead a mutation probe showed it fails when the fail-closed sentence or the `STALE_SWEEP` definition is removed. The policy-reference planner-row pin (P4.T1.2) already covers the "planner contract table row", and the QA routing-row pin (priority-5 row, from P2.T3) is present, so neither was added again. The planner agent file still does not carry the three fields (P4.T4.4 owns that).
+- (ii) `eval-01` rewritten to teach the primary-deliverable rule: keyword hits nominate, the deliverable decides, repairing an existing crash is the deliverable so DEBUG, and the DEFAULT row is priority 8 (it said priority-7; the table's DEFAULT is the eighth row). The "first matching signal" step is gone. `eval-02` now applies the same test (the "fix" keyword nominates the ERROR row but the deliverable is the review) and keeps priority 3 for REVIEW. `eval-03`: "priority-7 DEFAULT" became "priority-8 DEFAULT". `README.md`: the checker name `cc10x_doc_consistency_check.py` became `tools/doc_consistency_check.py`; the rule list now says the primary deliverable decides.
+- The plan also named "section 13" to 12 and "section 2a" to 6 in the evals README. Neither string exists in that README or in the three evals (grep over the evals directory, the baseline and the eval standard), so there was nothing to change; recorded as already-clean.
+- (iii) No fixture carries an out-of-enum `convergence_state`: the replay checker enforces `CONVERGENCE_STATES` over every fixture and is green (32 fixtures; values in use: pending, needs_iteration, converged, N/A).
+- (iv) Assertion count: 298 at the start of T1.5c, 301 after T1.5c, 306 after this task. The pin floor is 253 plus additions, and no pin was retired; the count only grew.
+
+Not changed, with reason: `eval-03` still mirrors the repo root `CLAUDE.md` ("only a single trivial one-line edit may skip routing" in its Counter table); `SKILL.md` now says a small edit still routes as BUILD trivial scope (T1.5a, B5). The root file and the eval agree with each other and not with `SKILL.md`; the wording is a P6.T11 item. `docs/EVAL-STANDARD.md` line 8 carries the same stale checker name as the README did; it is outside this task's file list and left for the docs phase.
+
+Why safe: only eval teaching documents (not loaded at runtime), one pin set and no router text changed.
+
+Claim boundary: now true: the router evals teach the rule `SKILL.md` states and cite the table's real row numbers; the sweep fields are pinned where the router reads them. Still not claimed: that any eval was run (AD-2).
+
+Pins and fixtures: five new pins (the amendment-lane anchor, eval-01, eval-02, eval-03, README path); no existing pin edited or removed; no fixture changed.
+
+Classification: `orchestration_sensitive` (the evals are doc-only; the pins protect router-adjacent contract text).
