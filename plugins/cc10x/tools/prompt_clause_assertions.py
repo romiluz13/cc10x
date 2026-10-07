@@ -3838,7 +3838,7 @@ ASSERTIONS = [
         "router: the verifier findings handoff adds the REM-FIX report sub-block on a re-verify",
         SKILLS / "cc10x-router" / "SKILL.md",
         contains_all(
-            "add a `### REM-FIX report` sub-block that references the persisted REM-FIX report (`results.builder`)",
+            "add a `### REM-FIX report` sub-block that references the persisted REM-FIX report (`results.builder`, or `results.investigator` when `bug-investigator` executed the REM-FIX)",
             "Re-review precondition gate",
         ),
         "the section 12 handoff is the single source of the verifier's Previous Agent Findings; it must name the REM-FIX report",
@@ -3861,7 +3861,8 @@ ASSERTIONS = [
         lambda text: yaml_has_keys("COVERING_TESTS", "TEST_COMMAND", "TEST_OUTPUT", "FINDING_DISPUTED", "VERIFY_COMMAND", "VERIFY_OUTPUT")(text)
         and contains_all(
             "## REM-FIX Tasks (`kind:remfix`)",
-            "dispatches a `kind:remfix` task with `origin:bug-investigator` to you",
+            "dispatches a `kind:remfix` task to you when it is created in a DEBUG workflow, whatever its `origin:`",
+            "or when it carries `origin:bug-investigator`",
             "only the files that would fail if the fix were wrong",
             "fails closed without all three",
             "in the same order in all three lists",
@@ -3909,9 +3910,10 @@ ASSERTIONS = [
         "remediation: the REM-FIX subject names the executing agent per origin",
         SKILLS / "cc10x-router" / "references" / "remediation-and-research.md",
         lambda text: "{executing agent: component-builder | bug-investigator}: REM-FIX {short reason}" in text
-        and "`bug-investigator` when `origin:bug-investigator`" in text
+        and "`bug-investigator` when the REM-FIX is created in a DEBUG workflow or has `origin:bug-investigator`" in text
+        and "`origin:` names the agent whose findings triggered the fix, never the executor" in text
         and 'subject: "CC10X component-builder: REM-FIX' not in text
-        and "`component-builder`, or `bug-investigator` when `origin:bug-investigator`; both declare them" in text,
+        and "`component-builder`, or `bug-investigator` when the REM-FIX is created in a DEBUG workflow or has `origin:bug-investigator`; both declare them" in text,
         "the template hard-coded component-builder while the dispatch table sends origin bug-investigator to the investigator",
     ),
     A(
@@ -3998,7 +4000,7 @@ ASSERTIONS = [
         "policy: builder and investigator rows define the dispute-only return",
         POLICY_REF,
         lambda text: "**`kind:remfix` proof:**" in text
-        and "the **dispute-only return**: every dispatched finding is in `FINDING_DISPUTED` (equal count)" in text
+        and "the **dispute-only return**: every dispatched finding is in `FINDING_DISPUTED` (equal count, the entries distinct and each mapping to one finding in the task)" in text
         and "the only `PASS` accepted with `PHASE_EXIT_READY=false`" in text
         and "`PHASE_STATUS=partial`, `PROOF_STATUS=gaps_found`" in text
         and "A fabricated RED or GREEN on a dispute-only return is invalid output" in text
@@ -4102,12 +4104,149 @@ ASSERTIONS = [
         and (SKILLS / "memory-and-handoff" / "references" / "memory-operations.md").read_text(encoding="utf-8").count("mkdir -p .cc10x/\n") == 1,
         "the memory load is the first step of every workflow and runs before any QA plan phase guard",
     ),
+    # --- P4B remediation 2, commit 2: dispute-only phase transition, re-raise matching, persisted set, named stall exit, executor rule ---
+    A(
+        "router: step 6 stop rule excepts a valid dispute-only REM-FIX return, which proceeds to the Re-Review loop",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        contains_all(
+            "persist `phase_status={partial|blocked}` and stop, except that a valid dispute-only REM-FIX return persists `partial` and proceeds to the Re-Review loop",
+            "and one whose dispute is still in flight continues to the verifier under the same gate",
+        ),
+        "step 6 stopped on every non-complete phase, so a dispute-only phase stayed partial forever; and a blocking re-raise of an in-flight dispute stopped the chain before the verifier",
+    ),
+    A(
+        "build-workflow: the BUILD stop rule excepts the dispute-only return, and finishing waits for the verifier's adjudication",
+        ROUTER_REFS / "build-workflow.md",
+        contains_all(
+            "the one exception is a valid dispute-only REM-FIX return, which records `partial` and proceeds to the Re-Review loop",
+            "A phase left `partial` by a dispute-only REM-FIX is green only after the verifier's adjudication has set it `completed`.",
+        ),
+        "the BUILD graph rule said stop on incomplete phase evidence with no exception",
+    ),
+    A(
+        "remediation: dispute-only phase transition names what phase_exit_gate reads",
+        SKILLS / "cc10x-router" / "references" / "remediation-and-research.md",
+        contains_all(
+            "Dispute-only phase transition.",
+            "When the verifier adjudicates EVERY dispute validly (by index) and returns `PASS`, the router sets `phase_status=completed` and runs `phase_exit_gate` on exactly two things",
+            "the verifier return, and the phase's earlier builder evidence",
+            "The gate never reads the dispute-only report's `PHASE_EXIT_READY=false`",
+            "If the verifier rejects any dispute, the phase stays `partial`",
+        ),
+        "without a named transition and named gate inputs the gate reads the dispute-only report (PHASE_EXIT_READY=false) and the phase never completes",
+    ),
+    A(
+        "remediation: a re-raise of an in-flight dispute is matched by identity, creates no REM-FIX and continues to the verifier",
+        SKILLS / "cc10x-router" / "references" / "remediation-and-research.md",
+        contains_all(
+            "Re-raise matching.",
+            "the same file and the same summary as the disputed finding",
+            "When the router cannot match confidently it treats the finding as new",
+            "A matched re-raise creates no REM-FIX and the chain CONTINUES to the verifier",
+            "does not stop the chain before the verifier",
+        ),
+        "the reviewer's blocking verdict on a re-raised disputed finding stopped the chain before the only adjudicator ran",
+    ),
+    A(
+        "remediation: the in-flight dispute set is persisted in results.disputes_in_flight (policy and skeleton agree)",
+        SKILLS / "cc10x-router" / "references" / "remediation-and-research.md",
+        lambda text: "Persisted dispute set." in text
+        and "`results.disputes_in_flight` entry per disputed position: `{cycle_number, position, finding, ruling}`" in text
+        and "`ruling` null until the verifier adjudicates" in text
+        and "`results.disputes_in_flight` is the router-written list of disputed REM-FIX findings" in POLICY_REF.read_text(encoding="utf-8")
+        and "disputes_in_flight" in (ROUTER_REFS / "workflow-artifact.skeleton.json").read_text(encoding="utf-8"),
+        "the dispute set lived only in conversation, so it did not survive compaction or resume",
+    ),
+    A(
+        "skeleton: results.disputes_in_flight ships as an empty list",
+        ROUTER_REFS / "workflow-artifact.skeleton.json",
+        lambda text: json.loads(text).get("results", {}).get("disputes_in_flight", "missing") == [],
+        "the key the router writes and the policy names must exist in the skeleton, empty",
+    ),
+    A(
+        "remediation: the unadjudicated-dispute stall has a named exit (one changed re-dispatch, then BLOCKED and ask; inline mode asks)",
+        SKILLS / "cc10x-router" / "references" / "remediation-and-research.md",
+        contains_all(
+            "Unadjudicated-dispute exit.",
+            "re-dispatches the verifier ONCE with a changed input",
+            "an explicit `### Disputed findings` list",
+            "the router stops with `BLOCKED`",
+            "it creates no REM-FIX and advances no phase",
+            "In inline mode (no Agent primitive) the router states that it cannot adjudicate its own builder's disputes and asks the user",
+        ),
+        "an invalid or absent verifier return left the chain stalled with no owner and no way out",
+    ),
+    A(
+        "remediation: a REM-FIX created from DISPUTE_REJECTED carries the ruling and the verifier's reason",
+        SKILLS / "cc10x-router" / "references" / "remediation-and-research.md",
+        contains_all(
+            "{rejected disputes block, only when created from a DISPUTE_REJECTED ruling}",
+            "under `Rejected disputes:` after the findings, each rejected finding with the ruling (`DISPUTE_REJECTED`) and the verifier's rejection reason",
+            "does not dispute the same `VERIFY_COMMAND` again unless it has new evidence",
+            "carrying the ruling and the verifier's rejection reason as the template section above says",
+        ),
+        "the REM-FIX template carried only the findings, so the executor never saw the ruling and could re-dispute the same command",
+    ),
+    A(
+        "remediation: dispute-only requires distinct FINDING_DISPUTED entries that each map to a task finding",
+        SKILLS / "cc10x-router" / "references" / "remediation-and-research.md",
+        contains_all("the `FINDING_DISPUTED` entries are distinct, each maps to exactly one finding in the task by its id or restated file and summary, and the count of `FINDING_DISPUTED` entries equals the count of findings in the task"),
+        "an equal count alone let two copies of one dispute pass for an all-disputed report",
+    ),
+    A(
+        "router dispatch: a REM-FIX created in a DEBUG workflow executes with bug-investigator, any origin",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        contains("| `kind:remfix` created in a DEBUG workflow (any `origin:`; wins over the origin rows below), or `kind:remfix` + `origin:bug-investigator` | `cc10x:bug-investigator` |"),
+        "nothing produced origin:bug-investigator, so the investigator never executed a REM-FIX; origin names who raised the findings, the workflow decides the executor",
+    ),
+    A(
+        "policy: dispute-only FIXED row defines FEEDBACK_LOOP and DEBUG_CLOSEOUT so the investigator invents nothing",
+        POLICY_REF,
+        contains_all(
+            "(the `kind:remfix` dispute-only return below is the one exception)",
+            "`FEEDBACK_LOOP.rung=cli_snapshot` with `command` the first `VERIFY_COMMAND`",
+            "`DEBUG_CLOSEOUT.instrumentation_removed` and `repro_no_longer_fires` both null (nothing was changed or reproduced)",
+        ),
+        "the FIXED row required instrumentation_removed=true and a non-none rung, which a no-code-change dispute-only return could only satisfy with invented values",
+    ),
+    A(
+        "policy: the dispute-only row says what phase_exit_gate reads after adjudication",
+        POLICY_REF,
+        contains_all(
+            "the router sets `phase_status=completed` and runs `phase_exit_gate` on the verifier return and the phase's earlier builder evidence, never on the dispute-only report",
+        ),
+        "the contract row carried the partial state but not the transition out of it",
+    ),
+    *[
+        A(
+            f"{name}: a REM-FIX carrying Rejected disputes is applied, the same command is not re-disputed without new evidence, entries name distinct findings",
+            AGENTS / f"{name}.md",
+            contains_all(
+                "A REM-FIX that carries `Rejected disputes:` is that ruling already made",
+                "apply those findings, and do not dispute the same `VERIFY_COMMAND` again unless you have new evidence (a different command or new output)",
+                "each entry naming a different finding of the task",
+            ),
+            "the executor must know what to do with a rejected dispute, or it re-disputes the same command in a loop",
+        )
+        for name in ("component-builder", "bug-investigator")
+    ],
+    A(
+        "bug-investigator: dispute-only return defines FEEDBACK_LOOP.rung and the DEBUG_CLOSEOUT values, null where nothing happened",
+        AGENTS / "bug-investigator.md",
+        contains_all(
+            "`FEEDBACK_LOOP.rung: cli_snapshot` with `FEEDBACK_LOOP.command` set to the first `VERIFY_COMMAND`",
+            "`DEBUG_CLOSEOUT.instrumentation_removed` and `DEBUG_CLOSEOUT.repro_no_longer_fires` both `null` (nothing was changed or reproduced, so there is nothing to confirm)",
+            "instrumentation_removed: [true | false | null on a kind:remfix dispute-only return]",
+            "(both `null` on a `kind:remfix` dispute-only return, REM-FIX section item 5)",
+        ),
+        "the dispute-only return left rung and closeout to be invented, which the FIXED requirements could only satisfy with fabricated values",
+    ),
     # --- P4B remediation 1, commit 3: stale text and the pins the hunt showed unprotected ---
     A(
         "remediation: the REM-FIX report reaches the verifier from results.investigator when the origin is bug-investigator",
         SKILLS / "cc10x-router" / "references" / "remediation-and-research.md",
         contains_all(
-            "It names `results.builder` (`results.investigator` when the REM-FIX origin is `bug-investigator`) of the workflow artifact",
+            "It names `results.builder`, or `results.investigator` when `bug-investigator` executed the REM-FIX, of the workflow artifact",
             "where the router persisted the report",
         ),
         "the investigator is an executor of kind:remfix, so its report is persisted under its own key and the hand-off must name it",
@@ -4115,7 +4254,7 @@ ASSERTIONS = [
     A(
         "router: artifact-only REM-FIX is dispatched to the origin's executing agent, not always component-builder",
         SKILLS / "cc10x-router" / "SKILL.md",
-        contains("dispatched through the Agent tool to the executing agent the dispatch table names for its `origin:` (`component-builder`, or `bug-investigator` for `origin:bug-investigator`)"),
+        contains("dispatched through the Agent tool to the executing agent the dispatch table names (`component-builder`, or `bug-investigator` in a DEBUG workflow or for `origin:bug-investigator`)"),
         "the artifact-only sentence hard-coded component-builder while the dispatch table sends origin bug-investigator to the investigator",
     ),
     A(

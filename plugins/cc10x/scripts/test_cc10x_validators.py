@@ -939,6 +939,42 @@ def _case_task(name, **fields):
     return _case(name, lambda c: c["task"].update(fields))
 
 
+def _case_report(name, **fields):
+    return _case(name, lambda c: c["remfix_report"].update(fields))
+
+
+def _case_scenario(case_name, index, **fields):
+    return _case(case_name, lambda c: c["executor_contract"]["SCENARIOS"][index].update(fields))
+
+
+def _case_drop_scenario(name):
+    return _case(name, lambda c: c["executor_contract"]["SCENARIOS"].pop())
+
+
+def _case_set(name, **fields):
+    return _case(name, lambda c: c.update(fields))
+
+
+def _case_pop(name, key):
+    return _case(name, lambda c: c.pop(key))
+
+
+def _case_loop(name, **fields):
+    return _case(name, lambda c: c["executor_contract"]["FEEDBACK_LOOP"].update(fields))
+
+
+def _case_closeout(name, **fields):
+    return _case(name, lambda c: c["executor_contract"]["DEBUG_CLOSEOUT"].update(fields))
+
+
+def _set_expected(**fields):
+    return lambda d: d["expected"].update(fields)
+
+
+def _pop_expected(key):
+    return lambda d: d["expected"].pop(key)
+
+
 def _dispute_only_undispute_one(c):
     c["remfix_report"]["FINDING_DISPUTED"] = c["remfix_report"]["FINDING_DISPUTED"][:1]
     c["remfix_report"]["VERIFY_COMMAND"] = c["remfix_report"]["VERIFY_COMMAND"][:1]
@@ -1186,10 +1222,45 @@ L1_MUTATIONS = [
     ("remfix-gate.json", _case_contract("dispute-only", STATUS="FIXED"), "dispute-only STATUS"),
     ("remfix-gate.json", _case("dispute-only", _dispute_only_drop_contract), "dispute-only report needs the executor contract"),
     ("remfix-gate.json", _case("dispute-only", _dispute_only_undispute_one), "REM-FIX report empty COVERING_TESTS"),
-    ("remfix-gate.json", _case_task("bug-investigator-origin", subject="CC10X component-builder: REM-FIX x"), "must name its executor bug-investigator"),
-    ("remfix-gate.json", _case_task("bug-investigator-origin", executor="component-builder"), "executor must be bug-investigator"),
-    ("remfix-gate.json", _case("bug-investigator-origin", lambda c: c.update({"verifier_handoff_key": "results.builder"})), "hands the verifier results.investigator"),
+    ("remfix-gate.json", _case_task("debug-workflow-remfix", subject="CC10X component-builder: REM-FIX x"), "must name its executor bug-investigator"),
+    ("remfix-gate.json", _case_task("debug-workflow-remfix", executor="component-builder"), "executor must be bug-investigator"),
+    ("remfix-gate.json", _case("debug-workflow-remfix", lambda c: c.update({"verifier_handoff_key": "results.builder"})), "hands the verifier results.investigator"),
+    ("remfix-gate.json", _case_task("debug-workflow-remfix", workflow_type="BUILD"), "executor must be component-builder"),
+    ("remfix-gate.json", _case_task("dispute-only", workflow_type="DEBUG"), "executor must be bug-investigator"),
     ("remfix-gate.json", _case("dispute-only", lambda c: c.update({"dispute_outcomes": ["remfix_created", "remfix_created"]})), "dispute_outcomes"),
+    ("remfix-gate.json", _pop_expected("phase_status_after"), "must carry phase_status_after"),
+    ("remfix-gate.json", _set_expected(phase_status_after={"before_adjudication": "partial", "after_adjudication": "partial"}), "phase_status_after must be"),
+    ("remfix-gate.json", _set_expected(phase_status_after={"before_adjudication": "completed", "after_adjudication": "completed"}), "phase_status_after must be"),
+    ("remfix-gate.json", lambda d: d["agent_outputs"]["verifier_adjudication"].update({"verifier_status": "FAIL"}), "phase_status_after must be"),
+    ("remfix-gate.json", lambda d: d["agent_outputs"]["verifier_adjudication"].pop("verifier_status"), "must carry the verifier_status"),
+    ("remfix-gate.json", _case_set("dispute-only", phase_status_after={"before_adjudication": "partial", "after_adjudication": "completed"}), "phase_status_after must be"),
+    ("remfix-gate.json", _case_set("dispute-only", phase_status_after={"before_adjudication": "completed", "after_adjudication": "partial"}), "phase_status_after must be"),
+    ("remfix-gate.json", _case_pop("dispute-only", "phase_status_after"), "must carry phase_status_after"),
+    ("remfix-gate.json", _case_set("dispute-only-all-upheld", phase_exit_gate_reads=["verifier_return", "dispute_only_report"]), "phase_exit_gate reads the verifier return"),
+    ("remfix-gate.json", _case_set("dispute-only-all-upheld", phase_exit_gate_reads=["verifier_return", "original_builder_completion", "dispute_only_report"]), "phase_exit_gate reads the verifier return"),
+    ("remfix-gate.json", _case_pop("dispute-only-all-upheld", "phase_exit_gate_reads"), "phase_exit_gate reads the verifier return"),
+    ("remfix-gate.json", _case("dispute-only-all-upheld", lambda c: c["verifier_adjudication"].update({"verifier_status": "FAIL"})), "phase_status_after must be"),
+    ("remfix-gate.json", _case_report("dispute-only", FINDING_DISPUTED=["F1 (HIGH): save handler swallows a timeout", "F1 (HIGH): save handler swallows a timeout"]), "FINDING_DISPUTED entries must be distinct"),
+    ("remfix-gate.json", _case_report("dispute-only", FINDING_DISPUTED=["F1 (HIGH): save handler swallows a timeout", "F9 (HIGH): an unrelated finding"]), "must map to exactly one distinct finding"),
+    ("remfix-gate.json", _case_report("dispute-only", FINDING_DISPUTED=["F1 (HIGH): save handler swallows a timeout", "F1 (HIGH): the same finding restated"]), "must map to exactly one distinct finding"),
+    ("remfix-gate.json", _case_contract("dispute-only", PHASE_STATUS="completed"), "must carry PHASE_STATUS partial"),
+    ("remfix-gate.json", _case_contract("dispute-only", PROOF_STATUS="passed"), "must carry PROOF_STATUS gaps_found"),
+    ("remfix-gate.json", _case_contract("dispute-only", TDD_RED_REASON_KIND="behavioral"), "must leave TDD_RED_REASON_KIND null"),
+    ("remfix-gate.json", _case_contract("dispute-only", TDD_RED_REASON="expected 1 received 0"), "must leave TDD_RED_REASON null"),
+    ("remfix-gate.json", _case_contract("dispute-only", BLOCKED_ITEMS=["cannot run"]), "must carry empty BLOCKED_ITEMS"),
+    ("remfix-gate.json", _case_drop_scenario("dispute-only"), "one scenario per dispute"),
+    ("remfix-gate.json", _case_contract("dispute-only", SCENARIOS=[]), "one scenario per dispute"),
+    ("remfix-gate.json", _case_scenario("dispute-only", 1, command="npm test"), "carries the VERIFY_COMMAND"),
+    ("remfix-gate.json", _case_scenario("dispute-only", 0, expected=""), "non-empty name, expected and actual"),
+    ("remfix-gate.json", _case_contract("dispute-only-investigator", STATUS="PASS"), "dispute-only STATUS must be FIXED"),
+    ("remfix-gate.json", _case_contract("dispute-only-investigator", TDD_RED_EXIT=1), "must leave TDD_RED_EXIT null"),
+    ("remfix-gate.json", _case_loop("dispute-only-investigator", rung="none"), "FEEDBACK_LOOP.rung cli_snapshot"),
+    ("remfix-gate.json", _case_loop("dispute-only-investigator", command=None), "FEEDBACK_LOOP.rung cli_snapshot"),
+    ("remfix-gate.json", _case_closeout("dispute-only-investigator", instrumentation_removed=True), "leaves DEBUG_CLOSEOUT.instrumentation_removed"),
+    ("remfix-gate.json", _case_closeout("dispute-only-investigator", repro_no_longer_fires=True), "leaves DEBUG_CLOSEOUT.instrumentation_removed"),
+    ("remfix-gate.json", _case_scenario("dispute-only-investigator", 0, name="Dispute: F1 the cart total uses the locale"), "is a Regression: scenario"),
+    ("remfix-gate.json", _case_set("dispute-only-investigator", phase_status_after={"before_adjudication": "partial", "after_adjudication": "completed"}), "phase_status_after must be"),
+    ("remfix-gate.json", _case_set("dispute-only-investigator", verifier_handoff_key="results.builder"), "hands the verifier results.investigator"),
     ("multi-phase-memory-finalize.json", _memory_blocked_by_early_task_only, "must be blocked by the last phase's verifier"),
     ("multi-phase-memory-finalize.json", _memory_blocked_by_last_and_early_task, "blocked by an earlier-phase task"),
     ("multi-phase-memory-finalize.json", _memory_blocked_by_doc_sync_of_wrong_verifier, "last phase's verifier"),
@@ -1250,7 +1321,7 @@ def test_multi_phase_fixture_accepts_memory_blocked_by_the_last_phase_doc_sync_t
     assert result.returncode == 0, result.stdout + result.stderr
 
 
-def test_remfix_gate_accepts_a_multiline_block_scalar_proof(tmp_path):
+def test_remfix_gate_replay_accepts_a_multiline_string_in_the_proof_field(tmp_path):
     root = make_tree(tmp_path)
     block = "PASS tests/team_settings.test.ts\n  saves the team id\n  rejects a non-admin\nTests: 2 passed"
     edit_json(root / FIXTURES_REL / "remfix-gate.json", _set_remfix_field("TEST_OUTPUT", block))

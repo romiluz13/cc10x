@@ -68,6 +68,7 @@
     "reviewer": null,
     "hunter": null,
     "verifier": null,
+    "disputes_in_flight": [],
     "planner": null,
     "planning_reviewer": null,
     "qa_repo_set": [],

@@ -1444,19 +1444,31 @@ def check_remfix_case(
     handoff_key: str,
     executor_contract: dict[str, Any] | None,
     dispute_outcomes: Any,
+    phase_status_after: Any = None,
+    gate_reads: Any = None,
 ) -> None:
     require(task["kind"] == "remfix", f"{label}: wrong task kind")
     require(task["wf"] == artifact["workflow_id"], f"{label}: remfix task carries a foreign wf")
     require(task["status"] == "completed", f"{label}: completed_remfix must be completed, got {task['status']!r}")
-    executor = "bug-investigator" if task["origin"] == "bug-investigator" else "component-builder"
-    require(task.get("executor") == executor, f"{label}: executor must be {executor} for origin {task['origin']!r}")
+    workflow_type = task.get("workflow_type", artifact["workflow_type"])
+    executor = "bug-investigator" if task["origin"] == "bug-investigator" or workflow_type == "DEBUG" else "component-builder"
+    require(task.get("executor") == executor, f"{label}: executor must be {executor} for origin {task['origin']!r} in a {workflow_type} workflow")
     require(executor in task["subject"], f"{label}: the REM-FIX subject must name its executor {executor}")
     expected_key = "results.investigator" if executor == "bug-investigator" else "results.builder"
-    require(handoff_key == expected_key, f"{label}: the REM-FIX origin {task['origin']!r} hands the verifier {expected_key}, got {handoff_key!r}")
+    require(handoff_key == expected_key, f"{label}: the REM-FIX executor {executor} hands the verifier {expected_key}, got {handoff_key!r}")
     findings = task["findings"]
     require(isinstance(findings, list) and bool(findings), f"{label}: the REM-FIX task carries its findings")
     disputed = report.get("FINDING_DISPUTED") or []
     require(len(disputed) <= len(findings), f"{label}: more disputed findings than dispatched findings")
+    require(len(set(disputed)) == len(disputed), f"{label}: FINDING_DISPUTED entries must be distinct")
+    mapped = [
+        [i for i, finding in enumerate(findings) if entry == finding or entry.split()[:1] == finding.split()[:1]]
+        for entry in disputed
+    ]
+    require(
+        all(len(m) == 1 for m in mapped) and len({m[0] for m in mapped}) == len(mapped),
+        f"{label}: every FINDING_DISPUTED entry must map to exactly one distinct finding in the task",
+    )
     dispute_only = bool(disputed) and len(disputed) == len(findings)
     if dispute_only:
         require(executor_contract is not None, f"{label}: a dispute-only report needs the executor contract")
@@ -1466,10 +1478,41 @@ def check_remfix_case(
         )
         for field in ("TDD_RED_EXIT", "TDD_GREEN_EXIT"):
             require(executor_contract.get(field) is None, f"{label}: a dispute-only report must leave {field} null (no code changed, nothing to observe)")
+        commands = report.get("VERIFY_COMMAND") or []
+        scenarios = executor_contract.get("SCENARIOS")
+        require(
+            isinstance(scenarios, list) and len(scenarios) == len(disputed),
+            f"{label}: a dispute-only report carries one scenario per dispute ({len(disputed)})",
+        )
+        for scenario, command in zip(scenarios, commands):
+            require(
+                scenario.get("command") == command and all(str(scenario.get(k) or "").strip() for k in ("name", "expected", "actual")),
+                f"{label}: each dispute-only scenario carries the VERIFY_COMMAND and non-empty name, expected and actual",
+            )
         if executor == "component-builder":
+            for field in ("TDD_RED_REASON_KIND", "TDD_RED_REASON"):
+                require(executor_contract.get(field) is None, f"{label}: a dispute-only report must leave {field} null (no code changed, nothing to observe)")
             require(
                 strict_bool(executor_contract.get("PHASE_EXIT_READY"), False),
                 f"{label}: a dispute-only report must carry PHASE_EXIT_READY false until the verifier adjudicates",
+            )
+            require(executor_contract.get("PHASE_STATUS") == "partial", f"{label}: a dispute-only report must carry PHASE_STATUS partial")
+            require(executor_contract.get("PROOF_STATUS") == "gaps_found", f"{label}: a dispute-only report must carry PROOF_STATUS gaps_found")
+            require(executor_contract.get("BLOCKED_ITEMS") == [], f"{label}: a dispute-only report must carry empty BLOCKED_ITEMS")
+        else:
+            require(
+                all(str(s.get("name", "")).startswith("Regression:") for s in scenarios),
+                f"{label}: each dispute-only investigator scenario is a Regression: scenario",
+            )
+            loop = executor_contract.get("FEEDBACK_LOOP") or {}
+            require(
+                loop.get("rung") == "cli_snapshot" and loop.get("command") == commands[0],
+                f"{label}: a dispute-only investigator return sets FEEDBACK_LOOP.rung cli_snapshot with the first VERIFY_COMMAND",
+            )
+            closeout = executor_contract.get("DEBUG_CLOSEOUT") or {}
+            require(
+                closeout.get("instrumentation_removed") is None and closeout.get("repro_no_longer_fires") is None,
+                f"{label}: a dispute-only investigator return leaves DEBUG_CLOSEOUT.instrumentation_removed and repro_no_longer_fires null",
             )
     else:
         for field in ("COVERING_TESTS", "TEST_COMMAND", "TEST_OUTPUT"):
@@ -1514,6 +1557,23 @@ def check_remfix_case(
                 == ["finding_dropped: dispute upheld" if i in upheld else "remfix_created" for i in valid_indexes],
                 f"{label}: dispute_outcomes must drop an upheld finding and create a REM-FIX for a rejected one, in FINDING_DISPUTED order",
             )
+        require(isinstance(phase_status_after, dict), f"{label}: a disputed REM-FIX case must carry phase_status_after")
+        verifier_status = adjudication.get("verifier_status")
+        require(verifier_status in ("PASS", "FAIL"), f"{label}: a disputed REM-FIX case must carry the verifier_status (PASS or FAIL)")
+        if executor == "bug-investigator":
+            expected_after = {"before_adjudication": "not_applicable", "after_adjudication": "not_applicable"}
+        else:
+            closes = not rejected and verifier_status == "PASS"
+            expected_after = {"before_adjudication": "partial", "after_adjudication": "completed" if closes else "partial"}
+        require(
+            phase_status_after == expected_after,
+            f"{label}: phase_status_after must be {expected_after} (partial until the verifier adjudicates every dispute and returns PASS; a DEBUG workflow has no phase gate)",
+        )
+        if dispute_only and executor == "component-builder" and expected_after["after_adjudication"] == "completed":
+            require(
+                isinstance(gate_reads, list) and sorted(gate_reads) == ["original_builder_completion", "verifier_return"],
+                f"{label}: phase_exit_gate reads the verifier return and the original builder completion, never the dispute-only report",
+            )
 
 
 def check_remfix_gate(fixture: dict[str, Any]) -> None:
@@ -1528,6 +1588,8 @@ def check_remfix_gate(fixture: dict[str, Any]) -> None:
         fixture["agent_outputs"].get("verifier_handoff_key"),
         None,
         fixture["expected"].get("dispute_outcomes"),
+        fixture["expected"].get("phase_status_after"),
+        fixture["expected"].get("phase_exit_gate_reads"),
     )
     for case in fixture.get("additional_cases", []):
         check_remfix_case(
@@ -1539,6 +1601,8 @@ def check_remfix_gate(fixture: dict[str, Any]) -> None:
             case.get("verifier_handoff_key"),
             case.get("executor_contract"),
             case.get("dispute_outcomes"),
+            case.get("phase_status_after"),
+            case.get("phase_exit_gate_reads"),
         )
     history = artifact["remediation_history"]
     cycles = [entry.get("cycle_number") for entry in history]

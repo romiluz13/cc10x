@@ -347,7 +347,7 @@ Only create child tasks after the workflow artifact exists and the read-back pas
 | `research-github` | `cc10x:researcher` |
 | `triage` | `cc10x:triage-agent` |
 | `codebase-health` | `cc10x:architecture-scanner` |
-| `kind:remfix` + `origin:bug-investigator` | `cc10x:bug-investigator` |
+| `kind:remfix` created in a DEBUG workflow (any `origin:`; wins over the origin rows below), or `kind:remfix` + `origin:bug-investigator` | `cc10x:bug-investigator` |
 | `build-doc-sync` | `cc10x:doc-syncer` |
 | `kind:remfix` + `origin:code-reviewer` / `origin:failure-hunter` / `origin:integration-verifier` / `origin:router` | `cc10x:component-builder` |
 
@@ -601,16 +601,16 @@ The harness is a loop engine. These concepts govern how the loop runs:
    - persist task-state side effects
    - if BUILD review and hunt are both complete for the current phase, write one router-owned merged findings summary into the existing workflow results before verifier handoff
    - apply workflow rules
-   - for BUILD and QA, run `phase_exit_gate`; if the current phase is not complete, persist `phase_status={partial|blocked}` and stop
+   - for BUILD and QA, run `phase_exit_gate`; if the current phase is not complete, persist `phase_status={partial|blocked}` and stop, except that a valid dispute-only REM-FIX return persists `partial` and proceeds to the Re-Review loop (`references/remediation-and-research.md`, Re-review precondition gate)
    - never advance to the next phase or workflow step on apology prose alone
-   - if two agents in the same phase return contradictory verdicts (e.g., reviewer approves but verifier fails on the same evidence), treat the blocking verdict as authoritative (FAIL over PASS, CHANGES_REQUESTED over APPROVE), except that a re-raised finding whose dispute the verifier upheld is dropped per the Re-review precondition gate; never average or reconcile the signals. Log the contradiction in `status_history`.
+   - if two agents in the same phase return contradictory verdicts (e.g., reviewer approves but verifier fails on the same evidence), treat the blocking verdict as authoritative (FAIL over PASS, CHANGES_REQUESTED over APPROVE), except that a re-raised finding whose dispute the verifier upheld is dropped per the Re-review precondition gate, and one whose dispute is still in flight continues to the verifier under the same gate; never average or reconcile the signals. Log the contradiction in `status_history`.
    - **Cross-reviewer agreement promotion:** if `code-reviewer` and `failure-hunter` independently flag the SAME finding (same file:line, same defect, raised from different passes), that is stronger signal than either alone — promote the merged finding's confidence by one tier (80→90, or mark it `cross-confirmed` in the merged findings summary). Agreement between two mutually-blind reviewers is independent confirmation; use it. Promotion never overrides the quote-the-line gate — a finding without a verbatim `file:line` quote cannot be promoted, only demoted.
    - doc-syncer `STATUS=SKIPPED` is a passing state; advance to Memory Update immediately
    - doc-syncer STATUS=PARTIAL: soft pass; advance to Memory Update; persist doc_sync_partial=true in workflow artifact results.doc_syncer for user review
 7. Repeat until all tasks in the active `wf:` are completed.
 ```
 
-Artifact-only graph mode: read "task" in this loop as a graph step recorded in the artifact. Blockers are the ordering rules of the route's `references/*-workflow.md` graph, evaluated with the events-log completion rule of §4 (never from a bare `results.*` slot); "mark in_progress/completed" is an artifact write plus an event-log entry instead of a `TaskUpdate`; a REM-FIX is a recorded step with the same metadata fields, dispatched through the Agent tool to the executing agent the dispatch table names for its `origin:` (`component-builder`, or `bug-investigator` for `origin:bug-investigator`), and its `remediation_history` entry comes with a `remediation_created` event. Record the mode once in `status_history`.
+Artifact-only graph mode: read "task" in this loop as a graph step recorded in the artifact. Blockers are the ordering rules of the route's `references/*-workflow.md` graph, evaluated with the events-log completion rule of §4 (never from a bare `results.*` slot); "mark in_progress/completed" is an artifact write plus an event-log entry instead of a `TaskUpdate`; a REM-FIX is a recorded step with the same metadata fields, dispatched through the Agent tool to the executing agent the dispatch table names (`component-builder`, or `bug-investigator` in a DEBUG workflow or for `origin:bug-investigator`), and its `remediation_history` entry comes with a `remediation_created` event. Record the mode once in `status_history`.
 
 ### After every agent completion
 
@@ -687,7 +687,7 @@ Before invoking `integration-verifier` in BUILD:
   {hunter critical issues or "None / not in this workflow"}
   ```
 
-- Never invoke verifier without that section when review/hunt already ran. On a re-verify after a REM-FIX, add a `### REM-FIX report` sub-block that references the persisted REM-FIX report (`results.builder`) and its proof and dispute fields, per the Re-review precondition gate in `references/remediation-and-research.md`.
+- Never invoke verifier without that section when review/hunt already ran. On a re-verify after a REM-FIX, add a `### REM-FIX report` sub-block that references the persisted REM-FIX report (`results.builder`, or `results.investigator` when `bug-investigator` executed the REM-FIX) and its proof and dispute fields, per the Re-review precondition gate in `references/remediation-and-research.md`.
 
 **Post-verifier finding validation (act on hallucinated findings):** after the verifier returns, read its `### Reviewer Finding Validation` section. For any finding the verifier marked `validated: false`, DROP that finding from the merged findings set before creating a REM-FIX task — a hallucinated critical finding must not gate the phase or waste a builder cycle. Log the dropped finding in `status_history` (`finding_dropped: hallucinated — verifier could not confirm quote at file:line`). For `validated: degraded` CRITICAL/HIGH findings, KEEP them in the blocking set (fail-safe — a transient access failure must never silently remove a critical finding). This gate runs BEFORE the REM-FIX scope decision in §remediation-and-research, so `CRITICAL_ONLY` / `ALL_ISSUES` scope is computed over validated findings only.
 

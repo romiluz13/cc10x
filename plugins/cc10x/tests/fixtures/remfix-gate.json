@@ -84,7 +84,8 @@
       "DISPUTE_UPHELD": [
         1
       ],
-      "DISPUTE_REJECTED": []
+      "DISPUTE_REJECTED": [],
+      "verifier_status": "PASS"
     },
     "verifier_handoff_key": "results.builder"
   },
@@ -97,15 +98,19 @@
     ],
     "dispute_outcomes": [
       "finding_dropped: dispute upheld"
-    ]
+    ],
+    "phase_status_after": {
+      "before_adjudication": "partial",
+      "after_adjudication": "completed"
+    }
   },
   "additional_cases": [
     {
-      "name": "bug-investigator-origin",
+      "name": "debug-workflow-remfix",
       "task": {
         "wf": "wf-20261007T100000Z-remfix-gate",
         "kind": "remfix",
-        "origin": "bug-investigator",
+        "origin": "code-reviewer",
         "phase": "debug-review",
         "scope": "ALL_ISSUES",
         "reason": "Fix review findings on the debug fix",
@@ -114,7 +119,8 @@
         "executor": "bug-investigator",
         "findings": [
           "F1 (HIGH): the regression test asserts a stubbed path"
-        ]
+        ],
+        "workflow_type": "DEBUG"
       },
       "remfix_report": {
         "COVERING_TESTS": [
@@ -174,7 +180,26 @@
         "TDD_RED_EXIT": null,
         "TDD_RED_REASON_KIND": null,
         "TDD_RED_REASON": null,
-        "TDD_GREEN_EXIT": null
+        "TDD_GREEN_EXIT": null,
+        "BLOCKED_ITEMS": [],
+        "SCENARIOS": [
+          {
+            "name": "Dispute: F1 save handler rethrows the timeout",
+            "command": "grep -n 'throw err' src/save.ts",
+            "expected": "the timeout is rethrown, so the finding is false",
+            "actual": "31:    throw err",
+            "exit_code": 0,
+            "status": "PASS"
+          },
+          {
+            "name": "Dispute: F2 retry loop is capped",
+            "command": "grep -n 'MAX_RETRIES' src/retry.ts",
+            "expected": "a retry cap constant exists",
+            "actual": "4:const MAX_RETRIES = 3",
+            "exit_code": 0,
+            "status": "PASS"
+          }
+        ]
       },
       "verifier_adjudication": {
         "DISPUTE_UPHELD": [
@@ -183,13 +208,161 @@
         "DISPUTE_REJECTED": [
           2
         ],
-        "validated_false": []
+        "validated_false": [],
+        "verifier_status": "FAIL"
       },
       "verifier_handoff_key": "results.builder",
       "dispute_outcomes": [
         "finding_dropped: dispute upheld",
         "remfix_created"
+      ],
+      "phase_status_after": {
+        "before_adjudication": "partial",
+        "after_adjudication": "partial"
+      }
+    },
+    {
+      "name": "dispute-only-all-upheld",
+      "task": {
+        "wf": "wf-20261007T100000Z-remfix-gate",
+        "kind": "remfix",
+        "origin": "code-reviewer",
+        "phase": "build-review",
+        "scope": "ALL_ISSUES",
+        "reason": "Fix review findings",
+        "status": "completed",
+        "subject": "CC10X component-builder: REM-FIX Fix review findings",
+        "executor": "component-builder",
+        "findings": [
+          "F1 (HIGH): the export handler has no size cap"
+        ]
+      },
+      "remfix_report": {
+        "COVERING_TESTS": [],
+        "TEST_COMMAND": null,
+        "TEST_OUTPUT": null,
+        "FINDING_DISPUTED": [
+          "F1 (HIGH): the export handler has no size cap"
+        ],
+        "VERIFY_COMMAND": [
+          "grep -n 'MAX_EXPORT_BYTES' src/export.ts"
+        ],
+        "VERIFY_OUTPUT": [
+          "9:const MAX_EXPORT_BYTES = 1048576"
+        ]
+      },
+      "executor_contract": {
+        "STATUS": "PASS",
+        "PHASE_STATUS": "partial",
+        "PHASE_EXIT_READY": false,
+        "PROOF_STATUS": "gaps_found",
+        "TDD_RED_EXIT": null,
+        "TDD_RED_REASON_KIND": null,
+        "TDD_RED_REASON": null,
+        "TDD_GREEN_EXIT": null,
+        "BLOCKED_ITEMS": [],
+        "SCENARIOS": [
+          {
+            "name": "Dispute: F1 the export handler is capped",
+            "command": "grep -n 'MAX_EXPORT_BYTES' src/export.ts",
+            "expected": "a size cap constant exists",
+            "actual": "9:const MAX_EXPORT_BYTES = 1048576",
+            "exit_code": 0,
+            "status": "PASS"
+          }
+        ]
+      },
+      "verifier_adjudication": {
+        "DISPUTE_UPHELD": [
+          1
+        ],
+        "DISPUTE_REJECTED": [],
+        "validated_false": [],
+        "verifier_status": "PASS"
+      },
+      "verifier_handoff_key": "results.builder",
+      "dispute_outcomes": [
+        "finding_dropped: dispute upheld"
+      ],
+      "phase_status_after": {
+        "before_adjudication": "partial",
+        "after_adjudication": "completed"
+      },
+      "phase_exit_gate_reads": [
+        "verifier_return",
+        "original_builder_completion"
       ]
+    },
+    {
+      "name": "dispute-only-investigator",
+      "task": {
+        "wf": "wf-20261007T100000Z-remfix-gate",
+        "kind": "remfix",
+        "origin": "integration-verifier",
+        "workflow_type": "DEBUG",
+        "phase": "debug-verify",
+        "scope": "ALL_ISSUES",
+        "reason": "Fix verifier findings on the debug fix",
+        "status": "completed",
+        "subject": "CC10X bug-investigator: REM-FIX Fix verifier findings on the debug fix",
+        "executor": "bug-investigator",
+        "findings": [
+          "F1 (HIGH): the cart total ignores the locale"
+        ]
+      },
+      "remfix_report": {
+        "COVERING_TESTS": [],
+        "TEST_COMMAND": null,
+        "TEST_OUTPUT": null,
+        "FINDING_DISPUTED": [
+          "F1 (HIGH): the cart total ignores the locale"
+        ],
+        "VERIFY_COMMAND": [
+          "grep -n 'toLocaleString(locale' src/cart.ts"
+        ],
+        "VERIFY_OUTPUT": [
+          "22:  return total.toLocaleString(locale)"
+        ]
+      },
+      "executor_contract": {
+        "STATUS": "FIXED",
+        "TDD_RED_EXIT": null,
+        "TDD_GREEN_EXIT": null,
+        "FEEDBACK_LOOP": {
+          "rung": "cli_snapshot",
+          "command": "grep -n 'toLocaleString(locale' src/cart.ts"
+        },
+        "DEBUG_CLOSEOUT": {
+          "instrumentation_removed": null,
+          "repro_no_longer_fires": null
+        },
+        "SCENARIOS": [
+          {
+            "name": "Regression: F1 the cart total uses the locale",
+            "command": "grep -n 'toLocaleString(locale' src/cart.ts",
+            "expected": "the locale reaches the formatter",
+            "actual": "22:  return total.toLocaleString(locale)",
+            "exit_code": 0,
+            "status": "PASS"
+          }
+        ]
+      },
+      "verifier_adjudication": {
+        "DISPUTE_UPHELD": [
+          1
+        ],
+        "DISPUTE_REJECTED": [],
+        "validated_false": [],
+        "verifier_status": "PASS"
+      },
+      "verifier_handoff_key": "results.investigator",
+      "dispute_outcomes": [
+        "finding_dropped: dispute upheld"
+      ],
+      "phase_status_after": {
+        "before_adjudication": "not_applicable",
+        "after_adjudication": "not_applicable"
+      }
     }
   ]
 }

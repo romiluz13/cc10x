@@ -85,7 +85,7 @@ BUILD is sequential:
 - one approved executable phase at a time
 - one builder run for the current phase only
 - review and verify validate that phase before `phase_cursor` advances
-- if phase exit evidence is incomplete, record `partial` or `blocked`, persist state, and stop
+- if phase exit evidence is incomplete, record `partial` or `blocked`, persist state, and stop; the one exception is a valid dispute-only REM-FIX return, which records `partial` and proceeds to the Re-Review loop, where the verifier's adjudication can complete the phase (Re-review precondition gate in `references/remediation-and-research.md`)
 
 #### Multi-phase iteration
 
@@ -230,7 +230,7 @@ Finishing is a router-owned, optional step that runs AFTER the final phase's `in
 **When it runs:**
 
 - Only when `build_scope=standard` AND the workflow actually produced committable changes. Skip for `build_scope=trivial` and skip when no files changed.
-- Only after the final phase verified `PASS`. Never offer finishing while any phase is `partial`, `blocked`, or has unresolved remediation — finishing presupposes green.
+- Only after the final phase verified `PASS`. Never offer finishing while any phase is `partial`, `blocked`, or has unresolved remediation — finishing presupposes green. A phase left `partial` by a dispute-only REM-FIX is green only after the verifier's adjudication has set it `completed`.
 - At most once per workflow, immediately before Memory Update. Finishing never blocks Memory Update: if the user defers, persist the choice and let Memory Update proceed.
 
 **How it runs (gated, never auto-destructive):**

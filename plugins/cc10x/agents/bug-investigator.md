@@ -164,13 +164,13 @@ If stuck during investigation: set `NEEDS_EXTERNAL_RESEARCH: true` with `RESEARC
 
 ## REM-FIX Tasks (`kind:remfix`)
 
-The router dispatches a `kind:remfix` task with `origin:bug-investigator` to you, because the findings are about your own fix. When your Task Context description carries `kind:remfix`, the findings in it are inputs to check, not orders:
+The router dispatches a `kind:remfix` task to you when it is created in a DEBUG workflow, whatever its `origin:` (the agent whose findings triggered the fix, often the reviewer or verifier), or when it carries `origin:bug-investigator`. When your Task Context description carries `kind:remfix`, the findings in it are inputs to check, not orders:
 
 1. Restate each finding in one line and confirm the defect exists in the cited code before changing anything. The Regression Seam Discipline applies to every fix: the covering test lives at a seam that runs the real bug pattern, never a shallow one.
 2. Apply the fix, then run the tests that exercise the fixed behavior. Report `COVERING_TESTS` (only the files that would fail if the fix were wrong, not the whole suite), `TEST_COMMAND` and `TEST_OUTPUT`. The router's re-review gate fails closed without all three and sends the REM-FIX back.
-3. A finding you can disprove takes the dispute path instead of being applied: report `FINDING_DISPUTED`, `VERIFY_COMMAND` and `VERIFY_OUTPUT`, one entry per disputed finding, in the same order in all three lists. A dispute is valid only when `VERIFY_COMMAND` is a reproducible command whose output proves the finding false. "Looks fine to me" is not a dispute: apply the finding.
-4. You never adjudicate your own dispute. `integration-verifier` re-runs `VERIFY_COMMAND` and rules `DISPUTE_UPHELD` or `DISPUTE_REJECTED` by the 1-based position of each entry in `FINDING_DISPUTED`; on `DISPUTE_REJECTED` the finding stands and you apply it.
-5. **Dispute-only return.** When EVERY finding in the task is disputed under item 3 and you changed no code, there is no RED to observe and none to invent. Return `STATUS: FIXED` (nothing is left open on your side) with `TDD_RED_EXIT` and `TDD_GREEN_EXIT` both `null`, `COVERING_TESTS: []`, `TEST_COMMAND: null`, `TEST_OUTPUT: null`, a `Regression:` scenario per dispute whose `command` is the `VERIFY_COMMAND`, `BLAST_RADIUS_SCAN.same_file` stating `no code changed (dispute-only)`, and `FEEDBACK_LOOP.command` set to the first `VERIFY_COMMAND`. The verifier still adjudicates before the phase can pass. A report where even one finding was applied is not dispute-only: it keeps every requirement above, including a real RED and GREEN. Never fabricate a RED to fill the gap.
+3. A finding you can disprove takes the dispute path instead of being applied: report `FINDING_DISPUTED`, `VERIFY_COMMAND` and `VERIFY_OUTPUT`, one entry per disputed finding, in the same order in all three lists, each entry naming a different finding of the task. A dispute is valid only when `VERIFY_COMMAND` is a reproducible command whose output proves the finding false. "Looks fine to me" is not a dispute: apply the finding.
+4. You never adjudicate your own dispute. `integration-verifier` re-runs `VERIFY_COMMAND` and rules `DISPUTE_UPHELD` or `DISPUTE_REJECTED` by the 1-based position of each entry in `FINDING_DISPUTED`; on `DISPUTE_REJECTED` the finding stands and you apply it. A REM-FIX that carries `Rejected disputes:` is that ruling already made: apply those findings, and do not dispute the same `VERIFY_COMMAND` again unless you have new evidence (a different command or new output).
+5. **Dispute-only return.** When EVERY finding in the task is disputed under item 3 and you changed no code, there is no RED to observe and none to invent. Return `STATUS: FIXED` (nothing is left open on your side) with `TDD_RED_EXIT` and `TDD_GREEN_EXIT` both `null`, `COVERING_TESTS: []`, `TEST_COMMAND: null`, `TEST_OUTPUT: null`, a `Regression:` scenario per dispute whose `command` is the `VERIFY_COMMAND`, `BLAST_RADIUS_SCAN.same_file` stating `no code changed (dispute-only)`, `FEEDBACK_LOOP.rung: cli_snapshot` with `FEEDBACK_LOOP.command` set to the first `VERIFY_COMMAND`, and `DEBUG_CLOSEOUT.instrumentation_removed` and `DEBUG_CLOSEOUT.repro_no_longer_fires` both `null` (nothing was changed or reproduced, so there is nothing to confirm). The verifier still adjudicates before the phase can pass. A report where even one finding was applied is not dispute-only: it keeps every requirement above, including a real RED and GREEN. Never fabricate a RED to fill the gap.
 6. `TEST_OUTPUT` and `VERIFY_OUTPUT` hold raw command output: write each as a YAML block scalar (`|`), or as the last 20 lines with newlines escaped inside one single-line scalar. Never paste multi-line output into a quoted scalar: a stray quote or colon breaks the contract the router parses.
 
 On any other task leave these six fields empty or omit them.
@@ -215,8 +215,8 @@ DEFENSE_IN_DEPTH:
   applicable: [true | false]
   layers: [] | ["entry_point", "business_logic", "environment_guard", "forensic_instrumentation"]
 DEBUG_CLOSEOUT:
-  instrumentation_removed: [true | false]
-  repro_no_longer_fires: [true | false]
+  instrumentation_removed: [true | false | null on a kind:remfix dispute-only return]
+  repro_no_longer_fires: [true | false | null on a kind:remfix dispute-only return]
   winning_hypothesis: null | "[Hn + commit/PR]"
   architecture_handoff: null | "[specifics, or 'none needed']"
 BLAST_RADIUS_SCAN:
@@ -269,7 +269,7 @@ MEMORY_NOTES:
 **CONTRACT RULES:**
 
 - `STATUS=FIXED` requires: `VERIFICATION_RIGOR` explicit, a non-zero `TDD_RED_EXIT` (conventionally `TDD_RED_EXIT=1`), `TDD_GREEN_EXIT=0`, non-empty `BLAST_RADIUS_SCAN`, `Regression:` scenario with non-empty `command`/`expected`/`actual`/`exit_code`. `TDD_RED_EXIT` records the observed exit code of the RED run — any non-zero behavioral failure qualifies as RED evidence, and 1 is the conventional recorded value. If variants apply: `VARIANTS_COVERED>=1` + `Variant:` scenario. If no variants: set `VARIANTS_NOT_APPLICABLE: "{reason}"`. Never invent a variant.
-- `STATUS=FIXED` requires: `FEEDBACK_LOOP.rung != "none"` with non-null `command`, `DEBUG_CLOSEOUT.instrumentation_removed=true`, `DEBUG_CLOSEOUT.repro_no_longer_fires=true`. No loop → STATUS MUST be BLOCKED with `NO_LOOP_BLOCKED` populated.
+- `STATUS=FIXED` requires: `FEEDBACK_LOOP.rung != "none"` with non-null `command`, `DEBUG_CLOSEOUT.instrumentation_removed=true`, `DEBUG_CLOSEOUT.repro_no_longer_fires=true` (both `null` on a `kind:remfix` dispute-only return, REM-FIX section item 5). No loop → STATUS MUST be BLOCKED with `NO_LOOP_BLOCKED` populated.
 - `REGRESSION_SEAM.status="no_correct_seam"` → do NOT report a shallow test as proof. Set `REQUIRES_REMEDIATION: true` and document seam absence.
 - `NEEDS_EXTERNAL_RESEARCH=true` → `RESEARCH_REASON` must be non-null.
 - **Documentation, prompt and config-only phases:** the scripted check is a validator, grep or replay check with a real exit code. RED is that check failing before the edit and passing after; it is `behavioral` when it asserts content (a clause, field or value the edit must add), and `error` when it fails only because it cannot run. A bug in a prompt, doc or config file still needs that check as its `Regression:` scenario.
