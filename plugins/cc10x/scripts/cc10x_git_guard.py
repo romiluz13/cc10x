@@ -9,13 +9,16 @@ PreToolUse hook for Bash commands. Blocks:
 - git checkout . / -- . / -f, git restore . (discard all changes)
 - git stash clear
 
-`classify_git_command` is the pure decision: it reads wrapped and chained
-commands (env/sudo/xargs/..., `git -C`, `git -c alias.x=`, `bash -c`, `eval`,
-`$(...)`, backticks, newlines) and treats a quoted argument of echo/grep/printf
-as data. The legacy regex list (BLOCKED_PATTERNS) stays as a deny floor over
-every executable segment, so the classifier can only add allowances for
-quoted data, never drop a denial for executed text. It is a text heuristic,
-not a shell parser: a model can still build a command the text does not show
+`classify_git_command` is the pure decision. By construction it denies at
+least everything the legacy regex list (BLOCKED_PATTERNS) denies on the RAW
+command text, and adds denials for wrapped and chained commands (env/sudo/
+xargs/..., `git -C`, `git -c alias.x=`, `bash -c`, `eval`, `$(...)`,
+backticks, newlines, shell comments). The one exception is a strict,
+default-deny allowance for read-only quoted data (`_quoted_data_only`): the
+whole command must be a single `echo|printf|grep` pipeline into plain text
+filters with no shell operator outside quotes. Anything else gets the floor
+over the entire raw command plus the extra scan. It is a text heuristic, not
+a shell parser: a model can still build a command the text does not show
 (variables, scripts written then run, `git config alias`).
 
 Approval token (single-use unlock for router-sanctioned finishing flows):
@@ -188,8 +191,14 @@ def normalize_segment(segment: str) -> str:
     """Collapse git's global flags so `git -C dir <op>` matches `git <op>`,
     and strip trailing shell comments so `git restore . # tidy` still hits
     the end-anchored discard patterns. (Heuristic: ` #` outside quotes is
-    rare in legitimate git arguments; erring toward deny is the safe side.)"""
-    segment = re.sub(r"\s+#.*$", "", segment)
+    rare in legitimate git arguments; erring toward deny is the safe side.)
+
+    Linear on purpose: substituting a whitespace-run-then-hash pattern
+    backtracks quadratically on long runs of spaces and outlasts the hook
+    timeout."""
+    comment = re.search(r"\s#", segment)
+    if comment:
+        segment = segment[: comment.start()].rstrip()
     return re.sub(GIT_GLOBAL_FLAGS, "git ", segment)
 
 
@@ -216,6 +225,7 @@ PRIORITY = (
     "discard-all",
     "checkout-force",
     "stash-clear",
+    "classifier-error",
     "push",
     "branch-delete",
 )
@@ -232,15 +242,22 @@ MSG_STASH_CLEAR = "git stash clear — permanently discards every stash."
 MSG_CLASSIFIER_ERROR = (
     "the git guard classifier failed on this command, so it cannot be cleared."
 )
+MSG_DEPTH = (
+    "the command nests deeper than the git guard reads (depth cap), so it "
+    "cannot be cleared."
+)
 
 SHELLS = {"bash", "sh", "zsh", "dash", "ksh"}
-# Their quoted arguments are text, not commands (unless a shell reads them).
+# Their quoted arguments are scanned as text that a consumer might execute.
 DATA_COMMANDS = {"echo", "printf", "grep", "egrep", "fgrep"}
-# A data command's quoted text is exempt only while every member of its
-# pipeline is a pure text filter (or another data command) and none of them
-# redirects output: anything else may execute or store what it reads.
-TEXT_FILTERS = {"grep", "egrep", "fgrep", "cat", "head", "tail", "wc", "sort", "uniq", "tr", "cut"}
-REDIRECT = re.compile(r"(>>|>&|>|<<<|<<-?|<)(.*)$")
+# The only members the quoted-data allowance accepts behind its data command:
+# none of them writes a file or runs what it reads (sort and uniq can write).
+TEXT_FILTERS = {"grep", "egrep", "fgrep", "cat", "head", "tail", "wc", "tr", "cut"}
+ALLOWANCE_FORBIDDEN_CHARS = set("#\\\r$`(){};&<>\n")
+ALLOWANCE_FORBIDDEN_WORDS = {
+    "exec", "eval", "source", ".", "function", "for", "while", "until", "if",
+    "case", "do", "done", "then", "fi",
+}
 # Zero-argument prefixes that only continue into the real command.
 KEYWORDS = {
     "if", "then", "else", "elif", "do", "while", "until", "!", "{", "}",
@@ -261,6 +278,7 @@ GIT_VALUE_FLAGS = {
 GROUP_OPS = {"&&", "||", ";", ";;", "&", "(", ")", "\n"}
 MAX_DEPTH = 8
 ASSIGNMENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=")
+GIT_WORD = re.compile(r"\bgit\b", re.IGNORECASE)
 
 
 class _Tok(NamedTuple):
@@ -320,9 +338,14 @@ def _capture_backtick(text: str, start: int) -> tuple[str, int] | None:
     return None
 
 
-def _lex(command: str) -> list[_Tok] | None:
+def _lex(command: str, tails: list[str] | None = None) -> list[_Tok] | None:
     """Words and shell operators with quoting resolved; None if a quote or a
     substitution is left open.
+
+    A `#` at a word start ends the scan of its line, but the text it drops is
+    appended to `tails` for the caller to scan: a `#` inside `${y/ #/}` is not
+    a comment to the shell, and the text after it still runs. Without `tails`
+    a `#` is an ordinary character. CR is a word character, as in bash.
 
     A hand-rolled scanner rather than shlex: shlex drops whether a word was
     quoted, which is what separates data from an executable argument. Words
@@ -344,7 +367,7 @@ def _lex(command: str) -> list[_Tok] | None:
     i, n = 0, len(command)
     while i < n:
         char = command[i]
-        if char in " \t\r":
+        if char in " \t":
             flush()
             i += 1
         elif char == "\n":
@@ -371,9 +394,11 @@ def _lex(command: str) -> list[_Tok] | None:
                 buf.append(command[i + 1])
                 state["word"] = state["quoted"] = True
             i += 2
-        elif char == "#" and not state["word"]:
+        elif char == "#" and not state["word"] and tails is not None:
             end = command.find("\n", i)
-            i = n if end < 0 else end
+            end = n if end < 0 else end
+            tails.append(command[i + 1 : end])
+            i = end
         elif char == "$" and command.startswith("'", i + 1):
             escapes = {"n": "\n", "t": "\t", "r": "\r"}
             decoded: list[str] = []
@@ -596,75 +621,28 @@ def _shell_script_arg(words: list[_Tok]) -> int | None:
     return None
 
 
-def _redirects(segment: list[_Tok]) -> bool:
-    """True when an unquoted word redirects output (or feeds a here-string or
-    heredoc) anywhere but /dev/null and file-descriptor duplication."""
-    for idx, tok in enumerate(segment):
-        if tok.quoted or tok.op:
-            continue
-        match = REDIRECT.search(tok.text)
-        if match is None:
-            continue
-        op, target = match.groups()
-        if not target and idx + 1 < len(segment):
-            target = segment[idx + 1].text
-        if op.startswith("<<"):
-            return True
-        if op == "<":
-            continue
-        if target == "/dev/null" or (
-            op in (">", ">&") and re.fullmatch(r"&?(\d+|-)", target)
-        ):
-            continue
-        return True
-    return False
-
-
 def _name(words: list[_Tok]) -> str:
     return words[0].text.rsplit("/", 1)[-1] if words else ""
 
 
-def _text_only(pipeline: list[list[_Tok]], words: list[list[_Tok]]) -> bool:
-    """Every member is a text filter or data command and none redirects."""
-    return all(
-        _name(member_words) in TEXT_FILTERS | DATA_COMMANDS
-        and not _redirects(member)
-        for member, member_words in zip(pipeline, words)
-    )
-
-
 def _segment(
-    segment: list[_Tok],
-    words: list[_Tok],
-    exempt: bool,
-    inner_data_ok: bool,
-    depth: int,
+    segment: list[_Tok], words: list[_Tok], depth: int
 ) -> list[tuple[str, str]]:
     name = _name(words)
-    if name in DATA_COMMANDS and exempt:
-        # A quoted word with a newline is not one word of data: it is read
-        # line by line, as executable text.
-        multiline = [tok for tok in segment if tok.quoted and "\n" in tok.text]
-        found = _floor(
-            " ".join(tok.text for tok in segment if not tok.quoted or tok in multiline)
-        )
-        for tok in multiline:
-            found += _scan(tok.text, depth + 1, False)
-        return found
     found = _floor(" ".join(tok.text for tok in segment))
     args = [tok.text for tok in words[1:]]
     if name in DATA_COMMANDS:
         for tok in words[1:]:
             if tok.quoted:
-                found += _scan(tok.text, depth + 1, False)
+                found += _scan(tok.text, depth + 1)
     elif name == "git":
         found += _git(args, depth)
     elif name in SHELLS:
         idx = _shell_script_arg(words)
         if idx is not None and idx < len(words):
-            found += _scan(words[idx].text, depth + 1, inner_data_ok)
+            found += _scan(words[idx].text, depth + 1)
     elif name == "eval":
-        found += _scan(" ".join(args), depth + 1, inner_data_ok)
+        found += _scan(" ".join(args), depth + 1)
     return found
 
 
@@ -681,32 +659,110 @@ def _groups(toks: list[_Tok]) -> list[list[list[_Tok]]]:
     return groups
 
 
-def _scan(command: str, depth: int, data_ok: bool = True) -> list[tuple[str, str]]:
-    """`data_ok` is False where the output of the scanned text is consumed by
-    something else (a substitution body, a script handed to a shell): there a
-    quoted echo/grep/printf argument is not known to be inert data."""
+def _scan(command: str, depth: int, comments: bool = True) -> list[tuple[str, str]]:
+    """Every finding for `command`, with nothing exempt: quoted arguments of
+    echo/grep/printf are scanned as text a consumer might execute, and the
+    text a `#` drops is scanned too. The depth cap denies."""
     if depth > MAX_DEPTH:
-        return _floor(command)
+        return [("classifier-error", MSG_DEPTH)] + _floor(command)
     found: list[tuple[str, str]] = []
-    toks = _lex(command)
+    tails: list[str] | None = [] if comments else None
+    toks = _lex(command, tails)
     if toks is None:
         toks = []
+        if tails is not None:
+            tails.clear()
         for line in command.split("\n"):
-            line_toks = _lex(line)
+            line_toks = _lex(line, tails)
             if line_toks is None:
                 found += _floor(line)
                 line_toks = _fallback_tokens(line)
             toks += line_toks + [_Tok("\n", op=True)]
+    for tail in tails or ():
+        found += _scan(tail, depth + 1, False)
     for pipeline in _groups(toks):
         words = [_command_words(segment) for segment in pipeline]
-        exempt = data_ok and _text_only(pipeline, words)
         for segment, segment_words in zip(pipeline, words):
             for tok in segment:
                 for body in tok.subst:
-                    found += _scan(body, depth + 1, False)
-            inner_ok = data_ok and len(pipeline) == 1 and not _redirects(segment)
-            found += _segment(segment, segment_words, exempt, inner_ok, depth)
+                    found += _scan(body, depth + 1)
+            found += _segment(segment, segment_words, depth)
     return found
+
+
+def _quoted_data_only(command: str) -> bool:
+    """The one allowance for quoted destructive text, default deny.
+
+    True only for a single pipeline `A | B | ...` where A is echo, printf or
+    grep/egrep/fgrep and every other member is a plain text filter (bare
+    names: no path, no quoting), with none of ALLOWANCE_FORBIDDEN_CHARS
+    outside quotes, none of ALLOWANCE_FORBIDDEN_WORDS as an unquoted word,
+    no `$`, backtick or backslash inside double quotes, no newline or CR
+    anywhere, and nothing destructive anywhere but inside A's quoted text
+    (the floor runs over the rest of the command as written).
+    """
+    members: list[list[tuple[str, bool]]] = [[]]
+    raw: list[list[str]] = [[]]
+    kept: list[str] = []
+    word: list[str] = []
+    quote = ""
+    quoted_word = False
+
+    def end_word() -> None:
+        nonlocal word, quoted_word
+        if word or quoted_word:
+            members[-1].append(("".join(word), quoted_word))
+        word, quoted_word = [], False
+
+    for char in command:
+        if char in "\r\n":
+            return False
+        if quote:
+            raw[-1].append(char)
+            if char == quote:
+                quote = ""
+                if len(members) == 1:
+                    kept.append("Q")
+            elif quote == '"' and char in "\\$`":
+                return False
+            continue
+        if char in "'\"":
+            quote, quoted_word = char, True
+            raw[-1].append(char)
+            continue
+        if char == "|":
+            end_word()
+            if not members[-1]:
+                return False
+            members.append([])
+            raw.append([])
+            continue
+        if char in ALLOWANCE_FORBIDDEN_CHARS:
+            return False
+        raw[-1].append(char)
+        if len(members) == 1:
+            kept.append(char)
+        if char in " \t":
+            end_word()
+        else:
+            word.append(char)
+    if quote:
+        return False
+    end_word()
+    if not members[-1]:
+        return False
+    for index, member in enumerate(members):
+        text, quoted = member[0]
+        if quoted or text not in (DATA_COMMANDS if index == 0 else TEXT_FILTERS):
+            return False
+    if any(
+        not quoted and text in ALLOWANCE_FORBIDDEN_WORDS
+        for member in members
+        for text, quoted in member
+    ):
+        return False
+    remainder = "|".join(["".join(kept)] + ["".join(chars) for chars in raw[1:]])
+    return not _floor(remainder)
 
 
 def _pick(found: list[tuple[str, str]]) -> tuple[str, str] | None:
@@ -720,9 +776,12 @@ def classify_git_command(command: str) -> tuple[str, str] | None:
 
     Pure: no I/O, no approval-token handling. `reason_key` is `push` or
     `branch-delete` for the two token-unlockable operations; every other key
-    has no unlock path.
+    has no unlock path. Everything the legacy floor denies on the raw text is
+    denied, except what `_quoted_data_only` allows.
     """
-    return _pick(_scan(command, 0))
+    if _quoted_data_only(command):
+        return None
+    return _pick(_floor(command) + _scan(command, 0))
 
 
 def _log_classifier_failure(exc: Exception, command: str) -> None:
@@ -734,7 +793,7 @@ def _log_classifier_failure(exc: Exception, command: str) -> None:
             "task_id": None,
             "agent": "unknown",
             "event": "git_guard_classifier_failed",
-            "decision": "deny" if "git" in command.lower() else "allow",
+            "decision": "deny" if GIT_WORD.search(command) else "allow",
             "reason": "classifier-error",
             "error": exc.__class__.__name__,
         },
@@ -755,12 +814,12 @@ def main() -> int:
     try:
         verdict = classify_git_command(command)
     except Exception as exc:
-        # Fail closed when the text names git: a silent fallback to the floor
-        # would be weaker than the classifier it replaces.
+        # Fail closed when the text names git as a word: a silent fallback to
+        # the floor would be weaker than the classifier it replaces.
         _log_classifier_failure(exc, command)
         verdict = (
             ("classifier-error", MSG_CLASSIFIER_ERROR)
-            if "git" in command.lower()
+            if GIT_WORD.search(command)
             else None
         )
     if verdict is None:

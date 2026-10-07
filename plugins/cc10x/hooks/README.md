@@ -63,23 +63,38 @@ Each hook in `hooks.json` appears exactly once in this table (a validator in
 
 ### Git guard limits
 
-- It is a **text heuristic**, not a shell parser. It reads wrapper prefixes
-  (`env`, `sudo`, `xargs`, `nohup`, ...), `git -C`, `git -c alias.x=...`,
-  `bash -c`, `eval`, `$(...)`, backticks, chains and newlines. Shell comments
-  (`# ...` at a word start) and `$'...'` quoting are read the way the shell reads
-  them, so a quote character in a comment cannot hide the next line.
-- A quoted argument of `echo`, `grep` or `printf` is data only while its whole
-  pipeline is text filters (`grep`, `cat`, `head`, `tail`, `wc`, `sort`, `uniq`,
-  `tr`, `cut`) with no output redirect. Pipe-fed executors (`xargs`, `sh`,
-  `source`, `while read`, `python -c`), a redirect to a file, `<<<`, and process
-  substitution (`bash <(echo ...)`) are denied. Quoted text with a newline is
-  read as commands.
+- It is a **text heuristic**, not a shell parser, and it is built so that it
+  denies at least everything the original pattern list denies when run over the
+  raw command text. On top of that it reads wrapper prefixes (`env`, `sudo`,
+  `xargs`, `nohup`, ...), `git -C`, `git -c alias.x=...`, `bash -c`, `eval`,
+  `$(...)`, backticks, chains and newlines. Text that a shell comment (`# ...`
+  at a word start) drops is scanned as well, because a `#` is not always a
+  comment (`${y/ #/}`), so a command that names a destructive operation in a
+  comment is denied. CR is an ordinary character, as in bash.
+- **One narrow allowance for quoted data (default deny).** Destructive text is
+  allowed only when the whole command is a single pipeline `A | B | C` where `A`
+  is `echo`, `printf`, `grep`, `egrep` or `fgrep`, every other member is one of
+  `grep`, `egrep`, `fgrep`, `cat`, `head`, `tail`, `wc`, `tr`, `cut` (bare names,
+  not `./cat` or `/bin/cat`; not `sort` or `uniq`, which can write files), and
+  the destructive text is only inside `A`'s quotes. The command may contain none
+  of `#`, backslash, CR, newline, `$`, backtick, `(`, `)`, `{`, `}`, `;`, `&`,
+  `<`, `>` outside single or double quotes, none of `exec`, `eval`, `source`,
+  `.`, `function`, `for`, `while`, `until`, `if`, `case`, `do`, `done`, `then`,
+  `fi` as an unquoted word, and no `$`, backtick or backslash inside double
+  quotes. Every other command gets the full pattern list over its entire raw
+  text plus the wrapper scan. So a read-only `grep` over notes that quotes a
+  destructive command passes, while a redirect (`2>/dev/null` included), a group
+  or loop, a pipe into `sh`, `xargs`, `tee`, `sort` or anything else that is not
+  a plain text filter is denied. Pipe-fed executors (`xargs`, `sh`, `source`,
+  `while read`, `python -c`), a redirect to a file, `<<<`, and process
+  substitution are denied.
+- Nesting deeper than 8 levels (`$(...)`, backticks, `bash -c`, `eval`, aliases)
+  is denied, not skimmed.
 - A script written to a file and run later is not seen (the write is not a git
   command). A command whose text hides the git call (variables, `$IFS`, hex
   escapes, `git config` aliases set in an earlier command) is not seen either.
 - Destructive text inside other quoted arguments (a commit message, a `gh` body,
-  `ssh host '...'`) is still denied; only `echo`, `grep` and `printf` data is
-  exempt.
+  `ssh host '...'`) is still denied; only the allowance above is exempt.
 - If the classifier itself crashes, the guard logs `git_guard_classifier_failed`
   and denies any command whose text contains `git`; other commands pass.
 - Only remote publish and branch force-delete can be unlocked, by a single-use

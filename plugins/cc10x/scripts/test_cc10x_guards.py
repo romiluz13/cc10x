@@ -2315,6 +2315,9 @@ def test_hooks_readme_lists_the_git_guard_limits_and_does_not_oversell_the_logs(
     for needle in (
         "comment",
         "Pipe-fed executors",
+        "One narrow allowance for quoted data (default deny)",
+        "not `sort` or `uniq`",
+        "Nesting deeper than 8 levels",
         "script written to a file",
         "Destructive text inside other quoted arguments",
         "`git_guard_classifier_failed`",
@@ -2502,6 +2505,64 @@ PIPE_EXECUTED_TEMPLATES = (
     "echo 'echo \"@@\"' | sh",
 )
 
+# Shapes from the second re-review. `@@` marks the destructive text. Each one
+# once ran executable text past the exemption: a comment-like `#` inside a
+# parameter expansion, a CR before `#`, a group or loop in front of a pipe or
+# redirect, a quoted or escaped redirect target, and sort/uniq writing files.
+BYPASS_TEMPLATES = (
+    "echo ${y/ #/}; @@",
+    "echo ${x:- # } ; @@",
+    "echo ${x%% #*}; @@",
+    "cd ${y/ #/}; @@",
+    "{ echo ${y/ #/}; @@; }",
+    "echo a\r# ; @@",
+    "{ echo '@@'; } | sh",
+    "( echo '@@' ) | sh",
+    "( echo '@@' ) | bash",
+    "for i in 1; do echo '@@'; done | sh",
+    "while true; do echo '@@'; done | sh",
+    "if true; then echo '@@'; fi | sh",
+    "{ echo '@@'; } > run.sh",
+    "( echo '@@' ) > run.sh",
+    "{ echo '@@'; } | tee run.sh",
+    "{ bash -c \"echo '@@'\"; } | sh",
+    "exec 3> >(sh); echo '@@' >&3",
+    "exec >run.sh; echo '@@'",
+    "f() { echo '@@'; }; f | sh",
+    "( grep -h '@@' notes.txt ) | sh",
+    "{ echo '@@'; } | xargs -I{} sh -c {}",
+    "echo '@@' >\"run.sh\"",
+    "echo '@@' 2>\"run.sh\"",
+    "echo '@@' &>\"run.sh\"",
+    "echo '@@' >>\"run.sh\"",
+    "echo '@@' >&\"run.sh\"",
+    "echo '@@' >\\run.sh",
+    "echo '@@' | cat >\"run.sh\"",
+    "echo '@@' >\"$F\"",
+    "echo '@@' 1<>run.sh",
+    "echo '@@' | sort -o run.sh",
+    "echo '@@' | sort --output=run.sh",
+    "echo '@@' | sort -orun.sh",
+    "echo '@@' | uniq - run.sh",
+    "echo '@@' | uniq /dev/stdin run.sh",
+    "echo '@@' | env sort -o run.sh",
+    "echo '@@' | sudo sort -o run.sh",
+    "echo '@@' | nice sort -o run.sh",
+    "echo '@@' | xargs sort -o run.sh",
+    "echo '@@' | ./cat",
+    "echo '@@' | /usr/bin/sort",
+    "cat notes | grep '@@'",
+)
+
+
+def bypass_corpus() -> dict[str, str]:
+    return {
+        template.replace("@@", git(*words)): template
+        for words in DESTRUCTIVE
+        for template in BYPASS_TEMPLATES
+    }
+
+
 # Reviewed quoted-data shapes: the destructive text is one quoted argument of
 # echo, grep or printf and is never executed. The legacy list denies them all;
 # the classifier is allowed to differ on exactly these.
@@ -2512,11 +2573,11 @@ QUOTED_DATA_TEMPLATES = (
     "grep -rn '{}' docs/",
     "printf '%s\\n' \"{}\"",
     "echo '{}' | cat",
-    "cat notes | grep \"{}\" | head -5",
-    "grep '{}' f 2>/dev/null",
-    "grep -c '{}' f 2>&1 | tail -1",
-    "printf '%s\\n' '{}' | sort | uniq -c",
+    "grep -h \"{}\" notes | head -5",
+    "printf '%s\\n' '{}' | wc -l",
+    "echo '{}' | grep -c x | tail -1",
 )
+
 # Copied verbatim from cc10x_git_guard.py at BASE (64b74ee) before the rewrite.
 LEGACY_BLOCKED_PATTERNS = [
     (
@@ -2679,10 +2740,7 @@ def test_classifier_allows_quoted_destructive_text_as_echo_grep_printf_data(tmp_
         "grep -rn \"" + git("push", "--force") + "\" plugins/",
         "egrep '" + git("checkout", ".") + "' docs",
         "echo \"" + git("branch", "-D", "x") + "\" | cat",
-        "cat notes | grep \"" + git("clean", "-f") + "\"",
-        "sudo grep \"" + git("push") + "\" file",
         "echo '$(" + git("push") + ")'",
-        "bash run.sh && grep \"" + git("push") + "\" log.txt",
     ]
     wrongly_denied = [
         f"{c!r} -> {verdict(c)}" for c in allowed_shapes if classify(c) is not None
@@ -2777,6 +2835,7 @@ def test_legacy_denied_corpus_stays_denied_except_reviewed_quoted_data(tmp_path)
             for template in EXECUTED_TEMPLATES + LEXER_TEMPLATES + QUOTED_DATA_TEMPLATES
         },
         **pipe_executed_corpus(),
+        **bypass_corpus(),
     }
     legacy_denied = {
         c for c in corpus if legacy_denies(c)
@@ -2790,7 +2849,7 @@ def test_legacy_denied_corpus_stays_denied_except_reviewed_quoted_data(tmp_path)
     assert not lost, f"{len(lost)} denials lost, first: {lost[:5]}"
 
 
-TEXT_FILTERS = ("grep", "egrep", "fgrep", "cat", "head", "tail", "wc", "sort", "uniq", "tr", "cut")
+TEXT_FILTERS = ("grep", "egrep", "fgrep", "cat", "head", "tail", "wc", "tr", "cut")
 
 
 def test_quoted_data_exceptions_are_real_and_narrow(tmp_path):
@@ -2799,8 +2858,8 @@ def test_quoted_data_exceptions_are_real_and_narrow(tmp_path):
         assert command.split()[0] in ("echo", "grep", "printf", "cat"), command
         for member in command.split("|"):
             assert member.split()[0] in ("echo", "printf") + TEXT_FILTERS, command
-        stripped = re.sub(r"\d?>(&\d|/dev/null)", "", command)
-        assert not re.search(r"[<>]|\$\(|`", stripped), f"redirect or subst: {command!r}"
+        assert not re.search(r"[<>&;(){}`#]", command), f"operator: {command!r}"
+        assert "\\" not in command.replace("'%s\\n'", ""), f"backslash: {command!r}"
         assert legacy_denies(command), f"not a legacy denial, stale entry: {command!r}"
         assert classify(command) is None, f"still denied: {command!r}"
 
@@ -2913,7 +2972,8 @@ def test_classifier_denies_every_executed_text_shape(tmp_path):
         for template in LEXER_TEMPLATES
     }
     corpus.update(pipe_executed_corpus())
-    assert len(corpus) > 500
+    corpus.update(bypass_corpus())
+    assert len(corpus) > 1000
     undenied = [f"{c!r}" for c in sorted(corpus) if classify(c) is None]
     assert not undenied, f"{len(undenied)} undenied, first: {undenied[:6]}"
 
@@ -2937,8 +2997,9 @@ def test_classifier_denies_after_a_comment_holding_a_quote_character(tmp_path):
 
 
 def test_classifier_reads_comments_and_ansi_c_quotes_like_the_shell(tmp_path):
-    assert classify("echo hi # " + git("push")) is None
-    assert classify("echo hi;# " + git("push")) is None
+    assert classify("echo hi # " + git("push")) is not None
+    assert classify("echo hi;# " + git("push")) is not None
+    assert classify("echo hi # tidy") is None
     assert classify("echo a#b && " + git("push")) is not None
     assert classify("$'" + "git" + "' push origin main") is not None
     assert classify("echo $'it\\'s' && " + git("reset", "--hard")) is not None
@@ -2952,9 +3013,9 @@ def test_classifier_denies_quoted_text_spanning_lines(tmp_path):
 
 def test_classifier_allows_quoted_text_only_through_text_filter_pipes(tmp_path):
     allowed = [
-        "grep -rn \"" + git("push", "origin", "main") + "\" plugins/ 2>/dev/null",
-        "cat f | grep '" + git("reset", "--hard") + "' | head -3",
-        "grep -c \"" + git("clean", "-fd") + "\" f 2>&1 | tail -1",
+        "grep -rn \"" + git("push", "origin", "main") + "\" plugins/ | head",
+        "grep -h '" + git("reset", "--hard") + "' f | cut -d: -f1 | head -3",
+        "grep -c \"" + git("clean", "-fd") + "\" f | tail -1",
         "echo '" + git("push") + "' | wc -l",
     ]
     wrongly_denied = [c for c in allowed if classify(c) is not None]
@@ -2962,11 +3023,181 @@ def test_classifier_allows_quoted_text_only_through_text_filter_pipes(tmp_path):
     denied = [
         "grep '" + git("push") + "' f | xargs sh -c",
         "git log | grep '" + git("push") + "'",
+        "cat f | grep '" + git("reset", "--hard") + "' | head -3",
+        "grep -c \"" + git("clean", "-fd") + "\" f 2>&1 | tail -1",
+        "grep '" + git("push") + "' f 2>/dev/null",
         "grep '" + git("push") + "' f > out.sh",
         "echo '" + git("push") + "' <<< x",
     ]
     undenied = [c for c in denied if classify(c) is None]
     assert not undenied, undenied
+
+
+def nested_substitution(levels: int, inner: str) -> str:
+    return "echo $(" * levels + inner + ")" * levels
+
+
+def test_classifier_denies_every_second_review_bypass_shape(tmp_path):
+    corpus = bypass_corpus()
+    assert len(corpus) > 900
+    undenied = [c for c in sorted(corpus) if classify(c) is None]
+    assert not undenied, f"{len(undenied)} undenied, first: {undenied[:6]}"
+
+
+def test_classifier_floor_runs_over_the_whole_raw_command(tmp_path):
+    checked = 0
+    for words in DESTRUCTIVE:
+        text = git(*words)
+        for template in BYPASS_TEMPLATES:
+            command = template.replace("@@", text)
+            if legacy_denies(command):
+                checked += 1
+                assert classify(command) is not None, command
+    assert checked > 400
+
+
+def test_quoted_data_allowance_is_a_default_deny_allowlist(tmp_path):
+    d = git("push", "origin", "main")
+    allowed = [
+        f"echo '{d}'",
+        f'echo "{d}"',
+        f"printf '%s\\n' '{d}' | wc -l",
+        f"grep -rn '{d}' docs/ | head -5 | cut -d: -f1",
+        f"egrep '{d}' notes | tr a-z A-Z",
+        f"fgrep -c '{d}' notes | tail -1",
+        f"echo '{d}' | cat | grep -c x | head",
+        f"echo '$(rm -rf x) `y` ; & > # \\ {d}'",
+    ]
+    wrongly_denied = [c for c in allowed if classify(c) is not None]
+    assert not wrongly_denied, wrongly_denied
+    denied = [
+        f"echo '{d}' | sort",
+        f"echo '{d}' | uniq",
+        f"echo '{d}' | ./cat",
+        f"echo '{d}' | /bin/cat",
+        f"echo '{d}' | tee f",
+        f"echo '{d}' | xargs echo",
+        f"echo '{d}' | sed s/a/b/",
+        f"cat notes | grep '{d}'",
+        f"ls | grep '{d}'",
+        f"echo '{d}' ; ls",
+        f"echo '{d}' && ls",
+        f"echo '{d}' &",
+        f"echo '{d}' || ls",
+        f"echo '{d}' |& cat",
+        f"echo '{d}' > f",
+        f"echo '{d}' < f",
+        f"echo '{d}' # note",
+        f"echo '{d}' \\| sh",
+        f"echo '{d}' \r| sh",
+        f"echo '{d}'\nls",
+        f"echo '{d}' $x",
+        f"echo '{d}' `ls`",
+        f"echo '{d}' $(ls)",
+        f"echo \"$(true)\" '{d}'",
+        f'echo "$x {d}"',
+        f'echo "`ls` {d}"',
+        f'echo "a\\"b" \'{d}\'',
+        f"echo '{d}' ({d})",
+        f"echo '{d}' {{ x }}",
+        f"echo '{d}' | cat <<EOF",
+        f"echo '{d}' if",
+        f"echo '{d}' .",
+        f"echo '{d}' exec",
+        f"FOO=1 echo '{d}'",
+        f"time echo '{d}'",
+        f"env echo '{d}'",
+        f"echo {d}",
+        f"echo '{d}' {d}",
+        f"echo ok | grep '{d}'",
+        f"echo '{d}",
+        f'echo "{d}',
+        f"echo '{d}' | | cat",
+        f"| echo '{d}'",
+        f"echo '{d}' |",
+    ]
+    undenied = [c for c in denied if classify(c) is None]
+    assert not undenied, undenied
+    for word in (
+        "exec", "eval", "source", ".", "function", "for", "while", "until", "if",
+        "case", "do", "done", "then", "fi",
+    ):
+        assert classify(f"echo '{d}' {word}") is not None, word
+
+
+def test_classifier_denies_at_the_depth_cap_instead_of_flooring(tmp_path):
+    hidden = "g''i''t p''u''s''h origin main"
+    assert classify(nested_substitution(3, hidden)) is not None
+    nine = nested_substitution(9, hidden)
+    result = classify(nine)
+    assert result is not None and result[0] == "classifier-error", result
+    assert classify(nested_substitution(12, "ls")) is not None
+    deep = classify(nested_substitution(400, "ls"))
+    assert deep is not None and deep[0] == "classifier-error"
+
+
+def test_classifier_denies_comment_dropped_text_in_the_executable_tail(tmp_path):
+    assert classify("echo ${y/ #/}; " + git("stash", "clear")) is not None
+    assert classify("echo a\r# ; " + git("checkout", "-f")) is not None
+    assert classify("echo hi # " + git("stash", "clear")) is not None
+
+
+def test_classifier_crash_fallback_uses_a_git_word_boundary(tmp_path):
+    (tmp_path / ".cc10x").mkdir()
+    patches = [(git_guard, "classify_git_command", _boom)]
+    for harmless in ("cat .gitignore", "echo digit legit", "ls gitlab-notes"):
+        code, out = run_git_guard_in_process(tmp_path, harmless, patches)
+        assert code == 0 and out.strip() == "", harmless
+    for text in (git("status"), "env " + git("status"), "x;" + git("push"), "GIT status"):
+        code, out = run_git_guard_in_process(tmp_path, text, patches)
+        assert json.loads(out)["hookSpecificOutput"]["permissionDecision"] == "deny", text
+
+
+def test_classifier_crash_fallback_logs_the_decision_field(tmp_path):
+    (tmp_path / ".cc10x").mkdir()
+    patches = [(git_guard, "classify_git_command", _boom)]
+    run_git_guard_in_process(tmp_path, git("status"), patches)
+    run_git_guard_in_process(tmp_path, "ls .gitignore", patches)
+    events = [e for e in hook_log_lines(tmp_path) if e["event"] == "git_guard_classifier_failed"]
+    assert [e["decision"] for e in events] == ["deny", "allow"]
+
+
+def test_normalize_segment_is_linear_on_long_whitespace_runs(tmp_path):
+    import time
+
+    for command in (
+        "echo" + " " * 200_000,
+        "echo" + " " * 200_000 + "x",
+        git("restore") + " " * 200_000 + "x",
+        git("") + "-P " * 60_000 + "status",
+        "echo" + " \t" * 100_000 + "end",
+        "echo '" + " " * 200_000 + "x' | sh",
+        "ls " + " " * 200_000 + "x | sh",
+        "echo \"" + " " * 200_000 + "x\" | cat | sh",
+    ):
+        started = time.monotonic()
+        classify(command)
+        assert time.monotonic() - started < 2.0, command[:20]
+    assert classify("echo" + " " * 200_000 + "# " + git("push")) is not None
+
+
+def test_classifier_floor_does_not_depend_on_the_lexer_scan(tmp_path):
+    from unittest import mock
+
+    corpus = {**prefix_corpus(), **pipe_executed_corpus(), **bypass_corpus()}
+    legacy_denied = [
+        c for c in corpus if legacy_denies(c) and c not in QUOTED_DATA_EXCEPTIONS
+    ]
+    assert len(legacy_denied) > 1000
+    with mock.patch.object(git_guard, "_scan", lambda *args, **kwargs: []):
+        lost = [c for c in legacy_denied if classify(c) is None]
+    assert not lost, f"{len(lost)} lost without the scan, first: {lost[:5]}"
+
+
+def test_classifier_reads_cr_as_an_ordinary_word_character(tmp_path):
+    assert classify("git\rstash\rclear") is None
+    assert classify("echo a\r# tidy") is None
+    assert classify("echo a\r# ; " + git("stash", "clear")) is not None
 
 
 def run_git_guard_in_process(project_dir: Path, command: str, patches=()):
