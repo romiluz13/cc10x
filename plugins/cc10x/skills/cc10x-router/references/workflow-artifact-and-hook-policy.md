@@ -315,7 +315,7 @@ These agents emit a Router Contract too; the fields below are what the router re
 | triage-agent | `STATUS`, `CATEGORY`, `STATE`, `VERIFICATION_RESULT`, `REDUNDANCY_CHECK`, `PRIOR_REJECTION_CHECK`, `BRIEF_PATH`, `NEEDS_GRILLING`, `BLOCKING`, `MEMORY_NOTES` |
 | architecture-scanner | `STATUS`, `CANDIDATES`, `REPORT_PATH`, `BLOCKING`, `MEMORY_NOTES` |
 
-If the YAML block is missing or malformed, treat the task as invalid output, do not continue the workflow based on prose alone, and re-run inline verification and fail safe.
+If the YAML block is missing or malformed, treat the task as invalid output, do not continue the workflow based on prose alone, and re-run inline verification and fail safe. "Inline verification" means the inline verification pass defined in `SKILL.md` section "Inline no-subagent execution": the router applies the integration-verifier's checks itself and writes the same scenario accounting into the artifact.
 
 ### Contract overrides
 

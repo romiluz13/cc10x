@@ -59,12 +59,12 @@ Only consider fanning out when the user reports many tests red across files AND 
 
 If EITHER half fails, run a single investigator over all the failures.
 
-When BOTH halves PASS, fan out one scoped `bug-investigator` per domain — each scoped to its own non-overlapping file set. State the scope explicitly in the task description so each agent stays in its lane:
+When BOTH halves PASS, fan out one scoped `bug-investigator` per domain — each scoped to its own non-overlapping file set. State the owned file set in the task description body (`scope:` is a closed enum, so it stays `N/A`) so each agent stays in its lane:
 
 ```text
 TaskCreate({
   subject: "CC10X bug-investigator: Investigate {domain} failures",
-  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:debug-investigate\nplan:N/A\nscope:{files this investigator owns — do NOT edit outside this set}\nreason:Independent root cause for {domain}\n\nFind the root cause and apply the fix WITHIN your scoped files only.",
+  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:debug-investigate\nplan:N/A\nscope:N/A\nreason:Independent root cause for {domain}\n\nFiles you own (do NOT edit outside this set): {files this investigator owns}. Find the root cause and apply the fix WITHIN those files only.",
   activeForm: "Investigating {domain} bug"
 }) -> investigator_task_id_{domain}
 ```
@@ -73,7 +73,7 @@ TaskCreate({
 
 On return from a fan-out, BEFORE running the unified verifier, run a fan-in CONFLICT-CHECK — two WRITE agents that strayed past their scope will silently clobber each other:
 
-1. Collect the actual set of files each investigator edited (not the declared scope — what changed).
+1. Collect the actual set of files each investigator edited (not the declared file set — what changed).
 2. Intersect the edited-file sets pairwise. If any file was edited by two investigators, you have a conflict.
 3. On conflict: do NOT proceed to verify. Reconcile the overlapping edits (re-investigate the shared file with a single agent that sees both fixes), then re-run the conflict-check.
 4. Only when all edited-file sets are pairwise disjoint, proceed to the single unified verifier (the existing `integration-verifier` task) over the full test suite — never one verifier per domain, since a real fix must hold across the whole suite.

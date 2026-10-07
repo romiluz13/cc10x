@@ -49,3 +49,30 @@ Claim boundary: now true: no two policy tables disagree on field names with the 
 Pins and fixtures: 12 new pins (assertion count 276: 259 at P4 start, plus 5 in T1.1, plus 12 here; floor 253 plus additions holds); five fixtures migrated; `build-happy-path` expected value moved to `converged` in the replay check. No existing pin was edited, weakened or removed.
 
 Classification: `orchestration_sensitive`.
+
+## P4.T1.3 `build-workflow.md`, `debug-workflow.md`, `plan-workflow.md`, `review-workflow.md`
+
+Findings: B3, B8 (part), B10 (part), B11 (part).
+
+Files: `build-workflow.md` (new `#### Multi-phase iteration`), `debug-workflow.md` (fan-out `scope:`), `workflow-artifact-and-hook-policy.md` (one definition of "inline verification", one sentence); four new clause pins in `prompt_clause_assertions.py`. `plan-workflow.md` and `review-workflow.md` needed no edit (see below).
+
+What changed:
+- Multi-phase BUILD rule, one home under "BUILD task graph": the next phase's graph is created only after the previous phase's `phase_exit_gate` passes and `phase_cursor` advances (builder blocked on the previous verifier, BASE re-recorded per step 11a); Memory Update is created once per workflow with the last phase's graph, blocked on the last phase's verifier or its doc-sync task, never finalized after an earlier phase. This is the rule the `multi-phase-memory-finalize` fixture encodes (its checker requires memory blocked by the last verifier or its doc-sync task and by no earlier-phase task); the text was written to match the fixture, not the reverse.
+- DEBUG fan-out: the template carried a free-text `scope:{files ...}` value outside the closed `scope:` enum in `SKILL.md` section 3 (`ALL_ISSUES|CRITICAL_ONLY|N/A|{source}|code:{repo}`). It is now `scope:N/A`, and the owned file set moves into the description body, the same choice the QA route already made for its finding text. The fan-in conflict check now speaks of the declared file set.
+- "Run inline verification": the phrase appears in `SKILL.md` and in the policy reference, defined nowhere. The policy reference sentence at the malformed-YAML rule now says what it means and points at the `SKILL.md` section "Inline no-subagent execution" (its inline verification pass). The `SKILL.md` occurrences are left for T1.5.
+- `normalized_phases` names: already aligned with `build-workflow.md` in T1.2; no change here.
+
+Not changed, with reason:
+- `[BUILD-START]` / `[PLAN-START]`: neither marker appears in any of the four reference files. They live only in `SKILL.md` ("Marker rules"; written, read nowhere). Default is remove: pending for T1.5a.
+- The 14 plugin-root reference lines (R-B11 verdict BROKEN; P4.T1.4b skipped, deferred): untouched, including `build-workflow.md` lines 7 and 207 equivalents.
+- B10 sub-item "spike SKILL_HINTS unreachable": the only text is `SKILL.md` ("Include `cc10x:exploration` only on an explicit de-risk/spike intent"); pending for T1.5a, not a reference-file edit.
+- B10 sub-items "REVIEW re-review branch" and "legacy agent-created remediation": done in P4.T1.1.
+- `review-workflow.md` already states REVIEW never creates REM-FIX tasks; nothing dead remained there. `plan-workflow.md` has no defect named by the task.
+
+Why safe: no gate semantics changed. `phase_exit_gate`, `plan_trust_gate`, the memory sync gate, per-phase review/verify, and the Memory Update blocking rule (last verifier or doc-sync) are as documented before; the rule is stated once where it was only implied. The scope enum change removes a value no hook or fixture reads (the TaskCompleted guard audits only that the seven lines are present).
+
+Claim boundary: now true: the multi-phase graph/memory rule is written down once and matches the fixture; the fan-out template stays inside the metadata enum. Still not claimed: the `SKILL.md` marker rules, the spike hint and the remaining "inline verification" mentions are unedited until T1.5a.
+
+Pins and fixtures: four new pins (assertion count 280). No existing pin was edited, weakened or removed. No fixture changed.
+
+Classification: `orchestration_sensitive`.

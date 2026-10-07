@@ -86,6 +86,11 @@ BUILD is sequential:
 - review and verify validate that phase before `phase_cursor` advances
 - if phase exit evidence is incomplete, record `partial` or `blocked`, persist state, and stop
 
+#### Multi-phase iteration
+
+- Each approved phase gets its own task graph (the full graph below, or the reduced graph for `build_scope=trivial`). The graph for the next phase is created only after the previous phase's `phase_exit_gate` passes and `phase_cursor` has advanced to it; its builder is blocked on the previous phase's verifier, and step 11a re-records `results.git_base_sha` first.
+- Memory Update is created once per workflow, with the LAST phase's graph, blocked on the LAST phase's `integration-verifier` (or its doc-sync task when one exists). It is never created with an earlier phase's graph and never finalized after an earlier phase, so phase 1 of a multi-phase plan never writes memory. Memory Notes extracted after each phase stay in the workflow artifact `memory_notes` until that one Memory Update persists them.
+
 **Complexity gradient (read `build_scope` from BUILD preparation step 4):**
 The router is still the sole entry point for every BUILD, but the task graph scales to the work. This is a deliberate gradient, not the retired unconditional QUICK path: trivial work earns a reduced graph; everything else pays the full chain.
 

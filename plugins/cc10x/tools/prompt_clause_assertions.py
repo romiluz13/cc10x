@@ -81,6 +81,7 @@ def frontmatter_is(key: str, value: str):
 
 
 POLICY_REF = SKILLS / "cc10x-router" / "references" / "workflow-artifact-and-hook-policy.md"
+ROUTER_REFS = SKILLS / "cc10x-router" / "references"
 # Fields the router requires on a qa-re-plan return; planner.md carries them from P4.T4.4.
 POLICY_FIELDS_AGENT_SIDE_PENDING = {"AMENDED_FILES", "STALE_SWEEP", "RECONCILIATION_RERUN"}
 POLICY_TABLE_AGENTS = (
@@ -2415,6 +2416,37 @@ ASSERTIONS = [
         lambda text: text.count("fewer than 3 file:line evidence citations") == 1
         and "does not change the per-finding reporting floor" in text,
         "the 3-citation check on a zero-finding approval is kept; the per-finding confidence floor is untouched",
+    ),
+    A(
+        "build-workflow: multi-phase iteration rule has one home",
+        ROUTER_REFS / "build-workflow.md",
+        contains_all(
+            "#### Multi-phase iteration",
+            "only after the previous phase's `phase_exit_gate` passes",
+            "Memory Update is created once per workflow",
+            "never finalized after an earlier phase",
+        ),
+        "next-phase graph follows phase_exit_gate; one Memory Update after the last phase (B3)",
+    ),
+    A(
+        "build-workflow: Memory Update blocks on the last phase's verifier or doc-sync",
+        ROUTER_REFS / "build-workflow.md",
+        contains_all("blocked on the LAST phase's `integration-verifier`", "or its doc-sync task"),
+        "matches the multi-phase-memory-finalize fixture blockedBy rule",
+    ),
+    A(
+        "debug-workflow: fan-out scope stays inside the task-metadata enum",
+        ROUTER_REFS / "debug-workflow.md",
+        lambda text: "scope:{files" not in text
+        and "Files you own (do NOT edit outside this set)" in text
+        and "`scope:` is a closed enum" in text,
+        "the owned file set travels in the description body; scope: stays N/A (B8)",
+    ),
+    A(
+        "policy: inline verification is defined by pointing at the inline-mode section",
+        POLICY_REF,
+        contains_all("`SKILL.md` section \"Inline no-subagent execution\"", "inline verification pass"),
+        "the phrase 'run inline verification' has one definition (B10)",
     ),
 ]
 
