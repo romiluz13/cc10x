@@ -1745,3 +1745,87 @@ def test_root_claude_md_has_no_placeholder_skill_table_and_no_entry_directive():
     assert "[CC10x]|entry:" not in claude and "[CC10x]|entry:" not in readme
     assert "plugins/cc10x/skills/cc10x-router/SKILL.md" in claude
     assert "need not pay full routing" not in claude and "need not pay full routing" not in readme
+
+
+def readme_text() -> str:
+    return (REPO / "README.md").read_text(encoding="utf-8")
+
+
+def readme_tree_paths() -> list[str]:
+    """Repo-relative paths of the plugins/cc10x/ file tree in the README, braces expanded."""
+    block = next(
+        b for b in re.findall(r"```[a-z]*\n(.*?)```", readme_text(), re.S) if b.startswith("plugins/cc10x/\n")
+    )
+    stack: list[str] = []
+    paths: list[str] = []
+    for line in block.splitlines()[1:]:
+        match = re.match(r"^((?:│   |    )*)(?:├── |└── )(\S+)", line)
+        if not match:
+            continue
+        depth = len(match.group(1)) // 4
+        del stack[depth:]
+        stack.append(match.group(2))
+        brace = re.search(r"\{([^}]*)\}", match.group(2))
+        names = [match.group(2)] if not brace else [
+            match.group(2).replace(brace.group(0), part) for part in brace.group(1).split(",")
+        ]
+        base = "".join(stack[:-1])
+        paths.extend("plugins/cc10x/" + base + name for name in names)
+    return paths
+
+
+def test_readme_file_tree_lists_only_paths_that_exist_and_every_agent():
+    paths = readme_tree_paths()
+    assert len(paths) > 40
+    assert [p for p in paths if not (REPO / p).exists()] == []
+    for agent in (REPO / "plugins/cc10x/agents").glob("*.md"):
+        assert f"plugins/cc10x/agents/{agent.name}" in paths, agent.name
+    for name in ("qa-workflow.md", "cc10x_qa_isolation_guard.py", "templates/"):
+        assert any(p.endswith(name) for p in paths), name
+
+
+def test_readme_names_every_workflow_in_the_router_table():
+    router = (REPO / "plugins/cc10x/skills/cc10x-router/SKILL.md").read_text(encoding="utf-8")
+    table = router.split("## 1. Intent Routing", 1)[1].split("\n---", 1)[0]
+    workflows = re.findall(r"(?m)^\|\s*\d+\s*\|[^|]*\|[^|]*\|\s*([A-Z][A-Z-]*)\s*\|", table)
+    assert len(set(workflows)) == 8
+    section = readme_text().split("## The 8 Workflows", 1)[1].split("\n## ", 1)[0]
+    assert [w for w in sorted(set(workflows)) if f"**{w}**" not in section] == []
+
+
+def test_readme_has_no_flagged_tagline_and_no_stale_plugin_command():
+    text = readme_text()
+    assert "Stop chasing better models" not in text
+    assert "/plugins enable" not in text
+    assert "silent-failure-red-flags" not in text
+
+
+def test_readme_documents_install_update_python_and_env_vars():
+    text = readme_text()
+    for needle in (
+        "claude plugin marketplace add romiluz13/cc10x",
+        "claude plugin install cc10x@cc10x",
+        "claude plugin update cc10x@cc10x --scope",
+        "/reload-plugins",
+        "Python 3.9",
+        "3.13",
+        "auto-update",
+        "CLAUDE_CODE_ENABLE_TODO_TOOLS=1",
+        "CLAUDE_CODE_TASK_LIST_ID",
+        "CLAUDE_CONFIG_DIR",
+        "CLAUDE_CODE_PLUGIN_CACHE_DIR",
+        "plugins/cc10x/hooks/README.md",
+    ):
+        assert needle in text, needle
+    assert re.search(r"(?mi)^.*gitignore.*`\.cc10x/`", text)
+    assert re.search(r"(?m)^#+ .*auto-memory", text, re.I)
+
+
+def test_readme_release_table_covers_every_release_from_v11_to_the_current_version():
+    current = json.loads((REPO / "plugins/cc10x/.claude-plugin/plugin.json").read_text(encoding="utf-8"))["version"]
+    changelog = (REPO / "CHANGELOG.md").read_text(encoding="utf-8")
+    wanted = [v for v in re.findall(r"(?m)^## \[(\d+\.\d+\.\d+)\]", changelog) if int(v.split(".")[0]) >= 11]
+    assert current in wanted
+    text = readme_text()
+    assert [v for v in wanted if f"| **v{v}** |" not in text] == []
+    assert f"Release history (v5.3 → v{current})" in text
