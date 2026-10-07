@@ -3292,6 +3292,106 @@ ASSERTIONS = [
         and "(no `phase_cursor`, no phases)" not in text,
         "same rule as the triage reference",
     ),
+    # --- P4.T4.1 commit 1: agent-common reconciled with the agent bodies and the router (A1, A6, A7) ---
+    A(
+        "agent-common: Memory First mkdir is for writers; the router creates the directories (qa-researcher row)",
+        SKILLS / "agent-common" / "SKILL.md",
+        lambda text: "the router creates `.cc10x/` and `.cc10x/qa/<workflow>/` for you" in text
+        and "unless your agent doc is read-only" in text,
+        "the preamble no longer tells a read-only agent to mkdir; the router owns directory creation",
+    ),
+    A(
+        "agent-common: qa-researcher is on the narrower-protocol list",
+        SKILLS / "agent-common" / "SKILL.md",
+        lambda text: "`qa-researcher` creates no files and runs no `mkdir`" in text
+        and "Narrower agent protocols win" in text,
+        "the qa-researcher mkdir prohibition survives the shared preamble",
+    ),
+    A(
+        "qa-researcher: the mkdir and file-creation prohibition stays",
+        AGENTS / "qa-researcher.md",
+        contains_all("**You may not**, by any tool or command: create, edit, move, or delete files; `mkdir`;"),
+        "agent-common narrowing does not loosen the QA read-only prohibition",
+    ),
+    A(
+        "agent-common: Shell Safety carves out writers and test-running agents, never redirection",
+        SKILLS / "agent-common" / "SKILL.md",
+        lambda text: "component-builder, bug-investigator, qa-harness-builder, qa-executor" in text
+        and "test runners, builds, docker, `mkdir`, `open`" in text
+        and "No agent writes file content through shell redirection or heredoc" in text
+        and "Bash is for read-only commands (git diff, grep, file existence) only" not in text,
+        "the shell rule matches what the writing agents actually run and keeps the redirection ban",
+    ),
+    A(
+        "agent-common: memory-file ban names the three files, the DEBUG carve-out, and the QA and router paths",
+        SKILLS / "agent-common" / "SKILL.md",
+        lambda text: "`.cc10x/activeContext.md`, `.cc10x/patterns.md`, `.cc10x/progress.md`" in text
+        and "Sole carve-out:" in text
+        and "under `.cc10x/qa/`" in text
+        and "`.cc10x/workflows/*` is router-owned" in text
+        and "Do NOT edit `.cc10x/*.md` files directly" not in text,
+        "the ban names the memory files; other .cc10x paths are written only where the agent doc says so",
+    ),
+    A(
+        "agent-common: glossary section says every agent but plan-gap-reviewer loads it",
+        SKILLS / "agent-common" / "SKILL.md",
+        lambda text: "`agent-common` is loaded by every agent except `plan-gap-reviewer`" in text
+        and "loaded by read-only agents" not in text
+        and "Do NOT write or edit `CONTEXT.md`" in text,
+        "the stale read-only-agents claim is gone; the no-write rule stays",
+    ),
+    A(
+        "agent-common: SKILL_HINTS states preloads versus hints and the planner's own gate skill",
+        SKILLS / "agent-common" / "SKILL.md",
+        lambda text: "Frontmatter `skills:` preloads are your role-core skills" in text
+        and "the router is the only authority that adds situational skills" in text
+        and "the planner may invoke `cc10x:plan-review-gate` itself" in text
+        and "Do not self-activate internal cc10x skills not passed in SKILL_HINTS" in text,
+        "the self-activation rule is stated per C4.3 with the one agent-owned invocation named",
+    ),
+    A(
+        "agent-common: Memory Notes block versus YAML key",
+        SKILLS / "agent-common" / "SKILL.md",
+        lambda text: "Read-only agents emit this block" in text
+        and "write agents carry `MEMORY_NOTES` in their YAML Router Contract" in text
+        and "where it prescribes both, keep them identical" in text,
+        "the router extracts the block from read-only agents and the YAML key from write agents",
+    ),
+    A(
+        "agent-common: agents without the TaskUpdate tool never call it",
+        SKILLS / "agent-common" / "SKILL.md",
+        contains("An agent without the `TaskUpdate` tool never calls it"),
+        "the completion wording is true for agents that do not have the tool",
+    ),
+    A(
+        "agent-common: the YAML STATUS decides, envelope is the fast path",
+        SKILLS / "agent-common" / "SKILL.md",
+        lambda text: "`STATUS` in the fenced YAML block decides" in text
+        and "fast-path signal" in text
+        and "Router reads envelope first" not in text
+        and "primary machine-readable signal" not in text,
+        "agent-common matches the router's YAML-first contract rule",
+    ),
+    *[
+        A(
+            f"{name}: Memory First body carries no mkdir (agent-common owns it, router creates the directory)",
+            AGENTS / f"{name}.md",
+            lambda text: "mkdir -p .cc10x" not in text and "Read(file_path=\".cc10x/" in text,
+            "the duplicate mkdir is gone; the reads stay",
+        )
+        for name in ("architecture-scanner", "code-reviewer", "failure-hunter", "triage-agent", "doc-syncer")
+    ],
+    *[
+        A(
+            f"{name}: SKILL_HINTS paragraph is single-sourced in agent-common",
+            AGENTS / f"{name}.md",
+            lambda text: "invoke each skill via" not in text
+            and "agent-common's SKILL_HINTS section" in text
+            and "Do not self-activate internal cc10x skills not passed in SKILL_HINTS" in text,
+            "the reviewers point at the shared SKILL_HINTS procedure and keep the canonical sentence",
+        )
+        for name in ("code-reviewer", "failure-hunter")
+    ],
 ]
 
 

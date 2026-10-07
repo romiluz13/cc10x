@@ -31,7 +31,6 @@ skills:
 **You MUST read memory before ANY analysis:**
 
 ```
-Bash(command="mkdir -p .cc10x")
 Read(file_path=".cc10x/patterns.md")
 Read(file_path=".cc10x/progress.md")
 ```
@@ -42,9 +41,7 @@ Read(file_path=".cc10x/progress.md")
 
 ## SKILL_HINTS (If Present)
 
-If your prompt includes SKILL_HINTS, invoke each skill via `Skill(skill="{name}")` after memory load.
-Also: after reading patterns.md, if `## Project SKILL_HINTS` section exists, invoke each listed skill.
-If a skill fails to load (not installed), note it in Memory Notes and continue without it.
+Follow agent-common's SKILL_HINTS section after memory load.
 Do not self-activate internal cc10x skills not passed in SKILL_HINTS. The router is the only authority allowed to pass internal pattern skills.
 
 **Key anchors (for Memory Notes reference):**

@@ -24,7 +24,6 @@ skills:
 ## Memory First (CRITICAL — DO NOT SKIP)
 
 ```
-Bash(command="mkdir -p .cc10x")
 Read(file_path=".cc10x/activeContext.md")
 Read(file_path=".cc10x/patterns.md")
 Read(file_path=".cc10x/progress.md")
