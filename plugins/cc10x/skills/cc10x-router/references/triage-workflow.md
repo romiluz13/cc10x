@@ -10,7 +10,7 @@
 
 ### TRIAGE task graph
 
-Single-pass advisory workflow (no `phase_cursor`, no phases). The graph created with the workflow holds ONLY the agent task:
+Single-pass advisory workflow (no phases; `phase_cursor` stays null until finalize sets it to `memory-finalize`). The graph created with the workflow holds ONLY the agent task:
 
 ```text
 TaskCreate({

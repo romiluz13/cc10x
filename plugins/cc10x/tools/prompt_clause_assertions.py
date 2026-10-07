@@ -3277,6 +3277,21 @@ ASSERTIONS = [
         and re.search(r"`details\.phase_id` set to the `phase_cursor` value \(the literal `N/A` when it is null\)", text) is not None,
         "the phase_started boundary and the result events must use the same phase_id value for a no-plan BUILD",
     ),
+    # --- P4A remediation 3, commit 3: wording that must agree with the finalize rule ---
+    A(
+        "triage-workflow: the advisory graph has no phases but its phase_cursor is set to memory-finalize at finalize, not absent",
+        ROUTER_REFS / "triage-workflow.md",
+        lambda text: re.search(r"Single-pass advisory workflow \(no phases; `phase_cursor` stays null until finalize sets it to `memory-finalize`\)", text) is not None
+        and "(no `phase_cursor`, no phases)" not in text,
+        "SKILL.md sets phase_cursor to memory-finalize at finalize and the checker requires it on a terminal advisory artifact",
+    ),
+    A(
+        "codebase-health-workflow: the advisory graph has no phases but its phase_cursor is set to memory-finalize at finalize, not absent",
+        ROUTER_REFS / "codebase-health-workflow.md",
+        lambda text: re.search(r"Single-pass advisory workflow \(no phases; `phase_cursor` stays null until finalize sets it to `memory-finalize`\)", text) is not None
+        and "(no `phase_cursor`, no phases)" not in text,
+        "same rule as the triage reference",
+    ),
 ]
 
 
