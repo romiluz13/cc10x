@@ -1720,3 +1720,28 @@ def test_checklist_section_5_points_to_the_gate_and_uses_the_changelog_as_the_ch
     section = text.split("## 5.", 1)[1].split("\n## ", 1)[0]
     assert GATE_HEADING in section
     assert "CHANGELOG.md" in section and "benchmark note" not in text.lower()
+
+
+ROUTING_BLOCK_START = "# CC10x Orchestration (Always On)"
+ROUTING_BLOCK_END = "No interpretation. No guessing. Only these exact opt-out phrases."
+
+
+def routing_block(text: str) -> str:
+    return text.split(ROUTING_BLOCK_START, 1)[1].split(ROUTING_BLOCK_END, 1)[0]
+
+
+def test_readme_install_template_routing_block_is_identical_to_root_claude_md():
+    claude = (REPO / "CLAUDE.md").read_text(encoding="utf-8")
+    readme = (REPO / "README.md").read_text(encoding="utf-8")
+    assert ROUTING_BLOCK_END in claude and ROUTING_BLOCK_END in readme
+    assert routing_block(readme) == routing_block(claude)
+
+
+def test_root_claude_md_has_no_placeholder_skill_table_and_no_entry_directive():
+    claude = (REPO / "CLAUDE.md").read_text(encoding="utf-8")
+    readme = (REPO / "README.md").read_text(encoding="utf-8")
+    for name in ("mongodb-agent-skills", "react-best-practices", "vercel-agent-skills", "Complementary Skills"):
+        assert name not in claude, name
+    assert "[CC10x]|entry:" not in claude and "[CC10x]|entry:" not in readme
+    assert "plugins/cc10x/skills/cc10x-router/SKILL.md" in claude
+    assert "need not pay full routing" not in claude and "need not pay full routing" not in readme

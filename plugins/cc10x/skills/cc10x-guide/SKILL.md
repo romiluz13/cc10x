@@ -63,9 +63,9 @@ special phrases are the opt-outs: "don't use cc10x", "without cc10x", "skip cc10
   CLAUDE.md entry, settings.json permissions, optional user standards.
 - `claude-settings-template.json` (repo root) — the canonical permission list. If the
   user hits permission prompts mid-workflow, their settings.json drifted from this file.
-- The CLAUDE.md entry line is `[CC10x]|entry: cc10x:cc10x-router` (plugin reference).
-  A relative path (`./plugins/cc10x/...`) works only inside the cc10x repo itself —
-  see README.md → Troubleshooting.
+- The CLAUDE.md section names the router skill `cc10x:cc10x-router` (plugin reference).
+  A relative path (`plugins/cc10x/skills/cc10x-router/SKILL.md`) works only inside the
+  cc10x repo itself — see README.md → Troubleshooting.
 - Global `~/.claude/CLAUDE.md` activates cc10x in EVERY project. Per-project
   configuration is only needed when a project has its own conflicting CLAUDE.md.
 
@@ -111,7 +111,7 @@ research. Details: README.md → "Optional MCP Integrations", `../mcp-cli/SKILL.
 
 | Symptom | Cause → Fix |
 |---|---|
-| cc10x never activates | Restart after setup; verify `[CC10x]|entry: cc10x:cc10x-router` is in `~/.claude/CLAUDE.md` (plugin reference, not a relative path) |
+| cc10x never activates | Restart after setup; verify the cc10x section naming `cc10x:cc10x-router` is in `~/.claude/CLAUDE.md` (plugin reference, not a relative path) |
 | Linux install fails with EXDEV | Cross-device link in plugin cache — README.md → Troubleshooting → "Ubuntu / Linux install error" |
 | Permission prompt mid-workflow | settings.json drifted from `claude-settings-template.json` — merge the canonical list |
 | "Unknown skill" errors | Plugin cache stale — reinstall the plugin, restart |

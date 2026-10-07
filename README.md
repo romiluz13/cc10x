@@ -172,7 +172,7 @@ This section is written for Claude Code to follow when the user says "set up cc1
 IMPORTANT: For multi-step development work (build, debug, review, plan), do minimal orientation first, then invoke cc10x-router before planning, implementation, review, or code changes.
 IMPORTANT: Minimal orientation means only the nearest project instructions, manifest, and immediate target surface. Do not do broad exploration before routing.
 IMPORTANT: Prefer retrieval-led reasoning over pre-training-led reasoning for orchestration decisions.
-IMPORTANT: The router is the default for multi-step development work. Route write-heavy BUILD/DEBUG work through it; the router's fail-closed gates and durable artifacts are the value. A single trivial one-line edit need not pay full routing, but anything that spans files, has separable concerns, or changes a contract should route.
+IMPORTANT: The router is the default for multi-step development work. Route write-heavy BUILD/DEBUG work through it; the router's fail-closed gates and durable artifacts are the value. A small edit still routes: the router runs a single trivial change as BUILD with trivial scope (a reduced task graph that keeps the verifier's proof path), and anything that spans files, has separable concerns, or changes a contract gets the full chain.
 
 Precedence (highest first): explicit user instructions > project standards (CLAUDE.md / repo conventions) > approved plans and design docs > domain-specific skills > cc10x internal skills > router defaults. The router enforces quality; it does not override the user.
 
@@ -180,7 +180,7 @@ Precedence (highest first): explicit user instructions > project standards (CLAU
 - User EXPLICITLY says "don't use cc10x", "without cc10x", or "skip cc10x"
 - No interpretation. No guessing. Only these exact opt-out phrases.
 
-[CC10x]|entry: cc10x:cc10x-router
+The router is the plugin skill `cc10x:cc10x-router`.
 
 ---
 
@@ -369,7 +369,7 @@ Working as intended. `.cc10x/` orchestration state is pre-permitted, but outward
 The global `~/.claude/CLAUDE.md` activates cc10x in every project — you only need one install. If it's not activating in a specific project:
 
 1. **Check if that project has its own `.claude/CLAUDE.md`** — open it and verify the cc10x section is present. If the project-level file exists but doesn't have the cc10x entry, add it there.
-2. **Verify the entry format** — use `[CC10x]|entry: cc10x:cc10x-router` (plugin reference). A relative path like `./plugins/cc10x/...` only works in the cc10x repo itself, not in your projects.
+2. **Verify the router reference** — the CLAUDE.md section names the plugin skill `cc10x:cc10x-router`. A relative path like `plugins/cc10x/skills/cc10x-router/SKILL.md` only resolves inside the cc10x repo itself, not in your projects.
 3. **Restart Claude Code** — the plugin system requires a restart after any CLAUDE.md change.
 
 ---
