@@ -6,7 +6,9 @@ PreToolUse hook for Bash commands. Blocks:
 - git reset --hard
 - git clean -f / git clean --force
 - git branch -D / git branch --delete --force (force delete)
-- git checkout . / -- . / -f, git restore . (discard all changes)
+- git checkout . / -- . / -f, git switch -f, git restore . (discard all changes;
+  `.`, `./.`, `:/` and `:(top)` all name the whole tree)
+- git worktree remove --force
 - git stash clear
 
 `classify_git_command` is the pure decision. By construction it denies at
@@ -225,6 +227,7 @@ PRIORITY = (
     "clean-force",
     "discard-all",
     "checkout-force",
+    "worktree-force",
     "stash-clear",
     "classifier-error",
     "command-too-large",
@@ -240,6 +243,8 @@ MSG_BRANCH = BLOCKED_PATTERNS[4][1]
 MSG_CHECKOUT = BLOCKED_PATTERNS[5][1]
 MSG_RESTORE = BLOCKED_PATTERNS[8][1]
 MSG_CHECKOUT_FORCE = "git checkout -f — discards uncommitted changes."
+MSG_SWITCH_FORCE = "git switch --force — discards uncommitted changes."
+MSG_WORKTREE_FORCE = "git worktree remove --force — deletes a worktree with uncommitted changes."
 MSG_STASH_CLEAR = "git stash clear — permanently discards every stash."
 MSG_CLASSIFIER_ERROR = (
     "the git guard classifier failed on this command, so it cannot be cleared."
@@ -287,7 +292,9 @@ GIT_VALUE_FLAGS = {
     "-C", "--git-dir", "--work-tree", "--namespace", "--super-prefix", "--config-env",
     "--attr-source",
 }
-GIT_DESTRUCTIVE_SUBS = ("push", "reset", "clean", "branch", "checkout", "restore", "stash")
+GIT_DESTRUCTIVE_SUBS = (
+    "push", "reset", "clean", "branch", "checkout", "restore", "stash", "switch", "worktree",
+)
 BRACE_EXPANSION = re.compile(r"(?<!\$)\{[^{}]*(,|\.\.)[^{}]*\}")
 MAX_COMMAND_CHARS = 65536
 GROUP_OPS = {"&&", "||", ";", ";;", "&", "(", ")", "\n"}
@@ -533,7 +540,7 @@ def _short_flags(args: list[str]) -> str:
 def _git_subcommand(sub: str, rest: list[str]) -> list[tuple[str, str]]:
     long_flags = {arg for arg in rest if arg.startswith("--")}
     short = _short_flags(rest)
-    discards_all = any(arg in (".", "*", "./") for arg in rest)
+    discards_all = any(arg in (".", "*", "./", "./.", ":/", ":(top)") for arg in rest)
     if sub == "push":
         forced = (
             "--force" in long_flags
@@ -558,6 +565,10 @@ def _git_subcommand(sub: str, rest: list[str]) -> list[tuple[str, str]]:
         if "--force" in long_flags or "f" in short:
             found.append(("checkout-force", MSG_CHECKOUT_FORCE))
         return found
+    if sub == "switch" and ("--force" in long_flags or "--discard-changes" in long_flags or "f" in short):
+        return [("checkout-force", MSG_SWITCH_FORCE)]
+    if sub == "worktree" and rest[:1] == ["remove"] and ("--force" in long_flags or "f" in short):
+        return [("worktree-force", MSG_WORKTREE_FORCE)]
     if sub == "restore" and discards_all:
         staged_only = ("--staged" in long_flags or "S" in short) and not (
             "--worktree" in long_flags or "W" in short

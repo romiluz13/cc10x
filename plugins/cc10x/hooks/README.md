@@ -25,7 +25,7 @@ Each hook in `hooks.json` appears exactly once in this table (a validator in
 | Event (matcher) | Hook | What it does | Blocks or audits |
 | --- | --- | --- | --- |
 | `PreToolUse` (`Edit\|Write`) | `cc10x_pretooluse_guard.py` | Flags direct writes to the memory markdown files under `.cc10x/` | Audit by default; denies when `memoryWrites` is `"block"` |
-| `PreToolUse` (`Bash`) | `cc10x_git_guard.py` | Denies push, hard reset, forced clean, forced branch delete, discard-all checkout/restore and stash clear | Blocks always; not controlled by hook-mode config |
+| `PreToolUse` (`Bash`) | `cc10x_git_guard.py` | Denies push, hard reset, forced clean, forced branch delete, forced `checkout`/`switch`, discard-all checkout/restore (`.`, `./.`, `:/`, `:(top)`), forced `worktree remove` and stash clear | Blocks always; not controlled by hook-mode config |
 | `PreToolUse` (`Read\|Grep\|Glob\|Edit\|Write\|NotebookEdit\|Bash`) | `cc10x_qa_isolation_guard.py` | QA route only: denies reads of quarantined paths and environment mutation during plan phases; disengages once the QA workflow is finished | Blocks always; not controlled by hook-mode config |
 | `SessionStart` (`startup\|resume\|clear\|compact\|fork`) | `cc10x_preflight.sh` | Tells the agent when `python3` is missing or older than 3.9 | Context only; always exits 0 |
 | `SessionStart` (same matcher) | `cc10x_sessionstart_context.py` | Injects resume context for the newest workflow that is not finished | Context only |

@@ -2371,6 +2371,15 @@ DESTRUCTIVE = (
     ("checkout", "HEAD", "--", "."),
     ("restore", "."),
     ("restore", "--", "."),
+    ("restore", "./."),
+    ("restore", ":/"),
+    ("checkout", "--", "./."),
+    ("checkout", ":/"),
+    ("switch", "-f", "main"),
+    ("switch", "--force", "main"),
+    ("switch", "--discard-changes", "main"),
+    ("worktree", "remove", "--force", "wt"),
+    ("worktree", "remove", "-f", "wt"),
     ("branch", "-D", "old"),
     ("branch", "--delete", "--force", "old"),
     ("branch", "-d", "-f", "old"),
@@ -2964,6 +2973,38 @@ def test_git_guard_unterminated_quote_with_destructive_text_is_still_denied(tmp_
     r = run_guard("cc10x_git_guard.py", {"tool_input": {"command": command}}, tmp_path)
     assert r.returncode in (0, 2)
     assert json.loads(r.stdout)["hookSpecificOutput"]["permissionDecision"] == "deny"
+
+
+def test_classifier_denies_switch_force_wide_pathspecs_and_forced_worktree_remove(tmp_path):
+    denied = {
+        git("switch", "-f", "main"): "checkout-force",
+        git("switch", "--force", "main"): "checkout-force",
+        git("switch", "--discard-changes", "main"): "checkout-force",
+        git("restore", "./."): "discard-all",
+        git("restore", "':/'"): "discard-all",
+        git("restore", "':(top)'"): "discard-all",
+        git("checkout", "--", "./."): "discard-all",
+        git("checkout", "':/'"): "discard-all",
+        git("worktree", "remove", "--force", "wt"): "worktree-force",
+        git("worktree", "remove", "-f", "wt"): "worktree-force",
+        git("-C", "sub", "worktree", "remove", "-f", "-f", "wt"): "worktree-force",
+    }
+    for command, key in denied.items():
+        verdict = classify(command)
+        assert verdict is not None and verdict[0] == key, (command, verdict)
+
+
+def test_classifier_keeps_plain_switch_worktree_and_staged_restore_allowed(tmp_path):
+    for command in (
+        git("switch", "main"),
+        git("switch", "-c", "topic"),
+        git("worktree", "add", "wt"),
+        git("worktree", "remove", "wt"),
+        git("worktree", "list"),
+        git("restore", "--staged", "':/'"),
+        git("restore", "src/./a.py"),
+    ):
+        assert classify(command) is None, command
 
 
 def test_classifier_denies_every_executed_text_shape(tmp_path):
