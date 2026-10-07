@@ -156,3 +156,27 @@ Size: `SKILL.md` 787 lines against the 781 budget (+6: resolver paragraph 2, tas
 Classification: `orchestration_sensitive`.
 
 Claim boundary: now true: the router tolerates absent task tools, the completion text holds under both ownership models, no stale model/TaskOutput/sub-agent-spawn claim remains, and the plugin-root placeholder has a resolver in the body. Still not claimed: that the resolver makes `qa-seed-template-path` green in a live run (analytical only, AD-2); that agents stop calling `TaskUpdate` (P4.T4.5b); any frontmatter change (P4.T4.1).
+
+## P4.T1.5c `SKILL.md`, pass 3 of 3: description and prose
+
+Findings: B13, E11 (part).
+
+Files: `plugins/cc10x/skills/cc10x-router/SKILL.md` (787 lines before, 781 after); `plugins/cc10x/tools/prompt_clause_assertions.py` (three new pins).
+
+What changed:
+- (h, B13) Router `description` rewritten in third person: "Routes build, debug, review, plan, QA, and triage requests through the cc10x workflows ...; it is the single entry point for cc10x code work." The shouted "THE ONLY ENTRY POINT FOR CC10X" and "CRITICAL: Route and execute immediately. Do not stop at describing capabilities." are gone; "Use when the user asks ..." became "Activates when the user asks ...". Domain nouns are kept and QA and triage are now named.
+- Deviation from the plan, by router decision: the plan wanted the generic trigger verbs dropped (add, write, create, update, change). They are KEPT, together with the whole keyword list (build, implement, create, write, add, review, audit, debug, fix, error, bug, broken, plan, design, architect, spec, brainstorm, test, refactor, optimize, update, change, research, cc10x, c10x). Reason: activation of the product cannot be measured without a paid eval (AD-2), and removing verbs could stop the router from activating at all, which is a worse failure than over-triggering. Risk boundary: the over-trigger risk named in B13 is NOT addressed and NOT measured; this pass only changes tone and adds the hand-off. A later measured pass can narrow the list.
+- Hand-off for the `update`, `research` and `cc10x` keywords (plan default was to remove them; the router decision keeps them): one description line, "questions about cc10x itself belong to `cc10x-guide`, and 'update cc10x' belongs to the `update` skill". `research` has no separate owning skill (research runs inside PLAN and DEBUG), so it needs no hand-off. The `cc10x-guide` and `update` skill descriptions already claim those requests, so the line only makes the two directions agree.
+- (i, E11) Prose, only where the 07-19 audit named the defect: removed "Runtime contract only." (audit dead-weight 1), "Treat it as load-bearing orchestration law, not optional background." (item 2), the "canonical ... law" sentence in the five preparation sections, merged into the preceding read bullet as "immediately read X and apply its ... blocks" (item 3; the QA section also folds its "governing design" sentence into that bullet, same facts), "Turn-count dominates price ..." and the two sentences after it (item 8: advisory cost prose for a lever the router does not hold; the live rules, the haiku/inherit fact and "never claim a tier was applied" stay), "Maintain professional objectivity in all routing decisions." (item 5; the operative "Do not rationalize ..." rule stays) and "Drift accumulates silently in long chains." (item 6; the circuit-breaker rule and its single-definition pointer stay).
+
+Not changed, with reason: audit items 4 (research pointer sections), 7 (loop-engine intro), 14 (entry-point restatement in the BUILD gradient bullet): the plan names lines 15, 221-242, 373 and 763 only, and those items live elsewhere. No table row, gate, workflow graph or contract field was touched.
+
+Why safe: every removed sentence is a label, restatement or advisory remark with no checkable behavior; each read-first instruction and block name is kept (pinned). The description change affects only activation wording, and the verb list that decides activation is unchanged.
+
+Size: 787 to 781 lines (-6: five preparation bullets merged, plus the QA design sentence folded in). The cumulative budget of 781 (AD-6) is met without trimming gate or behavior text.
+
+Claim boundary: now true: the description is third person, unshouted, and routes cc10x-about and update requests to the owning skills. Still not claimed: activation behavior is unchanged or improved (no trigger eval was run; the plan's L2 spot-check was replaced by the analytical review per AD-2), and that over-triggering is reduced.
+
+Pins and fixtures: three new pins (description shape and hand-off; audit-named sentences gone; preparation blocks still named for all five routes; assertion count 301). No existing pin edited, weakened or deleted; no fixture changed. `doc_consistency_check.py` OK.
+
+Classification: `orchestration_sensitive`.

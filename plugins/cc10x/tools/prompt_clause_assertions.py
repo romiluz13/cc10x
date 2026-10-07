@@ -80,6 +80,10 @@ def frontmatter_is(key: str, value: str):
     return check
 
 
+def router_description(text: str) -> str:
+    return text.split("\n---", 1)[0].split("description:", 1)[1] if text.startswith("---") and "description:" in text else ""
+
+
 POLICY_REF = SKILLS / "cc10x-router" / "references" / "workflow-artifact-and-hook-policy.md"
 ROUTER_REFS = SKILLS / "cc10x-router" / "references"
 # Fields the router requires on a qa-re-plan return; planner.md carries them from P4.T4.4.
@@ -2603,6 +2607,43 @@ ASSERTIONS = [
         )
         and "Include `cc10x:exploration` only" not in text,
         "the hints law names the real rule and the unreachable spike hint is marked as inline-only",
+    ),
+    # --- P4.T1.5c: router description and prose (B13, E11 part) ---
+    A(
+        "router: description is third-person, unshouted, keeps trigger verbs, hands off guide/update (B13)",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: router_description(text).lstrip("| \n").startswith("Routes ")
+        and "CRITICAL" not in router_description(text)
+        and "THE ONLY ENTRY POINT" not in router_description(text)
+        and "Route and execute immediately" not in router_description(text)
+        and all(
+            verb in router_description(text)
+            for verb in ("build", "implement", "create", "write", "add", "update", "change", "fix", "review", "plan", "test", "refactor")
+        )
+        and "`cc10x-guide`" in router_description(text)
+        and "`update` skill" in router_description(text),
+        "the activation text names what the router does, keeps the verbs the product activates on (over-trigger risk unmeasured, no paid eval), and sends questions about cc10x and 'update cc10x' to the skills that own them",
+    ),
+    A(
+        "router: audit-named no-op sentences removed (E11)",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: "Runtime contract only." not in text
+        and "as the canonical" not in text
+        and "Turn-count dominates price" not in text
+        and "Maintain professional objectivity" not in text
+        and "Drift accumulates silently" not in text
+        and "Treat it as load-bearing orchestration law" not in text
+        and "Do not rationalize a failing workflow as \"close enough\"" in text,
+        "the label, the repeated 'canonical law' sentences, the unactionable cost paragraph and the two ceremonial openers are gone; the operative rationalization rule stays",
+    ),
+    A(
+        "router: each workflow preparation block still names its reference and both blocks (E11 guard)",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: all(
+            f"immediately read `references/{ref}-workflow.md`" in text and f"`### {blk} preparation`" in text and f"`### {blk} task graph`" in text
+            for ref, blk in (("build", "BUILD"), ("debug", "DEBUG"), ("review", "REVIEW"), ("qa", "QA"), ("plan", "PLAN"))
+        ),
+        "tightening the preparation bullets keeps the read-first instruction and both block names for the five routes",
     ),
 ]
 

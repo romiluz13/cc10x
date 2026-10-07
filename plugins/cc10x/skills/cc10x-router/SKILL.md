@@ -1,18 +1,18 @@
 ---
 name: cc10x-router
 description: |
-  THE ONLY ENTRY POINT FOR CC10X. Activate this skill for build, debug, review, and plan requests.
+  Routes build, debug, review, plan, QA, and triage requests through the cc10x workflows (task graphs, workflow artifacts, gates); it is the single entry point for cc10x code work.
 
-  Use when the user asks to implement, fix, review, plan, test, refactor, or continue code work.
+  Activates when the user asks to implement, fix, review, plan, test, refactor, or continue code work.
 
   Trigger keywords: build, implement, create, write, add, review, audit, debug, fix, error, bug, broken, plan, design, architect, spec, brainstorm, test, refactor, optimize, update, change, research, cc10x, c10x.
 
-  CRITICAL: Route and execute immediately. Do not stop at describing capabilities.
+  Hand-off: questions about cc10x itself belong to `cc10x-guide`, and "update cc10x" belongs to the `update` skill.
 ---
 
 # cc10x Router
 
-**Runtime contract only.** The router runs trust-first orchestration: route intent, hydrate workflow state, write workflow artifacts, execute the task graph, validate agent output, and fail closed on ambiguity, skipped work, or missing persistence.
+The router runs trust-first orchestration: route intent, hydrate workflow state, write workflow artifacts, execute the task graph, validate agent output, and fail closed on ambiguity, skipped work, or missing persistence.
 
 ## 1. Intent Routing
 
@@ -107,7 +107,7 @@ Core law:
 Mandatory reference read:
 
 - Before workflow creation, artifact mutation, hook policy changes, or resume logic that depends on artifact fields, immediately read `references/workflow-artifact-and-hook-policy.md`.
-- That reference contains the verbatim artifact schema, event log contract, hook policy, and gate wording extracted from the prior router monolith. Treat it as load-bearing orchestration law, not optional background.
+- That reference contains the verbatim artifact schema, event log contract, hook policy, and gate wording extracted from the prior router monolith.
 
 Plugin root for commands in reference files: ${CLAUDE_PLUGIN_ROOT}; Claude Code substitutes it when this skill loads, but reference files and agent prompts reach you unsubstituted. When a reference command or agent prompt carries the plugin-root placeholder, build the absolute path from the value on this line; never run the placeholder as-is.
 
@@ -221,30 +221,24 @@ Router-owned interface fields:
 
 ### BUILD preparation
 
-- Before any BUILD-specific readiness decision or child-task creation, immediately read `references/build-workflow.md`.
-- Use the `### BUILD preparation` and `### BUILD task graph` blocks in that file as the canonical BUILD law.
+- Before any BUILD-specific readiness decision or child-task creation, immediately read `references/build-workflow.md` and apply its `### BUILD preparation` and `### BUILD task graph` blocks.
 
 ### DEBUG preparation
 
-- Before any DEBUG-specific readiness decision or child-task creation, immediately read `references/debug-workflow.md`.
-- Use the `### DEBUG preparation` and `### DEBUG task graph` blocks in that file as the canonical DEBUG law.
+- Before any DEBUG-specific readiness decision or child-task creation, immediately read `references/debug-workflow.md` and apply its `### DEBUG preparation` and `### DEBUG task graph` blocks.
 
 ### REVIEW preparation
 
-- Before any REVIEW-specific readiness decision or child-task creation, immediately read `references/review-workflow.md`.
-- Use the `### REVIEW preparation` and `### REVIEW task graph` blocks in that file as the canonical REVIEW law.
+- Before any REVIEW-specific readiness decision or child-task creation, immediately read `references/review-workflow.md` and apply its `### REVIEW preparation` and `### REVIEW task graph` blocks.
 
 ### QA preparation
 
-- Before any QA-specific readiness decision or child-task creation, immediately read `references/qa-workflow.md`.
-- Use the `### QA preparation` and `### QA task graph` blocks in that file as the canonical QA law.
-- QA's governing design is `references/qa-workflow.md` itself; there is no separate design document.
-- TRIAGE and CODEBASE-HEALTH (advisory-only): before any child-task creation, immediately read `references/triage-workflow.md` or `references/codebase-health-workflow.md` and use its `### TRIAGE preparation` or `### CODEBASE-HEALTH preparation` block as the canonical law.
+- Before any QA-specific readiness decision or child-task creation, immediately read `references/qa-workflow.md` and apply its `### QA preparation` and `### QA task graph` blocks; that file is QA's governing design (there is no separate design document).
+- TRIAGE and CODEBASE-HEALTH (advisory-only): before any child-task creation, immediately read `references/triage-workflow.md` or `references/codebase-health-workflow.md` and apply its `### TRIAGE preparation` or `### CODEBASE-HEALTH preparation` block.
 
 ### PLAN preparation
 
-- Before any PLAN-specific readiness decision or child-task creation, immediately read `references/plan-workflow.md`.
-- Use the `### PLAN preparation` and `### PLAN task graph` blocks in that file as the canonical PLAN law.
+- Before any PLAN-specific readiness decision or child-task creation, immediately read `references/plan-workflow.md` and apply its `### PLAN preparation` and `### PLAN task graph` blocks.
 - If planner clarification, review-loop findings, or plan remediation rules trigger later in the workflow, also read `references/remediation-and-research.md` before continuing.
 
 ## 6. Workflow Task Graphs
@@ -374,7 +368,7 @@ ADVISORY — for humans tuning frontmatter; the router does not act on this tabl
 | `qa-harness-builder` (`MODE: preflight`) | standard | Measurement, not design — but it must never round a `BLOCKED` up to a `PASS`, so not `cheap`. **Guidance only:** the agent ships one `model:` for both modes and the router passes no per-dispatch model (see the note below), so no tier is actually applied here. |
 | `qa-executor` (produces the QA verdict) | capable | Last line before "the feature works"; must not round BLOCKED up to PASS. |
 
-cc10x ships `model: haiku` on `doc-syncer` (safely mechanical) and `model: inherit` everywhere else so the user's session model choice is respected. Never claim a tier was applied that frontmatter did not set. Turn-count dominates price — a capable model that one-shots a phase is cheaper than a cheap model that loops three times re-reading state and re-trying. When a role tends to iterate (planner, verifier, stubborn investigation), prefer the higher tier even though its per-token cost is greater: fewer turns wins.
+cc10x ships `model: haiku` on `doc-syncer` (safely mechanical) and `model: inherit` everywhere else so the user's session model choice is respected. Never claim a tier was applied that frontmatter did not set.
 
 Reviewer floor, restated for the amendment lane (a restatement, not a relaxation): the amendment lane (`REVIEW_MODE: amendment`) reads less text than a fresh pass, but it is **scope-cheap, never tier-cheap** — a narrower brief is not a licence for a cheaper model, and it gets no exemption from rule (1) above or from the `capable` row for `plan-gap-reviewer`.
 
@@ -763,10 +757,10 @@ For DEBUG:
 - Never let `qa-executor` edit test or harness code to turn a red run green. A harness defect routes to `re-qa-build`; a product defect routes to a DEBUG offer. [EASY TO MISS: this is the QA route's most damaging failure mode — it silently destroys the only thing QA produces, which is a trustworthy answer.]
 - Never report a QA verdict of PASS while any scenario is BLOCKED, teardown leaked, or the report artifact is absent from disk. Blocked is never rounded up to PASS.
 - Never report a workflow outcome (pass, fixed, complete) to the user without first confirming the verification evidence that supports that claim. "I believe it works" is not evidence. [EASY TO MISS: "I ran the tests and they passed" without showing command output, exit codes, or scenario evidence is also not evidence. Require concrete proof artifacts, not agent assertions.]
-- Never let a remediation loop reach 3 cycles without a human checkpoint (the `>= 3` circuit breaker in `references/remediation-and-research.md` is the single definition). Drift accumulates silently in long chains.
+- Never let a remediation loop reach 3 cycles without a human checkpoint (the `>= 3` circuit breaker in `references/remediation-and-research.md` is the single definition).
 - Only parallelize agents whose file-write surfaces do not overlap. Reviewer and hunter are read-only and safe to parallelize. Two write agents on overlapping files must be serialized. [EASY TO MISS: Each parallel agent must have a distinct phase value and unique task description. Identical prompts cause agents to duplicate work or silently clobber each other's output.]
 - Agents must never inherit raw conversation context. They receive only the structured scaffold from the dispatcher. Leaking conversation history into agent prompts causes scope pollution and non-reproducible behavior.
-- Maintain professional objectivity in all routing decisions. Do not rationalize a failing workflow as "close enough" or downgrade critical findings to avoid remediation. The router exists to enforce quality, not to please.
+- Do not rationalize a failing workflow as "close enough" or downgrade critical findings to avoid remediation. The router exists to enforce quality, not to please.
 - `DIFF_DRIVEN_DOCS: skip` in Session Settings disables doc-syncer for projects that manage documentation separately; when present, skip `build-doc-sync` task creation and block Memory Update on `verifier_task_id` directly.
 - Agents must never read another agent's live contract output or router-internal task bookkeeping (TaskList/TaskGet state, `[cc10x-internal]` markers, `status_history`, other agents' `results.*` entries). The workflow artifact itself is dispatch-readable BY REFERENCE: an agent may read the artifact path handed to it in the scaffold, but only the sections its dispatch names (`intent`, `normalized_phases`, its own phase's `results`/`evidence`/`baseline`) — cross-agent orchestration knowledge still flows exclusively through router-mediated scaffolds. Reading a shared pattern/reference doc for domain guidance is fine; inheriting another agent's live state is not.
 - Native plan mode (EnterPlanMode) is not the planning substrate — the CC10x PLAN workflow is, because it carries orchestration state, workflow artifacts, intent contracts, and the bounded fresh review. But a plan the user produced via native plan mode is an acceptable input: ingest it as the `plan_file` and run the fresh-review gate over it rather than rejecting it outright.
