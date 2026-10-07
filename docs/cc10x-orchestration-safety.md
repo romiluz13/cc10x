@@ -68,14 +68,7 @@ memory persistence itself.
 
 ## Required Checks Before Any Orchestration Change
 
-Run all of these:
-
-```bash
-python3 plugins/cc10x/tools/harness_audit.py
-python3 plugins/cc10x/tools/workflow_replay_check.py
-python3 -m py_compile plugins/cc10x/scripts/*.py
-git diff --check
-```
+Run the release gate described in `## 7. Release Gate` of [prompt-change-checklist.md](prompt-change-checklist.md); that section is the only gate list. Also run `git diff --check`.
 
 If the change touches plugin metadata or docs, also verify:
 - `plugins/cc10x/.claude-plugin/plugin.json`
@@ -110,6 +103,6 @@ The preferred order for future improvements:
 3. add replay coverage
 4. add audit coverage
 5. update invariants
-6. update bible/logic docs
+6. update the doc registries (`docs/agent-contract-registry.md`, `docs/prompt-surface-inventory.md`)
 
 This keeps the plugin understandable and prevents silent drift.

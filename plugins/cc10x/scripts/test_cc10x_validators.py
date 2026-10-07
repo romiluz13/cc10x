@@ -1681,3 +1681,42 @@ def test_anthropic_comparison_open_items_live_in_the_tracked_known_flaws_doc():
     text = (REPO / "docs/known-flaws.md").read_text(encoding="utf-8")
     assert "2026-07-30 Anthropic prompting-guide comparison" in text
     assert "/tmp/" not in text and "/Users/" not in text
+
+
+GATE_HEADING = "## 7. Release Gate"
+GATE_DOCS = ("docs/cc10x-orchestration-safety.md", "docs/EVAL-STANDARD.md", "docs/prompt-change-checklist.md")
+
+
+def gate_section() -> str:
+    text = (REPO / "docs/prompt-change-checklist.md").read_text(encoding="utf-8")
+    return text.split(f"\n{GATE_HEADING}\n", 1)[1].split("\n## ", 1)[0]
+
+
+def test_the_release_gate_section_lists_every_step_and_flag_of_the_runner():
+    import release_gate
+
+    section = gate_section()
+    for step_id, _ in release_gate.GATE_STEPS:
+        assert f"`{step_id}`" in section, step_id
+    help_text = subprocess.run(
+        [sys.executable, str(TOOLS / "release_gate.py"), "--help"], capture_output=True, text=True, check=True
+    ).stdout
+    for flag in sorted(set(re.findall(r"--[a-z][a-z-]+", help_text)) - {"--help"}):
+        assert flag in section, flag
+
+
+def test_the_gate_list_exists_once_and_the_other_gate_docs_point_to_it():
+    owners = [doc for doc in GATE_DOCS if f"\n{GATE_HEADING}\n" in (REPO / doc).read_text(encoding="utf-8")]
+    assert owners == ["docs/prompt-change-checklist.md"]
+    for doc in GATE_DOCS:
+        text = (REPO / doc).read_text(encoding="utf-8")
+        assert "7. Release Gate" in text, doc
+        if doc != "docs/prompt-change-checklist.md":
+            assert "python3 plugins/cc10x/tools/" not in text, f"{doc} carries its own gate command list"
+
+
+def test_checklist_section_5_points_to_the_gate_and_uses_the_changelog_as_the_change_record():
+    text = (REPO / "docs/prompt-change-checklist.md").read_text(encoding="utf-8")
+    section = text.split("## 5.", 1)[1].split("\n## ", 1)[0]
+    assert GATE_HEADING in section
+    assert "CHANGELOG.md" in section and "benchmark note" not in text.lower()

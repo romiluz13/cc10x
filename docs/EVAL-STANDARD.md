@@ -5,10 +5,9 @@ verification-before-completion, diff-driven-docs, routing decisions) exist to ma
 agent do the unglamorous thing under pressure. The only way to know a skill actually
 holds under that pressure is to write the pressure down and check the behavior against it.
 
-This standard is **not** counted by `cc10x_doc_consistency_check.py` (it lives in
-`docs/`, not `plugins/cc10x/skills/`). Eval directories live as `evals/` **subdirs**
-inside an individual skill dir; the doc-consistency check counts only top-level
-`skills/*/` dirs, so adding `evals/` never changes the skill count.
+Eval directories live as `evals/` **subdirs** inside an individual skill dir; the
+doc-consistency check counts only top-level `skills/*/` dirs, so adding `evals/` never
+changes the skill count.
 
 ## Why eval-driven authoring
 
@@ -82,9 +81,9 @@ matches the **Key assertion**; a fail matches the **Failure Signature** — and 
 apply REFACTOR: lift the agent's actual excuse into the skill's Rationalization Table via the
 eval's `## Counter` table.
 
-These evals are author-time and review-time artifacts. They are deliberately NOT wired into
-the four CI validators (harness audit, replay check, doc consistency, worldclass benchmark),
-which assert literal needles and fixture contracts rather than running subagents. Evals are
+These evals are author-time and review-time artifacts. They are deliberately NOT a step of
+the release gate (`## 7. Release Gate` in `docs/prompt-change-checklist.md`), whose steps
+assert literal needles and fixture contracts rather than running subagents. Evals are
 run by hand or by an authoring agent when a discipline skill is created or materially changed.
 
 ## Coverage status
@@ -92,9 +91,9 @@ run by hand or by an authoring agent when a discipline skill is created or mater
 | Skill | Evals dir | Scenarios |
 |-------|-----------|-----------|
 | `diff-driven-docs` | `skills/diff-driven-docs/evals/` | 2 |
-| `test-driven-development` | `skills/test-driven-development/evals/` | 3 |
-| `verification-before-completion` | `skills/verification-before-completion/evals/` | 3 |
+| `verification` | `skills/verification/evals/` | 3 |
 | `cc10x-router` (routing decisions) | `skills/cc10x-router/evals/` | 3 |
+| `debugging` | `skills/debugging/evals/` (`pressure-test-N-*.md`, not the `eval-NN` layout) | 3 |
 | `cc10x-guide` | reference — exempt | 0 |
 
 Highest-leverage discipline skills first. When a new discipline skill lands, add its
