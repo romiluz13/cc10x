@@ -1366,9 +1366,9 @@ ASSERTIONS = [
         "router: Cycle row states checkpoint-at-3, not caps-at-3",
         SKILLS / "cc10x-router" / "SKILL.md",
         lambda text: "caps cycles at 3" not in text
-        and "pauses the loop for a human checkpoint at the 3rd remediation cycle" in text
+        and "pauses the loop for a human checkpoint before a 4th remediation cycle is created" in text
         and "cycles beyond 3 run only on explicit user go-ahead" in text,
-        "matches what remediation-and-research.md and §14 already enforce: >= 3 -> human checkpoint, not a hard stop",
+        "matches what remediation-and-research.md and §14 enforce: count >= 3 -> human checkpoint before a 4th cycle, not a hard stop",
     ),
     # --- Design-cluster contradiction fixes (ticket #81) ---
     # 81.1 — architecture: two-adapter gloss matches canonical ports-only formulation, both occurrences
@@ -2302,7 +2302,8 @@ ASSERTIONS = [
         "remediation: circuit breaker defined once, other phrasings are pointers",
         SKILLS / "cc10x-router" / "references" / "remediation-and-research.md",
         lambda text: text.count("\n### Circuit breaker\n") == 1
-        and text.count(">= 3") == 1
+        and re.search(r"- If count >= 3, ask the user how to proceed BEFORE creating a 4th remediation cycle\.", text) is not None
+        and len(re.findall(r">= ?3", text)) == 1
         and "`>= 3` circuit breaker above" not in text
         and "count >= 3 circuit-breaker gate" not in text
         and "(count `>= 3` -> ask the user)" not in text
@@ -2682,6 +2683,74 @@ ASSERTIONS = [
         ROUTER_EVALS / "README.md",
         lambda text: "tools/doc_consistency_check.py" in text and "cc10x_doc_consistency_check" not in text,
         "the README points at the checker that exists",
+    ),
+    # --- P4A remediation 1, commit 1: artifact-only graph mode and the single breaker count ---
+    A(
+        "router: Task tools absent selects artifact-only graph mode, agents still dispatched through the Agent tool",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: re.search(
+            r"ARTIFACT-ONLY GRAPH MODE\..{0,500}every agent is still dispatched through the Agent tool with fresh context",
+            text,
+            re.S,
+        )
+        is not None
+        and "The inline no-subagent fallback (§12) applies only when the Agent/dispatch primitive itself is unavailable" in text
+        and "take the inline fallback (§12, trigger 1)" not in text,
+        "missing Task tools must not collapse reviewer, hunter and verifier into the router's own context",
+    ),
+    A(
+        "router: artifact-only resume reads the artifact by scope, pending_gate first, never newest-by-mtime alone",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: re.search(
+            r"Artifact-only resume.{0,300}never by modification time alone.{0,400}`pending_gate` first.{0,300}`phase_cursor`.{0,60}`phase_status`.{0,60}`results`",
+            text,
+            re.S,
+        )
+        is not None,
+        "without TaskList the resume path is artifact-based and scoped like the task-based one",
+    ),
+    A(
+        "router: inline trigger 1 means no Agent primitive; missing Task tools alone is not that trigger",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: "Absent `TaskCreate`/`TaskList` alone is not this trigger" in text
+        and "(no `Agent(...)` dispatch path, or `TaskCreate`/`TaskList` are absent)" not in text
+        and re.search(r"inline verification pass.{0,600}reviewer pass and a hunter pass", text, re.S) is not None
+        and "inline mode does not skip" in text,
+        "inline mode keeps the reviewer and hunter passes inside the verifier pass; trigger 1 is the dispatch primitive only",
+    ),
+    A(
+        "router: chain loop and hard rules name artifact-only graph mode beside the other sanctioned degrades",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: re.search(r"Artifact-only graph mode: read .task. in this loop as a graph step recorded in the artifact", text) is not None
+        and "artifact-only graph mode when the Task tools are missing" in text,
+        "sections 4, 12 and 14 describe the same two modes",
+    ),
+    A(
+        "remediation: breaker counts remediation_history entries, asks BEFORE creating a 4th cycle, task count is a cross-check only",
+        SKILLS / "cc10x-router" / "references" / "remediation-and-research.md",
+        lambda text: re.search(r"- Count the entries in the workflow artifact's `remediation_history`[^\n]{0,200}authoritative[^\n]{0,200}BOTH modes", text) is not None
+        and re.search(r"- If count >= 3, ask the user how to proceed BEFORE creating a 4th remediation cycle", text) is not None
+        and re.search(r"[Oo]nly when Task tools exist[^\n]{0,200}mismatch[^\n]{0,120}artifact (count )?wins", text) is not None
+        and "- Count tasks whose descriptions contain both" not in text
+        and len(re.findall(r"count >= 3", text)) == 1,
+        "the single breaker is evaluable without Task tools; one definition, asked before the 4th cycle exists",
+    ),
+    A(
+        "remediation: each remediation round appends one remediation_history entry in both modes; hook counts stay one cycle behind",
+        SKILLS / "cc10x-router" / "references" / "remediation-and-research.md",
+        lambda text: re.search(r"each remediation round appends exactly one entry[^\n]{0,300}(artifact-only|without Task tools)", text) is not None
+        and "deliberately one cycle BEHIND" in text
+        and "`taskMetadata` mode ships as `audit`" in text,
+        "the audit backstop wording survives and the append rule no longer needs a REM-FIX task to exist",
+    ),
+    A(
+        "router: Cycle row and hard rule say before a 4th cycle, matching the breaker",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: "pauses the loop for a human checkpoint before a 4th remediation cycle is created" in text
+        and re.search(r"Never let a remediation loop create a 4th cycle without a human checkpoint", text) is not None
+        and "at the 3rd remediation cycle" not in text
+        and "reach 3 cycles" not in text,
+        "SKILL.md no longer restates the breaker at a different count than its single definition",
     ),
 ]
 

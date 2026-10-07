@@ -37,11 +37,12 @@ TaskCreate({
 
 Before creating a new remediation task:
 
-- Count tasks whose descriptions contain both `wf:{workflow_uuid}` and `kind:remfix`.
-- If count >= 3, ask the user how to proceed before creating another one.
+- Count the entries in the workflow artifact's `remediation_history`. That count is authoritative: each remediation round appends exactly one entry in BOTH modes, with or without Task tools.
+- Only when Task tools exist, cross-check it against the number of tasks whose descriptions contain both `wf:{workflow_uuid}` and `kind:remfix`; a mismatch is reported to the user and the artifact count wins.
+- If count >= 3, ask the user how to proceed BEFORE creating a 4th remediation cycle.
 - This is the only point where the limit is evaluated; every other mention of the breaker points here. One review pass is one cycle (see Fix-wave consolidation).
 
-**Audit backstop (MANDATORY — do not skip):** immediately after creating any `kind:remfix` task, append an entry to the workflow artifact's `remediation_history` array: `{ts, phase, reason, cycle_number}` where `cycle_number` is this workflow's running REM-FIX count (starting at 1). The `TaskCompleted` guard independently counts `remediation_history` entries from the artifact on every `kind:remfix` completion and flags when the count exceeds 3 — deliberately one cycle BEHIND the router's own ask-user rule above, so it fires only if the router already missed its checkpoint. In `config/hook-mode.json` the `taskMetadata` mode ships as `audit`: the guard then logs the event and warns on stderr, and it blocks (exit 2) only when `taskMetadata` is set to `block`. It does not depend on the router's own counting being correct. If `remediation_history` and the router's own task count ever disagree, the artifact's `remediation_history` is authoritative.
+**Audit backstop (MANDATORY — do not skip):** each remediation round appends exactly one entry to the workflow artifact's `remediation_history` array, `{ts, phase, reason, cycle_number}`, where `cycle_number` is this workflow's running remediation count (starting at 1): immediately after creating the `kind:remfix` task when Task tools exist, and when the router records the REM-FIX step in artifact-only mode or inline mode (no task exists then, and the hook below does not run). The `TaskCompleted` guard independently counts `remediation_history` entries from the artifact on every `kind:remfix` completion and flags when the count exceeds 3 — deliberately one cycle BEHIND the router's own ask-user rule above, so it fires only if the router already missed its checkpoint. In `config/hook-mode.json` the `taskMetadata` mode ships as `audit`: the guard then logs the event and warns on stderr, and it blocks (exit 2) only when `taskMetadata` is set to `block`. It does not depend on the router's own counting being correct.
 
 ### Change-something-before-re-dispatch
 
@@ -242,7 +243,7 @@ ADJUDICATOR: integration-verifier
 Do NOT fire one REM-FIX agent per finding. Batch ALL findings from a single review pass into ONE REM-FIX dispatch carrying the implementer contract.
 
 - One review pass -> one REM-FIX task -> counts as ONE cycle against the circuit breaker, not N.
-- Per-finding dispatch is wasteful: each agent rebuilds context and re-runs the suite, and each inflates the `kind:remfix` count toward the circuit-breaker limit (see `### Circuit breaker`), tripping it on a single review's worth of work.
+- Per-finding dispatch is wasteful: each agent rebuilds context and re-runs the suite, and each inflates the `remediation_history` count toward the circuit-breaker limit (see `### Circuit breaker`), tripping it on a single review's worth of work.
 - The single dispatch lists every finding (each subject to verify-before-implement above); the fix agent works them as a batch and runs the covering tests once at the end.
 - Findings from a LATER, distinct review pass form a new wave and a new cycle. Consolidation is within one pass, never across passes.
 
