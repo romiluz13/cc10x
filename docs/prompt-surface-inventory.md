@@ -1,252 +1,250 @@
 # CC10X Prompt Surface Inventory
 
-> **Status note:** Synced to `v10.1.20` on 2026-05-06. Structural contract last changed on 2026-04-12 (`v10.1.19`); `v10.1.20` is a state-root path migration (`.claude/cc10x/` → `.cc10x/`) with no prompt-surface changes.
+> **Status note:** Aligned to the `v12.10.0` remediation tree on 2026-10-07 (last released line `v12.9.1`). One entry per agent in `plugins/cc10x/agents/` and per skill in `plugins/cc10x/skills/`; `harness_audit.py` fails when an entry, a path or a name drifts from disk.
 
 ## Purpose
 
-This inventory defines which prompt surfaces are allowed to affect trust-critical behavior and what kind of edits are safe on each.
+This inventory records which prompt surfaces can affect trust-critical behavior and how much review an edit needs.
 
-The router kernel and `cc10x-router/references/*.md` are intentionally excluded
-from prompt-only tiers here. They are orchestration surfaces and must be
-changed with replay + audit + Claude validation, not treated as ordinary prompt
-copy.
+The router (`cc10x-router`) and its `plugins/cc10x/skills/cc10x-router/references/` files are orchestration surfaces. They are not prompt-only: change them with replay, audit and Claude validation.
 
-## Tier 1: Trust-Critical Prompt Contracts
+Hooks (`plugins/cc10x/hooks/hooks.json`) and tools (`plugins/cc10x/tools/`) are code, not prompt surfaces, and are not listed here.
+
+## Tiers
+
+- Tier 1, trust-critical contracts: audit, replay and manual semantic review.
+- Tier 2, supporting contracts: audit and targeted semantic review.
+- Tier 3, advisory skills: audit; replay only if authority wording changes.
+
+## Orchestration Surface
+
+### cc10x-router
+
+- Path: `plugins/cc10x/skills/cc10x-router/SKILL.md`
+- Tier: orchestration (not eligible for a prompt-only change)
+- Purpose: single entry point; intent routing, task graphs, workflow artifacts, gates, memory finalization
+
+## Tier 1: Trust-Critical Contracts
 
 ### planner
 
 - Path: `plugins/cc10x/agents/planner.md`
-- Role: agreement-first planning artifact creation
-- Allowed edits: wording clarity, contract wording, output sections, codebase-reality checks, live-verification planning wording, examples, context-loading guidance
-- Forbidden edits: anything that changes routing, approval semantics, plan-mode meaning, or build-start conditions
-- Comparison references: `metaswarm` plan review, `get-shit-done` planning/execution contract, `cc10x-v7` planner usability
-- Review requirement: audit + replay + manual semantic review
-
-### planning-patterns
-
-- Path: `plugins/cc10x/skills/planning-patterns/SKILL.md`
-- Role: planner save discipline and router-subordinate memory intent guidance
-- Allowed edits: wording clarity, plan-save examples, `MEMORY_NOTES` guidance, live-verification wording
-- Forbidden edits: direct writes to `.cc10x/*.md`, altered plan-mode semantics, or bypassing router-owned memory finalization
-- Comparison references: `get-shit-done` artifact-first planning, `skill-creator` reference-backed skill design
-- Review requirement: audit + replay + manual semantic review
-
-### brainstorming
-
-- Path: `plugins/cc10x/skills/brainstorming/SKILL.md`
-- Role: inline design clarification and planner handoff
-- Allowed edits: clarification wording, design template structure, handoff wording, save examples
-- Forbidden edits: direct writes to `.cc10x/*.md`, changing the brainstorming handoff schema, or bypassing planner handoff
-- Comparison references: `metaswarm` clarification discipline, `get-shit-done` design-before-plan behavior
-- Review requirement: audit + replay + manual semantic review
-
-### memory-and-handoff
-
-- Path: `plugins/cc10x/skills/memory-and-handoff/SKILL.md`
-- Role: persist context across compaction; portable handoff package
-- Allowed edits: memory-file contract wording, context-budget guidance, checkpoint examples
-- Forbidden edits: changing the `.cc10x/*.md` ownership law (router persists at workflow-final, agents emit Memory Notes), bypassing router-owned memory finalization
-- Comparison references: `metaswarm` artifact persistence, `get-shit-done` context-recovery
-- Review requirement: audit + replay + manual semantic review
+- Tier: 1
+- Purpose: saved execution plan or decision RFC, agreement first
 
 ### component-builder
 
 - Path: `plugins/cc10x/agents/component-builder.md`
-- Role: current approved phase execution
-- Allowed edits: TDD wording, anti-scope-creep wording, evidence phrasing, context-curation wording
-- Forbidden edits: new checkpoints, altered phase-order semantics, changed remediation ownership
-- Comparison references: `get-shit-done` executor, `superpowers` execution discipline
-- Review requirement: audit + replay + manual semantic review
+- Tier: 1
+- Purpose: executes the current approved phase test-first, with seam and evidence fields
 
 ### integration-verifier
 
 - Path: `plugins/cc10x/agents/integration-verifier.md`
-- Role: fail-closed independent end-to-end verification
-- Allowed edits: evidence wording, auditor tone, truths/artifacts/wiring exposition, output clarity
-- Forbidden edits: accepting upstream approval as proof, weakening fail-closed logic, changing remediation flow
-- Comparison references: `get-shit-done` verifier, `superpowers` verification-before-completion
-- Review requirement: audit + replay + manual semantic review
+- Tier: 1
+- Purpose: fail-closed end-to-end verification before any pass or advance claim
+
+### qa-harness-builder
+
+- Path: `plugins/cc10x/agents/qa-harness-builder.md`
+- Tier: 1
+- Purpose: builds the QA test environment and suites from an approved plan; never modifies product code
+
+### qa-executor
+
+- Path: `plugins/cc10x/agents/qa-executor.md`
+- Tier: 1
+- Purpose: runs an approved QA plan, records per-scenario evidence, emits bug candidates; never edits test or product code
+
+### agent-common
+
+- Path: `plugins/cc10x/skills/agent-common/SKILL.md`
+- Tier: 1
+- Purpose: preamble preloaded into 13 agents: memory protocol, contract format, output rules
+
+### memory-and-handoff
+
+- Path: `plugins/cc10x/skills/memory-and-handoff/SKILL.md`
+- Tier: 1
+- Purpose: session memory under `.cc10x/` and the portable, redacted handoff package
 
 ### plan-review-gate
 
 - Path: `plugins/cc10x/skills/plan-review-gate/SKILL.md`
-- Role: fail-closed plan review boundary
-- Allowed edits: adversarial tone, wording clarity, evidence expectations
-- Forbidden edits: implying non-blocking review, fake reviewer isolation, or advisory-only output
-- Comparison references: `metaswarm` plan-review-gate and adversarial rubric
-- Review requirement: audit + replay + manual semantic review
+- Tier: 1
+- Purpose: fail-closed plan review that blocks execution
 
-### verification-before-completion
+### verification
 
-- Path: `plugins/cc10x/skills/verification-before-completion/SKILL.md`
-- Role: fresh-evidence honesty layer before completion claims
-- Allowed edits: compactness, anti-rationalization wording, live-proof wording, example cleanup
-- Forbidden edits: relaxing fresh-evidence requirement or reducing scope to only tests/build
-- Comparison references: `superpowers` verification-before-completion, `get-shit-done` goal-backward verification
-- Review requirement: audit + replay + manual semantic review
+- Path: `plugins/cc10x/skills/verification/SKILL.md`
+- Tier: 1
+- Purpose: goal-backward verification, evidence array protocol, fresh-evidence rule
 
-## Tier 2: Strong Supporting Contracts
+## Tier 2: Supporting Contracts
 
 ### plan-gap-reviewer
 
 - Path: `plugins/cc10x/agents/plan-gap-reviewer.md`
-- Role: fresh, read-only challenge pass for saved plans
-- Allowed edits: reviewer wording, finding categories, evidence language, anti-anchoring rules
-- Forbidden edits: granting write authority, workflow ownership, or user-question authority
-- Comparison references: `metaswarm` adversarial planning, Claude Code subagent best practices
-- Review requirement: audit + targeted semantic review
+- Tier: 2
+- Purpose: fresh, read-only challenge pass over a saved plan
 
 ### bug-investigator
 
 - Path: `plugins/cc10x/agents/bug-investigator.md`
-- Role: evidence-first debugging with variant and blast-radius coverage
-- Allowed edits: hypothesis wording, anti-hardcode wording, anti-loop wording, context-curation wording
-- Forbidden edits: changing research escalation policy or fix/report ownership
-- Comparison references: `get-shit-done` debugger, `superpowers` systematic-debugging
-- Review requirement: audit + targeted semantic review
-
-### session-memory
-
-- Path: `plugins/cc10x/skills/session-memory/SKILL.md`
-- Role: versioned memory load discipline, distillation rules, and router-subordinate memory-note protocol
-- Allowed edits: compactness, reference navigation, distillation wording, context-budget guidance, and examples that preserve current ownership
-- Forbidden edits: allowing write agents to edit `.cc10x/*.md` directly, changing the memory namespace or required headings, or weakening router-owned final persistence
-- Comparison references: `get-shit-done` context-budget, `agent-skills` context-engineering, `skill-creator` reference-first packaging
-- Review requirement: audit + targeted semantic review
+- Tier: 2
+- Purpose: evidence-first debugging with variant and blast-radius coverage
 
 ### code-reviewer
 
 - Path: `plugins/cc10x/agents/code-reviewer.md`
-- Role: adversarial code review with remediation intent
-- Allowed edits: rubric clarity, evidence language, confidence wording
-- Forbidden edits: self-healing ownership changes or authority drift against router
-- Comparison references: `superpowers` review skills, `metaswarm` auditor tone
-- Review requirement: audit + targeted semantic review
+- Tier: 2
+- Purpose: adversarial multi-dimension review with confidence-scored findings
 
-### silent-failure-hunter
+### failure-hunter
 
-- Path: `plugins/cc10x/agents/silent-failure-hunter.md`
-- Role: scan for silent-failure patterns and report truthful coverage
-- Allowed edits: scan-language clarity, severity wording, output clarity
-- Forbidden edits: self-healing behavior or weakening coverage-truth requirements
-- Comparison references: internal benchmark notes, error-handling competitors where applicable
-- Review requirement: audit + targeted semantic review
+- Path: `plugins/cc10x/agents/failure-hunter.md`
+- Tier: 2
+- Purpose: finds silent failures (empty catches, swallowed errors) in parallel with the code review
 
-## Tier 3: Advisory Skill Metadata
+### qa-researcher
 
-### frontend-patterns
+- Path: `plugins/cc10x/agents/qa-researcher.md`
+- Tier: 2
+- Purpose: scans one source and reports what the feature does, for QA test planning
 
-- Path: `plugins/cc10x/skills/frontend-patterns/SKILL.md`
-- Role: advisory frontend guardrails and spec-aligned project-local DESIGN.md authoring guidance
-- Allowed edits: trigger accuracy, brevity, advisory clarifications, reference navigation, checklist extraction, DESIGN.md authoring guidance
-- Forbidden edits: authority drift that competes with user/project standards or copying external brand/design references as project authority
-- Comparison references: DESIGN.md format specification and `superpowers` writing-skills description hygiene
-- Review requirement: audit only unless authority wording changes
+### researcher
 
-### debugging-patterns
+- Path: `plugins/cc10x/agents/researcher.md`
+- Tier: 2
+- Purpose: web and GitHub research persisted to dated files as a structured research contract
 
-- Path: `plugins/cc10x/skills/debugging-patterns/SKILL.md`
-- Role: advisory root-cause debugging reference
-- Allowed edits: trigger accuracy, brevity, root-cause emphasis, reference navigation, playbook extraction
-- Forbidden edits: language that authorizes shallow/local-only fixes
-- Comparison references: `superpowers` writing-skills description hygiene
-- Review requirement: audit only unless authority wording changes
+### triage-agent
 
-### code-review-patterns
+- Path: `plugins/cc10x/agents/triage-agent.md`
+- Tier: 2
+- Purpose: categorizes and verifies issues and PRs and writes agent-ready briefs; no source writes
 
-- Path: `plugins/cc10x/skills/code-review-patterns/SKILL.md`
-- Role: advisory review-order, security, and quality heuristics
-- Allowed edits: compactness, rubric clarity, reference navigation, checklist extraction
-- Forbidden edits: authority drift that bypasses router-owned review agents
-- Comparison references: `get-shit-done` review references, `superpowers` review skills
-- Review requirement: audit only unless authority wording changes
+### architecture-scanner
 
-### test-driven-development
+- Path: `plugins/cc10x/agents/architecture-scanner.md`
+- Tier: 2
+- Purpose: read-only scan for shallow modules and duplicates, with an HTML report
 
-- Path: `plugins/cc10x/skills/test-driven-development/SKILL.md`
-- Role: advisory TDD discipline and verification-depth escalation
-- Allowed edits: compactness, examples, reference navigation, live-proof escalation wording
-- Forbidden edits: relaxing fail-first discipline or weakening delete-and-restart guidance
-- Comparison references: `superpowers` test-driven-development, `agent-skills` testing references
-- Review requirement: audit only unless authority wording changes
+### doc-syncer
 
-### architecture-patterns
+- Path: `plugins/cc10x/agents/doc-syncer.md`
+- Tier: 2
+- Purpose: updates documentation layers to match the current diff
 
-- Path: `plugins/cc10x/skills/architecture-patterns/SKILL.md`
-- Role: advisory architecture lens
-- Allowed edits: trigger accuracy, advisory framing
-- Forbidden edits: language that sounds like router-owned policy
-- Comparison references: internal benchmark notes
-- Review requirement: audit only unless authority wording changes
+### building
 
-### prototyping
+- Path: `plugins/cc10x/skills/building/SKILL.md`
+- Tier: 2
+- Purpose: RED-GREEN-REFACTOR discipline, false-RED detection, seam discipline
 
-- Path: `plugins/cc10x/skills/prototyping/SKILL.md`
-- Role: advisory throwaway-spike mode (answer ONE design question, then delete-or-absorb)
-- Allowed edits: trigger accuracy, branch guidance, close-out/disposition wording
-- Forbidden edits: weakening the hard wall (spike "no tests/no abstractions" must never leak into BUILD; absorb is a fresh gated BUILD, not promotion)
-- Comparison references: `matt-pocock` prototype skill
-- Review requirement: audit only unless the hard-wall or precedence wording changes
+### debugging
 
-### finding-duplicate-functions
+- Path: `plugins/cc10x/skills/debugging/SKILL.md`
+- Tier: 2
+- Purpose: feedback loop first, root cause before fix, blast radius after fix
 
-- Path: `plugins/cc10x/skills/finding-duplicate-functions/SKILL.md`
-- Role: advisory semantic-duplicate audit for LLM-grown codebases (loaded by the reviewer or run standalone)
-- Allowed edits: phase clarity, high-risk-zone table, model-tier wiring, common-mistakes
-- Forbidden edits: language that authorizes deleting a duplicate without confirming the survivor has tests + callers updated + suite re-run
-- Comparison references: `superpowers-lab` finding-duplicate-functions
-- Review requirement: audit only unless authority wording changes
+### code-review
+
+- Path: `plugins/cc10x/skills/code-review/SKILL.md`
+- Tier: 2
+- Purpose: adversarial review rubric and the verify-before-agreeing rule for received feedback
+
+### planning
+
+- Path: `plugins/cc10x/skills/planning/SKILL.md`
+- Tier: 2
+- Purpose: task decomposition, validation levels, plan completeness gate, decision RFC format
+
+### qa-strategy
+
+- Path: `plugins/cc10x/skills/qa-strategy/SKILL.md`
+- Tier: 2
+- Purpose: QA tiers, scenario matrices, environment isolation, fixture lifecycle, flake sources
+
+### update
+
+- Path: `plugins/cc10x/skills/update/SKILL.md`
+- Tier: 2
+- Purpose: cc10x upgrade through the plugin CLI across installed scopes
+
+## Tier 3: Advisory Skills
+
+### architecture
+
+- Path: `plugins/cc10x/skills/architecture/SKILL.md`
+- Tier: 3
+- Purpose: greenfield architecture design: flows, components, APIs, dependencies
+
+### cc10x-guide
+
+- Path: `plugins/cc10x/skills/cc10x-guide/SKILL.md`
+- Tier: 3
+- Purpose: answers questions about cc10x itself; reads only, performs no work
+
+### codebase-design
+
+- Path: `plugins/cc10x/skills/codebase-design/SKILL.md`
+- Tier: 3
+- Purpose: deep-module vocabulary (module, interface, depth, seam) used by other skills
+
+### codebase-hygiene
+
+- Path: `plugins/cc10x/skills/codebase-hygiene/SKILL.md`
+- Tier: 3
+- Purpose: advisory search for semantic duplicates and shallow modules; changes route through BUILD
+
+### diff-driven-docs
+
+- Path: `plugins/cc10x/skills/diff-driven-docs/SKILL.md`
+- Tier: 3
+- Purpose: classifies a diff's documentation impact across business, technical and audit layers
+
+### domain-modeling
+
+- Path: `plugins/cc10x/skills/domain-modeling/SKILL.md`
+- Tier: 3
+- Purpose: glossary and ADR discipline; active for shaping agents, read-only for builders
+
+### exploration
+
+- Path: `plugins/cc10x/skills/exploration/SKILL.md`
+- Tier: 3
+- Purpose: design dialogue before planning, and throwaway spikes that answer one question
+
+### frontend
+
+- Path: `plugins/cc10x/skills/frontend/SKILL.md`
+- Tier: 3
+- Purpose: UI authoring guidance and a read-only scored critique of built UI
 
 ### mcp-cli
 
 - Path: `plugins/cc10x/skills/mcp-cli/SKILL.md`
-- Role: advisory on-demand MCP invocation (transient, not permanently mounted)
-- Allowed edits: discovery/call/cleanup flow, install prereq, guard safety pattern
-- Forbidden edits: language that turns a missing-capability/fallback message into a hard blocker
-- Comparison references: `superpowers-lab` mcp-cli
-- Review requirement: audit only unless authority wording changes
+- Tier: 3
+- Purpose: one-off call to an unmounted MCP server through the `mcp` CLI
 
-### receiving-code-review
+### research
 
-- Path: `plugins/cc10x/skills/receiving-code-review/SKILL.md`
-- Role: main-session discipline for verifying human/external review feedback before agreeing or implementing
-- Allowed edits: the 6-step loop, forbidden-responses table, YAGNI-grep step, when-to-push-back
-- Forbidden edits: language that restores performative agreement or that lets a suggestion be implemented without verification; weakening the user>standards>plan precedence
-- Comparison references: `superpowers` receiving-code-review
-- Review requirement: audit only unless authority/precedence wording changes
+- Path: `plugins/cc10x/skills/research/SKILL.md`
+- Tier: 3
+- Purpose: synthesis of research files into a recommendation; does not run research
 
-### codebase-deepening
+### resolving-merge-conflicts
 
-- Path: `plugins/cc10x/skills/codebase-deepening/SKILL.md`
-- Role: advisory retrofit/deepening analysis for shallow modules in existing code (read-only; proposes, does not edit)
-- Allowed edits: deletion-test framing, diagnosis flow, candidate-badge presentation, two-adapters seam application
-- Forbidden edits: language that turns it into an ungated rewrite path bypassing the BUILD chain
-- Comparison references: `matt-pocock` improve-codebase-architecture, local `codebase-design` vocabulary
-- Review requirement: audit only unless it stops routing refactors through BUILD
-
-### frontend-design-critique
-
-- Path: `plugins/cc10x/skills/frontend-design-critique/SKILL.md`
-- Role: read-only design-quality critique (two isolated assessments + anchored rubric + AI-slop ban-list)
-- Allowed edits: rubric criteria, ban-list maintenance, isolation/synthesis protocol, RTL notes
-- Forbidden edits: making the optional deterministic detector a hard dependency; collapsing the two assessments into one head
-- Comparison references: `matt-pocock` impeccable critique
-- Review requirement: audit only unless it competes with frontend-patterns authority
-
-### handoff-package
-
-- Path: `plugins/cc10x/skills/handoff-package/SKILL.md`
-- Role: portable cross-session/cross-tool handoff doc (repo-external, reference-by-path, secrets-redacted)
-- Allowed edits: doc contents, location recipe, suggested-skills pointer
-- Forbidden edits: writing the handoff into the repo, pasting artifact contents instead of referencing, or dropping the redaction rule
-- Comparison references: `matt-pocock` handoff
-- Review requirement: audit only unless the redaction/location rules change
+- Path: `plugins/cc10x/skills/resolving-merge-conflicts/SKILL.md`
+- Tier: 3
+- Purpose: procedure for an in-progress merge or rebase that reports conflicts
 
 ## Review Classification
 
-Every prompt change must be classified before merge:
+Every prompt change is classified before merge, as set out in `docs/prompt-change-checklist.md`:
 
 - `metadata_only`
 - `wording_only_low_risk`
 - `wording_only_trust_sensitive`
-- `orchestration_sensitive` → not eligible for prompt-only release
+- `orchestration_sensitive` (not eligible for a prompt-only release)
