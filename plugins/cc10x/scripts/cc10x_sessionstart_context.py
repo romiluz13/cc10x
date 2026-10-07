@@ -17,9 +17,10 @@ def main() -> int:
     if parse_error and path is not None:
         log_unreadable_artifact(path, parse_error)
         session_context(
-            f"CC10X workflow context ({source}): the newest workflow artifact "
-            f"{path.name} is unreadable ({parse_error}); its state cannot be "
-            "trusted, so inspect or repair that file before resuming."
+            f"CC10X workflow context ({source}): an unreadable workflow artifact "
+            f"{path.name} ({parse_error}) was found and no live workflow could be "
+            "read; its state cannot be trusted, so inspect or repair that file "
+            "before resuming."
         )
         return 0
     if not payload:
@@ -31,7 +32,7 @@ def main() -> int:
     incomplete = [
         name
         for name, status in phase_status.items()
-        if status not in {"completed", "skipped"}
+        if status not in ("completed", "skipped")
     ]
     # `research_quality` records EXTERNAL research (web/github via the researcher
     # agent). The QA route never writes it — QA's own lanes land in

@@ -109,13 +109,20 @@ Each hook in `hooks.json` appears exactly once in this table (a validator in
 
 The matcher covers every documented source (`startup`, `resume`, `clear`,
 `compact`, `fork`). Resume context comes from the newest workflow artifact that is
-not finished (last `status_history` event or newest router-written events-log
-record is `memory_finalized`, `workflow_completed` or `workflow_failed`, or the
-`memory-finalize` phase is completed); with only finished workflows nothing is
-injected. When the newest artifact cannot be parsed, SessionStart says so in one
-line and logs `workflow_artifact_unreadable`. The QA isolation guard does not use
-this selection: the newest artifact decides, so an abandoned older QA workflow is
-never revived by a later workflow finishing.
+not finished (the later of the last `status_history` entry and the newest
+router-written events-log record decides when both carry a timestamp; otherwise a
+terminal `memory_finalized`, `workflow_completed` or `workflow_failed` in either
+counts; a completed `memory-finalize` phase also counts); with only finished
+workflows nothing is injected. Only files named like a workflow id (`wf-...json`)
+are artifacts. JSON that is not an object (`[]`, `5`, `null`) is an unreadable
+artifact. An unreadable artifact newer than a live one is logged
+(`workflow_artifact_unreadable`) and skipped; when no live workflow can be read,
+SessionStart says so in one line naming the unreadable artifact. Without
+`CLAUDE_PROJECT_DIR` the project root is the checkout root containing the session
+`cwd`, and a relative hook-input `cwd` is made absolute. The QA isolation guard
+does not use this selection: the newest artifact decides, so an abandoned older QA
+workflow is never revived by a later workflow finishing. The QA guard does not read
+the events log.
 
 ## Internal Publication Audit
 

@@ -15,10 +15,13 @@ _input_cwd: str | None = None
 
 
 def project_dir() -> Path:
+    """CLAUDE_PROJECT_DIR, else the checkout root containing the session cwd
+    (a subdirectory of a repository is not its own project), else the cwd."""
     value = os.environ.get("CLAUDE_PROJECT_DIR")
     if value:
         return Path(value)
-    return Path.cwd()
+    base = Path(_input_cwd) if _input_cwd else Path.cwd()
+    return git_checkout_root(base) or base
 
 
 def plugin_root() -> Path:
@@ -121,8 +124,8 @@ def load_input() -> dict[str, Any]:
         data = json.loads(raw)
     except (ValueError, TypeError):
         return {}
-    if isinstance(data, dict) and isinstance(data.get("cwd"), str):
-        _input_cwd = data["cwd"]
+    if isinstance(data, dict) and isinstance(data.get("cwd"), str) and data["cwd"]:
+        _input_cwd = os.path.abspath(data["cwd"])
     return data
 
 
@@ -263,10 +266,21 @@ TERMINAL_EVENTS = {"memory_finalized", "workflow_completed", "workflow_failed"}
 EVENTS_TAIL_BYTES = 65_536
 
 
-def _events_log_finished(artifact_path: Path) -> bool:
-    """The newest router-written record of the events log is a terminal event.
-    Hook-appended records (artifact_mutated, compact_occurred) are skipped so
-    the hooks' own bookkeeping after finalization does not hide it."""
+def _parse_ts(value: Any) -> datetime | None:
+    if not isinstance(value, str):
+        return None
+    try:
+        stamp = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return stamp if stamp.tzinfo else stamp.replace(tzinfo=timezone.utc)
+
+
+def _events_log_last(artifact_path: Path) -> tuple[bool, datetime | None] | None:
+    """(terminal?, timestamp) of the newest router-written record of the events
+    log, or None. Hook-appended records (artifact_mutated, compact_occurred)
+    are skipped so the hooks' own bookkeeping after finalization does not hide
+    it."""
     log = artifact_path.with_name(f"{artifact_path.stem}.events.jsonl")
     try:
         with log.open("rb") as fh:
@@ -274,7 +288,7 @@ def _events_log_finished(artifact_path: Path) -> bool:
             fh.seek(max(0, size - EVENTS_TAIL_BYTES))
             tail = fh.read().decode("utf-8", errors="ignore")
     except OSError:
-        return False
+        return None
     for line in reversed(tail.split("\n")):
         try:
             record = json.loads(line)
@@ -283,25 +297,20 @@ def _events_log_finished(artifact_path: Path) -> bool:
         if not isinstance(record, dict) or record.get("agent") == "hook":
             continue
         event = record.get("event")
-        return isinstance(event, str) and event in TERMINAL_EVENTS
-    return False
+        terminal = isinstance(event, str) and event in TERMINAL_EVENTS
+        return terminal, _parse_ts(record.get("ts"))
+    return None
 
 
 def workflow_is_finished(payload: Any, artifact_path: Path | None = None) -> bool:
     """The router's terminal test (SKILL.md, resume algorithm): a terminal last
     `status_history` event, a terminal newest events-log record, or a
-    `memory-finalize` cursor whose phase is completed."""
+    `memory-finalize` cursor whose phase is completed. When the last
+    `status_history` entry and the newest events-log record both carry
+    timestamps, the later of the two decides between them; without both
+    timestamps either terminal signal counts."""
     if not isinstance(payload, dict):
         return False
-    history = payload.get("status_history")
-    if isinstance(history, list) and history:
-        last = history[-1]
-        if (
-            isinstance(last, dict)
-            and isinstance(last.get("event"), str)
-            and last["event"] in TERMINAL_EVENTS
-        ):
-            return True
     status = payload.get("phase_status")
     if (
         payload.get("phase_cursor") == "memory-finalize"
@@ -309,7 +318,21 @@ def workflow_is_finished(payload: Any, artifact_path: Path | None = None) -> boo
         and status.get("memory-finalize") == "completed"
     ):
         return True
-    return artifact_path is not None and _events_log_finished(artifact_path)
+    history = payload.get("status_history")
+    last = history[-1] if isinstance(history, list) and history else None
+    history_terminal = (
+        isinstance(last, dict)
+        and isinstance(last.get("event"), str)
+        and last["event"] in TERMINAL_EVENTS
+    )
+    from_log = _events_log_last(artifact_path) if artifact_path is not None else None
+    if from_log is None:
+        return history_terminal
+    log_terminal, log_ts = from_log
+    history_ts = _parse_ts(last.get("ts")) if isinstance(last, dict) else None
+    if history_ts is not None and log_ts is not None and history_ts != log_ts:
+        return history_terminal if history_ts > log_ts else log_terminal
+    return history_terminal or log_terminal
 
 
 def _artifacts_newest_first() -> list[Path]:
@@ -322,7 +345,8 @@ def _artifacts_newest_first() -> list[Path]:
     stamped = [
         (mtime, p)
         for p in workflows_dir().glob("*.json")
-        if (mtime := mtime_or_none(p)) is not None
+        if safe_workflow_id(p.stem) is not None
+        and (mtime := mtime_or_none(p)) is not None
     ]
     return [path for _, path in sorted(stamped, reverse=True)]
 
@@ -336,28 +360,39 @@ def latest_workflow_file() -> Path | None:
     return artifacts[0] if artifacts else None
 
 
-def live_workflow_file() -> Path | None:
+def _scan_live() -> tuple[Path | None, list[tuple[Path, str]]]:
     """Newest-mtime artifact that is not finished, for resume and context
-    consumers only (a finished workflow must not shadow a live one). None when
-    every artifact is finished. An unreadable artifact is returned, not
-    skipped, so it can be reported."""
+    consumers only (a finished workflow must not shadow a live one), and the
+    unreadable artifacts met on the way, newest first. A file that is not a
+    workflow artifact (its name is not a workflow id) is never considered."""
+    unreadable: list[tuple[Path, str]] = []
     for path in _artifacts_newest_first():
-        try:
-            payload = json.loads(path.read_text(encoding="utf-8"))
-        except Exception:
-            return path
-        if not workflow_is_finished(payload, path):
-            return path
-    return None
+        payload, error = _load_artifact(path)
+        if error is not None:
+            unreadable.append((path, error))
+        elif not workflow_is_finished(payload, path):
+            return path, unreadable
+    return None, unreadable
+
+
+def _load_artifact(path: Path) -> tuple[dict[str, Any], str | None]:
+    """The artifact object, or `{}` plus the error class. JSON that is not an
+    object (`[]`, `5`, `null`) is unreadable, never a payload: every consumer
+    calls `.get` on what it gets back."""
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        return {}, exc.__class__.__name__
+    if not isinstance(payload, dict):
+        return {}, "NotAnObject"
+    return payload, None
 
 
 def _read_artifact(path: Path | None) -> tuple[dict[str, Any], Path | None, str | None]:
     if path is None:
         return {}, None, None
-    try:
-        return json.loads(path.read_text(encoding="utf-8")), path, None
-    except Exception as exc:
-        return {}, path, exc.__class__.__name__
+    payload, error = _load_artifact(path)
+    return payload, path, error
 
 
 def read_latest_workflow_state() -> tuple[dict[str, Any], Path | None, str | None]:
@@ -365,7 +400,18 @@ def read_latest_workflow_state() -> tuple[dict[str, Any], Path | None, str | Non
 
 
 def read_live_workflow_state() -> tuple[dict[str, Any], Path | None, str | None]:
-    return _read_artifact(live_workflow_file())
+    """The newest live artifact. Unreadable artifacts newer than it are logged
+    here and skipped; when no artifact is live and one is unreadable, that
+    artifact is returned with its error so the caller can report it."""
+    live, unreadable = _scan_live()
+    if live is not None:
+        for path, error in unreadable:
+            log_unreadable_artifact(path, error)
+        return _read_artifact(live)
+    if unreadable:
+        path, error = unreadable[0]
+        return {}, path, error
+    return {}, None, None
 
 
 SAFE_WORKFLOW_ID = re.compile(r"wf-[A-Za-z0-9._-]+")
@@ -402,13 +448,7 @@ def workflow_event_log_path(workflow_id: str | None) -> Path | None:
 def read_workflow_state(
     workflow_id: str | None,
 ) -> tuple[dict[str, Any], Path | None, str | None]:
-    path = workflow_artifact_path(workflow_id)
-    if path is None:
-        return {}, None, None
-    try:
-        return json.loads(path.read_text(encoding="utf-8")), path, None
-    except Exception as exc:
-        return {}, path, exc.__class__.__name__
+    return _read_artifact(workflow_artifact_path(workflow_id))
 
 
 def workflow_event_log_contains(workflow_id: str | None, needle: str) -> bool:

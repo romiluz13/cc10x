@@ -167,13 +167,11 @@ def hooklib_project_dir(cwd: Path) -> str:
     return r.stdout.strip()
 
 
-def test_state_root_resolution_differs_from_the_docstring_claim(tmp_path):
-    # P5.T1 changes this: state_root() gains the git-checkout precedence.
-    # KNOWN DOC DEFECT, pinned as current behavior (the tool is not changed
-    # here): the module docstring says the state root is "resolved like the
-    # hooklib: CLAUDE_PROJECT_DIR env, else git toplevel, else cwd". The
-    # hooklib has no git-toplevel step (CLAUDE_PROJECT_DIR, else cwd), so with
-    # no env var and a cwd below a repo root the two disagree.
+def test_state_root_resolution_agrees_between_the_tool_and_the_hooklib(tmp_path):
+    # The tool docstring says the state root is "resolved like the hooklib:
+    # CLAUDE_PROJECT_DIR env, else git toplevel, else cwd". The hooklib used to
+    # skip the git-toplevel step; with no env var and a cwd below a repo root it
+    # now resolves the checkout root, like the tool (P5 remediation 2, G10).
     repo = tmp_path / "repo"
     sub = repo / "pkg" / "inner"
     sub.mkdir(parents=True)
@@ -189,7 +187,7 @@ def test_state_root_resolution_differs_from_the_docstring_claim(tmp_path):
     assert r.returncode == 0, r.stderr
     assert (repo / ".cc10x" / "phase-1-brief.md").is_file()  # git toplevel
     assert not (sub / ".cc10x").exists()
-    assert os.path.realpath(hooklib_project_dir(sub)) == os.path.realpath(sub)
+    assert os.path.realpath(hooklib_project_dir(sub)) == os.path.realpath(repo)
 
 
 def test_state_root_falls_back_to_cwd_outside_a_repo(tmp_path):

@@ -3321,6 +3321,204 @@ def test_git_guard_floor_tables_stay_aligned(tmp_path):
         assert key in git_guard.PRIORITY, key
 
 
+# --- P5 remediation 2, group B: readers and selection --------------------------
+
+NON_OBJECT_JSON = ("[]", "[1]", '"s"', "5", "null", "true")
+
+
+def _project_with_raw_artifact(root: Path, body: str, name: str = "wf-zzz") -> Path:
+    workflows = root / ".cc10x" / "workflows"
+    workflows.mkdir(parents=True)
+    path = workflows / f"{name}.json"
+    path.write_text(body)
+    return path
+
+
+def test_a_non_object_artifact_never_crashes_a_hook_and_is_logged_once(tmp_path):
+    for index, body in enumerate(NON_OBJECT_JSON):
+        proj = tmp_path / f"p{index}"
+        _project_with_raw_artifact(proj, body)
+        runs = [
+            ("cc10x_sessionstart_context.py", {"source": "startup"}, []),
+            ("cc10x_state_persist.py", {}, ["stop"]),
+            (
+                "cc10x_qa_isolation_guard.py",
+                {"tool_name": "Write", "tool_input": {"file_path": "a.txt"}},
+                [],
+            ),
+            (
+                "cc10x_pretooluse_guard.py",
+                {"tool_name": "Write", "tool_input": {"file_path": str(proj / ".cc10x" / "patterns.md")}},
+                [],
+            ),
+            ("cc10x_event_logger.py", {"trigger": "auto"}, ["postcompact"]),
+        ]
+        for script, payload, argv in runs:
+            before = len(hook_log_lines(proj))
+            r = run_guard(script, payload, proj, argv=argv)
+            assert r.returncode in (0, 2), (body, script, r.stderr[-300:])
+            assert "Traceback" not in r.stderr, (body, script, r.stderr[-300:])
+            events = [
+                e
+                for e in hook_log_lines(proj)[before:]
+                if e["event"] == "workflow_artifact_unreadable"
+            ]
+            assert len(events) == 1, (body, script, events)
+            assert events[0]["reason"] == "NotAnObject", (body, script)
+
+
+def test_a_non_object_artifact_through_the_posttool_guard_is_a_corrupt_artifact(tmp_path):
+    for index, body in enumerate(NON_OBJECT_JSON):
+        proj = tmp_path / f"p{index}"
+        path = _project_with_raw_artifact(proj, body)
+        r = run_guard(
+            "cc10x_posttooluse_artifact_guard.py",
+            {"tool_name": "Write", "tool_input": {"file_path": str(path)}},
+            proj,
+        )
+        assert r.returncode == 2, (body, r.returncode, r.stderr[-300:])
+        assert "Traceback" not in r.stderr, (body, r.stderr[-300:])
+        assert any(
+            "artifact-json:NotAnObject" in e.get("reason", "") for e in hook_log_lines(proj)
+        ), body
+
+
+def test_unhashable_phase_fields_never_crash_the_qa_guard_or_sessionstart(tmp_path):
+    shapes = (
+        {"phase_cursor": ["qa-plan"]},
+        {"phase_cursor": {"a": 1}},
+        {"phase_cursor": None, "status_history": [{"phase": ["qa-plan"]}]},
+        {"phase_cursor": None, "status_history": [{"phase": {"a": 1}}]},
+        {"phase_cursor": ["x"], "phase_status": {"a": ["in_progress"]}},
+    )
+    for index, fields in enumerate(shapes):
+        proj = tmp_path / f"p{index}"
+        write_artifact(proj, "wf-odd", workflow_type="QA", **fields)
+        for script, payload in (
+            ("cc10x_qa_isolation_guard.py", {"tool_name": "Bash", "tool_input": {"command": "mkdir x"}}),
+            ("cc10x_qa_isolation_guard.py", {"tool_name": "Write", "tool_input": {"file_path": "a.txt"}}),
+            ("cc10x_sessionstart_context.py", {"source": "resume"}),
+            ("cc10x_pretooluse_guard.py", {"tool_name": "Write", "tool_input": {"file_path": str(proj / ".cc10x" / "patterns.md")}}),
+        ):
+            r = run_guard(script, payload, proj)
+            assert r.returncode in (0, 2), (fields, script, r.stderr[-300:])
+            assert "Traceback" not in r.stderr, (fields, script, r.stderr[-300:])
+
+
+def test_a_stray_non_workflow_json_is_never_the_newest_artifact(tmp_path):
+    qa_workflow(tmp_path, "wf-a1", 3000)
+    stray = tmp_path / ".cc10x" / "workflows" / "settings.json"
+    stray.write_text('{"unrelated": true}')
+    set_age(stray, 10)
+    assert qa_guard_decisions(tmp_path)["write"] == "deny"
+    live = write_artifact(tmp_path, "wf-aaa")
+    set_age(live, 300)
+    assert sessionstart_wf(tmp_path, None) == "wf-aaa"
+
+
+def test_an_unreadable_newer_artifact_does_not_hide_an_older_live_one_from_resume(tmp_path):
+    live = write_artifact(tmp_path, "wf-aaa", phase_status={"phase-1": "in_progress"})
+    set_age(live, 300)
+    bad = tmp_path / ".cc10x" / "workflows" / "wf-zzz.json"
+    bad.write_text("{not json")
+    set_age(bad, 10)
+    assert sessionstart_wf(tmp_path, None) == "wf-aaa"
+    events = [e for e in hook_log_lines(tmp_path) if e["event"] == "workflow_artifact_unreadable"]
+    assert len(events) == 1 and events[0]["path"].endswith("wf-zzz.json")
+    r = run_guard("cc10x_state_persist.py", {}, tmp_path, argv=["stop"])
+    snapshot = json.loads((tmp_path / ".cc10x" / "stop-state.json").read_text())
+    assert snapshot["workflow_uuid"] == "wf-aaa"
+
+
+def test_sessionstart_says_an_unreadable_artifact_not_the_newest_one(tmp_path):
+    _project_with_raw_artifact(tmp_path, "{not json", "wf-corrupt")
+    r = run_guard("cc10x_sessionstart_context.py", {"source": "startup"}, tmp_path)
+    context = json.loads(r.stdout)["hookSpecificOutput"]["additionalContext"]
+    assert "an unreadable workflow artifact wf-corrupt.json" in context
+    assert "newest" not in context
+
+
+def _bare_env_run(script: str, payload: dict, cwd: Path) -> subprocess.CompletedProcess:
+    env = {"CLAUDE_PLUGIN_ROOT": str(PLUGIN_ROOT), "PATH": "/usr/bin:/bin"}
+    return subprocess.run(
+        [sys.executable, str(SCRIPTS_DIR / script)],
+        input=json.dumps(payload),
+        capture_output=True,
+        text=True,
+        env=env,
+        cwd=cwd,
+        timeout=30,
+    )
+
+
+def test_state_root_without_a_project_dir_env_uses_the_checkout_root_of_a_subdirectory(tmp_path):
+    repo = make_checkout(tmp_path / "repo")
+    write_artifact(repo, "wf-root")
+    sub = repo / "pkg" / "deep"
+    sub.mkdir(parents=True)
+    r = _bare_env_run("cc10x_sessionstart_context.py", {"source": "startup", "cwd": str(sub)}, sub)
+    assert r.returncode == 0, r.stderr
+    assert "wf=wf-root" in json.loads(r.stdout)["hookSpecificOutput"]["additionalContext"]
+    r = _bare_env_run("cc10x_sessionstart_context.py", {"source": "startup"}, sub)
+    assert "wf=wf-root" in json.loads(r.stdout)["hookSpecificOutput"]["additionalContext"]
+
+
+def test_a_relative_hook_input_cwd_is_made_absolute(tmp_path):
+    import contextlib
+    import io
+    from unittest import mock
+
+    import cc10x_hooklib
+
+    repo = make_checkout(tmp_path / "repo")
+    (repo / ".cc10x").mkdir()
+    (repo / "sub").mkdir()
+    previous = os.getcwd()
+    env = {k: v for k, v in os.environ.items() if k != "CLAUDE_PROJECT_DIR"}
+    try:
+        os.chdir(repo)
+        with contextlib.ExitStack() as stack:
+            stack.enter_context(mock.patch.dict(os.environ, env, clear=True))
+            stack.enter_context(mock.patch.object(sys, "stdin", io.StringIO(json.dumps({"cwd": "sub"}))))
+            stack.enter_context(mock.patch.object(cc10x_hooklib, "_input_cwd", None))
+            cc10x_hooklib.load_input()
+            assert Path(cc10x_hooklib._input_cwd).is_absolute()
+            assert cc10x_hooklib.state_root() == Path(os.getcwd()) / ".cc10x"
+    finally:
+        os.chdir(previous)
+
+
+def _stamped(event: str, ts: str, **extra) -> dict:
+    return {"event": event, "ts": ts, **extra}
+
+
+def test_the_last_signal_in_time_decides_whether_a_workflow_is_finished(tmp_path):
+    t1, t2, t3 = (
+        "2026-01-01T00:00:01+00:00",
+        "2026-01-01T00:00:02+00:00",
+        "2026-01-01T00:00:03+00:00",
+    )
+    older = write_artifact(tmp_path, "wf-aaa")
+    set_age(older, 300)
+    resumed = write_artifact(
+        tmp_path,
+        "wf-bbb",
+        status_history=[_stamped("memory_finalized", t1), _stamped("resumed", t3)],
+    )
+    append_events(tmp_path, "wf-bbb", _stamped("memory_finalized", t2, agent="router"))
+    set_age(resumed, 10)
+    assert sessionstart_wf(tmp_path, None) == "wf-bbb"
+
+    done = write_artifact(
+        tmp_path,
+        "wf-ccc",
+        status_history=[_stamped("started", t1), _stamped("memory_finalized", t3)],
+    )
+    append_events(tmp_path, "wf-ccc", _stamped("phase_started", t2, agent="router"))
+    set_age(done, 5)
+    assert sessionstart_wf(tmp_path, None) == "wf-bbb"
+
+
 def main() -> int:
     """Dependency-free runner (repo convention: tests run on bare python3).
 

@@ -523,7 +523,9 @@ def main() -> int:
     history = workflow.get("status_history")
     history = history if isinstance(history, list) else []
     prev_phase = history[-1].get("phase") if history and isinstance(history[-1], dict) else ""
-    phase = (workflow.get("phase_cursor") or prev_phase or "")
+    phase = workflow.get("phase_cursor") or prev_phase or ""
+    if not isinstance(phase, str):
+        phase = ""  # unhashable or non-text cursor: undeterminable, so fail open
     wf_id = workflow.get("workflow_uuid") or workflow.get("workflow_id")
 
     # ---- 0. A finished workflow disengages the guard entirely ---------------
