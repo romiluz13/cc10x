@@ -40,6 +40,16 @@ Your prompt includes findings from code-reviewer and failure-hunter under `## Pr
 
 **Per-finding validation (MANDATORY):** every CRITICAL and HIGH finding from code-reviewer or failure-hunter — and any other finding that materially affects your PASS/FAIL verdict — is an unverified claim until you independently confirm it against the codebase. For each such finding: (1) restate the finding and its `file:line` quote, (2) open the file at that line in the merged result and confirm the quoted code exists and the finding's characterization is accurate — a finding raised at `BASE..HEAD` may have been fixed by a later REM-FIX you did not witness, so verify against current state, not the reviewer's snapshot, (3) classify as `validated: true` (the code says what the reviewer claims), `validated: false` (the quote is missing, misquoted, the issue was since fixed, or the characterization is wrong — a hallucinated or stale finding), or `validated: degraded` (you cannot reach the file or line, but the finding's severity warrants keeping it). Drop `validated: false` findings from your verdict's blocking set — a hallucinated critical finding must not gate the phase. Keep `validated: degraded` CRITICAL/HIGH findings fail-safe (mark them degraded, do not drop — a transient access failure must never silently remove a critical finding). Report the validation result per finding in your output so the router can act on false positives before they waste a REM-FIX cycle.
 
+## Disputed Findings (adjudication)
+
+When the REM-FIX report in your dispatch carries `FINDING_DISPUTED` with `VERIFY_COMMAND` and `VERIFY_OUTPUT`, you are the only adjudicator: a CRITICAL or HIGH finding the builder disputed must never pass on the builder's claim alone. For each disputed finding:
+
+1. Re-run `VERIFY_COMMAND` yourself against the current tree and read its output.
+2. Rule `DISPUTE_UPHELD` only when your own output proves the finding false; the finding then leaves the blocking set. Rule `DISPUTE_REJECTED` when the output does not prove it false, when the command does not reproduce, or when no `VERIFY_COMMAND` was given: the finding stands, set `REMEDIATION_NEEDED: true`, and the verdict cannot be PASS while it is CRITICAL or HIGH.
+3. If the command cannot run for an environment reason, mark that scenario BLOCKED, never `DISPUTE_UPHELD`.
+
+Report both lists in the YAML block, each entry being the `FINDING_DISPUTED` string; both stay `[]` when nothing was disputed.
+
 ## Process
 
 1. **Understand** — what user flow to verify? What integrations?
@@ -61,8 +71,10 @@ Your prompt includes findings from code-reviewer and failure-hunter under `## Pr
 | Build succeeds | `npm run build` exit 0 (skip if no package.json) | FAIL |
 | Live harness (when required) | `live_harness_runner.py --mode proof` exit 0 | FAIL/BLOCKED |
 | Goal-backward check | TRUTHS + ARTIFACTS + WIRING verified | FAIL |
-| Test tampering | `git diff HEAD -- '*.test.*' '*.spec.*' \| grep -E '\.skip\|\.only\|expect\(\)\.not\b\|\.toBe\(true\)$'` | CRITICAL |
+| Test tampering | `git diff $BASE -- '*.test.*' '*.spec.*' \| grep -E '\.skip\|\.only\|expect\(\)\.not\b\|\.toBe\(true\)$'` | CRITICAL |
 | Verification run cap | Count test/build/lint commands. >15 → stop, report scope | WARNING |
+
+**Tamper-check base:** `BASE` is `results.git_base_sha`, the recorded sha before the phase's builder ran, read from the Workflow Artifact named in your Task Context, that key only (the artifact's other results would anchor your verdict). A phase makes several commits, so a diff against `HEAD` alone misses test tampering that was already committed. If no BASE is recorded or it is `unavailable`, fall back to `git diff HEAD` and say so in Findings.
 
 ## Test Honesty Gates (MANDATORY)
 
@@ -114,6 +126,8 @@ SCENARIOS_TOTAL: [total]
 SCENARIOS_PASSED: [count]
 SCENARIOS_FAILED: [count]
 SCENARIOS_BLOCKED: [count — OPTIONAL field; omit or 0 when no scenario is blocked]
+DISPUTE_UPHELD: [] | ["FINDING_DISPUTED entry your own run proved false"]  # OPTIONAL; [] when nothing was disputed
+DISPUTE_REJECTED: [] | ["FINDING_DISPUTED entry that stands"]  # OPTIONAL; [] when nothing was disputed
 REMEDIATION_NEEDED: [true if REM-FIX should be created]
 REMEDIATION_REASON: "[reason]" | None
 REVERT_RECOMMENDED: [true if decision = revert]

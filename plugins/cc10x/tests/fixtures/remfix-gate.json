@@ -63,7 +63,22 @@
         "tests/team_settings.test.ts"
       ],
       "TEST_COMMAND": "npm test -- team_settings",
-      "TEST_OUTPUT": "PASS tests/team_settings.test.ts (6 tests)"
+      "TEST_OUTPUT": "PASS tests/team_settings.test.ts (6 tests)",
+      "FINDING_DISPUTED": [
+        "F2 (HIGH): team settings route lacks an admin guard"
+      ],
+      "VERIFY_COMMAND": [
+        "grep -n requireAdmin src/routes/team_settings.ts"
+      ],
+      "VERIFY_OUTPUT": [
+        "14:  router.use(requireAdmin)"
+      ]
+    },
+    "verifier_adjudication": {
+      "DISPUTE_UPHELD": [
+        "F2 (HIGH): team settings route lacks an admin guard"
+      ],
+      "DISPUTE_REJECTED": []
     }
   },
   "expected": {

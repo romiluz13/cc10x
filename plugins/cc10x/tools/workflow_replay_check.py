@@ -231,6 +231,10 @@ def validate_verifier_contract(
         )
 
 
+def nonzero_exit(value: Any) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool) and value != 0
+
+
 def validate_builder_contract(fixture_id: str, contract: dict[str, Any]) -> None:
     require(contract["STATUS"] == "PASS", f"{fixture_id}: builder must pass")
     require(
@@ -247,7 +251,7 @@ def validate_builder_contract(fixture_id: str, contract: dict[str, Any]) -> None
     require(
         contract["PROOF_STATUS"] == "passed", f"{fixture_id}: proof status must pass"
     )
-    require(contract["TDD_RED_EXIT"] == 1, f"{fixture_id}: missing RED evidence")
+    require(nonzero_exit(contract["TDD_RED_EXIT"]), f"{fixture_id}: missing RED evidence")
     require(contract["TDD_GREEN_EXIT"] == 0, f"{fixture_id}: missing GREEN evidence")
     require(
         not contract.get("BLOCKED_ITEMS"), f"{fixture_id}: blocked items must be empty"
@@ -321,7 +325,7 @@ def validate_investigator_contract(
         require(contract["RESEARCH_REASON"], f"{fixture_id}: missing research reason")
         return
     require(contract["STATUS"] == "FIXED", f"{fixture_id}: investigator must be FIXED")
-    require(contract["TDD_RED_EXIT"] == 1, f"{fixture_id}: missing regression RED")
+    require(nonzero_exit(contract["TDD_RED_EXIT"]), f"{fixture_id}: missing regression RED")
     require(contract["TDD_GREEN_EXIT"] == 0, f"{fixture_id}: missing regression GREEN")
     require(
         bool(contract.get("BLAST_RADIUS_SCAN")),
@@ -1447,6 +1451,24 @@ def check_remfix_gate(fixture: dict[str, Any]) -> None:
     for field in ("TEST_COMMAND", "TEST_OUTPUT"):
         value = report[field]
         require(isinstance(value, str) and bool(value.strip()), f"{label}: REM-FIX report empty {field} (a non-blank string)")
+    disputed = report.get("FINDING_DISPUTED")
+    if disputed:
+        for field in ("DISPUTE_UPHELD", "DISPUTE_REJECTED"):
+            require(field not in report, f"{label}: {field} is produced by integration-verifier, not by the REM-FIX report")
+        commands, outputs = report.get("VERIFY_COMMAND"), report.get("VERIFY_OUTPUT")
+        require(
+            all(isinstance(v, list) for v in (disputed, commands, outputs)) and len(disputed) == len(commands) == len(outputs),
+            f"{label}: FINDING_DISPUTED, VERIFY_COMMAND and VERIFY_OUTPUT must be equal-length lists",
+        )
+        for field, values in (("FINDING_DISPUTED", disputed), ("VERIFY_COMMAND", commands), ("VERIFY_OUTPUT", outputs)):
+            require(all(isinstance(v, str) and v.strip() for v in values), f"{label}: blank entry in {field}")
+        verdicts = fixture["agent_outputs"].get("verifier_adjudication", {})
+        upheld, rejected = verdicts.get("DISPUTE_UPHELD") or [], verdicts.get("DISPUTE_REJECTED") or []
+        for finding in disputed:
+            require(
+                (finding in upheld) != (finding in rejected),
+                f"{label}: disputed finding {finding!r} needs exactly one verifier adjudication (DISPUTE_UPHELD or DISPUTE_REJECTED)",
+            )
     history = artifact["remediation_history"]
     cycles = [entry.get("cycle_number") for entry in history]
     require(

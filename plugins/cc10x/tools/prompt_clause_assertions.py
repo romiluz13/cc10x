@@ -153,6 +153,18 @@ def agent_yaml_keys(agent: str) -> set[str]:
     return keys
 
 
+def yaml_has_keys(*keys: str):
+    """True when every key is a top-level key of some fenced yaml block in the text."""
+
+    def check(text: str) -> bool:
+        found: set[str] = set()
+        for block in re.findall(r"```yaml\n(.*?)```", text, re.S):
+            found |= set(re.findall(r"^([A-Z][A-Z0-9_]+):", block, re.M))
+        return set(keys) <= found
+
+    return check
+
+
 def policy_table_matches_agents(text: str) -> bool:
     rows = policy_required_rows(text)
     if set(POLICY_TABLE_AGENTS) - set(rows):
@@ -3498,6 +3510,126 @@ ASSERTIONS = [
         )
         for name in ("code-reviewer", "failure-hunter", "doc-syncer")
     ],
+    # --- P4.T4.2: builder REM-FIX producer fields, verifier adjudication, BASE tamper check, E2, any non-zero RED (A5, E2) ---
+    A(
+        "component-builder: YAML contract carries the six REM-FIX producer fields",
+        AGENTS / "component-builder.md",
+        yaml_has_keys("COVERING_TESTS", "TEST_COMMAND", "TEST_OUTPUT", "FINDING_DISPUTED", "VERIFY_COMMAND", "VERIFY_OUTPUT"),
+        "the router's re-review gate and dispute path name the remediating builder as the producer, so its contract must declare the fields",
+    ),
+    A(
+        "component-builder: kind:remfix proof is the covering tests only and fails closed without all three",
+        AGENTS / "component-builder.md",
+        contains_all(
+            "## REM-FIX Tasks (`kind:remfix`)",
+            "only the files that would fail if the fix were wrong",
+            "fails closed without all three",
+        ),
+        "the builder is told which tests count and that the router sends an incomplete REM-FIX back",
+    ),
+    A(
+        "component-builder: a dispute needs a proving command",
+        AGENTS / "component-builder.md",
+        contains_all(
+            "is valid only when `VERIFY_COMMAND` is a reproducible command whose output proves the finding false",
+            "is not a dispute",
+        ),
+        "prose disagreement is never grounds to dispute (evidence-gated, not an escape hatch)",
+    ),
+    A(
+        "component-builder: the builder never adjudicates its own dispute",
+        AGENTS / "component-builder.md",
+        contains_all(
+            "You never adjudicate your own dispute",
+            "`DISPUTE_UPHELD` or `DISPUTE_REJECTED`",
+        ),
+        "integration-verifier is the only adjudicator; a rejected dispute means the finding is applied",
+    ),
+    A(
+        "integration-verifier: adjudicates disputed findings and is the only adjudicator",
+        AGENTS / "integration-verifier.md",
+        contains_all(
+            "## Disputed Findings (adjudication)",
+            "you are the only adjudicator",
+            "must never pass on the builder's claim alone",
+            "Re-run `VERIFY_COMMAND` yourself",
+        ),
+        "a builder-disputed CRITICAL or HIGH finding is re-proven by the verifier, never accepted on the builder's word",
+    ),
+    A(
+        "integration-verifier: DISPUTE_UPHELD only on the verifier's own proof, otherwise REJECTED and the finding stands",
+        AGENTS / "integration-verifier.md",
+        contains_all(
+            "Rule `DISPUTE_UPHELD` only when your own output proves the finding false",
+            "Rule `DISPUTE_REJECTED` when the output does not prove it false",
+            "never `DISPUTE_UPHELD`",
+        ),
+        "the verifier fails closed: unproven, unreproducible or unrunnable disputes never remove a finding",
+    ),
+    A(
+        "integration-verifier: YAML contract carries DISPUTE_UPHELD and DISPUTE_REJECTED",
+        AGENTS / "integration-verifier.md",
+        yaml_has_keys("DISPUTE_UPHELD", "DISPUTE_REJECTED"),
+        "the router names integration-verifier as the producer of both fields",
+    ),
+    A(
+        "integration-verifier: tamper check compares against the recorded BASE, not HEAD alone",
+        AGENTS / "integration-verifier.md",
+        lambda text: all(
+            n in text
+            for n in (
+                "git diff $BASE -- '*.test.*'",
+                "`results.git_base_sha`",
+                "from the Workflow Artifact named in your Task Context",
+                "that key only",
+            )
+        )
+        and "git diff HEAD -- '*.test.*'" not in text,
+        "a phase makes several commits, so a HEAD-only diff misses committed test tampering; the BASE is read from the artifact, that key only",
+    ),
+    A(
+        "integration-verifier: tamper check falls back to HEAD only when no BASE is recorded, and says so",
+        AGENTS / "integration-verifier.md",
+        contains_all("`unavailable`", "fall back to `git diff HEAD` and say so"),
+        "the router records git_base_sha=unavailable when git preflight degrades; the fallback is stated, not silent",
+    ),
+    A(
+        "builder and investigator: no-runner exception never fabricates TDD exits (E2, one rule)",
+        AGENTS / "component-builder.md",
+        lambda text: "Never fabricate `TDD_RED_EXIT` or `TDD_GREEN_EXIT`" in text
+        and "require a runner or block" in text
+        and "`PROOF_STATUS: human_needed`" in text
+        and "`CHECKPOINT_TYPE: human_verify`" in text
+        and "TDD evidence may use manual browser verification" not in text,
+        "the manual-browser exception no longer sets TDD_RED_EXIT=1 and TDD_GREEN_EXIT=0 from a manual check; it blocks to a human_verify checkpoint",
+    ),
+    A(
+        "bug-investigator: no-runner exception never fabricates TDD exits (E2, one rule)",
+        AGENTS / "bug-investigator.md",
+        lambda text: "Never fabricate `TDD_RED_EXIT` or `TDD_GREEN_EXIT`" in text
+        and "require a runner or block" in text
+        and "`NO_LOOP_BLOCKED.ask`" in text
+        and "Set `TDD_RED_EXIT=1`, `TDD_GREEN_EXIT=0` with manual check evidence" not in text,
+        "the investigator blocks with NO_LOOP_BLOCKED instead of reporting FIXED on a manual check",
+    ),
+    *[
+        A(
+            f"{name}: PASS needs a non-zero TDD_RED_EXIT, 1 is only the convention",
+            AGENTS / f"{name}.md",
+            lambda text: "non-zero `TDD_RED_EXIT` (conventionally `TDD_RED_EXIT=1`)" in text
+            and "the replay gate checks" not in text,
+            "any non-zero behavioral RED qualifies; the contract no longer demands the literal 1",
+        )
+        for name in ("component-builder", "bug-investigator")
+    ],
+    A(
+        "policy: contract overrides accept any non-zero TDD_RED_EXIT",
+        POLICY_REF,
+        lambda text: text.count("a non-zero `TDD_RED_EXIT` (1 by convention)") == 2
+        and "requires `TDD_RED_EXIT=1`" not in text
+        and "`TDD_RED_EXIT=1`, `TDD_GREEN_EXIT=0`" not in text,
+        "the router table agrees with the agents and the replay check: builder and investigator rows both say non-zero",
+    ),
 ]
 
 

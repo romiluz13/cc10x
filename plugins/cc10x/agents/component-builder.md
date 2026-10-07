@@ -74,7 +74,7 @@ Only absorb work directly caused by the current phase's changes or required to s
 ## Process
 
 1. **Understand** — read relevant files, define acceptance criteria, name ≥1 success scenario tied to phase intent
-2. **RED** — failing test (exit 1). **False-RED guard:** exit 1 from import/syntax/collection ERROR is NOT a real RED. A genuine RED is a behavioral failure (e.g. "X is not a function", "expected 3, received undefined"). Record the observed failure reason verbatim. Fix the harness and re-run if false-RED.
+2. **RED** — failing test (non-zero exit). **False-RED guard:** a non-zero exit from an import/syntax/collection ERROR is NOT a real RED. A genuine RED is a behavioral failure (e.g. "X is not a function", "expected 3, received undefined"). Record the observed failure reason verbatim. Fix the harness and re-run if false-RED.
 3. **GREEN** — minimal code to pass (exit 0). No unrelated test breakage.
 4. **REFACTOR** — clean up, keep tests green. Revert if tests fail.
 5. **Verify** — all tests pass, functionality works, truths/artifacts/wiring reconcile, phase exit criteria satisfied. Collect all evidence with exit codes.
@@ -95,6 +95,17 @@ Only absorb work directly caused by the current phase's changes or required to s
 | Breaking existing API contract | FAIL with impacted callers |
 | Adding dependency not in plan | FAIL with dependency name + why |
 | Touching a later planned phase early | FAIL with skipped phase |
+
+## REM-FIX Tasks (`kind:remfix`)
+
+When your Task Context description carries `kind:remfix`, the findings in it are inputs to check, not orders:
+
+1. Restate each finding in one line and confirm the defect exists in the cited code before changing anything.
+2. Apply the fix, then run the tests that exercise the fixed behavior. Report `COVERING_TESTS` (only the files that would fail if the fix were wrong, not the whole suite), `TEST_COMMAND` and `TEST_OUTPUT`. The router's re-review gate fails closed without all three and sends the REM-FIX back.
+3. A finding you can disprove takes the dispute path instead of being applied: report `FINDING_DISPUTED`, `VERIFY_COMMAND` and `VERIFY_OUTPUT`, one entry per disputed finding, in the same order in all three lists. A dispute is valid only when `VERIFY_COMMAND` is a reproducible command whose output proves the finding false. "Looks fine to me" or "the plan said so" is not a dispute: apply the finding.
+4. You never adjudicate your own dispute. `integration-verifier` re-runs `VERIFY_COMMAND` and rules `DISPUTE_UPHELD` or `DISPUTE_REJECTED`; on `DISPUTE_REJECTED` the finding stands and you apply it.
+
+On any other task leave these six fields empty or omit them.
 
 ## Task Completion
 
@@ -149,6 +160,12 @@ NEXT_ACTION: "review" | "remediation" | "abort"
 REMEDIATION_NEEDED: [true if router should create remediation]
 REQUIRES_REMEDIATION: [true if TDD evidence missing]
 REMEDIATION_REASON: null | "Missing TDD evidence"
+COVERING_TESTS: [] | ["test file that covers the fixed behavior"]  # kind:remfix only
+TEST_COMMAND: null | "[exact command run]"  # kind:remfix only
+TEST_OUTPUT: null | "[its output]"  # kind:remfix only
+FINDING_DISPUTED: [] | ["finding id or one-line restatement"]  # kind:remfix only, when a finding is disproved
+VERIFY_COMMAND: [] | ["exact command whose output proves the finding false"]  # same order as FINDING_DISPUTED
+VERIFY_OUTPUT: [] | ["that output"]  # same order as FINDING_DISPUTED
 MEMORY_NOTES:
   learnings: ["What was built and key patterns"]
   patterns: ["New conventions discovered"]
@@ -158,7 +175,8 @@ MEMORY_NOTES:
 
 **CONTRACT RULES:**
 
-- `STATUS=PASS` requires: PHASE_STATUS=`completed`, PHASE_EXIT_READY=true, PROOF_STATUS=`passed`, BUILD_PREFLIGHT_EMITTED=true, TDD_RED_EXIT=1, TDD_RED_REASON_KIND=`behavioral` with non-empty TDD_RED_REASON, TDD_GREEN_EXIT=0, BLOCKED_ITEMS=[], ≥1 passing scenario with non-empty name/command/expected/actual/exit_code. CHECKPOINT_TYPE must be `none` unless paused for human action. **Seam gate:** when `build_scope=standard` with a plan, `SEAM_GATE_STATUS` must be `confirmed` (TEST_SEAMS non-empty, matching plan) or `disagreed` (DECISIONS rationale + a better seam in TEST_SEAMS); when direct/no-plan, `SEAM_GATE_STATUS=proposed` (TEST_SEAMS non-empty); when `build_scope=trivial`, `SEAM_GATE_STATUS=not_applicable` accepted.
-- `TDD_RED_EXIT` records the observed exit code of the RED run — any non-zero exit with TDD_RED_REASON_KIND=`behavioral` qualifies as RED evidence, and 1 is the conventional recorded value the replay gate checks.
+- `STATUS=PASS` requires: PHASE_STATUS=`completed`, PHASE_EXIT_READY=true, PROOF_STATUS=`passed`, BUILD_PREFLIGHT_EMITTED=true, a non-zero `TDD_RED_EXIT` (conventionally `TDD_RED_EXIT=1`), TDD_RED_REASON_KIND=`behavioral` with non-empty TDD_RED_REASON, TDD_GREEN_EXIT=0, BLOCKED_ITEMS=[], ≥1 passing scenario with non-empty name/command/expected/actual/exit_code. CHECKPOINT_TYPE must be `none` unless paused for human action. **Seam gate:** when `build_scope=standard` with a plan, `SEAM_GATE_STATUS` must be `confirmed` (TEST_SEAMS non-empty, matching plan) or `disagreed` (DECISIONS rationale + a better seam in TEST_SEAMS); when direct/no-plan, `SEAM_GATE_STATUS=proposed` (TEST_SEAMS non-empty); when `build_scope=trivial`, `SEAM_GATE_STATUS=not_applicable` accepted.
+- `TDD_RED_EXIT` records the observed exit code of the RED run — any non-zero exit with TDD_RED_REASON_KIND=`behavioral` qualifies as RED evidence, and 1 is the conventional recorded value.
 - Router rejects false-RED (TDD_RED_REASON_KIND=`error`) same as missing RED. Rejects any build with BUILD_PREFLIGHT_EMITTED=false.
-- **Exception:** Pure HTML/CSS/JS with no test runner — TDD evidence may use manual browser verification.
+- **No test runner:** a scripted check with real exit codes is TDD evidence; manual browser verification is not. Never fabricate `TDD_RED_EXIT` or `TDD_GREEN_EXIT`: leave both `null`. For a Pure HTML/CSS/JS project with no runner and no scripted check, return `STATUS: FAIL`, `PHASE_STATUS: blocked`, `CHECKPOINT_TYPE: human_verify`, `PROOF_STATUS: human_needed`, with the manual checklist and what was observed in `SCENARIOS` (the `command` names the manual step). The contract has no PASS value for manual-only evidence, so the rule is: require a runner or block.
+- **REM-FIX:** on a `kind:remfix` task, `STATUS=PASS` also requires non-empty `COVERING_TESTS`, `TEST_COMMAND` and `TEST_OUTPUT` (or a dispute per the REM-FIX section).

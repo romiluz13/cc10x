@@ -899,6 +899,23 @@ def _set_remfix_field(field, value):
     return lambda d: d["agent_outputs"]["remfix_report"].update({field: value})
 
 
+def _drop_adjudication(d):
+    d["agent_outputs"].pop("verifier_adjudication")
+
+
+def _adjudication_empty(d):
+    d["agent_outputs"]["verifier_adjudication"].update({"DISPUTE_UPHELD": [], "DISPUTE_REJECTED": []})
+
+
+def _adjudication_both(d):
+    adjudication = d["agent_outputs"]["verifier_adjudication"]
+    adjudication["DISPUTE_REJECTED"] = list(adjudication["DISPUTE_UPHELD"])
+
+
+def _builder_self_adjudicates(d):
+    d["agent_outputs"]["remfix_report"]["DISPUTE_UPHELD"] = list(d["agent_outputs"]["remfix_report"]["FINDING_DISPUTED"])
+
+
 def _remfix_in_progress(d):
     d["relevant_tasks"]["completed_remfix"]["status"] = "in_progress"
 
@@ -1120,6 +1137,12 @@ L1_MUTATIONS = [
     ("remfix-gate.json", _set_remfix_field("TEST_OUTPUT", " \n"), "REM-FIX report empty TEST_OUTPUT"),
     ("remfix-gate.json", _set_remfix_field("TEST_OUTPUT", ["x"]), "REM-FIX report empty TEST_OUTPUT"),
     ("remfix-gate.json", _remfix_in_progress, "completed_remfix must be completed"),
+    ("remfix-gate.json", _drop_adjudication, "needs exactly one verifier adjudication"),
+    ("remfix-gate.json", _adjudication_empty, "needs exactly one verifier adjudication"),
+    ("remfix-gate.json", _adjudication_both, "needs exactly one verifier adjudication"),
+    ("remfix-gate.json", _builder_self_adjudicates, "DISPUTE_UPHELD is produced by integration-verifier"),
+    ("remfix-gate.json", _set_remfix_field("VERIFY_COMMAND", [" "]), "blank entry in VERIFY_COMMAND"),
+    ("remfix-gate.json", _set_remfix_field("VERIFY_OUTPUT", []), "must be equal-length lists"),
     ("multi-phase-memory-finalize.json", _memory_blocked_by_early_task_only, "must be blocked by the last phase's verifier"),
     ("multi-phase-memory-finalize.json", _memory_blocked_by_last_and_early_task, "blocked by an earlier-phase task"),
     ("multi-phase-memory-finalize.json", _memory_blocked_by_doc_sync_of_wrong_verifier, "last phase's verifier"),
@@ -1193,6 +1216,37 @@ def test_a_mutated_p3_fixture_fails_with_a_specific_message(name, mutate, messag
     result = run_tool("workflow_replay_check.py", root)
     assert result.returncode == 1, result.stdout + result.stderr
     assert name in result.stderr and message in result.stderr, result.stderr
+
+
+@pytest.mark.parametrize(
+    "name,path",
+    [
+        ("build-happy-path.json", ("agent_outputs", "builder_contract")),
+        ("debug-fixed.json", ("agent_outputs", "investigator_contract")),
+    ],
+)
+def test_replay_accepts_any_nonzero_red_exit_and_rejects_zero_or_null(name, path, tmp_path):
+    def with_red(value):
+        def mutate(d):
+            node = d
+            for key in path:
+                node = node[key]
+            node["TDD_RED_EXIT"] = value
+
+        return mutate
+
+    for value in (2, 127):
+        (tmp_path / f"ok{value}").mkdir()
+        root = make_tree(tmp_path / f"ok{value}")
+        edit_json(root / FIXTURES_REL / name, with_red(value))
+        result = run_tool("workflow_replay_check.py", root)
+        assert result.returncode == 0, (value, result.stdout + result.stderr)
+    for value in (0, None, True):
+        (tmp_path / f"bad{value}").mkdir()
+        root = make_tree(tmp_path / f"bad{value}")
+        edit_json(root / FIXTURES_REL / name, with_red(value))
+        result = run_tool("workflow_replay_check.py", root)
+        assert result.returncode == 1 and ("RED evidence" in result.stderr or "regression RED" in result.stderr), (value, result.stderr)
 
 
 def skeleton_artifact(tmp_path, workflow_type, **overrides):
