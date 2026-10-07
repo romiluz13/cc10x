@@ -49,6 +49,8 @@ Red cases: 4 of 8 (B1, B2, B3, B11). Green regression guards: 4 of 8. Each red c
 
 - After P4.T1.5a: `triage-loads-reference` (B2) is expected to flip red to green. `SKILL.md` section 5 and section 6 now point at `references/triage-workflow.md` and `references/codebase-health-workflow.md`, the route-and-load hard rule names both, and the hydration bullet says TRIAGE and CODEBASE-HEALTH create no parent task. This is a reading of the text, not a measured run.
 - After P4.T1.5a: `route-precedence` (B4) is expected to stay green. The routing table rows are byte-identical; the rewritten sentences give the same four routes (R1 REVIEW, R2 ORIENT, R3 QA, R4 DEBUG) because the primary-deliverable test decides each one and none of them is a genuine tie. Line anchors cited above for `SKILL.md:19` and `:55` still hold; later `SKILL.md` line numbers in the baseline table are baseline-time numbers.
+- After P4.T1.5b: `qa-seed-template-path` (B11) is expected to flip red to green, analytical only (no L2 run, AD-2). `SKILL.md` section 2a now carries one body line that Claude Code substitutes to the absolute plugin root and that tells the router a literal plugin-root placeholder in `references/qa-workflow.md:140` or `:464` means that path, so the seeding `cp` should no longer start with the empty prefix measured in R-B11. The reference lines are unchanged; if a live run still fails, contingency P4.T1.4b applies.
+- After P4.T1.5b: `build-trivial-happy` and `two-workflow-resume` are expected to stay green; the task-tools-optional paragraph and the "may have called" completion wording add a fallback path and do not change the tools-present path.
 
 ## Visibility
 

@@ -131,3 +131,28 @@ Claim boundary: now true: SKILL.md points at both advisory-route references and 
 Pins and fixtures: six new pins (assertion count 291). No existing pin edited, weakened or deleted; no fixture changed. BASELINE.md gains an analytical post-P4 note (no table row changed).
 
 Classification: `orchestration_sensitive`.
+
+## P4.T1.5b `SKILL.md`, pass 2 of 3: task tools, claims, hints law, plugin root
+
+Findings: A3, A4, A6 (router half), B9 (ORIENT), B10 (spike hint), B11.
+
+Files: `plugins/cc10x/skills/cc10x-router/SKILL.md` (781 lines before, 787 after); `plugins/cc10x/tools/prompt_clause_assertions.py` (seven new pins, two existing pins re-pointed); `plugins/cc10x/evals/BASELINE.md` (analytical note).
+
+What changed:
+- (e, B11) R-B11 is BROKEN, so item (e) applies. One body line in section 2a: `Plugin root for commands in reference files: ${CLAUDE_PLUGIN_ROOT}; ...`. Claude Code substitutes the variable in the `SKILL.md` body (the existing `cp` command in section 6 relies on the same substitution), so the line resolves to the absolute root. The explanation after the `;` says "plugin-root placeholder" instead of repeating the variable, so it is not substituted into nonsense. A reference command or agent prompt that carries the placeholder means that path. The reference-file lines are untouched (P4.T1.4b stays skipped), so the four pinned QA paths and `cc10x_qa_isolation_guard.py:35` are unchanged.
+- (f, A3) New "Task tools are optional" paragraph in section 4: task tools ship only on some models (docs, Task tool availability); the artifact is the source of truth; absent tools take the existing inline fallback (section 12, trigger 1) and resume from the artifact; `CLAUDE_CODE_ENABLE_TODO_TOOLS=1` recommended, `CLAUDE_CODE_TASK_LIST_ID` optional (both variables checked against the env-vars page). Completion text: write agents "may have called" `TaskUpdate`; if the task is still not completed after the contract validates, the router applies the fallback. That is true both while the five agent bodies still say to call it and after P4.T4.5b removes the instruction. The `TaskGet`/`TaskList` state check says to skip when the tools are absent.
+- (g, A4) Per-invocation model: the Agent tool has a `model` parameter that outranks frontmatter; the text now says the router passes none, so model selection stays in frontmatter and the table stays advisory. Nothing new is enabled. `TaskOutput` is named deprecated; the check reads the task output file path instead (tools reference). The main-session hard rule no longer says sub-agents cannot spawn: the docs say up to three layers by default, and the rule keeps router-only dispatch and sole ownership of user gates. R-A8: a lead paragraph under "After every agent completion" says a dispatched agent may run in the background and, in auto mode, report through `SubagentHandback`, so the router reads the contract from whichever channel carries it and takes the missing-contract path otherwise. The hook-side reader is a separate P-task (the logger), not done here.
+- (j, A6, C4.3) Hints law: "frontmatter `skills:` preloads carry each agent's role-core skills; everything else reaches an agent only through SKILL_HINTS; the router is the only authority that adds situational skills; the router never passes a skill the agent already preloads." True before and after the P4.T4.1 frontmatter pass. The hints list itself is unchanged except the spike line (next bullet).
+- (B10, addenda item 2) The spike `SKILL_HINTS` bullet was unreachable: no dispatched agent loads `cc10x:exploration`; the router runs it inline. The bullet now says so, keeps the trigger phrases and the "fresh gated BUILD, not promotion" sentence, and is no longer worded as an include rule.
+- (B9) ORIENT procedure names `Glob`, `Grep`, `Read` and the `LSP` tool; the Octocode tools are named as optional accelerators.
+- Skeleton claim: now "carries every required key; undecided fields such as `verification_rigor` ship as `null`".
+
+Not changed, with reason: pass 3 items (description, trigger verbs, prose); agent files and frontmatter (P4.T4.1, P4.T4.5b); the Per-role table rows; the logger fix for `SubagentHandback`.
+
+Pins and fixtures: seven new pins (assertion count 298). Two existing pins re-pointed, named per rule 3: "router: main-session rule carries the sub-agent-gates why" (old token: "sub-agents cannot open user gates or spawn the phase agents", now requires "never inside a sub-agent", "only dispatcher of phase agents", "up to three layers") and "router: tier table marked ADVISORY with live rules separated" (two tokens re-worded: "the router does not act on this table" and the per-invocation-model sentence; the two live rules and the `JUST_GO` rule are still required verbatim). No pin deleted, no fixture changed.
+
+Size: `SKILL.md` 787 lines against the 781 budget (+6: resolver paragraph 2, task-tools paragraph 2, handback paragraph 2). Overrun recorded per AD-6; no gate text was trimmed. Pass 3 must land the cumulative count at or under 781 only by tightening prose it owns.
+
+Classification: `orchestration_sensitive`.
+
+Claim boundary: now true: the router tolerates absent task tools, the completion text holds under both ownership models, no stale model/TaskOutput/sub-agent-spawn claim remains, and the plugin-root placeholder has a resolver in the body. Still not claimed: that the resolver makes `qa-seed-template-path` green in a live run (analytical only, AD-2); that agents stop calling `TaskUpdate` (P4.T4.5b); any frontmatter change (P4.T4.1).

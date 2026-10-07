@@ -2082,8 +2082,12 @@ ASSERTIONS = [
     A(
         "router: main-session rule carries the sub-agent-gates why",
         SKILLS / "cc10x-router" / "SKILL.md",
-        contains("sub-agents cannot open user gates or spawn the phase agents"),
-        "router-in-main-session rule states sub-agents cannot open gates or spawn phase agents",
+        contains_all(
+            "never inside a sub-agent",
+            "only dispatcher of phase agents",
+            "up to three layers",
+        ),
+        "router-in-main-session rule keeps router-only dispatch and states the documented sub-agent spawn depth (A4)",
     ),
     A(
         "router: Memory Update sub-agent ban carries the payload why",
@@ -2150,13 +2154,13 @@ ASSERTIONS = [
         "router: tier table marked ADVISORY with live rules separated",
         SKILLS / "cc10x-router" / "SKILL.md",
         contains_all(
-            "ADVISORY — for humans tuning frontmatter; the router cannot act on this table at dispatch time.",
-            "Model selection comes from agent frontmatter; the router cannot set it per dispatch.",
+            "ADVISORY — for humans tuning frontmatter; the router does not act on this table at dispatch time.",
+            "The Agent tool accepts a per-invocation `model` that outranks frontmatter, but the router passes none: model selection stays in agent frontmatter.",
             "never edit a gating agent's",
             "frontmatter below mid-tier — the cheapest tier rubber-stamps",
             "never downgrade a gating role to save tokens, including under `JUST_GO`",
         ),
-        "model-tier section: two live rules agent-facing, table prefixed as advisory-only",
+        "model-tier section: two live rules agent-facing, table prefixed as advisory-only, per-invocation model stated truthfully (A4)",
     ),
     A(
         "router: capture-memory-payload is literal step 0 before the pre-check",
@@ -2528,6 +2532,77 @@ ASSERTIONS = [
         SKILLS / "cc10x-router" / "SKILL.md",
         contains_all("Only an explicit user opt-out", "\"skip cc10x\""),
         "a small edit still routes as BUILD trivial scope; opt-out phrases are the sole bypass",
+    ),
+    A(
+        "router: plugin-root resolver line is a substituted body line (B11)",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: any(
+            line.startswith("Plugin root for commands in reference files: ${CLAUDE_PLUGIN_ROOT};")
+            and line.count("${CLAUDE_PLUGIN_ROOT}") == 1
+            and "plugin-root placeholder" in line
+            for line in text.splitlines()
+        ),
+        "one body line carries the substituted root once and tells the router what a literal placeholder in a reference means",
+    ),
+    A(
+        "router: task tools optional, artifact is the source of truth (A3)",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        contains_all(
+            "Task tools are optional.",
+            "artifact is the source of truth",
+            "`CLAUDE_CODE_ENABLE_TODO_TOOLS=1`",
+            "`CLAUDE_CODE_TASK_LIST_ID`",
+        ),
+        "the router tolerates absent TaskCreate/TaskList and names the opt-in variables",
+    ),
+    A(
+        "router: write-agent completion text true under both ownership models (A3, C4.1c)",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: "should already have called" not in text
+        and "may have called `TaskUpdate(status=\"completed\")`" in text
+        and "the router applies the fallback `TaskUpdate(status=\"completed\")`" in text,
+        "write agents may complete their task; the router completes it after contract validation when they did not",
+    ),
+    A(
+        "router: A4 claims corrected (TaskOutput, per-invocation model, handback channel)",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: "cannot set it per dispatch" not in text
+        and "the router cannot set a model per dispatch" not in text
+        and "TaskOutput with block=false" not in text
+        and "`TaskOutput` is deprecated" in text
+        and "SubagentHandback" in text
+        and "in the background" in text,
+        "no stale per-dispatch-model or TaskOutput claim; the agent report may arrive by handback or notification",
+    ),
+    A(
+        "router: ORIENT names base-install tools, Octocode only as optional accelerators (B9)",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: "optional accelerators" in text.split("### ORIENT move", 1)[1].split("## 2. Memory Load", 1)[0]
+        and "(use `localViewStructure`" not in text,
+        "ORIENT procedure works without Octocode tools",
+    ),
+    A(
+        "router: skeleton claim matches the null-ships-undecided skeleton (A6/B7)",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: "ships every required key already populated with safe defaults" not in text
+        and "ship as `null`" in text,
+        "the router no longer claims every key is populated; verification_rigor is router-filled",
+    ),
+    A(
+        "router: hints law states preload versus SKILL_HINTS and the spike line is not a hint (C4.3, B10)",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: all(
+            token in text
+            for token in (
+                "Frontmatter `skills:` preloads carry each agent's role-core skills",
+                "everything else reaches an agent only through SKILL_HINTS",
+                "the router is the only authority that adds situational skills",
+                "never passes a skill the agent already preloads",
+                "`cc10x:exploration` is not a SKILL_HINTS entry",
+            )
+        )
+        and "Include `cc10x:exploration` only" not in text,
+        "the hints law names the real rule and the unreachable spike hint is marked as inline-only",
     ),
 ]
 

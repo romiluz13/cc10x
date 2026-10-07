@@ -47,8 +47,8 @@ Triggered when the user wants to understand existing code, not change it ("zoom 
 
 Orientation procedure:
 
-1. Map the relevant modules/files for the named subject (use `localViewStructure` / `localFindFiles` / `localSearchCode` to locate, read only the slices needed to explain).
-2. Trace ONE layer up: callers and dependents of the focal symbols via LSP call-hierarchy (`lspCallHierarchy`) and references (`lspFindReferences`); run `localSearchCode` first to get the exact `lineHint` before any LSP call.
+1. Map the relevant modules/files for the named subject (use `Glob` / `Grep` to locate, `Read` only the slices needed to explain). Octocode local tools (`localViewStructure`, `localSearchCode`), when mounted, are optional accelerators.
+2. Trace ONE layer up: callers and dependents of the focal symbols via the `LSP` tool (`incomingCalls`, `findReferences`) where a language server is configured, else `Grep`; locate the exact line and column with `Grep` before any LSP call. Octocode `lspCallHierarchy` is an optional accelerator.
 3. Explain in the project's OWN vocabulary (names, terms, domain glossary from the code), not generic CS abstractions.
 4. Stop at understanding. Do not propose or apply edits. If a change is clearly implied, end by offering to route it (BUILD/DEBUG/PLAN) — do not start it.
 
@@ -109,6 +109,8 @@ Mandatory reference read:
 - Before workflow creation, artifact mutation, hook policy changes, or resume logic that depends on artifact fields, immediately read `references/workflow-artifact-and-hook-policy.md`.
 - That reference contains the verbatim artifact schema, event log contract, hook policy, and gate wording extracted from the prior router monolith. Treat it as load-bearing orchestration law, not optional background.
 
+Plugin root for commands in reference files: ${CLAUDE_PLUGIN_ROOT}; Claude Code substitutes it when this skill loads, but reference files and agent prompts reach you unsubstituted. When a reference command or agent prompt carries the plugin-root placeholder, build the absolute path from the value on this line; never run the placeholder as-is.
+
 ## 3. Task Metadata Contract
 
 Every CC10X task description starts with normalized metadata lines:
@@ -141,6 +143,8 @@ After memory load:
 ```text
 TaskList()
 ```
+
+Task tools are optional. Claude Code ships `TaskCreate`/`TaskList`/`TaskGet`/`TaskUpdate` by default only on some models; the workflow artifact is the source of truth and task metadata mirrors it. When those tools are absent, do not fail: take the inline fallback (§12, trigger 1), keep phase state in the artifact, and resume from the artifact instead of `TaskList()`. `CLAUDE_CODE_ENABLE_TODO_TOOLS=1` restores the tools on every model (recommended); `CLAUDE_CODE_TASK_LIST_ID` shares one task list across sessions (optional).
 
 Hydration rules:
 
@@ -186,7 +190,7 @@ Known misbehaviors (resume/poll surfaces). Symptom → detection → fallback. D
 
 | Symptom | Detection | Fallback |
 | --------- | ---------- | -------- |
-| Sub-agent reported "completed" but no output arrived | Check the task's result payload directly (TaskGet / TaskOutput with block=false) before trusting status | Retrieve once more; still empty → inspect the workflow artifact and events log before declaring the output lost, then treat the task as failed through the existing resume/retry gate — any re-dispatch carries changed input (never re-dispatch the same agent on unchanged input). Never mark a phase PASS on a missing result |
+| Sub-agent reported "completed" but no output arrived | Check the task's result payload directly (`TaskGet`, or `Read` of the task's output file path; `TaskOutput` is deprecated) before trusting status | Retrieve once more; still empty → inspect the workflow artifact and events log before declaring the output lost, then treat the task as failed through the existing resume/retry gate — any re-dispatch carries changed input (never re-dispatch the same agent on unchanged input). Never mark a phase PASS on a missing result |
 | Background task hangs (alive, no progress) | Elapsed time far past expected duration; log unchanged between checks | At the named bound, stop the poll and route the task through the existing resume checkpoint (resume, delete, or mark complete with the user); do not silently relaunch past the gate |
 | Stop-state hint contradicts task metadata | Compare `.cc10x/stop-state.json` hint to `wf:` scope and `phase_cursor` | Discard the hint — task metadata and the workflow artifact stay authoritative |
 
@@ -271,7 +275,7 @@ TaskCreate({
 Bash(command="mkdir -p .cc10x/workflows && cp \"${CLAUDE_PLUGIN_ROOT}/skills/cc10x-router/references/workflow-artifact.skeleton.json\" .cc10x/workflows/{workflow_uuid}.json")
 ```
 
-Then `Edit` the copied file, replacing each placeholder token with the live value (the skeleton ships every required key already populated with safe defaults — you only fill these):
+Then `Edit` the copied file, replacing each placeholder token with the live value (the skeleton carries every required key; undecided fields such as `verification_rigor` ship as `null` and the router sets them explicitly later — you only fill these placeholders now):
 
 - `__WORKFLOW_UUID__` → `{workflow_uuid}` (appears twice: `workflow_uuid` and `workflow_id`)
 - `__WORKFLOW_TYPE__` → `{WORKFLOW}` (BUILD | DEBUG | REVIEW | PLAN | QA | ORIENT | TRIAGE | CODEBASE-HEALTH) — **if routing (§5) has not yet determined the workflow type, use `pending` and update it after §5 resolves.** Never hardcode BUILD before routing completes. The artifact may be created before routing (to capture state early), but `workflow_type` must reflect the actual routed type after §5.
@@ -352,9 +356,9 @@ Only create child tasks after the workflow artifact exists and the read-back pas
 
 ### Per-role model-tier policy
 
-Model selection comes from agent frontmatter; the router cannot set it per dispatch. Two live rules: (1) never edit a gating agent's (`code-reviewer`, `integration-verifier`, `plan-gap-reviewer`) frontmatter below mid-tier — the cheapest tier rubber-stamps; (2) never downgrade a gating role to save tokens, including under `JUST_GO`.
+The Agent tool accepts a per-invocation `model` that outranks frontmatter, but the router passes none: model selection stays in agent frontmatter. Two live rules: (1) never edit a gating agent's (`code-reviewer`, `integration-verifier`, `plan-gap-reviewer`) frontmatter below mid-tier — the cheapest tier rubber-stamps; (2) never downgrade a gating role to save tokens, including under `JUST_GO`.
 
-ADVISORY — for humans tuning frontmatter; the router cannot act on this table at dispatch time. Tiers are abstract: `cheap` (small/fast), `standard` (mid), `capable` (frontier).
+ADVISORY — for humans tuning frontmatter; the router does not act on this table at dispatch time. Tiers are abstract: `cheap` (small/fast), `standard` (mid), `capable` (frontier).
 
 | Role / phase | Recommended tier | Why |
 | -------------- | ------------------ | ----- |
@@ -367,10 +371,10 @@ ADVISORY — for humans tuning frontmatter; the router cannot act on this table 
 | `integration-verifier` (final phase, REVERT authority) | capable | Last line before "done"; must not miss scenario gaps. |
 | `researcher`, `qa-researcher` | standard | Retrieval + synthesis. |
 | `qa-harness-builder` | standard | Real wiring across services and environments; needs coherence. |
-| `qa-harness-builder` (`MODE: preflight`) | standard | Measurement, not design — but it must never round a `BLOCKED` up to a `PASS`, so not `cheap`. **Guidance only:** the agent ships one `model:` for both modes and the router cannot set a model per dispatch (see the mechanism note below), so no tier is actually applied here. |
+| `qa-harness-builder` (`MODE: preflight`) | standard | Measurement, not design — but it must never round a `BLOCKED` up to a `PASS`, so not `cheap`. **Guidance only:** the agent ships one `model:` for both modes and the router passes no per-dispatch model (see the note below), so no tier is actually applied here. |
 | `qa-executor` (produces the QA verdict) | capable | Last line before "the feature works"; must not round BLOCKED up to PASS. |
 
-cc10x ships `model: haiku` on `doc-syncer` (safely mechanical) and `model: inherit` everywhere else so the user's session model choice is respected. Never claim a tier was applied when the mechanism cannot apply it. Turn-count dominates price — a capable model that one-shots a phase is cheaper than a cheap model that loops three times re-reading state and re-trying. When a role tends to iterate (planner, verifier, stubborn investigation), prefer the higher tier even though its per-token cost is greater: fewer turns wins.
+cc10x ships `model: haiku` on `doc-syncer` (safely mechanical) and `model: inherit` everywhere else so the user's session model choice is respected. Never claim a tier was applied that frontmatter did not set. Turn-count dominates price — a capable model that one-shots a phase is cheaper than a cheap model that loops three times re-reading state and re-trying. When a role tends to iterate (planner, verifier, stubborn investigation), prefer the higher tier even though its per-token cost is greater: fewer turns wins.
 
 Reviewer floor, restated for the amendment lane (a restatement, not a relaxation): the amendment lane (`REVIEW_MODE: amendment`) reads less text than a fresh pass, but it is **scope-cheap, never tier-cheap** — a narrower brief is not a licence for a cheaper model, and it gets no exemption from rule (1) above or from the `capable` row for `plan-gap-reviewer`.
 
@@ -428,12 +432,12 @@ Optional sections:
 
 ### Deterministic skill hints
 
-- Router is the only authority allowed to load internal CC10X skills.
+- Frontmatter `skills:` preloads carry each agent's role-core skills; everything else reaches an agent only through SKILL_HINTS, and the router is the only authority that adds situational skills. The router never passes a skill the agent already preloads.
 - Agents may not self-activate `frontend` or `architecture`.
 - Include `cc10x:frontend` only when the request, changed files, plan, or design targets UI/frontend work. The skill has two modes: authoring (build UI with patterns) and critique (score built UI). Router selects mode via dispatch context.
 - Include `cc10x:architecture` only for multi-component, API, schema, auth, or integration-heavy work.
 - Include `cc10x:research` only when planner or investigator receives `## Research Files`.
-- Include `cc10x:exploration` only on an explicit de-risk/spike intent ("spike", "try out", "what should this look like", "prototype", "throwaway") — never as the default for a real build. The skill has two modes: design (brainstorm a design) and spike (throwaway prototype). Absorbing a spike's answer is a fresh gated BUILD, not promotion.
+- `cc10x:exploration` is not a SKILL_HINTS entry: no dispatched agent loads it. The router runs it inline (see Inline exploration handoff) only on an explicit de-risk/spike intent ("spike", "try out", "what should this look like", "prototype", "throwaway") or in PLAN — never as the default for a real build. The skill has two modes: design (brainstorm a design) and spike (throwaway prototype). Absorbing a spike's answer is a fresh gated BUILD, not promotion.
 - Include `cc10x:codebase-hygiene` only when (a) the code-reviewer is asked for a reuse/consolidation audit or the request targets semantic duplication, OR (b) the request targets retrofitting/deepening shallow modules in EXISTING code (not greenfield architecture, which stays `cc10x:architecture`). The skill has two modes: duplicate detection and module deepening.
 - Include `cc10x:qa-strategy` only on QA-route dispatches whose agent loads skills (`qa-researcher`, `qa-plan`, `qa-re-plan`, `qa-preflight`, `qa-harness-builder`, `qa-executor`). `qa-plan-review` and `qa-plan-review-2` dispatch `plan-gap-reviewer`, which loads no skills and has no Skill tool — a SKILL_HINTS entry cannot reach it, so there the coverage lens is a scaffold Read of `skills/qa-strategy/SKILL.md`, named in the dispatch itself (§7). It is the test-system design discipline — tier selection, scenario matrices, environment topology, flake sources. Do NOT inject it into BUILD's `component-builder`: BUILD's inner TDD is governed by `cc10x:building`, and mixing the two blurs "write a failing test for the code I am writing" with "design a test system for code that exists."
 - Include `cc10x:mcp-cli` only when a researcher needs a one-off MCP capability that is not already mounted.
@@ -615,6 +619,8 @@ The harness is a loop engine. These concepts govern how the loop runs:
 
 ### After every agent completion
 
+Claude Code may run a dispatched agent in the background and deliver its result as a notification, and in auto mode an agent's report can arrive through `SubagentHandback` instead of its final message. Do not assume the final message is the report: read the contract from whichever channel carries it, and if none does, take the missing-contract path in §8.
+
 0. Capture memory payload FIRST — before the pre-check, validation, or any task-state mutation (compaction can fire between agent return and parse; an uncaptured payload is lost).
    - READ-ONLY agents: extract `### Memory Notes (For Workflow-Final Persistence)` immediately after return.
    - WRITE agents: extract `MEMORY_NOTES` from YAML immediately after return.
@@ -623,9 +629,9 @@ The harness is a loop engine. These concepts govern how the loop runs:
    - Did tests, builds, or checks referenced in the contract actually run (not merely described)?
    - Is follow-up work needed that the agent did not self-remediate?
    If any answer is "no" or "unknown", treat as incomplete and apply the fallback validation path below.
-2. `TaskGet({ taskId })` or `TaskList()` to verify final task state.
+2. `TaskGet({ taskId })` or `TaskList()` to verify final task state (skip when the task tools are absent; the artifact is the record).
 3. WRITE agents:
-   - They should already have called `TaskUpdate(status="completed")`.
+   - They may have called `TaskUpdate(status="completed")`. If the task is still not completed after the contract validates, the router applies the fallback `TaskUpdate(status="completed")`.
    - Parse YAML before continuing.
 4. READ-ONLY agents:
    - Router owns completion fallback for read-only tasks.
@@ -743,7 +749,7 @@ For DEBUG:
 
 ## 14. Hard Rules
 
-- Router must run in the main Claude Code session, never inside a sub-agent — sub-agents cannot open user gates or spawn the phase agents.
+- Router must run in the main Claude Code session, never inside a sub-agent — the router is the only dispatcher of phase agents and the only owner of user gates. (Claude Code lets a sub-agent spawn sub-agents, up to three layers by default; cc10x does not use that.)
 - Router is the only orchestration state owner. Agents may propose remediation or next actions, but only the router creates, blocks, unblocks, reuses, or completes orchestration tasks.
 - Never stop after one agent if the workflow chain has more runnable tasks.
 - Never rely on prose when `wf:`, `kind:`, `origin:`, `phase:`, or `scope:` can answer the question.
