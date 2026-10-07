@@ -122,7 +122,7 @@ State what you CAN verify from code. Tag anything else as "potential impact, not
 
 ### Deferred Findings (Not "Residual" — Already Wired)
 
-MEDIUM and LOW findings you don't fix in this pass (the router's non-blocking "Minor" class) are NOT dropped, but you do NOT need a separate file or a separate CONTRACT field for them. Just report them normally with severity and file:line in your output. **The router already handles persistence**: it reads your findings, appends every non-blocking MEDIUM or LOW item to the workflow artifact's `deferred_findings` array (source, phase, finding, severity), and surfaces the accumulated list for explicit user triage at BUILD-DONE finishing. Nothing is silently discarded — this is automatic on the router side, not something you need to engineer in your response.
+Findings of any severity that do not block and that you don't fix in this pass (the router's non-blocking "Minor" class) are NOT dropped, but you do NOT need a separate file or a separate CONTRACT field for them. Just report them normally with severity and file:line in your output. **The router already handles persistence**: it reads your findings, appends every non-blocking item to the workflow artifact's `deferred_findings` array (source, phase, finding, severity), and surfaces the accumulated list for explicit user triage at BUILD-DONE finishing. Nothing is silently discarded — this is automatic on the router side, not something you need to engineer in your response.
 
 ### False Positive Prevention
 

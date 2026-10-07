@@ -3360,7 +3360,7 @@ PP43B_ROOT_PREFIX = "${CLAUDE_PLUGIN_ROOT}/"
 # never hit this because no ${CLAUDE_PLUGIN_ROOT} token is in its frozen scope.
 PP43B_EXCLUDE = (re.compile(r"\{[^}]*\}"), re.compile(r"\*"))
 PP43B_MIN_EXTRACTED = 11  # measured 20 at b966c52; P4.T7.2 deleted 5 tokens (4 placeholder references, 1 building-reference path), measured 14, floor 16 -> 11 keeps the same headroom of 3
-PP43B_MIN_RESOLVED = 8  # measured 11 at b966c52 -- re-measured, unchanged from c3ea86f
+PP43B_MIN_RESOLVED = 8  # measured 9 at 79a909c (11 at b966c52 before P4C removed two resolvable tokens); headroom 1
 # Declared-future files under an explicit **PLACEHOLDER** banner. NAMED, not
 # line-ranged: `tools/live_harness_runner.py` shares the fourth bullet's line and
 # DOES exist, so a line-range drop would swallow a live token. A declared

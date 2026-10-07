@@ -790,3 +790,12 @@ Deferred, still open after P4C: deletion of `skills/agent-common/references/sile
 Claim boundary (honest): now true: the skills, agents and router agree on severity words, verdict words, the blocking-verdict rule with its upheld-dispute exception, the no-test-runner rule, and the seam term; skills carry no draft markers, no dead pointers, no unpinned install instruction; descriptions are triggers; the memory skill says what is and is not implemented. Every one of those is pinned as text. Not claimed: any live behavior (no agent or router run), the file deletion, or that the deferred memory-loop features exist.
 
 Classification: `orchestration_sensitive` for the sweep (no text change; evidence only).
+
+## P4C review fixes (after fresh review, APPROVE 85)
+
+- Findings: E1 (review vocabulary), one medium and three low from the fresh P4C review.
+- `skills/code-review/SKILL.md`: the router persists every non-blocking finding to `deferred_findings`; the skill no longer narrows that to MEDIUM and LOW. The router defines "Minor" as non-blocking, not as a severity band (`build-workflow.md`, deferred-findings rule). The matching pin in `prompt_clause_assertions.py` was re-pointed to the new wording, so the wording is still pinned.
+- `scripts/test_cc10x_qa_phase_invariants.py`: the stale comment on the resolved-candidate floor now states the measured value (9) and the headroom (1). The floor value is unchanged.
+- `tools/prompt_clause_assertions.py`: the `codebase-design` pin message no longer says "neither does".
+- Claim boundary: wording and comments only, no gate semantics changed. Still open from the review (low): the building skill's own Test Process Discipline copy differs from agent-common's; it stays on the deferred list.
+- Classification per `docs/prompt-change-checklist.md`: behavior-preserving wording fix on a skill, with its pin updated in the same commit.

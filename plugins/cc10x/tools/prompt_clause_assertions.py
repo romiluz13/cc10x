@@ -4376,8 +4376,8 @@ ASSERTIONS = [
         lambda text: "before reporting zero findings (Zero-Finding Halt re-scan)" in text
         and "`APPROVE` for `code-reviewer`, `CLEAN` for `failure-hunter`" in text
         and "at least three positive assertions with file:line evidence" in text
-        and "MEDIUM and LOW findings you don't fix in this pass (the router's non-blocking \"Minor\" class)" in text
-        and "every non-blocking MEDIUM or LOW item" in text
+        and "Findings of any severity that do not block and that you don't fix in this pass (the router's non-blocking \"Minor\" class)" in text
+        and "appends every non-blocking item to" in text
         and "triage labels for received feedback, not the review severities above" in text
         and "before reporting CLEAN" not in text
         and "Minor/Medium findings" not in text
@@ -4480,7 +4480,7 @@ ASSERTIONS = [
             "cc10x:codebase-design" in read(SKILLS / name / "SKILL.md")
             for name in ("architecture", "codebase-hygiene")
         ),
-        "the description said building and planning point here; neither does (the agents preload it), so the claim names the two skills that do",
+        "the description said building and planning point here; the description claimed pointers from building and planning; the claim now names the skills that actually reference it",
     ),
     A(
         "building: the seam definition is the codebase-design one",
