@@ -1853,3 +1853,24 @@ def test_memory_permission_rule_uses_the_edit_form_that_covers_nested_paths():
     troubleshooting = text.split("### Claude Code keeps asking for permission to edit memory files", 1)[1].split("\n---", 1)[0]
     assert '"Edit(.cc10x/**)"' in troubleshooting
     assert "Bash(python3:*)" in text and "any `python3` command" in text
+
+
+def guide_text() -> str:
+    return (REPO / GUIDE_REL).read_text(encoding="utf-8")
+
+
+def test_guide_has_one_workflow_section_covering_all_eight_workflows():
+    text = guide_text()
+    assert "## The 4 workflows" not in text and "The 4 Workflows" not in text
+    section = text.split("## The 8 workflows", 1)[1].split("\n## ", 1)[0]
+    for name in ("BUILD", "DEBUG", "REVIEW", "PLAN", "QA", "ORIENT", "TRIAGE", "CODEBASE-HEALTH"):
+        assert re.search(rf"(?m)^\| {name} \|", section), name
+
+
+def test_guide_describes_hooks_and_allowed_tools_as_they_behave():
+    text = guide_text()
+    assert "can be blocked" not in text and "enforce guardrails" not in text
+    assert "audit by default" in text
+    assert "pre-approves" in text and "does not restrict" in text
+    assert "docs/cc10x-orchestration-bible.md" not in text.replace("docs/history/cc10x-orchestration-bible.md", "")
+    assert (REPO / "docs/history/cc10x-orchestration-bible.md").exists()

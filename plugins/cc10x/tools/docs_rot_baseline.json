@@ -1,18 +1,6 @@
 {
   "entries": [
     {
-      "key": "guide-agent-count",
-      "owner": "P6.T9",
-      "reason": "cc10x-guide states 11 agents but 14 exist; P6.T9 corrects the counts",
-      "message": "cc10x-guide claims 11 agents but disk has 14"
-    },
-    {
-      "key": "guide-skill-count",
-      "owner": "P6.T9",
-      "reason": "cc10x-guide states 20 skills but 21 exist besides the router; P6.T9 corrects the counts",
-      "message": "cc10x-guide claims 20 skills but disk has 21"
-    },
-    {
       "key": "manifest-unverifiable-claim:plugin.json",
       "owner": "P6.T12",
       "reason": "plugin.json description says '73% leaner', which nothing verifies; P6.T12 removes it",
