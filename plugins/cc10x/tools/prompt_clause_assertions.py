@@ -4084,6 +4084,24 @@ ASSERTIONS = [
         and "denies the bare form `mkdir -p .cc10x` in QA plan phases" in text,
         "the guard's allowlist is the prefix `.cc10x/`, so the bare form was denied for the planner in QA plan phases (a behavioral guard test pins both forms)",
     ),
+    # --- P4B remediation 2, commit 1: the bare mkdir form is prescribed nowhere ---
+    A(
+        "no prompt file prescribes the bare `mkdir -p .cc10x` form (the QA isolation guard denies it in QA plan phases)",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda _text: not [
+            path
+            for path in [*AGENTS.glob("*.md"), *SKILLS.rglob("*.md")]
+            if path != SKILLS / "agent-common" / "SKILL.md" and re.search(r"mkdir -p \.cc10x(?![/\w.-])", read(path))
+        ],
+        "the guard's allowlist is the prefix `.cc10x/`; a prescribed bare form is denied for every caller in a QA plan phase (agent-common is the one file that may mention the bare form, and only to say it is denied)",
+    ),
+    A(
+        "router memory load and memory-operations use the trailing-slash mkdir",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: 'Bash("mkdir -p .cc10x/")' in text
+        and (SKILLS / "memory-and-handoff" / "references" / "memory-operations.md").read_text(encoding="utf-8").count("mkdir -p .cc10x/\n") == 1,
+        "the memory load is the first step of every workflow and runs before any QA plan phase guard",
+    ),
     # --- P4B remediation 1, commit 3: stale text and the pins the hunt showed unprotected ---
     A(
         "remediation: the REM-FIX report reaches the verifier from results.investigator when the origin is bug-investigator",

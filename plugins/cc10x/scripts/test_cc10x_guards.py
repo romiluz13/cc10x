@@ -1221,6 +1221,11 @@ def test_qa_isolation_guard_denies_the_bare_mkdir_so_agent_common_must_not_presc
     assert _qa_plan_phase_mkdir_denied(tmp_path, "mkdir -p .cc10x")
 
 
+def test_qa_isolation_guard_allows_the_router_skeleton_copy_form(tmp_path):
+    command = 'mkdir -p .cc10x/workflows && cp "/p/skills/cc10x-router/references/workflow-artifact.skeleton.json" .cc10x/workflows/wf-x.json'
+    assert not _qa_plan_phase_mkdir_denied(tmp_path, command)
+
+
 def main() -> int:
     """Dependency-free runner (repo convention: tests run on bare python3).
 

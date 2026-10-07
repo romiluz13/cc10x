@@ -57,7 +57,7 @@ The router memory-finalize step:
 ### Create the directory
 
 ```bash
-mkdir -p .cc10x
+mkdir -p .cc10x/
 ```
 
 ### Read memory files

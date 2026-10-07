@@ -59,7 +59,7 @@ Distinguish from REVIEW: REVIEW judges quality ("is this good", audit); ORIENT o
 Always run this before routing or resuming:
 
 ```text
-1. Bash("mkdir -p .cc10x")
+1. Bash("mkdir -p .cc10x/")
 2. Read(".cc10x/activeContext.md")
 3. Read(".cc10x/patterns.md")
 4. Read(".cc10x/progress.md")
