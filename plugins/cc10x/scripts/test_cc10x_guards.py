@@ -3837,6 +3837,45 @@ def test_every_registered_hook_survives_valid_non_object_json_on_stdin(tmp_path)
     assert not bad, bad
 
 
+def hooklib_functions_called(script: str) -> set[str]:
+    import ast
+
+    tree = ast.parse((SCRIPTS_DIR / script).read_text(encoding="utf-8"))
+    imported = {
+        alias.name
+        for node in ast.walk(tree)
+        if isinstance(node, ast.ImportFrom) and node.module == "cc10x_hooklib"
+        for alias in node.names
+    }
+    called = {
+        node.func.id
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
+    }
+    return imported & called
+
+
+def test_hook_scripts_split_between_newest_artifact_and_live_artifact_selection(tmp_path):
+    # The policy reference names which hooks take the newest artifact (finished
+    # or not) and which skip finished ones; this pins the code side so the two
+    # cannot drift apart again.
+    newest = {"latest_workflow_payload", "read_latest_workflow_state", "latest_workflow_file"}
+    live = {"read_live_workflow_state"}
+    by_script = {
+        "cc10x_pretooluse_guard.py": newest,
+        "cc10x_qa_isolation_guard.py": newest,
+        "cc10x_posttooluse_artifact_guard.py": newest,
+        "cc10x_event_logger.py": newest,
+        "cc10x_sessionstart_context.py": live,
+        "cc10x_state_persist.py": live,
+    }
+    for script, family in by_script.items():
+        called = hooklib_functions_called(script)
+        assert called & family, (script, called)
+        assert not called & ((newest | live) - family), (script, called)
+    assert not hooklib_functions_called("cc10x_task_completed_guard.py") & (newest | live)
+
+
 def main() -> int:
     """Dependency-free runner (repo convention: tests run on bare python3).
 

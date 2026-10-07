@@ -2487,11 +2487,24 @@ ASSERTIONS = [
         "two live workflows can make a hook read the other one; no hook checks phase exit",
     ),
     A(
-        "policy: hooks skip finished workflows when choosing the newest artifact",
+        "policy: names which hooks take the newest artifact and which skip finished ones, and defines finished",
         POLICY_REF,
-        lambda text: text.count("newest modification time in `.cc10x/workflows/` that is not finished") == 1
-        and "last `status_history` event is not `memory_finalized`, `workflow_completed` or `workflow_failed`" in text,
-        "P5.T5 hooks ignore artifacts whose last status_history event is terminal; the reference must say so",
+        lambda text: text.count("use the artifact with the newest modification time in `.cc10x/workflows/`, finished or not") == 1
+        and "newest modification time in `.cc10x/workflows/` that is not finished" not in text
+        and "SessionStart context and the compaction and stop snapshots use the newest artifact that is not finished" in text
+        and "the QA isolation guard then disengages itself when that artifact is finished" in text
+        and "last `status_history` event is `memory_finalized`, `workflow_completed` or `workflow_failed`" in text
+        and "when its `memory-finalize` phase is completed" in text
+        and "fires on startup|resume|clear|compact|fork" in text
+        and "startup|resume|compact" not in text,
+        "the protected-writes guard, QA isolation guard, PostToolUse guard and event logger read latest_workflow_file (finished or not); only SessionStart and the state snapshots skip finished artifacts (a code-reading test pins the split)",
+    ),
+    A(
+        "router: the PostToolUse guard is said to flag a malformed artifact, not reject it",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: "validates this write in `block` mode and will flag a malformed or key-missing artifact" in text
+        and "will reject a malformed or key-missing artifact" not in text,
+        "PostToolUse runs after the write and cannot undo it; the policy reference already says so",
     ),
     A(
         "policy: zero-finding bounce keeps the floor and says what it is",

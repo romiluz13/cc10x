@@ -289,7 +289,7 @@ Write(
 )
 ```
 
-**Read-back gate (MANDATORY before any child `TaskCreate`):** `Read(".cc10x/workflows/{workflow_uuid}.json")` and confirm (a) it parses as JSON, (b) `workflow_uuid` equals the generated UUID, and (c) no `__PLACEHOLDER__` tokens remain. If any check fails, fix the file and re-read before proceeding. The PostToolUse artifact guard also validates this write in `block` mode and will reject a malformed or key-missing artifact — but the router must not rely on the guard alone; confirm the read-back first.
+**Read-back gate (MANDATORY before any child `TaskCreate`):** `Read(".cc10x/workflows/{workflow_uuid}.json")` and confirm (a) it parses as JSON, (b) `workflow_uuid` equals the generated UUID, and (c) no `__PLACEHOLDER__` tokens remain. If any check fails, fix the file and re-read before proceeding. The PostToolUse artifact guard also validates this write in `block` mode and will flag a malformed or key-missing artifact — but the router must not rely on the guard alone; confirm the read-back first.
 
 Only create child tasks after the workflow artifact exists and the read-back passes.
 
