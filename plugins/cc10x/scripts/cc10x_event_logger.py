@@ -8,9 +8,45 @@ postcompact event also appends to the workflow's <wf>.events.jsonl.
 
 from __future__ import annotations
 
+import json
 import sys
+from pathlib import Path
 
 from cc10x_hooklib import load_input, log_event
+
+TRANSCRIPT_TAIL_BYTES = 1_048_576
+
+
+def read_handback_report(transcript_path: str) -> str | None:
+    """The report a subagent delivered through SubagentHandback, read from the
+    tail of its own transcript. With that tool `last_assistant_message` holds
+    only the closing text, not the report (hooks reference, SubagentStop)."""
+    if not transcript_path:
+        return None
+    try:
+        path = Path(transcript_path)
+        with path.open("rb") as fh:
+            fh.seek(max(0, path.stat().st_size - TRANSCRIPT_TAIL_BYTES))
+            tail = fh.read().decode("utf-8", errors="ignore")
+    except OSError:
+        return None
+    for line in reversed(tail.splitlines()):
+        try:
+            content = json.loads(line)["message"]["content"]
+        except (ValueError, KeyError, TypeError):
+            continue
+        if not isinstance(content, list):
+            continue
+        for block in reversed(content):
+            if (
+                isinstance(block, dict)
+                and block.get("type") == "tool_use"
+                and block.get("name") == "SubagentHandback"
+            ):
+                message = (block.get("input") or {}).get("message")
+                if isinstance(message, str):
+                    return message
+    return None
 
 
 def main() -> int:
@@ -18,8 +54,7 @@ def main() -> int:
     data = load_input()
 
     if event_name == "postcompact":
-        from cc10x_hooklib import workflows_dir, latest_workflow_payload
-        import json
+        from cc10x_hooklib import latest_workflow_payload, workflow_event_log_append
         from datetime import datetime, timezone
 
         trigger = data.get("trigger", "auto")
@@ -28,7 +63,8 @@ def main() -> int:
         if not payload:
             return 0
         wf = payload.get("workflow_uuid") or payload.get("workflow_id")
-        events_path = workflows_dir() / f"{wf}.events.jsonl"
+        if not wf:
+            return 0
         event = {
             "ts": datetime.now(timezone.utc).isoformat(),
             "wf": wf,
@@ -40,11 +76,7 @@ def main() -> int:
             "reason": trigger,
             "details": summary[:200] if summary else None,
         }
-        try:
-            with events_path.open("a", encoding="utf-8") as fh:
-                fh.write(json.dumps(event, ensure_ascii=True) + "\n")
-        except Exception:
-            pass
+        workflow_event_log_append(wf, event)
         log_event(
             "plugin_postcompact_context",
             {
@@ -66,14 +98,30 @@ def main() -> int:
         agent_transcript_path = data.get("agent_transcript_path", "") or ""
         stop_hook_active = data.get("stop_hook_active", False)
         message = data.get("last_assistant_message", "") or ""
-        contract_found = "CONTRACT {" in message
-        is_cc10x_agent = (
-            agent_type.startswith("cc10x:")
-            or "CC10X" in message
-            or "Router Contract" in message
-        )
-        if not is_cc10x_agent:
+        if not agent_type.startswith("cc10x:"):
+            log_event(
+                "plugin_subagent_stop_audit",
+                {
+                    "agent_type": agent_type,
+                    "agent_id": agent_id,
+                    "task_id": None,
+                    "agent": agent_type,
+                    "event": "subagent_stop",
+                    "decision": "logged",
+                    "reason": "non_cc10x_agent",
+                },
+            )
             return 0
+        report = message
+        report_source = "last_assistant_message"
+        if "CONTRACT {" not in report:
+            handback = read_handback_report(agent_transcript_path)
+            if handback is not None:
+                report = handback
+                report_source = "handback_report"
+            elif not message:
+                report_source = "none"
+        contract_found = "CONTRACT {" in report
         log_event(
             "plugin_subagent_stop_audit",
             {
@@ -82,6 +130,7 @@ def main() -> int:
                 "agent_transcript_path": agent_transcript_path,
                 "stop_hook_active": stop_hook_active,
                 "contract_found": contract_found,
+                "report_source": report_source,
                 "message_len": len(message),
                 "task_id": None,
                 "agent": agent_type,
@@ -93,13 +142,12 @@ def main() -> int:
         return 0
 
     if event_name == "instructions_loaded":
-        instructions_hash = data.get("instructions_hash", "")
-        instruction_count = data.get("instruction_count", 0)
         log_event(
             "plugin_instructions_loaded_audit",
             {
-                "instructions_hash": instructions_hash,
-                "instruction_count": instruction_count,
+                "file_path": data.get("file_path", ""),
+                "memory_type": data.get("memory_type", ""),
+                "load_reason": data.get("load_reason", ""),
                 "task_id": None,
                 "agent": "hook",
                 "event": "instructions_loaded",
@@ -110,11 +158,11 @@ def main() -> int:
         return 0
 
     if event_name == "stop_failure":
-        stop_hook_active = data.get("stop_hook_active", False)
         log_event(
             "plugin_stop_failure_log",
             {
-                "stop_hook_active": stop_hook_active,
+                "error": data.get("error", ""),
+                "error_details": data.get("error_details", ""),
                 "task_id": None,
                 "agent": "hook",
                 "event": "stop_failure",

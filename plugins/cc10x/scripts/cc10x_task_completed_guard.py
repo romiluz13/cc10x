@@ -5,7 +5,7 @@ Validates:
 1. Every CC10X task has required metadata (wf, kind, origin, phase, plan, scope, reason)
 2. Memory tasks have router-owned evidence (origin=router, inline marker, finalized event)
 3. After any non-memory CC10X task completes, check that the workflow artifact was
-   updated (updated_at bumped) since the task was created. A stale artifact means the
+   touched within the last 5 minutes (audit-only). A stale artifact means the
    router skipped persistence.
 4. Circuit breaker backstop: when a kind:remfix task completes, count remediation_history
    entries in the workflow artifact. This is the hook-enforced version of the router's
@@ -17,7 +17,6 @@ from __future__ import annotations
 
 import re
 import sys
-from datetime import datetime, timezone
 
 from cc10x_hooklib import (
     load_input,
@@ -99,14 +98,14 @@ def validate_memory_task_completion(data: dict, metadata: dict, mode: dict) -> i
 
 def check_artifact_freshness(data: dict, metadata: dict, mode: dict) -> int:
     """Fix #3/#5: After a non-memory CC10X task completes, verify the workflow
-    artifact was updated since the task was created.
+    artifact was touched recently.
 
-    A stale artifact (updated_at unchanged since before the task ran) means the
-    router skipped persistence — the agent's results were not written to the
-    durable state. This breaks resume logic and leaves the workflow incomplete.
+    A stale artifact means the router skipped persistence — the agent's results
+    were not written to the durable state. This breaks resume logic and leaves
+    the workflow incomplete.
 
     We use a generous window (300s = 5 min) because agent runs can be long.
-    The check is: artifact mtime must be newer than the task creation time.
+    The check is: artifact mtime must be within the window; audit-only.
     """
     if metadata.get("kind") == "memory":
         return 0  # memory tasks are handled separately
@@ -119,25 +118,9 @@ def check_artifact_freshness(data: dict, metadata: dict, mode: dict) -> int:
     if artifact_path is None or parse_error:
         return 0  # don't compound errors — the main validator catches missing artifacts
 
-    # Freshness = the artifact was updated SINCE THE TASK WAS CREATED (task
-    # lifetime), not merely "touched within the last 5 minutes" — wall-clock
-    # recency false-warns on long tasks and false-passes on short ones. When
-    # the hook payload carries no task-creation timestamp, fall back to the
-    # old 300s wall-clock window.
-    created_raw = data.get("task_created_at") or (data.get("task") or {}).get(
-        "created_at"
-    )
-    stale = False
-    if isinstance(created_raw, str):
-        try:
-            created = datetime.fromisoformat(created_raw.replace("Z", "+00:00"))
-            if created.tzinfo is None:
-                created = created.replace(tzinfo=timezone.utc)
-            stale = artifact_path.stat().st_mtime < created.timestamp()
-        except (ValueError, OSError):
-            created_raw = None
-    if not isinstance(created_raw, str):
-        stale = not workflow_artifact_is_fresh(artifact_path, max_age_seconds=300)
+    # TaskCompleted carries no task-creation timestamp (hooks reference), so
+    # freshness is a wall-clock window; the result is an audit event only.
+    stale = not workflow_artifact_is_fresh(artifact_path, max_age_seconds=300)
     if stale:
         log_event(
             "plugin_task_completed_stale_artifact",
@@ -152,16 +135,9 @@ def check_artifact_freshness(data: dict, metadata: dict, mode: dict) -> int:
                 "task_subject": data.get("task_subject", ""),
             },
         )
-        # Audit-only for now — blocking would be too aggressive since the model
-        # may update the artifact in the next turn. But the audit log entry
-        # creates an observable signal for stress tests.
-        sys.stderr.write(
-            f"CC10X WARNING: workflow artifact {artifact_path.name} appears stale "
-            f"after task completion (phase={metadata.get('phase')}, "
-            f"agent={metadata.get('origin')}). "
-            "Ensure the router updates the artifact with agent results before "
-            "proceeding.\n"
-        )
+        # Audit-only: blocking would be too aggressive since the model may
+        # update the artifact in the next turn. Exit-0 stderr never reaches the
+        # model, so the log event is the signal.
 
     return 0
 
@@ -209,12 +185,6 @@ def check_circuit_breaker(data: dict, metadata: dict, mode: dict) -> int:
                 "task_subject": data.get("task_subject", ""),
             },
         )
-        sys.stderr.write(
-            f"CC10X WARNING: workflow {workflow_id} completed a kind:remfix task "
-            "but the artifact's remediation_history is missing or not an array — "
-            "the circuit breaker cannot count cycles. The router must append "
-            "{ts, phase, reason, cycle_number} on every REM-FIX creation.\n"
-        )
         return 0
 
     cycle_count = len(remediation_history)
@@ -235,13 +205,13 @@ def check_circuit_breaker(data: dict, metadata: dict, mode: dict) -> int:
             "task_subject": data.get("task_subject", ""),
         },
     )
-    sys.stderr.write(
-        f"CC10X circuit breaker: workflow {workflow_id} has {cycle_count} remediation "
-        f"cycles recorded in remediation_history, exceeding the {CIRCUIT_BREAKER_LIMIT}-cycle "
-        "limit. The router must stop and ask the user how to proceed before creating "
-        "another kind:remfix task.\n"
-    )
     if decision == "block":
+        sys.stderr.write(
+            f"CC10X circuit breaker: workflow {workflow_id} has {cycle_count} remediation "
+            f"cycles recorded in remediation_history, exceeding the {CIRCUIT_BREAKER_LIMIT}-cycle "
+            "limit. The router must stop and ask the user how to proceed before creating "
+            "another kind:remfix task.\n"
+        )
         return 2
     return 0
 

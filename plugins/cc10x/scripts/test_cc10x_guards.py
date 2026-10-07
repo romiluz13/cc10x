@@ -21,6 +21,7 @@ import json
 import subprocess
 import sys
 import tempfile
+import time
 import traceback
 from pathlib import Path
 
@@ -393,9 +394,15 @@ def test_task_guard_circuit_breaker_warns_past_limit_in_shipped_mode(tmp_path):
         },
         tmp_path,
     )
-    # Shipped audit mode: surfaces on stderr but does not block.
+    # Shipped audit mode: a log event, not exit-0 stderr (the model never sees
+    # it, per the hooks reference); does not block.
     assert r.returncode == 0
-    assert "circuit breaker" in r.stderr
+    assert r.stderr == ""
+    assert any(
+        e["event"] == "task_completed_circuit_breaker_exceeded"
+        and e["decision"] == "audit"
+        for e in hook_log_lines(tmp_path)
+    )
 
 
 def test_task_guard_circuit_breaker_blocks_in_block_mode(tmp_path):
@@ -525,15 +532,26 @@ def test_event_logger_audits_cc10x_subagent_contract(tmp_path):
     )
 
 
-def test_event_logger_ignores_non_cc10x_subagents(tmp_path):
-    r = run_guard(
-        "cc10x_event_logger.py",
-        {"agent_type": "general-purpose", "last_assistant_message": "done"},
-        tmp_path,
-        argv=["subagent_stop"],
-    )
-    assert r.returncode == 0
-    assert hook_log_lines(tmp_path) == []
+def test_event_logger_does_not_evaluate_the_contract_for_non_cc10x_subagents(tmp_path):
+    (tmp_path / ".cc10x").mkdir()
+    # Contract-looking text or "CC10X"/"Router Contract" wording must not make a
+    # non-cc10x agent type count as a contract miss (N1).
+    for agent_type in ("general-purpose", "worktree-worker", ""):
+        r = run_guard(
+            "cc10x_event_logger.py",
+            {
+                "agent_type": agent_type,
+                "last_assistant_message": "CC10X Router Contract notes, no envelope",
+            },
+            tmp_path,
+            argv=["subagent_stop"],
+        )
+        assert r.returncode == 0
+    events = [e for e in hook_log_lines(tmp_path) if e["event"] == "subagent_stop"]
+    assert len(events) == 3
+    for e in events:
+        assert e["reason"] == "non_cc10x_agent"
+        assert "contract_found" not in e
 
 
 def test_event_logger_postcompact_appends_workflow_event(tmp_path):
@@ -601,6 +619,7 @@ def test_task_guard_circuit_breaker_surfaces_missing_history(tmp_path):
         tmp_path,
     )
     assert r.returncode == 0
+    assert r.stderr == ""
     events = hook_log_lines(tmp_path)
     assert any(
         e["event"] == "task_completed_circuit_breaker_missing_history"
@@ -690,20 +709,12 @@ def test_task_guard_metadata_keys_must_anchor_line_starts(tmp_path):
     assert "missing metadata" in r.stderr
 
 
-def test_task_guard_freshness_compares_against_task_creation(tmp_path):
-    # P5.T2 changes this: the guard stops reading the undocumented task_created_at.
-    # The check warned whenever the artifact mtime was >300s old — pure
-    # wall-clock recency. An artifact updated AFTER the task was created is
-    # fresh, however long ago that was.
-    import os
-    import time
-
-    path = write_artifact(tmp_path)
-    old = time.time() - 600
-    os.utime(path, (old, old))  # updated 10 min ago...
-    created = time.strftime(
-        "%Y-%m-%dT%H:%M:%S+00:00", time.gmtime(old - 600)
-    )  # ...but the task started 20 min ago
+def test_task_guard_ignores_the_undocumented_task_created_at(tmp_path):
+    # TaskCompleted carries no creation timestamp (hooks reference), so the
+    # freshness check is the 300s wall-clock window alone: a payload-supplied
+    # task_created_at, however late, cannot make a fresh artifact stale.
+    write_artifact(tmp_path)
+    created = time.strftime("%Y-%m-%dT%H:%M:%S+00:00", time.gmtime(time.time() + 600))
     r = run_guard(
         "cc10x_task_completed_guard.py",
         {
@@ -711,11 +722,17 @@ def test_task_guard_freshness_compares_against_task_creation(tmp_path):
             "task_description": CC10X_METADATA,
             "task_id": "t4",
             "task_created_at": created,
+            "task": {"created_at": created},
         },
         tmp_path,
     )
     assert r.returncode == 0
-    assert "stale" not in r.stderr
+    assert r.stderr == ""
+    assert not [
+        e
+        for e in hook_log_lines(tmp_path)
+        if e["event"] == "task_completed_stale_artifact"
+    ]
 
 
 # --- P2.T4 characterization tests (pin CURRENT behavior; P5 updates them) ----
@@ -875,29 +892,26 @@ def test_task_guard_validator_only_applies_to_kind_memory(tmp_path):
 
 
 def test_task_guard_stale_artifact_is_audit_only_even_in_block_mode(tmp_path):
-    # P5.T2 changes this: the exit-0 stderr warning moves to a log event or documented channel,
-    # and the guard stops reading the undocumented task_created_at.
+    # P5.T2: the exit-0 warning is a log event only (the model never sees
+    # exit-0 stderr), and the undocumented task_created_at is not read.
     import os
-    import time
 
     root = mode_root(tmp_path, {"taskMetadata": "block"})
     path = write_artifact(tmp_path)
     old = time.time() - 600
     os.utime(path, (old, old))
-    created = time.strftime("%Y-%m-%dT%H:%M:%S+00:00", time.gmtime(old + 300))
     r = run_guard(
         "cc10x_task_completed_guard.py",
         {
             "task_subject": "CC10X component-builder: Execute phase 1",
             "task_description": CC10X_METADATA,
             "task_id": "t6",
-            "task_created_at": created,  # task started AFTER the last artifact write
         },
         tmp_path,
         plugin_root=root,
     )
     assert r.returncode == 0
-    assert "appears stale" in r.stderr
+    assert r.stderr == ""
     events = hook_log_lines(tmp_path)
     assert any(
         e["event"] == "task_completed_stale_artifact" and e["decision"] == "audit"
@@ -905,10 +919,9 @@ def test_task_guard_stale_artifact_is_audit_only_even_in_block_mode(tmp_path):
     )
 
 
-def test_task_guard_stale_artifact_falls_back_to_300s_window_without_created_at(tmp_path):
-    # P5.T2 changes this: the exit-0 stderr warning moves to a log event or documented channel.
+def test_task_guard_stale_artifact_uses_the_300s_window(tmp_path):
+    # P5.T2: log event, no exit-0 stderr.
     import os
-    import time
 
     path = write_artifact(tmp_path)
     old = time.time() - 600
@@ -923,7 +936,11 @@ def test_task_guard_stale_artifact_falls_back_to_300s_window_without_created_at(
         tmp_path,
     )
     assert r.returncode == 0
-    assert "appears stale" in r.stderr
+    assert r.stderr == ""
+    assert any(
+        e["event"] == "task_completed_stale_artifact"
+        for e in hook_log_lines(tmp_path)
+    )
 
 
 def test_task_guard_circuit_breaker_allows_exactly_the_limit(tmp_path):
@@ -1400,6 +1417,214 @@ def test_posttool_artifact_guard_matcher_covers_bash(tmp_path):
 def test_qa_isolation_matcher_lists_only_documented_tools(tmp_path):
     matcher = hooks_json_matcher("PreToolUse", "cc10x_qa_isolation_guard.py")
     assert "NotebookRead" not in matcher.split("|")  # not in the tools reference
+
+
+# --- P5.T2: logger documented fields, SubagentHandback report, guard channels --
+
+
+def write_agent_transcript(path: Path, *entries: dict, padding: int = 0) -> Path:
+    lines = ["x" * padding] if padding else []
+    lines += [json.dumps(entry) for entry in entries]
+    path.write_text("\n".join(lines) + "\n")
+    return path
+
+
+def handback_entry(message: str) -> dict:
+    return {
+        "type": "assistant",
+        "message": {
+            "role": "assistant",
+            "content": [
+                {
+                    "type": "tool_use",
+                    "name": "SubagentHandback",
+                    "input": {"message": message},
+                }
+            ],
+        },
+    }
+
+
+def text_entry(text: str) -> dict:
+    return {
+        "type": "assistant",
+        "message": {"role": "assistant", "content": [{"type": "text", "text": text}]},
+    }
+
+
+def subagent_stop_event(tmp_path: Path, payload: dict) -> dict:
+    (tmp_path / ".cc10x").mkdir(exist_ok=True)
+    r = run_guard("cc10x_event_logger.py", payload, tmp_path, argv=["subagent_stop"])
+    assert r.returncode == 0, r.stderr
+    assert r.stderr == ""
+    events = [e for e in hook_log_lines(tmp_path) if e["event"] == "subagent_stop"]
+    assert len(events) == 1, events
+    return events[0]
+
+
+CONTRACT_REPORT = 'CONTRACT {"s":"PASS","b":false,"cr":0}\n## Build: PASS'
+
+
+def test_event_logger_reads_the_handback_report_when_the_final_message_is_empty(tmp_path):
+    transcript = write_agent_transcript(
+        tmp_path / "agent.jsonl",
+        text_entry("working"),
+        handback_entry(CONTRACT_REPORT),
+    )
+    e = subagent_stop_event(
+        tmp_path,
+        {
+            "agent_type": "cc10x:component-builder",
+            "agent_id": "a1",
+            "agent_transcript_path": str(transcript),
+            "last_assistant_message": "",
+        },
+    )
+    assert e["contract_found"] is True
+    assert e["reason"] == "contract_present"
+    assert e["report_source"] == "handback_report"
+    assert e["message_len"] == 0
+
+
+def test_event_logger_uses_the_last_handback_found_near_the_end_of_a_large_transcript(tmp_path):
+    transcript = write_agent_transcript(
+        tmp_path / "agent.jsonl",
+        handback_entry("an earlier report without an envelope"),
+        text_entry("revised"),
+        handback_entry(CONTRACT_REPORT),
+        padding=3_000_000,
+    )
+    e = subagent_stop_event(
+        tmp_path,
+        {
+            "agent_type": "cc10x:planner",
+            "agent_transcript_path": str(transcript),
+            "last_assistant_message": "",
+        },
+    )
+    assert e["contract_found"] is True
+    assert e["report_source"] == "handback_report"
+
+
+def test_event_logger_reports_a_miss_when_no_handback_report_exists(tmp_path):
+    transcript = write_agent_transcript(
+        tmp_path / "agent.jsonl", text_entry("no envelope here")
+    )
+    cases = [
+        {"agent_transcript_path": str(transcript)},
+        {"agent_transcript_path": str(tmp_path / "missing.jsonl")},
+        {"agent_transcript_path": ""},
+        {},
+    ]
+    for extra in cases:
+        e = subagent_stop_event(
+            tmp_path,
+            {"agent_type": "cc10x:code-reviewer", "last_assistant_message": "", **extra},
+        )
+        assert e["contract_found"] is False
+        assert e["reason"] == "contract_missing"
+        assert e["report_source"] == "none"
+        (tmp_path / ".cc10x" / "cc10x-hook-events.log").unlink()
+
+
+def test_event_logger_survives_a_corrupt_agent_transcript(tmp_path):
+    transcript = tmp_path / "agent.jsonl"
+    transcript.write_text("{not json\n" + json.dumps(handback_entry("no envelope")) + "\n{")
+    e = subagent_stop_event(
+        tmp_path,
+        {
+            "agent_type": "cc10x:planner",
+            "agent_transcript_path": str(transcript),
+            "last_assistant_message": "",
+        },
+    )
+    assert e["contract_found"] is False
+    assert e["report_source"] == "handback_report"
+
+
+def test_event_logger_prefers_the_final_message_over_the_transcript(tmp_path):
+    transcript = write_agent_transcript(
+        tmp_path / "agent.jsonl", handback_entry("no envelope in the report")
+    )
+    e = subagent_stop_event(
+        tmp_path,
+        {
+            "agent_type": "cc10x:planner",
+            "agent_transcript_path": str(transcript),
+            "last_assistant_message": CONTRACT_REPORT,
+        },
+    )
+    assert e["contract_found"] is True
+    assert e["report_source"] == "last_assistant_message"
+
+
+def test_event_logger_instructions_loaded_logs_only_documented_fields(tmp_path):
+    (tmp_path / ".cc10x").mkdir()
+    r = run_guard(
+        "cc10x_event_logger.py",
+        {
+            "file_path": "/proj/CLAUDE.md",
+            "memory_type": "Project",
+            "load_reason": "session_start",
+            "instructions_hash": "undocumented",
+            "instruction_count": 9,
+        },
+        tmp_path,
+        argv=["instructions_loaded"],
+    )
+    assert r.returncode == 0
+    (e,) = [e for e in hook_log_lines(tmp_path) if e["event"] == "instructions_loaded"]
+    assert e["file_path"] == "/proj/CLAUDE.md"
+    assert e["memory_type"] == "Project"
+    assert e["load_reason"] == "session_start"
+    assert "instructions_hash" not in e and "instruction_count" not in e
+
+
+def test_event_logger_stop_failure_logs_only_documented_fields(tmp_path):
+    (tmp_path / ".cc10x").mkdir()
+    r = run_guard(
+        "cc10x_event_logger.py",
+        {"error": "rate_limit", "error_details": "429", "stop_hook_active": True},
+        tmp_path,
+        argv=["stop_failure"],
+    )
+    assert r.returncode == 0
+    (e,) = [e for e in hook_log_lines(tmp_path) if e["event"] == "stop_failure"]
+    assert e["error"] == "rate_limit"
+    assert e["error_details"] == "429"
+    assert "stop_hook_active" not in e
+
+
+def test_event_logger_postcompact_without_a_workflow_id_writes_no_none_log(tmp_path):
+    workflows = tmp_path / ".cc10x" / "workflows"
+    workflows.mkdir(parents=True)
+    (workflows / "wf-legacy.json").write_text(json.dumps({"phase_cursor": "p1"}))
+    r = run_guard(
+        "cc10x_event_logger.py",
+        {"trigger": "auto", "compact_summary": "s"},
+        tmp_path,
+        argv=["postcompact"],
+    )
+    assert r.returncode == 0
+    assert not list(workflows.glob("None*"))
+    assert sorted(p.name for p in workflows.iterdir()) == ["wf-legacy.json"]
+
+
+def test_task_guard_block_mode_circuit_breaker_keeps_its_exit_2_message(tmp_path):
+    root = mode_root(tmp_path, {"taskMetadata": "block"})
+    write_artifact(tmp_path, remediation_history=[{"cycle": i} for i in range(4)])
+    r = run_guard(
+        "cc10x_task_completed_guard.py",
+        {
+            "task_subject": "CC10X component-builder: remediation fix",
+            "task_description": CC10X_METADATA.replace("kind:agent", "kind:remfix"),
+            "task_id": "t9",
+        },
+        tmp_path,
+        plugin_root=root,
+    )
+    assert r.returncode == 2  # exit 2 stderr IS delivered to the model
+    assert "circuit breaker" in r.stderr
 
 
 def main() -> int:
