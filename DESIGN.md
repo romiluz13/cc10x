@@ -44,6 +44,8 @@ components:
     rounded: "{rounded.tight}"
 ---
 
+Scope: this file describes the keynote deck (`keynote.html`) only, not the cc10x plugin.
+
 ## Overview
 
 **Creative North Star: "The Electric Field Manual."** This keynote looks like the engineering document people keep because it changes how they work. It combines the confidence of a printed technical manifesto with the energy of a live system under load. The surface is warm paper and dark ink, not a dark-mode agent dashboard.

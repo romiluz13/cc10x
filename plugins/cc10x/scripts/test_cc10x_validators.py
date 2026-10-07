@@ -1656,3 +1656,16 @@ def test_readme_local_links_resolve():
         if not (REPO / href).exists()
     ]
     assert missing == []
+
+
+@pytest.mark.parametrize("name", ["DESIGN.md", "PRODUCT.md"])
+def test_keynote_deck_docs_state_their_scope(name):
+    text = (REPO / name).read_text(encoding="utf-8")
+    scope = re.search(r"^Scope: .*keynote deck.*not the cc10x plugin.*$", text, re.M)
+    assert scope, f"{name} has no one-line scope sentence"
+
+
+def test_anthropic_comparison_open_items_live_in_the_tracked_known_flaws_doc():
+    text = (REPO / "docs/known-flaws.md").read_text(encoding="utf-8")
+    assert "2026-07-30 Anthropic prompting-guide comparison" in text
+    assert "/tmp/" not in text and "/Users/" not in text

@@ -1,5 +1,7 @@
 # Product
 
+Scope: this file describes the keynote deck (`keynote.html`) only, not the cc10x plugin.
+
 ## Register
 
 brand

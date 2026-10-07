@@ -88,4 +88,20 @@ The on-disk state namespace dropped its version segment (`.cc10x/v10/` → `.cc1
 
 ---
 
+## Open items from the 2026-07-30 Anthropic prompting-guide comparison
+
+**Discovered:** 2026-07-30 · **Status:** open, advisory (review only, no changes made)
+
+A read-only review compared the prompt surface (then 20 skills, 11 agents, the router and hook scripts) with Anthropic's model-specific prompting guides. It found strong alignment and five open items, ranked by impact. The full report lives in a gitignored local research folder, so the items are recorded here.
+
+1. **Code-review reporting floor.** The `code-review` skill and `code-reviewer` agent report only findings at confidence 80 or above. The guides recommend reporting every finding with confidence and severity and filtering downstream, because filtering at the finding stage loses recall. The floor also sits awkwardly beside the Zero-Finding Halt rule. Effort: small, wording only.
+2. **Frontend variety lever.** The `frontend` skill rejects generic output but does not generate variety. The guides suggest proposing several directions first and letting the user pick. Effort: small, additive.
+3. **`doc-syncer` model pin.** `doc-syncer` pins `model: haiku`. The guides treat effort, not model pinning, as the lever. Effort: tiny.
+4. **Mid-run user messages.** There is no literal send-to-user tool. The contract envelope plus router synthesis is the functional equivalent, but very long runs have no mechanism for mid-run progress updates short of ending the turn. Evaluate before changing. Effort: medium, design.
+5. **Confidence-band drift.** The 80 confidence number appears in code-review reporting and in the debugging action gate with different meanings. Deduplicate. Effort: small.
+
+One memory-layout divergence (per-heading entries in three files instead of one lesson per file) was judged deliberate and is not tracked as a flaw.
+
+---
+
 *Add new flaws below as they are discovered.*
