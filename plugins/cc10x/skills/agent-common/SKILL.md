@@ -1,6 +1,6 @@
 ---
 name: agent-common
-description: "Shared preamble loaded by all cc10x agents — memory protocol, contract format, output rules."
+description: "Use when a cc10x agent starts a task: the shared preamble for the memory protocol, the contract format, and the output rules."
 user-invocable: false
 ---
 

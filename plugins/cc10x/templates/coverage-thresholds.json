@@ -1,6 +1,6 @@
 {
   "_comment": "cc10x coverage gate — copy to project root to enable. component-builder checks this before STATUS: PASS.",
-  "_install": "cp plugins/cc10x/templates/coverage-thresholds.json coverage-thresholds.json",
+  "_install": "Copy this file from the plugin's templates/ directory into the project root, named coverage-thresholds.json.",
   "statements": 80,
   "branches": 70,
   "functions": 80,

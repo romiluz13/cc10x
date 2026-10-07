@@ -1,6 +1,6 @@
 ---
 name: research
-description: "Internal skill. Synthesis guidance loaded via SKILL_HINTS by planner and bug-investigator when research files are available."
+description: "Use when research files (web or GitHub findings) are available and must be synthesized into a recommendation. Synthesis guidance only; it does not execute research."
 allowed-tools: Read
 user-invocable: false
 ---
@@ -86,11 +86,6 @@ Once the **canonical entity is resolved** — the one the project actually depen
 
 ## Handling Partial Research
 
-If web researcher returned `[Web phase unavailable]`:
-- Note it in the synthesis header: "Web research unavailable — GitHub only"
-- Do not fabricate web findings
-- Reduce confidence in synthesis accordingly
-
 If GitHub researcher returned `[GitHub phase unavailable]`:
 - Note it in the synthesis header: "GitHub research unavailable — Web only"
 - Use web findings only for synthesis
@@ -107,7 +102,7 @@ Quality weighting:
 
 ## Memory Output
 
-Do not edit `.cc10x/*.md` directly from this skill or from the host agent.
+Do not edit `.cc10x/*.md` directly from this skill or from the host agent. `allowed-tools: Read` in this skill's frontmatter pre-approves Read; it does not restrict other tools, so this rule is an instruction to the host agent, not a tool restriction.
 
 Instead, surface the most durable takeaway through the host agent's `MEMORY_NOTES`, for example:
 - one research-backed gotcha worth preserving

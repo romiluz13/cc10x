@@ -69,6 +69,23 @@ def matches(pattern: str):
     return lambda text: re.search(pattern, text) is not None
 
 
+def skill_description(text: str) -> str:
+    """The frontmatter `description` value (quoted, block or folded scalar) as one whitespace-normalized string."""
+    block = re.match(r"---\n(.*?)\n---", text, re.S)
+    if block is None:
+        return ""
+    lines = block.group(1).splitlines()
+    for i, line in enumerate(lines):
+        if line.startswith("description:"):
+            out = [line[len("description:"):].strip()]
+            for follow in lines[i + 1:]:
+                if re.match(r"[A-Za-z][\w-]*:", follow):
+                    break
+                out.append(follow.strip())
+            return " ".join(" ".join(out).strip("|>-\"' ").split())
+    return ""
+
+
 def frontmatter_is(key: str, value: str):
     """True only when the frontmatter block has `key: value` as a real key; malformed frontmatter is False."""
 
@@ -1429,8 +1446,8 @@ ASSERTIONS = [
         and text.count(
             "fails the two-adapter rule (it is a port with only one adapter — an ordinary caller or test exercising the interface is not an adapter)"
         )
-        == 2,
-        "matches codebase-design verbatim: an ordinary caller or test exercising the interface is NOT an adapter (a test ADAPTER implementing the port still counts, per DEEPENING.md production+test)",
+        == 1,
+        "matches codebase-design verbatim: an ordinary caller or test exercising the interface is NOT an adapter (a test ADAPTER implementing the port still counts, per DEEPENING.md production+test); P4.T7.3 removed the duplicate, so the one remaining occurrence carries it",
     ),
     # 81.2 — codebase-hygiene: deletion-test question uses canonical inline-at-call-site phrasing
     A(
@@ -1821,7 +1838,7 @@ ASSERTIONS = [
         "pointer + enforcement rule only; the restated depth definition and Ousterhout clause are gone",
     ),
     A(
-        "architecture: application rule byte-identical at both points of use",
+        "architecture: the application rule is stated once, byte-identical to the canonical sentence",
         SKILLS / "architecture" / "SKILL.md",
         lambda text: text.count(
             "Before finalizing any component boundary, apply the **Deletion Test** and "
@@ -1832,8 +1849,8 @@ ASSERTIONS = [
             "yet — fold it into its "
             "caller or defer the split until a second concrete need appears."
         )
-        == 2,
-        "the deliberate repetition at Design Components and Architecture Vocabulary cannot drift",
+        == 1,
+        "E7: the sentence was repeated at Design Components and again at Architecture Vocabulary (ticket #84.3 kept both on purpose); P4.T7.3 removed the second copy, so one copy remains and a returning duplicate fails",
     ),
     # 84.4 — exploration: never-ships single-sourced at Hard Wall; Doubt Pass unbraided
     A(
@@ -4474,6 +4491,81 @@ ASSERTIONS = [
         and "the _location_ at which a module's interface lives" in read(SKILLS / "codebase-design" / "SKILL.md"),
         "building defined a seam as a public boundary while codebase-design defines it as where a module's interface lives; one definition, pointed at the canonical skill",
     ),
+    # --- P4.T7.3: memory-and-handoff, mcp-cli, research, descriptions, misc (E4, E5, E6, E7, E10) ---
+    A(
+        "memory-and-handoff: the surface list names .cc10x/qa/ and .cc10x/state/",
+        SKILLS / "memory-and-handoff" / "SKILL.md",
+        contains_all(
+            "| `.cc10x/qa/` |",
+            "`env/{env_key}/setup.md`",
+            "| `.cc10x/state/git-approval.json` |",
+        ),
+        "the surface table omitted two router-owned surfaces that exist on disk",
+    ),
+    A(
+        "memory-and-handoff: the compounding loop says what the router implements and what is deferred",
+        SKILLS / "memory-and-handoff" / "SKILL.md",
+        contains_all(
+            "**What the router implements today.**",
+            "no session-start loader reads it",
+            "Deferred, not implemented by the router",
+            "consolidate-at-3+ on `patterns.md` (step 3)",
+            "the periodic refresh with the five-outcome model (step 4",
+            "the CLAUDE.md/AGENTS.md discover step (step 5)",
+        ),
+        "the skill described a five-step loop in the imperative while the router implements capture and the solution-doc threshold only",
+    ),
+    A(
+        "mcp-cli: a specific non-auto-fire description and a manual, unpinned-free install step",
+        SKILLS / "mcp-cli" / "SKILL.md",
+        lambda text: skill_description(text).startswith(
+            "Use when a research task needs a single tool from a named MCP server that is not already mounted"
+        )
+        and "Not for servers already mounted" in skill_description(text)
+        and "git clone" not in text
+        and "go build" not in text
+        and "## Prerequisite (manual, user-installed)" in text
+        and "The agent does not install it" in text,
+        "the description invited auto-fire on any MCP talk and the prerequisite had the agent clone and build an unpinned third-party binary into the PATH",
+    ),
+    A(
+        "research: no branch on a marker no agent emits, and allowed-tools is described as pre-approval",
+        SKILLS / "research" / "SKILL.md",
+        lambda text: "[Web phase unavailable]" not in text
+        and "`allowed-tools: Read` in this skill's frontmatter pre-approves Read; it does not restrict other tools" in text,
+        "no agent emits [Web phase unavailable]; and the Read-only grant was read as a write ban",
+    ),
+    A(
+        "debugging playbooks: git bisect run uses env so the command can execute",
+        SKILLS / "debugging" / "references" / "root-cause-playbooks.md",
+        lambda text: "git bisect run env CI=true npm test" in text and "git bisect run CI=true" not in text,
+        "bisect run exec'd `CI=true` as a program name (exit 127)",
+    ),
+    A(
+        "coverage-thresholds template: the install note names no repo-relative plugin path and the file is valid JSON",
+        PLUGIN / "templates" / "coverage-thresholds.json",
+        lambda text: "plugins/cc10x" not in text
+        and json.loads(text)["_install"].startswith("Copy this file from the plugin's templates/ directory into the project root")
+        and json.loads(text)["lines"] == 80,
+        "a user project has no plugins/cc10x directory; the note now says where the file comes from",
+    ),
+    A(
+        "diff-driven-docs: the opt-out is read from activeContext.md Session Settings, where the router reads it",
+        SKILLS / "diff-driven-docs" / "SKILL.md",
+        lambda text: "`DIFF_DRIVEN_DOCS: skip` to the `## Session Settings` section of `activeContext.md`" in text
+        and "`DIFF_DRIVEN_DOCS: skip` to the `## Session Settings` section of `CLAUDE.md`" not in text,
+        "the skill said CLAUDE.md; the router reads activeContext.md ## Session Settings",
+    ),
+    *[
+        A(
+            f"{name}: the description is a trigger, not a statement of which agent loads the skill",
+            SKILLS / name / "SKILL.md",
+            lambda text: skill_description(text).startswith("Use when ")
+            and re.search(r"(?i)\bloaded by\b|\bpreloaded\b|\bloaded via\b|\bloads? (?:into|in)\b", skill_description(text)) is None,
+            "eight internal skills named the loading agent instead of a trigger (the finding counted six); the trigger style is what the other skills use",
+        )
+        for name in ("agent-common", "building", "debugging", "domain-modeling", "planning", "qa-strategy", "research", "verification")
+    ],
 ]
 
 

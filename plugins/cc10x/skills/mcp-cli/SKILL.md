@@ -1,6 +1,6 @@
 ---
 name: mcp-cli
-description: "Use when you need a one-off MCP server capability during research or debugging without permanently mounting it as a context-polluting integration."
+description: "Use when a research task needs a single tool from a named MCP server that is not already mounted, and the `mcp` CLI (github.com/f/mcptools) is the way to call it. Not for servers already mounted, general MCP questions, or installing MCP servers."
 allowed-tools: Read Bash
 user-invocable: false
 ---
@@ -15,17 +15,11 @@ This keeps accelerators **transient**: spun up for the task, used, and dropped. 
 
 Composes with `cc10x:research`.
 
-## Prerequisite (install once)
+## Prerequisite (manual, user-installed)
 
-Check first: `command -v mcp`. If absent, install:
+Check first: `command -v mcp`. The agent does not install it: building a third-party binary into the user's PATH is the user's decision, to be made from a release of `github.com/f/mcptools` that the user has reviewed.
 
-```bash
-git clone https://github.com/f/mcptools /tmp/mcptools
-CGO_ENABLED=0 go build -o ~/.local/bin/mcp /tmp/mcptools/cmd/mcptools
-# ensure ~/.local/bin is on PATH
-```
-
-If `go` is unavailable, report that the accelerator is missing and proceed with built-in tools — do NOT treat the missing binary as a task blocker (it is a fallback message, not a wall).
+If `mcp` is absent, report that the accelerator is missing and proceed with built-in tools — do NOT treat the missing binary as a task blocker (it is a fallback message, not a wall).
 
 ## Flow: discover → call → release
 

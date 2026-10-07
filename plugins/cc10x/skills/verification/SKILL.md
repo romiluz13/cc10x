@@ -1,9 +1,9 @@
 ---
 name: verification
 description: |
-  Verification discipline: task completion is not goal achievement. Covers the gate
-  function, self-critique gate, validation levels, evidence array protocol, and
-  goal-backward lens. Loaded by integration-verifier, component-builder, and bug-investigator.
+  Use when judging whether a task reached its goal, not just finished: the gate function,
+  self-critique gate, validation levels, evidence array protocol, and goal-backward lens.
+  Task completion is not goal achievement.
 allowed-tools: Read Bash Grep Glob
 user-invocable: false
 ---

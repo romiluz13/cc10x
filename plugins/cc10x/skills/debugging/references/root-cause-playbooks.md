@@ -93,7 +93,7 @@ Use `git bisect` when a regression has a clear good state:
 git bisect start
 git bisect bad HEAD
 git bisect good <known-good-commit-or-tag>
-git bisect run CI=true npm test -- --grep "failing behavior"
+git bisect run env CI=true npm test -- --grep "failing behavior"
 git bisect reset
 ```
 

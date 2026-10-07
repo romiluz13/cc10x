@@ -1,12 +1,11 @@
 ---
 name: qa-strategy
 description: |
-  Test-system design discipline for the QA route: choosing the right tier, designing
-  scenario matrices with pipeline-wide observation points, test-environment topology
-  and isolation, fixture lifecycle, and flake sources. Loaded by qa-researcher,
-  qa-harness-builder, and qa-executor; read as a coverage lens by
-  plan-gap-reviewer on QA plan reviews (it arrives as a file to Read in the
-  task scaffold, not a SKILL_HINTS entry).
+  Use when designing or checking a QA test system: choosing the right tier, scenario
+  matrices with pipeline-wide observation points, test-environment topology and
+  isolation, fixture lifecycle, and flake sources. Also the coverage lens for reviewing
+  a QA plan (it reaches a plan reviewer as a file to Read in the task scaffold, not as
+  a SKILL_HINTS entry).
 allowed-tools: Read Grep Glob Bash LSP
 user-invocable: false
 ---

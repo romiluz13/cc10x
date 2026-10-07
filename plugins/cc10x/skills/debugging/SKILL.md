@@ -1,9 +1,9 @@
 ---
 name: debugging
 description: |
-  Debugging discipline: feedback loop FIRST, root cause before fix, blast radius after
-  fix. Covers the 10-rung construction ladder, LSP-powered tracing, hypothesis quality
-  criteria, and four-phase investigation. Loaded by bug-investigator.
+  Use when diagnosing a defect or regression: feedback loop FIRST, root cause before fix,
+  blast radius after fix. Covers the 10-rung construction ladder, LSP-powered tracing,
+  hypothesis quality criteria, and four-phase investigation.
 allowed-tools: Read Edit Bash Grep Glob LSP
 user-invocable: false
 ---

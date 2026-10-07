@@ -33,6 +33,8 @@ Memory is an index, not a transcript. Distill decisions, learnings, references, 
 | `.cc10x/patterns.md` | reusable project standards, gotchas, conventions, skill hints |
 | `.cc10x/progress.md` | current workflow, tasks snapshot, completed items, verification evidence |
 | `.cc10x/workflows/{wf}.json` + `.events.jsonl` | durable orchestration truth (machine-owned, verbatim) |
+| `.cc10x/qa/` | QA route artifacts: `{workflow_uuid}/feature-map.md`, `test-plan.md`, `env-plan.md`, `report.md`, and per-environment `env/{env_key}/setup.md` (router- and QA-agent-owned) |
+| `.cc10x/state/git-approval.json` | git approval token written by the router and read by the git guard |
 | `docs/plans/*`, `docs/research/*` | detailed artifacts; memory points to them |
 
 ### Ownership
@@ -119,6 +121,8 @@ The "suggested skills/tools" pointer is load-bearing: tell the next agent how to
 ## Knowledge Compounding Loop
 
 Memory is not just for context survival — it's for system self-improvement. After every BUILD or DEBUG cycle, structured learnings should compound into reusable knowledge. Memory files (`activeContext.md`, `patterns.md`, `progress.md`) hold session-scoped context; **durable, structured learnings that survive across projects and sessions** go to `docs/solutions/`.
+
+**What the router implements today.** Capture (step 1) and the solution-doc threshold in `### When to Write a Solution Doc`: the router's memory task persists the learnings and applies those three conditions at workflow finalize. Grounding (step 2) is partial: `cc10x:debugging` and `cc10x:planning` check `docs/solutions/` when it exists, and no session-start loader reads it. Deferred, not implemented by the router: consolidate-at-3+ on `patterns.md` (step 3), the periodic refresh with the five-outcome model (step 4; the `### Compounding Outcomes` table is guidance for a person or agent doing that review), and the CLAUDE.md/AGENTS.md discover step (step 5).
 
 ### The Loop
 

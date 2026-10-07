@@ -1,13 +1,11 @@
 ---
 name: domain-modeling
 description: |
-  Actively build and sharpen a project's domain model — challenge terms against
-  the glossary, sharpen fuzzy language, stress-test with edge-case scenarios,
-  update CONTEXT.md inline, and offer ADRs sparingly. The active discipline
-  loaded by language-shaping agents (planner, doc-syncer, exploration). Builders
-  load a read-only/obey variant: they read CONTEXT.md and obey it, emitting a
-  proposal on contradiction rather than resolving it. See the Active vs
-  read-only section for which mode applies.
+  Use when changing or sharpening a project's domain model: challenge terms against
+  the glossary, sharpen fuzzy language, stress-test with edge-case scenarios, update
+  CONTEXT.md inline, and offer ADRs sparingly. In read-only mode it reads CONTEXT.md and
+  obeys it, emitting a proposal on contradiction rather than resolving it. See the
+  Active vs read-only section for which mode applies.
 allowed-tools: Read Edit Write Glob Grep
 user-invocable: false
 ---

@@ -1,9 +1,9 @@
 ---
 name: planning
 description: |
-  Planning discipline for creating execution plans and decision RFCs. Covers task
-  decomposition, context references, validation levels, risk-based testing, ADR format,
-  plan completeness gate, and functionality flow mapping. Loaded by planner agent.
+  Use when writing an execution plan or a decision RFC: task decomposition, context
+  references, validation levels, risk-based testing, ADR format, plan completeness gate,
+  and functionality flow mapping.
 allowed-tools: Read Write Edit Grep Glob LSP
 user-invocable: false
 ---

@@ -1,9 +1,9 @@
 ---
 name: building
 description: |
-  Implementation skill for writing production code with TDD. Covers the RED-GREEN-REFACTOR
-  cycle, false-RED detection, vertical slicing, scope escalation, test process discipline,
-  and code generation patterns. Loaded by component-builder and bug-investigator.
+  Use when writing production code test-first: the RED-GREEN-REFACTOR cycle, false-RED
+  detection, vertical slicing, scope escalation, test process discipline, and code
+  generation patterns.
 allowed-tools: Read Write Edit Bash Grep Glob LSP
 user-invocable: false
 ---

@@ -168,7 +168,7 @@ Before emitting the contract, verify:
 
 This skill is loaded by the `doc-syncer` agent in the BUILD chain. The router spawns `doc-syncer` after `integration-verifier` passes and before the Memory Update task. The agent emits a `### Router Contract (MACHINE-READABLE)` YAML block that the router validates before advancing.
 
-**Opt-out:** Add `DIFF_DRIVEN_DOCS: skip` to the `## Session Settings` section of `CLAUDE.md` to disable the doc-syncer for projects that manage documentation separately.
+**Opt-out:** Add `DIFF_DRIVEN_DOCS: skip` to the `## Session Settings` section of `activeContext.md` to disable the doc-syncer for projects that manage documentation separately.
 
 ## Rationalization Table
 

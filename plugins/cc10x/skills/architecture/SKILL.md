@@ -140,8 +140,6 @@ Three extra terms specific to greenfield architecture (not in codebase-design):
 - **Temporal coupling** — caller must know the order of operations. Design defect — remove or document explicitly.
 - **Leaky abstraction** — interface exposes internal details callers must know. Design defect — fix the interface.
 
-Before finalizing any component boundary, apply the **Deletion Test** and **Two-Adapter Rule** as defined in `cc10x:codebase-design`. A component that fails the deletion test (complexity vanishes if deleted) or fails the two-adapter rule (it is a port with only one adapter — an ordinary caller or test exercising the interface is not an adapter) is not a real boundary yet — fold it into its caller or defer the split until a second concrete need appears.
-
 ## Design It Twice
 
 When a module's interface is non-trivial, design it twice:
