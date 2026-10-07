@@ -40,6 +40,8 @@ REQUIRED_ARTIFACT_KEYS = (
     "remediation_history",
 )
 
+CONVERGENCE_STATES = ("pending", "needs_iteration", "converged", "N/A")
+
 MEMORY_TASK_WORKFLOW_TYPES = ("BUILD", "DEBUG", "REVIEW", "PLAN", "QA")
 
 WORKFLOW_TYPES = ("BUILD", "DEBUG", "PLAN", "REVIEW", "QA", "ORIENT", "TRIAGE", "CODEBASE-HEALTH", "pending")
@@ -404,6 +406,22 @@ def validate_fixture_common(fixture: dict[str, Any]) -> None:
     ):
         require(key in fixture, f"{fixture.get('id', '<unknown>')}: missing {key}")
     validate_artifact_shape(fixture)
+    validate_convergence_states(fixture, fixture["id"])
+
+
+def validate_convergence_states(node: Any, label: str = "fixture") -> None:
+    if isinstance(node, dict):
+        for key, value in node.items():
+            if key == "convergence_state":
+                require(
+                    value in CONVERGENCE_STATES,
+                    f"{label}: convergence_state {value!r} is not in CONVERGENCE_STATES {CONVERGENCE_STATES}",
+                )
+            else:
+                validate_convergence_states(value, label)
+    elif isinstance(node, list):
+        for item in node:
+            validate_convergence_states(item, label)
 
 
 def validate_latency_telemetry(
@@ -925,7 +943,7 @@ def check_build_happy_path(fixture: dict[str, Any]) -> None:
     )
     require(
         fixture["expected"]["artifact_delta"]["quality"]["convergence_state"]
-        == "stable",
+        == "converged",
         "build-happy-path: wrong convergence state",
     )
     require(

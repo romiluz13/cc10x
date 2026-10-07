@@ -16,7 +16,7 @@
     "results": {},
     "intent": {"goal": "Add test coverage for existing auth flow"},
     "evidence": {},
-    "quality": {"convergence_state": "stable"},
+    "quality": {"convergence_state": "converged"},
     "status_history": [],
     "remediation_history": []
   },

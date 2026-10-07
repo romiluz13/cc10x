@@ -99,7 +99,7 @@
     "artifact_delta": {
       "phase_cursor": "phase-2",
       "quality": {
-        "convergence_state": "stable"
+        "convergence_state": "converged"
       }
     }
   }

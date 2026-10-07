@@ -71,7 +71,7 @@
     "next_action": "memory_finalize",
     "doc_syncer_status": "COMPLETE",
     "artifact_delta": {
-      "quality": {"convergence_state": "stable"}
+      "quality": {"convergence_state": "converged"}
     }
   }
 }

@@ -64,12 +64,15 @@ Rules:
 - `workflow_id` remains as a compatibility alias and must equal `workflow_uuid` in new artifacts.
 - `state_root` must equal `.cc10x`.
 - `phase_cursor` points at the only BUILD phase that may run next.
-- `normalized_phases` stores planner-approved executable phases with:
+- `normalized_phases` stores planner-approved executable phases with (the same names `build-workflow.md` BUILD preparation step 8 requires):
   - `phase_id`
   - `title`
   - `objective`
-  - `files`
-  - `checks`
+  - `inputs`
+  - `files/surfaces`
+  - `expected_artifacts`
+  - `required_checks`
+  - `checkpoint_type`
   - `exit_criteria`
   - `test_seams` — array of seam names the phase tests at. **Required for `build_scope=standard` with a plan** (the builder draws `TEST_SEAMS` from here and sets `SEAM_GATE_STATUS=confirmed`); optional (empty or omitted) for `build_scope=trivial` or direct/no-plan. **Legacy fallback:** a pre-2a saved plan whose phase omits `test_seams` is accepted — the builder sets `SEAM_GATE_STATUS=proposed` and proposes seams at BUILD_PREFLIGHT (same as direct/no-plan), and the next plan-save backfills `test_seams`.
 - Bright Data MCP and Octocode MCP are optional accelerators. Base CC10X installs must continue to work with built-in Claude Code tools only.
@@ -88,6 +91,8 @@ Rules:
   - `open_decisions`
 - `approved_decisions` stores decisions explicitly approved by the user or already fixed in the saved plan.
 - `plan_mode`, `verification_rigor`, and `proof_status` mirror the router-owned interface fields from workflow preparation (`direct|execution_plan|decision_rfc`, `standard|critical_path`, `passed|gaps_found|human_needed`).
+- `verification_rigor` ships as `null` in the skeleton, meaning undecided. The router must set explicitly `standard` or `critical_path` (from the planner contract when a plan exists, at workflow preparation otherwise) before dispatching planner or builder; `plan_trust_gate` fails while it is `null` and a plan artifact exists.
+- `DIFF_DRIVEN_DOCS: skip` is read by the router from `activeContext.md ## Session Settings` (not from `CLAUDE.md`); when present, BUILD skips doc-sync task creation (`build-workflow.md`, opt-out check).
 - `traceability` stores requirement→phase→verification→remediation linkage arrays (`requirements`, `phases`, `verification`, `remediation`).
 - `deferred_findings` accumulates non-blocking Minor findings across phases (each entry: `source`, `phase_id`, `finding`, `severity:minor`); never consumed mid-flight, and surfaced once — at BUILD-DONE triage on the BUILD route, and on the QA route with the report, alongside the DEBUG offer, because QA has no BUILD-DONE triage to surface it at. See `build-workflow.md` §Deferred Minor findings roll-up and `qa-workflow.md` *Harness review*.
 - `evidence` stores proof-of-work grouped by agent:
@@ -104,6 +109,7 @@ Rules:
   - `scenario_coverage`
   - `research_quality`
   - `convergence_state`
+- `quality.convergence_state` takes one of `CONVERGENCE_STATES` (defined in `tools/workflow_replay_check.py`, which rejects any other value in a replay fixture): `pending` (default), `needs_iteration`, `converged`, `N/A` (advisory routes with no convergence loop: TRIAGE, CODEBASE-HEALTH).
 - PLAN-local fresh review tracking stores:
   - `planning_review_runs`
   - `planning_review_findings`
@@ -146,13 +152,13 @@ Rules:
 
 Router gates (operational definitions — a gate name without these semantics is meaningless):
 
-- `plan_trust_gate` — before executing any phase from a plan: the plan file exists, matches the recorded `plan_trust` anchor, and has no unresolved Open Decisions. On mismatch, stop and re-anchor with the user; never build from a plan the artifact no longer trusts.
+- `plan_trust_gate` — before executing any phase from a plan: the plan file exists and passes the checks listed in `build-workflow.md` BUILD preparation step 3 (Open Decisions resolved, Differences from agreement present, explicit `plan_mode` and `verification_rigor`, phase `exit_criteria`, constraint cross-check). That list is the single definition. On failure, stop and ask the user; never build from a plan the artifact no longer trusts.
 - `phase_exit_gate` — a phase task may complete only when its agent contract validates (per the Contract overrides table), its result is persisted to `results.{agent}`, and the matching event-log entry exists. A failed contract routes to remediation; it never advances `phase_cursor`.
 - `failure_stop_gate` — any agent `FAIL`/`BLOCKED` halts chain advancement. Until it is cleared through remediation, research, or a user checkpoint, the router may not create or unblock downstream phase tasks.
 - `memory_sync_gate` — the workflow may not reach final state until Memory Update ran (router-inline, never a subagent) and the `memory_finalized` event is in the event log; the TaskCompleted guard audits exactly this evidence.
 - `skill_precedence_gate` — dispatched skills and instructions resolve conflicts by the precedence order (user > project standards > approved plans > domain skills > internal skills > defaults); the router records any conflict it resolved in `status_history`.
 
-These are router-owned checks, not advisory hints.
+These are router-owned checks, not advisory hints. `phase_exit_gate` is enforced by the router, not by any hook: the hooks audit task metadata, artifact shape and memory-finalization evidence, and none of them checks that a phase's contract validated or that `phase_cursor` may advance.
 
 Workflow event log:
 
@@ -175,17 +181,23 @@ Workflow event log:
   - `duration_seconds`
   - `work_category`
   - `details`
-- Event types:
-  - `workflow_started`
+- Event types the router appends:
+  - `workflow_started` (at workflow bootstrap)
+  - `result_persisted` (each agent result persisted to the artifact)
+  - `memory_finalized` (Memory Update)
+  - `inline_fallback_entered` (inline no-subagent mode)
+- Event types a hook appends to this log:
+  - `compact_occurred` (PostCompact)
+  - `artifact_mutated` (PostToolUse fallback append when the router logged no matching entry)
+- Not emitted by any router step or hook (names kept so older artifacts and fixtures stay readable):
   - `agent_started`
   - `agent_completed`
   - `contract_parsed`
   - `remediation_created`
   - `scope_decision_requested`
   - `scope_decision_resolved`
-  - `memory_finalized`
-  - `workflow_completed`
-  - `workflow_failed`
+- `workflow_completed` and `workflow_failed` are not appended by any router step either; the QA isolation guard accepts them, with `memory_finalized`, as terminal markers when one is present as the last `status_history` event.
+- The hook scripts keep a separate log, `cc10x-hook-events.log`, for their own audit lines (`subagent_stop`, `instructions_loaded`, `stop_failure`, guard decisions); those are not workflow events.
 
 Hook policy:
 
@@ -197,12 +209,13 @@ Hook policy:
   - `PostToolUse` for workflow artifact integrity audit (`cc10x_posttooluse_artifact_guard.py`)
   - `TaskCompleted` for task metadata checks (`cc10x_task_completed_guard.py`)
   - `PostCompact` for compaction event capture in workflow event log (audit only)
-  - `SubagentStop` for agent contract presence audit (telemetry only)
+  - `SubagentStop` for agent contract presence audit (hook log, telemetry only)
   - `PreCompact` for workflow state snapshot before compaction (persistence only)
   - `Stop` for workflow state snapshot on session stop (persistence only, never blocks)
-- `StopFailure` for API error logging to workflow event log (async, telemetry only)
-- `InstructionsLoaded` for instruction file load audit trail (async, telemetry only)
-- Default mode is audit-only for the hooks that consult `hook-mode.json`, with one exception there: `artifactIntegrity` ships in `block` mode — the PostToolUse guard rejects (exit 2) a write to a workflow artifact that is malformed JSON or missing required keys. It blocks only writes to the artifact itself; writes to other files are audited, never blocked. Two blocking hooks do not consult `hook-mode.json` at all and block unconditionally whatever the mode says: the PreToolUse git guard `cc10x_git_guard.py` (next bullet) and the PreToolUse QA isolation guard `cc10x_qa_isolation_guard.py`. Do not rely on hooks as the only source of truth; the router still owns orchestration decisions.
+  - `StopFailure` for API error logging to the hook log (async, telemetry only)
+  - `InstructionsLoaded` for instruction file load audit trail in the hook log (async, telemetry only)
+- Default mode is audit-only for the hooks that consult `hook-mode.json`, with one exception there: `artifactIntegrity` ships in `block` mode — the PostToolUse guard exits 2 after a write to a workflow artifact that is malformed JSON or missing required keys. PostToolUse runs after the write: exit 2 feeds stderr to the model and cannot undo the write, so the malformed artifact stays on disk until the model repairs it (the message says to repair it now). It signals only for writes to the artifact itself; writes to other files are audited, never signaled. Two blocking hooks do not consult `hook-mode.json` at all and block unconditionally whatever the mode says: the PreToolUse git guard `cc10x_git_guard.py` (next bullet) and the PreToolUse QA isolation guard `cc10x_qa_isolation_guard.py`. Do not rely on hooks as the only source of truth; the router still owns orchestration decisions.
+- Hooks that read workflow state (the protected-writes guard, the QA isolation guard, SessionStart context, and the compaction and stop snapshots) resolve the artifact with the newest modification time in `.cc10x/workflows/`, not the `wf:` of the current task; the TaskCompleted guard reads the artifact named by the task's `wf:`. With two live workflows a hook can therefore evaluate the other one; the router, which scopes by `wf:`, stays the source of truth.
 - Git-guard approval token: the PreToolUse git guard blocks `git push` and `git branch -D` unconditionally UNLESS a fresh single-use token exists at `.cc10x/state/git-approval.json` (`{"wf", "operations": ["push"|"branch-delete"], "expires_at"}`, ≤10 min). Only the BUILD-DONE finishing gate writes this token, and only immediately after the user's explicit menu choice (see `build-workflow.md` §BUILD-DONE finishing). The guard consumes the token on first use. `git reset --hard`, `git clean -f`, force-push, and `git checkout .` have no token path.
 - Repo-local `.claude/settings.json` is not part of the shipped CC10X product.
 - Optional accelerator MCPs are user-configured in Claude Code. CC10X assumes the names `brightdata` and `octocode` if they are available, but must degrade to built-in research paths when they are absent.
@@ -276,7 +289,7 @@ This section is consulted at post-agent validation time only, not at routing tim
 
 ### Write-agent YAML required fields
 
-For write agents, parse the final fenced YAML block under `### Router Contract (MACHINE-READABLE)`.
+Parsing direction, for every agent (write and read-only): the router branches on `STATUS` from the final fenced YAML Router Contract block (`### Router Contract (MACHINE-READABLE)`). The line-1 `CONTRACT` envelope and the line-2 heading are quick presence signals read first (`SKILL.md` §8); if they disagree with the YAML block, the YAML block decides.
 
 Expected fields:
 
@@ -284,11 +297,23 @@ Expected fields:
 | ------- | ----------------- |
 | component-builder | `STATUS`, `CONFIDENCE`, `PHASE_ID`, `PHASE_STATUS`, `PHASE_EXIT_READY`, `CHECKPOINT_TYPE`, `PROOF_STATUS`, `BUILD_PREFLIGHT_EMITTED`, `INPUTS`, `EXPECTED_ARTIFACTS`, `TDD_RED_EXIT`, `TDD_RED_REASON_KIND`, `TDD_RED_REASON`, `TDD_GREEN_EXIT`, `TEST_SEAMS`, `SEAM_GATE_STATUS`, `SCENARIOS`, `ASSUMPTIONS`, `DECISIONS`, `BLOCKED_ITEMS`, `SKIPPED_ITEMS`, `SCOPE_INCREASES`, `BLOCKING`, `NEXT_ACTION`, `REMEDIATION_NEEDED`, `REQUIRES_REMEDIATION`, `REMEDIATION_REASON`, `MEMORY_NOTES` |
 | bug-investigator | `STATUS`, `VERIFICATION_RIGOR`, `CONFIDENCE`, `ROOT_CAUSE`, `TDD_RED_EXIT`, `TDD_GREEN_EXIT`, `VARIANTS_COVERED`, `VARIANTS_NOT_APPLICABLE`, `FEEDBACK_LOOP`, `NO_LOOP_BLOCKED`, `BOUNDARY_MATRIX`, `REGRESSION_SEAM`, `DEFENSE_IN_DEPTH`, `DEBUG_CLOSEOUT`, `BLAST_RADIUS_SCAN`, `SCENARIOS`, `ASSUMPTIONS`, `DECISIONS`, `BLOCKING`, `NEXT_ACTION`, `REMEDIATION_NEEDED`, `REQUIRES_REMEDIATION`, `REMEDIATION_REASON`, `NEEDS_EXTERNAL_RESEARCH`, `RESEARCH_REASON`, `MEMORY_NOTES` |
-| planner | `STATUS`, `PLAN_MODE`, `VERIFICATION_RIGOR`, `CONFIDENCE`, `PLAN_FILE`, `PHASES`, `RISKS_IDENTIFIED`, `SCENARIOS`, `ASSUMPTIONS`, `DECISIONS`, `OPEN_DECISIONS`, `DIFFERENCES_FROM_AGREEMENT`, `RECOMMENDED_DEFAULTS`, `ALTERNATIVES`, `DRAWBACKS`, `PROVABLE_PROPERTIES`, `BLOCKING`, `NEXT_ACTION`, `REMEDIATION_NEEDED`, `REQUIRES_REMEDIATION`, `REMEDIATION_REASON`, `GATE_PASSED`, `USER_INPUT_NEEDED`, `MEMORY_NOTES` |
-| researcher | `STATUS`, `FILE_PATH`, `BACKEND_MODE`, `SOURCES_ATTEMPTED`, `SOURCES_USED`, `QUALITY_LEVEL`, `KEY_FINDINGS_COUNT`/`IMPLEMENTATIONS_FOUND`, `WHAT_CHANGED_RECOMMENDATION`, `MEMORY_NOTES` |
+| planner | `STATUS`, `PLAN_MODE`, `VERIFICATION_RIGOR`, `CONFIDENCE`, `PLAN_FILE`, `PLAN_REVISION`, `LAST_REVIEWED_REVISION`, `PHASES`, `RISKS_IDENTIFIED`, `SCENARIOS`, `ASSUMPTIONS`, `DECISIONS`, `OPEN_DECISIONS`, `DIFFERENCES_FROM_AGREEMENT`, `RECOMMENDED_DEFAULTS`, `ALTERNATIVES`, `DRAWBACKS`, `PROVABLE_PROPERTIES`, `BLOCKING`, `NEXT_ACTION`, `REMEDIATION_NEEDED`, `REQUIRES_REMEDIATION`, `REMEDIATION_REASON`, `GATE_PASSED`, `USER_INPUT_NEEDED`, `MEMORY_NOTES`. On a `phase:qa-re-plan` return also `AMENDED_FILES`, `STALE_SWEEP`, `RECONCILIATION_RERUN` (the pass-2 gate in `qa-workflow.md` fails closed without all three). |
+| researcher | `STATUS`, `FILE_PATH`, `BACKEND_MODE`, `SOURCES_ATTEMPTED`, `SOURCES_USED`, `QUALITY_LEVEL`, `KEY_FINDINGS_COUNT`, `WHAT_CHANGED_RECOMMENDATION`, `MEMORY_NOTES` |
 | doc-syncer | `STATUS`, `IMPACT_LEVEL`, `DOC_LAYERS_EVALUATED`, `DOC_FILES_UPDATED`, `DOC_FILES_SKIPPED`, `SKIP_REASON`, `AUDIT_DOCS_CREATED`, `AUDIT_DOCS_UPDATED`, `MEMORY_NOTES` |
 | qa-harness-builder | **`MODE` selects the set.** A contract omitting `MODE` is validated as `MODE: harness` — the pre-change behaviour, so nothing already written or in flight starts failing.<br>`MODE: harness` → `MODE`, `STATUS`, `CONFIDENCE`, `PHASE_STATUS`, `SCENARIOS_PLANNED`, `SCENARIOS_IMPLEMENTED`, `MUTATION_CHECKS`, `LIVENESS_PROBES`, `RERUN_CLEAN`, `TEARDOWN_VERIFIED`, `ENV_MODE`, `SERVICES_PROVISIONED`, `PRODUCT_CODE_TOUCHED`, `SCOPE_INCREASES`, `BLOCKED_ITEMS`, `BLOCKING`, `NEXT_ACTION`, `MEMORY_NOTES`, `ARTIFACTS_CREATED`, `HARNESS_MANIFEST`. Every other field in the block stays optional, exactly as before.<br>`MODE: preflight` → `MODE`, `STATUS`, `CONFIDENCE`, `PHASE_STATUS`, `COST_TIER_REACHED`, `CHECKS`, `HUMAN_PREREQUISITES`, `ENV_PLAN_CORRECTIONS`, `REPO_CURRENCY`, `CURRENCY_GATE`, `SETUP_RECORD`, `SETUP_RECORD_STALE`, `SERVICES_PROVISIONED`, `PRODUCT_CODE_TOUCHED`, `BUG_CANDIDATES`, `SCOPE_INCREASES`, `BLOCKED_ITEMS`, `BLOCKING`, `NEXT_ACTION`, `MEMORY_NOTES` |
 | qa-executor | **This row is a deliberate TIGHTENING.** Neither table listed `qa-executor` before, so `qa-execute` has never been validated here and now will be. `STATUS`, `CONFIDENCE`, `REPORT_FILE`, `ENV_MODE`, `ENV_READY`, `SCENARIOS_TOTAL`, `SCENARIOS_PASSED`, `SCENARIOS_FAILED`, `SCENARIOS_BLOCKED`, `SCENARIOS_FLAKY`, `EVIDENCE`, `TEARDOWN_STATUS`, `TEARDOWN_EVIDENCE`, `LEAKED_RESOURCES`, `COVERAGE_GAPS`, `BUG_CANDIDATES`, `FAILURE_CLASS_COUNTS`, `HARNESS_ISSUES`, `TEST_CODE_TOUCHED`, `PRODUCT_CODE_TOUCHED`, `CRITICAL_ISSUES`, `BLOCKING`, `NEXT_ACTION`, `REMEDIATION_NEEDED`, `REMEDIATION_REASON`, `MEMORY_NOTES`. |
+
+### Read-only and advisory agent required fields
+
+These agents emit a Router Contract too; the fields below are what the router reads. Optional fields are named in the agent file.
+
+| Agent | Required fields |
+| ------- | ----------------- |
+| code-reviewer | `STATUS`, `FUNCTIONALITY`, `CONFIDENCE`, `SIGNAL_SCORES`, `REMEDIATION_NEEDED`, `REMEDIATION_REASON`, `REMEDIATION_SCOPE_REQUESTED`, `REVERT_RECOMMENDED`, `SPEC_COMPLIANCE`, `PLAN_DEFECT`, `CANNOT_VERIFY_CROSS_PHASE`, `MEMORY_NOTES` |
+| failure-hunter | `STATUS`, `TOTAL_HANDLERS_AUDITED`, `CRITICAL_ISSUES`, `HIGH_ISSUES`, `MEMORY_NOTES` |
+| integration-verifier | `STATUS`, `PROOF_STATUS`, `SCENARIOS_TOTAL`, `SCENARIOS_PASSED`, `SCENARIOS_FAILED`, `REMEDIATION_NEEDED`, `REMEDIATION_REASON`, `REVERT_RECOMMENDED`, `MEMORY_NOTES` |
+| triage-agent | `STATUS`, `CATEGORY`, `STATE`, `VERIFICATION_RESULT`, `REDUNDANCY_CHECK`, `PRIOR_REJECTION_CHECK`, `BRIEF_PATH`, `NEEDS_GRILLING`, `BLOCKING`, `MEMORY_NOTES` |
+| architecture-scanner | `STATUS`, `CANDIDATES`, `REPORT_PATH`, `BLOCKING`, `MEMORY_NOTES` |
 
 If the YAML block is missing or malformed, treat the task as invalid output, do not continue the workflow based on prose alone, and re-run inline verification and fail safe.
 
@@ -299,7 +324,7 @@ If the YAML block is missing or malformed, treat the task as invalid output, do 
 | component-builder | `STATUS=PASS` requires `TDD_RED_EXIT=1`, `TDD_RED_REASON_KIND=behavioral` with **non-empty `TDD_RED_REASON`** (a false-RED — `TDD_RED_REASON_KIND=error` from import/syntax/collection failure — is rejected same as missing RED; a behavioral RED with an empty reason is also rejected), `TDD_GREEN_EXIT=0`, `BUILD_PREFLIGHT_EMITTED=true`, `PHASE_STATUS=completed`, `PHASE_EXIT_READY=true`, `PROOF_STATUS=passed`, empty `BLOCKED_ITEMS`, and a non-empty `SCENARIOS` array with at least one passing scenario. That passing scenario must include non-empty `name`, `command`, `expected`, `actual`, and `exit_code`. **Seam gate:** when `build_scope=standard` with a plan that provides `test_seams`, `SEAM_GATE_STATUS` must be `confirmed` (`TEST_SEAMS` non-empty, matching the plan's `test_seams`) or `disagreed` (with a DECISIONS rationale + a better seam in `TEST_SEAMS`, OR `STATUS=FAIL` with the ambiguity `REMEDIATION_REASON` and empty `TEST_SEAMS`); when `build_scope=standard` with a legacy plan whose phase omits `test_seams`, `SEAM_GATE_STATUS=proposed` is accepted (`TEST_SEAMS` non-empty — builder proposes at BUILD_PREFLIGHT); when direct/no-plan, `SEAM_GATE_STATUS=proposed` (`TEST_SEAMS` non-empty); when `build_scope=trivial`, `SEAM_GATE_STATUS=not_applicable` is accepted. |
 | bug-investigator | `STATUS=FIXED` requires `VERIFICATION_RIGOR` to be explicit, `TDD_RED_EXIT=1`, `TDD_GREEN_EXIT=0`, a non-empty `BLAST_RADIUS_SCAN`, and a non-empty `SCENARIOS` array unless it explicitly set `NEEDS_EXTERNAL_RESEARCH=true`. At least one scenario name must start with `Regression:` (non-empty `command`, `expected`, `actual`, `exit_code`). A `Variant:` scenario with `VARIANTS_COVERED>=1` is required ONLY when the bug has applicable variants; if `VARIANTS_NOT_APPLICABLE` is set with a reason and `VARIANTS_COVERED=0`, accept FIXED without a `Variant:` scenario. Do not force a fabricated variant. **Feedback loop + close-out:** `FEEDBACK_LOOP.rung` must not be `none` (with non-null `FEEDBACK_LOOP.command`), and `DEBUG_CLOSEOUT.instrumentation_removed=true` + `DEBUG_CLOSEOUT.repro_no_longer_fires=true`. No loop → STATUS MUST be BLOCKED with `NO_LOOP_BLOCKED` populated. |
 | code-reviewer | `APPROVE` + critical issues becomes `CHANGES_REQUESTED` |
-| code-reviewer | `APPROVE` with zero findings across ALL dimensions AND fewer than 3 file:line evidence citations → trigger fallback inline verification. Rubber-stamp approvals without substantive analysis are invalid. |
+| code-reviewer | `APPROVE` with zero findings across ALL dimensions AND fewer than 3 file:line evidence citations → trigger fallback inline verification. Rubber-stamp approvals without substantive analysis are invalid. This is a validity check on a zero-finding approval; it does not change the per-finding reporting floor. |
 | failure-hunter | A `CLEAN` verdict that states zero error-handling sites inspected OR zero files scanned → trigger fallback inline verification. A clean silent-failure verdict requires stated scan scope. |
 | integration-verifier | `PASS` + critical issues becomes `FAIL`; scenario totals must reconcile with the scenario table and evidence array; every counted scenario must map to a concrete evidence row; every scenario row must contain non-empty `Expected` and `Actual` values |
 | planner | `PLAN_CREATED` or `DECISION_RFC_CREATED` requires non-empty `PLAN_FILE`, explicit `PLAN_MODE`, explicit `VERIFICATION_RIGOR`, `CONFIDENCE>=50`, `GATE_PASSED=true`, a non-empty `SCENARIOS` array, `OPEN_DECISIONS=[]`, and `DIFFERENCES_FROM_AGREEMENT` explicitly present. `PLAN_MODE=decision_rfc` also requires `ALTERNATIVES` with **length ≥2** (not just non-empty) and non-empty `DRAWBACKS`; `VERIFICATION_RIGOR=critical_path` requires non-empty `PROVABLE_PROPERTIES`. |

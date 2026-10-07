@@ -23,7 +23,7 @@
     },
     "evidence": {},
     "quality": {
-      "convergence_state": "stable"
+      "convergence_state": "converged"
     },
     "status_history": [
       {

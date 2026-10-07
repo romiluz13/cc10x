@@ -80,6 +80,54 @@ def frontmatter_is(key: str, value: str):
     return check
 
 
+POLICY_REF = SKILLS / "cc10x-router" / "references" / "workflow-artifact-and-hook-policy.md"
+# Fields the router requires on a qa-re-plan return; planner.md carries them from P4.T4.4.
+POLICY_FIELDS_AGENT_SIDE_PENDING = {"AMENDED_FILES", "STALE_SWEEP", "RECONCILIATION_RERUN"}
+POLICY_TABLE_AGENTS = (
+    "component-builder",
+    "bug-investigator",
+    "planner",
+    "researcher",
+    "doc-syncer",
+    "code-reviewer",
+    "failure-hunter",
+    "integration-verifier",
+    "triage-agent",
+    "architecture-scanner",
+    "qa-harness-builder",
+    "qa-executor",
+)
+
+
+def policy_required_rows(text: str) -> dict[str, str]:
+    section = text.split("### Write-agent YAML required fields", 1)[-1].split("### Contract overrides", 1)[0]
+    rows = {}
+    for line in section.splitlines():
+        if line.startswith("| ") and not line.startswith(("| Agent", "| ---")):
+            cells = [c.strip() for c in line.strip().strip("|").split("|", 1)]
+            rows[cells[0]] = cells[1]
+    return rows
+
+
+def agent_yaml_keys(agent: str) -> set[str]:
+    text = read(AGENTS / f"{agent}.md")
+    keys: set[str] = set()
+    for block in re.findall(r"```yaml\n(.*?)```", text, re.S):
+        keys |= set(re.findall(r"^([A-Z][A-Z0-9_]+):", block, re.M))
+    return keys
+
+
+def policy_table_matches_agents(text: str) -> bool:
+    rows = policy_required_rows(text)
+    if set(POLICY_TABLE_AGENTS) - set(rows):
+        return False
+    for agent, cell in rows.items():
+        named = set(re.findall(r"`([A-Z][A-Z0-9_]+)`", cell)) - POLICY_FIELDS_AGENT_SIDE_PENDING
+        if not named <= agent_yaml_keys(agent):
+            return False
+    return True
+
+
 ALLOW_NO_YAML = False
 YAML_SKIPS = [0]
 YAML_HINT = (
@@ -2267,6 +2315,106 @@ ASSERTIONS = [
         and "or on the re-reviewer for REVIEW" not in text
         and "REVIEW never creates a REM-FIX" in text,
         "REVIEW creates no REM-FIX and agents create none, so those branches cannot run",
+    ),
+    # --- P4.T1.2: policy reference and skeleton (B7, B8, B10, C2 part, B14 part) ---
+    A(
+        "policy: every agent row names only fields that agent's contract carries",
+        POLICY_REF,
+        policy_table_matches_agents,
+        "required-field rows exist for every router-validated agent and no row demands a field the agent never emits",
+    ),
+    A(
+        "policy: planner row carries the revision fields and the amendment-lane fields",
+        POLICY_REF,
+        lambda text: all(
+            token in policy_required_rows(text).get("planner", "")
+            for token in ("`PLAN_REVISION`", "`LAST_REVIEWED_REVISION`", "`AMENDED_FILES`", "`STALE_SWEEP`", "`RECONCILIATION_RERUN`")
+        )
+        and "IMPLEMENTATIONS_FOUND" not in text,
+        "the planner revision pair and the qa-re-plan sweep fields are required where the router reads them; the unused researcher alias is gone",
+    ),
+    A(
+        "policy: contract parsing direction is STATUS from the YAML block for every agent",
+        POLICY_REF,
+        lambda text: "the router branches on `STATUS` from the final fenced YAML Router Contract block" in text
+        and "the YAML block decides" in text
+        and "For write agents, parse the final fenced YAML block" not in text,
+        "the policy no longer implies the envelope is primary for some agents",
+    ),
+    A(
+        "policy: normalized_phases uses the build-workflow field names",
+        POLICY_REF,
+        lambda text: all(
+            name in text.split("- `normalized_phases` stores", 1)[-1].split("- Bright Data MCP", 1)[0]
+            for name in ("`phase_id`", "`title`", "`objective`", "`inputs`", "`files/surfaces`", "`expected_artifacts`", "`required_checks`", "`checkpoint_type`", "`exit_criteria`", "`test_seams`")
+        )
+        and all(
+            name in read(SKILLS / "cc10x-router" / "references" / "build-workflow.md")
+            for name in ("`files/surfaces`", "`expected_artifacts`", "`required_checks`", "`checkpoint_type`")
+        ),
+        "one set of phase field names across the artifact schema and BUILD preparation",
+    ),
+    A(
+        "policy: plan_trust_gate has one definition, no phantom plan_trust anchor",
+        POLICY_REF,
+        lambda text: text.count("`plan_trust_gate` —") == 1
+        and "`plan_trust` anchor" not in text
+        and "BUILD preparation step 3" in text,
+        "the gate points at the checks in build-workflow.md instead of citing an artifact key that does not exist",
+    ),
+    A(
+        "policy: DIFF_DRIVEN_DOCS skip is stated where the router reads it",
+        POLICY_REF,
+        contains_all("`DIFF_DRIVEN_DOCS: skip`", "`activeContext.md ## Session Settings`"),
+        "the opt-out lives in activeContext.md Session Settings, which is what the router reads",
+    ),
+    A(
+        "policy: verification_rigor ships null and must be set explicitly",
+        POLICY_REF,
+        contains_all("`verification_rigor` ships as `null`", "set explicitly"),
+        "a pre-filled default made the must-be-explicit check unable to fire",
+    ),
+    A(
+        "policy: CONVERGENCE_STATES defined and listed",
+        POLICY_REF,
+        contains_all("`CONVERGENCE_STATES`", "`pending`", "`needs_iteration`", "`converged`", "`N/A`"),
+        "quality.convergence_state has a defined value set the replay check enforces",
+    ),
+    A(
+        "policy: event types split into emitted, hook-emitted and not emitted",
+        POLICY_REF,
+        lambda text: all(
+            name in text
+            for name in ("`result_persisted`", "`inline_fallback_entered`", "`compact_occurred`", "`artifact_mutated`")
+        )
+        and "Not emitted by any router step or hook" in text
+        and text.index("Not emitted by any router step or hook") < text.index("`agent_started`")
+        and text.index("Not emitted by any router step or hook") < text.index("`scope_decision_resolved`"),
+        "the event list says which types are real and which are reserved names",
+    ),
+    A(
+        "policy: PostToolUse behavior stated as documented, not as rejection",
+        POLICY_REF,
+        lambda text: "the PostToolUse guard rejects" not in text
+        and "cannot undo the write" in text
+        and "malformed artifact stays on disk" in text,
+        "exit 2 feeds stderr to the model after the write has happened",
+    ),
+    A(
+        "policy: hooks key on the newest artifact and phase_exit_gate is router-enforced",
+        POLICY_REF,
+        contains_all(
+            "newest modification time",
+            "`phase_exit_gate` is enforced by the router, not by any hook",
+        ),
+        "two live workflows can make a hook read the other one; no hook checks phase exit",
+    ),
+    A(
+        "policy: zero-finding bounce keeps the floor and says what it is",
+        POLICY_REF,
+        lambda text: text.count("fewer than 3 file:line evidence citations") == 1
+        and "does not change the per-finding reporting floor" in text,
+        "the 3-citation check on a zero-finding approval is kept; the per-finding confidence floor is untouched",
     ),
 ]
 

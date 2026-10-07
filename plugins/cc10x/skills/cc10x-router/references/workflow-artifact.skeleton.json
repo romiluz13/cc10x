@@ -13,7 +13,7 @@
   "worktree": null,
   "execution_mode": "subagent_dispatch",
   "inline_fallback_reason": null,
-  "verification_rigor": "standard",
+  "verification_rigor": null,
   "proof_status": "gaps_found",
   "traceability": {
     "requirements": [],
