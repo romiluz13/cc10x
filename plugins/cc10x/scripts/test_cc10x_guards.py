@@ -17,10 +17,12 @@ tests for the known fail-open paths land with their fixes in T8/#73.
 
 from __future__ import annotations
 
+import atexit
 import json
 import os
 import re
 import shlex
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -30,6 +32,13 @@ from pathlib import Path
 
 SCRIPTS_DIR = Path(__file__).resolve().parent
 PLUGIN_ROOT = SCRIPTS_DIR.parent
+
+# In-process hooklib tests that do not set CLAUDE_PROJECT_DIR would otherwise
+# resolve the checkout running the suite and write events and markers there.
+if not os.environ.get("CLAUDE_PROJECT_DIR"):
+    _AMBIENT_PROJECT = tempfile.mkdtemp(prefix="cc10x-guards-ambient-")
+    os.environ["CLAUDE_PROJECT_DIR"] = _AMBIENT_PROJECT
+    atexit.register(shutil.rmtree, _AMBIENT_PROJECT, True)
 
 
 def run_guard(
@@ -3600,6 +3609,97 @@ def test_invalid_hook_mode_logging_survives_an_unwritable_marker_location(tmp_pa
         r = _run_write_guard(tmp_path, env)
         assert r.returncode == 0 and "Traceback" not in r.stderr, r.stderr[-300:]
     assert len(invalid_mode_events(tmp_path)) == 2
+
+
+def _hook_mode_markers(project: Path) -> list[Path]:
+    state = project / ".cc10x" / "state"
+    return sorted(state.glob("hook-mode-reported-*")) if state.is_dir() else []
+
+
+def test_a_normal_setup_writes_no_invalid_hook_mode_event_or_marker(tmp_path):
+    valid = tmp_path / "valid-data"
+    valid.mkdir()
+    (valid / "hook-mode.json").write_text('{"artifactIntegrity": "audit"}')
+    empty = tmp_path / "empty-data"
+    empty.mkdir()
+    setups = {
+        "unset": {},
+        "nonexistent": {"CLAUDE_PLUGIN_DATA": str(tmp_path / "no-such-dir")},
+        "empty": {"CLAUDE_PLUGIN_DATA": str(empty)},
+        "valid": {"CLAUDE_PLUGIN_DATA": str(valid)},
+    }
+    for name, env in setups.items():
+        project = tmp_path / f"proj-{name}"
+        (project / ".cc10x").mkdir(parents=True)
+        for _ in range(10):
+            assert _run_write_guard(project, env).returncode == 0
+        assert invalid_mode_events(project) == [], name
+        assert _hook_mode_markers(project) == [], name
+
+
+def test_a_corrupt_override_leaves_one_marker_across_repeated_runs(tmp_path):
+    (tmp_path / ".cc10x").mkdir()
+    data = tmp_path / "plugin-data"
+    data.mkdir()
+    (data / "hook-mode.json").write_text("{not json")
+    for _ in range(10):
+        assert _run_write_guard(tmp_path, {"CLAUDE_PLUGIN_DATA": str(data)}).returncode == 0
+    assert len(invalid_mode_events(tmp_path)) == 1
+    assert len(_hook_mode_markers(tmp_path)) == 1
+
+
+def test_a_new_hook_mode_marker_prunes_markers_older_than_a_day(tmp_path):
+    state = tmp_path / ".cc10x" / "state"
+    state.mkdir(parents=True)
+    old = time.time() - 2 * 86400
+    stale = [state / f"hook-mode-reported-{i:016x}" for i in range(3)]
+    for marker in stale:
+        marker.touch()
+        os.utime(marker, (old, old))
+    fresh = state / "hook-mode-reported-ffffffffffffffff"
+    fresh.touch()
+    unrelated = state / "other-state-file"
+    unrelated.touch()
+    os.utime(unrelated, (old, old))
+    data = tmp_path / "plugin-data"
+    data.mkdir()
+    (data / "hook-mode.json").write_text("{not json")
+    assert _run_write_guard(tmp_path, {"CLAUDE_PLUGIN_DATA": str(data)}).returncode == 0
+    assert [m for m in stale if m.exists()] == []
+    assert fresh.exists() and unrelated.exists()
+    assert len(_hook_mode_markers(tmp_path)) == 2
+
+
+def test_in_process_hooklib_tests_do_not_write_into_a_checkout_state_dir(tmp_path):
+    sandbox = tmp_path / "checkout"
+    (sandbox / ".git").mkdir(parents=True)
+    (sandbox / ".cc10x").mkdir()
+    code = (
+        "import importlib.util, inspect, pathlib, sys, tempfile\n"
+        "spec = importlib.util.spec_from_file_location('guards_under_test', sys.argv[1])\n"
+        "mod = importlib.util.module_from_spec(spec)\n"
+        "spec.loader.exec_module(mod)\n"
+        "for name, fn in sorted(vars(mod).items()):\n"
+        "    if not name.startswith('test_') or not callable(fn):\n"
+        "        continue\n"
+        "    if 'load_hooklib()' not in inspect.getsource(fn) or name == sys.argv[2]:\n"
+        "        continue\n"
+        "    with tempfile.TemporaryDirectory() as d:\n"
+        "        try:\n"
+        "            fn(pathlib.Path(d).resolve())\n"
+        "        except Exception:\n"
+        "            pass\n"
+    )
+    subprocess.run(
+        [sys.executable, "-c", code, str(Path(__file__).resolve()), "test_in_process_hooklib_tests_do_not_write_into_a_checkout_state_dir"],
+        env={"PATH": "/usr/bin:/bin"},
+        cwd=sandbox,
+        capture_output=True,
+        text=True,
+        timeout=120,
+    )
+    leaked = [p.name for p in (sandbox / ".cc10x").rglob("*") if p.is_file()]
+    assert leaked == []
 
 
 def test_an_unsafe_workflow_id_in_an_artifact_is_logged_when_its_event_is_dropped(tmp_path):

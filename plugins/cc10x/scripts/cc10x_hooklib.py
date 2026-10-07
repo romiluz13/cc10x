@@ -6,6 +6,7 @@ import json
 import os
 import re
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -187,6 +188,32 @@ def _mode_source_path(source: str) -> Path | None:
     return None
 
 
+_MODE_MARKER_PREFIX = "hook-mode-reported-"
+_MODE_MARKER_MAX_AGE_SECONDS = 86400
+_MODE_MARKER_SCAN_LIMIT = 200
+
+
+def _prune_stale_mode_markers(state_dir: Path, keep: Path) -> None:
+    """Drop dedupe markers older than a day; looks at a bounded number of
+    entries and never raises."""
+    try:
+        cutoff = time.time() - _MODE_MARKER_MAX_AGE_SECONDS
+        for count, entry in enumerate(state_dir.iterdir()):
+            if count >= _MODE_MARKER_SCAN_LIMIT:
+                break
+            try:
+                if (
+                    entry != keep
+                    and entry.name.startswith(_MODE_MARKER_PREFIX)
+                    and entry.stat().st_mtime < cutoff
+                ):
+                    entry.unlink()
+            except OSError:
+                continue
+    except OSError:
+        pass
+
+
 def _report_mode_problem(problem: dict[str, str]) -> None:
     """Log one invalid_hook_mode event per distinct problem, project and
     state of the offending file (path, mtime, size). A marker file under
@@ -201,7 +228,7 @@ def _report_mode_problem(problem: dict[str, str]) -> None:
             stamp = f"{source}|{info.st_mtime_ns}|{info.st_size}"
         fingerprint = "|".join([stamp, *(f"{k}={v}" for k, v in sorted(problem.items()))])
         digest = hashlib.sha1(fingerprint.encode("utf-8", "replace")).hexdigest()[:16]
-        marker = state_root() / "state" / f"hook-mode-reported-{digest}"
+        marker = state_root() / "state" / f"{_MODE_MARKER_PREFIX}{digest}"
         if marker.exists():
             return
     except OSError:
@@ -221,6 +248,7 @@ def _report_mode_problem(problem: dict[str, str]) -> None:
             if logs_dir().is_dir():
                 marker.parent.mkdir(exist_ok=True)
                 marker.touch()
+                _prune_stale_mode_markers(marker.parent, keep=marker)
         except OSError:
             pass
 
