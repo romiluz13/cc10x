@@ -54,7 +54,7 @@ Every agent's final response uses ONE canonical shape:
 3. Then a fenced ```yaml Router Contract block carrying your agent's required structured fields (`STATUS` must appear there too, not just the envelope).
 4. Then the prose sections your agent doc prescribes.
 
-The `STATUS` in the fenced YAML block decides; the envelope and heading are the fast path, and the fallback only when the YAML block is absent. If they disagree, the YAML decides. The final contract response is your LAST message — never call a tool (including TaskUpdate) after emitting it: the router parses only your last message, and a trailing tool result would become it. No agent holds the `TaskUpdate` tool or owns task completion: the router completes every task after it validates your contract, so you never call TaskUpdate.
+The `STATUS` in the fenced YAML block decides; the envelope and heading are the fast path, and the fallback only when the YAML block is absent. If they disagree, the YAML decides. The final contract response is your LAST message — never call a tool (including TaskUpdate) after emitting it: the router parses only your last message, and a trailing tool result would become it. If a `SubagentHandback` tool is available, pass the whole contract as its message and make that call your last action. No agent holds the `TaskUpdate` tool or owns task completion: the router completes every task after it validates your contract, so you never call TaskUpdate.
 
 ## SINGLE FINAL RESPONSE RULE
 

@@ -1051,3 +1051,23 @@ Docs, manifests, one skill (wording only) and validator edits limited to the pla
 - `cc10x-guide` skill (`wording_only_low_risk`): the REVIEW row lists the router's actual keywords (`review, audit, analyze, assess`), and one sentence says the README, `docs/` and settings-template pointers live in the repo, not in an installed plugin.
 - Claim boundary: no validator checks markdown links in `docs/*.md`; this was fixed by hand and by a one-off link scan. A link-resolution check in `doc_consistency_check` is a candidate for a later release.
 - Left as is (low, wording only): README "12 slash commands to remember" and the "You never invoke them directly" lead-in, INV-007 section name, dead `.gitignore` negations for moved docs.
+
+## Whole-branch review fixes (F1 to F5, after the fresh whole-branch review)
+
+A fresh review of the whole branch (approve, no critical or high findings) found five seams. Each is fixed in its own commit with a pin or test written first.
+
+### F1: hook selection text and the PostToolUse verb (router reference and `SKILL.md`; classification `wording_only_low_risk`)
+- `workflow-artifact-and-hook-policy.md` said the protected-writes guard and the QA isolation guard skip finished artifacts. The code does the opposite: `latest_workflow_file()` returns the newest artifact, finished or not, for the protected-writes guard, the QA isolation guard (which then disengages itself when that artifact is finished), the PostToolUse artifact guard (for writes that are not to an artifact) and the event logger. Only SessionStart context and the compaction and stop snapshots skip finished artifacts. The sentence now names each group and defines finished as `workflow_is_finished` does: terminal last `status_history` event, terminal newest events-log record, or a completed `memory-finalize` phase, the later timestamp deciding when both exist. The same file now says SessionStart fires on `startup|resume|clear|compact|fork`, the matcher in `hooks.json`.
+- `SKILL.md` read-back gate: "will reject" became "will flag" (same line, same length). PostToolUse runs after the write and cannot undo it; the policy reference already said so.
+- Invariants untouched: no gate, no hook behavior. The text now matches the code. Pins: the old "skip finished workflows" pin was replaced by one that pins the corrected split, the definition and the matcher; a new pin covers the "will flag" wording; a code-reading test in `test_cc10x_guards.py` parses each hook script and asserts which selection function it calls, so the text and the code cannot drift apart silently.
+- Claim boundary: the test proves which function each script calls, not that the selection behaves well with two live workflows (existing behavior, unchanged).
+
+### F5: `agent-common` and the SubagentHandback channel (classification `wording_only_trust_sensitive (one added sentence naming the harness channel for an existing rule; no gate semantics changed)`)
+- `agent-common/SKILL.md` said never to call a tool after the contract. Where the platform delivers the final report through a `SubagentHandback` tool, the agent must call it. One sentence was added: if that tool is available, pass the whole contract as its message and make that call the last action. No emphasis word was added.
+- Agreement check: router `SKILL.md` section 617 already says the report can arrive through `SubagentHandback` and to read the contract from whichever channel carries it; the hooks README says the logger reads the `SubagentHandback` report from the transcript. Both agree, no edit.
+- Pin added: the exact sentence in `agent-common`. Claim boundary: nobody has watched a live agent follow the sentence (no paid L2 run).
+
+### Other fixes in this round (not prompt surfaces)
+- F2: the settings template and the README rule list carry `Bash(mkdir -p .cc10x/)` beside the bare rule (the README wizard still runs the bare form for the user-standards step); a validators test keeps both forms and the README copy consistent.
+- F3: the git guard also denies `git switch -f`, `--force` and `--discard-changes`, the whole-tree pathspecs `./.`, `:/` and `:(top)` for restore and checkout, and `git worktree remove --force`; approval-token behavior, the size cap and the depth cap are unchanged. One side effect: a glob or brace built subcommand word that could be `switch` or `worktree` now takes the existing opaque-word deny, like `stash`.
+- F4: the CHANGELOG names the tree each live probe ran on.

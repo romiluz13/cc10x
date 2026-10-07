@@ -2119,6 +2119,14 @@ ASSERTIONS = [
         "no-tool-after-contract rule explains the router parses only the last message",
     ),
     A(
+        "agent-common: a SubagentHandback tool carries the whole contract as the last action",
+        SKILLS / "agent-common" / "SKILL.md",
+        contains_all(
+            "If a `SubagentHandback` tool is available, pass the whole contract as its message and make that call your last action.",
+        ),
+        "where the platform delivers the report through SubagentHandback the agent must call it; the router reads the contract from whichever channel carries it (SKILL.md section on notifications)",
+    ),
+    A(
         "exploration: interview restores bewildering why and facts-vs-decisions",
         SKILLS / "exploration" / "SKILL.md",
         contains_all(
