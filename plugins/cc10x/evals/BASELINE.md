@@ -45,6 +45,11 @@ Red cases: 4 of 8 (B1, B2, B3, B11). Green regression guards: 4 of 8. Each red c
 - Pytest: 379 passed (`plugins/cc10x/scripts`, 59 of them structural eval-case checks).
 - Prompt clause assertions: 259 passed.
 
+## Post-P4 analytical expectations (read from the edited text; no L2 run, AD-2)
+
+- After P4.T1.5a: `triage-loads-reference` (B2) is expected to flip red to green. `SKILL.md` section 5 and section 6 now point at `references/triage-workflow.md` and `references/codebase-health-workflow.md`, the route-and-load hard rule names both, and the hydration bullet says TRIAGE and CODEBASE-HEALTH create no parent task. This is a reading of the text, not a measured run.
+- After P4.T1.5a: `route-precedence` (B4) is expected to stay green. The routing table rows are byte-identical; the rewritten sentences give the same four routes (R1 REVIEW, R2 ORIENT, R3 QA, R4 DEBUG) because the primary-deliverable test decides each one and none of them is a genuine tie. Line anchors cited above for `SKILL.md:19` and `:55` still hold; later `SKILL.md` line numbers in the baseline table are baseline-time numbers.
+
 ## Visibility
 
 Every tracked path under `evals/cases/` and this file must report `git check-ignore -q` exit 1; `evals/results/x.json` must report exit 0. Grader file names avoid the substrings `test` and `audit` because `.gitignore` globs `*test*.md` and `*audit*.md` would silently untrack them.

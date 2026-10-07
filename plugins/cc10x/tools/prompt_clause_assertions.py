@@ -2478,6 +2478,57 @@ ASSERTIONS = [
         contains_all("Do NOT save a plan under `docs/plans/`", "the two artifacts named here are the plan"),
         "planner.md saves to docs/plans; the QA scaffold names the sole write targets (A5)",
     ),
+    A(
+        "router: precedence stated once; QA/ORIENT/REVIEW cases are applications of it (B4)",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: text.count("the lower Priority number wins") == 1
+        and "applications of this test, not exceptions to it" in text
+        and "**QA over REVIEW**" in text
+        and "QA beats REVIEW" not in text
+        and "prefer ORIENT" not in text,
+        "the three precedence statements reduce to one rule: the primary-deliverable test first, the lower number only on a genuine tie",
+    ),
+    A(
+        "router: TRIAGE and CODEBASE-HEALTH references are route-and-load pointed (B2)",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        contains_all(
+            "`references/triage-workflow.md`",
+            "`### TRIAGE preparation`",
+            "`### TRIAGE task graph`",
+            "`references/codebase-health-workflow.md`",
+            "`### CODEBASE-HEALTH preparation`",
+            "`### CODEBASE-HEALTH task graph`",
+        ),
+        "the two advisory routes load their workflow reference like every other route",
+    ),
+    A(
+        "router: hydration covers TRIAGE and CODEBASE-HEALTH, which create no parent task (B2)",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        contains_all("TRIAGE and CODEBASE-HEALTH create no parent task", "`CC10X triage-agent:`", "`CC10X architecture-scanner:`"),
+        "resume can find an advisory workflow by its agent task or pending Memory Update task, scoped by wf:",
+    ),
+    A(
+        "router: marker rules keep only the read markers (B10)",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: "[BUILD-START" not in text
+        and "[PLAN-START" not in text
+        and "[DEBUG-RESET: wf:{workflow_uuid}]" in text
+        and "[QA-START: wf:{workflow_uuid}]" in text,
+        "BUILD-START and PLAN-START were written and read nowhere; DEBUG-RESET and QA-START are read",
+    ),
+    A(
+        "router: circuit breaker has no second count phrasing outside the pinned pointers (B6)",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: "`### Circuit breaker` in `references/remediation-and-research.md`" in text
+        and "3-cycle remediation limit" not in text,
+        "the inline-mode rule points at the single circuit-breaker definition instead of restating the count",
+    ),
+    A(
+        "router: only an explicit opt-out skips the router gates (B5)",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        contains_all("Only an explicit user opt-out", "\"skip cc10x\""),
+        "a small edit still routes as BUILD trivial scope; opt-out phrases are the sole bypass",
+    ),
 ]
 
 

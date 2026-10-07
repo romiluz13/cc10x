@@ -103,3 +103,31 @@ Claim boundary: now true: both advisory routes create a Memory Update task and t
 Pins and fixtures: five new pins (assertion count 285; floor 253 plus additions holds); two pin tokens re-pointed as above; two fixtures extended. No pin deleted.
 
 Classification: `orchestration_sensitive`.
+
+## P4.T1.5a `SKILL.md`, pass 1 of 3: routing and precedence
+
+Findings: B2, B4, B5, B6, B10 (part).
+
+Files: `plugins/cc10x/skills/cc10x-router/SKILL.md` (781 lines before, 781 after); `plugins/cc10x/tools/prompt_clause_assertions.py` (six new pins); `plugins/cc10x/evals/BASELINE.md` (analytical post-P4 note).
+
+What changed:
+- (a, B2) Section 5 and section 6 each gain one bullet pointing at `references/triage-workflow.md` and `references/codebase-health-workflow.md` and naming their preparation and task graph blocks; the route-and-load hard rule now lists both references. The hydration bullet states that TRIAGE and CODEBASE-HEALTH create no parent task (their graphs hold an agent task and a Memory Update task only), so resume finds them by the `CC10X triage-agent:` / `CC10X architecture-scanner:` subject or the pending `CC10X Memory Update:` task, scoped by `wf:`, and that ORIENT creates no task. No new subject prefix was added to the parent-task list because no parent task exists for these routes; the Memory Update task is already reconstructed by `wf:` + `kind:memory` in the resume algorithm.
+- (b, B4) The routing table is untouched. The opening paragraph keeps one tie-break sentence ("the lower Priority number wins") and adds that the QA, ORIENT and REVIEW cases are applications of the primary-deliverable test, not exceptions. "QA beats REVIEW" became "QA over REVIEW": the deliverable test separates "prove it works" from "tell me what's wrong", so no tie arises. "Prefer ORIENT for help me understand" became: the deliverable decides, and only a genuine tie goes to REVIEW (lower number). That last change makes the rare true tie resolve by the table, where the old text preferred ORIENT; ORIENT stays advisory and read-only either way, so the worst case of a mis-tie is an advisory review instead of an advisory explanation.
+- (c, B6) The inline-mode hard-rule bullet that restated "the 3-cycle remediation limit" now points at `### Circuit breaker` in `references/remediation-and-research.md`. The other two SKILL.md mentions (the Cycle row in Loop Discipline and the hard rule near the end) already point at the single definition and carry pins (the 3rd-cycle wording), so they were left. Count semantics are unchanged.
+- (d, B10) The `[BUILD-START]` and `[PLAN-START]` marker rules are removed: neither marker is read by any reference, hook or pin (the matching reference text was removed in P4.T1.3). `[DEBUG-RESET]` stays (the debug workflow and the memory skill read it, and a harness check pins it) and `[QA-START]` stays (the QA workflow writes it).
+- (b2, B5) One sentence appended to the terse-imperative hard rule: only an explicit user opt-out ("don't use cc10x", "without cc10x", "skip cc10x") skips the router's gates; a small edit still routes as BUILD trivial scope. SKILL.md had no "trivial one-line edit" exemption; the exemption sits in the repo root `CLAUDE.md`, which is not in this file list. Root `CLAUDE.md` wording is a P6 item (P6.T11).
+
+Not changed, with reason (still pending or unassigned):
+- Pass 2 (T1.5b): task-tools-optional text, completion wording, claim corrections, the hints-law amendment, the plugin-root resolver, the ORIENT tool-name reword (B9).
+- Pass 3 (T1.5c): description and prose items.
+- The spike `SKILL_HINTS` sentence (B10): the plan's T1.5a item list (a)-(d), (b2) does not include it, so it was left; it needs an owner (T1.5b, T1.5c or a named T1.5d).
+- The `[DEBUG-RESET]-equivalent: none` line in `references/triage-workflow.md`: a reference file outside this task's list; it is now a mention of a marker that SKILL.md no longer defines for TRIAGE (it never did). Left for a reference-file task.
+- Parent-task description template in section 6 still lists five `phase:` values for parent tasks; TRIAGE and CODEBASE-HEALTH have no parent, so no change.
+
+Why safe: no routing-table row, gate, workflow graph or contract field changed. The precedence edit restates the existing rule; the only behavior difference is the genuine ORIENT/REVIEW tie, resolved by the table order. `route-precedence` keeps the same four routes by the deliverable test.
+
+Claim boundary: now true: SKILL.md points at both advisory-route references and says how to find those workflows on resume; precedence has one tie-break statement; the breaker count lives in one place plus two pinned pointers; two dead markers are gone; opt-out phrases are the stated sole bypass. Still not claimed: any L2 run (AD-2); that root `CLAUDE.md` agrees (P6).
+
+Pins and fixtures: six new pins (assertion count 291). No existing pin edited, weakened or deleted; no fixture changed. BASELINE.md gains an analytical post-P4 note (no table row changed).
+
+Classification: `orchestration_sensitive`.
