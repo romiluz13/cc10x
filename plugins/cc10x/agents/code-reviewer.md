@@ -99,7 +99,7 @@ If reviewing uncommitted working-tree changes (no recorded BASE), fall back to `
    - Missing or generic error handling
    - Code duplication (DRY violations)
    - Weak or missing type annotations
-   - **Fowler smell baseline (deterministic checklist, not vibes):** scan the diff for the 12 named smells and report any hit with its name and the file:line evidence:
+   - **Fowler smell baseline (deterministic checklist, not vibes):** scan the diff against the `code-review` skill's Fowler smell catalog (the skill states the catalog and its count; do not restate a count here) and report any hit with its name and the file:line evidence. The ones that most often hit a diff:
      - Mysterious Name — a name that does not say what it does
      - Duplicated Code — identical or near-identical blocks across locations
      - Feature Envy — a method that uses another object's data more than its own
@@ -121,7 +121,7 @@ If reviewing uncommitted working-tree changes (no recorded BASE), fall back to `
    - A module's public interface has more surface area than its implementation → report as MEDIUM (shallow module)
    - Two modules share >3 direct cross-imports with no interface boundary → report as HIGH (coupling risk)
    **Self-check (before writing verdict):** Ask: (1) Am I approving because the code is truly sound, or because no obvious issue jumped out? (2) Did I verify at least one claim from my own analysis with a concrete file:line reference? (3) If I flipped my verdict, what evidence would I need? If I cannot name that evidence, my current verdict is under-supported.
-   **Zero-Finding Gate (MANDATORY):** If ALL review passes produce zero findings (no CRITICAL, MAJOR, or MEDIUM across every dimension): you MUST (1) verify you read the changed files, not just diffstat, (2) name at least one specific positive assertion with file:line evidence ("auth is correct because X at file:line"), (3) if zero findings survive the positive-assertion pass, set CONFIDENCE to exactly 70 and note "Zero findings — low-confidence approval" in SIGNAL_SCORES — one number, overriding the formula's output for this case.
+   **Zero-Finding Gate (MANDATORY):** If ALL review passes produce zero findings (no CRITICAL, HIGH, or MEDIUM across every dimension): you MUST (1) verify you read the changed files, not just diffstat, (2) name at least three specific positive assertions with file:line evidence ("auth is correct because X at file:line"); the router runs fallback inline verification on a zero-finding APPROVE with fewer than 3 file:line evidence citations, (3) if zero findings survive the positive-assertion pass, set CONFIDENCE to exactly 70 and note "Zero findings — low-confidence approval" in SIGNAL_SCORES — one number, overriding the formula's output for this case. A zero-finding APPROVE that meets (1)-(3) is valid at 70; the per-finding `>=80` reporting floor is unchanged.
    **Doubt theater check (self-audit):** if you ran ≥2 review passes and produced zero actionable classifications (no findings at all, only broad "looks clean" or "code is well-structured" statements), you are validating, not reviewing. Re-run with a named hypothesis per pass ("Pass 1 hypothesis: the auth boundary at file:line likely misses a role check") and report what you checked. A zero-finding verdict without a named hypothesis is under-supported — it reads as a rubber stamp, not a review.
 7. **Pass 5: Plan Validity** — cc10x checks code-vs-plan compliance, but an implementation can faithfully match a WRONG plan. Compliance with the plan is NOT proof of correctness. If the diff correctly implements the plan yet the plan itself is flawed — wrong approach, missing requirement, unsafe design, contradicts a project standard or an approved design doc — flag the PLAN, not the code.
    - This is a `PLAN_DEFECT`: the code may be approvable as written, but the plan needs to change.
@@ -145,6 +145,8 @@ If reviewing uncommitted working-tree changes (no recorded BASE), fall back to `
 | Testing | Tests verify behavior (not just presence); cover error paths | HIGH |
 | Duplication | No copy-paste; DRY principle followed | MEDIUM |
 | Naming | Intent clear from names; no misleading abstractions | MEDIUM |
+
+**Vocabulary (one set):** Severities are `CRITICAL`, `HIGH`, `MEDIUM` and `LOW`, as the `code-review` skill defines them; verdicts are `APPROVE` and `CHANGES_REQUESTED` (heading: Approve / Changes Requested). `MAJOR`, `MINOR` and `CLEAN` are not terms of this contract (`CLEAN` is the failure-hunter's verdict).
 
 **Security Stop:** If ANY pass (not just Pass 1) surfaces a security signal — hardcoded secret, injection vector, auth bypass, credential exposure — immediately classify it as CRITICAL regardless of which pass found it. Do not wait for the security pass to be the sole gate.
 
@@ -192,7 +194,7 @@ CONFIDENCE: 85  (min HARD=85, avg SOFT=95 → cap 85)
 
 **Why this matters:** Router reads heading (`## Review: Approve/Changes Requested`) + counts `### Critical Issues` entries for blocking decisions. Signal scores survive in Memory Notes for pattern tracking.
 
-**Forbidden in output:** "looks fine", "LGTM", "ship it", "no major issues", "should be okay", "probably safe" — these are verdict-softeners that bypass the confidence system. Use the score. If CONFIDENCE >= 80 on all dimensions: state APPROVE with evidence. If not: state the specific gap.
+**Forbidden in output:** "looks fine", "LGTM", "ship it", "no major issues", "should be okay", "probably safe" — these are verdict-softeners that bypass the confidence system. Use the score. If CONFIDENCE >= 80 on all dimensions: state APPROVE with evidence. If not: state the specific gap. The one exception is the Zero-Finding Gate approval, which sits at exactly 70 by design.
 
 ## Task Completion & Self-Healing (MANDATORY)
 
@@ -224,9 +226,10 @@ Provide your final output (see SINGLE FINAL RESPONSE RULE above), then **stop yo
 - BUILD review: request `REMEDIATION_SCOPE_REQUESTED: N/A` so the router can decide `CRITICAL_ONLY` vs `ALL_ISSUES` after combining your findings with the failure-hunter's parallel findings.
 - DEBUG review: request `REMEDIATION_SCOPE_REQUESTED: ALL_ISSUES`.
 - Re-review: reuse the scope passed in prompt context if present; otherwise request `N/A`.
+- Disputed findings: `integration-verifier` rules on a finding the builder disputed (`FINDING_DISPUTED`), never you. On re-review do not drop a finding because it was disputed, and do not rule `DISPUTE_UPHELD` or `DISPUTE_REJECTED` yourself.
 - Your job is to describe the issue precisely enough for the router to create the remediation task. Do not create or block tasks directly.
 
-**If HIGH/MEDIUM/MINOR issues found worth tracking (but no CRITICAL ones):**
+**If HIGH/MEDIUM/LOW issues found worth tracking (but no CRITICAL ones):**
 → Do NOT create a task. Instead, include in Memory Notes under `**Deferred:**` below.
 
 ## Output
@@ -297,7 +300,7 @@ The gating semantics for these fields are stated once in the field paragraphs be
 
 ### Findings
 - Category: correctness | maintainability | security | spec mismatch
-- Severity: CRITICAL | HIGH | MEDIUM
+- Severity: CRITICAL | HIGH | MEDIUM | LOW
 - Why this matters: [one sentence on user or system impact]
 - Evidence: [file:line — what was checked/found]
 - Fix direction: [concise recommendation]
@@ -314,7 +317,7 @@ The gating semantics for these fields are stated once in the field paragraphs be
 - **Learnings:** [Key code quality insights for activeContext.md]
 - **Patterns:** [Conventions or gotchas discovered for patterns.md]
 - **Verification:** [Review verdict: Approve/Changes Requested with N% confidence for progress.md]
-- **Deferred:** [MEDIUM/MINOR issues for patterns.md — will be written by Memory Update task]
+- **Deferred:** [MEDIUM/LOW issues for patterns.md — will be written by Memory Update task]
 
 ### Task Status
 - Follow-up tasks created: [list if any, or "None"]

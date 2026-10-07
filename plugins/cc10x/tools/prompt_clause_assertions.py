@@ -3630,6 +3630,69 @@ ASSERTIONS = [
         and "`TDD_RED_EXIT=1`, `TDD_GREEN_EXIT=0`" not in text,
         "the router table agrees with the agents and the replay check: builder and investigator rows both say non-zero",
     ),
+    # --- P4.T4.3: review agents, one smell count, one vocabulary, one zero-finding semantics, disputes (A5, E1; C4.2 floor unchanged) ---
+    A(
+        "code-reviewer: the smell count lives in the code-review skill catalog only",
+        AGENTS / "code-reviewer.md",
+        lambda text: "the `code-review` skill's Fowler smell catalog" in text
+        and "do not restate a count here" in text
+        and re.search(r"\b\d+ named smells", text) is None,
+        "the agent said 12 while the skill said 16; the count is stated once, in the skill (a pin there keeps it equal to the table rows)",
+    ),
+    A(
+        "code-reviewer: one severity and verdict vocabulary",
+        AGENTS / "code-reviewer.md",
+        lambda text: "Severities are `CRITICAL`, `HIGH`, `MEDIUM` and `LOW`, as the `code-review` skill defines them" in text
+        and "verdicts are `APPROVE` and `CHANGES_REQUESTED`" in text
+        and "no CRITICAL, MAJOR, or MEDIUM" not in text
+        and "HIGH/MEDIUM/MINOR issues" not in text
+        and "[MEDIUM/MINOR issues" not in text,
+        "MAJOR and MINOR map to the skill's HIGH and LOW; CLEAN is the hunter's word, not the reviewer's",
+    ),
+    A(
+        "code-reviewer: zero-finding gate asks for the router's three citations",
+        AGENTS / "code-reviewer.md",
+        lambda text: "name at least three specific positive assertions with file:line evidence" in text
+        and "fewer than 3 file:line evidence citations" in text
+        and "name at least one specific positive assertion" not in text
+        and "set CONFIDENCE to exactly 70" in text,
+        "the agent asked for 1 citation, the router bounces a zero-finding APPROVE with fewer than 3: the agent now meets the router's check",
+    ),
+    A(
+        "code-reviewer: the 80 floor stays per-finding and the zero-finding approval is the stated exception",
+        AGENTS / "code-reviewer.md",
+        lambda text: "the per-finding `>=80` reporting floor is unchanged" in text
+        and "The one exception is the Zero-Finding Gate approval, which sits at exactly 70 by design" in text,
+        "C4.2: the floor is unchanged; the APPROVE-at-80 sentence and the zero-finding 70 no longer contradict",
+    ),
+    A(
+        "code-reviewer: a disputed finding is ruled on by the verifier, never the reviewer",
+        AGENTS / "code-reviewer.md",
+        lambda text: "`integration-verifier` rules on a finding the builder disputed (`FINDING_DISPUTED`), never you" in text
+        and "do not drop a finding because it was disputed" in text,
+        "the router: a dispute is adjudicated by the independent verifier, never by the reviewer who raised it",
+    ),
+    A(
+        "failure-hunter: same severity vocabulary, its own verdict words",
+        AGENTS / "failure-hunter.md",
+        lambda text: "Severities are `CRITICAL`, `HIGH`, `MEDIUM` and `LOW`, as the `code-review` skill defines them" in text
+        and "your verdicts are `CLEAN` and `ISSUES_FOUND`, never `APPROVE` or `CHANGES_REQUESTED`" in text,
+        "the hunter and the reviewer share one severity set and do not borrow each other's verdict words",
+    ),
+    A(
+        "failure-hunter: a CLEAN with an empty scan scope triggers the router's fallback",
+        AGENTS / "failure-hunter.md",
+        lambda text: "makes the router run fallback inline verification" in text
+        and "zero error-handling sites inspected or zero files scanned" in text,
+        "the zero-results path no longer reads as a guaranteed CLEAN: the router's policy row bounces an empty scope",
+    ),
+    A(
+        "failure-hunter: a disputed finding is ruled on by the verifier, never the hunter",
+        AGENTS / "failure-hunter.md",
+        lambda text: "`integration-verifier` rules on a finding the builder disputed (`FINDING_DISPUTED`), never you" in text
+        and "do not drop a finding because it was disputed" in text,
+        "the router: a dispute is adjudicated by the independent verifier, never by the hunter who raised it",
+    ),
 ]
 
 

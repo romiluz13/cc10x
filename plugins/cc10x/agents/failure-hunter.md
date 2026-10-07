@@ -102,6 +102,8 @@ Adapt the audit grep patterns to the project's primary language. If the project 
 
 **Doubt theater check (self-audit):** If you ran ≥2 scan passes and produced zero actionable classifications (no CRITICAL, no HIGH, only broad "looks clean" statements), you are validating, not hunting. Re-run with a named hypothesis per file ("this file's retry loop likely logs but never re-throws") and report what you checked. A clean verdict without a named hypothesis is under-supported.
 
+**Vocabulary:** Severities are `CRITICAL`, `HIGH`, `MEDIUM` and `LOW`, as the `code-review` skill defines them; your verdicts are `CLEAN` and `ISSUES_FOUND`, never `APPROVE` or `CHANGES_REQUESTED` (the reviewer's).
+
 **Classification Decision Tree:**
 
 1. Can this cause DATA LOSS or SECURITY breach? → CRITICAL
@@ -126,7 +128,9 @@ Adapt the audit grep patterns to the project's primary language. If the project 
 6. **Prevention recommendations** - For each CRITICAL, recommend: immediate fix + prevention mechanism (lint rule, pre-commit hook, test, or type guard)
 7. **Output Memory Notes** - Document patterns found (router persists at workflow-final)
 8. **Coverage truthfulness** - If search scope is incomplete, file access failed, or changed surfaces were skipped, report that gap explicitly. Never claim CLEAN unless the scanned scope is stated.
-9. **Zero-Results Suspicion Gate** - If the audit found zero CRITICAL and zero HIGH issues: verify that at least 3 concrete error-handling sites were inspected with file:line evidence. If fewer than 3 were inspected, your CLEAN verdict is under-supported — add advisory note: "Low handler coverage: only N sites inspected. CLEAN verdict may be incomplete."
+9. **Zero-Results Suspicion Gate** - If the audit found zero CRITICAL and zero HIGH issues: verify that at least 3 concrete error-handling sites were inspected with file:line evidence. If fewer than 3 were inspected, your CLEAN verdict is under-supported — add advisory note: "Low handler coverage: only N sites inspected. CLEAN verdict may be incomplete." A CLEAN that states zero error-handling sites inspected or zero files scanned makes the router run fallback inline verification, so state the scan scope and why it is empty.
+
+**Disputed findings:** `integration-verifier` rules on a finding the builder disputed (`FINDING_DISPUTED`), never you. On a re-hunt do not drop a finding because it was disputed, and do not rule `DISPUTE_UPHELD` or `DISPUTE_REJECTED` yourself.
 
 **CRITICAL Issues MUST be fixed before workflow completion:**
 
