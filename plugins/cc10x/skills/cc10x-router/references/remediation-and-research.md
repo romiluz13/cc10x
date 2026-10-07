@@ -14,14 +14,34 @@ scope:{ALL_ISSUES|CRITICAL_ONLY|N/A}
 reason:{short remediation reason}
 ```
 
+### REM-FIX TaskCreate template
+
+The router creates every REM-FIX with this call. The subject names the agent the dispatch table assigns for the `origin:` value. `phase:` carries the originating phase from the metadata enum (for example `build-review`).
+
+```text
+TaskCreate({
+  subject: "CC10X component-builder: REM-FIX {short reason}",
+  description: "wf:{workflow_uuid}\nkind:remfix\norigin:{originating agent}\nphase:{originating phase}\nplan:{plan_file or 'N/A'}\nscope:{ALL_ISSUES|CRITICAL_ONLY|N/A}\nreason:{short remediation reason}\n\nFix the findings below as ONE batch. Verify each finding against the code before changing it. When done, report COVERING_TESTS, TEST_COMMAND and TEST_OUTPUT for the tests that exercise the fixed behavior. For a finding you can disprove, report FINDING_DISPUTED, VERIFY_COMMAND and VERIFY_OUTPUT instead of applying it.\n\nFindings:\n{findings}",
+  activeForm: "Fixing review findings"
+})
+```
+
+### Producers of the REM-FIX gate fields
+
+- `COVERING_TESTS`, `TEST_COMMAND` and `TEST_OUTPUT` are produced by the remediating builder: the contract of the agent that executes a `kind:remfix` task (`component-builder`; the template body above is how the router asks for them).
+- `FINDING_DISPUTED`, `VERIFY_COMMAND` and `VERIFY_OUTPUT` are produced by the remediating builder, per disputed finding (see Verify-before-implement).
+- `DISPUTE_UPHELD` and `DISPUTE_REJECTED` are produced by `integration-verifier`, the only adjudicator.
+- The Re-review precondition gate (Section 11) consumes the first group; the router never fills these fields itself.
+
 ### Circuit breaker
 
 Before creating a new remediation task:
 
 - Count tasks whose descriptions contain both `wf:{workflow_uuid}` and `kind:remfix`.
 - If count >= 3, ask the user how to proceed before creating another one.
+- This is the only point where the limit is evaluated; every other mention of the breaker points here. One review pass is one cycle (see Fix-wave consolidation).
 
-**Hook-enforced backstop (MANDATORY — do not skip):** immediately after creating any `kind:remfix` task, append an entry to the workflow artifact's `remediation_history` array: `{ts, phase, reason, cycle_number}` where `cycle_number` is this workflow's running REM-FIX count (starting at 1). The `TaskCompleted` guard independently counts `remediation_history` entries from the artifact on every `kind:remfix` completion and flags/blocks when the count exceeds 3 — deliberately one cycle BEHIND the router's own `>= 3` ask-user rule, so the hook fires only if the router already missed its checkpoint. This is the enforced version of the LLM-counted rule above and does not depend on the router's own counting being correct. If `remediation_history` and the router's own task count ever disagree, the artifact's `remediation_history` is authoritative.
+**Audit backstop (MANDATORY — do not skip):** immediately after creating any `kind:remfix` task, append an entry to the workflow artifact's `remediation_history` array: `{ts, phase, reason, cycle_number}` where `cycle_number` is this workflow's running REM-FIX count (starting at 1). The `TaskCompleted` guard independently counts `remediation_history` entries from the artifact on every `kind:remfix` completion and flags when the count exceeds 3 — deliberately one cycle BEHIND the router's own ask-user rule above, so it fires only if the router already missed its checkpoint. In `config/hook-mode.json` the `taskMetadata` mode ships as `audit`: the guard then logs the event and warns on stderr, and it blocks (exit 2) only when `taskMetadata` is set to `block`. It does not depend on the router's own counting being correct. If `remediation_history` and the router's own task count ever disagree, the artifact's `remediation_history` is authoritative.
 
 ### Change-something-before-re-dispatch
 
@@ -32,7 +52,7 @@ When an agent returns `BLOCKED` (or a fix attempt fails), the circuit breaker on
 3. Shrink the task scope — split an oversized task into smaller, completable pieces.
 4. Escalate to the human — if the plan itself is wrong, stop and ask; do not loop.
 
-NEVER re-dispatch the same agent with the same model on the same unchanged input. If the agent said it is stuck, something must change. This complements (does not replace) the `>= 3` circuit breaker above.
+NEVER re-dispatch the same agent with the same model on the same unchanged input. If the agent said it is stuck, something must change. This complements (does not replace) the circuit breaker (see `### Circuit breaker`).
 
 ### Rule matrix
 
@@ -54,7 +74,7 @@ NEVER re-dispatch the same agent with the same model on the same unchanged input
 The router is authoritative for BUILD remediation scope.
 
 - BUILD reviewer/verifier should request `REMEDIATION_SCOPE_REQUESTED: N/A`; the router resolves `CRITICAL_ONLY` vs `ALL_ISSUES`.
-- Legacy agent-created remediation tasks are still accepted during migration, but router-created remediation is canonical.
+- Remediation tasks are created only by the router: no agent contract creates a REM-FIX, so there is no agent-created remediation to accept.
 - `1a-SCOPE` applies only in BUILD when the review phase shows both:
   - at least one CRITICAL issue
   - at least one HIGH issue in the reviewer or hunter narrative
@@ -222,7 +242,7 @@ ADJUDICATOR: integration-verifier
 Do NOT fire one REM-FIX agent per finding. Batch ALL findings from a single review pass into ONE REM-FIX dispatch carrying the implementer contract.
 
 - One review pass -> one REM-FIX task -> counts as ONE cycle against the circuit breaker, not N.
-- Per-finding dispatch is wasteful: each agent rebuilds context and re-runs the suite, and each inflates the `kind:remfix` count toward the count >= 3 circuit-breaker gate, tripping it on a single review's worth of work.
+- Per-finding dispatch is wasteful: each agent rebuilds context and re-runs the suite, and each inflates the `kind:remfix` count toward the circuit-breaker limit (see `### Circuit breaker`), tripping it on a single review's worth of work.
 - The single dispatch lists every finding (each subject to verify-before-implement above); the fix agent works them as a batch and runs the covering tests once at the end.
 - Findings from a LATER, distinct review pass form a new wave and a new cycle. Consolidation is within one pass, never across passes.
 
@@ -312,7 +332,7 @@ Do not misread a tool/fallback message as a hard blocker (the "you ARE the provi
 
 When a `kind:remfix` task completes:
 
-1. Count completed remediation tasks in the same `wf:`. Apply the circuit breaker above (count `>= 3` → ask the user) before continuing.
+1. The circuit breaker is evaluated only when a REM-FIX is created (see `### Circuit breaker`); completion of a REM-FIX proceeds to step 2 without a second count. REVIEW never creates a REM-FIX (`references/review-workflow.md`), so this loop runs only in BUILD and DEBUG.
 2. Create a re-review task:
 
 ```text
@@ -344,7 +364,7 @@ TaskCreate({
 ```
 
 5. Block the verifier on both the re-review and re-hunt tasks.
-6. Re-block the memory task on the verifier for BUILD/DEBUG or on the re-reviewer for REVIEW.
+6. Re-block the memory task on the verifier.
 7. Increment telemetry loop counters whenever the follow-up tasks are created:
    - `telemetry.loop_counts.re_review += 1`
    - `telemetry.loop_counts.re_hunt += 1` (BUILD only)
@@ -363,4 +383,4 @@ TEST_OUTPUT: {its output}
 - Name only the COVERING tests — the files that exercise the changed behavior — not the whole suite. "Ran all tests, green" is not sufficient; the report must point at the tests that would fail if this fix were wrong.
 - If `COVERING_TESTS`, `TEST_COMMAND`, and `TEST_OUTPUT` are missing or empty, the gate fails closed: do NOT create the re-review task. Send the REM-FIX back (or block the task) until the proof is supplied.
 - A `FINDING_DISPUTED` entry satisfies this gate for that finding via its `VERIFY_COMMAND`/`VERIFY_OUTPUT` pair (adjudicated by integration-verifier per Section 9), since the dispute itself carries the proving evidence.
-- This precondition is independent of the circuit-breaker check in step 1; both must pass before re-dispatch.
+- This precondition is independent of the circuit breaker, which is checked when a REM-FIX is created (see `### Circuit breaker`); both must pass before the remediation loop continues.

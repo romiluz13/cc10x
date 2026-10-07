@@ -2218,6 +2218,56 @@ ASSERTIONS = [
         ),
         "the skill must not edit the registry or assume a cache path; installPath comes from the CLI",
     ),
+    # --- P4.T1.1: remediation reference (B1, B6, B9 part, B10 part, A4 part) ---
+    A(
+        "remediation: REM-FIX TaskCreate template exists with the standard shape",
+        SKILLS / "cc10x-router" / "references" / "remediation-and-research.md",
+        contains_all(
+            "### REM-FIX TaskCreate template",
+            "kind:remfix\\norigin:{originating agent}",
+            "COVERING_TESTS, TEST_COMMAND and TEST_OUTPUT",
+        ),
+        "the router has one literal REM-FIX TaskCreate whose body asks the fix agent for the re-review proof fields",
+    ),
+    A(
+        "remediation: every REM-FIX proof field names exactly one producer",
+        SKILLS / "cc10x-router" / "references" / "remediation-and-research.md",
+        contains_all(
+            "### Producers of the REM-FIX gate fields",
+            "`COVERING_TESTS`, `TEST_COMMAND` and `TEST_OUTPUT` are produced by the remediating builder",
+            "`FINDING_DISPUTED`, `VERIFY_COMMAND` and `VERIFY_OUTPUT` are produced by the remediating builder",
+            "`DISPUTE_UPHELD` and `DISPUTE_REJECTED` are produced by `integration-verifier`",
+        ),
+        "the gate fields have a named producer so the fail-closed gate can be satisfied",
+    ),
+    A(
+        "remediation: circuit breaker defined once, other phrasings are pointers",
+        SKILLS / "cc10x-router" / "references" / "remediation-and-research.md",
+        lambda text: text.count("\n### Circuit breaker\n") == 1
+        and text.count(">= 3") == 1
+        and "`>= 3` circuit breaker above" not in text
+        and "count >= 3 circuit-breaker gate" not in text
+        and "(count `>= 3` -> ask the user)" not in text
+        and "Apply the circuit breaker above" not in text,
+        "one definition of the 3-cycle limit; the fan-out, loop and consolidation texts point at it",
+    ),
+    A(
+        "remediation: breaker backstop is audit-mode accurate, not claimed hook-enforced",
+        SKILLS / "cc10x-router" / "references" / "remediation-and-research.md",
+        lambda text: "Hook-enforced" not in text
+        and "hook-enforced" not in text
+        and "`taskMetadata`" in text
+        and "audit" in text,
+        "the guard blocks only when taskMetadata is block; the shipped default is audit, so the backstop is a warning",
+    ),
+    A(
+        "remediation: unreachable branches are marked, not presented as live",
+        SKILLS / "cc10x-router" / "references" / "remediation-and-research.md",
+        lambda text: "Legacy agent-created remediation tasks are still accepted" not in text
+        and "or on the re-reviewer for REVIEW" not in text
+        and "REVIEW never creates a REM-FIX" in text,
+        "REVIEW creates no REM-FIX and agents create none, so those branches cannot run",
+    ),
 ]
 
 
