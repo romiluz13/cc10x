@@ -165,9 +165,7 @@ Resume algorithm:
 5. Reconstruct the memory task as the unique pending/in_progress `kind:memory` task in the same `wf:`.
 6. Artifact-only resume (no Task tools; replaces steps 1 and 3-5): (a) list `.cc10x/workflows/*.json`, drop the terminal ones, and keep the artifacts whose `workflow_uuid` the user named or whose `user_request` matches the current conversation, never by modification time alone; zero non-terminal matches start a new workflow (say so), more than one, ask which; (b) read `pending_gate` first and answer it, then `phase_cursor`, `phase_status` and `results`; (c) a graph step is complete only if the events log holds a `result_persisted` event for its agent and task phase with `details.phase_id` equal to the current `phase_cursor`, appended after the latest `phase_started` or `remediation_created` event for that phase_id (file order decides; the workflow start event is the boundary when neither exists, and after a `remediation_created` the current graph is the remediation graph: REM-FIX, re-review, re-hunt, re-verify); `results.*` holds only the latest value and never proves a step done; the next step is the first step of that route's graph that is not complete, and a `partial` or `blocked` step is re-entered only through its remediation or clarification gate.
 
-Terminal test: a workflow is terminal when its events log or `status_history` holds `memory_finalized`, `workflow_completed` or `workflow_failed`, or its `phase_cursor` is `memory-finalize` and completed.
-
-Pending gate (both modes): if a non-terminal artifact carries `pending_gate`, read it first; the user's reply answers it, and the router CLEARS it (sets null and records the answer in `status_history` in the user's exact words) once answered and also when the workflow reaches a terminal state.
+Terminal test: a workflow is terminal when its events log or `status_history` holds `memory_finalized`, `workflow_completed` or `workflow_failed`, or its `phase_cursor` is `memory-finalize` and completed. Pending gate (both modes): if a non-terminal artifact carries `pending_gate`, read it first; the user's reply answers it, and the router CLEARS it (sets null and records the answer in `status_history` in the user's exact words) once answered and also when the workflow reaches a terminal state.
 
 Scope-decision resume:
 
@@ -407,6 +405,8 @@ Reviewer floor, restated for the amendment lane (a restatement, not a relaxation
 {router-detected skill list or "None"}
 ```
 
+Artifact-only mode (Task tools absent): pass `- Task ID: N/A` and add the line `Task tools are absent: skip TaskUpdate; the router records completion` under `## Task Context`; write agents are otherwise told to call `TaskUpdate` before their contract.
+
 Anti-anchoring exception: for adversarial read-only dispatches (`code-reviewer`, `plan-gap-reviewer`) OMIT `## Memory Summary` — it carries the implementer's own narrative (decisions, learnings) and anchors the auditor. Keep `## Project Patterns` (user standards and gotchas are neutral law, not author narrative). Approved decisions the reviewer genuinely needs travel via `## Pre-Answered Requirements` / `## Intent Contract`, never via the memory summary.
 
 Optional sections:
@@ -454,7 +454,7 @@ Optional sections:
 
 ### Previous Agent Findings handoff
 
-When invoking `integration-verifier`, build and pass the `## Previous Agent Findings` section per the **Verifier findings handoff** law in §13 — read `results.reviewer` and `results.hunter` from the workflow artifact and use the exact template defined there (single source). DEBUG skips the hunter.
+When invoking `integration-verifier`, build and pass the `## Previous Agent Findings` section per the **Verifier findings handoff** law in §12 — read `results.reviewer` and `results.hunter` from the workflow artifact and use the exact template defined there (single source). DEBUG skips the hunter.
 
 ### Task metrics and timing telemetry
 
@@ -475,16 +475,9 @@ When invoking `integration-verifier`, build and pass the `## Previous Agent Find
 
 One rule, the same one `references/workflow-artifact-and-hook-policy.md` §contracts states: the `STATUS` in the fenced YAML Router Contract block decides. The line-1 envelope `CONTRACT {"s":"...","b":...,"cr":...}` and the line-2 heading are fast-path signals, and the fallback verdict signal only when the YAML block is absent; if they disagree with the YAML, the YAML decides.
 
-Fallback headings on line 2:
+Fallback headings on line 2: `## Review: Approve|Changes Requested`, `## Verification: PASS|FAIL`, `## Planning Review: Pass|Findings`, `## QA Research: PASS|FAIL`, `## QA Harness: PASS|FAIL|BLOCKED`, `## QA Execution: PASS|FAIL|BLOCKED`.
 
-- `## Review: Approve|Changes Requested`
-- `## Verification: PASS|FAIL`
-- `## Planning Review: Pass|Findings`
-- `## QA Research: PASS|FAIL`
-- `## QA Harness: PASS|FAIL|BLOCKED`
-- `## QA Execution: PASS|FAIL|BLOCKED`
-
-Finding the YAML block: `qa-researcher` carries a `### Router Contract (MACHINE-READABLE)` heading. `code-reviewer`, `failure-hunter`, `integration-verifier`, `plan-gap-reviewer`, `triage-agent` and `architecture-scanner` do not, so take the first fenced `yaml` block after the envelope and heading. `plan-gap-reviewer` emits `PLANNING_REVIEW_STATUS: PASS|FINDINGS` as its status field, not `STATUS`.
+Finding the YAML block: take the fenced `yaml` block that follows the `### Router Contract (MACHINE-READABLE)` heading when that heading exists (`qa-researcher` has it); otherwise take the first fenced `yaml` block after the envelope and heading (`code-reviewer`, `failure-hunter`, `integration-verifier`, `plan-gap-reviewer`, `triage-agent` and `architecture-scanner` carry no such heading). `plan-gap-reviewer` emits `PLANNING_REVIEW_STATUS: PASS|FINDINGS` as its status field, not `STATUS`.
 
 Verdict extraction:
 
@@ -493,7 +486,7 @@ Verdict extraction:
 3. Extract `CRITICAL_ISSUES` from `### Critical Issues`.
 4. If the YAML block is absent or any required contract field is missing, whatever the envelope and heading say, run inline verification rather than approving; for TRIAGE and CODEBASE-HEALTH there is nothing to verify inline, so the router sets `failure_stop_gate` instead (see their workflow references; no Memory Update).
 5. Detect `SELF_REMEDIATED` from task state:
-   - If the task remains `in_progress` and `blockedBy` is non-empty after the agent stops, treat it as self-remediated.
+   - If the task remains `in_progress` and `blockedBy` is non-empty after the agent stops, treat it as self-remediated. This is `blockedBy` based, so it cannot fire in artifact-only mode; there the structured remediation fields decide.
 6. For integration-verifier, parse scenario accounting:
    - `SCENARIOS_TOTAL`
    - `SCENARIOS_PASSED`
@@ -519,7 +512,7 @@ Compatibility rule:
 
 ### Write-agent YAML contracts
 
-For write agents, parse the final fenced YAML block under `### Router Contract (MACHINE-READABLE)`.
+For write agents, parse the fenced YAML block that follows the `### Router Contract (MACHINE-READABLE)` heading.
 
 Before post-agent validation, read `references/workflow-artifact-and-hook-policy.md` §contracts for the per-agent required-field table and the contract-override pass conditions.
 
@@ -658,7 +651,7 @@ Claude Code may run a dispatched agent in the background and deliver its result 
      - loop counters
      - verifier workload classification when present
    - quality/convergence state
-   - status_history and remediation_history entries when decisions change workflow state
+   - `status_history` entries when decisions change workflow state, and exactly one `remediation_history` entry per remediation round (see `### Circuit breaker`)
    - pending gate if waiting on user input
    - **`updated_at` timestamp MUST be set to the current ISO timestamp** — a stale `updated_at` breaks resume logic and triggers the TaskCompleted guard's stale-artifact warning.
    **READ-BACK GATE (MANDATORY):** After writing the artifact, Read it back and confirm:
@@ -671,9 +664,7 @@ Claude Code may run a dispatched agent in the background and deliver its result 
    {"ts":"<ISO>","wf":"<wf_id>","event":"result_persisted","phase":"<phase>","task_id":"<task_id>","agent":"<agent_name>","decision":"<contract_status>","reason":"<one-line summary>","details":{"phase_id":"<phase_cursor>"}}
    ```
 
-   `phase` is the task phase (e.g. `build-review`); `details.phase_id` is the `phase_cursor` value (`N/A` on routes without phases).
-
-   The event log MUST stay in sync with the artifact. A mutation without an event log entry is a desync that breaks the audit trail. (The PostToolUse guard auto-appends a fallback `artifact_mutated` event, but the router MUST write the semantic `result_persisted` entry with agent-specific metadata.)
+   `phase` is the task phase (e.g. `build-review`); `details.phase_id` is the `phase_cursor` value (`N/A` on routes without phases). The event log MUST stay in sync with the artifact. A mutation without an event log entry is a desync that breaks the audit trail. (The PostToolUse guard auto-appends a fallback `artifact_mutated` event, but the router MUST write the semantic `result_persisted` entry with agent-specific metadata.)
 8. Persist `[cc10x-internal] memory_task_id: {memory_task_id} wf:{workflow_uuid}` only if it matches the active workflow.
 
 ### Verifier findings handoff

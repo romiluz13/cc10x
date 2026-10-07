@@ -2348,7 +2348,7 @@ ASSERTIONS = [
     A(
         "policy: contract parsing direction is STATUS from the YAML block for every agent",
         POLICY_REF,
-        lambda text: "the router branches on `STATUS` from the final fenced YAML Router Contract block" in text
+        lambda text: "the router branches on `STATUS` from the fenced YAML block that follows the `### Router Contract (MACHINE-READABLE)` heading" in text
         and "the YAML block decides" in text
         and "For write agents, parse the final fenced YAML block" not in text,
         "the policy no longer implies the envelope is primary for some agents",
@@ -2729,9 +2729,9 @@ ASSERTIONS = [
     A(
         "remediation: breaker counts remediation_history entries, asks BEFORE creating a 4th cycle, task count is a cross-check only",
         SKILLS / "cc10x-router" / "references" / "remediation-and-research.md",
-        lambda text: re.search(r"- Count the entries in the workflow artifact's `remediation_history`[^\n]{0,200}authoritative[^\n]{0,200}BOTH modes", text) is not None
+        lambda text: re.search(r"- Count the entries in the workflow artifact's `remediation_history`[^\n]{0,200}authoritative without Task tools[^\n]{0,200}BOTH modes", text) is not None
         and re.search(r"- If count >= 3, ask the user how to proceed BEFORE creating a 4th remediation cycle", text) is not None
-        and re.search(r"[Oo]nly when Task tools exist[^\n]{0,200}mismatch[^\n]{0,120}artifact (count )?wins", text) is not None
+        and re.search(r"[Oo]nly when Task tools exist[^\n]{0,200}mismatch[^\n]{0,120}LARGER of the two counts", text) is not None
         and "- Count tasks whose descriptions contain both" not in text
         and len(re.findall(r"count >= 3", text)) == 1,
         "the single breaker is evaluable without Task tools; one definition, asked before the 4th cycle exists",
@@ -2798,7 +2798,7 @@ ASSERTIONS = [
         "router: YAML anchor by position for the read-only agents without the heading, and plan-gap-reviewer's own status field",
         SKILLS / "cc10x-router" / "SKILL.md",
         lambda text: re.search(
-            r"`code-reviewer`, `failure-hunter`, `integration-verifier`, `plan-gap-reviewer`, `triage-agent` and `architecture-scanner` do not[^\n]{0,200}first fenced `yaml` block after the envelope and heading",
+            r"otherwise take the first fenced `yaml` block after the envelope and heading \(`code-reviewer`, `failure-hunter`, `integration-verifier`, `plan-gap-reviewer`, `triage-agent` and `architecture-scanner` carry no such heading\)",
             text,
         )
         is not None
@@ -3061,6 +3061,101 @@ ASSERTIONS = [
         SKILLS / "cc10x-router" / "SKILL.md",
         lambda text: re.search(r"for TRIAGE and CODEBASE-HEALTH[^\n]{0,200}sets `failure_stop_gate`[^\n]{0,160}no Memory Update", text) is not None,
         "inline verification means nothing for an advisory route",
+    ),
+    # --- P4A remediation 2, commit 2: breaker, backstop, templates, YAML selection, scaffold, misc ---
+    A(
+        "router: remediation_history is described as one entry per remediation round, not as a decisions log",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: re.search(r"exactly one `remediation_history` entry per remediation round \(see `### Circuit breaker`\)", text) is not None
+        and "status_history and remediation_history entries when decisions change workflow state" not in text,
+        "a general-decisions reading would break the breaker count",
+    ),
+    A(
+        "policy: remediation_history holds exactly one entry per remediation round",
+        POLICY_REF,
+        lambda text: re.search(r"`remediation_history` holds exactly one entry per remediation round \(see `### Circuit breaker`", text) is not None
+        and "`status_history` and `remediation_history` are append-only summaries of major router decisions" not in text,
+        "the schema note must agree with the breaker's count rule",
+    ),
+    A(
+        "remediation: on a task-count mismatch the breaker uses the LARGER of the two counts and reports it",
+        SKILLS / "cc10x-router" / "references" / "remediation-and-research.md",
+        lambda text: re.search(r"on a mismatch, report it to the user and use the LARGER of the two counts", text) is not None
+        and not re.search(r"mismatch[^\n]{0,120}artifact (count )?wins", text),
+        "a missed append or a missed REM-FIX task must never lower the count",
+    ),
+    A(
+        "remediation: the hook backstop also flags a user-authorized cycle beyond 3, so block mode is not for authorized extra cycles",
+        SKILLS / "cc10x-router" / "references" / "remediation-and-research.md",
+        lambda text: "deliberately one cycle BEHIND" in text
+        and "so it fires only if the router already missed its checkpoint" not in text
+        and re.search(r"cannot see the user's authorization, so it also flags a cycle the user authorized beyond 3", text) is not None
+        and re.search(r"do not set `taskMetadata` to `block` when cycles beyond 3 may be authorized", text) is not None,
+        "the guard counts entries and cannot see consent; the old text claimed it only fires on a router miss",
+    ),
+    A(
+        "build-workflow: both builder templates block the builder on the previous phase's last task for phases after the first",
+        ROUTER_REFS / "build-workflow.md",
+        lambda text: text.count("// Phases after the first: block the builder on the previous phase's LAST task") == 2
+        and text.count("TaskUpdate({ taskId: builder_task_id, addBlockedBy: [previous_phase_last_task_id] })") == 2
+        and text.count("with `DIFF_DRIVEN_DOCS: skip` there is no doc-sync task, so the verifier") == 2,
+        "the multi-phase ordering rule lives in the template where the task is created, not only in prose",
+    ),
+    A(
+        "build-workflow: trivial-to-full escalation re-blocks Memory Update only when this phase's graph carries one",
+        ROUTER_REFS / "build-workflow.md",
+        lambda text: text.count("when this phase's graph carries a Memory Update task (only the LAST phase's does), re-block it on `doc_sync_task_id`") == 2
+        and "re-block Memory Update on `doc_sync_task_id`" not in text,
+        "an earlier phase has no memory task to re-block under the multi-phase rule",
+    ),
+    A(
+        "router: one YAML-block selection rule for read-only agents, matching write agents and the policy",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: re.search(
+            r"take the fenced `yaml` block that follows the `### Router Contract \(MACHINE-READABLE\)` heading when that heading exists[^\n]{0,200}otherwise take the first fenced `yaml` block after the envelope and heading",
+            text,
+        )
+        is not None
+        and re.search(r"parse the fenced YAML block that follows the `### Router Contract \(MACHINE-READABLE\)` heading", text) is not None
+        and "the final fenced YAML block under" not in text,
+        "first-after-envelope versus final-under-heading selected different blocks for an agent with several yaml blocks",
+    ),
+    A(
+        "policy: the YAML-block selection rule is the router's rule",
+        POLICY_REF,
+        lambda text: re.search(
+            r"the fenced YAML block that follows the `### Router Contract \(MACHINE-READABLE\)` heading when the heading exists, otherwise the first fenced `yaml` block after the envelope and heading",
+            text,
+        )
+        is not None
+        and "the final fenced YAML Router Contract block" not in text,
+        "one selection rule in both files",
+    ),
+    A(
+        "router: artifact-only dispatch scaffold passes Task ID N/A and tells write agents to skip TaskUpdate",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: re.search(r"Artifact-only mode \(Task tools absent\): pass `- Task ID: N/A`[^\n]{0,200}`Task tools are absent: skip TaskUpdate; the router records completion`", text) is not None
+        and "completion, validation and every gate are unchanged" not in text
+        and "completion is recorded by the router in the artifact" in text,
+        "the scaffold would otherwise hand agents an empty Task ID and an instruction to call a tool that does not exist",
+    ),
+    A(
+        "router: SELF_REMEDIATED detection is blockedBy based and cannot fire in artifact-only mode",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: re.search(r"blockedBy` based, so it cannot fire in artifact-only mode; there the structured remediation fields decide", text) is not None,
+        "without Task tools no blockedBy exists to detect self-remediation",
+    ),
+    A(
+        "router and policy: the verifier findings handoff and post-verifier validation are cited as section 12",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: "**Verifier findings handoff** law in §12" in text and "**Verifier findings handoff** law in §13" not in text,
+        "the handoff law lives in section 12 (Chain Execution Loop), not 13 (Memory Finalization)",
+    ),
+    A(
+        "policy: finding_dropped citation names section 12",
+        POLICY_REF,
+        lambda text: re.search(r"post-verifier finding validation, `SKILL\.md` §12\)", text) is not None and "`SKILL.md` §13)" not in text,
+        "same section-number fix in the policy reference",
     ),
 ]
 

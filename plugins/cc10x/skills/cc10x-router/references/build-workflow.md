@@ -98,7 +98,7 @@ The router is still the sole entry point for every BUILD, but the task graph sca
 - `build_scope=trivial` → use the **reduced task graph** below: `component-builder` → `integration-verifier` → `Memory Update`. NO separate `code-reviewer` task, NO `failure-hunter` task, NO standalone `doc-syncer` task. The verifier still runs its FULL real proof path — never weaken the Pre-Completion Checklist, Proof Reconciliation, or Test Honesty Gates to "save time" on trivial work — and folds a brief review/edge-case pass into its report.
 - `build_scope=standard` (default, and always when a plan exists) → use the **full task graph** further below.
 
-**Escalation rule (trivial → full):** after the builder returns, if its Router Contract reports non-empty `SCOPE_INCREASES` or non-empty `BLOCKED_ITEMS`, the work was not actually trivial. Before advancing, promote the workflow to the full graph: create the `code-reviewer` task AND the `failure-hunter` task (both blocked by the builder — never skip the hunter on escalation), create the `doc-syncer` task (blocked by the verifier), re-block the verifier on `[reviewer_task_id, hunter_task_id]`, and re-block Memory Update on `doc_sync_task_id`. Persist `build_scope=standard` and an escalation entry in `status_history`. (The conversion note under the reduced graph below states the same rule — they are one rule, not two.)
+**Escalation rule (trivial → full):** after the builder returns, if its Router Contract reports non-empty `SCOPE_INCREASES` or non-empty `BLOCKED_ITEMS`, the work was not actually trivial. Before advancing, promote the workflow to the full graph: create the `code-reviewer` task AND the `failure-hunter` task (both blocked by the builder — never skip the hunter on escalation), create the `doc-syncer` task (blocked by the verifier), re-block the verifier on `[reviewer_task_id, hunter_task_id]`, and, when this phase's graph carries a Memory Update task (only the LAST phase's does), re-block it on `doc_sync_task_id`. Persist `build_scope=standard` and an escalation entry in `status_history`. (The conversion note under the reduced graph below states the same rule — they are one rule, not two.)
 
 #### Reduced task graph (`build_scope=trivial`)
 
@@ -108,6 +108,8 @@ TaskCreate({
   description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:build-implement\nplan:N/A\nscope:N/A\nreason:Execute trivial change\n\nExecute the trivial change. Recover objective, inputs, expected artifacts, required checks, and exit criteria. Stop if blocked, partial, or scope grows beyond trivial (report SCOPE_INCREASES so the router can escalate to the full review chain).",
   activeForm: "Building components"
 }) -> builder_task_id
+// Phases after the first: block the builder on the previous phase's LAST task (its doc-sync task when one exists, else its verifier; with `DIFF_DRIVEN_DOCS: skip` there is no doc-sync task, so the verifier). Omit for the first phase.
+TaskUpdate({ taskId: builder_task_id, addBlockedBy: [previous_phase_last_task_id] })
 
 TaskCreate({
   subject: "CC10X integration-verifier: Verify integration",
@@ -125,7 +127,7 @@ TaskCreate({
 TaskUpdate({ taskId: memory_task_id, addBlockedBy: [verifier_task_id] })
 ```
 
-If the builder triggers the escalation rule, convert this into the full graph before running the verifier: add the code-reviewer task (blocked by builder), add the failure-hunter task (blocked by builder), add doc-syncer (blocked by verifier), re-block verifier on `[reviewer_task_id, hunter_task_id]`, and re-block Memory Update on `doc_sync_task_id`.
+If the builder triggers the escalation rule, convert this into the full graph before running the verifier: add the code-reviewer task (blocked by builder), add the failure-hunter task (blocked by builder), add doc-syncer (blocked by verifier), re-block verifier on `[reviewer_task_id, hunter_task_id]`, and, when this phase's graph carries a Memory Update task (only the LAST phase's does), re-block it on `doc_sync_task_id`.
 
 #### Full task graph (`build_scope=standard`)
 
@@ -135,6 +137,8 @@ TaskCreate({
   description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:build-implement\nplan:{plan_file or 'N/A'}\nscope:N/A\nreason:Execute approved phase\n\nExecute ONLY the phase at phase_cursor. Recover objective, inputs, expected artifacts, required checks, checkpoint type, and exit criteria from the approved phase. Stop if blocked, partial, or proof remains incomplete.",
   activeForm: "Building components"
 }) -> builder_task_id
+// Phases after the first: block the builder on the previous phase's LAST task (its doc-sync task when one exists, else its verifier; with `DIFF_DRIVEN_DOCS: skip` there is no doc-sync task, so the verifier). Omit for the first phase.
+TaskUpdate({ taskId: builder_task_id, addBlockedBy: [previous_phase_last_task_id] })
 
 TaskCreate({
   subject: "CC10X code-reviewer: Review implementation",

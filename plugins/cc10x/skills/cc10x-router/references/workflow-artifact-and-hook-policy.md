@@ -148,7 +148,7 @@ Rules:
   - `reconcile`
   - `reasoning`
 - `pending_gate` is required whenever BUILD/PLAN/DEBUG/QA/TRIAGE/CODEBASE-HEALTH is waiting on user clarification, scope selection, or persistence repair. QA sets exactly two: `qa_preflight_human_prerequisites` (the batched preflight ask) and `qa_source_contradiction` (consolidation found sources that disagree about what to test).
-- `status_history` and `remediation_history` are append-only summaries of major router decisions.
+- `status_history` is an append-only summary of major router decisions; `remediation_history` holds exactly one entry per remediation round (see `### Circuit breaker` in `remediation-and-research.md`).
 
 Router gates (operational definitions — a gate name without these semantics is meaningless):
 
@@ -190,7 +190,7 @@ Workflow event log:
   - `inline_fallback_entered` (inline no-subagent mode)
   - `inline_fallback_exited` (the router resumes subagent dispatch)
   - `parallel_fallback` (reviewer and hunter fell back to sequential dispatch)
-- `finding_dropped` is a `status_history` entry (post-verifier finding validation, `SKILL.md` §13), not an event-log type.
+- `finding_dropped` is a `status_history` entry (post-verifier finding validation, `SKILL.md` §12), not an event-log type.
 - Event types a hook appends to this log:
   - `compact_occurred` (PostCompact)
   - `artifact_mutated` (PostToolUse fallback append when the router logged no matching entry)
@@ -293,7 +293,7 @@ This section is consulted at post-agent validation time only, not at routing tim
 
 ### Write-agent YAML required fields
 
-Parsing direction, for every agent (write and read-only): the router branches on `STATUS` from the final fenced YAML Router Contract block (`### Router Contract (MACHINE-READABLE)`). The line-1 `CONTRACT` envelope and the line-2 heading are quick presence signals read first (`SKILL.md` §8); if they disagree with the YAML block, the YAML block decides.
+Parsing direction, for every agent (write and read-only): the router branches on `STATUS` from the fenced YAML block that follows the `### Router Contract (MACHINE-READABLE)` heading when the heading exists, otherwise the first fenced `yaml` block after the envelope and heading. The line-1 `CONTRACT` envelope and the line-2 heading are quick presence signals read first (`SKILL.md` §8); if they disagree with the YAML block, the YAML block decides.
 
 Expected fields:
 
