@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '^MEMORY_FINALIZED_COUNT=1$'
+pattern: '^MEMORY_FINALIZED_(?:HISTORY|EVENTS)=1$'
 flags: m
 target:
   source: file

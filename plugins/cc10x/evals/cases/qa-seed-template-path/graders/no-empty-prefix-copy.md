@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: 'cp: /templates/'
+pattern: '(?<![\w.$}])/templates/qa-|cp: /templates/'
 match: not_contains
 target: trace
 ---

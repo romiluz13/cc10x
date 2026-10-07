@@ -1,6 +1,6 @@
 schema_version: "1.1"
 name: two-workflow-resume
-description: "EXPECTED RED at baseline. Guards B14 - with two active workflows the router must scope resume by wf marker, while hooks key on the newest-mtime artifact (cc10x_hooklib.py latest_workflow_file)."
-tags: [two, expected-red, guards-B14]
+description: "REGRESSION GUARD (green at baseline). Guards scoped-resume - with two in-flight workflows the router resumes only the one matching the request and leaves the other untouched. B14 (hooks keying on the newest-mtime artifact) is NOT observable here, because the prompt names alpha.txt and the first router write makes alpha the newest file; B14 stays an L1/hook-level finding owned by P5.T5."
+tags: [resume, regression, guards-scoped-resume]
 context:
   scaffold_script: fixture.sh

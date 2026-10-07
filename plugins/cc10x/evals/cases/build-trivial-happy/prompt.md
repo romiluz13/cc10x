@@ -1,7 +1,7 @@
 ---
 max_turns: 60
 timeout_seconds: 900
-allowed_tools: [Read, Glob, Grep, Skill, Bash, Write, Edit]
+allowed_tools: [Read, Glob, Grep, Skill, Bash, Write, Edit, Agent, TaskCreate, TaskGet, TaskList, TaskUpdate]
 ---
 
 Use cc10x to build this: create a file named greeting.txt in the repo root containing exactly the single line `hello`. It is a trivial one-file change.
