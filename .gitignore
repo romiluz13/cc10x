@@ -189,6 +189,13 @@ push_v3.1.py
 !plugins/cc10x/tools/*.py
 !plugins/cc10x/evals/cases/*/fixture.sh
 plugins/cc10x/evals/results/
+# scar: 2026-10-07 — archived docs live in docs/history; this must stay below the
+# `*-PLAN.md`, `*-ANALYSIS.md`, `*test*.md` and `*audit*.md` rules or it has no effect.
+!docs/history/
+!docs/history/*.md
+!docs/history/*.html
+!docs/history/playgrounds/
+!docs/history/playgrounds/*.html
 
 # ========================================
 # BACKUP & ARCHIVE FILES

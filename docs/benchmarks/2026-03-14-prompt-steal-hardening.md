@@ -1,3 +1,5 @@
+> HISTORICAL: records past work; not maintained against the current release. Superseded by: docs/EVAL-STANDARD.md.
+
 # Prompt Steal Hardening
 
 This round changed wording only. No router logic, task topology, hooks, state, approval semantics, or artifact schema changed.

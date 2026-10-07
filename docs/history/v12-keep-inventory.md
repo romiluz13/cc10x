@@ -1,3 +1,5 @@
+> HISTORICAL: records past work; not maintained against the current release. Superseded by: CHANGELOG.md.
+
 # v12 Keep Inventory — What Must Survive the Refactor
 
 Every item here is a unique cc10x innovation. Removing any one causes quality regression.

@@ -1,3 +1,5 @@
+> HISTORICAL: records past work; not maintained against the current release. Superseded by: plugins/cc10x/skills/diff-driven-docs/SKILL.md.
+
 # Plan: diff-driven-docs — Documentation Sync Skill
 
 **Date:** 2026-04-19  

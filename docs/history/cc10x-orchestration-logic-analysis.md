@@ -1,3 +1,5 @@
+> HISTORICAL: records past work; not maintained against the current release. Superseded by: docs/router-invariants.md.
+
 # CC10x Orchestration Logic Analysis
 
 > **Last synced with live router/agents:** 2026-06-17 (`v11.0.0`; last structural sync `v10.1.19` on 2026-04-12; `v11.0.0` de-versions the state root from `.cc10x/v10/` to `.cc10x/`, version held only in `plugin.json`/GitHub; `v11.1.0` adds execution-engine deltas + 4 net-new skills, additive)

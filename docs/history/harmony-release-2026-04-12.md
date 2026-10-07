@@ -1,3 +1,5 @@
+> HISTORICAL: records past work; not maintained against the current release. Superseded by: CHANGELOG.md.
+
 # CC10X Harmony Release Plan
 
 Date: 2026-04-12

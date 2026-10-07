@@ -1,3 +1,5 @@
+> HISTORICAL: records past work; not maintained against the current release. Superseded by: docs/EVAL-STANDARD.md.
+
 # CC10X First-Place Strategy
 
 ## Goal

@@ -1,3 +1,5 @@
+> HISTORICAL: records past work; not maintained against the current release. Superseded by: CHANGELOG.md.
+
 # cc10x v12.0 — "The Loop Engine" Refactoring Plan (Validated against Claude Code v2.1.198)
 
 > **For Claude:** This plan was validated against the live Claude Code documentation (v2.1.198, June 2026). Every assumption has been checked against the actual hooks reference, skills docs, sub-agent docs, and plugins reference. The plan is harmonized with Claude Code's native capabilities — it uses native frontmatter fields, native hook types, native skill features, and aligns with bundled skills.

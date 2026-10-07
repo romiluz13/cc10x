@@ -1,3 +1,5 @@
+> HISTORICAL: records past work; not maintained against the current release. Superseded by: docs/EVAL-STANDARD.md.
+
 # Prompt Engineering Round 2: Head-to-Head Audit
 
 Date: 2026-03-12

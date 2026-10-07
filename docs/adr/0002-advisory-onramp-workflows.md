@@ -1,3 +1,5 @@
+> HISTORICAL: records past work; not maintained against the current release. Superseded by: plugins/cc10x/skills/cc10x-router/SKILL.md.
+
 # Advisory On-Ramp Workflows: TRIAGE + CODEBASE-HEALTH
 
 Sub-project 2b added two new intent routes to the router's routing table —

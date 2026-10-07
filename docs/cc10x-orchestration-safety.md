@@ -12,8 +12,7 @@ When behavior conflicts, trust sources in this order:
 4. `plugins/cc10x/tools/harness_audit.py`
 5. `plugins/cc10x/tools/workflow_replay_check.py`
 6. `docs/router-invariants.md`
-7. `docs/cc10x-orchestration-bible.md`
-8. this document
+7. this document
 
 ## Do Not Break These
 

@@ -1578,3 +1578,81 @@ def test_the_only_n_enforcement_points_claim_is_rejected_wherever_it_appears(phr
     path = root / rel
     path.write_text(path.read_text(encoding="utf-8") + f"\n**Blocking** ({phrase}):\n", encoding="utf-8")
     assert any("enforcement" in e and rel in e for e in readme_errors(root))
+
+
+ARCHIVED_DOCS = (
+    "2026-06-17-HANDOFF.md",
+    "2026-04-19-diff-driven-docs-plan.md",
+    "2026-06-17-upstream-steal-list.md",
+    "harmony-release-2026-04-12.md",
+    "latency-reduction-note.md",
+    "cc10x-orchestration-bible.md",
+    "cc10x-orchestration-logic-analysis.md",
+    "v12-keep-inventory.md",
+    "2026-07-02-cc10x-v12-loop-engine-plan.md",
+    "cc10x-explorer.html",
+    "cc10x-architecture-explorer.html",
+    "playgrounds",
+)
+BANNERED_IN_PLACE = (
+    "docs/benchmarks/2026-03-12-first-place-strategy.md",
+    "docs/benchmarks/2026-03-12-prompt-engineering-round-2-head-to-head.md",
+    "docs/benchmarks/2026-03-12-session-learnings.md",
+    "docs/benchmarks/2026-03-14-prompt-steal-hardening.md",
+    "docs/benchmarks/2026-03-16-planning-recovery.md",
+    "docs/adr/0002-advisory-onramp-workflows.md",
+)
+BANNER = re.compile(r"HISTORICAL: records past work; not maintained against the current release\. Superseded by: (\S+)\.(?:\s|$)")
+
+
+def test_archived_docs_are_visible_to_git_and_carry_a_resolving_banner():
+    history = REPO / "docs" / "history"
+    names = [p.name for p in history.iterdir() if p.name != "playgrounds"] if history.is_dir() else []
+    assert sorted(names + (["playgrounds"] if (history / "playgrounds").is_dir() else [])) == sorted(ARCHIVED_DOCS)
+    banner_files = [history / n for n in names if n.endswith((".md", ".html"))]
+    banner_files += sorted((history / "playgrounds").glob("*.html"))
+    for path in banner_files + [REPO / r for r in BANNERED_IN_PLACE]:
+        text = path.read_text(encoding="utf-8")
+        match = BANNER.search(text[:600])
+        assert match, f"{path.name} has no historical banner in its first lines"
+        assert (REPO / match.group(1).strip("`")).exists(), f"{path.name} points at missing {match.group(1)}"
+        ignored = subprocess.run(["git", "check-ignore", "-q", str(path)], cwd=REPO).returncode
+        assert ignored == 1, f"{path} is ignored by git"
+
+
+def test_archived_docs_are_gone_from_their_old_locations():
+    old = [REPO / "docs" / n for n in ARCHIVED_DOCS[:7]]
+    old += [REPO / "docs" / "plans" / n for n in ARCHIVED_DOCS[7:9]]
+    old += [REPO / n for n in ARCHIVED_DOCS[9:]]
+    assert [str(p.relative_to(REPO)) for p in old if p.exists()] == []
+
+
+@pytest.mark.parametrize("name", ["cc10x-orchestration-bible.md", "cc10x-orchestration-logic-analysis.md", "latency-reduction-note.md"])
+def test_harness_audit_does_not_require_the_archived_docs(name, tmp_path):
+    root = make_tree(tmp_path)
+    old = root / "docs" / name
+    if old.exists():
+        old.unlink()
+    result = run_tool("harness_audit.py", root)
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_the_version_tag_requirement_covers_the_three_maintained_registries(tmp_path):
+    root = make_tree(tmp_path)
+    for name in ("router-invariants.md", "prompt-invariants.md", "agent-contract-registry.md"):
+        path = root / "docs" / name
+        tag = f"v{plugin_version(root)}"
+        path.write_text(path.read_text(encoding="utf-8").replace(tag, "vX.Y.Z"), encoding="utf-8")
+        result = run_tool("harness_audit.py", root)
+        assert result.returncode != 0 and "not synced to current version tag" in result.stderr, name
+        path.write_text(path.read_text(encoding="utf-8").replace("vX.Y.Z", tag), encoding="utf-8")
+
+
+def test_readme_local_links_resolve():
+    text = (REPO / "README.md").read_text(encoding="utf-8")
+    missing = [
+        href
+        for href in re.findall(r'href="([^"#:]+?)"', text)
+        if not (REPO / href).exists()
+    ]
+    assert missing == []

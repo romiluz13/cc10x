@@ -1,3 +1,5 @@
+> HISTORICAL: records past work; not maintained against the current release. Superseded by: CHANGELOG.md.
+
 # cc10x Upstream Steal-List — 2026-06-17
 
 Comprehensive harvest of superpowers 6.0.2 + superpowers-lab + matt-pocock skills, diffed against cc10x's live capability map. **34 agents, 30 skills deep-read, 332 raw ideas → 54 ranked, 18 rejected, 6 critic-caught misses.** This is the decision surface: Rom approves per-batch, then validator-gated implement passes (same discipline as Campaigns 1–2).

@@ -36,12 +36,9 @@ INVARIANTS = ROOT / "docs" / "router-invariants.md"
 PROMPT_INVARIANTS = ROOT / "docs" / "prompt-invariants.md"
 PROMPT_SURFACE_INVENTORY = ROOT / "docs" / "prompt-surface-inventory.md"
 PROMPT_CHANGE_CHECKLIST = ROOT / "docs" / "prompt-change-checklist.md"
-ORCHESTRATION_BIBLE = ROOT / "docs" / "cc10x-orchestration-bible.md"
-ORCHESTRATION_LOGIC = ROOT / "docs" / "cc10x-orchestration-logic-analysis.md"
 ORCHESTRATION_SAFETY = ROOT / "docs" / "cc10x-orchestration-safety.md"
 AGENT_CONTRACT_REGISTRY = ROOT / "docs" / "agent-contract-registry.md"
 VERIFIER_LATENCY_MODEL = ROOT / "docs" / "verifier-latency-model.md"
-LATENCY_REDUCTION_NOTE = ROOT / "docs" / "latency-reduction-note.md"
 REPLAY_CHECK = PLUGIN_ROOT / "tools" / "workflow_replay_check.py"
 LATENCY_AUDIT = PLUGIN_ROOT / "tools" / "latency_audit.py"
 LIVE_HARNESS_RUNNER = PLUGIN_ROOT / "tools" / "live_harness_runner.py"
@@ -631,15 +628,12 @@ def main(argv: list[str] | None = None) -> int:
     prompt_invariants = read(PROMPT_INVARIANTS)
     prompt_surface_inventory = read(PROMPT_SURFACE_INVENTORY)
     prompt_change_checklist = read(PROMPT_CHANGE_CHECKLIST)
-    orchestration_bible = read(ORCHESTRATION_BIBLE)
-    orchestration_logic = read(ORCHESTRATION_LOGIC)
     orchestration_safety = read(ORCHESTRATION_SAFETY)
     session_memory = read(SESSION_MEMORY_SKILL)
     planner_agent = read(PLANNER_AGENT)
     planning_patterns = read(PLANNING_PATTERNS_SKILL)
     brainstorming = read(BRAINSTORMING_SKILL)
     verifier_latency_model = read(VERIFIER_LATENCY_MODEL)
-    latency_reduction_note = read(LATENCY_REDUCTION_NOTE)
 
     version = plugin.get("version")
     if f"**Current version:** {version}" not in readme:
@@ -687,10 +681,6 @@ def main(argv: list[str] | None = None) -> int:
         errors.append("missing prompt surface inventory")
     if not PROMPT_CHANGE_CHECKLIST.exists():
         errors.append("missing prompt change checklist")
-    if not ORCHESTRATION_BIBLE.exists():
-        errors.append("missing orchestration bible")
-    if not ORCHESTRATION_LOGIC.exists():
-        errors.append("missing orchestration logic analysis")
     if not ORCHESTRATION_SAFETY.exists():
         errors.append("missing orchestration safety doc")
     if not AGENT_CONTRACT_REGISTRY.exists():
@@ -701,8 +691,6 @@ def main(argv: list[str] | None = None) -> int:
         errors.append("missing planning recovery benchmark note")
     if not VERIFIER_LATENCY_MODEL.exists():
         errors.append("missing verifier latency model")
-    if not LATENCY_REDUCTION_NOTE.exists():
-        errors.append("missing latency reduction note")
     if not LATENCY_AUDIT.exists():
         errors.append("missing latency audit script")
     if not LIVE_HARNESS_RUNNER.exists():
@@ -884,18 +872,12 @@ def main(argv: list[str] | None = None) -> int:
         errors.append("prompt-surface-inventory.md appears malformed")
     if "Prompt Change Checklist" not in prompt_change_checklist:
         errors.append("prompt-change-checklist.md appears malformed")
-    if "CC10X Orchestration Bible" not in orchestration_bible:
-        errors.append("cc10x-orchestration-bible.md appears malformed")
-    if "CC10x Orchestration Logic Analysis" not in orchestration_logic:
-        errors.append("cc10x-orchestration-logic-analysis.md appears malformed")
     if "CC10x Orchestration Safety" not in orchestration_safety:
         errors.append("cc10x-orchestration-safety.md appears malformed")
     if "CC10X Agent Contract Registry" not in read(AGENT_CONTRACT_REGISTRY):
         errors.append("agent-contract-registry.md appears malformed")
     if "Verifier Latency Model" not in verifier_latency_model:
         errors.append("verifier-latency-model.md appears malformed")
-    if "Latency Reduction Note" not in latency_reduction_note:
-        errors.append("latency-reduction-note.md appears malformed")
     if "MEMORY_FINAL_EVENT" not in task_completed_guard:
         errors.append("task_completed_guard missing memory finalize event guard")
     for phrase in (
@@ -935,20 +917,13 @@ def main(argv: list[str] | None = None) -> int:
     for name, body in (
         ("router invariants", invariants),
         ("prompt invariants", prompt_invariants),
-        ("orchestration bible", orchestration_bible),
-        ("orchestration logic analysis", orchestration_logic),
         ("agent contract registry", read(AGENT_CONTRACT_REGISTRY)),
     ):
         if version_tag not in body:
             errors.append(f"{name} is not synced to current version tag {version_tag}")
 
-    for name, body in (
-        ("orchestration bible", orchestration_bible),
-        ("orchestration logic analysis", orchestration_logic),
-        ("orchestration safety", orchestration_safety),
-    ):
-        if ".cc10x/workflows" not in body:
-            errors.append(f"{name} does not reference the .cc10x workflow namespace")
+    if ".cc10x/workflows" not in orchestration_safety:
+        errors.append("orchestration safety does not reference the .cc10x workflow namespace")
 
     expected_router_fields = {
         "component-builder": [

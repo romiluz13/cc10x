@@ -22,10 +22,6 @@
   Fail-closed gates &nbsp;·&nbsp; survives compaction &nbsp;·&nbsp; dispatch-by-reference &nbsp;·&nbsp; test honesty gates &nbsp;·&nbsp; anti-anchored review
 </p>
 
-<p align="center">
-  <strong>Explore interactively:</strong> <a href="cc10x-explorer.html">cc10x Explorer</a> &nbsp;·&nbsp; <a href="cc10x-architecture-explorer.html">Architecture Explorer</a>
-</p>
-
 **Current version:** 12.9.1
 
 ---
@@ -816,8 +812,6 @@ plugins/cc10x/
 Additional developer docs live under:
 
 ```text
-docs/cc10x-orchestration-bible.md
-docs/cc10x-orchestration-logic-analysis.md
 docs/cc10x-orchestration-safety.md
 docs/router-invariants.md
 ```

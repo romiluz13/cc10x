@@ -1,3 +1,5 @@
+> HISTORICAL: records past work; not maintained against the current release. Superseded by: docs/verifier-latency-model.md.
+
 # CC10X Latency Reduction Note
 
 ## What Changed
