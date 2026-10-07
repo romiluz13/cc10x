@@ -88,20 +88,76 @@ def load_input() -> dict[str, Any]:
     return data
 
 
-def load_mode() -> dict[str, str]:
-    path = plugin_config_dir() / "hook-mode.json"
+HOOK_MODE_DEFAULTS = {
+    "artifactIntegrity": "block",
+    "memoryWrites": "audit",
+    "taskMetadata": "audit",
+}
+HOOK_MODE_VALUES = ("block", "audit")
+_MODE_MISSING = object()
+_MODE_CORRUPT = object()
+
+
+def resolve_hook_mode(
+    layers: list[tuple[str, Any]],
+) -> tuple[dict[str, str], list[dict[str, str]]]:
+    """Merge parsed hook-mode layers (lowest precedence first) over
+    HOOK_MODE_DEFAULTS. Always returns exactly the default keys, each `block`
+    or `audit`; an invalid layer or value is skipped, so that key keeps the
+    value from the layer below, and is reported as a problem."""
+    modes = dict(HOOK_MODE_DEFAULTS)
+    problems: list[dict[str, str]] = []
+    for source, layer in layers:
+        if layer is _MODE_MISSING:
+            continue
+        if layer is _MODE_CORRUPT or not isinstance(layer, dict):
+            problems.append({"source": source, "reason": "not-a-json-object"})
+            continue
+        for key, value in layer.items():
+            if key not in HOOK_MODE_DEFAULTS:
+                continue
+            if isinstance(value, str) and value in HOOK_MODE_VALUES:
+                modes[key] = value
+            else:
+                problems.append(
+                    {"source": source, "key": key, "reason": "invalid-value"}
+                )
+    return modes, problems
+
+
+def _read_mode_layer(path: Path) -> Any:
     if not path.exists():
-        return {
-            "memoryWrites": "audit",
-            "taskMetadata": "audit",
-        }
+        return _MODE_MISSING
     try:
         return json.loads(path.read_text(encoding="utf-8"))
     except Exception:
-        return {
-            "memoryWrites": "audit",
-            "taskMetadata": "audit",
-        }
+        return _MODE_CORRUPT
+
+
+def load_mode() -> dict[str, str]:
+    """Shipped config/hook-mode.json, then the user override at
+    ${CLAUDE_PLUGIN_DATA}/hook-mode.json (survives plugin updates). Never
+    raises; invalid input falls back per key and logs invalid_hook_mode."""
+    try:
+        layers = [("shipped", _read_mode_layer(plugin_config_dir() / "hook-mode.json"))]
+        data_dir = os.environ.get("CLAUDE_PLUGIN_DATA")
+        if data_dir:
+            layers.append(("override", _read_mode_layer(Path(data_dir) / "hook-mode.json")))
+        modes, problems = resolve_hook_mode(layers)
+    except Exception:
+        return dict(HOOK_MODE_DEFAULTS)
+    for problem in problems:
+        log_event(
+            "invalid_hook_mode",
+            {
+                **problem,
+                "task_id": None,
+                "agent": "hook",
+                "event": "invalid_hook_mode",
+                "decision": "fallback",
+            },
+        )
+    return modes
 
 
 def now_iso() -> str:

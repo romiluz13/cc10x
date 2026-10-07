@@ -18,6 +18,7 @@ tests for the known fail-open paths land with their fixes in T8/#73.
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -458,12 +459,10 @@ def test_sessionstart_silent_on_corrupt_artifact(tmp_path):
 # --- cc10x_hooklib.py (mode resolution, exercised through the artifact guard) --
 
 
-def test_hooklib_corrupt_mode_config_downgrades_block_to_audit(tmp_path):
-    # Baseline lock of cc10x_hooklib.load_mode's fallback: a corrupt
-    # hook-mode.json silently drops artifactIntegrity to audit, so a
-    # key-missing artifact write that would exit 2 under the shipped
-    # config exits 0. (Current behavior; whether it SHOULD fail open is
-    # a T8/#73 design question.)
+def test_hooklib_corrupt_mode_config_falls_back_to_the_block_default(tmp_path):
+    # P5.T3: a corrupt hook-mode.json falls back to HOOK_MODE_DEFAULTS
+    # (artifactIntegrity=block) and records an invalid_hook_mode event, so a
+    # key-missing artifact write still exits 2 instead of silently auditing.
     root = tmp_path / "plugin-root"
     (root / "config").mkdir(parents=True)
     (root / "config" / "hook-mode.json").write_text("{not json")
@@ -477,7 +476,8 @@ def test_hooklib_corrupt_mode_config_downgrades_block_to_audit(tmp_path):
         tmp_path,
         plugin_root=root,
     )
-    assert r.returncode == 0
+    assert r.returncode == 2
+    assert any(e["event"] == "invalid_hook_mode" for e in hook_log_lines(tmp_path))
 
 
 # --- cc10x_state_persist.py --------------------------------------------------
@@ -1041,17 +1041,17 @@ def test_artifact_guard_hard_corruption_is_audit_when_mode_is_audit(tmp_path):
     assert hook_log_lines(tmp_path)[0]["decision"] == "audit"
 
 
-def test_artifact_guard_mode_file_without_the_key_silently_means_audit(tmp_path):
-    # Current behavior (P5.T3 changes it): load_mode returns the file verbatim,
-    # so a hook-mode.json lacking artifactIntegrity downgrades block to audit.
+def test_artifact_guard_mode_file_without_the_key_keeps_the_block_default(tmp_path):
+    # P5.T3: a partial hook-mode.json is merged over HOOK_MODE_DEFAULTS, so a
+    # file lacking artifactIntegrity can no longer downgrade block to audit.
     root = mode_root(tmp_path, {"memoryWrites": "block"})
     workflows = tmp_path / ".cc10x" / "workflows"
     workflows.mkdir(parents=True)
     bad = workflows / "wf-bad.json"
     bad.write_text(json.dumps({"workflow_uuid": "wf-bad"}))
     r = run_posttool(tmp_path, bad, plugin_root=root)
-    assert r.returncode == 0
-    assert hook_log_lines(tmp_path)[0]["decision"] == "audit"
+    assert r.returncode == 2
+    assert hook_log_lines(tmp_path)[0]["decision"] == "block"
 
 
 def write_git_token(project_dir: Path, operations, expires_at: str | None) -> Path:
@@ -1625,6 +1625,180 @@ def test_task_guard_block_mode_circuit_breaker_keeps_its_exit_2_message(tmp_path
     )
     assert r.returncode == 2  # exit 2 stderr IS delivered to the model
     assert "circuit breaker" in r.stderr
+
+
+# --- P5.T3: hook-mode resolver ------------------------------------------------
+
+
+def load_hooklib():
+    if str(SCRIPTS_DIR) not in sys.path:
+        sys.path.insert(0, str(SCRIPTS_DIR))
+    import cc10x_hooklib
+
+    return cc10x_hooklib
+
+
+class env_patch:
+    """Set (str) or unset (None) environment variables for the with-block."""
+
+    def __init__(self, **values: str | None):
+        self.values = values
+
+    def __enter__(self):
+        self.saved = {k: os.environ.get(k) for k in self.values}
+        for key, value in self.values.items():
+            if value is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = value
+
+    def __exit__(self, *exc):
+        for key, value in self.saved.items():
+            if value is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = value
+
+
+def resolved_mode(
+    tmp_path: Path, shipped: object | None, override: object | None = None, data_dir: bool = True
+) -> tuple[dict, list[dict]]:
+    """load_mode() against a synthetic plugin root, optional override file and
+    an opted-in project (.cc10x exists so events are recorded)."""
+    root = tmp_path / "plugin-root"
+    (root / "config").mkdir(parents=True, exist_ok=True)
+    cfg = root / "config" / "hook-mode.json"
+    if shipped is not None:
+        cfg.write_text(shipped if isinstance(shipped, str) else json.dumps(shipped))
+    data = tmp_path / "plugin-data"
+    if override is not None:
+        data.mkdir(exist_ok=True)
+        (data / "hook-mode.json").write_text(
+            override if isinstance(override, str) else json.dumps(override)
+        )
+    proj = tmp_path / "proj"
+    (proj / ".cc10x").mkdir(parents=True, exist_ok=True)
+    with env_patch(
+        CLAUDE_PLUGIN_ROOT=str(root),
+        CLAUDE_PLUGIN_DATA=str(data) if data_dir else None,
+        CLAUDE_PROJECT_DIR=str(proj),
+    ):
+        modes = load_hooklib().load_mode()
+    return modes, [e for e in hook_log_lines(proj) if e["event"] == "invalid_hook_mode"]
+
+
+DEFAULT_MODES = {"artifactIntegrity": "block", "memoryWrites": "audit", "taskMetadata": "audit"}
+
+
+def test_load_mode_missing_shipped_file_returns_all_defaults(tmp_path):
+    modes, events = resolved_mode(tmp_path, None)
+    assert modes == DEFAULT_MODES
+    assert events == []
+
+
+def test_load_mode_corrupt_json_falls_back_and_records_an_event(tmp_path):
+    modes, events = resolved_mode(tmp_path, "{not json")
+    assert modes == DEFAULT_MODES
+    assert len(events) == 1 and events[0]["source"] == "shipped"
+
+
+def test_load_mode_unknown_value_falls_back_for_that_key_only(tmp_path):
+    modes, events = resolved_mode(
+        tmp_path, {"artifactIntegrity": "warn", "memoryWrites": "block", "taskMetadata": 1}
+    )
+    assert modes == {"artifactIntegrity": "block", "memoryWrites": "block", "taskMetadata": "audit"}
+    assert sorted(e["key"] for e in events) == ["artifactIntegrity", "taskMetadata"]
+
+
+def test_load_mode_partial_file_keeps_defaults_for_missing_keys(tmp_path):
+    modes, events = resolved_mode(tmp_path, {"taskMetadata": "block"})
+    assert modes == {"artifactIntegrity": "block", "memoryWrites": "audit", "taskMetadata": "block"}
+    assert events == []
+
+
+def test_load_mode_user_override_wins_over_the_shipped_file(tmp_path):
+    modes, events = resolved_mode(
+        tmp_path,
+        {"artifactIntegrity": "block", "memoryWrites": "block"},
+        override={"artifactIntegrity": "audit", "taskMetadata": "block", "extra": "block"},
+    )
+    assert modes == {"artifactIntegrity": "audit", "memoryWrites": "block", "taskMetadata": "block"}
+    assert events == []
+
+
+def test_load_mode_invalid_override_value_falls_back_to_the_shipped_value(tmp_path):
+    modes, events = resolved_mode(
+        tmp_path, {"memoryWrites": "block"}, override={"memoryWrites": "banana"}
+    )
+    assert modes["memoryWrites"] == "block"
+    assert [e["source"] for e in events] == ["override"]
+    modes, events = resolved_mode(
+        tmp_path / "corrupt", {"memoryWrites": "block"}, override="{oops"
+    )
+    assert modes["memoryWrites"] == "block"
+    assert [e["source"] for e in events] == ["override"]
+
+
+def test_load_mode_data_dir_absent_or_empty_is_not_an_error(tmp_path):
+    modes, events = resolved_mode(tmp_path, {"taskMetadata": "block"}, data_dir=False)
+    assert modes["taskMetadata"] == "block" and events == []
+    root = tmp_path / "plugin-root"
+    with env_patch(
+        CLAUDE_PLUGIN_ROOT=str(root),
+        CLAUDE_PLUGIN_DATA=str(tmp_path / "does-not-exist"),
+        CLAUDE_PROJECT_DIR=str(tmp_path / "proj"),
+    ):
+        again = load_hooklib().load_mode()
+    assert again["taskMetadata"] == "block"
+    assert not (tmp_path / "does-not-exist").exists()
+
+
+def test_load_mode_never_raises_and_always_returns_the_three_keys(tmp_path):
+    for bad in ('[]', '"block"', "null", "7", '{"artifactIntegrity": ["block"]}'):
+        modes, _ = resolved_mode(tmp_path / f"c{abs(hash(bad))}", bad)
+        assert modes == DEFAULT_MODES, bad
+    unreadable = tmp_path / "dirfile"
+    (unreadable / "config").mkdir(parents=True)
+    (unreadable / "config" / "hook-mode.json").mkdir()  # a directory, not a file
+    with env_patch(CLAUDE_PLUGIN_ROOT=str(unreadable), CLAUDE_PLUGIN_DATA=None):
+        assert load_hooklib().load_mode() == DEFAULT_MODES
+    # An unreadable data dir: Path.exists() raises PermissionError on Python 3.9.
+    locked = tmp_path / "locked"
+    locked.mkdir()
+    (locked / "hook-mode.json").write_text("{}")
+    locked.chmod(0)
+    try:
+        with env_patch(CLAUDE_PLUGIN_ROOT=str(unreadable), CLAUDE_PLUGIN_DATA=str(locked)):
+            assert load_hooklib().load_mode() == DEFAULT_MODES
+    finally:
+        locked.chmod(0o700)
+
+
+def test_shipped_hook_mode_file_is_valid_and_complete(tmp_path):
+    shipped = json.loads((PLUGIN_ROOT / "config" / "hook-mode.json").read_text())
+    assert shipped == DEFAULT_MODES
+    assert shipped == load_hooklib().HOOK_MODE_DEFAULTS
+
+
+def test_user_override_file_downgrades_the_artifact_guard_end_to_end(tmp_path):
+    data = tmp_path / "plugin-data"
+    data.mkdir()
+    (data / "hook-mode.json").write_text(json.dumps({"artifactIntegrity": "audit"}))
+    workflows = tmp_path / ".cc10x" / "workflows"
+    workflows.mkdir(parents=True)
+    bad = workflows / "wf-bad.json"
+    bad.write_text(json.dumps({"workflow_uuid": "wf-bad"}))
+    r = run_guard(
+        "cc10x_posttooluse_artifact_guard.py",
+        {"tool_name": "Write", "tool_input": {"file_path": str(bad)}},
+        tmp_path,
+        extra_env={"CLAUDE_PLUGIN_DATA": str(data)},
+    )
+    assert r.returncode == 0
+    assert hook_log_lines(tmp_path)[0]["decision"] == "audit"
+    # Without the override file the shipped block default applies.
+    r = run_posttool(tmp_path, bad)
+    assert r.returncode == 2
 
 
 def main() -> int:
