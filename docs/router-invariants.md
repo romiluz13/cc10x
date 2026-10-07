@@ -1,6 +1,6 @@
 # CC10x Router Behavioral Invariant Registry
 
-> **Status note:** Current product line is `v11.0.0`. This registry is aligned to the live router structure in `plugins/cc10x/skills/cc10x-router/SKILL.md` and `plugins/cc10x/skills/cc10x-router/references/*.md` as of 2026-06-17. Structural contract last changed on 2026-04-12 (`v10.1.19`); `v11.0.0` de-versions the state root from `.cc10x/v10/` to `.cc10x/` (version lives only in `plugin.json`/GitHub) with no invariant changes. `v11.1.0` adds execution-engine scripts (`cc10x_phase_brief`, `cc10x_review_package`), recorded-BASE diffing, an inline no-subagent fallback, and 4 net-new skills — additive, no invariant changes. `v12.5.0` adds the enforced seam gate (TEST_SEAMS/SEAM_GATE_STATUS contract fields), resolving-merge-conflicts skill, and 2 advisory on-ramp workflows (TRIAGE, CODEBASE-HEALTH) at routing priority 5/6 — additive, no invariant changes to priority 1-4 routes. **v12.6.0** is an integrity reconciliation (spec #65): audit-seam revival, router-kernel drift fixes (phase enum + dispatcher rows for triage/codebase-health, tie-break stated, gates operationally defined, single circuit-breaker source), unified agent contract dialect (envelope + fenced YAML, per-agent fields unchanged), guard fail-open fixes, and skills reconciliation — behavior-preserving; no routing, gate-semantic, or hook-mode changes. **v12.7.0** is a prompt-engineering prose reconciliation (spec #77): wording-only edits across skills/agents/router prose — contradictions resolved, restatements single-sourced, undecidable gate adjectives replaced with decision procedures, rationale clauses added; no orchestration, invariant, or contract changes; routing and dispatcher tables byte-identical to v12.6.0. **v12.8.0** adds cc10x-guide skill (reference, model-invoked, read-only — no router invariant changes), README restructure, setup-template fix, permission-list unification, marketplace.json version assertion; no routing, invariant, or contract changes. **v12.8.1** is an adversarially-validated instruction refinement (verification evidence identity, working gh feedback timestamps, recovery-row wording); no routing, gate, or invariant changes. **v12.8.2:** imports pstack evidence-discipline wording into four skill/reference files (one-fact review rule, observation-method suspicion, premise prediction-testing, restart-state playbook); wording-level only, no orchestration, routing, gate, or contract changes. **v12.9.0:** adds the QA route (routing priority 5; 3 agents; `qa-strategy` skill; QA isolation guard); QA-route invariants are not yet registered in this file (known gap, recorded in the CHANGELOG). INV-026's "pre-creates … capped at two reviewer passes" wording predates the on-demand, uncapped amendment-verification task (`plan-review-amendment` phase, `plan-gap-reviewer` `REVIEW_MODE: amendment`), which is not pre-created and cannot close the review loop. Tooling references re-anchored to `plugins/cc10x/tools/` (INV-014 Covers, Legacy Appendix) — reference fixes only; no invariant text changed in this release. **v12.9.1:** no routing, gate, or invariant-semantics changes — the README install template's routing block is harmonized to the repo CLAUDE.md text (a user-facing paste, not a plugin prompt surface; the exact-phrase skip rule is untouched), and `tools/token_usage_report.py` is added (read-only session-usage measurement, informational per INV-025).
+> **Status note:** Aligned to the `v12.10.0` remediation tree on 2026-10-07 (last released line `v12.9.1`), against `plugins/cc10x/skills/cc10x-router/SKILL.md`, `plugins/cc10x/skills/cc10x-router/references/*.md` and `plugins/cc10x/hooks/hooks.json`. Release history lives in `CHANGELOG.md`. Invariants for the QA route, ORIENT, the seam gate and the git guard are registered below.
 
 ## Purpose
 
@@ -21,6 +21,10 @@ Validated against the live plugin surface:
 - agent memory reads under `.cc10x/*.md`
 - verifier independence from builder/reviewer/hunter verdicts
 - router kernel plus mandatory workflow/reference playbooks
+- the QA route, its phase sets and the QA isolation guard
+- the ORIENT move
+- the builder seam gate (`TEST_SEAMS`, `SEAM_GATE_STATUS`)
+- the git guard (`classify_git_command`)
 
 ## Current Invariants
 
@@ -55,8 +59,8 @@ Validated against the live plugin surface:
 ### INV-026: Fresh planning review is bounded and planner-owned
 
 **Covers:** Router `## 5. Workflow Preparation`, `## 9. Remediation And Workflow Rules`, planner, `plan-gap-reviewer`
-**Enforces:** Every PLAN workflow pre-creates a DAG-visible bounded review chain (`plan-create -> plan-review-gap-1 -> re-plan -> plan-review-gap-2 -> memory-finalize`), while the planner remains the only writer, the router remains the only orchestration owner, and the loop is capped at two reviewer passes.
-**If removed:** PLAN can drift into hidden dynamic orchestration, ambiguous plan ownership, or open-ended token-heavy refinement loops that are not auditable from the task graph.
+**Enforces:** Every PLAN workflow pre-creates a DAG-visible bounded fresh-review chain (`plan-create -> plan-review-gap-1 -> re-plan -> plan-review-gap-2 -> memory-finalize`) capped at two `REVIEW_MODE: fresh` passes. Amendments to a saved plan are verified by an on-demand `plan-review-amendment` task (`REVIEW_MODE: amendment`) that is not pre-created, is uncapped, does not count against the fresh-pass cap and cannot close the review loop; `PLANNING_REVIEW_STATUS: passed` needs `plan_revision == last_reviewed_revision`. The planner remains the only writer and the router the only orchestration owner.
+**If removed:** PLAN can drift into hidden dynamic orchestration, ambiguous plan ownership, unreviewed amendments, or open-ended token-heavy refinement loops that are not auditable from the task graph.
 **Safe to remove:** Never.
 
 ### INV-023: Proof status gates phase completion
@@ -76,7 +80,7 @@ Validated against the live plugin surface:
 ### INV-001: Workflow artifact creation is immediate and durable
 
 **Covers:** Router `## 2a. Workflow Artifact And Hook Policy`, `## 6. Workflow Task Graphs`, `references/workflow-artifact-and-hook-policy.md`
-**Enforces:** Every workflow gets a JSON artifact and append-only event log under the v10 namespace as soon as the workflow UUID is known.
+**Enforces:** Every workflow gets a JSON artifact and append-only event log under the `.cc10x/` state root as soon as the workflow UUID is known.
 **If removed:** Resume, verifier handoff, research quality tracking, and hook-based context injection become conversation-dependent and non-durable.
 **Safe to remove:** Never.
 
@@ -172,13 +176,13 @@ Validated against the live plugin surface:
 
 **Covers:** Router `## 7. Dispatcher And Agent Prompt Contract`, internal skills
 **Enforces:** Explicit user instructions, `CLAUDE.md`, repo standards, and approved plans outrank CC10X internal skills.
-**If removed:** `frontend-patterns` / `architecture-patterns` / `debugging-patterns` can silently compete with user intent again.
+**If removed:** Skills such as `frontend`, `architecture` and `debugging` can silently compete with user intent again.
 **Safe to remove:** Never.
 
-### INV-018: Agents use only the v10 state namespace
+### INV-018: Agents use only the `.cc10x/` state namespace
 
 **Covers:** Router `## 2. Memory Load And Template Validation`, agent memory-read sections
-**Enforces:** BUILD / DEBUG / REVIEW / VERIFY agents read from `.cc10x/*.md` only and never mix legacy memory paths into active orchestration.
+**Enforces:** BUILD / DEBUG / REVIEW / VERIFY agents read from `.cc10x/*.md` only and never mix legacy memory paths (`.claude/cc10x/`, `.cc10x/v10/`) into active orchestration.
 **If removed:** Agents can read stale state, leak legacy decisions into live workflows, or disagree about the active workflow memory surface.
 **Safe to remove:** Never.
 
@@ -189,10 +193,10 @@ Validated against the live plugin surface:
 **If removed:** The workflow can regress into self-certified completion where one agent's confidence is mistaken for verification.
 **Safe to remove:** Never.
 
-### INV-020: Silent-failure analysis must state scan coverage truthfully
+### INV-020: Failure analysis must state scan coverage truthfully
 
-**Covers:** Router `## 8. Post-Agent Validation`, hunter contract
-**Enforces:** The silent-failure hunter must describe scanned scope and blind spots before a CLEAN result is accepted.
+**Covers:** Router `## 8. Post-Agent Validation`, `failure-hunter` contract
+**Enforces:** The `failure-hunter` must describe scanned scope and blind spots before a CLEAN result is accepted.
 **If removed:** CLEAN verdicts can hide incomplete search coverage and create false confidence in error-handling quality.
 **Safe to remove:** Never.
 
@@ -206,20 +210,64 @@ Validated against the live plugin surface:
 ### INV-013: Plugin hooks are guardrails, not orchestration
 
 **Covers:** Router `## 2a. Workflow Artifact And Hook Policy`, `references/workflow-artifact-and-hook-policy.md`, plugin hooks
-**Enforces:** Hooks remain minimal and audit-first:
+**Enforces:** `hooks.json` registers ten events, and every hook stays a guard, an audit, a context injection or a state snapshot, never a second orchestrator. `plugins/cc10x/hooks/README.md` lists each hook once and is the maintained table:
 
-- `PreToolUse` protects memory writes
-- `SessionStart` injects workflow context
-- `PostToolUse` audits workflow artifact integrity
-- `TaskCompleted` checks task metadata and memory-finalize completion evidence
+- `PreToolUse`: the memory-write guard (audit by default), the git guard and the QA isolation guard (both unconditional blockers)
+- `SessionStart`: the Python preflight and resume-context injection
+- `PostToolUse`: workflow artifact integrity (`artifactIntegrity`, ships as block) and Bash workflow-write audit
+- `TaskCompleted`: task metadata and memory-finalize evidence (`taskMetadata`, ships as audit)
+- `PostCompact`, `SubagentStop`, `StopFailure`, `InstructionsLoaded`: audit logging
+- `PreCompact`, `Stop`: workflow state snapshots
 **If removed:** Either runtime safety degrades, or hooks sprawl into a second orchestration system.
 **Safe to remove:** Only if an equivalent plugin-native guardrail replaces the specific hook behavior.
 
 ### INV-014: Workflow replay fixtures are part of the safety contract
 
 **Covers:** `plugins/cc10x/tools/workflow_replay_check.py`, `plugins/cc10x/tests/fixtures/`
-**Enforces:** PLAN / BUILD / DEBUG / REVIEW / VERIFY decision paths are regression-checked without relying on a live Claude session.
+**Enforces:** PLAN / BUILD / DEBUG / REVIEW / VERIFY / QA / TRIAGE / CODEBASE-HEALTH decision paths are regression-checked without relying on a live Claude session.
 **If removed:** Future router/prompt edits can regress core orchestration behavior without a deterministic detection path.
+**Safe to remove:** Never.
+
+### INV-028: QA phase sets keep planning read-only and preflight able to provision
+
+**Covers:** Router `## 3. Task Metadata Contract` (phase enum), `references/qa-workflow.md`, `plugins/cc10x/scripts/cc10x_qa_isolation_guard.py`, `plugins/cc10x/scripts/test_cc10x_qa_phase_invariants.py`
+**Enforces:** The QA planning phases (`qa`, `qa-research`, `qa-plan`, `qa-plan-review`, `qa-re-plan`, `qa-plan-review-2`) deny environment mutation, while `qa-preflight` is deliberately outside that set so it can probe the real environment; the router sets `phase_cursor` to `qa-preflight` before dispatching it. A quarantined path declared by the workflow is refused for reads in both directions (named path, and a search root that contains it). The guard resolves the phase from every `status_history` shape without failing open on legacy artifacts.
+**If removed:** Planning phases can provision or mutate the environment, or preflight is silently blocked from the one thing it exists to do; either failure prints nothing.
+**Safe to remove:** Never. The phase-set properties are asserted by `test_cc10x_qa_phase_invariants.py` (release-gate step `suite_qa_phase_invariants`).
+
+### INV-029: QA route law is single-sourced and enumerations agree
+
+**Covers:** Router `## 1. Intent Routing`, `## 3. Task Metadata Contract`, `## 6. Workflow Task Graphs`, `## 7. Dispatcher And Agent Prompt Contract`, `references/qa-workflow.md`, `references/workflow-artifact-and-hook-policy.md`
+**Enforces:** Every `phase:` token in `qa-workflow.md` and `plan-workflow.md` is in the phase enum; every dispatchable QA phase has exactly one dispatcher row; every `origin:` value the route law writes is in the origin enum; QA is a member of every enumeration of workflow types; every filesystem path the QA law names resolves; the QA phase-token spellings are frozen. The same suite checks that the harness PASS rule (`assertion_falsified`, `survived`, `LIVENESS_PROBES`) agrees between the harness builder and the hook-policy reference, and that the revision-pair guard on the workflow artifact rejects inconsistent `planning_review_status` writes.
+**If removed:** The route gains a phase no dispatcher row handles, an origin no enum admits, or two copies of a rule that disagree, and nothing fails until a live QA run.
+**Safe to remove:** Never. Asserted by `test_cc10x_qa_phase_invariants.py`.
+
+### INV-030: QA loops are bounded and no QA finding goes unconsumed
+
+**Covers:** `references/qa-workflow.md`, `plugins/cc10x/scripts/test_cc10x_qa_phase_invariants.py`
+**Enforces:** The QA re-dispatch loops are bounded and counted; no QA finding reaches the executor unconsumed and no Minor finding evaporates; a defect found at any QA phase reaches the sink the DEBUG offer reads; no QA phase holds a write tool without a stated product-code boundary; the measure-before-you-ask step precedes the research fan-out.
+**If removed:** QA can loop without a cap, drop findings, or let a write-capable phase edit product code.
+**Safe to remove:** Never. Asserted by `test_cc10x_qa_phase_invariants.py`.
+
+### INV-031: ORIENT is read-only and spawns no agents
+
+**Covers:** Router `## 1. Intent Routing` (priority 4 and the `### ORIENT move (read-only)` block), `## 2a. Workflow Artifact And Hook Policy`
+**Enforces:** A request to understand existing code is answered inline: no `TaskCreate`, no new workflow artifact, no phase graph, no write agent. A pre-created `workflow_type: pending` artifact is closed as `ORIENT` with `phase_cursor` `orient` and no graph. A follow-up change request is re-routed from scratch. The deliverable decides between ORIENT and REVIEW ("explain" versus "what is wrong"); only a genuine tie goes to REVIEW.
+**If removed:** "Help me understand this code" falls through to DEFAULT and spawns a write builder, or ORIENT quietly grows task state.
+**Safe to remove:** Never.
+
+### INV-032: The builder seam gate is enforced by the contract override
+
+**Covers:** `references/workflow-artifact-and-hook-policy.md` (component-builder contract fields and override), `references/build-workflow.md` (`test_seams` on each phase), `plugins/cc10x/agents/component-builder.md`, `plugins/cc10x/tools/workflow_replay_check.py`, `docs/adr/0001-enforced-seam-gate.md`
+**Enforces:** The builder contract carries `TEST_SEAMS` and `SEAM_GATE_STATUS` (`confirmed`, `proposed`, `disagreed`, `not_applicable`) and the router validates them per `build_scope`: a standard plan phase with `test_seams` is `confirmed` or `disagreed`; a standard legacy phase or a direct build is `proposed`; a trivial build is `not_applicable`. `disagreed` with empty `TEST_SEAMS` is valid only as the ambiguity block (`STATUS=FAIL` plus the exact remediation reason). The replay check rejects a builder PASS fixture without `SEAM_GATE_STATUS`.
+**If removed:** Builders stop declaring where they tested, and a rubber-stamped `disagreed` skips the gate.
+**Safe to remove:** Never.
+
+### INV-033: The git guard is default-deny for destructive git text
+
+**Covers:** `plugins/cc10x/scripts/cc10x_git_guard.py` (`classify_git_command`), `plugins/cc10x/hooks/README.md` (Git guard limits), `plugins/cc10x/scripts/test_cc10x_guards.py`
+**Enforces:** The guard denies the destructive set (push, hard reset, forced clean, forced branch delete, discard-all checkout and restore, stash clear) over the raw command text and over wrapper, chain, substitution and nested-shell forms. Destructive text is allowed only as quoted data in one strict pipeline allowance (`echo`, `printf` or `grep` family feeding plain text filters, with no redirect, group, loop or substitution); every other command gets the full pattern list. A command over 64 KB (65,536 characters) that names `git` as a word is denied as `command-too-large` before any pattern runs, and nesting past eight levels is denied. A classifier crash denies any command containing `git`. Only remote publish and branch force-delete can be unlocked, by a single-use approval token under `.cc10x/state/`; a command mixing an unlockable with a non-unlockable operation is denied as the non-unlockable one. The guard is a text heuristic that protects against accidents; the token is a plain file and is not a defended boundary.
+**If removed:** A destructive git command runs without the user's explicit finishing choice, or the quadratic legacy pattern times out and fails open.
 **Safe to remove:** Never.
 
 ## Legacy Appendix

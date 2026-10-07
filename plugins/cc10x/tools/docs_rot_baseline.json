@@ -1,12 +1,6 @@
 {
   "entries": [
     {
-      "key": "registry-banner-stale:docs/router-invariants.md",
-      "owner": "P6.T4",
-      "reason": "status banner claims a product line older than the current minor; P6.T4 rewrites the banner",
-      "message": "docs/router-invariants.md claims product line v11.0.x, older than the current minor"
-    },
-    {
       "key": "guide-agent-count",
       "owner": "P6.T9",
       "reason": "cc10x-guide states 11 agents but 14 exist; P6.T9 corrects the counts",
@@ -35,12 +29,6 @@
       "owner": "P6.T12",
       "reason": "plugin.json and marketplace.json plugins[0] keywords differ (QA missing); P6.T12 aligns them",
       "message": "plugin.json keywords differ from marketplace.json plugins[0].keywords"
-    },
-    {
-      "key": "registry-banner-stale:docs/prompt-invariants.md",
-      "owner": "P6.T4",
-      "reason": "status banner claims a product line older than the current minor; P6.T4 rewrites the banner",
-      "message": "docs/prompt-invariants.md claims product line v11.0.x, older than the current minor"
     }
   ]
 }
