@@ -1,6 +1,6 @@
 {
   "id": "multi-phase-memory-finalize",
-  "description": "Forward-looking end-state shape: memory finalizes exactly once, after the last phase, blocked only by the last phase's verifier. The exactly-once rule is the P4.T1.3 target, not a current router contract; the router does not yet forbid per-phase memory-finalize tasks.",
+  "description": "End-state shape of the multi-phase BUILD rules in build-workflow.md (Multi-phase iteration): memory finalizes exactly once, after the last phase, blocked only by the last phase's last task (its doc-sync task); each later phase's builder is blocked on the previous phase's last task (its doc-sync task when one exists, else its verifier), so the per-phase BASE is re-recorded only after the previous phase is fully done. Both rules are the current router contract.",
   "workflow_type": "BUILD",
   "starting_artifact": {
     "workflow_uuid": "wf-20261007T110000Z-multiphase",
@@ -79,12 +79,20 @@
         "builder_phase_1"
       ]
     },
+    "doc_sync_phase_1": {
+      "wf": "wf-20261007T110000Z-multiphase",
+      "phase": "build-doc-sync",
+      "status": "completed",
+      "blockedBy": [
+        "verifier_phase_1"
+      ]
+    },
     "builder_phase_2": {
       "wf": "wf-20261007T110000Z-multiphase",
       "phase": "build-implement",
       "status": "completed",
       "blockedBy": [
-        "verifier_phase_1"
+        "doc_sync_phase_1"
       ]
     },
     "verifier_phase_2": {
@@ -95,13 +103,21 @@
         "builder_phase_2"
       ]
     },
+    "doc_sync_phase_2": {
+      "wf": "wf-20261007T110000Z-multiphase",
+      "phase": "build-doc-sync",
+      "status": "completed",
+      "blockedBy": [
+        "verifier_phase_2"
+      ]
+    },
     "memory_finalize": {
       "wf": "wf-20261007T110000Z-multiphase",
       "kind": "memory",
       "phase": "memory-finalize",
       "status": "completed",
       "blockedBy": [
-        "verifier_phase_2"
+        "doc_sync_phase_2"
       ]
     }
   },

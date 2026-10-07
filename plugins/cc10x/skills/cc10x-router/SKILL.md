@@ -118,7 +118,7 @@ Every CC10X task description starts with normalized metadata lines:
 ```text
 wf:{workflow_uuid}
 kind:{workflow|agent|remfix|memory|reverify|research}
-origin:{router|component-builder|bug-investigator|code-reviewer|integration-verifier|planner|qa-harness-builder|qa-executor}
+origin:{router|component-builder|bug-investigator|code-reviewer|failure-hunter|integration-verifier|planner|qa-harness-builder|qa-executor}
 phase:{build|build-implement|build-review|build-hunt|build-verify|build-doc-sync|build-finish|debug|debug-investigate|debug-review|debug-verify|review|review-audit|plan|plan-create|plan-review-gap-1|plan-review-gap-2|plan-review-amendment|qa|qa-research|qa-plan|qa-plan-review|qa-re-plan|qa-plan-review-2|qa-preflight|qa-build|qa-review|qa-hunt|qa-execute|memory-finalize|re-review|re-hunt|re-verify|re-plan|re-qa-build|re-qa-execute|research-web|research-github|triage|codebase-health}
 plan:{path|N/A}
 scope:{ALL_ISSUES|CRITICAL_ONLY|N/A|{source}|code:{repo}}
@@ -217,7 +217,7 @@ Before dispatching to planner or builder, verify the intent contract meets three
 Router-owned interface fields:
 
 - `plan_mode`: `direct` | `execution_plan` | `decision_rfc`
-- `verification_rigor`: `standard` | `critical_path`
+- `verification_rigor`: `standard` | `critical_path`; the router sets it at workflow preparation: `standard` when no plan exists (direct BUILD, DEBUG, REVIEW, QA, and PLAN before the planner returns), and from the planner contract once a plan exists
 - `checkpoint_type`: `none` | `human_verify` | `decision` | `human_action`
 - `proof_status`: `passed` | `gaps_found` | `human_needed`
 
@@ -247,7 +247,7 @@ Router-owned interface fields:
 
 ### Parent workflow creation
 
-Use this pattern for every new workflow:
+Use this pattern for every new workflow that has a parent task (BUILD, DEBUG, REVIEW, PLAN, QA). TRIAGE and CODEBASE-HEALTH create no parent task: skip the `TaskCreate` step and write `N/A` as the `task_id` of the start event. Skip that step too when the Task tools are absent. Every other step applies:
 
 1. Generate a stable workflow UUID before `TaskCreate()`:
 
@@ -294,7 +294,7 @@ Only create child tasks after the workflow artifact exists and the read-back pas
 
 ### BUILD task graph
 
-- See `references/build-workflow.md` and apply its `### BUILD task graph` block verbatim before creating BUILD child tasks.
+- See `references/build-workflow.md` and apply its `### BUILD task graph` block verbatim, including its multi-phase exception (Memory Update is created once, with the LAST phase's graph), before creating BUILD child tasks.
 
 ### DEBUG task graph
 
@@ -348,7 +348,7 @@ Only create child tasks after the workflow artifact exists and the read-back pas
 | `codebase-health` | `cc10x:architecture-scanner` |
 | `kind:remfix` + `origin:bug-investigator` | `cc10x:bug-investigator` |
 | `build-doc-sync` | `cc10x:doc-syncer` |
-| `kind:remfix` + `origin:code-reviewer` / `origin:integration-verifier` / `origin:router` | `cc10x:component-builder` |
+| `kind:remfix` + `origin:code-reviewer` / `origin:failure-hunter` / `origin:integration-verifier` / `origin:router` | `cc10x:component-builder` |
 
 ### Per-role model-tier policy
 
@@ -470,11 +470,9 @@ When invoking `integration-verifier`, build and pass the `## Previous Agent Find
 
 ### Read-only contracts
 
-Primary signal:
+One rule, the same one `references/workflow-artifact-and-hook-policy.md` §contracts states: the `STATUS` in the fenced YAML Router Contract block decides. The line-1 envelope `CONTRACT {"s":"...","b":...,"cr":...}` and the line-2 heading are fast-path signals, and the fallback verdict signal only when the YAML block is absent; if they disagree with the YAML, the YAML decides.
 
-- Line 1: `CONTRACT {"s":"...","b":...,"cr":...}`
-
-Fallback heading on line 2:
+Fallback headings on line 2:
 
 - `## Review: Approve|Changes Requested`
 - `## Verification: PASS|FAIL`
@@ -483,12 +481,14 @@ Fallback heading on line 2:
 - `## QA Harness: PASS|FAIL|BLOCKED`
 - `## QA Execution: PASS|FAIL|BLOCKED`
 
+Finding the YAML block: `qa-researcher` carries a `### Router Contract (MACHINE-READABLE)` heading. `code-reviewer`, `failure-hunter`, `integration-verifier`, `plan-gap-reviewer`, `triage-agent` and `architecture-scanner` do not, so take the first fenced `yaml` block after the envelope and heading. `plan-gap-reviewer` emits `PLANNING_REVIEW_STATUS: PASS|FINDINGS` as its status field, not `STATUS`.
+
 Verdict extraction:
 
-1. Try the envelope on line 1.
-2. If envelope is missing or malformed, scan the first 5 lines for the heading.
+1. Read the YAML block and take the verdict from its `STATUS` (`PLANNING_REVIEW_STATUS` for `plan-gap-reviewer`).
+2. If the YAML block is absent, the envelope on line 1, else the heading in the first 5 lines, only names the verdict to re-check.
 3. Extract `CRITICAL_ISSUES` from `### Critical Issues`.
-4. If the line-1 envelope AND the first-5-lines fallback heading are both absent, or any required contract field is missing, run inline verification rather than approving.
+4. If the YAML block is absent or any required contract field is missing, whatever the envelope and heading say, run inline verification rather than approving.
 5. Detect `SELF_REMEDIATED` from task state:
    - If the task remains `in_progress` and `blockedBy` is non-empty after the agent stops, treat it as self-remediated.
 6. For integration-verifier, parse scenario accounting:
@@ -590,6 +590,7 @@ The harness is a loop engine. These concepts govern how the loop runs:
    - execute inline in the main context
    - set `phase_cursor="memory-finalize"` in the workflow artifact BEFORE any other memory-side write, and on completion append a `memory_finalized` entry to the artifact's `status_history`. This is what disengages the QA isolation guard when the workflow ends: the guard keys on the newest artifact and treats `phase_cursor` in `{memory-finalize}` or a last `status_history` event in `{memory_finalized, workflow_completed, workflow_failed}` as terminal. A QA workflow whose cursor is left on a plan phase keeps the guard engaged after the work is over, locking all later sessions — cc10x or not — out of Write, Edit, and mutating Bash, including the router's own next-workflow bootstrap
    - persist workflow artifact results + Memory Notes from the task description
+   - set `quality.convergence_state=converged` when the workflow's final gate has passed (BUILD and QA: the final phase's `phase_exit_gate`; every other route: its last gate) and memory is finalized; the advisory routes (TRIAGE, CODEBASE-HEALTH) carry `N/A`, set before the first agent dispatch
    - append `memory_finalized` to `.cc10x/workflows/{wf}.events.jsonl`
    - clean up the matching [cc10x-internal] memory_task_id entry
    - mark the memory task completed

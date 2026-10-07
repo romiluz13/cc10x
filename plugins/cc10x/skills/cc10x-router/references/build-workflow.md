@@ -51,7 +51,7 @@ The orchestration state dir (`.cc10x/`) and the workflow artifacts STAY at `CLAU
    - `Build without plan` -> continue with `plan:N/A`
    - `Re-plan first` -> switch to PLAN workflow
 6. Normalize planner phases into executable `normalized_phases` and initialize `phase_cursor` to the first incomplete phase.
-7. Persist the approved `plan_mode` and `verification_rigor` from the planner contract into the workflow artifact.
+7. Persist the approved `plan_mode` and `verification_rigor` from the planner contract into the workflow artifact; when plan path is `N/A`, set `verification_rigor` to `standard`.
 8. Every normalized phase must carry:
    - `objective`
    - `inputs`
@@ -88,7 +88,7 @@ BUILD is sequential:
 
 #### Multi-phase iteration
 
-- Each approved phase gets its own task graph (the full graph below, or the reduced graph for `build_scope=trivial`). The graph for the next phase is created only after the previous phase's `phase_exit_gate` passes and `phase_cursor` has advanced to it; its builder is blocked on the previous phase's verifier, and step 11a re-records `results.git_base_sha` first.
+- Each approved phase gets its own task graph (the full graph below, or the reduced graph for `build_scope=trivial`). The graph for the next phase is created only after the previous phase's `phase_exit_gate` passes and `phase_cursor` has advanced to it; its builder is blocked on the previous phase's LAST task (its doc-sync task when one exists, else its `integration-verifier`), so step 11a re-records `results.git_base_sha` only after phase N is fully done; the doc-syncer diffs `results.git_base_sha..HEAD`, so an earlier re-record would shrink its diff.
 - Memory Update is created once per workflow, with the LAST phase's graph, blocked on the LAST phase's `integration-verifier` (or its doc-sync task when one exists). It is never created with an earlier phase's graph and never finalized after an earlier phase, so phase 1 of a multi-phase plan never writes memory. Memory Notes extracted after each phase stay in the workflow artifact `memory_notes` until that one Memory Update persists them.
 
 **Complexity gradient (read `build_scope` from BUILD preparation step 4):**
@@ -115,6 +115,7 @@ TaskCreate({
 }) -> verifier_task_id
 TaskUpdate({ taskId: verifier_task_id, addBlockedBy: [builder_task_id] })
 
+// Memory Update: create ONLY with the LAST phase's graph (see Multi-phase iteration); omit it for earlier phases.
 TaskCreate({
   subject: "CC10X Memory Update: Persist workflow learnings",
   description: "wf:{workflow_uuid}\nkind:memory\norigin:router\nphase:memory-finalize\nplan:N/A\nscope:N/A\nreason:Persist captured Memory Notes\n\nROUTER ONLY: execute inline. Read the workflow artifact and THIS task description payload, persist to .cc10x/*.md, then remove the matching [cc10x-internal] memory_task_id line from activeContext.md ## References. Never spawn Agent() for this task.",
@@ -164,6 +165,7 @@ TaskCreate({
 }) -> doc_sync_task_id
 TaskUpdate({ taskId: doc_sync_task_id, addBlockedBy: [verifier_task_id] })
 
+// Memory Update: create ONLY with the LAST phase's graph (see Multi-phase iteration); omit it for earlier phases.
 TaskCreate({
   subject: "CC10X Memory Update: Persist workflow learnings",
   description: "wf:{workflow_uuid}\nkind:memory\norigin:router\nphase:memory-finalize\nplan:{plan_file or 'N/A'}\nscope:N/A\nreason:Persist captured Memory Notes\n\nROUTER ONLY: execute inline. Read the workflow artifact and THIS task description payload, persist to .cc10x/*.md, then remove the matching [cc10x-internal] memory_task_id line from activeContext.md ## References. Never spawn Agent() for this task.",

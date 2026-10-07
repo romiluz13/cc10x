@@ -991,6 +991,18 @@ def _terminal_keeps_gate(d):
     d["starting_artifact"]["pending_gate"] = "needs_info"
 
 
+def _builder2_blocked_by_verifier_only(d):
+    d["relevant_tasks"]["builder_phase_2"]["blockedBy"] = ["verifier_phase_1"]
+
+
+def _builder2_unblocked(d):
+    d["relevant_tasks"]["builder_phase_2"]["blockedBy"] = []
+
+
+def _memory_blocked_by_early_doc_sync_with_last(d):
+    d["relevant_tasks"]["memory_finalize"]["blockedBy"] = ["doc_sync_phase_2", "doc_sync_phase_1"]
+
+
 L1_MUTATIONS = [
     ("qa-route-happy-path.json", _drop_task("qa_hunt"), "QA route phases"),
     ("qa-route-happy-path.json", _qa_open_isolation, "plan_phase_readonly"),
@@ -1013,6 +1025,9 @@ L1_MUTATIONS = [
     ("multi-phase-memory-finalize.json", _memory_blocked_by_last_and_early_task, "blocked by an earlier-phase task"),
     ("multi-phase-memory-finalize.json", _memory_blocked_by_doc_sync_of_wrong_verifier, "last phase's verifier"),
     ("multi-phase-memory-finalize.json", _memory_blocked_by_early_doc_sync_only, "last phase's verifier"),
+    ("multi-phase-memory-finalize.json", _builder2_blocked_by_verifier_only, "must be blocked on the previous phase's last task"),
+    ("multi-phase-memory-finalize.json", _builder2_unblocked, "must be blocked on the previous phase's last task"),
+    ("multi-phase-memory-finalize.json", _memory_blocked_by_early_doc_sync_with_last, "blocked by an earlier-phase task"),
     ("multi-phase-memory-finalize.json", _legacy_phase_id_key, "phase_id"),
     ("multi-phase-memory-finalize.json", _dup_memory_finalized, "memory_finalized appears 2 times"),
     ("multi-phase-memory-finalize.json", _unfinalized_memory, "memory_finalized appears 0 times"),

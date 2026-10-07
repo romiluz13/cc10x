@@ -1358,8 +1358,8 @@ ASSERTIONS = [
         "router: malformed-output rule is checkable",
         SKILLS / "cc10x-router" / "SKILL.md",
         lambda text: "If output is too short or malformed" not in text
-        and "If the line-1 envelope AND the first-5-lines fallback heading are both absent, or any required contract field is missing" in text,
-        "inline verification triggers on concrete absence conditions, not a vibe about output length",
+        and "If the YAML block is absent or any required contract field is missing, whatever the envelope and heading say, run inline verification" in text,
+        "inline verification triggers on concrete absence conditions (YAML block or a required field), not a vibe about output length",
     ),
     # 80.5 — §11b Cycle row: checkpoint-at-3 semantics, not a hard cap
     A(
@@ -2778,6 +2778,129 @@ ASSERTIONS = [
         lambda text: re.search(r"single-pass: the agent task now, the router-inline Memory Update only at the terminal state; no parent task", text) is not None
         and re.search(r"a paused workflow has no Memory Update task yet", text) is not None,
         "SKILL.md pointers match the reference graphs",
+    ),
+    # --- P4A remediation 1, commit 3: contract direction, phase ordering, rigor, misc ---
+    A(
+        "router: read-only contracts follow one rule, the YAML STATUS decides; envelope and heading are fast-path or fallback only",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: re.search(
+            r"the `STATUS` in the fenced YAML Router Contract block decides\..{0,400}fast-path signals.{0,200}only when the YAML block is absent.{0,200}the YAML decides",
+            text,
+            re.S,
+        )
+        is not None
+        and "Primary signal:" not in text
+        and "1. Try the envelope on line 1." not in text,
+        "SKILL.md no longer says the envelope is primary while the policy says the YAML decides",
+    ),
+    A(
+        "router: YAML anchor by position for the read-only agents without the heading, and plan-gap-reviewer's own status field",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: re.search(
+            r"`code-reviewer`, `failure-hunter`, `integration-verifier`, `plan-gap-reviewer`, `triage-agent` and `architecture-scanner` do not[^\n]{0,200}first fenced `yaml` block after the envelope and heading",
+            text,
+        )
+        is not None
+        and re.search(r"`plan-gap-reviewer` emits `PLANNING_REVIEW_STATUS: PASS\|FINDINGS`[^\n]{0,40}not `STATUS`", text) is not None
+        and "If the YAML block is absent or any required contract field is missing, whatever the envelope and heading say, run inline verification rather than approving" in text,
+        "the router finds the contract block of agents that lack the heading anchor, and reads the right status field for the plan reviewer",
+    ),
+    A(
+        "build-workflow: next phase's builder is blocked on the previous phase's LAST task so the BASE is re-recorded after doc-sync",
+        ROUTER_REFS / "build-workflow.md",
+        lambda text: re.search(
+            r"its builder is blocked on the previous phase's LAST task \(its doc-sync task when one exists, else its `integration-verifier`\), so step 11a re-records `results.git_base_sha` only after phase N is fully done",
+            text,
+        )
+        is not None
+        and "the doc-syncer diffs `results.git_base_sha..HEAD`" in text,
+        "doc-sync of phase N must not race the next phase's BASE re-record",
+    ),
+    A(
+        "build-workflow: both task-graph templates say Memory Update is created only with the last phase's graph",
+        ROUTER_REFS / "build-workflow.md",
+        lambda text: text.count("// Memory Update: create ONLY with the LAST phase's graph (see Multi-phase iteration); omit it for earlier phases.") == 2,
+        "the multi-phase exception sits where the template is applied, not only in prose above",
+    ),
+    A(
+        "router: BUILD task-graph pointer carries the multi-phase memory exception",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: re.search(
+            r"`### BUILD task graph` block verbatim, including its multi-phase exception \(Memory Update is created once, with the LAST phase's graph\)",
+            text,
+        )
+        is not None,
+        "'apply verbatim' no longer contradicts the once-per-workflow memory rule",
+    ),
+    A(
+        "router: verification_rigor is set at workflow preparation, standard when no plan exists",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: re.search(
+            r"`verification_rigor`: `standard` \| `critical_path`; the router sets it at workflow preparation: `standard` when no plan exists[^\n]{0,160}planner contract once a plan exists",
+            text,
+        )
+        is not None,
+        "non-plan routes (direct BUILD, DEBUG, REVIEW, QA) no longer leave the skeleton null",
+    ),
+    A(
+        "build-workflow: step 7 sets standard rigor when plan path is N/A",
+        ROUTER_REFS / "build-workflow.md",
+        lambda text: re.search(r"7\. Persist the approved `plan_mode` and `verification_rigor` from the planner contract[^\n]{0,200}when plan path is `N/A`, set `verification_rigor` to `standard`", text) is not None,
+        "the direct-BUILD route has a setter for the field the gate requires",
+    ),
+    A(
+        "policy: verification_rigor has one setter sentence, standard until a plan exists, then the planner contract",
+        POLICY_REF,
+        lambda text: re.search(
+            r"must set explicitly `standard` or `critical_path`: `standard` at workflow preparation whenever no plan artifact exists yet[^\n]{0,200}overwritten from the planner contract once a plan exists",
+            text,
+        )
+        is not None
+        and "before dispatching planner or builder" not in text,
+        "the policy no longer asks for the planner's value before the planner has run",
+    ),
+    A(
+        "router: parent-task pattern is scoped to the routes that create a parent task",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: re.search(
+            r"Use this pattern for every new workflow that has a parent task \(BUILD, DEBUG, REVIEW, PLAN, QA\)\. TRIAGE and CODEBASE-HEALTH create no parent task[^\n]{0,200}skip the `TaskCreate` step",
+            text,
+        )
+        is not None
+        and "Use this pattern for every new workflow:" not in text,
+        "section 6 no longer contradicts the advisory routes' no-parent-task rule",
+    ),
+    A(
+        "router: convergence_state is set to converged at memory finalization, N/A for the advisory routes",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: re.search(
+            r"set `quality\.convergence_state=converged` when[^\n]{0,300}final phase's `phase_exit_gate`[^\n]{0,300}memory is finalized[^\n]{0,200}`N/A`",
+            text,
+        )
+        is not None,
+        "something writes converged and N/A; CONVERGENCE_STATES stays the value set",
+    ),
+    A(
+        "policy: event lists add inline_fallback_exited and parallel_fallback; finding_dropped is a status_history entry",
+        POLICY_REF,
+        lambda text: re.search(r"  - `inline_fallback_exited`", text) is not None
+        and re.search(r"  - `parallel_fallback`", text) is not None
+        and re.search(r"`finding_dropped` is a `status_history` entry[^\n]{0,160}not an event-log type", text) is not None,
+        "the policy event lists name what the router text actually logs",
+    ),
+    A(
+        "router: failure-hunter is a remfix origin and has a dispatcher row handled by the builder",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: re.search(r"origin:\{router\|component-builder\|bug-investigator\|code-reviewer\|failure-hunter\|", text) is not None
+        and re.search(r"`kind:remfix` \+ `origin:code-reviewer` / `origin:failure-hunter` / `origin:integration-verifier` / `origin:router` \| `cc10x:component-builder`", text) is not None,
+        "a hunter-originated REM-FIX is a valid origin and is dispatched like a reviewer-originated one",
+    ),
+    A(
+        "remediation: producers of the gate fields are named per agent and the gates fail closed until agent files declare them",
+        SKILLS / "cc10x-router" / "references" / "remediation-and-research.md",
+        lambda text: re.search(r"`AMENDED_FILES`, `STALE_SWEEP` and `RECONCILIATION_RERUN` are produced by `planner` on a `phase:qa-re-plan` return", text) is not None
+        and re.search(r"Until the agent files declare these producers[^\n]{0,200}the gates fail closed", text) is not None,
+        "H3: the producer is stated plainly for P4B, and the router does not paper over missing fields",
     ),
 ]
 

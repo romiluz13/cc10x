@@ -1466,11 +1466,26 @@ def check_multi_phase_memory_finalize(fixture: dict[str, Any]) -> None:
         f"{label}: memory_finalize must be blocked by the last phase's verifier {last_verifier} or by its doc-sync task, got {blocked_by}",
     )
     implementers = [key for key, task in tasks.items() if task["phase"] == "build-implement"]
-    earlier = set(verifiers[:-1]) | set(implementers[:-1])
+    early_doc_syncs = {
+        key
+        for key, task in tasks.items()
+        if task["phase"] == "build-doc-sync" and set(task["blockedBy"]) & set(verifiers[:-1])
+    }
+    earlier = set(verifiers[:-1]) | set(implementers[:-1]) | early_doc_syncs
     require(
         not earlier & set(blocked_by),
         f"{label}: memory_finalize is blocked by an earlier-phase task {sorted(earlier & set(blocked_by))}",
     )
+    for index in range(1, len(phases)):
+        prior_verifier = verifiers[index - 1]
+        prior_last = [
+            key for key, task in tasks.items() if task["phase"] == "build-doc-sync" and prior_verifier in task["blockedBy"]
+        ] or [prior_verifier]
+        builder_blockers = set(tasks[implementers[index]]["blockedBy"])
+        require(
+            set(prior_last) <= builder_blockers,
+            f"{label}: {implementers[index]} must be blocked on the previous phase's last task {prior_last}, got {sorted(builder_blockers)}",
+        )
 
 
 def check_two_workflow_resume(fixture: dict[str, Any]) -> None:

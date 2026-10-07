@@ -91,7 +91,7 @@ Rules:
   - `open_decisions`
 - `approved_decisions` stores decisions explicitly approved by the user or already fixed in the saved plan.
 - `plan_mode`, `verification_rigor`, and `proof_status` mirror the router-owned interface fields from workflow preparation (`direct|execution_plan|decision_rfc`, `standard|critical_path`, `passed|gaps_found|human_needed`).
-- `verification_rigor` ships as `null` in the skeleton, meaning undecided. The router must set explicitly `standard` or `critical_path` (from the planner contract when a plan exists, at workflow preparation otherwise) before dispatching planner or builder; `plan_trust_gate` fails while it is `null` and a plan artifact exists.
+- `verification_rigor` ships as `null` in the skeleton, meaning undecided. The router must set explicitly `standard` or `critical_path`: `standard` at workflow preparation whenever no plan artifact exists yet (direct BUILD, DEBUG, REVIEW, QA, and PLAN before the planner returns), overwritten from the planner contract once a plan exists. `plan_trust_gate` fails while it is `null` and a plan artifact exists.
 - `DIFF_DRIVEN_DOCS: skip` is read by the router from `activeContext.md ## Session Settings` (not from `CLAUDE.md`); when present, BUILD skips doc-sync task creation (`build-workflow.md`, opt-out check).
 - `traceability` stores requirement→phase→verification→remediation linkage arrays (`requirements`, `phases`, `verification`, `remediation`).
 - `deferred_findings` accumulates non-blocking Minor findings across phases (each entry: `source`, `phase_id`, `finding`, `severity:minor`); never consumed mid-flight, and surfaced once — at BUILD-DONE triage on the BUILD route, and on the QA route with the report, alongside the DEBUG offer, because QA has no BUILD-DONE triage to surface it at. See `build-workflow.md` §Deferred Minor findings roll-up and `qa-workflow.md` *Harness review*.
@@ -186,6 +186,9 @@ Workflow event log:
   - `result_persisted` (each agent result persisted to the artifact)
   - `memory_finalized` (Memory Update)
   - `inline_fallback_entered` (inline no-subagent mode)
+  - `inline_fallback_exited` (the router resumes subagent dispatch)
+  - `parallel_fallback` (reviewer and hunter fell back to sequential dispatch)
+- `finding_dropped` is a `status_history` entry (post-verifier finding validation, `SKILL.md` §13), not an event-log type.
 - Event types a hook appends to this log:
   - `compact_occurred` (PostCompact)
   - `artifact_mutated` (PostToolUse fallback append when the router logged no matching entry)

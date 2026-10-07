@@ -31,7 +31,8 @@ TaskCreate({
 - `COVERING_TESTS`, `TEST_COMMAND` and `TEST_OUTPUT` are produced by the remediating builder: the contract of the agent that executes a `kind:remfix` task (`component-builder`; the template body above is how the router asks for them).
 - `FINDING_DISPUTED`, `VERIFY_COMMAND` and `VERIFY_OUTPUT` are produced by the remediating builder, per disputed finding (see Verify-before-implement).
 - `DISPUTE_UPHELD` and `DISPUTE_REJECTED` are produced by `integration-verifier`, the only adjudicator.
-- The Re-review precondition gate (Section 11) consumes the first group; the router never fills these fields itself.
+- `AMENDED_FILES`, `STALE_SWEEP` and `RECONCILIATION_RERUN` are produced by `planner` on a `phase:qa-re-plan` return (see `qa-workflow.md`).
+- The Re-review precondition gate (Section 11) consumes the first group; the router never fills these fields itself. Until the agent files declare these producers (agent-file work, P4B), the gates fail closed: a REM-FIX report without the fields goes back, and a `qa-re-plan` return without the three sweep fields creates no pass-2 task.
 
 ### Circuit breaker
 
