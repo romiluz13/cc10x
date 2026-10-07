@@ -109,7 +109,7 @@ Mandatory reference read:
 - Before workflow creation, artifact mutation, hook policy changes, or resume logic that depends on artifact fields, immediately read `references/workflow-artifact-and-hook-policy.md`.
 - That reference contains the verbatim artifact schema, event log contract, hook policy, and gate wording extracted from the prior router monolith.
 
-Plugin root for commands in reference files: ${CLAUDE_PLUGIN_ROOT}; Claude Code substitutes it when this skill loads, but reference files and agent prompts reach you unsubstituted. When a reference command or agent prompt carries the plugin-root placeholder, build the absolute path from the value on this line; never run the placeholder as-is.
+Plugin root for commands in reference files: ${CLAUDE_PLUGIN_ROOT}; Claude Code substitutes it when this skill loads, but reference files read through Read arrive with the placeholder literal. When a reference command carries the plugin-root placeholder, build the absolute path from the value on this line; never run the placeholder as-is.
 
 ## 3. Task Metadata Contract
 
@@ -163,8 +163,7 @@ Resume algorithm:
 3. Read all CC10X tasks whose descriptions contain that `wf:`.
 4. Derive runnable tasks from `status` and `blockedBy`.
 5. Reconstruct the memory task as the unique pending/in_progress `kind:memory` task in the same `wf:`.
-
-Artifact-only resume (no Task tools; replaces steps 1 and 3-5): (a) list `.cc10x/workflows/*.json` and keep the artifacts whose `workflow_uuid` the user named or whose `user_request` matches the current conversation, never by modification time alone; if more than one remains, ask which; (b) read `pending_gate` first and answer it, then `phase_cursor`, `phase_status` and `results`; (c) the next step is the first step of that route's graph with no completed `results` entry, and a `partial` or `blocked` step is re-entered only through its remediation or clarification gate.
+6. Artifact-only resume (no Task tools; replaces steps 1 and 3-5): (a) list `.cc10x/workflows/*.json` and keep the artifacts whose `workflow_uuid` the user named or whose `user_request` matches the current conversation, never by modification time alone; if more than one remains, ask which; (b) read `pending_gate` first and answer it, then `phase_cursor`, `phase_status` and `results`; (c) the next step is the first step of that route's graph with no completed `results` entry, and a `partial` or `blocked` step is re-entered only through its remediation or clarification gate.
 
 Scope-decision resume:
 

@@ -15,6 +15,7 @@ Usage: python3 plugins/cc10x/tools/prompt_clause_assertions.py [--allow-no-yaml]
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
 import sys
@@ -2894,6 +2895,46 @@ ASSERTIONS = [
         lambda text: re.search(r"origin:\{router\|component-builder\|bug-investigator\|code-reviewer\|failure-hunter\|", text) is not None
         and re.search(r"`kind:remfix` \+ `origin:code-reviewer` / `origin:failure-hunter` / `origin:integration-verifier` / `origin:router` \| `cc10x:component-builder`", text) is not None,
         "a hunter-originated REM-FIX is a valid origin and is dispatched like a reviewer-originated one",
+    ),
+    # --- P4A remediation 1, commit 4: pins on the decisive clause of each behavior ---
+    A(
+        "router: ORIENT-vs-REVIEW tie-break clause, only a genuine tie goes to REVIEW",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: re.search(
+            r"\"help me understand\" is ORIENT, \"tell me what's wrong\" is REVIEW; only a genuine tie goes to REVIEW \(lower number\)\.",
+            text,
+        )
+        is not None
+        and re.search(r"genuinely holds for more than one row, the lower Priority number wins", text) is not None,
+        "the deliverable decides first; a swapped or widened tie-break would send explanation requests to REVIEW",
+    ),
+    A(
+        "router: plugin-root line says reference files read through Read arrive literal and the placeholder is never run as-is",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: any(
+            line.startswith("Plugin root for commands in reference files: ${CLAUDE_PLUGIN_ROOT};")
+            and re.search(r"reference files read through Read arrive with the placeholder literal", line) is not None
+            and re.search(r"build the absolute path from the value on this line; never run the placeholder as-is\.$", line) is not None
+            and "agent prompts" not in line
+            for line in text.splitlines()
+        ),
+        "the operative clause is pinned, and the line claims only what is certain (agent bodies are substituted by the host too)",
+    ),
+    A(
+        "policy: memory_sync_gate names the router-inline Memory Update and the memory_finalized event",
+        POLICY_REF,
+        lambda text: re.search(
+            r"- `memory_sync_gate` — the workflow may not reach final state until Memory Update ran \(router-inline, never a subagent\) and the `memory_finalized` event is in the event log",
+            text,
+        )
+        is not None,
+        "the gate's two evidence conditions and the inline-only rule are one clause; dropping either re-opens a subagent memory task",
+    ),
+    A(
+        "skeleton: verification_rigor ships null (undecided), pinned on the JSON file",
+        ROUTER_REFS / "workflow-artifact.skeleton.json",
+        lambda text: json.loads(text).get("verification_rigor", "missing") is None,
+        "a pre-filled default makes plan_trust_gate's must-be-explicit check unable to fire",
     ),
     A(
         "remediation: producers of the gate fields are named per agent and the gates fail closed until agent files declare them",
