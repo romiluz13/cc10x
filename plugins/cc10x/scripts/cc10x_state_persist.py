@@ -56,11 +56,12 @@ def main() -> int:
         "precompact-state.json" if event_type == "precompact" else "stop-state.json"
     )
 
+    save_error = None
     try:
         out = state_root() / output_file
         out.write_text(json.dumps(snapshot, ensure_ascii=True), encoding="utf-8")
-    except Exception:
-        pass  # never fail the hook
+    except Exception as exc:
+        save_error = exc.__class__.__name__  # never fail the hook, but say so
 
     log_event(
         f"plugin_{event_type}_persist",
@@ -69,9 +70,9 @@ def main() -> int:
             "phase": payload.get("phase_cursor") or "none",
             "task_id": None,
             "agent": "hook",
-            "event": f"{event_type}_state_saved",
-            "decision": "saved",
-            "reason": f"session_{event_type}",
+            "event": f"{event_type}_state_{'saved' if save_error is None else 'save_failed'}",
+            "decision": "saved" if save_error is None else "failed",
+            "reason": f"session_{event_type}" if save_error is None else save_error,
         },
     )
     return 0

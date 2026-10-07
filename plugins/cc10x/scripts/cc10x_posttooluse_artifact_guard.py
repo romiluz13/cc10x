@@ -107,7 +107,6 @@ def bash_writes_into_workflows(command: str) -> bool:
 
 def main() -> int:
     data = load_input()
-    mode = load_mode()
     tool_input = data.get("tool_input") or {}
     if data.get("tool_name") == "Bash":
         command = tool_input.get("command")
@@ -126,6 +125,7 @@ def main() -> int:
                 },
             )
         return 0
+    mode = load_mode()
     file_path = tool_input.get("file_path")
     if not file_path:
         return 0

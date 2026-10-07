@@ -26,7 +26,8 @@ def main() -> int:
         return 0
 
     pending = payload.get("pending_gate") or "none"
-    phase_status = payload.get("phase_status") or {}
+    phase_status = payload.get("phase_status")
+    phase_status = phase_status if isinstance(phase_status, dict) else {}
     incomplete = [
         name
         for name, status in phase_status.items()
@@ -44,7 +45,8 @@ def main() -> int:
         n = len(lanes) if isinstance(lanes, (list, dict)) else (1 if lanes else 0)
         research_field = f"qa_research_lanes={n or 'none'}"
     else:
-        overall_quality = (payload.get("research_quality") or {}).get("overall", "none")
+        quality = payload.get("research_quality")
+        overall_quality = quality.get("overall", "none") if isinstance(quality, dict) else "none"
         research_field = f"research_quality={overall_quality}"
     workflow_uuid = payload.get("workflow_uuid") or payload.get("workflow_id")
     message = (

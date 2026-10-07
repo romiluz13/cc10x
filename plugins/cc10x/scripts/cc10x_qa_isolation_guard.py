@@ -489,7 +489,8 @@ def main() -> int:
     tool_input = data.get("tool_input") or {}
 
     workflow = latest_workflow_payload()
-    if (workflow.get("workflow_type") or "").upper() != "QA":
+    workflow_type = workflow.get("workflow_type")
+    if not isinstance(workflow_type, str) or workflow_type.upper() != "QA":
         return 0
 
     # The same fail-open logic as status_history below applies to the config

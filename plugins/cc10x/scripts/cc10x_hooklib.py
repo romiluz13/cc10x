@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -171,6 +172,27 @@ def _read_mode_layer(path: Path) -> Any:
         return _MODE_CORRUPT
 
 
+_reported_mode_problems: set[tuple[str, ...]] = set()
+
+
+def _report_mode_problem(problem: dict[str, str]) -> None:
+    """Log one invalid_hook_mode event per distinct problem and project."""
+    key = (str(logs_dir()), *(f"{k}={v}" for k, v in sorted(problem.items())))
+    if key in _reported_mode_problems:
+        return
+    _reported_mode_problems.add(key)
+    log_event(
+        "invalid_hook_mode",
+        {
+            **problem,
+            "task_id": None,
+            "agent": "hook",
+            "event": "invalid_hook_mode",
+            "decision": "fallback",
+        },
+    )
+
+
 def load_mode() -> dict[str, str]:
     """Shipped config/hook-mode.json, then the user override at
     ${CLAUDE_PLUGIN_DATA}/hook-mode.json (survives plugin updates). Never
@@ -181,19 +203,13 @@ def load_mode() -> dict[str, str]:
         if data_dir:
             layers.append(("override", _read_mode_layer(Path(data_dir) / "hook-mode.json")))
         modes, problems = resolve_hook_mode(layers)
-    except Exception:
+    except Exception as exc:
+        _report_mode_problem(
+            {"source": "load", "reason": f"unexpected:{exc.__class__.__name__}"}
+        )
         return dict(HOOK_MODE_DEFAULTS)
     for problem in problems:
-        log_event(
-            "invalid_hook_mode",
-            {
-                **problem,
-                "task_id": None,
-                "agent": "hook",
-                "event": "invalid_hook_mode",
-                "decision": "fallback",
-            },
-        )
+        _report_mode_problem(problem)
     return modes
 
 
@@ -352,7 +368,19 @@ def read_live_workflow_state() -> tuple[dict[str, Any], Path | None, str | None]
     return _read_artifact(live_workflow_file())
 
 
+SAFE_WORKFLOW_ID = re.compile(r"wf-[A-Za-z0-9._-]+")
+
+
+def safe_workflow_id(value: Any) -> str | None:
+    """The id as a file-name stem, or None: ids read from artifact content
+    must not carry path separators into an events-log path."""
+    if isinstance(value, str) and SAFE_WORKFLOW_ID.fullmatch(value):
+        return value
+    return None
+
+
 def workflow_artifact_path(workflow_id: str | None) -> Path | None:
+    workflow_id = safe_workflow_id(workflow_id)
     if not workflow_id:
         return None
     path = workflows_dir() / f"{workflow_id}.json"
@@ -362,6 +390,7 @@ def workflow_artifact_path(workflow_id: str | None) -> Path | None:
 
 
 def workflow_event_log_path(workflow_id: str | None) -> Path | None:
+    workflow_id = safe_workflow_id(workflow_id)
     if not workflow_id:
         return None
     path = workflows_dir() / f"{workflow_id}.events.jsonl"
@@ -397,6 +426,7 @@ def workflow_event_log_append(workflow_id: str | None, event: dict[str, Any]) ->
 
     Returns True on success, False on failure. Never raises.
     """
+    workflow_id = safe_workflow_id(workflow_id)
     if not workflow_id:
         return False
     path = workflows_dir() / f"{workflow_id}.events.jsonl"
@@ -421,7 +451,9 @@ def workflow_event_log_count(workflow_id: str | None) -> int:
 
 
 def workflow_event_log_exists(payload: dict[str, Any], artifact_path: Path) -> bool:
-    workflow_uuid = payload.get("workflow_uuid") or payload.get("workflow_id")
+    workflow_uuid = safe_workflow_id(
+        payload.get("workflow_uuid") or payload.get("workflow_id")
+    )
     if not workflow_uuid:
         workflow_uuid = artifact_path.stem
     event_log = workflows_dir() / f"{workflow_uuid}.events.jsonl"

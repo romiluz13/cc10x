@@ -56,18 +56,32 @@ Each hook in `hooks.json` appears exactly once in this table (a validator in
   message to the model after the file is already on disk; the malformed artifact
   stays until the model repairs it, and the message says to repair it now.
 - **Fail-open by design:** a hook that crashes, times out or cannot parse its
-  input lets the tool call proceed. The logs are the evidence trail.
+  input lets the tool call proceed. The hooks log the decisions they make and
+  the failures they notice (an unreadable artifact, an invalid mode file, a
+  failed snapshot write, a classifier error), but a hook that dies before it
+  logs leaves only a trace in Claude Code's debug output.
 
 ### Git guard limits
 
 - It is a **text heuristic**, not a shell parser. It reads wrapper prefixes
   (`env`, `sudo`, `xargs`, `nohup`, ...), `git -C`, `git -c alias.x=...`,
-  `bash -c`, `eval`, `$(...)`, backticks, chains and newlines, and treats a quoted
-  argument of `echo`, `grep` or `printf` as data. A command whose text hides the
-  git call (variables, a script written and then run, `git config` aliases set in
-  an earlier command) is not seen.
-- Destructive text inside other quoted arguments (a commit message, a `gh` body)
-  is still denied; only `echo`, `grep` and `printf` data is exempt.
+  `bash -c`, `eval`, `$(...)`, backticks, chains and newlines. Shell comments
+  (`# ...` at a word start) and `$'...'` quoting are read the way the shell reads
+  them, so a quote character in a comment cannot hide the next line.
+- A quoted argument of `echo`, `grep` or `printf` is data only while its whole
+  pipeline is text filters (`grep`, `cat`, `head`, `tail`, `wc`, `sort`, `uniq`,
+  `tr`, `cut`) with no output redirect. Pipe-fed executors (`xargs`, `sh`,
+  `source`, `while read`, `python -c`), a redirect to a file, `<<<`, and process
+  substitution (`bash <(echo ...)`) are denied. Quoted text with a newline is
+  read as commands.
+- A script written to a file and run later is not seen (the write is not a git
+  command). A command whose text hides the git call (variables, `$IFS`, hex
+  escapes, `git config` aliases set in an earlier command) is not seen either.
+- Destructive text inside other quoted arguments (a commit message, a `gh` body,
+  `ssh host '...'`) is still denied; only `echo`, `grep` and `printf` data is
+  exempt.
+- If the classifier itself crashes, the guard logs `git_guard_classifier_failed`
+  and denies any command whose text contains `git`; other commands pass.
 - Only remote publish and branch force-delete can be unlocked, by a single-use
   approval token the router writes after the user's explicit finishing choice. The
   token is a plain file under `.cc10x/state/`: **a model that can write files can
@@ -79,9 +93,14 @@ Each hook in `hooks.json` appears exactly once in this table (a validator in
 ### SessionStart
 
 The matcher covers every documented source (`startup`, `resume`, `clear`,
-`compact`, `fork`). Resume context comes from the newest workflow artifact whose
-last `status_history` event is not `memory_finalized`, `workflow_completed` or
-`workflow_failed`; with only finished workflows nothing is injected.
+`compact`, `fork`). Resume context comes from the newest workflow artifact that is
+not finished (last `status_history` event or newest router-written events-log
+record is `memory_finalized`, `workflow_completed` or `workflow_failed`, or the
+`memory-finalize` phase is completed); with only finished workflows nothing is
+injected. When the newest artifact cannot be parsed, SessionStart says so in one
+line and logs `workflow_artifact_unreadable`. The QA isolation guard does not use
+this selection: the newest artifact decides, so an abandoned older QA workflow is
+never revived by a later workflow finishing.
 
 ## Internal Publication Audit
 

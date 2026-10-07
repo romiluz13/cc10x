@@ -17,20 +17,29 @@ from cc10x_hooklib import load_input, log_event
 TRANSCRIPT_TAIL_BYTES = 1_048_576
 
 
-def read_handback_report(transcript_path: str) -> str | None:
+def _text(value: object) -> str:
+    return value if isinstance(value, str) else ""
+
+
+def read_handback_report(transcript_path: str) -> tuple[str | None, str]:
     """The report a subagent delivered through SubagentHandback, read from the
-    tail of its own transcript. With that tool `last_assistant_message` holds
-    only the closing text, not the report (hooks reference, SubagentStop)."""
+    tail of its own transcript, and how the read went (`ok`, `unreadable`,
+    `truncated`: the file is longer than the tail and the report was not in
+    it). With that tool `last_assistant_message` holds only the closing text,
+    not the report (hooks reference, SubagentStop)."""
     if not transcript_path:
-        return None
+        return None, "ok"
     try:
         path = Path(transcript_path)
+        size = path.stat().st_size
         with path.open("rb") as fh:
-            fh.seek(max(0, path.stat().st_size - TRANSCRIPT_TAIL_BYTES))
+            fh.seek(max(0, size - TRANSCRIPT_TAIL_BYTES))
             tail = fh.read().decode("utf-8", errors="ignore")
     except OSError:
-        return None
-    for line in reversed(tail.splitlines()):
+        return None, "unreadable"
+    # Split on "\n" only: str.splitlines also breaks on U+2028, U+2029 and
+    # U+0085, which JSON string content may carry unescaped.
+    for line in reversed(tail.split("\n")):
         try:
             content = json.loads(line)["message"]["content"]
         except (ValueError, KeyError, TypeError):
@@ -43,22 +52,25 @@ def read_handback_report(transcript_path: str) -> str | None:
                 and block.get("type") == "tool_use"
                 and block.get("name") == "SubagentHandback"
             ):
-                message = (block.get("input") or {}).get("message")
+                block_input = block.get("input")
+                message = block_input.get("message") if isinstance(block_input, dict) else None
                 if isinstance(message, str):
-                    return message
-    return None
+                    return message, "ok"
+    return None, "truncated" if size > TRANSCRIPT_TAIL_BYTES else "ok"
 
 
 def main() -> int:
     event_name = sys.argv[1] if len(sys.argv) > 1 else "unknown"
     data = load_input()
+    if not isinstance(data, dict):
+        data = {}
 
     if event_name == "postcompact":
         from cc10x_hooklib import latest_workflow_payload, workflow_event_log_append
         from datetime import datetime, timezone
 
-        trigger = data.get("trigger", "auto")
-        summary = data.get("compact_summary", "") or ""
+        trigger = _text(data.get("trigger")) or "auto"
+        summary = _text(data.get("compact_summary"))
         payload = latest_workflow_payload()
         if not payload:
             return 0
@@ -76,7 +88,7 @@ def main() -> int:
             "reason": trigger,
             "details": summary[:200] if summary else None,
         }
-        workflow_event_log_append(wf, event)
+        appended = workflow_event_log_append(wf, event)
         log_event(
             "plugin_postcompact_context",
             {
@@ -86,18 +98,18 @@ def main() -> int:
                 "task_id": None,
                 "agent": "hook",
                 "event": "compact_occurred",
-                "decision": "logged",
+                "decision": "logged" if appended else "append_failed",
                 "reason": trigger,
             },
         )
         return 0
 
     if event_name == "subagent_stop":
-        agent_type = data.get("agent_type", "") or ""
-        agent_id = data.get("agent_id", "") or ""
-        agent_transcript_path = data.get("agent_transcript_path", "") or ""
+        agent_type = _text(data.get("agent_type"))
+        agent_id = _text(data.get("agent_id"))
+        agent_transcript_path = _text(data.get("agent_transcript_path"))
         stop_hook_active = data.get("stop_hook_active", False)
-        message = data.get("last_assistant_message", "") or ""
+        message = _text(data.get("last_assistant_message"))
         if not agent_type.startswith("cc10x:"):
             log_event(
                 "plugin_subagent_stop_audit",
@@ -114,14 +126,21 @@ def main() -> int:
             return 0
         report = message
         report_source = "last_assistant_message"
+        transcript_status = "ok"
         if "CONTRACT {" not in report:
-            handback = read_handback_report(agent_transcript_path)
+            handback, transcript_status = read_handback_report(agent_transcript_path)
             if handback is not None:
                 report = handback
                 report_source = "handback_report"
             elif not message:
                 report_source = "none"
         contract_found = "CONTRACT {" in report
+        if contract_found:
+            reason = "contract_present"
+        elif transcript_status != "ok":
+            reason = f"transcript_{transcript_status}"
+        else:
+            reason = "contract_missing"
         log_event(
             "plugin_subagent_stop_audit",
             {
@@ -136,7 +155,7 @@ def main() -> int:
                 "agent": agent_type,
                 "event": "subagent_stop",
                 "decision": "logged",
-                "reason": "contract_present" if contract_found else "contract_missing",
+                "reason": reason,
             },
         )
         return 0

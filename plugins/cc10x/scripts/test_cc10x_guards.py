@@ -1550,7 +1550,6 @@ def test_event_logger_reports_a_miss_when_no_handback_report_exists(tmp_path):
     )
     cases = [
         {"agent_transcript_path": str(transcript)},
-        {"agent_transcript_path": str(tmp_path / "missing.jsonl")},
         {"agent_transcript_path": ""},
         {},
     ]
@@ -1801,12 +1800,20 @@ def test_load_mode_never_raises_and_always_returns_the_three_keys(tmp_path):
     with env_patch(CLAUDE_PLUGIN_ROOT=str(unreadable), CLAUDE_PLUGIN_DATA=None):
         assert load_hooklib().load_mode() == DEFAULT_MODES
     # An unreadable data dir: Path.exists() raises PermissionError on Python 3.9.
+    # The override carries a real value, so honoring it and ignoring it give
+    # different answers: readable -> audit, unreadable -> the block default.
     locked = tmp_path / "locked"
     locked.mkdir()
-    (locked / "hook-mode.json").write_text("{}")
+    (locked / "hook-mode.json").write_text(json.dumps({"artifactIntegrity": "audit"}))
+    plain = tmp_path / "plain-root"
+    (plain / "config").mkdir(parents=True)
+    with env_patch(CLAUDE_PLUGIN_ROOT=str(plain), CLAUDE_PLUGIN_DATA=str(locked)):
+        assert load_hooklib().load_mode()["artifactIntegrity"] == "audit"
+    if hasattr(os, "geteuid") and os.geteuid() == 0:
+        return  # root reads a mode-0 directory; the unreadable half is meaningless
     locked.chmod(0)
     try:
-        with env_patch(CLAUDE_PLUGIN_ROOT=str(unreadable), CLAUDE_PLUGIN_DATA=str(locked)):
+        with env_patch(CLAUDE_PLUGIN_ROOT=str(plain), CLAUDE_PLUGIN_DATA=str(locked)):
             assert load_hooklib().load_mode() == DEFAULT_MODES
     finally:
         locked.chmod(0o700)
@@ -2074,6 +2081,258 @@ def test_an_unreadable_newest_artifact_is_logged_by_every_consumer(tmp_path):
         new = hook_log_lines(tmp_path)[before:]
         assert any(e["event"] == "workflow_artifact_unreadable" for e in new), script
 
+
+
+# --- P5 remediation 1, group C: visibility ------------------------------------
+
+
+def test_sessionstart_survives_odd_artifact_field_shapes(tmp_path):
+    shapes = (
+        {"phase_status": ["a", "b"]},
+        {"phase_status": "done"},
+        {"research_quality": "high"},
+        {"research_quality": 5, "phase_status": None},
+    )
+    for index, fields in enumerate(shapes):
+        proj = tmp_path / f"p{index}"
+        write_artifact(proj, "wf-shape", **fields)
+        r = run_guard("cc10x_sessionstart_context.py", {"source": "resume"}, proj)
+        assert r.returncode == 0 and r.stderr == "", (fields, r.stderr[-200:])
+        context = json.loads(r.stdout)["hookSpecificOutput"]["additionalContext"]
+        assert "wf=wf-shape" in context, fields
+
+
+def test_qa_guard_survives_a_non_string_workflow_type(tmp_path):
+    for value in (["QA"], 5, {"a": 1}):
+        proj = tmp_path / f"p{abs(hash(str(value)))}"
+        write_artifact(proj, "wf-odd", workflow_type=value)
+        r = run_guard(
+            "cc10x_qa_isolation_guard.py",
+            {"tool_name": "Bash", "tool_input": {"command": "mkdir x"}},
+            proj,
+        )
+        assert r.returncode == 0 and r.stderr == "" and r.stdout == "", (value, r.stderr[-200:])
+
+
+def test_event_logger_survives_odd_payload_shapes(tmp_path):
+    (tmp_path / ".cc10x").mkdir()
+    for argv in (["subagent_stop"], ["postcompact"], ["instructions_loaded"], ["stop_failure"]):
+        for payload in ([], "text", 5, None):
+            r = run_guard("cc10x_event_logger.py", payload, tmp_path, argv=argv)
+            assert r.returncode == 0 and r.stderr == "", (argv, payload, r.stderr[-200:])
+    odd = [
+        {"agent_type": 5},
+        {"agent_type": ["cc10x:planner"]},
+        {"agent_type": "cc10x:planner", "last_assistant_message": ["x"], "agent_transcript_path": 7},
+        {"agent_type": "cc10x:planner", "agent_id": {"a": 1}, "agent_transcript_path": ["p"]},
+    ]
+    for payload in odd:
+        r = run_guard("cc10x_event_logger.py", payload, tmp_path, argv=["subagent_stop"])
+        assert r.returncode == 0 and r.stderr == "", (payload, r.stderr[-200:])
+
+
+def test_event_logger_skips_a_handback_block_with_a_non_object_input(tmp_path):
+    bad = handback_entry("x")
+    bad["message"]["content"][0]["input"] = ["not", "an", "object"]
+    transcript = write_agent_transcript(
+        tmp_path / "agent.jsonl", handback_entry(CONTRACT_REPORT), bad
+    )
+    e = subagent_stop_event(
+        tmp_path,
+        {
+            "agent_type": "cc10x:planner",
+            "agent_transcript_path": str(transcript),
+            "last_assistant_message": "",
+        },
+    )
+    assert e["contract_found"] is True
+
+
+def test_state_persist_logs_failed_not_saved_when_the_snapshot_cannot_be_written(tmp_path):
+    write_artifact(tmp_path, "wf-aaa")
+    (tmp_path / ".cc10x" / "stop-state.json").mkdir()
+    r = run_guard("cc10x_state_persist.py", {}, tmp_path, argv=["stop"])
+    assert r.returncode == 0
+    events = [e for e in hook_log_lines(tmp_path) if e["event"].startswith("stop_state_")]
+    assert [e["decision"] for e in events] == ["failed"]
+    assert events[0]["event"] == "stop_state_save_failed"
+    assert events[0]["reason"] == "IsADirectoryError"
+    # The healthy path still reports saved.
+    (tmp_path / ".cc10x" / "stop-state.json").rmdir()
+    run_guard("cc10x_state_persist.py", {}, tmp_path, argv=["stop"])
+    last = [e for e in hook_log_lines(tmp_path) if e["event"].startswith("stop_state_")][-1]
+    assert (last["event"], last["decision"]) == ("stop_state_saved", "saved")
+
+
+def test_postcompact_logs_append_failed_when_the_workflow_event_cannot_be_written(tmp_path):
+    write_artifact(tmp_path, "wf-aaa")
+    events_log = tmp_path / ".cc10x" / "workflows" / "wf-aaa.events.jsonl"
+    events_log.unlink()
+    events_log.mkdir()
+    r = run_guard(
+        "cc10x_event_logger.py", {"trigger": "auto"}, tmp_path, argv=["postcompact"]
+    )
+    assert r.returncode == 0
+    (e,) = [e for e in hook_log_lines(tmp_path) if e["event"] == "compact_occurred"]
+    assert e["decision"] == "append_failed"
+
+
+def test_event_logger_reads_a_handback_with_a_unicode_line_separator(tmp_path):
+    for char in (" ", " ", "\u0085"):
+        proj = tmp_path / f"p{ord(char)}"
+        transcript = proj / "agent.jsonl"
+        proj.mkdir()
+        entry = handback_entry(CONTRACT_REPORT + "\nnote" + char + "more")
+        transcript.write_bytes((json.dumps(entry, ensure_ascii=False) + "\n").encode("utf-8"))
+        e = subagent_stop_event(
+            proj,
+            {
+                "agent_type": "cc10x:planner",
+                "agent_transcript_path": str(transcript),
+                "last_assistant_message": "",
+            },
+        )
+        assert e["contract_found"] is True, repr(char)
+        assert e["report_source"] == "handback_report", repr(char)
+
+
+def test_event_logger_tells_an_unreadable_or_truncated_transcript_from_a_missing_contract(tmp_path):
+    e = subagent_stop_event(
+        tmp_path,
+        {
+            "agent_type": "cc10x:planner",
+            "agent_transcript_path": str(tmp_path / "missing.jsonl"),
+            "last_assistant_message": "",
+        },
+    )
+    assert (e["contract_found"], e["reason"]) == (False, "transcript_unreadable")
+    (tmp_path / ".cc10x" / "cc10x-hook-events.log").unlink()
+    transcript = tmp_path / "agent.jsonl"
+    transcript.write_text(
+        json.dumps(handback_entry(CONTRACT_REPORT)) + "\n" + "x" * 1_200_000 + "\n"
+    )
+    e = subagent_stop_event(
+        tmp_path,
+        {
+            "agent_type": "cc10x:planner",
+            "agent_transcript_path": str(transcript),
+            "last_assistant_message": "",
+        },
+    )
+    assert (e["contract_found"], e["reason"]) == (False, "transcript_truncated")
+    (tmp_path / ".cc10x" / "cc10x-hook-events.log").unlink()
+    plain = write_agent_transcript(tmp_path / "plain.jsonl", text_entry("no envelope"))
+    e = subagent_stop_event(
+        tmp_path,
+        {
+            "agent_type": "cc10x:planner",
+            "agent_transcript_path": str(plain),
+            "last_assistant_message": "",
+        },
+    )
+    assert (e["contract_found"], e["reason"]) == (False, "contract_missing")
+
+
+def invalid_mode_events(project: Path) -> list[dict]:
+    return [e for e in hook_log_lines(project) if e["event"] == "invalid_hook_mode"]
+
+
+def test_load_mode_logs_an_unexpected_failure_once_per_process(tmp_path):
+    from unittest import mock
+
+    hooklib = load_hooklib()
+    (tmp_path / ".cc10x").mkdir()
+    with env_patch(CLAUDE_PROJECT_DIR=str(tmp_path)):
+        with mock.patch.object(hooklib, "_read_mode_layer", side_effect=RuntimeError("boom")):
+            assert hooklib.load_mode() == DEFAULT_MODES
+            assert hooklib.load_mode() == DEFAULT_MODES
+    events = invalid_mode_events(tmp_path)
+    assert len(events) == 1
+    assert events[0]["reason"] == "unexpected:RuntimeError"
+
+
+def test_load_mode_logs_the_same_invalid_file_once_per_process(tmp_path):
+    hooklib = load_hooklib()
+    root = tmp_path / "plugin-root"
+    (root / "config").mkdir(parents=True)
+    (root / "config" / "hook-mode.json").write_text("{not json")
+    proj = tmp_path / "proj"
+    (proj / ".cc10x").mkdir(parents=True)
+    with env_patch(
+        CLAUDE_PLUGIN_ROOT=str(root), CLAUDE_PLUGIN_DATA=None, CLAUDE_PROJECT_DIR=str(proj)
+    ):
+        hooklib.load_mode()
+        hooklib.load_mode()
+    assert len(invalid_mode_events(proj)) == 1
+
+
+def test_artifact_guard_does_not_load_the_mode_for_bash_calls(tmp_path):
+    (tmp_path / ".cc10x").mkdir()
+    data = tmp_path / "plugin-data"
+    data.mkdir()
+    (data / "hook-mode.json").write_text('{"artifactIntegrity": "Audit"}')
+    env = {"CLAUDE_PLUGIN_DATA": str(data)}
+    for _ in range(3):
+        r = run_guard(
+            "cc10x_posttooluse_artifact_guard.py",
+            {"tool_name": "Bash", "tool_input": {"command": "ls"}},
+            tmp_path,
+            extra_env=env,
+        )
+        assert r.returncode == 0
+    assert invalid_mode_events(tmp_path) == []
+    r = run_guard(
+        "cc10x_posttooluse_artifact_guard.py",
+        {"tool_name": "Write", "tool_input": {"file_path": str(tmp_path / "a.txt")}},
+        tmp_path,
+        extra_env=env,
+    )
+    assert len(invalid_mode_events(tmp_path)) == 1
+
+
+def test_a_workflow_id_from_artifact_content_cannot_escape_the_workflows_dir(tmp_path):
+    escape = tmp_path / "escape.events.jsonl"
+    escape.write_text("")
+    path = write_artifact(tmp_path, "wf-aaa", workflow_uuid="../../escape", workflow_id="../../escape")
+    # Posttool auto-append and postcompact both build an events path from the id.
+    r = run_guard(
+        "cc10x_posttooluse_artifact_guard.py",
+        {"tool_name": "Write", "tool_input": {"file_path": str(path)}},
+        tmp_path,
+    )
+    assert r.returncode in (0, 2)
+    r = run_guard("cc10x_event_logger.py", {"trigger": "auto"}, tmp_path, argv=["postcompact"])
+    assert r.returncode == 0
+    assert escape.read_text() == ""
+    assert sorted(p.name for p in tmp_path.iterdir()) == [".cc10x", "escape.events.jsonl"]
+    assert not list((tmp_path / ".cc10x").glob("escape*"))
+
+
+
+def test_hooks_readme_lists_the_git_guard_limits_and_does_not_oversell_the_logs(tmp_path):
+    readme = (PLUGIN_ROOT / "hooks" / "README.md").read_text()
+    section = readme.split("### Git guard limits", 1)[1].split("###", 1)[0]
+    for needle in (
+        "comment",
+        "Pipe-fed executors",
+        "script written to a file",
+        "Destructive text inside other quoted arguments",
+        "`git_guard_classifier_failed`",
+        "a model that can write files can",
+    ):
+        assert needle in section, needle
+    assert "evidence trail" not in readme
+
+
+def test_an_unsafe_workflow_id_checks_the_events_log_by_the_artifact_name(tmp_path):
+    path = write_artifact(tmp_path, "wf-aaa", workflow_uuid="../../nowhere", workflow_id="../../nowhere")
+    r = run_guard(
+        "cc10x_posttooluse_artifact_guard.py",
+        {"tool_name": "Write", "tool_input": {"file_path": str(path)}},
+        tmp_path,
+    )
+    assert r.returncode == 0, r.stderr
+    assert "missing-event-log" not in " ".join(e["reason"] for e in hook_log_lines(tmp_path))
 
 
 # --- cc10x_git_guard.py: classify_git_command (P5.T4, finding C5) -------------
