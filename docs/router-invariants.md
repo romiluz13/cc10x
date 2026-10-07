@@ -1,6 +1,6 @@
 # CC10x Router Behavioral Invariant Registry
 
-> **Status note:** Aligned to the `v12.10.0` remediation tree on 2026-10-07 (last released line `v12.9.1`), against `plugins/cc10x/skills/cc10x-router/SKILL.md`, `plugins/cc10x/skills/cc10x-router/references/*.md` and `plugins/cc10x/hooks/hooks.json`. Release history lives in `CHANGELOG.md`. Invariants for the QA route, ORIENT, the seam gate and the git guard are registered below.
+> **Status note:** Aligned to the `v12.10.0` product line as released on 2026-10-07 (v12.10.0; the release before it was v12.9.1), against `plugins/cc10x/skills/cc10x-router/SKILL.md`, `plugins/cc10x/skills/cc10x-router/references/*.md` and `plugins/cc10x/hooks/hooks.json`. Release history lives in `CHANGELOG.md`. Invariants for the QA route, ORIENT, the seam gate and the git guard are registered below.
 
 ## Purpose
 

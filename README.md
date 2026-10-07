@@ -21,7 +21,7 @@
   Fail-closed gates &nbsp;·&nbsp; survives compaction &nbsp;·&nbsp; dispatch-by-reference &nbsp;·&nbsp; test honesty gates &nbsp;·&nbsp; anti-anchored review
 </p>
 
-**Current version:** 12.9.1
+**Current version:** 12.10.0
 
 ---
 
@@ -844,10 +844,11 @@ If you need to understand or evolve the harness, start there after reading `cc10
 ## Version History
 
 <details>
-<summary><strong>Release history (v5.3 → v12.9.1)</strong></summary>
+<summary><strong>Release history (v5.3 → v12.10.0)</strong></summary>
 
 | Version | Highlights |
 | --------- | ------------ |
+| **v12.10.0** | Remediation release: agent-common is now delivered to 13 agents, Python 3.9 floor with a preflight hook, rewritten git guard, router consistency fixes, docs reset. See the CHANGELOG entry. |
 | **v12.9.1** | Instruction-layer harmony: the install template in this README is byte-identical to the repo's own CLAUDE.md routing block. |
 | **v12.9.0** | QA route: a sixth route for when testing the code is the deliverable (`qa-researcher`, `qa-harness-builder`, `qa-executor`, `qa-strategy`), plus the plan-review, debug-handoff and hook changes it depends on. |
 | **v12.8.2** | Evidence-discipline wording imports from pstack; wording only, no routing, gate, hook or contract changes. |
@@ -961,5 +962,5 @@ MIT License
 ---
 
 <p align="center">
-  <strong>cc10x v12.9.1</strong>
+  <strong>cc10x v12.10.0</strong>
 </p>

@@ -1,6 +1,6 @@
 # CC10X Agent Contract Registry
 
-> **Status note:** Aligned to the `v12.10.0` remediation tree on 2026-10-07 (last released line `v12.9.1`); one row per agent in `plugins/cc10x/agents/` (14), and `harness_audit.py` fails when a row drifts from disk.
+> **Status note:** Aligned to the `v12.10.0` product line as released on 2026-10-07 (v12.10.0; the release before it was v12.9.1); one row per agent in `plugins/cc10x/agents/` (14), and `harness_audit.py` fails when a row drifts from disk.
 > **Purpose:** Quick contract map for maintainers. It summarizes what the agent prompts enforce; the prompts are the source of truth and this file adds no behavior.
 
 ## Return Format

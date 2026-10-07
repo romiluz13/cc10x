@@ -1,6 +1,6 @@
 # CC10X Prompt Surface Inventory
 
-> **Status note:** Aligned to the `v12.10.0` remediation tree on 2026-10-07 (last released line `v12.9.1`). One entry per agent in `plugins/cc10x/agents/` and per skill in `plugins/cc10x/skills/`; `harness_audit.py` fails when an entry, a path or a name drifts from disk.
+> **Status note:** Aligned to the `v12.10.0` product line as released on 2026-10-07 (v12.10.0; the release before it was v12.9.1). One entry per agent in `plugins/cc10x/agents/` and per skill in `plugins/cc10x/skills/`; `harness_audit.py` fails when an entry, a path or a name drifts from disk.
 
 ## Purpose
 

@@ -1,6 +1,6 @@
 # CC10X Prompt Behavioral Invariant Registry
 
-> **Status note:** Aligned to the `v12.10.0` remediation tree on 2026-10-07 (last released line `v12.9.1`), against `plugins/cc10x/agents/` and `plugins/cc10x/skills/`. Release history lives in `CHANGELOG.md`. PINV-013 to PINV-019 register the seven agents added after the original set; the companion registry `router-invariants.md` is aligned to the same tree.
+> **Status note:** Aligned to the `v12.10.0` product line as released on 2026-10-07 (v12.10.0; the release before it was v12.9.1), against `plugins/cc10x/agents/` and `plugins/cc10x/skills/`. Release history lives in `CHANGELOG.md`. PINV-013 to PINV-019 register the seven agents added after the original set; the companion registry `router-invariants.md` is aligned to the same tree.
 
 ## Purpose
 

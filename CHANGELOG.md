@@ -1,5 +1,9 @@
 # Changelog
 
+## [12.10.0] - 2026-10-07
+
+Version bump only in this entry's first commit; the release notes follow in the next commit.
+
 ## [12.9.1] - 2026-09-30
 
 ### Instruction-layer harmony

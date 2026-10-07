@@ -1,6 +1,6 @@
 {
   "name": "cc10x",
-  "version": "12.9.1",
+  "version": "12.10.0",
   "description": "The Loop Engine: a harness for Claude Code. One router sends each request to one of eight workflows (build, debug, review, plan, QA, orient, triage, codebase health) run by specialist subagents, with fail-closed gates, workflow artifacts on disk, hook guardrails, test honesty gates, fresh-context verification, and memory that survives compaction.",
   "author": {
     "name": "Rom Iluz",
