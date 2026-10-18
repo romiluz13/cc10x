@@ -3348,26 +3348,38 @@ PP49_GRANTS = (
 )
 # (b) The pending_gate bullet must be unique and carry the gate list as ONE
 # sentence: three tokens scattered over the line passed with "exactly two"
-# still in front of them.
-PP49B_LINE = re.compile(r"(?m)^- `pending_gate` is required .*QA sets exactly three: .*$")
-PP49B_GATE_SENTENCE = (
-    "QA sets exactly three: `qa_preflight_human_prerequisites` (the batched "
-    "preflight ask), `qa_source_contradiction` (consolidation found sources "
-    "that disagree about what to test) and `qa_test_plan_approval` (the "
-    "reviewed test plan is on screen and `qa.negotiation.test_plan_approval` "
-    "is `wait`)."
+# still in front of them. Re-measured in Phase 4: four gates, the fourth the
+# grant gate (`qa_grant_needed`).
+PP49B_LINE = re.compile(r"(?m)^- `pending_gate` is required .*QA sets exactly four: .*$")
+# The line is pinned WHOLE (prefix + gate sentence): a qualifier inserted in
+# the middle of the line ("is required (advisory for QA ...) whenever", Phase 4
+# hunt H10) left both the stem regex and the sentence tail intact.
+PP49B_LINE_PREFIX = (
+    "- `pending_gate` is required whenever BUILD/PLAN/DEBUG/QA/TRIAGE/"
+    "CODEBASE-HEALTH is waiting on user clarification, scope selection, or "
+    "persistence repair. "
 )
-PP49B_BULLET = re.compile(
-    r"(?m)^- `qa\.negotiation` is written once, at QA step 0c, and read by "
-    r"every QA dispatch: .*$"
+PP49B_GATE_SENTENCE = (
+    "QA sets exactly four: `qa_preflight_human_prerequisites` (the batched "
+    "preflight ask), `qa_source_contradiction` (consolidation found sources "
+    "that disagree about what to test), `qa_test_plan_approval` (the "
+    "reviewed test plan is on screen and `qa.negotiation.test_plan_approval` "
+    "is `wait`) and `qa_grant_needed` (an acting QA agent returned "
+    "`GRANT_NEEDED`; the batched grant ask is on screen)."
 )
 # The bullet is pinned WHOLE (prefix + clauses + final period, whitespace
 # normalised): clauses pinned exactly once still passed a trailing sentence
 # that re-defined `ask` on the same bullet line (failure hunt H6).
+# Re-measured at the Phase 4 REM-FIX on c08b99f: the prefix no longer says
+# `written once` -- the grant gate amends `grants` and `pending_grant`.
 PP49B_BULLET_PREFIX = (
-    "- `qa.negotiation` is written once, at QA step 0c, and read by every QA "
-    "dispatch: "
+    '- `qa.negotiation` is created at QA step 0c (a regression run seeds it '
+    'from the source QA workflow), amended only by the grant-gate law — '
+    '`grants` on an answer, `pending_grant` while a question is open, '
+    'whichever gate raised it — and read by every QA dispatch: '
 )
+# Derived from the prefix, never retyped: it carries `(`, `)`, `.` and `—`.
+PP49B_BULLET = re.compile(r"(?m)^" + re.escape(PP49B_BULLET_PREFIX) + r".*$")
 PP49B_BULLET_CLAUSES = (
     "`grants` (each `granted | denied | ask`; `ask` means a batched router gate "
     "when first needed, never an agent question)",
@@ -3378,6 +3390,7 @@ PP49B_BULLET_CLAUSES = (
     "else null)",
 )
 PP49B_BULLET_TEXT = PP49B_BULLET_PREFIX + ", ".join(PP49B_BULLET_CLAUSES) + "."
+PP49B_LINE_TEXT = PP49B_LINE_PREFIX + PP49B_GATE_SENTENCE
 # (c) Step 0c sits between 0a and 0b; the anchors are PP-18's own.
 PP49C_0A = re.compile(r"(?m)^0a\. \*\*Capability discovery")
 PP49C_0B = re.compile(r"(?m)^0b\. \*\*Repo-set enumeration")
@@ -3450,6 +3463,330 @@ PP49D_PROBE_SENTENCE = (
 # (e) gate tokens are DERIVED from each surface, never retyped
 PP49E_GATE = re.compile(r"qa_[a-z_]+approval")
 PP49E_KEY = re.compile(r"^[a-z_]*approval$")
+# the grant gate's token, read out of the policy line beside the approval one
+PP49E_GRANT = re.compile(r"qa_grant_[a-z_]+")
+
+# ---------------------------------------------------------------- PP-50
+# The no-ask rule lived in ONE dispatch of ten (preflight's), and the BLOCKED it
+# told agents to return was not in qa-researcher's contract at all. Phase 4
+# defines a `## Grants` block once, renders it into every QA-agent dispatch in
+# one of two variants (acting / planning), carries the acting duty into the
+# three acting contracts, and gives the router a grant gate that consumes it.
+# (a) census + partition + per-line tail, (b) one vocabulary per variant,
+# (c) agent-file reach, (d) re-qa-execute seeding, (e) the grant gate,
+# (f) SKILL.md's optional-sections registry.
+PP50_PLACEHOLDER = (
+    "{one line per qa.negotiation.grants entry: name: granted|denied|ask}"
+)
+PP50_BLOCK_HEAD = "\n\n## Grants\n" + PP50_PLACEHOLDER + "\n"
+PP50_ACTING_SENTENCE = (
+    "Do NOT ask the user anything — act within the grants; outside them "
+    'return STATUS: BLOCKED, NEXT_ACTION: "gate", GRANT_NEEDED naming the '
+    "grant, and stop."
+)
+PP50_PLANNING_SENTENCE = (
+    "Plan within these grants; they bound what the harness builder may do. "
+    "A plan that needs a grant marked denied or ask is an open decision: the "
+    "planner returns STATUS: NEEDS_CLARIFICATION naming the grant in "
+    "USER_INPUT_NEEDED; the reviewer records it as a FINDING. Neither asks "
+    "the user."
+)
+PP50_ACTING = frozenset(
+    {"qa-research", "qa-preflight", "qa-build", "re-qa-build", "qa-execute",
+     "re-qa-execute"}
+)
+PP50_PLANNING = frozenset(
+    {"qa-plan", "qa-re-plan", "qa-plan-review", "qa-plan-review-2"}
+)
+# phase -> the agent its SUBJECT line must name (the dispatch string does not)
+PP50_EXCLUDED = {"qa-review": "code-reviewer", "qa-hunt": "failure-hunter"}
+PP50_MEMORY = frozenset({"memory-finalize"})
+# measured 13 at 024c047; headroom 0 — equal to the pinned partition
+# (6 acting + 4 planning + 2 excluded + 1 memory), so it cannot sit below it
+PP50_ALL_DISPATCH_MIN = 13
+PP50_WF_LINE = re.compile(r'(?m)^[ \t]*description: "wf:')
+# Bounded at the string's closing quote: the content is non-quote characters
+# or backslash escapes, then `"`, then at most a comma before end of line —
+# text appended after the closing quote drops the line out of the census.
+PP50_DISPATCH = re.compile(
+    r'(?m)^[ \t]*description: "(wf:\{[a-z_]+\}\\nkind:(?:agent|remfix)'
+    r'\\norigin:[a-z-]+\\nphase:([a-z0-9-]+)\\n(?:[^"\\\n]|\\.)*)",?[ \t]*$'
+)
+PP50_MEMORY_LINE = re.compile(
+    r'(?m)^[ \t]*description: "wf:\{[a-z_]+\}\\nkind:memory\\norigin:[a-z-]+'
+    r'\\nphase:([a-z0-9-]+)\\n(?:[^"\\\n]|\\.)*",?[ \t]*$'
+)
+PP50_SUBJECT = re.compile(r'^[ \t]*subject: "CC10X ([a-z-]+):')
+# (b) the definition paragraph, pinned whole (whitespace-normalised)
+PP50B_START = re.compile(r"(?m)^\*\*The `## Grants` block — one vocabulary, one owner\.\*\*")
+PP50B_HEAD_STEM = re.compile(r"(?m)^\*\*The `## Grants` block")
+PP50_PARA_END = re.compile(r"(?m)^\*\*|^### ")
+PP50B_PARAGRAPH = (
+    "**The `## Grants` block — one vocabulary, one owner.** Every QA-agent "
+    "dispatch carries, after its task text, a `## Grants` section rendered "
+    "from `qa.negotiation.grants` — one line per grant, `name: granted | "
+    "denied | ask` — followed by ONE of two sentences. **Acting dispatches** "
+    "(`qa-research`, `qa-preflight`, `qa-build`, `re-qa-build`, `qa-execute`, "
+    "`re-qa-execute` — the agents that touch a machine): `"
+    + PP50_ACTING_SENTENCE
+    + "` **Planning dispatches** (`qa-plan`, `qa-re-plan`, `qa-plan-review`, "
+    "`qa-plan-review-2` — planner and plan-gap-reviewer, read-only): `"
+    + PP50_PLANNING_SENTENCE
+    + "` **Not QA agents** (`qa-review`, `qa-hunt` — `code-reviewer` and "
+    "`failure-hunter` reading the harness): no block; they touch no machine "
+    "and ask no one. The sentences live here and in the dispatches only; an "
+    "agent file restates the duty, never the wording. The preflight dispatch "
+    "used to carry its own version; it now carries the block, so there is "
+    "exactly one owner."
+)
+PP50B_TOKENS = (
+    "`qa.negotiation.grants`",
+    "`name: granted | denied | ask`",
+    "**Acting dispatches**",
+    "**Planning dispatches**",
+    "**Not QA agents**",
+)
+# each variant's phase list and sentence are READ BACK out of the paragraph
+PP50B_VARIANT = re.compile(
+    r"\*\*(Acting dispatches|Planning dispatches|Not QA agents)\*\* "
+    r"\(([^)]*)\): ([^*]*)"
+)
+PP50B_OLD = "let the router raise one batched question"
+# (c) the acting duty in each acting agent's own file
+PP50C_HEAD = re.compile(r"(?m)^## Grants$")
+PP50C_END = re.compile(r"(?m)^## ")
+# Re-measured at the Phase 4 REM-FIX on c08b99f: `denied` is no longer a
+# gate trigger -- the agent works without it and reports what it blocks.
+PP50C_SECTION = "## Grants " + (
+    'Your dispatch carries a `## Grants` block recorded at QA step 0c. Act '
+    'within it. When you need something it marks `ask`, or something it does '
+    'not list, stop and return `STATUS: BLOCKED` with `NEXT_ACTION: "gate"` '
+    "and the grant's name in `GRANT_NEEDED` — the router asks the user once, "
+    'batched, and re-dispatches you. When you need something it marks '
+    '`denied`, the user has already answered: never request it, and never '
+    'turn it into a product verdict. Do what you can without it, and record '
+    'the work it gates as blocked by the denied grant in the field your '
+    'CONTRACT RULES name for it — `GRANT_NEEDED` stays empty and '
+    '`NEXT_ACTION` is never `"gate"` for a denied grant. You never ask.'
+)
+PP50C_YAML_START = re.compile(r"(?m)^```yaml$")
+PP50C_YAML_END = re.compile(r"(?m)^```$")
+PP50C_CONTRACT_HEAD = re.compile(r"(?m)^### Router Contract \(MACHINE-READABLE\)$")
+# Re-measured at the Phase 4 REM-FIX on c08b99f; tuple-valued: each
+# sentence is a rule of its own, named by index when it is missing.
+PP50C_RULES = {
+    "qa-researcher.md": (
+        (
+            '- `STATUS: BLOCKED` requires `NEXT_ACTION: "gate"` and non-empty '
+            '`GRANT_NEEDED`; it is the only way out when a source needs a grant the '
+            'block marks ask or does not list. A source a `denied` grant keeps from '
+            'you is `SOURCE_COVERAGE: unavailable` (or `partial`) with '
+            '`SOURCE_COVERAGE_REASON: "denied grant: <name>"` — a `PASS` under the '
+            'coverage rule above, never `BLOCKED`, never `FAIL`. You never ask.'
+        ),
+    ),
+    "qa-executor.md": (
+        (
+            '- `NEXT_ACTION: "gate"` requires `STATUS: BLOCKED` and non-empty '
+            '`GRANT_NEEDED`. Execution stops at the first scenario that needs the '
+            'grant; `SCENARIOS_BLOCKED` counts the rest. A scenario that needs a '
+            'grant marked `denied` is `status: BLOCKED` with `actual: "denied grant: '
+            '<name>"` — the slot an ENVIRONMENT signal lands in, no `failure_class` — '
+            'and counts in `SCENARIOS_BLOCKED`, so `STATUS: BLOCKED` by the rule '
+            'above, with `GRANT_NEEDED` empty and `NEXT_ACTION: "complete"`: the '
+            'report carries it, as it carries ENVIRONMENT; never `"gate"`, never '
+            '`FAIL`.'
+        ),
+    ),
+    "qa-harness-builder.md": (
+        (
+            '- `NEXT_ACTION: "gate"` with empty `GRANT_NEEDED` and empty '
+            '`HUMAN_PREREQUISITES` and empty `CURRENCY_GATE` is a contract violation '
+            '— a gate names what it waits for. A grant marked `denied` is never a '
+            'gate, in either mode: the work it blocks is a `BLOCKED_ITEMS` entry '
+            '`denied grant: <name> — <what it blocks>`, `STATUS: BLOCKED`, '
+            '`GRANT_NEEDED` empty, `NEXT_ACTION: "abort"` unless something else on '
+            'the same return is a gate; such an entry is reported, never requested, '
+            'and never escalates `qa_scope`.'
+        ),
+        (
+            '- Non-empty `BLOCKED_ITEMS` or `HUMAN_PREREQUISITES` forces `STATUS: '
+            'BLOCKED`, and forces `NEXT_ACTION: gate` unless every `BLOCKED_ITEMS` '
+            'entry is a `denied grant: <name>` item and `HUMAN_PREREQUISITES` is '
+            'empty (a denied grant is reported, never requested — the gate rule '
+            'above). Never `PASS`, never `FAIL` — a missing credential is not a '
+            'product failure, and rounding it to either one destroys the distinction '
+            'preflight exists to draw.'
+        ),
+        (
+            '- Non-empty `BLOCKED_ITEMS` escalates `qa_scope=probe` to `standard`, '
+            'except entries that are `denied grant: <name>` items — a refused grant '
+            "is the user's decision, not a scope finding. **Harness mode only** — see "
+            'the preflight rule below for why.'
+        ),
+    ),
+}
+# The policy's qa-harness-builder validation row says the same as :430.
+PP50C_POLICY_ROW_SENTENCE = (
+    'Non-empty `BLOCKED_ITEMS` or `HUMAN_PREREQUISITES` forces `STATUS: '
+    'BLOCKED`, never `PASS` and never `FAIL`, and forces `NEXT_ACTION: gate` '
+    'unless every `BLOCKED_ITEMS` entry is a `denied grant: <name>` item and '
+    '`HUMAN_PREREQUISITES` is empty — a denied grant is reported, never '
+    'requested.'
+)
+# (d) the regression run inherits the grants the user already gave
+PP50D_START = re.compile(r"(?m)^- \*\*A new QA workflow — not a resume, not a DEBUG task\.\*\*")
+PP50D_END = re.compile(r"(?m)^- \*\*|^### |^#### ")
+# The bullet is pinned WHOLE: a contradicting sentence inserted before the
+# seeding tail left an ends-with test green (Phase 4 hunt H12). Rebased onto
+# #94: the bullet also carries its `Denied reads:` copy sentence.
+PP50D_BULLET = "- **A new QA workflow — not a resume, not a DEBUG task.** The originating QA workflow ended with `memory_finalized`; its artifact is closed, and reopening it would falsify its own §2 rollups. The DEBUG workflow that fixed the bug is a `DEBUG`-type workflow, and a QA phase cannot run inside it. So the router seeds a fresh QA artifact with `source_wf` pointing at the ORIGINAL QA workflow, and everything the executor needs — the saved test plan, the built harness — resolves through that link. When it seeds that artifact, the router copies every `Denied reads:` entry from the source workflow's `intent.constraints` into the new artifact's `intent.constraints`; if the source has none, it takes the denied paths and reason of the source's legacy isolation block, in the step 2a form. The task is created only after the DEBUG workflow's verification PASS, which is the same precondition as the offer itself. The router seeds the regression artifact's `qa.negotiation` from the source QA workflow, so the `## Grants` block renders from the grants the user already gave."
+PP50D_SENTENCE = (
+    "The router seeds the regression artifact's `qa.negotiation` from the "
+    "source QA workflow, so the `## Grants` block renders from the grants the "
+    "user already gave."
+)
+# (e) the grant gate, pinned whole (whitespace-normalised)
+PP50E_START = re.compile(r"(?m)^\*\*The grant gate — ")
+PP50E_HEAD_STEM = re.compile(r"(?m)^\*\*The grant gate")
+# Re-measured at the Phase 4 REM-FIX on c08b99f: the preflight fold-in, the
+# denied answer (no FAIL), the empty-GRANT_NEEDED stop, and the cap-spent
+# resolution clause.
+PP50E_PARAGRAPH = (
+    '**The grant gate — `pending_gate="qa_grant_needed"`.** On `STATUS: '
+    'BLOCKED` with `NEXT_ACTION: "gate"` and non-empty `GRANT_NEEDED` from '
+    'any acting QA agent: persist `{phase, grants, blocks}` to '
+    '`qa.negotiation.pending_grant`, append `grant_requested` to the event '
+    'log, set `pending_gate="qa_grant_needed"`, and raise **exactly one** '
+    '`AskUserQuestion` naming every grant requested and what each blocks — '
+    "batched, as preflight's ask is. When a `qa-preflight` return carries "
+    '`GRANT_NEEDED` alongside `HUMAN_PREREQUISITES` or `CURRENCY_GATE` '
+    'entries it is still one question: the grant lines fold into the '
+    'preflight batched ask under '
+    '`pending_gate="qa_preflight_human_prerequisites"` (the `pending_grant` '
+    'write and the `grant_requested` event still happen), and the preflight '
+    're-dispatch cap counts both — one counter per phase, whichever gate '
+    'raised it. On the answer: write each grant into `qa.negotiation.grants` '
+    'as `granted` or `denied`, append `grant_recorded`, clear `pending_grant` '
+    'and `pending_gate`, and re-dispatch a fresh task of the blocked phase '
+    'with the re-rendered `## Grants` block — the preflight pattern, same '
+    'cap: **2 re-dispatches per phase, then a `human_action` checkpoint.** A '
+    '`denied` answer re-dispatches too; the re-dispatched agent then works '
+    'without the grant and records what it blocks the way its contract says — '
+    'never a product verdict, never a second request, never a scope finding. '
+    "A `BLOCKED` return with empty `GRANT_NEEDED` is not this gate's: the "
+    "executor's report carries its blocked scenarios as it does for "
+    'ENVIRONMENT, and a harness-builder return blocked by a denied grant '
+    'alone (`NEXT_ACTION: "abort"`, nothing to ask) stops at a `human_action` '
+    'checkpoint carrying its `BLOCKED_ITEMS` — the plan needs a grant the '
+    'user refused, and only the user can change the plan or the grant. On '
+    'resolution, re-render the `## Grants` block from `qa.negotiation.grants` '
+    'and re-dispatch the same phase (`qa-preflight` or `qa-build`), counted '
+    "against that phase's re-dispatch cap — when that cap is already spent at "
+    "resolution, stop at the cap's existing `human_action` checkpoint instead "
+    'of re-dispatching; when the user changes the plan instead, route '
+    '`qa-re-plan`. Any grant the user changes outside this gate — a plan '
+    "clarification's answer, or that checkpoint's — is written the same way, "
+    '`qa.negotiation.grants` and `grant_recorded`. A request for a grant that '
+    'is already `granted` or already `denied` is a contract violation, not a '
+    'gate.'
+)
+# A refused grant is not a scope finding: both escalation statements say so.
+PP50E_ESCALATION_SENTENCES = (
+    '- Escalation `probe` → `standard` is mandatory when the harness builder '
+    'reports non-empty `SCOPE_INCREASES` in **either** mode, or '
+    '`BLOCKED_ITEMS` with any entry other than a `denied grant: <name>` item '
+    "in **`MODE: harness`** (mirrors BUILD's trivial→full escalation; a "
+    'refused grant is not a scope finding). A **preflight** `BLOCKED_ITEMS` '
+    'does NOT escalate — see the reduced-graph section.',
+    'Escalate to the full graph when the harness builder reports non-empty '
+    '`SCOPE_INCREASES` (**either mode**) or `BLOCKED_ITEMS` with any entry '
+    'other than a `denied grant: <name>` item (**`MODE: harness` only** — a '
+    "refused grant is the user's decision, not a scope finding): create the "
+    'plan-review, reviewer, and hunter tasks, re-block the executor on '
+    '`[qa_reviewer_task_id, qa_hunter_task_id]`, persist `qa_scope=standard` '
+    'and an escalation entry in `status_history`.',
+)
+PP50E_TOKENS = (
+    'pending_gate="qa_grant_needed"',
+    "`GRANT_NEEDED`",
+    "`qa.negotiation.pending_grant`",
+    "`grant_requested`",
+    "`grant_recorded`",
+    "exactly one",
+    "AskUserQuestion",
+    "re-dispatch",
+    "2 re-dispatches",
+    "human_action",
+)
+# (f) SKILL.md's optional-sections registry, in order: it grew by one
+PP50F_START = re.compile(r"(?m)^Optional sections:$")
+PP50F_SHAPE = re.compile(r"- `(## [^`]+)` ")
+# (b)/(e) both paragraphs live in ### QA-specific rules (hunt H6b/H6c moved them
+# out under another heading and every pinned-whole test stayed green)
+PP50_RULES_START = re.compile(r"(?m)^### QA-specific rules$")
+PP50_RULES_END = re.compile(r"(?m)^### ")
+# (a) text that marks a grants block or its sentences, forbidden in the two
+# not-QA-agent tasks whatever heading it sits under (hunt H1a/H1b)
+PP50A_EXCLUDED_FORBID = (
+    "## Grants",
+    PP50_PLACEHOLDER,
+    "act within the grants",
+    "Plan within these grants",
+    "GRANT_NEEDED",
+    "NEEDS_CLARIFICATION naming the grant",
+)
+# (c) file-wide no-ask negative over the three acting agents' normative text:
+# `AskUserQuestion` never; "ask the user" / "ask directly" only inside the
+# pinned ## Grants window or in the listed pre-existing no-ask sentences
+# (PP-15(c)'s scope discipline: a benign baseline use is allowed by name, so the
+# negative is neither vacuous nor red for the wrong reason). Hunt H8.
+PP50C_ASK = re.compile(r"(?i)\bask (?:the user|directly)\b")
+PP50C_ASK_ALLOWED = ("**You never ask the user yourself.**",)
+PP50F_SECTIONS = (
+    "## Pre-Answered Requirements",
+    "## Intent Contract",
+    "## Research Files",
+    "## Research Quality",
+    "## Design File",
+    "## Planning Review Findings",
+    "## Original User Request",
+    "## Approved Context Files",
+    "## Previous Agent Findings",
+    "## QA Bug Context",
+    "## Grants",
+)
+PP50F_BULLET = (
+    "- `## Grants` only for QA-agent dispatches (the ten `phase:qa-*` / "
+    "`re-qa-*` dispatches to `qa-researcher`, `qa-harness-builder`, "
+    "`qa-executor`, `planner` and `plan-gap-reviewer`; never `qa-review` or "
+    "`qa-hunt`), rendered from `qa.negotiation.grants` per "
+    "`references/qa-workflow.md` *QA-specific rules*; two sentence variants, "
+    "acting and planning — the reference is the owner of both."
+)
+
+
+def _yaml_enum_offers(line: str, token: str) -> bool:
+    """True when a contract-YAML enum line offers `token` as an alternative.
+
+    The trailing YAML comment is dropped and the value split on `|`; a token
+    that only appears in a comment ("# BLOCKED retired", hunt H7a/H7b) or
+    inside another alternative is not offered.
+    """
+    value = line.split(":", 1)[1].split("#", 1)[0] if ":" in line else ""
+    return token in [alt.strip() for alt in value.split("|")]
+
+
+def _yaml_offers_grant(line: str) -> bool:
+    """True when a GRANT_NEEDED line offers a non-empty list of known grants."""
+    value = line.split(":", 1)[1].split("#", 1)[0] if ":" in line else ""
+    for alt in (a.strip() for a in value.split("|")):
+        names = re.findall(r'"([a-z_]+)"', alt)
+        if alt.startswith("[") and alt.endswith("]") and names and all(
+            n in PP49_GRANTS for n in names
+        ):
+            return True
+    return False
 
 
 def load_skeleton() -> tuple[dict, list[str]]:
@@ -4197,6 +4534,27 @@ def main() -> int:
     def _decommented(text: str) -> str:
         """Drop HTML comments ONLY. Fences are the graph's normative surface."""
         return re.sub(r"<!--.*?-->", "", text, flags=re.DOTALL)
+
+    def _dispatch_lines(text: str) -> dict[str, tuple[str, str]]:
+        """Map each `kind:agent|remfix` dispatch's phase to (subject, task).
+
+        `text` is `_decommented` law (the dispatches live in fences). The task
+        is the description string DECODED (`\\n` -> newline, `\\"` -> `"`)
+        and bounded at its closing quote; the subject is the line directly
+        above it, or "" when that line is not a `subject: "CC10X ...` line.
+        A phase dispatched twice keeps its last line; PP-50(a) counts both.
+        """
+        out: dict[str, tuple[str, str]] = {}
+        for m in PP50_DISPATCH.finditer(text):
+            prev = text[: m.start()].rstrip("\n").rsplit("\n", 1)[-1]
+            subject = prev if PP50_SUBJECT.match(prev) else ""
+            task = re.sub(
+                r"\\(.)",
+                lambda e: "\n" if e.group(1) == "n" else e.group(1),
+                m.group(1),
+            )
+            out[m.group(2)] = (subject, task)
+        return out
 
     def _canonical_node(token: str) -> str:
         return PP20_TEMPLATE_SUFFIX.sub("", token)
@@ -6662,15 +7020,17 @@ def main() -> int:
     else:
         # the gate sentence is the LAST thing on the line: a sentence after it
         # ("The third is advisory ...", hunt H2) qualifies all three away
-        if pp49b_line.count(PP49B_GATE_SENTENCE) != 1 or not (
-            pp49b_line.rstrip().endswith(PP49B_GATE_SENTENCE)
-        ):
+        if " ".join(pp49b_line.split()) != " ".join(PP49B_LINE_TEXT.split()):
             pp49b_faults.append(
-                "the pending_gate line does not END with the three-gate "
-                "sentence, carried exactly once"
+                "the pending_gate line is not exactly the pinned line"
+                + (" (the four-gate sentence is not its tail, carried once)"
+                   if pp49b_line.count(PP49B_GATE_SENTENCE) != 1
+                   or not pp49b_line.rstrip().endswith(PP49B_GATE_SENTENCE)
+                   else " (something was added before the gate sentence)")
             )
-        if "exactly two" in pp49b_line:
-            pp49b_faults.append("the pending_gate line still says 'exactly two'")
+        for stale in ("exactly two", "exactly three"):
+            if stale in pp49b_line:
+                pp49b_faults.append(f"the pending_gate line still says {stale!r}")
     pp49b_bullets = PP49B_BULLET.findall(pp49_policy)
     pp49b_bullet = pp49b_bullets[0] if len(pp49b_bullets) == 1 else ""
     if len(pp49b_bullets) != 1:
@@ -6690,8 +7050,8 @@ def main() -> int:
     check(
         "PP-49(b)",
         not pp49b_faults,
-        f"{HOOK_POLICY.name}: pending_gate line {len(pp49b_line)}B with the "
-        f"three-gate sentence, qa.negotiation bullet {len(pp49b_bullet)}B with "
+        f"{HOOK_POLICY.name}: pending_gate line {len(pp49b_line)}B pinned whole "
+        f"(four-gate sentence), qa.negotiation bullet {len(pp49b_bullet)}B with "
         f"{len(PP49B_BULLET_CLAUSES)} clauses, pinned whole"
         + ("" if not pp49b_faults else " -- " + "; ".join(pp49b_faults)),
     )
@@ -6796,6 +7156,12 @@ def main() -> int:
         + ("" if not pp49d_faults else " -- " + "; ".join(pp49d_faults)),
     )
 
+    # The grant gate's window is PP-50(e)'s; it is sliced here because PP-49(e)
+    # confines the grant token to it, and PP-50(e) reuses the slice.
+    pp50e_w, pp50e_fault = _pp41_window(
+        pp49_wf_norm, PP50E_START, PP50_PARA_END, "grant gate"
+    )
+
     # PP-49(e) -- one vocabulary: the gate token and the policy key, each read
     # out of its own surface by regex, agree across skeleton, policy, router.
     pp49e_faults: list[str] = []
@@ -6830,6 +7196,47 @@ def main() -> int:
     distinct = set().union(*pp49e_tokens.values())
     if len(distinct) != 1:
         pp49e_faults.append(f"the surfaces disagree on the gate: {sorted(distinct)}")
+    # The grant gate: its token is read out of the policy line, must be the one
+    # the grant-gate paragraph raises, and occurs nowhere else in the law.
+    pp49e_grant = set(PP49E_GRANT.findall(pp49b_line))
+    pp49e_grant_w = set(PP49E_GRANT.findall(pp50e_w))
+    if len(pp49e_grant) != 1:
+        pp49e_faults.append(
+            f"policy line carries grant-gate tokens {sorted(pp49e_grant)}, need 1"
+        )
+    elif pp49e_grant_w != pp49e_grant:
+        pp49e_faults.append(
+            f"the grant-gate paragraph carries {sorted(pp49e_grant_w)}, not the "
+            f"policy line's {sorted(pp49e_grant)}"
+            + (f" ({pp50e_fault[:60]}...)" if pp50e_fault else "")
+        )
+    pp50e_m = PP50E_START.search(pp49_wf_norm) if pp50e_w else None
+    pp49e_gspan = (pp50e_m.start(), pp50e_m.start() + len(pp50e_w)) if pp50e_m else (0, 0)
+    pp49e_gstray = [
+        pp49_wf_norm[pp49_wf_norm.rfind("\n", 0, m.start()) + 1 :].split("\n", 1)[0][:80]
+        for m in PP49E_GRANT.finditer(pp49_wf_norm)
+        if not pp49e_gspan[0] <= m.start() < pp49e_gspan[1]
+    ]
+    if pp49e_gstray:
+        pp49e_faults.append(
+            f"{len(pp49e_gstray)} grant-gate token(s) outside the grant-gate "
+            f"paragraph, on line(s) {pp49e_gstray}"
+        )
+    # The policy file too (hunt H11): a gate token on any line other than the
+    # two pinned ones (the pending_gate line, the qa.negotiation bullet) is a
+    # second statement of the gate nobody pins.
+    pp49e_pstray = [
+        ln[:80]
+        for ln in pp49_policy.splitlines()
+        if (PP49E_GATE.search(ln) or PP49E_GRANT.search(ln))
+        and ln not in (pp49b_line, pp49b_bullet)
+    ]
+    if pp49e_pstray:
+        pp49e_faults.append(
+            f"{len(pp49e_pstray)} gate token line(s) in {HOOK_POLICY.name} "
+            f"outside the pinned pending_gate line and qa.negotiation bullet: "
+            f"{pp49e_pstray}"
+        )
     if pp49e_key is None:
         pp49e_faults.append(
             f"the skeleton's qa.negotiation has {len(pp49e_keys)} approval keys "
@@ -6859,8 +7266,343 @@ def main() -> int:
         f"gate {sorted(distinct)} agrees across the policy line, the gate "
         f"paragraph and the reduced task graph, and occurs nowhere else in the "
         f"normative {QA_WORKFLOW.name}; skeleton key {pp49e_key!r} is "
-        f"named in the policy line, its bullet and the gate"
+        f"named in the policy line, its bullet and the gate; grant gate "
+        f"{sorted(pp49e_grant)} read from the policy line is the one the "
+        f"grant-gate paragraph ({len(pp50e_w.encode('utf-8'))}B) raises, and "
+        f"occurs nowhere else; no gate token on any other {HOOK_POLICY.name} line"
         + ("" if not pp49e_faults else " -- " + "; ".join(pp49e_faults)),
+    )
+
+    # ---------------------------------------------------------------- PP-50
+    # PP-50(a) -- census: every QA dispatch is classified, and each class ends
+    # with its own block (acting / planning) or carries none (not QA agents).
+    pp50a_faults: list[str] = []
+    pp50_dec = _decommented(QA_WORKFLOW.read_text(encoding="utf-8"))
+    pp50_lines = _dispatch_lines(pp50_dec)
+    pp50_all = len(PP50_WF_LINE.findall(pp50_dec))
+    pp50_agent_n = len(PP50_DISPATCH.findall(pp50_dec))
+    pp50_mem = [m.group(1) for m in PP50_MEMORY_LINE.finditer(pp50_dec)]
+    if pp50_all < PP50_ALL_DISPATCH_MIN:
+        pp50a_faults.append(
+            f"PRECONDITION failed: {pp50_all} `description: \"wf:` lines, "
+            f"floor {PP50_ALL_DISPATCH_MIN}"
+        )
+    if pp50_all != pp50_agent_n + len(pp50_mem):
+        unparsed = [
+            "phase " + (re.findall(r"\\nphase:([a-z0-9-]+)", ln) or ["?"])[0]
+            for ln in pp50_dec.splitlines()
+            if PP50_WF_LINE.match(ln)
+            and not PP50_DISPATCH.match(ln)
+            and not PP50_MEMORY_LINE.match(ln)
+        ]
+        pp50a_faults.append(
+            f"{pp50_all - pp50_agent_n - len(pp50_mem)} dispatch line(s) do not "
+            f"parse as one quoted string (agent/remfix or memory): {unparsed}"
+        )
+    if pp50_agent_n != len(pp50_lines):
+        pp50a_faults.append(
+            f"{pp50_agent_n} agent/remfix dispatch lines over "
+            f"{len(pp50_lines)} phases: a phase is dispatched twice"
+        )
+    if set(pp50_mem) != PP50_MEMORY:
+        pp50a_faults.append(f"kind:memory phases are {sorted(pp50_mem)}, not {sorted(PP50_MEMORY)}")
+    pp50_classes = PP50_ACTING | PP50_PLANNING | set(PP50_EXCLUDED)
+    if set(pp50_lines) != pp50_classes:
+        pp50a_faults.append(
+            f"partition broken: unclassified {sorted(set(pp50_lines) - pp50_classes)}, "
+            f"missing {sorted(pp50_classes - set(pp50_lines))}"
+        )
+    for phase, agent in sorted(PP50_EXCLUDED.items()):
+        subj, task = pp50_lines.get(phase, ("", ""))
+        got = PP50_SUBJECT.match(subj)
+        if not got or got.group(1) != agent:
+            pp50a_faults.append(
+                f"{phase}: subject line names {got.group(1) if got else None!r}, "
+                f"not {agent!r}"
+            )
+        bad = [tk for tk in PP50A_EXCLUDED_FORBID if tk in task]
+        if bad:
+            pp50a_faults.append(
+                f"{phase}: a not-QA-agent dispatch carries grants text {bad}"
+            )
+    for phase, sentence, need, forbid in (
+        *((ph, PP50_ACTING_SENTENCE,
+           ("act within the grants", 'NEXT_ACTION: "gate"', "GRANT_NEEDED"), ())
+          for ph in sorted(PP50_ACTING)),
+        *((ph, PP50_PLANNING_SENTENCE,
+           ("Plan within these grants", "NEEDS_CLARIFICATION", "FINDING"),
+           ("GRANT_NEEDED",))
+          for ph in sorted(PP50_PLANNING)),
+    ):
+        _, task = pp50_lines.get(phase, ("", ""))
+        if task.count("## Grants") != 1:
+            pp50a_faults.append(f"{phase}: ## Grants occurs {task.count('## Grants')} times, need 1")
+        if not task.endswith(PP50_BLOCK_HEAD + sentence):
+            pp50a_faults.append(f"{phase}: the task does not END with its ## Grants block")
+        miss = [c for c in need if c not in task]
+        if miss:
+            pp50a_faults.append(f"{phase}: missing {miss}")
+        bad = [c for c in forbid if c in task]
+        if bad:
+            pp50a_faults.append(f"{phase}: a planning dispatch carries {bad}")
+    check(
+        "PP-50(a)",
+        not pp50a_faults,
+        f"{QA_WORKFLOW.name}: {pp50_all} wf dispatch lines = {pp50_agent_n} "
+        f"agent/remfix + {len(pp50_mem)} kind:memory (memory-finalize, excluded "
+        f"by the kind alternation); {len(pp50_lines)} phases partition exactly "
+        f"into {len(PP50_ACTING)} acting / {len(PP50_PLANNING)} planning / "
+        f"{len(PP50_EXCLUDED)} not-QA-agent (attributed by subject); every "
+        f"acting and planning task ends with its one ## Grants block"
+        + ("" if not pp50a_faults else " -- " + "; ".join(pp50a_faults)),
+    )
+
+    pp50_rules_w, pp50_rules_fault = _pp41_window(
+        pp49_wf_norm, PP50_RULES_START, PP50_RULES_END, "### QA-specific rules"
+    )
+    pp50_rules_m = PP50_RULES_START.search(pp49_wf_norm)
+    pp50_rules_span = (
+        (pp50_rules_m.start(), pp50_rules_m.start() + len(pp50_rules_w))
+        if pp50_rules_m and not pp50_rules_fault else (0, 0)
+    )
+
+    def _in_rules(start_re: "re.Pattern[str]") -> str | None:
+        """None when start_re's one match sits inside ### QA-specific rules."""
+        if pp50_rules_fault:
+            return pp50_rules_fault[:90]
+        m = start_re.search(pp49_wf_norm)
+        if m and not pp50_rules_span[0] <= m.start() < pp50_rules_span[1]:
+            return "the paragraph is not under ### QA-specific rules"
+        return None
+
+    # PP-50(b) -- one vocabulary per variant, defined once, read back from the
+    # definition and compared with what the dispatches actually carry.
+    pp50b_faults: list[str] = []
+    pp50b_w, pp50b_fault = _pp41_window(
+        pp49_wf_norm, PP50B_START, PP50_PARA_END, "## Grants definition"
+    )
+    pp50b_variants: dict[str, tuple[set[str], str]] = {}
+    if pp50b_fault:
+        pp50b_faults.append(pp50b_fault)
+    else:
+        if " ".join(pp50b_w.split()) != " ".join(PP50B_PARAGRAPH.split()):
+            miss = [tk for tk in PP50B_TOKENS if tk not in pp50b_w]
+            pp50b_faults.append(
+                "the definition paragraph is not exactly the pinned paragraph"
+                + (f" (missing {miss})" if miss else
+                   " (every token present: something was added or reworded)")
+            )
+        for m in PP50B_VARIANT.finditer(" ".join(pp50b_w.split())):
+            phases = set(re.findall(r"`([a-z0-9-]+)`", m.group(2).split(" — ")[0]))
+            said = re.findall(r"`([^`]+)`", m.group(3))
+            pp50b_variants[m.group(1)] = (phases, said[0] if said else "")
+    if pp50b_w and (where := _in_rules(PP50B_START)):
+        pp50b_faults.append(f"definition: {where}")
+    pp50b_heads = PP50B_HEAD_STEM.findall(pp49_wf_norm)
+    if len(pp50b_heads) != 1:
+        pp50b_faults.append(f"'**The `## Grants` block' heads {len(pp50b_heads)} paragraphs, need 1")
+    for label, want in (
+        ("Acting dispatches", PP50_ACTING),
+        ("Planning dispatches", PP50_PLANNING),
+        ("Not QA agents", set(PP50_EXCLUDED)),
+    ):
+        if pp50b_variants.get(label, (set(), ""))[0] != set(want):
+            pp50b_faults.append(
+                f"the definition's {label} list is "
+                f"{sorted(pp50b_variants.get(label, (set(), ''))[0])}, not {sorted(want)}"
+            )
+    for label, members in (("Acting dispatches", PP50_ACTING), ("Planning dispatches", PP50_PLANNING)):
+        tails = {
+            pp50_lines[ph][1].rsplit("\n## Grants\n", 1)[1].partition("\n")[2]
+            for ph in members
+            if ph in pp50_lines and "\n## Grants\n" in pp50_lines[ph][1]
+        }
+        defined = pp50b_variants.get(label, (set(), ""))[1]
+        if tails and tails != {defined}:
+            pp50b_faults.append(
+                f"{label}: {len(tails)} distinct sentence(s) after the block, "
+                f"not the one the definition quotes"
+            )
+    for sentence in (PP50_ACTING_SENTENCE, PP50_PLANNING_SENTENCE):
+        n = pp49_wf_norm.count(sentence)
+        if n != 1:
+            pp50b_faults.append(f"sentence {sentence[:40]!r} occurs {n} times in normative law, need 1 (the definition)")
+    for agent_path in (RESEARCHER_AGENT, HARNESS_AGENT, EXECUTOR_AGENT):
+        a_txt = agent_path.read_text(encoding="utf-8")
+        for sentence in (PP50_ACTING_SENTENCE, PP50_PLANNING_SENTENCE):
+            if sentence in a_txt:
+                pp50b_faults.append(f"{agent_path.name} restates a dispatch sentence word for word")
+    pp50b_old = sum(task.count(PP50B_OLD) for _, task in pp50_lines.values())
+    if pp50b_old:
+        pp50b_faults.append(f"the old preflight fragment {PP50B_OLD!r} survives {pp50b_old} time(s) in dispatches")
+    check(
+        "PP-50(b)",
+        not pp50b_faults,
+        f"{QA_WORKFLOW.name} definition paragraph {len(pp50b_w.encode('utf-8'))}B "
+        f"pinned whole, heading unique; phase lists and both sentences read back "
+        f"from it equal the dispatches' (one sentence per variant); neither "
+        f"sentence restated in an agent file; old preflight fragment gone"
+        + ("" if not pp50b_faults else " -- " + "; ".join(pp50b_faults)),
+    )
+
+    # PP-50(c) -- the acting duty reaches the three acting contracts.
+    pp50c_faults: list[str] = []
+    pp50c_sizes: list[str] = []
+    for agent_path in (RESEARCHER_AGENT, EXECUTOR_AGENT, HARNESS_AGENT):
+        raw = agent_path.read_text(encoding="utf-8")
+        norm = _normative(raw)
+        name = agent_path.name
+        sec, sec_fault = _pp41_window(norm, PP50C_HEAD, PP50C_END, f"{name} ## Grants")
+        if sec_fault:
+            pp50c_faults.append(f"{name}: {sec_fault[:90]}")
+        elif " ".join(sec.split()) != " ".join(PP50C_SECTION.split()):
+            miss = [tk for tk in ("GRANT_NEEDED", 'NEXT_ACTION: "gate"', "You never ask") if tk not in sec]
+            pp50c_faults.append(
+                f"{name}: ## Grants section is not the pinned paragraph"
+                + (f" (missing {miss})" if miss else "")
+            )
+        for i, rule in enumerate(PP50C_RULES[name]):
+            if norm.count(rule) != 1:
+                pp50c_faults.append(
+                    f"{name}: the grant contract rule (sentence {i + 1}) is not present exactly once"
+                )
+        dec = _decommented(raw)
+        head = PP50C_CONTRACT_HEAD.search(dec)
+        yml, y_fault = _pp41_window(dec, PP50C_YAML_START, PP50C_YAML_END, f"{name} contract YAML")
+        if y_fault or not head or dec.find(yml) < head.end():
+            pp50c_faults.append(f"{name}: no contract YAML after the Router Contract heading")
+            continue
+        pp50c_sizes.append(f"{name} {len(yml.encode('utf-8'))}B")
+        for key, need in (("STATUS", "BLOCKED"), ("NEXT_ACTION", '"gate"'), ("GRANT_NEEDED", "")):
+            hits = re.findall(rf"(?m)^{key}:.*$", yml)
+            if len(hits) != 1:
+                pp50c_faults.append(f"{name}: top-level {key}: occurs {len(hits)} times in the contract YAML, need 1")
+            elif need and not _yaml_enum_offers(hits[0], need):
+                pp50c_faults.append(f"{name}: {key}: does not offer {need} as an enum alternative")
+            elif not need and not _yaml_offers_grant(hits[0]):
+                pp50c_faults.append(
+                    f"{name}: GRANT_NEEDED: offers no non-empty list of known grants"
+                )
+        scan = norm.replace(sec, "") if sec else norm
+        for allowed in PP50C_ASK_ALLOWED:
+            scan = scan.replace(allowed, "")
+        if "AskUserQuestion" in norm:
+            pp50c_faults.append(f"{name}: names AskUserQuestion {norm.count('AskUserQuestion')} time(s); an acting agent never asks")
+        asks = [m.group(0) for m in PP50C_ASK.finditer(scan)]
+        if asks:
+            pp50c_faults.append(
+                f"{name}: {asks!r} outside the pinned ## Grants paragraph"
+            )
+    if _normative(HOOK_POLICY.read_text(encoding="utf-8")).count(PP50C_POLICY_ROW_SENTENCE) != 1:
+        pp50c_faults.append(
+            f"{HOOK_POLICY.name}: the qa-harness-builder validation row does not "
+            f"carry the denied-grant sentence exactly once"
+        )
+    check(
+        "PP-50(c)",
+        not pp50c_faults,
+        f"## Grants paragraph pinned whole + each grant rule sentence once in "
+        f"each acting agent and the policy validation row; contract YAML ({', '.join(pp50c_sizes)}) offers STATUS BLOCKED, "
+        f'NEXT_ACTION "gate" as enum alternatives and a top-level GRANT_NEEDED '
+        f"offering known grants; no AskUserQuestion and no ask-the-user outside "
+        f"the paragraph"
+        + ("" if not pp50c_faults else " -- " + "; ".join(pp50c_faults)),
+    )
+
+    # PP-50(d) -- the regression run inherits the source workflow's grants.
+    pp50d_faults: list[str] = []
+    pp50d_w, pp50d_fault = _pp41_window(pp49_wf_norm, PP50D_START, PP50D_END, "re-qa-execute bullet")
+    if pp50d_fault:
+        pp50d_faults.append(pp50d_fault)
+    else:
+        flat = " ".join(pp50d_w.split())
+        if flat != " ".join(PP50D_BULLET.split()):
+            pp50d_faults.append(
+                "the bullet is not exactly the pinned bullet"
+                + (" (it does not END with the seeding sentence, carried once)"
+                   if flat.count(PP50D_SENTENCE) != 1 or not flat.endswith(PP50D_SENTENCE)
+                   else " (something was added or reworded before the tail)")
+            )
+        miss = [tk for tk in ("`qa.negotiation`", "source QA workflow") if tk not in pp50d_w]
+        if miss:
+            pp50d_faults.append(f"the bullet does not name {miss}")
+    check(
+        "PP-50(d)",
+        not pp50d_faults,
+        f"{QA_WORKFLOW.name} re-qa-execute bullet {len(pp50d_w.encode('utf-8'))}B "
+        f"pinned whole, ending with the qa.negotiation seeding sentence"
+        + ("" if not pp50d_faults else " -- " + "; ".join(pp50d_faults)),
+    )
+
+    # PP-50(e) -- the router grant gate consumes GRANT_NEEDED (window sliced
+    # before PP-49(e)).
+    pp50e_faults: list[str] = []
+    if pp50e_fault:
+        pp50e_faults.append(pp50e_fault)
+    elif " ".join(pp50e_w.split()) != " ".join(PP50E_PARAGRAPH.split()):
+        miss = [tk for tk in PP50E_TOKENS if tk not in pp50e_w]
+        pp50e_faults.append(
+            "the grant-gate paragraph is not exactly the pinned paragraph"
+            + (f" (missing {miss})" if miss else
+               " (every token present: something was added or reworded)")
+        )
+    if pp50e_w and (where := _in_rules(PP50E_START)):
+        pp50e_faults.append(f"grant gate: {where}")
+    pp50e_heads = PP50E_HEAD_STEM.findall(pp49_wf_norm)
+    if len(pp50e_heads) != 1:
+        pp50e_faults.append(f"'**The grant gate' heads {len(pp50e_heads)} paragraphs, need 1")
+    # a policy line with no single grant token is PP-49(e)'s fault, not this one's
+    if pp50e_w and len(pp49e_grant) == 1 and set(PP49E_GRANT.findall(pp50e_w)) != pp49e_grant:
+        pp50e_faults.append(
+            f"the paragraph's gate {sorted(set(PP49E_GRANT.findall(pp50e_w)))} is "
+            f"not the policy line's {sorted(pp49e_grant)}"
+        )
+    for i, sentence in enumerate(PP50E_ESCALATION_SENTENCES):
+        if pp49_wf_norm.count(sentence) != 1:
+            pp50e_faults.append(f"escalation sentence {i + 1} is not present exactly once")
+    check(
+        "PP-50(e)",
+        not pp50e_faults,
+        f"{QA_WORKFLOW.name} grant-gate paragraph {len(pp50e_w.encode('utf-8'))}B "
+        f"pinned whole ({len(PP50E_TOKENS)} tokens), heading unique, gate "
+        f"{sorted(pp49e_grant)} = the policy line's, escalation exemption "
+        f"{len(PP50E_ESCALATION_SENTENCES)}/{len(PP50E_ESCALATION_SENTENCES)}"
+        + ("" if not pp50e_faults else " -- " + "; ".join(pp50e_faults)),
+    )
+
+    # PP-50(f) -- SKILL.md registers ## Grants; the registry grew, nothing left.
+    pp50f_faults: list[str] = []
+    pp50f_norm = _normative(SKILL_MD.read_text(encoding="utf-8"))
+    pp50f_starts = list(PP50F_START.finditer(pp50f_norm))
+    pp50f_bullets: list[str] = []
+    if len(pp50f_starts) != 1:
+        pp50f_faults.append(f"PRECONDITION failed: 'Optional sections:' matched {len(pp50f_starts)} times")
+    else:
+        for ln in pp50f_norm[pp50f_starts[0].end() :].split("\n")[1:]:
+            if ln.startswith("- "):
+                pp50f_bullets.append(ln)
+            elif ln.strip():
+                break
+        names = tuple(
+            m.group(1) for m in (re.match(r"- `(## [^`]+)`", b) for b in pp50f_bullets) if m
+        )
+        off_shape = [b[:60] for b in pp50f_bullets if not PP50F_SHAPE.match(b)]
+        if off_shape:
+            pp50f_faults.append(
+                f"{len(off_shape)} registry bullet(s) are not '- `## <section>` ...' "
+                f"entries: {off_shape}"
+            )
+        if names != PP50F_SECTIONS:
+            pp50f_faults.append(f"the registry lists {list(names)}, not {list(PP50F_SECTIONS)}")
+        if pp50f_bullets.count(PP50F_BULLET) != 1:
+            pp50f_faults.append("the ## Grants bullet is not the pinned bullet")
+    check(
+        "PP-50(f)",
+        not pp50f_faults,
+        f"{SKILL_MD.name} optional sections: {len(pp50f_bullets)} bullets equal "
+        f"the {len(PP50F_SECTIONS)} pinned names in order (## QA Bug Context kept, "
+        f"## Grants added, pinned whole)"
+        + ("" if not pp50f_faults else " -- " + "; ".join(pp50f_faults)),
     )
 
     print(f"\nproperties checked: {', '.join(checked)}")

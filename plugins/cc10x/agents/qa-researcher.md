@@ -42,6 +42,10 @@ Honour it on every channel, not only the filesystem. A quarantined document past
 
 Concealing this is a contract violation: `STATUS: FAIL`. Reporting it is not.
 
+## Grants
+
+Your dispatch carries a `## Grants` block recorded at QA step 0c. Act within it. When you need something it marks `ask`, or something it does not list, stop and return `STATUS: BLOCKED` with `NEXT_ACTION: "gate"` and the grant's name in `GRANT_NEEDED` — the router asks the user once, batched, and re-dispatches you. When you need something it marks `denied`, the user has already answered: never request it, and never turn it into a product verdict. Do what you can without it, and record the work it gates as blocked by the denied grant in the field your CONTRACT RULES name for it — `GRANT_NEEDED` stays empty and `NEXT_ACTION` is never `"gate"` for a denied grant. You never ask.
+
 ## Why you are blind to the other sources
 
 Three other researchers are scanning the other sources in parallel. You are scoped to one so that when the ticket says the retry limit is 3 and the code says 5, the contradiction **survives** to the router instead of being silently smoothed over in one agent's head. Reconciliation is the router's job, and the surviving contradiction is often this workflow's highest-value output.
@@ -125,7 +129,7 @@ CONTRACT {"s":"PASS","b":false,"cr":0}
 ```
 
 ```yaml
-STATUS: PASS | FAIL
+STATUS: PASS | FAIL | BLOCKED
 CONFIDENCE: [0-100]
 SOURCE: "code" | "code:{repo}" | "spec_docs" | "tickets" | "cc10x_artifacts"
 SOURCE_COVERAGE: "full" | "partial" | "empty" | "unavailable"
@@ -179,6 +183,8 @@ MEMORY_NOTES:
   patterns: ["Conventions observed"]
   verification: ["Sources read, coverage achieved"]
   deferred: ["Non-blocking observations"]
+NEXT_ACTION: "complete" | "gate"
+GRANT_NEEDED: [] | ["db_access"]   # names from the ## Grants block; non-empty only with STATUS: BLOCKED
 ```
 
 **CONTRACT RULES:**
@@ -192,3 +198,4 @@ MEMORY_NOTES:
 - Do NOT pre-reduce `BEHAVIOUR_SURFACE`. Reduction belongs to `qa-plan`, which must apply a named technique against the full space and state what it leaves uncovered.
 - `BEHAVIOUR_SURFACE: []` with `SOURCE_COVERAGE: full` on a `code` source MUST be explained in `GAPS`. A feature with no auth, no flags and no limits is rare; an empty list with no reason is an unscanned dimension, not a finding.
 - Reading outside your assigned `SOURCE` is a contract violation: `STATUS: FAIL`.
+- `STATUS: BLOCKED` requires `NEXT_ACTION: "gate"` and non-empty `GRANT_NEEDED`; it is the only way out when a source needs a grant the block marks ask or does not list. A source a `denied` grant keeps from you is `SOURCE_COVERAGE: unavailable` (or `partial`) with `SOURCE_COVERAGE_REASON: "denied grant: <name>"` — a `PASS` under the coverage rule above, never `BLOCKED`, never `FAIL`. You never ask.
