@@ -3129,6 +3129,61 @@ PP43C_MIN_FILES_SCANNED = 4  # measured 4 at b966c52
 # cheap property rather than no property at all.
 PP43D_CLAUSE = re.compile(r"(?m)^- use the (.+) defined there\s*$")
 
+# --- PP-47: the input space has a non-UI half, and it is enumerated too ---
+# The researcher's USER_ACTION_INVENTORY covers what the screen offers. Auth
+# roles, flags/config and declared limits change behaviour without appearing on
+# the screen; BEHAVIOUR_SURFACE is their unreduced inventory. (a) the contract
+# block, (b) the MUST rules, (c) the process step, (d) the feature-map section
+# that receives it and the handoff that sends it on.
+PP47_W_START = re.compile(r"(?m)^BEHAVIOUR_SURFACE:")
+PP47_W_FIELDS = (
+    "dimension:",
+    "name:",
+    "where:",
+    "values:",
+    "default:",
+    "enumerated_from:",
+    "complete:",
+    "changes:",
+)
+PP47_DIMENSIONS = ("auth", "flag", "config", "limit")
+# measured 535 at f346ebe + this change; headroom 285. The smallest block that
+# still carries every pinned token (8 field names + 4 quoted dimensions) is
+# 131B, so 250 > 131: a block gutted down to its names goes red.
+PP47_W_MIN_BYTES = 250
+PP47C_START = re.compile(r"(?m)^2b\. \*\*Build the Behaviour-varying Surface")
+PP47C_END = re.compile(r"(?m)^3\. \*\*Extract the system-side flow")
+PP47C_TOKENS = (
+    "**auth**",
+    "**flag / config**",
+    "**limit**",
+    "MAX_*",
+    "Do NOT reduce",
+    "GAPS",
+)
+# measured 1170 at f346ebe + this change; headroom 620 (pinned-token
+# skeleton 104B < 550).
+PP47C_MIN_BYTES = 550
+PP47D_START = re.compile(r"(?m)^## 6b\. Behaviour-varying surface — UNREDUCED$")
+PP47D_SECTION_END = re.compile(r"(?m)^## ")
+PP47D_S6 = re.compile(r"(?m)^## 6\. ")
+PP47D_S7 = re.compile(r"(?m)^## 7\. ")
+PP47D_HANDOFF = re.compile(r"(?m)^## 9\. Handoff to the plan")
+PP47D_TOKENS = (
+    "| Dimension |",
+    "Enumerated from",
+    "Complete?",
+    "Changes what",
+    "`BEHAVIOUR_SURFACE`",
+    "Do not trim",
+    "not_enumerated",
+    "almost always wrong",
+    "roles are data",
+)
+# measured 944 at f346ebe + this change; headroom 494 (pinned-token
+# skeleton 182B < 450).
+PP47D_MIN_BYTES = 450
+
 
 failures: list[str] = []
 checked: list[str] = []
@@ -5917,6 +5972,153 @@ def main() -> int:
         not pp43d_bad,
         f"{pp43d_src.name} carries no 'defined there' promise and no qa-strategy pointer"
         + ("" if not pp43d_bad else " -- " + "; ".join(pp43d_bad)),
+    )
+
+    # ---------------------------------------------------------------- PP-47
+    # The input space is enumerated on both sides: what the screen offers
+    # (USER_ACTION_INVENTORY) and what changes behaviour without being shown
+    # (BEHAVIOUR_SURFACE). Every window reuses `_pp41_window` (start exactly
+    # once, end searched after the start) and prints its byte size.
+    pp47_researcher_raw = RESEARCHER_AGENT.read_text(encoding="utf-8")
+    pp47_researcher_dec = _decommented(pp47_researcher_raw)
+
+    # PP-47(a) -- the contract block carries attribution fields and the enum.
+    pp47a_faults: list[str] = []
+    pp47_w, pp47_w_fault = _pp41_window(
+        pp47_researcher_dec, PP47_W_START, PP41_W4_END, "BEHAVIOUR_SURFACE block"
+    )
+    if pp47_w_fault:
+        pp47a_faults.append(pp47_w_fault)
+    else:
+        if len(pp47_w.encode("utf-8")) < PP47_W_MIN_BYTES:
+            pp47a_faults.append(
+                f"block is {len(pp47_w.encode('utf-8'))}B, floor "
+                f"{PP47_W_MIN_BYTES}B -- the fields have been cut"
+            )
+        missing = [t for t in PP47_W_FIELDS if t not in pp47_w]
+        missing += [f'"{d}"' for d in PP47_DIMENSIONS if f'"{d}"' not in pp47_w]
+        if missing:
+            pp47a_faults.append(f"block omits {missing}")
+    check(
+        "PP-47(a)",
+        not pp47a_faults,
+        f"{RESEARCHER_AGENT.name} BEHAVIOUR_SURFACE block "
+        f"{len(pp47_w.encode('utf-8'))}B (floor {PP47_W_MIN_BYTES}B), "
+        f"{len(PP47_W_FIELDS)} fields + {len(PP47_DIMENSIONS)} dimension values"
+        + ("" if not pp47a_faults else " -- " + "; ".join(pp47a_faults)),
+    )
+
+    # PP-47(b) -- the MUST rules name the key: attribution and no pre-reduction.
+    pp47b_faults: list[str] = []
+    pp47_w9, pp47_w9_fault = _pp41_window(
+        pp47_researcher_dec,
+        PP41_CONTRACT_RULES,
+        PP41_SECTION_END,
+        "W9 (qa-researcher CONTRACT RULES)",
+        end_optional=True,
+    )
+    pp47b_bt = pp47_w9.count("`BEHAVIOUR_SURFACE`")
+    pp47b_bare = pp47_w9.count("BEHAVIOUR_SURFACE")
+    if pp47_w9_fault:
+        pp47b_faults.append(pp47_w9_fault)
+    else:
+        if pp47b_bt < 2:
+            pp47b_faults.append(
+                f"backticked `BEHAVIOUR_SURFACE` appears {pp47b_bt}x (need >= 2)"
+            )
+        if pp47b_bare < 3:
+            pp47b_faults.append(
+                f"BEHAVIOUR_SURFACE appears {pp47b_bare}x (need >= 3)"
+            )
+        # The count above cannot tell the empty-surface rule from its inverse;
+        # the operative clause must sit on the line that names the empty list.
+        if not any(
+            "BEHAVIOUR_SURFACE: []" in ln and "MUST be explained in `GAPS`" in ln
+            for ln in pp47_w9.splitlines()
+        ):
+            pp47b_faults.append(
+                "no line names `BEHAVIOUR_SURFACE: []` and 'MUST be explained "
+                "in `GAPS`' -- the empty-surface rule is gone or inverted"
+            )
+        if "Do NOT pre-reduce `BEHAVIOUR_SURFACE`" not in pp47_w9:
+            pp47b_faults.append("no 'Do NOT pre-reduce `BEHAVIOUR_SURFACE`' rule")
+        if not any(
+            "BEHAVIOUR_SURFACE" in ln
+            and "MUST set `enumerated_from` and `complete`" in ln
+            for ln in pp47_w9.splitlines()
+        ):
+            pp47b_faults.append(
+                "no line names BEHAVIOUR_SURFACE and 'MUST set `enumerated_from` "
+                "and `complete`'"
+            )
+    check(
+        "PP-47(b)",
+        not pp47b_faults,
+        f"{RESEARCHER_AGENT.name} CONTRACT RULES {len(pp47_w9.encode('utf-8'))}B: "
+        f"`BEHAVIOUR_SURFACE` x{pp47b_bt}, BEHAVIOUR_SURFACE x{pp47b_bare}"
+        + ("" if not pp47b_faults else " -- " + "; ".join(pp47b_faults)),
+    )
+
+    # PP-47(c) -- the process step is normative law, not a comment or a fence.
+    pp47c_faults: list[str] = []
+    pp47c_w, pp47c_fault = _pp41_window(
+        _normative(pp47_researcher_raw), PP47C_START, PP47C_END, "step 2b"
+    )
+    if pp47c_fault:
+        pp47c_faults.append(pp47c_fault)
+    else:
+        if len(pp47c_w.encode("utf-8")) < PP47C_MIN_BYTES:
+            pp47c_faults.append(
+                f"step 2b is {len(pp47c_w.encode('utf-8'))}B, floor "
+                f"{PP47C_MIN_BYTES}B"
+            )
+        missing = [t for t in PP47C_TOKENS if t not in pp47c_w]
+        if missing:
+            pp47c_faults.append(f"step 2b omits {missing}")
+    check(
+        "PP-47(c)",
+        not pp47c_faults,
+        f"{RESEARCHER_AGENT.name} normative step 2b "
+        f"{len(pp47c_w.encode('utf-8'))}B (floor {PP47C_MIN_BYTES}B), "
+        f"{len(PP47C_TOKENS)} tokens"
+        + ("" if not pp47c_faults else " -- " + "; ".join(pp47c_faults)),
+    )
+
+    # PP-47(d) -- the feature map has a §6b to receive it, and §9 hands it on.
+    pp47d_faults: list[str] = []
+    pp47_fm = _decommented(QA_FEATURE_MAP_TPL.read_text(encoding="utf-8"))
+    pp47d_w, pp47d_fault = _pp41_window(
+        pp47_fm, PP47D_START, PP47D_SECTION_END, "§6b"
+    )
+    if pp47d_fault:
+        pp47d_faults.append(pp47d_fault)
+    else:
+        pos = pp47_fm.find(pp47d_w)
+        m6 = PP47D_S6.search(pp47_fm)
+        m7 = PP47D_S7.search(pp47_fm)
+        if not (m6 and m7 and m6.start() < pos < m7.start()):
+            pp47d_faults.append("§6b does not sit between ## 6. and ## 7.")
+        if len(pp47d_w.encode("utf-8")) < PP47D_MIN_BYTES:
+            pp47d_faults.append(
+                f"§6b is {len(pp47d_w.encode('utf-8'))}B, floor {PP47D_MIN_BYTES}B"
+            )
+        missing = [t for t in PP47D_TOKENS if t not in pp47d_w]
+        if missing:
+            pp47d_faults.append(f"§6b omits {missing}")
+    pp47d_h, pp47d_h_fault = _pp41_window(
+        pp47_fm, PP47D_HANDOFF, PP47D_SECTION_END, "§9 handoff", end_optional=True
+    )
+    if pp47d_h_fault:
+        pp47d_faults.append(pp47d_h_fault)
+    elif "§6b" not in pp47d_h:
+        pp47d_faults.append("§9 handoff never names §6b")
+    check(
+        "PP-47(d)",
+        not pp47d_faults,
+        f"{QA_FEATURE_MAP_TPL.name} §6b {len(pp47d_w.encode('utf-8'))}B "
+        f"(floor {PP47D_MIN_BYTES}B), {len(PP47D_TOKENS)} tokens; §9 "
+        f"{len(pp47d_h.encode('utf-8'))}B"
+        + ("" if not pp47d_faults else " -- " + "; ".join(pp47d_faults)),
     )
 
     print(f"\nproperties checked: {', '.join(checked)}")
