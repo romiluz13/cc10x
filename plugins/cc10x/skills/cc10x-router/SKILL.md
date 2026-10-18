@@ -421,6 +421,7 @@ Optional sections:
 - `## Approved Context Files` only for `plan-gap-reviewer`.
 - `## Previous Agent Findings` only for integration-verifier and only after a review phase ran.
 - `## QA Bug Context` only for `bug-investigator`, and only when this DEBUG was seeded from a QA `BUG_CANDIDATE`. Built per `references/qa-workflow.md` §4; its anti-anchoring rule (§5) is mandatory — `suspected_service` travels only with `suspicion_basis` and only labelled as a hint, or the suspicion block is omitted entirely.
+- `## Grants` only for QA-agent dispatches (the ten `phase:qa-*` / `re-qa-*` dispatches to `qa-researcher`, `qa-harness-builder`, `qa-executor`, `planner` and `plan-gap-reviewer`; never `qa-review` or `qa-hunt`), rendered from `qa.negotiation.grants` per `references/qa-workflow.md` *QA-specific rules*; two sentence variants, acting and planning — the reference is the owner of both.
 
 ### Prompt assembly rule
 

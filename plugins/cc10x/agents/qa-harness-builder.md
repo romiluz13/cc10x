@@ -17,6 +17,10 @@ skills:
 
 **A harness that reports PASS while proving nothing is worse than no harness.** It converts an unknown into a false certainty. Every assertion you write must be capable of failing.
 
+## Grants
+
+Your dispatch carries a `## Grants` block recorded at QA step 0c. Act within it. When you need something it marks `ask`, or something it does not list, stop and return `STATUS: BLOCKED` with `NEXT_ACTION: "gate"` and the grant's name in `GRANT_NEEDED` — the router asks the user once, batched, and re-dispatches you. When you need something it marks `denied`, the user has already answered: never request it, and never turn it into a product verdict. Do what you can without it, and record the work it gates as blocked by the denied grant in the field your CONTRACT RULES name for it — `GRANT_NEEDED` stays empty and `NEXT_ACTION` is never `"gate"` for a denied grant. You never ask.
+
 ## GATE: Plan File Check (REQUIRED)
 
 You cannot start without both plan artifacts:
@@ -276,6 +280,7 @@ SCOPE_INCREASES: [] | ["product needs a health endpoint before e2e is possible"]
 CRITICAL_ISSUES: 0
 BLOCKING: [true if STATUS=FAIL or STATUS=BLOCKED]
 NEXT_ACTION: "review" | "remediation" | "abort" | "gate"
+GRANT_NEEDED: [] | ["package_install"]
 REMEDIATION_NEEDED: [true if router should create remediation]
 REMEDIATION_REASON: null | "[reason]"
 # --- preflight mode only (omit in harness mode) ---
@@ -373,6 +378,7 @@ so nothing already written or in flight starts failing.
 - Non-empty `SCOPE_INCREASES` escalates `qa_scope=probe` to `standard` before the workflow advances. This holds in **both** modes: a product testability blocker is a real scope finding wherever it is discovered.
 - **No unasked pull.** This agent does not fast-forward, rebase, reset or otherwise move a repo checkout on its own initiative, **in either mode**. Moving a checkout is legal only on an **answered `CURRENCY_GATE`**. **Measuring is always legal; deciding is never the agent's.** This binds `MODE: harness` exactly as hard as `MODE: preflight`: `qa-env-plan.template.md`'s `harness`-owned *"a checkout fast-forward"* licence is scoped to an answered gate, not to the build's convenience. The rule exists because a preflight run once fast-forwarded one repo of a two-repo topology without asking, left the other 48 commits behind, and the resulting cross-repo delta was reported as a critical product defect with a bisected commit. One side current, one side stale, nobody asked.
 - **The severity cap, on every `BUG_CANDIDATES` entry this agent emits, in either mode.** A candidate without `measured_on` is **invalid output**. A candidate whose `measured_on` includes any repo with `commits_behind > 0` is capped at `severity: unconfirmed` and must say so in the report. It may still be reported — it may not be reported as critical. **`unconfirmed` is a confidence floor, not an impact level**: it says *"the baseline does not support a severity claim yet"*, not *"this is minor"*. A reader who sorts it below `low` and ignores it has inverted the intent.
+- `NEXT_ACTION: "gate"` with empty `GRANT_NEEDED` and empty `HUMAN_PREREQUISITES` and empty `CURRENCY_GATE` is a contract violation — a gate names what it waits for. A grant marked `denied` is never a gate, in either mode: the work it blocks is a `BLOCKED_ITEMS` entry `denied grant: <name> — <what it blocks>`, `STATUS: BLOCKED`, `GRANT_NEEDED` empty, `NEXT_ACTION: "abort"` unless something else on the same return is a gate; such an entry is reported, never requested, and never escalates `qa_scope`.
 
 *`MODE: harness` only:*
 
@@ -415,13 +421,13 @@ more than 8 and flags none `at risk`, does not buy a cheaper run — it buys per
 wave, which in most plan shapes is strictly more mutation work than the per-property floor it avoided. The cost gradient
 points toward honest self-flagging. Do not report a shortfall as met because the plan was vague about
 its units; a vague plan raises the floor, it does not remove it.
-- Non-empty `BLOCKED_ITEMS` escalates `qa_scope=probe` to `standard`. **Harness mode only** — see the preflight rule below for why.
+- Non-empty `BLOCKED_ITEMS` escalates `qa_scope=probe` to `standard`, except entries that are `denied grant: <name>` items — a refused grant is the user's decision, not a scope finding. **Harness mode only** — see the preflight rule below for why.
 - `ENV_MODE: manual_instructions` requires `CHECKPOINT` on a human action — the harness cannot self-provision and must say so rather than pretending.
 
 *`MODE: preflight` only:*
 
 - `SERVICES_PROVISIONED` **must be `[]`**. Non-empty is an automatic `STATUS: FAIL`: preflight breached its T4 ceiling and booted something. This field is the machine-checkable proof that a preflight run costs seconds and starts nothing.
-- Non-empty `BLOCKED_ITEMS` or `HUMAN_PREREQUISITES` forces `STATUS: BLOCKED` with `NEXT_ACTION: gate`. Never `PASS`, never `FAIL` — a missing credential is not a product failure, and rounding it to either one destroys the distinction preflight exists to draw.
+- Non-empty `BLOCKED_ITEMS` or `HUMAN_PREREQUISITES` forces `STATUS: BLOCKED`, and forces `NEXT_ACTION: gate` unless every `BLOCKED_ITEMS` entry is a `denied grant: <name>` item and `HUMAN_PREREQUISITES` is empty (a denied grant is reported, never requested — the gate rule above). Never `PASS`, never `FAIL` — a missing credential is not a product failure, and rounding it to either one destroys the distinction preflight exists to draw.
 - **`BLOCKED_ITEMS` does NOT escalate `qa_scope`.** A missing prerequisite is the ordinary result of a cheap first check; promoting `probe` to the full graph over one would make the cheapest scope the most expensive the moment anything is unset. `SCOPE_INCREASES` still escalates, in both modes.
 - **`REPO_CURRENCY` covers every repo in the topology, not every repo preflight touches.** Enumerate the repo set from the feature map and the env plan **first**, then measure each one. A `REPO_CURRENCY` list shorter than that set is **invalid output** — the same standing as a failed check with no `classification`. This is a *coverage* rule, and the word is the whole point: measuring the repos you happened to touch is what produces one current side and one stale side. A repo with a detached HEAD or no resolvable default is still emitted, with `default_branch: null`, `commits_behind: null` and the reason — an unmeasurable repo is recorded as unmeasured, never omitted, because omission is indistinguishable from current.
 - **`CURRENCY_GATE` is derived from `REPO_CURRENCY`, and non-empty `CURRENCY_GATE` forces `STATUS: BLOCKED` with `NEXT_ACTION: gate`. Never `PASS`, never `FAIL`** — the same reason the prerequisite rule above gives: a stale checkout is an environment fact, and rounding it to either verdict destroys the distinction preflight exists to draw. The router raises the one batched question; **you never ask, and you never pull forward.**
