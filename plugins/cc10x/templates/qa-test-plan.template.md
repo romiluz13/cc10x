@@ -84,7 +84,7 @@ Restate them here rather than cross-referencing. A scenario that silently assume
 
 ## 2. Coverage plan
 
-The User Action Inventory in the feature map is the full input space. This table is how much of it this plan actually executes, and by what rule.
+The User Action Inventory (feature map §6) and the Behaviour-varying surface (feature map §6b) are the full input space. The tables below are how much of each this plan actually executes, and by what rule.
 
 **Reduction is deliberate, never silent.** Full combinatorial coverage is unachievable on any real UI — 5 filters × 4 options is 1,024 cases — and a plan that claims it never gets built, which yields less coverage than an honest reduction. State the technique and state the residual risk.
 
@@ -135,6 +135,18 @@ Every feature needs all three. A plan with only happy-path is a demo, not a test
 The OFF column is the one that gets skipped, and it is where the expensive incidents come from: a flag rolled back after an incident must return the system to a working state, and nobody finds out whether it does until that moment. If a flag is genuinely one-way (no rollback path), say so here — that is a finding worth surfacing, not a reason to skip the row.
 
 **Entitlement × flag.** Where both exist they are independent gates: flag-on + entitlement-off must degrade correctly, not 500.
+
+### Coverage by behaviour dimension
+
+Every `BEHAVIOUR_SURFACE` row in the feature map's §6b appears here exactly once, with the technique that reduced it and what the reduction leaves uncovered. A dimension the env plan fixes to one value and no scenario varies is a constant, and belongs in the `Leaves uncovered` column, not nowhere.
+
+| Dimension | Entry (feature map §6b) | Space size | Technique | Cases | Leaves uncovered — and why that is acceptable |
+| ----------- | ------------------------- | ------------ | ----------- | ------- | ----------------------------------------------- |
+| auth | <!-- role / entitlement --> | | every-option-once (minimum) · full-combinatorial where role × entitlement both exist | | |
+| flag / config | <!-- key --> | | every-option-once · pairwise across keys | | <!-- the OFF path is the one that gets skipped --> |
+| limit | <!-- constant --> | 3 | boundary-values (N-1, N, N+1) | | <!-- a declared limit the code does not enforce is a finding, not a gap --> |
+
+The `Cases` column obeys the same rule as the control-group table: `N (S3, S7)`, traceable to scenario rows, and reconciled with §3's waves and §4's total before finalising.
 
 ---
 
