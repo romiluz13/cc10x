@@ -148,7 +148,8 @@ Rules:
   - `scan`
   - `reconcile`
   - `reasoning`
-- `pending_gate` is required whenever BUILD/PLAN/DEBUG/QA/TRIAGE/CODEBASE-HEALTH is waiting on user clarification, scope selection, or persistence repair. QA sets exactly two: `qa_preflight_human_prerequisites` (the batched preflight ask) and `qa_source_contradiction` (consolidation found sources that disagree about what to test).
+- `pending_gate` is required whenever BUILD/PLAN/DEBUG/QA/TRIAGE/CODEBASE-HEALTH is waiting on user clarification, scope selection, or persistence repair. QA sets exactly three: `qa_preflight_human_prerequisites` (the batched preflight ask), `qa_source_contradiction` (consolidation found sources that disagree about what to test) and `qa_test_plan_approval` (the reviewed test plan is on screen and `qa.negotiation.test_plan_approval` is `wait`).
+- `qa.negotiation` is written once, at QA step 0c, and read by every QA dispatch: `grants` (each `granted | denied | ask`; `ask` means a batched router gate when first needed, never an agent question), `test_plan_approval` (`wait | run`), `users_words` (the user's answer, verbatim), `recorded_at`, `pending_grant` (the open grant request while the grant gate is raised, else null).
 - `status_history` is an append-only summary of major router decisions; `remediation_history` holds exactly one entry per remediation round (see `### Circuit breaker` in `remediation-and-research.md`).
 
 Router gates (operational definitions — a gate name without these semantics is meaningless):

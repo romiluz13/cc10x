@@ -2686,9 +2686,11 @@ PP40_HEADING = re.compile(r"^## (\d+[a-z]?)\. (.+)$", re.M)
 # one that LEAVES it is a prose edit nobody recorded. Either way, red. I-92 and
 # I-93 are both silent unless this is an equality -- each moves exactly one
 # correct citation INTO the class and produces no mismatch at all.
+# Re-measured at dcee43c + step 0c: the 8 lines of 0c moved the line from
+# 120 to 128 after #94 (the citations other comments in this file call `:119`).
 PP40_UNDESCRIPTIVE = {
-    ("qa-workflow.md", 120, "3"),   # "wave count and in the"  vs  ## 3. Build order
-    ("qa-workflow.md", 120, "2"),   # "id rollups"             vs  ## 2. Coverage plan
+    ("qa-workflow.md", 128, "3"),   # "wave count and in the"  vs  ## 3. Build order
+    ("qa-workflow.md", 128, "2"),   # "id rollups"             vs  ## 2. Coverage plan
 }
 # There is no exclusion list. The seven unprefixed `§N` in
 # `qa-harness-builder.md`'s 64-71 table fall into the NO-PREFIX branch already --
@@ -3321,6 +3323,159 @@ PP48D_TOKENS = {
     ),
 }
 
+# ---------------------------------------------------------------- PP-49
+# The QA route asked its questions one agent at a time and shipped a test plan
+# nobody approved. Step 0c negotiates grants + the approval policy ONCE and
+# persists them to `qa.negotiation`; the router halts on the reviewed plan
+# under `pending_gate="qa_test_plan_approval"` when the policy is `wait`.
+# (a) skeleton shape, (b) policy line + `qa.negotiation` bullet, (c) step 0c,
+# (d) the gate paragraph + its probe placement, (e) one vocabulary across all.
+PP49_NEGOTIATION_KEYS = (
+    "recorded_at",
+    "grants",
+    "test_plan_approval",
+    "users_words",
+    "pending_grant",
+)
+PP49_GRANTS = (
+    "mcp_servers",
+    "settings_changes",
+    "db_access",
+    "package_install",
+    "service_start",
+    "external_network",
+    "writes_outside_allowlist",
+)
+# (b) The pending_gate bullet must be unique and carry the gate list as ONE
+# sentence: three tokens scattered over the line passed with "exactly two"
+# still in front of them.
+PP49B_LINE = re.compile(r"(?m)^- `pending_gate` is required .*QA sets exactly three: .*$")
+PP49B_GATE_SENTENCE = (
+    "QA sets exactly three: `qa_preflight_human_prerequisites` (the batched "
+    "preflight ask), `qa_source_contradiction` (consolidation found sources "
+    "that disagree about what to test) and `qa_test_plan_approval` (the "
+    "reviewed test plan is on screen and `qa.negotiation.test_plan_approval` "
+    "is `wait`)."
+)
+PP49B_BULLET = re.compile(
+    r"(?m)^- `qa\.negotiation` is written once, at QA step 0c, and read by "
+    r"every QA dispatch: .*$"
+)
+# The bullet is pinned WHOLE (prefix + clauses + final period, whitespace
+# normalised): clauses pinned exactly once still passed a trailing sentence
+# that re-defined `ask` on the same bullet line (failure hunt H6).
+PP49B_BULLET_PREFIX = (
+    "- `qa.negotiation` is written once, at QA step 0c, and read by every QA "
+    "dispatch: "
+)
+PP49B_BULLET_CLAUSES = (
+    "`grants` (each `granted | denied | ask`; `ask` means a batched router gate "
+    "when first needed, never an agent question)",
+    "`test_plan_approval` (`wait | run`)",
+    "`users_words` (the user's answer, verbatim)",
+    "`recorded_at`",
+    "`pending_grant` (the open grant request while the grant gate is raised, "
+    "else null)",
+)
+PP49B_BULLET_TEXT = PP49B_BULLET_PREFIX + ", ".join(PP49B_BULLET_CLAUSES) + "."
+# (c) Step 0c sits between 0a and 0b; the anchors are PP-18's own.
+PP49C_0A = re.compile(r"(?m)^0a\. \*\*Capability discovery")
+PP49C_0B = re.compile(r"(?m)^0b\. \*\*Repo-set enumeration")
+PP49C_START = re.compile(r"(?m)^0c\. \*\*Negotiation")
+# The step IS these lines: the window's non-blank lines must equal them in
+# order. A swapped default (`run` ... the default) or a dropped grant changes a
+# pinned line; a seventh bullet laid over the blank line before 0b (line count
+# unchanged, failure hunt H3') makes the list longer. No byte floor: equality
+# is stricter than any floor could be.
+PP49C_LINES = (
+    "0c. **Negotiation (ONE `AskUserQuestion`, runs once, after 0a's "
+    "measurement and before 0b's on-screen repo set).**",
+    "- Propose grants from what 0a measured as **needed** for this run — not "
+    "the whole list. A grant nothing will use is noise, and noise is how a "
+    "user stops reading the question.",
+    "- The grants are `mcp_servers`, `settings_changes`, `db_access`, "
+    "`package_install`, `service_start`, `external_network`, "
+    "`writes_outside_allowlist`; each answer is `granted | denied | ask`. "
+    "`ask` means: when an agent first needs it, it returns `STATUS: BLOCKED` "
+    "with `NEXT_ACTION: gate` and the router raises ONE batched question — "
+    "never an agent question.",
+    "- Ask the approval policy in the same question: `test_plan_approval: "
+    "wait` (halt on the reviewed plan — the default) or `run`.",
+    "- Persist the answer to `qa.negotiation` NOW: `qa.negotiation.grants`, "
+    "`qa.negotiation.test_plan_approval`, `qa.negotiation.users_words` "
+    "(verbatim), `qa.negotiation.recorded_at`; append `negotiation_recorded` "
+    "to the event log. `JUST_GO` takes the proposed grants and `wait`.",
+    "- Every QA agent dispatch after this point carries the `## Grants` block "
+    "rendered from `qa.negotiation.grants` (defined under *QA-specific "
+    "rules*).",
+)
+# grant names, read back out of the grants line by regex (never retyped)
+PP49C_GRANT_LINE = re.compile(r"(?m)^- The grants are ((?:`[a-z_]+`, )+`[a-z_]+`);")
+# (d) The gate paragraph sits after the Pass-1 FINDINGS bullet and before the
+# amendment rule, and IS its sentences: the whitespace-normalised window must
+# equal them joined by one space. Sentences pinned exactly once plus a floor
+# passed a sentence appended inside the paragraph (failure hunt H1).
+PP49D_START = re.compile(r"(?m)^\*\*Test-plan approval gate — ")
+# File-wide: the heading's stem exactly once, so a second, differently-headed
+# gate paragraph ("... gate, fast path — ") cannot sit elsewhere (hunt H4).
+PP49D_HEAD_STEM = re.compile(r"(?m)^\*\*Test-plan approval gate")
+PP49D_END = re.compile(r"(?m)^\*\*|^#### |^```")
+PP49D_AFTER = re.compile(r"(?m)^- \*\*Pass 1 returns `FINDINGS`\*\* ")
+PP49D_BEFORE = re.compile(r"(?m)^\*\*An amendment is never self-certified")
+PP49D_SENTENCES = (
+    '**Test-plan approval gate — `pending_gate="qa_test_plan_approval"`.**',
+    "When the last review pass returns `PASS` (pass 1, or pass 2 after an "
+    "amendment) and `qa.negotiation.test_plan_approval` is `wait`: present the "
+    "plan ON SCREEN — the scenario total with its arithmetic, the waves with "
+    "their stop-ifs, every reduction technique from both coverage tables and "
+    "what each leaves uncovered, the open contradictions, the env mode and the "
+    'real-time cost — set `pending_gate="qa_test_plan_approval"`, raise '
+    "exactly one `AskUserQuestion`, and halt.",
+    "Do not unblock `qa_preflight_task_id` until the answer is recorded "
+    "(`test_plan_approved` in the event log, `pending_gate` cleared).",
+    "When the policy is `run`, append `test_plan_approval_skipped` and continue.",
+    "The same halt applies in `qa_scope=probe` after `qa-plan` returns, "
+    "because the deliverable is the same.",
+    "A plan the user never looked at is not an approved plan — the rule the "
+    "env plan already lives under.",
+)
+# The probe graph names the gate in its own section too, as prose (no node).
+PP49D_PROBE_START = re.compile(r"(?m)^#### Reduced task graph \(`qa_scope=probe`\)$")
+PP49D_PROBE_END = re.compile(r"(?m)^### |^#### ")
+PP49D_PROBE_SENTENCE = (
+    "The test-plan approval gate is not dropped with the review: after "
+    "`qa-plan` returns, preflight is unblocked only after the "
+    "`qa_test_plan_approval` gate clears or the policy is `run`."
+)
+# (e) gate tokens are DERIVED from each surface, never retyped
+PP49E_GATE = re.compile(r"qa_[a-z_]+approval")
+PP49E_KEY = re.compile(r"^[a-z_]*approval$")
+
+
+def load_skeleton() -> tuple[dict, list[str]]:
+    """Parse the skeleton with every repeated key, at any depth, reported.
+
+    Plain `json.loads` keeps the LAST of two equal keys, so a gutted
+    `"negotiation"` written before the real one parsed clean (failure hunt
+    H5). The hook does not raise: a raise here would crash the suite in the
+    first fixture builder, before any property could name the fault. Every
+    skeleton read goes through this loader; PP-49(a) fails on any repeat.
+    """
+    repeats: list[str] = []
+
+    def hook(pairs: list[tuple[str, object]]) -> dict:
+        seen: set[str] = set()
+        for key, _ in pairs:
+            if key in seen:
+                repeats.append(
+                    f"{key!r} repeated in the object with keys {[k for k, _ in pairs]}"
+                )
+            seen.add(key)
+        return dict(pairs)
+
+    data = json.loads(SKELETON.read_text(encoding="utf-8"), object_pairs_hook=hook)
+    return data, repeats
+
 
 failures: list[str] = []
 checked: list[str] = []
@@ -3347,7 +3502,7 @@ def closure_artifact(**overrides) -> dict:
     A key whose override value is the string "__ABSENT__" is DELETED, which is
     how case (d) synthesizes a legacy artifact that predates both revision keys.
     """
-    payload = json.loads(SKELETON.read_text())
+    payload, _ = load_skeleton()
     payload["workflow_uuid"] = PP13_WF_ID
     payload["workflow_id"] = PP13_WF_ID
     payload["workflow_type"] = "BUILD"
@@ -4075,7 +4230,7 @@ def main() -> int:
 
     # PP-21(a) -- every artifact key the QA law names exists in the skeleton it
     # names, resolved segment by segment to FULL DEPTH.
-    skeleton = json.loads(SKELETON.read_text(encoding="utf-8"))
+    skeleton, skeleton_repeats = load_skeleton()
 
     def _resolve(path: str, depth: int | None = None) -> bool:
         """Walk `path` through the skeleton. depth=None means full depth."""
@@ -6445,6 +6600,267 @@ def main() -> int:
         + ", ".join(f"{p} ({len(t)} tokens)" for p, t in PP48D_TOKENS.items())
         + " inside each description string"
         + ("" if not pp48d_faults else " -- " + "; ".join(pp48d_faults)),
+    )
+
+    # ---------------------------------------------------------------- PP-49
+    # One negotiation at step 0c, persisted to `qa.negotiation`, and a router
+    # halt on the reviewed plan when the policy is `wait`.
+    # PP-49(a) -- the skeleton carries the negotiation state at its defaults.
+    pp49a_faults: list[str] = []
+    if skeleton_repeats:
+        pp49a_faults.append(
+            f"the skeleton repeats a key (json keeps the last copy): {skeleton_repeats}"
+        )
+    pp49_neg = skeleton.get("qa", {}).get("negotiation")
+    if not isinstance(pp49_neg, dict):
+        pp49a_faults.append("qa.negotiation is absent or not an object")
+        pp49_neg = {}
+    else:
+        if list(pp49_neg) != list(PP49_NEGOTIATION_KEYS):
+            pp49a_faults.append(
+                f"qa.negotiation keys are {list(pp49_neg)}, not exactly "
+                f"{list(PP49_NEGOTIATION_KEYS)}"
+            )
+        grants = pp49_neg.get("grants")
+        if not isinstance(grants, dict) or list(grants) != list(PP49_GRANTS):
+            pp49a_faults.append(
+                f"qa.negotiation.grants keys are "
+                f"{list(grants) if isinstance(grants, dict) else grants!r}, not "
+                f"exactly {list(PP49_GRANTS)}"
+            )
+        else:
+            not_ask = {k: v for k, v in grants.items() if v != "ask"}
+            if not_ask:
+                pp49a_faults.append(f"grants not defaulted to 'ask': {not_ask}")
+        if pp49_neg.get("test_plan_approval") != "wait":
+            pp49a_faults.append(
+                f"test_plan_approval default is "
+                f"{pp49_neg.get('test_plan_approval')!r}, not 'wait'"
+            )
+        for k in ("recorded_at", "users_words", "pending_grant"):
+            if k in pp49_neg and pp49_neg[k] is not None:
+                pp49a_faults.append(f"{k} default is {pp49_neg[k]!r}, not null")
+    check(
+        "PP-49(a)",
+        not pp49a_faults,
+        f"{SKELETON.name} qa.negotiation: {len(PP49_NEGOTIATION_KEYS)} keys, "
+        f"{len(PP49_GRANTS)} grants at 'ask', test_plan_approval 'wait', "
+        f"3 nulls, no repeated key at any depth"
+        + ("" if not pp49a_faults else " -- " + "; ".join(pp49a_faults)),
+    )
+
+    # PP-49(b) -- the policy names the third gate and documents qa.negotiation.
+    pp49b_faults: list[str] = []
+    pp49_policy = _normative(HOOK_POLICY.read_text(encoding="utf-8"))
+    pp49b_lines = PP49B_LINE.findall(pp49_policy)
+    pp49b_line = pp49b_lines[0] if len(pp49b_lines) == 1 else ""
+    if len(pp49b_lines) != 1:
+        pp49b_faults.append(
+            f"PRECONDITION failed: the pending_gate line {PP49B_LINE.pattern!r} "
+            f"matched {len(pp49b_lines)} times (expected exactly 1)"
+        )
+    else:
+        # the gate sentence is the LAST thing on the line: a sentence after it
+        # ("The third is advisory ...", hunt H2) qualifies all three away
+        if pp49b_line.count(PP49B_GATE_SENTENCE) != 1 or not (
+            pp49b_line.rstrip().endswith(PP49B_GATE_SENTENCE)
+        ):
+            pp49b_faults.append(
+                "the pending_gate line does not END with the three-gate "
+                "sentence, carried exactly once"
+            )
+        if "exactly two" in pp49b_line:
+            pp49b_faults.append("the pending_gate line still says 'exactly two'")
+    pp49b_bullets = PP49B_BULLET.findall(pp49_policy)
+    pp49b_bullet = pp49b_bullets[0] if len(pp49b_bullets) == 1 else ""
+    if len(pp49b_bullets) != 1:
+        pp49b_faults.append(
+            f"PRECONDITION failed: the qa.negotiation bullet "
+            f"{PP49B_BULLET.pattern!r} matched {len(pp49b_bullets)} times "
+            f"(expected exactly 1)"
+        )
+    else:
+        if " ".join(pp49b_bullet.split()) != " ".join(PP49B_BULLET_TEXT.split()):
+            bad = [c for c in PP49B_BULLET_CLAUSES if pp49b_bullet.count(c) != 1]
+            pp49b_faults.append(
+                "the qa.negotiation bullet is not exactly the pinned bullet"
+                + (f" (clauses not present exactly once: {bad})" if bad else
+                   " (every clause present: something was added or reordered)")
+            )
+    check(
+        "PP-49(b)",
+        not pp49b_faults,
+        f"{HOOK_POLICY.name}: pending_gate line {len(pp49b_line)}B with the "
+        f"three-gate sentence, qa.negotiation bullet {len(pp49b_bullet)}B with "
+        f"{len(PP49B_BULLET_CLAUSES)} clauses, pinned whole"
+        + ("" if not pp49b_faults else " -- " + "; ".join(pp49b_faults)),
+    )
+
+    # PP-49(c) -- step 0c negotiates once, between 0a and 0b.
+    pp49c_faults: list[str] = []
+    pp49_wf_norm = _normative(QA_WORKFLOW.read_text(encoding="utf-8"))
+    pp49c_w, pp49c_fault = _pp41_window(
+        pp49_wf_norm, PP49C_START, PP49C_0B, "step 0c"
+    )
+    if pp49c_fault:
+        pp49c_faults.append(pp49c_fault)
+    else:
+        m_a = PP49C_0A.search(pp49_wf_norm)
+        m_c = PP49C_START.search(pp49_wf_norm)
+        m_bs = PP49C_0B.findall(pp49_wf_norm)
+        m_b = PP49C_0B.search(pp49_wf_norm)
+        if not (m_a and m_b and len(m_bs) == 1 and m_a.start() < m_c.start() < m_b.start()):
+            pp49c_faults.append(
+                f"0c is not between 0a and 0b (0a@{m_a.start() if m_a else -1}, "
+                f"0c@{m_c.start()}, 0b x{len(m_bs)}@{m_b.start() if m_b else -1})"
+            )
+        got = [ln for ln in pp49c_w.splitlines() if ln.strip()]
+        if got != list(PP49C_LINES):
+            first = next(
+                (i for i, (g, w) in enumerate(zip(got, PP49C_LINES)) if g != w),
+                min(len(got), len(PP49C_LINES)),
+            )
+            seen = got[first][:70] if first < len(got) else "<end of step>"
+            pp49c_faults.append(
+                f"step 0c has {len(got)} non-blank lines, not the "
+                f"{len(PP49C_LINES)} pinned; first difference at line {first}: "
+                f"{seen!r}"
+            )
+        gl = PP49C_GRANT_LINE.findall(pp49c_w)
+        named = tuple(re.findall(r"`([a-z_]+)`", gl[0])) if len(gl) == 1 else ()
+        if named != PP49_GRANTS:
+            pp49c_faults.append(
+                f"step 0c names grants {list(named)}, not {list(PP49_GRANTS)} "
+                f"(the list PP-49(a) holds the skeleton to)"
+            )
+    check(
+        "PP-49(c)",
+        not pp49c_faults,
+        f"{QA_WORKFLOW.name} normative step 0c {len(pp49c_w.encode('utf-8'))}B "
+        f"between 0a and 0b, exactly the {len(PP49C_LINES)} pinned lines, "
+        f"grant list read back equal to PP-49(a)'s"
+        + ("" if not pp49c_faults else " -- " + "; ".join(pp49c_faults)),
+    )
+
+    # PP-49(d) -- the router halts on the reviewed plan, in both graphs.
+    pp49d_faults: list[str] = []
+    pp49d_w, pp49d_fault = _pp41_window(
+        pp49_wf_norm, PP49D_START, PP49D_END, "test-plan approval gate"
+    )
+    if pp49d_fault:
+        pp49d_faults.append(pp49d_fault)
+    else:
+        m_g = PP49D_START.search(pp49_wf_norm)
+        m_after = PP49D_AFTER.findall(pp49_wf_norm)
+        m_bef = PP49D_BEFORE.findall(pp49_wf_norm)
+        a = PP49D_AFTER.search(pp49_wf_norm)
+        b = PP49D_BEFORE.search(pp49_wf_norm)
+        if not (
+            len(m_after) == 1 and len(m_bef) == 1
+            and a.start() < m_g.start() < b.start()
+        ):
+            pp49d_faults.append(
+                "the gate paragraph does not sit after the Pass-1 FINDINGS "
+                "bullet and before the amendment rule"
+            )
+        if " ".join(pp49d_w.split()) != " ".join(PP49D_SENTENCES):
+            bad = [s[:60] for s in PP49D_SENTENCES if pp49d_w.count(s) != 1]
+            pp49d_faults.append(
+                "the gate paragraph is not exactly the pinned sentences"
+                + (f" (not present exactly once: {bad})" if bad else
+                   " (every sentence present: something was added or reordered)")
+            )
+    pp49d_heads = PP49D_HEAD_STEM.findall(pp49_wf_norm)
+    if len(pp49d_heads) != 1:
+        pp49d_faults.append(
+            f"'**Test-plan approval gate' heads {len(pp49d_heads)} paragraphs "
+            f"in {QA_WORKFLOW.name} (need exactly 1)"
+        )
+    pp49d_p, pp49d_p_fault = _pp41_window(
+        pp49_wf_norm, PP49D_PROBE_START, PP49D_PROBE_END, "reduced task graph"
+    )
+    if pp49d_p_fault:
+        pp49d_faults.append(pp49d_p_fault)
+    elif pp49d_p.count(PP49D_PROBE_SENTENCE) != 1:
+        pp49d_faults.append(
+            "the reduced task graph does not name the gate's probe placement "
+            "exactly once"
+        )
+    check(
+        "PP-49(d)",
+        not pp49d_faults,
+        f"{QA_WORKFLOW.name} normative gate paragraph "
+        f"{len(pp49d_w.encode('utf-8'))}B is exactly its "
+        f"{len(PP49D_SENTENCES)} pinned sentences, heading unique file-wide; "
+        f"reduced task graph names the gate"
+        + ("" if not pp49d_faults else " -- " + "; ".join(pp49d_faults)),
+    )
+
+    # PP-49(e) -- one vocabulary: the gate token and the policy key, each read
+    # out of its own surface by regex, agree across skeleton, policy, router.
+    pp49e_faults: list[str] = []
+    pp49e_keys = [k for k in pp49_neg if PP49E_KEY.match(k)]
+    pp49e_key = pp49e_keys[0] if len(pp49e_keys) == 1 else None
+    pp49e_tokens = {
+        "policy line": set(PP49E_GATE.findall(pp49b_line)),
+        "gate paragraph": set(PP49E_GATE.findall(pp49d_w)),
+        "reduced task graph": set(PP49E_GATE.findall(pp49d_p)),
+    }
+    for where, toks in pp49e_tokens.items():
+        if len(toks) != 1:
+            pp49e_faults.append(f"{where} carries gate tokens {sorted(toks)}, need 1")
+    # File-wide: every gate token in the normative law sits inside one of the
+    # two windows. A second paragraph that names the gate under any heading
+    # (hunt H4) is an occurrence outside both, named by its line.
+    pp49e_spans = []
+    for rx, win in ((PP49D_START, pp49d_w), (PP49D_PROBE_START, pp49d_p)):
+        m = rx.search(pp49_wf_norm) if win else None
+        if m:
+            pp49e_spans.append((m.start(), m.start() + len(win)))
+    pp49e_stray = [
+        pp49_wf_norm[pp49_wf_norm.rfind("\n", 0, m.start()) + 1 :].split("\n", 1)[0][:80]
+        for m in PP49E_GATE.finditer(pp49_wf_norm)
+        if not any(a <= m.start() < b for a, b in pp49e_spans)
+    ]
+    if pp49e_stray:
+        pp49e_faults.append(
+            f"{len(pp49e_stray)} gate token(s) outside the gate paragraph and "
+            f"the reduced task graph, on line(s) {pp49e_stray}"
+        )
+    distinct = set().union(*pp49e_tokens.values())
+    if len(distinct) != 1:
+        pp49e_faults.append(f"the surfaces disagree on the gate: {sorted(distinct)}")
+    if pp49e_key is None:
+        pp49e_faults.append(
+            f"the skeleton's qa.negotiation has {len(pp49e_keys)} approval keys "
+            f"({pp49e_keys}), need 1"
+        )
+    else:
+        if distinct and distinct != {f"qa_{pp49e_key}"}:
+            pp49e_faults.append(
+                f"gate {sorted(distinct)} is not qa_ + the skeleton key "
+                f"{pp49e_key!r}"
+            )
+        dotted = f"qa.negotiation.{pp49e_key}"
+        # step 0c is PP-49(c)'s: naming it here would turn one fault into two
+        for where, text in (
+            ("policy line", pp49b_line),
+            ("gate paragraph", pp49d_w),
+        ):
+            if f"`{dotted}`" not in text:
+                pp49e_faults.append(f"{where} does not name `{dotted}`")
+        if f"`{pp49e_key}` (`wait | run`)" not in pp49b_bullet:
+            pp49e_faults.append(
+                f"the qa.negotiation bullet does not document `{pp49e_key}`"
+            )
+    check(
+        "PP-49(e)",
+        not pp49e_faults,
+        f"gate {sorted(distinct)} agrees across the policy line, the gate "
+        f"paragraph and the reduced task graph, and occurs nowhere else in the "
+        f"normative {QA_WORKFLOW.name}; skeleton key {pp49e_key!r} is "
+        f"named in the policy line, its bullet and the gate"
+        + ("" if not pp49e_faults else " -- " + "; ".join(pp49e_faults)),
     )
 
     print(f"\nproperties checked: {', '.join(checked)}")

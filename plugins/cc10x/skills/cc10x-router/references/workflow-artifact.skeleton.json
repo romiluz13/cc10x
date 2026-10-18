@@ -110,6 +110,21 @@
       "setup_record": null
     },
     "bug_candidates": [],
+    "negotiation": {
+      "recorded_at": null,
+      "grants": {
+        "mcp_servers": "ask",
+        "settings_changes": "ask",
+        "db_access": "ask",
+        "package_install": "ask",
+        "service_start": "ask",
+        "external_network": "ask",
+        "writes_outside_allowlist": "ask"
+      },
+      "test_plan_approval": "wait",
+      "users_words": null,
+      "pending_grant": null
+    },
     "env_key": null,
     "preflight": {
       "status": null,
