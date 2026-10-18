@@ -2673,8 +2673,13 @@ PP40_STOPWORDS = {
 # The 6-word cap is the same defence for lines with no terminator nearby.
 PP40_TERMINATORS = (",", ";", ")", "|", ".", "—", "§", "**")
 PP40_WORD_CAP = 6
-PP40_CITATION = re.compile(r"§(\d+)")
-PP40_HEADING = re.compile(r"^## (\d+)\. (.+)$", re.M)
+# A section number may carry ONE letter suffix (`§6b`, `## 2c.`). Without it
+# `§6b` parses as `§6` and resolves against the wrong heading -- or, inside
+# the env plan, against a heading that exists, so a citation of a section
+# the env plan does not have reads as valid. The negative lookahead keeps
+# `§3and` from eating the first letter of a glued word. Keys are strings.
+PP40_CITATION = re.compile(r"§(\d+(?:[a-z](?![a-z]))?)")
+PP40_HEADING = re.compile(r"^## (\d+[a-z]?)\. (.+)$", re.M)
 # Citations whose trailing words describe the citing sentence rather than the
 # cited section. Measured; both are correct citations. SET EQUALITY, not
 # containment: a citation that JOINS this class is a tokeniser regression, and
@@ -2682,8 +2687,8 @@ PP40_HEADING = re.compile(r"^## (\d+)\. (.+)$", re.M)
 # I-93 are both silent unless this is an equality -- each moves exactly one
 # correct citation INTO the class and produces no mismatch at all.
 PP40_UNDESCRIPTIVE = {
-    ("qa-workflow.md", 120, 3),   # "wave count and in the"  vs  ## 3. Build order
-    ("qa-workflow.md", 120, 2),   # "id rollups"             vs  ## 2. Coverage plan
+    ("qa-workflow.md", 120, "3"),   # "wave count and in the"  vs  ## 3. Build order
+    ("qa-workflow.md", 120, "2"),   # "id rollups"             vs  ## 2. Coverage plan
 }
 # There is no exclusion list. The seven unprefixed `§N` in
 # `qa-harness-builder.md`'s 64-71 table fall into the NO-PREFIX branch already --
@@ -2717,9 +2722,15 @@ def _pp40_tokens(text: str) -> set[str]:
     return out
 
 
-def _pp40_headings(path: Path) -> dict[int, str]:
+def _pp40_order(num: str) -> tuple[int, str]:
+    """Numeric order for section keys: `2` < `2c` < `10`."""
+    digits = num.rstrip("abcdefghijklmnopqrstuvwxyz")
+    return int(digits), num[len(digits):]
+
+
+def _pp40_headings(path: Path) -> dict[str, str]:
     return {
-        int(m.group(1)): m.group(2).strip()
+        m.group(1): m.group(2).strip()
         for m in PP40_HEADING.finditer(path.read_text(encoding="utf-8"))
     }
 
@@ -3183,6 +3194,132 @@ PP47D_TOKENS = (
 # measured 944 at f346ebe + this change; headroom 494 (pinned-token
 # skeleton 182B < 450).
 PP47D_MIN_BYTES = 450
+
+# --- PP-48: a dimension the env plan fixes is reduced by the test plan, too ---
+# PP-47 made BEHAVIOUR_SURFACE an unreduced inventory. Without a reduction
+# obligation the env plan still fixes each entry to one value and no scenario
+# varies it. (a) the test plan's coverage-by-behaviour-dimension table, (b) the
+# env plan's back-reference column, (c) the strategy section that names the
+# three dimensions, (d) the qa-plan and qa-plan-review dispatches.
+PP48A_S2 = re.compile(r"(?m)^## 2\. Coverage plan")
+PP48A_S2C = re.compile(r"(?m)^## 2c\. ")
+PP48A_START = re.compile(r"(?m)^### Coverage by behaviour dimension$")
+PP48_SECTION_END = re.compile(r"(?m)^### |^## ")
+# The ## 2. intro (up to its first ### ) must name both halves of the space
+# as ONE sentence: three fragments passed with the conjunction inverted
+# ("... §6 rows are the full input space. A scenario may also touch ... §6b").
+PP48A_INTRO_TOKENS = (
+    "The User Action Inventory (feature map §6) and the Behaviour-varying "
+    "surface (feature map §6b) are the full input space.",
+)
+PP48A_HEADER_CELLS = (
+    "Dimension",
+    "Entry (feature map §6b)",
+    "Space size",
+    "Technique",
+    "Cases",
+    "Leaves uncovered — and why that is acceptable",
+)
+# first cell of a data row -> a technique that row must name
+PP48A_ROWS = {
+    "auth": "every-option-once",
+    "flag / config": "pairwise",
+    "limit": "boundary-values (N-1, N, N+1)",
+}
+PP48A_TOKENS = (
+    "`BEHAVIOUR_SURFACE`",
+    "§6b",
+    "boundary-values",
+    "N-1",
+    "full-combinatorial",
+    "traceable to scenario rows",
+    "`N (S3, S7)`",
+    "reconciled with §3's waves and §4's total",
+)
+# The operative clauses, each line-anchored and required EXACTLY once in the
+# window: a phrase pair on one line passed "Not every `BEHAVIOUR_SURFACE` row
+# ... appears here exactly once".
+PP48A_CLAUSES = (
+    re.compile(
+        r"(?m)^Every `BEHAVIOUR_SURFACE` row in the feature map's §6b appears "
+        r"here exactly once"
+    ),
+    re.compile(
+        r"A dimension the env plan fixes to one value and no scenario varies is "
+        r"a constant, and belongs in the `Leaves uncovered` column, not nowhere\."
+    ),
+)
+# measured 1011 at e3e41ac + this change; headroom 361. Raised from 500 after
+# the failure hunt grew the pinned-token skeleton to 576B: the floor must sit
+# above it, so 650 > 576.
+PP48A_MIN_BYTES = 650
+PP48B_START = re.compile(r"(?m)^## 2\. Feature flags, settings, and entitlements")
+PP48B_END = re.compile(r"(?m)^### Flags that must be OFF")
+PP48B_TOKENS = (
+    "`BEHAVIOUR_SURFACE`",
+    "section 6b",
+    "**Every row names the feature-map section 6b entry it fixes.**",
+    "is a constant the plan must list as uncovered",
+    "is an uncontrolled variable",
+)
+# measured 1371 at e3e41ac + this change; headroom 721 (pinned-token
+# skeleton 227B < 650).
+PP48B_MIN_BYTES = 650
+PP48C_START = re.compile(
+    r"(?m)^### Auth, flags and config, and declared limits are coverage "
+    r"dimensions, not setup details$"
+)
+PP48C_OLD = re.compile(r"(?m)^### Feature flags are a coverage dimension")
+PP48C_TOKENS = (
+    "`BEHAVIOUR_SURFACE`",
+    "**auth**",
+    "**flag / config**",
+    "**limit**",
+    "Each is a dimension to vary, not a constant to set",
+    "**Limits take boundary values.**",
+    "N-1",
+    "N+1",
+    "that is a finding rather than a gap",
+    "coverage-by-behaviour-dimension table",
+    "Flag OFF",
+    "Toggled mid-session",
+    "**The OFF path is where the expensive incidents live.**",
+    "flag-on + entitlement-off",
+    "**Confirm a flag applied, do not confirm it was set.**",
+)
+# measured 2035 at e3e41ac + this change; headroom 1035 (pinned-token
+# skeleton 464B after the failure hunt < 1000).
+PP48C_MIN_BYTES = 1000
+# The group is the description string's BODY, bounded at its closing quote
+# (escapes honoured): a sentence moved past the quote on the same physical
+# line is outside the string the agent receives.
+PP48D_DISPATCH = {
+    "qa-plan": re.compile(
+        r'(?m)^\s*description: "wf:\{[a-z_]+\}\\nkind:agent\\norigin:router'
+        r'\\nphase:qa-plan\\n((?:[^"\\\n]|\\.)*)"'
+    ),
+    "qa-plan-review": re.compile(
+        r'(?m)^\s*description: "wf:\{[a-z_]+\}\\nkind:agent\\norigin:router'
+        r'\\nphase:qa-plan-review\\n((?:[^"\\\n]|\\.)*)"'
+    ),
+}
+PP48D_TOKENS = {
+    "qa-plan": (
+        "Cover the Behaviour-varying surface the same way",
+        "every BEHAVIOUR_SURFACE entry in feature-map section 6b",
+        "is reduced by a named technique",
+        "coverage-by-behaviour-dimension table with what it leaves uncovered stated",
+        "limits get boundary values at N-1, N and N+1",
+        "every env-plan feature-flag row names the entry it fixes",
+        "Never edit product code",
+    ),
+    "qa-plan-review": (
+        "Does every BEHAVIOUR_SURFACE entry in the feature map",
+        "appear in the coverage-by-behaviour-dimension table with a named "
+        "technique and a stated uncovered remainder",
+        "silently fixed to one value by the env plan and never varied",
+    ),
+}
 
 
 failures: list[str] = []
@@ -3715,16 +3852,17 @@ def main() -> int:
     # PP-9 — §N references resolve, using the CITATION PREFIX to pick the file.
     # qa-workflow.md cites at least four different documents, so a naive
     # "assume the env-plan template" rule fails on `SKILL.md §14`.
-    env_headings = {
-        int(m) for m in re.findall(r"^## (\d+)\.", ENV_PLAN_TPL.read_text(), re.M)
-    }
+    # Section keys keep a one-letter suffix (`6b`): see PP40_CITATION.
+    env_headings = set(
+        re.findall(r"^## (\d+[a-z]?)\.", ENV_PLAN_TPL.read_text(), re.M)
+    )
     bad: list[str] = []
     unresolved = 0
     for path in (ENV_PLAN_TPL, HARNESS_AGENT, QA_WORKFLOW):
         text = path.read_text()
-        for m in re.finditer(r"(\w[\w .`-]{0,14}?)?§(\d+)", text):
+        for m in re.finditer(r"(\w[\w .`-]{0,14}?)?§(\d+(?:[a-z](?![a-z]))?)", text):
             prefix = (m.group(1) or "").lower()
-            num = int(m.group(2))
+            num = m.group(2)
             if "env plan" in prefix or "env-plan" in prefix:
                 target = env_headings
             elif path is ENV_PLAN_TPL and not prefix.strip(" `"):
@@ -5205,7 +5343,7 @@ def main() -> int:
                 continue
             for cite in PP40_CITATION.finditer(pp40_line):
                 pp40_hits[pp40_path.name] += 1
-                num = int(cite.group(1))
+                num = cite.group(1)
                 vocab = _pp40_prefix(pp40_line, cite.start())
                 if vocab is None:
                     pp40_noprefix += 1          # SKILL.md / RFC / bare / ambiguous
@@ -5226,7 +5364,9 @@ def main() -> int:
                     pp40_matched += 1
                 else:
                     other = [
-                        m for m in sorted(titles) if m != num and cited & title_tokens[m]
+                        m
+                        for m in sorted(titles, key=_pp40_order)
+                        if m != num and cited & title_tokens[m]
                     ]
                     if other:                   # branch 3 -- the whole property
                         named = other[0]
@@ -6119,6 +6259,192 @@ def main() -> int:
         f"(floor {PP47D_MIN_BYTES}B), {len(PP47D_TOKENS)} tokens; §9 "
         f"{len(pp47d_h.encode('utf-8'))}B"
         + ("" if not pp47d_faults else " -- " + "; ".join(pp47d_faults)),
+    )
+
+    # ---------------------------------------------------------------- PP-48
+    # The surface PP-47 enumerates is reduced on purpose: the test plan names a
+    # technique per dimension and what it leaves uncovered, the env plan names
+    # the entry each fixed value belongs to, the strategy skill teaches the
+    # three dimensions, and both planning dispatches carry the duty.
+    def _pp48_cells(line: str) -> list[str]:
+        return [c.strip() for c in line.strip().strip("|").split("|")]
+
+    def _pp48_table(window: str) -> list[str]:
+        return [ln for ln in window.splitlines() if ln.lstrip().startswith("|")]
+
+    # PP-48(a) -- the test plan reduces every dimension by a named technique.
+    pp48a_faults: list[str] = []
+    pp48_tp = _decommented(QA_TEST_PLAN_TPL.read_text(encoding="utf-8"))
+    pp48a_intro, pp48a_intro_fault = _pp41_window(
+        pp48_tp, PP48A_S2, re.compile(r"(?m)^### "), "## 2. intro"
+    )
+    if pp48a_intro_fault:
+        pp48a_faults.append(pp48a_intro_fault)
+    else:
+        missing = [t for t in PP48A_INTRO_TOKENS if t not in pp48a_intro]
+        if missing:
+            pp48a_faults.append(f"## 2. intro omits {missing}")
+    pp48a_w, pp48a_fault = _pp41_window(
+        pp48_tp, PP48A_START, PP48_SECTION_END, "### Coverage by behaviour dimension"
+    )
+    if pp48a_fault:
+        pp48a_faults.append(pp48a_fault)
+    else:
+        pos = pp48_tp.find(pp48a_w)
+        m2 = PP48A_S2.search(pp48_tp)
+        m2c = PP48A_S2C.search(pp48_tp)
+        if not (m2 and m2c and m2.start() < pos < m2c.start()):
+            pp48a_faults.append("the section does not sit inside ## 2. (before ## 2c.)")
+        if len(pp48a_w.encode("utf-8")) < PP48A_MIN_BYTES:
+            pp48a_faults.append(
+                f"section is {len(pp48a_w.encode('utf-8'))}B, floor "
+                f"{PP48A_MIN_BYTES}B"
+            )
+        rows = _pp48_table(pp48a_w)
+        header = _pp48_cells(rows[0]) if rows else []
+        if header != list(PP48A_HEADER_CELLS):
+            pp48a_faults.append(
+                f"table header is {header}, not exactly {list(PP48A_HEADER_CELLS)}"
+            )
+        # The technique must sit IN the Technique column, not anywhere on the row.
+        ti = header.index("Technique") if "Technique" in header else -1
+        by_first = {_pp48_cells(r)[0]: _pp48_cells(r) for r in rows[2:]}
+        for first, technique in PP48A_ROWS.items():
+            cells = by_first.get(first)
+            if cells is None:
+                pp48a_faults.append(f"no '{first}' row")
+            elif ti < 0 or ti >= len(cells) or technique not in cells[ti]:
+                got = cells[ti] if 0 <= ti < len(cells) else None
+                pp48a_faults.append(
+                    f"'{first}' row's Technique cell is {got!r}, not one naming "
+                    f"'{technique}'"
+                )
+        missing = [t for t in PP48A_TOKENS if t not in pp48a_w]
+        if missing:
+            pp48a_faults.append(f"section omits {missing}")
+        for rx in PP48A_CLAUSES:
+            n = len(rx.findall(pp48a_w))
+            if n != 1:
+                pp48a_faults.append(
+                    f"operative clause {rx.pattern!r} matched {n}x (need exactly 1)"
+                )
+    check(
+        "PP-48(a)",
+        not pp48a_faults,
+        f"{QA_TEST_PLAN_TPL.name} ### Coverage by behaviour dimension "
+        f"{len(pp48a_w.encode('utf-8'))}B (floor {PP48A_MIN_BYTES}B), "
+        f"{len(PP48A_HEADER_CELLS)} header cells, {len(PP48A_ROWS)} rows, "
+        f"{len(PP48A_TOKENS)} tokens, {len(PP48A_CLAUSES)} clauses; ## 2. intro "
+        f"{len(pp48a_intro.encode('utf-8'))}B"
+        + ("" if not pp48a_faults else " -- " + "; ".join(pp48a_faults)),
+    )
+
+    # PP-48(b) -- every env-plan flag row names the feature-map entry it fixes.
+    pp48b_faults: list[str] = []
+    pp48b_env = _decommented(ENV_PLAN_TPL.read_text(encoding="utf-8"))
+    pp48b_w, pp48b_fault = _pp41_window(
+        pp48b_env,
+        PP48B_START,
+        PP48B_END,
+        "env plan ## 2.",
+    )
+    if pp48b_fault:
+        pp48b_faults.append(pp48b_fault)
+    else:
+        if len(pp48b_w.encode("utf-8")) < PP48B_MIN_BYTES:
+            pp48b_faults.append(
+                f"## 2. is {len(pp48b_w.encode('utf-8'))}B, floor {PP48B_MIN_BYTES}B"
+            )
+        rows = _pp48_table(pp48b_w)
+        header = _pp48_cells(rows[0]) if rows else []
+        if not header or header[-1] != "Feature-map entry":
+            pp48b_faults.append(
+                f"table header's last cell is {header[-1:]!r}, not 'Feature-map entry'"
+            )
+        widths = sorted({len(_pp48_cells(r)) for r in rows})
+        if len(rows) < 3 or len(widths) != 1:
+            pp48b_faults.append(
+                f"{len(rows)} table rows with cell counts {widths} -- header, "
+                f"separator and example row must all carry the column"
+            )
+        missing = [t for t in PP48B_TOKENS if t not in pp48b_w]
+        if missing:
+            pp48b_faults.append(f"## 2. omits {missing}")
+        if "§6b" in pp48b_w:
+            pp48b_faults.append(
+                "## 2. writes §6b -- PP-9/PP-40 resolve § against the env plan; "
+                "write 'section 6b'"
+            )
+    # Whole file, not only ## 2.: PP-9 resolves a bare env-plan §N against the
+    # env plan only when nothing precedes it, so "(cross-check §6b)" anywhere
+    # else is skipped there and must be caught here.
+    pp48b_glyph = [
+        i for i, ln in enumerate(pp48b_env.splitlines(), 1) if "§6b" in ln
+    ]
+    if pp48b_glyph:
+        pp48b_faults.append(
+            f"env plan writes §6b at decommented line(s) {pp48b_glyph} -- the env "
+            f"plan has no 6b section; write 'feature-map section 6b'"
+        )
+    check(
+        "PP-48(b)",
+        not pp48b_faults,
+        f"{ENV_PLAN_TPL.name} ## 2. {len(pp48b_w.encode('utf-8'))}B "
+        f"(floor {PP48B_MIN_BYTES}B), {len(PP48B_TOKENS)} tokens, §6b forbidden file-wide"
+        + ("" if not pp48b_faults else " -- " + "; ".join(pp48b_faults)),
+    )
+
+    # PP-48(c) -- the strategy skill teaches all three dimensions as normative law.
+    pp48c_faults: list[str] = []
+    pp48c_norm = _normative(qa_strategy_md.read_text(encoding="utf-8"))
+    pp48c_w, pp48c_fault = _pp41_window(
+        pp48c_norm, PP48C_START, PP48_SECTION_END, "qa-strategy dimensions section"
+    )
+    if pp48c_fault:
+        pp48c_faults.append(pp48c_fault)
+    else:
+        if len(pp48c_w.encode("utf-8")) < PP48C_MIN_BYTES:
+            pp48c_faults.append(
+                f"section is {len(pp48c_w.encode('utf-8'))}B, floor "
+                f"{PP48C_MIN_BYTES}B"
+            )
+        missing = [t for t in PP48C_TOKENS if t not in pp48c_w]
+        if missing:
+            pp48c_faults.append(f"section omits {missing}")
+    if PP48C_OLD.search(pp48c_norm):
+        pp48c_faults.append("the flags-only heading is still there beside it")
+    check(
+        "PP-48(c)",
+        not pp48c_faults,
+        f"{qa_strategy_md.name} normative dimensions section "
+        f"{len(pp48c_w.encode('utf-8'))}B (floor {PP48C_MIN_BYTES}B), "
+        f"{len(PP48C_TOKENS)} tokens"
+        + ("" if not pp48c_faults else " -- " + "; ".join(pp48c_faults)),
+    )
+
+    # PP-48(d) -- the qa-plan and qa-plan-review dispatches carry the duty.
+    # The dispatches live in ```text fences: the basis is `_decommented`.
+    pp48d_faults: list[str] = []
+    pp48d_wf = _decommented(QA_WORKFLOW.read_text(encoding="utf-8"))
+    for phase, rx in PP48D_DISPATCH.items():
+        bodies = rx.findall(pp48d_wf)
+        if len(bodies) != 1:
+            pp48d_faults.append(
+                f"PRECONDITION failed: {phase} dispatch matched {len(bodies)} "
+                f"times (expected exactly 1)"
+            )
+            continue
+        # tokens are searched in the string body only, never past its quote
+        missing = [t for t in PP48D_TOKENS[phase] if t not in bodies[0]]
+        if missing:
+            pp48d_faults.append(f"{phase} dispatch omits {missing}")
+    check(
+        "PP-48(d)",
+        not pp48d_faults,
+        f"{QA_WORKFLOW.name} dispatches "
+        + ", ".join(f"{p} ({len(t)} tokens)" for p, t in PP48D_TOKENS.items())
+        + " inside each description string"
+        + ("" if not pp48d_faults else " -- " + "; ".join(pp48d_faults)),
     )
 
     print(f"\nproperties checked: {', '.join(checked)}")

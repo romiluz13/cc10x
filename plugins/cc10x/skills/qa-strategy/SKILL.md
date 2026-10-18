@@ -95,7 +95,9 @@ A user action rarely stands alone. Cover the sequences too:
 
 Chains are where state bugs live, and they are almost never found by testing actions in isolation.
 
-### Feature flags are a coverage dimension, not a setup detail
+### Auth, flags and config, and declared limits are coverage dimensions, not setup details
+
+A feature's behaviour varies along three non-UI dimensions the researcher reports as `BEHAVIOUR_SURFACE`: **auth** (roles, entitlements, tenants), **flag / config** (flags, settings, config keys), and **limit** (declared caps). Each is a dimension to vary, not a constant to set — the env plan fixes a value, the test plan covers the values.
 
 A feature shipped behind a flag has **two live code paths in production**, and only one of them is new. Both need coverage:
 
@@ -108,6 +110,8 @@ A feature shipped behind a flag has **two live code paths in production**, and o
 **The OFF path is where the expensive incidents live.** A flag gets rolled back precisely when something is already going wrong, and that is the worst possible moment to discover the rollback does not restore a working system. If a flag is genuinely one-way, that is a finding to surface, not a row to skip.
 
 Where **entitlements** or plan tiers exist alongside flags, they are independent gates. `flag-on + entitlement-off` must degrade correctly rather than 500 — a combination almost no plan covers, because each gate is usually tested alone.
+
+**Limits take boundary values.** For a declared limit N, cover N-1, N and N+1; the N+1 case is where a declared-but-unenforced cap shows up, and that is a finding rather than a gap. Record every reduction in the test plan's coverage-by-behaviour-dimension table with what it leaves uncovered.
 
 **Confirm a flag applied, do not confirm it was set.** Asserting that the config call returned 200 proves the call returned 200. Caches, restart requirements, and per-pod config all break the leap from "set" to "in effect", and they break it silently.
 

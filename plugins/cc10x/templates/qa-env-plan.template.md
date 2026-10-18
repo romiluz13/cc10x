@@ -39,9 +39,11 @@ Port allocation: <!-- fixed or dynamic; how collisions are avoided on a shared m
 
 **The single most common cause of "works on my machine, not in the test env".** A feature behind a flag that nobody flipped does not fail loudly — it is simply absent, and the scenario fails in a way that looks like a product bug.
 
-| Flag / setting | Where it is set | Default | Required value | Scope | Who can change it |
-| ---------------- | ----------------- | --------- | ---------------- | ------- | ------------------- |
-| <!-- e.g. enableX --> | <!-- env var, config file, LaunchDarkly, DB row, admin UI --> | off | on | global / org / user | |
+| Flag / setting | Where it is set | Default | Required value | Scope | Who can change it | Feature-map entry |
+| ---------------- | ----------------- | --------- | ---------------- | ------- | ------------------- | ------------------- |
+| <!-- e.g. enableX --> | <!-- env var, config file, LaunchDarkly, DB row, admin UI --> | off | on | global / org / user | | <!-- the BEHAVIOUR_SURFACE row this fixes --> |
+
+**Every row names the feature-map section 6b entry it fixes.** A flag set here that no scenario varies is a constant the plan must list as uncovered; a `BEHAVIOUR_SURFACE` entry no row fixes is an uncontrolled variable and the run cannot say which value it measured.
 
 **Cover each category that applies:**
 
