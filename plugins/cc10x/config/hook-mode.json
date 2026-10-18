@@ -1,5 +1,6 @@
 {
   "artifactIntegrity": "block",
   "memoryWrites": "audit",
-  "taskMetadata": "audit"
+  "taskMetadata": "audit",
+  "gitGuard": "block"
 }

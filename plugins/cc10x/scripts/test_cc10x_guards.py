@@ -1733,7 +1733,12 @@ def resolved_mode(
     return modes, [e for e in hook_log_lines(proj) if e["event"] == "invalid_hook_mode"]
 
 
-DEFAULT_MODES = {"artifactIntegrity": "block", "memoryWrites": "audit", "taskMetadata": "audit"}
+DEFAULT_MODES = {
+    "artifactIntegrity": "block",
+    "memoryWrites": "audit",
+    "taskMetadata": "audit",
+    "gitGuard": "block",
+}
 
 
 def test_load_mode_missing_shipped_file_returns_all_defaults(tmp_path):
@@ -1752,13 +1757,23 @@ def test_load_mode_unknown_value_falls_back_for_that_key_only(tmp_path):
     modes, events = resolved_mode(
         tmp_path, {"artifactIntegrity": "warn", "memoryWrites": "block", "taskMetadata": 1}
     )
-    assert modes == {"artifactIntegrity": "block", "memoryWrites": "block", "taskMetadata": "audit"}
+    assert modes == {
+        "artifactIntegrity": "block",
+        "memoryWrites": "block",
+        "taskMetadata": "audit",
+        "gitGuard": "block",
+    }
     assert sorted(e["key"] for e in events) == ["artifactIntegrity", "taskMetadata"]
 
 
 def test_load_mode_partial_file_keeps_defaults_for_missing_keys(tmp_path):
     modes, events = resolved_mode(tmp_path, {"taskMetadata": "block"})
-    assert modes == {"artifactIntegrity": "block", "memoryWrites": "audit", "taskMetadata": "block"}
+    assert modes == {
+        "artifactIntegrity": "block",
+        "memoryWrites": "audit",
+        "taskMetadata": "block",
+        "gitGuard": "block",
+    }
     assert events == []
 
 
@@ -1768,7 +1783,12 @@ def test_load_mode_user_override_wins_over_the_shipped_file(tmp_path):
         {"artifactIntegrity": "block", "memoryWrites": "block"},
         override={"artifactIntegrity": "audit", "taskMetadata": "block", "extra": "block"},
     )
-    assert modes == {"artifactIntegrity": "audit", "memoryWrites": "block", "taskMetadata": "block"}
+    assert modes == {
+        "artifactIntegrity": "audit",
+        "memoryWrites": "block",
+        "taskMetadata": "block",
+        "gitGuard": "block",
+    }
     assert events == []
 
 
@@ -1785,6 +1805,37 @@ def test_load_mode_invalid_override_value_falls_back_to_the_shipped_value(tmp_pa
     assert [e["source"] for e in events] == ["override"]
 
 
+def test_git_guard_mode_accepts_ask_and_rejects_audit(tmp_path):
+    modes, events = resolved_mode(tmp_path / "ask", None, override={"gitGuard": "ask"})
+    assert modes["gitGuard"] == "ask"
+    assert events == []
+    # One directory per value: resolved_mode returns every event in its log.
+    for i, v in enumerate(["audit", "Ask", 1, None]):
+        modes, events = resolved_mode(tmp_path / f"v{i}", None, override={"gitGuard": v})
+        assert modes["gitGuard"] == "block", v
+        assert [(e["key"], e["source"]) for e in events] == [("gitGuard", "override")], v
+
+
+def test_ask_is_invalid_on_the_block_audit_keys(tmp_path):
+    modes, events = resolved_mode(
+        tmp_path,
+        None,
+        override={"artifactIntegrity": "ask", "memoryWrites": "ask", "taskMetadata": "ask"},
+    )
+    assert modes == DEFAULT_MODES
+    assert sorted(e["key"] for e in events) == ["artifactIntegrity", "memoryWrites", "taskMetadata"]
+
+
+def test_hook_mode_values_cover_every_key_and_admit_each_default(tmp_path):
+    hooklib = load_hooklib()
+    assert set(hooklib.HOOK_MODE_VALUES) == set(hooklib.HOOK_MODE_DEFAULTS)
+    for key, default in hooklib.HOOK_MODE_DEFAULTS.items():
+        assert default in hooklib.HOOK_MODE_VALUES[key], key
+    assert hooklib.HOOK_MODE_VALUES["gitGuard"] == ("block", "ask")
+    for key in ("artifactIntegrity", "memoryWrites", "taskMetadata"):
+        assert hooklib.HOOK_MODE_VALUES[key] == ("block", "audit"), key
+
+
 def test_load_mode_data_dir_absent_or_empty_is_not_an_error(tmp_path):
     modes, events = resolved_mode(tmp_path, {"taskMetadata": "block"}, data_dir=False)
     assert modes["taskMetadata"] == "block" and events == []
@@ -1799,7 +1850,7 @@ def test_load_mode_data_dir_absent_or_empty_is_not_an_error(tmp_path):
     assert not (tmp_path / "does-not-exist").exists()
 
 
-def test_load_mode_never_raises_and_always_returns_the_three_keys(tmp_path):
+def test_load_mode_never_raises_and_always_returns_all_four_keys(tmp_path):
     for bad in ('[]', '"block"', "null", "7", '{"artifactIntegrity": ["block"]}'):
         modes, _ = resolved_mode(tmp_path / f"c{abs(hash(bad))}", bad)
         assert modes == DEFAULT_MODES, bad
@@ -2334,6 +2385,83 @@ def test_hooks_readme_lists_the_git_guard_limits_and_does_not_oversell_the_logs(
     ):
         assert needle in section, needle
     assert "evidence trail" not in readme
+
+
+def test_hooks_readme_git_guard_limits_name_every_ask_mode_event(tmp_path):
+    # Derived from the guard source, so a renamed event cannot leave the docs stale.
+    readme = (PLUGIN_ROOT / "hooks" / "README.md").read_text()
+    section = readme.split("### Git guard limits", 1)[1].split("###", 1)[0]
+    source = (PLUGIN_ROOT / "scripts" / "cc10x_git_guard.py").read_text()
+    main_body = source.split("def main()", 1)[1]
+    # Only the `"event":` values main() logs, including both arms of a conditional.
+    emitted = set()
+    for first, second in re.findall(
+        r'"event":\s*"(git_guard_[a-z_]+)"(?:\s+if\s+\w+\s+else\s+"(git_guard_[a-z_]+)")?', main_body
+    ):
+        emitted |= {first, second} - {""}
+    expected = {"git_guard_deferred", "git_guard_ask", "git_guard_mode_read_failed", "git_guard_blocked"}
+    assert expected <= emitted, emitted
+    for needle in sorted(emitted) + ["gitGuard"]:
+        assert f"`{needle}`" in section, needle
+    assert "the guard asks" in section  # branch -D prompts despite `Bash(git branch:*)`
+    assert "only in a cc10x project" in section
+    # The ask/defer counts the docs state come from the source, in words.
+    words = dict(enumerate(("zero", "one", "two", "three", "four", "five", "six",
+                            "seven", "eight", "nine", "ten", "eleven", "twelve")))
+    n_keys = len(git_guard.PRIORITY)
+    n_defer = len(git_guard.ASK_MODE_DEFERRED)
+    n_ask = n_keys - n_defer
+    counts = (
+        f"Of the {words[n_keys]} verdict keys, {words[n_ask]} always ask and "
+        f"{words[n_defer]} (`push`) defers only when the whole command is a plain push"
+    )
+    repo = PLUGIN_ROOT.parent.parent
+    changelog = (repo / "CHANGELOG.md").read_text()
+    unreleased = changelog.split("## [Unreleased]", 1)[1].split("\n## [", 1)[0]
+    clause = (
+        "a command that is only a plain `git push` defers to Claude Code's permissions; "
+        "everything else prompts; see `plugins/cc10x/hooks/README.md`"
+    )
+    stale = (
+        "push-rewrite",
+        "do not affect the decision",
+        "other git commands in the chain",
+        "every guarded git operation in it is a plain push",
+        "defers only a plain push",
+        "provably plain",
+    )
+    # The full rule lives only in the hooks README section.
+    flat = " ".join(section.split())
+    assert counts in flat
+    assert "a command that is only a plain `git push`" in flat
+    assert "one command, no chains or other statements" in flat
+    assert "a remote name, never a URL or path" in flat
+    assert "`-C <path>`" in flat and "not visible" in flat.lower()
+    for flag in sorted(git_guard.PLAIN_PUSH_FLAGS):
+        assert f"`{flag}`" in flat, flag
+    for redirect in sorted(git_guard.PLAIN_REDIRECTS):
+        assert f"`{redirect}`" in flat, redirect
+    # The CHANGELOG carries the counts and the classifier claim, not the list.
+    flat = " ".join(unreleased.split())
+    assert counts in flat
+    assert f"each of the {words[len(ASK_CASES)]} other keys" in flat
+    assert "the classifier and the deny set are unchanged from 12.10.0" in flat
+    assert clause in flat
+    for name, text in (("hooks README", " ".join(section.split())), ("CHANGELOG", flat)):
+        for needle in stale:
+            assert needle not in text, (name, needle)
+    # Everywhere else: the one clause pointing at the hooks README, no list.
+    for path in (
+        repo / "README.md",
+        repo / "docs" / "router-invariants.md",
+        PLUGIN_ROOT / "skills" / "cc10x-guide" / "SKILL.md",
+        PLUGIN_ROOT / "skills" / "cc10x-router" / "references" / "workflow-artifact-and-hook-policy.md",
+    ):
+        flat = " ".join(path.read_text().split())
+        assert clause in flat, path.name
+        assert "`--porcelain`" not in flat and "`2>/dev/null`" not in flat, path.name
+        for needle in stale + ("overwrites or deletes remote refs",):
+            assert needle not in flat, (path.name, needle)
 
 
 def test_an_unsafe_workflow_id_checks_the_events_log_by_the_artifact_name(tmp_path):
@@ -3251,7 +3379,9 @@ def test_classifier_reads_cr_as_an_ordinary_word_character(tmp_path):
     assert classify("echo a\r# ; " + git("stash", "clear")) is not None
 
 
-def run_git_guard_in_process(project_dir: Path, command: str, patches=()):
+def run_git_guard_in_process(
+    project_dir: Path, command: str, patches=(), extra_env: dict[str, str] | None = None
+):
     import contextlib
     import io
     from unittest import mock
@@ -3261,8 +3391,17 @@ def run_git_guard_in_process(project_dir: Path, command: str, patches=()):
     cc10x_hooklib._input_cwd = None
     stdout = io.StringIO()
     payload = json.dumps({"tool_input": {"command": command}})
+    env = {
+        "CLAUDE_PROJECT_DIR": str(project_dir),
+        "CLAUDE_PLUGIN_ROOT": str(PLUGIN_ROOT),
+        **(extra_env or {}),
+    }
     with contextlib.ExitStack() as stack:
-        stack.enter_context(mock.patch.dict(os.environ, {"CLAUDE_PROJECT_DIR": str(project_dir)}))
+        stack.enter_context(mock.patch.dict(os.environ, env))
+        if "CLAUDE_PLUGIN_DATA" not in env:
+            # An ambient override (a developer's real hook-mode.json) must not
+            # reach load_mode(); patch.dict restores it on exit.
+            os.environ.pop("CLAUDE_PLUGIN_DATA", None)
         stack.enter_context(mock.patch.object(sys, "stdin", io.StringIO(payload)))
         stack.enter_context(contextlib.redirect_stdout(stdout))
         for target, name, value in patches:
@@ -3361,6 +3500,547 @@ def test_git_guard_a_crash_in_token_consumption_denies_and_logs(tmp_path):
     assert any(
         e["event"] == "git_guard_token_check_failed" for e in hook_log_lines(tmp_path)
     )
+
+
+# --- gitGuard hook mode: block (default) | ask ---------------------------------
+
+
+def git_guard_mode_data(tmp_path: Path, value: object) -> Path:
+    """A CLAUDE_PLUGIN_DATA dir whose hook-mode.json sets gitGuard."""
+    data = tmp_path / "plugin-data"
+    data.mkdir(parents=True, exist_ok=True)
+    (data / "hook-mode.json").write_text(json.dumps({"gitGuard": value}))
+    return data
+
+
+def run_git_guard_mode(project_dir: Path, command: str, data: Path | None):
+    (project_dir / ".cc10x").mkdir(parents=True, exist_ok=True)
+    return run_guard(
+        "cc10x_git_guard.py",
+        {"tool_input": {"command": command}},
+        project_dir,
+        extra_env={"CLAUDE_PLUGIN_DATA": str(data)} if data is not None else None,
+    )
+
+
+def git_guard_events(project_dir: Path) -> list[dict]:
+    return [e for e in hook_log_lines(project_dir) if e["event"].startswith("git_guard_")]
+
+
+def test_git_guard_ask_mode_defers_push_only(tmp_path):
+    assert git_guard.ASK_MODE_DEFERRED == frozenset({"push"})
+    data = git_guard_mode_data(tmp_path, "ask")
+    proj = tmp_path / "proj"
+    token = write_git_token(proj, ["push", "branch-delete"], "2099-01-01T00:00:00+00:00")
+    r = run_git_guard_mode(proj, git("push", "origin", "main"), data)
+    assert r.returncode == 0, r.stderr[-300:]
+    assert r.stdout.strip() == ""
+    events = git_guard_events(proj)
+    assert [(e["event"], e["decision"]) for e in events] == [("git_guard_deferred", "defer")]
+    assert token.exists()  # ask mode never reads or consumes the token
+
+
+def test_git_guard_ask_mode_asks_for_branch_delete_and_keeps_the_token(tmp_path):
+    # The shipped settings template allows `Bash(git branch:*)`, so a deferred
+    # forced delete would run with no prompt; the guard asks instead.
+    data = git_guard_mode_data(tmp_path, "ask")
+    proj = tmp_path / "proj"
+    token = write_git_token(proj, ["push", "branch-delete"], "2099-01-01T00:00:00+00:00")
+    r = run_git_guard_mode(proj, git("branch", "-D", "old"), data)
+    assert r.returncode == 0, r.stderr[-300:]
+    assert json.loads(r.stdout)["hookSpecificOutput"]["permissionDecision"] == "ask"
+    events = git_guard_events(proj)
+    assert [(e["event"], e["decision"]) for e in events] == [("git_guard_ask", "ask")]
+    assert token.exists()
+
+
+ASK_CASES = {
+    "branch-delete": git("branch", "-D", "old"),
+    "push-force": git("push", "--force", "origin", "main"),
+    "reset-hard": git("reset", "--hard", "HEAD~1"),
+    "clean-force": git("clean", "-fd"),
+    "discard-all": git("restore", "."),
+    "checkout-force": git("switch", "-f", "main"),
+    "worktree-force": git("worktree", "remove", "--force", "wt"),
+    "stash-clear": git("stash", "clear"),
+    "classifier-error": git("pu{sh,}", "origin"),
+    "command-too-large": git("status") + " " + "x" * 65536,
+}
+
+# Pushes that are not plain (allow-list), each built from split literals so no
+# command is spelled out whole. All of them ask in ask mode; in block mode each
+# is a `push`, as in 12.10.0.
+_P = "pu" + "sh"
+_F = "--for" + "ce"
+NON_PLAIN_PUSH_CASES = {
+    # Remote-rewriting flags and refspecs.
+    "mirror": git(_P, "--mirror", "origin"),
+    "mirror-abbreviated": git(_P, "--mirr", "origin"),
+    "delete": git(_P, "--delete", "origin", "old"),
+    "delete-short": git(_P, "-d", "origin", "old"),
+    "delete-short-combined": git(_P, "-ud", "origin", "old"),
+    "colon-refspec": git(_P, "origin", ":old"),
+    "bare-colon": git(_P, "origin", ":"),
+    "prune": git(_P, "--prune", "origin", "refs/heads/*:refs/heads/*"),
+    "unknown-flag": git(_P, "--receive-pack=x", "origin"),
+    "end-of-options": git(_P, "--", "origin"),
+    # Config overrides.
+    "config-mirror": git("-c", "remote.origin.mirror=true", _P, "origin"),
+    "config-mirror-bare": git("-c", "remote.origin.mirror", _P, "origin"),
+    "config-mirror-false": git("-c", "remote.origin.mirror=false", _P, "origin"),
+    "config-force-refspec": git("-c", "remote.origin.push=+refs/heads/*:refs/heads/*", _P, "origin"),
+    "config-env-equals": git("--config-env=remote.origin.mirror=MIRROR", _P, "origin"),
+    "config-env-two-word": git("--config-env", "remote.origin.mirror=MIRROR", _P, "origin"),
+    "alias-under-remote-config": git("-c", "remote.o.mirror=true", "-c", "alias.p=" + _P, "p"),
+    "alias": git("-c", "alias.p=" + _P, "p", "origin"),
+    "paginate-then-force-w": git("-p", _P, _F[:-2] + "-w"),
+    "no-replace-objects-then-force-w": git("--no-replace-objects", _P, _F[:-2] + "-w"),
+    "git-dir": git("--git-dir=.git", _P, "origin"),
+    # Env prefixes and wrappers.
+    "git-config-count": "GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=remote.origin.mirror "
+    "GIT_CONFIG_VALUE_0=true " + git(_P, "origin"),
+    "git-config-parameters": "GIT_CONFIG_PARAMETERS=\"'remote.origin.mirror=true'\" " + git(_P, "origin"),
+    "env-wrapper": "env X=1 " + git(_P),
+    "command-wrapper": "command " + git(_P, "origin"),
+    "bash-c": "bash -c '" + git(_P, "origin", "main") + "'",
+    "path-git": "/usr/bin/" + git(_P, "origin"),
+    # Shell-built arguments.
+    "brace-flag": git(_P, "--{" + _F[2:] + ",verbose}", "origin"),
+    "brace-colon": git(_P, "origin", "{:x,}"),
+    "ansi-c-plus": git(_P, "origin", "$'\\x2bmain'"),
+    "ansi-c-flag": git(_P, "-$'\\x66'", "origin"),
+    "substitution": git(_P, "origin", "$(echo +main)"),
+    "backtick": git(_P, "origin", "`echo +main`"),
+    "variable": git(_P, "origin", "$VAR"),
+    "braced-variable": git(_P, "origin", "${VAR}"),
+    "glob": git(_P, "origin", "ma*"),
+    "quoted-arg": git(_P, "origin", '"main"'),
+    "escaped-arg": git(_P, "origin", "ma\\in"),
+    "quoted-subcommand": git("'" + _P + "'", "origin"),
+    # zsh EXTENDED_GLOB globs `^pat` and `a~b`; `~` and `~user` tilde-expand
+    # to a local path, which git then reads as a path remote.
+    "caret-glob": git(_P, "origin", "^x"),
+    "caret-glob-in-ref": git(_P, "origin", "refs/^x"),
+    "tilde-glob": git(_P, "origin", "a~b"),
+    "tilde-remote": git(_P, "~", "main"),
+    "tilde-user-remote": git(_P, "~root", "main"),
+    "tilde-in-refspec": git(_P, "origin", "HEAD~1:refs/heads/x"),
+    # Redirects outside the harmless output set, and pipelines.
+    "redirect-to-file": git(_P, "origin", "main", ">", "out.txt"),
+    "redirect-to-file-joined": git(_P, "origin", "main", ">out.txt"),
+    "input-redirect": git(_P, "origin", "main", "<", "in"),
+    "heredoc": git(_P, "origin", "main", "<<", "EOF"),
+    "clobber-redirect": git(_P, "origin", "main", ">|", "f"),
+    "other-fd-dup": git(_P, "origin", "main", ">&2"),
+    "redirect-not-trailing": git(_P, "2>&1", "origin", "main"),
+    "quoted-dev-null": git(_P, "origin", "main", ">", "'/dev/null'"),
+    "process-substitution": git(_P, "origin", "main", ">(cat)"),
+    "pipe-to-tee": git(_P, "origin", "main", "2>&1") + " | tee log",
+    "pipe-to-filter": git(_P, "origin", "main") + " | tail -1",
+}
+
+# A segment-plain push that the rest of the command can rewrite, or that
+# names a URL or path remote. ask mode defers only a command that is one plain
+# push and nothing else, so every one of these asks.
+_PUSH_OM = git(_P, "origin", "main")
+NOT_LONE_PUSH_CASES = {
+    "function-parens": "git() { command " + git('"$@"', _F) + "; }; " + _PUSH_OM,
+    "function-keyword": "function git { command " + git('"$@"', _F) + "; }; " + _PUSH_OM,
+    "function-multiline": "git() {\n  command " + git('"$@"', _F) + "\n}\n" + _PUSH_OM,
+    "alias-line": "alias git='" + git("-c", "remote.origin.mirror=true") + "'\n" + _PUSH_OM,
+    "git-config-then-push": git("config", "remote.origin.mirror", "true") + "; " + _PUSH_OM,
+    "export-git-config": "export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=remote.origin.mirror "
+    "GIT_CONFIG_VALUE_0=true; " + _PUSH_OM,
+    "path-assignment": "PATH=./bin:$PATH; " + _PUSH_OM,
+    "path-prefix": "PATH=./bin " + _PUSH_OM,
+    "set-positional": "set -- " + _F + "; " + _PUSH_OM,
+    "heredoc-apostrophe-continuation": "cat <<'EOF'\nit's\nEOF\n" + _PUSH_OM + " \\\n" + _F,
+    "continuation": _PUSH_OM + " \\\n" + _F,
+    "cd-then-push": "cd x && " + _PUSH_OM,
+    "background": _PUSH_OM + " &",
+    "semicolon-after": _PUSH_OM + ";",
+    "or-chain": _PUSH_OM + " || true",
+    "subshell": "(" + _PUSH_OM + ")",
+    "brace-group": "{ " + _PUSH_OM + "; }",
+    "two-lines": _PUSH_OM + "\n" + _PUSH_OM,
+    "comment-tail": _PUSH_OM + " # note",
+    "chained-add-commit-push": git("add", ".") + " && " + git("commit", "-m", '"msg"') + " && " + _PUSH_OM,
+    "url-remote": git(_P, "https://h/x.git", "main"),
+    "scp-remote": git(_P, "git" + "@h:x/y.git"),
+    "path-remote": git(_P, "../other", "main"),
+    "ref-with-empty-side": git(_P, "origin", "main:"),
+}
+
+# The harmless output redirects a plain push may end with.
+PLAIN_REDIRECT_SUFFIXES = (
+    ("2>&1",), (">/dev/null",), ("2>/dev/null",), ("&>/dev/null",), ("1>/dev/null",),
+    (">", "/dev/null"), ("2>", "/dev/null"), ("&>", "/dev/null"), ("1>", "/dev/null"),
+    (">/dev/null", "2>&1"), ("2>/dev/null", "1>", "/dev/null"),
+)
+
+# Provably plain pushes: they defer in ask mode.
+PLAIN_PUSH_CASES = (
+    git(_P),
+    git(_P, "origin"),
+    git(_P, "-u", "origin", "feat/x-1"),
+    git(_P, "origin", "HEAD"),
+    git(_P, "origin", "main:main"),
+    git(_P, "--tags", "origin"),
+    git("-C", "some/dir", _P, "origin", "main"),
+    git("-C", "a", "-C", "b/c", _P),
+    git(_P, "--set-upstream", "--verbose", "--no-verify", "--atomic", "origin", "HEAD:refs/heads/x"),
+    git(_P, "origin") + "\n",
+) + tuple(git(_P, "origin", "main", *suffix) for suffix in PLAIN_REDIRECT_SUFFIXES) + tuple(
+    git(_P, flag, "origin") for flag in sorted(git_guard.PLAIN_PUSH_FLAGS)
+)
+
+
+def ask_reason(verdict):
+    # In ask mode a `push` verdict asks only when the command is not one plain push.
+    return git_guard.MSG_NOT_LONE_PUSH if verdict[0] == "push" else verdict[1]
+
+
+def test_git_guard_plain_word_admits_no_shell_special_character(tmp_path):
+    # Each of these is expanded, globbed, quoted or split by bash or zsh.
+    for ch in "$`{}*?[]^~#!=\\'\" \t\n":
+        assert git_guard.PLAIN_WORD.match("a" + ch + "b") is None, repr(ch)
+        assert git_guard.PLAIN_WORD.match(ch) is None, repr(ch)
+
+
+def test_git_guard_classifier_keys_and_push_verdicts_are_unchanged(tmp_path):
+    # Block mode: the verdict keys and the `push` verdict for every push table
+    # entry match 12.10.0 (the classifier itself is checked by diff, not here).
+    assert "push-rewrite" not in git_guard.PRIORITY
+    assert git_guard.APPROVABLE == {"push": "push", "branch-delete": "branch-delete"}
+    assert len(git_guard.PRIORITY) == 11
+    for name, cmd in NON_PLAIN_PUSH_CASES.items():
+        assert classify(cmd) == ("push", git_guard.MSG_PUSH), (name, classify(cmd))
+    for cmd in PLAIN_PUSH_CASES:
+        assert classify(cmd) == ("push", git_guard.MSG_PUSH), cmd
+
+
+def test_git_guard_plain_push_flags_are_exactly_the_contract_set(tmp_path):
+    assert git_guard.PLAIN_PUSH_FLAGS == frozenset({
+        "-u", "--set-upstream", "-v", "--verbose", "-q", "--quiet", "-n", "--dry-run",
+        "--tags", "--follow-tags", "--no-verify", "--porcelain", "--progress",
+        "--no-progress", "--atomic",
+    })
+    for flag in git_guard.PLAIN_PUSH_FLAGS:
+        assert classify(git(_P, flag, "origin")) == ("push", git_guard.MSG_PUSH), flag
+
+
+def test_git_guard_ask_mode_defers_every_plain_push(tmp_path):
+    data = git_guard_mode_data(tmp_path, "ask")
+    for i, cmd in enumerate(PLAIN_PUSH_CASES):
+        proj = tmp_path / f"plain-{i}"
+        r = run_git_guard_mode(proj, cmd, data)
+        assert r.returncode == 0 and r.stdout.strip() == "", (cmd, r.stdout)
+        assert [(e["event"], e["decision"]) for e in git_guard_events(proj)] == [
+            ("git_guard_deferred", "defer")
+        ], cmd
+
+
+def test_git_guard_ask_mode_asks_for_every_non_plain_push_and_keeps_the_token(tmp_path):
+    data = git_guard_mode_data(tmp_path, "ask")
+    env = {"CLAUDE_PLUGIN_DATA": str(data)}
+    for name, cmd in {**NON_PLAIN_PUSH_CASES, **NOT_LONE_PUSH_CASES}.items():
+        proj = tmp_path / f"rewrite-{name}"
+        token = write_git_token(proj, ["push", "branch-delete"], "2099-01-01T00:00:00+00:00")
+        before = token.read_text()
+        code, out = run_git_guard_in_process(proj, cmd, extra_env=env)
+        assert code == 0, name
+        assert out.strip(), name
+        decision = json.loads(out)["hookSpecificOutput"]
+        assert decision["permissionDecision"] == "ask", name
+        assert ask_reason(classify(cmd)) in decision["permissionDecisionReason"], name
+        assert [(e["event"], e["decision"]) for e in git_guard_events(proj)] == [("git_guard_ask", "ask")], name
+        assert token.read_text() == before, name
+
+
+def test_git_guard_lone_plain_push_check_fails_closed(tmp_path):
+    # Any exception inside the whole-command check means not plain: ask.
+    data = git_guard_mode_data(tmp_path, "ask")
+    (tmp_path / ".cc10x").mkdir()
+    class Raising:
+        match = staticmethod(_boom)
+
+    # PLAIN_WORD is read only by the whole-command check, not by the classifier.
+    patches = [(git_guard, "PLAIN_WORD", Raising())]
+    code, out = run_git_guard_in_process(
+        tmp_path, git(_P, "origin"), patches, extra_env={"CLAUDE_PLUGIN_DATA": str(data)}
+    )
+    assert code == 0
+    decision = json.loads(out)["hookSpecificOutput"]
+    assert decision["permissionDecision"] == "ask"
+    assert git_guard.MSG_NOT_LONE_PUSH in decision["permissionDecisionReason"]
+    assert [(e["event"], e["decision"]) for e in git_guard_events(tmp_path)] == [("git_guard_ask", "ask")]
+
+
+def test_git_guard_block_mode_rewrite_pushes_match_plain_push(tmp_path):
+    def observe(proj, cmd, token_ops):
+        token = write_git_token(proj, token_ops, "2099-01-01T00:00:00+00:00") if token_ops else None
+        r = run_git_guard_mode(proj, cmd, None)
+        events = [(e["event"], e["decision"], e["reason"]) for e in git_guard_events(proj)]
+        return r.returncode, r.stdout, events, token is not None and token.exists()
+
+    plain = observe(tmp_path / "plain", PUSH_CASE, None)
+    plain_token = observe(tmp_path / "plain-token", PUSH_CASE, ["push"])
+    assert json.loads(plain[1])["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert plain_token[1] == "" and plain_token[3] is False
+    for name, cmd in NON_PLAIN_PUSH_CASES.items():
+        assert observe(tmp_path / f"b-{name}", cmd, None) == plain, name
+        assert observe(tmp_path / f"t-{name}", cmd, ["push"]) == plain_token, name
+
+
+def test_git_guard_ask_mode_asks_for_every_non_deferred_key(tmp_path):
+    assert set(ASK_CASES) == set(git_guard.PRIORITY) - git_guard.ASK_MODE_DEFERRED
+    assert len(ASK_CASES) == 10
+    data = git_guard_mode_data(tmp_path, "ask")
+    for key, cmd in ASK_CASES.items():
+        verdict = classify(cmd)
+        assert verdict is not None and verdict[0] == key, key
+        proj = tmp_path / f"proj-{key}"
+        r = run_git_guard_mode(proj, cmd, data)
+        assert r.returncode == 0, (key, r.stderr[-300:])
+        decision = json.loads(r.stdout)["hookSpecificOutput"]
+        assert decision["permissionDecision"] == "ask", key
+        assert ask_reason(verdict) in decision["permissionDecisionReason"], key
+        events = git_guard_events(proj)
+        assert [(e["event"], e["decision"]) for e in events] == [("git_guard_ask", "ask")], key
+
+
+def test_git_guard_ask_mode_mixed_push_and_reset_asks(tmp_path):
+    data = git_guard_mode_data(tmp_path, "ask")
+    cmd = git("push", "origin", "main") + " && " + git("reset", "--hard")
+    r = run_git_guard_mode(tmp_path / "proj", cmd, data)
+    assert json.loads(r.stdout)["hookSpecificOutput"]["permissionDecision"] == "ask"
+    assert [e["event"] for e in git_guard_events(tmp_path / "proj")] == ["git_guard_ask"]
+
+
+PUSH_CASE = git("push", "origin", "main")
+CHAINED_PUSH_AND_BRANCH_DELETE = (
+    PUSH_CASE + " && " + git("branch", "-D", "old"),
+    git("branch", "-D", "old") + "; " + PUSH_CASE,
+    PUSH_CASE + " && " + git("branch", "--delete", "--force", "old"),
+    git("branch", "--delete", "--force", "old") + " && " + PUSH_CASE,
+)
+
+
+def test_git_guard_ask_mode_push_chained_with_branch_delete_asks(tmp_path):
+    # A push in the chain must not carry a forced branch delete past the prompt.
+    data = git_guard_mode_data(tmp_path, "ask")
+    for i, cmd in enumerate(CHAINED_PUSH_AND_BRANCH_DELETE):
+        proj = tmp_path / f"proj-{i}"
+        token = write_git_token(proj, ["push", "branch-delete"], "2099-01-01T00:00:00+00:00")
+        before = token.read_text()
+        r = run_git_guard_mode(proj, cmd, data)
+        assert r.returncode == 0, (cmd, r.stderr[-300:])
+        assert r.stdout.strip(), cmd
+        decision = json.loads(r.stdout)["hookSpecificOutput"]
+        assert decision["permissionDecision"] == "ask", cmd
+        # The verdict is `push` (12.10.0 priority); the command is not one plain push.
+        assert git_guard.MSG_NOT_LONE_PUSH in decision["permissionDecisionReason"], cmd
+        events = git_guard_events(proj)
+        assert [(e["event"], e["decision"]) for e in events] == [("git_guard_ask", "ask")], cmd
+        assert token.read_text() == before, cmd
+
+
+def test_git_guard_ask_mode_asks_for_every_pair_of_keys(tmp_path):
+    # A chain is never one plain push, so no pair defers, `push && push` included.
+    cases = {**ASK_CASES, "push": PUSH_CASE}
+    assert set(cases) == set(git_guard.PRIORITY)
+    data = git_guard_mode_data(tmp_path, "ask")
+    env = {"CLAUDE_PLUGIN_DATA": str(data)}
+    for a, cmd_a in cases.items():
+        for b, cmd_b in cases.items():
+            cmd = cmd_a + " && " + cmd_b
+            proj = tmp_path / f"pair-{a}-{b}"
+            (proj / ".cc10x").mkdir(parents=True)
+            code, out = run_git_guard_in_process(proj, cmd, extra_env=env)
+            assert code == 0, (a, b)
+            events = [(e["event"], e["decision"]) for e in git_guard_events(proj)]
+            decision = json.loads(out)["hookSpecificOutput"]
+            assert decision["permissionDecision"] == "ask", (a, b)
+            assert events == [("git_guard_ask", "ask")], (a, b)
+            assert ask_reason(classify(cmd)) in decision["permissionDecisionReason"], (a, b)
+
+
+def test_git_guard_block_mode_push_chained_with_branch_delete_is_unchanged(tmp_path):
+    # 12.10.0 behavior: denied as push without a token; a push token approves the
+    # bundled branch delete (pre-existing, recorded in the 12.10.0 entry).
+    data = git_guard_mode_data(tmp_path, "block")
+    for i, cmd in enumerate(CHAINED_PUSH_AND_BRANCH_DELETE):
+        explicit = run_git_guard_mode(tmp_path / f"explicit-{i}", cmd, data)
+        default = run_git_guard_mode(tmp_path / f"default-{i}", cmd, None)
+        assert explicit.stdout == default.stdout, cmd
+        decision = json.loads(default.stdout)["hookSpecificOutput"]
+        assert decision["permissionDecision"] == "deny", cmd
+        assert decision["permissionDecisionReason"].startswith(
+            "cc10x git guardrails blocked: git push — pushing to remote."
+        ), cmd
+        assert [(e["event"], e["decision"]) for e in git_guard_events(tmp_path / f"default-{i}")] == [
+            ("git_guard_blocked", "deny")
+        ], cmd
+        proj = tmp_path / f"token-{i}"
+        token = write_git_token(proj, ["push"], "2099-01-01T00:00:00+00:00")
+        r = run_git_guard_mode(proj, cmd, None)
+        assert r.returncode == 0 and r.stdout.strip() == "", cmd
+        assert not token.exists(), cmd
+        assert [(e["event"], e["decision"]) for e in git_guard_events(proj)] == [
+            ("git_guard_token_consumed", "allow")
+        ], cmd
+
+
+def test_git_guard_ask_mode_classifier_crash_asks(tmp_path):
+    # A push whose found set cannot be computed must not defer, and any other
+    # git text asks too.
+    data = git_guard_mode_data(tmp_path, "ask")
+    patches = [(git_guard, "classify_git_command", _boom)]
+    env = {"CLAUDE_PLUGIN_DATA": str(data), "CLAUDE_PLUGIN_ROOT": str(PLUGIN_ROOT)}
+    for i, cmd in enumerate((PUSH_CASE, git("status"))):
+        proj = tmp_path / f"proj-{i}"
+        (proj / ".cc10x").mkdir(parents=True)
+        code, out = run_git_guard_in_process(proj, cmd, patches, extra_env=env)
+        assert code == 0, cmd
+        decision = json.loads(out)["hookSpecificOutput"]
+        assert decision["permissionDecision"] == "ask", cmd
+        assert "classifier" in decision["permissionDecisionReason"], cmd
+        # PP-G: git_guard_ask is the single decision event; the failure event
+        # still records the crash but carries no decision of its own.
+        events = git_guard_events(proj)
+        assert [(e["event"], e.get("decision")) for e in events] == [
+            ("git_guard_classifier_failed", None),
+            ("git_guard_ask", "ask"),
+        ], cmd
+        assert events[0]["reason"] == "classifier-error" and events[0]["error"] == "RuntimeError"
+
+
+def test_git_guard_a_crash_while_picking_the_verdict_fails_closed(tmp_path):
+    (tmp_path / ".cc10x").mkdir()
+    patches = [(git_guard, "_pick", _boom)]
+    code, out = run_git_guard_in_process(tmp_path, PUSH_CASE, patches)
+    assert code == 0
+    decision = json.loads(out)["hookSpecificOutput"]
+    assert decision["permissionDecision"] == "deny"
+    assert git_guard.MSG_CLASSIFIER_ERROR in decision["permissionDecisionReason"]
+    assert [(e["event"], e.get("decision")) for e in git_guard_events(tmp_path)] == [
+        ("git_guard_classifier_failed", "deny"),
+        ("git_guard_blocked", "deny"),
+    ]
+
+
+def test_git_guard_mode_read_failure_takes_the_block_path(tmp_path):
+    data = git_guard_mode_data(tmp_path, "ask")
+    (tmp_path / ".cc10x").mkdir()
+    patches = [(git_guard, "load_mode", _boom)]
+    code, out = run_git_guard_in_process(
+        tmp_path, git("push", "origin", "main"), patches, extra_env={"CLAUDE_PLUGIN_DATA": str(data)}
+    )
+    assert code == 0
+    decision = json.loads(out)["hookSpecificOutput"]
+    assert decision["permissionDecision"] == "deny"
+    assert "approval token (.cc10x/state/git-approval.json)" in decision["permissionDecisionReason"]
+    events = git_guard_events(tmp_path)
+    assert [(e["event"], e.get("decision")) for e in events] == [
+        ("git_guard_mode_read_failed", None),
+        ("git_guard_blocked", "deny"),
+    ]
+    assert "decision" not in events[0] and events[0]["error"] == "RuntimeError"
+
+
+def test_git_guard_mode_read_failure_with_a_push_token_consumes_it(tmp_path):
+    # 12.10.0's block path: a valid push token still releases the push.
+    data = git_guard_mode_data(tmp_path, "ask")
+    token = write_git_token(tmp_path, ["push"], "2099-01-01T00:00:00+00:00")
+    patches = [(git_guard, "load_mode", _boom)]
+    code, out = run_git_guard_in_process(
+        tmp_path, git("push", "origin", "main"), patches, extra_env={"CLAUDE_PLUGIN_DATA": str(data)}
+    )
+    assert code == 0 and out == ""
+    assert not token.exists()
+    events = git_guard_events(tmp_path)
+    assert [(e["event"], e.get("decision")) for e in events] == [
+        ("git_guard_mode_read_failed", None),
+        ("git_guard_token_consumed", "allow"),
+    ]
+    assert "decision" not in events[0] and events[0]["error"] == "RuntimeError"
+
+
+def test_git_guard_classifier_crash_with_mode_read_failure_blocks(tmp_path):
+    data = git_guard_mode_data(tmp_path, "ask")
+    (tmp_path / ".cc10x").mkdir()
+    patches = [(git_guard, "classify_git_command", _boom), (git_guard, "load_mode", _boom)]
+    code, out = run_git_guard_in_process(
+        tmp_path, git("status"), patches, extra_env={"CLAUDE_PLUGIN_DATA": str(data)}
+    )
+    assert code == 0
+    assert json.loads(out)["hookSpecificOutput"]["permissionDecision"] == "deny"
+    events = git_guard_events(tmp_path)
+    assert [(e["event"], e.get("decision")) for e in events] == [
+        ("git_guard_classifier_failed", "deny"),
+        ("git_guard_mode_read_failed", None),
+        ("git_guard_blocked", "deny"),
+    ]
+    assert "decision" not in events[1]
+
+
+def test_git_guard_classifier_crash_without_git_word_never_reads_mode(tmp_path):
+    data = git_guard_mode_data(tmp_path, "ask")
+    (tmp_path / ".cc10x").mkdir()
+    reads = []
+    patches = [
+        (git_guard, "classify_git_command", _boom),
+        (git_guard, "load_mode", lambda *a, **k: reads.append(1) or {"gitGuard": "ask"}),
+    ]
+    code, out = run_git_guard_in_process(
+        tmp_path, "ls -la", patches, extra_env={"CLAUDE_PLUGIN_DATA": str(data)}
+    )
+    assert code == 0 and out == ""
+    assert reads == []
+    assert [(e["event"], e.get("decision")) for e in hook_log_lines(tmp_path)] == [
+        ("git_guard_classifier_failed", "allow"),
+    ]
+
+
+def test_git_guard_audit_value_falls_back_to_block(tmp_path):
+    data = git_guard_mode_data(tmp_path, "audit")
+    proj = tmp_path / "proj"
+    r = run_git_guard_mode(proj, git("push", "origin", "main"), data)
+    assert json.loads(r.stdout)["hookSpecificOutput"]["permissionDecision"] == "deny"
+    invalid = [e for e in hook_log_lines(proj) if e["event"] == "invalid_hook_mode"]
+    assert [e["key"] for e in invalid] == ["gitGuard"]
+
+
+def test_git_guard_explicit_block_mode_matches_no_config(tmp_path):
+    data = git_guard_mode_data(tmp_path, "block")
+    for i, cmd in enumerate([git("reset", "--hard", "HEAD~1"), git("push", "origin", "main")]):
+        explicit = run_git_guard_mode(tmp_path / f"explicit-{i}", cmd, data)
+        default = run_git_guard_mode(tmp_path / f"default-{i}", cmd, None)
+        assert explicit.stdout != ""
+        assert explicit.stdout == default.stdout, cmd
+
+
+def test_git_guard_ask_mode_ignores_commands_without_a_verdict(tmp_path):
+    data = git_guard_mode_data(tmp_path, "ask")
+    for i, cmd in enumerate(["ls -la", git("status")]):
+        proj = tmp_path / f"proj-{i}"
+        r = run_git_guard_mode(proj, cmd, data)
+        assert r.returncode == 0 and r.stdout.strip() == "", cmd
+        assert git_guard_events(proj) == [], cmd
+
+
+def test_git_guard_in_process_helper_ignores_ambient_plugin_data(tmp_path):
+    data = git_guard_mode_data(tmp_path, "ask")
+    (tmp_path / ".cc10x").mkdir()
+    cmd = git("reset", "--hard", "HEAD~1")
+    with env_patch(CLAUDE_PLUGIN_DATA=str(data)):
+        _, out = run_git_guard_in_process(tmp_path, cmd)
+        assert json.loads(out)["hookSpecificOutput"]["permissionDecision"] == "deny"
+        _, out = run_git_guard_in_process(
+            tmp_path, cmd, extra_env={"CLAUDE_PLUGIN_DATA": str(data)}
+        )
+        assert json.loads(out)["hookSpecificOutput"]["permissionDecision"] == "ask"
+        assert os.environ["CLAUDE_PLUGIN_DATA"] == str(data)
 
 
 def test_git_guard_floor_tables_stay_aligned(tmp_path):

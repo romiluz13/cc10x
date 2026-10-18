@@ -1351,6 +1351,8 @@ measurement rather than smoothed away.
 Measured state at green: 5 blocking hooks / 3 mode-aware / 2 unconditional
 ({cc10x_git_guard.py, cc10x_qa_isolation_guard.py}); W8 = 1249B normative
 (962B before this commit's edit 2), carrying exactly those two `.py` tokens.
+Live since `gitGuard`: 4 mode-aware / 1 unconditional (the git guard calls
+load_mode once); only cc10x_qa_isolation_guard.py remains unconditional.
 
 Negative controls for PP-40 (each restored with `cp` from a backup and
 re-greened before the next; never `git checkout --`). Four of the six defend a
@@ -3135,9 +3137,9 @@ PP13_WF_ID = f"wf-test-pp13-{os.getpid()}"
 # scope is the set reachable from hooks.json at an event that CAN deny, whose
 # source carries a block path.
 #
-# Measured at this commit — 5 blocking scripts, 3 of them mode-aware:
+# Measured live (since `gitGuard`) — 5 blocking scripts, 4 of them mode-aware:
 #   cc10x_pretooluse_guard.py            PreToolUse     load_mode: 1
-#   cc10x_git_guard.py                   PreToolUse     load_mode: 0  UNCOND
+#   cc10x_git_guard.py                   PreToolUse     load_mode: 1
 #   cc10x_qa_isolation_guard.py          PreToolUse     load_mode: 0  UNCOND
 #   cc10x_posttooluse_artifact_guard.py  PostToolUse    load_mode: 1
 #   cc10x_task_completed_guard.py        TaskCompleted  load_mode: 1

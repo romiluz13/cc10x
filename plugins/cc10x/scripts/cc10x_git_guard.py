@@ -33,9 +33,17 @@ immediately after the user's explicit BUILD-DONE finishing choice:
 The token is consumed (deleted) on first matching allow, and ignored when
 expired (or older than MAX_TOKEN_AGE_SECONDS as a backstop). Destructive
 history/worktree operations (reset --hard, clean -f, checkout ., force-push)
-have NO token path and stay blocked unconditionally. The token is a plain
-file: a model that can write files can write one itself; that limitation is
-documented, not defended.
+have NO token path and stay blocked in the default `block` mode. The token
+is a plain file: a model that can write files can write one itself; that
+limitation is documented, not defended.
+
+`gitGuard` hook mode (`hook-mode.json`): `block` (default) is the behavior
+above. `ask` reads no token: a command that is only a plain `git push`
+(`_lone_plain_push`, an allow-list over the whole command) produces no
+decision, so Claude Code's permission flow decides. Every other verdict, and
+a push in any other command, returns permissionDecision `ask`. The
+classifier is the 12.10.0 one; main() makes the ask-mode decision. A failure
+reading the mode takes the `block` path.
 """
 
 from __future__ import annotations
@@ -49,7 +57,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import NamedTuple
 
-from cc10x_hooklib import load_input, log_event, pretool_deny, state_root
+from cc10x_hooklib import load_input, load_mode, log_event, pretool_ask, pretool_deny, state_root
 
 MAX_TOKEN_AGE_SECONDS = 600  # backstop even if expires_at is missing/garbled
 
@@ -219,6 +227,23 @@ FLOOR_KEYS = (
     "discard-all",
 )
 APPROVABLE = {"push": "push", "branch-delete": "branch-delete"}
+# ask mode, `_lone_plain_push`: the only flags a plain push may carry.
+PLAIN_PUSH_FLAGS = frozenset({
+    "-u", "--set-upstream", "-v", "--verbose", "-q", "--quiet", "-n", "--dry-run",
+    "--tags", "--follow-tags", "--no-verify", "--porcelain", "--progress",
+    "--no-progress", "--atomic",
+})
+# Output-only redirects a plain push may end with (one word, or an operator
+# then `/dev/null`); they route output and cannot change what git pushes.
+PLAIN_REDIRECTS = frozenset({"2>&1", ">/dev/null", "2>/dev/null", "&>/dev/null", "1>/dev/null"})
+PLAIN_REDIRECT_OPS = frozenset({">", "2>", "&>", "1>"})
+# A plain push argument: no `$`, backtick, brace, glob, backslash, quote or `+`,
+# and no `^` or `~` (zsh EXTENDED_GLOB globs `^x` and `a~b`; `~` tilde-expands).
+PLAIN_WORD = re.compile(r"^[A-Za-z0-9._/@-]+$")
+# The only verdict ask mode can defer, and only for a lone plain push: the
+# shipped settings template allows `Bash(git branch:*)`, which would
+# auto-approve a deferred `branch -D` with no prompt.
+ASK_MODE_DEFERRED = frozenset({"push"})
 # Non-approvable reasons win over approvable ones in a mixed command, so a
 # token for `push` can never unlock `push && reset --hard`.
 PRIORITY = (
@@ -246,6 +271,13 @@ MSG_CHECKOUT_FORCE = "git checkout -f — discards uncommitted changes."
 MSG_SWITCH_FORCE = "git switch --force — discards uncommitted changes."
 MSG_WORKTREE_FORCE = "git worktree remove --force — deletes a worktree with uncommitted changes."
 MSG_STASH_CLEAR = "git stash clear — permanently discards every stash."
+# The ask-mode reason for a `push` verdict that is not `_lone_plain_push`.
+MSG_NOT_LONE_PUSH = (
+    "git push in a command that is not a single plain push (another statement "
+    "or chain, a flag outside the safe list, a built or quoted argument, a URL "
+    "or path remote, an env or wrapper prefix) — it may overwrite or delete "
+    "remote refs."
+)
 MSG_CLASSIFIER_ERROR = (
     "the git guard classifier failed on this command, so it cannot be cleared."
 )
@@ -853,20 +885,77 @@ def classify_git_command(command: str) -> tuple[str, str] | None:
     return _pick(_floor(command) + _scan(command, 0))
 
 
-def _log_classifier_failure(exc: Exception, command: str) -> None:
-    log_event(
-        "plugin_git_guard_classifier_failed",
-        {
-            "wf": None,
-            "phase": "unknown",
-            "task_id": None,
-            "agent": "unknown",
-            "event": "git_guard_classifier_failed",
-            "decision": "deny" if GIT_WORD.search(command) else "allow",
-            "reason": "classifier-error",
-            "error": exc.__class__.__name__,
-        },
-    )
+def _lone_plain_push(command: str) -> bool:
+    """ask mode only: True when the WHOLE command is one plain `git push`.
+
+    An allow-list over the full text, so nothing else in the command (a
+    function, alias, `git config`, export, `cd`, a chain, a `&`) can change
+    what that push does: one line, lexed with no fallback and no comment
+    tail, no quoted token, no operator or substitution, the literal word
+    `git`, optional `-C <path>` pairs, `push`, then only PLAIN_PUSH_FLAGS, one
+    remote name (no `:`, `@` or `/` and no leading `.`, so never a URL or
+    path) and `src[:dst]` refs (both sides non-empty), with optional trailing
+    PLAIN_REDIRECTS. Every path, remote and ref side is a PLAIN_WORD (so no
+    `^` or `~`) that does not start with `-`. Any exception means False.
+    """
+    try:
+        if command.endswith("\n"):
+            command = command[:-1]
+        tails: list[str] = []
+        toks = None if "\n" in command else _lex(command, tails)
+        if not toks or tails or any(tok.op or tok.quoted or tok.subst for tok in toks):
+            return False
+        words = [tok.text for tok in toks]
+        while words:
+            if words[-1] in PLAIN_REDIRECTS:
+                words.pop()
+            elif len(words) > 1 and words[-1] == "/dev/null" and words[-2] in PLAIN_REDIRECT_OPS:
+                del words[-2:]
+            else:
+                break
+
+        def plain(word: str) -> bool:  # PLAIN_WORD has no `:`, so no refspec
+            return bool(PLAIN_WORD.match(word)) and not word.startswith("-")
+
+        i = 1
+        while words[i : i + 1] == ["-C"] and i + 1 < len(words) and plain(words[i + 1]):
+            i += 2
+        if words[:1] != ["git"] or words[i : i + 1] != ["push"]:
+            return False
+        remote = None
+        for word in words[i + 1 :]:
+            if word in PLAIN_PUSH_FLAGS:
+                continue
+            if remote is None:
+                # The first positional is the repository: a name, never a URL,
+                # scp form (`:`, `@`) or path (`/`, leading `.`).
+                if not plain(word) or "@" in word or "/" in word or word.startswith("."):
+                    return False
+                remote = word
+                continue
+            src, colon, dst = word.partition(":")
+            if not (plain(src) and (not colon or plain(dst))):
+                return False
+        return True
+    except Exception:
+        return False
+
+
+def _log_classifier_failure(exc: Exception, decision: str | None) -> None:
+    payload = {
+        "wf": None,
+        "phase": "unknown",
+        "task_id": None,
+        "agent": "unknown",
+        "event": "git_guard_classifier_failed",
+        "decision": decision,
+        "reason": "classifier-error",
+        "error": exc.__class__.__name__,
+    }
+    if decision is None:
+        # ask mode: the git_guard_ask event is the verdict's one decision event.
+        del payload["decision"]
+    log_event("plugin_git_guard_classifier_failed", payload)
 
 
 def main() -> int:
@@ -880,21 +969,69 @@ def main() -> int:
     if not isinstance(command, str) or not command:
         return 0
 
+    failure = None
     try:
         verdict = classify_git_command(command)
     except Exception as exc:
         # Fail closed when the text names git as a word: a silent fallback to
         # the floor would be weaker than the classifier it replaces.
-        _log_classifier_failure(exc, command)
+        failure = exc
         verdict = (
             ("classifier-error", MSG_CLASSIFIER_ERROR)
             if GIT_WORD.search(command)
             else None
         )
     if verdict is None:
+        if failure is not None:
+            _log_classifier_failure(failure, "allow")
         return 0
 
     key, reason = verdict
+    mode_failure = None
+    try:
+        ask = load_mode()["gitGuard"] == "ask"
+    except Exception as exc:
+        ask = False  # a mode failure must never loosen the guard
+        mode_failure = exc
+    if failure is not None:
+        _log_classifier_failure(failure, None if ask else "deny")
+    if mode_failure is not None:
+        # No decision key; the block path below carries the decision, as in
+        # 12.10.0: git_guard_blocked or git_guard_token_consumed, after a
+        # decision=deny git_guard_classifier_failed when the classifier crashed.
+        log_event(
+            "plugin_git_guard_mode_read_failed",
+            {
+                "wf": None,
+                "phase": "unknown",
+                "task_id": None,
+                "agent": "unknown",
+                "event": "git_guard_mode_read_failed",
+                "error": mode_failure.__class__.__name__,
+            },
+        )
+    if ask:
+        # Defer only a command that is one plain push and nothing else; any
+        # other verdict, and a push in any other command, asks.
+        deferred = key in ASK_MODE_DEFERRED and _lone_plain_push(command)
+        if key in ASK_MODE_DEFERRED and not deferred:
+            reason = MSG_NOT_LONE_PUSH
+        log_event(
+            "plugin_git_guard_deferred" if deferred else "plugin_git_guard_ask",
+            {
+                "wf": None,
+                "phase": "unknown",
+                "task_id": None,
+                "agent": "unknown",
+                "event": "git_guard_deferred" if deferred else "git_guard_ask",
+                "decision": "defer" if deferred else "ask",
+                "reason": reason,
+                "command": command,
+            },
+        )
+        if not deferred:
+            pretool_ask(f"cc10x git guardrails: {reason} Approve only if intended.")
+        return 0
     operation = APPROVABLE.get(key)
     if operation is not None:
         try:

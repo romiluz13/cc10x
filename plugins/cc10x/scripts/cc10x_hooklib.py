@@ -137,8 +137,14 @@ HOOK_MODE_DEFAULTS = {
     "artifactIntegrity": "block",
     "memoryWrites": "audit",
     "taskMetadata": "audit",
+    "gitGuard": "block",
 }
-HOOK_MODE_VALUES = ("block", "audit")
+HOOK_MODE_VALUES = {
+    "artifactIntegrity": ("block", "audit"),
+    "memoryWrites": ("block", "audit"),
+    "taskMetadata": ("block", "audit"),
+    "gitGuard": ("block", "ask"),
+}
 _MODE_MISSING = object()
 _MODE_CORRUPT = object()
 
@@ -147,9 +153,10 @@ def resolve_hook_mode(
     layers: list[tuple[str, Any]],
 ) -> tuple[dict[str, str], list[dict[str, str]]]:
     """Merge parsed hook-mode layers (lowest precedence first) over
-    HOOK_MODE_DEFAULTS. Always returns exactly the default keys, each `block`
-    or `audit`; an invalid layer or value is skipped, so that key keeps the
-    value from the layer below, and is reported as a problem."""
+    HOOK_MODE_DEFAULTS. Always returns exactly the default keys, each one of
+    that key's allowed values in `HOOK_MODE_VALUES`; an invalid layer or
+    value is skipped, so that key keeps the value from the layer below, and is
+    reported as a problem."""
     modes = dict(HOOK_MODE_DEFAULTS)
     problems: list[dict[str, str]] = []
     for source, layer in layers:
@@ -161,7 +168,7 @@ def resolve_hook_mode(
         for key, value in layer.items():
             if key not in HOOK_MODE_DEFAULTS:
                 continue
-            if isinstance(value, str) and value in HOOK_MODE_VALUES:
+            if isinstance(value, str) and value in HOOK_MODE_VALUES[key]:
                 modes[key] = value
             else:
                 problems.append(
@@ -608,6 +615,18 @@ def pretool_deny(reason: str) -> None:
             "hookSpecificOutput": {
                 "hookEventName": "PreToolUse",
                 "permissionDecision": "deny",
+                "permissionDecisionReason": reason,
+            }
+        }
+    )
+
+
+def pretool_ask(reason: str) -> None:
+    json_print(
+        {
+            "hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "ask",
                 "permissionDecisionReason": reason,
             }
         }
