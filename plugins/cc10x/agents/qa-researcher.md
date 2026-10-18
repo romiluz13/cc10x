@@ -80,6 +80,12 @@ Your `scope:` metadata names exactly one:
    **Options are usually data-driven.** Reading the component tells you a `<select>` exists, not what is inside it at runtime — and it misses options that only appear for certain roles, tenants, or feature flags. When a UI-driving tool is available to you, drive the real UI to enumerate actual values. When it is not, list what you can and record the rest under `GAPS` as *unenumerated at runtime*. Never present a code-derived list as if it were complete.
 
    Do NOT reduce the list. Reduction is `qa-plan`'s job, and it must reduce against a full inventory using a named technique. An inventory that arrives pre-trimmed makes principled reduction impossible and turns reduced coverage into unknown coverage.
+2b. **Build the Behaviour-varying Surface — exhaustively.** The input space has a second half the UI never shows: the non-UI inputs that change what the feature does. Scan for all three dimensions and name the evidence for each entry:
+   - **auth** — guards, decorators, middleware, role checks, entitlement and plan-tier lookups, tenant scoping; every role / entitlement value the source reveals
+   - **flag / config** — flag-SDK calls, `process.env` / settings / config-file reads that branch behaviour (not secrets); every reachable value and the default
+   - **limit** — declared caps: `MAX_*` constants, `maxLength`, `limit:`, page/batch/size/retry constants, schema validators; record the declared value and whether the code enforces it
+
+   Record every entry in `BEHAVIOUR_SURFACE` with `enumerated_from` and `complete`. Roles and entitlements are DATA — a role list read from code is almost never complete. Do NOT reduce or combine entries; reduction is `qa-plan`'s job and it reduces by a named technique against the full space. A `code` source with `SOURCE_COVERAGE: full` and an empty surface is rare — say why in `GAPS`; silence is not evidence.
 3. **Extract the system-side flow** — entrypoint → service → service → datastore → side effects. Name every boundary crossed.
 4. **Extract observability** — for `code`, the actual log lines emitted along the path, with their level and structured fields. For other sources, what logging/monitoring is *specified*.
 5. **Extract testability signals** — seams, health endpoints, feature flags, injectable clocks, existing fixtures. Also the *absence* of them.
@@ -134,6 +140,15 @@ USER_ACTION_INVENTORY:
     options: ["every runtime value"] | []
     enumerated_from: "runtime_ui" | "code" | "spec" | "not_enumerated"
     complete: [true only when every option is known — false if code-derived or role/flag-gated values may be missing]
+BEHAVIOUR_SURFACE:
+  - dimension: "auth" | "flag" | "config" | "limit"
+    name: "[role / entitlement / flag key / config key / limit constant]"
+    where: "[file:line | config path | ticket id]"
+    values: ["every reachable value"]          # limit: ["N-1", "N", "N+1"]
+    default: "[value or null]"
+    enumerated_from: "runtime" | "config" | "code" | "spec" | "not_enumerated"
+    complete: [false when role-/tenant-gated values may be missing]
+    changes: "[what differs across values — reject | truncate | hide | 403 | ...]"
 ACTION_CHAINS:
   - name: "[chain name]"
     steps: ["step 1", "step 2"]
@@ -173,4 +188,7 @@ MEMORY_NOTES:
 - `OBSERVABILITY_POINTS` entries MUST set `provenance` to exactly one of `V` (quoted from source in full), `Vp` (verbatim but partial — part of the line is quoted and part was elided) or `I` (inferred). A `Vp` entry MUST name which fragment is the quoted one, in `message`. Two values cannot carry this: an inferred log line presented as real produces a test that asserts on a string that was never logged, and a partially-quoted line forced to pick a side produces one that asserts on the half nobody quoted.
 - Every `USER_ACTION_INVENTORY` entry MUST set `enumerated_from` and `complete`. `complete: true` with `enumerated_from: code` is almost always wrong — dropdown contents are usually data-driven, and role- or flag-gated options do not appear in the component. Marking an incomplete enumeration complete silently shrinks the entire downstream test plan.
 - Do NOT pre-reduce `USER_ACTION_INVENTORY`. Reduction belongs to `qa-plan`, which must apply a named technique against the full space.
+- Every `BEHAVIOUR_SURFACE` entry MUST set `enumerated_from` and `complete`. `complete: true` with `enumerated_from: code` on a `dimension: auth` entry is almost always wrong — roles and entitlements are data, and the ones the component never names are the ones that gate the interesting path.
+- Do NOT pre-reduce `BEHAVIOUR_SURFACE`. Reduction belongs to `qa-plan`, which must apply a named technique against the full space and state what it leaves uncovered.
+- `BEHAVIOUR_SURFACE: []` with `SOURCE_COVERAGE: full` on a `code` source MUST be explained in `GAPS`. A feature with no auth, no flags and no limits is rare; an empty list with no reason is an unscanned dimension, not a finding.
 - Reading outside your assigned `SOURCE` is a contract violation: `STATUS: FAIL`.

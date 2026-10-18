@@ -109,6 +109,18 @@ Recurring classes worth a deliberate look: no health or readiness endpoint · no
 
 ---
 
+## 6b. Behaviour-varying surface — UNREDUCED
+
+**Do not trim this either.** The non-UI inputs that change what the feature does — auth roles and entitlements, feature flags and config keys, declared limits. Canonical contract key: `BEHAVIOUR_SURFACE`. The env plan FIXES these to one value each; this table is the space the test plan must deliberately reduce, and a dimension fixed in the env plan that no scenario varies is a constant, not coverage.
+
+| Dimension | Name | Where | Values | Default | Enumerated from | Complete? | Changes what |
+| ----------- | ------ | ------- | -------- | --------- | ----------------- | ----------- | -------------- |
+| auth \| flag \| config \| limit | | | <!-- limit: N-1, N, N+1 --> | | runtime \| config \| code \| spec \| not_enumerated | | <!-- reject / truncate / hide / 403 / … --> |
+
+`complete: true` from `code` on an `auth` row is almost always wrong — roles are data. An empty table from a `full`-coverage `code` lane needs a reason in §0's note column.
+
+---
+
 ## 7. Action chains
 
 Ordered sequences a user actually strings together — back-and-re-enter, re-apply, reorder, repeat. Bugs live in "do A then B", not in A or in B.
@@ -141,6 +153,6 @@ Contradictions and observations that are real problems but not ours to solve her
 
 ## 9. Handoff to the plan
 
-- The full input space is §6, unreduced. The test plan reduces it by a named technique and states what it leaves uncovered.
+- The full input space is §6 and §6b, unreduced. The test plan reduces both by a named technique and states what each reduction leaves uncovered.
 - Every `blocking` row in §3 must be settled — or be scenario S0 — before the plan is trusted.
 - Every §5 blocker appears in the env plan as a blocker with an owner, or in the test plan as a known gap. Neither list may quietly drop one.
