@@ -1805,12 +1805,13 @@ def test_load_mode_invalid_override_value_falls_back_to_the_shipped_value(tmp_pa
     assert [e["source"] for e in events] == ["override"]
 
 
-def test_git_guard_mode_accepts_ask_and_rejects_audit(tmp_path):
-    modes, events = resolved_mode(tmp_path / "ask", None, override={"gitGuard": "ask"})
-    assert modes["gitGuard"] == "ask"
-    assert events == []
+def test_git_guard_mode_accepts_ask_and_audit_and_rejects_others(tmp_path):
+    for v in ("ask", "audit"):
+        modes, events = resolved_mode(tmp_path / v, None, override={"gitGuard": v})
+        assert modes["gitGuard"] == v
+        assert events == [], v
     # One directory per value: resolved_mode returns every event in its log.
-    for i, v in enumerate(["audit", "Ask", 1, None]):
+    for i, v in enumerate(["off", "Ask", "Audit", 1, None]):
         modes, events = resolved_mode(tmp_path / f"v{i}", None, override={"gitGuard": v})
         assert modes["gitGuard"] == "block", v
         assert [(e["key"], e["source"]) for e in events] == [("gitGuard", "override")], v
@@ -1831,7 +1832,7 @@ def test_hook_mode_values_cover_every_key_and_admit_each_default(tmp_path):
     assert set(hooklib.HOOK_MODE_VALUES) == set(hooklib.HOOK_MODE_DEFAULTS)
     for key, default in hooklib.HOOK_MODE_DEFAULTS.items():
         assert default in hooklib.HOOK_MODE_VALUES[key], key
-    assert hooklib.HOOK_MODE_VALUES["gitGuard"] == ("block", "ask")
+    assert hooklib.HOOK_MODE_VALUES["gitGuard"] == ("block", "ask", "audit")
     for key in ("artifactIntegrity", "memoryWrites", "taskMetadata"):
         assert hooklib.HOOK_MODE_VALUES[key] == ("block", "audit"), key
 
@@ -2399,12 +2400,19 @@ def test_hooks_readme_git_guard_limits_name_every_ask_mode_event(tmp_path):
         r'"event":\s*"(git_guard_[a-z_]+)"(?:\s+if\s+\w+\s+else\s+"(git_guard_[a-z_]+)")?', main_body
     ):
         emitted |= {first, second} - {""}
-    expected = {"git_guard_deferred", "git_guard_ask", "git_guard_mode_read_failed", "git_guard_blocked"}
+    expected = {
+        "git_guard_deferred", "git_guard_ask", "git_guard_audit",
+        "git_guard_mode_read_failed", "git_guard_blocked",
+    }
     assert expected <= emitted, emitted
     for needle in sorted(emitted) + ["gitGuard"]:
         assert f"`{needle}`" in section, needle
     assert "the guard asks" in section  # branch -D prompts despite `Bash(git branch:*)`
     assert "only in a cc10x project" in section
+    # Under audit the guard asks nothing, so the template's allow rule runs branch -D unprompted.
+    audit_bullet = " ".join(section.split("**`audit` mode: log only.**", 1)[1].split("\n- ", 1)[0].split())
+    assert "the shipped template's `Bash(git branch:*)` allow rule runs `git branch -D` with no prompt" in audit_bullet
+    assert "a failed log write is not reported" in audit_bullet
     # The ask/defer counts the docs state come from the source, in words.
     words = dict(enumerate(("zero", "one", "two", "three", "four", "five", "six",
                             "seven", "eight", "nine", "ten", "eleven", "twelve")))
@@ -3915,6 +3923,57 @@ def test_git_guard_ask_mode_classifier_crash_asks(tmp_path):
         assert events[0]["reason"] == "classifier-error" and events[0]["error"] == "RuntimeError"
 
 
+AUDIT_CASES = {
+    "push-force": ASK_CASES["push-force"],
+    "reset-hard": ASK_CASES["reset-hard"],
+    "clean-force": ASK_CASES["clean-force"],
+    "worktree-force": ASK_CASES["worktree-force"],
+    "branch-delete": ASK_CASES["branch-delete"],
+    "classifier-error": ASK_CASES["classifier-error"],
+    "push": PUSH_CASE,
+    "chained-push": CHAINED_PUSH_AND_BRANCH_DELETE[0],
+}
+
+
+def test_git_guard_audit_mode_logs_every_verdict_and_keeps_the_token(tmp_path):
+    # audit: no decision on stdout, so Claude Code's permission flow is the only gate.
+    data = git_guard_mode_data(tmp_path, "audit")
+    for name, cmd in AUDIT_CASES.items():
+        key = classify(cmd)[0]
+        proj = tmp_path / f"audit-{name}"
+        token = write_git_token(proj, ["push", "branch-delete"], "2099-01-01T00:00:00+00:00")
+        before = token.read_text()
+        r = run_git_guard_mode(proj, cmd, data)
+        assert r.returncode == 0, (name, r.stderr[-300:])
+        assert r.stdout.strip() == "", (name, r.stdout)
+        events = [(e["event"], e["decision"], e["key"]) for e in git_guard_events(proj)]
+        assert events == [("git_guard_audit", "audit", key)], name
+        assert token.read_text() == before, name
+
+
+def test_git_guard_audit_mode_ignores_non_git_commands(tmp_path):
+    data = git_guard_mode_data(tmp_path, "audit")
+    for i, cmd in enumerate(["ls -la", git("status")]):
+        proj = tmp_path / f"proj-{i}"
+        r = run_git_guard_mode(proj, cmd, data)
+        assert r.returncode == 0 and r.stdout == "", cmd
+        assert git_guard_events(proj) == [], cmd
+
+
+def test_git_guard_audit_mode_classifier_crash_logs_once(tmp_path):
+    data = git_guard_mode_data(tmp_path, "audit")
+    (tmp_path / ".cc10x").mkdir()
+    patches = [(git_guard, "classify_git_command", _boom)]
+    code, out = run_git_guard_in_process(
+        tmp_path, git("status"), patches, extra_env={"CLAUDE_PLUGIN_DATA": str(data)}
+    )
+    assert code == 0 and out == ""
+    assert [(e["event"], e.get("decision"), e.get("key")) for e in git_guard_events(tmp_path)] == [
+        ("git_guard_classifier_failed", None, None),
+        ("git_guard_audit", "audit", "classifier-error"),
+    ]
+
+
 def test_git_guard_a_crash_while_picking_the_verdict_fails_closed(tmp_path):
     (tmp_path / ".cc10x").mkdir()
     patches = [(git_guard, "_pick", _boom)]
@@ -3984,6 +4043,23 @@ def test_git_guard_classifier_crash_with_mode_read_failure_blocks(tmp_path):
     assert "decision" not in events[1]
 
 
+def test_git_guard_classifier_crash_with_out_of_domain_mode_logs_deny(tmp_path):
+    # Any mode that is not ask/audit takes the block path, so the failure event
+    # must say deny, as in 12.10.0.
+    (tmp_path / ".cc10x").mkdir()
+    patches = [
+        (git_guard, "classify_git_command", _boom),
+        (git_guard, "load_mode", lambda *a, **k: {"gitGuard": "off"}),
+    ]
+    code, out = run_git_guard_in_process(tmp_path, git("status"), patches)
+    assert code == 0
+    assert json.loads(out)["hookSpecificOutput"]["permissionDecision"] == "deny"
+    assert [(e["event"], e.get("decision")) for e in git_guard_events(tmp_path)] == [
+        ("git_guard_classifier_failed", "deny"),
+        ("git_guard_blocked", "deny"),
+    ]
+
+
 def test_git_guard_classifier_crash_without_git_word_never_reads_mode(tmp_path):
     data = git_guard_mode_data(tmp_path, "ask")
     (tmp_path / ".cc10x").mkdir()
@@ -4002,8 +4078,8 @@ def test_git_guard_classifier_crash_without_git_word_never_reads_mode(tmp_path):
     ]
 
 
-def test_git_guard_audit_value_falls_back_to_block(tmp_path):
-    data = git_guard_mode_data(tmp_path, "audit")
+def test_git_guard_invalid_value_falls_back_to_block(tmp_path):
+    data = git_guard_mode_data(tmp_path, "off")
     proj = tmp_path / "proj"
     r = run_git_guard_mode(proj, git("push", "origin", "main"), data)
     assert json.loads(r.stdout)["hookSpecificOutput"]["permissionDecision"] == "deny"

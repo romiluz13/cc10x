@@ -10,7 +10,7 @@ This design lets a user loosen the guard through the existing `hook-mode.json` l
 
 ## Users
 
-cc10x users who want Claude Code's own permission system (allow rules, auto mode, a prompt) to decide on routine git publishing, while still getting a human check on everything else the guard catches.
+cc10x users who want Claude Code's own permission system (allow rules, auto mode, a prompt) to decide on routine git publishing, while still getting a human check on everything else the guard catches (superseded 2026-10-18: see Amendment; `audit` keeps no human check).
 
 ## Success criteria
 
@@ -19,22 +19,22 @@ cc10x users who want Claude Code's own permission system (allow rules, auto mode
    - A command that is only one plain `git push` produces no output and exits 0, so Claude Code's own permission flow decides.
    - Every other verdict returns `permissionDecision: "ask"` with the guard's reason. That covers `branch-delete`, the other nine non-approvable keys, and a `push` verdict in any command that is not a single plain push.
    - The guard logs one decision event per verdict (in a cc10x project, where `.cc10x/` exists).
-3. Invalid input stays fail-safe. `gitGuard: "audit"`, a typo, or a non-string falls back to `block` and logs `invalid_hook_mode`, as the other keys do. `ask` on any other key is invalid and falls back for that key.
-4. The docs no longer say the git guard is "not controlled by hook-mode config". They name the new key, its two values, the plain-push rule and the trust trade-off. `plugins/cc10x/hooks/README.md` (Git guard limits) is the single place with the full rule; the other docs point there.
+3. Invalid input stays fail-safe. `gitGuard: "audit"`, a typo, or a non-string falls back to `block` and logs `invalid_hook_mode`, as the other keys do (superseded 2026-10-18: see Amendment). `ask` on any other key is invalid and falls back for that key.
+4. The docs no longer say the git guard is "not controlled by hook-mode config". They name the new key, its two values (superseded 2026-10-18: see Amendment), the plain-push rule and the trust trade-off. `plugins/cc10x/hooks/README.md` (Git guard limits) is the single place with the full rule; the other docs point there.
 
 ## Constraints
 
 - Reuse the `hook-mode.json` layering in `cc10x_hooklib.py` (`HOOK_MODE_DEFAULTS`, `resolve_hook_mode`, `load_mode`). No new config file or env var.
-- Allowed values are per key: `artifactIntegrity`, `memoryWrites` and `taskMetadata` keep `block|audit`; `gitGuard` takes `block|ask`.
+- Allowed values are per key: `artifactIntegrity`, `memoryWrites` and `taskMetadata` keep `block|audit`; `gitGuard` takes `block|ask` (superseded 2026-10-18: see Amendment).
 - `classify_git_command` and everything it calls stay exactly as in 12.10.0. The mode changes only what `main()` does with a verdict.
 - Python 3.9 floor (`from __future__ import annotations` is already present).
 - Fail open on a hook crash, as today. A mode-read failure takes the `block` path.
 
 ## Out of scope
 
-- An `off` value that lets destructive operations through without a human check. Rejected by the user; `ask` is the loosest mode.
+- An `off` value that lets destructive operations through without a human check. Rejected by the user; `ask` is the loosest mode (superseded 2026-10-18: see Amendment).
 - Per-operation configuration (for example "ask for push, block for reset"). YAGNI.
-- An `audit` alias for `gitGuard`: on the other keys `audit` means log-only, never block, so it would carry a second meaning here. An `audit` value falls back to `block` and logs `invalid_hook_mode`, which is visible and safe.
+- An `audit` alias for `gitGuard`: on the other keys `audit` means log-only, never block, so it would carry a second meaning here. An `audit` value falls back to `block` and logs `invalid_hook_mode`, which is visible and safe (superseded 2026-10-18: see Amendment).
 - Changing the approval-token mechanism or the QA isolation guard.
 - Any change to the classifier's deny set.
 
@@ -42,7 +42,7 @@ cc10x users who want Claude Code's own permission system (allow rules, auto mode
 
 Add `"gitGuard": "block"` to `HOOK_MODE_DEFAULTS` and to the shipped `config/hook-mode.json`. Replace the single `HOOK_MODE_VALUES` tuple with a per-key allowed-values map, and validate each layer's value against its key's set. Add `pretool_ask(reason)` beside `pretool_deny` in the hooklib.
 
-In `cc10x_git_guard.main()`, once the unchanged classifier returns a verdict, read `load_mode()["gitGuard"]`:
+In `cc10x_git_guard.main()`, once the unchanged classifier returns a verdict, read `load_mode()["gitGuard"]` (superseded 2026-10-18: see Amendment; `audit` is a third branch):
 
 - `block`: the 12.10.0 code path, unchanged (token check, then deny).
 - `ask`: defer only when the verdict key is `push` and `_lone_plain_push(command)` is true. Otherwise return `ask`. A `push` verdict that isn't a lone plain push asks with a reason saying so (`MSG_NOT_LONE_PUSH`).
@@ -89,7 +89,7 @@ Alternatives rejected (ADR notes):
 
 ## Data flow
 
-Bash PreToolUse → `cc10x_git_guard.main()` → `classify_git_command(command)`. If there's no verdict, exit 0 and don't read the mode. If there is one, `load_mode()["gitGuard"]` decides:
+Bash PreToolUse → `cc10x_git_guard.main()` → `classify_git_command(command)`. If there's no verdict, exit 0 and don't read the mode. If there is one, `load_mode()["gitGuard"]` decides (superseded 2026-10-18: see Amendment):
 - `block` runs the 12.10.0 token check, then deny.
 - `ask` defers a lone plain push and returns `ask` for everything else.
 
@@ -97,8 +97,8 @@ In `ask` mode each verdict logs exactly one decision event through `log_event`, 
 
 ## Error handling (as built)
 
-- **Mode read.** The `try` covers only `load_mode()["gitGuard"] == "ask"`. `load_mode()` itself already falls back to `block` on a missing, corrupt or unreadable file, and logs `invalid_hook_mode` for invalid input. If it raises anyway, the guard logs `git_guard_mode_read_failed` (the error class, no decision key) and takes the `block` path. That path logs `git_guard_blocked`, or `git_guard_token_consumed` when a token covers the operation.
-- **Classifier crash.** On text that names `git`, the verdict becomes `classifier-error`. `main()` logs `git_guard_classifier_failed` after the mode read, with decision `deny` in `block` mode. In `ask` mode it has no decision key and is followed by `git_guard_ask`, which stays the verdict's one decision event. On text without `git`, the event says `allow` and the mode is not read.
+- **Mode read.** The `try` covers only `load_mode()["gitGuard"] == "ask"` (superseded 2026-10-18: see Amendment). `load_mode()` itself already falls back to `block` on a missing, corrupt or unreadable file, and logs `invalid_hook_mode` for invalid input. If it raises anyway, the guard logs `git_guard_mode_read_failed` (the error class, no decision key) and takes the `block` path. That path logs `git_guard_blocked`, or `git_guard_token_consumed` when a token covers the operation.
+- **Classifier crash.** On text that names `git`, the verdict becomes `classifier-error`. `main()` logs `git_guard_classifier_failed` after the mode read, with decision `deny` in `block` mode. In `ask` mode it has no decision key and is followed by `git_guard_ask` (superseded 2026-10-18: see Amendment; `audit` also has no decision key), which stays the verdict's one decision event. On text without `git`, the event says `allow` and the mode is not read.
 - **Plain-push check.** Any exception inside `_lone_plain_push` returns false, so the push asks.
 - There is no fallback around the `ask` actions, so the hook can never print two JSON objects.
 
@@ -116,7 +116,7 @@ The full `scripts/test_*.py` suite and the doc validators run through `python3 p
 ## Trust trade-off and honest limits (documented in the hooks README)
 
 - `ask` moves a lone plain push to Claude Code's permission mode. Under `bypassPermissions`, or a broad `Bash(git push:*)` allow rule, it runs with no prompt.
-- Everything else returns `ask`. Whether that prompt reaches a human depends on the Claude Code mode, and in bypass mode it may not. `branch -D` prompts even with the template's `Bash(git branch:*)` rule, because the guard asks.
+- Everything else returns `ask`. Whether that prompt reaches a human depends on the Claude Code mode, and in bypass mode it may not. `branch -D` prompts even with the template's `Bash(git branch:*)` rule, because the guard asks (ask mode; under audit it does not, see Amendment).
 - The hook-mode file is a plain file the model could write itself. That's the same documented limitation as the approval token. The guard protects against accidents, not against a model working around it.
 - No text guard can see state outside the command text, so a plain push still defers when such state changes what it does:
   - remote config (`remote.<x>.push +...`, `remote.<x>.mirror`), an exported `GIT_*` variable, or a function or alias set by an earlier command.
@@ -137,14 +137,14 @@ The full `scripts/test_*.py` suite and the doc validators run through `python3 p
 - **This branch, final integration verification.**
   - The verifier ran the built hook live in `ask` mode against a real local bare remote. A plain push deferred and updated the remote. 22 non-plain push forms returned `ask`.
   - In `block` mode, 952 commands gave identical results through the 12.10.0 hook and this branch's hook (0 differences).
-  - 14/14 verification scenarios passed. `test_cc10x_guards.py` passed 232 of 232, and `RELEASE GATE: OK`.
+  - 14/14 verification scenarios passed. `test_cc10x_guards.py` passed 232 of 232 (236 after the 2026-10-18 amendment), and `RELEASE GATE: OK`.
   - The Claude Code side of defer and `ask` rests on the reference-patch session above.
 
 ## Questions resolved
 
 - Value name: `ask` (user, 2026-10-15).
 - Plan first: yes (user, 2026-10-15).
-- No `off` value, no per-op config, no `audit` alias (design, YAGNI).
+- No `off` value, no per-op config, no `audit` alias (design, YAGNI) (superseded 2026-10-18 for `audit`: see Amendment).
 - Build-time decisions (user, 2026-10-15):
   - "Prompt for branch -D (Recommended)": `branch -D` asks in `ask` mode, and only push can defer.
   - "Fix in code + docs (Recommended)": remote-rewriting push forms prompt (later absorbed into the allow-list).
@@ -153,3 +153,14 @@ The full `scripts/test_*.py` suite and the doc validators run through `python3 p
   - "Single-command only (Recommended)": the whole command must be one plain push. The classifier is reverted to 12.10.0, and the decision is made in `main()`.
   - "Yes, small fix (Recommended)": drop `^` and `~` from `PLAIN_WORD`.
 - Plan and design docs ship in the PR, scrubbed ("Ship, scrubbed (Recommended)").
+
+## Amendment, 2026-10-18: `audit` value
+
+- `gitGuard` gains a third value, `audit`: log-only, matching what `audit` means on the other three hook-mode keys. The classifier still runs; each verdict (`classifier-error` included) logs one `git_guard_audit` event with its key, the hook returns no decision, and the token is never read.
+- Why: `ask` still prompted too often on routine cleanup, for example a forced `worktree remove` of a throwaway worktree the agent had just created.
+- Trade-off: Claude Code's own permission flow is the only gate, so `audit` is no stronger than the permission mode; under `bypassPermissions` destructive git runs unprompted, and even in the default permission mode the template's `Bash(git branch:*)` allow rule (like any broad allow rule) runs `git branch -D` with no prompt. `block` stays the default and is unchanged; `ask` is unchanged.
+- `audit` is now the loosest mode. There is still no `off` value.
+- Data flow: `mode = load_mode()["gitGuard"]` is read once as a value. `audit` logs `git_guard_audit` and returns, before the ask and token branches.
+- Error handling: the classifier-failure decision key is `None if mode in ("ask", "audit") else "deny"`. A classifier crash in `audit` mode logs `git_guard_classifier_failed` (no decision key), then `git_guard_audit` with key `classifier-error`. A mode-read failure still sets the mode to `block`, so it takes the block path.
+- Events, as in `ask` mode, are logged only in a cc10x project (`.cc10x/` exists). Elsewhere `audit` gates nothing and records nothing.
+- Tests: `test_git_guard_mode_accepts_ask_and_audit_and_rejects_others` replaces `test_git_guard_mode_accepts_ask_and_rejects_audit`; the `audit` mode tests are `test_git_guard_audit_mode_logs_every_verdict_and_keeps_the_token`, `test_git_guard_audit_mode_ignores_non_git_commands` and `test_git_guard_audit_mode_classifier_crash_logs_once`.

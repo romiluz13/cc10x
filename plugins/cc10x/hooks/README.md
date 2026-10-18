@@ -25,7 +25,7 @@ Each hook in `hooks.json` appears exactly once in this table (a validator in
 | Event (matcher) | Hook | What it does | Blocks or audits |
 | --- | --- | --- | --- |
 | `PreToolUse` (`Edit\|Write`) | `cc10x_pretooluse_guard.py` | Flags direct writes to the memory markdown files under `.cc10x/` | Audit by default; denies when `memoryWrites` is `"block"` |
-| `PreToolUse` (`Bash`) | `cc10x_git_guard.py` | Denies push, hard reset, forced clean, forced branch delete, forced `checkout`/`switch`, discard-all checkout/restore (`.`, `./.`, `:/`, `:(top)`), forced `worktree remove` and stash clear | Blocks by default (`gitGuard` `"block"`); with `gitGuard` `"ask"`, a command that is only a plain `git push` defers to Claude Code's permissions and everything else it would deny returns a permission prompt (see Git guard limits) |
+| `PreToolUse` (`Bash`) | `cc10x_git_guard.py` | Denies push, hard reset, forced clean, forced branch delete, forced `checkout`/`switch`, discard-all checkout/restore (`.`, `./.`, `:/`, `:(top)`), forced `worktree remove` and stash clear | Blocks by default (`gitGuard` `"block"`); with `gitGuard` `"ask"`, a command that is only a plain `git push` defers to Claude Code's permissions and everything else it would deny returns a permission prompt; with `"audit"` it only logs (see Git guard limits) |
 | `PreToolUse` (`Read\|Grep\|Glob\|Edit\|Write\|NotebookEdit\|Bash`) | `cc10x_qa_isolation_guard.py` | QA route only: denies reads of quarantined paths and environment mutation during plan phases; disengages once the QA workflow is finished | Blocks always; not controlled by hook-mode config |
 | `SessionStart` (`startup\|resume\|clear\|compact\|fork`) | `cc10x_preflight.sh` | Tells the agent when `python3` is missing or older than 3.9 | Context only; always exits 0 |
 | `SessionStart` (same matcher) | `cc10x_sessionstart_context.py` | Injects resume context for the newest workflow that is not finished | Context only |
@@ -42,12 +42,12 @@ Each hook in `hooks.json` appears exactly once in this table (a validator in
 
 - **Config-controlled** (`config/hook-mode.json`): `artifactIntegrity`,
   `memoryWrites` and `taskMetadata` take `"block"` or `"audit"`; `gitGuard` takes
-  `"block"` or `"ask"`. `artifactIntegrity` and `gitGuard` ship as `"block"`,
+  `"block"`, `"ask"` or `"audit"`. `artifactIntegrity` and `gitGuard` ship as `"block"`,
   `memoryWrites` and `taskMetadata` ship as `"audit"`.
 - **Override location:** put a `hook-mode.json` with the same keys in
   `${CLAUDE_PLUGIN_DATA}` to change a mode without editing the plugin; it survives
   plugin updates. Each key falls back on its own: a missing key, a value the key does
-  not accept (`"audit"` for `gitGuard`, `"ask"` for the other three), or a corrupt
+  not accept (`"ask"` for the other three, `"off"` for any key), or a corrupt
   file leaves the shipped value for that key (an
   `invalid_hook_mode` event is logged for invalid input, once per problem and state of
   the file, tracked by a marker under `.cc10x/state/`; if the marker cannot be written
@@ -119,7 +119,9 @@ Each hook in `hooks.json` appears exactly once in this table (a validator in
 - If the classifier itself crashes, the guard logs `git_guard_classifier_failed`;
   in `block` mode it denies any command whose text contains `git`, and in `ask`
   mode it returns a permission prompt (`ask`) for it instead, logged as
-  `git_guard_ask`. Other commands pass.
+  `git_guard_ask`; in `audit` mode it logs `git_guard_classifier_failed` (no
+  decision key) followed by `git_guard_audit` with key `classifier-error`, and
+  returns no decision. Other commands pass.
 - In `block` mode, only remote publish and branch force-delete can be unlocked, by
   a single-use approval token the router writes after the user's explicit
   finishing choice; a consumed token logs `git_guard_token_consumed`. The token
@@ -173,12 +175,26 @@ Each hook in `hooks.json` appears exactly once in this table (a validator in
   (decision `ask`), only in a cc10x project (where `.cc10x/` exists): the event
   log skips other projects. `hook-mode.json` is a plain file the model could
   write, the same documented limitation as the token. A failure to read or
-  parse `hook-mode.json`, or an invalid `gitGuard` value (including `"audit"`),
+  parse `hook-mode.json`, or an invalid `gitGuard` value (such as `"off"`),
   logs `invalid_hook_mode` and keeps the shipped `block`.
   `git_guard_mode_read_failed` (the error class, no decision) is a backstop for
   an unexpected exception from the mode loader itself; the guard then takes the
   block path, which logs `git_guard_blocked`, or consumes the token and logs
   `git_guard_token_consumed` when one covers the operation.
+- **`audit` mode: log only.** With `gitGuard` set to `"audit"` the classifier
+  still runs, but the guard never returns a decision and reads no token: every
+  verdict (`classifier-error` included) logs one `git_guard_audit` event
+  (decision `audit`, with the verdict `key`) and the hook exits 0 with no
+  output. Events are logged only in a cc10x project (where `.cc10x/` exists);
+  elsewhere `audit` gates nothing and records nothing. Logging is best-effort:
+  a failed log write is not reported. Claude Code's own permission flow is then the only gate, so `audit`
+  is no stronger than the permission mode: under `bypassPermissions`, or with a
+  broad allow rule, destructive git (a forced push, `reset --hard`,
+  `branch -D`, a forced `worktree remove`) runs with no prompt. That includes
+  the README template: the shipped template's `Bash(git branch:*)` allow rule
+  runs `git branch -D` with no prompt in the default permission mode. A classifier
+  crash logs `git_guard_classifier_failed` with no decision key before the
+  `git_guard_audit` event. A failure reading the mode takes the block path.
 - A command that mixes a token-unlockable operation with a non-unlockable one is
   denied as the non-unlockable one in `block` mode. In `ask` mode a command that
   chains a push with any other guarded operation (`branch -D` included) gets an

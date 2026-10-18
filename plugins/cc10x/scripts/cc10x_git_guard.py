@@ -42,8 +42,9 @@ above. `ask` reads no token: a command that is only a plain `git push`
 (`_lone_plain_push`, an allow-list over the whole command) produces no
 decision, so Claude Code's permission flow decides. Every other verdict, and
 a push in any other command, returns permissionDecision `ask`. The
-classifier is the 12.10.0 one; main() makes the ask-mode decision. A failure
-reading the mode takes the `block` path.
+classifier is the 12.10.0 one; main() makes the ask-mode decision. `audit`
+logs one git_guard_audit event per verdict, returns no decision and never
+reads the token. A failure reading the mode takes the `block` path.
 """
 
 from __future__ import annotations
@@ -953,7 +954,8 @@ def _log_classifier_failure(exc: Exception, decision: str | None) -> None:
         "error": exc.__class__.__name__,
     }
     if decision is None:
-        # ask mode: the git_guard_ask event is the verdict's one decision event.
+        # ask or audit mode: the git_guard_ask or git_guard_audit event is
+        # the verdict's one decision event.
         del payload["decision"]
     log_event("plugin_git_guard_classifier_failed", payload)
 
@@ -989,12 +991,13 @@ def main() -> int:
     key, reason = verdict
     mode_failure = None
     try:
-        ask = load_mode()["gitGuard"] == "ask"
+        mode = load_mode()["gitGuard"]
     except Exception as exc:
-        ask = False  # a mode failure must never loosen the guard
+        mode = "block"  # a mode failure must never loosen the guard
         mode_failure = exc
+    ask = mode == "ask"
     if failure is not None:
-        _log_classifier_failure(failure, None if ask else "deny")
+        _log_classifier_failure(failure, None if mode in ("ask", "audit") else "deny")
     if mode_failure is not None:
         # No decision key; the block path below carries the decision, as in
         # 12.10.0: git_guard_blocked or git_guard_token_consumed, after a
@@ -1010,6 +1013,23 @@ def main() -> int:
                 "error": mode_failure.__class__.__name__,
             },
         )
+    if mode == "audit":
+        # Log only: Claude Code's own permission flow is the one gate.
+        log_event(
+            "plugin_git_guard_audit",
+            {
+                "wf": None,
+                "phase": "unknown",
+                "task_id": None,
+                "agent": "unknown",
+                "event": "git_guard_audit",
+                "decision": "audit",
+                "key": key,
+                "reason": reason,
+                "command": command,
+            },
+        )
+        return 0
     if ask:
         # Defer only a command that is one plain push and nothing else; any
         # other verdict, and a push in any other command, asks.

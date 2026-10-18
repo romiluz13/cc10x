@@ -25,6 +25,7 @@ The git guard denies `git push` and `git branch -D` unless the router wrote a si
 
 - `block` (shipped default): the 12.10.0 behavior, byte for byte. The classifier is unchanged.
 - `ask`: a command that is only one plain `git push` produces no hook decision, so Claude Code's permission flow decides. Every other verdict returns `permissionDecision: "ask"`: `branch -D`, the destructive set, and a push in any other command. The guard logs one decision event per verdict.
+- `audit` (superseded 2026-10-18: see design doc Amendment; added after this plan): log-only. Each verdict logs one `git_guard_audit` event, the hook returns no decision and reads no token, so Claude Code's permission flow is the only gate.
 
 Nothing changes for anyone who doesn't opt in.
 
@@ -32,7 +33,7 @@ Nothing changes for anyone who doesn't opt in.
 - **Goal:** let a user change the git guard from `block` to `ask` through `${CLAUDE_PLUGIN_DATA}/hook-mode.json`, with docs and CHANGELOG updated, ready for an upstream PR to romiluz13/cc10x.
 - **Constraints:**
   - Reuse `HOOK_MODE_DEFAULTS` / `resolve_hook_mode` / `load_mode`. No new config file or env var.
-  - Allowed values per key: `artifactIntegrity`, `memoryWrites`, `taskMetadata` take `block|audit`; `gitGuard` takes `block|ask`.
+  - Allowed values per key: `artifactIntegrity`, `memoryWrites`, `taskMetadata` take `block|audit`; `gitGuard` takes `block|ask` (superseded 2026-10-18: see design doc Amendment; `gitGuard` now also takes `audit`).
   - `classify_git_command` and everything it calls stay exactly as in v12.10.0.
   - Python 3.9 floor. Fail open on a hook crash, as today. A mode-read failure takes the `block` path.
   - Every phase ends with `python3 plugins/cc10x/tools/release_gate.py` green (run with Claude validation, without `--allow-no-claude`).
@@ -42,7 +43,7 @@ Nothing changes for anyone who doesn't opt in.
   - `cc10x_hooklib.py`, `config/hook-mode.json`, `cc10x_git_guard.py` (new constants, `_lone_plain_push`, `_log_classifier_failure`, `main()`, the docstring).
   - `test_cc10x_guards.py`, the PP-39 census comments in `test_cc10x_qa_phase_invariants.py`.
   - The doc surfaces D1-D18 below, and a `CHANGELOG.md` `## [Unreleased]` entry.
-- **Out of Scope:** an `off` value; per-operation config; an `audit` alias for `gitGuard`; any change to the classifier's deny set; the token mechanism and the router's token-writing step; the QA isolation guard; a version bump; `docs/history/**` and CHANGELOG entries for 12.10.0 and older.
+- **Out of Scope:** an `off` value; per-operation config; an `audit` alias for `gitGuard` (superseded 2026-10-18: see design doc Amendment); any change to the classifier's deny set; the token mechanism and the router's token-writing step; the QA isolation guard; a version bump; `docs/history/**` and CHANGELOG entries for 12.10.0 and older.
 - **Open Decisions:** none.
 - **Decisions answered by the user (2026-10-15), verbatim choice labels:**
   - Value name `ask` over `audit`; plan first.
@@ -56,9 +57,9 @@ Nothing changes for anyone who doesn't opt in.
 
 ### Durable Decisions
 Spell these exactly.
-- Config key `gitGuard`, values `"block"` (default) and `"ask"`.
+- Config key `gitGuard`, values `"block"` (default) and `"ask"` (superseded 2026-10-18: see design doc Amendment; `"audit"` added).
 - `HOOK_MODE_DEFAULTS["gitGuard"] == "block"`, and `config/hook-mode.json` carries `"gitGuard": "block"` as its last key.
-- `HOOK_MODE_VALUES` is a per-key dict: `{"artifactIntegrity": ("block", "audit"), "memoryWrites": ("block", "audit"), "taskMetadata": ("block", "audit"), "gitGuard": ("block", "ask")}`. `resolve_hook_mode` checks `value in HOOK_MODE_VALUES[key]`.
+- `HOOK_MODE_VALUES` is a per-key dict: `{"artifactIntegrity": ("block", "audit"), "memoryWrites": ("block", "audit"), "taskMetadata": ("block", "audit"), "gitGuard": ("block", "ask")}`. `resolve_hook_mode` checks `value in HOOK_MODE_VALUES[key]`. (superseded 2026-10-18: see design doc Amendment; `gitGuard` is now `("block", "ask", "audit")`)
 - `pretool_ask(reason: str) -> None`, the same shape as `pretool_deny` with `"permissionDecision": "ask"`.
 - Verdict keys (`PRIORITY`, 11, unchanged): `push-force`, `reset-hard`, `clean-force`, `discard-all`, `checkout-force`, `worktree-force`, `stash-clear`, `classifier-error`, `command-too-large`, `push`, `branch-delete`. `APPROVABLE` (token-unlockable in `block` mode) is `push` and `branch-delete`.
 - `ASK_MODE_DEFERRED = frozenset({"push"})`. In `ask` mode a verdict defers if and only if `key in ASK_MODE_DEFERRED and _lone_plain_push(command)`.
@@ -68,7 +69,8 @@ Spell these exactly.
 - Events:
   - `git_guard_deferred` (decision `defer`) and `git_guard_ask` (decision `ask`); log names `plugin_git_guard_deferred` and `plugin_git_guard_ask`.
   - `git_guard_mode_read_failed` (error class, no decision key).
-  - `git_guard_classifier_failed`, whose decision comes from `main()`: `allow` when there is no verdict, `deny` in `block` mode, and no decision key in `ask` mode.
+  - `git_guard_classifier_failed`, whose decision comes from `main()`: `allow` when there is no verdict, `deny` in `block` mode, and no decision key in `ask` mode (superseded 2026-10-18: see design doc Amendment; no key in `audit` mode either).
+  - `git_guard_audit` (decision `audit`, with the verdict `key`) (superseded 2026-10-18: see design doc Amendment; logged once per verdict in `audit` mode).
 - No third-party boundary changes. Claude Code's handling of "no output, exit 0" and of `permissionDecision: "ask"` was proven live on 2026-10-15.
 
 ### ADR: the `ask`-mode deferral rule
@@ -95,7 +97,7 @@ Spell these exactly.
 | `cc10x_hooklib.py` | `HOOK_MODE_DEFAULTS` + `gitGuard`; `HOOK_MODE_VALUES` per key; `resolve_hook_mode` lookup and docstring; `pretool_ask` after `pretool_deny` |
 | `config/hook-mode.json` | + `"gitGuard": "block"` |
 | `cc10x_git_guard.py` | import of `load_mode`, `pretool_ask`; new constants after `APPROVABLE` and among the messages; `_lone_plain_push` after `classify_git_command`; `_log_classifier_failure(exc, decision)`; the mode branch in `main()`; docstring. `classify_git_command`, `_scan`, `_floor`, `PRIORITY`, `APPROVABLE`, the existing messages and `consume_approval` are unchanged (no diff hunk inside them; the classifier, `_scan`, `_floor` and `PRIORITY` are also AST-identical to f346ebe) |
-| `test_cc10x_guards.py` | 204 → 232 tests; `run_git_guard_in_process` gains `extra_env` and pins its environment; 4 default-mode literals gain `gitGuard` |
+| `test_cc10x_guards.py` | 204 → 232 tests (236 after the 2026-10-18 amendment); `run_git_guard_in_process` gains `extra_env` and pins its environment; 4 default-mode literals gain `gitGuard` |
 | `test_cc10x_qa_phase_invariants.py` | PP-39 census comments updated to the live census (4 mode-aware / 1 unconditional) |
 
 ### Doc surface inventory
@@ -135,8 +137,8 @@ Durability horizon: P1-P3 are `stable` (a config contract users write files agai
 - **objective:** `load_mode()` returns `gitGuard`, validated against its own allowed set; `pretool_ask` exists. No hook behavior changes.
 - **files/surfaces:** `cc10x_hooklib.py`, `config/hook-mode.json`, `test_cc10x_guards.py`.
 - **Depends on:** nothing. **Enables:** P2.
-- **allowed scope:** the Durable Decisions for the hooklib and config, D4, and the 4 test literals. **out-of-scope drift:** any guard script, an `audit` alias, changes to invalid-value logging.
-- **tests:** `test_git_guard_mode_accepts_ask_and_rejects_audit`, `test_ask_is_invalid_on_the_block_audit_keys`, `test_hook_mode_values_cover_every_key_and_admit_each_default`.
+- **allowed scope:** the Durable Decisions for the hooklib and config, D4, and the 4 test literals. **out-of-scope drift:** any guard script, an `audit` alias (superseded 2026-10-18: see design doc Amendment), changes to invalid-value logging.
+- **tests:** `test_git_guard_mode_accepts_ask_and_rejects_audit`, `test_ask_is_invalid_on_the_block_audit_keys`, `test_hook_mode_values_cover_every_key_and_admit_each_default`. (superseded 2026-10-18: see design doc Amendment; the first test is now `test_git_guard_mode_accepts_ask_and_audit_and_rejects_others`)
 - **required checks / exit:** 207 guard tests passed, `RELEASE GATE: OK`, only the three files changed. Met; verifier 13/13.
 - **validation level:** Deterministic. **checkpoint:** none (AFK).
 - **test_seams:** unit seam `resolved_mode` → `load_hooklib().load_mode()`; module constants via `load_hooklib()`.
@@ -194,7 +196,7 @@ Durability horizon: P1-P3 are `stable` (a config contract users write files agai
   - the prompt diff review against f346ebe.
   - the CHANGELOG §5 record with classification `wording_only_trust_sensitive`.
   - `RELEASE GATE: OK`.
-- **exit:** met. Final verifier 14/14 scenarios; after the P4 polish round 232/232 guard tests, 838 pytest, `RELEASE GATE: OK`.
+- **exit:** met. Final verifier 14/14 scenarios; after the P4 polish round 232/232 guard tests (236 after the 2026-10-18 amendment), 838 pytest, `RELEASE GATE: OK`.
 - **validation level:** Deterministic (sweep, tests, gate) plus Manual (semantic and prompt-diff review). **checkpoint:** none (AFK); the rule changes were user decisions at circuit-breaker gates.
 - **test_seams:** as in P2, plus validator seams (`harness_audit.check_hooks_readme`, PP-39, the README pin `test_hooks_readme_git_guard_limits_name_every_ask_mode_event`).
 - **Interfaces:**
@@ -235,12 +237,13 @@ For a Bash PreToolUse call with command `c`:
   - `key == "push"` and `_lone_plain_push(c)`: no stdout, exit 0, `git_guard_deferred`.
   - otherwise: exactly one `pretool_ask` JSON, exit 0, `git_guard_ask`. The reason is `MSG_NOT_LONE_PUSH` for a non-plain push.
 - `gitGuard` is `"ask"` only when the highest-precedence valid layer holds exactly the string `"ask"`.
+- (Added 2026-10-18, see design doc Amendment; the original contract had no `audit` branch.) If there is a verdict and `gitGuard == "audit"`: one `git_guard_audit` event (decision `audit`, with the verdict key), no stdout, exit 0, no token read. A classifier crash logs `git_guard_classifier_failed` (no decision key) first.
 
 ### Edge-case catalog
 | Case | Expected | Test |
 |------|----------|------|
 | No override, or explicit `block` | 12.10.0 output | baseline tests; `test_git_guard_explicit_block_mode_matches_no_config` |
-| `audit`, `Ask`, `1`, `null` for `gitGuard` | `block` + `invalid_hook_mode` | `test_git_guard_mode_accepts_ask_and_rejects_audit`, `test_git_guard_audit_value_falls_back_to_block` |
+| `audit`, `Ask`, `1`, `null` for `gitGuard` | `block` + `invalid_hook_mode` | `test_git_guard_mode_accepts_ask_and_rejects_audit`, `test_git_guard_audit_value_falls_back_to_block` (superseded 2026-10-18: see design doc Amendment; `audit` is now valid, the first test is now `test_git_guard_mode_accepts_ask_and_audit_and_rejects_others`, and the second was removed) |
 | `ask` on the other three keys | that key keeps its default + event | `test_ask_is_invalid_on_the_block_audit_keys` |
 | Lone plain push (flags, `-C`, refspecs, output redirects) | defer | `test_git_guard_ask_mode_defers_every_plain_push` |
 | Push with another statement, chain, `&`, alias, function, `git config`, `export`, env prefix, wrapper, `-c`, `--config-env`, URL/scp/path/`~` remote, `^`/`~` glob, quoted or built argument, pipe, file redirect | `ask`, token kept | `test_git_guard_ask_mode_asks_for_every_non_plain_push_and_keeps_the_token`, `test_git_guard_plain_word_admits_no_shell_special_character` |
@@ -248,7 +251,7 @@ For a Bash PreToolUse call with command `c`:
 | Each of the ten non-deferred keys; every pair in one chain | `ask` | `test_git_guard_ask_mode_asks_for_every_non_deferred_key`, `test_git_guard_ask_mode_asks_for_every_pair_of_keys`, `test_git_guard_ask_mode_push_chained_with_branch_delete_asks` |
 | The same pushes in `block` mode | the 12.10.0 `push` verdict | `test_git_guard_classifier_keys_and_push_verdicts_are_unchanged`, `test_git_guard_block_mode_rewrite_pushes_match_plain_push`, `test_git_guard_block_mode_push_chained_with_branch_delete_is_unchanged` |
 | `_lone_plain_push` raises | `ask` | `test_git_guard_lone_plain_push_check_fails_closed` |
-| Classifier crash on git text (with or without a mode failure); crash without `git` | `ask` / `block` path / pass with no mode read | `test_git_guard_ask_mode_classifier_crash_asks`, `test_git_guard_classifier_crash_with_mode_read_failure_blocks`, `test_git_guard_classifier_crash_without_git_word_never_reads_mode`, `test_git_guard_a_crash_while_picking_the_verdict_fails_closed` |
+| Classifier crash on git text (with or without a mode failure); crash without `git` | `ask` / `block` path / pass with no mode read | `test_git_guard_ask_mode_classifier_crash_asks`, `test_git_guard_classifier_crash_with_mode_read_failure_blocks`, `test_git_guard_classifier_crash_without_git_word_never_reads_mode`, `test_git_guard_a_crash_while_picking_the_verdict_fails_closed` (superseded 2026-10-18: see design doc Amendment; in `audit` mode a crash logs and returns no decision, `test_git_guard_audit_mode_classifier_crash_logs_once`) |
 | `load_mode` raises | `block` path | `test_git_guard_mode_read_failure_takes_the_block_path` |
 | No verdict in `ask` | silent, no event | `test_git_guard_ask_mode_ignores_commands_without_a_verdict` |
 | Ambient `CLAUDE_PLUGIN_DATA` with `ask` in the pytest shell | in-process baseline tests still see `block` | `test_git_guard_in_process_helper_ignores_ambient_plugin_data` |
@@ -261,7 +264,7 @@ For a Bash PreToolUse call with command `c`:
    - the final verifier's 952-command differential run (0 differences).
    - the environment pin on `run_git_guard_in_process`.
 2. **PP-B (resolver total).** `load_mode()` returns exactly the `HOOK_MODE_DEFAULTS` keys, each in `HOOK_MODE_VALUES[key]`. Held by `test_hook_mode_values_cover_every_key_and_admit_each_default` and the resolver tests.
-3. **PP-C (no silent loosening on bad input).** Any `gitGuard` value other than the string `"ask"` resolves to `"block"`. Held by the two invalid-value tests.
+3. **PP-C (no silent loosening on bad input).** Any `gitGuard` value other than the string `"ask"` resolves to `"block"`. Held by the two invalid-value tests. (superseded 2026-10-18: see design doc Amendment; `"audit"` is now also valid, and every other value resolves to `"block"`)
 4. **PP-D (ask partition, amended).** In `ask` mode a verdict defers if and only if its key is `push` and `_lone_plain_push(command)` is true. Every other verdict returns `ask`; none yields `deny` or silence. Held by:
    - `test_git_guard_ask_mode_defers_push_only`.
    - the set lock in `test_git_guard_ask_mode_asks_for_every_non_deferred_key`: its cases equal `PRIORITY` minus `ASK_MODE_DEFERRED`.
@@ -270,10 +273,10 @@ For a Bash PreToolUse call with command `c`:
 5. **PP-E (fault direction, amended).** A fault never loosens the guard:
    - a mode-read exception takes the `block` path.
    - an exception in `_lone_plain_push` means `ask`.
-   - a classifier crash on git text is `classifier-error`, so `deny` in `block` mode and `ask` in `ask` mode.
+   - a classifier crash on git text is `classifier-error`, so `deny` in `block` mode and `ask` in `ask` mode (superseded 2026-10-18: see design doc Amendment; in `audit` mode it logs and returns no decision).
    - Held by the six fault tests in the catalog.
 6. **PP-F (token untouched in ask).** `ask` mode never reads or deletes `.cc10x/state/git-approval.json`. Held by the two "keeps_the_token" tests.
-7. **PP-G (audit trail, amended).** In `ask` mode each verdict logs exactly one decision event, `git_guard_deferred` or `git_guard_ask`. `git_guard_classifier_failed` (in `ask` mode) and `git_guard_mode_read_failed` carry no decision key, so the decision event stays unique. Events are written only where `.cc10x/` exists. Held by the defer and ask tests, and the crash tests.
+7. **PP-G (audit trail, amended).** In `ask` mode each verdict logs exactly one decision event, `git_guard_deferred` or `git_guard_ask`. `git_guard_classifier_failed` (in `ask` mode) and `git_guard_mode_read_failed` carry no decision key, so the decision event stays unique (superseded 2026-10-18: see design doc Amendment; in `audit` mode `git_guard_classifier_failed` also has no key and `git_guard_audit` is the one event per verdict). Events are written only where `.cc10x/` exists. Held by the defer and ask tests, and the crash tests.
 8. **PP-H (docs truthful about modes).** W8 names exactly the hooks that never call `load_mode`. Held by PP-39(b).
 
 ### Purity boundary map
@@ -290,7 +293,7 @@ For a Bash PreToolUse call with command `c`:
 - Live, this branch (final integration verifier):
   - The built hook ran in `ask` mode against a real local bare remote. The plain push deferred and updated the remote. 22 non-plain push forms returned `ask`.
   - In `block` mode, 952 commands gave identical results through the 12.10.0 hook and this branch's hook.
-  - 14/14 scenarios (final verifier and the P4 polish re-verify); 232/232 guard tests after the polish round; `RELEASE GATE: OK`.
+  - 14/14 scenarios (final verifier and the P4 polish re-verify); 232/232 guard tests after the polish round (236 after the 2026-10-18 amendment); `RELEASE GATE: OK`.
   - The Claude Code side of defer and `ask` rests on the reference-patch session.
 
 ## Honest limits
@@ -325,7 +328,7 @@ For a Bash PreToolUse call with command `c`:
 
 ## Functionality Flow Mapping
 Flow: the user opts into `ask`.
-1. Writes `{"gitGuard": "ask"}` to `${CLAUDE_PLUGIN_DATA}/hook-mode.json`. Test: `test_git_guard_mode_accepts_ask_and_rejects_audit`.
+1. Writes `{"gitGuard": "ask"}` to `${CLAUDE_PLUGIN_DATA}/hook-mode.json`. Test: `test_git_guard_mode_accepts_ask_and_rejects_audit` (superseded 2026-10-18: see design doc Amendment; now `test_git_guard_mode_accepts_ask_and_audit_and_rejects_others`).
 2. The model runs `git push origin main`. The guard defers. Test: `test_git_guard_ask_mode_defers_every_plain_push`.
 3. The model runs `git add . && git commit -m x && git push`. The guard asks. Test: the non-plain push table.
 4. The model runs `git branch -D old` or `reset --hard`. The guard asks. Tests: the `branch -D` and non-deferred-key tests.
@@ -341,7 +344,7 @@ Error paths:
 - **ask-defers-lone-plain-push:** given `{"gitGuard":"ask"}`; when the model runs `git push origin main`; then the hook prints nothing, exits 0 and logs `git_guard_deferred`.
 - **ask-prompts-chained-push:** given `ask`; when the model runs a commit chained with a push; then the hook returns `ask` with the not-a-single-plain-push reason.
 - **ask-prompts-branch-delete:** given `ask`; when the model runs `git branch -D old`; then the hook returns `ask`, and the token file is untouched.
-- **audit-value-rejected:** given `{"gitGuard":"audit"}`; when the model runs `git push`; then the guard denies and logs `invalid_hook_mode`.
+- **audit-value-rejected:** given `{"gitGuard":"audit"}`; when the model runs `git push`; then the guard denies and logs `invalid_hook_mode` (superseded 2026-10-18: see design doc Amendment; `audit` is now a valid log-only value).
 - **mode-read-failure:** given `ask` configured and `load_mode` raising; when a verdict exists; then `git_guard_mode_read_failed` is logged and the `block` path runs.
 
 ## Assumptions
@@ -377,11 +380,11 @@ Measured against revision 2 of this plan and the original design.
 - **The P2 exit criterion was narrowed** (router, remediation cycle 1). It used to say no hunk between `def _floor` and `def main`. It now says no change inside `classify_git_command`, `_scan`, `_floor`, `PRIORITY`, `APPROVABLE`, the existing messages or `consume_approval`. `_log_classifier_failure` and `main()`'s classifier-failure handling are sanctioned.
 - **Two event changes beyond revision 2:**
   - `git_guard_mode_read_failed`, which has no decision key.
-  - `git_guard_classifier_failed`, whose decision is now set by `main()` (`allow` / `deny` / no key in `ask`).
+  - `git_guard_classifier_failed`, whose decision is now set by `main()` (`allow` / `deny` / no key in `ask`) (superseded 2026-10-18: see design doc Amendment; no key in `audit` either).
 - **Census comments updated.** Revision 2 left the PP-39 "measured at this commit" comments in `test_cc10x_qa_phase_invariants.py` as history. P3 updated them to the live census (4 mode-aware / 1 unconditional), after review.
 - **A doc-pin test was added.** Revision 2 said P3 needed no new doc-pin seam. `test_hooks_readme_git_guard_limits_name_every_ask_mode_event` pins the ask-mode event names and the single-source wording, after review.
 - **Docs are single-sourced.** Revision 2 gave per-surface target wording for push and branch-delete deferral. The shipped docs carry a short rule plus a pointer to the hooks README, which has the full rule.
-- **Test counts:** 232 guard tests, against revision 2's planned 216. 838 pytest in the gate, against 810 at baseline.
+- **Test counts:** 232 guard tests (236 after the 2026-10-18 amendment), against revision 2's planned 216. 838 pytest in the gate, against 810 at baseline.
 - **Carried over from revision 2:**
   - the real `PRIORITY` key names are used (`worktree-force`, `discard-all`, `checkout-force`), where the design said `worktree-remove-force` and the discard forms.
   - D1/D2 moved into P2 for PP-39(b).

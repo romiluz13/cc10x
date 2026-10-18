@@ -143,7 +143,7 @@ HOOK_MODE_VALUES = {
     "artifactIntegrity": ("block", "audit"),
     "memoryWrites": ("block", "audit"),
     "taskMetadata": ("block", "audit"),
-    "gitGuard": ("block", "ask"),
+    "gitGuard": ("block", "ask", "audit"),
 }
 _MODE_MISSING = object()
 _MODE_CORRUPT = object()

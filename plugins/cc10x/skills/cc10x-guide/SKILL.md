@@ -43,7 +43,7 @@ that owns every development request, 14 specialist agents it delegates to, 21 sk
 that carry the discipline, and
 8 workflows (BUILD, DEBUG, REVIEW, PLAN, QA, ORIENT, TRIAGE, CODEBASE-HEALTH).
 State persists on disk in `.cc10x/` so work survives compaction; hooks add guardrails
-(the QA isolation guard blocks, and so does the git guard unless `gitGuard` is `"ask"`;
+(the QA isolation guard blocks, and so does the git guard unless `gitGuard` is `"ask"` or `"audit"`;
 memory-write and task-metadata hooks audit by default).
 
 For the pitch and the pain-to-feature table, read README.md → "Why cc10x".
@@ -116,7 +116,8 @@ contract — diff against memory-file-contracts.md and restore the missing headi
   token). `git reset --hard`, `git clean -f`, force-push, `git checkout .` are blocked
   with no unlock. With `gitGuard: "ask"` in `${CLAUDE_PLUGIN_DATA}/hook-mode.json`: a
   command that is only a plain `git push` defers to Claude Code's permissions;
-  everything else prompts; see `plugins/cc10x/hooks/README.md`.
+  everything else prompts; see `plugins/cc10x/hooks/README.md`. With `gitGuard:
+  "audit"`: `audit` only logs (`git_guard_audit`, only in a cc10x project), so Claude Code's permission flow is the only gate.
 - QA isolation guard: on the QA route it denies reads of quarantined paths and environment
   changes during the plan phases; it is not configurable.
 - Which hook does what, and which can block: `plugins/cc10x/hooks/README.md`.
