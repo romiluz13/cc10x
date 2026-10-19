@@ -3765,6 +3765,24 @@ PP50F_BULLET = (
     "acting and planning — the reference is the owner of both."
 )
 
+# ---------------------------------------------------------------- PP-51
+# The topology record script (scripts/cc10x_qa_topology.py) is the only code
+# that reads or writes `<home>/qa/topology/<slug>/topology.md`. Its unit suite
+# pins the promises a record cannot show by being read: one slug read, no
+# secret-shaped line written, no member removed, a superset run resolved to
+# the existing record. A suite nobody runs proves none of that, so PP-51 runs
+# it here -- inside the release gate's existing invariants step, with no change
+# to the gate's durable suite list -- and refuses a vacuous green: rc 0, an
+# empty stderr (every child in the suite captures its output), and a final
+# count line at or above the floor.
+TOPOLOGY_SCRIPT = SCRIPTS / "cc10x_qa_topology.py"
+TOPOLOGY_SUITE = SCRIPTS / "test_cc10x_qa_topology.py"
+TOPOLOGY_TPL = PLUGIN / "templates" / "qa-topology.template.md"
+PP51_COUNT_LINE = re.compile(r"^topology unit checks: (\d+) passed$")
+PP51_MIN_UNIT_CHECKS = 89  # measured 94 at 38ab7a3 + this REM-FIX; headroom 5
+PP51_SELFTEST_ENV = "CC10X_TOPOLOGY_SELFTEST_FAIL"
+PP51_SELFTEST_TAIL = re.compile(r"^topology unit checks: \d+ passed, 1 failed$")
+
 
 def _yaml_enum_offers(line: str, token: str) -> bool:
     """True when a contract-YAML enum line offers `token` as an alternative.
@@ -7603,6 +7621,68 @@ def main() -> int:
         f"the {len(PP50F_SECTIONS)} pinned names in order (## QA Bug Context kept, "
         f"## Grants added, pinned whole)"
         + ("" if not pp50f_faults else " -- " + "; ".join(pp50f_faults)),
+    )
+
+    # ---------------------------------------------------------------- PP-51
+    # The topology unit suite is executed, green, quiet on stderr, and
+    # non-vacuous. Run as a child so a crash in it is a red here, not a crash.
+    # A second run with the self-test variable set must fail exactly once:
+    # the suite's failure path is proven to reach its exit code and tail.
+    pp51_faults: list[str] = []
+    pp51_count = None
+    pp51_run = subprocess.run(
+        [sys.executable, str(TOPOLOGY_SUITE)],
+        capture_output=True,
+        text=True,
+        env={k: v for k, v in os.environ.items() if k != PP51_SELFTEST_ENV},
+    )
+    if "[FAIL]" in pp51_run.stdout:
+        pp51_faults.append("stdout carries '[FAIL]' outside the failure list")
+    pp51_self = subprocess.run(
+        [sys.executable, str(TOPOLOGY_SUITE)],
+        capture_output=True,
+        text=True,
+        env={**os.environ, PP51_SELFTEST_ENV: "1"},
+    )
+    pp51_self_last = pp51_self.stdout.rstrip("\n").split("\n")[-1]
+    if pp51_self.returncode != 1:
+        pp51_faults.append(f"self-test run exited {pp51_self.returncode}, expected 1")
+    if not PP51_SELFTEST_TAIL.match(pp51_self_last):
+        pp51_faults.append(
+            f"self-test tail is {pp51_self_last[:120]!r}, not "
+            f"'topology unit checks: N passed, 1 failed'"
+        )
+    if pp51_run.returncode != 0:
+        pp51_faults.append(f"the suite exited {pp51_run.returncode}")
+    if pp51_run.stderr:
+        pp51_faults.append(f"stderr is not empty: {pp51_run.stderr[:400]!r}")
+    pp51_lines = pp51_run.stdout.rstrip("\n").split("\n")
+    pp51_match = PP51_COUNT_LINE.match(pp51_lines[-1]) if pp51_lines else None
+    if pp51_match is None:
+        pp51_faults.append(
+            f"the last stdout line is {pp51_lines[-1][:120]!r}, not "
+            f"'topology unit checks: N passed'"
+        )
+    else:
+        pp51_count = int(pp51_match.group(1))
+        if pp51_count < PP51_MIN_UNIT_CHECKS:
+            pp51_faults.append(
+                f"{pp51_count} unit checks < floor {PP51_MIN_UNIT_CHECKS}"
+            )
+    for pp51_path in (TOPOLOGY_SCRIPT, TOPOLOGY_TPL):
+        if not pp51_path.is_file():
+            pp51_faults.append(f"{pp51_path.relative_to(PLUGIN)} does not exist")
+    check(
+        "PP-51",
+        not pp51_faults,
+        f"{TOPOLOGY_SUITE.relative_to(PLUGIN)} rc={pp51_run.returncode}, "
+        f"{'no count line' if pp51_count is None else str(pp51_count) + ' unit checks passed'} "
+        f"(floor {PP51_MIN_UNIT_CHECKS}), "
+        f"stderr {len(pp51_run.stderr)}B; "
+        f"self-test rc={pp51_self.returncode}, 1 failed; "
+        f"{TOPOLOGY_SCRIPT.relative_to(PLUGIN)} and "
+        f"{TOPOLOGY_TPL.relative_to(PLUGIN)} present"
+        + ("" if not pp51_faults else " -- " + "; ".join(pp51_faults)),
     )
 
     print(f"\nproperties checked: {', '.join(checked)}")

@@ -374,14 +374,18 @@ CORE_HOOK_PAIRS = (
     ("Stop", "cc10x_state_persist.py"),
 )
 CORE_HOOK_SCRIPTS = tuple(dict.fromkeys(script for _, script in CORE_HOOK_PAIRS))
+# Main-guarded scripts/cc10x_*.py that are NOT hooks, each with its reason.
+NON_HOOK_CLIS = frozenset({
+    "cc10x_qa_topology.py",  # router-run CLI for the QA topology record, invoked by qa-workflow law, never by hooks.json
+})
 
 
 def hook_entry_points(plugin_root: Path) -> set[str]:
-    """Hook scripts on disk: every scripts/*.sh and every scripts/cc10x_*.py that main-guards (libraries do not)."""
+    """Hook scripts on disk: every scripts/*.sh and every scripts/cc10x_*.py that main-guards (libraries do not), minus the named NON_HOOK_CLIS."""
     scripts = plugin_root / "scripts"
     found = {p.name for p in scripts.glob("*.sh")}
     found.update(p.name for p in scripts.glob("cc10x_*.py") if _MAIN_GUARD.search(read(p)))
-    return found
+    return found - NON_HOOK_CLIS
 
 
 def check_hook_registration(plugin_root: Path = PLUGIN_ROOT) -> list[str]:
