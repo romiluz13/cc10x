@@ -182,7 +182,6 @@ REDIRECT_TOKENS = {">", ">>", ">&", "&>"}
 # entered wholesale; `terraform fmt` needed no flag at all to rewrite files.
 # The cost of the rule is that the read-only halves go with them: prefer the
 # workflow's `mutation_allowlist` to re-widening this set.
-# OX Agent: least-privilege command classification prevented flag-blind fail-open
 SUBCOMMAND_TOOLS: dict[str, set[str]] = {
     "docker": {"info", "ps", "images", "version", "inspect", "logs", "port", "top", "stats", "diff", "history"},
     "docker-compose": {"config", "ps", "logs", "images", "version", "top"},
@@ -517,7 +516,6 @@ def main() -> int:
     # disk, and a non-dict where a dict is expected must degrade to "no
     # config", never to a traceback. A PreToolUse hook that raises exits
     # non-zero with no decision on stdout, which fails OPEN.
-    # OX Agent: Improper Input Validation prevented
     qa = workflow.get("qa")
     qa = qa if isinstance(qa, dict) else {}
     isolation = qa.get("isolation")
@@ -546,7 +544,6 @@ def main() -> int:
     # it is indexed: `isinstance(history, list)` absorbs null, a bare scalar and
     # an object; `history and` absorbs `[]`; the inner isinstance absorbs a list
     # whose last entry is not a dict.
-    # OX Agent: Improper Input Validation prevented
     history = workflow.get("status_history")
     history = history if isinstance(history, list) else []
     prev_phase = history[-1].get("phase") if history and isinstance(history[-1], dict) else ""
@@ -597,7 +594,6 @@ def main() -> int:
             # same candidate list and is matched by the same `_matches`, so it
             # inherits the resolve-and-compare semantics rather than bypassing
             # them.
-            # OX Agent: Improper Access Control prevented
             for key in ("file_path", "path", "pattern", "notebook_path"):
                 val = tool_input.get(key)
                 if isinstance(val, str):
@@ -651,7 +647,6 @@ def main() -> int:
             # ends in `or ""` and NOT in an unconditional allow -- a notebook
             # path outside the allowlist still reaches `_matches` and is still
             # denied.
-            # OX Agent: Improper Access Control prevented
             target = tool_input.get("file_path") or tool_input.get("notebook_path") or ""
             reason = f"{tool_name} writes a file"
         elif tool_name == "Bash":
@@ -680,7 +675,6 @@ def main() -> int:
             # through every command no path could be extracted from; `all`
             # rather than `any`, because a command touching one allowed path
             # and one forbidden path is a forbidden command.
-            # OX Agent: Path Traversal prevented
             if tool_name == "Bash":
                 paths = _bash_paths(tool_input.get("command") or "", writes_only=True)
                 if paths and all(_matches(p, allowlist) for p in paths):
