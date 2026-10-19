@@ -26,7 +26,8 @@ Subcommands (every one writes one JSON object to stdout):
           [--home DIR] [--template PATH]
         Copy the env plan's sections into the record by heading. Every copied
         line passes through `classify_secret`; a hit is dropped and reported
-        under `refused`, never written.
+        under `refused`, never written. --corrections merges gotchas, never
+        replaces them.
 
 Exit codes: 0 on a result (`none` is a result), 2 on a usage error (including
 a slug with `/`, `\\`, `..`, or an empty slug, and a `write` whose run has no
@@ -267,6 +268,17 @@ def merge_members(existing: dict, new_members: dict[str, list[str]]) -> dict:
         alias for group in new_members.values() for alias in group
     }
     return {"members": sorted(members), "aliases": sorted(aliases)}
+
+
+def merge_gotchas(existing: str, incoming: str) -> str:
+    """Union of gotcha rows: existing rows first, order kept, duplicates by exact row text dropped; nothing is ever removed."""
+    rows = [ln for ln in existing.split("\n") if ln.strip()]
+    seen = set(rows)
+    for ln in incoming.split("\n"):
+        if ln.strip() and ln not in seen:
+            rows.append(ln)
+            seen.add(ln)
+    return "\n".join(rows)
 
 
 # ------------------------------------------------------------- impure edges
@@ -643,10 +655,9 @@ def cmd_write(args: argparse.Namespace, home: Path) -> dict:
 
     refused: list[dict] = []
     sections = {key: _copy(_slice(plan_lines, start, stop), key, refused) for key, start, stop in ENV_PLAN_SLICES}
+    sections["5"] = sections_before.get("5", "")
     if setup_lines is not None:
-        sections["5"] = _copy(gotchas_from_setup(setup_lines), "5", refused)
-    else:
-        sections["5"] = sections_before.get("5", "")
+        sections["5"] = merge_gotchas(sections["5"], _copy(gotchas_from_setup(setup_lines), "5", refused))
     if args.ground_truth is not None:
         ground_truth = f"deployed:{args.ground_truth}"
         sections["6"] = f"`{ground_truth}`"

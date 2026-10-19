@@ -170,15 +170,18 @@ An under-gated environment produces failures that *look like product bugs*. That
 
 Teardown must verify itself. "Ran `docker compose down`" is not evidence; "`docker ps` shows nothing from this run" is. A suite that leaks will eventually make its own machine unable to run it.
 
-### Determining the topology — ask, then detect, then confirm on screen
+### Determining the topology — recall, then verify, then ask only the deltas, then confirm on screen
 
-Never silently infer how to run the system. The order is fixed:
+Never silently infer how to run the system — and never make the user the memory. The order is fixed:
 
-1. **Ask the user first.** They know whether there is a compose file that works, a staging environment, or a cloud-only deploy. One question here saves an hour of wrong inference.
-2. **Then detect**, using whatever the machine actually offers — compose/Tilt/Skaffold files, testcontainers in the manifest, `kind`/`k3d`, available MCP servers, project skills, plugins, and agents that already know how to run this system.
-3. **Then present the findings on screen and get explicit confirmation** before building anything. Show the proposed topology in the conversation — not only written to a file. A plan the user never actually looked at is not an approved plan, and the environment is the single most expensive thing to get wrong.
+1. **Recall** the topology record (`results.topology`; what the last run confirmed and what the last execution corrected).
+2. **Verify** fingerprints and re-probe every volatile fact.
+3. **Ask only the deltas.**
+4. **Present on screen and get explicit confirmation.**
 
-Write the confirmed topology to `env-plan.md` *after* the user confirms it, not before.
+Write the confirmed topology to `env-plan.md` and to the record *after* the user confirms it, not before.
+
+**First-time reconstruction is bounded.** Walk this list in order, stop when it is exhausted, and record what is still unknown as a gap: (1) compose `services` / `depends_on`; (2) k8s manifests, Helm charts, Tiltfile, Skaffold; (3) Procfile, Makefile, package-manager scripts; (4) Dockerfile `EXPOSE` / `HEALTHCHECK`; (5) `*_URL`-style env reads and client constructors in code; (6) README run sections. A deployed environment the user names, or deploy manifests reveal, is recorded as `ground_truth` and its service graph seeds the member and service lists.
 
 ### Settle contradictions with a probe, not with a preference
 
@@ -262,6 +265,7 @@ Every QA artifact has a shipped skeleton. **Copy it and fill in place** — do n
 | `env-plan.md` | `${CLAUDE_PLUGIN_ROOT}/templates/qa-env-plan.template.md` |
 | `feature-map.md` | `${CLAUDE_PLUGIN_ROOT}/templates/qa-feature-map.template.md` (router-owned, inline consolidation) |
 | `setup.md` | `${CLAUDE_PLUGIN_ROOT}/templates/qa-setup.template.md` — **environment-scoped, not per-run.** Lives at `.cc10x/qa/env/{env_key}/setup.md`, append-only, and records only MEASURED facts. It is the counterpart to `env-plan.md`: the plan predicts the environment from source, this records what the machine actually said |
+| `topology.md` | `${CLAUDE_PLUGIN_ROOT}/templates/qa-topology.template.md` — **user-level and system-keyed, not per-run.** Lives at `~/.cc10x/qa/topology/{slug}/topology.md`, rendered by `${CLAUDE_PLUGIN_ROOT}/scripts/cc10x_qa_topology.py`, written at topology confirmation and at memory-finalize; holds secret locations, never values |
 | `report.md` | `${CLAUDE_PLUGIN_ROOT}/templates/qa-report.template.md` (router-seeded at `qa-execute`; `qa-executor` rewrites it whole with `Write`) |
 | harness manifest | `${CLAUDE_PLUGIN_ROOT}/templates/live-harness.template.json` |
 
