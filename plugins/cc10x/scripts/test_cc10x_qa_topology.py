@@ -65,6 +65,16 @@ FAKE_YAML_PW_LINE = "DB_" + "PASSWORD: " + "hunter22x"
 FAKE_LOWER_BEARER = "authorization: bearer " + "abcDEF123" + "456ghiJKL"
 FAKE_UPPER_PW_LINE = "PASSWORD=" + "HUNTER2" + "SECRETX"
 FAKE_TABLE_BEARER_LINE = "| API_TOKEN | Bearer " + "ABCDEFGHIJKLM" + "NOPQRSTUVWXYZ |"
+FAKE_EMPTY_USER_URI = "redis://:" + "R3disP4ss!" + "@localhost:6379"
+FAKE_AWS_SECRET_LINE = "AWS_SECRET_ACCESS_" + "KEY=" + "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+FAKE_ASIA = "ASIA" + "IOSFODNN7" + "EXAMPLE"
+FAKE_PEM_BEGIN = "-----BEGIN OPENSSH " + "PRIVATE KEY-----"
+FAKE_BASIC = "Authorization: Basic " + "YWRtaW46cGFzc3dvcmQ="
+FAKE_LIVE_KEY = "export STRIPE_KEY=" + "sk_live_" + "abc123def456"
+FAKE_CURL_USER = "curl -u admin:" + "S3cretPass http://localhost"
+FAKE_MYSQL_FLAG = "mysql -uroot -p" + "S3cretPass"
+FAKE_KEY_BASE_LINE = "SECRET_KEY_" + "BASE=" + "abcdef123456"
+FAKE_TABLE_PW_ROW = "| DB_PASSWORD | " + "Hunter2" + "Hunter2 |"
 
 # Set to "1" to make the suite add one deliberate failure: PP-51 runs the
 # suite that way once to prove its failure path still exits 1.
@@ -462,6 +472,16 @@ def pure_checks() -> None:
         ("bearer", FAKE_LOWER_BEARER, " (lower-case header)"),
         ("assignment", FAKE_UPPER_PW_LINE, " (upper-case key)"),
         ("bearer", FAKE_TABLE_BEARER_LINE, " (upper-case value in a table cell)"),
+        ("uri_with_password", FAKE_EMPTY_USER_URI, " (empty username)"),
+        ("sensitive_assignment", FAKE_AWS_SECRET_LINE, " (AWS_SECRET_ACCESS_KEY=)"),
+        ("aws_key", FAKE_ASIA, " (temporary ASIA key id)"),
+        ("private_key", FAKE_PEM_BEGIN, ""),
+        ("basic_auth", FAKE_BASIC, ""),
+        ("known_token_prefix", FAKE_LIVE_KEY, " (sk_live_)"),
+        ("credential_flag", FAKE_CURL_USER, " (curl -u user:pass)"),
+        ("credential_flag", FAKE_MYSQL_FLAG, " (mysql -pPASS)"),
+        ("sensitive_assignment", FAKE_KEY_BASE_LINE, " (SECRET_KEY_BASE=)"),
+        ("sensitive_table_cell", FAKE_TABLE_PW_ROW, " (name and value in table cells)"),
     ]
     for shape, line, label in secret_cases:
         case(
@@ -481,6 +501,40 @@ def pure_checks() -> None:
         "classify_secret: a bare name in backticks is None",
         lambda: (tool().classify_secret(bare_name) is None, f"got {tool().classify_secret(bare_name)!r}"),
     )
+    for benign in (
+        "docker run -p 8080:80 app",
+        "ssh -p 2222 qa-host",
+        "redis://localhost:6379",
+        "| DB_PASSWORD_REF | ${DB_PASSWORD} |",
+        "export PORT=8080",
+    ):
+        case(
+            f"classify_secret: {benign!r} is None",
+            lambda benign=benign: (
+                tool().classify_secret(benign) is None,
+                f"got {tool().classify_secret(benign)!r}",
+            ),
+        )
+    secrets_section = [
+        "## 7. Secrets and config",
+        "| Variable | Source | Notes |",
+        "| --- | --- | --- |",
+        "| DB_PASSWORD | vault | test-only |",
+        FAKE_TABLE_PW_ROW,
+        "| `STRIPE_KEY` | vault | value `SKLIVE" + "ABCDEF123456XYZ` |",
+        FAKE_PEM_BEGIN,
+        "abc+def/ghi",
+        "-----END OPENSSH " + "PRIVATE KEY-----",
+    ]
+
+    def secrets_names_only() -> tuple[bool, str]:
+        refused: list[dict] = []
+        got = tool().secret_names(secrets_section, refused)
+        lines = [r["line_no"] for r in refused]
+        ok = got == "- `DB_PASSWORD`\n- `STRIPE_KEY`" and lines == [7, 8, 9]
+        return ok, f"names={got!r} refused_lines={lines}"
+
+    case("secret_names: only the Variable column is named; a private-key block is refused whole", secrets_names_only)
     pointer = "token: see vault"
     case(
         "classify_secret: a pointer to the vault is None",
@@ -651,6 +705,13 @@ def cli_checks(root: Path) -> None:
 
     case("CLI write: an empty run set exits 2 and writes nothing", write_no_remote)
 
+    def usage_error_json() -> tuple[bool, str]:
+        rc, data, _, err = cli("write", "some-slug", "--status", "confirmed", "--home", str(home))
+        ok = rc == 2 and data is not None and "--from" in data.get("error", "") and err == ""
+        return ok, said(rc, data, err)
+
+    case("CLI: an argparse usage error exits 2 with one JSON error object", usage_error_json)
+
     def write_bad_slugs() -> tuple[bool, str]:
         rcs = {}
         for slug in ("../x", "a/b", "a\\b", ""):
@@ -698,6 +759,32 @@ def cli_checks(root: Path) -> None:
         return ok, said(rc, data, err) + f" front={json.dumps(front, sort_keys=True)[:300]}"
 
     case("CLI write: first time -> record at <home>/qa/topology/<slug>/topology.md", write_first)
+
+    def write_private_no_symlink() -> tuple[bool, str]:
+        path = record_path(home, SLUG_REPO)
+        victim = root / "victim.txt"
+        victim.write_text("untouched\n", encoding="utf-8")
+        planted = path.with_name(path.name + ".tmp")
+        planted.symlink_to(victim)
+        try:
+            rc, data, _, err = cli(
+                "write", SLUG_REPO, "--from", str(env_plan), "--status", "confirmed",
+                "--repos", str(repo1), "--home", str(home),
+            )
+            mode = path.stat().st_mode & 0o777
+            ok = (
+                rc == 0
+                and victim.read_text(encoding="utf-8") == "untouched\n"
+                and not path.is_symlink()
+                and mode == 0o600
+                and (path.parent.stat().st_mode & 0o077) == 0
+                and not [p for p in path.parent.iterdir() if p.name.endswith(".tmp") and p != planted]
+            )
+            return ok, said(rc, data, err) + f" mode={oct(mode)} symlink={path.is_symlink()}"
+        finally:
+            planted.unlink()
+
+    case("CLI write: the record is owner-only and a planted .tmp symlink is never followed", write_private_no_symlink)
 
     path1 = record_path(home, SLUG_REPO)
 

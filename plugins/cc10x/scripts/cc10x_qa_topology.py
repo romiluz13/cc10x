@@ -54,8 +54,10 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import NoReturn
 
 TEMPLATE_DEFAULT = Path(__file__).resolve().parent.parent / "templates" / "qa-topology.template.md"
 GIT_TIMEOUT_SECONDS = 30
@@ -86,7 +88,28 @@ SECRET_SHAPES = (
     ("db_uri_with_password", re.compile(r"\b[a-z][a-z0-9+]*://[^/\s:@]+:[^@\s]+@")),
     ("long_token", re.compile(r"\b[A-Za-z0-9_\-]{40,}\b")),
     ("assignment", re.compile(r"(?i)(password|passwd|secret|token|api[_-]?key)\s*[:=]\s*\S{6,}")),
+    ("uri_with_password", re.compile(r"\b[a-z][a-z0-9+.-]*://[^/\s:@]*:[^@\s/]+@")),
+    ("aws_key", re.compile(r"\bASIA[0-9A-Z]{16}\b")),
+    ("private_key", re.compile(r"-----BEGIN [A-Z0-9 ]*PRIVATE KEY")),
+    ("basic_auth", re.compile(r"(?i)\bbasic\s+[A-Za-z0-9+/=]{8,}")),
+    ("known_token_prefix", re.compile(r"\b(?:sk|rk)_(?:live|test)_[A-Za-z0-9]{8,}|\b(?:ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{20,}|\bgithub_pat_\w{20,}|\bglpat-[\w-]{20,}|\bxox[abpr]-[\w-]{10,}|\bdckr_pat_[\w-]{20,}|\bnpm_[A-Za-z0-9]{30,}")),
+    ("credential_flag", re.compile(r"(?:^|\s)(?:(?:-u|--user)\s*[^\s:]+:\S+|-p[^\s-]\S{3,}|--password[=\s]+\S+)")),
+    (
+        "sensitive_assignment",
+        re.compile(
+            r"(?i)\b[\w.-]*(?:password|passwd|pwd|secret|token|credential|api[_-]?key|access[_-]?key|private[_-]?key|_key|_pat)[\w.-]*"
+            r"\s*[:=]\s*(?![\"']?\$\{?[A-Za-z_])\S{6,}"
+        ),
+    ),
+    (
+        "sensitive_table_cell",
+        re.compile(
+            r"(?i)\|\s*`?[\w.-]*(?:password|passwd|pwd|secret|token|credential|api[_-]?key|access[_-]?key|private[_-]?key|_key|_pat)[\w.-]*`?\s*\|"
+            r"\s*(?![\"'`]?\$\{?[A-Za-z_])[^|\s][^|]{5,}\|"
+        ),
+    ),
 )
+PEM_END = re.compile(r"-----END [A-Z0-9 ]*PRIVATE KEY")
 
 SLUG_SHAPE = re.compile(r"[a-z0-9][a-z0-9._-]{0,120}")
 GROUND_TRUTH_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._:/-]{0,120}")
@@ -421,13 +444,30 @@ def _slice(lines: list[str], start: re.Pattern[str], stop: re.Pattern[str] | Non
     return []
 
 
+def _secret_lines(numbered: list[tuple[int, str]]) -> dict[int, str]:
+    """Line number -> shape for every line to refuse: each secret-shaped line, and every line of a private-key block."""
+    hits: dict[int, str] = {}
+    in_key = False
+    for line_no, line in numbered:
+        shape = classify_secret(line)
+        if shape == "private_key":
+            in_key = True
+        if in_key:
+            hits[line_no] = "private_key"
+            in_key = not PEM_END.search(line)
+        elif shape:
+            hits[line_no] = shape
+    return hits
+
+
 def _copy(numbered: list[tuple[int, str]], section: str, refused: list[dict]) -> str:
     """The lines with every secret-shaped one dropped and recorded in `refused`."""
     kept: list[str] = []
+    hits = _secret_lines(numbered)
     for line_no, line in numbered:
         if line.strip() == "---":
             continue
-        shape = classify_secret(line)
+        shape = hits.get(line_no)
         if shape:
             refused.append({"section": SECTION_TITLES[section], "line_no": line_no, "shape": shape})
             continue
@@ -451,12 +491,19 @@ def gotchas_from_setup(lines: list[str]) -> list[tuple[int, str]]:
 def secret_names(lines: list[str], refused: list[dict]) -> str:
     """The NAMES in the env plan's secrets section, one per line, never values: a line that is itself a secret shape is refused whole and yields no name."""
     names: list[str] = []
-    for line_no, line in _slice(lines, ENV_PLAN_SECRETS, None):
-        shape = classify_secret(line)
+    numbered = _slice(lines, ENV_PLAN_SECRETS, None)
+    hits = _secret_lines(numbered)
+    for line_no, line in numbered:
+        shape = hits.get(line_no)
+        is_row = line.lstrip().startswith("|")
+        if shape == "sensitive_table_cell":
+            # A sensitive name beside its source is this section's normal row; its value cells are never copied.
+            shape = None
         if shape:
             refused.append({"section": SECTION_TITLES["7"], "line_no": line_no, "shape": shape})
             continue
-        for name in SECRET_NAME.findall(line):
+        # Only a table row's Variable column is a name; a value cell never is.
+        for name in SECRET_NAME.findall(_cells(line)[0] if is_row else line):
             if name not in names:
                 names.append(name)
     return "\n".join(f"- `{name}`" for name in names)
@@ -493,10 +540,13 @@ def _rewrite_front(text: str, front: dict) -> str:
 
 
 def _atomic_write(path: Path, text: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_name(path.name + ".tmp")
+    """Owner-only, via a fresh temp file: mkstemp never follows a planted symlink, and two writers never share one."""
+    path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    fd, name = tempfile.mkstemp(prefix=path.name + ".", suffix=".tmp", dir=path.parent)
+    tmp = Path(name)
     try:
-        tmp.write_text(text, encoding="utf-8")
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            handle.write(text)
         os.replace(tmp, path)
     except BaseException:
         tmp.unlink(missing_ok=True)
@@ -692,8 +742,15 @@ def cmd_write(args: argparse.Namespace, home: Path) -> dict:
     }
 
 
+class _Parser(argparse.ArgumentParser):
+    """Usage errors become UsageError, so they too print one JSON object (exit 2)."""
+
+    def error(self, message: str) -> NoReturn:
+        raise UsageError(message)
+
+
 def _parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
+    parser = _Parser(
         prog="cc10x_qa_topology.py",
         description="Resolve, verify and write the machine-local QA topology record.",
     )
@@ -730,8 +787,8 @@ def _emit(obj: dict) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    args = _parser().parse_args(argv)
     try:
+        args = _parser().parse_args(argv)
         result = args.handler(args, resolve_home(args.home))
     except UsageError as exc:
         _emit({"error": str(exc)})

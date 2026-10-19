@@ -36,6 +36,7 @@ PAYLOADS = [
 ]
 
 RUNTIME_TOOLS = ["phase_brief.py", "review_package.py", "live_harness_runner.py"]
+RUNTIME_SCRIPTS = ["cc10x_qa_topology.py"]
 
 
 def hook_commands() -> list[list[str]]:
@@ -101,10 +102,10 @@ def test_hook_scripts_do_not_crash(interp, tmp_path):
 
 @pytest.mark.parametrize("interp", interpreters())
 def test_runtime_tools_import_and_show_help(interp, tmp_path):
-    for name in RUNTIME_TOOLS:
-        r = run(interp, [str(TOOLS_DIR / name), "--help"], "", tmp_path)
-        assert "Traceback" not in r.stderr, f"{interp} {name}\n{r.stderr}"
-        assert r.returncode in (0, 2), f"{interp} {name} rc={r.returncode}\n{r.stderr}"
+    for path in [TOOLS_DIR / n for n in RUNTIME_TOOLS] + [SCRIPTS_DIR / n for n in RUNTIME_SCRIPTS]:
+        r = run(interp, [str(path), "--help"], "", tmp_path)
+        assert "Traceback" not in r.stderr, f"{interp} {path.name}\n{r.stderr}"
+        assert r.returncode in (0, 2), f"{interp} {path.name} rc={r.returncode}\n{r.stderr}"
 
 
 def first_statement_after_docstring(tree: ast.Module):
