@@ -45,6 +45,7 @@ Enumerate every repository the feature's traced path touches — *including* the
 
 - Derive the candidate set from the request, the target repo's outbound calls and clients, its dependency manifest, and any design docs already discovered — **not** from what the user named. A repo nobody mentioned is exactly the one this step exists to surface.
 - **Measure each candidate.** A repo is absent only after a check that could have found it came back empty.
+- **Recall the topology record.** Run `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/cc10x_qa_topology.py" resolve --repos {every present path}` and persist its JSON under `results.topology`; append `topology_resolved` (`match`, `slug`) to the event log. Put the outcome on the SAME screen as the repo set: `one` — name the record, its `status` and `updated_at`; `none` — say this is a first-time reconstruction, name the slug the resolver minted (`derived_slug`, from the lexicographically first member — never a human-chosen name) and that the record will be written under it when the plan returns; `tie` — list the candidates and ask which one on this same screen; the pick is mandatory, the run does not proceed without it; the pick is the slug for this run only (recorded as the `slug` field of `results.topology`), never persisted as an alias; `superset` — say the record will be EXTENDED with the new members on write, never forked into a second record. When `resolve` returns a non-empty `warnings` list, print every warning on this same screen; when a later `write` returns a non-null `corrupt_renamed`, name the renamed file on screen. The record lives at `~/.cc10x/qa/topology/{slug}/topology.md` (`$CC10X_HOME` when set); it is machine-local memory, not a workflow artifact.
 - **PRESENT the set on screen** — every candidate, its measured presence, its path — and get explicit confirmation of which repos are in scope for the `code` lane split.
 - Dispatch the research fan-out only after that confirmation.
 - **Re-measure and re-present if step 2 surfaces a repo this set does not contain.** Step 2 asks the user which ticket or spec the effort belongs to, and the ticket is the artifact that most often names an adjacent service nothing in the code points at. A set confirmed at 0b and never revisited would exclude exactly that repo — silently, which is the failure this step exists to prevent. Fold the re-presentation into step 2's own on-screen confirmation rather than raising a second gate.
@@ -151,12 +152,14 @@ Bash(command="mkdir -p .cc10x/qa/{workflow_uuid} && cp \"${CLAUDE_PLUGIN_ROOT}/t
 
 Then fill them in place. A section that does not apply is marked `N/A` with a reason — **never deleted**. The mandatory sections (test plan §2 coverage table, §7 known gaps; env plan §9 teardown verification, §10 re-runnability) exist because they are exactly what a plan omits when it is optimistic, and an omitted section is invisible while an `N/A` is arguable.
 
-**Environment topology gate — ask, detect, SHOW, confirm.** Before the plan agent writes `env-plan.md`:
+**Environment topology gate — recall, verify, ask only the deltas, SHOW, confirm.** Router-inline, before the `qa-plan` task is dispatched: steps 1-4 run in the router; the `qa-plan` dispatch hands the planner `results.topology` plus the confirmed topology as the starting proposal, the plan agent writes `env-plan.md` from it (step 5), and the router writes the record when the task returns (step 6):
 
-1. ASK the user how this system is meant to run for testing.
-2. Detect from the machine and from discovered tooling (step 0a).
-3. **PRESENT the proposed topology on screen** and get explicit confirmation.
-4. Write `env-plan.md` only after confirmation.
+1. **Recall** — read `results.topology`. `one`/`superset`: the record is the starting proposal. `none`: first-time reconstruction — follow the bounded evidence checklist in `qa-strategy` ("Determining the topology"), stop when it is exhausted, and record the gaps.
+2. **Verify** — `verify {slug} --repos …` for `one`/`superset`/resolved `tie`, with `--repos` = only the paths the recall's `resolve` did not warn about (the same rule as step 6); a `none` run has nothing to verify and skips this step. `unverified` means re-probe; and every volatile fact (ports, start commands, reachable-at) is re-probed regardless — the fingerprint is a freshness hint, not a proof.
+3. **Ask only the deltas** — what the record cannot answer and what verify flagged. Do not re-ask what the record already says.
+4. **PRESENT the proposed topology on screen** and get explicit confirmation.
+5. Write `env-plan.md` only after confirmation.
+6. **Write the record when `qa-plan` returns, before the plan-review task is unblocked** (probe: before the preflight task is unblocked) — `write {slug} --from .cc10x/qa/{workflow_uuid}/env-plan.md --status confirmed --repos …` with `{slug}` = the recalled record's slug, the user's `tie` pick, or the `derived_slug` field of `results.topology` for a `none` run, and `--repos` = only the paths the recall's `resolve` did not warn about (a warned path produced no member and would make `write` exit 2); a `write` exit 2 is the router's failure, not the user's — and a `verify` exit 2 or a `write` exit 1 is handled exactly the same way: stop at the phase's `human_action` checkpoint and show the one-line `{"error": …}` it printed; append `topology_written` (`status: confirmed`). `env-plan.md` does not exist until the plan agent writes it, so the write cannot be earlier; a run that aborts after that point must not lose the one expensive thing it produced, and the default `mutation_allowlist` makes this write legal in a plan phase.
 
 A plan written to a file the user never looked at is not an approved plan. The environment is the most expensive thing here to get wrong — a bad topology produces failures that look like product bugs, which is how a team learns to distrust its own suite.
 
@@ -486,6 +489,8 @@ TaskUpdate({ taskId: qa_execute_task_id, addBlockedBy: [qa_reviewer_task_id, qa_
 
 #### Memory
 
+**Before the memory task runs, update the topology record** — `write {slug} --from .cc10x/qa/{workflow_uuid}/env-plan.md --corrections .cc10x/qa/env/{env_key}/setup.md --status executed --repos …`, folding in setup.md section 4 corrections and the executor's observed facts; the write never replaces gotchas already in the record — section 5 becomes the union of the existing rows and the setup.md rows, existing rows first, duplicates by exact text dropped; `--repos` and a `write` exit 2 are handled exactly as in step 6 of the topology gate (only un-warned paths; exit 2 stops at the `human_action` checkpoint with the error line shown); append `topology_written` (`status: executed`). A run whose `results.topology` is null (a regression re-run never ran 0b) skips this write and appends `topology_written` with `status: skipped`. Router-inline, never an agent.
+
 ```text
 TaskCreate({
   subject: "CC10X Memory Update: Persist QA learnings",
@@ -517,7 +522,7 @@ Escalate to the full graph when the harness builder reports non-empty `SCOPE_INC
 
 These are prompt rules. No cc10x hook enforces them; the user's Claude Code permission settings are the only mechanical gate. A prior run installed global skill fixtures onto the user's machine during a planning phase, via `Bash`; Rule 2 exists because of it.
 
-**Rule 1 — planning phases mutate nothing.** During `qa` (the bare parent value), `qa-research`, `qa-plan`, `qa-plan-review`, `qa-re-plan`, and `qa-plan-review-2`, no agent creates files outside `.cc10x/`, installs fixtures, provisions services, or runs setup. Planning produces documents. Building the environment is `qa-build`; running it is `qa-execute`. Write what the environment SHOULD be into `env-plan.md` — do not build it.
+**Rule 1 — planning phases mutate nothing.** During `qa` (the bare parent value), `qa-research`, `qa-plan`, `qa-plan-review`, `qa-re-plan`, and `qa-plan-review-2`, no agent creates files outside `.cc10x/`, installs fixtures, provisions services, or runs setup. Planning produces documents. Building the environment is `qa-build`; running it is `qa-execute`. Write what the environment SHOULD be into `env-plan.md` — do not build it. The one write a plan phase makes outside `.cc10x/` is the router's own topology record under `~/.cc10x/qa/topology/`, allowlisted by default.
 
 **`qa-preflight` is NOT a plan phase and is deliberately absent from that list.** It probes the real environment — binds a port, stats a credential, runs `docker info` — which is exactly the mutation this rule forbids during planning.
 

@@ -150,6 +150,7 @@ Rules:
   - `reasoning`
 - `pending_gate` is required whenever BUILD/PLAN/DEBUG/QA/TRIAGE/CODEBASE-HEALTH is waiting on user clarification, scope selection, or persistence repair. QA sets exactly four: `qa_preflight_human_prerequisites` (the batched preflight ask), `qa_source_contradiction` (consolidation found sources that disagree about what to test), `qa_test_plan_approval` (the reviewed test plan is on screen and `qa.negotiation.test_plan_approval` is `wait`) and `qa_grant_needed` (an acting QA agent returned `GRANT_NEEDED`; the batched grant ask is on screen).
 - `qa.negotiation` is created at QA step 0c (a regression run seeds it from the source QA workflow), amended only by the grant-gate law — `grants` on an answer, `pending_grant` while a question is open, whichever gate raised it — and read by every QA dispatch: `grants` (each `granted | denied | ask`; `ask` means a batched router gate when first needed, never an agent question), `test_plan_approval` (`wait | run`), `users_words` (the user's answer, verbatim), `recorded_at`, `pending_grant` (the open grant request while the grant gate is raised, else null).
+- `results.topology` stores the topology resolver's JSON from QA step 0b exactly as `resolve` printed it — `match`, `records`, `run_members`, `derived_slug`, `warnings`, `home`.
 - `status_history` is an append-only summary of major router decisions; `remediation_history` holds exactly one entry per remediation round (see `### Circuit breaker` in `remediation-and-research.md`).
 
 Router gates (operational definitions — a gate name without these semantics is meaningless):
@@ -192,6 +193,8 @@ Workflow event log:
   - `inline_fallback_entered` (inline no-subagent mode)
   - `inline_fallback_exited` (the router resumes subagent dispatch)
   - `parallel_fallback` (reviewer and hunter fell back to sequential dispatch)
+  - `topology_resolved` (QA step 0b, after the topology record is recalled; `match`, `slug`)
+  - `topology_written` (QA topology gate step 6 and the memory-finalize write; `status` is `confirmed`, `executed` or `skipped`)
 - `finding_dropped` is a `status_history` entry (post-verifier finding validation, `SKILL.md` §12), not an event-log type.
 - Event types a hook appends to this log:
   - `compact_occurred` (PostCompact)

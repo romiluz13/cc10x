@@ -957,6 +957,49 @@ def cli_checks(root: Path) -> None:
 
     case("CLI write: without --corrections the existing gotchas are kept verbatim", gotchas_kept)
 
+    def corrections_zero_rows() -> tuple[bool, str]:
+        setup_empty = root / "setup-empty.md"
+        setup_empty.write_text(
+            SETUP.replace("| analyzer image has no sshd | derived | docker run img which sshd | (none) |\n", "")
+            .replace("| api on 8080 | api on 18080 | 1 | yes | wrong-guess |\n", ""),
+            encoding="utf-8",
+        )
+        before = section_of(path1, "5")
+        rc, data, _, err = cli(
+            "write", SLUG_REPO, "--from", str(env_plan), "--corrections", str(setup_empty),
+            "--status", "executed", "--repos", str(repo1), "--home", str(home),
+        )
+        after = section_of(path1, "5")
+        ok = rc == 0 and after == before and "no sshd" in before
+        return ok, said(rc, data, err) + f" before={before.strip()[:160]!r} after={after.strip()[:160]!r}"
+
+    case("CLI write: --corrections carrying zero rows keeps section 5 byte-identical", corrections_zero_rows)
+
+    def corrections_append() -> tuple[bool, str]:
+        extra = "| db on 5432 | db on 15432 | 1 | yes | wrong-guess |"
+        setup_plus = root / "setup-plus.md"
+        setup_plus.write_text(
+            SETUP.replace(
+                "| api on 8080 | api on 18080 | 1 | yes | wrong-guess |\n",
+                "| api on 8080 | api on 18080 | 1 | yes | wrong-guess |\n" + extra + "\n",
+            ),
+            encoding="utf-8",
+        )
+        before = section_of(path1, "5")
+        rc, data, _, err = cli(
+            "write", SLUG_REPO, "--from", str(env_plan), "--corrections", str(setup_plus),
+            "--status", "executed", "--repos", str(repo1), "--home", str(home),
+        )
+        after = section_of(path1, "5")
+        ok = (
+            rc == 0
+            and after.rstrip("\n") == before.rstrip("\n") + "\n" + extra
+            and after.count("api on 18080") == 1
+        )
+        return ok, said(rc, data, err) + f" before={before.strip()[-160:]!r} after={after.strip()[-200:]!r}"
+
+    case("CLI write: --corrections carrying one new row appends it after the existing rows", corrections_append)
+
     def ground_truth() -> tuple[bool, str]:
         rc, data, _, err = cli(
             "write", SLUG_REPO, "--from", str(env_plan), "--status", "confirmed",

@@ -2688,9 +2688,10 @@ PP40_HEADING = re.compile(r"^## (\d+[a-z]?)\. (.+)$", re.M)
 # correct citation INTO the class and produces no mismatch at all.
 # Re-measured at dcee43c + step 0c: the 8 lines of 0c moved the line from
 # 120 to 128 after #94 (the citations other comments in this file call `:119`).
+# Re-measured with the 0b recall bullet: 128 -> 129.
 PP40_UNDESCRIPTIVE = {
-    ("qa-workflow.md", 128, "3"),   # "wave count and in the"  vs  ## 3. Build order
-    ("qa-workflow.md", 128, "2"),   # "id rollups"             vs  ## 2. Coverage plan
+    ("qa-workflow.md", 129, "3"),   # "wave count and in the"  vs  ## 3. Build order
+    ("qa-workflow.md", 129, "2"),   # "id rollups"             vs  ## 2. Coverage plan
 }
 # There is no exclusion list. The seven unprefixed `§N` in
 # `qa-harness-builder.md`'s 64-71 table fall into the NO-PREFIX branch already --
@@ -3779,9 +3780,57 @@ TOPOLOGY_SCRIPT = SCRIPTS / "cc10x_qa_topology.py"
 TOPOLOGY_SUITE = SCRIPTS / "test_cc10x_qa_topology.py"
 TOPOLOGY_TPL = PLUGIN / "templates" / "qa-topology.template.md"
 PP51_COUNT_LINE = re.compile(r"^topology unit checks: (\d+) passed$")
-PP51_MIN_UNIT_CHECKS = 89  # measured 94 at 38ab7a3 + this REM-FIX; headroom 5
+PP51_MIN_UNIT_CHECKS = 89  # measured 96 at 6a440b9 + this REM-FIX; headroom 7
 PP51_SELFTEST_ENV = "CC10X_TOPOLOGY_SELFTEST_FAIL"
 PP51_SELFTEST_TAIL = re.compile(r"^topology unit checks: \d+ passed, 1 failed$")
+PP53A_TOKENS = (
+    "Recall the topology record", "cc10x_qa_topology.py", "`results.topology`",
+    "`one`", "`none`", "`tie`", "`superset`", "never forked", "`topology_resolved`",
+    "derived_slug", "never a human-chosen name",
+    "`warnings`", "`corrupt_renamed`", "lexicographically first member",
+)
+PP53A_ORDER = ("Recall the topology record", "PRESENT the set on screen")
+PP53B_START = re.compile(r"(?m)^\*\*Environment topology gate — recall, verify")
+PP53B_END = re.compile(r"(?m)^A plan written to a file")
+PP53B_TOKENS = (
+    "**Recall**", "**Verify**", "**Ask only the deltas**",
+    "PRESENT the proposed topology on screen", "explicit confirmation",
+    "--status confirmed", "`topology_written`", "freshness hint",
+    "bounded evidence checklist", "derived_slug",
+    "before the plan-review task is unblocked", "nothing to verify",
+    "only the paths the recall's", "verify {slug} --repos",
+    "before the `qa-plan` task is dispatched", "`verify` exit 2",
+)
+PP53B_STEPS = (
+    "1. **Recall**", "2. **Verify**", "3. **Ask only the deltas**",
+    "4. **PRESENT the proposed topology on screen**", "5. Write `env-plan.md`",
+    "6. **Write the record",
+)
+PP53B_REPOS_RULE = "only the paths the recall's"  # step 2 and step 6: two occurrences
+PP53B_MIN_BYTES = 950  # measured 1969 at a7e1ef3 + this change; floor ~50%
+PP53C_START = re.compile(r"(?m)^\*\*Before the memory task runs, update the topology record\*\*")
+PP53C_END = re.compile(r"(?m)^```")
+PP53C_TOKENS = (
+    "--status executed", "--corrections", "`topology_written`", "never an agent",
+    "never replaces gotchas already in the record", "status: skipped",
+)
+PP53C_FENCE = "CC10X Memory Update: Persist QA learnings"
+PP53C_LAST_SENTENCE = "Router-inline, never an agent."
+PP53D_START = re.compile(r"(?m)^### Determining the topology — recall, then verify")
+PP53D_END = re.compile(r"(?m)^### ")
+PP53D_TOKENS = (
+    "Recall", "Verify", "Ask only the deltas", "explicit confirmation",
+    "stop when it is exhausted", "ground_truth",
+    "Helm", "EXPOSE", "client constructors",
+)
+PP53D_RUNGS = (
+    "(1) compose", "(2) k8s", "(3) Procfile", "(4) Dockerfile", "(5) `*_URL`", "(6) README run",
+)
+PP53D_MIN_BYTES = 550  # measured 1144 at a7e1ef3 + this change; floor ~50%
+PP53E_DOTTED = re.compile(r"`results\.topology\.[a-z_]+`")
+PP53F_START = re.compile(r"(?m)^\*\*Rule 1 — planning phases mutate nothing\.\*\*")
+PP53F_END = re.compile(r"(?m)^\*\*")
+PP53F_TOKEN = "~/.cc10x/qa/topology/"
 
 
 def _yaml_enum_offers(line: str, token: str) -> bool:
@@ -6378,6 +6427,7 @@ def main() -> int:
     # --- PP-43(a). The template table points every artifact at templates/. ---
     pp43a_text = qa_strategy_md.read_text(encoding="utf-8")
     pp43a_starts = PP43A_WINDOW_START.findall(pp43a_text)
+    pp43a_rows: list[tuple[str, str]] = []
     if len(pp43a_starts) != 1:
         check(
             "PP-43(a)",
@@ -6393,7 +6443,6 @@ def main() -> int:
         _tail = pp43a_text[_m.end():]
         _e = PP43A_WINDOW_END.search(_tail)
         pp43a_window = pp43a_text[_m.start(): _m.end() + (_e.start() if _e else len(_tail))]
-        pp43a_rows = []
         for _c1, _c2 in PP43A_ROW.findall(pp43a_window):
             if _c1.strip() == "Artifact" and _c2.strip() == "Template":
                 continue  # header
@@ -7683,6 +7732,180 @@ def main() -> int:
         f"{TOPOLOGY_SCRIPT.relative_to(PLUGIN)} and "
         f"{TOPOLOGY_TPL.relative_to(PLUGIN)} present"
         + ("" if not pp51_faults else " -- " + "; ".join(pp51_faults)),
+    )
+
+    # ---------------------------------------------------------------- PP-53
+    # The user is not the memory of how the system runs: step 0b recalls the
+    # topology record, the gate is recall -> verify -> deltas -> confirm, the
+    # record is written at confirmation and before memory-finalize, the
+    # strategy skill bounds first-time reconstruction, Rule 1 names the write,
+    # and the template table points at the record's template.
+    pp53_law = QA_WORKFLOW.read_text(encoding="utf-8")
+    pp53_norm = _normative(pp53_law)
+    pp53_decom = _decommented(pp53_law)
+
+    def _pp53_tokens(label: str, window: str, fault: str | None,
+                     tokens: tuple[str, ...], floor: int = 1) -> list[str]:
+        """Faults for one window: a vacuous window, a short window, missing tokens."""
+        if fault:
+            return [fault]
+        out: list[str] = []
+        size = len(window.encode("utf-8"))
+        if size < floor:
+            out.append(f"{label} window {size}B < floor {floor}B")
+        missing = [tok for tok in tokens if tok not in window]
+        if missing:
+            out.append(f"{label} missing {missing}")
+        return out
+
+    # (a) inside PP-18(b)'s own window.
+    pp53a_win = win_0b
+    pp53a_faults = _pp53_tokens(
+        "0b", pp53a_win,
+        None if pp53a_win else "PRECONDITION failed: the 0b window is empty",
+        PP53A_TOKENS,
+    )
+    pp53a_o1, pp53a_o2 = (pp53a_win.find(tok) for tok in PP53A_ORDER)
+    if pp53a_win and not (pp53a_o1 >= 0 and pp53a_o2 >= 0 and pp53a_o1 < pp53a_o2):
+        pp53a_faults.append(
+            f"0b: the recall bullet does not precede the PRESENT bullet "
+            f"(recall@{pp53a_o1}, present@{pp53a_o2})"
+        )
+    check(
+        "PP-53(a)",
+        not pp53a_faults,
+        f"step 0b ({len(pp53a_win.encode('utf-8'))}B, _normative) recalls the "
+        f"topology record BEFORE the repo set is presented: {len(PP53A_TOKENS)} tokens incl. the four outcomes, "
+        f"derived_slug and never forked"
+        + ("" if not pp53a_faults else " -- " + "; ".join(pp53a_faults)),
+    )
+
+    # (b) the gate.
+    pp53b_win, pp53b_fault = _pp41_window(pp53_norm, PP53B_START, PP53B_END, "topology gate")
+    pp53b_faults = _pp53_tokens("gate", pp53b_win, pp53b_fault, PP53B_TOKENS, PP53B_MIN_BYTES)
+    pp53b_step_offsets = [pp53b_win.find(s) for s in PP53B_STEPS]
+    pp53b_steps_ok = bool(pp53b_win) and -1 not in pp53b_step_offsets and all(
+        a < b for a, b in zip(pp53b_step_offsets, pp53b_step_offsets[1:])
+    )
+    if pp53b_win and not pp53b_steps_ok:
+        pp53b_faults.append(
+            "gate: steps out of order or missing: "
+            + ", ".join(f"{s!r}@{o}" for s, o in zip(PP53B_STEPS, pp53b_step_offsets))
+        )
+    if pp53b_steps_ok:
+        pp53b_step2 = pp53b_win[pp53b_step_offsets[1]:pp53b_step_offsets[2]]
+        pp53b_step6 = pp53b_win[pp53b_step_offsets[5]:]
+        for pp53b_n, pp53b_slice in (("2", pp53b_step2), ("6", pp53b_step6)):
+            if PP53B_REPOS_RULE not in pp53b_slice:
+                pp53b_faults.append(f"gate: the --repos un-warned rule is missing from step {pp53b_n}")
+    check(
+        "PP-53(b)",
+        not pp53b_faults,
+        f"the topology gate in {QA_WORKFLOW.name} is recall -> verify -> deltas -> "
+        f"confirm -> write in that order ({len(pp53b_win.encode('utf-8'))}B >= {PP53B_MIN_BYTES}B, "
+        f"{len(PP53B_TOKENS)} tokens, {len(PP53B_STEPS)} steps ordered, --repos rule x2)"
+        + ("" if not pp53b_faults else " -- " + "; ".join(pp53b_faults)),
+    )
+
+    # (c) the memory-finalize write (the window ends at the memory fence, so
+    # the basis is _decommented: _normative would strip the end anchor).
+    pp53c_win, pp53c_fault = _pp41_window(pp53_decom, PP53C_START, PP53C_END, "memory write")
+    pp53c_faults = _pp53_tokens("memory", pp53c_win, pp53c_fault, PP53C_TOKENS)
+    pp53c_start = PP53C_START.search(pp53_decom)
+    pp53c_fence = pp53_decom.find(PP53C_FENCE)
+    if not (pp53c_start and pp53c_fence >= 0 and pp53c_start.start() < pp53c_fence):
+        pp53c_faults.append("memory: the paragraph does not precede the memory TaskCreate fence")
+    if not pp53c_win.split("\n\n")[0].rstrip().endswith(PP53C_LAST_SENTENCE):
+        pp53c_faults.append(
+            f"memory: the paragraph does not end with the sentence {PP53C_LAST_SENTENCE!r}"
+        )
+    check(
+        "PP-53(c)",
+        not pp53c_faults,
+        f"the record is updated before the memory task runs, ahead of its fence, "
+        f"closing on {PP53C_LAST_SENTENCE!r} "
+        f"({len(pp53c_win.encode('utf-8'))}B, {len(PP53C_TOKENS)} tokens)"
+        + ("" if not pp53c_faults else " -- " + "; ".join(pp53c_faults)),
+    )
+
+    # (d) the strategy skill, with the six rungs in order.
+    pp53d_text = _normative(qa_strategy_md.read_text(encoding="utf-8"))
+    pp53d_win, pp53d_fault = _pp41_window(pp53d_text, PP53D_START, PP53D_END, "strategy topology")
+    pp53d_faults = _pp53_tokens("strategy", pp53d_win, pp53d_fault, PP53D_TOKENS, PP53D_MIN_BYTES)
+    pp53d_offsets = [pp53d_win.find(r) for r in PP53D_RUNGS]
+    if pp53d_win and (-1 in pp53d_offsets or pp53d_offsets != sorted(pp53d_offsets)
+                      or len(set(pp53d_offsets)) != len(pp53d_offsets)):
+        pp53d_faults.append(
+            "rungs not in strictly increasing order: "
+            + ", ".join(f"{r}@{o}" for r, o in zip(PP53D_RUNGS, pp53d_offsets))
+        )
+    check(
+        "PP-53(d)",
+        not pp53d_faults,
+        f"{qa_strategy_md.parent.name}/SKILL.md's topology section "
+        f"({len(pp53d_win.encode('utf-8'))}B >= {PP53D_MIN_BYTES}B) is recall-first "
+        f"with a bounded checklist, {len(PP53D_RUNGS)} numbered rungs (1)..(6) in order"
+        + ("" if not pp53d_faults else " -- " + "; ".join(pp53d_faults)),
+    )
+
+    # (e) the skeleton key, null, and no dotted literal under it.
+    pp53e_skel, _ = load_skeleton()
+    pp53e_results = pp53e_skel.get("results") or {}
+    pp53e_faults: list[str] = []
+    if "topology" not in pp53e_results:
+        pp53e_faults.append(f"{SKELETON.name} results has no topology key")
+    elif pp53e_results["topology"] is not None:
+        pp53e_faults.append(f"{SKELETON.name} results.topology is {pp53e_results['topology']!r}, not null")
+    pp53e_texts = (
+        (QA_WORKFLOW.name, pp53_decom),
+        (HOOK_POLICY.name, _decommented(HOOK_POLICY.read_text(encoding="utf-8"))),
+        (f"{qa_strategy_md.parent.name}/SKILL.md", _decommented(qa_strategy_md.read_text(encoding="utf-8"))),
+    )
+    for pp53e_name, pp53e_text in pp53e_texts:
+        pp53e_dotted = PP53E_DOTTED.search(pp53e_text)
+        if pp53e_dotted:
+            pp53e_faults.append(
+                f"{pp53e_name} names {pp53e_dotted.group(0)} under a null skeleton key"
+            )
+    check(
+        "PP-53(e)",
+        not pp53e_faults,
+        f"{SKELETON.name} results.topology exists and is null; no "
+        f"`results.topology.<field>` literal in {', '.join(n for n, _ in pp53e_texts)}"
+        + ("" if not pp53e_faults else " -- " + "; ".join(pp53e_faults)),
+    )
+
+    # (f) Rule 1 names the one outside write.
+    pp53f_win, pp53f_fault = _pp41_window(pp53_norm, PP53F_START, PP53F_END, "Rule 1")
+    pp53f_faults = _pp53_tokens("Rule 1", pp53f_win, pp53f_fault, (PP53F_TOKEN,))
+    check(
+        "PP-53(f)",
+        not pp53f_faults,
+        f"Rule 1 ({len(pp53f_win.encode('utf-8'))}B) names {PP53F_TOKEN}"
+        + ("" if not pp53f_faults else " -- " + "; ".join(pp53f_faults)),
+    )
+
+    # (g) the template table carries the record's row (PP-43(a)'s window and row regex).
+    pp53g_win, pp53g_fault = _pp41_window(
+        _normative(pp43a_text), PP43A_WINDOW_START, PP43A_WINDOW_END, "template table"
+    )
+    pp53g_rows: list[tuple[str, str]] = []
+    for _c1, _c2 in PP43A_ROW.findall(pp53g_win):
+        if _c1.strip() == "Artifact" and _c2.strip() == "Template":
+            continue  # header
+        if set(_c1.strip()) <= {"-"} or set(_c2.strip()) <= {"-"}:
+            continue  # separator
+        pp53g_rows.append((_c1.strip(), _c2.strip()))
+    pp53g_ok = not pp53g_fault and any(
+        a == "`topology.md`" and "templates/qa-topology.template.md" in b
+        for a, b in pp53g_rows
+    )
+    check(
+        "PP-53(g)",
+        pp53g_ok,
+        f"the artifact-template table in {qa_strategy_md.name} has a `topology.md` "
+        f"row naming templates/qa-topology.template.md (_normative; {len(pp53g_rows)} rows)"
+        + ("" if pp53g_ok else " -- " + (pp53g_fault or "no such row")),
     )
 
     print(f"\nproperties checked: {', '.join(checked)}")
