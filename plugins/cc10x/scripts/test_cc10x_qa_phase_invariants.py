@@ -5,25 +5,17 @@ No framework. Run:  python3 test_cc10x_qa_phase_invariants.py   (exit 0 = pass)
 
 Why this file exists
 --------------------
-`qa-preflight` provisions and probes the real environment. If it ever lands in
-`cc10x_qa_isolation_guard.PLAN_PHASES`, the guard blocks the phase from doing
-the only thing it exists to do — and the failure is silent and total: nothing
-prints, and the edit *looks* like a strengthening of the plan-phase read-only
-guarantee. Prose cannot prevent that. These assertions can.
-
-The behavioural half (PP-6) is the part that matters most: it invokes the guard
-as a subprocess against synthesized workflow artifacts, so it proves what the
-guard DOES rather than what its constants say.
+The QA route is law written in prose: its phase set, its dispatch table, its
+loops and caps, and the artifacts, templates and paths it names, spread across
+qa-workflow.md, SKILL.md, the agent files and the templates. Prose drifts
+silently — a renamed phase, a dropped rationale or a dangling path reads fine
+and breaks a run. These assertions pin the QA route's phase-set and law
+invariants so that drift turns this suite red instead.
 
 Properties
 ----------
-PP-1  "qa-preflight" is NOT in PLAN_PHASES
-PP-2  no existing plan phase was lost from PLAN_PHASES
-PP-3  PLAN_PHASES and PROVISIONING_PHASES are disjoint
 PP-4  every phase: token in qa-workflow.md appears in the SKILL.md §3 enum
 PP-5  every DISPATCHABLE QA phase in the §3 enum has exactly one §7 dispatcher row
-PP-6  the guard denies at qa-plan, denies at the bare parent "qa", allows at
-      qa-preflight, and allows via the status_history[-1].phase fallback
 PP-9  every §N reference resolves to a real "## N." heading in the file its
       citation prefix names
 PP-10(a) no block of the router state machine writes planning_review_status=
@@ -39,7 +31,7 @@ PP-11 `revised_after_review` is REACHABLE: planner.md still declares it in the
 PP-12 the byte-duplicated harness PASS rule agrees with itself: each of
       {assertion_falsified, survived, LIVENESS_PROBES} appears in BOTH
       qa-harness-builder.md and workflow-artifact-and-hook-policy.md
-PP-13 the artifact guard ENFORCES revision consistency behaviourally and does
+PP-13 the artifact guard checks revision consistency behaviourally and does
       not brick legacy artifacts: four synthesized artifacts, one at a time,
       guard invoked as a subprocess in `artifactIntegrity: block` mode
 PP-16 every dispatch-metadata value the route law WRITES is a member of the
@@ -73,11 +65,12 @@ PP-21 the workflow artifact's three authorities agree: (a) every backticked
       `results.*` / `qa.*` literal the QA law names resolves SEGMENT BY SEGMENT
       to FULL DEPTH in the shipped skeleton; (b) every top-level key the
       skeleton ships is documented in the hook policy's artifact schema list;
-      (c) QA is a member of the five enums the guard and the router read --
-      the `workflow_type` enum LINE, the `evidence` agent list, and all THREE
-      of SKILL.md's phase-enum lines (the event-log template, the
-      parent-workflow `TaskCreate` template, and the `__PHASE__` substitution
-      list) -- each asserted on its anchored line, never whole-file.
+      (c) QA is a member of the five enums the PostToolUse artifact guard and
+      the router read -- the `workflow_type` enum LINE, the `evidence` agent
+      list, and all THREE of SKILL.md's phase-enum lines (the event-log
+      template, the parent-workflow `TaskCreate` template, and the
+      `__PHASE__` substitution list) -- each asserted on its anchored line,
+      never whole-file.
 PP-23 the harness contract cannot pass while proving or enumerating nothing:
       (a) the mutation floor is never VACUOUS -- the floor minimum binds every
       branch and branch 2 names its fall-through, in BOTH byte-duplicated
@@ -93,9 +86,9 @@ PP-25 the QA route's two re-dispatch loops are BOUNDED and COUNTED: (a) each
       that loop's own bold-lead-in-anchored window, because the word "cap"
       appears in both and a file-wide test lets one satisfy the other;
       (b) the `kind:remfix` block mandates the `remediation_history` append, in
-      the `{ts, phase, reason, cycle_number}` shape the audit-backstopped circuit
-      breaker counts. Without (b) the breaker counts 0 forever and QA's cap of
-      2 is LLM-counted with no backstop at all
+      the `{ts, phase, reason, cycle_number}` shape the circuit breaker counts.
+      Without (b) the breaker counts 0 forever and QA's cap of 2 is
+      LLM-counted
 PP-26 no QA finding reaches the executor unconsumed and no Minor evaporates,
       and the carve-out that makes that possible names its parent BOTH WAYS:
       (a) the QA remediation block is uniquely line-anchored and, INSIDE ITS OWN
@@ -166,8 +159,8 @@ PP-31 the QA phase-token spellings are FROZEN and the freeze CITES ITS REASON:
       read before renaming. The asymmetry (`qa-re-plan` prefixed where
       `re-qa-build`/`re-qa-execute` are infixed) is deliberate and PRICED, and
       editing the frozen constant to make a rename green is the WHOLE COST of
-      the rename, not a formality -- see the constant's comment, and control
-      I-45, which measures that cost
+      the rename, not a formality -- see the constant's comment (control I-45
+      measured that cost while a removed hook still held the token)
 PP-32 EVERY DELIBERATE OMISSION IN THE QA LAW CARRIES ITS RATIONALE IN THE SAME
       BLOCK: three omissions -- probe drops plan review, no amendment lane, no
       `re-qa-preflight` -- each window-anchored to the block that makes it,
@@ -179,28 +172,14 @@ PP-33 QA IS A MEMBER OF EVERY ENUMERATION OF WORKFLOW TYPES, and the
       extractors that find those enumerations still find them. Four sites in
       four syntactic shapes (parens+pipes, SQUARE+pipes, parens+COMMAS, and a
       bare marquee count) read under the normaliser each one's fence position
-      demands. The guard returns 0 unless `workflow_type == "QA"`, so a router
-      that never stamps QA makes every rule in qa-workflow.md unreachable in
-      production -- fail-open by omission rather than by logic. (a) is the
-      anti-vacuity half: every anchor matched exactly once, every extractor
-      still yielded members, the routing table still has rows, and the stamping
-      SHAPE is proved live on the two sibling route files that already carry it
+      demands. SessionStart's QA branch runs only when `workflow_type == "QA"`
+      (cc10x_sessionstart_context.py), so a router that never stamps QA
+      resumes the route as something else -- fail-open by omission rather
+      than by logic. (a) is the anti-vacuity half: every anchor matched
+      exactly once, every extractor still yielded members, the routing table
+      still has rows, and the stamping SHAPE is proved live on the two sibling route files that already carry it
 
-PP-34 THE GUARD RESOLVES A PHASE FROM EVERY status_history SHAPE WITHOUT
-      CRASHING, and rc/stderr are part of the verdict. A PreToolUse hook that
-      raises exits non-zero with no decision on stdout, and a hook that emits
-      no decision FAILS OPEN -- so a crash is indistinguishable from a
-      deliberate allow to any property that reads the decision alone. Six
-      shapes, each asserted as the triple (rc == 0, stderr == "", decision),
-      all with `phase_cursor` absent because that is the only state in which
-      status_history is consulted at all. (d) is the positive control: five of
-      the six expect ALLOW and a guard that crashes on everything also allows
-      everything, so without a case that must DENY the property is green on a
-      wholly broken guard.
-
-Negative control (run and recorded when this file was written): temporarily
-adding "qa-preflight" to PLAN_PHASES turns PP-1, PP-3 and PP-6 case (c) red.
-A test never observed failing is unproven.
+Records below are measurements taken when each property was added; some name hooks removed later (CHANGELOG [Unreleased]).
 
 Negative control for PP-12 (run and recorded when PP-12 was added): deleting the
 token `survived` from the `qa-harness-builder` row of
@@ -1041,247 +1020,6 @@ memory-file-contracts.md:103 and S3 cc10x-guide/SKILL.md:38 each list the same
 8 members; S4 README.md:18 count=8; SKILL.md section 1 routing table = 8
 distinct workflows.
 
-Negative controls for PP-34 (two runs, each restored and re-greened before the
-next). Both inject into cc10x_qa_isolation_guard.py's phase-resolution
-expression. The pair exists because ONE injection cannot prove this property:
-the first shows PP-34 catches the crash at all, the second shows it
-discriminates between the two candidate fixes.
-  I-56 the whole four-line narrowed form reverted to the original one-liner
-       `phase = (workflow.get("phase_cursor") or
-                 workflow.get("status_history", [{}])[-1].get("phase") or "")`
-                                          -> FIVE reds, one per crashing shape,
-                                             with (d) GREEN and all four PP-6
-                                             checks green:
-                                             PP-34(a) "got rc=1 deny=False
-                                               stderr='IndexError: list index
-                                               out of range'"
-                                             PP-34(b) "AttributeError: 'str'
-                                               object has no attribute 'get'"
-                                             PP-34(c) "TypeError: 'NoneType'
-                                               object is not subscriptable"
-                                             PP-34(e) "KeyError: -1"
-                                             PP-34(f) "TypeError: 'int' object
-                                               is not subscriptable"
-                                             (d) STAYING GREEN IS THE POINT: it
-                                             shows the five reds are about the
-                                             crash and not about the rig.
-  I-88 the SHIPPED form replaced by the `or []` form -- `isinstance(history,
-       list)` swapped for `or []` and nothing else changed:
-           history = workflow.get("status_history") or []
-           prev_phase = history[-1].get("phase") if history and isinstance(
-                        history[-1], dict) else ""
-           phase = (workflow.get("phase_cursor") or prev_phase or "")
-                                          -> EXACTLY TWO reds, (e) "KeyError:
-                                             -1" and (f) "TypeError: 'int'
-                                             object is not subscriptable", with
-                                             (a)(b)(c)(d) green.
-       THIS IS THE CONTROL THAT PICKS THE FIX. `or []` looks like it closes the
-       hole and closes only four of six: `{"a": 1}` and `5` are both TRUTHY, so
-       `or []` never fires and `history[-1]` still raises. Only
-       `isinstance(history, list)` closes all six. Note the shape of the
-       injection: the two-line abbreviation "revision 1 used `or []`" WITHOUT
-       the `isinstance(history[-1], dict)` guard reds on five instead of two and
-       is red whichever fix is shipped -- it cannot tell them apart, which is
-       this control's entire job.
-
-Negative controls for PP-35 and PP-36 (each restored and re-greened before the
-next; the target file was copied to a backup and restored with `cp`, never
-`git checkout --`).
-  I-57 the path-extracting Bash test at cc10x_qa_isolation_guard.py reverted to
-       the substring escape it replaced:
-           if tool_name == "Bash" and any(
-               a.strip("/") in (tool_input.get("command") or "") for a in allowlist
-           ):
-                                          -> EXACTLY TWO reds, with (c)(e)
-                                             green:
-                                             PP-35(a) "got rc=0 deny=False"
-                                             PP-35(b) "got rc=0 deny=False"
-                                             (c) and (e) STAYING GREEN is what
-                                             makes this a property about path
-                                             semantics and not about denial.
-  I-57b the Bash allow escape DELETED outright (the "deny everything" guard)
-                                          -> PP-35(c) "got rc=0 deny=True".
-       This is why (c) is in the table. Without it, I-57's fix could be
-       "remove the escape", which reds nothing in the DENY rows and breaks
-       every legitimate `.cc10x/` write the QA route depends on.
-  I-57c the WRITE allow escape deleted (`if target and tool_name in
-       WRITE_TOOLS and _matches(target, allowlist)`)
-                                          -> PP-35(e) "got rc=0 deny=True".
-       (e)'s counterpart to I-57b, on the branch this phase did not rewrite.
-  I-57d the plan-phase branch disabled (`if False and plan_readonly and ...`)
-                                          -> FOUR PP-35 reds, (a)(b)(d)(f),
-                                             with (c)(e) green. This is the
-                                             control for row (f), which no
-                                             other injection reaches: (f)
-                                             differs from (a) only by the
-                                             appended `# .cc10x`, so (f) going
-                                             red here is what proves (a)'s
-                                             green is about the comment and
-                                             not about the rig.
-  I-58 `/tmp/cc10x-` restored to the line-228 default, path-aware Bash test
-       LEFT IN PLACE
-                                          -> ONE red, PP-36. **The plan
-                                             predicted two (PP-35(d) as well)
-                                             and the plan is wrong.** Measured:
-                                             `_matches("/tmp/cc10x-pp35",
-                                             ["/tmp/cc10x-"])` is None. The
-                                             entry has no wildcard, so it takes
-                                             the bare-path branch, which
-                                             resolves it to
-                                             `/private/tmp/cc10x-` and then
-                                             requires either equality or a
-                                             `/`-separated descendant. A
-                                             PREFIX like `cc10x-pp35` is
-                                             neither. So once the Bash branch
-                                             stops being a substring test, the
-                                             `/tmp/cc10x-` entry is genuinely
-                                             dead -- it was live ONLY through
-                                             the escape this phase removed.
-                                             PP-35(d) is therefore held by the
-                                             CONJUNCTION, not by either half.
-  I-58b BOTH halves reverted (the pre-phase state at c82d562): the substring
-       escape AND `/tmp/cc10x-` in the default
-                                          -> FOUR reds, PP-35(a)(b)(d) and
-                                             PP-36. (d) reds here and only
-                                             here, because the substring
-                                             `tmp/cc10x-` does occur in
-                                             `mkdir -p /tmp/cc10x-pp35`. This
-                                             is the control I-58 was meant to
-                                             be, and it is the one that shows
-                                             the ALLOW measured in R3 was real.
-  I-59(i) PP-36's site-1 regex broken (`mutation_allowlist` ->
-       `mutation_ALLOWLIST`) so it parses nothing
-                                          -> PP-36 red on the PRECONDITION,
-                                             not a vacuous green: "1 code ...
-                                             pattern matched 0 times, expected
-                                             exactly 1; PRECONDITION failed:
-                                             ... parsed an empty list -- an
-                                             empty parse makes the
-                                             set-equality vacuous".
-  I-59(ii) PP-36's site 5 switched from `_decommented()` to `_normative()`
-                                          -> PP-36 red on the same
-                                             precondition, naming site 5. This
-                                             is the half worth running: site 5
-                                             lives inside a fenced JSON block,
-                                             `_normative()` strips fences, and
-                                             without the precondition this is a
-                                             FOUR-site property that prints
-                                             "5" and passes.
-Parsed state at green: all five declarations = ['.cc10x/'] -- code line 228,
-the guard's own module docstring, workflow-artifact.skeleton.json
-qa.isolation.mutation_allowlist, qa-workflow.md prose, qa-workflow.md fence.
-
-Negative controls for PP-37 (each restored and re-greened before the next; the
-guard was copied to a backup and restored with `cp`, never `git checkout --`).
-The last two are a PAIR and they red OPPOSITE halves of the table; recording
-them side by side is what makes PP-37 two-sided rather than a catalogue of
-denials.
-  I-60 `"config"` restored to the `git` set
-                                          -> ONE red, PP-37(a):
-                                             "`git config user.email x@y.z` ->
-                                             ALLOW, want DENY".
-  I-61 `"fmt"` restored to `terraform`    -> ONE red, PP-37(a), naming BOTH
-                                             terraform rows: "`terraform fmt
-                                             -write=true` -> ALLOW, want DENY;
-                                             `terraform fmt` -> ALLOW, want
-                                             DENY". The flagless row is the
-                                             point: `terraform fmt` rewrites
-                                             files with no flag at all, so no
-                                             amount of flag-awareness in the
-                                             parser would have saved it.
-  I-62 SUBCOMMAND_TOOLS = {k: set() for k in SUBCOMMAND_TOOLS}
-       (the VALUES emptied)               -> the OVER-denial control. All 7
-                                             ALLOW rows red, all 13 DENY rows
-                                             green: "`git log --oneline -1` ->
-                                             DENY, want ALLOW; `git status
-                                             --porcelain` -> DENY, want ALLOW;
-                                             `docker info` ...". This is the
-                                             control that prices ADR-1's blast
-                                             radius: an over-fix that denied
-                                             every capability probe step 0a
-                                             runs would pass a deny-only
-                                             property.
-                                             It also settles, by execution, the
-                                             claim that `git log --oneline -1`
-                                             and `git status --porcelain` never
-                                             reach the membership test because
-                                             line 201 consumes every argument.
-                                             They do reach it: both can only
-                                             flip to DENY through it.
-  I-89 SUBCOMMAND_TOOLS = {} (the whole DICT emptied)
-                                          -> the UNDER-denial control, and the
-                                             exact opposite red: all 13 DENY
-                                             rows red, all 7 ALLOW rows green.
-                                             `argv0 in SUBCOMMAND_TOOLS` is
-                                             False, control falls through to
-                                             MUTATING_COMMANDS where none of
-                                             git/docker/kubectl/terraform
-                                             appears, `_bash_mutates` returns
-                                             None, and everything is allowed.
-                                             "Someone deletes the dict" and
-                                             "someone empties a tool's set" are
-                                             distinct regressions with opposite
-                                             signatures; one injection cannot
-                                             stand for both.
-Measured state at green: the 13 mutating invocations DENY and the 7 read-only
-probes ALLOW at phase_cursor=qa-plan. Priced and accepted (ADR-1): the bare
-read forms `git config --get user.email`, `npm config get registry` and
-`kubectl config view` are DENIED too, because every argument after the
-subcommand is a flag and the parser is flag-blind by design. Step 0a's
-documented probes were re-measured against the fixed guard and all ALLOW --
-`docker info`, `podman info`, the file-presence checks, the dependency-manifest
-reads and the `which`/`command -v` lookups.
-
-Negative controls for PP-38 (each restored with `cp` from a backup and
-re-greened before the next; never `git checkout --`). Four injections because
-the three edits are independently necessary and one of them is invisible to the
-other two's checks.
-  I-63 `for key in ("file_path", "path", "pattern"):`
-       (the denylist tuple reverted)      -> ONE red, PP-38(a): "NotebookRead
-                                             '/tmp/pp38-secret.ipynb' -> ALLOW,
-                                             want DENY". (b) stays green, which
-                                             localises the red to the key
-                                             lookup and not to `_matches`.
-  I-64 `target = tool_input.get("file_path") or ""`
-       (the write-branch fallback reverted)
-                                          -> ONE red, PP-38(c): "NotebookEdit
-                                             '.cc10x/qa/pp38.ipynb' -> DENY,
-                                             want ALLOW". This is the FALSE-DENY
-                                             half, and it was live at HEAD:
-                                             NotebookEdit was already in the
-                                             matcher, so a notebook write into
-                                             the workflow's own directory was
-                                             being blocked in production.
-                                             (d) and (e) stay green.
-  I-65 `NotebookRead` removed from the hooks.json matcher
-                                          -> ONE red, PP-38(f). Note what does
-                                             NOT go red: PP-38(a) stays GREEN
-                                             throughout, because (a)-(e) invoke
-                                             the guard as a subprocess over
-                                             stdin and never consult the
-                                             PreToolUse matcher. A guard that
-                                             decides correctly and is never
-                                             invoked is indistinguishable from
-                                             a correct guard at the subprocess
-                                             seam. That is the whole reason (f)
-                                             exists as a separate check rather
-                                             than as an assertion inside (a).
-  I-66 `READ_TOOLS = {..., "Sparkle"}` (a tool added to the guard but not to
-       the matcher)                       -> ONE red, PP-38(f): "matcher
-                                             'Read|Grep|Glob|NotebookRead|Edit|
-                                             Write|NotebookEdit|Bash' never
-                                             fires for ['Sparkle']". This is the
-                                             frozen-copy control: (f) imports
-                                             READ_TOOLS/WRITE_TOOLS from the
-                                             live guard module via load_guard()
-                                             rather than transcribing them, so
-                                             the two sets cannot drift apart
-                                             silently. A hard-coded copy of the
-                                             sets would stay green here forever.
-Measured state at green: NotebookRead of a denylisted path DENIES, NotebookEdit
-into the allowlist ALLOWS, NotebookEdit outside it still DENIES, and the matcher
-is exactly READ_TOOLS | WRITE_TOOLS | {"Bash"} (8 tools).
-
 Negative controls for PP-39 (each restored with `cp` from a backup and
 re-greened before the next; never `git checkout --`). TWO of the three planned
 injections did not red as planned, and both are recorded here with the
@@ -1803,8 +1541,6 @@ TWO ITEMS THE PLAN LEFT HELD BY NO PROPERTY; Phase 10 decided both.
 
 from __future__ import annotations
 
-import ast
-import importlib.util
 import json
 import re
 import os
@@ -1815,7 +1551,6 @@ from pathlib import Path
 
 SCRIPTS = Path(__file__).resolve().parent
 PLUGIN = SCRIPTS.parent
-GUARD = SCRIPTS / "cc10x_qa_isolation_guard.py"
 ROUTER = PLUGIN / "skills" / "cc10x-router"
 QA_WORKFLOW = ROUTER / "references" / "qa-workflow.md"
 SKILL_MD = ROUTER / "SKILL.md"
@@ -1993,7 +1728,7 @@ PP20_TEMPLATE_SUFFIX = re.compile(r"_?\{[a-z_]+\}$")
 # Read over _decommented() text for the same reason PP-20 is: a key named inside
 # <!-- --> is not named. Not _normative(): several of these literals are inside
 # ```text dispatch fences, which are the normative surface here, and the fenced
-# `qa.isolation`/`qa.preflight` mentions are exactly the ones a reader trusts.
+# `qa.preflight` mentions are exactly the ones a reader trusts.
 PP21_KEY_LITERAL = re.compile(r"`((?:results|qa)\.[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)*)`")
 # Anti-vacuity floor, asserted BEFORE resolution: a regex that stopped matching
 # yields an empty set and "every literal resolves" is vacuously true forever.
@@ -2199,7 +1934,7 @@ PP24_DIRTY_FIELD = re.compile(r"^\s+dirty:", re.M)
 
 
 # PP-25. The two re-dispatch loops in the QA law: bound them, and COUNT them
-# where a hook can see the count.
+# where the breaker can see the count.
 #
 # (a) M2. The preflight re-dispatch ran uncapped while its own sibling three
 # hundred lines down capped at 2 with a checkpoint. An uncapped retry is worse
@@ -2252,32 +1987,31 @@ PP25_LOOPS = (
 )
 PP25_CAP = re.compile(r"\*\*Cap: (\d+) ")
 
-# (b) M3. The auditor said `cc10x_task_completed_guard.py` "faults when
-# remediation_history is not a list". Measured: it logs an audit event, writes a
-# stderr warning and `return 0` -- and the branch is UNREACHABLE anyway, because
-# the shipped skeleton initialises `remediation_history: []`, which IS a list.
+# (b) M3. An auditor said a since-removed hook "faults when remediation_history
+# is not a list". Measured: it logged, warned and returned 0 -- and the branch
+# was UNREACHABLE anyway, because the shipped skeleton initialises
+# `remediation_history: []`, which IS a list.
 #
 # That measurement is what decides this property's scope, and the scope is the
 # whole point. An invariant asserting "the array is a list" would be green at
 # HEAD *and* green against the defect. The real defect is one level down:
 # `remediation-and-research.md`'s Circuit-breaker section makes appending
 # `{ts, phase, reason, cycle_number}` MANDATORY on every `kind:remfix` creation,
-# and the guard counts those entries as the hook-enforced backstop for the
-# 3-cycle breaker -- while `qa-workflow.md` creates a `kind:remfix` task
+# and the 3-cycle breaker counts those entries in the artifact -- while `qa-workflow.md` creates a `kind:remfix` task
 # (`re-qa-build`) and contained the token `remediation_history` ZERO times. So
 # the count stayed 0 for every QA workflow, the breaker could never fire, and
-# QA's "cap: 2 extra rounds" was LLM-counted with no backstop at all: the
-# precise condition that mandate exists to remove.
+# QA's "cap: 2 extra rounds" was LLM-counted: the precise condition that
+# mandate exists to remove.
 #
 # The property therefore asserts the APPEND DUTY IS STATED IN THE QA LAW, and
 # its negative control is the deletion of that duty. Control (ii) is the run
 # that justifies the property existing: with the duty deleted the artifact is
-# still valid JSON with `remediation_history: []` and the task-completed guard
-# still exits 0 -- no existing check anywhere catches this.
+# still valid JSON with `remediation_history: []` and every hook still exits
+# 0 -- no existing check anywhere catches this.
 #
 # Asserted inside the re-qa-build window for PP-25(a)'s reason, and the SHAPE is
 # asserted alongside the token: an append of the wrong shape is not the entry
-# the guard's consumers read, and Phase 6 consumes this exact quadruple.
+# the breaker counts, and Phase 6 consumes this exact quadruple.
 PP25_REMHIST_TOKENS = (
     "`remediation_history`",
     "`{ts, phase, reason, cycle_number}`",
@@ -2397,17 +2131,16 @@ PP26B_SKILL_TOKENS = ("re-qa-build", "qa-workflow.md", "exception")
 # holding `Edit, Write, Bash` (planner.md:7), so the set is wrong by one at
 # every site.
 #
-# The hole is narrower than the sentence is wrong, and saying which is which is
-# the substance of the fix: `cc10x_qa_isolation_guard.PLAN_PHASES` carries
-# `qa-plan` and `qa-re-plan`, so the filesystem outside `.cc10x/` is already
-# ENFORCED shut for both. The sentence is the NOTICE. A rule that enumerates
-# three agents and omits the fourth still teaches the reader the wrong set, and
-# the reader is the router.
+# The hole is narrower than the sentence is wrong: Rule 1 of the isolation
+# section already forbids writes outside `.cc10x/` during `qa-plan` and
+# `qa-re-plan`. The sentence names the planner so a reader does not conclude it
+# is exempt. A rule that enumerates three agents and omits the fourth still
+# teaches the reader the wrong set, and the reader is the router.
 #
 # Deliberately NOT fixed by adding `PRODUCT_CODE_TOUCHED` to the planner
 # contract: the planner is shared with the PLAN route, so a QA-motivated
 # required field would make every PLAN run emit it. That is why this property
-# asserts a SENTENCE and a GUARD NAME rather than a contract field.
+# asserts a SENTENCE and a RULE CITATION rather than a contract field.
 #
 # PER SITE, PER FILE, and that is the load-bearing decision. Two of the three
 # sentences live in the same file; a property reporting "some site omits the
@@ -2444,12 +2177,12 @@ PP27A_SITES = (
 # tokens are the spellings the prose already uses for the first three; `planner`
 # is the addition.
 PP27A_AGENTS = ("researcher", "harness builder", "executor", "planner")
-# The ENFORCEMENT/NOTICE distinction is asserted at exactly one site -- the
-# QA-specific rules block -- rather than at all three. Requiring the guard name
-# in every sentence would push an implementation detail into SKILL.md's
-# never-list, which is a list of rules, not of mechanisms.
+# The planner-is-bound paragraph is asserted at exactly one site -- the
+# QA-specific rules block -- rather than at all three. Requiring the Rule 1
+# citation in every sentence would push a cross-reference into SKILL.md's
+# never-list, which is a list of rules, not of citations.
 PP27A_ENFORCEMENT_SITE = "QA-specific rules: QA never edits product code"
-PP27A_ENFORCEMENT_TOKENS = ("PLAN_PHASES", "ENFORCEMENT", "NOTICE")
+PP27A_ENFORCEMENT_TOKENS = ("Rule 1", "`PRODUCT_CODE_TOUCHED`", "exempt")
 # The two plan-phase dispatch windows. Anchored on the unique task-id
 # terminator line and walked BACK to the opening `TaskCreate({`, because the
 # opening line is identical in all nine dispatch blocks in the file while the
@@ -2657,27 +2390,20 @@ PP30B_TOKENS = ("`ARTIFACTS_CREATED`", "`HARNESS_MANIFEST`")
 # prices that asymmetry and keeps it.
 #
 # EDITING THIS CONSTANT TO MAKE A RENAME GREEN IS THE WHOLE COST OF THE RENAME,
-# NOT A FORMALITY. That sentence is the property. Three measured reasons:
+# NOT A FORMALITY. That sentence is the property. Three reasons:
 #   1. `re-qa-build` / `re-qa-execute` follow the route-wide `re-` prefix
 #      already in the enum (`re-review`, `re-hunt`, `re-verify`, `re-plan`).
 #      They are the CONFORMING names; `qa-re-plan` is the single outlier. A
-#      rename is a five-surface change to fix one token.
-#   2. A rename must reach `cc10x_qa_isolation_guard.PLAN_PHASES` — a live
-#      security-relevant constant that literally contains `"qa-re-plan"` — or
-#      the renamed phase silently stops being read-only. Reaching it turns PP-2
-#      red, and the only repair is editing `EXPECTED_PLAN_PHASES`, the constant
-#      PP-2 asserts against. A change whose completion criterion is "edit the
-#      guard until it stops complaining" is INDISTINGUISHABLE FROM DEFEATING THE
-#      PROPERTY. Control (i) below runs exactly that and records the sympathetic
-#      red; it is the evidence for ADR-1's central claim, not a side effect.
-#   3. SKILL.md §4 reconstructs runnable tasks from `wf:` + `kind:` + `phase:`.
-#      An in-flight task carrying `phase:qa-re-plan` becomes unroutable after a
-#      rename and — worse — stops matching `PLAN_PHASES`, so the isolation guard
-#      stops treating it as read-only. The rename opens the exact mutation hole
-#      PP-1 and PP-3 exist to close, for every workflow spanning the change.
-# And `plan-review-gap-N`'s `-gap-` infix is a fossil of `plan-gap-reviewer`'s
-# older name, so aligning QA's clearer `qa-plan-review-N` down to it would be
-# aligning to legacy.
+#      rename touches every surface that spells the token (the §3 enum, the
+#      dispatcher rows, the qa-workflow scaffolds, this constant) to fix one.
+#   2. SKILL.md §4 reconstructs runnable tasks from `wf:` + `kind:` + `phase:`.
+#      An in-flight task carrying `phase:qa-re-plan` becomes unroutable on
+#      resume after a rename, for every workflow spanning the change.
+#   3. `plan-review-gap-N`'s `-gap-` infix is a fossil of `plan-gap-reviewer`'s
+#      older name, so aligning QA's clearer `qa-plan-review-N` down to it would
+#      be aligning to legacy.
+# The docstring's PP-31 negative-control record also cites a guard constant
+# removed later; it is kept as history of the measurement, not as a reason.
 #
 # TWO HALVES, and the second is what stops the constant and the argument from
 # drifting apart. A frozen set with no anchored rationale is a rule with no
@@ -2721,10 +2447,10 @@ PP31_RATIONALE = re.compile(
 # any one of them would read as a style note.
 PP31_RATIONALE_TOKENS = (
     "this paragraph is the decision record",
-    "`PLAN_PHASES`",
-    "`EXPECTED_PLAN_PHASES`",
-    "in-flight",
     "`re-`",
+    "in-flight",
+    "unroutable",
+    "fossil",
 )
 
 # PP-32. P9 and its siblings. EVERY DELIBERATE OMISSION IN THE QA LAW CARRIES
@@ -2766,7 +2492,7 @@ PP32_OMISSIONS = (
     (
         "probe drops plan review",
         re.compile(r"(?m)^#### Reduced task graph \(`qa_scope=probe`\)$"),
-        re.compile(r"(?m)^### Isolation and phase discipline \(ENFORCED\)$"),
+        re.compile(r"(?m)^### Isolation and phase discipline$"),
         (
             "`build_scope=trivial`",
             "anti-anchoring",
@@ -2793,11 +2519,11 @@ PP32_OMISSIONS = (
 # extractors that look for those enumerations still find them.
 #
 # The defect: the `__WORKFLOW_TYPE__` enum in cc10x-router/SKILL.md was written
-# before the QA route existed and was never extended. The isolation guard
-# returns 0 immediately unless `workflow_type == "QA"`
-# (cc10x_qa_isolation_guard.py:220), so every QA isolation rule is unreachable
-# in production if the router never stamps QA. Hardening a guard behind an
-# unreachable predicate is the same fail-open in a new costume.
+# before the QA route existed and was never extended. SessionStart's resume
+# context reports the QA research lanes only when `workflow_type == "QA"`
+# (cc10x_sessionstart_context.py), so a router that never stamps QA resumes the
+# route as a different one. Code behind an unreachable predicate is the same
+# fail-open in a new costume.
 #
 # FOUR SITES, FOUR SYNTACTIC SHAPES -- which is why this is a table and not one
 # regex. A single corpus-wide regex reaches exactly ONE of them:
@@ -2956,8 +2682,8 @@ PP40_HEADING = re.compile(r"^## (\d+)\. (.+)$", re.M)
 # I-93 are both silent unless this is an equality -- each moves exactly one
 # correct citation INTO the class and produces no mismatch at all.
 PP40_UNDESCRIPTIVE = {
-    ("qa-workflow.md", 119, 3),   # "wave count and in the"  vs  ## 3. Build order
-    ("qa-workflow.md", 119, 2),   # "id rollups"             vs  ## 2. Coverage plan
+    ("qa-workflow.md", 120, 3),   # "wave count and in the"  vs  ## 3. Build order
+    ("qa-workflow.md", 120, 2),   # "id rollups"             vs  ## 2. Coverage plan
 }
 # There is no exclusion list. The seven unprefixed `§N` in
 # `qa-harness-builder.md`'s 64-71 table fall into the NO-PREFIX branch already --
@@ -3098,31 +2824,9 @@ PP15_CROSS_FILE_TOKENS = ("REPO_CURRENCY", "CURRENCY_GATE")
 # required: without this, PP-5 is false against SKILL.md as it stands today.
 NON_DISPATCHABLE = {"qa"}
 
-# Plan phases that existed before qa-preflight was added. PP-2 guards against an
-# edit that adds the new phase by accidentally replacing one of these.
-EXPECTED_PLAN_PHASES = {
-    "qa",
-    "qa-research",
-    "qa-plan",
-    "qa-plan-review",
-    "qa-re-plan",
-    "qa-plan-review-2",
-}
-
-# Deliberately outside the guard's default mutation_allowlist ([".cc10x/"]) —
-# a target inside it is allowed regardless of phase, which would make the deny
-# cases pass for the wrong reason. On the Bash branch the allowlist is now
-# matched against the paths `_bash_paths` extracts from the command, resolved
-# and compared as paths; `/tmp/pp6-probe-<pid>` matches no entry under that
-# rule. NOTE: the ledger's claim that this comment was false is REFUTED — the
-# comment was accurate for the Bash branch even under the old substring test,
-# because the substring `.cc10x` does not occur in `mkdir -p /tmp/pp6-probe-N`.
-# What was wrong here was only the list it cited.
-PROBE_TARGET = f"/tmp/pp6-probe-{os.getpid()}"
-
-# PP-13. Same one-artifact-at-a-time discipline as PP-6, for the same reason
-# (latest_workflow_file() resolves by mtime). The pid keeps two concurrent runs
-# of this suite from colliding on one workflow id.
+# PP-13. One artifact at a time: `cc10x_hooklib.latest_workflow_file()`
+# resolves by mtime, so the property writes one artifact at a time. The pid
+# keeps two concurrent runs of this suite from colliding on one workflow id.
 PP13_WF_ID = f"wf-test-pp13-{os.getpid()}"
 
 # PP-39. The BLOCKING hook set, derived rather than transcribed.
@@ -3135,23 +2839,49 @@ PP13_WF_ID = f"wf-test-pp13-{os.getpid()}"
 # scope is the set reachable from hooks.json at an event that CAN deny, whose
 # source carries a block path.
 #
-# Measured at this commit — 5 blocking scripts, 3 of them mode-aware:
-#   cc10x_pretooluse_guard.py            PreToolUse     load_mode: 1
-#   cc10x_git_guard.py                   PreToolUse     load_mode: 0  UNCOND
-#   cc10x_qa_isolation_guard.py          PreToolUse     load_mode: 0  UNCOND
+# Measured once only the artifact guard remained at these events — 1
+# blocking script, mode-aware, none unconditional:
 #   cc10x_posttooluse_artifact_guard.py  PostToolUse    load_mode: 1
-#   cc10x_task_completed_guard.py        TaskCompleted  load_mode: 1
 PP39_EVENTS = ("PreToolUse", "PostToolUse", "TaskCompleted")
 PP39_SCRIPT_REF = re.compile(r"([A-Za-z0-9_]+\.py)")
-PP39_BLOCK_PATH = re.compile(r"pretool_deny\s*\(|sys\.exit\(2\)|return 2\b")
-# The CALL, not the import. `cc10x_qa_isolation_guard.py` carried a dead
-# `load_mode,` import line with no parenthesis; an importing-but-never-calling
-# script is unconditional, and this regex is what makes that distinction.
+PP39_BLOCK_ALTERNATIVES = (
+    r"\bexit\(2\)",
+    r"SystemExit\(2\)",
+    r"return 2\b",
+    r"permissionDecision[\"']?\s*:\s*[\"']deny",
+    r"[\"']decision[\"']\s*:\s*[\"']block",
+)
+PP39_BLOCK_PATH = re.compile("|".join(PP39_BLOCK_ALTERNATIVES))
+# Negative control for the block-path regex. The shapes covered: exit 2 by
+# `sys.exit(2)` or `exit(2)` (one alternative), `raise SystemExit(2)` or
+# `return 2` from main; the permission-decision JSON `"permissionDecision": "deny"`; and
+# the PostToolUse/Stop JSON `"decision": "block"`. Every BLOCK sample must
+# match, each alternative must match at least one BLOCK sample on its own, and
+# no NON_BLOCK sample may match, so neither an uncovered alternative nor a
+# match-everything regex passes.
+PP39_BLOCK_SAMPLES = (
+    "    sys.exit(2)\n",
+    "    raise SystemExit(2)\n",
+    "    exit(2)\n",
+    "    return 2\n",
+    '"permissionDecision": "deny",',
+    "{'permissionDecision': 'deny'}",
+    '{"decision": "block", "reason": "x"}',
+)
+PP39_NON_BLOCK_SAMPLES = (
+    "    return 20\n",
+    "    sys.exit(0)\n",
+    '"permissionDecision": "allow",',
+    '{"decision": "audit"}',
+)
+# The CALL, not the import: a script that imports `load_mode` but never calls
+# it is unconditional, and this regex is what makes that distinction.
 PP39_LOAD_MODE_CALL = re.compile(r"load_mode\s*\(")
 # Anti-vacuity floor, shape (a). `set() - set()` is empty and every membership
-# test over an empty set passes. 5 measured at this commit; if the block-path
-# regex stops matching the set shrinks and this floor is what notices.
-PP39_MIN_HOOKS = 5
+# test over an empty set passes. 1 measured with the census above; if the
+# block-path regex stops matching the set shrinks and this floor is what
+# notices.
+PP39_MIN_HOOKS = 1
 # W8 — the policy's mode paragraph. Window-anchored rather than whole-file
 # (vacuity shape (b)): the hook enumeration above it now carries the same
 # basenames, so `name in policy_text` would be satisfied by the enumeration
@@ -3159,7 +2889,7 @@ PP39_MIN_HOOKS = 5
 # searched over the whole text and required to match exactly once, AFTER the
 # start anchor — an end regex that matches its own start line yields a 0-byte
 # window in which every `not in` passes.
-PP39_W8_START = re.compile(r"(?m)^- Default mode is audit-only")
+PP39_W8_START = re.compile(r"(?m)^- Hook mode:")
 PP39_W8_END = re.compile(r"(?m)^- Repo-local")
 
 # ---------------------------------------------------------------- PP-41
@@ -3301,17 +3031,6 @@ PP42C_FIRST_PERSON = ("reads them", "requires this plan", "this plan's fields",
                       "gates this artifact")
 PP42C_MIN_GATE_TOKENS = 2  # measured at this commit -- re-measure
 
-# PP-38(f), second clause -- added in Phase 10, closing one of the two edits the
-# plan left "held by no property". The PreToolUse matcher is declared a SECOND
-# time, in prose, in qa-workflow.md's Rule 1 paragraph. Phase 5 found that copy
-# STALE and synced it by hand; nothing then held it, so the next hooks.json
-# change re-opens the same drift. It is pinned here rather than as a new
-# property because PP-38(f) already holds the authoritative matcher string --
-# the comparison costs one assertion and adds no check. The prose copy is not
-# deleted: the paragraph states which tools the isolation rule covers at the
-# point where the rule is stated, and is unreadable without them.
-PP38F_PROSE_MATCHER = re.compile(r"matcher `([A-Za-z|]+)`")
-
 # ---- PP-43. Phase 10. Pointers that name something that is not there. ----
 #
 # Four defect classes, one property each, all of the same shape: a reference
@@ -3423,83 +3142,6 @@ def check(prop: str, ok: bool, detail: str) -> None:
         failures.append(f"{prop}: {detail}")
 
 
-def load_guard():
-    spec = importlib.util.spec_from_file_location("qa_guard", GUARD)
-    module = importlib.util.module_from_spec(spec)
-    sys.path.insert(0, str(SCRIPTS))  # cc10x_hooklib is a sibling import
-    try:
-        spec.loader.exec_module(module)
-    finally:
-        sys.path.pop(0)
-    return module
-
-
-def artifact(phase: str | None, *, history_phase: str | None = None) -> dict:
-    """A minimal QA workflow artifact.
-
-    `workflow_type` must be QA or the guard returns 0 immediately
-    (cc10x_qa_isolation_guard.py, main()) and every case would trivially pass.
-    """
-    payload: dict = {
-        "workflow_uuid": "wf-test-pp6",
-        "workflow_id": "wf-test-pp6",
-        "workflow_type": "QA",
-        "qa": {"isolation": {"plan_phase_readonly": True}},
-        "status_history": [{"event": "started", "phase": history_phase or "qa"}],
-    }
-    if phase is not None:
-        payload["phase_cursor"] = phase
-    return payload
-
-
-def run_guard_raw(
-    project_dir: Path, payload: dict, tool_payload: dict
-) -> subprocess.CompletedProcess:
-    """Write ONE artifact, invoke the guard, return the CompletedProcess.
-
-    One artifact at a time is load-bearing: cc10x_hooklib.latest_workflow_file()
-    sorts .cc10x/workflows/*.json by mtime and returns only the newest, so
-    several artifacts in one directory would all resolve to the same file and
-    every case but the last would assert against the wrong one.
-
-    Returns rc and stderr as well as the decision, because a CRASHING guard
-    emits no decision on stdout and therefore reads as ALLOW. A property that
-    asserts only the decision cannot tell a deliberate allow from a traceback
-    -- which is the exact defect PP-34 exists to catch. `tool_payload` is a
-    parameter rather than a constant so a property can probe a tool other than
-    the Bash mkdir probe PP-6 uses.
-    """
-    wf_dir = project_dir / ".cc10x" / "workflows"
-    wf_dir.mkdir(parents=True, exist_ok=True)
-    wf_file = wf_dir / "wf-test-pp6.json"
-    wf_file.write_text(json.dumps(payload))
-    try:
-        env = dict(os.environ, CLAUDE_PROJECT_DIR=str(project_dir))
-        return subprocess.run(
-            [sys.executable, str(GUARD)],
-            input=json.dumps(tool_payload),
-            capture_output=True,
-            text=True,
-            env=env,
-        )
-    finally:
-        wf_file.unlink(missing_ok=True)
-
-
-def run_guard(project_dir: Path, payload: dict) -> bool:
-    """Write ONE artifact, invoke the guard, return True if it denied.
-
-    Thin wrapper over run_guard_raw preserving PP-6's exact probe. PP-6's four
-    detail strings are byte-identical across this refactor.
-    """
-    result = run_guard_raw(
-        project_dir,
-        payload,
-        {"tool_name": "Bash", "tool_input": {"command": f"mkdir -p {PROBE_TARGET}"}},
-    )
-    return '"permissionDecision": "deny"' in result.stdout
-
-
 def closure_artifact(**overrides) -> dict:
     """A COMPLETE workflow artifact, built from the shipped skeleton.
 
@@ -3561,53 +3203,6 @@ def run_artifact_guard(project_dir: Path, plugin_root: Path, payload: dict):
 
 def main() -> int:
     print("QA phase invariants")
-    guard = load_guard()
-
-    plan = guard.PLAN_PHASES
-    prov = guard.PROVISIONING_PHASES
-
-    check(
-        "PP-1",
-        "qa-preflight" not in plan,
-        "'qa-preflight' is not in PLAN_PHASES — preflight must be able to provision",
-    )
-    missing = EXPECTED_PLAN_PHASES - plan
-    check(
-        "PP-2",
-        not missing,
-        f"no plan phase lost from PLAN_PHASES (missing: {sorted(missing) or 'none'})",
-    )
-    overlap = plan & prov
-    check(
-        "PP-3",
-        not overlap,
-        f"PLAN_PHASES and PROVISIONING_PHASES are disjoint (overlap: {sorted(overlap) or 'none'})",
-    )
-
-    # PP-6 — behavioural, one synthesized artifact per case.
-    cases = [
-        ("a", "phase_cursor='qa-plan'", artifact("qa-plan"), True),
-        ("b", "phase_cursor='qa' (bare parent)", artifact("qa"), True),
-        ("c", "phase_cursor='qa-preflight'", artifact("qa-preflight"), False),
-        (
-            "d",
-            "no phase_cursor, status_history fallback -> 'qa-preflight'",
-            artifact(None, history_phase="qa-preflight"),
-            False,
-        ),
-    ]
-    with tempfile.TemporaryDirectory() as tmp:
-        project_dir = Path(tmp)
-        for tag, label, payload, want_deny in cases:
-            got_deny = run_guard(project_dir, payload)
-            verb = "denies" if want_deny else "allows"
-            check(
-                f"PP-6({tag})",
-                got_deny == want_deny,
-                f"guard {verb} `mkdir {PROBE_TARGET}` when {label}"
-                + ("" if got_deny == want_deny else f" — got deny={got_deny}"),
-            )
-
     # PP-4 / PP-5 — phase-name drift between the route law and the router kernel.
     wf_text = QA_WORKFLOW.read_text()
     skill_text = SKILL_MD.read_text()
@@ -3814,9 +3409,8 @@ def main() -> int:
     )
 
     # PP-13 — the ONLY property in this suite that answers "does the gate WORK".
-    # Four synthesized artifacts, one at a time (the latest_workflow_file()
-    # mtime hazard PP-6 documents applies identically), the guard invoked as a
-    # SUBPROCESS in `artifactIntegrity: block` mode. Reading the new predicate's
+    # Four synthesized artifacts, one at a time (see the PP13_WF_ID comment), the
+    # guard invoked as a SUBPROCESS in `artifactIntegrity: block` mode. Reading the new predicate's
     # source back out of the guard would prove nothing about its exit code.
     #
     # (b)(c)(d) are the backward-compatibility half and they are not decoration:
@@ -4362,7 +3956,8 @@ def main() -> int:
             )
     check("PP-21(b)", pp21b_ok, pp21b_detail)
 
-    # PP-21(c) -- QA is a member of the three enums the guard and the router read.
+    # PP-21(c) -- QA is a member of the three enums the PostToolUse artifact guard
+    # and the router read.
     # Anchored per line; each half fails loudly if its anchor stops matching.
     pp21c_gaps: list[str] = []
 
@@ -4733,7 +4328,7 @@ def main() -> int:
         pp25b_ok = not pp25b_missing
         pp25b_detail = (
             f"the `kind:remfix` block mandates the `remediation_history` append "
-            f"in the shape the audit-backstopped breaker counts "
+            f"in the shape the circuit breaker counts "
             f"(window={len(rebuild_win)}B, "
             f"{len(PP25_REMHIST_TOKENS) - len(pp25b_missing)}/"
             f"{len(PP25_REMHIST_TOKENS)} tokens)"
@@ -4897,8 +4492,8 @@ def main() -> int:
             miss_e = [t for t in PP27A_ENFORCEMENT_TOKENS if t not in window]
             if miss_e:
                 pp27a_gaps.append(
-                    f"{fname} ({label}) does not say which half is the guard and "
-                    f"which is the notice: missing {miss_e} (bullet={len(window)}B)"
+                    f"{fname} ({label}) does not bind the planner to Rule 1: "
+                    f"missing {miss_e} (bullet={len(window)}B)"
                 )
     for phase_token, task_var in PP27A_DISPATCHES:
         wf = pp27a_texts["qa-workflow.md"]
@@ -5172,9 +4767,8 @@ def main() -> int:
                     f"{_lost or 'none'} — if this is a deliberate rename, read "
                     f"ADR-1 in the constant's comment first: editing "
                     f"PP31_QA_TOKENS is the whole cost of the rename, and the "
-                    f"rename must also reach "
-                    f"cc10x_qa_isolation_guard.PLAN_PHASES (which turns PP-2 "
-                    f"red) and every in-flight `phase:` token"
+                    f"rename must also reach every surface that spells the "
+                    f"token and every in-flight `phase:` token"
                 )
     _p31r = list(PP31_RATIONALE.finditer(qa_norm))
     pp31_rat_window = ""
@@ -5370,9 +4964,10 @@ def main() -> int:
     if pp33_qa_stamp != ["QA"]:
         pp33_bad.append(
             f"qa-workflow.md's stamping line is {pp33_qa_stamp} (expected "
-            f"exactly ['QA']) -- the guard returns 0 on any other value, so an "
-            f"unstamped route leaves every rule in this file unenforced, and "
-            f"both sibling route files state theirs"
+            f"exactly ['QA']) -- SessionStart's QA branch keys on this value, "
+            f"so an unstamped route resumes reporting `research_quality=none` "
+            f"instead of its QA research lanes, and both sibling route files "
+            f"state theirs"
         )
 
     pp33_b_ok = not pp33_bad
@@ -5383,836 +4978,6 @@ def main() -> int:
         f"marquee count matches the routing table, and the QA law stamps "
         f"`workflow_type: QA` like both its siblings"
         + ("" if pp33_b_ok else " -- " + "; ".join(pp33_bad)),
-    )
-
-    # PP-34 -- the guard resolves a phase from every artifact shape without
-    # crashing, and rc/stderr are part of the verdict.
-    #
-    # A PreToolUse hook that raises exits non-zero with NOTHING on stdout, and
-    # a hook that emits no decision FAILS OPEN: the tool call proceeds. So a
-    # crash is indistinguishable from a deliberate allow if the property reads
-    # only the decision. Every case below asserts the triple
-    # (rc == 0, stderr == "", decision) -- never the decision alone.
-    #
-    # All six cases leave `phase_cursor` absent, because status_history is only
-    # consulted when the cursor is falsy; with a cursor set, no shape of
-    # status_history is reachable at all.
-    #
-    # (d) is the POSITIVE CONTROL and is not optional. (a)(b)(c)(e)(f) all
-    # expect ALLOW, and a guard that crashes on everything also allows
-    # everything -- without (d) the property is green on a totally broken
-    # guard. (d) proves the guard is still engaged and still denying.
-    #
-    # `{}` and `"qa-plan"` also crash at HEAD, but they take the same branch as
-    # (e) and (b) respectively and are covered by the edge-case catalog rather
-    # than by their own checks.
-    pp34_cases = [
-        ("a", "[]", [], False),
-        ("b", '["qa-plan"] (list of strings)', ["qa-plan"], False),
-        ("c", "null", None, False),
-        (
-            "d",
-            '[{"event":"s","phase":"qa-plan"}] (the fallback that must NOT regress)',
-            [{"event": "s", "phase": "qa-plan"}],
-            True,
-        ),
-        ("e", '{"a": 1} (a dict, not a list)', {"a": 1}, False),
-        ("f", "5 (a bare int)", 5, False),
-    ]
-    with tempfile.TemporaryDirectory() as tmp:
-        pp34_dir = Path(tmp)
-        for tag, label, history, want_deny in pp34_cases:
-            pp34_payload = {
-                "workflow_uuid": "wf-test-pp34",
-                "workflow_id": "wf-test-pp34",
-                "workflow_type": "QA",
-                "qa": {"isolation": {"plan_phase_readonly": True}},
-                "status_history": history,
-            }
-            r = run_guard_raw(
-                pp34_dir,
-                pp34_payload,
-                {
-                    "tool_name": "Bash",
-                    "tool_input": {"command": f"mkdir -p {PROBE_TARGET}"},
-                },
-            )
-            got_deny = '"permissionDecision": "deny"' in r.stdout
-            stderr_tail = (r.stderr.strip().splitlines() or [""])[-1]
-            ok = r.returncode == 0 and r.stderr == "" and got_deny == want_deny
-            verb = "denies" if want_deny else "allows"
-            check(
-                f"PP-34({tag})",
-                ok,
-                f"rc=0 stderr='' and guard {verb} `mkdir {PROBE_TARGET}` when "
-                f"status_history is {label} and phase_cursor is absent"
-                + (
-                    ""
-                    if ok
-                    else f" -- got rc={r.returncode} deny={got_deny} "
-                    f"stderr={stderr_tail!r}"
-                ),
-            )
-
-    # ---- PP-35: the plan-phase mutation allowlist is path-aware on BOTH -----
-    # branches. The Bash branch was a bare substring test over the RAW command
-    # string, so `.cc10x` appearing anywhere -- inside a shell comment, after a
-    # `;`, in an unrelated argument -- bought arbitrary destruction at a phase
-    # whose entire purpose is to mutate nothing. `_bash_mutates` splits with
-    # `comments=True`, so the comment was stripped for PARSING and kept for the
-    # escape test: the two halves of the same branch disagreed about what the
-    # command said.
-    #
-    # The DENY rows alone are NOT a property. Delete the escape outright and
-    # (a)(b)(d)(f) all pass while every legitimate `.cc10x/` write the QA route
-    # depends on starts failing. (c) and (e) are the positive controls that
-    # make this a property about path semantics rather than about denial.
-    pp35_deny = "/etc/pp35-probe"
-    pp35_allowed = ".cc10x/qa/pp35"
-    pp35_cases: list[tuple[str, dict, bool, str]] = [
-        (
-            "a",
-            {
-                "tool_name": "Bash",
-                "tool_input": {"command": f"rm -rf {pp35_deny} # .cc10x"},
-            },
-            True,
-            f"Bash `rm -rf {pp35_deny} # .cc10x` (the comment-mention bypass)",
-        ),
-        (
-            "b",
-            {
-                "tool_name": "Bash",
-                "tool_input": {"command": f"rm -rf {pp35_deny}; echo .cc10x"},
-            },
-            True,
-            f"Bash `rm -rf {pp35_deny}; echo .cc10x` (the trailing-mention bypass)",
-        ),
-        (
-            "c",
-            {
-                "tool_name": "Bash",
-                "tool_input": {"command": f"mkdir -p {pp35_allowed}"},
-            },
-            False,
-            f"Bash `mkdir -p {pp35_allowed}` (the escape still works for real)",
-        ),
-        (
-            "d",
-            {
-                "tool_name": "Bash",
-                "tool_input": {"command": "mkdir -p /tmp/cc10x-pp35"},
-            },
-            True,
-            "Bash `mkdir -p /tmp/cc10x-pp35` (the dropped `/tmp/cc10x-` entry)",
-        ),
-        (
-            "e",
-            {
-                "tool_name": "Write",
-                "tool_input": {"file_path": f"{pp35_allowed}.md", "content": "x"},
-            },
-            False,
-            f"Write `{pp35_allowed}.md` (the Write branch unregressed)",
-        ),
-        (
-            "f",
-            {"tool_name": "Bash", "tool_input": {"command": f"rm -rf {pp35_deny}"}},
-            True,
-            f"Bash `rm -rf {pp35_deny}` (the control)",
-        ),
-    ]
-    # Every probe path is under /etc/pp35-probe, /tmp/cc10x-pp35 or .cc10x/qa/
-    # and NONE of them is ever executed: the guard is a PreToolUse hook invoked
-    # as a subprocess over stdin, and it inspects the command string only.
-    with tempfile.TemporaryDirectory() as tmp:
-        pp35_dir = Path(tmp)
-        for tag, tool_payload, want_deny, label in pp35_cases:
-            r = run_guard_raw(pp35_dir, artifact("qa-plan"), tool_payload)
-            got_deny = '"permissionDecision": "deny"' in r.stdout
-            stderr_tail = (r.stderr.strip().splitlines() or [""])[-1]
-            ok = r.returncode == 0 and r.stderr == "" and got_deny == want_deny
-            verb = "denies" if want_deny else "allows"
-            check(
-                f"PP-35({tag})",
-                ok,
-                f"rc=0 stderr='' and guard {verb} {label} at phase_cursor=qa-plan"
-                + (
-                    ""
-                    if ok
-                    else f" -- got rc={r.returncode} deny={got_deny} "
-                    f"stderr={stderr_tail!r}"
-                ),
-            )
-
-    # ---- PP-36: all five declarations of the default mutation_allowlist -----
-    # agree. The entry `/tmp/cc10x-` survived nine commits because the CODE was
-    # the lone dissenter among five sites: the skeleton, the route law twice,
-    # and the guard's own module docstring 193 lines above the wrong line all
-    # said [".cc10x/"]. Every document a reader consulted agreed with every
-    # other document, so nothing a reader could read would have caught it.
-    pp36_guard_text = GUARD.read_text(encoding="utf-8")
-    pp36_wf_raw = QA_WORKFLOW.read_text(encoding="utf-8")
-
-    def _pp36_parse(site: str, text: str, pattern: str) -> tuple[str, list]:
-        """Extract exactly one bracketed literal and parse it, or explain why not."""
-        found = re.findall(pattern, text)
-        if len(found) != 1:
-            return (
-                f"{site}: pattern matched {len(found)} times, expected exactly 1",
-                [],
-            )
-        try:
-            val = ast.literal_eval(found[0])
-        except (ValueError, SyntaxError) as exc:
-            return (f"{site}: `{found[0]}` did not parse ({exc})", [])
-        if not isinstance(val, list):
-            return (f"{site}: parsed a {type(val).__name__}, not a list", [])
-        return ("", val)
-
-    # Site 5 lives INSIDE a fenced JSON block, so its basis must be
-    # _decommented(): _normative() strips fences and the site silently
-    # vanishes, leaving a four-site property that prints "5". That is the
-    # second half of I-59.
-    pp36_sites: list[tuple[str, str, str]] = [
-        (
-            f"1 code {GUARD.name} `isolation.get(...) or [...]`",
-            pp36_guard_text,
-            r'isolation\.get\("mutation_allowlist"\)\s*or\s*(\[[^\]]*\])',
-        ),
-        (
-            f"2 docstring {GUARD.name}",
-            pp36_guard_text,
-            r'"mutation_allowlist":\s*(\[[^\]]*\])',
-        ),
-        (
-            f"4 law prose {QA_WORKFLOW.name} (_normative)",
-            _normative(pp36_wf_raw),
-            r"`mutation_allowlist`:\s*`(\[[^\]]*\])`",
-        ),
-        (
-            f"5 law fence {QA_WORKFLOW.name} (_decommented)",
-            _decommented(pp36_wf_raw),
-            r'"mutation_allowlist":\s*(\[[^\]]*\])',
-        ),
-    ]
-    pp36_problems: list[str] = []
-    pp36_values: list[tuple[str, list]] = []
-    for site, text, pattern in pp36_sites:
-        err, val = _pp36_parse(site, text, pattern)
-        if err:
-            pp36_problems.append(err)
-        pp36_values.append((site, val))
-
-    # Site 3 is the one site parsed with json.load rather than a regex,
-    # precisely because the skeleton is pretty-printed -- the key is on one
-    # line and the value on the next, so any line-keyed parse of it is wrong.
-    pp36_skel = json.loads(SKELETON.read_text(encoding="utf-8"))
-    pp36_skel_val = ((pp36_skel.get("qa") or {}).get("isolation") or {}).get(
-        "mutation_allowlist"
-    )
-    if not isinstance(pp36_skel_val, list):
-        pp36_problems.append(
-            f"3 skeleton {SKELETON.name} qa.isolation.mutation_allowlist: "
-            f"got {type(pp36_skel_val).__name__}, not a list"
-        )
-        pp36_skel_val = []
-    pp36_values.insert(2, (f"3 skeleton {SKELETON.name}", pp36_skel_val))
-
-    # Anti-vacuity, asserted BEFORE the comparison: five failed parses give
-    # set() == set() == set() == set() == set(), which is vacuously true. Four
-    # of the five parses are regexes over text that gets reformatted, so this
-    # is the likeliest way the property rots.
-    pp36_empty = [site for site, val in pp36_values if not val]
-    if pp36_empty:
-        pp36_problems.append(
-            "PRECONDITION failed: "
-            + "; ".join(f"{site} parsed an empty list" for site in pp36_empty)
-            + " -- an empty parse makes the set-equality vacuous"
-        )
-    pp36_printed = "; ".join(f"{site} = {val!r}" for site, val in pp36_values)
-    if not pp36_problems:
-        pp36_distinct = {tuple(sorted(set(val))) for _, val in pp36_values}
-        if len(pp36_distinct) != 1:
-            pp36_problems.append(
-                "the five declarations disagree -- the values are printed "
-                "above, and the site that differs is the one to fix"
-            )
-    check(
-        "PP-36",
-        not pp36_problems,
-        "all five declarations of the default `mutation_allowlist` parse "
-        f"non-empty and agree -- {pp36_printed}"
-        + ("" if not pp36_problems else " -- " + "; ".join(pp36_problems)),
-    )
-
-    # ---- PP-37: a subcommand is read-only only if EVERY invocation of it ----
-    # is read-only REGARDLESS OF FLAGS. `SUBCOMMAND_TOOLS` classified whole
-    # subcommands, and the parser discards flags by design
-    # (`if arg.startswith("-"): continue`), so a subcommand-granular allowlist
-    # cannot express `git config --get` (read) vs `git config user.email x`
-    # (write). Thirteen mutating invocations were therefore ALLOWED at a phase
-    # whose entire purpose is to mutate nothing -- `terraform fmt` worst of
-    # all, since it rewrites files with no flag at all.
-    #
-    # The DENY rows alone are NOT a property. Empty every value of
-    # SUBCOMMAND_TOOLS and all thirteen go green while every capability probe
-    # step 0a depends on (`docker info`, `kubectl get pods`, `terraform show`)
-    # starts being denied. The ALLOW set is what makes this a property about
-    # the rule rather than about denial; I-62 and I-89 are the two injections
-    # that red the two sides separately.
-    #
-    # The cost of the flag-blind fix (inline ADR-1) is that only the BARE read
-    # forms survive: `git config --get` is now denied too, because every
-    # argument is a flag and `sub` resolves to "". That is priced, not missed.
-    pp37_deny_set = [
-        "git branch -D feature-x",
-        "git config user.email x@y.z",
-        "git tag -d v1",
-        "git remote add evil https://e.example",
-        "git branch -m old new",
-        "terraform fmt -write=true",
-        "terraform fmt",
-        "npm config set registry https://e.example",
-        "pip config set global.index-url https://e.example",
-        "kubectl config use-context prod",
-        "pnpm config set registry https://e.example",
-        "yarn config set registry https://e.example",
-        "kubectl config set-context prod",
-    ]
-    pp37_allow_set = [
-        "git log --oneline -1",
-        "git status --porcelain",
-        "docker info",
-        "kubectl get pods",
-        "terraform show",
-        "git show HEAD",
-        "git rev-parse HEAD",
-    ]
-    # Anti-vacuity, asserted BEFORE the loop: a table emptied by a bad edit
-    # iterates zero times and reports nothing wrong. Both floors are checked,
-    # and both are reported through (a) so a truncated ALLOW set cannot hide
-    # behind a green (b).
-    pp37_pre: list[str] = []
-    if len(pp37_deny_set) < 13:
-        pp37_pre.append(
-            f"DENY set holds {len(pp37_deny_set)} rows, expected >= 13"
-        )
-    if len(pp37_allow_set) < 7:
-        pp37_pre.append(
-            f"ALLOW set holds {len(pp37_allow_set)} rows, expected >= 7"
-        )
-    # None of these 20 command strings is ever executed: the guard is a
-    # PreToolUse hook invoked as a subprocess over stdin and it inspects the
-    # command string only. They are built here in the test source rather than
-    # typed into a shell because cc10x_git_guard.py blocks some of them --
-    # a second, independent line of defence that has nothing to say about
-    # what this guard decides.
-    pp37_wrong_deny: list[str] = []
-    pp37_wrong_allow: list[str] = []
-    with tempfile.TemporaryDirectory() as tmp:
-        pp37_dir = Path(tmp)
-        for command, want_deny in [(c, True) for c in pp37_deny_set] + [
-            (c, False) for c in pp37_allow_set
-        ]:
-            r = run_guard_raw(
-                pp37_dir,
-                artifact("qa-plan"),
-                {"tool_name": "Bash", "tool_input": {"command": command}},
-            )
-            got_deny = '"permissionDecision": "deny"' in r.stdout
-            stderr_tail = (r.stderr.strip().splitlines() or [""])[-1]
-            if r.returncode == 0 and r.stderr == "" and got_deny == want_deny:
-                continue
-            problem = (
-                f"`{command}` -> {'DENY' if got_deny else 'ALLOW'}, "
-                f"want {'DENY' if want_deny else 'ALLOW'}"
-            )
-            if r.returncode != 0 or r.stderr != "":
-                problem += f" (rc={r.returncode} stderr={stderr_tail!r})"
-            (pp37_wrong_deny if want_deny else pp37_wrong_allow).append(problem)
-    check(
-        "PP-37(a)",
-        not pp37_pre and not pp37_wrong_deny,
-        f"rc=0 stderr='' and all {len(pp37_deny_set)} mutating invocations "
-        "are DENIED at phase_cursor=qa-plan"
-        + (
-            ""
-            if not pp37_pre and not pp37_wrong_deny
-            else " -- " + "; ".join(pp37_pre + pp37_wrong_deny)
-        ),
-    )
-    check(
-        "PP-37(b)",
-        not pp37_pre and not pp37_wrong_allow,
-        f"rc=0 stderr='' and all {len(pp37_allow_set)} read-only capability "
-        "probes are still ALLOWED at phase_cursor=qa-plan"
-        + (
-            ""
-            if not pp37_pre and not pp37_wrong_allow
-            else " -- " + "; ".join(pp37_pre + pp37_wrong_allow)
-        ),
-    )
-
-    # ---- PP-38: the guard reads the key each tool actually passes, and the ---
-    # matcher invokes it for every tool it handles.
-    #
-    # Claude Code's notebook tools pass `notebook_path`, not `file_path`. The
-    # guard's denylist branch read only ("file_path", "path", "pattern") and its
-    # plan-phase write branch read only `file_path`, so ONE missing key produced
-    # two opposite defects:
-    #   (a) a denylisted notebook was ALLOWED -- the quarantine was unreachable;
-    #   (c) `target` was always "" for NotebookEdit, so the allowlist escape
-    #       (`if target and ... _matches(target, allowlist)`) could not fire and
-    #       a notebook write INTO `.cc10x/` was wrongly DENIED. That one is live
-    #       today: NotebookEdit is already in the matcher.
-    # (b) and (d) are the non-notebook controls: they pin that the denylist and
-    # the allowlist themselves still behave, so a red on (a)/(c) localises to
-    # the key lookup rather than to the matching semantics.
-    #
-    # (e) is not redundant with (c). The cheap way to "fix" the false-deny is to
-    # make NotebookEdit's target unconditionally allowed, which passes (c) and
-    # (d) and installs a NEW fail-open: notebook writes anywhere on disk during
-    # a planning phase. (e) is the probe that refuses that fix.
-    #
-    # (f) is a separate check because (a)-(e) invoke the guard directly over
-    # stdin and therefore BYPASS the PreToolUse matcher entirely. Every one of
-    # them stays green while `NotebookRead` is absent from `hooks.json` and the
-    # guard is consequently never invoked for it in production. The key fix and
-    # the matcher fix are independently necessary, so they need independent
-    # checks.
-    pp38_denylist = ["/tmp/pp38-secret*"]
-
-    def pp38_artifact(denied: list[str] | None = None) -> dict:
-        payload = artifact("qa-plan")
-        payload["qa"]["isolation"]["denied_reads"] = denied or []
-        return payload
-
-    # want=True means DENY. Each row is (id, artifact, tool payload, want_deny).
-    pp38_cases = [
-        (
-            "b",
-            pp38_artifact(pp38_denylist),
-            {
-                "tool_name": "Read",
-                "tool_input": {"file_path": "/tmp/pp38-secret.md"},
-            },
-            True,
-        ),
-        (
-            "c",
-            pp38_artifact(),
-            {
-                "tool_name": "NotebookEdit",
-                "tool_input": {"notebook_path": ".cc10x/qa/pp38.ipynb"},
-            },
-            False,
-        ),
-        (
-            "d",
-            pp38_artifact(),
-            {
-                "tool_name": "Write",
-                "tool_input": {"file_path": ".cc10x/qa/pp38.md"},
-            },
-            False,
-        ),
-        (
-            "e",
-            pp38_artifact(),
-            {
-                "tool_name": "NotebookEdit",
-                "tool_input": {"notebook_path": "/tmp/pp38-out.ipynb"},
-            },
-            True,
-        ),
-    ]
-    # None of these paths is created, read or written: the guard is a PreToolUse
-    # hook that inspects the tool input and returns a decision on stdout.
-    pp38_results: dict[str, str] = {}
-    with tempfile.TemporaryDirectory() as tmp:
-        pp38_dir = Path(tmp)
-        for case_id, payload, tool_payload, want_deny in pp38_cases:
-            r = run_guard_raw(pp38_dir, payload, tool_payload)
-            got_deny = '"permissionDecision": "deny"' in r.stdout
-            stderr_tail = (r.stderr.strip().splitlines() or [""])[-1]
-            if r.returncode != 0 or r.stderr != "":
-                pp38_results[case_id] = (
-                    f"{tool_payload['tool_name']} -> rc={r.returncode} "
-                    f"stderr={stderr_tail!r} (a crashing guard emits no decision "
-                    f"and reads as ALLOW)"
-                )
-            elif got_deny != want_deny:
-                pp38_results[case_id] = (
-                    f"{tool_payload['tool_name']} "
-                    f"{sorted(tool_payload['tool_input'].values())[0]!r} -> "
-                    f"{'DENY' if got_deny else 'ALLOW'}, "
-                    f"want {'DENY' if want_deny else 'ALLOW'}"
-                )
-
-    # P5.T1 retired the NotebookRead probe: the tools reference documents no such
-    # tool (Read handles notebooks), so it left READ_TOOLS and the matcher.
-    check(
-        "PP-38(a)",
-        "NotebookRead" not in load_guard().READ_TOOLS,
-        "NotebookRead (not a documented tool) is not a READ_TOOLS member",
-    )
-    check(
-        "PP-38(b)",
-        "b" not in pp38_results,
-        "control: Read of a denylisted file_path is DENIED"
-        + ("" if "b" not in pp38_results else " -- " + pp38_results["b"]),
-    )
-    check(
-        "PP-38(c)",
-        "c" not in pp38_results,
-        "NotebookEdit of an allowlisted notebook_path is ALLOWED at qa-plan"
-        + ("" if "c" not in pp38_results else " -- " + pp38_results["c"]),
-    )
-    check(
-        "PP-38(d)",
-        "d" not in pp38_results,
-        "control: Write of an allowlisted file_path is ALLOWED at qa-plan"
-        + ("" if "d" not in pp38_results else " -- " + pp38_results["d"]),
-    )
-    check(
-        "PP-38(e)",
-        "e" not in pp38_results,
-        "NotebookEdit OUTSIDE the allowlist is still DENIED at qa-plan -- (c) "
-        "is the allowlist working, not the notebook branch going silent"
-        + ("" if "e" not in pp38_results else " -- " + pp38_results["e"]),
-    )
-
-    # PP-38(f). hooks.json is parsed as JSON and the QA guard's own entry is
-    # located by its command string. A whole-file grep for "NotebookRead" is
-    # satisfied by ANY other hook's matcher in the same file -- vacuity shape
-    # (b). The required set is IMPORTED from the live guard module rather than
-    # transcribed, so adding a tool to READ_TOOLS/WRITE_TOOLS without adding it
-    # to the matcher is red (I-66); a hard-coded copy would stay green forever
-    # while the real sets drift.
-    pp38f_guard = load_guard()
-    pp38_required = (
-        set(pp38f_guard.READ_TOOLS) | set(pp38f_guard.WRITE_TOOLS) | {"Bash"}
-    )
-    pp38_hooks = json.loads(HOOKS_JSON.read_text(encoding="utf-8"))
-    pp38_entries = [
-        entry
-        for matchers in pp38_hooks.get("hooks", {}).values()
-        for entry in matchers
-        if any(
-            "cc10x_qa_isolation_guard.py" in (h.get("command") or "")
-            for h in entry.get("hooks", [])
-        )
-    ]
-    pp38f_detail = ""
-    # Anti-vacuity, asserted BEFORE the containment test: zero entries makes the
-    # loop iterate nothing, and an empty required set makes containment
-    # vacuously true. 1 entry and 7 required tools measured at this commit.
-    if len(pp38_entries) != 1:
-        pp38f_ok = False
-        pp38f_detail = (
-            f"PRECONDITION failed: {len(pp38_entries)} hooks.json entries invoke "
-            f"cc10x_qa_isolation_guard.py, expected exactly 1 -- any matcher "
-            f"result below is vacuous"
-        )
-    elif len(pp38_required) < 7:
-        pp38f_ok = False
-        pp38f_detail = (
-            f"PRECONDITION failed: READ_TOOLS | WRITE_TOOLS | {{Bash}} holds "
-            f"{len(pp38_required)} tools, expected >= 7 -- the guard's tool sets "
-            f"have been emptied, so any containment result below is vacuous"
-        )
-    else:
-        pp38_matcher = pp38_entries[0].get("matcher") or ""
-        pp38_declared = {t for t in pp38_matcher.split("|") if t}
-        pp38_missing = sorted(pp38_required - pp38_declared)
-        # Second clause: the prose restatement in qa-workflow.md must be the
-        # same string. Exactly-one asserted before comparing -- a regex that
-        # stopped matching would compare nothing and pass.
-        pp38f_prose = PP38F_PROSE_MATCHER.findall(
-            QA_WORKFLOW.read_text(encoding="utf-8")
-        )
-        pp38f_faults = (
-            [
-                f"matcher {pp38_matcher!r} never fires for {pp38_missing} -- "
-                f"the guard is not invoked for them at all, so the key fix "
-                f"above is unreachable in production"
-            ]
-            if pp38_missing
-            else []
-        )
-        if len(pp38f_prose) != 1:
-            pp38f_faults.append(
-                f"PRECONDITION failed: {QA_WORKFLOW.name} states a `matcher "
-                f"`...`` {len(pp38f_prose)} times, expected exactly 1 -- the "
-                f"prose restatement cannot be compared and its drift is unheld"
-            )
-        elif pp38f_prose[0] != pp38_matcher:
-            pp38f_faults.append(
-                f"{QA_WORKFLOW.name} restates the matcher as "
-                f"{pp38f_prose[0]!r}, hooks.json declares {pp38_matcher!r} -- "
-                f"a second declaration of one value, drifted"
-            )
-        pp38f_ok = not pp38f_faults
-        pp38f_detail = (
-            f"hooks.json matcher declares all {len(pp38_required)} tools the "
-            f"guard handles (READ_TOOLS | WRITE_TOOLS | {{Bash}}), and "
-            f"{QA_WORKFLOW.name}'s prose restatement is byte-identical to it"
-            if pp38f_ok
-            else "; ".join(pp38f_faults)
-        )
-    check("PP-38(f)", pp38f_ok, pp38f_detail)
-
-    # ---- PP-44: a FINISHED workflow disengages the guard entirely. ----------
-    #
-    # PR-#91 P1-1. A QA workflow scoped to the plan phase, or abandoned mid-
-    # plan, leaves `phase_cursor` on a planning value forever. The guard keyed
-    # ONLY on that cursor, so for as long as the abandoned artifact remained
-    # the newest on disk it denied every Write and every mutating Bash call in
-    # the repo -- including work that had nothing to do with the workflow, and
-    # including the router's own documented way of starting the next workflow.
-    # A quarantine and a read-only phase belong to a LIVE workflow; a finished
-    # one must take both with it.
-    #
-    # (a) covers the cursor form the router is required to leave behind
-    # (SKILL.md §12 step 3 sets `phase_cursor=memory-finalize`). (b) covers
-    # every terminal status_history event, parametrised, with the cursor
-    # REMOVED so the history fallback -- not the cursor -- is what disengages.
-    # (c) is the control that keeps (a)/(b) a property about terminal state
-    # rather than about a guard that stopped denying: same artifact, same
-    # probe, last event non-terminal -> still DENY.
-    pp44_probes = "/tmp/pp44-probe"
-    pp44_cases: list[tuple[str, dict, bool]] = [
-        (
-            "a",
-            {"phase_cursor": "memory-finalize"},
-            False,
-        ),
-        *[
-            (
-                f"b-{evt}",
-                {
-                    "phase_cursor": None,
-                    "status_history": [
-                        {"event": "started", "phase": "qa"},
-                        {"event": evt, "phase": "qa-plan"},
-                    ],
-                },
-                False,
-            )
-            for evt in ("memory_finalized", "workflow_completed", "workflow_failed")
-        ],
-        (
-            "c",
-            {
-                "phase_cursor": None,
-                "status_history": [
-                    {"event": "started", "phase": "qa"},
-                    {"event": "result_persisted", "phase": "qa-plan"},
-                ],
-            },
-            True,
-        ),
-    ]
-    pp44_faults: list[str] = []
-    with tempfile.TemporaryDirectory() as tmp:
-        pp44_dir = Path(tmp)
-        for tag, overrides, want_deny in pp44_cases:
-            pp44_payload = artifact(None)
-            for key, val in overrides.items():
-                if val is None:
-                    pp44_payload.pop(key, None)
-                else:
-                    pp44_payload[key] = val
-            r = run_guard_raw(
-                pp44_dir,
-                pp44_payload,
-                {"tool_name": "Bash", "tool_input": {"command": f"mkdir -p {pp44_probes}"}},
-            )
-            got_deny = '"permissionDecision": "deny"' in r.stdout
-            ok = r.returncode == 0 and r.stderr == "" and got_deny == want_deny
-            if not ok:
-                pp44_faults.append(
-                    f"({tag}) -> deny={got_deny} want {want_deny} "
-                    f"(rc={r.returncode} stderr={(r.stderr.strip().splitlines() or [''])[-1]!r})"
-                )
-    check(
-        "PP-44",
-        not pp44_faults,
-        f"a terminal cursor or terminal last status_history event disengages the "
-        f"guard ({len(pp44_cases)} cases incl. the non-terminal control), and a "
-        f"non-terminal last event does not"
-        + ("" if not pp44_faults else " -- " + "; ".join(pp44_faults)),
-    )
-
-    # ---- PP-45: the guard's Bash surface -- parser, router commands, --------
-    # ---- redirects. PR-#91 P1-2 / P2-1 / P2-5.                              --
-    #
-    # Three defects in one function family, landed together because they are
-    # one surface:
-    #
-    # P1-2 -- the guard denied commands the ROUTER is required to run during
-    #         plan phases: the mandatory template copy (SKILL.md route law,
-    #         qa-workflow.md `#### Plan`) and the event-log append (SKILL.md
-    #         §12 step 7). Both write only into `.cc10x/`; the copy was denied
-    #         because its SOURCE (the plugin root) is outside every allowlist
-    #         and the old escape tested read operands as writes, the append
-    #         because a redirect was denied before its target was ever matched
-    #         against the allowlist. (a) and (b) are the LITERAL commands from
-    #         the two documents, not paraphrases -- a paraphrase tests the
-    #         paraphrase. (c) is the control: the escape is path-aware, not a
-    #         blanket allow on the router's vocabulary.
-    #
-    # P2-1 -- the parser saw only whitespace-separated operators, so
-    #         `echo hi;mkdir x`, `echo hi\nmkdir x`, `sudo rm -rf x`,
-    #         `bash -c "mkdir y"` and `xargs rm` all reached the classifier as
-    #         one innocent command. (d)-(i) pin each bypass closed, and (j) is
-    #         the benign control that the tokenizer did not become
-    #         operator-blind: quoted operators and redirects inside quotes are
-    #         data, not commands.
-    #
-    # P2-5 -- redirect detection existed but had NO test (mutation M6: disable
-    #         it and the suite stayed green), and it missed `2>file` because
-    #         the digit-lookbehind that excludes `2>&1` excludes it too.
-    #         (k)-(n) pin the four sides: /dev/null exempt (step 0a's
-    #         `docker info >/dev/null` probe), allowlisted target allowed,
-    #         non-allowlisted target denied, `2>file` detected.
-    pp45_uuid = "2f9a8c4d"
-    pp45_router_copy = (
-        f'mkdir -p .cc10x/qa/{pp45_uuid} && cp "${{CLAUDE_PLUGIN_ROOT}}/templates/qa-test-plan.template.md" '
-        f'.cc10x/qa/{pp45_uuid}/test-plan.md && cp "${{CLAUDE_PLUGIN_ROOT}}/templates/qa-env-plan.template.md" '
-        f'.cc10x/qa/{pp45_uuid}/env-plan.md'
-    )
-    pp45_router_append = (
-        'printf \'%s\\n\' \'{"ts":"2026-01-01T00:00:00Z","wf":"wf-pp45","event":"result_persisted",'
-        '"phase":"qa-plan","agent":"qa-plan","decision":"ok","reason":"plan written"}\' '
-        '>> .cc10x/workflows/wf-pp45.events.jsonl'
-    )
-    pp45_cases: list[tuple[str, str, bool]] = [
-        ("a", pp45_router_copy, False),
-        ("b", pp45_router_append, False),
-        ("c", "mkdir -p /tmp/pp45-outside", True),
-        ("d", f"echo hi\nmkdir -p {pp44_probes}-nl", True),
-        ("e", f"echo hi;mkdir -p {pp44_probes}-semi", True),
-        ("f", f"echo hi&&mkdir -p {pp44_probes}-and", True),
-        ("g", f"sudo rm -rf {pp44_probes}-sudo", True),
-        ("h", 'bash -c "mkdir -p %s-bashc"' % f"{pp44_probes}", True),
-        ("i", f"echo x | xargs rm -rf {pp44_probes}-xargs", True),
-        ("j", "echo 'a;b' && printf '%s' hi", False),
-        ("k", "docker info >/dev/null", False),
-        ("l", "echo done >> .cc10x/qa/progress.md", False),
-        ("m", "echo done >> /tmp/pp45-redirect", True),
-        ("n", f"grep pat f.md 2>{pp44_probes}-err", True),
-    ]
-    pp45_faults: list[str] = []
-    with tempfile.TemporaryDirectory() as tmp:
-        pp45_dir = Path(tmp)
-        for tag, command, want_deny in pp45_cases:
-            r = run_guard_raw(
-                pp45_dir,
-                artifact("qa-plan"),
-                {"tool_name": "Bash", "tool_input": {"command": command}},
-            )
-            got_deny = '"permissionDecision": "deny"' in r.stdout
-            ok = r.returncode == 0 and r.stderr == "" and got_deny == want_deny
-            if not ok:
-                pp45_faults.append(
-                    f"({tag}) `{command[:60]}` -> deny={got_deny} want {want_deny} "
-                    f"(rc={r.returncode} stderr={(r.stderr.strip().splitlines() or [''])[-1]!r})"
-                )
-    check(
-        "PP-45",
-        not pp45_faults,
-        f"router-mandated commands pass the plan-phase allowlist, parser bypasses "
-        f"(newline / unspaced operators / sudo / bash -c / xargs) are denied, and "
-        f"redirect detection is pinned on all four sides ({len(pp45_cases)} cases)"
-        + ("" if not pp45_faults else " -- " + "; ".join(pp45_faults)),
-    )
-
-    # ---- PP-46: the denylist is ROOT-AWARE. PR-#91 P2-2. --------------------
-    #
-    # The denylist matched a tool that NAMED a quarantined path. A tool whose
-    # search ROOT contains one -- Grep over the project, Grep over an ancestor
-    # directory, a Bash `grep -r` from an ancestor -- reads the quarantined
-    # content as surely as a Read of the file, and passed. The quarantine is
-    # a refusal, not a request; a refusal with a recursive hole in it is a
-    # request.
-    #
-    # (a) Grep over an ancestor of a quarantined absolute path. (b) Grep with
-    # NO path -- Claude Code searches the whole project -- where the quarantine
-    # lives inside the project: the absent root is the project root, not "no
-    # root". (c) is the counter-control for (b): a quarantine OUTSIDE the
-    # project does not make a pathless Grep deny. (d) the Bash recursive
-    # reader from an ancestor. (e) the non-recursive control: `grep` without
-    # -r reads only the files it names, and a file it names that is not
-    # quarantined passes. (f) a `cp` whose SOURCE is quarantined: the read
-    # operand is checked against the denylist even though the plan-phase
-    # escape deliberately ignores read operands -- the two branches ask
-    # different questions of the same token stream.
-    pp46_denied_abs = "/tmp/pp46-denied/answers.md"
-    pp46_cases: list[tuple[str, dict, dict, bool]] = [
-        (
-            "a",
-            {"denied_reads": [pp46_denied_abs]},
-            {"tool_name": "Grep", "tool_input": {"pattern": "answers", "path": "/tmp"}},
-            True,
-        ),
-        (
-            "b",
-            {"denied_reads": [".cc10x/qa/answer-sheet.md"]},
-            {"tool_name": "Grep", "tool_input": {"pattern": "answers"}},
-            True,
-        ),
-        (
-            "c",
-            {"denied_reads": [pp46_denied_abs]},
-            {"tool_name": "Grep", "tool_input": {"pattern": "answers"}},
-            False,
-        ),
-        (
-            "d",
-            {"denied_reads": [pp46_denied_abs]},
-            {"tool_name": "Bash", "tool_input": {"command": "grep -r answers /tmp"}},
-            True,
-        ),
-        (
-            "e",
-            {"denied_reads": [pp46_denied_abs]},
-            {"tool_name": "Bash", "tool_input": {"command": "grep answers /etc/hosts"}},
-            False,
-        ),
-        (
-            "f",
-            {"denied_reads": [pp46_denied_abs]},
-            {
-                "tool_name": "Bash",
-                "tool_input": {"command": f"cp {pp46_denied_abs} .cc10x/qa/x.md"},
-            },
-            True,
-        ),
-    ]
-    pp46_faults: list[str] = []
-    with tempfile.TemporaryDirectory() as tmp:
-        pp46_dir = Path(tmp)
-        for tag, isolation_extra, tool_payload, want_deny in pp46_cases:
-            pp46_payload = artifact("qa-plan")
-            pp46_payload["qa"]["isolation"].update(isolation_extra)
-            r = run_guard_raw(pp46_dir, pp46_payload, tool_payload)
-            got_deny = '"permissionDecision": "deny"' in r.stdout
-            ok = r.returncode == 0 and r.stderr == "" and got_deny == want_deny
-            if not ok:
-                pp46_faults.append(
-                    f"({tag}) {tool_payload['tool_name']} -> deny={got_deny} "
-                    f"want {want_deny} "
-                    f"(rc={r.returncode} stderr={(r.stderr.strip().splitlines() or [''])[-1]!r})"
-                )
-    check(
-        "PP-46",
-        not pp46_faults,
-        f"a search root that CONTAINS a quarantined path is denied, for Grep "
-        f"(with and without a path) and for Bash recursive readers, without "
-        f"denying non-recursive reads or out-of-project roots ({len(pp46_cases)} cases)"
-        + ("" if not pp46_faults else " -- " + "; ".join(pp46_faults)),
     )
 
     # ---- PP-39: every BLOCKING hook is enumerated in the policy, and the ----
@@ -6253,8 +5018,24 @@ def main() -> int:
     # Anti-vacuity, asserted BEFORE either membership loop: an empty blocking
     # set makes (a) iterate nothing and makes (b)'s `unconditional` empty, and
     # both would pass while checking nothing.
+    pp39_missed_samples = [s for s in PP39_BLOCK_SAMPLES if not PP39_BLOCK_PATH.search(s)]
+    pp39_false_samples = [s for s in PP39_NON_BLOCK_SAMPLES if PP39_BLOCK_PATH.search(s)]
+    pp39_uncovered = [
+        alt
+        for alt in PP39_BLOCK_ALTERNATIVES
+        if not any(re.search(alt, s) for s in PP39_BLOCK_SAMPLES)
+    ]
     pp39_precondition = (
-        ""
+        f"PRECONDITION failed: the block-path alternative(s) {pp39_uncovered} "
+        f"match no block sample, so nothing shows they still catch a real block"
+        if pp39_uncovered
+        else f"PRECONDITION failed: the block-path regex misses the block shape(s) "
+        f"{pp39_missed_samples}, so a hook that blocks that way is invisible here"
+        if pp39_missed_samples
+        else f"PRECONDITION failed: the block-path regex matches the non-block "
+        f"sample(s) {pp39_false_samples}, so it would count hooks that never block"
+        if pp39_false_samples
+        else ""
         if len(pp39_blocking) >= PP39_MIN_HOOKS
         else (
             f"PRECONDITION failed: {len(pp39_blocking)} blocking hooks derived "

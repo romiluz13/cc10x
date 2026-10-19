@@ -264,7 +264,7 @@ The router is the plugin skill `cc10x:cc10x-router`.
 "Bash(git status)",
 "Bash(git diff:*)",
 "Bash(git log:*)",
-"Bash(git branch:*)",
+"Bash(git branch --show-current)",
 "Bash(git blame:*)",
 "Bash(git ls-files:*)",
 "Bash(git rev-parse:*)",
@@ -274,7 +274,7 @@ The router is the plugin skill `cc10x:cc10x-router`.
 
 > **What `Edit(.cc10x/**)` does.** It pre-approves file edits under `.cc10x/` at any depth, so memory files, workflow artifacts and QA files stop prompting on every write. Claude Code applies an `Edit(...)` rule to every file-editing tool, `Write` included, so one rule covers both; a `Write(.cc10x/*)` allow rule does nothing (Claude Code warns that only `Edit(...)` rules are matched), which is why this template no longer has one. Claude Code drops a project's `permissions.allow` entries until you trust the workspace, so put the rule in your user settings or trust the folder first.
 
-> **What the `Bash` rules do.** The `mkdir -p` rules create fixed directories (a rule matches the command text exactly, so `.cc10x` and `.cc10x/` are two rules) and the `git` rules read repository state (`git branch:*` also lets Claude create branches; the git guard hook still denies pushes and forced deletes). `Bash(python3:*)` is broad: it approves any `python3` command, not just cc10x's tools. It is in the template because every BUILD phase records its base SHA (`git rev-parse HEAD`) and the router builds review diff packages and phase briefs by running plugin tools via `python3`; without it, every phase prompts mid-workflow. If you do not want to pre-approve every `python3` command, drop that rule and approve the plugin's `python3` calls when prompted.
+> **What the `Bash` rules do.** The `mkdir -p` rules create fixed directories (a rule matches the command text exactly, so `.cc10x` and `.cc10x/` are two rules) and the `git` rules are for inspecting the repository (`git branch --show-current` reads the current branch; direct `git` commands that create or delete branches or push are not pre-approved, so they go through your Claude Code permission settings). `Bash(python3:*)` is broad: it approves any `python3` command, not just cc10x's tools. It is in the template because every BUILD phase records its base SHA (`git rev-parse HEAD`) and the router builds review diff packages and phase briefs by running plugin tools via `python3`; without it, every phase prompts mid-workflow. The template is a convenience, not a security boundary: `python3:*`, and `git log` or `git diff` through `--output` (which can write files such as `.git/config`), can be used to run other commands, git operations included, without a prompt, and deny rules see only the command text. If you need git operations gated, remove the broad rules (`Bash(python3:*)`, `Bash(git log:*)`, `Bash(git diff:*)`) and add explicit `deny` rules for the git commands you want blocked, then approve cc10x's commands when Claude Code prompts. Deny rules alone do not gate git while `Bash(python3:*)` is allowed, because an allowed `python3` command can run git without a prompt; removing one rule alone does not close every path either. In `bypassPermissions`, allow rules have no effect and only explicit `ask` rules prompt; `deny` rules still apply, but a deny rule on git commands does not see git run through `python3`. Only an `ask` or `deny` rule on `python3` itself closes that path, and it also gates cc10x's own tools, so use that mode only in an isolated container or VM. In auto mode, a classifier decides most actions instead of prompting, and entering it drops broad allow rules that grant code execution, such as `Bash(python3:*)`.
 
 ### Step 4: Set User Standards (Optional)
 
@@ -533,7 +533,7 @@ The QA workflow also keeps its test plan, environment plan and report under `.cc
 
 #### 5. Hooks are guardrails, not a second orchestrator
 
-Hooks do not replace the router. They provide lightweight enforcement and diagnostics. Most of them only audit; the git guard and the QA isolation guard always deny. The table under [Hooks](#hooks) lists the registered events, and [`plugins/cc10x/hooks/README.md`](plugins/cc10x/hooks/README.md) is the one place that says exactly what each hook does and which can block.
+Hooks do not replace the router. They provide diagnostics, resume context and state snapshots, and the artifact guard flags a malformed workflow artifact. No hook gates git or file operations; Claude Code's permission settings do. The table under [Hooks](#hooks) lists the registered events, and [`plugins/cc10x/hooks/README.md`](plugins/cc10x/hooks/README.md) is the one place that says exactly what each hook does and which can block.
 
 #### 6. MCP is optional acceleration only
 
@@ -701,10 +701,8 @@ The plugin ships these Claude Code-native hooks, registered in `plugins/cc10x/ho
 
 | Hook | Purpose |
 | ------ | --------- |
-| `PreToolUse` | Three guards: protected memory writes (audit by default), git operations (always blocks the destructive ones), QA isolation (always blocks quarantined reads and environment changes on the QA route) |
 | `SessionStart` | Python preflight, then rehydrate workflow context after restart or compaction |
 | `PostToolUse` | Audit workflow artifact integrity after writes (blocks a malformed artifact by default) |
-| `TaskCompleted` | Validate CC10X task metadata before task completion (audit by default) |
 | `PostCompact` | Capture compaction events for workflow telemetry |
 | `SubagentStop` | Audit subagent outputs for required contract markers |
 | `PreCompact` | Snapshot workflow state before compaction |
@@ -778,7 +776,7 @@ plugins/cc10x/
 ├── config/
 │   └── hook-mode.json
 ├── scripts/                # hook scripts and the L1 test suites (test_cc10x_*.py)
-│   ├── cc10x_{event_logger,git_guard,hooklib,posttooluse_artifact_guard,pretooluse_guard,qa_isolation_guard,sessionstart_context,state_persist,task_completed_guard}.py
+│   ├── cc10x_{event_logger,hooklib,posttooluse_artifact_guard,sessionstart_context,state_persist}.py
 │   └── cc10x_preflight.sh
 ├── tools/
 │   ├── {doc_consistency_check,fixture_registry,harness_audit,latency_audit,live_harness_runner,phase_brief,preload_probe,prompt_clause_assertions,release_gate,review_package,token_usage_report,workflow_replay_check}.py

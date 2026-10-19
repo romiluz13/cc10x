@@ -1,40 +1,5 @@
 {
   "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/cc10x_pretooluse_guard.py\"",
-            "timeout": 10,
-            "statusMessage": "CC10X protected-write guard"
-          }
-        ]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/cc10x_git_guard.py\"",
-            "timeout": 5,
-            "statusMessage": "CC10X git guardrails"
-          }
-        ]
-      },
-      {
-        "matcher": "Read|Grep|Glob|Edit|Write|NotebookEdit|Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/cc10x_qa_isolation_guard.py\"",
-            "timeout": 10,
-            "statusMessage": "CC10X QA isolation guard"
-          }
-        ]
-      }
-    ],
     "SessionStart": [
       {
         "matcher": "startup|resume|clear|compact|fork",
@@ -63,18 +28,6 @@
             "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/cc10x_posttooluse_artifact_guard.py\"",
             "timeout": 10,
             "statusMessage": "CC10X workflow artifact audit"
-          }
-        ]
-      }
-    ],
-    "TaskCompleted": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/cc10x_task_completed_guard.py\"",
-            "timeout": 10,
-            "statusMessage": "CC10X task metadata guard"
           }
         ]
       }

@@ -1,6 +1,6 @@
 # CC10x Router Behavioral Invariant Registry
 
-> **Status note:** Aligned to the `v12.10.0` product line as released on 2026-10-07 (v12.10.0; the release before it was v12.9.1), against `plugins/cc10x/skills/cc10x-router/SKILL.md`, `plugins/cc10x/skills/cc10x-router/references/*.md` and `plugins/cc10x/hooks/hooks.json`. Release history lives in `CHANGELOG.md`. Invariants for the QA route, ORIENT, the seam gate and the git guard are registered below.
+> **Status note:** Aligned to the `v12.10.0` product line as released on 2026-10-07 (v12.10.0; the release before it was v12.9.1), against `plugins/cc10x/skills/cc10x-router/SKILL.md`, `plugins/cc10x/skills/cc10x-router/references/*.md` and `plugins/cc10x/hooks/hooks.json`. Release history lives in `CHANGELOG.md`. Invariants for the QA route, ORIENT and the seam gate are registered below.
 
 ## Purpose
 
@@ -21,10 +21,9 @@ Validated against the live plugin surface:
 - agent memory reads under `.cc10x/*.md`
 - verifier independence from builder/reviewer/hunter verdicts
 - router kernel plus mandatory workflow/reference playbooks
-- the QA route, its phase sets and the QA isolation guard
+- the QA route and its phase sets
 - the ORIENT move
 - the builder seam gate (`TEST_SEAMS`, `SEAM_GATE_STATUS`)
-- the git guard (`classify_git_command`)
 
 ## Current Invariants
 
@@ -210,16 +209,14 @@ Validated against the live plugin surface:
 ### INV-013: Plugin hooks are guardrails, not orchestration
 
 **Covers:** Router `## 2a. Workflow Artifact And Hook Policy`, `references/workflow-artifact-and-hook-policy.md`, plugin hooks
-**Enforces:** `hooks.json` registers ten events, and every hook stays a guard, an audit, a context injection or a state snapshot, never a second orchestrator. `plugins/cc10x/hooks/README.md` lists each hook once and is the maintained table:
+**Enforces:** `hooks.json` registers eight events, and every hook stays an artifact check, an audit, a context injection or a state snapshot, never a second orchestrator. No hook gates git or file operations; Claude Code's permission settings do. `plugins/cc10x/hooks/README.md` lists each hook once and is the maintained table:
 
-- `PreToolUse`: the memory-write guard (audit by default), the git guard and the QA isolation guard (both unconditional blockers)
 - `SessionStart`: the Python preflight and resume-context injection
 - `PostToolUse`: workflow artifact integrity (`artifactIntegrity`, ships as block) and Bash workflow-write audit
-- `TaskCompleted`: task metadata and memory-finalize evidence (`taskMetadata`, ships as audit)
 - `PostCompact`, `SubagentStop`, `StopFailure`, `InstructionsLoaded`: audit logging
 - `PreCompact`, `Stop`: workflow state snapshots
 **If removed:** Either runtime safety degrades, or hooks sprawl into a second orchestration system.
-**Safe to remove:** Only if an equivalent plugin-native guardrail replaces the specific hook behavior.
+**Safe to remove:** A hook may be removed when the CHANGELOG entry names the behavior that goes and what the user relies on instead, as `[Unreleased]` does for the four enforcing hooks.
 
 ### INV-014: Workflow replay fixtures are part of the safety contract
 
@@ -230,10 +227,10 @@ Validated against the live plugin surface:
 
 ### INV-028: QA phase sets keep planning read-only and preflight able to provision
 
-**Covers:** Router `## 3. Task Metadata Contract` (phase enum), `references/qa-workflow.md`, `plugins/cc10x/scripts/cc10x_qa_isolation_guard.py`, `plugins/cc10x/scripts/test_cc10x_qa_phase_invariants.py`
-**Enforces:** The QA planning phases (`qa`, `qa-research`, `qa-plan`, `qa-plan-review`, `qa-re-plan`, `qa-plan-review-2`) deny environment mutation, while `qa-preflight` is deliberately outside that set so it can probe the real environment; the router sets `phase_cursor` to `qa-preflight` before dispatching it. A quarantined path declared by the workflow is refused for reads in both directions (named path, and a search root that contains it). The guard resolves the phase from every `status_history` shape without failing open on legacy artifacts.
-**If removed:** Planning phases can provision or mutate the environment, or preflight is silently blocked from the one thing it exists to do; either failure prints nothing.
-**Safe to remove:** Never. The phase-set properties are asserted by `test_cc10x_qa_phase_invariants.py` (release-gate step `suite_qa_phase_invariants`).
+**Covers:** Router `## 3. Task Metadata Contract` (phase enum), Router `## 4` resume step 7, `references/qa-workflow.md` (Rule 1, Rule 3, step 2a), `plugins/cc10x/scripts/test_cc10x_qa_phase_invariants.py`
+**Enforces:** A router and prompt rule, not a hook. The QA planning phases (`qa`, `qa-research`, `qa-plan`, `qa-plan-review`, `qa-re-plan`, `qa-plan-review-2`) do not mutate the environment (`qa-workflow.md` Rule 1), while `qa-preflight` is deliberately outside that set so it can probe the real environment; the router sets `phase_cursor` to `qa-preflight` before dispatching it. A quarantine is recorded as `Denied reads:` entries in the workflow artifact's `intent.constraints`. The router fills them into the `Denied reads:` line of every QA agent dispatch at dispatch time, re-applies them on resume (`SKILL.md` §4 step 7), keeps them through planner intent updates, and copies them into both regression runs. A legacy isolation block in an in-flight artifact is carried over into a `Denied reads:` entry before the next dispatch. A QA agent that reads denied material reports it, and Rule 3 handles the report. Nothing refuses the read mechanically.
+**If removed:** Planning phases provision or mutate the environment, preflight is skipped or mislabeled, or a quarantine is lost on resume or after a planner intent update, and none of these failures prints anything.
+**Safe to remove:** Never. The phase enum agreement is asserted by `test_cc10x_qa_phase_invariants.py` (PP-4, PP-5, PP-16; release-gate step `suite_qa_phase_invariants`).
 
 ### INV-029: QA route law is single-sourced and enumerations agree
 
@@ -261,13 +258,6 @@ Validated against the live plugin surface:
 **Covers:** `references/workflow-artifact-and-hook-policy.md` (component-builder contract fields and override), `references/build-workflow.md` (`test_seams` on each phase), `plugins/cc10x/agents/component-builder.md`, `plugins/cc10x/tools/workflow_replay_check.py`, `docs/adr/0001-enforced-seam-gate.md`
 **Enforces:** The builder contract carries `TEST_SEAMS` and `SEAM_GATE_STATUS` (`confirmed`, `proposed`, `disagreed`, `not_applicable`) and the router validates them per `build_scope`: a standard plan phase with `test_seams` is `confirmed` or `disagreed`; a standard legacy phase or a direct build is `proposed`; a trivial build is `not_applicable`. `disagreed` with empty `TEST_SEAMS` is valid only as the ambiguity block (`STATUS=FAIL` plus the exact remediation reason). The replay check rejects a builder PASS fixture without `SEAM_GATE_STATUS`.
 **If removed:** Builders stop declaring where they tested, and a rubber-stamped `disagreed` skips the gate.
-**Safe to remove:** Never.
-
-### INV-033: The git guard is default-deny for destructive git text
-
-**Covers:** `plugins/cc10x/scripts/cc10x_git_guard.py` (`classify_git_command`), `plugins/cc10x/hooks/README.md` (Git guard limits), `plugins/cc10x/scripts/test_cc10x_guards.py`
-**Enforces:** The guard denies the destructive set (push, hard reset, forced clean, forced branch delete, discard-all checkout and restore, stash clear) over the raw command text and over wrapper, chain, substitution and nested-shell forms. Destructive text is allowed only as quoted data in one strict pipeline allowance (`echo`, `printf` or `grep` family feeding plain text filters, with no redirect, group, loop or substitution); every other command gets the full pattern list. A command over 64 KB (65,536 characters) that names `git` as a word is denied as `command-too-large` before any pattern runs, and nesting past eight levels is denied. A classifier crash denies any command containing `git`. Only remote publish and branch force-delete can be unlocked, by a single-use approval token under `.cc10x/state/`; a command mixing an unlockable with a non-unlockable operation is denied as the non-unlockable one. The guard is a text heuristic that protects against accidents; the token is a plain file and is not a defended boundary.
-**If removed:** A destructive git command runs without the user's explicit finishing choice, or the quadratic legacy pattern times out and fails open.
 **Safe to remove:** Never.
 
 ## Legacy Appendix

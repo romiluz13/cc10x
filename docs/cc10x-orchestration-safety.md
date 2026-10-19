@@ -62,9 +62,8 @@ Hooks are not allowed to become:
 - a hidden task system
 - a replacement for router logic
 
-For example, `TaskCompleted` may reject or audit a `kind:memory` task that was marked
-complete without workflow-level `memory_finalized` evidence, but it must not take over
-memory persistence itself.
+For example, the PostToolUse artifact guard flags a malformed workflow artifact after it
+is written and tells the model to repair it, but it must not repair the artifact itself.
 
 ## Required Checks Before Any Orchestration Change
 

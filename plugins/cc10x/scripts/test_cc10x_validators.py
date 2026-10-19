@@ -426,28 +426,13 @@ def test_a_removed_hook_script_is_named(tmp_path):
     assert "hooks.json references missing script cc10x_state_persist.py" in result.stderr
 
 
-def test_a_dropped_qa_isolation_registration_is_named(tmp_path):
-    root = make_tree(tmp_path)
-    hooks = json.loads((root / HOOKS_REL).read_text(encoding="utf-8"))
-    hooks["hooks"]["PreToolUse"] = [
-        group
-        for group in hooks["hooks"]["PreToolUse"]
-        if "cc10x_qa_isolation_guard.py" not in json.dumps(group)
-    ]
-    (root / HOOKS_REL).write_text(json.dumps(hooks), encoding="utf-8")
-    result = run_tool("harness_audit.py", root)
-    assert result.returncode == 1
-    assert "hooks.json does not register cc10x_qa_isolation_guard.py" in result.stderr
-
-
-def test_a_dropped_preflight_and_git_guard_registration_are_named(tmp_path):
+def test_a_dropped_preflight_registration_is_named(tmp_path):
     root = make_tree(tmp_path)
     text = (root / HOOKS_REL).read_text(encoding="utf-8")
-    text = text.replace("cc10x_preflight.sh", "cc10x_state_persist.py").replace("cc10x_git_guard.py", "cc10x_state_persist.py")
+    text = text.replace("cc10x_preflight.sh", "cc10x_state_persist.py")
     (root / HOOKS_REL).write_text(text, encoding="utf-8")
     stderr = run_tool("harness_audit.py", root).stderr
     assert "hooks.json does not register cc10x_preflight.sh" in stderr
-    assert "hooks.json does not register cc10x_git_guard.py" in stderr
 
 
 def edit_hooks(root: Path, mutate) -> None:
@@ -463,10 +448,8 @@ def drop_hook_script(data: dict, script: str) -> None:
 @pytest.mark.parametrize(
     "script",
     [
-        "cc10x_pretooluse_guard.py",
         "cc10x_posttooluse_artifact_guard.py",
         "cc10x_sessionstart_context.py",
-        "cc10x_task_completed_guard.py",
         "cc10x_event_logger.py",
         "cc10x_state_persist.py",
     ],
@@ -479,13 +462,13 @@ def test_dropping_any_registered_core_hook_script_is_named(script, tmp_path):
     assert f"hooks.json does not register {script}" in result.stderr
 
 
-def test_an_emptied_task_completed_hook_list_is_named(tmp_path):
+def test_an_emptied_hook_list_is_named(tmp_path):
     root = make_tree(tmp_path)
-    edit_hooks(root, lambda d: d["hooks"]["TaskCompleted"][0].update(hooks=[]))
+    edit_hooks(root, lambda d: d["hooks"]["PostToolUse"][0].update(hooks=[]))
     result = run_tool("harness_audit.py", root)
     assert result.returncode == 1, result.stdout + result.stderr
-    assert "hooks.json event TaskCompleted registers no hook command" in result.stderr
-    assert "hooks.json does not register cc10x_task_completed_guard.py" in result.stderr
+    assert "hooks.json event PostToolUse registers no hook command" in result.stderr
+    assert "hooks.json does not register cc10x_posttooluse_artifact_guard.py" in result.stderr
 
 
 def test_an_event_with_no_groups_registers_no_command(tmp_path):
@@ -511,13 +494,13 @@ def test_a_script_named_only_in_prose_is_not_registered(tmp_path):
     root = make_tree(tmp_path)
 
     def mutate(data):
-        group = data["hooks"]["PreToolUse"][0]
-        group["hooks"][0]["command"] = 'python3 "${CLAUDE_PLUGIN_ROOT}/scripts/cc10x_git_guard.py"'
-        group["hooks"][0]["statusMessage"] = "see scripts/cc10x_pretooluse_guard.py"
+        group = data["hooks"]["PostToolUse"][0]
+        group["hooks"][0]["command"] = 'python3 "${CLAUDE_PLUGIN_ROOT}/scripts/cc10x_event_logger.py"'
+        group["hooks"][0]["statusMessage"] = "see scripts/cc10x_posttooluse_artifact_guard.py"
 
     edit_hooks(root, mutate)
     errors = harness_audit.check_hook_registration(root / "plugins" / "cc10x")
-    assert "hooks.json does not register cc10x_pretooluse_guard.py" in errors
+    assert "hooks.json does not register cc10x_posttooluse_artifact_guard.py" in errors
 
 
 def test_unparseable_hooks_json_is_one_clear_error(tmp_path):
@@ -528,13 +511,9 @@ def test_unparseable_hooks_json_is_one_clear_error(tmp_path):
 
 
 CORE_SCRIPTS = (
-    "cc10x_pretooluse_guard.py",
-    "cc10x_git_guard.py",
-    "cc10x_qa_isolation_guard.py",
     "cc10x_posttooluse_artifact_guard.py",
     "cc10x_sessionstart_context.py",
     "cc10x_preflight.sh",
-    "cc10x_task_completed_guard.py",
     "cc10x_event_logger.py",
     "cc10x_state_persist.py",
 )
@@ -580,19 +559,6 @@ def test_a_malformed_or_retargeted_hook_entry_is_named(event, mutate, expected, 
     edit_hooks(root, lambda d: mutate(first_hook(d, event)))
     errors = hook_errors(root)
     assert any(expected in e for e in errors), errors
-
-
-@pytest.mark.parametrize("script", ["cc10x_git_guard.py", "cc10x_qa_isolation_guard.py", "cc10x_pretooluse_guard.py"])
-def test_a_pretooluse_guard_must_keep_its_matcher(script, tmp_path):
-    root = make_tree(tmp_path)
-
-    def drop_matcher(data):
-        for group in data["hooks"]["PreToolUse"]:
-            if script in json.dumps(group):
-                del group["matcher"]
-
-    edit_hooks(root, drop_matcher)
-    assert f"hooks.json PreToolUse hook for {script} has no matcher" in hook_errors(root)
 
 
 @pytest.mark.parametrize(
@@ -1000,10 +966,6 @@ def _legacy_phase_id_key(d):
         phase["id"] = phase.pop("phase_id")
 
 
-def _qa_open_isolation(d):
-    d["starting_artifact"]["qa"]["isolation"]["plan_phase_readonly"] = False
-
-
 def _qa_unfinalized(d):
     d["starting_artifact"]["status_history"].pop()
 
@@ -1188,7 +1150,6 @@ def _memory_blocked_by_early_doc_sync_with_last(d):
 
 L1_MUTATIONS = [
     ("qa-route-happy-path.json", _drop_task("qa_hunt"), "QA route phases"),
-    ("qa-route-happy-path.json", _qa_open_isolation, "plan_phase_readonly"),
     ("qa-route-happy-path.json", _qa_unfinalized, "memory_finalized"),
     ("qa-route-happy-path.json", _qa_foreign_wf, "qa_hunt carries wf"),
     ("remfix-gate.json", _pop_remfix_field("COVERING_TESTS"), "REM-FIX report missing COVERING_TESTS"),
@@ -1533,10 +1494,10 @@ def test_a_hook_missing_from_the_hooks_readme_is_named(tmp_path):
     root = make_tree(tmp_path)
     readme = root / HOOKS_README_REL
     readme.write_text(
-        readme.read_text(encoding="utf-8").replace("`cc10x_qa_isolation_guard.py`", "the QA guard"),
+        readme.read_text(encoding="utf-8").replace("`cc10x_posttooluse_artifact_guard.py`", "the artifact guard"),
         encoding="utf-8",
     )
-    assert any("cc10x_qa_isolation_guard.py" in e and "0 times" in e for e in readme_errors(root))
+    assert any("cc10x_posttooluse_artifact_guard.py" in e and "0 times" in e for e in readme_errors(root))
     result = run_tool("harness_audit.py", root)
     assert result.returncode == 1 and "hooks README" in result.stderr
 
@@ -1554,8 +1515,12 @@ def test_each_event_logger_registration_must_be_listed_by_its_argument(tmp_path)
 def test_a_hook_listed_twice_in_the_hooks_readme_is_named(tmp_path):
     root = make_tree(tmp_path)
     readme = root / HOOKS_README_REL
-    readme.write_text(readme.read_text(encoding="utf-8") + "\nAgain: `cc10x_git_guard.py`.\n", encoding="utf-8")
-    assert any("cc10x_git_guard.py" in e and "2 times" in e for e in readme_errors(root))
+    readme.write_text(readme.read_text(encoding="utf-8") + "\nAgain: `cc10x_sessionstart_context.py`.\n", encoding="utf-8")
+    assert any("cc10x_sessionstart_context.py" in e and "2 times" in e for e in readme_errors(root))
+
+
+def test_hooks_readme_does_not_oversell_the_logs_as_an_evidence_trail():
+    assert "evidence trail" not in (REPO / HOOKS_README_REL).read_text(encoding="utf-8")
 
 
 def test_a_phantom_hook_script_in_the_hooks_readme_is_named(tmp_path):
@@ -1780,7 +1745,7 @@ def test_readme_file_tree_lists_only_paths_that_exist_and_every_agent():
     assert [p for p in paths if not (REPO / p).exists()] == []
     for agent in (REPO / "plugins/cc10x/agents").glob("*.md"):
         assert f"plugins/cc10x/agents/{agent.name}" in paths, agent.name
-    for name in ("qa-workflow.md", "cc10x_qa_isolation_guard.py", "templates/"):
+    for name in ("qa-workflow.md", "cc10x_sessionstart_context.py", "templates/"):
         assert any(p.endswith(name) for p in paths), name
 
 
@@ -1845,12 +1810,40 @@ def test_settings_template_and_readme_setup_step_carry_the_same_rules():
 
 def test_settings_template_allows_every_mkdir_form_the_prompts_and_readme_run():
     allow = json.loads((REPO / "claude-settings-template.json").read_text(encoding="utf-8"))["permissions"]["allow"]
-    # Agents and the router run the trailing-slash form (the QA guard denies the bare one);
+    # Agents and the router run the trailing-slash form (one canonical form);
     # the README wizard's user-standards step still runs the bare form.
     assert "Bash(mkdir -p .cc10x/)" in allow
     assert "Bash(mkdir -p .cc10x)" in allow
     assert 'Bash(command="mkdir -p .cc10x")' in readme_text()
     assert "Bash(mkdir -p .cc10x/)" in readme_setup_rules()
+
+
+def test_settings_template_git_rules_are_exactly_the_shipped_set():
+    # Any new git rule (a `git branch` prefix, `git:*`, checkout, push) widens what runs unprompted; adding one is deliberate.
+    allow = json.loads((REPO / "claude-settings-template.json").read_text(encoding="utf-8"))["permissions"]["allow"]
+    assert {rule for rule in allow if re.match(r"Bash\(git\b", rule)} == {
+        "Bash(git status)",
+        "Bash(git diff:*)",
+        "Bash(git log:*)",
+        "Bash(git branch --show-current)",
+        "Bash(git blame:*)",
+        "Bash(git ls-files:*)",
+        "Bash(git rev-parse:*)",
+    }
+    text = readme_text()
+    assert "`git branch --show-current` reads the current branch" in text
+    assert "git branch" + ":*" not in text  # split so the repo-wide grep for the old rule stays empty
+    # Some shipped rules can run other commands unprompted, so the README must not promise a gate.
+    assert "The template is a convenience, not a security boundary" in text
+    assert "`--output`" in text
+    assert "gate those git operations" not in text
+    # Deny rules alone do not gate git while `Bash(python3:*)` is allowed, so the advice is "remove and deny".
+    assert "or add explicit `deny` rules" not in text
+    assert "Deny rules alone do not gate git while `Bash(python3:*)` is allowed" in text
+    # bypassPermissions ignores allow rules, so the "remove and deny" advice needs this caveat.
+    assert "In `bypassPermissions`, allow rules have no effect and only explicit `ask` rules prompt" in text
+    assert "nothing prompts" not in text
+    assert "In auto mode, a classifier decides most actions instead of prompting" in text
 
 
 def test_memory_permission_rule_uses_the_edit_form_that_covers_nested_paths():
@@ -1880,7 +1873,10 @@ def test_guide_has_one_workflow_section_covering_all_eight_workflows():
 def test_guide_describes_hooks_and_allowed_tools_as_they_behave():
     text = guide_text()
     assert "can be blocked" not in text and "enforce guardrails" not in text
-    assert "audit by default" in text
+    assert "the artifact guard blocks a malformed workflow artifact by default" in text
+    assert "Claude Code's permission settings are the gate for git commands and file reads and writes" in text
+    assert "(a prompt rule, not a hook; picking Merge includes its cleanup)" in text
+    assert "`bug-investigator` may append investigation lines under `## Debug History`" in text
     assert "pre-approves" in text and "does not restrict" in text
     assert "docs/cc10x-orchestration-bible.md" not in text.replace("docs/history/cc10x-orchestration-bible.md", "")
     assert (REPO / "docs/history/cc10x-orchestration-bible.md").exists()

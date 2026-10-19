@@ -90,7 +90,7 @@ def test_system_python39_present_or_skipped():
 @pytest.mark.parametrize("interp", interpreters())
 def test_hook_scripts_do_not_crash(interp, tmp_path):
     commands = hook_commands()
-    assert len(commands) >= 9
+    assert len(commands) >= 8
     for argv in commands:
         for payload in PAYLOADS:
             r = run(interp, argv, json.dumps(payload), tmp_path)

@@ -9,7 +9,7 @@
       "Bash(git status)",
       "Bash(git diff:*)",
       "Bash(git log:*)",
-      "Bash(git branch:*)",
+      "Bash(git branch --show-current)",
       "Bash(git blame:*)",
       "Bash(git ls-files:*)",
       "Bash(git rev-parse:*)",

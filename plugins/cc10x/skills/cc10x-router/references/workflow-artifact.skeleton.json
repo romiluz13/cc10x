@@ -110,14 +110,6 @@
       "setup_record": null
     },
     "bug_candidates": [],
-    "isolation": {
-      "denied_reads": [],
-      "denied_read_reason": null,
-      "plan_phase_readonly": true,
-      "mutation_allowlist": [
-        ".cc10x/"
-      ]
-    },
     "env_key": null,
     "preflight": {
       "status": null,

@@ -45,7 +45,7 @@ Before creating a new remediation task:
 - If count >= 3, ask the user how to proceed BEFORE creating a 4th remediation cycle.
 - This is the only point where the limit is evaluated; every other mention of the breaker points here. One review pass is one cycle (see Fix-wave consolidation).
 
-**Audit backstop (MANDATORY — do not skip):** each remediation round appends exactly one entry to the workflow artifact's `remediation_history` array, `{ts, phase, reason, cycle_number}`, where `cycle_number` is this workflow's running remediation count (starting at 1): immediately after creating the `kind:remfix` task when Task tools exist, and when the router records the REM-FIX step in artifact-only mode or inline mode (no task exists then, and the hook below does not run). In the same step, append a `remediation_created` event with `details.phase_id` (the `phase_cursor` value) to the events log; it is the boundary the artifact-only resume rule reads (`SKILL.md` §4). The `TaskCompleted` guard independently counts `remediation_history` entries from the artifact on every `kind:remfix` completion and flags when the count exceeds 3 — deliberately one cycle BEHIND the router's own ask-user rule above. It cannot see the user's authorization, so it also flags a cycle the user authorized beyond 3: in `audit` mode that is a warning, and in `block` mode it would block the authorized cycle, so do not set `taskMetadata` to `block` when cycles beyond 3 may be authorized. In `config/hook-mode.json` the `taskMetadata` mode ships as `audit`: the guard then logs the event and warns on stderr, and it blocks (exit 2) only when `taskMetadata` is set to `block`. It does not depend on the router's own counting being correct.
+**Remediation history (MANDATORY — do not skip):** each remediation round appends exactly one entry to the workflow artifact's `remediation_history` array, `{ts, phase, reason, cycle_number}`, where `cycle_number` is this workflow's running remediation count (starting at 1): immediately after creating the `kind:remfix` task when Task tools exist, and when the router records the REM-FIX step in artifact-only mode or inline mode (no task exists then). In the same step, append a `remediation_created` event with `details.phase_id` (the `phase_cursor` value) to the events log; it is the boundary the artifact-only resume rule reads (`SKILL.md` §4). The circuit breaker above is a router rule, and the router is the only counter. The breaker count reads `remediation_history` and artifact-only resume reads the `remediation_created` event, so skipping either append breaks one of them; without Task tools there are no REM-FIX tasks to cross-check, so a missed append lowers the count.
 
 ### Change-something-before-re-dispatch
 
@@ -212,7 +212,7 @@ TaskCreate({
 If integration-verifier emits `FAIL` and the findings contain `REVERT`:
 
 - Ask the user whether to revert or create a fix task.
-- `Revert` -> record the decision in memory and stop.
+- `Revert` -> record the decision in memory and stop; run a command that drops work only if the user asks, under the drop-work rule in `SKILL.md` §14 Hard Rules.
 - `Create fix task instead` -> continue with normal remediation creation.
 
 ### Verify-before-implement (bidirectional remediation)

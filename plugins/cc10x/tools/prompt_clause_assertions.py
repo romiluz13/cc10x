@@ -256,7 +256,85 @@ def yaml_alternatives_parse(marker: str, expected_blocks: int):
     return check
 
 
+def _qa_agent_dispatches(text: str) -> list[str]:
+    """Each TaskCreate description in qa-workflow.md whose metadata is kind:agent or kind:remfix."""
+    return [
+        m.group(0)
+        for m in re.finditer(r'description: "wf:[^\n]*', text)
+        if re.search(r"\\nkind:(agent|remfix)\\n", m.group(0))
+    ]
+
+
+# Names of the enforcing guards, the approval token, the removed hook-mode keys and the menu rule
+# that were removed; no shipped prompt or doc surface may describe them as current behavior.
+REMOVED_GUARD_PATTERN = re.compile(
+    r"cc10x_git_guard|cc10x_qa_isolation_guard|cc10x_pretooluse_guard|cc10x_task_completed_guard|git[-_ ]approval|approval[-_ ]token|consume_approval|memoryWrites|taskMetadata|gitGuard|isolation[-_ ](guard|hook)|QA[-_ ]guard|git[-_ ]guard|guard enforces|guard denies|PreToolUse|TaskCompleted|PLAN_PHASES|PROVISIONING_PHASES|task[-_ ]metadata[-_ ](guard|hook|check)|memory[-_ ]writes?[-_ ](guard|hook)|protected[-_ ]writes?|explicit menu choice|Execute ONLY the chosen option|hook can see|guards fail|classifier error|disengage|hooks audit task metadata|guards never saw|proven insufficient|audit[- ]backstop|hook-enforced|task[-_ ]completed[-_ ]guard|denial message|it is a refusal|plan phase guard|plugin-native guardrail|guard returns 0|which half is the guard|enforce it anywhere else|the hook below does not run|blocked unconditionally|unconditional blockers?|single-use token",
+    re.IGNORECASE,
+)
+# Every scan root must contribute files, and the total must not shrink below this floor
+# (158 files were scanned when the floor was set), so a moved or renamed root fails instead of passing vacuously.
+REMOVED_GUARD_MIN_FILES = 140
+
+
+def _removed_guard_scan_roots() -> dict[str, list[Path]]:
+    docs = ROOT / "docs"
+    history = {docs / "plans", docs / "research", docs / "history"}
+    roots = {
+        "README.md": [ROOT / "README.md"],
+        "CLAUDE.md": [ROOT / "CLAUDE.md"],
+        "manifests": [ROOT / ".claude-plugin" / "marketplace.json", PLUGIN / ".claude-plugin" / "plugin.json"],
+        "docs/**/*.md": sorted(p for p in docs.rglob("*.md") if not history & set(p.parents)),
+        "hook scripts": sorted([*(PLUGIN / "scripts").glob("cc10x_*.py"), *(PLUGIN / "scripts").glob("cc10x_*.sh")]),
+    }
+    for sub in ("agents", "skills", "templates", "hooks", "config", "tests/fixtures"):
+        roots[sub] = sorted(p for p in (PLUGIN / sub).rglob("*") if p.is_file())
+    return {name: [p for p in paths if p.is_file()] for name, paths in roots.items()}
+
+
+def removed_guard_hits() -> list[str]:
+    """One "{relpath}:{lineno}: {line}" per REMOVED_GUARD_PATTERN match in the shipped prompt and doc surfaces,
+    plus one entry per empty scan root or a total file count under REMOVED_GUARD_MIN_FILES.
+
+    README.md skips only the `## Version History` section (release rows are history), up to the next
+    `## ` heading. CHANGELOG.md, docs/plans, docs/research, docs/history, test files and tools/ are out of scope."""
+    roots = _removed_guard_scan_roots()
+    hits = [f"{name}: scan root is missing or empty" for name, paths in roots.items() if not paths]
+    total = sum(len(paths) for paths in roots.values())
+    if total < REMOVED_GUARD_MIN_FILES:
+        hits.append(f"scanned {total} files, fewer than REMOVED_GUARD_MIN_FILES={REMOVED_GUARD_MIN_FILES}")
+    for path in (p for paths in roots.values() for p in paths):
+        try:
+            lines = read(path).splitlines()
+        except UnicodeDecodeError:
+            # It counted toward the floor, so it must not pass unread.
+            hits.append(f"{path.relative_to(ROOT)}: undecodable, not scanned")
+            continue
+        skip = range(0)
+        if path == ROOT / "README.md" and "## Version History" in lines:
+            start = lines.index("## Version History")
+            end = next((i for i in range(start + 1, len(lines)) if lines[i].startswith("## ")), len(lines))
+            skip = range(start, end)
+        for lineno, line in enumerate(lines, 1):
+            if lineno - 1 not in skip and REMOVED_GUARD_PATTERN.search(line):
+                hits.append(f"{path.relative_to(ROOT)}:{lineno}: {line.strip()}")
+    return hits
+
+
+def no_removed_guard_hits(_text: str) -> bool:
+    # A.eval passes one file's text; this check scans many files and names each hit on stdout.
+    hits = removed_guard_hits()
+    for hit in hits:
+        print(f"REMOVED-GUARD-HIT {hit}")
+    return not hits
+
+
 ASSERTIONS = [
+    A(
+        "no shipped surface names a removed guard, the approval token, a removed hook-mode key, or the menu rule",
+        ROOT / "README.md",
+        no_removed_guard_hits,
+        "the enforcing guards, the approval token, memoryWrites/taskMetadata and the finishing-menu rule were removed; docs that still describe them promise protection that is gone",
+    ),
     A(
         "router routing table: priority-5 QA row",
         SKILLS / "cc10x-router" / "SKILL.md",
@@ -1406,6 +1484,17 @@ ASSERTIONS = [
         and "plans with unresolved Open Decisions (BUILD may not start)" in text,
         "all four pre-existing exceptions (Trust rule, §14, build-workflow finishing) are stated where JUST_GO is defined",
     ),
+    A(
+        "router: JUST_GO never answers a drop-work confirmation and its auto-answer is never the user's agreement",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: any(
+            "auto-default AskUserQuestion gates" in line
+            and "drop-work confirmations (the §14 drop-work rule and Discard's typed `discard`)" in line
+            and "A JUST_GO auto-answer is never the user's agreement" in line
+            for line in text.splitlines()
+        ),
+        "the §14 drop-work rule runs only what the user agreed to; JUST_GO auto-answering that confirmation would turn a default into consent",
+    ),
     # 80.4 — §8: 'too short or malformed' made checkable
     A(
         "router: malformed-output rule is checkable",
@@ -2372,13 +2461,15 @@ ASSERTIONS = [
         "one definition of the 3-cycle limit; the fan-out, loop and consolidation texts point at it",
     ),
     A(
-        "remediation: breaker backstop is audit-mode accurate, not claimed hook-enforced",
+        "remediation: the circuit breaker is a router rule and the remediation_history append is mandatory",
         SKILLS / "cc10x-router" / "references" / "remediation-and-research.md",
-        lambda text: "Hook-enforced" not in text
-        and "hook-enforced" not in text
-        and "`taskMetadata`" in text
-        and "audit" in text,
-        "the guard blocks only when taskMetadata is block; the shipped default is audit, so the backstop is a warning",
+        contains_all(
+            "**Remediation history (MANDATORY — do not skip):**",
+            "The circuit breaker above is a router rule, and the router is the only counter",
+            "The breaker count reads `remediation_history` and artifact-only resume reads the `remediation_created` event",
+            "without Task tools there are no REM-FIX tasks to cross-check, so a missed append lowers the count",
+        ),
+        "the router counts the entries and asks the user; the breaker reads remediation_history and artifact-only resume reads remediation_created",
     ),
     A(
         "remediation: unreachable branches are marked, not presented as live",
@@ -2487,12 +2578,12 @@ ASSERTIONS = [
         lambda text: text.count("use the artifact with the newest modification time in `.cc10x/workflows/`, finished or not") == 1
         and "newest modification time in `.cc10x/workflows/` that is not finished" not in text
         and "SessionStart context and the compaction and stop snapshots use the newest artifact that is not finished" in text
-        and "the QA isolation guard then disengages itself when that artifact is finished" in text
+        and "The PostToolUse artifact guard (for writes that are not to a workflow artifact) and the event logger use the artifact with the newest modification time" in text
         and "last `status_history` event is `memory_finalized`, `workflow_completed` or `workflow_failed`" in text
         and "when its `memory-finalize` phase is completed" in text
         and "fires on startup|resume|clear|compact|fork" in text
         and "startup|resume|compact" not in text,
-        "the protected-writes guard, QA isolation guard, PostToolUse guard and event logger read latest_workflow_file (finished or not); only SessionStart and the state snapshots skip finished artifacts (a code-reading test pins the split)",
+        "the PostToolUse guard and the event logger read latest_workflow_file (finished or not); only SessionStart and the state snapshots skip finished artifacts (a code-reading test pins the split)",
     ),
     A(
         "router: the PostToolUse guard is said to flag a malformed artifact, not reject it",
@@ -2558,10 +2649,49 @@ ASSERTIONS = [
         "docs/adr holds only 0001 and 0002; the QA numbered ADR-n and RFC section citations pointed at nothing (B9)",
     ),
     A(
-        "qa-workflow: circuit-breaker backstop is called audit, not hook-enforced",
+        "qa-workflow: the remediation_history append is the counter the circuit breaker reads",
         ROUTER_REFS / "qa-workflow.md",
-        lambda text: "hook-enforced" not in text and text.count("audit backstop for the 3-cycle breaker") == 1,
-        "taskMetadata ships as audit; consistent with remediation-and-research.md (B1/B9)",
+        lambda text: text.count("3-cycle circuit breaker counts those entries") == 1
+        and text.count("artifact-only resume reads the `remediation_created`") == 1,
+        "the breaker is a router rule and the artifact entries are its count; consistent with remediation-and-research.md (B1/B9)",
+    ),
+    A(
+        "qa-workflow: a quarantine reaches every QA agent scaffold, is recorded in intent.constraints, and a legacy isolation block carries over",
+        ROUTER_REFS / "qa-workflow.md",
+        lambda text: "fill the `Denied reads:` line of every QA agent dispatch" in text
+        and "append one entry to the workflow artifact's `intent.constraints`" in text
+        and "On resume, re-read `intent.constraints`" in text
+        and "legacy isolation block" in text
+        and "from the current artifact's `intent.constraints`, never from a stored task description or from memory" in text
+        and "so the prefix is never doubled" in text
+        and "`{paths} — {reason}. Do not read these by any channel; if any of it reaches you anyway, say so in your report and tag the findings it affected.`" in text
+        and "join every `Denied reads:` entry in `intent.constraints`" in text
+        and "an artifact that still carries a legacy isolation block under `qa`" in text
+        and "unless that exact entry is already present" in text
+        and "Escalates to the user **before the next dispatch**" in text
+        and "Any QA agent that reads denied material by any channel says so in its report and tags the affected findings" in text
+        and "When any QA agent reports such an incident, the router:" in text
+        and 0 < len(_qa_agent_dispatches(text)) == text.count("TaskCreate({") - len(re.findall(r'description: "wf:[^\n]*?\\nkind:memory\\n', text))
+        and all(d.count("\\n\\nDenied reads: {quarantine}") == 1 for d in _qa_agent_dispatches(text))
+        and "Nothing is persisted" not in text,
+        "OD-1 = B carries a quarantine only in dispatch scaffolds; a researcher-only line left the planner, reviewers, harness builder and executor blind, and nothing survived resume",
+    ),
+    A(
+        "qa-workflow: both regression runs copy the source workflow's quarantine into the new artifact",
+        ROUTER_REFS / "qa-workflow.md",
+        lambda text: text.count("copies every `Denied reads:` entry from the source workflow's `intent.constraints` into the new artifact's `intent.constraints`") == 2
+        and text.count("the denied paths and reason of the source's legacy isolation block") == 2
+        and "Such a run requires `source_wf`" in text,
+        "a regression run is a fresh workflow that skips step 2a, so without the copy its executor gets `Denied reads: None`",
+    ),
+    A(
+        "router: QA resume fills the quarantine from intent.constraints, and planner intent updates keep it",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        contains_all(
+            "7. QA workflows, before the next dispatch: apply `references/qa-workflow.md` step 2a's resume and legacy bullets, and fill every QA dispatch's `Denied reads:` line from `intent.constraints` at dispatch.",
+            "(preserve existing `Denied reads:` entries in `intent.constraints`)",
+        ),
+        "a stored task description is a stale snapshot of the quarantine, and an intent rewrite from planner output must not drop it",
     ),
     A(
         "qa-workflow: qa-plan dispatch overrides the planner's docs/plans save path",
@@ -2820,12 +2950,10 @@ ASSERTIONS = [
         "the single breaker is evaluable without Task tools; one definition, asked before the 4th cycle exists",
     ),
     A(
-        "remediation: each remediation round appends one remediation_history entry in both modes; hook counts stay one cycle behind",
+        "remediation: each remediation round appends one remediation_history entry in both modes",
         SKILLS / "cc10x-router" / "references" / "remediation-and-research.md",
-        lambda text: re.search(r"each remediation round appends exactly one entry[^\n]{0,300}(artifact-only|without Task tools)", text) is not None
-        and "deliberately one cycle BEHIND" in text
-        and "`taskMetadata` mode ships as `audit`" in text,
-        "the audit backstop wording survives and the append rule no longer needs a REM-FIX task to exist",
+        lambda text: re.search(r"each remediation round appends exactly one entry[^\n]{0,300}(artifact-only|without Task tools)", text) is not None,
+        "the append rule does not need a REM-FIX task to exist",
     ),
     A(
         "router: Cycle row and hard rule say before a 4th cycle, matching the breaker",
@@ -3070,7 +3198,7 @@ ASSERTIONS = [
         "the two boundary events moved from not-emitted to emitted together with the steps that append them",
     ),
     A(
-        "remediation: the audit-backstop append also appends a remediation_created event with details.phase_id",
+        "remediation: the remediation_history append also appends a remediation_created event with details.phase_id",
         SKILLS / "cc10x-router" / "references" / "remediation-and-research.md",
         lambda text: re.search(r"append a `remediation_created` event[^\n]{0,160}`details\.phase_id`", text) is not None,
         "the REM-FIX boundary is written where the remediation_history entry is written",
@@ -3170,13 +3298,54 @@ ASSERTIONS = [
         "a missed append or a missed REM-FIX task must never lower the count",
     ),
     A(
-        "remediation: the hook backstop also flags a user-authorized cycle beyond 3, so block mode is not for authorized extra cycles",
+        "build-workflow: the finishing options keep their safety lines (no force-push, typed discard as a separate reply, no JUST_GO destructive picks)",
+        ROUTER_REFS / "build-workflow.md",
+        contains_all(
+            "push + open PR; preserve the worktree (the user still needs it). Never force-push.",
+            "`Discard`: after the user chooses discard, in the menu or in conversation, ask for a typed `discard` confirmation as a separate reply",
+            "and run no command that drops work until it arrives (for example branch deletion, worktree removal, hard reset, clean, or checkout or restore over the working tree)",
+            "First show exactly what will be dropped (files, branches, worktrees), then wait for the typed `discard`",
+            "Picking Merge counts as asking for its cleanup (worktree teardown and deleting the merged branch).",
+            "Before teardown, check that the worktree has nothing uncommitted or untracked; if it does, stop and ask the user.",
+            "using only the safe branch delete that refuses unmerged branches",
+            "If the reply is not `discard`, treat it as `Keep as-is` and record that.",
+            "if a choice made in conversation does not clearly name one option (for example \"ship it\" could mean push or merge), ask which",
+            "JUST_GO must NOT auto-select discard.",
+            "JUST_GO never auto-merges, auto-pushes, or auto-discards",
+        ),
+        "a discard chosen in conversation still needs the typed reply (OD-2); in-place discard drops only this workflow's changes",
+    ),
+    A(
+        "router: one hard rule makes the router show and confirm before any command that drops work, on every path; agents get a scaffold line",
+        SKILLS / "cc10x-router" / "SKILL.md",
+        lambda text: all(
+            needle in text
+            for needle in (
+                "- Before the router runs any command that drops work (for example branch deletion, worktree removal, hard reset, clean, checkout or restore over the working tree, stash drop, or deleting a remote branch), it shows the user exactly what the command will drop (files, branches, worktrees) and runs only what the user agreed to in the conversation.",
+                "This covers every command the router itself runs, on every path: finishing, REVERT, trivial builds, failed merges.",
+                "The router never guesses which edits belong to the workflow: anything it cannot attribute (untracked files, edits that predate the workflow) it lists for the user and leaves alone unless the user names it.",
+                "If a request does not clearly name what to drop, ask.",
+                "Never run a command that drops work (for example hard reset, clean, checkout or restore over files, stash drop, branch deletion); if one seems needed, stop and report it so the router can ask the user.",
+                "The router never force-pushes",
+            )
+        )
+        and text.count("typed `discard` confirmation") == 1,
+        "the user chose 'Only when you ask': show what drops, run only what the user agreed to; Discard's typed confirmation is stated once",
+    ),
+    A(
+        "remediation: the REVERT gate points at the drop-work hard rule",
         SKILLS / "cc10x-router" / "references" / "remediation-and-research.md",
-        lambda text: "deliberately one cycle BEHIND" in text
-        and "so it fires only if the router already missed its checkpoint" not in text
-        and re.search(r"cannot see the user's authorization, so it also flags a cycle the user authorized beyond 3", text) is not None
-        and re.search(r"do not set `taskMetadata` to `block` when cycles beyond 3 may be authorized", text) is not None,
-        "the guard counts entries and cannot see consent; the old text claimed it only fires on a router miss",
+        lambda text: "- `Revert` -> record the decision in memory and stop; run a command that drops work only if the user asks, under the drop-work rule in `SKILL.md` §14 Hard Rules.\n" in text
+        and "REVERT records the decision and stops" not in text,
+        "REVERT had no rule against dropping work once the token and the guard were gone",
+    ),
+    A(
+        "build-workflow: the Merge menu option says it includes its cleanup",
+        ROUTER_REFS / "build-workflow.md",
+        contains(
+            "   - `Merge to base branch locally` — merges into the base branch, re-runs the tests on the merged result, checks the worktree is clean, then removes the worktree (only one cc10x created) and deletes the merged branch with the safe delete.\n"
+        ),
+        "picking Merge counts as asking for its cleanup, so the option must say what that cleanup drops",
     ),
     A(
         "build-workflow: both builder templates block the builder on the previous phase's last task for phases after the first",
@@ -3244,9 +3413,9 @@ ASSERTIONS = [
     ),
     # --- P4A remediation 2, commit 3: survivors of the hunt that are cheap to pin ---
     A(
-        "remediation: the backstop append names artifact-only and inline mode, where no task exists and the hook does not run",
+        "remediation: the remediation_history append names artifact-only and inline mode, where no task exists",
         SKILLS / "cc10x-router" / "references" / "remediation-and-research.md",
-        lambda text: "when the router records the REM-FIX step in artifact-only mode or inline mode (no task exists then, and the hook below does not run)" in text,
+        lambda text: "when the router records the REM-FIX step in artifact-only mode or inline mode (no task exists then)" in text,
         "without this clause the append rule reads as task-bound and the artifact count goes stale in those modes",
     ),
     A(
@@ -3758,7 +3927,7 @@ ASSERTIONS = [
         and "`phase:qa-re-plan` may also amend `.cc10x/qa/{workflow_uuid}/feature-map.md`" in text
         and "Do NOT write under `docs/plans/` on a QA route" in text
         and "create no file outside `.cc10x/`" in text,
-        "the docs/plans-only write rule contradicted the QA dispatch and the QA isolation guard (A5)",
+        "the docs/plans-only write rule contradicted the QA dispatch (A5)",
     ),
     A(
         "planner: writes what plan-review-gate checks",
@@ -4112,32 +4281,31 @@ ASSERTIONS = [
         "the BASE tamper clauses in the verifier and reviewer had no DEBUG producer, so DEBUG always fell back to git diff HEAD",
     ),
     A(
-        "agent-common: Memory First mkdir keeps the trailing slash the QA isolation guard allows, and is a no-op safety net",
+        "agent-common: Memory First mkdir uses the trailing-slash form the router uses, and is a no-op safety net",
         SKILLS / "agent-common" / "SKILL.md",
         lambda text: 'Bash(command="mkdir -p .cc10x/")' in text
         and 'Bash(command="mkdir -p .cc10x")' not in text
         and "so the step is a no-op safety net" in text
-        and "Keep the trailing slash" in text
-        and "denies the bare form `mkdir -p .cc10x` in QA plan phases" in text,
-        "the guard's allowlist is the prefix `.cc10x/`, so the bare form was denied for the planner in QA plan phases (a behavioral guard test pins both forms)",
+        and "so every prompt shows one canonical form" in text,
+        "one canonical form across the router, memory-operations and agent-common; the settings template allows both forms",
     ),
     # --- P4B remediation 2, commit 1: the bare mkdir form is prescribed nowhere ---
     A(
-        "no prompt file prescribes the bare `mkdir -p .cc10x` form (the QA isolation guard denies it in QA plan phases)",
+        "no prompt file prescribes the bare `mkdir -p .cc10x` form",
         SKILLS / "cc10x-router" / "SKILL.md",
         lambda _text: not [
             path
             for path in [*AGENTS.glob("*.md"), *SKILLS.rglob("*.md")]
-            if path != SKILLS / "agent-common" / "SKILL.md" and re.search(r"mkdir -p \.cc10x(?![/\w.-])", read(path))
+            if re.search(r"mkdir -p \.cc10x(?![/\w.-])", read(path))
         ],
-        "the guard's allowlist is the prefix `.cc10x/`; a prescribed bare form is denied for every caller in a QA plan phase (agent-common is the one file that may mention the bare form, and only to say it is denied)",
+        "one canonical form across the router, memory-operations and agent-common; the settings template allows both forms",
     ),
     A(
         "router memory load and memory-operations use the trailing-slash mkdir",
         SKILLS / "cc10x-router" / "SKILL.md",
         lambda text: 'Bash("mkdir -p .cc10x/")' in text
         and (SKILLS / "memory-and-handoff" / "references" / "memory-operations.md").read_text(encoding="utf-8").count("mkdir -p .cc10x/\n") == 1,
-        "the memory load is the first step of every workflow and runs before any QA plan phase guard",
+        "the memory load is the first step of every workflow, so its form is the one agents copy",
     ),
     # --- P4B remediation 2, commit 2: dispute-only phase transition, re-raise matching, persisted set, named stall exit, executor rule ---
     A(
@@ -4513,7 +4681,7 @@ ASSERTIONS = [
         contains_all(
             "| `.cc10x/qa/` |",
             "`env/{env_key}/setup.md`",
-            "| `.cc10x/state/git-approval.json` |",
+            "| `.cc10x/state/` | hook-mode report markers",
         ),
         "the surface table omitted two router-owned surfaces that exist on disk",
     ),

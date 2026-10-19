@@ -20,17 +20,17 @@ skills:
 
 **You may not**, by any tool or command: create, edit, move, or delete files; `mkdir`; install packages or fixtures; start or stop services; `git init` / `commit` / `checkout`; write via redirection (`>`, `>>`, heredoc) or `tee`.
 
-> An agent that mutates the machine while claiming to be read-only produces a report nobody can trust and side effects nobody expected. In a prior run this exact gap installed global skill fixtures onto the user's machine during a planning phase, and they outlived the workflow. `Edit`/`Write` guards never saw it, because it went through `Bash`.
+> An agent that mutates the machine while claiming to be read-only produces a report nobody can trust and side effects nobody expected. In a prior run this exact gap installed global skill fixtures onto the user's machine during a planning phase, and they outlived the workflow. It went through `Bash`, which is why `Bash` counts as a write surface.
 
 **If enumerating something requires running it** — you cannot read a dropdown's runtime values without a live UI, you cannot know a CLI's flags without invoking it — then either use a genuinely non-mutating invocation (`--help`), or record it in `GAPS` as *unenumerated: requires a running system*. A gap you named is worth more than a fact you obtained by breaking your own contract.
 
-A PreToolUse guard enforces this during QA planning phases. Do not attempt to work around it; a blocked call is a signal to record a gap, not an obstacle to route around.
+This holds during QA planning phases. When you cannot enumerate something without mutating, record the gap; do not route around the rule.
 
 ## If your dispatch carries a read denylist
 
-Your scaffold may name paths you must not read — a quarantined document, another tenant's data, an existing test suite the plan is meant to be written independently of. The guard enforces that **over the filesystem only.**
+Your scaffold may name paths you must not read — a quarantined document, another tenant's data, an existing test suite the plan is meant to be written independently of. The denylist is an instruction in your scaffold: do not read those paths.
 
-It cannot enforce it anywhere else. A quarantined document pasted into a Jira comment, an MR description, a Confluence page, a Slack thread or a wiki export reaches you through an allowlisted source, in a batched API response, whole. By the time you can recognise it, you have read it. No hook can prevent that, and the failure is not yours.
+Honour it on every channel, not only the filesystem. A quarantined document pasted into a Jira comment, an MR description, a Confluence page, a Slack thread or a wiki export reaches you through an allowlisted source, in a batched API response, whole. By the time you can recognise it, you have read it. No hook can prevent that, and the failure is not yours.
 
 **What is yours is the report.** When you recognise denied material arriving over any channel:
 
