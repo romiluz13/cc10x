@@ -3122,7 +3122,7 @@ EXPECTED_PLAN_PHASES = {
     "qa-plan-review-2",
 }
 
-# Deliberately outside the guard's default mutation_allowlist ([".cc10x/"]) —
+# Deliberately outside the guard's default mutation_allowlist ([".cc10x/", "~/.cc10x/qa/topology/"]) —
 # a target inside it is allowed regardless of phase, which would make the deny
 # cases pass for the wrong reason. On the Bash branch the allowlist is now
 # matched against the paths `_bash_paths` extracts from the command, resolved
@@ -4062,6 +4062,8 @@ PP51_COUNT_LINE = re.compile(r"^topology unit checks: (\d+) passed$")
 PP51_MIN_UNIT_CHECKS = 89  # measured 94 at 38ab7a3 + this REM-FIX; headroom 5
 PP51_SELFTEST_ENV = "CC10X_TOPOLOGY_SELFTEST_FAIL"
 PP51_SELFTEST_TAIL = re.compile(r"^topology unit checks: \d+ passed, 1 failed$")
+PP52_FIXTURE = PLUGIN / "tests" / "fixtures" / "qa-route-happy-path.json"
+PP52_TOPOLOGY_ENTRY = "~/.cc10x/qa/topology/"
 
 
 def _yaml_enum_offers(line: str, token: str) -> bool:
@@ -4154,7 +4156,12 @@ def artifact(phase: str | None, *, history_phase: str | None = None) -> dict:
 
 
 def run_guard_raw(
-    project_dir: Path, payload: dict, tool_payload: dict
+    project_dir: Path,
+    payload: dict,
+    tool_payload: dict,
+    *,
+    extra_env: dict[str, str] | None = None,
+    python: str | None = None,
 ) -> subprocess.CompletedProcess:
     """Write ONE artifact, invoke the guard, return the CompletedProcess.
 
@@ -4168,7 +4175,9 @@ def run_guard_raw(
     asserts only the decision cannot tell a deliberate allow from a traceback
     -- which is the exact defect PP-34 exists to catch. `tool_payload` is a
     parameter rather than a constant so a property can probe a tool other than
-    the Bash mkdir probe PP-6 uses.
+    the Bash mkdir probe PP-6 uses. `extra_env` can only SET variables
+    (HOME, CC10X_HOME); a case that needs one unset sets it to "".
+    `python` picks the interpreter (default: the one running this suite).
     """
     wf_dir = project_dir / ".cc10x" / "workflows"
     wf_dir.mkdir(parents=True, exist_ok=True)
@@ -4176,8 +4185,10 @@ def run_guard_raw(
     wf_file.write_text(json.dumps(payload))
     try:
         env = dict(os.environ, CLAUDE_PROJECT_DIR=str(project_dir))
+        if extra_env:
+            env.update(extra_env)
         return subprocess.run(
-            [sys.executable, str(GUARD)],
+            [python or sys.executable, str(GUARD)],
             input=json.dumps(tool_payload),
             capture_output=True,
             text=True,
@@ -8901,6 +8912,144 @@ def main() -> int:
         f"{TOPOLOGY_SCRIPT.relative_to(PLUGIN)} and "
         f"{TOPOLOGY_TPL.relative_to(PLUGIN)} present"
         + ("" if not pp51_faults else " -- " + "; ".join(pp51_faults)),
+    )
+
+    # ---------------------------------------------------------------- PP-52
+    # The confirmation-time topology write is legal by default: the default
+    # mutation_allowlist carries the topology dir, `~/.cc10x/` follows
+    # $CC10X_HOME when it is set (replacing, never adding), and the happy-path
+    # fixture carries the skeleton's default. Each guard case asserts the
+    # triple rc == 0, stderr == "", decision -- a crash reads as ALLOW.
+    pp52_faults: list[str] = []
+    with tempfile.TemporaryDirectory() as tmp:
+        pp52_root = Path(tmp)
+        pp52_proj = pp52_root / "project"
+        pp52_home = pp52_root / "home"
+        pp52_other = pp52_root / "other"
+        for d in (pp52_proj, pp52_home, pp52_other):
+            d.mkdir()
+        pp52_rec = "qa/topology/acme/topology.md"
+        pp52_unset = {"HOME": str(pp52_home), "CC10X_HOME": ""}
+        pp52_moved = {"HOME": str(pp52_home), "CC10X_HOME": str(pp52_other)}
+        pp52_cases: list[tuple[str, dict[str, str], dict, bool]] = [
+            ("a", pp52_unset, {"tool_name": "Write", "tool_input": {
+                "file_path": str(pp52_home / ".cc10x" / pp52_rec), "content": "x"}}, False),
+            ("b", pp52_unset, {"tool_name": "Write", "tool_input": {
+                "file_path": str(pp52_home / ".cc10x" / "qa" / "notes.md"), "content": "x"}}, True),
+            ("c", pp52_moved, {"tool_name": "Write", "tool_input": {
+                "file_path": str(pp52_other / pp52_rec), "content": "x"}}, False),
+            ("d", pp52_moved, {"tool_name": "Write", "tool_input": {
+                "file_path": str(pp52_home / ".cc10x" / pp52_rec), "content": "x"}}, True),
+            ("e", pp52_unset, {"tool_name": "Bash", "tool_input": {"command":
+                'python3 "${CLAUDE_PLUGIN_ROOT}/scripts/cc10x_qa_topology.py" write acme '
+                "--from .cc10x/qa/x/env-plan.md --status confirmed --repos ."}}, False),
+            ("f", pp52_unset, {"tool_name": "Bash", "tool_input": {"command":
+                f"mkdir -p {pp52_home / '.cc10x' / 'qa' / 'topology' / 'acme'}"}}, False),
+        ]
+        for tag, env_over, tool, want_deny in pp52_cases:
+            r = run_guard_raw(pp52_proj, artifact("qa-plan"), tool, extra_env=env_over)
+            got_deny = '"permissionDecision": "deny"' in r.stdout
+            if not (r.returncode == 0 and r.stderr == "" and got_deny == want_deny):
+                pp52_faults.append(
+                    f"({tag}) -> deny={got_deny} want {want_deny} "
+                    f"(rc={r.returncode} stderr={(r.stderr.strip().splitlines() or [''])[-1]!r})"
+                )
+
+        def _pp52_probe(tag: str, art: dict, env_over: dict[str, str], target: str,
+                        want_deny: bool, py: str | None = None) -> None:
+            """One Write probe; a fault names the tag, the decision and the crash, if any."""
+            r = run_guard_raw(
+                pp52_proj, art,
+                {"tool_name": "Write", "tool_input": {"file_path": target, "content": "x"}},
+                extra_env=env_over, python=py,
+            )
+            got_deny = '"permissionDecision": "deny"' in r.stdout
+            if not (r.returncode == 0 and r.stderr == "" and got_deny == want_deny):
+                pp52_faults.append(
+                    f"({tag}) -> deny={got_deny} want {want_deny} "
+                    f"(rc={r.returncode} stderr={(r.stderr.strip().splitlines() or [''])[-1]!r})"
+                )
+
+        # (h) a non-list allowlist falls back to the default AND says so.
+        pp52_art_h = artifact("qa-plan")
+        pp52_art_h["qa"]["isolation"]["mutation_allowlist"] = "bogus"
+        _pp52_probe("h", pp52_art_h, pp52_unset, str(pp52_home / ".cc10x" / pp52_rec), False)
+        _pp52_probe("h", pp52_art_h, pp52_unset, str(pp52_home / ".cc10x" / "qa" / "notes.md"), True)
+        pp52_log = pp52_proj / ".cc10x" / "cc10x-hook-events.log"
+        pp52_events: list[dict] = []
+        if pp52_log.is_file():
+            for line in pp52_log.read_text(encoding="utf-8").splitlines():
+                try:
+                    rec = json.loads(line)
+                except ValueError:
+                    continue
+                if isinstance(rec, dict):
+                    pp52_events.append(rec)
+        if not any(
+            e.get("event") == "config_malformed"
+            and e.get("reason") == "mutation_allowlist not a list of strings; default applied"
+            for e in pp52_events
+        ):
+            pp52_faults.append("(h) events log lacks config_malformed")
+
+        # (i) only `~/.cc10x/` follows CC10X_HOME; any other tilde entry stays under HOME.
+        pp52_art_i = artifact("qa-plan")
+        pp52_art_i["qa"]["isolation"]["mutation_allowlist"] = [
+            ".cc10x/", "~/.cc10x/qa/topology/", "~/notes/",
+        ]
+        _pp52_probe("i", pp52_art_i, pp52_moved, str(pp52_other / "x.md"), True)
+        _pp52_probe("i", pp52_art_i, pp52_moved, str(pp52_home / "notes" / "x.md"), False)
+
+        # (j) an unresolvable path is a decision, never a crash: a symlink loop
+        # (raises on 3.9, resolves on newer Pythons) and an embedded NUL.
+        pp52_loop = pp52_other / "loop"
+        os.symlink(str(pp52_loop), str(pp52_loop))
+        pp52_art_j = artifact("qa-plan")
+        pp52_art_j["qa"]["isolation"]["mutation_allowlist"] = [".cc10x/", "~/.cc10x/qa/topology/"]
+        pp52_pythons = [sys.executable] + [
+            p for p in ("/usr/bin/python3",) if Path(p).is_file() and p != sys.executable
+        ]
+        pp52_39 = "ran" if len(pp52_pythons) > 1 else "absent"
+        for py in pp52_pythons:
+            probe = subprocess.run(
+                [py, "-c", "import pathlib,sys; p=pathlib.Path(sys.argv[1]);\n"
+                 "try: p.resolve(); sys.exit(0)\nexcept Exception: sys.exit(3)",
+                 str(pp52_loop / "qa")],
+                capture_output=True, text=True,
+            )
+            _pp52_probe(
+                f"j1@{py}", pp52_art_j,
+                {"HOME": str(pp52_home), "CC10X_HOME": str(pp52_loop)},
+                str(pp52_loop / "qa" / "topology" / "a.md"), probe.returncode == 3, py,
+            )
+            _pp52_probe(
+                f"j2@{py}", pp52_art_j, pp52_unset,
+                str(pp52_home / ".cc10x" / "qa" / "topology" / "acme" / "top\x00ology.md"),
+                True, py,
+            )
+    pp52_skel, _ = load_skeleton()
+    pp52_skel_val = ((pp52_skel.get("qa") or {}).get("isolation") or {}).get("mutation_allowlist")
+    pp52_fix = json.loads(PP52_FIXTURE.read_text(encoding="utf-8"))
+    pp52_fix_val = (
+        ((pp52_fix.get("starting_artifact") or {}).get("qa") or {}).get("isolation") or {}
+    ).get("mutation_allowlist")
+    if pp52_fix_val != pp52_skel_val:
+        pp52_faults.append(
+            f"(g) fixture {PP52_FIXTURE.name} mutation_allowlist {pp52_fix_val!r} != "
+            f"skeleton {pp52_skel_val!r}"
+        )
+    if not isinstance(pp52_skel_val, list) or PP52_TOPOLOGY_ENTRY not in pp52_skel_val:
+        pp52_faults.append(f"(g) skeleton mutation_allowlist {pp52_skel_val!r} lacks {PP52_TOPOLOGY_ENTRY!r}")
+    check(
+        "PP-52",
+        not pp52_faults,
+        f"the default allowlist admits the topology record and nothing else under the "
+        f"home ({len(pp52_cases) + 3} guard cases a-f, h, i, j: HOME/CC10X_HOME substitution, "
+        f"the topology CLI, mkdir of its dir, the non-list fallback + config_malformed "
+        f"event, a foreign tilde entry, a symlink loop and a NUL under "
+        f"{', '.join(pp52_pythons)}; 3.9 probe: {pp52_39}), and fixture {PP52_FIXTURE.name} == "
+        f"skeleton {SKELETON.name} == {pp52_skel_val!r} (g)"
+        + ("" if not pp52_faults else " -- " + "; ".join(pp52_faults)),
     )
 
     print(f"\nproperties checked: {', '.join(checked)}")

@@ -1427,8 +1427,8 @@ def check_qa_route_happy_path(fixture: dict[str, Any]) -> None:
         f"{label}: qa.isolation.plan_phase_readonly must be true",
     )
     require(
-        qa["isolation"]["mutation_allowlist"] == [".cc10x/"],
-        f"{label}: qa.isolation.mutation_allowlist must be ['.cc10x/']",
+        qa["isolation"]["mutation_allowlist"] == [".cc10x/", "~/.cc10x/qa/topology/"],
+        f"{label}: qa.isolation.mutation_allowlist must be ['.cc10x/', '~/.cc10x/qa/topology/'] (the skeleton default)",
     )
 
 

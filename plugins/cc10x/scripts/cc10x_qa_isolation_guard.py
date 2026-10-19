@@ -72,9 +72,11 @@ Config lives in the workflow artifact under `qa.isolation`:
         "denied_reads": ["/abs/path/answer-sheet.md", "**/test/*.e2e-spec.ts"],
         "denied_read_reason": "quarantined for benchmark comparison",
         "plan_phase_readonly": true,
-        "mutation_allowlist": [".cc10x/"]
+        "mutation_allowlist": [".cc10x/", "~/.cc10x/qa/topology/"]
       }
     }
+
+Patterns beginning `~/.cc10x/` follow `$CC10X_HOME` when it is set.
 
 Absent config, the plan-phase read-only rule still applies whenever the active
 workflow is QA and its phase cursor is a planning phase. Fail open: if the
@@ -213,19 +215,36 @@ def _norm(path: str) -> str:
 
     The hook process can be started from anywhere; `.cc10x/` in an allowlist
     and `.cc10x/qa/x` in a command must resolve to the same tree or the
-    comparison is between two different repos.
+    comparison is between two different repos. A path that cannot be
+    resolved — a symlink loop, an embedded NUL — raises OSError; callers treat
+    it as "matches nothing", which for a mutating tool in a plan phase is DENY.
     """
     p = Path(os.path.expanduser(path))
     if not p.is_absolute():
         p = project_dir() / p
-    return str(p.resolve())
+    try:
+        return str(p.resolve())
+    except (OSError, RuntimeError, ValueError) as exc:
+        # A symlink loop is RuntimeError on 3.9 and OSError on newer
+        # Pythons; an embedded NUL is ValueError everywhere. One type out.
+        raise OSError(f"unresolvable path: {exc}") from exc
+
+
+def _expand_pattern(pat: str, cc10x_home: str | None) -> str:
+    """`~/.cc10x/...` follows CC10X_HOME when it is set; then ~ expands as usual."""
+    if cc10x_home and pat.startswith("~/.cc10x/"):
+        pat = cc10x_home.rstrip("/") + pat[len("~/.cc10x"):]
+    return os.path.expanduser(pat)
 
 
 def _matches(path: str, patterns: list[str]) -> str | None:
     """Return the pattern that matched, or None."""
-    resolved = _norm(path)
+    try:
+        resolved = _norm(path)
+    except OSError:
+        return None  # unresolvable target: it matches nothing
     for pat in patterns:
-        expanded = os.path.expanduser(pat)
+        expanded = _expand_pattern(pat, os.environ.get("CC10X_HOME"))
         if fnmatch.fnmatch(resolved, expanded) or fnmatch.fnmatch(path, expanded):
             return pat
         # Bare path: match it and anything beneath it.
@@ -253,7 +272,7 @@ def _covers(root: str, patterns: list[str]) -> str | None:
     except OSError:
         return None
     for pat in patterns:
-        expanded = os.path.expanduser(pat)
+        expanded = _expand_pattern(pat, os.environ.get("CC10X_HOME"))
         if "*" in expanded or "?" in expanded:
             continue
         try:
@@ -509,9 +528,17 @@ def main() -> int:
     denied_reads = [d for d in denied_reads if isinstance(d, str)]
     deny_reason = isolation.get("denied_read_reason") or "declared off-limits for this workflow"
     plan_readonly = isolation.get("plan_phase_readonly", True)
-    allowlist = isolation.get("mutation_allowlist") or [".cc10x/"]
+    allowlist = isolation.get("mutation_allowlist") or [".cc10x/", "~/.cc10x/qa/topology/"]
     if not isinstance(allowlist, list) or not all(isinstance(a, str) for a in allowlist):
-        allowlist = [".cc10x/"]
+        log_event(
+            "qa_isolation_guard",
+            {
+                "tool_name": tool_name,
+                "event": "config_malformed",
+                "reason": "mutation_allowlist not a list of strings; default applied",
+            },
+        )
+        allowlist = [".cc10x/", "~/.cc10x/qa/topology/"]
 
     # A PreToolUse hook that raises exits non-zero with no decision on stdout,
     # which fails OPEN -- the guard silently stops guarding. status_history is

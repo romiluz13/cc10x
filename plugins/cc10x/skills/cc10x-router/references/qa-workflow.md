@@ -72,7 +72,7 @@ Enumerate every repository the feature's traced path touches — *including* the
 2a. **Persist `qa.isolation` into the workflow artifact NOW — before any researcher is dispatched.**
    - `denied_reads`: absolute paths and globs no agent may read. Ask the user if the workflow implies quarantined material (a comparison baseline, out-of-scope repos, material that would bias the result).
    - `plan_phase_readonly`: `true` unless the user explicitly waives it.
-   - `mutation_allowlist`: `[".cc10x/"]` by default.
+   - `mutation_allowlist`: `[".cc10x/", "~/.cc10x/qa/topology/"]` by default — the second entry is the router's own topology record (`$CC10X_HOME` replaces `~/.cc10x/` when set), the one write a plan phase makes outside `.cc10x/`. The topology CLI is the sanctioned writer of that directory; a by-hand write must name the expanded path — `$VAR` forms are not expanded by the guard.
    - The PreToolUse guard reads this artifact. A denylist that exists only in a prompt is unenforced.
 
 3. **Immediately write `[QA-START: wf:{workflow_uuid}]`** into `activeContext.md ## Recent Changes` once the workflow id exists.
@@ -532,7 +532,7 @@ These are enforced by `scripts/cc10x_qa_isolation_guard.py` (PreToolUse, matcher
   "denied_reads": ["/abs/path/answer-sheet.md", "**/test/*.e2e-spec.ts"],
   "denied_read_reason": "quarantined for benchmark comparison",
   "plan_phase_readonly": true,
-  "mutation_allowlist": [".cc10x/"]
+  "mutation_allowlist": [".cc10x/", "~/.cc10x/qa/topology/"]
 }}
 ```
 
