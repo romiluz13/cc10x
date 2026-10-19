@@ -1422,14 +1422,6 @@ def check_qa_route_happy_path(fixture: dict[str, Any]) -> None:
         )
     qa = artifact["qa"]
     require(qa["qa_scope"] in {"probe", "standard"}, f"{label}: qa_scope must be probe|standard")
-    require(
-        strict_bool(qa["isolation"]["plan_phase_readonly"], True),
-        f"{label}: qa.isolation.plan_phase_readonly must be true",
-    )
-    require(
-        qa["isolation"]["mutation_allowlist"] == [".cc10x/"],
-        f"{label}: qa.isolation.mutation_allowlist must be ['.cc10x/']",
-    )
 
 
 REMFIX_EXECUTOR_STATUS = {"component-builder": "PASS", "bug-investigator": "FIXED"}

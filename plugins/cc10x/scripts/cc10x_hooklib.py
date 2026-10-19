@@ -80,8 +80,7 @@ def _is_project_checkout(root: Path, project: Path) -> bool:
 
 def state_root() -> Path:
     """The project's .cc10x dir. Never creates it — guards must not litter
-    state dirs into repos that never opted into CC10x. Callers that write
-    into an opted-in project use ensure_state_root().
+    state dirs into repos that never opted into CC10x.
 
     Precedence: the .cc10x of the git checkout containing the hook input `cwd`
     when that checkout is the project directory or one of its linked worktrees
@@ -101,12 +100,6 @@ def state_root() -> Path:
     if env_dir and (Path(env_dir) / ".cc10x").is_dir():
         return Path(env_dir) / ".cc10x"
     return project_dir() / ".cc10x"
-
-
-def ensure_state_root() -> Path:
-    path = state_root()
-    path.mkdir(parents=True, exist_ok=True)
-    return path
 
 
 def workflows_dir() -> Path:
@@ -135,8 +128,6 @@ def load_input() -> dict[str, Any]:
 
 HOOK_MODE_DEFAULTS = {
     "artifactIntegrity": "block",
-    "memoryWrites": "audit",
-    "taskMetadata": "audit",
 }
 HOOK_MODE_VALUES = ("block", "audit")
 _MODE_MISSING = object()
@@ -409,10 +400,11 @@ def _artifacts_newest_first() -> list[Path]:
 
 
 def latest_workflow_file() -> Path | None:
-    """The newest-mtime workflow artifact, finished or not. Guards that hold a
-    standing lock (the QA isolation guard) use this: the newest artifact
-    decides, so an abandoned older workflow cannot be resurrected by a newer
-    one finishing."""
+    """The newest-mtime workflow artifact, finished or not. The PostToolUse
+    artifact guard (for writes that are not to a workflow artifact, and as the
+    fallback when a written artifact's name does not resolve) and the event
+    logger use this; SessionStart and the state snapshots use
+    read_live_workflow_state instead."""
     artifacts = _artifacts_newest_first()
     return artifacts[0] if artifacts else None
 
@@ -508,19 +500,9 @@ def read_workflow_state(
     return _read_artifact(workflow_artifact_path(workflow_id))
 
 
-def workflow_event_log_contains(workflow_id: str | None, needle: str) -> bool:
-    path = workflow_event_log_path(workflow_id)
-    if path is None:
-        return False
-    try:
-        return needle in path.read_text(encoding="utf-8")
-    except Exception:
-        return False
-
-
 def log_dropped_workflow_event(source: str, workflow_id: Any, reason: str) -> None:
     """Say that an event for `workflow_id` was not written. An id that fails
-    safe_workflow_id is refused on purpose (it came from artifact or task
+    safe_workflow_id is refused on purpose (it came from artifact
     content and must not become a path); the refusal is logged, not silent."""
     unsafe = safe_workflow_id(workflow_id) is None
     name = "workflow_id_unsafe" if unsafe else "workflow_event_append_failed"
@@ -586,32 +568,8 @@ def workflow_artifact_is_fresh(path: Path, max_age_seconds: int = 60) -> bool:
     return age <= max_age_seconds
 
 
-def parse_metadata(description: str) -> dict[str, str]:
-    values: dict[str, str] = {}
-    for line in description.splitlines():
-        if ":" not in line:
-            continue
-        key, value = line.split(":", 1)
-        key = key.strip()
-        if key in {"wf", "kind", "origin", "phase", "plan", "scope", "reason"}:
-            values[key] = value.strip()
-    return values
-
-
 def json_print(payload: dict[str, Any]) -> None:
     print(json.dumps(payload, ensure_ascii=True))
-
-
-def pretool_deny(reason: str) -> None:
-    json_print(
-        {
-            "hookSpecificOutput": {
-                "hookEventName": "PreToolUse",
-                "permissionDecision": "deny",
-                "permissionDecisionReason": reason,
-            }
-        }
-    )
 
 
 def session_context(message: str) -> None:

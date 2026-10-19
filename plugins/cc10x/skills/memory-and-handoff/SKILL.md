@@ -34,7 +34,7 @@ Memory is an index, not a transcript. Distill decisions, learnings, references, 
 | `.cc10x/progress.md` | current workflow, tasks snapshot, completed items, verification evidence |
 | `.cc10x/workflows/{wf}.json` + `.events.jsonl` | durable orchestration truth (machine-owned, verbatim) |
 | `.cc10x/qa/` | QA route artifacts: `{workflow_uuid}/feature-map.md`, `test-plan.md`, `env-plan.md`, `report.md`, and per-environment `env/{env_key}/setup.md` (router- and QA-agent-owned) |
-| `.cc10x/state/git-approval.json` | git approval token written by the router and read by the git guard |
+| `.cc10x/state/` | hook-mode report markers (`hook-mode-reported-*`), so an invalid `hook-mode.json` is logged once per file state |
 | `docs/plans/*`, `docs/research/*` | detailed artifacts; memory points to them |
 
 ### Ownership

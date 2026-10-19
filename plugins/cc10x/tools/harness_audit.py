@@ -31,7 +31,6 @@ CHANGELOG = ROOT / "CHANGELOG.md"
 PLUGIN_JSON = PLUGIN_ROOT / ".claude-plugin" / "plugin.json"
 MARKETPLACE_JSON = ROOT / ".claude-plugin" / "marketplace.json"
 HOOKS_JSON = PLUGIN_ROOT / "hooks" / "hooks.json"
-TASK_COMPLETED_GUARD = PLUGIN_ROOT / "scripts" / "cc10x_task_completed_guard.py"
 INVARIANTS = ROOT / "docs" / "router-invariants.md"
 PROMPT_INVARIANTS = ROOT / "docs" / "prompt-invariants.md"
 PROMPT_SURFACE_INVENTORY = ROOT / "docs" / "prompt-surface-inventory.md"
@@ -364,13 +363,9 @@ def check_agent_colors(agents_dir: Path = PLUGIN_ROOT / "agents") -> list[str]:
 _HOOK_COMMAND = re.compile(r'(python3|sh) "\$\{CLAUDE_PLUGIN_ROOT\}/scripts/([A-Za-z0-9_.-]+)"(?: [a-z_]+)*')
 _MAIN_GUARD = re.compile(r"^if __name__ == [\"']__main__[\"']:", re.M)
 CORE_HOOK_PAIRS = (
-    ("PreToolUse", "cc10x_pretooluse_guard.py"),
-    ("PreToolUse", "cc10x_git_guard.py"),
-    ("PreToolUse", "cc10x_qa_isolation_guard.py"),
     ("PostToolUse", "cc10x_posttooluse_artifact_guard.py"),
     ("SessionStart", "cc10x_sessionstart_context.py"),
     ("SessionStart", "cc10x_preflight.sh"),
-    ("TaskCompleted", "cc10x_task_completed_guard.py"),
     ("PostCompact", "cc10x_event_logger.py"),
     ("SubagentStop", "cc10x_event_logger.py"),
     ("StopFailure", "cc10x_event_logger.py"),
@@ -379,11 +374,6 @@ CORE_HOOK_PAIRS = (
     ("Stop", "cc10x_state_persist.py"),
 )
 CORE_HOOK_SCRIPTS = tuple(dict.fromkeys(script for _, script in CORE_HOOK_PAIRS))
-MATCHER_REQUIRED = (
-    ("PreToolUse", "cc10x_pretooluse_guard.py"),
-    ("PreToolUse", "cc10x_git_guard.py"),
-    ("PreToolUse", "cc10x_qa_isolation_guard.py"),
-)
 
 
 def hook_entry_points(plugin_root: Path) -> set[str]:
@@ -402,7 +392,7 @@ def check_hook_registration(plugin_root: Path = PLUGIN_ROOT) -> list[str]:
     if not isinstance(hooks, dict):
         return ["hooks.json top-level 'hooks' must be an object keyed by event"]
     errors: list[str] = []
-    registered: dict[tuple[str, str], list[bool]] = {}
+    registered: set[tuple[str, str]] = set()
     for event, groups in sorted(hooks.items()):
         if not isinstance(groups, list):
             errors.append(f"hooks.json event {event} must be a list of hook groups")
@@ -412,7 +402,6 @@ def check_hook_registration(plugin_root: Path = PLUGIN_ROOT) -> list[str]:
             if not isinstance(group, dict) or not isinstance(group.get("hooks"), list):
                 errors.append(f"hooks.json event {event} has a group that is not an object with a 'hooks' list")
                 continue
-            has_matcher = isinstance(group.get("matcher"), str) and bool(group["matcher"].strip())
             for hook in group["hooks"]:
                 if not isinstance(hook, dict):
                     errors.append(f"hooks.json event {event} has a hook entry that is not an object")
@@ -435,7 +424,7 @@ def check_hook_registration(plugin_root: Path = PLUGIN_ROOT) -> list[str]:
                         errors.append(f"hooks.json event {event} command runs {script} with {interpreter}, expected {expected}")
                     if not (plugin_root / "scripts" / script).exists():
                         errors.append(f"hooks.json references missing script {script}")
-                    registered.setdefault((event, script), []).append(has_matcher)
+                    registered.add((event, script))
         if not commands:
             errors.append(f"hooks.json event {event} registers no hook command")
     scripts = {script for _, script in registered}
@@ -445,11 +434,6 @@ def check_hook_registration(plugin_root: Path = PLUGIN_ROOT) -> list[str]:
         f"hooks.json does not register {script} on event {event}"
         for event, script in CORE_HOOK_PAIRS
         if script in scripts and (event, script) not in registered
-    )
-    errors.extend(
-        f"hooks.json {event} hook for {script} has no matcher"
-        for event, script in MATCHER_REQUIRED
-        if (event, script) in registered and not any(registered[(event, script)])
     )
     return errors
 
@@ -621,7 +605,6 @@ def main(argv: list[str] | None = None) -> int:
             router_artifact_skeleton,
         ]
     )
-    task_completed_guard = read(TASK_COMPLETED_GUARD)
     readme = read(README)
     changelog = read(CHANGELOG)
     invariants = read(INVARIANTS)
@@ -878,19 +861,6 @@ def main(argv: list[str] | None = None) -> int:
         errors.append("agent-contract-registry.md appears malformed")
     if "Verifier Latency Model" not in verifier_latency_model:
         errors.append("verifier-latency-model.md appears malformed")
-    if "MEMORY_FINAL_EVENT" not in task_completed_guard:
-        errors.append("task_completed_guard missing memory finalize event guard")
-    for phrase in (
-        'metadata.get("kind") != "memory"',
-        "workflow_event_log_contains(workflow_id, MEMORY_FINAL_EVENT)",
-        "missing-memory-finalized-event",
-        "CC10X Memory Update:",
-    ):
-        if phrase not in task_completed_guard:
-            errors.append(
-                f"task_completed_guard missing memory finalize phrase '{phrase}'"
-            )
-
     for required in (
         "memory-model-and-ownership.md",
         "memory-operations.md",

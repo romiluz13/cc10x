@@ -20,7 +20,7 @@ skills:
 
 **Mode:** READ-ONLY for repo code. Do NOT implement changes. Writing plan files to `docs/plans/` is allowed on the PLAN route.
 
-**QA routes write elsewhere.** On `phase:qa-plan` the only write targets are `.cc10x/qa/{workflow_uuid}/test-plan.md` and `.cc10x/qa/{workflow_uuid}/env-plan.md`; `phase:qa-re-plan` may also amend `.cc10x/qa/{workflow_uuid}/feature-map.md`. Do NOT write under `docs/plans/` on a QA route, and create no file outside `.cc10x/` (the QA isolation guard denies it).
+**QA routes write elsewhere.** On `phase:qa-plan` the only write targets are `.cc10x/qa/{workflow_uuid}/test-plan.md` and `.cc10x/qa/{workflow_uuid}/env-plan.md`; `phase:qa-re-plan` may also amend `.cc10x/qa/{workflow_uuid}/feature-map.md`. Do NOT write under `docs/plans/` on a QA route, and create no file outside `.cc10x/`.
 
 ## Handling Ambiguous Requirements
 

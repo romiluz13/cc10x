@@ -21,7 +21,7 @@ Read(file_path=".cc10x/progress.md")
 
 Memory contains prior decisions, known gotchas, and current context. Without it, you work blind.
 
-Run the `mkdir -p .cc10x/` step unless your agent doc is read-only; the router creates `.cc10x/` and `.cc10x/qa/<workflow>/` for you, so the step is a no-op safety net. Keep the trailing slash: the QA isolation guard's allowlist is the prefix `.cc10x/`, and it denies the bare form `mkdir -p .cc10x` in QA plan phases.
+Run the `mkdir -p .cc10x/` step unless your agent doc is read-only; the router creates `.cc10x/` and `.cc10x/qa/<workflow>/` for you, so the step is a no-op safety net. Use this trailing-slash form, the one the router and `memory-operations.md` run, so every prompt shows one canonical form.
 
 **Narrower agent protocols win:** if your agent doc deliberately narrows this protocol (anti-anchoring reviewers such as `code-reviewer` skip `activeContext.md`; `plan-gap-reviewer` reads no memory at all; `qa-researcher` creates no files and runs no `mkdir`), follow the agent doc — the narrowing is intentional, not an omission.
 

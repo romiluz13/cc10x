@@ -56,15 +56,7 @@
         "report": ".cc10x/qa/wf-20261007T090000Z-qa-happy/report.md",
         "setup_record": null
       },
-      "bug_candidates": [],
-      "isolation": {
-        "denied_reads": [],
-        "denied_read_reason": null,
-        "plan_phase_readonly": true,
-        "mutation_allowlist": [
-          ".cc10x/"
-        ]
-      }
+      "bug_candidates": []
     }
   },
   "relevant_tasks": {

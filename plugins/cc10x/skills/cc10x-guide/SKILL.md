@@ -42,9 +42,8 @@ cc10x ("The Loop Engine") is a Claude Code plugin: one router skill (`cc10x-rout
 that owns every development request, 14 specialist agents it delegates to, 21 skills
 that carry the discipline, and
 8 workflows (BUILD, DEBUG, REVIEW, PLAN, QA, ORIENT, TRIAGE, CODEBASE-HEALTH).
-State persists on disk in `.cc10x/` so work survives compaction; hooks add guardrails
-(the git guard and QA isolation guard block; memory-write and task-metadata hooks audit
-by default).
+State persists on disk in `.cc10x/` so work survives compaction; hooks add audits and
+context, and the artifact guard blocks a malformed workflow artifact by default.
 
 For the pitch and the pain-to-feature table, read README.md → "Why cc10x".
 
@@ -106,17 +105,22 @@ contract — diff against memory-file-contracts.md and restore the missing headi
 
 ## Hooks & guardrails (what users bump into)
 
-- Protected memory writes: a direct Edit/Write to the three memory files is flagged in the
-  hook log (audit by default); it is denied only if `memoryWrites` is set to `"block"` in
-  `hook-mode.json`. Memory updates go through the router's finalization path either way.
 - Artifact integrity: a malformed workflow artifact is blocked after it is written (the
-  shipped default); task-metadata checks audit by default.
-- Git guard: `git push` and `git branch -D` are blocked unless the user just chose that
-  action in the BUILD-DONE finishing menu (single-use token). `git reset --hard`,
-  `git clean -f`, force-push, `git checkout .` are blocked unconditionally.
-- QA isolation guard: on the QA route it denies reads of quarantined paths and environment
-  changes during the plan phases; it is not configurable.
-- Which hook does what, and which can block: `plugins/cc10x/hooks/README.md`.
+  shipped default; `artifactIntegrity` in `hook-mode.json` can set it to `"audit"`).
+- Git and file operations: no cc10x hook gates them.
+  Claude Code's permission settings are the gate for git commands and file reads and writes.
+  Before the router runs a command that drops work (for example branch deletion,
+  worktree removal, reset, clean, checkout or restore over the working tree, stash drop),
+  it shows what will be dropped and runs only what you agreed to
+  (a prompt rule, not a hook; picking Merge includes its cleanup).
+- Memory updates go through the router's finalization path; agents do not edit the memory
+  files directly (a prompt rule, not a hook). The one carve-out:
+  `bug-investigator` may append investigation lines under `## Debug History` in `activeContext.md`.
+- QA quarantine: when a QA workflow must not read some material, the router records it as
+  a `Denied reads:` entry in the workflow artifact's `intent.constraints` and fills it into
+  every QA agent dispatch. It is a prompt rule: a QA agent that reads denied material
+  reports it, and nothing refuses the read mechanically.
+- Which hook does what: `plugins/cc10x/hooks/README.md`.
 - Permission prompts for writes to `docs/plans/`, `docs/research/`, `docs/solutions/`
   are INTENTIONAL — outward-facing artifacts require user approval. Not a bug.
 
@@ -134,7 +138,6 @@ research. Details: README.md → "Optional MCP Integrations", `../mcp-cli/SKILL.
 | Permission prompt mid-workflow | settings.json drifted from `claude-settings-template.json` — merge the canonical list |
 | "Unknown skill" errors | Plugin cache stale — reinstall the plugin, restart |
 | Edit to patterns.md fails on anchor | Headings drifted from contract — see Memory system above |
-| `git push` blocked | Working as intended — choose PR/push in the BUILD-DONE finishing menu |
 
 Deeper trouble: README.md → Troubleshooting.
 
