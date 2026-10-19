@@ -125,7 +125,7 @@ cc10x writes memory and workflow state under `.cc10x/` in each project. It is se
 
 → Router detects QA intent
 → one negotiation at step 0 records grants and the test-plan approval policy; the router asks once, batched, when a grant is set to ask — agents never ask
-→ the topology is recalled from a machine-local record under ~/.cc10x/qa/topology/ (or $CC10X_HOME/qa/topology/ — set CC10X_HOME to an absolute path: the guard and the CLI resolve a relative one against different directories) and written back after confirmation and after the run (a regression re-run that never recalled a record skips the write)
+→ the topology is recalled from a machine-local record under ~/.cc10x/qa/topology/ (or $CC10X_HOME/qa/topology/ — set CC10X_HOME to an absolute path: the CLI resolves a relative one against the current directory) and written back after confirmation and after the run (a regression re-run that never recalled a record skips the write)
 → qa-researcher agents survey the code, specs and tickets, one source each
 → A test plan is reviewed by plan-gap-reviewer before anything is built
 → the reviewed test plan is shown on screen for approval (policy-controlled)

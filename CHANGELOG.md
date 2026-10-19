@@ -38,6 +38,13 @@ Known limits: the drop-work, quarantine and QA planning-phase rules have no runt
 - **Invariants intentionally untouched:** the resume contract (`read_live_workflow_state`, `TERMINAL_EVENTS`, the `memory_finalized` evidence), the artifact-integrity guard and its `artifactIntegrity` mode, the remediation circuit breaker, the seven task metadata lines, the QA phase tokens and enum, and the BUILD-DONE procedural constraints (no force-push, merge-then-cleanup ordering, worktree cleanup provenance, JUST_GO never merges, pushes or discards).
 - **Claim boundary:** cc10x no longer stops a git command, a file write or a QA read at runtime. The confirmations and the quarantine are prompt rules that a model follows, not mechanisms. Only the artifact guard can block, and only a malformed workflow artifact, after the write.
 
+### QA route: behaviour-varying surface, step-0 negotiation, topology record (PR #95)
+
+- **Behaviour-varying surface.** `qa-researcher` reports a `BEHAVIOUR_SURFACE` block (auth, flags and config, declared limits), the feature map carries it unreduced as §6b, the test plan reduces each entry in a "Coverage by behaviour dimension" table with what it leaves uncovered, and every env-plan flag row names the entry it fixes.
+- **Step-0 negotiation and plan approval.** Step 0c asks once for the grants the run needs and the test-plan approval policy, and records them in `qa.negotiation`. Every QA agent dispatch ends with a `## Grants` block, agents never ask the user, and a grant marked `ask` returns `BLOCKED` with `GRANT_NEEDED` so the router asks once, batched. The reviewed test plan halts on `qa_test_plan_approval` unless the policy is `run`.
+- **Topology record.** `scripts/cc10x_qa_topology.py resolve|verify|write` keeps a machine-local record per system at `~/.cc10x/qa/topology/<slug>/topology.md` (`$CC10X_HOME` when set). Step 0b recalls it, the env-plan gate verifies it and asks only the deltas, and it is written after confirmation and again after execution. Secret-shaped values are refused, members are only added, and a corrupt record is renamed, never overwritten.
+- **Rebased onto the guard removal.** PR #95 was written against the QA isolation guard that PR #94 removes. Its guard allowlist commit (`mutation_allowlist` gains the topology directory, PP-52) and its guard comment cleanup are dropped; the rest lands as written. Rule 1 now names `.cc10x/` and the topology directory as the allowlist the `writes_outside_allowlist` grant refers to, and every QA dispatch carries both PR #94's `Denied reads:` line and PR #95's `## Grants` block, in that order.
+
 ## [12.10.0] - 2026-10-07
 
 ### Remediation release
