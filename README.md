@@ -124,8 +124,11 @@ cc10x writes memory and workflow state under `.cc10x/` in each project. It is se
 "write an end-to-end test plan for checkout and run it"
 
 → Router detects QA intent
+→ one negotiation at step 0 records grants and the test-plan approval policy; the router asks once, batched, when a grant is set to ask — agents never ask
+→ the topology is recalled from a machine-local record under ~/.cc10x/qa/topology/ (or $CC10X_HOME/qa/topology/ — set CC10X_HOME to an absolute path: the guard and the CLI resolve a relative one against different directories) and written back after confirmation and after the run (a regression re-run that never recalled a record skips the write)
 → qa-researcher agents survey the code, specs and tickets, one source each
 → A test plan is reviewed by plan-gap-reviewer before anything is built
+→ the reviewed test plan is shown on screen for approval (policy-controlled)
 → qa-harness-builder provisions the environment
 → code-reviewer + failure-hunter check the harness
 → qa-executor runs the plan and fills in the report
@@ -194,7 +197,7 @@ The router picks the workflow from the request's primary deliverable. When more 
 | 2 | **PLAN** | plan, design, architect, roadmap, spec, brainstorm | Turn rough intent into an execution-ready plan with explicit decisions, then a bounded fresh review (`planner` → `plan-gap-reviewer`) |
 | 3 | **REVIEW** | review, audit, analyze, assess | High-signal review with confidence thresholds and file:line citations (`code-reviewer`). Advisory only: never creates code-changing tasks |
 | 4 | **ORIENT** | zoom out, explain, "how does X work", "walk me through" | Read-only orientation answered inline: no agents, no phase graph, no writes |
-| 5 | **QA** | test, QA, e2e, integration test, test plan, regression | Testing the code is the deliverable: survey → test plan → plan review → environment → execution (`qa-researcher` ×N → `plan-gap-reviewer` → `qa-harness-builder` → `qa-executor`) |
+| 5 | **QA** | test, QA, e2e, integration test, test plan, regression | Testing the code is the deliverable: grants negotiation → topology recalled from `~/.cc10x/qa/topology/` → survey (user action inventory + behaviour-varying surface) → test plan → plan review → on-screen plan approval → environment → execution (`qa-researcher` ×N → `plan-gap-reviewer` → `qa-harness-builder` → `qa-executor`) |
 | 6 | **TRIAGE** | triage, "incoming issues" | Categorize and verify incoming issues or PRs and write agent-ready briefs (`triage-agent`). Advisory only |
 | 7 | **CODEBASE-HEALTH** | codebase health, deepening, shallow modules | Scan for deepening candidates and produce an HTML report (`architecture-scanner`). Advisory only |
 | 8 | **BUILD** | build, implement, create, add (and everything else) | Clarify scope → TDD implementation → adversarial review → integration verification (`component-builder` → `code-reviewer` ∥ `failure-hunter` → `integration-verifier`) |
@@ -635,7 +638,7 @@ WORKFLOW STATE (.cc10x/workflows/)
 | **researcher** | Web + GitHub research (Bright Data / Octocode MCP accelerators, built-in fallbacks) | Saves findings to file |
 | **triage-agent** | Triages incoming issues/PRs | Does not change project code; categorizes, verifies, checks redundancy + prior rejection, writes agent-ready briefs |
 | **architecture-scanner** | Codebase health audit | Does not change project code; scans for shallow modules + deepening candidates, produces HTML report with before/after diagrams |
-| **qa-researcher** | QA route: surveys ONE source (code, spec docs, tickets, or cc10x artifacts) | Read-only; produces a per-source report (user flow, system flow, user action inventory, observation points) that the router consolidates into the feature map — it does not write the test plan |
+| **qa-researcher** | QA route: surveys ONE source (code, spec docs, tickets, or cc10x artifacts) | Read-only; produces a per-source report (user flow, system flow, user action inventory, observation points, behaviour-varying surface (auth, flags/config, limits)) that the router consolidates into the feature map — it does not write the test plan |
 | **qa-harness-builder** | QA route: builds the test environment | Provisions services, isolation and fixtures; extends the existing live-harness manifest, never forks it |
 | **qa-executor** | QA route: runs the plan and reports | Fills the router-seeded `qa-report.template.md` in place; teardown is verified, not assumed |
 
@@ -783,7 +786,7 @@ plugins/cc10x/
 │   └── docs_rot_baseline.json
 ├── templates/
 │   ├── {coverage-thresholds,live-harness.template}.json
-│   └── {doc-target-overlay,qa-env-plan.template,qa-feature-map.template,qa-report.template,qa-setup.template,qa-test-plan.template}.md
+│   └── {doc-target-overlay,qa-env-plan.template,qa-feature-map.template,qa-report.template,qa-setup.template,qa-test-plan.template,qa-topology.template}.md
 ├── tests/
 │   ├── fixtures/
 │   └── live/
