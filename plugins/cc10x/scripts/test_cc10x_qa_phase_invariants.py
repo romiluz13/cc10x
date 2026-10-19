@@ -2688,10 +2688,10 @@ PP40_HEADING = re.compile(r"^## (\d+[a-z]?)\. (.+)$", re.M)
 # correct citation INTO the class and produces no mismatch at all.
 # Re-measured at dcee43c + step 0c: the 8 lines of 0c moved the line from
 # 120 to 128 after #94 (the citations other comments in this file call `:119`).
-# Re-measured with the 0b recall bullet: 128 -> 129.
+# Re-measured with the 0b recall bullet: 128 -> 129; the 0c resume bullet: 130.
 PP40_UNDESCRIPTIVE = {
-    ("qa-workflow.md", 129, "3"),   # "wave count and in the"  vs  ## 3. Build order
-    ("qa-workflow.md", 129, "2"),   # "id rollups"             vs  ## 2. Coverage plan
+    ("qa-workflow.md", 130, "3"),   # "wave count and in the"  vs  ## 3. Build order
+    ("qa-workflow.md", 130, "2"),   # "id rollups"             vs  ## 2. Coverage plan
 }
 # There is no exclusion list. The seven unprefixed `§N` in
 # `qa-harness-builder.md`'s 64-71 table fall into the NO-PREFIX branch already --
@@ -3422,6 +3422,13 @@ PP49C_LINES = (
     "- Every QA agent dispatch after this point carries the `## Grants` block "
     "rendered from `qa.negotiation.grants` (defined under *QA-specific "
     "rules*).",
+    # Added in the PR #94/#95 integration: a workflow begun before step 0c.
+    "- On resume, an artifact with no `qa.negotiation` (begun before step 0c "
+    "existed) takes the skeleton's defaults before the next dispatch — every "
+    "grant `ask`, `test_plan_approval: wait` — and appends "
+    "`negotiation_recorded` with `users_words: null`; an artifact with no "
+    "`results.topology` recalled nothing, so steps 0b and 6 treat it as "
+    "`none` with no `derived_slug` and skip the write.",
 )
 # grant names, read back out of the grants line by regex (never retyped)
 PP49C_GRANT_LINE = re.compile(r"(?m)^- The grants are ((?:`[a-z_]+`, )+`[a-z_]+`);")

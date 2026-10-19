@@ -268,7 +268,7 @@ def _qa_agent_dispatches(text: str) -> list[str]:
 # Names of the enforcing guards, the approval token, the removed hook-mode keys and the menu rule
 # that were removed; no shipped prompt or doc surface may describe them as current behavior.
 REMOVED_GUARD_PATTERN = re.compile(
-    r"cc10x_git_guard|cc10x_qa_isolation_guard|cc10x_pretooluse_guard|cc10x_task_completed_guard|git[-_ ]approval|approval[-_ ]token|consume_approval|memoryWrites|taskMetadata|gitGuard|isolation[-_ ](guard|hook)|QA[-_ ]guard|git[-_ ]guard|guard enforces|guard denies|PreToolUse|TaskCompleted|PLAN_PHASES|PROVISIONING_PHASES|task[-_ ]metadata[-_ ](guard|hook|check)|memory[-_ ]writes?[-_ ](guard|hook)|protected[-_ ]writes?|explicit menu choice|Execute ONLY the chosen option|hook can see|guards fail|classifier error|disengage|hooks audit task metadata|guards never saw|proven insufficient|audit[- ]backstop|hook-enforced|task[-_ ]completed[-_ ]guard|denial message|it is a refusal|plan phase guard|plugin-native guardrail|guard returns 0|which half is the guard|enforce it anywhere else|the hook below does not run|blocked unconditionally|unconditional blockers?|single-use token",
+    r"cc10x_git_guard|cc10x_qa_isolation_guard|mutation_allowlist|plan_phase_readonly|cc10x_pretooluse_guard|cc10x_task_completed_guard|git[-_ ]approval|approval[-_ ]token|consume_approval|memoryWrites|taskMetadata|gitGuard|isolation[-_ ](guard|hook)|QA[-_ ]guard|git[-_ ]guard|guard enforces|guard denies|PreToolUse|TaskCompleted|PLAN_PHASES|PROVISIONING_PHASES|task[-_ ]metadata[-_ ](guard|hook|check)|memory[-_ ]writes?[-_ ](guard|hook)|protected[-_ ]writes?|explicit menu choice|Execute ONLY the chosen option|hook can see|guards fail|classifier error|disengage|hooks audit task metadata|guards never saw|proven insufficient|audit[- ]backstop|hook-enforced|task[-_ ]completed[-_ ]guard|denial message|it is a refusal|plan phase guard|plugin-native guardrail|guard returns 0|which half is the guard|enforce it anywhere else|the hook below does not run|blocked unconditionally|unconditional blockers?|single-use token",
     re.IGNORECASE,
 )
 # Every scan root must contribute files, and the total must not shrink below this floor
@@ -2688,7 +2688,7 @@ ASSERTIONS = [
         "router: QA resume fills the quarantine from intent.constraints, and planner intent updates keep it",
         SKILLS / "cc10x-router" / "SKILL.md",
         contains_all(
-            "7. QA workflows, before the next dispatch: apply `references/qa-workflow.md` step 2a's resume and legacy bullets, and fill every QA dispatch's `Denied reads:` line from `intent.constraints` at dispatch.",
+            "7. QA workflows, before the next dispatch: apply `references/qa-workflow.md` step 2a's resume and legacy bullets and step 0c's resume bullet, and fill every QA dispatch's `Denied reads:` line from `intent.constraints` at dispatch.",
             "(preserve existing `Denied reads:` entries in `intent.constraints`)",
         ),
         "a stored task description is a stale snapshot of the quarantine, and an intent rewrite from planner output must not drop it",

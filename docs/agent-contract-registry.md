@@ -38,9 +38,9 @@ No agent calls `TaskUpdate` or creates tasks. The router completes each task aft
 
 | Agent | Contract type | Completion states | Key blocking signal | Memory payload |
 | ------ | --------------- | ------------------- | --------------------- | ---------------- |
-| `qa-researcher` | YAML Router Contract | `PASS`, `FAIL` | reading outside the assigned `SOURCE` is `FAIL`; an empty or unavailable source reported honestly is `PASS` | YAML `MEMORY_NOTES` |
-| `qa-harness-builder` | YAML Router Contract | `PASS`, `FAIL`, `BLOCKED` | `PRODUCT_CODE_TOUCHED=true`, a survived `MUTATION_CHECKS` entry, or non-empty `SERVICES_PROVISIONED` in preflight is `FAIL`; non-empty `BLOCKED_ITEMS`, `HUMAN_PREREQUISITES` or `CURRENCY_GATE` is `BLOCKED` with `NEXT_ACTION: gate` | YAML `MEMORY_NOTES` |
-| `qa-executor` | YAML Router Contract | `PASS`, `FAIL`, `BLOCKED` | `TEST_CODE_TOUCHED` or `PRODUCT_CODE_TOUCHED` is `FAIL`; `TEARDOWN_STATUS` of `leaked` or `not_run` is `FAIL`; `SCENARIOS_BLOCKED>0` is `BLOCKED` | YAML `MEMORY_NOTES` |
+| `qa-researcher` | YAML Router Contract | `PASS`, `FAIL`, `BLOCKED` | reading outside the assigned `SOURCE` is `FAIL`; an empty or unavailable source reported honestly is `PASS`; a grant marked `ask` or not listed is `BLOCKED` with `NEXT_ACTION: gate` and `GRANT_NEEDED`; a source a `denied` grant keeps out is `PASS` with `SOURCE_COVERAGE_REASON: "denied grant: <name>"` | YAML `MEMORY_NOTES` |
+| `qa-harness-builder` | YAML Router Contract | `PASS`, `FAIL`, `BLOCKED` | `PRODUCT_CODE_TOUCHED=true`, a survived `MUTATION_CHECKS` entry, or non-empty `SERVICES_PROVISIONED` in preflight is `FAIL`; non-empty `BLOCKED_ITEMS`, `HUMAN_PREREQUISITES` or `CURRENCY_GATE` is `BLOCKED` with `NEXT_ACTION: gate`, except that `BLOCKED_ITEMS` entries that are all `denied grant: <name>` items (and no `HUMAN_PREREQUISITES`) are reported, never a gate; a grant marked `ask` or not listed is `BLOCKED` with `GRANT_NEEDED` | YAML `MEMORY_NOTES` |
+| `qa-executor` | YAML Router Contract | `PASS`, `FAIL`, `BLOCKED` | `TEST_CODE_TOUCHED` or `PRODUCT_CODE_TOUCHED` is `FAIL`; `TEARDOWN_STATUS` of `leaked` or `not_run` is `FAIL`; `SCENARIOS_BLOCKED>0` is `BLOCKED`; a grant marked `ask` or not listed is `BLOCKED` with `NEXT_ACTION: gate` and `GRANT_NEEDED`; a scenario a `denied` grant blocks is `BLOCKED` with `actual: "denied grant: <name>"`, never a gate | YAML `MEMORY_NOTES` |
 
 ## Read-Only Review Agents
 
