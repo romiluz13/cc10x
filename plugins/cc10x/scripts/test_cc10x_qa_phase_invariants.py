@@ -4113,6 +4113,39 @@ PP53E_DOTTED = re.compile(r"`results\.topology\.[a-z_]+`")
 PP53F_START = re.compile(r"(?m)^\*\*Rule 1 — planning phases mutate nothing\.\*\*")
 PP53F_END = re.compile(r"(?m)^\*\*")
 PP53F_TOKEN = "~/.cc10x/qa/topology/"
+PP54_README = PLUGIN.parent.parent / "README.md"
+PP54_GUIDE = PLUGIN / "skills" / "cc10x-guide" / "SKILL.md"
+PP54_FLOW_START = re.compile(r"(?m)^→ Router detects QA intent")
+PP54_FLOW_END = re.compile(r"(?m)^$")
+PP54_FLOW_TOKENS = ("negotiation", "approval", "~/.cc10x/qa/topology/")
+PP54_TREE_LINE = re.compile(r"(?m)^.*\{doc-target-overlay,.*\}\.md$")
+PP54_TREE_MEMBER = re.compile(r"qa-topology\.template[,}]")
+PP54_TEMPLATE = PLUGIN / "templates" / "qa-topology.template.md"
+PP54_ROWS = (
+    (
+        "cc10x-guide/SKILL.md",
+        PP54_GUIDE,
+        re.compile(r"(?m)^\| QA \|.*$"),
+        re.compile(r"(?m)^\| Intent \| Example triggers \| Shape \|"),
+        3,
+    ),
+    (
+        "README.md",
+        PP54_README,
+        re.compile(r"(?m)^\| 5 \| \*\*QA\*\* \|.*$"),
+        re.compile(r"(?m)^\| Priority \| Workflow \| Trigger words \| What happens \|"),
+        4,
+    ),
+)
+PP54_ROW_TOKENS = ("behaviour-varying surface", "grants", "approval", "topology")
+PP54_FLOW_ORDER = (
+    ("negotiation", "topology is recalled"),
+    ("topology is recalled", "survey"),
+    ("topology is recalled", "provisions the environment"),
+)
+PP54_AGENT_ROW = re.compile(r"(?m)^\| \*\*qa-researcher\*\* \|.*$")
+PP54_AGENT_TOKEN = "behaviour-varying surface"
+PP54_FENCE = "```"
 
 
 def _yaml_enum_offers(line: str, token: str) -> bool:
@@ -9273,6 +9306,93 @@ def main() -> int:
         f"the artifact-template table in {qa_strategy_md.name} has a `topology.md` "
         f"row naming templates/qa-topology.template.md (_normative; {len(pp53g_rows)} rows)"
         + ("" if pp53g_ok else " -- " + (pp53g_fault or "no such row")),
+    )
+
+    # ---------------------------------------------------------------- PP-54
+    # The two places that describe the route to a reader name the three
+    # changes: the README QA flow block, the templates tree line, and the
+    # QA routing rows of the guide and the README (twins, asserted per row).
+    pp54_readme = _decommented(PP54_README.read_text(encoding="utf-8"))
+    pp54_faults: list[str] = []
+    pp54_flow, pp54_flow_fault = _pp41_window(
+        pp54_readme, PP54_FLOW_START, PP54_FLOW_END, "README QA flow block"
+    )
+    if pp54_flow_fault:
+        pp54_faults.append(pp54_flow_fault)
+    else:
+        pp54_missing = [tok for tok in PP54_FLOW_TOKENS if tok not in pp54_flow]
+        if pp54_missing:
+            pp54_faults.append(f"README QA flow block missing {pp54_missing}")
+    pp54_tree = PP54_TREE_LINE.findall(pp54_readme)
+    if len(pp54_tree) != 1:
+        pp54_faults.append(
+            f"PRECONDITION failed: README templates tree line matched {len(pp54_tree)} times (expected exactly 1)"
+        )
+    elif not PP54_TREE_MEMBER.search(pp54_tree[0]):
+        pp54_faults.append("README templates tree line does not list qa-topology.template as a brace member")
+    if not PP54_TEMPLATE.is_file():
+        pp54_faults.append("templates/qa-topology.template.md is not on disk")
+    for pp54_first, pp54_second in PP54_FLOW_ORDER:
+        pp54_o1, pp54_o2 = pp54_flow.find(pp54_first), pp54_flow.find(pp54_second)
+        if pp54_o1 < 0 or pp54_o2 < 0 or pp54_o1 >= pp54_o2:
+            pp54_faults.append(
+                f"README QA flow block order: {pp54_first!r} must precede {pp54_second!r} ({pp54_o1}, {pp54_o2})"
+            )
+    for pp54_name, pp54_path, pp54_row_re, pp54_hdr_re, pp54_idx in PP54_ROWS:
+        pp54_text = _decommented(pp54_path.read_text(encoding="utf-8"))
+        pp54_rows = pp54_row_re.findall(pp54_text)
+        if len(pp54_rows) != 1:
+            pp54_faults.append(
+                f"PRECONDITION failed: the {pp54_name} QA routing row matched {len(pp54_rows)} times (expected exactly 1)"
+            )
+            continue
+        pp54_hdrs = pp54_hdr_re.findall(pp54_text)
+        if len(pp54_hdrs) != 1:
+            pp54_faults.append(
+                f"PRECONDITION failed: the {pp54_name} table header matched {len(pp54_hdrs)} times"
+            )
+            continue
+        pp54_row_m = pp54_row_re.search(pp54_text)
+        pp54_hdr_m = pp54_hdr_re.search(pp54_text)
+        if pp54_row_m is None or pp54_hdr_m is None or pp54_row_m.start() <= pp54_hdr_m.end():
+            pp54_faults.append(f"the {pp54_name} QA routing row sits above its table header")
+            continue
+        if PP54_FENCE in pp54_text[pp54_hdr_m.end() : pp54_row_m.start()]:
+            pp54_faults.append(
+                f"a fence opens between the {pp54_name} table header and its QA routing row"
+            )
+            continue
+        pp54_cells = pp54_rows[0].split("|")
+        if len(pp54_cells) <= pp54_idx:
+            pp54_faults.append(
+                f"the {pp54_name} QA routing row has {len(pp54_cells)} cells, expected the description at index {pp54_idx}"
+            )
+            continue
+        pp54_missing = [tok for tok in PP54_ROW_TOKENS if tok not in pp54_cells[pp54_idx]]
+        if pp54_missing:
+            pp54_faults.append(
+                f"the {pp54_name} QA routing row's description cell is missing {pp54_missing}"
+            )
+    pp54_agent = PP54_AGENT_ROW.findall(pp54_readme)
+    if len(pp54_agent) != 1:
+        pp54_faults.append(
+            f"PRECONDITION failed: the README qa-researcher agent row matched {len(pp54_agent)} times"
+        )
+    else:
+        pp54_last = [c for c in pp54_agent[0].split("|") if c.strip()][-1]
+        if PP54_AGENT_TOKEN not in pp54_last:
+            pp54_faults.append(f"the README qa-researcher agent row's last cell lacks {PP54_AGENT_TOKEN!r}")
+    check(
+        "PP-54",
+        not pp54_faults,
+        f"README QA flow block ({len(pp54_flow.encode('utf-8'))}B) names "
+        f"{len(PP54_FLOW_TOKENS)} tokens in route order (negotiation < recall < survey, "
+        f"recall < provisioning), the templates tree lists qa-topology.template as a brace "
+        f"member and the file is on disk, the QA routing rows of "
+        f"{' and '.join(r[0] for r in PP54_ROWS)} each carry {len(PP54_ROW_TOKENS)} tokens in "
+        f"their description cell under their own table header, and the README qa-researcher "
+        f"agent row names behaviour-varying surface"
+        + ("" if not pp54_faults else " -- " + "; ".join(pp54_faults)),
     )
 
     print(f"\nproperties checked: {', '.join(checked)}")

@@ -84,7 +84,7 @@ special phrases are the opt-outs: "don't use cc10x", "without cc10x", "skip cc10
 | DEBUG | fix, bug, broken | Reproduce from evidence → isolate → validate → prove no regression |
 | REVIEW | review, audit, analyze, assess | High-signal review, confidence ≥80 + file:line citations; advisory only |
 | PLAN | plan, design, architect | Intent → execution-ready plan with explicit decisions, then a fresh plan review |
-| QA | test, e2e, test plan, regression | Testing the code is the deliverable: survey → test plan → environment → execution |
+| QA | test, e2e, test plan, regression | Testing the code is the deliverable: grants negotiation → topology recalled from `~/.cc10x/qa/topology/` → survey (user action inventory + behaviour-varying surface) → test plan → plan review → on-screen plan approval → environment → execution |
 | ORIENT | explain, "how does X work", "walk me through" | Read-only orientation answered inline; no agents, no writes |
 | TRIAGE | triage, "incoming issues" | Categorize and verify issues or PRs, write agent-ready briefs; advisory only |
 | CODEBASE-HEALTH | codebase health, deepening, shallow modules | Scan for deepening candidates, produce an HTML report; advisory only |
