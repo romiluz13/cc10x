@@ -715,6 +715,8 @@ The plugin ships these Claude Code-native hooks, registered in `plugins/cc10x/ho
 
 These hooks are intentionally minimal. They improve reliability without turning the plugin into a second runtime. Which script runs on each event, which can block, and how to change a mode: [`plugins/cc10x/hooks/README.md`](plugins/cc10x/hooks/README.md).
 
+Loop pane (mod). Beside the settings hooks, `hooks.json` names a hooks module under `modules` (`plugins/cc10x/hooks/register.tsx`). It only reads the workflow artifact and events log under `.cc10x/workflows/` and draws what it finds: a one-line band above the prompt (phase, running agent, next step, remediation count) and a dock pane with the whole step chain. Type `/cc10x-loop` to open the pane, or `/cc10x-loop status` to print which artifact it reads. It needs Claude Code 2.1.287 in the terminal or 2.1.286 in Desktop; older releases are not yet verified, and the settings hooks are unaffected either way. It never changes a workflow. Details and known limits: [`plugins/cc10x/hooks/README.md`](plugins/cc10x/hooks/README.md).
+
 ---
 
 ### Plan → Build Automation
@@ -775,12 +777,17 @@ plugins/cc10x/
 ├── hooks/
 │   ├── hooks.json
 │   ├── README.md
-│   └── pre-commit
+│   ├── pre-commit
+│   ├── {register.tsx,loop-state.ts,loop-routes.ts,loop-fixtures.ts}
+│   └── {loop-pane.test.tsx,loop-state.test.ts}
+├── types/
+│   └── index.d.ts
 ├── config/
 │   └── hook-mode.json
 ├── scripts/                # hook scripts and the L1 test suites (test_cc10x_*.py)
 │   ├── cc10x_{event_logger,hooklib,posttooluse_artifact_guard,sessionstart_context,state_persist}.py
-│   └── cc10x_preflight.sh
+│   ├── cc10x_preflight.sh
+│   └── test_cc10x_loop_routes.py
 ├── tools/
 │   ├── {doc_consistency_check,fixture_registry,harness_audit,latency_audit,live_harness_runner,phase_brief,preload_probe,prompt_clause_assertions,release_gate,review_package,token_usage_report,workflow_replay_check}.py
 │   └── docs_rot_baseline.json

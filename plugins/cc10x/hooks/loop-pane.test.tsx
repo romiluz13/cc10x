@@ -629,7 +629,7 @@ test('pane 4b. an events log that cannot be read keeps the previous live view an
   expect(error?.text).toContain('EACCES: log refused')
 })
 
-test('pane 5. the newest artifact with no events log yet is idle, not an error', async ($, on) => {
+test('pane 5. the newest artifact with no events log yet is live with no events, not an error', async ($, on) => {
   const state = engine(on)
   const disk = answerFs(on, BUILD_MID_PHASE)
   disk.log = false

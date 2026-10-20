@@ -1687,6 +1687,14 @@ def test_the_release_gate_section_lists_every_step_and_flag_of_the_runner():
         assert flag in section, flag
 
 
+def test_release_gate_lists_plugin_test_right_after_plugin_validate():
+    ids = subprocess.run(
+        [sys.executable, str(TOOLS / "release_gate.py"), "--list"], capture_output=True, text=True, check=True
+    ).stdout.split()
+    assert "plugin_test" in ids, ids
+    assert ids.index("plugin_test") == ids.index("plugin_validate") + 1, ids
+
+
 def test_the_gate_list_exists_once_and_the_other_gate_docs_point_to_it():
     owners = [doc for doc in GATE_DOCS if f"\n{GATE_HEADING}\n" in (REPO / doc).read_text(encoding="utf-8")]
     assert owners == ["docs/prompt-change-checklist.md"]
