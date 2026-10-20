@@ -74,6 +74,23 @@ def test_clause_assertions_read_the_overridden_root(tmp_path):
     assert "building: one-seam-one-test cycle" in bad.stdout
 
 
+def test_removed_guard_scan_skips_git_ignored_files_but_not_tracked_ones(tmp_path):
+    root = make_tree(tmp_path)
+    for name in (".gitignore", "CLAUDE.md"):
+        shutil.copy2(REPO / name, root / name)
+    with open(root / ".gitignore", "a", encoding="utf-8") as f:
+        f.write("\ndocs/local-notes.md\n")
+    subprocess.run(["git", "init", "-q", str(root)], check=True)
+    (root / "docs/local-notes.md").write_text("the cc10x_git_guard blocks pushes\n", encoding="utf-8")
+    ok = run_tool("prompt_clause_assertions.py", root, "--allow-no-yaml")
+    assert ok.returncode == 0, ok.stdout + ok.stderr
+    (root / "docs/shipped-doc.md").write_text("the cc10x_git_guard blocks pushes\n", encoding="utf-8")
+    bad = run_tool("prompt_clause_assertions.py", root, "--allow-no-yaml")
+    assert bad.returncode != 0, bad.stdout + bad.stderr
+    assert "REMOVED-GUARD-HIT docs/shipped-doc.md:1:" in bad.stdout
+    assert "local-notes" not in bad.stdout
+
+
 def test_harness_audit_reads_the_overridden_root(tmp_path):
     root = make_tree(tmp_path)
     (root / "plugins/cc10x/tests/fixtures/plan-direct.json").unlink()

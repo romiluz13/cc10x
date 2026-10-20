@@ -18,6 +18,7 @@ import argparse
 import json
 import os
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -288,7 +289,25 @@ def _removed_guard_scan_roots() -> dict[str, list[Path]]:
     }
     for sub in ("agents", "skills", "templates", "hooks", "config", "tests/fixtures"):
         roots[sub] = sorted(p for p in (PLUGIN / sub).rglob("*") if p.is_file())
-    return {name: [p for p in paths if p.is_file()] for name, paths in roots.items()}
+    ignored = _git_ignored([p for paths in roots.values() for p in paths])
+    return {name: [p for p in paths if p.is_file() and str(p) not in ignored] for name, paths in roots.items()}
+
+
+def _git_ignored(paths: list[Path]) -> set[str]:
+    # A file git ignores is local and never ships, so a maintainer's ignored notes must not fail the gate.
+    # Outside a git work tree, or without git, nothing is dropped and every file is scanned.
+    try:
+        proc = subprocess.run(
+            ["git", "-C", str(ROOT), "check-ignore", "--stdin", "-z"],
+            input="\0".join(str(p) for p in paths),
+            capture_output=True,
+            text=True,
+        )
+    except FileNotFoundError:
+        return set()
+    if proc.returncode not in (0, 1):
+        return set()
+    return {p for p in proc.stdout.split("\0") if p}
 
 
 def removed_guard_hits() -> list[str]:
