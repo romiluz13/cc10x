@@ -7,6 +7,8 @@ export type Step = {
   at: string | null
   startedAt: number | null
   parallel: boolean
+  // true for a result that fits no chain row (appended after the chain, always done)
+  extra: boolean
 }
 export type LoopEvent = {
   ts: string
@@ -17,7 +19,9 @@ export type LoopEvent = {
   reason: string | null
   phaseId: string
 }
-export type Spawn = { agent: string; atIndex: number; startedAt: number; phaseId: string }
+// `wf` is the spawning workflow's workflow_uuid (else workflow_id): a spawn binds rows of that workflow only.
+// `wf` '' means the workflow is unknown: such a spawn never binds a row.
+export type Spawn = { agent: string; atIndex: number; startedAt: number; phaseId: string; wf: string }
 export type LoopState = {
   wf: string
   path: string
