@@ -20,7 +20,7 @@ const str = (v: unknown): string | null => (typeof v === 'string' ? v : null)
 const obj = (v: unknown): Artifact => (v !== null && typeof v === 'object' && !Array.isArray(v) ? (v as Artifact) : {})
 // null, missing, '' and 'N/A' are one phase id; any other value reads as its String form.
 const phaseKey = (v: unknown): string => (v === null || v === undefined || v === '' ? NO_PHASE : String(v))
-const workflowOf = (artifact: Artifact): string => str(artifact.workflow_uuid) || str(artifact.workflow_id) || ''
+export const workflowOf = (artifact: Artifact): string => str(artifact.workflow_uuid) || str(artifact.workflow_id) || ''
 
 export function parseEvents(text: string): LoopEvent[] {
   const out: LoopEvent[] = []
@@ -113,8 +113,11 @@ function chainOf(artifact: Artifact, remediation: boolean, warnings: string[]): 
   const trivial = scopes.includes('trivial') && !scopes.includes('standard')
   const regression = type === 'QA' && str(artifact.source_wf)
   const key = type === 'BUILD' && trivial ? 'BUILD_TRIVIAL' : regression ? 'QA_REGRESSION' : type
-  if (remediation && REMEDIATION[key] === undefined && ROUTES[key] !== undefined) warnings.push('no remediation chain for ' + key)
-  const chain = (remediation && REMEDIATION[key]) || ROUTES[key]
+  // Own keys only: a type naming an Object.prototype key ('constructor') is unknown, never a chain.
+  const route = Object.hasOwn(ROUTES, key) ? ROUTES[key] : undefined
+  const fix = Object.hasOwn(REMEDIATION, key) ? REMEDIATION[key] : undefined
+  if (remediation && fix === undefined && route !== undefined) warnings.push('no remediation chain for ' + key)
+  const chain = (remediation && fix) || route
   if (chain === undefined) warnings.push('unknown workflow type: ' + (type || '(missing)'))
   return chain ?? []
 }
@@ -152,9 +155,10 @@ export function deriveSteps(artifact: Artifact, events: LoopEvent[], spawns: Spa
         s.atIndex > boundary &&
         !events.some((e, i) => i >= s.atIndex && e.event === 'result_persisted' && e.agent === s.agent),
     )
+    // Another workflow's spawn is a correct non-match; only a spawn of no known workflow is an anomaly.
     for (const s of live) {
-      if (s.wf === '' || s.wf !== wf) {
-        warnings.push('spawn of ' + agent + ' (workflow ' + (s.wf || 'unknown') + ') not bound to ' + (wf || 'unknown'))
+      if (s.wf === '') {
+        warnings.push('spawn of ' + agent + ' (workflow unknown) not bound to ' + (wf || 'unknown'))
       }
     }
     const spawn = live.filter(s => s.wf !== '' && s.wf === wf).pop()

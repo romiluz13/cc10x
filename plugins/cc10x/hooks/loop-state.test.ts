@@ -544,7 +544,7 @@ test('33. build_scope standard in either location wins over trivial (escalation 
   expect(top.steps.slice(0, ROUTES.BUILD.length).map(s => s.phase)).toEqual(ROUTES.BUILD.map(r => r.phase))
 })
 
-test('34. an empty workflow id never binds a spawn; a dropped same-phase spawn warns', () => {
+test('34. an empty workflow id never binds a spawn and warns; a foreign workflow\'s spawn is silent', () => {
   const { events } = load(PLAN_AT_GAP1)
   const at = { agent: 'plan-gap-reviewer', atIndex: events.length, startedAt: NOW, phaseId: 'N/A' }
   const anonymous = loop(PLAN_AT_GAP1, [{ ...at, wf: '' }], a => {
@@ -554,8 +554,10 @@ test('34. an empty workflow id never binds a spawn; a dropped same-phase spawn w
   expect(anonymous.steps.some(s => s.status === 'running')).toBe(false)
   expect(anonymous.warnings).toEqual(['spawn of plan-gap-reviewer (workflow unknown) not bound to unknown'])
 
+  // Another workflow's spawn is a correct non-match, not an anomaly: no warning.
   const foreign = loop(PLAN_AT_GAP1, [{ ...at, wf: 'wf-other' }])
-  expect(foreign.warnings).toEqual(['spawn of plan-gap-reviewer (workflow wf-other) not bound to ' + foreign.wf])
+  expect(foreign.steps.some(s => s.status === 'running')).toBe(false)
+  expect(foreign.warnings).toEqual([])
 
   // A spawn dropped for another reason (before the boundary) is not a workflow mismatch.
   expect(loop(PLAN_AT_GAP1, [{ ...at, atIndex: 0, wf: 'wf-other' }]).warnings).toEqual([])
@@ -626,4 +628,16 @@ test('38. rem never lowers the breaker count: the larger of remediation_history 
   expect(rounds([{}])).toBe(2) // a missed history append
   expect(rounds([{}, {}, {}])).toBe(3) // a missed log record
   expect(rounds('n/a')).toBe(2) // not an array: the log alone
+})
+
+test('39. a workflow_type naming an Object.prototype key is an unknown type, not a throw', () => {
+  for (const type of ['constructor', 'toString', '__proto__', 'hasOwnProperty']) {
+    const state = loop(QA_MID, [], a => {
+      a.workflow_type = type
+    })
+    expect(state.steps.filter(s => !s.extra)).toEqual([])
+    expect(state.warnings).toEqual(['unknown workflow type: ' + type])
+  }
+  const remediated = deriveSteps({ workflow_uuid: 'wf-1', workflow_type: 'constructor' }, [record('remediation_created')], [])
+  expect(remediated.filter(s => !s.extra)).toEqual([])
 })
