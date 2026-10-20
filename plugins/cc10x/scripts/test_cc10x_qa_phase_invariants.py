@@ -3428,8 +3428,8 @@ PP49C_LINES = (
     "grant `ask`, `test_plan_approval: wait` — and appends "
     "`negotiation_recorded` with `users_words: null`; an artifact with no "
     "`results.topology` key at all that is already past step 0b recalled "
-    "nothing, so step 6 skips the write and appends `topology_written` "
-    "(`status: skipped`).",
+    "nothing, so the topology gate's step 6 and the memory-time write both "
+    "skip and append `topology_written` (`status: skipped`).",
 )
 # grant names, read back out of the grants line by regex (never retyped)
 PP49C_GRANT_LINE = re.compile(r"(?m)^- The grants are ((?:`[a-z_]+`, )+`[a-z_]+`);")

@@ -484,6 +484,12 @@ def pure_checks() -> None:
         ("sensitive_assignment", FAKE_KEY_BASE_LINE, " (SECRET_KEY_BASE=)"),
         ("sensitive_table_cell", FAKE_TABLE_PW_ROW, " (name and value in table cells)"),
         ("sensitive_assignment", "GITHUB_" + "PAT=" + "abcdef123456", " (GITHUB_PAT=)"),
+        ("sensitive_assignment", "API_" + "KEYS=" + "abcdef123", " (plural name)"),
+        ("sensitive_assignment", "secret" + "Key: " + "abcdef123", " (camelCase name)"),
+        ("sensitive_assignment", "password" + "Hash=" + "abcdef123", " (camelCase suffix)"),
+        ("sensitive_table_cell", "| tok" + "ens | " + "abcdef123 |", " (plural name in a table cell)"),
+        ("credential_flag", "-u admin:" + "1234", " (a numeric password)"),
+        ("credential_flag", "-p1" + "secretpw", " (a password starting with a digit)"),
     ]
     for shape, line, label in secret_cases:
         case(
@@ -512,11 +518,11 @@ def pure_checks() -> None:
         "CONFIG_PATH=/etc/app/config.yaml",
         "OUTPUT_PATTERN=*.log.gz",
         "| DATA_PATH | /var/lib/data |",
-        "SECRETS_DIR=/run/secrets/app",
         "docker run -u 1000:1000 img",
         "docker run -p8080:80 img",
         "ssh -p2222 qa-host",
         "java -port=8080 -jar app.jar",
+        "docker run -p8080:80/tcp img",
     ):
         case(
             f"classify_secret: {benign!r} is None",
@@ -552,6 +558,7 @@ def pure_checks() -> None:
             [
                 "## 7. Secrets and config",
                 "- STRIPE_KEY is set to LIVEVALUE" + "XYZ in prod",
+                "- DB_PASSWORD is HUNTER_" + "TWO_X from vault",
                 "client_secret: " + FAKE_PEM_BEGIN,
                 "MIIEvQ+BADANBg/xyz",
                 "-----END OPENSSH " + "PRIVATE KEY-----",
@@ -559,10 +566,10 @@ def pure_checks() -> None:
             refused,
         )
         lines = [r["line_no"] for r in refused]
-        ok = got == "- `STRIPE_KEY`" and lines == [3, 4, 5]
+        ok = got == "" and lines == [4, 5, 6]
         return ok, f"names={got!r} refused_lines={lines}"
 
-    case("secret_names: a prose all-caps value is no name; a key block caught by another shape is still refused whole", secrets_prose_and_disguised_key)
+    case("secret_names: prose yields no names, so no value; a key block caught by another shape is still refused whole", secrets_prose_and_disguised_key)
 
     def classify_linear() -> tuple[bool, str]:
         worst = 0.0

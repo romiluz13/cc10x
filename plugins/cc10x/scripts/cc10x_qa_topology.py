@@ -82,7 +82,7 @@ FINGERPRINT_CANDIDATES = (
     "Cargo.lock",
 )
 
-SENSITIVE_NAME = r"(?:password|passwd|pwd|secret|token|credential|api[_-]?key|access[_-]?key|private[_-]?key|_key|_pat)(?![a-z])"
+SENSITIVE_NAME = r"(?:password|passwd|pwd|secret|token|credential|api[_-]?key|access[_-]?key|private[_-]?key|_key|_pats?(?![a-z]))"
 SECRET_SHAPES = (
     ("aws_key", re.compile(r"\bAKIA[0-9A-Z]{16}\b")),
     ("bearer", re.compile(r"(?i)\bbearer\s+[A-Za-z0-9._~+/=-]{8,}")),
@@ -94,9 +94,9 @@ SECRET_SHAPES = (
     ("private_key", re.compile(r"-----BEGIN [A-Z0-9 ]*PRIVATE KEY")),
     ("basic_auth", re.compile(r"(?i)\bbasic\s+[A-Za-z0-9+/=]{8,}")),
     ("known_token_prefix", re.compile(r"\b(?:sk|rk)_(?:live|test)_[A-Za-z0-9]{8,}|\b(?:ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{20,}|\bgithub_pat_\w{20,}|\bglpat-[\w-]{20,}|\bxox[abpr]-[\w-]{10,}|\bdckr_pat_[\w-]{20,}|\bnpm_[A-Za-z0-9]{30,}")),
-    ("credential_flag", re.compile(r"(?:^|\s)(?:(?:-u|--user)\s*[^\s:]+:(?!\d+(?:\s|$))\S+|-p(?![a-z]+=)[^\s\d-]\S{3,}|--password[=\s]+\S+)")),
+    ("credential_flag", re.compile(r"(?:^|\s)(?:(?:-u|--user)\s*(?!\d+:\d+(?:\s|$))[^\s:]+:\S+|-p(?!\d+(?::\d+)?(?:/\w+)?(?:\s|$))(?![a-z]+=)[^\s-]\S{3,}|--password[=\s]+\S+)")),
     # Both name shapes start only at a token boundary and look ahead within that one token,
-    # so a long line costs linear time; `(?![a-z])` keeps `_key`/`_pat` from matching `_keyboard`/`_PATH`.
+    # so a long line costs linear time; `(?![a-z])` keeps `_pat` from matching `_PATH` or `_PATTERN`.
     (
         "sensitive_assignment",
         re.compile(
@@ -118,8 +118,6 @@ PEM_END = re.compile(r"-----END [A-Z0-9 ]*PRIVATE KEY")
 SLUG_SHAPE = re.compile(r"[a-z0-9][a-z0-9._-]{0,120}")
 GROUND_TRUTH_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._:/-]{0,120}")
 SECRET_NAME = re.compile(r"(?<![^|`\s])[A-Z][A-Z0-9_]{2,}(?![^|`\s])")
-# Outside a table an all-caps word may be a value, so a prose name must also carry an underscore.
-PROSE_SECRET_NAME = re.compile(r"(?<![^|`\s])[A-Z][A-Z0-9]*_[A-Z0-9_]+(?![^|`\s])")
 SECTION_HEADING = re.compile(r"## (\d+)\. ")
 TABLE_SEPARATOR = re.compile(r"\|[\s:|-]+\|?")
 # Marks a scan_repos warning for a --repos entry that produced no member.
@@ -509,8 +507,9 @@ def secret_names(lines: list[str], refused: list[dict]) -> str:
         if shape:
             refused.append({"section": SECTION_TITLES["7"], "line_no": line_no, "shape": shape})
             continue
-        # Only a table row's first (Variable) column is a name; a value cell never is.
-        found = SECRET_NAME.findall(_cells(line)[0]) if is_row else PROSE_SECRET_NAME.findall(line)
+        # Only a table row's first (Variable) column is a name. Prose cannot tell a name from an
+        # all-caps value, so it yields none.
+        found = SECRET_NAME.findall(_cells(line)[0]) if is_row else []
         for name in found:
             if name not in names:
                 names.append(name)
