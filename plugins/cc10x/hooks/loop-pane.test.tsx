@@ -1,7 +1,7 @@
 import type { AgentSpawnArgs, On } from 'claude-code'
 import { expect, test, type TestBody } from 'claude-code/testing'
 
-import { BUILD_MID_PHASE, FINISHED_BUILD, type LoopFixture } from './loop-fixtures'
+import { BUILD_MID_PHASE, BUILD_REMEDIATION, FINISHED_BUILD, PLAN_AT_GAP1, TRIAGE_NEEDS_INFO, type LoopFixture } from './loop-fixtures'
 import { parseEvents } from './loop-state'
 import type { LoopView, Spawn } from '../types'
 
@@ -25,8 +25,8 @@ const bandProps = (hasSurvey = false) => ({
 // The disk beneath the plugin. `listing` 'missing': no .cc10x/workflows (fs.exists false, fs.list rejects);
 // 'denied': the directory exists but fs.list rejects. `log` false leaves the newest artifact's events log
 // unwritten; `older` lists more artifacts behind it, each a minute older, each with its log unless named in
-// `noLog`. `denyRead` rejects every fs.read; `hold` answers ms to delay one fs.read by. Tests change these
-// fields between refreshes.
+// `noLog`. `denyRead` rejects every fs.read; `denyLog` rejects only events-log reads; `hold` answers ms to
+// delay one fs.read by. Tests change these fields between refreshes.
 type Disk = {
   fixture: LoopFixture
   log: boolean
@@ -34,11 +34,12 @@ type Disk = {
   noLog: string[]
   listing: 'files' | 'empty' | 'missing' | 'denied'
   denyRead: boolean
+  denyLog: boolean
   hold: (path: string) => number
 }
 
 function answerFs(on: On, fixture: LoopFixture): Disk {
-  const disk: Disk = { fixture, log: true, older: [], noLog: [], listing: 'files', denyRead: false, hold: () => 0 }
+  const disk: Disk = { fixture, log: true, older: [], noLog: [], listing: 'files', denyRead: false, denyLog: false, hold: () => 0 }
   const eventsPath = (f: LoopFixture) => f.path.replace(/\.json$/, '.events.jsonl')
   const name = (p: string) => p.slice(p.lastIndexOf('/') + 1)
   const entry = (path: string, text: string, mtimeMs: number) =>
@@ -60,6 +61,7 @@ function answerFs(on: On, fixture: LoopFixture): Disk {
   })
   on('fs.read', async (_, e) => {
     if (disk.denyRead) return { deny: 'EACCES: read refused' }
+    if (disk.denyLog && e.path.endsWith('.events.jsonl')) return { deny: 'EACCES: log refused' }
     const ms = disk.hold(e.path)
     if (ms > 0) await new Promise(resolve => setTimeout(resolve, ms))
     for (const f of [disk.fixture, ...disk.older]) {
@@ -73,10 +75,15 @@ function answerFs(on: On, fixture: LoopFixture): Disk {
 }
 
 // What the plugin last wrote to its atoms: the test spies on `state.set` and lets the kit store it.
-function watchState(on: On) {
-  const seen: { loop?: LoopView; spawns?: Spawn[] } = {}
+// `openedWrites` counts writes of the `opened` atom; `failOpened` refuses each such write.
+function watchState(on: On, failOpened = false) {
+  const seen: { loop?: LoopView; spawns?: Spawn[]; openedWrites: number } = { openedWrites: 0 }
   on('state.set', (_, e, next) => {
     const w = e as { plugin: string; key: string; value: unknown }
+    if (w.plugin === 'cc10x' && w.key === 'opened') {
+      seen.openedWrites++
+      if (failOpened) return { deny: 'state store down' }
+    }
     if (w.plugin === 'cc10x' && (w.key === 'loop' || w.key === 'spawns')) Object.assign(seen, { [w.key]: w.value })
     return next(e)
   })
@@ -85,9 +92,19 @@ function watchState(on: On) {
 
 // The rest of the engine: every other call the hooks make, answered plainly.
 // `refuse` names engine calls that answer `{ deny }` instead.
-// 'agent.spawn!' makes the core spawn itself throw.
-function engine(on: On, logs: string[] = [], refuse: ('command.register' | 'agent.spawn' | 'agent.spawn!')[] = []) {
+// 'agent.spawn!' makes the core spawn itself throw; 'ui.open' refuses every pane; 'opened' refuses every write of
+// the `opened` atom. `opens` collects every pane id `ui.open` was asked for.
+function engine(
+  on: On,
+  logs: string[] = [],
+  refuse: ('command.register' | 'agent.spawn' | 'agent.spawn!' | 'ui.open' | 'opened')[] = [],
+  opens: string[] = [],
+) {
   on('command.register', () => (refuse.includes('command.register') ? { deny: 'refused' } : { value: { command: 'cc10x-loop' } }))
+  on('ui.open', (_, e) => {
+    opens.push(e.id)
+    return refuse.includes('ui.open') ? { deny: 'surface refused' } : { value: { isPlaced: true } }
+  })
   on('session.start', (_, e) => ({ cwd: e.cwd }))
   on('tool.call', () => ({ result: {} }))
   on('agent.spawn', () => {
@@ -103,11 +120,13 @@ function engine(on: On, logs: string[] = [], refuse: ('command.register' | 'agen
     const { Text } = $.ui.resolve(e)
     return <Text>engine</Text>
   })
-  return watchState(on)
+  return watchState(on, refuse.includes('opened'))
 }
 
-const band = async ($: Kit, surface: 'terminal' | 'desktop' = 'terminal', hasSurvey = false) => {
-  const ui = await $.ui.mount({ plugin: 'cc10x', component: 'AbovePrompt', surface, props: bandProps(hasSurvey) })
+// `isFullscreen` is what the surface says of docking a pane (absent: it has not said).
+const band = async ($: Kit, surface: 'terminal' | 'desktop' = 'terminal', hasSurvey = false, isFullscreen?: boolean) => {
+  const viewport = isFullscreen === undefined ? undefined : { columns: 160, rows: 40, isFullscreen }
+  const ui = await $.ui.mount({ plugin: 'cc10x', component: 'AbovePrompt', surface, props: bandProps(hasSurvey), viewport })
   const text = (await ui.find({ type: 'Text', text: /./ }))?.text
   await ui.unmount()
   return text
@@ -494,4 +513,322 @@ test('wave 8 / 4. a core spawn that throws is logged as a spawn failure, not a r
 
   expect(logs.some(l => l.startsWith('cc10x: spawn failed'))).toBe(true)
   expect(logs.some(l => l.includes('spawn record failed'))).toBe(false)
+})
+
+// ---- P4: the pane and the command ----
+
+const paneProps = {
+  title: 'cc10x loop',
+  isFocused: false,
+  bodyColumns: 60,
+  placement: 'dock',
+  scroll: { offset: 0, bodyRows: 20 },
+  view: {},
+} as const
+
+type Surface = 'terminal' | 'desktop' | 'vscode'
+
+// Every Text the pane drew, in order, with whether it is dim.
+const pane = async ($: Kit, surface: Surface = 'terminal') => {
+  const ui = await $.ui.mount({ plugin: 'cc10x', component: 'Pane', requestId: 'cc10x-loop', surface, props: paneProps })
+  const found = await ui.findAll({ type: 'Text' })
+  await ui.unmount()
+  return found.map(t => ({ text: t.text, dim: t.props.dimColor === true }))
+}
+const texts = async ($: Kit, surface: Surface = 'terminal') => (await pane($, surface)).map(t => t.text)
+const SURFACES = ['terminal', 'desktop', 'vscode'] as const
+const REM_WF = 'wf-20261018T112922Z-7e99ef54'
+
+test('pane 1. BUILD_REMEDIATION: header, cursor, phases, the FIXED builder, re-review pending, remediation 1/3', async ($, on) => {
+  engine(on)
+  answerFs(on, BUILD_REMEDIATION)
+  await start($)
+
+  for (const surface of SURFACES) {
+    const lines = await texts($, surface)
+    expect(lines[0]).toBe('cc10x · BUILD ' + REM_WF + ' · /repo/loop-pane-fixture.md')
+    expect(lines).toContain('cursor: P1')
+    // P1 is in_progress at cursor P1 in this fixture: it reads ▶, never ✓.
+    expect(lines).toContain('P1 ▶ P2 · P3 · P4 · P5 · P6 · P7 ·')
+    expect(lines.some(l => /^✓ component-builder +FIXED 11:51/.test(l))).toBe(true)
+    expect(lines.some(l => /^· code-reviewer.*re-review/.test(l))).toBe(true)
+    expect(lines).toContain('remediation 1/3 · gate: none')
+  }
+})
+
+test('pane 1b. BUILD_MID_PHASE on every surface: P1 ✓ P2 ✓ P3 ▶, a spawned reviewer runs with its elapsed time', async ($, on) => {
+  engine(on)
+  answerFs(on, BUILD_MID_PHASE)
+  await start($)
+  await $.agent.spawn(reviewer)
+
+  for (const surface of SURFACES) {
+    const lines = await texts($, surface)
+    expect(lines).toContain('P1 ✓ P2 ✓ P3 ▶ P4 · P5 · P6 · P7 ·')
+    expect(lines.some(l => /^▶ code-reviewer running 0m00s/.test(l))).toBe(true)
+    expect(lines).toContain('remediation 3/3 · gate: none')
+  }
+})
+
+test('pane 1c. the last three events, newest last', async ($, on) => {
+  engine(on)
+  answerFs(on, BUILD_REMEDIATION)
+  await start($)
+
+  const lines = await texts($)
+  const events = lines.slice(lines.indexOf('last events') + 1)
+  expect(events).toEqual([
+    '11:44 result_persisted failure-hunter build-hunt CLEAN',
+    '11:45 remediation_created router build-implement remfix',
+    '11:51 result_persisted component-builder build-implement FIXED',
+  ])
+})
+
+test('pane 2. TRIAGE_NEEDS_INFO: the pending gate', async ($, on) => {
+  engine(on)
+  answerFs(on, TRIAGE_NEEDS_INFO)
+  await start($)
+
+  expect((await texts($)).some(l => /gate: needs_info/.test(l))).toBe(true)
+})
+
+test('pane 3. no workflow files: no live workflow', async ($, on) => {
+  engine(on)
+  const disk = answerFs(on, BUILD_MID_PHASE)
+  disk.listing = 'empty'
+  await start($)
+
+  expect(await texts($)).toEqual(['no live workflow'])
+})
+
+test('pane 4. an artifact that reads [] keeps the previous live view and says artifact unreadable, dim', async ($, on) => {
+  engine(on)
+  const disk = answerFs(on, BUILD_MID_PHASE)
+  await start($)
+  disk.fixture = { ...BUILD_MID_PHASE, artifactText: '[]' }
+  await $.turn.complete(turnDone)
+
+  const drawn = await pane($)
+  expect(drawn[0].text).toMatch(/^cc10x · BUILD wf-20261018T112922Z-7e99ef54/)
+  const error = drawn.find(t => /artifact unreadable/.test(t.text))
+  expect(error?.dim).toBe(true)
+})
+
+test('pane 4b. an events log that cannot be read keeps the previous live view and says events log unreadable, dim', async ($, on) => {
+  engine(on)
+  const disk = answerFs(on, BUILD_MID_PHASE)
+  await start($)
+  disk.denyLog = true
+  await $.turn.complete(turnDone)
+
+  const drawn = await pane($)
+  expect(drawn[0].text).toMatch(/^cc10x · BUILD wf-20261018T112922Z-7e99ef54/)
+  expect(drawn.map(t => t.text)).toContain('P1 ✓ P2 ✓ P3 ▶ P4 · P5 · P6 · P7 ·')
+  const error = drawn.find(t => t.text.includes('events log unreadable'))
+  expect(error?.dim).toBe(true)
+  expect(error?.text).toContain('EACCES: log refused')
+})
+
+test('pane 5. the newest artifact with no events log yet is idle, not an error', async ($, on) => {
+  const state = engine(on)
+  const disk = answerFs(on, BUILD_MID_PHASE)
+  disk.log = false
+  await start($)
+
+  const lines = await texts($)
+  expect(state.loop?.error).toBe(null)
+  expect(lines[0]).toMatch(/^cc10x · BUILD wf-20261018T112922Z-7e99ef54/)
+  expect(lines).toContain('no events yet')
+  expect(lines.some(l => /unreadable|missing|error/.test(l))).toBe(false)
+})
+
+test('pane 6. /cc10x-loop status names the chosen artifact and the error, or no live workflow', async ($, on) => {
+  engine(on)
+  const disk = answerFs(on, BUILD_MID_PHASE)
+  await start($)
+
+  const ok = await $.command.run({ command: 'cc10x-loop', args: 'status' })
+  expect(ok.text).toBe(BUILD_MID_PHASE.path)
+
+  disk.denyRead = true
+  const failing = await $.command.run({ command: 'cc10x-loop', args: 'status' })
+  expect(failing.text).toContain(BUILD_MID_PHASE.path)
+  expect(failing.text).toContain('EACCES: read refused')
+
+  disk.denyRead = false
+  disk.listing = 'empty'
+  const idle = await $.command.run({ command: 'cc10x-loop', args: ' status ' })
+  expect(idle.text).toBe('no live workflow')
+})
+
+test('pane 7. OD-1 B: on a docking surface a new live workflow opens the pane once; a second refresh does not', async ($, on) => {
+  const opens: string[] = []
+  const state = engine(on, [], [], opens)
+  const disk = answerFs(on, BUILD_MID_PHASE)
+  await start($)
+  await band($, 'terminal', false, true)
+  await $.turn.complete(turnDone)
+  expect(opens).toEqual(['cc10x-loop'])
+
+  await $.turn.complete(turnDone)
+  await $.tool.call({ tool: 'Bash', command: 'cat .cc10x/workflows/x' })
+  expect(opens).toEqual(['cc10x-loop'])
+  // The id is read before it is written: later refreshes leave the opened atom alone.
+  expect(state.openedWrites).toBe(1)
+
+  // Another live workflow is new: it opens once more.
+  disk.fixture = otherWf(BUILD_MID_PHASE)
+  await $.turn.complete(turnDone)
+  await $.turn.complete(turnDone)
+  expect(opens).toEqual(['cc10x-loop', 'cc10x-loop'])
+})
+
+test('pane 7d. docking unknown: no unasked open and the id stays unmarked, so docking later still opens', async ($, on) => {
+  const opens: string[] = []
+  const state = engine(on, [], [], opens)
+  answerFs(on, BUILD_MID_PHASE)
+  await start($)
+  await band($)
+  await $.turn.complete(turnDone)
+  expect(opens).toEqual([])
+  expect(state.openedWrites).toBe(0)
+
+  await band($, 'terminal', false, true)
+  await $.turn.complete(turnDone)
+  expect(opens).toEqual(['cc10x-loop'])
+})
+
+test('pane 7e. a main screen that does not dock never opens unasked; once it docks, one open', async ($, on) => {
+  const opens: string[] = []
+  engine(on, [], [], opens)
+  answerFs(on, BUILD_MID_PHASE)
+  await start($)
+  await band($, 'terminal', false, false)
+  await $.turn.complete(turnDone)
+  await $.turn.complete(turnDone)
+  expect(opens).toEqual([])
+
+  await band($, 'desktop', false, true)
+  await $.turn.complete(turnDone)
+  await $.turn.complete(turnDone)
+  expect(opens).toEqual(['cc10x-loop'])
+})
+
+test('pane 7f. a failed write of the opened atom is logged, not thrown into the refresh', async ($, on) => {
+  const logs: string[] = []
+  const opens: string[] = []
+  const state = engine(on, logs, ['opened'], opens)
+  answerFs(on, BUILD_MID_PHASE)
+  await start($)
+  await band($, 'terminal', false, true)
+  await $.turn.complete(turnDone)
+
+  expect(state.loop?.live?.wf).toBe(WF)
+  expect(opens).toEqual([])
+  expect(logs.some(l => l.includes('pane open failed') && l.includes('state store down'))).toBe(true)
+  expect(logs.some(l => l.includes('loop refresh failed'))).toBe(false)
+})
+
+test('pane 7b. OD-1 B: with no live workflow the pane never opens unasked', async ($, on) => {
+  const opens: string[] = []
+  engine(on, [], [], opens)
+  const disk = answerFs(on, BUILD_MID_PHASE)
+  disk.listing = 'empty'
+  await start($)
+  await $.turn.complete(turnDone)
+
+  disk.listing = 'files'
+  disk.fixture = FINISHED_BUILD
+  await $.turn.complete(turnDone)
+
+  expect(opens).toEqual([])
+})
+
+test('pane 7c. OD-1 B: a refused unasked open is logged and the loop still reads', async ($, on) => {
+  const logs: string[] = []
+  const state = engine(on, logs, ['ui.open'])
+  answerFs(on, BUILD_MID_PHASE)
+  await start($)
+  await band($, 'terminal', false, true)
+  await $.turn.complete(turnDone)
+
+  expect(state.loop?.live?.wf).toBe(WF)
+  expect(logs.some(l => l.includes('pane open failed') && l.includes('surface refused'))).toBe(true)
+})
+
+test('pane 9. a multi-line user_request is one header line, whitespace collapsed', async ($, on) => {
+  engine(on)
+  const request = '"user_request": "/repo/loop-pane-fixture.md"'
+  answerFs(on, { ...BUILD_REMEDIATION, artifactText: BUILD_REMEDIATION.artifactText.replace(request, '"user_request": "fix the\\n\\n  pane   header"') })
+  await start($)
+
+  expect((await texts($))[0]).toBe('cc10x · BUILD ' + REM_WF + ' · fix the pane header')
+})
+
+test('pane 8. PLAN_AT_GAP1: raw cursor plan-create, the planner NEEDS_CLARIFICATION, gap reviewer pending, no phase row', async ($, on) => {
+  engine(on)
+  answerFs(on, PLAN_AT_GAP1)
+  await start($)
+
+  const lines = await texts($)
+  expect(lines).toContain('cursor: plan-create')
+  expect(lines.some(l => /^✓ planner +NEEDS_CLARIFICATION/.test(l))).toBe(true)
+  expect(lines.some(l => /^· plan-gap-reviewer/.test(l))).toBe(true)
+  expect(lines.some(l => /^P\d/.test(l))).toBe(false)
+})
+
+test('carried 1. a workflow that finishes shows last in the pane, never its live view', async ($, on) => {
+  engine(on)
+  const disk = answerFs(on, BUILD_MID_PHASE)
+  await start($)
+  disk.fixture = FINISHED_BUILD
+  await $.turn.complete(turnDone)
+
+  const lines = await texts($)
+  expect(lines[0]).toBe('no live workflow')
+  expect(lines[1]).toMatch(/^\(last: wf-20261018T112922Z-7e99ef54 finished 2026-10-\d\dT/)
+  expect(lines.some(l => /^cc10x · /.test(l) || /^cursor:/.test(l))).toBe(false)
+})
+
+test('carried 2. the error is a dim pane line; the band keeps only the stale marker', async ($, on) => {
+  engine(on)
+  const disk = answerFs(on, BUILD_MID_PHASE)
+  await start($)
+  disk.denyRead = true
+  await $.turn.complete(turnDone)
+
+  const error = (await pane($)).find(t => /EACCES: read refused/.test(t.text))
+  expect(error?.dim).toBe(true)
+  const b = await band($)
+  expect(b).toMatch(/ · stale$/)
+  expect(b).not.toMatch(/EACCES/)
+})
+
+test('carried 3. past the breaker: pane remediation 5 (breaker 3), band rem 5', async ($, on) => {
+  engine(on)
+  const fix = JSON.stringify({ ts: '2026-10-18T11:52:00Z', wf: REM_WF, event: 'remediation_created', phase: 'build-implement', agent: 'router', decision: 'remfix', details: { phase_id: 'P1' } }) + '\n'
+  answerFs(on, { ...BUILD_REMEDIATION, eventsText: BUILD_REMEDIATION.eventsText + fix.repeat(4) })
+  await start($)
+
+  expect(await texts($)).toContain('remediation 5 (breaker 3) · gate: none')
+  expect(await band($)).toMatch(/ · rem 5$/)
+})
+
+test('carried 4. a result outside the chain is a + row, distinct from the chain rows', async ($, on) => {
+  engine(on)
+  answerFs(on, PLAN_AT_GAP1)
+  await start($)
+
+  const lines = await texts($)
+  expect(lines).toContain('+ exploration DESIGN_SAVED 06:42 (plan)')
+  expect(lines.some(l => /^✓ exploration/.test(l))).toBe(false)
+})
+
+test('pane warnings. a warning is a dim line', async ($, on) => {
+  engine(on)
+  answerFs(on, { ...BUILD_MID_PHASE, artifactText: BUILD_MID_PHASE.artifactText.replace('"workflow_type": "BUILD"', '"workflow_type": "constructor"') })
+  await start($)
+
+  const warning = (await pane($)).find(t => t.text.includes('unknown workflow type: constructor'))
+  expect(warning?.dim).toBe(true)
 })

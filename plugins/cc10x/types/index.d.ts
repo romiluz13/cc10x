@@ -45,6 +45,7 @@ export type LoopView = {
 
 declare module 'claude-code' {
   interface PluginState {
-    cc10x: { loop: LoopView; spawns: Spawn[] }
+    // `opened`: the live workflow ids the pane already opened for unasked (OD-1 B), newest last.
+    cc10x: { loop: LoopView; spawns: Spawn[]; opened: string[] }
   }
 }

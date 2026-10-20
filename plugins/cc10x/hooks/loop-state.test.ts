@@ -347,8 +347,8 @@ test('22. an extra row never pins next: 0161b108 mid P4 reads next: router (memo
   expect(state.cursor).toBe('P4')
   expect(row(state.steps, 'router', 'build-finish')).toMatchObject({ status: 'done', decision: 'pushed', extra: false })
   expect(row(state.steps, 'planner', 're-plan')).toMatchObject({ status: 'done', decision: 'PLAN_CREATED', extra: true })
-  // 0161b108's remediation_history holds nine rounds; the band shows the breaker count unclamped.
-  expect(bandLine(state, NOW)).toBe('cc10x BUILD P4/4 · next: router · rem 9/3')
+  // 0161b108's remediation_history holds nine rounds; past the breaker the band shows the bare count, never 9/3.
+  expect(bandLine(state, NOW)).toBe('cc10x BUILD P4/4 · next: router · rem 9')
 })
 
 test('23. normalized_phases: numeric and bare-string entries are their own ids; an entry with no id warns', () => {
@@ -514,7 +514,14 @@ test('31. rem counts the whole workflow like the circuit breaker: a P1 remediati
     p2(a)
     a.remediation_history = [{}, {}, {}, {}]
   })
-  expect(bandLine(over, NOW)).toContain('rem 4/3')
+  expect(bandLine(over, NOW)).toMatch(/ · rem 4$/)
+
+  // At the breaker the count still reads against it.
+  const at = loop(BUILD_REMEDIATION, [], a => {
+    p2(a)
+    a.remediation_history = [{}, {}, {}]
+  })
+  expect(bandLine(at, NOW)).toMatch(/ · rem 3\/3$/)
 })
 
 test('32. a QA regression workflow (source_wf set) runs re-qa-execute then memory; DEBUG with source_wf keeps its chain', () => {

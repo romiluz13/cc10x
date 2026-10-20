@@ -232,12 +232,19 @@ export function deriveLoop(input: {
   }
 }
 
-function elapsed(ms: number): string {
+export function elapsed(ms: number): string {
   const total = Math.max(0, Math.floor(ms / 1000))
   const m = Math.floor(total / 60)
   const s = String(total % 60).padStart(2, '0')
   return m >= 60 ? Math.floor(m / 60) + 'h' + String(m % 60).padStart(2, '0') + 'm' : m + 'm' + s + 's'
 }
+
+// The circuit breaker's remediation round cap.
+export const BREAKER = 3
+
+// The workflow-wide round count against the circuit breaker: 'N/3' up to it; past it the bare count,
+// since '8/3' reads like a cap the count can never pass.
+export const remediation = (rounds: number): string => (rounds > BREAKER ? String(rounds) : rounds + '/' + BREAKER)
 
 export function bandLine(state: LoopState, now: number): string {
   // Plain concatenation throughout: this file stays free of engine calls and of template syntax.
@@ -248,7 +255,7 @@ export function bandLine(state: LoopState, now: number): string {
   const segments = [
     running.length > 0 ? running.map(s => s.agent).join(' ‖ ') + ' running ' + elapsed(now - started) : '',
     next !== undefined ? 'next: ' + next.agent : '',
-    state.rounds > 0 ? 'rem ' + state.rounds + '/3' : '',
+    state.rounds > 0 ? 'rem ' + remediation(state.rounds) : '',
     state.gate !== null ? 'gate: ' + state.gate : '',
   ]
   return [head, ...segments.filter(s => s !== '')].join(' · ')

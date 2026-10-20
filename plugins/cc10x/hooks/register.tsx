@@ -1,15 +1,16 @@
 import { atom, read, update } from 'claude-code'
 import type { CoreEngineInterface, Register } from 'claude-code'
 
-import type { LoopView, Spawn } from '../types'
+import type { LoopState, LoopView, Spawn, Step } from '../types'
 import { REMEDIATION, ROUTES } from './loop-routes'
-import { bandLine, deriveLoop, isFinished, parseEvents, workflowOf, type Artifact } from './loop-state'
+import { BREAKER, bandLine, deriveLoop, elapsed, isFinished, parseEvents, remediation, workflowOf, type Artifact } from './loop-state'
 
 const PANE = 'cc10x-loop'
 const WORKFLOWS = '.cc10x/workflows'
 const EMPTY: LoopView = { live: null, last: null, error: null }
 export const loop = atom({ plugin: 'cc10x', key: 'loop' } as const, EMPTY)
 export const spawns = atom({ plugin: 'cc10x', key: 'spawns' } as const, [] as Spawn[])
+const opened = atom({ plugin: 'cc10x', key: 'opened' } as const, [] as string[])
 
 // Every agent some chain dispatches (the router is no spawn).
 const AGENTS = new Set(
@@ -22,7 +23,7 @@ const AGENTS = new Set(
 // plugin id (`cc10x@cc10x`, `cc10x@inline`), so the type, not the provider, names a cc10x agent.
 const SPAWNED = /^cc10x:([a-z-]+)$/
 
-type Api = Pick<CoreEngineInterface, 'session' | 'fs' | 'state'>
+type Api = Pick<CoreEngineInterface, 'session' | 'fs' | 'state' | 'ui'>
 
 // The newest not-finished workflow under .cc10x/workflows, newest artifact first (at most 20).
 // A bad artifact is skipped and named in `error`; when it is the one shown, the shown view stays.
@@ -45,10 +46,12 @@ async function scan($: Api, previous: LoopView): Promise<LoopView> {
     // The router writes the artifact before its log: a log not there yet is no events on the newest
     // artifact; an older artifact without one is an abandoned orphan, never live.
     if (i > 0 && !names.has(log)) continue
+    let reading = 'artifact unreadable'
     try {
       const raw: unknown = JSON.parse(await $.fs.read(path))
-      if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) throw new Error(path + ' is not a JSON object')
+      if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) throw new Error('not a JSON object')
       const artifact = raw as Artifact
+      reading = 'events log unreadable'
       const events = names.has(log) ? parseEvents(await $.fs.read(dir + '/' + log)) : []
       if (isFinished(artifact, events)) {
         last ??= { wf: workflowOf(artifact), finishedAt: events[events.length - 1]?.ts ?? '' }
@@ -58,7 +61,7 @@ async function scan($: Api, previous: LoopView): Promise<LoopView> {
       const live = deriveLoop({ path, artifact, events, spawns: recorded, otherLive: 0, warnings: [] })
       return { live, last, error: errors.join('; ') || null }
     } catch (err) {
-      const message = path + ': ' + (err instanceof Error ? err.message : String(err))
+      const message = path + ': ' + reading + ': ' + (err instanceof Error ? err.message : String(err))
       if (previous.live?.path === path) return { live: previous.live, last, error: [...errors, message].join('; ') }
       errors.push(message)
     }
@@ -81,11 +84,63 @@ async function readLoop($: Api): Promise<LoopView> {
     view = { ...previous, error: err instanceof Error ? err.message : String(err) }
   }
   if (gen === seq) await update($, loop, () => view)
+  if (view.live !== null) await openOnce($, view.live.wf || view.live.path)
   return view
+}
+
+// Whether the surface docks a pane beside the transcript, as the band's viewport last said (undefined: not said).
+// A module variable: a render hook may not write state, and the terminal raises no session.attach.
+let docks: boolean | undefined
+
+// OD-1 B: the first refresh that sees a live workflow opens the pane unasked, once per workflow id, and only
+// where it docks as a sidebar; elsewhere the id stays unmarked so a refresh after docking still opens.
+async function openOnce($: Api, id: string): Promise<void> {
+  if (docks !== true) return
+  try {
+    if ((await read($, opened)).includes(id)) return
+    let fresh = false
+    await update($, opened, list => {
+      fresh = !list.includes(id)
+      return fresh ? [...list, id].slice(-20) : list
+    })
+    if (fresh) await $.ui.open({ id: PANE, title: 'cc10x loop' })
+  } catch (err) {
+    $.ui.log(`cc10x: pane open failed: ${err instanceof Error ? err.message : String(err)}`)
+  }
+}
+
+// shortcut: times are the UTC hh:mm the router stamped; convert to local time if users ask.
+const hhmm = (ts: string | null) => ts?.slice(11, 16) ?? ''
+const MARK = { done: '✓', running: '▶', pending: '·' } as const
+
+// The pane's lines for a live workflow: header, cursor, phases, steps, remediation, last three events.
+function paneLines(live: LoopState, now: number): string[] {
+  const join = (parts: string[], by = ' ') => parts.filter(p => p !== '').join(by)
+  const row = (s: Step) =>
+    join([
+      // A result outside the chain is marked + (always done), so it never reads as a chain step.
+      s.extra ? '+' : MARK[s.status],
+      s.agent,
+      s.status === 'running' ? 'running ' + elapsed(now - (s.startedAt ?? now)) : (s.decision ?? ''),
+      hhmm(s.at),
+      '(' + s.phase + ')',
+    ])
+  const phases = live.phases.map(p => p.id + ' ' + (p.status === 'completed' ? '✓' : p.id === live.cursor ? '▶' : '·'))
+  const rounds = remediation(live.rounds) + (live.rounds > BREAKER ? ' (breaker ' + BREAKER + ')' : '')
+  const events = live.events.slice(-3).map(e => join([hhmm(e.ts), e.event, e.agent, e.phase, e.decision ?? '']))
+  return [
+    join(['cc10x', join([live.type, live.wf]), live.request.replace(/\s+/g, ' ').slice(0, 40), live.otherLive > 0 ? `+${live.otherLive} other live` : ''], ' · '),
+    `cursor: ${live.rawCursor ?? 'none'}`,
+    join(phases),
+    ...live.steps.map(row),
+    `remediation ${rounds} · gate: ${live.gate ?? 'none'}`,
+    ...(events.length > 0 ? ['last events', ...events] : ['no events yet']),
+  ].filter(l => l !== '')
 }
 
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
+    docks = undefined
     try {
       await $.command.register({
         name: PANE,
@@ -158,7 +213,12 @@ export const register: Register = on => {
     return next(e)
   })
 
-  on('command.run', { command: PANE }, async $ => {
+  on('command.run', { command: PANE }, async ($, e) => {
+    if (e.args.trim() === 'status') {
+      const { live, error } = await readLoop($)
+
+      return { text: [live?.path ?? 'no live workflow', error ?? ''].filter(l => l !== '').join('\n') }
+    }
     const opened = await $.ui.open({ id: PANE, title: 'cc10x loop' })
 
     return {
@@ -173,6 +233,7 @@ export const register: Register = on => {
   }))
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
+    if (e.viewport?.isFullscreen !== undefined) docks = e.viewport.isFullscreen
     const { live, error } = await read($, loop)
     if (e.props.hasSurvey || live === null) return next(e)
     const { Text } = $.ui.resolve(e)
@@ -186,10 +247,26 @@ export const register: Register = on => {
     return next(e)
   })
 
-  on('ui.render', { component: 'Pane', requestId: PANE }, ($, e) => {
-    const { Text } = $.ui.resolve(e)
+  on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
+    const { Box, Text } = $.ui.resolve(e)
+    const { live, last, error } = await read($, loop)
+    // A finished workflow is never drawn live: the scan yields live null and names it in last.
+    const lines =
+      live !== null
+        ? paneLines(live, await $.clock.now())
+        : ['no live workflow', ...(last === null ? [] : [`(last: ${last.wf} finished${last.finishedAt ? ' ' + last.finishedAt : ''})`])]
+    const dim = [...(live?.warnings ?? []), ...(error === null ? [] : [error])]
 
-    return <Text dimColor>no live workflow</Text>
+    return (
+      <Box flexDirection="column">
+        {lines.map(l => (
+          <Text>{l}</Text>
+        ))}
+        {dim.map(l => (
+          <Text dimColor>{l}</Text>
+        ))}
+      </Box>
+    )
   }).catch(($, e, next) => {
     $.ui.log(`cc10x: pane render failed: ${next.error.message ?? next.error.kind}`)
 
