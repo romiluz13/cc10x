@@ -523,6 +523,12 @@ def pure_checks() -> None:
         "ssh -p2222 qa-host",
         "java -port=8080 -jar app.jar",
         "docker run -p8080:80/tcp img",
+        "docker run -p127.0.0.1:8080:80 img",
+        "docker run -p8000-8010:8000-8010 img",
+        "DB_PASSWORD=${DB_PASSWORD}",
+        "password: ${DB_PASSWORD}",
+        "mysql -uroot -p${MYSQL_ROOT_PASSWORD}",
+        "http://host:8080/a@b",
     ):
         case(
             f"classify_secret: {benign!r} is None",
@@ -573,13 +579,13 @@ def pure_checks() -> None:
 
     def classify_linear() -> tuple[bool, str]:
         worst = 0.0
-        for line in ("a_key" * 3200, "x_key." * 2700 + "=", "|" + "a_key" * 3200 + "|", "a-" * 8000):
+        for line in ("a_key" * 3200, "x_key." * 2700 + "=", "|" + "a_key" * 3200 + "|", "a-" * 8000, "x://" * 10000, "a." * 20000):
             started = time.perf_counter()
             tool().classify_secret(line)
             worst = max(worst, time.perf_counter() - started)
-        return worst < 0.5, f"slowest 16k-char line took {worst:.3f}s"
+        return worst < 0.5, f"slowest 16k-40k-char line took {worst:.3f}s"
 
-    case("classify_secret: a 16k-character line takes linear time", classify_linear)
+    case("classify_secret: 16k-40k-character lines take linear time", classify_linear)
     pointer = "token: see vault"
     case(
         "classify_secret: a pointer to the vault is None",

@@ -86,15 +86,15 @@ SENSITIVE_NAME = r"(?:password|passwd|pwd|secret|token|credential|api[_-]?key|ac
 SECRET_SHAPES = (
     ("aws_key", re.compile(r"\bAKIA[0-9A-Z]{16}\b")),
     ("bearer", re.compile(r"(?i)\bbearer\s+[A-Za-z0-9._~+/=-]{8,}")),
-    ("db_uri_with_password", re.compile(r"\b[a-z][a-z0-9+]*://[^/\s:@]+:[^@\s]+@")),
+    ("db_uri_with_password", re.compile(r"(?<![a-z0-9+])[a-z][a-z0-9+]*://[^/\s:@]+:[^@\s/]+@")),
     ("long_token", re.compile(r"\b[A-Za-z0-9_\-]{40,}\b")),
-    ("assignment", re.compile(r"(?i)(password|passwd|secret|token|api[_-]?key)\s*[:=]\s*\S{6,}")),
-    ("uri_with_password", re.compile(r"\b[a-z][a-z0-9+.-]*://[^/\s:@]*:[^@\s/]+@")),
+    ("assignment", re.compile(r"(?i)(password|passwd|secret|token|api[_-]?key)\s*[:=]\s*(?![\"']?\$\{?[A-Za-z_])\S{6,}")),
+    ("uri_with_password", re.compile(r"(?<![a-z0-9+.-])[a-z][a-z0-9+.-]*://[^/\s:@]*:[^@\s/]+@")),
     ("aws_key", re.compile(r"\bASIA[0-9A-Z]{16}\b")),
     ("private_key", re.compile(r"-----BEGIN [A-Z0-9 ]*PRIVATE KEY")),
     ("basic_auth", re.compile(r"(?i)\bbasic\s+[A-Za-z0-9+/=]{8,}")),
     ("known_token_prefix", re.compile(r"\b(?:sk|rk)_(?:live|test)_[A-Za-z0-9]{8,}|\b(?:ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{20,}|\bgithub_pat_\w{20,}|\bglpat-[\w-]{20,}|\bxox[abpr]-[\w-]{10,}|\bdckr_pat_[\w-]{20,}|\bnpm_[A-Za-z0-9]{30,}")),
-    ("credential_flag", re.compile(r"(?:^|\s)(?:(?:-u|--user)\s*(?!\d+:\d+(?:\s|$))[^\s:]+:\S+|-p(?!\d+(?::\d+)?(?:/\w+)?(?:\s|$))(?![a-z]+=)[^\s-]\S{3,}|--password[=\s]+\S+)")),
+    ("credential_flag", re.compile(r"(?:^|\s)(?:(?:-u|--user)\s*(?!\d+:\d+(?:\s|$))[^\s:]+:\S+|-p(?![\d.:-]+(?:/\w+)?(?:\s|$))(?![a-z]+=)(?!\$)[^\s-]\S{3,}|--password[=\s]+\S+)")),
     # Both name shapes start only at a token boundary and look ahead within that one token,
     # so a long line costs linear time; `(?![a-z])` keeps `_pat` from matching `_PATH` or `_PATTERN`.
     (
