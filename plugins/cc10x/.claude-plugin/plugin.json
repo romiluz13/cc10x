@@ -24,5 +24,6 @@
     "hooks",
     "qa",
     "claude-code"
-  ]
+  ],
+  "types": "./types/index.d.ts"
 }
