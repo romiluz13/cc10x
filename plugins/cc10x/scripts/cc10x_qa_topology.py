@@ -82,6 +82,7 @@ FINGERPRINT_CANDIDATES = (
     "Cargo.lock",
 )
 
+SENSITIVE_NAME = r"(?:password|passwd|pwd|secret|token|credential|api[_-]?key|access[_-]?key|private[_-]?key|_key|_pat)(?![a-z])"
 SECRET_SHAPES = (
     ("aws_key", re.compile(r"\bAKIA[0-9A-Z]{16}\b")),
     ("bearer", re.compile(r"(?i)\bbearer\s+[A-Za-z0-9._~+/=-]{8,}")),
@@ -93,27 +94,32 @@ SECRET_SHAPES = (
     ("private_key", re.compile(r"-----BEGIN [A-Z0-9 ]*PRIVATE KEY")),
     ("basic_auth", re.compile(r"(?i)\bbasic\s+[A-Za-z0-9+/=]{8,}")),
     ("known_token_prefix", re.compile(r"\b(?:sk|rk)_(?:live|test)_[A-Za-z0-9]{8,}|\b(?:ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{20,}|\bgithub_pat_\w{20,}|\bglpat-[\w-]{20,}|\bxox[abpr]-[\w-]{10,}|\bdckr_pat_[\w-]{20,}|\bnpm_[A-Za-z0-9]{30,}")),
-    ("credential_flag", re.compile(r"(?:^|\s)(?:(?:-u|--user)\s*[^\s:]+:\S+|-p[^\s-]\S{3,}|--password[=\s]+\S+)")),
+    ("credential_flag", re.compile(r"(?:^|\s)(?:(?:-u|--user)\s*[^\s:]+:(?!\d+(?:\s|$))\S+|-p(?![a-z]+=)[^\s\d-]\S{3,}|--password[=\s]+\S+)")),
+    # Both name shapes start only at a token boundary and look ahead within that one token,
+    # so a long line costs linear time; `(?![a-z])` keeps `_key`/`_pat` from matching `_keyboard`/`_PATH`.
     (
         "sensitive_assignment",
         re.compile(
-            r"(?i)\b[\w.-]*(?:password|passwd|pwd|secret|token|credential|api[_-]?key|access[_-]?key|private[_-]?key|_key|_pat)[\w.-]*"
+            r"(?i)(?<![\w.-])(?=[\w.-]*?" + SENSITIVE_NAME + r")[\w.-]+"
             r"\s*[:=]\s*(?![\"']?\$\{?[A-Za-z_])\S{6,}"
         ),
     ),
     (
         "sensitive_table_cell",
         re.compile(
-            r"(?i)\|\s*`?[\w.-]*(?:password|passwd|pwd|secret|token|credential|api[_-]?key|access[_-]?key|private[_-]?key|_key|_pat)[\w.-]*`?\s*\|"
+            r"(?i)\|\s*`?(?=[\w.-]*?" + SENSITIVE_NAME + r")[\w.-]+`?\s*\|"
             r"\s*(?![\"'`]?\$\{?[A-Za-z_])[^|\s][^|]{5,}\|"
         ),
     ),
 )
+PEM_BEGIN = re.compile(r"-----BEGIN [A-Z0-9 ]*PRIVATE KEY")
 PEM_END = re.compile(r"-----END [A-Z0-9 ]*PRIVATE KEY")
 
 SLUG_SHAPE = re.compile(r"[a-z0-9][a-z0-9._-]{0,120}")
 GROUND_TRUTH_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._:/-]{0,120}")
 SECRET_NAME = re.compile(r"(?<![^|`\s])[A-Z][A-Z0-9_]{2,}(?![^|`\s])")
+# Outside a table an all-caps word may be a value, so a prose name must also carry an underscore.
+PROSE_SECRET_NAME = re.compile(r"(?<![^|`\s])[A-Z][A-Z0-9]*_[A-Z0-9_]+(?![^|`\s])")
 SECTION_HEADING = re.compile(r"## (\d+)\. ")
 TABLE_SEPARATOR = re.compile(r"\|[\s:|-]+\|?")
 # Marks a scan_repos warning for a --repos entry that produced no member.
@@ -450,7 +456,8 @@ def _secret_lines(numbered: list[tuple[int, str]]) -> dict[int, str]:
     in_key = False
     for line_no, line in numbered:
         shape = classify_secret(line)
-        if shape == "private_key":
+        if PEM_BEGIN.search(line):
+            # Whichever shape caught the BEGIN line, the key body follows it.
             in_key = True
         if in_key:
             hits[line_no] = "private_key"
@@ -502,8 +509,9 @@ def secret_names(lines: list[str], refused: list[dict]) -> str:
         if shape:
             refused.append({"section": SECTION_TITLES["7"], "line_no": line_no, "shape": shape})
             continue
-        # Only a table row's Variable column is a name; a value cell never is.
-        for name in SECRET_NAME.findall(_cells(line)[0] if is_row else line):
+        # Only a table row's first (Variable) column is a name; a value cell never is.
+        found = SECRET_NAME.findall(_cells(line)[0]) if is_row else PROSE_SECRET_NAME.findall(line)
+        for name in found:
             if name not in names:
                 names.append(name)
     return "\n".join(f"- `{name}`" for name in names)
@@ -654,8 +662,9 @@ def cmd_verify(args: argparse.Namespace, home: Path) -> dict:
                 mismatched.append({"member": member, "file": rel})
     status = front.get("status")
     # A bare missing_repo (a partial run) never flips; a --repos entry that
-    # produced no member (a warning) does: nothing it named was hashed.
-    if mismatched or warnings:
+    # produced no member (a NO_MEMBER_MARK warning) does: nothing it named was
+    # hashed. A partly parsed remote still hashed its member, so it does not.
+    if mismatched or any(NO_MEMBER_MARK in w for w in warnings):
         status = "unverified"
         front["status"] = status
         _atomic_write(path, _rewrite_front(path.read_text(encoding="utf-8"), front))

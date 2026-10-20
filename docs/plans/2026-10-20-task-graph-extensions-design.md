@@ -59,7 +59,7 @@ Keeps the contract closed. It leaves users with the unrecorded per-machine patch
 ## Mechanics of option A
 
 1. **Load.** During §5 shared preparation, the router reads `.claude/cc10x-extensions.json` if it exists, validates it against the v1 schema, and records the accepted entries in the workflow artifact (`extensions.accepted`, `extensions.skipped` with reasons). The file is read once per workflow; resume uses the recorded copy, not a re-read.
-2. **Attach points (v1).** Only the existing read-only review points: `build-review` (BUILD full graph only, never the trivial reduced graph), `plan-review-gap-1` (PLAN), `review-audit` (REVIEW). DEBUG and QA are out of scope for v1, because their read-only points carry route-specific contracts.
+2. **Attach points.** Only the existing read-only review points: `build-review` (BUILD full graph only, never the trivial reduced graph), then `plan-review-gap-1` (PLAN) and `review-audit` (REVIEW) once those routes have a surface for advisory findings (decision 5). DEBUG and QA are out of scope for v1, because their read-only points carry route-specific contracts.
 3. **Task shape.** One new label, `phase:ext-advisory`, with `kind:agent`, `origin:router`, `scope:{attach_to label}` and `reason:ext:{id}`. That is one enum addition to §3, not one per extension.
 4. **Wiring.** Each extension task gets the **same blockers** as the task at its attach point, and nothing waits on it except the Memory Update task. That one edge is what keeps its findings from evaporating: BUILD-DONE finishing runs only once Memory Update is otherwise ready (`references/build-workflow.md`, BUILD-DONE finishing), so the findings are in `deferred_findings` before step 1a reads them.
 5. **Dispatch.** A new §7 row: `ext-advisory` → the agent named in the entry, by bare name (project `.claude/agents/`) or `plugin:agent`. It is dispatched in the same message as `code-reviewer` and `failure-hunter`, and the existing sequential fallback applies.
@@ -81,13 +81,13 @@ Keeps the contract closed. It leaves users with the unrecorded per-machine patch
 2. **File location.** Recommendation: `.claude/cc10x-extensions.json`. The alternative is `.cc10x/extensions.json` with a documented `.gitignore` exception.
 3. **Do extension tasks block Memory Update?** Recommendation: yes, and nothing else. Without the edge, a slow extension's findings can arrive after BUILD-DONE has already triaged `deferred_findings`.
 4. **Reject write-capable extension agents, or only warn?** Recommendation: reject (skip and log). The issue argues for not policing; the counterargument is that cc10x no longer has a runtime guard to catch the post-gate write.
-5. **v1 attach points.** Recommendation: `build-review`, `plan-review-gap-1`, `review-audit`. DEBUG and QA later, on demand.
+5. **v1 attach points.** Recommendation: `build-review` first. `deferred_findings` is surfaced only by BUILD-DONE, which only BUILD runs, so `plan-review-gap-1` and `review-audit` also need a place where PLAN and REVIEW show advisory findings (for example, a section of the saved plan or the review report) before they can be attach points. DEBUG and QA later, on demand.
 
 ## Suggested slices once decided
 
 1. Schema, validator and `references/extensions.md`, with no router wiring. The gate validates a sample file.
 2. BUILD `build-review` attach point end to end: load, task, dispatch, `deferred_findings`, events, replay fixture.
-3. PLAN and REVIEW attach points.
+3. PLAN and REVIEW attach points, after deciding where those routes show advisory findings.
 4. Docs: README, `cc10x-guide`, CHANGELOG.
 
 The issue's author offered a PR. Once decisions 1–5 are settled, slices 1–2 are a good scope to hand them.

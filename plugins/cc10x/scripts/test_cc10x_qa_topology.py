@@ -33,6 +33,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
 from types import ModuleType
 from typing import Callable
@@ -482,6 +483,7 @@ def pure_checks() -> None:
         ("credential_flag", FAKE_MYSQL_FLAG, " (mysql -pPASS)"),
         ("sensitive_assignment", FAKE_KEY_BASE_LINE, " (SECRET_KEY_BASE=)"),
         ("sensitive_table_cell", FAKE_TABLE_PW_ROW, " (name and value in table cells)"),
+        ("sensitive_assignment", "GITHUB_" + "PAT=" + "abcdef123456", " (GITHUB_PAT=)"),
     ]
     for shape, line, label in secret_cases:
         case(
@@ -507,6 +509,14 @@ def pure_checks() -> None:
         "redis://localhost:6379",
         "| DB_PASSWORD_REF | ${DB_PASSWORD} |",
         "export PORT=8080",
+        "CONFIG_PATH=/etc/app/config.yaml",
+        "OUTPUT_PATTERN=*.log.gz",
+        "| DATA_PATH | /var/lib/data |",
+        "SECRETS_DIR=/run/secrets/app",
+        "docker run -u 1000:1000 img",
+        "docker run -p8080:80 img",
+        "ssh -p2222 qa-host",
+        "java -port=8080 -jar app.jar",
     ):
         case(
             f"classify_secret: {benign!r} is None",
@@ -535,6 +545,34 @@ def pure_checks() -> None:
         return ok, f"names={got!r} refused_lines={lines}"
 
     case("secret_names: only the Variable column is named; a private-key block is refused whole", secrets_names_only)
+
+    def secrets_prose_and_disguised_key() -> tuple[bool, str]:
+        refused: list[dict] = []
+        got = tool().secret_names(
+            [
+                "## 7. Secrets and config",
+                "- STRIPE_KEY is set to LIVEVALUE" + "XYZ in prod",
+                "client_secret: " + FAKE_PEM_BEGIN,
+                "MIIEvQ+BADANBg/xyz",
+                "-----END OPENSSH " + "PRIVATE KEY-----",
+            ],
+            refused,
+        )
+        lines = [r["line_no"] for r in refused]
+        ok = got == "- `STRIPE_KEY`" and lines == [3, 4, 5]
+        return ok, f"names={got!r} refused_lines={lines}"
+
+    case("secret_names: a prose all-caps value is no name; a key block caught by another shape is still refused whole", secrets_prose_and_disguised_key)
+
+    def classify_linear() -> tuple[bool, str]:
+        worst = 0.0
+        for line in ("a_key" * 3200, "x_key." * 2700 + "=", "|" + "a_key" * 3200 + "|", "a-" * 8000):
+            started = time.perf_counter()
+            tool().classify_secret(line)
+            worst = max(worst, time.perf_counter() - started)
+        return worst < 0.5, f"slowest 16k-char line took {worst:.3f}s"
+
+    case("classify_secret: a 16k-character line takes linear time", classify_linear)
     pointer = "token: see vault"
     case(
         "classify_secret: a pointer to the vault is None",
@@ -1274,6 +1312,22 @@ def verify_checks(root: Path, env_plan: Path) -> None:
         return ok, said(rc, data, err)
 
     case("CLI verify: fingerprints equal -> status kept", equal)
+
+    def partly_parsed() -> tuple[bool, str]:
+        repo, home = fresh("partly-parsed")
+        git(repo, "remote", "add", "mirror", "file:///srv/mirror.git")
+        rc, data, _, err = cli("verify", SLUG_REPO, "--repos", str(repo), "--home", str(home))
+        ok = (
+            rc == 0
+            and data is not None
+            and data["status"] == "confirmed"
+            and data["mismatched"] == []
+            and len(data["warnings"]) == 1
+            and "no member" not in data["warnings"][0]
+        )
+        return ok, said(rc, data, err)
+
+    case("CLI verify: a partly parsed remote warns but keeps the status", partly_parsed)
 
     def changed() -> tuple[bool, str]:
         repo, home = fresh("changed")

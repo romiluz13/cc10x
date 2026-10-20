@@ -3427,8 +3427,9 @@ PP49C_LINES = (
     "existed) takes the skeleton's defaults before the next dispatch — every "
     "grant `ask`, `test_plan_approval: wait` — and appends "
     "`negotiation_recorded` with `users_words: null`; an artifact with no "
-    "`results.topology` recalled nothing, so steps 0b and 6 treat it as "
-    "`none` with no `derived_slug` and skip the write.",
+    "`results.topology` key at all that is already past step 0b recalled "
+    "nothing, so step 6 skips the write and appends `topology_written` "
+    "(`status: skipped`).",
 )
 # grant names, read back out of the grants line by regex (never retyped)
 PP49C_GRANT_LINE = re.compile(r"(?m)^- The grants are ((?:`[a-z_]+`, )+`[a-z_]+`);")
