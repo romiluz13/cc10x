@@ -6,6 +6,32 @@ import { REMEDIATION, ROUTES, type Route } from './loop-routes'
 
 export type Artifact = Record<string, unknown>
 
+export const WORKFLOWS = '.cc10x/workflows'
+
+// Where to look for the workflows dir, in order: the session cwd and each parent (the router writes
+// .cc10x/ beside the shell's cwd, which a shell cd moves), then the project root. The walk stops at the
+// root when cwd is inside it, so an ancestor's workflows never pass for this project's; outside it, it runs to /.
+// Inside the root this walk is the whole answer; only outside it may the caller add the last-shown workflow's dir.
+// shortcut: '/' separators only (macOS/Linux); split on '\\' too if the mod ever runs on Windows.
+export function insideRoot(cwd: string, root: string): boolean {
+  const top = root.replace(/\/+$/, '')
+  const from = cwd.replace(/\/+$/, '')
+  return from === top || from.startsWith(top + '/')
+}
+
+export function workflowDirs(cwd: string, root: string): string[] {
+  const top = root.replace(/\/+$/, '')
+  const from = cwd.replace(/\/+$/, '')
+  const inside = insideRoot(cwd, root)
+  const dirs: string[] = []
+  for (let d = from; ; d = d.slice(0, d.lastIndexOf('/'))) {
+    dirs.push(d + '/' + WORKFLOWS)
+    if (d === '' || (inside && d === top)) break
+  }
+  const fallback = top + '/' + WORKFLOWS
+  return dirs.includes(fallback) ? dirs : [...dirs, fallback]
+}
+
 const NO_PHASE = 'N/A'
 const OPEN = new Set(['NEEDS_INFO', 'NEEDS_GRILLING'])
 const TERMINAL = new Set(['memory_finalized', 'workflow_completed', 'workflow_failed'])

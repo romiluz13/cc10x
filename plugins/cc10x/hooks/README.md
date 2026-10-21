@@ -88,9 +88,25 @@ never blocks a tool call. The settings hooks in the table above run exactly as b
 events log `wf-*.events.jsonl`. Like resume context it takes the newest live artifact
 first, but it reads at most the 20 newest and skips an older artifact that has no events log. It re-reads
 at session start, after an Edit, Write or Bash call that names `.cc10x/workflows/`,
-when a `cc10x:` agent is spawned, and when a turn completes. Its own plugin state
+when a cc10x workflow agent is spawned, and when a turn completes. Its own plugin state
 (`cc10x.loop`, `cc10x.spawns`, `cc10x.opened`) holds the last view, the spawns it has
 seen, and the workflow ids it already opened the pane for.
+
+**Where it looks.** The router writes `.cc10x/` beside the shell's current directory, which
+a shell `cd` moves while the project root stays put. So the mod looks in `.cc10x/workflows`
+from the session's current directory upward. Inside the project the walk stops at the project
+root, so a parent folder's workflows never show as this project's; from a directory outside the
+project it walks up to `/` and then tries the project root. It reads each directory that exists
+in that order (at most 20 artifacts in each) and stops at the first that holds a live workflow,
+so a folder with only finished workflows does not hide a live one further up; the first
+finished workflow it passes is the one the pane names as last. A directory it cannot list is
+named in a dim error line and skipped. Inside the project that walk is the whole answer: the
+nearest live workflow wins, and a `cd` to a folder with none shows none, not the one left
+behind. Only from a directory outside the project does it also try the directory of the
+workflow it last showed (running or finished), so a brief `cd /tmp` does not drop it. When
+it finds no `.cc10x/workflows` at all, that is the idle
+state, unless a workflow was showing: then the pane says `no .cc10x/workflows found from <cwd>`
+as a dim line until a directory turns up again.
 
 **What it draws.**
 
@@ -105,7 +121,8 @@ seen, and the workflow ids it already opened the pane for.
   finished.
 
 **Commands.** `/cc10x-loop` opens the pane. `/cc10x-loop status` re-reads and prints
-the artifact path it reads and the last read error, if any.
+the artifact path it reads, the workflows directories it read, in order (or `no .cc10x/workflows
+found from <cwd>`), and the last read error, if any.
 
 **Opening by itself.** The pane also opens unasked, once per live workflow in a session, at the
 first refresh that sees that workflow, but only after the band has seen a layout that
@@ -127,7 +144,7 @@ Claude Code 2.1.304):
   ❯ ./register.tsx gating hook with .catch: tool.call
   ❯ ./register.tsx gating hook with .catch: agent.spawn
   ❯ ./register.tsx gating hook with .catch: command.run{command=cc10x-loop}
-  ❯ ./register.tsx calls: $.clock.now, $.command.register, $.fs.exists (via scan), $.fs.list (via scan), $.fs.read (via scan), $.session.root (via scan), $.state.get, $.state.set, $.ui.log, $.ui.open, $.ui.resolve
+  ❯ ./register.tsx calls: $.clock.now, $.command.register, $.fs.exists (via scan), $.fs.list (via scanDir), $.fs.read (via scanDir), $.session.cwd (via scan), $.session.root (via scan), $.state.get, $.state.set, $.ui.log, $.ui.open, $.ui.resolve
   ❯ ./register.tsx state writes: cc10x.loop, cc10x.opened, cc10x.spawns
   ❯ ./register.tsx state reads: cc10x.loop, cc10x.opened, cc10x.spawns
 ```

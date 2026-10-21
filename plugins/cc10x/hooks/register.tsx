@@ -3,10 +3,9 @@ import type { CoreEngineInterface, Register } from 'claude-code'
 
 import type { LoopState, LoopView, Spawn, Step } from '../types'
 import { REMEDIATION, ROUTES } from './loop-routes'
-import { BREAKER, bandLine, deriveLoop, elapsed, isFinished, parseEvents, remediation, workflowOf, type Artifact } from './loop-state'
+import { BREAKER, WORKFLOWS, bandLine, deriveLoop, elapsed, insideRoot, isFinished, parseEvents, remediation, workflowDirs, workflowOf, type Artifact } from './loop-state'
 
 const PANE = 'cc10x-loop'
-const WORKFLOWS = '.cc10x/workflows'
 const EMPTY: LoopView = { live: null, last: null, error: null }
 export const loop = atom({ plugin: 'cc10x', key: 'loop' } as const, EMPTY)
 export const spawns = atom({ plugin: 'cc10x', key: 'spawns' } as const, [] as Spawn[])
@@ -25,19 +24,17 @@ const SPAWNED = /^cc10x:([a-z-]+)$/
 
 type Api = Pick<CoreEngineInterface, 'session' | 'fs' | 'state' | 'ui'>
 
-// The newest not-finished workflow under .cc10x/workflows, newest artifact first (at most 20).
-// A bad artifact is skipped and named in `error`; when it is the one shown, the shown view stays.
-async function scan($: Api, previous: LoopView): Promise<LoopView> {
-  const dir = (await $.session.root()) + '/' + WORKFLOWS
-  // No workflows directory: nothing has run here, which is idle, not an error. Any other list failure throws.
-  if (!(await $.fs.exists(dir))) return EMPTY
+const NOT_FOUND = 'no .cc10x/workflows found from '
+
+// The newest not-finished workflow in one workflows dir, newest artifact first (at most 20).
+// A bad artifact is skipped and named in `errors`; when it is the one shown, the shown view stays.
+async function scanDir($: Api, dir: string, previous: LoopView, recorded: Spawn[]): Promise<{ live: LoopState | null; last: LoopView['last']; errors: string[] }> {
   const entries = await $.fs.list(dir)
   const names = new Set(entries.map(f => f.name))
   const artifacts = entries
     .filter(f => f.kind === 'file' && /^wf-.*\.json$/.test(f.name))
     .sort((a, b) => b.mtimeMs - a.mtimeMs)
     .slice(0, 20)
-  const recorded = await read($, spawns)
   const errors: string[] = []
   let last: LoopView['last'] = null
   for (const [i, file] of artifacts.entries()) {
@@ -54,38 +51,84 @@ async function scan($: Api, previous: LoopView): Promise<LoopView> {
       reading = 'events log unreadable'
       const events = names.has(log) ? parseEvents(await $.fs.read(dir + '/' + log)) : []
       if (isFinished(artifact, events)) {
-        last ??= { wf: workflowOf(artifact), finishedAt: events[events.length - 1]?.ts ?? '' }
+        last ??= { wf: workflowOf(artifact), finishedAt: events[events.length - 1]?.ts ?? '', path }
         continue
       }
       // shortcut: otherLive stays 0 because the scan stops at the first live workflow; count the rest if the pane needs it.
       const live = deriveLoop({ path, artifact, events, spawns: recorded, otherLive: 0, warnings: [] })
-      return { live, last, error: errors.join('; ') || null }
+      return { live, last, errors }
     } catch (err) {
       const message = path + ': ' + reading + ': ' + (err instanceof Error ? err.message : String(err))
-      if (previous.live?.path === path) return { live: previous.live, last, error: [...errors, message].join('; ') }
+      if (previous.live?.path === path) return { live: previous.live, last, errors: [...errors, message] }
       errors.push(message)
     }
   }
-  return { live: null, last, error: errors.join('; ') || null }
+  return { live: null, last, errors }
+}
+
+// The view plus where it looked: `searched` names the dirs read, or why none was found.
+type Scan = { view: LoopView; searched: string }
+
+// Reads each existing workflows dir in workflowDirs order and stops at the first that yields a live workflow;
+// the first finished one seen is `last`. Inside the root that walk is all (the nearest live wins, so a cd to a
+// sibling never keeps the one left behind); outside it, the dir of the workflow last shown or finished is tried
+// last, so a brief cd elsewhere does not drop it.
+async function scan($: Api, previous: LoopView): Promise<Scan> {
+  const cwd = await $.session.cwd()
+  const root = await $.session.root()
+  const dirs = workflowDirs(cwd, root)
+  const remembered = (previous.live ?? previous.last)?.path
+  const shown = previous.live?.path.slice(0, previous.live.path.lastIndexOf('/'))
+  if (remembered && !insideRoot(cwd, root)) {
+    const dir = remembered.slice(0, remembered.lastIndexOf('/'))
+    if (!dirs.includes(dir)) dirs.push(dir)
+  }
+  const recorded = await read($, spawns)
+  const searched: string[] = []
+  const errors: string[] = []
+  let last: LoopView['last'] = null
+  for (const dir of dirs) {
+    if (!(await $.fs.exists(dir))) continue
+    searched.push(dir)
+    let found: Awaited<ReturnType<typeof scanDir>>
+    try {
+      found = await scanDir($, dir, previous, recorded)
+    } catch (err) {
+      // An existing dir that cannot be listed is named and skipped; if it holds the shown workflow, that view stays.
+      errors.push(dir + ': ' + (err instanceof Error ? err.message : String(err)))
+      if (dir === shown && previous.live !== null) return { view: { live: previous.live, last, error: errors.join('; ') }, searched: 'searched: ' + searched.join(', ') }
+      continue
+    }
+    errors.push(...found.errors)
+    last ??= found.last
+    if (found.live !== null) return { view: { live: found.live, last, error: errors.join('; ') || null }, searched: 'searched: ' + searched.join(', ') }
+  }
+  if (searched.length > 0) return { view: { live: null, last, error: errors.join('; ') || null }, searched: 'searched: ' + searched.join(', ') }
+  // No workflows dir: nothing has run here, which is idle, not an error, unless that would drop a
+  // shown workflow (or already did) without saying why.
+  const reason = NOT_FOUND + cwd
+  const dropped = previous.live !== null || previous.error?.startsWith(NOT_FOUND) === true
+  return { view: dropped ? { live: null, last: previous.last, error: reason } : EMPTY, searched: reason }
 }
 
 // Hooks of parallel calls run concurrently: only the latest-started read writes its view.
 let seq = 0
 
-// Re-reads the live workflow into the loop atom and returns the view it read, written or not.
+// Re-reads the live workflow into the loop atom and returns the view it read, written or not, with where it looked.
 // A failure keeps the previous view and records why.
-async function readLoop($: Api): Promise<LoopView> {
+async function readLoop($: Api): Promise<Scan> {
   const gen = ++seq
   const previous = await read($, loop)
-  let view: LoopView
+  let result: Scan
   try {
-    view = await scan($, previous)
+    result = await scan($, previous)
   } catch (err) {
-    view = { ...previous, error: err instanceof Error ? err.message : String(err) }
+    result = { view: { ...previous, error: err instanceof Error ? err.message : String(err) }, searched: '' }
   }
+  const { view } = result
   if (gen === seq) await update($, loop, () => view)
   if (view.live !== null) await openOnce($, view.live.wf || view.live.path)
-  return view
+  return result
 }
 
 // Whether the surface docks a pane beside the transcript, as the band's viewport last said (undefined: not said).
@@ -180,7 +223,7 @@ export const register: Register = on => {
     if (started.deny === undefined && agent !== undefined && AGENTS.has(agent)) {
       // A router write the tool.call filter missed may have moved the boundary: read before recording,
       // and record from this read even when a parallel spawn's newer read superseded its write.
-      const { live } = await readLoop($)
+      const { live } = (await readLoop($)).view
       const spawn: Spawn = {
         agent,
         atIndex: live?.events.length ?? 0,
@@ -215,9 +258,16 @@ export const register: Register = on => {
 
   on('command.run', { command: PANE }, async ($, e) => {
     if (e.args.trim() === 'status') {
-      const { live, error } = await readLoop($)
+      try {
+        const { view, searched } = await readLoop($)
+        // The not-found reason can be both `searched` and the error: print it once.
+        const lines = [view.live?.path ?? 'no live workflow', searched, view.error ?? '']
 
-      return { text: [live?.path ?? 'no live workflow', error ?? ''].filter(l => l !== '').join('\n') }
+        return { text: lines.filter((l, i) => l !== '' && lines.indexOf(l) === i).join('\n') }
+      } catch (err) {
+        // readLoop's own state read and write sit outside its catch: status still answers, never "pane did not open".
+        return { text: `cc10x loop status unavailable: ${err instanceof Error ? err.message : String(err)}` }
+      }
     }
     const opened = await $.ui.open({ id: PANE, title: 'cc10x loop' })
 

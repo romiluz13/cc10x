@@ -39,7 +39,8 @@ export type LoopState = {
 }
 export type LoopView = {
   live: LoopState | null
-  last: { wf: string; finishedAt: string } | null
+  // `path`: the finished artifact, so a refresh from outside the root can re-read its dir.
+  last: { wf: string; finishedAt: string; path: string } | null
   error: string | null
 }
 

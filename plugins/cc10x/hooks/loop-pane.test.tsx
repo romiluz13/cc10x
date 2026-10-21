@@ -13,6 +13,8 @@ const APPROVE =
 
 type Kit = Parameters<TestBody>[0]
 
+const DIR = '/repo/.cc10x/workflows'
+
 const bandProps = (hasSurvey = false) => ({
   hasSurvey,
   isWorking: true,
@@ -26,8 +28,16 @@ const bandProps = (hasSurvey = false) => ({
 // 'denied': the directory exists but fs.list rejects. `log` false leaves the newest artifact's events log
 // unwritten; `older` lists more artifacts behind it, each a minute older, each with its log unless named in
 // `noLog`. `denyRead` rejects every fs.read; `denyLog` rejects only events-log reads; `hold` answers ms to
-// delay one fs.read by. Tests change these fields between refreshes.
+// delay one fs.read by. `cwd` and `root` answer $.session.cwd() and $.session.root(); the workflows
+// directory is /repo/.cc10x/workflows, plus each dir named in `extra` holding its one artifact and log;
+// fs.exists and fs.list answer for those paths only. `denyCwd` rejects $.session.cwd(). Each dir in
+// `refuseList` exists but fs.list rejects it. Tests change these fields between refreshes.
 type Disk = {
+  cwd: string
+  root: string
+  denyCwd: boolean
+  refuseList: string[]
+  extra: Record<string, LoopFixture>
   fixture: LoopFixture
   log: boolean
   older: LoopFixture[]
@@ -39,16 +49,34 @@ type Disk = {
 }
 
 function answerFs(on: On, fixture: LoopFixture): Disk {
-  const disk: Disk = { fixture, log: true, older: [], noLog: [], listing: 'files', denyRead: false, denyLog: false, hold: () => 0 }
+  const disk: Disk = {
+    cwd: '/repo',
+    root: '/repo',
+    denyCwd: false,
+    refuseList: [],
+    extra: {},
+    fixture,
+    log: true,
+    older: [],
+    noLog: [],
+    listing: 'files',
+    denyRead: false,
+    denyLog: false,
+    hold: () => 0,
+  }
   const eventsPath = (f: LoopFixture) => f.path.replace(/\.json$/, '.events.jsonl')
   const name = (p: string) => p.slice(p.lastIndexOf('/') + 1)
   const entry = (path: string, text: string, mtimeMs: number) =>
     ({ name: name(path), kind: 'file', size: text.length, mtimeMs, isLink: false }) as const
-  on('session.root', () => ({ value: '/repo' }))
+  on('session.root', () => ({ value: disk.root }))
+  on('session.cwd', () => (disk.denyCwd ? { deny: 'EPERM: cwd refused' } : { value: disk.cwd }))
   on('clock.now', () => ({ value: NOW }))
-  on('fs.exists', () => ({ value: disk.listing !== 'missing' }))
-  on('fs.list', () => {
-    if (disk.listing === 'missing') return { deny: 'ENOENT: no such directory' }
+  on('fs.exists', (_, e) => ({ value: (disk.listing !== 'missing' && e.path === DIR) || e.path in disk.extra || disk.refuseList.includes(e.path) }))
+  on('fs.list', (_, e) => {
+    if (disk.refuseList.includes(e.path)) return { deny: 'EACCES: list refused' }
+    const other = disk.extra[e.path]
+    if (other) return { value: [entry(other.path, other.artifactText, NOW), entry(eventsPath(other), other.eventsText, NOW)] }
+    if (disk.listing === 'missing' || e.path !== DIR) return { deny: 'ENOENT: no such directory' }
     if (disk.listing === 'denied') return { deny: 'EACCES: list refused' }
     if (disk.listing === 'empty') return { value: [] }
     const files = [entry(disk.fixture.path, disk.fixture.artifactText, NOW)]
@@ -64,8 +92,9 @@ function answerFs(on: On, fixture: LoopFixture): Disk {
     if (disk.denyLog && e.path.endsWith('.events.jsonl')) return { deny: 'EACCES: log refused' }
     const ms = disk.hold(e.path)
     if (ms > 0) await new Promise(resolve => setTimeout(resolve, ms))
-    for (const f of [disk.fixture, ...disk.older]) {
-      const logged = f === disk.fixture ? disk.log : !disk.noLog.includes(f.path)
+    const extra = Object.values(disk.extra)
+    for (const f of [disk.fixture, ...disk.older, ...extra]) {
+      const logged = f === disk.fixture ? disk.log : extra.includes(f) || !disk.noLog.includes(f.path)
       if (e.path === f.path) return { value: f.artifactText }
       if (e.path === eventsPath(f) && logged) return { value: f.eventsText }
     }
@@ -648,7 +677,7 @@ test('pane 6. /cc10x-loop status names the chosen artifact and the error, or no 
   await start($)
 
   const ok = await $.command.run({ command: 'cc10x-loop', args: 'status' })
-  expect(ok.text).toBe(BUILD_MID_PHASE.path)
+  expect(ok.text).toBe(BUILD_MID_PHASE.path + '\nsearched: ' + DIR)
 
   disk.denyRead = true
   const failing = await $.command.run({ command: 'cc10x-loop', args: 'status' })
@@ -658,7 +687,7 @@ test('pane 6. /cc10x-loop status names the chosen artifact and the error, or no 
   disk.denyRead = false
   disk.listing = 'empty'
   const idle = await $.command.run({ command: 'cc10x-loop', args: ' status ' })
-  expect(idle.text).toBe('no live workflow')
+  expect(idle.text).toBe('no live workflow\nsearched: ' + DIR)
 })
 
 test('pane 7. OD-1 B: on a docking surface a new live workflow opens the pane once; a second refresh does not', async ($, on) => {
@@ -831,4 +860,216 @@ test('pane warnings. a warning is a dim line', async ($, on) => {
 
   const warning = (await pane($)).find(t => t.text.includes('unknown workflow type: constructor'))
   expect(warning?.dim).toBe(true)
+})
+
+test('cwd 1. a shell cd below the project root: the workflows dir is found from the session cwd upward', async ($, on) => {
+  engine(on)
+  const disk = answerFs(on, BUILD_MID_PHASE)
+  disk.root = '/home'
+  disk.cwd = '/repo/src/deep'
+  await start($)
+
+  expect((await texts($))[0]).toMatch(/^cc10x · BUILD wf-20261018T112922Z-7e99ef54/)
+  const status = await $.command.run({ command: 'cc10x-loop', args: 'status' })
+  expect(status.text).toBe(BUILD_MID_PHASE.path + '\nsearched: ' + DIR)
+})
+
+test('cwd 2. a cwd inside .cc10x/workflows itself resolves to that same directory', async ($, on) => {
+  engine(on)
+  const disk = answerFs(on, BUILD_MID_PHASE)
+  disk.root = '/home'
+  disk.cwd = DIR
+  await start($)
+
+  expect((await texts($))[0]).toMatch(/^cc10x · BUILD wf-20261018T112922Z-7e99ef54/)
+})
+
+test('cwd 3. no workflows dir above cwd falls back to the project root', async ($, on) => {
+  engine(on)
+  const disk = answerFs(on, BUILD_MID_PHASE)
+  disk.cwd = '/tmp/elsewhere'
+  await start($)
+
+  expect((await texts($))[0]).toMatch(/^cc10x · BUILD wf-20261018T112922Z-7e99ef54/)
+})
+
+test('cwd 4. /cc10x-loop status says where it looked when no workflows dir is found', async ($, on) => {
+  engine(on)
+  const disk = answerFs(on, BUILD_MID_PHASE)
+  disk.root = '/home'
+  disk.cwd = '/tmp/elsewhere'
+  await start($)
+
+  const status = await $.command.run({ command: 'cc10x-loop', args: 'status' })
+  expect(status.text).toBe('no live workflow\nno .cc10x/workflows found from /tmp/elsewhere')
+})
+
+test('cwd 5. a workflow the router starts under cwd (root elsewhere) auto-opens the docked pane once on its write', async ($, on) => {
+  const opens: string[] = []
+  engine(on, [], [], opens)
+  const disk = answerFs(on, BUILD_MID_PHASE)
+  disk.root = '/home'
+  disk.cwd = '/repo'
+  disk.listing = 'missing'
+  await start($)
+  await band($, 'terminal', false, true)
+  expect(opens).toEqual([])
+
+  // The router's Write creates cwd/.cc10x/workflows with the new artifact and its events log.
+  disk.listing = 'files'
+  await $.tool.call({ tool: 'Write', file_path: BUILD_MID_PHASE.path, content: BUILD_MID_PHASE.artifactText })
+  expect(opens).toEqual(['cc10x-loop'])
+
+  await $.tool.call({ tool: 'Bash', command: "printf '...' >> .cc10x/workflows/" + WF + '.events.jsonl' })
+  expect(opens).toEqual(['cc10x-loop'])
+})
+
+test('cwd 6. cwd at the project root: a live workflow in an ancestor .cc10x/workflows is not this project', async ($, on) => {
+  const opens: string[] = []
+  engine(on, [], [], opens)
+  const disk = answerFs(on, BUILD_MID_PHASE)
+  disk.root = '/repo/sub'
+  disk.cwd = '/repo/sub'
+  await start($)
+  await band($, 'terminal', false, true)
+  await $.turn.complete(turnDone)
+
+  expect(await texts($)).toEqual(['no live workflow'])
+  expect(opens).toEqual([])
+})
+
+test('cwd 7. cwd leaves for a dir with no workflows: the shown workflow keeps reading from its dir; gone, the pane says why', async ($, on) => {
+  engine(on)
+  const disk = answerFs(on, BUILD_MID_PHASE)
+  await start($)
+  expect((await texts($))[0]).toMatch(/^cc10x · BUILD wf-20261018T112922Z-7e99ef54/)
+
+  disk.cwd = '/tmp/elsewhere'
+  disk.root = '/home'
+  await $.turn.complete(turnDone)
+  expect((await texts($))[0]).toMatch(/^cc10x · BUILD wf-20261018T112922Z-7e99ef54/)
+
+  disk.listing = 'missing'
+  await $.turn.complete(turnDone)
+  const why = { text: 'no .cc10x/workflows found from /tmp/elsewhere', dim: true }
+  expect(await pane($)).toEqual([{ text: 'no live workflow', dim: false }, why])
+
+  // The reason stays while nothing is found, not just for the one refresh that dropped the view.
+  await $.turn.complete(turnDone)
+  expect(await pane($)).toEqual([{ text: 'no live workflow', dim: false }, why])
+})
+
+test('cwd 8. a child dir with only finished workflows falls through to a live one in its parent under the root', async ($, on) => {
+  const state = engine(on)
+  const disk = answerFs(on, BUILD_MID_PHASE)
+  const child = '/repo/child/.cc10x/workflows'
+  const finished = otherWf(FINISHED_BUILD)
+  disk.extra = { [child]: { ...finished, path: child + finished.path.slice(finished.path.lastIndexOf('/')) } }
+  disk.cwd = '/repo/child'
+  await start($)
+
+  expect((await texts($))[0]).toMatch(/^cc10x · BUILD wf-20261018T112922Z-7e99ef54/)
+  expect(state.loop?.live?.path).toBe(BUILD_MID_PHASE.path)
+  expect(state.loop?.last?.wf).toBe('wf-20261018T112922Z-0000beef')
+  const status = await $.command.run({ command: 'cc10x-loop', args: 'status' })
+  expect(status.text).toBe(BUILD_MID_PHASE.path + '\nsearched: ' + child + ', ' + DIR)
+})
+
+test('cwd 9. /cc10x-loop status after a refused session cwd answers with the status, never "pane did not open"', async ($, on) => {
+  engine(on)
+  const disk = answerFs(on, BUILD_MID_PHASE)
+  await start($)
+  disk.denyCwd = true
+
+  const status = await $.command.run({ command: 'cc10x-loop', args: 'status' })
+  expect(status.text).not.toContain('did not open')
+  expect(status.text?.split('\n')[0]).toBe(BUILD_MID_PHASE.path)
+  expect(status.text).toContain('cwd refused')
+})
+
+// The fixture moved into another workflows dir, same file name.
+const inDir = (dir: string, f: LoopFixture): LoopFixture => ({ ...f, path: dir + f.path.slice(f.path.lastIndexOf('/')) })
+const notFound = (cwd: string) => [
+  { text: 'no live workflow', dim: false },
+  { text: 'no .cc10x/workflows found from ' + cwd, dim: true },
+]
+
+test('cwd 10. a cd to a sibling inside the root with no workflows: the reason line, never the sibling it left', async ($, on) => {
+  engine(on)
+  const disk = answerFs(on, BUILD_MID_PHASE)
+  const a = '/p/A/.cc10x/workflows'
+  disk.listing = 'missing'
+  disk.root = '/p'
+  disk.extra = { [a]: inDir(a, BUILD_MID_PHASE) }
+  disk.cwd = '/p/A'
+  await start($)
+  expect((await texts($))[0]).toMatch(/^cc10x · BUILD wf-20261018T112922Z-7e99ef54/)
+
+  disk.cwd = '/p/B'
+  await $.turn.complete(turnDone)
+  expect(await pane($)).toEqual(notFound('/p/B'))
+})
+
+test('cwd 11. cd from a parent outside the root into the root with nothing live: never the parent workflow', async ($, on) => {
+  engine(on)
+  const disk = answerFs(on, BUILD_MID_PHASE)
+  const parent = '/p/.cc10x/workflows'
+  disk.listing = 'missing'
+  disk.root = '/p/repo'
+  disk.extra = { [parent]: inDir(parent, BUILD_MID_PHASE) }
+  disk.cwd = '/p'
+  await start($)
+  expect((await texts($))[0]).toMatch(/^cc10x · BUILD wf-20261018T112922Z-7e99ef54/)
+
+  disk.cwd = '/p/repo'
+  await $.turn.complete(turnDone)
+  expect(await pane($)).toEqual(notFound('/p/repo'))
+})
+
+test('cwd 12. outside the root, a shown workflow that finishes stays named as last across refreshes', async ($, on) => {
+  const state = engine(on)
+  const disk = answerFs(on, BUILD_MID_PHASE)
+  await start($)
+  disk.cwd = '/tmp/elsewhere'
+  disk.root = '/home'
+  await $.turn.complete(turnDone)
+  expect((await texts($))[0]).toMatch(/^cc10x · BUILD wf-20261018T112922Z-7e99ef54/)
+
+  disk.fixture = FINISHED_BUILD
+  for (let i = 0; i < 3; i++) {
+    await $.turn.complete(turnDone)
+    expect(state.loop?.last?.wf).toBe(WF)
+    const lines = await texts($)
+    expect(lines[0]).toBe('no live workflow')
+    expect(lines[1]).toMatch(/^\(last: wf-20261018T112922Z-7e99ef54 finished /)
+  }
+})
+
+test('cwd 13. a nearer workflows dir that cannot be listed is named in the error; a live one further up still shows', async ($, on) => {
+  const state = engine(on)
+  const disk = answerFs(on, BUILD_MID_PHASE)
+  const child = '/repo/child/.cc10x/workflows'
+  disk.refuseList = [child]
+  disk.cwd = '/repo/child'
+  await start($)
+
+  expect(state.loop?.live?.path).toBe(BUILD_MID_PHASE.path)
+  expect(state.loop?.error).toContain(child + ': ')
+  expect(state.loop?.error).toContain('EACCES: list refused')
+})
+
+test('cwd 14. /cc10x-loop status when the loop state cannot be read answers with status text, never "pane did not open"', async ($, on) => {
+  engine(on)
+  answerFs(on, BUILD_MID_PHASE)
+  let refuse = false
+  on('state.get', (_, e, next) => {
+    const r = e as { plugin: string; key: string }
+    return refuse && r.plugin === 'cc10x' && r.key === 'loop' ? { deny: 'state store down' } : next(e)
+  })
+  await start($)
+  refuse = true
+
+  const status = await $.command.run({ command: 'cc10x-loop', args: 'status' })
+  expect(status.text).not.toContain('did not open')
+  expect(status.text).toContain('state store down')
 })

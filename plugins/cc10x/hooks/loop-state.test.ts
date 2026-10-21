@@ -16,7 +16,7 @@ import {
   type LoopFixture,
 } from './loop-fixtures'
 import { REMEDIATION, ROUTES } from './loop-routes'
-import { bandLine, deriveLoop, deriveSteps, isFinished, nextStep, parseEvents, type Artifact } from './loop-state'
+import { bandLine, deriveLoop, deriveSteps, insideRoot, isFinished, nextStep, parseEvents, workflowDirs, type Artifact } from './loop-state'
 
 // 2026-10-18T12:51:24Z, the second the case-2 APPROVE record carries.
 const NOW = 1_792_327_884_000
@@ -647,4 +647,27 @@ test('39. a workflow_type naming an Object.prototype key is an unknown type, not
   }
   const remediated = deriveSteps({ workflow_uuid: 'wf-1', workflow_type: 'constructor' }, [record('remediation_created')], [])
   expect(remediated.filter(s => !s.extra)).toEqual([])
+})
+
+test('40. workflowDirs: cwd up to the project root inside it; outside it, up to / and then the root', () => {
+  expect(workflowDirs('/p/n', '/p/n')).toEqual(['/p/n/.cc10x/workflows'])
+  expect(workflowDirs('/p/n/src', '/p/n/')).toEqual(['/p/n/src/.cc10x/workflows', '/p/n/.cc10x/workflows'])
+  expect(workflowDirs('/p/clutch', '/p')).toEqual(['/p/clutch/.cc10x/workflows', '/p/.cc10x/workflows'])
+  expect(workflowDirs('/p/n/.cc10x/workflows', '/p/n')).toEqual([
+    '/p/n/.cc10x/workflows/.cc10x/workflows',
+    '/p/n/.cc10x/.cc10x/workflows',
+    '/p/n/.cc10x/workflows',
+  ])
+  // A sibling sharing the root's name prefix is outside the root.
+  expect(workflowDirs('/p/nx', '/p/n')).toEqual(['/p/nx/.cc10x/workflows', '/p/.cc10x/workflows', '/.cc10x/workflows', '/p/n/.cc10x/workflows'])
+  expect(workflowDirs('/tmp/x/', '/repo')).toEqual(['/tmp/x/.cc10x/workflows', '/tmp/.cc10x/workflows', '/.cc10x/workflows', '/repo/.cc10x/workflows'])
+  expect(workflowDirs('/', '/')).toEqual(['/.cc10x/workflows'])
+})
+
+test('41. insideRoot: the root itself and paths under it, trailing slashes ignored; a name-prefix sibling is outside', () => {
+  expect(insideRoot('/p/n', '/p/n')).toBe(true)
+  expect(insideRoot('/p/n/src/', '/p/n/')).toBe(true)
+  expect(insideRoot('/p/nx', '/p/n')).toBe(false)
+  expect(insideRoot('/p', '/p/n')).toBe(false)
+  expect(insideRoot('/tmp/x', '/')).toBe(true)
 })
