@@ -76,6 +76,101 @@ SessionStart says so in one line naming the unreadable artifact. Without
 `CLAUDE_PROJECT_DIR` the project root is the checkout root containing the session
 `cwd`, and a relative hook-input `cwd` is made absolute.
 
+## Loop pane (mod)
+
+`hooks.json` also names a hooks module, `"modules": ["./register.tsx"]`, beside the
+`hooks` object. It is a Claude Code mod that shows a running cc10x workflow: which
+phase is current, which agent is running, what is pending, and the whole step chain.
+It is a read-only viewer: it never writes to `.cc10x/`, never changes a workflow and
+never blocks a tool call. The settings hooks in the table above run exactly as before.
+
+**What it reads.** The newest live workflow artifact `.cc10x/workflows/wf-*.json` and its
+events log `wf-*.events.jsonl`. Like resume context it takes the newest live artifact
+first, but it reads at most the 20 newest and skips an older artifact that has no events log. It re-reads
+at session start, after an Edit, Write or Bash call that names `.cc10x/workflows/`,
+when a cc10x workflow agent is spawned, and when a turn completes. Its own plugin state
+(`cc10x.loop`, `cc10x.spawns`, `cc10x.opened`) holds the last view, the spawns it has
+seen, and the workflow ids it already opened the pane for.
+
+**Where it looks.** The router writes `.cc10x/` beside the shell's current directory, which
+a shell `cd` moves while the project root stays put. So the mod looks in `.cc10x/workflows`
+from the session's current directory upward. Inside the project the walk stops at the project
+root, so a parent folder's workflows never show as this project's; from a directory outside the
+project it walks up to `/` and then tries the project root. It reads each directory that exists
+in that order (at most 20 artifacts in each) and stops at the first that holds a live workflow,
+so a folder with only finished workflows does not hide a live one further up; the first
+finished workflow it passes is the one the pane names as last. A directory it cannot list is
+named in a dim error line and skipped. Inside the project that walk is the whole answer: the
+nearest live workflow wins, and a `cd` to a folder with none shows none, not the one left
+behind. Only from a directory outside the project does it also try the directory of the
+workflow it last showed (running or finished), so a brief `cd /tmp` does not drop it. When
+it finds no `.cc10x/workflows` at all, that is the idle
+state, unless a workflow was showing: then the pane says `no .cc10x/workflows found from <cwd>`
+as a dim line until a directory turns up again.
+
+**What it draws.**
+
+- A band, one line above the prompt: phase, running agents and how long they have
+  run, the next step, the remediation count against the circuit breaker, and any
+  pending gate. It ends with ` · stale` when the last re-read failed and the band shows
+  the previous view. Drawn in the terminal and Desktop only.
+- A dock pane: the workflow header, the raw phase cursor, one row per chain step
+  with its decision or running time (router results outside the chain marked `+`),
+  the remediation count, the gate, the last three events, and any read error or
+  warning. With no live workflow, the pane says so and names the last workflow that
+  finished.
+
+**Commands.** `/cc10x-loop` opens the pane. `/cc10x-loop status` re-reads and prints
+the artifact path it reads, the workflows directories it read, in order (or `no .cc10x/workflows
+found from <cwd>`), and the last read error, if any.
+
+**Opening by itself.** The pane also opens unasked, once per live workflow in a session, at the
+first refresh that sees that workflow, but only after the band has seen a layout that
+docks a pane beside the transcript (fullscreen). A main-screen terminal is never taken
+over: there the pane opens only on `/cc10x-loop`, and a workflow id stays unmarked so a
+later refresh after docking still opens it. With no live workflow nothing opens.
+
+**Minimum version.** The mod needs Claude Code 2.1.287 in the terminal or 2.1.286 in
+Desktop. It is not yet verified on a Claude Code release before 2.1.287; the settings
+hooks are unaffected either way.
+
+**What `claude plugin validate plugins/cc10x` reports for it** (copied from a run on
+Claude Code 2.1.304):
+
+```
+  ❯ types ./types/index.d.ts declares on $: nothing (no EngineInterface member)
+  ❯ types ./types/index.d.ts declares state: cc10x.loop, cc10x.spawns, cc10x.opened
+  ❯ ./register.tsx hooks: session.start, tool.call, agent.spawn, turn.complete, command.run{command=cc10x-loop}, ui.render{component=AbovePrompt}, ui.render{component=Pane, requestId=cc10x-loop}
+  ❯ ./register.tsx gating hook with .catch: tool.call
+  ❯ ./register.tsx gating hook with .catch: agent.spawn
+  ❯ ./register.tsx gating hook with .catch: command.run{command=cc10x-loop}
+  ❯ ./register.tsx calls: $.clock.now, $.command.register, $.fs.exists (via scan), $.fs.list (via scanDir), $.fs.read (via scanDir), $.session.cwd (via scan), $.session.root (via scan), $.state.get, $.state.set, $.ui.log, $.ui.open, $.ui.resolve
+  ❯ ./register.tsx state writes: cc10x.loop, cc10x.opened, cc10x.spawns
+  ❯ ./register.tsx state reads: cc10x.loop, cc10x.opened, cc10x.spawns
+```
+
+The mod's tests (`loop-pane.test.tsx`, `loop-state.test.ts`) run with
+`claude plugin test plugins/cc10x`, which is the `plugin_test` step of the release gate.
+
+**Known limits.**
+
+- Nothing is drawn in `claude -p`, cloud sessions or Desktop on WSL; the artifact and
+  events log stay the source of truth there.
+- The band draws in the terminal and Desktop only; VS Code gets the pane.
+- Elapsed times update when the view refreshes (a tool call on the workflow files, a
+  spawn, a turn end); there is no timer.
+- Spawns are kept in session state, so a spawn made before a session restart is not
+  shown as running until its result lands in the events log.
+- A spawn for an agent outside the current chain is not shown until its result lands.
+- Whether the surface docks a pane is remembered per session, not per surface; a
+  surface that never draws the band never opens the pane by itself (`/cc10x-loop`
+  still opens it).
+- A workflow already live when the session starts opens the pane at the first later
+  refresh, not at session start.
+- The `doc-syncer` row stays pending when memory sets `DIFF_DRIVEN_DOCS: skip`; the mod
+  cannot see that setting.
+- A QA workflow shows the full QA chain; steps its probe never runs stay pending.
+
 ## Internal Publication Audit
 
 The plugin also ships an internal drift check:

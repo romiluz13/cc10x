@@ -2,6 +2,28 @@
 
 ## [Unreleased]
 
+### Loop pane
+
+A Claude Code mod inside the plugin shows a running cc10x workflow without changing the router. `hooks/hooks.json` gains `"modules": ["./register.tsx"]` beside the unchanged `hooks` object, and `plugin.json` gains `"types": "./types/index.d.ts"`.
+
+- **Band.** One line above the prompt in the terminal and Desktop: phase, running agents and their elapsed time, the next step, the remediation count against the circuit breaker, and any pending gate.
+- **Pane.** `/cc10x-loop` opens a dock pane with the whole step chain (one row per step with its decision or running time), the gate, the last three events and any read error. `/cc10x-loop status` prints the artifact it reads. The pane also opens by itself once per live workflow in a session where the layout docks it beside the transcript; a main-screen terminal is never taken over.
+- **Where it looks.** The mod finds `.cc10x/workflows` from the session's current directory upward, stopping at the project root when the session is inside it, so a session launched in a parent folder that `cd`s into a repo shows that repo's workflow. `/cc10x-loop status` prints the directories it read.
+- **Read-only.** It reads `.cc10x/workflows/<wf>.json` and `<wf>.events.jsonl` and writes only its own plugin state (`cc10x.loop`, `cc10x.spawns`, `cc10x.opened`). Every route's chain, including the remediation chains, is pinned to the router's phase names by `scripts/test_cc10x_loop_routes.py`.
+- **Release gate.** A tenth step, `plugin_test`, runs `claude plugin test plugins/cc10x` after `plugin_validate`; `--allow-no-claude` skips it loudly like `plugin_validate`. Each step now has a 600 s cap; a step past it fails as `FAIL <step-id>: timed out after 600 s`, its whole process group is killed, and the gate moves on.
+- **Minimum version.** Claude Code 2.1.287 in the terminal, 2.1.286 in Desktop. It is not yet verified on a Claude Code release before 2.1.287; the settings hooks are unaffected either way.
+
+**Maintainer pre-release check:** before releasing, start one Claude Code older than 2.1.287 with the plugin installed (the `modules` key present in `hooks.json`) and confirm the settings hooks still run and nothing errors on load.
+
+Known limits (full list in `plugins/cc10x/hooks/README.md`): nothing is drawn in `claude -p`, cloud sessions or Desktop on WSL; VS Code gets the pane but not the band; elapsed times update on refresh, with no timer; spawns made before a session restart are not shown as running until their result lands; the docking flag is per session, not per surface; the `doc-syncer` row stays pending under `DIFF_DRIVEN_DOCS: skip`.
+
+### Prompt change record
+
+- **Classification:** `code-only`. No agent, skill, router or template prompt changes; the change is a hooks module, its types and tests, a release-gate step and the docs that describe them.
+- **What changed:** the loop pane mod (`register.tsx`, `loop-state.ts`, `loop-routes.ts`, fixtures and tests under `hooks/`, `types/index.d.ts`), the `plugin_test` release-gate step, `README.md`, `hooks/README.md`, `docs/prompt-change-checklist.md` section 7 and one sentence in `docs/router-invariants.md` INV-013.
+- **Why it is safe:** the mod only reads the artifact and events log the router already writes; every hook has a `.catch`, so a failure logs and lets the call proceed. The settings hooks and the existing release-gate steps are unchanged and green, and `claude plugin test` runs the mod's tests in the gate.
+- **Claim boundary:** the pane mirrors the router's recorded state; it does not enforce or repair it, and it shows nothing a workflow did not write to `.cc10x/workflows/`.
+
 ### Enforcing guards removed
 
 cc10x no longer ships hooks that gate git or file operations. Claude Code's own permission modes and allow and deny rules are now the only gate for them. PR #93 (a configurable git guard) is superseded by this change.

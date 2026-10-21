@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import argparse
 import importlib.util
+import os
 import shutil
+import signal
 import subprocess
 import sys
 from pathlib import Path
@@ -18,7 +20,7 @@ SCRIPT_STYLE_SUITES = (
 )
 
 # Python steps use sys.executable so the gate exercises the interpreter that invoked it.
-# argv None means the step has a dedicated resolver (prompt_clause_assertions, pytest, plugin_validate).
+# argv None means the step has a dedicated resolver (prompt_clause_assertions, pytest, plugin_validate, plugin_test).
 GATE_STEPS = (
     ("harness_audit", [sys.executable, f"{TOOLS}/harness_audit.py"]),
     ("doc_consistency_check", [sys.executable, f"{TOOLS}/doc_consistency_check.py"]),
@@ -29,20 +31,53 @@ GATE_STEPS = (
     ("suite_review_package", [sys.executable, f"{SCRIPTS}/{SCRIPT_STYLE_SUITES[1]}"]),
     ("suite_token_usage_report", [sys.executable, f"{SCRIPTS}/{SCRIPT_STYLE_SUITES[2]}"]),
     ("plugin_validate", None),
+    ("plugin_test", None),
 )
+
+
+# Per-step wall-clock cap: the slowest step (pytest) took about 55 s on 2026-10-20, so a hung mod test cannot stall the gate.
+STEP_TIMEOUT_S = 600
 
 
 def run(argv: list[str]) -> int:
     print("$ " + " ".join(argv), flush=True)
     try:
-        return subprocess.run(argv, cwd=ROOT).returncode
+        # Own session so a timeout kills the whole group: `uv run` and `claude plugin test` do their work in grandchildren.
+        p = subprocess.Popen(argv, cwd=ROOT, start_new_session=True)
     except OSError as exc:
         print(f"FAIL: cannot execute {argv[0]}: {exc}", flush=True)
         return 1
+    try:
+        rc = p.wait(timeout=STEP_TIMEOUT_S)
+    except subprocess.TimeoutExpired:
+        kill_group(p)
+        return TIMED_OUT_RC
+    except BaseException:
+        # Ctrl-C no longer reaches a child in its own session, so take the group down before re-raising.
+        kill_group(p)
+        raise
+    # A background member left by a passing step would keep running and block a `| cat` reader.
+    kill_group(p)
+    return rc
+
+
+def kill_group(p: subprocess.Popen) -> None:
+    try:
+        os.killpg(p.pid, signal.SIGKILL)
+    except (ProcessLookupError, PermissionError):
+        # macOS answers EPERM, not ESRCH, when the group holds only unreaped zombies.
+        pass
+    p.wait()
+
+
+def raise_exit(signum, frame) -> None:
+    # SIGTERM/SIGHUP no longer reach a step in its own session; exiting via SystemExit runs run()'s cleanup.
+    raise SystemExit(128 + signum)
 
 
 SKIPPED_RC = -1000
 PASSED_NO_YAML_RC = -1001
+TIMED_OUT_RC = -1002
 CLAUSE_SCRIPT = f"{TOOLS}/prompt_clause_assertions.py"
 
 
@@ -58,7 +93,8 @@ def run_prompt_clauses(allow_missing: bool) -> int:
         )
     if allow_missing:
         print("SKIPPED-YAML prompt_clause_assertions: no importable PyYAML and no uv on PATH (--allow-no-yaml)", flush=True)
-        return PASSED_NO_YAML_RC if run([sys.executable, CLAUSE_SCRIPT, "--allow-no-yaml"]) == 0 else 1
+        rc = run([sys.executable, CLAUSE_SCRIPT, "--allow-no-yaml"])
+        return PASSED_NO_YAML_RC if rc == 0 else rc
     print("FAIL prompt_clause_assertions: no importable PyYAML and no uv on PATH (use --allow-no-yaml to skip the YAML parse check)", flush=True)
     return 1
 
@@ -90,6 +126,17 @@ def run_plugin_validate(allow_missing: bool) -> int:
     return 1
 
 
+def run_plugin_test(allow_missing: bool) -> int:
+    # claude plugin test exits 1 on a failing test, a load error, or no modules key, so its exit code is the verdict.
+    if shutil.which("claude"):
+        return run(["claude", "plugin", "test", "plugins/cc10x"])
+    if allow_missing:
+        print("SKIPPED plugin_test: claude not on PATH (--allow-no-claude)", flush=True)
+        return SKIPPED_RC
+    print("FAIL plugin_test: claude not on PATH (use --allow-no-claude to skip)", flush=True)
+    return 1
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="cc10x release gate runner")
     parser.add_argument("--list", action="store_true", help="print step ids and exit")
@@ -99,6 +146,16 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--allow-no-yaml", action="store_true")
     parser.add_argument("--allow-no-claude", action="store_true")
     args = parser.parse_args(argv)
+    previous = {sig: signal.signal(sig, raise_exit) for sig in (signal.SIGTERM, signal.SIGHUP)}
+    try:
+        return run_gate(args)
+    finally:
+        for sig, handler in previous.items():
+            if handler is not None:
+                signal.signal(sig, handler)
+
+
+def run_gate(args: argparse.Namespace) -> int:
 
     ids = [step_id for step_id, _ in GATE_STEPS]
     if args.list:
@@ -126,9 +183,13 @@ def main(argv: list[str] | None = None) -> int:
             rc = run_pytest(args.allow_no_pytest)
         elif step_id == "plugin_validate":
             rc = run_plugin_validate(args.allow_no_claude)
+        elif step_id == "plugin_test":
+            rc = run_plugin_test(args.allow_no_claude)
         else:
             # harness_audit parses --strict itself: it fails while the docs-rot baseline is non-empty.
             rc = run(cmd + (["--strict"] if args.strict and step_id == "harness_audit" else []))
+        if rc == TIMED_OUT_RC:
+            print(f"FAIL {step_id}: timed out after {STEP_TIMEOUT_S} s", flush=True)
         if rc == SKIPPED_RC:
             skipped.append(step_id)
         elif rc != 0:

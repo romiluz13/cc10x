@@ -106,5 +106,8 @@
         ]
       }
     ]
-  }
+  },
+  "modules": [
+    "./register.tsx"
+  ]
 }
