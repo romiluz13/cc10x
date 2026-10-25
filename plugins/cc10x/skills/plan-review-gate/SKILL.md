@@ -82,7 +82,7 @@ Read the user's original request and compare against the plan:
    a. Present blocking issues clearly
    b. Revise the plan to address them
    c. Re-run checks (increment iteration counter)
-   <!-- CC10X-M9: iteration counter is in-context only — not persisted to memory. If compaction occurs mid-retry, counter resets to 0 and gate may retry more than 3 times. Acceptable for now (gate still converges). -->
+   Before each iteration, persist SPEC_GATE_ATTEMPT_ID and incremented SPEC_GATE_ITERATIONS_USED in the saved plan metadata. Resume reads that same reservation/count; missing or conflicting metadata after a started iteration blocks rather than resets. Never exceed three within one planner reservation.
 7. IF SPEC_GATE_FAIL after 3 iterations → ESCALATION: emit a blocking review result and stop — three failed revisions means the premise is wrong, not the wording
 ```
 

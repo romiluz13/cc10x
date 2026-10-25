@@ -1,5 +1,22 @@
 # Changelog
 
+## [12.11.0] — Bounded review budgets
+
+- Added a local reservation ledger and CLI for shared lineage accounting, scoped
+  finite grants, stable node/proof identities and conservative legacy migration.
+  Related phases/workflows retain spending; invalid work costs units without
+  earning review credit. The router reserves before dispatch and reconciles on resume.
+- Added shared replay validation and audit-only budget diagnostics to the existing
+  artifact guard. Inline planner gate counts now persist across compaction.
+- **Classification:** `orchestration_sensitive`. Runtime, tests, router references,
+  planner/reviewer/proof contracts and release metadata change together. This
+  extends the existing finite review/checkpoint pattern; no external wording was
+  copied. Seam, advisory-route, QA isolation, security and approval gates remain.
+- **Claim boundary:** local POSIX ledger enforcement for conforming router calls;
+  semantic graph/proof/authorization checks remain parent-owned. No exact token,
+  monetary, distributed-locking or arbitrary-harness interception claim.
+
+
 ## [Unreleased]
 
 ### Loop pane

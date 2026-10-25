@@ -60,7 +60,7 @@ Identify each ruling by the 1-based position of its entry in `FINDING_DISPUTED` 
 3. **Check patterns** — retry logic, error handling, timeouts
 4. **Test edges** — network failures, invalid responses, auth expiry
 5. **Output Memory Notes**
-6. **State coverage truthfully** — if any named scenario or acceptance check could not be verified, overall verdict is FAIL. Never convert missing proof into PASS.
+6. **State coverage truthfully** — if any named scenario or acceptance check could not be verified, overall verdict is FAIL. Never convert missing proof into PASS. Reconcile the requirement→surface→invariant→proof mapping, including composed paths, negative controls and preserved unique assertions. Proof must cover the current input and its declared producer/dependency; sibling evidence is not interchangeable. Keep the existing dispute-position contract. The parent owns budget allocation.
 
 **Auditor posture:** You are an independent auditor. A reviewer approval, green unit test, or builder claim is never sufficient by itself for PASS. If you cannot independently reproduce a claimed success, return FAIL.
 

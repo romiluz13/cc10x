@@ -1,5 +1,8 @@
 ### BUILD preparation
 
+At dispatch, result ingestion and continuation, apply [review-budget.md](review-budget.md).
+PLAN→BUILD and later phases keep the lineage and subject; phase-local graphs do not reset review slots.
+
 **Target repo (`CC10X_REPO_DIR`) — resolve before everything below.** By default every git command, dependency install, and test run in this workflow operates on the **process cwd**. To drive a build against a repo that is NOT the session cwd (a sibling repo, one package in a multi-repo checkout, or a repo reached from a parent dir), set `CC10X_REPO_DIR` to that repo's absolute path; then for the REST of this workflow:
 
 - prefix every git command with it — `git -C "$CC10X_REPO_DIR" <cmd>` — covering the `0a` pre-flight, the `11a` per-phase BASE, the final-review `merge-base`, and the finishing checkout/pull/merge/branch/worktree ops;

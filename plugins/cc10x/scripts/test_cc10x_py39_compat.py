@@ -36,7 +36,26 @@ PAYLOADS = [
 ]
 
 RUNTIME_TOOLS = ["phase_brief.py", "review_package.py", "live_harness_runner.py"]
-RUNTIME_SCRIPTS = ["cc10x_qa_topology.py"]
+RUNTIME_SCRIPTS = ["cc10x_qa_topology.py", "cc10x_review_budget.py"]
+
+
+@pytest.mark.parametrize("interp", [sys.executable, SYSTEM_PYTHON])
+def test_budget_cli_exit_contract(interp, tmp_path):
+    if not Path(interp).exists():
+        pytest.skip("Interpreter unavailable")
+    state = tmp_path / ".cc10x"
+    workflow = state / "workflows/wf-a.json"
+    workflow.parent.mkdir(parents=True)
+    workflow.write_text(json.dumps({"workflow_uuid": "wf-a"}))
+    request = tmp_path / "request.json"
+    argv = [str(SCRIPTS_DIR / "cc10x_review_budget.py"), "--state-root", str(state),
+            "--workflow", str(workflow), "--request", str(request)]
+    for payload, expected in [({"op": "init", "lineage_id": "a", "subject_id": "a"}, 0),
+                              ({"op": "inspect"}, 2), ({"op": "init", "lineage_id": "../bad"}, 3)]:
+        request.write_text(json.dumps(payload))
+        result = run(interp, argv, "", tmp_path)
+        assert result.returncode == expected, result.stdout + result.stderr
+        assert "Traceback" not in result.stderr
 
 
 def hook_commands() -> list[list[str]]:

@@ -84,6 +84,12 @@ Planner-specific mapping: every task must state its validation level. If manual,
 
 ## Plan Completeness Gate (MANDATORY — before save)
 
+The existing requirement mapping must name concrete producer/consumer surfaces,
+affected invariant, phase, proof and the distinct failure it catches. Temporal or
+composed behavior needs one composed path and a meaningful negative control.
+Amendments identify changed proofs; consolidation preserves each unique assertion.
+Missing mapping blocks readiness; nonempty strings alone do not establish coverage.
+
 Scan the plan against these 10 checks. Fix inline.
 
 1. Every task has a test that verifies completion

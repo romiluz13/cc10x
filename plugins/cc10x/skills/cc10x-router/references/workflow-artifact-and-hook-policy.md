@@ -43,6 +43,8 @@ Artifact schema must include:
 - `telemetry`
 - `quality`
 - `planning_review_runs`
+- `review_budget`
+- `plan_input_digest`
 - `planning_review_findings`
 - `planning_review_status`
 - `plan_revision`
@@ -55,6 +57,13 @@ Artifact schema must include:
 - `updated_at`
 
 Rules:
+
+- `review_budget` is absent/null for legacy artifacts, otherwise the v1 projection
+  from [review-budget.md](review-budget.md). Initialize/join before new work,
+  reconcile on resume and persist each reservation before dispatch. `plan_input_digest`
+  binds new-format fresh closure to exact current input. The CLI writes only its
+  ledger; normal artifact tools write projections. The hook audits budget conflicts
+  after writes without adding a new blocking reason or hook type.
 
 - Router creates the workflows directory before the first workflow artifact write.
 - Router writes or updates the artifact after workflow creation, every agent completion, every remediation decision, every clarification answer, every phase completion, every blocking stop, and memory finalization.

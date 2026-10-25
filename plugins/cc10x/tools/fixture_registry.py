@@ -22,6 +22,7 @@ PLUGIN_ROOT = ROOT / "plugins" / "cc10x"
 FIXTURES_DIR = PLUGIN_ROOT / "tests" / "fixtures"
 
 REQUIRED_FIXTURES = (
+    "review-budget.json",
     "plan-direct.json",
     "plan-decision-rfc.json",
     "plan-full.json",

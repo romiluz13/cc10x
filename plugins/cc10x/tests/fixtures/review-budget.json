@@ -1,0 +1,308 @@
+{
+  "id": "review-budget",
+  "workflow_type": "QA",
+  "starting_artifact": {
+    "workflow_uuid": "wf-a",
+    "workflow_id": "wf-a",
+    "workflow_type": "QA",
+    "state_root": ".cc10x",
+    "plan_mode": null,
+    "verification_rigor": null,
+    "proof_status": "gaps_found",
+    "traceability": {
+      "requirements": [],
+      "phases": [],
+      "verification": [],
+      "remediation": []
+    },
+    "phase_cursor": null,
+    "task_ids": {
+      "builder": null,
+      "investigator": null,
+      "reviewer": null,
+      "hunter": null,
+      "verifier": null,
+      "doc_syncer": null,
+      "planner_create": null,
+      "planning_review_pass1": null,
+      "planner_replan": null,
+      "planning_review_pass2": null,
+      "memory_finalize": null
+    },
+    "results": {
+      "git_preflight": null,
+      "baseline": null,
+      "git_base_sha": null,
+      "target_repo": null,
+      "builder": null,
+      "investigator": null,
+      "reviewer": null,
+      "hunter": null,
+      "verifier": null,
+      "disputes_in_flight": [],
+      "planner": null,
+      "planning_reviewer": null,
+      "qa_repo_set": [],
+      "qa_researchers": [],
+      "qa_plan": null,
+      "qa_preflight": null,
+      "qa_harness_builder": null,
+      "qa_executor": null,
+      "topology": null,
+      "doc_syncer": null,
+      "finishing": null,
+      "final_branch_review": null,
+      "research": {
+        "web": null,
+        "github": null,
+        "synthesis": null
+      }
+    },
+    "intent": {
+      "goal": null,
+      "non_goals": [],
+      "constraints": [],
+      "acceptance_criteria": [],
+      "open_decisions": []
+    },
+    "evidence": {
+      "builder": [],
+      "investigator": [],
+      "reviewer": [],
+      "hunter": [],
+      "verifier": [],
+      "planning_reviewer": [],
+      "qa_executor": []
+    },
+    "quality": {
+      "confidence": null,
+      "evidence_complete": false,
+      "scenario_coverage": 0,
+      "research_quality": "none",
+      "convergence_state": "pending"
+    },
+    "status_history": [
+      {
+        "event": "workflow_started",
+        "ts": "__ISO_TIMESTAMP__",
+        "phase": "__PHASE__"
+      }
+    ],
+    "remediation_history": []
+  },
+  "relevant_tasks": {},
+  "agent_outputs": {},
+  "initial_ledger": {
+    "version": 1,
+    "lineage_id": "lineage-a",
+    "revision": 1,
+    "event_count": 0,
+    "policy": {
+      "base_units": 32,
+      "extension_units": 8,
+      "fresh_limit": 2,
+      "remediation_limit": 3,
+      "amendment_attempt_limit": 3,
+      "code_review_limit": 4,
+      "spec_gate_limit": 3
+    },
+    "members": [
+      {
+        "workflow_uuid": "wf-a",
+        "subject_id": "subject-a",
+        "source_workflow_uuid": null
+      }
+    ],
+    "opening": {
+      "charged_units": 0,
+      "counts": {},
+      "coverage": "complete",
+      "source_refs": []
+    },
+    "events": []
+  },
+  "steps": [
+    {
+      "request": {
+        "op": "reserve",
+        "event_id": "reserve-a",
+        "attempt_id": "a",
+        "workflow_uuid": "wf-a",
+        "subject_id": "subject-a",
+        "recorded_at": "2026-01-01T00:00:00Z",
+        "node_descriptor": {
+          "lineage_id": "lineage-a",
+          "subject_id": "subject-a",
+          "step_key": "build",
+          "phase_id": "P1",
+          "role": "qa-researcher",
+          "source_id": "source-a",
+          "repository_id": null
+        },
+        "node_id": "4c81e4ed93643748dd23269635bf0587fdaf09afac8f3d0428b1e37ae8a0f447",
+        "dependency_node_ids": [],
+        "lane": "work",
+        "phase_id": "P1",
+        "scope_digest": "2e543a502d97d3080df6611378d8c52c36b93c71e7bf0d78b19a12451f142601",
+        "parent_attempt_id": null,
+        "retry_of": null,
+        "input_digest": "20237819fe745fb252445a6c2f063cf8e0c3f37ba2807b3268a6b02337c86a7d",
+        "input_refs": [
+          {
+            "ref": "graph-row",
+            "digest": "4c81e4ed93643748dd23269635bf0587fdaf09afac8f3d0428b1e37ae8a0f447"
+          }
+        ],
+        "authorization_checks": [],
+        "finding_ids": [],
+        "checkpoint_id": null
+      },
+      "status": "allowed",
+      "charged_units": 1
+    },
+    {
+      "request": {
+        "op": "reserve",
+        "event_id": "reserve-b",
+        "attempt_id": "b",
+        "workflow_uuid": "wf-a",
+        "subject_id": "subject-a",
+        "recorded_at": "2026-01-01T00:00:00Z",
+        "node_descriptor": {
+          "lineage_id": "lineage-a",
+          "subject_id": "subject-a",
+          "step_key": "build",
+          "phase_id": "P1",
+          "role": "qa-researcher",
+          "source_id": "source-b",
+          "repository_id": null
+        },
+        "node_id": "0fedaff548a58817f4202d4eeec446afd04d71887cfd99ecdba1d4be477a0cf5",
+        "dependency_node_ids": [],
+        "lane": "work",
+        "phase_id": "P1",
+        "scope_digest": "2e543a502d97d3080df6611378d8c52c36b93c71e7bf0d78b19a12451f142601",
+        "parent_attempt_id": null,
+        "retry_of": null,
+        "input_digest": "7f658510f9dc433efc33dca6a4ec7ace495437c347ca67256ee9bd9583cd1faa",
+        "input_refs": [
+          {
+            "ref": "graph-row",
+            "digest": "0fedaff548a58817f4202d4eeec446afd04d71887cfd99ecdba1d4be477a0cf5"
+          }
+        ],
+        "authorization_checks": [],
+        "finding_ids": [],
+        "checkpoint_id": null
+      },
+      "status": "allowed",
+      "charged_units": 2
+    },
+    {
+      "request": {
+        "op": "reserve",
+        "event_id": "reserve-a",
+        "attempt_id": "a",
+        "workflow_uuid": "wf-a",
+        "subject_id": "subject-a",
+        "recorded_at": "2026-01-01T00:00:00Z",
+        "node_descriptor": {
+          "lineage_id": "lineage-a",
+          "subject_id": "subject-a",
+          "step_key": "build",
+          "phase_id": "P1",
+          "role": "qa-researcher",
+          "source_id": "source-a",
+          "repository_id": null
+        },
+        "node_id": "4c81e4ed93643748dd23269635bf0587fdaf09afac8f3d0428b1e37ae8a0f447",
+        "dependency_node_ids": [],
+        "lane": "work",
+        "phase_id": "P1",
+        "scope_digest": "2e543a502d97d3080df6611378d8c52c36b93c71e7bf0d78b19a12451f142601",
+        "parent_attempt_id": null,
+        "retry_of": null,
+        "input_digest": "20237819fe745fb252445a6c2f063cf8e0c3f37ba2807b3268a6b02337c86a7d",
+        "input_refs": [
+          {
+            "ref": "graph-row",
+            "digest": "4c81e4ed93643748dd23269635bf0587fdaf09afac8f3d0428b1e37ae8a0f447"
+          }
+        ],
+        "authorization_checks": [],
+        "finding_ids": [],
+        "checkpoint_id": null
+      },
+      "status": "allowed",
+      "charged_units": 2
+    },
+    {
+      "request": {
+        "op": "finish",
+        "event_id": "finish-a",
+        "workflow_uuid": "wf-a",
+        "subject_id": "subject-a",
+        "recorded_at": "2026-01-01T00:00:01Z",
+        "attempt_id": "a",
+        "outcome": "invalid",
+        "contract_ref": null,
+        "contract_digest": null,
+        "verdict": null,
+        "review_mode": null,
+        "reviewed_revision": null,
+        "reviewed_input_digest": null,
+        "spec_gate_iterations": 0,
+        "evidence_refs": [],
+        "measurement": {
+          "availability": "unknown",
+          "tokens": null,
+          "agent_seconds": null,
+          "source": null
+        }
+      },
+      "status": "allowed",
+      "charged_units": 2
+    },
+    {
+      "request": {
+        "op": "reserve",
+        "event_id": "reserve-retry",
+        "attempt_id": "retry",
+        "workflow_uuid": "wf-a",
+        "subject_id": "subject-a",
+        "recorded_at": "2026-01-01T00:00:00Z",
+        "node_descriptor": {
+          "lineage_id": "lineage-a",
+          "subject_id": "subject-a",
+          "step_key": "build",
+          "phase_id": "P1",
+          "role": "qa-researcher",
+          "source_id": "source-a",
+          "repository_id": null
+        },
+        "node_id": "4c81e4ed93643748dd23269635bf0587fdaf09afac8f3d0428b1e37ae8a0f447",
+        "dependency_node_ids": [],
+        "lane": "work",
+        "phase_id": "P1",
+        "scope_digest": "2e543a502d97d3080df6611378d8c52c36b93c71e7bf0d78b19a12451f142601",
+        "parent_attempt_id": null,
+        "retry_of": "a",
+        "input_digest": "20237819fe745fb252445a6c2f063cf8e0c3f37ba2807b3268a6b02337c86a7d",
+        "input_refs": [
+          {
+            "ref": "graph-row",
+            "digest": "4c81e4ed93643748dd23269635bf0587fdaf09afac8f3d0428b1e37ae8a0f447"
+          }
+        ],
+        "authorization_checks": [],
+        "finding_ids": [],
+        "checkpoint_id": null
+      },
+      "status": "blocked",
+      "charged_units": 2
+    }
+  ],
+  "expected": {
+    "charged_units": 2
+  }
+}

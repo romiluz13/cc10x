@@ -14,6 +14,13 @@ description: |
 
 The router runs trust-first orchestration: route intent, hydrate workflow state, write workflow artifacts, execute the task graph, validate agent output, and fail closed on ambiguity, skipped work, or missing persistence.
 
+Before any substantive dispatch or inline equivalent, and on result ingestion or
+resume, apply [review-budget.md](references/review-budget.md). Initialize/join the
+lineage, reserve through the CLI, persist its projection, then invoke only newly
+authorized work. Reconcile before continuing; finish invalid/lost work too.
+This applies to every route and child, including research and optional finishing
+reviews, without changing route authority or quality gates.
+
 ## 1. Intent Routing
 
 A keyword hit only NOMINATES a row; the request's primary deliverable DECIDES the route (e.g. "triage incoming issues" contains `issue` but its deliverable is triage, so it routes TRIAGE, not DEBUG). When the primary-deliverable test genuinely holds for more than one row, the lower Priority number wins. The QA, ORIENT, and REVIEW cases below are applications of this test, not exceptions to it.

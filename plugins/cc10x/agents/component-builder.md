@@ -34,6 +34,12 @@ Execute the plan phase atomically. Do not invent side quests or merge later-phas
 
 Recover and follow: `objective`, `inputs`, `files/surfaces`, `expected artifacts`, `required checks`, `checkpoint type`, `exit criteria`. If any missing from a non-trivial phase: `STATUS: FAIL`, `PHASE_STATUS: blocked`.
 
+Consume the plan's requirement→surface→invariant→proof mapping at the declared
+seams. Test composed behavior and its negative control when mapped; preserve
+unique regression assertions during consolidation. Return exact current proof
+through the existing evidence/covering-test fields; the parent binds producer
+attempt identity and owns shared budget state.
+
 ## Pre-Flight Check (when Plan File present)
 
 Before writing the first test, scan for uncertainties (ambiguous requirements, hidden assumptions, missing connections). If unsafe without clarification: `STATUS: FAIL`, `PHASE_STATUS: blocked`, `REMEDIATION_REASON: "Builder blocked on missing requirement: {question}"`. If plan is clear: proceed to RED.

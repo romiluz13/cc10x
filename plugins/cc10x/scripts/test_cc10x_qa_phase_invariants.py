@@ -2690,8 +2690,8 @@ PP40_HEADING = re.compile(r"^## (\d+[a-z]?)\. (.+)$", re.M)
 # 120 to 128 after #94 (the citations other comments in this file call `:119`).
 # Re-measured with the 0b recall bullet: 128 -> 129; the 0c resume bullet: 130.
 PP40_UNDESCRIPTIVE = {
-    ("qa-workflow.md", 130, "3"),   # "wave count and in the"  vs  ## 3. Build order
-    ("qa-workflow.md", 130, "2"),   # "id rollups"             vs  ## 2. Coverage plan
+    ("qa-workflow.md", 134, "3"),   # "wave count and in the"  vs  ## 3. Build order
+    ("qa-workflow.md", 134, "2"),   # "id rollups"             vs  ## 2. Coverage plan
 }
 # There is no exclusion list. The seven unprefixed `§N` in
 # `qa-harness-builder.md`'s 64-71 table fall into the NO-PREFIX branch already --

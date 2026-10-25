@@ -21,6 +21,9 @@ PLAN_REVIEW_GATE = PLUGIN_ROOT / "skills" / "plan-review-gate" / "SKILL.md"
 
 from fixture_registry import REQUIRED_FIXTURES, check_registry_complete
 
+sys.path.insert(0, str(PLUGIN_ROOT / "scripts"))
+from cc10x_review_budget import evaluate_budget, validate_budget_projection
+
 REQUIRED_ARTIFACT_KEYS = (
     "workflow_uuid",
     "workflow_id",
@@ -1774,7 +1777,17 @@ def check_two_workflow_resume(fixture: dict[str, Any]) -> None:
     require(covered == set(tasks), f"{label}: every task must be either resumed or ignored")
 
 
+def check_review_budget(fixture: dict[str, Any]) -> None:
+    ledger = fixture["initial_ledger"]
+    for step in fixture["steps"]:
+        result = evaluate_budget(ledger, step["request"])
+        require(result["status"] == step["status"], f"review-budget: unexpected status {result['reasons']}")
+        require(result["projection"]["charged_units"] == step["charged_units"], "review-budget: charge mismatch")
+        ledger = result["ledger"]
+
+
 CHECKS = {
+    "review-budget.json": check_review_budget,
     "plan-direct.json": check_plan_direct,
     "plan-decision-rfc.json": check_plan_decision_rfc,
     "plan-full.json": check_plan_full,
@@ -1841,6 +1854,16 @@ def validate_artifact_file(path: Path, artifact: Any) -> None:
     """
     require(isinstance(artifact, dict), f"{path.name}: artifact must be a JSON object, got {type(artifact).__name__}")
     validate_end_state(path.name, artifact)
+    if artifact.get("review_budget") is not None:
+        try:
+            ledger_path = Path(artifact["review_budget"]["ledger_path"])
+            ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
+            log_path = path.with_suffix(".events.jsonl")
+            budget_events = read_events_jsonl(log_path) if log_path.is_file() else []
+            reasons = validate_budget_projection(dict(artifact, _budget_events=budget_events), ledger)
+        except (OSError, ValueError, TypeError, KeyError):
+            reasons = ["invalid_budget_state"]
+        require(not reasons, f"{path.name}: review-budget: {','.join(reasons)}")
     sibling = path.with_name(path.stem + ".events.jsonl")
     events = read_events_jsonl(sibling) if sibling.is_file() else []
     in_history = count_memory_finalized(path.name, artifact)

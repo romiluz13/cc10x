@@ -1,5 +1,9 @@
 ### QA preparation
 
+At dispatch, result ingestion and continuation, apply [review-budget.md](review-budget.md).
+Reserve source/repository inventory siblings serially before parallel research;
+each has its own node and proof provenance. Fan-in and QA's existing grant gates remain required.
+
 **Status: active.** This file *is* the governing design for the QA route; there is no separate design document to consult.
 
 **Target repo (`CC10X_REPO_DIR`).** Same rule as BUILD: when set, every git command, dependency install, service start, and test run in this workflow operates on that absolute path; `.cc10x/` state stays at the session cwd. Record the resolved target under `results.target_repo`.

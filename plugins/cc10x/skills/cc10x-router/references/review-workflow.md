@@ -1,5 +1,8 @@
 ### REVIEW preparation
 
+At dispatch, result ingestion and continuation, apply [review-budget.md](review-budget.md).
+An accepted BUILD follow-up joins this lineage; the advisory route still never starts fixes itself.
+
 1. REVIEW is advisory only.
 2. Never create REM-FIX or implementation tasks directly from a REVIEW workflow.
 3. If the final review verdict is `CHANGES_REQUESTED`, the router may offer `Start BUILD to fix (Recommended)` as a follow-up user choice.

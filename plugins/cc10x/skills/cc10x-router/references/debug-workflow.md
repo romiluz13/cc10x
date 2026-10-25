@@ -1,5 +1,8 @@
 ### DEBUG preparation
 
+At dispatch, result ingestion and continuation, apply [review-budget.md](review-budget.md).
+QA→DEBUG retains its source ledger; DEBUG-RESET below resets local diagnostic markers only.
+
 1. If the user explicitly asks for research or the bug clearly depends on external post-2024 behavior, allow a research round before the first investigator run.
 2. Immediately write `[DEBUG-RESET: wf:{workflow_uuid}]` once the workflow id exists.
 3. Preserve failed attempt counting semantics: the investigator counts `[DEBUG-N]:` entries after the most recent reset marker.

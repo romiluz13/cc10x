@@ -1310,7 +1310,7 @@ def test_remfix_gate_replay_accepts_a_multiline_string_in_the_proof_field(tmp_pa
 def test_replay_registers_the_p3_fixtures_and_the_two_advisory_pause_fixtures():
     result = run_tool("workflow_replay_check.py")
     assert result.returncode == 0, result.stdout + result.stderr
-    assert "fixtures=35" in result.stdout
+    assert "fixtures=36" in result.stdout
 
 
 @pytest.mark.parametrize("name,mutate,message", L1_MUTATIONS, ids=lambda v: getattr(v, "__name__", str(v)))

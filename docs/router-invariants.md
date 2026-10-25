@@ -1,6 +1,12 @@
 # CC10x Router Behavioral Invariant Registry
 
-> **Status note:** Aligned to the `v12.10.0` product line as released on 2026-10-07 (v12.10.0; the release before it was v12.9.1), against `plugins/cc10x/skills/cc10x-router/SKILL.md`, `plugins/cc10x/skills/cc10x-router/references/*.md` and `plugins/cc10x/hooks/hooks.json`. Release history lives in `CHANGELOG.md`. Invariants for the QA route, ORIENT and the seam gate are registered below.
+The v12.11.0 budget contract is defined in
+`plugins/cc10x/skills/cc10x-router/references/review-budget.md`: every substantive
+dispatch reserves before invocation; continuations retain lineage spending;
+scoped grants cannot fund other lanes/subjects. CLI enforcement and replay share
+one reducer; hook budget diagnostics remain audit-only after writes.
+
+> **Status note:** Aligned to the `v12.11.0` product line (previous release v12.10.0), against `plugins/cc10x/skills/cc10x-router/SKILL.md`, `plugins/cc10x/skills/cc10x-router/references/*.md` and `plugins/cc10x/hooks/hooks.json`. Release history lives in `CHANGELOG.md`. Invariants for the QA route, ORIENT and the seam gate are registered below.
 
 ## Purpose
 
@@ -58,7 +64,7 @@ Validated against the live plugin surface:
 ### INV-026: Fresh planning review is bounded and planner-owned
 
 **Covers:** Router `## 5. Workflow Preparation`, `## 9. Remediation And Workflow Rules`, planner, `plan-gap-reviewer`
-**Enforces:** Every PLAN workflow pre-creates a DAG-visible bounded fresh-review chain (`plan-create -> plan-review-gap-1 -> re-plan -> plan-review-gap-2 -> memory-finalize`) capped at two `REVIEW_MODE: fresh` passes. Amendments to a saved plan are verified by an on-demand `plan-review-amendment` task (`REVIEW_MODE: amendment`) that is not pre-created, is uncapped, does not count against the fresh-pass cap and cannot close the review loop; `PLANNING_REVIEW_STATUS: passed` needs `plan_revision == last_reviewed_revision`. The planner remains the only writer and the router the only orchestration owner.
+**Enforces:** Every PLAN workflow pre-creates a DAG-visible bounded fresh-review chain (`plan-create -> plan-review-gap-1 -> re-plan -> plan-review-gap-2 -> memory-finalize`) capped at two `REVIEW_MODE: fresh` passes. Amendments to a saved plan are verified by an on-demand `plan-review-amendment` task (`REVIEW_MODE: amendment`) that is not pre-created, uses the shared bounded review budget, does not count against the fresh-pass cap and cannot close the review loop; `PLANNING_REVIEW_STATUS: passed` needs `plan_revision == last_reviewed_revision`. The planner remains the only writer and the router the only orchestration owner.
 **If removed:** PLAN can drift into hidden dynamic orchestration, ambiguous plan ownership, unreviewed amendments, or open-ended token-heavy refinement loops that are not auditable from the task graph.
 **Safe to remove:** Never.
 

@@ -173,6 +173,8 @@
     "research_quality": "none",
     "convergence_state": "pending"
   },
+  "review_budget": null,
+  "plan_input_digest": null,
   "planning_review_runs": 0,
   "planning_review_findings": [],
   "planning_review_status": "not_started",

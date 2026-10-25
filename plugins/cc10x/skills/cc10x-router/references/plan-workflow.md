@@ -1,5 +1,8 @@
 ### PLAN preparation
 
+At dispatch, result ingestion and continuation, apply [review-budget.md](review-budget.md).
+Reserve the planner's inline envelope once; review gates never replenish it.
+
 1. Restore design enrichment:
    - Read `- Design:` from `activeContext.md ## References`.
    - If a design path exists, verify it with `Glob(...)` and hold it as fallback.
@@ -69,7 +72,7 @@ TaskUpdate({ taskId: planning_review_pass2_task_id, addBlockedBy: [planner_repla
 # spent, which is the case it exists for — so it has no fixed position in the graph.
 TaskCreate({
   subject: "CC10X plan-gap-reviewer: Amendment verification",
-  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:plan-review-amendment\nplan:{plan_file}\nscope:N/A\nreason:Diff-scoped verification of the amendment itself\n\nREVIEW_MODE: amendment. Read the prior findings list and only the sections this amendment changed. Answer exactly two questions: did EVERY accepted finding land, and did the amendment introduce a NEW defect? This lane is diff-scoped and uncapped: it does NOT count against the maximum of 2 fresh-review passes, and its verdict does NOT close the review loop.",
+  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:plan-review-amendment\nplan:{plan_file}\nscope:N/A\nreason:Diff-scoped verification of the amendment itself\n\nREVIEW_MODE: amendment. Read the prior findings list and only the sections this amendment changed. Answer exactly two questions: did EVERY accepted finding land, and did the amendment introduce a NEW defect? This lane is diff-scoped: it does NOT count against the maximum of 2 fresh-review passes, and its verdict does NOT close the review loop.",
   activeForm: "Verifying plan amendment"
 }) -> planning_review_amendment_task_id
 

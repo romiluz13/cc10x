@@ -376,6 +376,7 @@ CORE_HOOK_PAIRS = (
 CORE_HOOK_SCRIPTS = tuple(dict.fromkeys(script for _, script in CORE_HOOK_PAIRS))
 # Main-guarded scripts/cc10x_*.py that are NOT hooks, each with its reason.
 NON_HOOK_CLIS = frozenset({
+    "cc10x_review_budget.py",  # parent-run reservation CLI; never a hook
     "cc10x_qa_topology.py",  # router-run CLI for the QA topology record, invoked by qa-workflow law, never by hooks.json
 })
 

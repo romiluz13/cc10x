@@ -15,8 +15,11 @@ Scope discipline (prevents the stale-artifact footgun):
 from __future__ import annotations
 
 import re
+import json
 import sys
 from pathlib import Path
+
+from cc10x_review_budget import validate_budget_projection
 
 from cc10x_hooklib import (
     load_input,
@@ -169,6 +172,16 @@ def main() -> int:
         closure = review_closure_reason(payload)
         if closure:
             reasons.append(closure)
+
+        if payload.get("review_budget") is not None:
+            try:
+                ledger = json.loads(Path(payload["review_budget"]["ledger_path"]).read_text(encoding="utf-8"))
+                log_path = artifact_path.with_suffix(".events.jsonl")
+                budget_events = [json.loads(line) for line in log_path.read_text(encoding="utf-8").splitlines() if line.strip()] if log_path.is_file() else []
+                budget_reasons = validate_budget_projection(dict(payload, _budget_events=budget_events), ledger)
+            except (OSError, ValueError, KeyError, TypeError):
+                budget_reasons = ["invalid_budget_state"]
+            reasons.extend("review-budget:" + reason for reason in budget_reasons)
 
         if target_is_artifact:
             if not payload.get("updated_at"):

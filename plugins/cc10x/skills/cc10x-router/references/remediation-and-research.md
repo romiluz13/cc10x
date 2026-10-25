@@ -40,6 +40,11 @@ When the router creates a REM-FIX from a `DISPUTE_REJECTED` ruling, the descript
 
 Before creating a new remediation task:
 
+For v1 budgets, use the shared ledger checkpoint/grant decision in
+[review-budget.md](review-budget.md), including applicable standing authority.
+The legacy counts below are migration cross-checks only; reconcile into v1 before
+dispatch. They never replenish a lineage or supersede its scoped grant decision.
+
 - Count the entries in the workflow artifact's `remediation_history`. That count is authoritative without Task tools: each remediation round appends exactly one entry in BOTH modes, with or without Task tools.
 - Only when Task tools exist, cross-check it against the number of tasks whose descriptions contain both `wf:{workflow_uuid}` and `kind:remfix`; on a mismatch, report it to the user and use the LARGER of the two counts (a missed append or a missed REM-FIX task must never lower the count).
 - If count >= 3, ask the user how to proceed BEFORE creating a 4th remediation cycle.
@@ -48,6 +53,11 @@ Before creating a new remediation task:
 **Remediation history (MANDATORY — do not skip):** each remediation round appends exactly one entry to the workflow artifact's `remediation_history` array, `{ts, phase, reason, cycle_number}`, where `cycle_number` is this workflow's running remediation count (starting at 1): immediately after creating the `kind:remfix` task when Task tools exist, and when the router records the REM-FIX step in artifact-only mode or inline mode (no task exists then). In the same step, append a `remediation_created` event with `details.phase_id` (the `phase_cursor` value) to the events log; it is the boundary the artifact-only resume rule reads (`SKILL.md` §4). The circuit breaker above is a router rule, and the router is the only counter. The breaker count reads `remediation_history` and artifact-only resume reads the `remediation_created` event, so skipping either append breaks one of them; without Task tools there are no REM-FIX tasks to cross-check, so a missed append lowers the count.
 
 ### Change-something-before-re-dispatch
+
+Apply [review-budget.md](review-budget.md) before every retry, repair creation,
+review and research dispatch and after every result. Its ledger governs aggregate
+attempts and scoped grants across continuations; local histories remain evidence.
+Project valid fresh counts from it instead of independently incrementing them.
 
 When an agent returns `BLOCKED` (or a fix attempt fails), the circuit breaker only BOUNDS the loop — it does not improve it. Re-dispatching the SAME agent with the SAME model on the SAME unchanged input just burns a circuit-breaker cycle and produces the same failure. Before any re-dispatch, the router MUST change at least one input:
 
@@ -256,7 +266,7 @@ The `skill_precedence_gate` (plan > domain skills) must NOT be misread as "auto-
 
 - Normal precedence still applies when a finding merely prefers a different approach than the plan chose.
 - CARVE-OUT: when a finding DIRECTLY CONTRADICTS an explicit plan mandate (e.g. the plan mandated a test and the finding is that the test asserts nothing, or the plan mandated a guard the finding shows is unsafe), the router does NOT silently apply precedence.
-- Instead the router surfaces a which-governs `AskUserQuestion` that places the finding text BESIDE the plan mandate text so the user can see the contradiction directly:
+- Implementation/test-allocation corrections that preserve approved guarantees and every unique regression assertion proceed within the existing allowance, with an updated requirement→proof mapping. For architecture/product/security changes or an actual contradiction in guarantees, the router surfaces a which-governs `AskUserQuestion` that places the finding text BESIDE the plan mandate text so the user can see the contradiction directly:
   - option A: `Plan governs` (finding is dismissed, record why)
   - option B: `Finding governs` (plan mandate is overridden, REM-FIX applies the finding)
 - The reviewer must STILL report the finding regardless of plan precedence. Precedence governs what the router does with a finding, never whether the reviewer is allowed to raise it.

@@ -68,7 +68,13 @@ When `critical_path`: include behavior contract, edge-case catalog, provable pro
 12. **Two-layer artifact** — Human Layer first (what + why), then Execution Contract Layer (buildable without improvisation). Write what `plan-review-gate` checks: for a multi-phase plan a `## Durable Decisions` section (routes, schema, models, auth, third-party boundaries every phase references), `Depends on:` and `Enables:` statements on every non-trivial phase, and a `## Differences from agreement` section that matches `DIFFERENCES_FROM_AGREEMENT`.
 13. **Fresh review resolution** — if prompt includes fresh-review findings, revise existing plan (don't fork). Accept valid findings, record rejections with reasons.
 14. **Save plan** — `docs/plans/YYYY-MM-DD-<feature>-plan.md`. Verify with Glob. Retry once if missing. If still missing: `STATUS=NEEDS_CLARIFICATION`.
-15. **Plan Review Gate** — invoke `Skill(skill="cc10x:plan-review-gate")`. If SPEC_GATE_PASS → output. If SPEC_GATE_FAIL → revise, re-run, max 3 iterations. Gate iterations (max 3) and fresh-review passes (max 2, `PLANNING_REVIEW_RUNS`) are different counters. Skip if trivial.
+15. **Plan Review Gate** — invoke `Skill(skill="cc10x:plan-review-gate")`. If SPEC_GATE_PASS → output. If SPEC_GATE_FAIL → revise, re-run, max 3 iterations. Gate iterations (max 3) and fresh-review passes (max 2, `PLANNING_REVIEW_RUNS`) are different counters. Skip if trivial. Before each iteration persist `SPEC_GATE_ATTEMPT_ID` and incremented `SPEC_GATE_ITERATIONS_USED` in the plan metadata; resume reads them and conflicting/missing started-iteration metadata blocks. Echo the used count in the return. These iterations use the parent-reserved planner envelope; do not write shared budget state.
+
+In the existing traceability mapping, bind each critical requirement to concrete
+producer/consumer surfaces, invariant, phase, named proof and distinct failure
+caught. Include composition and a negative control for temporal/stateful work.
+Amendments name changed invariants/proofs; test consolidation maps every unique
+assertion to its new home. Missing mappings block readiness.
 
 ## Plan Header Wording Law (MANDATORY)
 

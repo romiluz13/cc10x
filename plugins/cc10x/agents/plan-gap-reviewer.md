@@ -28,7 +28,7 @@ tools: Read, Grep, Glob, LSP
 **Dispatch input — `REVIEW_MODE: fresh | amendment`.** Router-set at dispatch, **never agent-chosen**. It is a *dispatch input*, not a contract field: this agent emits a fenced YAML block (`PLANNING_REVIEW_STATUS` and the other keys under Output), and the line-1 `CONTRACT` envelope is the shared cross-agent shape, so `REVIEW_MODE` is never a per-agent key on the line-1 `CONTRACT` envelope. **An omitted `REVIEW_MODE` validates as `fresh`** — byte-identical behavior to a dispatch that never carried the field.
 
 - **`fresh`** — the lane described above. Sees the original request, the saved plan, the current codebase, and any explicitly provided design/research files. **Never** the prior findings list. Counts against the maximum of 2 fresh-review passes.
-- **`amendment`** — sees the prior findings list **and the changed sections only**. Diff-scoped, **uncapped**, and it runs after **every** amendment including the last one — the last one is the point, because it is the amendment no fresh pass can ever reach. Answer exactly two questions:
+- **`amendment`** — sees the prior findings list **and the changed sections only**. Diff-scoped; the parent reserves this lane before dispatch. If it cannot run, verification remains not run. Answer exactly two questions:
   1. Did **every** accepted finding land?
   2. Did the amendment introduce a **new** defect?
 
