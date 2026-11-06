@@ -23,14 +23,21 @@
   "agent_outputs": {
     "parallel_findings": {
       "critical_issues": 1,
-      "high_issues": 3
+      "high_issues": 3,
+      "medium_issues": 1,
+      "low_issues": 1
     }
   },
   "expected": {
-    "next_action": "pause_for_scope_decision",
-    "pending_gate": "scope_decision",
+    "next_action": "create_remfix",
+    "remfix_scope": "ALL_ISSUES",
+    "pending_gate": null,
     "artifact_delta": {
-      "quality": {"convergence_state": "needs_iteration"}
+      "quality": {"convergence_state": "needs_iteration"},
+      "deferred_findings": [
+        {"source": "code-reviewer", "phase_id": "phase-1", "finding": "checkout total helper duplicates the cart sum", "severity": "medium"},
+        {"source": "failure-hunter", "phase_id": "phase-1", "finding": "verbose debug log in payment retry", "severity": "low"}
+      ]
     }
   }
 }

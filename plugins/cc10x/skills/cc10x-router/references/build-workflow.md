@@ -75,7 +75,7 @@ The orchestration state dir (`.cc10x/`) and the workflow artifacts STAY at `CLAU
 13. Router handoff for the current BUILD phase must be phase-local:
 
 - include only the current phase objective, inputs, expected artifacts, required checks, checkpoint type, exit criteria, and approved clarifications still in force
-- include the phase's `#### Input space`, `#### Failure modes` and `#### Touched surfaces` tables verbatim when the plan phase carries them (a plan saved before 12.11 may not; the handoff then omits them and the build proceeds)
+- include the phase's `#### Input space`, `#### Failure modes` and `#### Touched surfaces` tables verbatim when the plan phase carries them (a plan saved before phase tables existed may not; the handoff then omits them and the build proceeds)
 - include prior-phase detail only when it remains an active blocker, dependency, or unresolved finding
 - do not rehydrate broad historical narrative when the workflow artifact already captures it
 
@@ -96,7 +96,7 @@ BUILD is sequential:
 **Complexity gradient (read `build_scope` from BUILD preparation step 4):**
 The router is still the sole entry point for every BUILD, but the task graph scales to the work. This is a deliberate gradient, not the retired unconditional QUICK path: trivial work earns a reduced graph; everything else pays the full chain.
 
-- `build_scope=trivial` → use the **reduced task graph** below: `component-builder` → `integration-verifier` → `Memory Update`. NO separate `code-reviewer` task, NO `failure-hunter` task, NO standalone `doc-syncer` task. The verifier still runs its FULL real proof path — never weaken the Pre-Completion Checklist, Proof Reconciliation, or Test Honesty Gates to "save time" on trivial work — and folds a brief review/edge-case pass into its report.
+- `build_scope=trivial` → use the **reduced task graph** below: `component-builder` → `integration-verifier` → `Memory Update`. NO separate `code-reviewer` task, NO `failure-hunter` task, NO standalone `doc-syncer` task. The verifier still runs its FULL real proof path — never weaken the Pre-Completion Checklist, Proof Reconciliation, or Test Honesty Gates to "save time" on trivial work — and folds a brief review/edge-case pass into its report under `### Folded Review`.
 - `build_scope=standard` (default, and always when a plan exists) → use the **full task graph** further below.
 
 **Escalation rule (trivial → full):** after the builder returns, if its Router Contract reports non-empty `SCOPE_INCREASES` or non-empty `BLOCKED_ITEMS`, the work was not actually trivial. Before advancing, promote the workflow to the full graph: create the `code-reviewer` task AND the `failure-hunter` task (both blocked by the builder — never skip the hunter on escalation), create the `doc-syncer` task (blocked by the verifier), re-block the verifier on `[reviewer_task_id, hunter_task_id]`, and, when this phase's graph carries a Memory Update task (only the LAST phase's does), re-block it on `doc_sync_task_id`. Persist `build_scope=standard` and an escalation entry in `status_history`. (The conversion note under the reduced graph below states the same rule — they are one rule, not two.)
@@ -114,7 +114,7 @@ TaskUpdate({ taskId: builder_task_id, addBlockedBy: [previous_phase_last_task_id
 
 TaskCreate({
   subject: "CC10X integration-verifier: Verify integration",
-  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:build-verify\nplan:N/A\nscope:N/A\nreason:Trivial-path phase exit verification\n\nRun required checks for the change and report whether truths, artifacts, wiring, and exit criteria are satisfied. Fold a brief correctness/edge-case review into your report since no separate reviewer ran.",
+  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:build-verify\nplan:N/A\nscope:N/A\nreason:Trivial-path phase exit verification\n\nRun required checks for the change and report whether truths, artifacts, wiring, and exit criteria are satisfied. Fold a brief correctness/edge-case review into your report under `### Folded Review`, one entry per finding with a `Severity:` line, since no separate reviewer ran.",
   activeForm: "Verifying integration"
 }) -> verifier_task_id
 TaskUpdate({ taskId: verifier_task_id, addBlockedBy: [builder_task_id] })
@@ -192,13 +192,13 @@ When an approved phase decomposes into multiple INDEPENDENT logical tasks AND th
 
 The finer per-TASK review cadence (one review per task rather than one per phase) applies ONLY in this mode. In the default per-phase mode the phase-level reviewer/verifier chain is unchanged. This mode reuses the existing builder + reviewer machinery — it changes dispatch granularity, not the agents.
 
-### Deferred Minor findings roll-up
+### Deferred findings roll-up
 
-Minor findings that do not block a phase exit must not silently evaporate — that violates the "no finding silently discarded" rule. The workflow artifact carries a `deferred_findings` array for exactly this:
+MEDIUM and LOW findings do not block a BUILD phase exit, and they must not silently evaporate — that violates the "no finding silently discarded" rule. The workflow artifact carries a `deferred_findings` array for exactly this:
 
-- When `code-reviewer` or `failure-hunter` raises a Minor finding that does NOT block the current `phase_exit_gate`, the router appends it to `deferred_findings` (each entry: `source` agent, `phase_id`, terse `finding`, and `severity:minor`) rather than dropping it. Blocking findings still gate the phase as before — this array is only for the non-blocking remainder.
+- When `code-reviewer` or `failure-hunter` reports a MEDIUM or LOW finding under `### Findings`, the router appends it to `deferred_findings` (each entry: `source` agent, `phase_id`, terse `finding`, and `severity` `medium` or `low`, from the agent's severity) and creates no REM-FIX for it. The blocking set (`remediation-and-research.md` `### Scope resolution`) still gates the phase; this array is only for the non-blocking remainder. The deferral is BUILD only, with one DEBUG use: in DEBUG, MEDIUM auto-creates a REM-FIX and each LOW is appended here with `severity: low`, listed at memory finalization and never at BUILD-DONE (rule 1b). `severity` `minor` stays valid for QA entries and older artifacts.
 - The array accumulates across phases for the whole workflow. Nothing consumes it mid-flight; it is surfaced once at BUILD-DONE (see the finishing block's triage step) so the user can decide explicitly: fix now, file as follow-up, or knowingly accept. No automatic action is taken on a deferred finding.
-- In the reduced task graph (`build_scope=trivial`) there is no separate reviewer, so the verifier's folded review/edge-case pass appends any Minor leftovers to `deferred_findings` the same way.
+- In the reduced task graph (`build_scope=trivial`) there is no separate reviewer, so the verifier writes its folded review/edge-case pass under `### Folded Review`, one entry per finding with a `Severity:` line: a CRITICAL or HIGH entry is in the blocking set (rule 1a), and the router appends each MEDIUM or LOW entry to `deferred_findings` the same way (`source` `integration-verifier`).
 
 ### doc-syncer SKIPPED state
 
@@ -219,10 +219,10 @@ cc10x gates EACH phase against its own per-phase BASE, but it never re-reviews t
 1. Compute `MERGE_BASE = git merge-base <base-branch> HEAD` (use `git -C "$CC10X_REPO_DIR"` when a target repo is set). If `git_preflight=degraded` blocks this, skip the pass and note it.
 2. Produce the whole-branch diff package via `python3 "${CLAUDE_PLUGIN_ROOT}/tools/review_package.py" MERGE_BASE HEAD` (add `--repo "$CC10X_REPO_DIR"` when targeting a non-cwd repo). Note: this is `MERGE_BASE..HEAD` across ALL phases, not a single phase's `results.git_base_sha..HEAD`.
 3. Dispatch exactly ONE `code-reviewer` over that whole-branch package, scoped to cross-phase concerns (seam misuse, contract drift, duplicated/diverged abstractions introduced across phases).
-4. If the reviewer returns findings, run ONE consolidated fix wave — a single remediation `component-builder` addressing all findings together, NOT one fixer per finding — then re-verify with one `integration-verifier` against `results.baseline`. If it returns no findings, record clean and proceed.
+4. If the reviewer returns CRITICAL or HIGH findings, run one fix wave — a single remediation `component-builder` addressing all of them together, NOT one fixer per finding — then re-verify with one `integration-verifier` against `results.baseline`. MEDIUM and LOW findings go to `deferred_findings`. If it returns no CRITICAL or HIGH findings, record clean and proceed.
 5. Record the outcome in the workflow artifact (`results.final_branch_review`) before advancing to the finishing menu.
 
-This reuses the existing `code-reviewer` and remediation machinery; it adds no new agent type. Non-blocking Minor findings still flow to `deferred_findings` and are surfaced at finishing.
+This reuses the existing `code-reviewer` and remediation machinery; it adds no new agent type. MEDIUM and LOW findings flow to `deferred_findings` and are surfaced at finishing.
 
 ### BUILD-DONE finishing (optional)
 
@@ -237,7 +237,7 @@ Finishing is a router-owned, optional step that runs AFTER the final phase's `in
 **How it runs (gated, never auto-destructive):**
 
 1. Confirm verification is green from the workflow artifact (`proof_status=passed`, final phase `completed`). Do not re-derive from prose.
-1a. **Surface deferred Minor findings before the menu.** Read `deferred_findings` from the workflow artifact. If non-empty, present the accumulated list (source, phase, finding) for explicit triage BEFORE offering the finishing menu, so nothing rolls off silently. Let the user fix now, file as follow-up, or knowingly accept; record the disposition in the artifact. An empty array is fine — just note "no deferred findings" and continue. This is surfacing-and-triage only; the router takes no automatic action on these findings.
+1a. **Surface deferred MEDIUM and LOW findings before the menu.** Read `deferred_findings` from the workflow artifact. If non-empty, present the accumulated list (source, phase, severity, finding) for explicit triage BEFORE offering the finishing menu, so nothing rolls off silently. Let the user fix now, file as follow-up, or knowingly accept; record the disposition in the artifact. An empty array is fine — just note "no deferred findings" and continue. This is surfacing-and-triage only; the router takes no automatic action on these findings.
 2. Detect environment: normal repo vs. linked worktree vs. detached HEAD. Reuse the `worktree` mode recorded in BUILD preparation step 0 AND the read-only `results.git_preflight` recorded in step 0a (`isolated`, `detached_head`, degraded). Re-run a single read-only pre-flight here only if step 0a was skipped. This selects the menu and the cleanup owner. If `git_preflight=degraded` (sandbox blocks git), degrade gracefully: skip every git mutation and instead OUTPUT the suggested branch name, commit message, and PR title/body text for the user to run manually.
 3. Offer exactly one `AskUserQuestion` with safe-by-default options:
    - `Keep the branch as-is (Recommended)` — default; no git mutation.

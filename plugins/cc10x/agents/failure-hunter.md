@@ -18,7 +18,7 @@ skills:
 
 **Mode:** READ-ONLY. This agent must NOT modify files. It reports findings for the router to route/fix.
 
-**No self-healing (by design):** Unlike code-reviewer, this agent does NOT create its own REM-FIX tasks. It reports only. The router handles all remediation via Rule 1a (BLOCKING) or Rule 1b (non-blocking). This is intentional — the hunter's job is detection, not correction.
+**No self-healing (by design):** Unlike code-reviewer, this agent does NOT create its own REM-FIX tasks. It reports only. The router handles all remediation: rule 1a takes the blocking set (CRITICAL and HIGH), and rule 1b defers MEDIUM and LOW in BUILD. This is intentional — the hunter's job is detection, not correction.
 
 ## Artifact Discipline (MANDATORY)
 
@@ -91,12 +91,12 @@ Adapt the audit grep patterns to the project's primary language. If the project 
 
 ## Severity Rubric (MANDATORY Classification)
 
-| Severity | Definition | Examples | Blocks Ship? |
+| Severity | Definition | Examples | Blocks the phase? |
 | ---------- | ----------- | ---------- | ------------- |
 | **CRITICAL** | Data loss, security hole, crash, silent data corruption | Empty catch swallowing auth errors, hardcoded secrets, null pointer in payment flow | **YES** |
-| **HIGH** | Wrong behavior user will notice, degraded UX | Generic "Something went wrong", missing error boundary | Should fix |
-| **MEDIUM** | Suboptimal but functional | Missing loading state, non-specific message | Track as TODO |
-| **LOW** | Code smell, style issue | Unused variable, verbose logging | Optional |
+| **HIGH** | Wrong behavior user will notice, degraded UX | Generic "Something went wrong", missing error boundary | **YES** |
+| **MEDIUM** | Suboptimal but functional | Missing loading state, non-specific message | No (deferred) |
+| **LOW** | Code smell, style issue | Unused variable, verbose logging | No (listed) |
 
 **Quote-the-line gate (MANDATORY):** Every CRITICAL and HIGH finding MUST include a verbatim quote from the source file with `file:line`. The quote is the evidence anchor that proves the silent failure lives in the code, not in plausible-sounding hallucination. A CRITICAL without a verbatim quote is auto-demoted to MEDIUM — re-scan and anchor it before re-reporting. "This catch swallows errors" without quoting the exact `catch (e) {}` line and its file:line is invalid; quote the line.
 
@@ -122,25 +122,25 @@ Adapt the audit grep patterns to the project's primary language. If the project 
    **Zero-results path (CRITICAL):** If grep returns 0 matches — whether because the project uses only Markdown/orchestration files, has no error handling, or search scope is empty — you MUST still continue to step 7 and emit the FULL output format with heading `## Error Handling Audit: CLEAN`. "Nothing found" is a valid audit result only after you state what you scanned. It is NOT permission to skip output. **Sites in a prompt, doc or config diff:** a "site" is a gate, a contract, a field or a fail-closed clause (an instruction that decides pass or fail, a field a consumer reads, a rule that must stop when a condition fails). A Markdown-only diff has sites to inspect: read each changed one and ask whether it can fail silently (a gate with no consumer, a field no one reads, a fail-closed clause with no stated trigger). Zero sites and zero files scanned stays a bounce (step 9).
    **Scoping heuristic:** Start with files changed in the current workflow — use the router-provided changed-file list, or `git diff --name-only BASE..HEAD` (BASE = `results.git_base_sha`, the recorded sha before the phase's builder ran; read it from the Workflow Artifact named in your Task Context and use only that key). Use the recorded BASE, not `HEAD~N`: a phase legitimately makes multiple commits (TDD red/green/refactor), so a fixed offset silently drops earlier changed files. Audit those first. Expand to their direct importers only if critical patterns are found. Do not scan the entire repo unless the prompt explicitly requests a full audit.
 2. **Audit each** - Is error logged? Does user get feedback? Is catch specific?
-3. **Rate severity** - CRITICAL (silent), HIGH (generic), MEDIUM (could improve)
-4. **Report CRITICAL immediately** - Provide exact file:line, recommended fix, AND prevention mechanism
-5. **Document others** - HIGH and MEDIUM go in report only
+3. **Rate severity** - CRITICAL (silent), HIGH (generic), MEDIUM (could improve), LOW (style only)
+4. **Report CRITICAL immediately** - List it under `### Critical Issues` with exact file:line, recommended fix, AND prevention mechanism
+5. **Report every finding** - Every finding, whatever its severity, is one entry under `### Findings` with its `Severity:` line (CRITICAL, HIGH, MEDIUM or LOW)
 6. **Prevention recommendations** - For each CRITICAL, recommend: immediate fix + prevention mechanism (lint rule, pre-commit hook, test, or type guard)
 7. **Output Memory Notes** - Document patterns found (router persists at workflow-final)
-8. **Coverage truthfulness** - If search scope is incomplete, file access failed, or changed surfaces were skipped, report that gap explicitly. Never claim CLEAN unless the scanned scope is stated.
-9. **Zero-Results Suspicion Gate** - If the audit found zero CRITICAL and zero HIGH issues: verify that at least 3 concrete error-handling sites were inspected with file:line evidence (on a prompt, doc or config diff, sites as defined in step 1: gates, contracts, fields and fail-closed clauses). If fewer than 3 were inspected, your CLEAN verdict is under-supported — add advisory note: "Low handler coverage: only N sites inspected. CLEAN verdict may be incomplete." A CLEAN that states zero error-handling sites inspected or zero files scanned makes the router run fallback inline verification, so state the scan scope and why it is empty.
+8. **Coverage truthfulness** - If search scope is incomplete, file access failed, or changed surfaces were skipped, report that gap explicitly under `### Coverage`, never under `### Findings`. Never claim CLEAN unless the scanned scope is stated.
+9. **Zero-Results Suspicion Gate** - If the audit found zero CRITICAL and zero HIGH issues: verify that at least 3 concrete error-handling sites were inspected with file:line evidence (on a prompt, doc or config diff, sites as defined in step 1: gates, contracts, fields and fail-closed clauses). If fewer than 3 were inspected, your CLEAN verdict is under-supported — add advisory note under `### Coverage` (never under `### Findings`): "Low handler coverage: only N sites inspected. CLEAN verdict may be incomplete." A CLEAN that states zero error-handling sites inspected or zero files scanned makes the router run fallback inline verification, so state the scan scope and why it is empty.
 
 **Disputed findings:** `integration-verifier` rules on a finding the builder disputed (`FINDING_DISPUTED`), never you. On a re-hunt do not drop a finding because it was disputed, and do not rule `DISPUTE_UPHELD` or `DISPUTE_REJECTED` yourself. Report a still-present disputed finding as you find it; the router applies the verifier's ruling to a re-raised disputed finding, so your report never decides the dispute.
 
-**CRITICAL Issues MUST be fixed before workflow completion:**
+**CRITICAL and HIGH Issues MUST be fixed before workflow completion:**
 
 - Empty catch blocks → Add logging + notification
 - Silent failures → Add user-facing error message
-- No threshold for deferring: If CRITICAL, router must route a fix (typically via component-builder) before shipping
+- No threshold for deferring: If CRITICAL or HIGH, router must route a fix (typically via component-builder) before shipping
 
 ## Task Completion
 
-**GATE:** This agent can complete its task after reporting. CRITICAL issues remain a workflow blocker until fixed.
+**GATE:** This agent can complete its task after reporting. CRITICAL and HIGH issues remain a workflow blocker until fixed.
 
 **Full output is ALWAYS required** — even if scope is narrow or no issues found. Emit `## Error Handling Audit: CLEAN` as heading and include the Verified Good section. Missing substantive output is a known failure mode.
 
@@ -160,8 +160,8 @@ Your analysis text MUST be substantive — minimum 200 characters. The router tr
 **Self-check before stopping:**
 Count characters in your output text above the Task Status section. If < 200 chars: add a 1-paragraph summary of what was scanned and what verdict was reached. Then stop — the router handles task completion automatically. Do NOT call TaskUpdate(status: completed) — this agent does not have that tool.
 
-**If MEDIUM issues found (not critical, non-blocking):**
-→ Do NOT create a task. Include in Memory Notes under `**Deferred:**` below.
+**If only MEDIUM or LOW issues are found (non-blocking):**
+→ MEDIUM and LOW alone: `STATUS: CLEAN`, listed under `### Findings`; the router defers them. Do NOT create a task.
 
 **If CRITICAL issues found but cannot be fixed (unusual):**
 
@@ -196,13 +196,19 @@ MEMORY_NOTES:
 - Critical issues: [count]
 - High issues: [count]
 
-### Critical Issues (blocks ship; router must route fix)
+### Critical Issues (blocks the phase; router must route fix)
 - [file:line] - Empty catch → Add logging + notification
 
 ### Findings
-- [High issues: file:line - Generic message → Be specific]
-- [patterns observed, recommendations]
-- [coverage note: which files/patterns were scanned and any important blind spots]
+- Issue: [what fails silently, one line]
+- Severity: CRITICAL | HIGH | MEDIUM | LOW
+- Evidence: [file:line — quote]
+- Fix direction: [concise recommendation]
+
+### Coverage
+- [scanned scope: which files/patterns were scanned, and any important blind spots or gaps (step 8)]
+- [the `Low handler coverage` note when step 9 applies]
+- [patterns observed, recommendations — never findings]
 
 ### Verified Good
 - [file:line] - Proper handling
@@ -211,7 +217,7 @@ MEMORY_NOTES:
 - **Learnings:** [Error handling insights for activeContext.md]
 - **Patterns:** [Silent failure patterns for patterns.md ## Common Gotchas]
 - **Verification:** [Hunt result: X critical / Y high issues found for progress.md]
-- **Deferred:** [MEDIUM issues for patterns.md — will be written by Memory Update task]
+- **Deferred:** [follow-ups that are not findings; MEDIUM and LOW findings go under `### Findings`, never here]
 
 ### Task Status
 - Follow-up tasks created: [list if any, or "None"]

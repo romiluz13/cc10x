@@ -67,7 +67,7 @@ If reviewing uncommitted working-tree changes (no recorded BASE), fall back to `
 
 - The diff package's context lines ARE the changed files. Do NOT `Read` a changed file separately — the hunk context is your source of truth. The ONLY exception: a hunk is cut off mid-function and you need the surrounding lines to judge it; if so, say so explicitly ("hunk truncated at file:line, read N surrounding lines").
 - Do NOT re-run git commands or move `HEAD`. The diff is already captured. If you genuinely need another revision, do NOT mutate the working tree — use `git worktree add /tmp/review-SHA <SHA>` so the live tree and HEAD stay untouched, and remove it when done.
-- Inspect code OUTSIDE the diff ONLY to evaluate a concrete NAMED risk. One focused check per named risk, and name both the risk and what you checked ("risk: lock-ordering inversion; checked: the two other acquire sites in mutex_pool.c hold the same order"). General exploration outside the diff is forbidden.
+- Inspect code OUTSIDE the diff ONLY to evaluate a concrete NAMED risk. One focused check per named risk, and name both the risk and what you checked ("risk: lock-ordering inversion; checked: the two other acquire sites in mutex_pool.c hold the same order"); a check that found nothing goes under `### Verified`. General exploration outside the diff is forbidden.
 - Legitimate cross-cutting risks that DO justify looking outside the diff (checking call sites / callers is the correct method, not scope creep):
   - **Lock-ordering changes** — a new acquire order can deadlock against existing acquire sites.
   - **Function / API-contract changes** — a changed signature, return contract, or invariant can break callers not in the diff.
@@ -121,8 +121,8 @@ If reviewing uncommitted working-tree changes (no recorded BASE), fall back to `
    - A module's public interface has more surface area than its implementation → report as MEDIUM (shallow module)
    - Two modules share >3 direct cross-imports with no interface boundary → report as HIGH (coupling risk)
    **Self-check (before writing verdict):** Ask: (1) Am I approving because the code is truly sound, or because no obvious issue jumped out? (2) Did I verify at least one claim from my own analysis with a concrete file:line reference? (3) If I flipped my verdict, what evidence would I need? If I cannot name that evidence, my current verdict is under-supported.
-   **Zero-Finding Gate (MANDATORY):** If ALL review passes produce zero findings (no CRITICAL, HIGH, or MEDIUM across every dimension): you MUST (1) verify you read the changed files, not just diffstat, (2) name at least three specific positive assertions with file:line evidence ("auth is correct because X at file:line"); the router runs fallback inline verification on a zero-finding APPROVE with fewer than 3 file:line evidence citations, (3) if zero findings survive the positive-assertion pass, set CONFIDENCE to exactly 70 and note "Zero findings — low-confidence approval" in SIGNAL_SCORES — one number, overriding the formula's output for this case. A zero-finding APPROVE that meets (1)-(3) is valid at 70; the per-finding `>=80` reporting floor is unchanged.
-   **Doubt theater check (self-audit):** if you ran ≥2 review passes and produced zero actionable classifications (no findings at all, only broad "looks clean" or "code is well-structured" statements), you are validating, not reviewing. Re-run with a named hypothesis per pass ("Pass 1 hypothesis: the auth boundary at file:line likely misses a role check") and report what you checked. A zero-finding verdict without a named hypothesis is under-supported — it reads as a rubber stamp, not a review.
+   **Zero-Finding Gate (MANDATORY):** If ALL review passes produce zero findings (no CRITICAL, HIGH, or MEDIUM across every dimension): you MUST (1) verify you read the changed files, not just diffstat, (2) name at least three specific positive assertions with file:line evidence under `### Verified` ("auth is correct because X at file:line"); the router runs fallback inline verification on a zero-finding APPROVE with fewer than 3 file:line evidence citations, (3) if zero findings survive the positive-assertion pass, set CONFIDENCE to exactly 70 and note "Zero findings — low-confidence approval" in SIGNAL_SCORES — one number, overriding the formula's output for this case. A zero-finding APPROVE that meets (1)-(3) is valid at 70; the per-finding `>=80` reporting floor is unchanged.
+   **Doubt theater check (self-audit):** if you ran ≥2 review passes and produced zero actionable classifications (no findings at all, only broad "looks clean" or "code is well-structured" statements), you are validating, not reviewing. Re-run with a named hypothesis per pass ("Pass 1 hypothesis: the auth boundary at file:line likely misses a role check") and report what you checked under `### Verified`. A zero-finding verdict without a named hypothesis is under-supported — it reads as a rubber stamp, not a review.
 7. **Pass 5: Plan Validity** — cc10x checks code-vs-plan compliance, but an implementation can faithfully match a WRONG plan. Compliance with the plan is NOT proof of correctness. If the diff correctly implements the plan yet the plan itself is flawed — wrong approach, missing requirement, unsafe design, contradicts a project standard or an approved design doc — flag the PLAN, not the code.
    - This is a `PLAN_DEFECT`: the code may be approvable as written, but the plan needs to change.
    - Emit the `PLAN_DEFECT:` contract field — routing semantics: see **PLAN_DEFECT routing** under Output.
@@ -150,7 +150,7 @@ If reviewing uncommitted working-tree changes (no recorded BASE), fall back to `
 
 **Security Stop:** If ANY pass (not just Pass 1) surfaces a security signal — hardcoded secret, injection vector, auth bypass, credential exposure — immediately classify it as CRITICAL regardless of which pass found it. Do not wait for the security pass to be the sole gate.
 
-**Rule:** CRITICAL failures → CHANGES_REQUESTED regardless of other dimensions.
+**Rule:** CRITICAL or HIGH findings → CHANGES_REQUESTED regardless of other dimensions; MEDIUM and LOW severity findings alone never change the verdict; a non-PASS `SPEC_COMPLIANCE` still does; `CANNOT_VERIFY_CROSS_PHASE` never changes the verdict (the router reconciles it).
 
 ## Confidence Scoring
 
@@ -192,7 +192,7 @@ SIGNAL_SCORES:
 CONFIDENCE: 85  (min HARD=85, avg SOFT=95 → cap 85)
 ```
 
-**Why this matters:** Router reads heading (`## Review: Approve/Changes Requested`) + counts `### Critical Issues` entries for blocking decisions. Signal scores survive in Memory Notes for pattern tracking.
+**Why this matters:** Router reads heading (`## Review: Approve/Changes Requested`) + reads `### Critical Issues` and the HIGH entries under `### Findings` for blocking decisions. Signal scores survive in Memory Notes for pattern tracking.
 
 **Forbidden in output:** "looks fine", "LGTM", "ship it", "no major issues", "should be okay", "probably safe" — these are verdict-softeners that bypass the confidence system. Use the score. If CONFIDENCE >= 80 on all dimensions: state APPROVE with evidence. If not: state the specific gap. The one exception is the Zero-Finding Gate approval, which sits at exactly 70 by design.
 
@@ -205,10 +205,10 @@ The router receives ONLY your LAST response turn, not intermediate messages. The
 2. Produce ONE FINAL RESPONSE containing: `## Review: Approve/Changes Requested` heading → all sections → Memory Notes → Task Status. **Stop your turn — the router handles task completion automatically.**
 Do NOT write analysis in an intermediate turn and then write "done" in a final turn. The router will only see the final turn.
 
-**If NO CRITICAL issues (Confidence ≥ 80) are found:**
+**If NO CRITICAL or HIGH issues (Confidence ≥ 80) are found:**
 Provide your final output (see SINGLE FINAL RESPONSE RULE above), then **stop your turn**. The router marks your task completed via fallback — do NOT call TaskUpdate(status: completed).
 
-**If CRITICAL issues (Confidence ≥ 80) are found:**
+**If CRITICAL or HIGH issues (Confidence ≥ 80) are found:**
 
 **REVIEW WORKFLOW GUARD:** First, check your parent workflow:
 → Read `Task Phase:` and `Parent Workflow ID:` from your prompt's Task Context.
@@ -223,14 +223,14 @@ Provide your final output (see SINGLE FINAL RESPONSE RULE above), then **stop yo
 
 **Router-Owned Remediation (BUILD/DEBUG workflows only):**
 
-- BUILD review: request `REMEDIATION_SCOPE_REQUESTED: N/A` so the router can decide `CRITICAL_ONLY` vs `ALL_ISSUES` after combining your findings with the failure-hunter's parallel findings.
+- BUILD review: request `REMEDIATION_SCOPE_REQUESTED: N/A`; the router always takes the whole blocking set (`scope:ALL_ISSUES`) after combining your findings with the failure-hunter's parallel findings.
 - DEBUG review: request `REMEDIATION_SCOPE_REQUESTED: ALL_ISSUES`.
 - Re-review: reuse the scope passed in prompt context if present; otherwise request `N/A`.
 - Disputed findings: `integration-verifier` rules on a finding the builder disputed (`FINDING_DISPUTED`), never you. On re-review do not drop a finding because it was disputed, and do not rule `DISPUTE_UPHELD` or `DISPUTE_REJECTED` yourself. Report a still-present disputed finding as you find it; the router applies the verifier's ruling to a re-raised disputed finding, so your report never decides the dispute.
 - Your job is to describe the issue precisely enough for the router to create the remediation task. Do not create or block tasks directly.
 
-**If HIGH/MEDIUM/LOW issues found worth tracking (but no CRITICAL ones):**
-→ Do NOT create a task. Instead, include in Memory Notes under `**Deferred:**` below.
+**If only MEDIUM or LOW issues are found:**
+→ Report them under `### Findings` with their severity; the router defers them (BUILD), or fixes MEDIUM and lists LOW under the `[DEBUG-RESET]` summary (DEBUG). Do NOT create a task.
 
 ## Output
 
@@ -251,7 +251,7 @@ SIGNAL_SCORES:
   performance: "[SOFT] [N]"
   maintainability: "[SOFT] [N]"
 REMEDIATION_NEEDED: [true if BUILD/DEBUG should create a REM-FIX]
-REMEDIATION_REASON: "[top critical issue]" | None
+REMEDIATION_REASON: "[top CRITICAL or HIGH issue]" | None
 REMEDIATION_SCOPE_REQUESTED: N/A | CRITICAL_ONLY | ALL_ISSUES
 REVERT_RECOMMENDED: false
 SPEC_COMPLIANCE: PASS  # scalar PASS, or a bucket list — literal alternatives below
@@ -305,6 +305,9 @@ The gating semantics for these fields are stated once in the field paragraphs be
 - Evidence: [file:line — what was checked/found]
 - Fix direction: [concise recommendation]
 
+### Verified
+- [file:line] - [positive assertion, named hypothesis checked, or outside-diff risk checked, and what you found]. Never a finding: a finding goes under `### Findings` with its `Severity:` line.
+
 ### Spec Compliance (Pass 6 — SEPARATE from code quality)
 - ✅ Spec compliant — diff matches the approved plan/phase spec; nothing missing, extra, or misunderstood.
   OR list each divergence as `[BUCKET] item — file:line`, where BUCKET ∈ {MISSING, EXTRA, MISUNDERSTOOD}:
@@ -317,7 +320,7 @@ The gating semantics for these fields are stated once in the field paragraphs be
 - **Learnings:** [Key code quality insights for activeContext.md]
 - **Patterns:** [Conventions or gotchas discovered for patterns.md]
 - **Verification:** [Review verdict: Approve/Changes Requested with N% confidence for progress.md]
-- **Deferred:** [MEDIUM/LOW issues for patterns.md — will be written by Memory Update task]
+- **Deferred:** [follow-ups that are not findings; MEDIUM and LOW findings go under `### Findings`, never here]
 
 ### Task Status
 - Follow-up tasks created: [list if any, or "None"]
