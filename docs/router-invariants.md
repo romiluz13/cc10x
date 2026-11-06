@@ -104,12 +104,12 @@ Validated against the live plugin surface:
 **If removed:** Reviewer/verifier drift back into mutating orchestration state and task ownership becomes ambiguous again.
 **Safe to remove:** Never.
 
-### INV-005: Scope decision is a first-class BUILD pause
+### INV-005: Every BUILD REM-FIX takes the whole blocking set
 
-**Covers:** Router `## 8. Post-Agent Validation`, `## 9. Remediation And Workflow Rules`
-**Enforces:** Mixed CRITICAL + HIGH findings in BUILD pause for explicit scope selection before remediation is created.
-**If removed:** HIGH issues are silently dropped when CRITICAL-only fixes are chosen by default.
-**Safe to remove:** Only if re-hunt is forced to `ALL_ISSUES` in every BUILD remediation path.
+**Covers:** Router `## 8. Post-Agent Validation`, `## 9. Remediation And Workflow Rules`, `references/remediation-and-research.md` `### Scope resolution`
+**Enforces:** A BUILD REM-FIX takes every validated CRITICAL and HIGH finding plus the non-severity gates in one wave (`scope:ALL_ISSUES`), with no scope question; MEDIUM and LOW findings go to `deferred_findings` (ADR 0003). Replay fixture `build-scope-gate.json`.
+**If removed:** HIGH issues wait on a scope question or are dropped by a critical-only fix, each severity class costs its own remediation cycle, and MEDIUM findings either block a phase or vanish.
+**Safe to remove:** Never.
 
 ### INV-006: Remediation loops are workflow-scoped and bounded
 

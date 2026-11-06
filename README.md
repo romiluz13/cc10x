@@ -488,7 +488,7 @@ It decides:
 
 - which workflow to run
 - which subagent to invoke next
-- when to pause for clarification or scope decisions
+- when to pause for clarification
 - when remediation is required
 - when a workflow is allowed to advance
 - when memory and workflow artifacts are finalized

@@ -1161,6 +1161,15 @@ def _builder2_unblocked(d):
     d["relevant_tasks"]["builder_phase_2"]["blockedBy"] = []
 
 
+def _deferred_severity_minor(d):
+    d["expected"]["artifact_delta"]["deferred_findings"][0]["severity"] = "minor"
+
+
+def _deferred_medium_relabelled_low(d):
+    # Same entry count and both severities still legal: only the per-severity counts disagree with the findings.
+    d["expected"]["artifact_delta"]["deferred_findings"][0]["severity"] = "low"
+
+
 def _memory_blocked_by_early_doc_sync_with_last(d):
     d["relevant_tasks"]["memory_finalize"]["blockedBy"] = ["doc_sync_phase_2", "doc_sync_phase_1"]
 
@@ -1289,6 +1298,10 @@ L1_MUTATIONS = [
     ("triage-happy-path.json", _triage_wontfix_with_grilling, "expected TRIAGED"),
     ("two-workflow-resume.json", _share_workflow_id, "distinct workflow_id"),
     ("two-workflow-resume.json", _foreign_task, "resumed task a_builder carries wf"),
+    ("build-scope-gate.json", _set_expected(next_action="pause_for_scope_decision"), "build-scope-gate: wrong next action"),
+    ("build-scope-gate.json", _set_expected(pending_gate="scope_decision"), "build-scope-gate: pending gate must be null"),
+    ("build-scope-gate.json", _deferred_severity_minor, "build-scope-gate: deferred entry severity"),
+    ("build-scope-gate.json", _deferred_medium_relabelled_low, "build-scope-gate: deferred severities must match"),
 ]
 
 

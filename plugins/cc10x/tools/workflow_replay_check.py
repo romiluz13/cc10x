@@ -5,6 +5,7 @@ import argparse
 import json
 import os
 import sys
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -1000,13 +1001,29 @@ def check_build_scope_gate(fixture: dict[str, Any]) -> None:
         findings["critical_issues"] > 0, "build-scope-gate: expected critical issues"
     )
     require(findings["high_issues"] > 0, "build-scope-gate: expected high issues")
+    expected = fixture["expected"]
+    # Tighter loops P2 (D2, D4): one REM-FIX takes the whole blocking set; MEDIUM and LOW are deferred, never asked about.
+    require(expected["next_action"] == "create_remfix", "build-scope-gate: wrong next action")
+    require(expected.get("remfix_scope") == "ALL_ISSUES", "build-scope-gate: REM-FIX scope must be ALL_ISSUES")
+    require(expected.get("pending_gate", "missing") is None, "build-scope-gate: pending gate must be null")
+    deferred = expected["artifact_delta"].get("deferred_findings", [])
+    severities = Counter(entry.get("severity") for entry in deferred)
     require(
-        fixture["expected"]["next_action"] == "pause_for_scope_decision",
-        "build-scope-gate: wrong next action",
+        len(deferred) == findings.get("medium_issues", 0) + findings.get("low_issues", 0),
+        "build-scope-gate: deferred_findings must hold one entry per MEDIUM and LOW finding",
     )
+    for entry in deferred:
+        require(
+            all(entry.get(key) for key in ("source", "phase_id", "finding")),
+            "build-scope-gate: deferred entry needs source, phase_id and finding",
+        )
+        require(
+            entry.get("severity") in {"medium", "low"},
+            "build-scope-gate: deferred entry severity must be medium or low in BUILD",
+        )
     require(
-        fixture["expected"]["pending_gate"] == "scope_decision",
-        "build-scope-gate: wrong pending gate",
+        severities["medium"] == findings.get("medium_issues", 0) and severities["low"] == findings.get("low_issues", 0),
+        "build-scope-gate: deferred severities must match medium_issues and low_issues",
     )
 
 

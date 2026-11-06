@@ -444,8 +444,8 @@ that found the silence, which is the one outcome the hunter is dispatched here t
   also adding a workflow-type discriminator the dispatcher does not have. So this follows the
   precedent the mutation-floor round already set, for the same measured reason, and the true source
   travels in `reason:`.
-- **A non-blocking Minor does not evaporate — it goes to `deferred_findings`.** Minors from
-  `qa-review` or `qa-hunt`, and `HARNESS_ISSUES` that do not warrant a re-build, append to the
+- **A non-blocking finding does not evaporate — it goes to `deferred_findings`.**
+  QA's non-blocking class is the MEDIUM and LOW findings from `qa-review` or `qa-hunt`; those findings, and `HARNESS_ISSUES` that do not warrant a re-build, append to the
   workflow artifact's `deferred_findings` array in BUILD's entry shape (`source`, `phase_id`,
   `finding`, `severity:minor`). **QA's surfacing point is the report**, and it has to be named
   because QA has no BUILD-DONE triage — QA has no finishing menu (step 0) to carry one. Surface

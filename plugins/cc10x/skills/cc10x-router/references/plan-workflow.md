@@ -45,7 +45,7 @@ TaskCreate({
 
 TaskCreate({
   subject: "CC10X plan-gap-reviewer: Fresh review pass 1",
-  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:plan-review-gap-1\nplan:N/A\nscope:N/A\nreason:Fresh anti-anchoring review of saved plan (pass 1)\n\nWait for the planner to save a plan artifact, then review it against the original user request and any approved design/research files. REVIEW_MODE: fresh. Router-set at dispatch, never agent-chosen: a reviewer told nothing about its lane picks one from whatever it was handed, and if the only concrete input is an amendment it will run a diff review and report it as a fresh pass. Do NOT read the prior findings list in this mode.",
+  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:plan-review-gap-1\nplan:N/A\nscope:N/A\nreason:Fresh anti-anchoring review of saved plan (pass 1)\n\nRead ${CLAUDE_PLUGIN_ROOT}/skills/planning/SKILL.md first, for its `## Task Structure` block only — it is the template the placeholder rule compares phase-table rows against, and it arrives as a file because you load no skills. Wait for the planner to save a plan artifact, then review it against the original user request and any approved design/research files. REVIEW_MODE: fresh. Router-set at dispatch, never agent-chosen: a reviewer told nothing about its lane picks one from whatever it was handed, and if the only concrete input is an amendment it will run a diff review and report it as a fresh pass. Do NOT read the prior findings list in this mode.",
   activeForm: "Fresh-reviewing plan"
 }) -> planning_review_pass1_task_id
 TaskUpdate({ taskId: planning_review_pass1_task_id, addBlockedBy: [planner_task_id] })
@@ -59,7 +59,7 @@ TaskUpdate({ taskId: planner_replan_task_id, addBlockedBy: [planning_review_pass
 
 TaskCreate({
   subject: "CC10X plan-gap-reviewer: Fresh review pass 2",
-  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:plan-review-gap-2\nplan:N/A\nscope:N/A\nreason:Fresh anti-anchoring review of saved plan (pass 2)\n\nOnly run if the re-plan task produces a revised saved plan after pass 1 findings. REVIEW_MODE: fresh. Router-set at dispatch, never agent-chosen: a reviewer told nothing about its lane picks one from whatever it was handed, and if the only concrete input is an amendment it will run a diff review and report it as a fresh pass. Do NOT read the prior findings list in this mode.",
+  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:plan-review-gap-2\nplan:N/A\nscope:N/A\nreason:Fresh anti-anchoring review of saved plan (pass 2)\n\nOnly run if the re-plan task produces a revised saved plan after pass 1 findings. Read ${CLAUDE_PLUGIN_ROOT}/skills/planning/SKILL.md first, for its `## Task Structure` block only — it is the template the placeholder rule compares phase-table rows against, and it arrives as a file because you load no skills. REVIEW_MODE: fresh. Router-set at dispatch, never agent-chosen: a reviewer told nothing about its lane picks one from whatever it was handed, and if the only concrete input is an amendment it will run a diff review and report it as a fresh pass. Do NOT read the prior findings list in this mode.",
   activeForm: "Fresh-reviewing revised plan"
 }) -> planning_review_pass2_task_id
 TaskUpdate({ taskId: planning_review_pass2_task_id, addBlockedBy: [planner_replan_task_id] })
@@ -69,7 +69,7 @@ TaskUpdate({ taskId: planning_review_pass2_task_id, addBlockedBy: [planner_repla
 # spent, which is the case it exists for — so it has no fixed position in the graph.
 TaskCreate({
   subject: "CC10X plan-gap-reviewer: Amendment verification",
-  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:plan-review-amendment\nplan:{plan_file}\nscope:N/A\nreason:Diff-scoped verification of the amendment itself\n\nREVIEW_MODE: amendment. Read the prior findings list and only the sections this amendment changed. Answer exactly two questions: did EVERY accepted finding land, and did the amendment introduce a NEW defect? This lane is diff-scoped and uncapped: it does NOT count against the maximum of 2 fresh-review passes, and its verdict does NOT close the review loop.",
+  description: "wf:{workflow_uuid}\nkind:agent\norigin:router\nphase:plan-review-amendment\nplan:{plan_file}\nscope:N/A\nreason:Diff-scoped verification of the amendment itself\n\nRead ${CLAUDE_PLUGIN_ROOT}/skills/planning/SKILL.md first, for its `## Task Structure` block only — it is the template the placeholder rule compares phase-table rows against, and it arrives as a file because you load no skills. REVIEW_MODE: amendment. Read the prior findings list and only the sections this amendment changed. Answer exactly two questions: did EVERY accepted finding land, and did the amendment introduce a NEW defect? This lane is diff-scoped and uncapped: it does NOT count against the maximum of 2 fresh-review passes, and its verdict does NOT close the review loop.",
   activeForm: "Verifying plan amendment"
 }) -> planning_review_amendment_task_id
 
