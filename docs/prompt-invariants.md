@@ -105,7 +105,7 @@ Validated against the live prompt surface:
 ### PINV-009: Non-trivial plans must be grounded in repo reality
 
 **Covers:** `plugins/cc10x/agents/planner.md`, `plugins/cc10x/skills/plan-review-gate/SKILL.md`
-**Enforces:** Non-trivial plans expose a codebase reality check, plan-vs-code gaps, an assumption ledger, and phase dependencies before they can pass review.
+**Enforces:** Non-trivial plans expose a codebase reality check, plan-vs-code gaps, an assumption ledger, and phase dependencies before they can pass review. Every phase of a PLAN-route plan also carries `#### Input space`, `#### Failure modes` and `#### Touched surfaces`, and plan-gap-reviewer reports a missing or incomplete table as a BLOCKING `missing_surfaces` finding.
 **Failure prevented:** Plans that look rigorous on paper but ignore the actual codebase and force the user into repeated “compare it to the code again” loops.
 **Wording drift that breaks it:** Removing explicit repo-comparison language, hiding contradictions behind summary prose, or collapsing assumptions back into confident narrative text.
 **Safe to weaken:** Never.

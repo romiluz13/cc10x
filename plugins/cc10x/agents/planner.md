@@ -36,7 +36,7 @@ skills:
 
 | Mode | Use when | Required content |
 | ------ | ---------- | ------------------ |
-| `direct` | Trivial, low-risk, single-surface | requirements, constraints, acceptance checks |
+| `direct` | Trivial, low-risk, single-surface | requirements, constraints, acceptance checks; no phase tables (exempt) |
 | `execution_plan` | Standard implementation with sequential phases | requirements, constraints, open decisions, phase plan, acceptance checks |
 | `decision_rfc` | Architecture decisions, refactors, library choices | motivation, current state, alternatives, drawbacks, recommendation, phased plan |
 
@@ -63,6 +63,7 @@ When `critical_path`: include behavior contract, edge-case catalog, provable pro
     - **Consumes:** exact signatures used from earlier phases (function names with param/return types, exported constants, route shapes, schema field names) — verbatim
     - **Produces:** exact names later phases rely on — verbatim, the spelling later builders must match
     - If neither: write `Consumes: none` / `Produces: none` explicitly
+    - **Phase tables (PLAN-route plans only):** after the Interfaces block, every phase carries `#### Input space` (each input the change handles, its expected outcome and its test), `#### Failure modes` (each failure, whether it fails loud or closed, and its test) and `#### Touched surfaces` (the sweep command, then every surface it finds with its kind and action). Input space may be the single line `N/A: <reason>` when the phase adds or changes no guard, parser, classifier or validator. Failure modes and Touched surfaces are never `N/A`. A sweep hit that needs no change is listed as `checked, unchanged` with a short reason. Exempt: a `direct`-mode plan and QA artifacts (`qa-plan`, `qa-re-plan`).
 11. **Classify autonomy** — label each phase `AFK` (checkpoint_type=none) or `HITL` with reason-category (`judgment-call` | `external-access` | `design-decision` | `manual-verification`)
 11b. **Plan Self-Review (MANDATORY for non-trivial plans)** — scan for cross-phase contract drift. Every `Consumes` in a later phase must verbatim-match a `Produces` in an earlier phase. Fix spelling/signature drift inline before save. Treat dangling references as PLAN FAILURES. Record "Self-review: no cross-phase reference drift" if clean.
 12. **Two-layer artifact** — Human Layer first (what + why), then Execution Contract Layer (buildable without improvisation). Write what `plan-review-gate` checks: for a multi-phase plan a `## Durable Decisions` section (routes, schema, models, auth, third-party boundaries every phase references), `Depends on:` and `Enables:` statements on every non-trivial phase, and a `## Differences from agreement` section that matches `DIFFERENCES_FROM_AGREEMENT`.

@@ -75,6 +75,7 @@ The orchestration state dir (`.cc10x/`) and the workflow artifacts STAY at `CLAU
 13. Router handoff for the current BUILD phase must be phase-local:
 
 - include only the current phase objective, inputs, expected artifacts, required checks, checkpoint type, exit criteria, and approved clarifications still in force
+- include the phase's `#### Input space`, `#### Failure modes` and `#### Touched surfaces` tables verbatim when the plan phase carries them (a plan saved before 12.11 may not; the handoff then omits them and the build proceeds)
 - include prior-phase detail only when it remains an active blocker, dependency, or unresolved finding
 - do not rehydrate broad historical narrative when the workflow artifact already captures it
 

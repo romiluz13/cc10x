@@ -70,6 +70,95 @@ def matches(pattern: str):
     return lambda text: re.search(pattern, text) is not None
 
 
+# Tighter loops P1: what makes a phase table hollow, stated identically in plan-gap-reviewer and plan-review-gate.
+PHASE_TABLE_SENTENCES = (
+    "A table heading with no data rows is BLOCKING.",
+    "`N/A` under `#### Failure modes` or `#### Touched surfaces` is BLOCKING.",
+    "`N/A: <reason>` is accepted only for Input space, and only on a phase that adds or changes no guard, parser, classifier or validator.",
+    "A Touched surfaces table with no `Sweep:` command line is BLOCKING.",
+    "A Touched surfaces table that omits a surface named in the phase's own Files/surfaces list is BLOCKING.",
+    "A sweep hit listed as `checked, unchanged` with a short reason satisfies the sweep rule.",
+    "A row cell, `Sweep:` argument or `N/A:` reason that still holds a bracketed placeholder copied unchanged from the planning template's `## Task Structure` is BLOCKING.",
+    "Bracketed text inside backticks in a row is content, not a placeholder.",
+)
+
+# Each phase-table rule is pinned as an exact line: it must appear exactly once, verbatim, as a whole line.
+REVIEWER_PHASE_RULE = (
+    "   - On a PLAN-route plan, every phase carries `#### Input space`, `#### Failure modes` and `#### Touched surfaces`."
+    " A missing or incomplete table is a BLOCKING `missing_surfaces` finding: a phase without one of the three,"
+    " or an Input space of `N/A: <reason>` on a phase that adds or changes a guard, parser, classifier or validator. "
+    + " ".join(PHASE_TABLE_SENTENCES)
+    + " Do not re-run the `Sweep:` command: its flags need a shell you do not have, and plan-review-gate re-runs every"
+    " phase's `Sweep:` command with Bash inside the planner."
+    + " Exempt: a `direct`-mode plan and a QA-route plan (`qa-plan-review`, `qa-plan-review-2`)."
+)
+GATE_PHASE_ROW = (
+    "| Phase tables present | For each phase of a PLAN-route plan, find `#### Input space`, `#### Failure modes` and `#### Touched surfaces`;"
+    " re-run every phase's `Sweep:` command with Bash and compare its hits to that phase's Touched surfaces"
+    " | A phase lacks a table, its Input space is `N/A: <reason>`"
+    " while it changes a guard, parser, classifier or validator, or its Touched surfaces omits a site its sweep finds. "
+    + " ".join(PHASE_TABLE_SENTENCES)
+    + " Not blocking for a `direct`-mode plan or for `qa-plan` and `qa-re-plan` artifacts (QA-route plans). |"
+)
+GATE_TOOLS_SENTENCE = (
+    "checks it against 3 criteria using Read/Grep/Glob, plus Bash to re-run every phase's `Sweep:` command."
+)
+# The placeholder rule compares rows to the planning template; the reviewer loads no skills, so the PLAN-route scaffolds name it as a Read.
+PLAN_TEMPLATE_READ = (
+    "Read ${CLAUDE_PLUGIN_ROOT}/skills/planning/SKILL.md first, for its `## Task Structure` block only — it is the template"
+    " the placeholder rule compares phase-table rows against, and it arrives as a file because you load no skills."
+)
+PLAN_TEMPLATE_READ_PHASES = ("plan-review-gap-1", "plan-review-gap-2", "plan-review-amendment")
+REVIEWER_TEMPLATE_READ = (
+    "On PLAN-route dispatches (`plan-review-gap-1`, `plan-review-gap-2`, `plan-review-amendment`), the scaffold names one"
+    " file to Read instead: `${CLAUDE_PLUGIN_ROOT}/skills/planning/SKILL.md`, for its `## Task Structure` block only — the"
+    " template the placeholder rule in step 5 compares phase-table rows against. It is sanctioned on the same grounds: a"
+    " neutral template, not author narrative, not prior findings, and not a `.cc10x/*.md` artifact, so it counts as an"
+    " explicitly provided file on those dispatches, in both `fresh` and `amendment` mode."
+)
+PLANNER_PHASE_RULE = (
+    "    - **Phase tables (PLAN-route plans only):** after the Interfaces block, every phase carries `#### Input space`"
+    " (each input the change handles, its expected outcome and its test), `#### Failure modes` (each failure, whether it fails"
+    " loud or closed, and its test) and `#### Touched surfaces` (the sweep command, then every surface it finds with its kind"
+    " and action). Input space may be the single line `N/A: <reason>` when the phase adds or changes no guard, parser,"
+    " classifier or validator. Failure modes and Touched surfaces are never `N/A`. A sweep hit that needs no change is listed"
+    " as `checked, unchanged` with a short reason. Exempt: a `direct`-mode plan and QA artifacts (`qa-plan`, `qa-re-plan`)."
+)
+PLANNER_DIRECT_ROW = "| `direct` | Trivial, low-risk, single-surface | requirements, constraints, acceptance checks; no phase tables (exempt) |"
+PLANNING_PHASE_RULE = (
+    "The three tables are required on every phase of a PLAN-route plan. Exempt: a `direct`-mode plan and QA-route plans."
+    " Input space may be the single line `N/A: <reason>` when the task adds or changes no"
+    " guard, parser, classifier or validator. Failure modes and Touched surfaces are never `N/A`. A sweep hit that needs no"
+    " change is listed as `checked, unchanged` with a short reason."
+)
+PLANNING_CHECK_11 = (
+    "11. Every phase of a PLAN-route plan carries `#### Input space`, `#### Failure modes` and `#### Touched surfaces`, and"
+    " Touched surfaces has a `Sweep:` line and lists every surface in the phase's Files/surfaces list and every site its own"
+    " sweep finds (a hit that needs no change is listed as `checked, unchanged` with a short reason); only Input space may be"
+    " `N/A: <reason>`; exempt: a `direct`-mode plan and a QA-route plan"
+)
+HANDOFF_TABLES_LINE = (
+    "- include the phase's `#### Input space`, `#### Failure modes` and `#### Touched surfaces` tables verbatim when the plan"
+    " phase carries them (a plan saved before 12.11 may not; the handoff then omits them and the build proceeds)"
+)
+FINDING_BUCKET_KEYS = [
+    "repo_mismatches",
+    "missing_surfaces",
+    "execution_order_issues",
+    "hidden_assumptions",
+    "under_scoped_integrations",
+    "open_decisions_presented_as_settled",
+]
+
+
+def pinned_line(text: str, line: str) -> bool:
+    """`line` appears exactly once in `text`, verbatim, as a whole line. On failure, names the line it expected."""
+    ok = text.count(line) == 1 and re.search(r"(?:^|\n)" + re.escape(line) + r"(?=\n|$)", text) is not None
+    if not ok:
+        print(f"PINNED-LINE MISSING (expected exactly once, as a whole line): {line}", file=sys.stderr)
+    return ok
+
+
 def skill_description(text: str) -> str:
     """The frontmatter `description` value (quoted, block or folded scalar) as one whitespace-normalized string."""
     block = re.match(r"---\n(.*?)\n---", text, re.S)
@@ -3966,6 +4055,109 @@ ASSERTIONS = [
         and "never a per-agent key on the line-1 `CONTRACT` envelope" in text
         and "the first fenced `yaml` block after the line-1 envelope and the line-2 heading" in text,
         "the body said it had no YAML block while its Output section emits one; REVIEW_MODE stays a dispatch input (A5)",
+    ),
+    A(
+        "planner: step 10 names the three phase tables, the N/A form, and scopes them to PLAN-route plans",
+        AGENTS / "planner.md",
+        lambda text: pinned_line(text, PLANNER_PHASE_RULE) and pinned_line(text, PLANNER_DIRECT_ROW),
+        "tighter loops P1 (D14): every PLAN-route phase carries Input space, Failure modes and Touched surfaces; direct plans and QA artifacts are exempt",
+    ),
+    A(
+        "planning: Task Structure carries the three phase tables and the gate lists 11 checks",
+        SKILLS / "planning" / "SKILL.md",
+        lambda text: (m := re.search(r"## Task Structure\n.*?\n## Context References", text, re.S)) is not None
+        and all(h in m.group(0) for h in ("#### Input space", "#### Failure modes", "#### Touched surfaces", "`N/A: <reason>`"))
+        and "Scan the plan against these 11 checks." in text
+        and "these 10 checks" not in text
+        and "\nSweep: `command grep -rnIiE" in m.group(0)
+        and "| checked, unchanged: [short reason] |" in m.group(0)
+        and pinned_line(text, PLANNING_PHASE_RULE)
+        and pinned_line(text, PLANNING_CHECK_11),
+        "tighter loops P1 (D14): the template and the completeness gate carry the phase tables, a Sweep line and a checked-unchanged row",
+    ),
+    A(
+        "plan-gap-reviewer: a missing or incomplete phase table is BLOCKING missing_surfaces; direct and QA-route plans exempt",
+        AGENTS / "plan-gap-reviewer.md",
+        lambda text: pinned_line(text, REVIEWER_PHASE_RULE)
+        and "`missing_surfaces`: Phase 3 changes a validator but its `#### Input space` reads `N/A: docs only`" in text,
+        "tighter loops P1 (D14): the reviewer fails a PLAN-route plan that lacks a phase table or carries a hollow one, without a new bucket",
+    ),
+    A(
+        "plan-gap-reviewer: FINDING_BUCKETS keys and the Finding Buckets list unchanged",
+        AGENTS / "plan-gap-reviewer.md",
+        lambda text: (m := re.search(r"\nFINDING_BUCKETS:\n((?:  .*\n)+)", text)) is not None
+        and re.findall(r"^  (\S+):", m.group(1), re.M) == FINDING_BUCKET_KEYS
+        and len(m.group(1).splitlines()) == len(FINDING_BUCKET_KEYS)
+        and (p := re.search(r"\nEvery finding must use exactly one category:\n\n((?:- .*\n)+)", text)) is not None
+        and re.findall(r"^- `(\S+)`$", p.group(1), re.M) == FINDING_BUCKET_KEYS
+        and len(p.group(1).splitlines()) == len(FINDING_BUCKET_KEYS),
+        "tighter loops P1 (D14): missing phase tables use missing_surfaces; harness_audit checks only the FINDING_BUCKETS literal, so this pin holds the six keys in the YAML block and the prose list",
+    ),
+    A(
+        "plan-review-gate: Check 2 has the phase-tables row with its exemptions",
+        SKILLS / "plan-review-gate" / "SKILL.md",
+        lambda text: (m := re.search(r"### Check 2: Completeness.*?### Check 3", text, re.S)) is not None
+        and pinned_line(m.group(0), GATE_PHASE_ROW),
+        "tighter loops P1 (D14): the gate the planner runs fails a PLAN-route plan without phase tables or with hollow ones; direct plans and QA artifacts are exempt",
+    ),
+    A(
+        "plan-review-gate: the auditor re-runs every phase's Sweep command with Bash",
+        SKILLS / "plan-review-gate" / "SKILL.md",
+        lambda text: text.count(GATE_TOOLS_SENTENCE) == 1
+        and "criteria using Read/Grep/Glob. " not in text
+        and "spot-check one Touched surfaces sweep" not in text
+        and re.search(r"(?m)^allowed-tools: .*\bBash\b", text) is not None,
+        "tighter loops P1 (D14): the reviewer skips the sweep because the gate re-runs it, so the gate must re-run every phase's sweep, not spot-check one",
+    ),
+    A(
+        "plan-gap-reviewer: the planning-template Read is sanctioned on PLAN-route dispatches",
+        AGENTS / "plan-gap-reviewer.md",
+        lambda text: (m := re.search(r"(?m)^\*\*The sanctioned extra Reads\.\*\* On `qa-plan-review`.*$", text)) is not None
+        and m.group(0).count(REVIEWER_TEMPLATE_READ) == 1
+        and m.group(0).endswith(REVIEWER_TEMPLATE_READ)
+        and "skills/qa-strategy/SKILL.md" in m.group(0),
+        "tighter loops P1 (D14): the placeholder rule names the planning template, which the freshness rule allows only as an explicitly provided file",
+    ),
+    A(
+        "plan-workflow: every PLAN-route reviewer scaffold names the planning-template Read",
+        SKILLS / "cc10x-router" / "references" / "plan-workflow.md",
+        lambda text: all(
+            (m := re.search(r'description: "[^"\n]*\\nphase:' + re.escape(ph) + r'\\n[^"\n]*"', text)) is not None
+            and m.group(0).count(PLAN_TEMPLATE_READ) == 1
+            for ph in PLAN_TEMPLATE_READ_PHASES
+        )
+        and text.count(PLAN_TEMPLATE_READ) == len(PLAN_TEMPLATE_READ_PHASES),
+        "tighter loops P1 (D14): plan-gap-reviewer loads no skills; without this Read the template sits in the plugin cache, out of reach",
+    ),
+    A(
+        "planning: the placeholder rule points at Task Structure and lists none of its tokens by hand",
+        SKILLS / "planning" / "SKILL.md",
+        lambda text: (m := re.search(r"## Task Structure\n.*?\n## Context References", text, re.S)) is not None
+        and len(tokens := set(re.findall(r"\[[^\]\n]*\]|<[^>\n]*>", m.group(0)))) >= 13
+        and any("`## Task Structure`" in s for s in PHASE_TABLE_SENTENCES)
+        and not any(tok in s for tok in tokens for s in PHASE_TABLE_SENTENCES[-2:]),
+        "tighter loops P1 (D14): a hand-listed token set drifted from the template (5 of 13 missing); the rule now names the template instead",
+    ),
+    A(
+        "build-workflow: step 13 handoff includes the phase tables verbatim when the plan has them",
+        SKILLS / "cc10x-router" / "references" / "build-workflow.md",
+        lambda text: (m := re.search(r"\n13\. Router handoff for the current BUILD phase.*?### BUILD task graph", text, re.S)) is not None
+        and pinned_line(m.group(0), HANDOFF_TABLES_LINE),
+        "tighter loops P1 (D14): the builder sees the phase's tables",
+    ),
+    A(
+        "build-workflow: plan_trust_gate does not check the phase tables",
+        SKILLS / "cc10x-router" / "references" / "build-workflow.md",
+        lambda text: (m := re.search(r"\n3\. Run `plan_trust_gate` before BUILD:.*?\n4\. ", text, re.S)) is not None
+        and re.search(r"(?i)Input space|Failure modes|Touched surfaces|phase tables?|D14", m.group(0)) is None,
+        "tighter loops P1 (D14): plans saved before 12.11 still build",
+    ),
+    A(
+        "prompt-invariants: PINV-009 names the phase tables",
+        ROOT / "docs" / "prompt-invariants.md",
+        lambda text: (m := re.search(r"### PINV-009:.*?\n### ", text, re.S)) is not None
+        and "`#### Input space`, `#### Failure modes` and `#### Touched surfaces`" in m.group(0),
+        "tighter loops P1 (D14): the registry names the tables the reviewers check",
     ),
     A(
         "doc-syncer: legacy ADR cleanup is propose-only, deletes are user-run",

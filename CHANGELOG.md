@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Tighter loops
+
+- **Plan phase tables.** Every phase of a PLAN-route plan now carries `#### Input space`, `#### Failure modes` and `#### Touched surfaces` (planner step 10, the planning skill's Task Structure, and an eleventh Plan Completeness Gate check). Input space may be the single line `N/A: <reason>` when the phase adds or changes no guard, parser, classifier or validator. plan-gap-reviewer and plan-review-gate report a missing or incomplete table as a BLOCKING `missing_surfaces` finding; the `FINDING_BUCKETS` contract keeps its six keys. A planning-template placeholder left in a table (outside backticks in a row, in a `Sweep:` line, or as a bare `<reason>`) is BLOCKING; bracketed text inside backticks is content. `direct`-mode plans and QA-route plans are exempt. The BUILD handoff passes the phase's tables to the builder. `plan_trust_gate` does not check them, so plans saved before 12.11 still build.
+
 ### Loop pane
 
 A Claude Code mod inside the plugin shows a running cc10x workflow without changing the router. `hooks/hooks.json` gains `"modules": ["./register.tsx"]` beside the unchanged `hooks` object, and `plugin.json` gains `"types": "./types/index.d.ts"`.

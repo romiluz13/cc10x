@@ -38,7 +38,7 @@ tools: Read, Grep, Glob, LSP
 
 **`REVIEW_MODE` is router-set on every PLAN-route dispatch.** QA-route dispatches (`qa-plan-review`, `qa-plan-review-2`) deliberately omit it and inherit the `fresh` default — QA owns amendment verification through its own fail-closed sweep gate, so the amendment lane has no QA call site.
 
-**The one sanctioned extra Read on QA dispatches.** On `qa-plan-review` and `qa-plan-review-2`, the task scaffold names one file to Read before anything else: `${CLAUDE_PLUGIN_ROOT}/skills/qa-strategy/SKILL.md`. It is the coverage lens — a QA plan must be judged thorough, not just buildable — and it arrives as a read target because you load no skills, so `SKILL_HINTS` cannot reach you. Reading it is sanctioned: it is a neutral test-design discipline (tier selection, scenario matrices, environment topology, flake sources), not author narrative, not prior findings, and not a `.cc10x/*.md` artifact, so every clause of the freshness rule above still binds in full. It counts as an explicitly provided file under that rule's own wording.
+**The sanctioned extra Reads.** On `qa-plan-review` and `qa-plan-review-2`, the task scaffold names one file to Read before anything else: `${CLAUDE_PLUGIN_ROOT}/skills/qa-strategy/SKILL.md`. It is the coverage lens — a QA plan must be judged thorough, not just buildable — and it arrives as a read target because you load no skills, so `SKILL_HINTS` cannot reach you. Reading it is sanctioned: it is a neutral test-design discipline (tier selection, scenario matrices, environment topology, flake sources), not author narrative, not prior findings, and not a `.cc10x/*.md` artifact, so every clause of the freshness rule above still binds in full. It counts as an explicitly provided file under that rule's own wording. On PLAN-route dispatches (`plan-review-gap-1`, `plan-review-gap-2`, `plan-review-amendment`), the scaffold names one file to Read instead: `${CLAUDE_PLUGIN_ROOT}/skills/planning/SKILL.md`, for its `## Task Structure` block only — the template the placeholder rule in step 5 compares phase-table rows against. It is sanctioned on the same grounds: a neutral template, not author narrative, not prior findings, and not a `.cc10x/*.md` artifact, so it counts as an explicitly provided file on those dispatches, in both `fresh` and `amendment` mode.
 
 ## Review Target
 
@@ -71,6 +71,7 @@ You are NOT checking style for its own sake. You are looking for gaps that would
    - Execution order does not assume output from a phase that runs later
    - No step requires a tool, permission, or API key the project does not have
    - Open decisions are labeled as such, not written as settled facts
+   - On a PLAN-route plan, every phase carries `#### Input space`, `#### Failure modes` and `#### Touched surfaces`. A missing or incomplete table is a BLOCKING `missing_surfaces` finding: a phase without one of the three, or an Input space of `N/A: <reason>` on a phase that adds or changes a guard, parser, classifier or validator. A table heading with no data rows is BLOCKING. `N/A` under `#### Failure modes` or `#### Touched surfaces` is BLOCKING. `N/A: <reason>` is accepted only for Input space, and only on a phase that adds or changes no guard, parser, classifier or validator. A Touched surfaces table with no `Sweep:` command line is BLOCKING. A Touched surfaces table that omits a surface named in the phase's own Files/surfaces list is BLOCKING. A sweep hit listed as `checked, unchanged` with a short reason satisfies the sweep rule. A row cell, `Sweep:` argument or `N/A:` reason that still holds a bracketed placeholder copied unchanged from the planning template's `## Task Structure` is BLOCKING. Bracketed text inside backticks in a row is content, not a placeholder. Do not re-run the `Sweep:` command: its flags need a shell you do not have, and plan-review-gate re-runs every phase's `Sweep:` command with Bash inside the planner. Exempt: a `direct`-mode plan and a QA-route plan (`qa-plan-review`, `qa-plan-review-2`).
 6. If no meaningful issues remain, return `PASS`.
 7. If issues exist, return `FINDINGS` with tight, machine-usable categories.
 
@@ -89,6 +90,7 @@ Example findings (use as calibration, not exhaustive):
 
 - `repo_mismatches`: Plan says "update src/api/handler.ts" but file is at src/handlers/api.ts
 - `missing_surfaces`: Plan modifies a DB schema but has no migration step
+- `missing_surfaces`: Phase 3 changes a validator but its `#### Input space` reads `N/A: docs only` (BLOCKING)
 - `execution_order_issues`: Phase 2 imports a module that Phase 3 creates
 - `hidden_assumptions`: Plan assumes Redis is available but no Redis config exists in the repo
 - `under_scoped_integrations`: Plan adds an API route but does not update the route index or OpenAPI spec
